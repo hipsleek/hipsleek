@@ -2313,14 +2313,18 @@ and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_ba
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let pos = IP.pos_of_formula rdef.I.rel_formula in
-  let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
-  let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })) rdef.I.rel_typed_vars in
+  let rel_sv_vars = List.map (fun (var_type, var_name) ->
+    CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)
+  ) rdef.I.rel_typed_vars in
+  let n_tl = List.map (fun (var_type, var_name) ->
+    (var_name,{ sv_info_kind = (trans_type prog var_type pos);id = fresh_int () })
+  ) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_pure prog rdef.I.rel_formula n_tl in
   let crf = trans_pure_formula rdef.I.rel_formula n_tl in
   {C.rel_name = rdef.I.rel_name; 
-  C.rel_vars = rel_sv_vars;
-  C.rel_formula = crf; }
+   C.rel_vars = rel_sv_vars;
+   C.rel_formula = crf;}
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in

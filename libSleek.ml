@@ -62,6 +62,7 @@ let process_cmd_list cmds :bool=
   );
   (* end pre-processing *)
   convert_data_and_pred_to_cast ();
+  process_rel_decls ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
    (*proc_one_lemma*)
   List.iter (fun c->  match c with

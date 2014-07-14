@@ -510,6 +510,7 @@ let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initializ
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+let print_rel_decl = ref (fun (c:rel_decl) -> "cast printer has not been initialized")
 
 (* imply function has not been initialized yet *)
 let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
@@ -3249,4 +3250,3 @@ let update_views_info (prog: prog_decl) : prog_decl =
     vd
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
- 

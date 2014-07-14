@@ -1,0 +1,35 @@
+/*
+relation fib(int n, int f) == 
+  (n = 0 & f = 1 |
+  n = 1 & f = 1 |
+  n > 1 & exists(f1, f2 : fib(n-1,f1) & fib(n-2,f2) & f = f1 + f2)).
+
+relation fiba(int n, int f).
+
+  //axiom n=0 ==> fiba(n,1).
+  //axiom n=1 ==> fiba(n,1).
+axiom 0<=n & n<=1 ==> fiba(n,1).
+axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
+*/
+
+//relation odd(int n) == (n = 1 | n > 1 & exists (m: n=m+2 & odd(m))).
+
+//relation mOdd(int n) == (n = 1 | n > 1 & exists (m: n=m+1 & mEven(m))).
+
+//relation mEven(int n) == (n = 0 | n > 0 & exists (m: n=m+1 & mOdd(m))).
+
+relation sum(int n, int s) == (n=1 & s=1 | n>1 & exists (s0: sum(n-1,s0) & s=n+s0)).
+
+
+//checkentail mOdd(3) |- false.
+
+checkentail sum(10,s) |- s= 55.
+
+checkentail sum(10,s) |- s= 45.
+
+//
+//checkentail sum(n,s) |- s= n*(n+1)/2.
+
+//checkentail odd(n) |- odd(n+1).
+
+//checkentail n=10 |- odd(n).

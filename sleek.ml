@@ -93,7 +93,7 @@ let proc_gen_cmd cmd =
     | BarrierCheck bdef -> (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) 
                              ; process_barrier_def bdef)
     | FuncDef fdef -> process_func_def fdef
-    | RelDef rdef -> process_rel_def rdef
+    | RelDef rdef -> collect_rel_def rdef (*process_rel_def rdef*)
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
@@ -148,7 +148,7 @@ let parse_file (parse) (source_file : string) =
       | PredDef pdef -> process_pred_def_4_iast pdef
       | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
       | FuncDef fdef -> process_func_def fdef
-      | RelDef rdef -> process_rel_def rdef
+      | RelDef rdef -> collect_rel_def rdef (*process_rel_def rdef*)
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
@@ -220,8 +220,8 @@ let parse_file (parse) (source_file : string) =
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
       (* | LemmaDef ldef -> process_list_lemma ldef *)
-      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
-      | EmptyCmd -> () in
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ 
+      | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
   let _ = Slk2smt.smt_cmds := cmds in
   List.iter proc_one_def cmds;
@@ -240,7 +240,9 @@ let parse_file (parse) (source_file : string) =
     eliminate_unused_components cmds;
   );
   (* end pre-processing *)
+  process_rel_decls ();
   convert_data_and_pred_to_cast ();
+
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)

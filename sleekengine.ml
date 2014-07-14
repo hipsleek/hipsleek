@@ -337,38 +337,27 @@ let process_func_def fdef =
   else
 		print_string (fdef.I.func_name ^ " is already defined.\n")
 
-(* An Hoa : process the relational definition *)
-let process_rel_def rdef =
+(* collect all relation definition *)
+let collect_rel_def rdef =
   if Astsimp.check_data_pred_name iprog rdef.I.rel_name then
-	let tmp = iprog.I.prog_rel_decls in
-	  try
-		(*let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) rdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) rdef.Iast.view_vars ) in
-		let wf,_ = Astsimp.case_normalize_struc_formulas iprog h p rdef.Iast.view_formula false false [] in
-		let new_rdef = {rdef with Iast.view_formula = wf} in
-		iprog.I.prog_view_decls <- ( new_rdef :: iprog.I.prog_view_decls);
-		let crdef = Astsimp.trans_view iprog new_rdef in
-		let old_vdec = cprog.Cast.prog_view_decls in
-		cprog.Cast.prog_view_decls <- (crdef :: cprog.Cast.prog_view_decls);
-		ignore (Astsimp.compute_view_x_formula cprog crdef !Globals.n_xpure);
-    let crdef = 
-      if !Globals.enable_case_inference then 
-        Astsimp.view_case_inference cprog iprog.I.prog_view_decls crdef else crdef in
-		let n_crdef = Astsimp.view_prune_inv_inference cprog crdef in
-    cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec);
-    let n_crdef = {n_crdef with 
-        Cast.view_formula =  Solver.prune_pred_struc cprog true n_crdef.Cast.view_formula ;
-        Cast.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.Cast.view_un_struc_formula;}in
-		let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
-		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
-			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
-			let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
-			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
-	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
+    let cur_rel_decls = iprog.I.prog_rel_decls in
+    iprog.I.prog_rel_decls <- rdef :: cur_rel_decls;
   else
-		print_string (rdef.I.rel_name ^ " is already defined.\n")
+    let msg = "relation" ^ rdef.I.rel_name ^ " is already defined." in
+    report_error no_pos msg
+
+(* process all relation definition *)
+let process_rel_decls () =
+  try
+    let crdecls = List.map (fun irdecl ->
+      Astsimp.trans_rel iprog irdecl
+    ) iprog.I.prog_rel_decls in
+    !cprog.Cast.prog_rel_decls <- crdecls;
+    (* Forward the relation to the smt solver. *)
+    List.iter (fun crdecl ->
+      Smtsolver.add_relation crdecl.Cast.rel_name crdecl.Cast.rel_vars crdecl.Cast.rel_formula;
+    ) crdecls;
+  with e -> ()
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in

@@ -1795,27 +1795,23 @@ cexp_w:
         mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-        else
-          begin
-            if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-            Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-          end
+        else (
+          if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+          else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+        )
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-             (* AnHoa: relation constraint, for instance, given the relation 
-       * s(a,b,c) == c = a + b.
-       * After this definition, we can have the relation constraint like
-       * s(x,1,x+1), s(x,y,x+y), ...
-       * in our formula.
-       *)
+        (* AnHoa: relation constraint, for instance, given the relation 
+         * s(a,b,c) == c = a + b.
+         * After this definition, we can have the relation constraint like
+         * s(x,1,x+1), s(x,y,x+y), ...
+         * in our formula.
+         *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
-          else
-            begin
-              if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-            end
+        else if hp_names # mem id then
+          report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else
+          Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
     | peek_cexp_list; ocl = opt_comma_list -> 
         Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
     | t = cid ->

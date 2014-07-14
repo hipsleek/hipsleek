@@ -887,9 +887,15 @@ let string_of_proc_decl p =
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
 
-let string_of_rel_decl p = 
-  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
-    p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
+let string_of_rel_decl p =
+  let name = p.Iast.rel_name in
+  let args = (
+    let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+    (pr p.rel_typed_vars)
+  ) in
+  let decl_kind = "relation " in
+  let decl_form = string_of_pure_formula p.Iast.rel_formula in
+  decl_kind ^ name ^ "(" ^ args ^ ") == " ^ decl_form ^ ".\n"
 ;;
 
 
@@ -989,7 +995,7 @@ let rec string_of_global_var_decl_list l =
 
 (* An Hoa : print relations *)
 let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+	String.concat "\n" (List.map (fun r -> string_of_rel_decl r) rdecls)
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in

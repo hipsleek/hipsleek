@@ -2243,9 +2243,10 @@ let string_of_rel_decl reldecl =
     let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
     (CP.name_of_type t)  ^ " " ^ arg_name
   in
-  let decl_kind = " relation " in
+  let decl_kind = "relation " in
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
-  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+  let decl_form = string_of_pure_formula reldecl.Cast.rel_formula in
+  decl_kind ^ name ^ "(" ^ args ^ ") == " ^ decl_form ^ ".\n"
 
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
@@ -3897,7 +3898,8 @@ let rec string_of_barrier_decl_list l = match l with
 
 (* An Hoa : print relations *)
 let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+  (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
+  String.concat "\n" (List.map (fun r -> string_of_rel_decl r) rdecls)
 
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
@@ -4528,6 +4530,7 @@ Cast.print_hp_decl := string_of_hp_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
 Cast.print_coerc_decl_list := string_of_coerc_decl_list;;
+Cast.print_rel_decl := string_of_rel_decl;
 Omega.print_pure := string_of_pure_formula;;
 Omega.print_exp := string_of_formula_exp;
 Smtsolver.print_pure := string_of_pure_formula;;

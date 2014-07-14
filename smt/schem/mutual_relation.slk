@@ -1,0 +1,6 @@
+relation odd(int n) == (n = 1 | n > 1 & exists (m: n=m+1 & even(m))).
+
+relation even(int n) == (n = 0 | n > 0 & exists (m: n=m+1 & odd(m))).
+
+checkentail odd(3) |- false.
+
