@@ -12558,20 +12558,22 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       *)
       let head_node = List.hd lhs_hs in
       let extra_heap = join_star_conjunctions (List.tl lhs_hs) in
-      let p1,c1,perm1,ps1,p2,c2,perm2,ps2 = 
+      let p1,c1,perm1,ps1,ho_ps1,p2,c2,perm2,ps2,ho_ps2 = 
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
         | ViewNode ({ 
             h_formula_view_node = p1;
             h_formula_view_name = c1;
             h_formula_view_perm = perm1; (*LDK*)
-            (* h_formula_view_ho_arguments = ho_ps1; *)
+            h_formula_view_ho_arguments = ho_ps1;
             h_formula_view_arguments = ps1} (* as h1 *)),
           ViewNode ({ 
             h_formula_view_node = p2;
             h_formula_view_name = c2;
             h_formula_view_perm = perm2; (*LDK*)
-            (* h_formula_view_ho_arguments = ho_ps2; *)
+            h_formula_view_ho_arguments = ho_ps2;
             h_formula_view_arguments = ps2} (* as h2 *))
+              when CF.is_eq_node_name c1 c2 ->
+              p1,c1,perm1,ps1,ho_ps1,p2,c2,perm2,ps2,ho_ps2
         | DataNode ({ 
             h_formula_data_node = p1;
             h_formula_data_name = c1;
@@ -12583,7 +12585,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             h_formula_data_perm = perm2; (*LDK*)
             h_formula_data_arguments = ps2} (* as h2 *)) 
           when CF.is_eq_node_name c1 c2 ->
-              p1,c1,perm1,ps1,p2,c2,perm2,ps2
+              p1,c1,perm1,ps1,[],p2,c2,perm2,ps2,[]
         | _ -> report_error no_pos "unexpecte match pattern"
       in
       let perms1, perms2 = 
@@ -12616,7 +12618,34 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
       (*prove extra heap + guard*)
       let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (mkTrueFlow ()) [] no_pos in
-      
+
+      (*=====================================================*)
+      (***********Handle high-order argument: BEGIN**********)
+      if (List.length ho_ps1 != List.length ho_ps2) then
+        let _ = print_endline ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node") in
+        Debug.tinfo_zprint (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
+        (false, estate, h, p,mkNormalFlow ()) (* false, return dummy h and p *)
+      else
+      let coer_rhs_new =
+        if (ho_ps1=[]) then coer_rhs_new else
+          let args = List.combine ho_ps1 ho_ps2 in
+          let match_one_ho_arg ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+            (* lhs <==> rhs: instantiate any high-order variables in rhs
+               Currently assume that only HVar is in the rhs
+            *)
+            let hvars = CF.extract_hvar_f rhs in
+            [List.hd hvars, lhs]
+          in
+          let maps = List.map match_one_ho_arg args in
+          let maps = List.concat maps in
+          let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
+          coer_rhs_new
+      in
+      (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
+      (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
+      (***********Handle high-order argument: END**********)
+      (*=====================================================*)
+
       Debug.tinfo_pprint  ("normalize_w_coers: process_one: check extra heap") no_pos;
       Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
       Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
