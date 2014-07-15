@@ -18,3 +18,9 @@ print residue.
 
 checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
 print residue.
+
+checkentail c::CNT<1> |- (exists n: c::CNT<n> & n>0).
+print residue.
+// 2 residues: 1 match only, 1 split
+// Potential overhead due to splitting (due to CNT<0>)
+// need a good way to control splitting
