@@ -12847,15 +12847,15 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
     in 
     if coers ==[] then 
       begin
-        let _ = print_endline ("No combine lemma in left coercion?") in
+        (* let _ = print_endline ("No combine lemma in left coercion?") in *)
         Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
         f
       end
     else 
       begin
-        let _ = print_endline ("normalize_formula_w_coers: "  
-        ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
-        ^ "\n\n") in
+        (* let _ = print_endline ("normalize_formula_w_coers: "   *)
+        (* ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers)  *)
+        (* ^ "\n\n") in *)
         Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "  
         ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
         ^ "\n\n")) no_pos;
