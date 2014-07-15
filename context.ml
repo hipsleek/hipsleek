@@ -1414,7 +1414,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                       (*Do not fold/unfold LOCKs*)
                       if (is_l_lock || is_r_lock) then None else 
                         if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (m_res,0))
-                        else if not(vr_is_rec) then Some (2,M_fold m_res) 
+                        else if not(vr_is_rec) && not(vl_is_prim) then Some (2,M_fold m_res) 
                         else None
                     ) in
                     let a5 = (
