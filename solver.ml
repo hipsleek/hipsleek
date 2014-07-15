@@ -9070,7 +9070,6 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
         report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
 
-
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -12559,85 +12558,84 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       *)
       let head_node = List.hd lhs_hs in
       let extra_heap = join_star_conjunctions (List.tl lhs_hs) in
+      let p1,c1,perm1,ps1,p2,c2,perm2,ps2 = 
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
         | ViewNode ({ 
             h_formula_view_node = p1;
             h_formula_view_name = c1;
-            h_formula_view_origins = origs;
-            (* h_formula_view_original = original; (*LDK: unused*) *)
-            h_formula_view_remaining_branches = br1;
             h_formula_view_perm = perm1; (*LDK*)
+            (* h_formula_view_ho_arguments = ho_ps1; *)
             h_formula_view_arguments = ps1} (* as h1 *)),
           ViewNode ({ 
             h_formula_view_node = p2;
             h_formula_view_name = c2;
-            h_formula_view_remaining_branches = br2;
             h_formula_view_perm = perm2; (*LDK*)
+            (* h_formula_view_ho_arguments = ho_ps2; *)
             h_formula_view_arguments = ps2} (* as h2 *))
         | DataNode ({ 
             h_formula_data_node = p1;
             h_formula_data_name = c1;
-            h_formula_data_origins = origs;
-            h_formula_data_remaining_branches = br1;
             h_formula_data_perm = perm1; (*LDK*)
             h_formula_data_arguments = ps1} (* as h1 *)),
           DataNode ({ 
             h_formula_data_node = p2;
             h_formula_data_name = c2;
-            h_formula_data_remaining_branches = br2;
             h_formula_data_perm = perm2; (*LDK*)
             h_formula_data_arguments = ps2} (* as h2 *)) 
           when CF.is_eq_node_name c1 c2 ->
-            let perms1, perms2 = 
-              if (Perm.allow_perm ()) then
-                Perm.get_perm_var_lists perm1 perm2
-              else ([],[]) in
-            let fr_vars = perms2@(p2 :: ps2) in
-            let to_vars = perms1@(p1 :: ps1) in
-            let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-            let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-            let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
-            let coer_rhs_new1, extra_heap_new =
-              if (Perm.allow_perm ()) then
-                match perm1, perm2 with
-                  | Some f1, None -> (*propagate perm into coercion*)
-                      (match !Globals.perm with
-                        | Bperm -> report_error no_pos "[solver.ml] normalize_w_coers : unexpected for bperm"
-                        | _ ->
-                            let f1 = List.hd (Perm.get_cperm_var perm1) in
-                            let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                            let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
-                            (rhs,extra))
-                  | _ -> (coer_rhs_new1, extra_heap_new)
-              else (coer_rhs_new1, extra_heap_new) in
-            let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
-            let new_es_heap = anode in (*consumed*)
-            let old_trace = estate.es_trace in
-            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(normalizing-" ^ coer.coercion_name ^")")::old_trace); es_is_normalizing = true} in
-            let new_ctx1 = Ctx new_estate in
-            let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-            (*prove extra heap + guard*)
-            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (mkTrueFlow ()) [] no_pos in
-            
-            Debug.tinfo_pprint  ("normalize_w_coers: process_one: check extra heap") no_pos;
-            Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
-            Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
+              p1,c1,perm1,ps1,p2,c2,perm2,ps2
+        | _ -> report_error no_pos "unexpecte match pattern"
+      in
+      let perms1, perms2 = 
+        if (Perm.allow_perm ()) then
+          Perm.get_perm_var_lists perm1 perm2
+        else ([],[]) in
+      let fr_vars = perms2@(p2 :: ps2) in
+      let to_vars = perms1@(p1 :: ps1) in
+      let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+      let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
+      let coer_rhs_new1, extra_heap_new =
+        if (Perm.allow_perm ()) then
+          match perm1, perm2 with
+            | Some f1, None -> (*propagate perm into coercion*)
+                  (match !Globals.perm with
+                    | Bperm -> report_error no_pos "[solver.ml] normalize_w_coers : unexpected for bperm"
+                    | _ ->
+                          let f1 = List.hd (Perm.get_cperm_var perm1) in
+                          let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                          let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
+                          (rhs,extra))
+            | _ -> (coer_rhs_new1, extra_heap_new)
+        else (coer_rhs_new1, extra_heap_new) in
+      let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
+      let new_es_heap = anode in (*consumed*)
+      let old_trace = estate.es_trace in
+      let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(normalizing-" ^ coer.coercion_name ^")")::old_trace); es_is_normalizing = true} in
+      let new_ctx1 = Ctx new_estate in
+      let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+      (*prove extra heap + guard*)
+      let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (mkTrueFlow ()) [] no_pos in
+      
+      Debug.tinfo_pprint  ("normalize_w_coers: process_one: check extra heap") no_pos;
+      Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
+      Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
-            let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
-            (* let _ = print_endline ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res)) in *)
-            
-            (* Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos; *)
-            
-            (* PROCCESS RESULT *)
-            (match check_res with
-              | FailCtx _ ->
-                Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching failed")) no_pos; 
-                (false, estate, h, p,mkNormalFlow ()) (* false, return dummy h and p *)
-              | SuccCtx res -> match List.hd res with(*we expect only one result*)
-                | OCtx (c1, c2) ->
+      let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
+      (* let _ = print_endline ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res)) in *)
+      
+      (* Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos; *)
+      
+      (* PROCCESS RESULT *)
+      (match check_res with
+        | FailCtx _ ->
+              Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching failed")) no_pos; 
+              (false, estate, h, p,mkNormalFlow ()) (* false, return dummy h and p *)
+        | SuccCtx res -> match List.hd res with(*we expect only one result*)
+            | OCtx (c1, c2) ->
                   let _ = print_string ("[solver.+ml] Warning: normalize_w_coers: process_one: expect only one context \n") in
                   (false,estate,h,p,mkNormalFlow ())
-                | Ctx es ->
+            | Ctx es ->
                   let new_ante = normalize_combine coer_rhs_new es.es_formula no_pos in
                   (* let new_ante = add_mix_formula_to_formula p new_ante in *)
                   let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
@@ -12646,7 +12644,6 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: new ctx: \n" ^ (Cprinter.string_of_entail_state new_es))) no_pos;
                   (true,new_es,h1,p1,fl1))
-        | _ -> report_error no_pos "unexpecte match pattern"	  
     in
     let process_one estate anode rest coer h p fl =
       let pr (c1,c2,c3,c4,c5) = pr_triple string_of_bool Cprinter.string_of_entail_state (Cprinter.string_of_flow_formula "") (c1,c2,c5) in 
@@ -12782,7 +12779,7 @@ and normalize_context_perm prog ctx = match ctx with
 	| Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 	  
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
-  if (isAnyConstFalse f) || (!Globals.perm = NoPerm) then f
+  if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then f
   else if !Globals.perm = Dperm then normalize_formula_perm prog f 
   else if coers==[] then f
   else
@@ -12821,11 +12818,15 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
     in 
     if coers ==[] then 
       begin
+        let _ = print_endline ("No combine lemma in left coercion?") in
         Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
         f
       end
     else 
       begin
+        let _ = print_endline ("normalize_formula_w_coers: "  
+        ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
+        ^ "\n\n") in
         Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "  
         ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
         ^ "\n\n")) no_pos;

@@ -1427,6 +1427,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
+                | F.HVar _ -> false
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
@@ -1438,14 +1439,15 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
                             | _ -> false)
                       | _ -> false
                 )
-                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+                | _ -> failwith ("Only nodes, HVar, and HRel allowed after split_star_conjunctions 1") 
               in
               only_self) hs  in
           let get_name h = match h with
+            | F.HVar v -> P.name_of_sv v
             | F.DataNode _
             | F.ViewNode _-> F.get_node_name h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
-            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+            | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
           (List.length hs),self_n, List.map get_name hs
       | _ -> 1,false,[]
     in

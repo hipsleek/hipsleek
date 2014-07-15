@@ -3441,8 +3441,9 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                   else if name2 = "" then name1
                   else if (name1=name2) then name1
                   else (
-                    Debug.ninfo_hprint (add_str "phase h0" !CF.print_h_formula) h0 pos;
-                    raise (Failure ("phase: " ^ v ^ " must point to only one view 11"))
+                      Debug.ninfo_hprint (add_str "phase h0" !CF.print_h_formula) h0 pos;
+                      name1 (*TOCHECK: temporarily return name1*)
+                    (* raise (Failure ("phase: " ^ v ^ " must point to only one view 11")) *)
                   )
               | CF.ThreadNode
                       {

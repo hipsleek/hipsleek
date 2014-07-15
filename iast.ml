@@ -547,6 +547,8 @@ let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
+let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
+let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 
 let find_empty_static_specs iprog = 

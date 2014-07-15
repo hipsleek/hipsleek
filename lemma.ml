@@ -286,18 +286,28 @@ let manage_safe_lemmas repo iprog cprog =
           None
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) =
+let manage_unsafe_lemmas_x repo iprog cprog: (CF.list_context list option) =
   let (left,right, lnames) = List.fold_left (fun (left,right,names) ldef ->
     try
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right,((ldef.I.coercion_name)::names))
-    with _ -> (left,right,names)
+    with e ->
+        (*This will mask all errors*)
+        let _ = print_endline ("manage_unsafe_lemmas: error(s) occurred") in
+        raise e
+        (* (left,right,names) *)
   ) ([],[], []) repo in
   let _ = Lem_store.all_lemma # add_coercion left right in
   let _ = (* if  (!Globals.dump_lem_proc) then   *)
     Debug.ninfo_hprint (add_str "\nUpdated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
   let _ = Debug.info_ihprint (add_str "\nUpdated store with unsafe repo." pr_id) "" no_pos in
   None
+
+let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) =
+  Debug.no_1 "manage_unsafe_lemmas"
+      (pr_list !I.print_coerc_decl)
+      pr_none
+      (fun _ -> manage_unsafe_lemmas_x repo iprog cprog) repo
 
 let manage_lemmas repo iprog cprog =
   if !Globals.check_coercions then manage_safe_lemmas repo iprog cprog 
@@ -655,7 +665,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
     | Some(c::_) -> CF.set_residue true c
 
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct  =
-  Debug.no_1 "process_list_lemma" pr_none pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
+  Debug.no_1 "process_list_lemma" !I.print_coerc_decl_list pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
 
 (* ============================ END --- lemma translation and store update================================= *)
 
