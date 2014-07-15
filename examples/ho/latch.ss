@@ -36,6 +36,7 @@ void main()
   countDown(c,x);
   dprint;
   await(c,x);
+  dprint;
   assert x'::cell<10>;
   dprint;
 }
