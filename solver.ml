@@ -9740,8 +9740,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       let lhs_b1, rhs_b1, _ =  Cfutil.smart_subst_new lhs_b rhs_b [] l_emap r_emap r_eqsetmap [] [] in
       let ante1 = CF.Base lhs_b1 in
       let conseq1 = CF.Base rhs_b1 in
-      let _ = DD.info_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in
-      let _ = DD.info_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in
+      (* let _ = DD.info_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in *)
+      (* let _ = DD.info_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in *)
       let r = Syn_checkeq.check_exists_cyclic_proofs estate (ante1, conseq1) in
       let estate = {estate with CF.es_proof_traces = estate.CF.es_proof_traces@[(ante1, conseq1)]} in
       let _ = Debug.tinfo_hprint (add_str "estate1" (Cprinter.string_of_entail_state)) estate pos in
