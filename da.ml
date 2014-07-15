@@ -488,3 +488,5 @@ let find_rel_args_groups_scc prog scc0 =
   in
   process_scc scc0
   (* List.map process_scc sccs *)
+(*	r1@[nscc],r2@defs *)
+(*	) ([],[]) sccs *)
