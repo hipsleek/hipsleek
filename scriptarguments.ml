@@ -670,6 +670,11 @@ let common_arguments = [
       Arg.Unit (fun _ -> Globals.cts_acc_fold := true; Globals.fold_contra_detect := true;),
       "enable context-sensitive accelerated folding");
   ("--dcaf", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
+  (* enable, disable predicate transformation *)
+  ("--en-trans-pred", Arg.Set Globals.trans_pred, "enable transforming predicate");
+  ("--dis-trans-pred", Arg.Clear Globals.trans_pred, "disable transforming predicate");
+  ("--etp", Arg.Set Globals.trans_pred, "enable transforming predicate");
+  ("--dtp", Arg.Clear Globals.trans_pred, "disable transforming predicate");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

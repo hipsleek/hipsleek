@@ -1,0 +1,6 @@
+relation sum(int n, int s) == (n=1 & s=1 | n>1 & exists (s0: sum(n-1,s0) & s=n+s0)).
+
+checkentail sum(10,s) |- s= 55.
+
+checkentail sum(10,s) |- s= 45.
+

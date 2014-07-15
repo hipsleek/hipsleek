@@ -1327,11 +1327,11 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       ) in
       let lem_body_heap = (
         let induct_vnode = List.hd induct_vnodes in
-        let v_subs = C.collect_subs_from_view_node induct_vnode vd in
+        let v_subs = Astsimp.collect_subs_from_view_node induct_vnode vd in
         let new_base_f = CF.subst_one_by_one v_subs base_f in
         Debug.ninfo_hprint (add_str "new_base_f" (!CF.print_formula)) new_base_f vpos;
-        let base_subs = C.collect_subs_from_view_formula new_base_f vd in
-        let induct_subs = C.collect_subs_from_view_formula induct_f vd in
+        let base_subs = Astsimp.collect_subs_from_view_formula new_base_f vd in
+        let induct_subs = Astsimp.collect_subs_from_view_formula induct_f vd in
 
         (* compute pred2 *)
         let pred2_node = (

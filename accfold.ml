@@ -66,6 +66,7 @@ type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 (*   let _ = CF.transform_h_formula f_hf hf in                                      *)
 (*   !views                                                                         *)
 
+(* return: (a list of atomic heap chain * the rest of hformula *)
 let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
     : (heap_chain list * CF.h_formula) =
   if ((List.length root_view.C.view_forward_ptrs > 1) 
@@ -585,3 +586,93 @@ let detect_cts_fold_sequence (lhf: CF.h_formula) (rhf: CF.h_formula)
   Debug.no_4 "detect_cts_fold_sequence" pr_hf pr_hf pr_sv pr_vd pr_out
       (fun _ _ _ _ -> detect_cts_fold_sequence_x lhf rhf root_sv root_view prog)
       lhf rhf root_sv root_view
+
+(* prefix for the name of relation 'size_of_view' *)
+let prefix_sizeof = "size_of_"
+
+(*
+ * Compute the size relation of a view
+ *)
+let generate_view_size_relation_x (vdecl: C.view_decl) (prog: C.prog_decl) : C.rel_decl =
+  let rec size_of_heap_chains root_sv atom_heap_chains emap pos = (
+    (* the size of a heap chain contain two part:
+       - the first part is number of data nodes
+       - the second part is a list of predicate size *)
+    try
+      let root_aliases = CP.EMapSV.find_equiv_all root_sv emap in
+      let next_chains, rest_chains = List.partition (fun (hf,entry_sv,_,exit_sv) ->
+        (CP.eq_spec_var entry_sv root_sv) || (CP.EMapSV.mem entry_sv root_aliases)
+      ) atom_heap_chains in
+      let next_chain, rest_chains = (
+        match next_chains with
+        | [] -> raise Not_found
+        | hd::tl -> (hd, tl @ rest_chains)
+      ) in
+      let (hf, _, _, exit_sv) = next_chain in
+      let (dnode_num, size_rels, rel_vars) = size_of_heap_chains exit_sv atom_heap_chains emap pos in
+      match hf with 
+      | CF.DataNode _ -> (dnode_num + 1, size_rels, rel_vars)
+      | CF.ViewNode vd ->
+          let var_size = CP.mk_typed_spec_var Int (fresh_name ()) in
+          let size_rel = (
+            let rel_sv = CP.mk_typed_spec_var Int (prefix_sizeof ^ vd.CF.h_formula_view_name) in
+            let rel_exp = CP.Var (var_size, pos) in
+            CP.BForm ((CP.RelForm (rel_sv, [rel_exp], pos), None), None)
+          ) in
+          (dnode_num, size_rels @ [size_rel], rel_vars @ [var_size])
+      | _ -> (dnode_num, size_rels, rel_vars)
+    with Not_found -> (0, [], [])
+  ) in
+  let rsize_name = prefix_sizeof ^ vdecl.C.view_name in
+  let rsize_var = CP.SpecVar(Int, fresh_name (), Unprimed) in
+  let (view_branches, _) = List.split vdecl.C.view_un_struc_formula in
+  let size_of_branches = List.map (fun f ->
+    let pos = CF.pos_of_formula f in
+    let (hf,pf,_,_,_) = CF.split_components f in
+    let pf = MCP.pure_of_mix pf in
+    let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
+    let (atom_heap_chains, _) = collect_atomic_heap_chain hf vdecl prog in
+    let self_typ = Named (vdecl.C.view_data_name) in
+    let self_sv = CP.SpecVar (self_typ, self, Unprimed) in
+    let (dnode_num, size_rels, rel_vars) = size_of_heap_chains self_sv atom_heap_chains emap pos in
+    let dnode_constraint = (
+      let size_sum = List.fold_left (fun e sv ->
+        CP.Add (e, CP.Var (sv, pos), pos)
+      ) (CP.IConst (dnode_num, pos)) rel_vars in
+      CP.mkEqExp (CP.Var (rsize_var, pos)) size_sum pos
+    ) in
+    let size_formula = List.fold_left (fun f1 f2 ->
+      CP.mkAnd f1 f2 pos
+    ) dnode_constraint size_rels in
+    CP.mkExists rel_vars size_formula None pos 
+  ) view_branches in
+  let pos = vdecl.C.view_pos in
+  let rsize_formula = (
+    match size_of_branches with
+    | [] -> CP.mkTrue pos
+    | hd::tl -> List.fold_left (fun f1 f2 -> CP.mkOr f1 f2 None pos) hd tl
+  ) in
+  let rel_size = {C.rel_name = rsize_name;
+                  C.rel_vars = [rsize_var];
+                  C.rel_formula = rsize_formula;} in
+  rel_size
+
+let generate_view_size_relation (vdecl: C.view_decl) (prog: C.prog_decl) : C.rel_decl =
+  let pr_view = !C.print_view_decl in
+  let pr_rel = !C.print_rel_decl in
+  Debug.no_1 "generate_view_size_relation" pr_view pr_rel
+      (fun _ -> generate_view_size_relation_x vdecl prog) vdecl
+
+(* TRUNG: TODO *)
+(* let simplify_size_relation_of_view (rdecl: C.rel_decl) : C.rel_decl = *)
+
+let update_view_size_relations (prog: C.prog_decl) : unit =
+  List.iter (fun vdecl ->
+    let rdecls = prog.C.prog_rel_decls in
+    let rname = prefix_sizeof ^ vdecl.C.view_name in
+    try let _ = C.look_up_rel_def_raw rdecls rname in ()
+    with Not_found -> (
+      let rel_size = generate_view_size_relation vdecl prog in
+      prog.C.prog_rel_decls <- rdecls @ [rel_size];
+    )
+  ) prog.C.prog_view_decls;

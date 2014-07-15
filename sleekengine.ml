@@ -615,6 +615,8 @@ let convert_data_and_pred_to_cast_x () =
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let cviews0 = Astsimp.update_views_info cviews0 !cprog.Cast.prog_data_decls in
+
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
@@ -647,6 +649,7 @@ let convert_data_and_pred_to_cast_x () =
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
+  let _ = if !Globals.trans_pred then Accfold.update_view_size_relations !cprog in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
@@ -654,8 +657,7 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = Cast.update_views_info cprog5 in
-  let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
+  let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog5 else cprog5 in
   let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
     Lemma.generate_all_lemmas iprog cprog6

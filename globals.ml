@@ -813,6 +813,8 @@ let acc_fold = ref true
 
 let cts_acc_fold = ref true
 
+let trans_pred = ref true
+
 let smart_lem_search = ref false
 
 let fold_contra_detect = ref false
