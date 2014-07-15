@@ -8,6 +8,8 @@
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
 <mona-1.4/comp/lib/*.*>: not_hygienic
+<mona-1.4/comp/Lib/*.*>: not_hygienic
+<mona-1.4/comp/BDD/*.*>: not_hygienic
 <mona-1.4/GTA/.libs/*.*>: not_hygienic
 <mona-1.4/Mem/.libs/*.*>: not_hygienic
 <mona-1.4/BDD/.libs/*.*>: not_hygienic
