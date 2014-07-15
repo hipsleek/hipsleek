@@ -1,0 +1,20 @@
+//CountDownLatch
+data CDL{
+}.
+
+pred_prim Latch{P}<>.
+
+pred_prim CNT<n:int>.
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+
+checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
+print residue.
+
+checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
+print residue.
+
+checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
+print residue.
