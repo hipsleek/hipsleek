@@ -25,6 +25,9 @@ pred_prim RTHRD2{Q}<t:thrd,l:list,c:count>;
 
 pred_prim DEAD<>;
 
+//normalization of dead threads
+lemma "normalize" self::MTHRD2{%Q}<x,y,z> * self::DEAD<> -> %Q;
+
 thrd create_mapper()
   requires true
   ensures (exists l,ol,el: res::MTHRD{l::list<hl> * hl::ll<n> * ol::list<null> * el::list<null> & n>=0, l::list<hl> * hl::ll<n> * ol::list<hol> * hol::ll<n1> * el::list<hel> * hel::ll<n2>  & n=n1+n2}<l,ol,el>);
@@ -170,9 +173,10 @@ void main()
   // the second reducer counts in ol
   fork_reducer(r2,m,el,c2);
 
-  join_mapper(m,l,ol,el);
+  //join_mapper(m,l,ol,el); //no longer need this due to the normalization lemma
   join_reducer(r1,m,ol,c1);
   join_reducer(r2,m,el,c2);
+
 
   int n1 = countList(l);
   int n2 = countList(ol);
@@ -184,8 +188,9 @@ void main()
   destroyList(el);
   destroyCount(c1);
   destroyCount(c2);
-  dprint;
-  //may need to explicitly destroy t::DEAD<>
-  // t::DEAD<> * t::DEAD<> -> t::DEAD<>
+
+  //no need to explicitly destroy t::DEAD<>
+  //since they are pure predicates
+  //t::DEAD<> * t::DEAD<> -> t::DEAD<>
 }
 

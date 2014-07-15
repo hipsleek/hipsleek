@@ -2171,7 +2171,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
 		            res 
 		      else res
-		    in res
+		    in
+                    (*Exhausively apply normalization lemma after each SCall.
+                      Need to devise a smart way since
+                      this will incur overhead if we have many
+                      normalization lemmas in the programs*)
+                    let res = normalize_list_failesc_context_w_lemma prog res in
+                    res
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
                     (* get source code position of failed branches *)
