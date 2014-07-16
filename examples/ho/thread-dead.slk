@@ -11,7 +11,7 @@ data cell{
 
 pred_prim dead<>.
 
-pred_prim Thrd2{Q}<x:cell,y:cell>
+pred_prim Thrd2{(+)Q}<x:cell,y:cell>
 inv x!=null.
 
 lemma "sync" self::Thrd2{%Q}<y1,y2> * self::dead<> -> %Q.

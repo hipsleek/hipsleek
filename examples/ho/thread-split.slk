@@ -2,10 +2,10 @@ data cell{
   int v;
 }.
 
-pred_prim THRD2{Q@Split}<x:cell,y:cell>
+pred_prim THRD2{(+)Q@Split}<x:cell,y:cell>
 inv x!=null.
 
-pred_prim THRD3{P,Q}<t:thrd, x:cell>
+pred_prim THRD3{(-)P,(+)Q}<t:thrd, x:cell>
 inv x!=null.
 
 checkentail t2::THRD3{t::THRD2{x::cell<10> & true}<x,y> & true,

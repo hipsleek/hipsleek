@@ -8,16 +8,16 @@ data cell{
   int v;
 }
 
-pred_prim THRD{P,Q}<x:cell,y:cell>
+pred_prim THRD{(-)P,(+)Q}<x:cell,y:cell>
 inv x!=null;
 
-pred_prim THRD2{Q@Split}<x:cell,y:cell>
+pred_prim THRD2{(+)Q@Split}<x:cell,y:cell>
 inv x!=null;
 
-pred_prim THRD3{P,Q}<t:thrd, x:cell>
+pred_prim THRD3{(-)P,(+)Q}<t:thrd, x:cell>
 inv x!=null;
 
-pred_prim THRD4{Q}<t:thrd, x:cell>
+pred_prim THRD4{(+)Q}<t:thrd, x:cell>
 inv x!=null;
 
 //after join

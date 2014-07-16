@@ -16,12 +16,12 @@ ll<n> == self = null & n = 0
   inv n >= 0;
 
 //mapper thread
-pred_prim MTHRD{P,Q}<l:list,ol:list,el:list>;
-pred_prim MTHRD2{Q@Split}<l:list,ol:list,el:list>;
+pred_prim MTHRD{(-)P,(+)Q}<l:list,ol:list,el:list>;
+pred_prim MTHRD2{(+)Q@Split}<l:list,ol:list,el:list>;
 
 //reducer thread
-pred_prim RTHRD{P,Q}<t:thrd,l:list,c:count>;
-pred_prim RTHRD2{Q}<t:thrd,l:list,c:count>;
+pred_prim RTHRD{(-)P,(+)Q}<t:thrd,l:list,c:count>;
+pred_prim RTHRD2{(+)Q}<t:thrd,l:list,c:count>;
 
 pred_prim DEAD<>;
 
