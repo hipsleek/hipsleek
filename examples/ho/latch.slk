@@ -16,6 +16,8 @@ lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
 
 lemma "normalize" self::Latch{%P}<y> * self::CNT<n> & n<0 -> %P.
 
+lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
 checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
 print residue.
 
@@ -37,4 +39,12 @@ print residue.
 
 //FAIL, since c::CMT<0> is resource-ambiguous
 checkentail c::Latch{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
+print residue.
+
+//VALID
+checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
+print residue.
+
+//FAIL
+checkentail c::CNT<1> * c::CNT<(-1)> |- true.
 print residue.
