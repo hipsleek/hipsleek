@@ -45,9 +45,14 @@ type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)
 
-type ho_kind =
+type ho_split_kind =
   | HO_SPLIT
   | HO_NONE
+
+type ho_flow_kind =
+  | INFLOW
+  | OUTFLOW
+  | NEUTRAL
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -333,7 +338,14 @@ let string_of_term_ann a =
         | TermErr_May -> "TermErr_May"
         | TermErr_Must -> "TermErr_Must"
 
-let string_of_ho_kind k =
+
+let string_of_ho_flow_kind (k:ho_flow_kind) =
+  match k with
+    | INFLOW -> "(-)"
+    | OUTFLOW -> "(+)"
+    | NEUTRAL -> "(.)" (* or "" *)
+
+let string_of_ho_split_kind (k:ho_split_kind) =
   match k with
     | HO_SPLIT -> "@Split"
     | HO_NONE -> ""

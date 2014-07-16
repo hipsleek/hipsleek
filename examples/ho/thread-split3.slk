@@ -10,6 +10,7 @@ inv x!=null.
 pred_prim THRD3{(-)P,(+)Q}<t:thrd, x:cell>
 inv x!=null.
 
+/*
 checkentail 
     t2::THRD3{t::THRD2{x::cell<10> & true}<x,y>& true,
               x::cell<10>}<t,x>
@@ -17,6 +18,8 @@ checkentail
   |- t2::THRD3{%P,%Q}<ttt,xxx> .
 print residue.
 //expect: empty residue
+
+*/
 
 /*
 checkentail t2::THRD3{t::THRD2{x::cell<10> & true}<x,y> & true,

@@ -9527,17 +9527,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   else
                     (* TODO: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
                     let l_vdef = Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
-                    let _, l_vdef_hvar_kinds = List.split (l_vdef.view_ho_vars) in
+                    let l_vdef_hvar_split_kinds = List.map (fun (_,_,sk) -> sk) l_vdef.view_ho_vars in
                     let r_ho_args = List.map (subst_avoid_capture r_subs l_subs) r_ho_args in
                     let args = List.combine l_ho_args r_ho_args in
-                    let args = List.combine args l_vdef_hvar_kinds in
+                    let args = List.combine args l_vdef_hvar_split_kinds in
                     (* for each lhs, rhs, and a kind k, possible situations:
                        - A new mapping: rhs -> lhs
                        - ho_arg split if k = HO_SPLIT
                        - ho_arg match, otherwise
                       Expected return value: A list of (fail_ctx option, residue option, mapping option)
                     *)
-                    let match_one_ho_arg_x (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
+                    let match_one_ho_arg_x (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_split_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
                       (* lhs <==> rhs: instantiate any high-order variables in rhs
                          Currently assume that only HVar is in the rhs
                       *)
@@ -9594,8 +9594,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         [None, None, Some (List.hd hvars, lhs)]
                       else report_error no_pos ("do_match: unexpected multiple hvars in rhs")
                     in
-                    let match_one_ho_arg (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
-                      let pr1 = pr_pair (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) string_of_ho_kind in
+                    let match_one_ho_arg (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_split_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
+                      let pr1 = pr_pair (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) string_of_ho_split_kind in
                       let pr3 = pr_option (fun _ -> "Something") in
                       let pr4 = pr_option Cprinter.string_of_formula in
                       let pr5 = pr_option (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in

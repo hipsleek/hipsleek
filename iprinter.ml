@@ -841,7 +841,7 @@ let string_of_barrier_decl b =
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = 
-  let ho_str = "{"^(String.concat "," (List.map (fun (v,k) -> v^(string_of_ho_kind k)) v.view_ho_vars))^"}" in
+  let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
   v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
 ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)

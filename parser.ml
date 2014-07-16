@@ -1212,7 +1212,7 @@ form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]];
 formula_ann: [[ `SPLITANN -> HO_SPLIT]];
 
 id_ann:
-  [[ `IDENTIFIER id ; t= OPT formula_ann -> (id,un_option t HO_NONE) ]];
+  [[ `IDENTIFIER id ; t= OPT formula_ann -> (NEUTRAL,id,(un_option t HO_NONE)) ]];
 
 id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 

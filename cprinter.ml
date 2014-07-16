@@ -544,9 +544,9 @@ let string_of_typed_spec_var x =
   match x with
     | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
 
-let string_of_ho_var (x,k) = 
+let string_of_ho_var (fk,x,sk) = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) ^ (string_of_ho_kind k)
+    | P.SpecVar (t, id, p) -> (string_of_ho_flow_kind fk) ^ id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) ^ (string_of_ho_split_kind sk)
 
 let string_of_spec_var x = 
   (* string_of_typed_spec_var x *)
