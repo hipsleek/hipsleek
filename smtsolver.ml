@@ -133,7 +133,7 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.Bptriple _ -> ""
+  | CP.Bptriple _ | Tup2 _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple/Tup2 should not appear here)")
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()

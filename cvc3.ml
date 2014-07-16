@@ -79,6 +79,7 @@ and cvc3_of_exp a = match a with
   | CP.Level _ -> failwith ("level should not be here in cvc3")
   | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
   | CP.Bptriple _ -> failwith ("cvc3.cvc3_of_exp: Bptriple should not appear here")
+  | CP.Tup2 _ -> failwith ("cvc3.cvc3_of_exp: Tup2 should not appear here")
   | CP.InfConst _ -> Error.report_no_pattern ()
   
 and cvc3_of_b_formula b =

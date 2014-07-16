@@ -35,6 +35,7 @@ let rec rev_trans_exp e = match e with
       let nt = IP.Var (rev_trans_spec_var t, p) in
       let na = IP.Var (rev_trans_spec_var a, p) in
       IP.Bptriple ((nc,nt,na),p)
+  | CP.Tup2 ((e1,e2),p)      -> IP.Tup2 ((rev_trans_exp e1, rev_trans_exp e2), p)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b

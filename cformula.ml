@@ -15457,6 +15457,7 @@ let elim_prm e =
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
+    | CP.Tup2 _ 
     | CP.Add _ 
     | CP.Subtract _ 
     | CP.Mult _
