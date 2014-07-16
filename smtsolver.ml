@@ -78,9 +78,10 @@ let rec smt_of_typ t =
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
   | BagT _ -> "Int"
+  | Tup2 _ -> "Int" (*TODO: handle this*)
   | TVar _ -> "Int"
   | Void -> "Int"
-  | List _ | FORM | Tup2 _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)
@@ -117,13 +118,14 @@ let rec smt_of_exp a =
   | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
   | CP.Bag ([], _) -> "0"
+  | CP.Tup2 _ -> "0" (* TODO: handle this *)
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
-  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
+  | CP.BagDiff _ -> "0" (*TODO*) (* illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)") *)
   | CP.List _ 
   | CP.ListCons _
   | CP.ListHead _
@@ -133,7 +135,7 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-  | CP.Bptriple _ | Tup2 _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple/Tup2 should not appear here)")
+  | CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple/Tup2 should not appear here)")
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
