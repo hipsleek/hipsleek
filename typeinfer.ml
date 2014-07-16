@@ -421,22 +421,27 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
           with
             | Not_found ->
                   (try
-                    let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-                    in Int
+                    let _ = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+                    in Named c
                   with
-                    | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-                          if CF.view_prim_lst # mem c then Named c
-                          else
-                          (* if !inter then*)
-                          Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text = c ^ " is neither data, enum type, nor prim pred";
-                              }
-                              (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                                let _ = undef_data_types := (c, pos) :: !undef_data_types in
-                                Named c (* Store this temporarily *)*)
-                  ))
+                    | Not_found ->
+                          (try
+                            let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                            in Int
+                          with
+                            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
+                                  if CF.view_prim_lst # mem c then Named c
+                                  else
+                                    (* if !inter then*)
+                                    Err.report_error
+                                        {
+                                            Err.error_loc = pos;
+                                            Err.error_text = c ^ " is neither data, enum type, nor prim pred";
+                                        }
+                                        (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+                                          let _ = undef_data_types := (c, pos) :: !undef_data_types in
+                                          Named c (* Store this temporarily *)*)
+                          )))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
