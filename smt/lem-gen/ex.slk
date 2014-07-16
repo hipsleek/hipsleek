@@ -1,0 +1,20 @@
+/*
+ x::ll<n> & n=5 & x.next.next!=null
+
+
+   pred --> over_approx
+  
+  under_approx --> pred
+*/
+
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n,sum> == self=null & n=0 & sum=0
+  or self::node<v,r> * r::lseg<n-1,sum-2>
+ //inv sum=3*n & n>=0
+ .
+
+//checkentail x::lseg<n,sum> |- sum>=0.
