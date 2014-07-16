@@ -6,7 +6,9 @@ data cell{
   int v;
 }.
 
-pred_prim Latch{P}<x:cell>.
+pred_prim LatchIn{(-)P}<x:cell>.
+
+pred_prim LatchOut{(+)P}<x:cell>.
 
 pred_prim CNT<n:int>.
 
@@ -14,7 +16,7 @@ lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
 
-lemma "normalize" self::Latch{%P}<y> * self::CNT<n> & n<0 -> %P.
+lemma "normalize" self::LatchOut{%P}<y> * self::CNT<n> & n<0 -> %P.
 
 lemma "error" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
@@ -34,11 +36,11 @@ print residue.
 // need a good way to control splitting
 
 //VALID
-checkentail c::Latch{z::cell<10>}<z> * c::CNT<(-1)> |- z::cell<10>.
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<(-1)> |- z::cell<10>.
 print residue.
 
 //FAIL, since c::CMT<0> is resource-ambiguous
-checkentail c::Latch{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
 print residue.
 
 //VALID

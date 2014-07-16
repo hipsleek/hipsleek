@@ -6,7 +6,10 @@ data cell{
   int v;
 }
 
-pred_prim Latch{P}<x:cell>
+pred_prim LatchIn{(-)P}<x:cell>
+inv x!=null;
+
+pred_prim LatchOut{(+)P}<x:cell>
 inv x!=null;
 
 pred_prim CNT<n:int>;
@@ -17,16 +20,16 @@ lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>;
 
 CDL create_latch(int n) // with %P
   requires n>0
-  ensures (exists x: res::Latch{x::cell<10>}<x> * res::Latch{x::cell<10>}<x> * res::CNT<n>);
+  ensures (exists x: res::LatchIn{x::cell<10>}<x> * res::LatchOut{x::cell<10>}<x> * res::CNT<n>);
 
 void countDown(CDL c, cell a)
-  requires c::Latch{%P}<a> * %P * c::CNT<n> & n>0
+  requires c::LatchIn{%P}<a> * %P * c::CNT<n> & n>0
   ensures c::CNT<n-1>;
   requires c::CNT<n> & n<=0
   ensures c::CNT<n>;
 
 void await(CDL c,cell a)
-  requires c::Latch{%P}<a> * c::CNT<0>
+  requires c::LatchOut{%P}<a> * c::CNT<0>
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<n> & n<0
   ensures c::CNT<n>;

@@ -11372,6 +11372,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rhs_node = match rhs with
                 | DataNode n -> n.h_formula_data_node
                 | ViewNode n -> n.h_formula_view_node
+                | HVar v -> v
                 | HRel (hrel,_,_) -> hrel
                 | _ -> report_error pos "Expect a node"
               in

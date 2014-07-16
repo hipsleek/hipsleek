@@ -5,7 +5,7 @@ echo "======= thread-split.ss  ======"
 diff test-cases/thread-split.slk.res test-cases/thread-split.slk.n
 echo "======= thread-dead.ss  ======"
 diff test-cases/thread-dead.slk.res test-cases/thread-dead.slk.n
-echo "======= latch.ss  ======"
+echo "======= latch.slk  ======"
 diff test-cases/latch.slk.res test-cases/latch.slk.n
 
 #================HIP==========================
