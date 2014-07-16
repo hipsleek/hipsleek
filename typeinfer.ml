@@ -238,6 +238,12 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   (match (dim_unify d1 d2), (unify x1 x2 tl) with
                   | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
                   | _,(n_tl,_) -> (n_tl,None))
+              | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                    let n_tl, t5 = unify t1 t3 tl in
+                    let n_tl2, t6 = unify t2 t4 n_tl in
+                    match t5,t6 with
+                      | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                      | _ -> (n_tl2,None))
               | _,_ -> (tl,None)
             end
         )
@@ -296,6 +302,13 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
                 match (unify x1 x2 tl) with
                 | (n_tl,Some t) -> (n_tl,Some (List t))
                 | (n_tl,None) -> (n_tl,None)
+              )
+            | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                  let n_tl, t5 = unify t1 t3 tl in
+                  let n_tl2, t6 = unify t2 t4 n_tl in
+                  match t5,t6 with
+                    | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                    | _ -> (n_tl2,None)
               )
             | Array (x1,d1),Array (x2,d2) -> (
                 match (dim_unify d1 d2), (unify x1 x2 tl) with
@@ -504,9 +517,10 @@ and gather_type_info_exp_x a0 tlist et =
   | IP.Tup2 ((p1,p2), pos) ->
       let (new_et, n_tl) = fresh_tvar tlist in
       let (n_tl1,t1) = gather_type_info_exp p1 n_tl new_et in
-      let (n_tl2,t2) = gather_type_info_exp_x p2 n_tl1 new_et in
-      let (n_tl,n_typ) = must_unify_expect (Tup2 (t1,t2)) et n_tl2 pos in 
-      (n_tl,n_typ)
+      let (new_et2, n_tl2) = fresh_tvar n_tl1 in
+      let (n_tl3,t2) = gather_type_info_exp_x p2 n_tl2 new_et2 in
+      let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
+      (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->
       let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in
