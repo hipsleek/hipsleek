@@ -449,11 +449,11 @@ let find_rel_args_groups_scc prog scc0 =
        | CF.EInfer b ->
              (* let _ =  Debug.info_hprint (add_str "EInfer" pr_id) "EInfer" no_pos in *)
              CF.EInfer {b with formula_inf_vars =
-                     add_hps@(CP.diff_svl b.formula_inf_vars drop_hps);
+                     add_hps@(CP.diff_svl b.CF.formula_inf_vars drop_hps);
                  CF.formula_inf_continuation = CF.struc_formula_drop_infer drop_hps b.CF.formula_inf_continuation;
              }
-       | EList l-> (* let _ =  Debug.info_hprint (add_str "EList" pr_id) "EList" no_pos in *)
-          EList (Gen.map_l_snd recf l)
+       | CF.EList l-> (* let _ =  Debug.info_hprint (add_str "EList" pr_id) "EList" no_pos in *)
+          CF.EList (Gen.map_l_snd recf l)
        | _ -> sf
   in
   (*************************************************)
