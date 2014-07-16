@@ -76,6 +76,7 @@ let pr_map_aux pr_1 pr_2 (a,b) =
   (* fmt_string "("; *)
   pr_1 a; fmt_string " --> ";
   pr_2 b
+      (* ; fmt_print_newline () *)
 
 let pr_opt f x = match x with
     | None -> fmt_string "None"
@@ -445,6 +446,8 @@ let pr_sharp_angle op f xs =
 
 (** print a sequence with cut after separator*)  
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
+
+let pr_seq_ln op f xs = pr_args None (Some "A") op "[" "]" ";\n " f xs
 
 (** print a sequence with cut after separator in a VBOX*)    
 let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
@@ -2552,7 +2555,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp);
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
-          pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (lho);
+          pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_spec_var pr_formula)) (lho);
           f b;
           fmt_print_newline ();
           fmt_close_box ();

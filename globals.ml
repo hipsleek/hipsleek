@@ -138,6 +138,7 @@ type typ =
   | Float
   | Int
   | INFInt
+  (* | Tup2 of typ * typ *)
   | NUM
   | Void
   | List of typ

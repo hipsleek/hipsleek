@@ -1,0 +1,104 @@
+
+data cell {
+  int x;
+}.
+
+data chan {
+  int x;
+}.
+
+pred_prim MSG_HO{F}<c:chan>
+ inv true.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+//(1)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{%P}<x>.
+print residue.
+expect Valid.
+
+//(2)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>@L.
+print residue.
+expect Valid.
+
+//(3)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>.
+print residue.
+expect Valid.
+
+//(4)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>.
+print residue.
+expect Valid.
+
+//(5)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>2}<v>.
+print residue.
+expect Fail.
+
+//(6)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Valid.
+
+//(7)
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>2}<v>@L.
+print residue.
+expect Fail.
+
+//(8)
+checkentail t::MSG{(exists vv: v::cell<1> * v::cell<1> & true)}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Valid.
+//Entail 8: Fail.(must) cause:104expecting matched ho_args but getting @split
+
+//(9)
+checkentail t::MSG{false}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Valid.
+//Entail 9: Fail.(must) cause:104expecting matched ho_args but getting @split
+
+
+/*
+
+- if RHS is a %P, add the instantiation into P definition
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{%P}<x>@L.
+print residue.
+expect Valid.
+
+ <1>t::MSG{ (exists flted_52_19: v::cell<flted_52_19>&flted_52_19=1&
+{FLOW,(21,22)=__norm})[]}<v>&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists flted_52_19,v: v::cell<flted_52_19>&x=v & 
+           flted_52_19=1&{FLOW,(21,22)=__norm})[]]
+[[ COND ==>  Match ==> ]]
+
+- if RHS is a formula, add the instantiation x=v to lhs of ho_args
+before matching ho_args
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>@L.
+print residue.
+expect Valid.
+
+Entail 1: Valid. 
+
+ <1>t::MSG{ (exists flted_52_19: v::cell<flted_52_19>&flted_52_19=1&
+{FLOW,(21,22)=__norm})[]}<v>&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  Match ==> ]]
+
+Shall we expect "x=v" in residue?
+
+*/
