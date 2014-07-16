@@ -73,6 +73,16 @@ print residue.
 expect Valid.
 
 
+//(10)
+checkentail t::MSG{(exists vv: v::cell<1> * vv::cell<1> & true)}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Fail.
+//??? should we return
+//t::MSG{(exists vv: v::cell<1> * v::cell<1> & true)}<v> 
+//or t::MSG{false}<v>
+
+
 /*
 
 - if RHS is a %P, add the instantiation into P definition

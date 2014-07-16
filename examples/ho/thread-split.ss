@@ -32,7 +32,7 @@ lemma t::THRD2{%P}<x> & t::DEAD<> -> %P;
 //this new thread multiplies x and y by 10
 thrd create_thrd() // with %P
   requires true
-  ensures (exists x,y: res::THRD{x::cell<vx> * y::cell<vy> & true,x::cell<vy> * y::cell<vx>}<x,y>);
+  ensures (exists x,y,z: res::THRD{x::cell<vx> * y::cell<vy> & true,x::cell<vy> * y::cell<vx>}<x,y,z>);
 
 void fork_thrd(thrd t,cell x, cell y)
   requires t::THRD{%P,%Q}<x,y> * %P

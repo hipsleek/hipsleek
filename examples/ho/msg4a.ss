@@ -19,8 +19,9 @@ chan create_msg (int x)
   ensures (exists v,n: res::MSG{v::cell<n> & n>x}<v> * res::CNT<0>);
 
 /*
-chan create_msg{%G}(int x)
+ chan create_msg{%G}(int x)
   requires true ensures (exists v: res::MSG{%G}<v>);
+
 */
 
 void send(chan ch, cell c)

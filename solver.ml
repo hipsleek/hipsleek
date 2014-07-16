@@ -9045,7 +9045,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
               let new_estate = {estate with es_formula = es_f;} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
               let new_conseq = r_rsr in
-              let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in
+              (* let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in *)
               let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
 	            | SuccCtx(cl) ->
@@ -9553,7 +9553,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         let new_estate = {new_estate with es_formula = es_f; es_evars = evars; es_unsat_flag = false;} in
                         let new_ctx = elim_unsat_es_now 13 prog (ref 1) new_estate in
                         (* let new_ctx = Ctx (CF.add_to_estate new_estate "matching of ho_args") in *)
-                        let _ = print_endline ("Attempt semantic entailment of ho_args") in
+                        (* let _ = print_endline ("Attempt semantic entailment of ho_args") in *)
                         let res_ctx, res_prf =
                           (match k with
                             | HO_NONE -> Wrapper.wrap_classic (Some true)  (fun v -> heap_entail_conjunct 11 prog false new_ctx rhs [] pos) true (* exact *)
