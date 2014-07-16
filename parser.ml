@@ -1885,6 +1885,8 @@ cexp_w:
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
     | `FLOAT_LIT (f,_) -> Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
+    | `TUP2; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+          apply_cexp_form2 (fun c1 c2-> (P.Tup2 ((c1,c2), get_pos_camlp4 _loc 1))) c1 c2
     | `OPAREN; t=SELF; `CPAREN -> t  
     | i=cid; `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE ->
         Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))

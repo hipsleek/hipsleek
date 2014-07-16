@@ -59,6 +59,7 @@ type sleek_token =
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE (* | PREF *)
   | SPLITANN
+  | TUP2
   | PLUS | PRIME 
   | SEMICOLON | SAT | SPEC
   | STAR | DIV
@@ -136,6 +137,7 @@ module Token = struct
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
           (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | SPLITANN -> "@Split"
+    | TUP2 -> "tup2"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
     | INFINITY -> "\\inf"
