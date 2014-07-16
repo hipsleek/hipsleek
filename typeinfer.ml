@@ -500,7 +500,13 @@ and gather_type_info_exp_x a0 tlist et =
   | IP.FConst (_,pos) -> 
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)      
+      (n_tl,n_typ)
+  | IP.Tup2 ((p1,p2), pos) ->
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let (n_tl1,t1) = gather_type_info_exp p1 n_tl new_et in
+      let (n_tl2,t2) = gather_type_info_exp_x p2 n_tl1 new_et in
+      let (n_tl,n_typ) = must_unify_expect (Tup2 (t1,t2)) et n_tl2 pos in 
+      (n_tl,n_typ)
   | IP.Bptriple ((pc,pt,pa), pos) ->
       let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in

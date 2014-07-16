@@ -100,6 +100,7 @@ and exp =
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
+  | Tup2 of ((exp * exp) * loc) (* a pair *)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)

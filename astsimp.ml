@@ -6706,6 +6706,13 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
               let pa = trans_var va tlist posa in
               CP.Bptriple ((pc,pt,pa),pos)
           | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
+    | IP.Tup2 ((p1,p2),pos) ->
+        (match p1,p2 with
+          | Ipure.Var (v1,pos1), Ipure.Var (v2,pos2) ->
+              let np1 = trans_var v1 tlist pos1 in
+              let np2 = trans_var v2 tlist pos2 in
+              CP.Null pos (*TODO: add Tup2 into CPure*)
+          | _ -> report_error pos ("trans_pure_exp: Tup2 error at location "^(string_of_full_loc pos)))
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 

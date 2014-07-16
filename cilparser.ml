@@ -1231,6 +1231,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Tsconst (t, pos) ->
               Ipure.Tsconst (t, pos)
+        | Ipure.Tup2 ((e1, e2), pos) ->
+              Ipure.Tup2 ((helper_exp e1, helper_exp e2), pos)
         | Ipure.Bptriple ((e1, e2, e3), pos) ->
               Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
         | Ipure.Add (e1, e2, pos) ->
