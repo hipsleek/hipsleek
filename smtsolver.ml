@@ -80,7 +80,7 @@ let rec smt_of_typ t =
   | BagT _ -> "Int"
   | TVar _ -> "Int"
   | Void -> "Int"
-  | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | List _ | FORM | Tup2 _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)

@@ -121,6 +121,7 @@ and aug_class_name (t : typ) = match t with
   | FORM -> "FORMAug"
   | Void -> "void"
   | Tree_sh -> "tree_share"
+  | Tup2 _ -> "Tup2"
   | Bptyp -> "Bperm"
   | HpT -> "HeapP"
   | (BagT t) -> "Set("^(aug_class_name t)^")"

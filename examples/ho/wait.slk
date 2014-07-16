@@ -1,20 +1,12 @@
-//CountDownLatch
-data CDL{
-}.
+pred_prim WAIT<b:bag((int,int))>.
 
-data cell{
-  int v;
-}.
-
-
-pred_prim WAIT<b:BAG('a,'b)>.
-
+/*
 pred WAITFOR<B:BAG('a),c:'b> == self::WAIT<B2> & B2 = {(a,c) | a \in B}.
 
 lemma x::WAIT<B1> * x::WAIT<B2> --> x::WAIT<B1 union B2>.
 
 lemma x::WAIT<B> & cylic(B) --> emp & flow __Fail.
-
+*/
 /*
 global RS stk;
 

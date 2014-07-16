@@ -31,7 +31,8 @@ let rec coq_of_typ = function
   | List _		  -> "list"
   | Pointer _
   | Tree_sh 	  -> "int"
-  | FORM -> illegal_format ("z3.smt_of_typ: FORMULA type not supported for SMT")
+  | Tup2 _ -> illegal_format ("coq_of_typ: Tup2 type not supported for Coq")
+  | FORM -> illegal_format ("coq_of_typ: FORMULA type not supported for Coq")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
   | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
         Error.report_error {Err.error_loc = no_pos; 

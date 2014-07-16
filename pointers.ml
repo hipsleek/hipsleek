@@ -80,9 +80,9 @@ let default_value (t :typ) pos : exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | NUM | UNK | Void | AnnT | FORM ->
+    | NUM | UNK | Void | AnnT | FORM | Tup2 _ ->
 	      failwith
-              "default_value: void/NUM/UNK/AnnT/FORM in variable declaration should have been rejected by parser"
+              "default_value: void/NUM/UNK/AnnT/FORM/Tup2 in variable declaration should have been rejected by parser"
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->

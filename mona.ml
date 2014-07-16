@@ -54,9 +54,9 @@ let rec mona_of_typ t = match t with
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
-  | UNK |FORM          -> 	
+  | UNK |FORM | Tup2 _         ->
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = ("unexpected type"^(string_of_typ t))}
+        Error.error_text = ("unexpected type for mona: "^(string_of_typ t))}
   | List t        -> "("^(mona_of_typ t)^") list"	(* lists are not supported *)
   | NUM | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 

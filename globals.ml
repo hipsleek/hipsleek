@@ -143,7 +143,7 @@ type typ =
   | Float
   | Int
   | INFInt
-  (* | Tup2 of typ * typ *)
+  | Tup2 of typ * typ
   | NUM
   | Void
   | List of typ
@@ -497,6 +497,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -536,6 +537,7 @@ let rec string_of_typ_alpha = function
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
   | Bptyp		  -> "Bptyp"
+  | Tup2 (t1,t2)  -> "tup2_"^(string_of_typ t1)^"_"^(string_of_typ t2)
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
