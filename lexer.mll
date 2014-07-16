@@ -225,6 +225,7 @@ module Make (Token : SleekTokenS)
      ("pred_split", PRED_SPLIT);
      ("pred_norm_disj", PRED_NORM_DISJ);
      ("pred_spec", PRED_SPEC);
+     ("pred_norm_seg", PRED_NORM_SEG);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);

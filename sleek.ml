@@ -115,6 +115,7 @@ let proc_gen_cmd cmd =
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
     | PredSplit (pred_ids) -> process_pred_split pred_ids
+    | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
@@ -155,7 +156,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
-      | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
+      | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
       | Time _ | EmptyCmd | _ -> () 
   in
   let proc_one_def c =
@@ -203,6 +204,7 @@ let parse_file (parse) (source_file : string) =
       | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
       | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
       | PredSplit ids -> process_pred_split ids
+      | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
       | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
       | EqCheck (lv, if1, if2) -> 
