@@ -997,8 +997,9 @@ let rec string_of_global_var_decl_list l =
 ;;
 
 (* An Hoa : print relations *)
-let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+let string_of_rel_decl_list rdecls =
+  String.concat "\n" (List.map string_of_rel_decl rdecls)
+	(* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in

@@ -1,6 +1,6 @@
 pred_prim WAIT<b:bag((int,int))>.
 
-relation cyclic(WAIT g) == true.
+relation cyclic(bag((int,int)) g) == true.
 
 
 /*
@@ -11,12 +11,17 @@ lemma x::WAIT<B> & cylic(B) --> emp & flow __Fail.
 
 //lemma "union" self::WAIT<B1> * self::WAIT<B2>  -> self::WAIT<union(B1,B2)>.
 
-lemma "deadlock" self::WAIT<B> & cyclic(self) ->  emp & flow __Fail.
+//lemma "deadlock" self::WAIT<B> & cyclic(B) ->  emp & flow __Fail.
 
-//checkentail  x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- true.
+//checkentail  x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- true & flow __Fail.
 
 //checkentail  x::WAIT<B1> * x::WAIT<B2> & B1={tup2(c1,c2)} & B2={tup2(c2,c1)} |- true & flow __Fail.
 //print residue.
+
+//VALID
+checkentail B={tup2(c1,c2),tup2(c2,c1)} |- cyclic(B).
+print residue.
+
 
 /*
 global RS stk;

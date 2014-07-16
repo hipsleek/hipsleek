@@ -3927,8 +3927,10 @@ let rec string_of_barrier_decl_list l = match l with
 ;;
 
 (* An Hoa : print relations *)
-let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+let string_of_rel_decl_list rdecls =
+  String.concat "\n" (List.map string_of_rel_decl rdecls)
+      (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
+
 
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
