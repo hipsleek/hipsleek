@@ -152,17 +152,17 @@ let rec combine_multiple_length ls1 orig_args=
   in
   helper ls1 orig_args []
 
-let rec is_empty_f f0=
-  let rec helper f=
-    match f with
-      | CF.Base fb ->
-            (CF.is_empty_heap fb.CF.formula_base_heap) &&
-                (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
-      | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in
-        is_empty_f base_f
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
-  in
-  helper f0
+let rec is_empty_f f0= CF.is_empty_f f0
+  (* let rec helper f= *)
+  (*   match f with *)
+  (*     | CF.Base fb -> *)
+  (*           (CF.is_empty_heap fb.CF.formula_base_heap) && *)
+  (*               (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure)) *)
+  (*     | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in *)
+  (*       is_empty_f base_f *)
+  (*     | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2) *)
+  (* in *)
+  (* helper f0 *)
 
 let is_empty_base fb=
   (CF.is_empty_heap fb.CF.formula_base_heap) &&
@@ -5259,7 +5259,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
               match ls_n_hpargs with
                 | [(new_hp, (n_args, n_r,paras))] ->
                       (* let (a,b,g,orig_fs) = orig_hpdef in *)
-                      let fs, gs = List.split orig_hpdef.CF.def_rhs in
+                      (* let fs, gs = List.split orig_hpdef.CF.def_rhs in *)
                       (* let orig_fs = CF.disj_of_list fs no_pos in *)
                       let _,n_orig_fs_wg,(n_args,r,n_paras), n_fs_wg,ss, link_defs, n_hp1=
                         elim_not_in_used_args prog unk_hps orig_hpdef.CF.def_rhs n_fs2_wg new_hp (n_args, n_r,paras)  in

@@ -52,6 +52,7 @@ and action =
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
+  | M_seg_fold of (match_res * int)
   | M_rd_lemma of match_res
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
@@ -83,6 +84,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_unfold  (m,_)
     | M_base_case_unfold m
     | M_base_case_fold m
+    | M_seg_fold (m,_)
     | M_acc_fold (m,_)
     | M_rd_lemma m
     | M_lemma  (m, _)
@@ -156,6 +158,7 @@ let rec pr_action_name a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
+  | M_seg_fold e -> fmt_string "SegFold"
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
   | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
@@ -177,6 +180,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
+  | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
   | M_acc_fold (e,steps) ->
       let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Accfold.print_fold_type s)) in
       fmt_string "AccFold =>"; pr_mr e; pr_steps steps
@@ -227,6 +231,7 @@ let action_get_holes a = match a with
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
+  | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
   | M_lemma (e,_)
@@ -1407,7 +1412,21 @@ and process_one_match_x prog estate lhs_h lhs_p rhs_h rhs_p rhs is_normalizing (
                               let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
                               let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                               (* (1,Cond_action [a21;a22]) *) a22
-                          else (1,M_match m_res)
+                           else
+                             let m_act = (1,M_match m_res) in
+                             (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
+                             if !Globals.seg_fold then (
+                                 let seg_fold_type = (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset) in
+                                 let seg_acts = if seg_fold_type>= 0 then
+                                   [(1, M_seg_fold (m_res, seg_fold_type))]
+                                 else
+                                   (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                                   []
+                                 in
+                                 (1,Search_action ([m_act]@seg_acts))
+                               )
+                               else
+                                 m_act
                       ) in
                       let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                       let a3 = (
@@ -1462,6 +1481,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs_h rhs_p rhs is_normalizing (
                                       | None -> a3
                                       | Some a2 -> Some (1,Cond_action [a2; a1]) 
                       ) in
+                      let a7 =
+                        if (!Globals.smart_lem_search) then
+                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 in
+                          if lem_act = [] then a6 else
+                            match a6 with
+                              | Some a ->  Some (1, Cond_action ([a]@lem_act))
+                              | None   -> if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None
+                        else a6
+                      in
                       match a6 with
                         | Some a -> [a],syn_lem_typ
                         | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
@@ -1625,7 +1653,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs_h rhs_p rhs is_normalizing (
                   else [] in
                 let a2 = if (new_orig_r) then r_lem else [] in
                 (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
-                let a = a1@a2@a3 in
+                let seg_acts = 
+                   if !Globals.seg_fold then
+                     let seg_fold_type = (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset) in
+                     if seg_fold_type>= 0 then
+                       [(1, M_seg_fold (m_res, seg_fold_type))]
+                     else []
+                   else []
+                in
+                let a = a1@seg_acts@a2@a3 in
                 (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
                 (*   match act with                                    *)
                 (*   | M_fold _ -> true                                *)
@@ -1980,6 +2016,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_base_case_unfold _ 
     | M_unfold _
     | M_fold _
+    | M_seg_fold _
     | M_acc_fold _
     | M_split_match _ 
     | M_match _ 

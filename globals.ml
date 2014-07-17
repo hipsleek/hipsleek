@@ -645,10 +645,10 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
-let sl_error = "separation entailment"
-let logical_error = "logical bug"
+let sl_error = "separation entailment" (* sl_error is a may error *)
+let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
-let lemma_error = "lemma"
+let lemma_error = "lemma" (* may error *)
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -806,7 +806,7 @@ let lemma_tail_rec_count = ref 0
 
 let lemma_syn_bound = 5
 
-let is_lem_syn_in_bound () = !lemma_syn_count < lemma_syn_bound
+let is_lem_syn_in_bound () = true (* !lemma_syn_count < lemma_syn_bound *)
 
 let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
 
@@ -821,6 +821,8 @@ let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold l
 let acc_fold = ref true
 
 let cts_acc_fold = ref true
+
+let seg_fold = ref false
 
 let trans_pred = ref true
 
@@ -1257,14 +1259,15 @@ let show_unexpected_ents = ref true
     else print_endline s 
 
 (* generate baga inv from view *)
-let check_baga = ref false
+let double_check = ref false
 let gen_baga_inv = ref false
-let pred_sat = ref false
+let prove_invalid = ref true
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
-
+(* get counter example *)
+let get_model = ref false
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
@@ -1319,7 +1322,7 @@ let dis_bk ()=
 let dis_pred_sat () = 
   print_endline_q "Disabling baga inv gen .."; 
   (* let _ = gen_baga_inv := false in *)
-  let _ = pred_sat := false in
+  let _ = prove_invalid := false in
   (*baga bk*)
   let _ = dis_bk () in
   ()
@@ -1335,27 +1338,27 @@ let en_bk () =
 let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
   (* let _ = gen_baga_inv := true in *)
-  let _ = pred_sat := true in
+  let _ = prove_invalid := true in
   (*baga bk*)
   let _ = en_bk ()  in
   ()
 
-let _ = if !smt_compete_mode then
-  begin
-    (* Debug.trace_on := false; *)
-    (* Debug.devel_debug_on:= false; *)
-    silence_output:=true;
-    enable_count_stats:=false;
-    enable_time_stats:=false;
-    print_core:=false;
-    print_core_all:=false;
-    (* gen_baga_inv := true; *)
-    en_pred_sat ();
-    (* do_infer_inv := true; *)
-    lemma_gen_unsafe := true;
-    graph_norm := true;
-    smt_compete_mode:=true
-  end
+(* let _ = if !smt_compete_mode then *)
+(*   begin *)
+(*     (\* Debug.trace_on := false; *\) *)
+(*     (\* Debug.devel_debug_on:= false; *\) *)
+(*     silence_output:=true; *)
+(*     enable_count_stats:=false; *)
+(*     enable_time_stats:=false; *)
+(*     print_core:=false; *)
+(*     print_core_all:=false; *)
+(*     (\* gen_baga_inv := true; *\) *)
+(*     en_pred_sat (); *)
+(*     (\* do_infer_inv := true; *\) *)
+(*     lemma_gen_unsafe := true; *)
+(*     graph_norm := true; *)
+(*     smt_compete_mode:=true *)
+(*   end *)
 
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
@@ -1737,6 +1740,6 @@ let un_option opt default_val = match opt with
 
 let smt_return_must_on_error ()=
   let _ = if !return_must_on_pure_failure then
-    let _ = smt_is_must_failure := (Some true) in ()
+    (* let _ = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()

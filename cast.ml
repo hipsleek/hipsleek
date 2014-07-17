@@ -121,7 +121,10 @@ and view_decl = {
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
-    mutable view_baga_inv : Excore.ef_pure_disj option;
+    (* exact baga *)
+    mutable view_baga_inv : Excore.ef_pure_disj option; 
+    (* necessary baga *)
+    mutable view_baga_under_inv : Excore.ef_pure_disj option; 
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -2519,6 +2522,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
          | None -> r
    ) [] prog.prog_view_decls in
    let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
+   if List.length seg_opz_views  > 1 then false else
    let ldnodes, lvnodes,_ = (Cformula.get_hp_rel_formula ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
    let rdnodes = Cformula.get_datas_struc conseq in

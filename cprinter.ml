@@ -2851,7 +2851,10 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
+let pr_failure_cex cex=
+  fmt_string (string_of_bool cex.cex_sat)
 
+let string_of_failure_cex cex=  poly_string_of_pr pr_failure_cex cex
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
@@ -2875,7 +2878,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_wrap_test "es_aux_conseq: "  CP.isConstTrue (pr_pure_formula) es.es_aux_conseq; 
   (* pr_wrap_test "es_imm_pure_stk: " Gen.is_empty  (pr_seq "" pr_mix_formula) es.es_imm_pure_stk; *)
-  pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_) -> fmt_string s)) (es.es_must_error); 
+  pr_wrap_test "es_must_error: "  Gen.is_None (pr_opt (fun (s,_,cex) -> fmt_string (s ^";" ^ (string_of_failure_cex cex) ))) (es.es_must_error); 
   (* pr_wrap_test "es_success_pts: " Gen.is_empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts; *)
   (* pr_wrap_test "es_residue_pts: " Gen.is_empty (pr_seq "" pr_formula_label) es.es_residue_pts; *)
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
@@ -3047,15 +3050,18 @@ let string_of_fail_type (e:fail_type) : string =  poly_string_of_pr  pr_fail_typ
 let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
   poly_printer_of_pr fmt pr_fail_type e
 
+
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft ,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
         (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
         (*     | _ -> fmt_string ""); *)
-        pr_fail_type ft; fmt_cut ()
+        pr_fail_type ft;
+        pr_failure_cex cex;
+        fmt_cut ()
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
@@ -3127,7 +3133,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
+    | FailCtx (ft,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
     | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
     
 let pr_entail_state_short e =
@@ -3151,13 +3157,13 @@ let pr_entail_state_short e =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
         (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
         (*     | _ -> fmt_string ""); *)
-        pr_fail_type ft; fmt_cut ()
+        pr_fail_type ft; pr_failure_cex cex; fmt_cut ()
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
@@ -4484,6 +4490,7 @@ Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_context_list_short := string_of_context_list_short;;
 Cformula.print_list_context_short := string_of_list_context_short;;
+Cformula.print_cex := string_of_failure_cex;;
 Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;

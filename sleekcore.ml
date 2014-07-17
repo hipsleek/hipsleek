@@ -82,7 +82,7 @@ let sleek_unsat_check isvl cprog ante=
     (true, CF.SuccCtx [init_ctx], [])
   else
     (false, CF.FailCtx (CF.Trivial_Reason
-     ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
+     ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  CF.mk_cex true),
   [])
 
 
@@ -184,7 +184,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-    if (!Globals.pred_sat) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+    if (!Globals.prove_invalid) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
       (* TODO : new unsat checking for LHS from Loc *)
       (* need to document; and generalize? *)
       let _ = Globals.smt_is_must_failure := None in
@@ -201,7 +201,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
         (true, (CF.SuccCtx[ctx]), isvl)
       else
         let fctx = CF.FailCtx (CF.Trivial_Reason
-            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  CF.mk_cex true) in
         (false, fctx, isvl)
     else
       (* let _ = Globals.disable_failure_explaining := false in *)
@@ -278,7 +278,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
   let _ = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
-      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []), CF.mk_cex true) in
   let s_ctx = (CF.SuccCtx [init_ctx]) in
   let ante_quans, ante0b = (CF.split_quantifiers ante0) in
   let ante0b = (CF.simplify_pure_f ante0b) in
@@ -385,7 +385,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
               if conseq_unsat0 then
                 (*rhs is unsat*)
                 (false, CF.FailCtx (CF.Trivial_Reason
-                    ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
+                    ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []), CF.mk_cex true),
                 [])
               else
                 (*pi1 =  ptos predicate into pure*)

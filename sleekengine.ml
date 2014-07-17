@@ -21,12 +21,20 @@ let string_of_vres t =
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
-      if CF.is_must_failure lc then VR_Fail 1
-      else VR_Fail (-1)
+      if CF.is_must_failure lc then
+        if CF.is_sat_failure lc then
+          (* must fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
+      else
+        if CF.is_may_failure lc then
+          (* may fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
     | CF.SuccCtx c -> 
       match CF.get_must_error_from_ctx c with
       | None -> VR_Valid
-      | _ -> VR_Fail 1
+      | (Some (_,cex)) -> if Cformula.is_sat_fail cex then VR_Fail 1 else (VR_Fail (-1))
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
@@ -589,25 +597,25 @@ let convert_data_and_pred_to_cast_x () =
   let _ = if !Globals.smt_compete_mode then
     let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
-    let _ = if num_vdecls <= gen_baga_inv_threshold then
-        (* let _ = Globals.gen_baga_inv := false in *)
-      (* let _ = Globals.dis_pred_sat () in *)
-        ()
-    else
-      let _ = Globals.lemma_gen_unsafe := false in
-      (* let _ = Globals.lemma_syn := false in *)
-      ()
-    in
+    (* let _ = if num_vdecls <= gen_baga_inv_threshold then *)
+    (*     (\* let _ = Globals.gen_baga_inv := false in *\) *)
+    (*   (\* let _ = Globals.dis_pred_sat () in *\) *)
+    (*     () *)
+    (* else *)
+    (*   let _ = Globals.lemma_gen_unsafe := false in *)
+    (*   (\* let _ = Globals.lemma_syn := false in *\) *)
+    (*   () *)
+    (* in *)
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
       let _ = Globals.graph_norm := false in
       ()
     else ()
     in
-    let _ = if ls_mut_rec_views != [] || num_vdecls > 2 then
-      (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
-      let _ = Globals.lemma_syn := false in
-      ()
-    else () in
+    (* let _ = if ls_mut_rec_views != [] (\* || num_vdecls > 2 *\) then *)
+    (*   (\* lemma_syn does not work well with mut_rec views. Loc: to improve*\) *)
+    (*   let _ = Globals.lemma_syn := false in *)
+    (*   () *)
+    (* else () in *)
     ()
   else ()
   in
@@ -658,9 +666,11 @@ let convert_data_and_pred_to_cast_x () =
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog5 else cprog5 in
-  let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-               || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-    Lemma.generate_all_lemmas iprog cprog6
+  let _ =  (* if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
+           (*     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then *)
+    try
+      Lemma.generate_all_lemmas iprog cprog6
+    with _ -> ()
   in
   let cprog6a =
      if !Globals.norm_cont_analysis then
@@ -997,6 +1007,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       with _ ->
           Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
+  (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   ((res, rs,v_hp_rel), (ante,conseq))
@@ -1638,8 +1649,8 @@ let process_pred_split ids=
 
 let process_pred_norm_disj ids=
   let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
+  (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
   let sel_hp_defs = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
@@ -1656,7 +1667,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps,_=
+  let ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)
@@ -1751,7 +1762,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout = 
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
@@ -1778,31 +1789,36 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s ->
-                  let reg1 = Str.regexp "base case unfold failed" in
-                  let _ = try
-                    if Str.search_forward reg1 s 0 >=0 then
-                      let _ = smt_is_must_failure := (Some false) in ()
-                    else let _ = smt_is_must_failure := (Some true) in
-                    ()
-                  with _ -> let _ = smt_is_must_failure := (Some true) in ()
-                  in
-                  "(must) cause:"^s
+            | Some (s, cex) ->
+                  (* let reg1 = Str.regexp "base case unfold failed" in *)
+                  (* let _ = try *)
+                  (*   if Str.search_forward reg1 s 0 >=0 then *)
+                  (*     let _ = smt_is_must_failure := (Some false) in () *)
+                  (*   else let _ = smt_is_must_failure := (Some true) in *)
+                  (*   () *)
+                  (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
+                  (* in *)
+                  let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in
+                  let _ = smt_is_must_failure := (Some is_sat) in
+                  ns
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> begin
-                      try
-                        let reg1 = Str.regexp "Nothing_to_do" in
-                        let _ = if Str.search_forward reg1 s 0 >=0 then
-                          let _ = smt_is_must_failure := (Some false) in ()
-                        else
-                          if is_lem_syn_reach_bound () then
-                            let _ = smt_is_must_failure := (Some false) in ()
-                          else
-                            ()
-                        in
-                        "(may) cause:"^s
-                      with _ ->
-                          "(may) cause:"^s
+                | Some (s, cex) -> begin
+                      (* try *)
+                      (*   let reg1 = Str.regexp "Nothing_to_do" in *)
+                      (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
+                      (*     let _ = smt_is_must_failure := (Some false) in () *)
+                      (*   else *)
+                      (*     if is_lem_syn_reach_bound () then *)
+                      (*       let _ = smt_is_must_failure := (Some false) in () *)
+                      (*     else *)
+                      (*       () *)
+                      (*   in *)
+                    let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in
+                    let _ = smt_is_must_failure := (Some is_sat) in
+                    ns
+                        (* with _ -> *)
+                      (*     let _ = smt_is_must_failure := (Some false) in *)
+                      (*     "(may) cause:"^s *)
                   end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
@@ -1813,7 +1829,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let timeout = 
         if !Globals.sleek_timeout_limit > 0. then
           match CF.get_may_failure residue with
-            | Some "timeout" -> " (timeout) "
+            | Some ("timeout",_) -> " (timeout) "
             | _ -> ""
         else ""
       in

@@ -342,7 +342,7 @@ let common_arguments = [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
+  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3-4.2"; "z3-4.3.1"; "zm"; "om";
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
@@ -558,8 +558,8 @@ let common_arguments = [
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
-  ("--check-baga",Arg.Set Globals.check_baga,"check new syn baga");
-  ("--dis-check-baga",Arg.Clear Globals.check_baga,"disable checking new syn baga");
+  ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
+  ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
@@ -631,6 +631,7 @@ let common_arguments = [
   ("--inf-dis-split-ante", Arg.Clear Globals.infer_deep_ante_flag, "disable deep split of ante for pure inference");
   ("--pred-dis-infer", Arg.Clear Globals.sa_syn, "disable the shape inference stage");
   ("--lem-en-syn", Arg.Set Globals.lemma_syn, "enable the lemma synthesis");
+  ("--seg-fold", Arg.Set Globals.seg_fold, "enable seg folding");
   (* enable, diable lemma generation *)
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
@@ -729,6 +730,8 @@ let common_arguments = [
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
+  ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
+  ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--smt-compete", 
      Arg.Unit
       (fun _ ->
@@ -778,7 +781,33 @@ let common_arguments = [
           Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
-   "SMT competition mode - essential printing only + show unexpected ents");
+  "SMT competition mode - essential printing only + show unexpected ents");
+  ("--smt-test", 
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := true;
+          (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := true;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=false;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          Globals.lemma_syn := true;
+          (* Globals.acc_fold := true; *)
+          (* Globals.smart_lem_search := true; *)
+          Globals.seg_fold := true;
+          Globals.en_pred_sat ();
+          (* Globals.gen_baga_inv := false; *)
+          (* Globals.do_infer_inv := true; *)
+          Globals.graph_norm := true;
+          (* Globals.is_solver_local := false; *)
+          Globals.disable_failure_explaining := false;
+          Globals.smt_compete_mode :=true;
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+  "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

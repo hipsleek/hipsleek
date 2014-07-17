@@ -402,6 +402,10 @@ let set_tp tp_str =
     (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
     if is_smtsolver_z3 tp_str then
        (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+    else if tp_str = "z3-4.2" then
+      (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.2"::!prover_str;)
+    else if tp_str = "z3-4.3.1" then
+      (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.3.1"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "OCRed" then
@@ -431,7 +435,7 @@ let set_tp tp_str =
   else if tp_str = "spass" then
     (pure_tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else if tp_str = "minisat" then
-    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)	
+    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)
   else if tp_str = "log" then
     (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
@@ -2746,8 +2750,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
-        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
-        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
+        (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
+        (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in

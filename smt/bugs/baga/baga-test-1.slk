@@ -21,11 +21,11 @@ data node {
 pred l3<> == 
   self::node<q>*q::node<_> 
 inv self!=null.
-
+/*
 pred l3a<> == 
   self::node<q>*q::node<_>  & self=q
 inv self!=null.
-
+*/
 
 
 pred l4<q:node> == 

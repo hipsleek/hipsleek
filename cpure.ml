@@ -25,6 +25,7 @@ let is_zero s = s==mk_zero
 
 let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
+
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
@@ -146,6 +147,7 @@ type formula =
   | BForm of (b_formula * (formula_label option))
   (* | Pure_Baga of (spec_var list) *)
   (* ADDR[a,b] <==> a>0 & b>0 > a!=b *)
+  (* | BagaF of (spec_var list * formula) *)
   | And of (formula * formula * loc)
   | AndList of (LO.t * formula) list
   | Or of (formula * formula * (formula_label option) * loc)
@@ -471,7 +473,6 @@ let string_of_annot_arg ann =
 let string_of_annot_arg_list ann_list = 
   pr_list string_of_annot_arg ann_list
 
-
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list_noparen l = match l with 
   | [] -> ""
@@ -480,6 +481,15 @@ let rec string_of_spec_var_list_noparen l = match l with
 ;;
 
 let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+
+(* pretty printing for a spec_var list *)
+let rec string_of_typed_spec_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_typed_spec_var h 
+  | h::t -> (string_of_typed_spec_var h) ^ "," ^ (string_of_typed_spec_var_list_noparen t)
+;;
+
+let string_of_typed_spec_var_list l = "["^(string_of_typed_spec_var_list_noparen l)^"]" ;;
 
 let string_of_spec_var_arg l = "<"^(string_of_spec_var_list_noparen l)^">" ;;
 
@@ -681,6 +691,10 @@ let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* We need only to compare names  of permission variables*)
 	    v1 = v2
+
+let eq_pair_spec_var ((sv11 : spec_var), sv12) ((sv21 : spec_var),sv22) =
+  (eq_spec_var_x sv11 sv21 && eq_spec_var_x sv12 sv22) ||
+      (eq_spec_var_x sv11 sv22 && eq_spec_var_x sv12 sv21)
 
 let eq_xpure_view_x xp1 xp2=
   let rec check_eq_order_spec_var_list svl1 svl2=
