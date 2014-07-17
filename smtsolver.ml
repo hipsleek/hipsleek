@@ -116,16 +116,15 @@ let rec smt_of_exp a =
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  (* UNHANDLED *)
-  | CP.Bag ([], _) -> "0"
-  | CP.Tup2 _ -> "0" (* TODO: handle this *)
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
+  | CP.Bag ([], _)
+  | CP.Tup2 _ 
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
-  | CP.BagDiff _ -> "0" (*TODO*) (* illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)") *)
+  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2 should not appear here)")
   | CP.List _ 
   | CP.ListCons _
   | CP.ListHead _
@@ -135,7 +134,7 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-  | CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple/Tup2 should not appear here)")
+  | CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple should not appear here)")
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
