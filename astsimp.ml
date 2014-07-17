@@ -2466,9 +2466,9 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
     | _ -> []
   ) in
   let new_bwf = List.concat (List.map (fun n -> collect_field n bwp) first_nodes) in
-  let new_bwf = Gen.BList.remove_dups_eq eq_str new_bwf in
+  let new_bwf = remove_dups_str_list (new_bwf @ bwf) in
   let new_fwf = List.concat (List.map (fun n -> collect_field n fwp) last_nodes) in
-  let new_fwf = Gen.BList.remove_dups_eq eq_str new_fwf in
+  let new_fwf = remove_dups_str_list (new_fwf @ fwf) in
   (* find forward, backward pointer using first and last nodes *)
   let collect_pointer node fields = (match node with
     | CF.DataNode dn ->
@@ -2481,9 +2481,9 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
     | _ -> []
   ) in
   let new_bwp = List.concat (List.map (fun node -> collect_pointer node bwf) first_nodes) in
-  let new_bwp = CP.remove_dups_svl new_bwp in
+  let new_bwp = CP.remove_dups_svl (new_bwp @ bwp) in
   let new_fwp = List.concat (List.map (fun node -> collect_pointer node fwf) last_nodes) in
-  let new_fwp = CP.remove_dups_svl new_fwp in
+  let new_fwp = CP.remove_dups_svl (new_fwp @ fwp) in
   (new_fwp, new_fwf, new_bwp, new_bwf)
 
 and compute_view_forward_backward_info_x (vdecl: C.view_decl)
@@ -2493,18 +2493,18 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
   (* find the main heap chain in view's definition, 
      and extract head and body nodes of this chain *)
   let extract_head_body_node f ddecl vdecl = (
-    let head_node = (
+    let head_nodes = (
       (* self is head node *)
       let is_self_node hf = (match hf with
-        | CF.DataNode dn when (eq_str (CP.name_of_sv dn.CF.h_formula_data_node) self) -> [hf]
-        | CF.ViewNode vn when (eq_str (CP.name_of_sv vn.CF.h_formula_view_node) self) -> [hf]
+        | CF.DataNode {CF.h_formula_data_node = dn} ->
+            if (eq_str (CP.name_of_sv dn) self) then [hf]
+            else []
+        | CF.ViewNode {CF.h_formula_view_node = vn} ->
+            if (eq_str (CP.name_of_sv vn) self) then [hf]
+            else []
         | _ -> []
       ) in
-      let self_nodes = CF.get_one_kind_heap is_self_node f in
-      if (self_nodes = []) then
-        let _ = report_warning no_pos "compute_fw_bw: self points to nowhere" in
-        CF.HEmp
-      else (List.hd self_nodes)
+      CF.get_one_kind_heap is_self_node f
     ) in
     let body_nodes = (
       let is_body_node hf = (match hf with
@@ -2521,7 +2521,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
       ) in
       CF.get_one_kind_heap is_body_node f
     ) in
-    (head_node, body_nodes)
+    (head_nodes, body_nodes)
   ) in
   let get_residents hf vd = (match hf with
     | CF.DataNode dn -> [dn.CF.h_formula_data_node]
@@ -2535,22 +2535,18 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
   ) in
 
   let pos = vdecl.C.view_pos in
-  let dname = vdecl.C.view_data_name in
-  let _ = if (eq_str dname "") then (
-    report_warning pos "compute_view_fw_bw: data name in view is empty";
-  ) in
-  let ddecl = C.look_up_data_def_raw data_decls dname in
+  let ddecl = C.look_up_data_def_raw data_decls vdecl.C.view_data_name in
   let base_fs, induct_fs = split_view_branches vdecl in
   let head_body_info = List.map (fun f -> extract_head_body_node f ddecl vdecl) induct_fs in
   (* do fix point iteration to find forward, backward info *)
   let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
-  List.iter2 (fun induct_f (head_node, body_nodes) ->
+  List.iter2 (fun induct_f (head_nodes, body_nodes) ->
     (* find forward, backward info from head and body node *)
-    let head_ptrs = get_residents head_node vdecl in
+    let head_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) head_nodes) in
     let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
     let (hf,pf,_,_,_) = CF.split_components induct_f in
     let eqs = MCP.ptr_equations_without_null pf in
-    let _ = match head_node with
+    let _ = List.iter (fun head_node -> match head_node with
       | CF.ViewNode vn -> 
           List.iter2 (fun sv1 sv2 ->
             let sv1_closure = CF.find_close [sv1] eqs in
@@ -2566,7 +2562,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
               fwf := remove_dups_str_list (fld::!fwf);
           ) dn.CF.h_formula_data_arguments ddecl.C.data_fields;
       | _ -> ()
-    in
+    ) head_nodes in
     let new_bwps, new_bwfs = ref [], ref [] in 
     let _ = List.iter (fun body_node ->
       match body_node with
@@ -2605,10 +2601,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
         Debug.binfo_hprint (add_str "self recursive, unfold_f " (!CF.print_formula)) unfold_f no_pos;
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
-        fwp := CP.remove_dups_svl (!fwp @ new_fwp);
-        fwf := remove_dups_str_list (!fwf @ new_fwf);
-        bwp := CP.remove_dups_svl (!bwp @ new_bwp);
-        bwf := remove_dups_str_list (!bwf @ new_bwf);
+        fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
         Debug.binfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)
@@ -2636,10 +2629,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
         Debug.binfo_hprint (add_str "mutual recursive, unfold_f" (!CF.print_formula)) unfold_f no_pos;
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
-        fwp := CP.remove_dups_svl (!fwp @ new_fwp);
-        fwf := remove_dups_str_list (!fwf @ new_fwf);
-        bwp := CP.remove_dups_svl (!bwp @ new_bwp);
-        bwf := remove_dups_str_list (!bwf @ new_bwf);
+        fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
         Debug.binfo_hprint (add_str "forward, backward 3 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)

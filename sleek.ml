@@ -131,17 +131,17 @@ let proc_gen_cmd cmd =
     | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =
-  let rec parse_first (cmds:command list) : (command list)  =
-    try 
-      parse source_file 
+  let rec parse_first_x (cmds:command list) : (command list)  = (
+    try parse source_file 
     with
-      | End_of_file -> List.rev cmds
-      | M.Loc.Exc_located (l,t)-> 
-            (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-            raise t) in
+    | End_of_file -> List.rev cmds
+    | M.Loc.Exc_located (l,t)->
+        print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+        raise t
+  ) in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
-    Debug.no_1 "parse_first" pr pr parse_first cmds in
+    Debug.no_1 "parse_first" pr pr parse_first_x cmds in
   let proc_one_def c = 
     match c with
       | DataDef ddef -> process_data_def ddef
