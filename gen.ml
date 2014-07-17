@@ -339,6 +339,12 @@ struct
       | [] -> false
       | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
 
+  let rec get_all_pairs ls = match ls with
+    | [] -> []
+    | c::cs -> 
+          let lst = List.map (fun x -> (c,x)) cs in
+          lst @ (get_all_pairs cs)
+
   let check_no_dups_eq eq n = not(check_dups_eq eq n)
 
   let subset_eq eq l1 l2 =

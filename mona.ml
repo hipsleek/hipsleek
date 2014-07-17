@@ -878,6 +878,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
   | CP.BagIntersect (_, _) -> ([], mona_of_exp e0 f, "") (*TO CHECK: add non-empty case *)
   | CP.BagDiff (_,_,_) -> ([], mona_of_exp e0 f, "")
+  | CP.Tup2 _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support Tup2"^(Cprinter.string_of_formula_exp e0))
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =

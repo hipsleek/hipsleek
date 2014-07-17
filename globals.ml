@@ -307,6 +307,9 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+(*Remove all blanks in a string*)
+let remove_blanks = Str.global_replace (Str.regexp " ") ""
+
 let string_of_heap_ann a =
   match a with
     | Accs -> "@A"
@@ -616,6 +619,7 @@ let is_dont_care_var id =
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
+let nonef2 v1 v2 = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v

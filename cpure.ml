@@ -11389,6 +11389,73 @@ and translate_waitlevel_pure (pf : formula) : formula =
   Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf
 
+(*
+  Convert: tup2(a1,a2) --> tup2_a1_a2.
+  Return: new formula * (tup2_a1_a2, tup2(a1,a2)) list
+*)
+and translate_tup2_pure_x (pf : formula) : formula * ((spec_var * exp) list) =
+  let f_e arg e =
+    match e with
+      | Tup2 ((e1,e2),l) ->
+            let str1 = !print_exp e1 in
+            let str2 = !print_exp e2 in
+            (*Could generate a new fresh variable instead.
+              However, reuse e1,e2 in the new name to
+              make it more meaningful to read *)
+            let id = "tup2_" ^ str1 ^ "_" ^ str2 in
+            let id = remove_blanks id in
+            let sv = mk_spec_var id in
+            Some (Var (sv,l), [(sv,e)])
+      | _ -> None
+  in
+  let f = (nonef2,nonef2,f_e) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let nfp, ls = trans_formula pf arg f f_arg f_comb in
+  (nfp,ls)
+
+
+and translate_tup2_pure (pf : formula) : formula * ((spec_var * exp) list) =
+  let pr1 = pr_list (pr_pair !print_sv !print_exp) in
+  let pr_out = pr_pair !print_formula pr1 in
+  Debug.no_1 "translate_tup2_pure" !print_formula pr_out
+      translate_tup2_pure_x pf
+
+(*
+  Convert: A & v1=tup2(a1,a2) |- B & v2=tup2(b1,b2)
+  into: A & v1=tup2_a1_a2 & (a1=b1 & a2=b2 => tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
+  or A & v1=tup2_a1_a2 & (a1!=b1 | a2!=b2 | tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
+*)
+and translate_tup2_imply_x (ante : formula) (conseq : formula) : formula * formula =
+  let ante, a_ls = translate_tup2_pure ante in
+  let conseq, c_ls = translate_tup2_pure conseq in
+  let ls = Gen.BList.remove_dups_eq (fun (v1,e1) (v2,e2) -> eq_spec_var v1 v2) (a_ls@c_ls) in
+  let translate_one_pair (v1,e1) (v2,e2) : formula =
+    match e1,e2 with
+      | Tup2 ((a1,a2),_), Tup2 ((b1,b2),_) ->
+            (* (a1!=b1 | a2!=b2 | v1=v2) *)
+            let f1 = mkNeqExp a1 b1 no_pos in
+            let f2 = mkNeqExp a2 b2 no_pos in
+            let f3 = mkEqVar v1 v2 no_pos in
+            let f12 = mkOr f1 f2 None no_pos in
+            let f123 = mkOr f12 f3 None no_pos in
+            f123
+      | _ -> report_error no_pos ("translate_one_pair: expected Tup2 only\n")
+  in
+  let pairs = Gen.BList.get_all_pairs ls in
+  let new_ante = List.fold_left (fun res (p1,p2) ->
+      let p_f = translate_one_pair p1 p2 in
+      mkAnd res p_f no_pos) ante pairs
+  in
+  (new_ante,conseq)
+
+and translate_tup2_imply (ante : formula) (conseq : formula) : formula * formula =
+  let pr_out = pr_pair !print_formula !print_formula in
+  Debug.no_2 "translate_tup2_imply" !print_formula !print_formula pr_out
+  translate_tup2_imply_x ante conseq
+
+
 let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with
