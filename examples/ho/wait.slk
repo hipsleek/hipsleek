@@ -22,6 +22,22 @@ lemma x::WAIT<B> & cylic(B) --> emp & flow __Fail.
 checkentail B={tup2(c1,c2),tup2(c2,c1)} |- cyclic(B).
 print residue.
 
+/*
+   D= {..} |- |D|>4
+
+   D={..}  & |D|=k |- k>4  
+
+
+   D={(a,b),(c,d)} & a<b & c<d |- false
+  --------------------------------------
+   D={(a,b),(c,d)} & acyclic(D) |- false
+   D={(a,b),(c,d)} & acyclic(D) |- false
+  ------------------------------
+       D={..} |- cyclic(D)
+
+   D= {..} & g=cyclic(D) |- g
+
+*/
 
 /*
 global RS stk;
