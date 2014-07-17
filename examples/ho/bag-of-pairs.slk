@@ -6,7 +6,8 @@
 
  A & v1=tup2(a1,a2) |- B & v2=tup2(b1,b2) & v1=v2
        ==translate==>
- A & (a1=b1 & a2=b2 => v1=v2) |- B & v1=v2.
+ A & (a1=b1 & a2=b2 => v1=v2) &
+     (a1!=b1 | a2!=b2 => v1!=v2)  |- B & v1=v2.
 
 */
 
@@ -16,9 +17,11 @@ S = union(S1,{tup2(c1,c2)})
   |- S = union(S1,{tup2(c1,c2)}).
     ==translate
 S = union(S1,{v1}) & (c1=c1 & c2=c2 => v1=v2) //& v1=tup2(c1,c2)
+                   & (c1!=c1 | c2!=c2 => v1!=v2) 
   |- S = union(S1,(v2}). // v2=tup2(c1,c2)
 
 checkentail S = union(S1,{v1}) & (c1!=c1 | c2!=c2 | v1=v2)
+                               & ((c1=c1 & c2=c2) | v1!=v2)
             |- S = union(S1,{v2}).
 expect Valid.
 print residue.
