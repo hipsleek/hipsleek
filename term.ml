@@ -386,7 +386,6 @@ let strip_lexvar_list ls =
             (l2@l0,r2::r0)
   in aux ls
 
-
 let strip_lexvar_from_andlist ls =
   List.fold_left (fun (l,cj) f ->
       match f with
@@ -403,19 +402,31 @@ let strip_lexvar_from_pure f =
   (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
   (lexvar, CP.join_conjunctions fs)
 
+let strip_lexvar_memo_grp mg =
+  let b_lexvar, memo_grp_cons = List.partition (fun mc -> 
+    CP.is_lexvar_b_formula mc.Mcpure_D.memo_formula) mg.Mcpure_D.memo_group_cons in
+  let lexvar, memo_grp_slice = List.split (List.map 
+    (fun f -> strip_lexvar_from_pure f) mg.Mcpure_D.memo_group_slice) in
+  let lexvar = 
+    (List.map (fun mc -> CP.BForm (mc.Mcpure_D.memo_formula, None)) b_lexvar) @ 
+    (List.concat lexvar) in 
+  (lexvar, { mg with
+    Mcpure_D.memo_group_cons = memo_grp_cons;
+    Mcpure_D.memo_group_slice = memo_grp_slice; })
+
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
-  let mf_p = MCP.pure_of_mix mf in
-  let (lexvar, f) = strip_lexvar_from_pure mf_p in
-  (lexvar, f)
-  (* let mf_ls = CP.split_conjunctions mf_p in *)
-  (* Debug.tinfo_hprint (add_str "mf_ls" (pr_list !CP.print_formula)) mf_ls no_pos; *)
-  (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
-  (* (lexvar, CP.join_conjunctions other_p) *)
+  match mf with
+  | MCP.OnePF f ->
+    let lexvar, f = strip_lexvar_from_pure f in
+    (lexvar, MCP.OnePF f)
+  | MCP.MemoF mp -> 
+    let lexvar, mp = List.split (List.map strip_lexvar_memo_grp mp) in
+    (List.concat lexvar, MCP.MemoF mp)
 
 let strip_lexvar_mix_formula mf =
   let pr0 = !CP.print_formula in
   let pr = !MCP.print_mix_formula in
-  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
+  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
   
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
@@ -503,7 +514,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               None, 
               None
             else
-              if Infer.no_infer_pure estate then (* No inference at all*)
+              if Infer.no_infer_pure estate then (* No inference at all *)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
@@ -556,19 +567,27 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
-      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
-      let rhs_p = MCP.mix_of_pure rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
+      | (TUnk _, _)
+      | (_, TUnk _) ->
+          (* Collect temporal relation here *)
+          (* No need to collect from primitive calls *)
+          let _ =
+            match t_ann_d, dst_lv with
+            | Term, [] -> ()
+            | _ ->
+              let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
+              Tnt.tu_call_stk # push trans 
+          in (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
@@ -584,7 +603,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
-            | Term -> failwith "unexpected Term in check_term_rhs"
+            | _ -> failwith "unexpected Term/TUnk in check_term_rhs"
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;
@@ -610,7 +629,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (*print_string ("got exception\n "^(!MCP.print_mix_formula rhs_p)^"\n");*)(estate, lhs_p, rhs_p, None)
+  with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
@@ -620,16 +639,13 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = MCP.mix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
-  if !Globals.dis_term_chk or estate.es_term_err != None then
+  if !Globals.dis_term_chk || estate.es_term_err != None then
     (* Remove LexVar in RHS *)
-    (*TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-    let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
   else
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
-(*TODO: consider --eps *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
@@ -650,9 +666,9 @@ let strip_lexvar_lhs (ctx: context) : context =
       let f_e_f _ = None in
       let f_f _ = None in
       let f_h_f e = Some e in
-      let f_m mp = Some (MCP.memoise_add_pure_N_m (MCP.mkMTrue_no_mix no_pos) other_p) in
+      let f_m mp = Some (MCP.memo_of_mix other_p) in
       let f_a _ = None in
-      let f_p_f pf = Some other_p in
+      let f_p_f pf = Some (MCP.pure_of_mix other_p) in
       let f_b _ = None in
       let f_e _ = None in
       match lexvar with
@@ -1270,21 +1286,24 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 
 (* Main function of the termination checker *)
 let term_check_output () =
-  if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && not(term_res_stk # is_empty) then
+  if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && 
+     not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
   begin
     fmt_string "\nTermination checking result: ";
-    if (!Globals.term_verbosity == 0) then 
-    begin
-      fmt_string "\n";
-      pr_term_res_stk (term_res_stk # get_stk)
-    end
-    else
-    begin
-      let err_msg = term_err_stk # get_stk in
-      if err_msg = [] then fmt_string "SUCCESS\n"
-      else pr_term_err_stk (term_err_stk # get_stk)
-    end;
+    pr_term_res_stk (term_res_stk # get_stk);
     fmt_print_newline ()
+    (* if (!Globals.term_verbosity == 0) then          *)
+    (* begin                                           *)
+    (*   fmt_string "\n";                              *)
+    (*   pr_term_res_stk (term_res_stk # get_stk)      *)
+    (* end                                             *)
+    (* else                                            *)
+    (* begin                                           *)
+    (*   let err_msg = term_err_stk # get_stk in       *)
+    (*   if err_msg = [] then fmt_string "SUCCESS\n"   *)
+    (*   else pr_term_err_stk (term_err_stk # get_stk) *)
+    (* end;                                            *)
+    (* fmt_print_newline ()                            *)
   end
 
 let rec get_loop_ctx c =
@@ -1308,25 +1327,30 @@ let add_unsound_ctx (es: entail_state) pos =
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   Debug.trace_hprint (add_str "proc name" pr_id) proc.Cast.proc_name pos;
-  let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in (* Not a fail context *)
-  let loop_es = List.concat (List.map (fun (fl,sl) -> get_loop_only sl) good_ls) in
-  if loop_es==[] then true
-  else 
+  let good_es = List.filter (fun (fl, _) -> fl = []) ctx in (* Not a fail context *)
+  let loop_es = List.concat (List.map (fun (_, sl) -> get_loop_only sl) good_es) in
+  let res = if loop_es = [] then true
+    else 
     begin
       Debug.devel_zprint (lazy (" >>>>>> [term.ml][check loop safety] <<<<<<")) no_pos;
       Debug.trace_hprint (add_str "res ctx" Cprinter.string_of_list_partial_context_short) ctx pos;
       Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
-      (* TODO: must check that each entail_state from loop_es implies false *)
+      (* Check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
-      let unsound_ctx = List.find_all (fun es -> is_Loop_es es) loop_es in
-      if unsound_ctx == [] then true
+      let unsound_ctx = List.find_all (fun es -> (is_Loop_es es) && not (isAnyConstFalse es.es_formula)) loop_es in
+      if unsound_ctx = [] then true
       else
         begin
-        Debug.devel_hprint (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
-        List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx;
-        false
+          Debug.devel_hprint (add_str "unsound Loop" (pr_list Cprinter.string_of_entail_state_short)) unsound_ctx pos;
+          List.iter (fun es -> add_unsound_ctx es pos) unsound_ctx;
+          false
         end;
-    end
+    end in
+  let _ = if !Globals.en_tnt_infer && res then
+      let pw_TUnk = Tnt.get_pw_elem_list_partial_context good_es in
+      Tnt.tu_ret_stk # push_list pw_TUnk
+    else () 
+  in res
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   let pr = !print_list_partial_context in

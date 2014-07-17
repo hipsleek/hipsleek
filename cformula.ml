@@ -13521,18 +13521,21 @@ let rec has_lexvar_formula f =
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
 
      
-let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
-  | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_lexvar is_primitive) ef.formula_case_branches }
+let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f  = 
+  let helper = norm_struc_with_lexvar is_primitive proc_name proc_args in
+  match struc_f with
+  | ECase ef -> ECase { ef with formula_case_branches = map_l_snd helper ef.formula_case_branches }
   | EBase ef ->
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
-      else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
+      else EBase { ef with formula_struc_continuation = map_opt helper ef.formula_struc_continuation }
   | EAssume _ ->
       let lexvar = 
-        if is_primitive then  CP.mkLexVar Term [] [] no_pos
+        if is_primitive then CP.mkLexVar Term [] [] no_pos
+        else if !Globals.en_tnt_infer then CP.mkLexVar (TUnk (proc_name, proc_args)) [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in 
       mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
-  | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
-  | EList b -> mkEList_no_flatten (map_l_snd (norm_struc_with_lexvar is_primitive) b)
+  | EInfer ef -> EInfer { ef with formula_inf_continuation = helper ef.formula_inf_continuation }
+  | EList b -> mkEList_no_flatten (map_l_snd helper b)
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

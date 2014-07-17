@@ -85,16 +85,6 @@ and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
-and term_ann = 
-  | Term    (* definitely terminates *)
-  | Loop    (* definitely loops *)
-  | MayLoop (* don't know *)
-  | Fail of term_fail    (* failed because of invalid trans *)
-
-and term_fail =
-  | TermErr_May
-  | TermErr_Must
-
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -165,6 +155,17 @@ let rec cmp_typ t1 t2=
     | Bptyp, Bptyp -> true
     | Pointer t11, Pointer t22 -> cmp_typ t11 t22
     | _ -> false
+
+type term_ann = 
+  | Term    (* definitely terminates *)
+  | Loop    (* definitely loops *)
+  | MayLoop (* don't know *)
+  | Fail of term_fail    (* failed because of invalid trans *)
+  | TUnk of (ident * (typ * ident * primed) list) (* For TNT inference *)
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
 
 let ann_var_sufix = "_ann"
 
@@ -303,15 +304,6 @@ let string_of_vp_ann a =
     | VP_Value -> "@value"
     (* | VP_Ref-> "@p_ref" *)
   )
-
-let string_of_term_ann a =
-  match a with
-    | Term -> "Term"
-    | Loop -> "Loop"
-    | MayLoop -> "MayLoop"
-    | Fail f -> match f with
-        | TermErr_May -> "TermErr_May"
-        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -553,6 +545,19 @@ let rec s_p_i_list l c = match l with
 
 let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
 ;;
+
+let string_of_term_ann a =
+  match a with
+    | Term -> "Term"
+    | Loop -> "Loop"
+    | MayLoop -> "MayLoop"
+    | TUnk (pname, args) ->
+      let string_of_args args = "[" ^ (String.concat "," 
+        (List.map (fun (_, n, p) -> string_of_primed_ident (n, p)) args)) ^ "]" in 
+      "TUnk" ^ "(" ^ pname ^ ")" ^ (string_of_args args)
+    | Fail f -> match f with
+        | TermErr_May -> "TermErr_May"
+        | TermErr_Must -> "TermErr_Must"
 
 let is_substr s id =
   let len_s = String.length s in
@@ -1109,7 +1114,7 @@ let cpfile = ref ""
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
 
-(* for Termination *)
+(* Options for Termination and Non-Termination Proving *)
 let dis_term_chk = ref false
 let term_verbosity = ref 1
 let dis_call_num = ref false
@@ -1120,6 +1125,9 @@ let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+
+(* Options for Termination and Non-Termination Inference *)
+let en_tnt_infer = ref true
   
 (* Options for slicing *)
 let en_slc_ps = ref false

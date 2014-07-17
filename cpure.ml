@@ -3089,10 +3089,15 @@ and b_apply_subs_x sst bf =
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
     (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
-    | LexVar t_info -> 
+    | LexVar t_info ->
+        let ann = t_info.lex_ann in
+        let ann = match ann with
+        | TUnk (id, args) -> TUnk (id, List.map (fun (t, a, p) -> (t, subs_ident sst a, p)) args)
+        | _ -> ann in
         LexVar { t_info with
-				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+          lex_ann = ann;
+          lex_exp = e_apply_subs_list sst t_info.lex_exp;
+          lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
@@ -3174,6 +3179,15 @@ and subs_one sst v =
   let rec helper sst v = match sst with
     | [] -> v
     | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
+  in helper sst v
+  
+and subs_ident sst v = 
+  let rec helper sst v = match sst with
+    | [] -> v
+    | (fr, t)::sst -> 
+      if (String.compare (name_of_spec_var fr) v == 0) 
+      then name_of_spec_var t 
+      else helper sst v
   in helper sst v
 
 and e_apply_subs sst e = match e with
@@ -9282,12 +9296,15 @@ and has_func (f:formula): bool = match f with
   | BForm ((b,_),_) -> has_func_pf b
   | _ -> false
 
-let is_lexvar (f:formula) : bool =
+let is_lexvar_b_formula (bf: b_formula): bool =
+  let b, _ = bf in 
+  match b with
+  | LexVar _ -> true
+  | _ -> false 
+
+let is_lexvar (f:formula): bool =
   match f with
-    | BForm ((b,_),_) -> 
-              (match b with
-                | LexVar _ -> true
-                | _ -> false)
+    | BForm (bf, _) -> is_lexvar_b_formula bf
     | _ -> false
 
 let rec has_lexvar (f: formula) : bool =

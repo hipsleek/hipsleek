@@ -2393,9 +2393,6 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   wrap_classic etype (check_post_x_x prog proc ctx posts pos) pid
-
-
-      
       
 and pr_spec = Cprinter.string_of_struc_formula
 
@@ -3392,6 +3389,10 @@ let check_prog iprog (prog : prog_decl) =
     | Some cout -> close_out cout
     | _ -> ()
   in 
+  let _ = if !en_tnt_infer then
+    let unsat_formula f = Solver.unsat_base_nth 1 prog (ref 0) f in 
+    Tnt.process_infer unsat_formula
+  else () in 
   Term.term_check_output ()
 	    
 let check_prog iprog (prog : prog_decl) =

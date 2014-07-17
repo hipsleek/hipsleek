@@ -2718,14 +2718,16 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * Primitive functions: Term[] 
        * User-defined functions: MayLoop *)
       let is_primitive = not (proc.I.proc_is_main) in
+      let proc_name = proc.I.proc_mingled_name in 
+      let proc_args = List.map (fun p -> (p.I.param_type, p.I.param_name)) proc.I.proc_args in
       let static_specs_list = 
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive static_specs_list
+          CF.norm_struc_with_lexvar is_primitive proc_name proc_args static_specs_list 
         else static_specs_list
       in
       let dynamic_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive dynamic_specs_list
+          CF.norm_struc_with_lexvar is_primitive proc_name proc_args dynamic_specs_list
         else dynamic_specs_list
       in
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
