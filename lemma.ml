@@ -1498,8 +1498,9 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     | ((_,sv1),_)::rest -> if str_cmp sv sv1 then n
       else get_dfield_pos rest (n+1) sv
   in
-  let find_pos (view_fwd_para, (ddcl, data_fwd_fname) )=
+  let find_pos (view_fwd_para, data_fwd_fname)=
     try
+      let ddcl = C.look_up_data_def_raw cprog.C.prog_data_decls vd.C.view_data_name in
       let view_fwd_para_pos = Cfutil.get_pos vd.Cast.view_vars 0 view_fwd_para in
       let data_fwd_fname_pos =  get_dfield_pos ddcl.Cast.data_fields 0 data_fwd_fname in
       [(view_fwd_para, view_fwd_para_pos, (ddcl, data_fwd_fname),data_fwd_fname_pos )]

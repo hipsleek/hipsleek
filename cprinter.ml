@@ -3429,9 +3429,9 @@ let pr_view_decl v =
   pr_vwrap  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
   pr_vwrap  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
   pr_vwrap  "forward_fields: " 
-      (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_forward_fields;
+      (pr_list_none (fun f -> fmt_string (v.view_data_name ^ "." ^ f))) v.view_forward_fields;
   pr_vwrap  "backward_fields: " 
-      (pr_list_none (fun (d,f) -> fmt_string (d.data_name ^ "." ^ f))) v.view_backward_fields;
+      (pr_list_none (fun f -> fmt_string (v.view_data_name ^ "." ^ f))) v.view_backward_fields;
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;

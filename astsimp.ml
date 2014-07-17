@@ -2485,9 +2485,9 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
   let core_nodes = core_dnodes @ core_vnodes in
   let is_head node = CP.mem_svl (CF.get_node_var node) self_closure in
   let head_nodes, body_nodes = (
-    let head_nodes, rest = List.partition is_head core_nodes in
-    if (rest != []) then (head_nodes, rest)
-    else (head_nodes, head_nodes)
+    let heads, rest = List.partition is_head core_nodes in
+    if (rest != []) then (heads, rest)
+    else (heads, heads)
   ) in
   let collect_field node ptrs = (match node with
     | CF.DataNode dn -> 
@@ -2520,8 +2520,7 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
 
 and compute_view_forward_backward_info_x (vdecl: C.view_decl)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
-    : (  CP.spec_var list * (C.data_decl * ident) list
-       * CP.spec_var list * (C.data_decl * ident) list ) =
+    : (CP.spec_var list * ident list * CP.spec_var list * ident list) =
   (* find the main heap chain in view's definition, 
      and extract head and body nodes of this chain *)
   let extract_head_body_node f ddecl vdecl = (
@@ -2658,21 +2657,18 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
       ) unfold_fs;
     )
   ) induct_fs;
-  let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
-  let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
-  (!fwp, fwf, !bwp, bwf)
+  (!fwp, !fwf, !bwp, !bwf)
 
 and compute_view_forward_backward_info (vdecl: C.view_decl)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
-    : (  CP.spec_var list * (C.data_decl * ident) list
-       * CP.spec_var list * (C.data_decl * ident) list ) =
+    : (CP.spec_var list * ident list * CP.spec_var list * ident list) =
   let pr_vd = !C.print_view_decl in
   let pr_svl = pr_list !CP.print_sv in
   let pr_out (fwp,fwf,bwp,bwf) = (
     let fwp_s = pr_svl fwp in
-    let fwf_s = pr_list (fun(d,f) -> d.C.data_name^"."^f) fwf in
+    let fwf_s = pr_list idf fwf in
     let bwp_s = pr_svl bwp in
-    let bwf_s = pr_list (fun(d,f) -> d.C.data_name^"."^f) bwf in
+    let bwf_s = pr_list idf bwf in
     ("(fwp = " ^ fwp_s ^ "  ;; fwf = " ^ fwf_s 
      ^ "  ;; bwp = " ^ bwp_s ^ "  ;; bwf = " ^ bwf_s ^ ")") 
   ) in

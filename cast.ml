@@ -100,9 +100,9 @@ and view_decl = {
     view_mutual_rec_views: ident list;   (* list of mutual-recursive views with this view *)
     view_residents: P.spec_var list;     (* list of pointers reside in the memory allocated of view *) 
     view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)
-    view_forward_fields: (data_decl * ident) list;               (* definition of the view          *) 
+    view_forward_fields: ident list;                             (* definition of the view          *) 
     view_backward_ptrs: P.spec_var list;
-    view_backward_fields: (data_decl * ident) list;
+    view_backward_fields: ident list;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)

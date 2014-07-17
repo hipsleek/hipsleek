@@ -69,8 +69,7 @@ type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 (* return: (a list of atomic heap chain * the rest of hformula *)
 let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
     : (heap_chain list * CF.h_formula) =
-  if ((List.length root_view.C.view_forward_ptrs > 1) 
-      || (List.length root_view.C.view_forward_fields > 1)) then
+  if ((List.length root_view.C.view_forward_ptrs > 1) || (List.length root_view.C.view_forward_fields > 1)) then
     ([], hf)
   (* consider only the case the root view has at most 1 forward pointer and at most 1 forward field *)
   else (
@@ -80,7 +79,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
       | CF.DataNode dn ->
           if (eq_str dn.CF.h_formula_data_name root_dname) then (
             try 
-              let fw_field = snd (List.hd root_view.C.view_forward_fields) in
+              let fw_field = List.hd root_view.C.view_forward_fields in
               let ddecl = C.look_up_data_def_raw prog.C.prog_data_decls root_dname in
               let entry_sv = dn.CF.h_formula_data_node in
               let last_sv = entry_sv in
