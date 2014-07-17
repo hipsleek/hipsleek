@@ -27,39 +27,60 @@ relation acyclic(bag((int,int)) g).
      D  |- cyclic(S)
 */
 
-//VALID
+//VALID (1)
 checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT<C>.
 print residue.
 expect Valid.
 
+// (2)
 checkentail x::WAIT<B> & cyclic(B) |- x::WAIT<C> & cyclic(C).
 print residue.
 expect Valid.
+/* 
+ works with -tp z3
+ but not -tp zm
+*/
 
+// (3)
 checkentail x::WAIT<B> & B={} |- x::WAIT<C> & cyclic(C).
 print residue.
 expect Fail.
 
+// (4)
 checkentail x::WAIT<B> & B={} |- x::WAIT<C> & acyclic(C).
 print residue.
 expect Valid.
 
-
+// (5)
 checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} 
     |- x::WAIT<C> & cyclic(C).
 expect Valid.
 print residue.
 
+// (6)
 checkentail S = union(S1,{tup2(c1,c2)})
   |- S = union(S1,{tup2(c1,c2)}).
 expect Valid.
 print residue.
 
+// (7)
 checkentail S = union(S1,{tup2(c1,c2)})
   |- S = union(S1,{tup2(c2,c1)}).
 expect Fail.
 print residue.
 
+
+// (8)
+checkentail S = union(S1,{tup2(c1,c3)}) & c3=c2
+  |- S = union({tup2(c1,c2)},S1).
+expect Valid.
+print residue.
+
+// (9)
+checkentail S = union(S1,{tup2(c1,c2)}) & c1=c2
+  |- S = union(S1,{tup2(c2,c1)}).
+expect Valid.
+print residue.
 
 /*
    D= {..} |- |D|>4
