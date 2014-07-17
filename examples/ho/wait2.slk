@@ -17,8 +17,8 @@ relation acyclic(bag((int,int)) g).
 
   cyclic S /\ acyclic S  <->false
 
-  cyclic S & S2<=S2   --> cyclic S2
-  acyclic S & S0<= S --> acyclic S
+  cyclic S & S2 <=S2   --> cyclic S2
+  acyclic S & S0 <= S --> acyclic S
 
   cyclic S U S --> cyclic S
 
@@ -40,9 +40,24 @@ checkentail x::WAIT<B> & B={} |- x::WAIT<C> & cyclic(C).
 print residue.
 expect Fail.
 
+checkentail x::WAIT<B> & B={} |- x::WAIT<C> & acyclic(C).
+print residue.
+expect Valid.
+
+
 checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} 
     |- x::WAIT<C> & cyclic(C).
 expect Valid.
+print residue.
+
+checkentail S = union(S1,{tup2(c1,c2)})
+  |- S = union(S1,{tup2(c1,c2)}).
+expect Valid.
+print residue.
+
+checkentail S = union(S1,{tup2(c1,c2)})
+  |- S = union(S1,{tup2(c2,c1)}).
+expect Fail.
 print residue.
 
 
