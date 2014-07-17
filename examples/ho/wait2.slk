@@ -4,7 +4,12 @@ pred_prim WAIT<b:bag((int,int))>.
 
 relation cyclic(bag((int,int)) g).
 relation acyclic(bag((int,int)) g).
+
+
 /*
+
+  axiom true --> acylic({}) 
+
   cyclic {} = false
   cyclic S  = {(a,b)} U S'= S & path(S',b,a)
 
@@ -22,9 +27,24 @@ relation acyclic(bag((int,int)) g).
 
   cyclic S U S --> cyclic S
 
+// acyclic test
    D & acyclic(S) |- false
   -------------------------
      D  |- cyclic(S)
+
+=====
+
+// S is instantiated
+   D |- cyclic(S)
+  try acyclic test
+
+// if u ve relation on RHS, use
+   --> z3
+
+// if you have set on RHS
+   --> mona
+
+
 */
 
 //VALID (1)
@@ -32,9 +52,6 @@ checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT<C>.
 print residue.
 expect Valid.
 
-
-//this is ok for z3, but not for Mona
-checkentail cyclic(B) & B=C |- cyclic(C).
 
 // (2)
 checkentail x::WAIT<B> & cyclic(B) |- x::WAIT<C> & cyclic(C).
@@ -51,7 +68,7 @@ print residue.
 expect Fail.
 
 // (4)
-checkentail x::WAIT<B> & B={} |- x::WAIT<C> & acyclic(C).
+checkentail B={} & B=C |- acyclic(C).
 print residue.
 expect Valid.
 
@@ -84,6 +101,9 @@ checkentail S = union(S1,{tup2(c1,c2)}) & c1=c2
   |- S = union(S1,{tup2(c2,c1)}).
 expect Valid.
 print residue.
+
+//(10)this is ok for z3, but not for Mona
+checkentail cyclic(B) & B=C |- cyclic(C).
 
 /*
    D= {..} |- |D|>4
