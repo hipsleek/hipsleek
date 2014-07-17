@@ -32,6 +32,10 @@ checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT<C>.
 print residue.
 expect Valid.
 
+
+//this is ok for z3, but not for Mona
+checkentail cyclic(B) & B=C |- cyclic(C).
+
 // (2)
 checkentail x::WAIT<B> & cyclic(B) |- x::WAIT<C> & cyclic(C).
 print residue.
@@ -68,7 +72,6 @@ checkentail S = union(S1,{tup2(c1,c2)})
   |- S = union(S1,{tup2(c2,c1)}).
 expect Fail.
 print residue.
-
 
 // (8)
 checkentail S = union(S1,{tup2(c1,c3)}) & c3=c2
