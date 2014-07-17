@@ -99,7 +99,9 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
           )
           else ([], hf)
       | CF.ViewNode vn ->
-          if (eq_str vn.CF.h_formula_view_name root_vname) then (
+          let vname = vn.CF.h_formula_view_name in
+          let mutrec_vnames = root_view.C.view_mutual_rec_views in
+          if ((eq_str vname root_vname) || (mem_str_list vname mutrec_vnames)) then (
             try 
               let fw_ptr = List.hd root_view.C.view_forward_ptrs in
               let entry_sv = vn.CF.h_formula_view_node in
@@ -624,7 +626,7 @@ let generate_view_size_relation_x (vdecl: C.view_decl) (prog: C.prog_decl) : C.r
     with Not_found -> (0, [], [])
   ) in
   let rsize_name = prefix_sizeof ^ vdecl.C.view_name in
-  let rsize_var = CP.SpecVar(Int, fresh_name (), Unprimed) in
+  let rsize_var = CP.SpecVar(Int, "n", Unprimed) in
   let (view_branches, _) = List.split vdecl.C.view_un_struc_formula in
   let size_of_branches = List.map (fun f ->
     let pos = CF.pos_of_formula f in
@@ -663,8 +665,10 @@ let generate_view_size_relation (vdecl: C.view_decl) (prog: C.prog_decl) : C.rel
   Debug.no_1 "generate_view_size_relation" pr_view pr_rel
       (fun _ -> generate_view_size_relation_x vdecl prog) vdecl
 
-(* TRUNG: TODO *)
-(* let simplify_size_relation_of_view (rdecl: C.rel_decl) : C.rel_decl = *)
+(* TRUNG: TODO 
+ * - simplify, convert inductive relation to ordinary relation
+ * let simplify_size_relation_of_view (rdecl: C.rel_decl) : C.rel_decl =
+ *)
 
 let update_view_size_relations (prog: C.prog_decl) : unit =
   List.iter (fun vdecl ->
@@ -676,3 +680,5 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
       prog.C.prog_rel_decls <- rdecls @ [rel_size];
     )
   ) prog.C.prog_view_decls;
+
+(* let generate_schematic_predicate (vdecl: C.view_decl) (prog: C.prog_decl) *)
