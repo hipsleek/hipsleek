@@ -71,6 +71,15 @@ let eq_str s1 s2 = String.compare s1 s2 = 0
 let mem_str_list (s: string) (s_list: string list) =
   List.exists (fun x -> eq_str s x) s_list
 
+(* check if s is member of string list s_list *)
+let rec remove_dups_str_list (sl: string list) =
+  match sl with
+  | [] -> []
+  | hd::tl -> (
+      if (mem_str_list hd tl) then remove_dups_str_list tl
+      else hd::(remove_dups_str_list tl)
+    )
+
 (* fin the intersection of two string list *) 
 let intersect_str_list sl1 sl2 =
   List.filter (fun s -> mem_str_list s sl1) sl2
