@@ -1529,7 +1529,7 @@ let disj_cnt a c s =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
-  let f,_ = CP.translate_tup2_pure f in
+  let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let f = CP.infer_level_pure f in (*add l.mu>0*)

@@ -11426,6 +11426,9 @@ and translate_tup2_pure (pf : formula) : formula * ((spec_var * exp) list) =
   Convert: A & v1=tup2(a1,a2) |- B & v2=tup2(b1,b2)
   into: A & v1=tup2_a1_a2 & (a1=b1 & a2=b2 => tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
   or A & v1=tup2_a1_a2 & (a1!=b1 | a2!=b2 | tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
+
+  For v1=tup2(a1,a2) and v2=tup2(b1,b2), infer the following
+  (a1=b1 & a2=b2 => v1=v2) & (a1!=b1 | a2!=b2 => v1!=v2)
 *)
 and translate_tup2_imply_x (ante : formula) (conseq : formula) : formula * formula =
   let ante, a_ls = translate_tup2_pure ante in
@@ -11440,7 +11443,15 @@ and translate_tup2_imply_x (ante : formula) (conseq : formula) : formula * formu
             let f3 = mkEqVar v1 v2 no_pos in
             let f12 = mkOr f1 f2 None no_pos in
             let f123 = mkOr f12 f3 None no_pos in
-            f123
+            (* (a1!=b1 | a2!=b2 => v1!=v2) 
+               == (a1=b1 & a2=b2) | v1!=v2
+            *)
+            let ff1 = mkEqExp a1 b1 no_pos in
+            let ff2 = mkEqExp a2 b2 no_pos in
+            let ff3 = mkNeqVar v1 v2 no_pos in
+            let ff12 = mkAnd ff1 ff2 no_pos in
+            let ff123 = mkOr ff12 ff3 None no_pos in
+            (mkAnd f123 ff123 no_pos)
       | _ -> report_error no_pos ("translate_one_pair: expected Tup2 only\n")
   in
   let pairs = Gen.BList.get_all_pairs ls in
