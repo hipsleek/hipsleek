@@ -2483,11 +2483,11 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
   let core_dnodes = List.filter is_core_dnode (CF.get_dnodes f) in
   let core_vnodes = List.filter is_core_vnode (CF.get_vnodes f) in
   let core_nodes = core_dnodes @ core_vnodes in
-  let is_first_node node = CP.mem_svl (CF.get_node_var node) self_closure in
-  let first_nodes, last_nodes = (
-    let first_nodes, rest = List.partition is_first_node core_nodes in
-    if (rest != []) then (first_nodes, rest)
-    else (first_nodes, first_nodes)
+  let is_head node = CP.mem_svl (CF.get_node_var node) self_closure in
+  let head_nodes, body_nodes = (
+    let head_nodes, rest = List.partition is_head core_nodes in
+    if (rest != []) then (head_nodes, rest)
+    else (head_nodes, head_nodes)
   ) in
   let collect_field node ptrs = (match node with
     | CF.DataNode dn -> 
@@ -2497,9 +2497,9 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
         ) dn.CF.h_formula_data_arguments ddecl.C.data_fields)
     | _ -> []
   ) in
-  let new_bwf = List.concat (List.map (fun n -> collect_field n bwp) first_nodes) in
+  let new_bwf = List.concat (List.map (fun n -> collect_field n bwp) head_nodes) in
   let new_bwf = remove_dups_str_list (new_bwf @ bwf) in
-  let new_fwf = List.concat (List.map (fun n -> collect_field n fwp) last_nodes) in
+  let new_fwf = List.concat (List.map (fun n -> collect_field n fwp) body_nodes) in
   let new_fwf = remove_dups_str_list (new_fwf @ fwf) in
   (* find forward, backward pointer using first and last nodes *)
   let collect_pointer node fields = (match node with
@@ -2512,9 +2512,9 @@ and collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
         ) dn.CF.h_formula_data_arguments ddecl.C.data_fields)
     | _ -> []
   ) in
-  let new_bwp = List.concat (List.map (fun node -> collect_pointer node bwf) first_nodes) in
+  let new_bwp = List.concat (List.map (fun node -> collect_pointer node bwf) head_nodes) in
   let new_bwp = CP.remove_dups_svl (new_bwp @ bwp) in
-  let new_fwp = List.concat (List.map (fun node -> collect_pointer node fwf) last_nodes) in
+  let new_fwp = List.concat (List.map (fun node -> collect_pointer node fwf) body_nodes) in
   let new_fwp = CP.remove_dups_svl (new_fwp @ fwp) in
   (new_fwp, new_fwf, new_bwp, new_bwf)
 
@@ -2566,13 +2566,11 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
     | _ -> [] 
   ) in
 
-  let pos = vdecl.C.view_pos in
   let ddecl = C.look_up_data_def_raw data_decls vdecl.C.view_data_name in
   let base_fs, induct_fs = split_view_branches vdecl in
-  let head_body_info = List.map (fun f -> extract_head_body_node f ddecl vdecl) induct_fs in
-  (* do fix point iteration to find forward, backward info *)
   let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
-  List.iter2 (fun induct_f (head_nodes, body_nodes) ->
+  List.iter (fun induct_f ->
+    let head_nodes, body_nodes = extract_head_body_node induct_f ddecl vdecl in
     (* find forward, backward info from head and body node *)
     let head_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) head_nodes) in
     let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
@@ -2580,46 +2578,39 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
     let eqs = MCP.ptr_equations_without_null pf in
     let _ = List.iter (fun head_node -> match head_node with
       | CF.ViewNode vn -> 
-          List.iter2 (fun sv1 sv2 ->
+          let new_fwps = List.concat (List.map2 (fun sv1 sv2 ->
             let sv1_closure = CF.find_close [sv1] eqs in
             let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
-            fwp := CP.remove_dups_svl (sv2::!fwp);
-          ) vn.CF.h_formula_view_arguments vdecl.C.view_vars;
+            if (List.length rch_ptrs > 0) then [sv2] else []
+          ) vn.CF.h_formula_view_arguments vdecl.C.view_vars) in
+          fwp := CP.remove_dups_svl (new_fwps @ !fwp)
       | CF.DataNode dn ->
-          List.iter2 (fun sv1 ((_,fld),_) ->
+          let new_fwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
             let sv1_closure = CF.find_close [sv1] eqs in
             let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
-            let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
-            if (List.length rch_ptrs > 0) then
-              fwf := remove_dups_str_list (fld::!fwf);
-          ) dn.CF.h_formula_data_arguments ddecl.C.data_fields;
+            if (List.length rch_ptrs > 0) then [fld] else []
+          ) dn.CF.h_formula_data_arguments ddecl.C.data_fields) in
+          fwf := remove_dups_str_list (new_fwfs @ !fwf)
       | _ -> ()
     ) head_nodes in
-    let new_bwps, new_bwfs = ref [], ref [] in 
     let _ = List.iter (fun body_node ->
       match body_node with
       | CF.ViewNode vn ->
-          let p_bwps = List.concat (List.map2 (fun sv1 sv2 ->
+          let new_bwps = List.concat (List.map2 (fun sv1 sv2 ->
             let sv1_closure = CF.find_close [sv1] eqs in
             let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
             if (List.length rch_ptrs > 0) then [sv2] else []
           ) vn.CF.h_formula_view_arguments vdecl.C.view_vars) in
-          if (!new_bwps = []) then new_bwps := p_bwps
-          else if (p_bwps != []) then
-            new_bwps := Cpure.intersect_svl !new_bwps p_bwps;
+          bwp := CP.remove_dups_svl (new_bwps @ !bwp)
       | CF.DataNode dn ->
-          let p_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
+          let new_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
             let sv1_closure = CF.find_close [sv1] eqs in
             let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
             if (List.length rch_ptrs > 0) then [fld] else []
           ) dn.CF.h_formula_data_arguments ddecl.C.data_fields) in
-          if (!new_bwfs = []) then new_bwfs := p_bwfs
-          else if (p_bwfs != []) then
-            new_bwfs := Gen.BList.intersect_eq eq_str !new_bwfs p_bwfs;
+          bwf := remove_dups_str_list (new_bwfs @ !bwf)
       | _ -> ()
     ) body_nodes in
-    bwp := CP.remove_dups_svl (!new_bwps @ !bwp);
-    bwf := remove_dups_str_list (!new_bwfs @ !bwf);
     Debug.binfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
           "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
         ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)
@@ -2652,9 +2643,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
       let unfold_fs = List.fold_left (fun fs vd ->
         let base_fs, _ = split_view_branches vd in
         List.concat (List.map (fun base_f ->
-          List.map (fun f ->
-            replace_view_node_by_formula f vd base_f
-          ) fs
+          List.map (fun f -> replace_view_node_by_formula f vd base_f) fs
         ) base_fs)
       ) [induct_f] rec_views in
       List.iter (fun unfold_f ->
@@ -2668,7 +2657,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
           ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
       ) unfold_fs;
     )
-  ) induct_fs head_body_info;
+  ) induct_fs;
   let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
   let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
   (!fwp, fwf, !bwp, bwf)
