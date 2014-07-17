@@ -12,8 +12,8 @@ data node {
   node next;
 }.
 
-pred lseg<n,sum> == self=null & n=0 & sum=0
-  or self::node<v,r> * r::lseg<n-1,sum-2>
+pred even<n,sum> == self=null & n=0 & sum=0
+  or self::node<v,r> * r::even<n-1,sum-2>
  //inv sum=3*n & n>=0
  .
 

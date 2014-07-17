@@ -188,6 +188,32 @@ Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR 
 
 
 ================================================================
+# even-mut.fc/slk (* fixcalc *)
+
+pred meven_new<n,i> == self=null & n=0 & i=0
+     or self::node<_,r> * r::modd_new<n-1,i-1>
+//inv i>=0 & n=2*i
+.
+
+pred modd_new<n,i> == 
+     self::node<_,r> * r::meven_new<n-1,i>
+//inv i>=0 & n=2*i+1
+.
+// fix-point computation for mutual-recursion is inaccurate!
+//!!! new inv(meven_new): i>=0 & n>=0
+//!!! new inv(modd_new): self!=Cnull & n>=1 & i>=0
+
+
+Currently obtained:
+# meven_new:={ ... };
+# modd_new:={ ... };
+(i_63 >= 0 && n_62 >= 0)
+(n_64 >= 1 && i_65 >= 0)
+
+Expecting:
+//inv i>=0 & n=2*i
+//inv i>=0 & n=2*i+1
+
 ================================================================
 ================================================================
 ================================================================

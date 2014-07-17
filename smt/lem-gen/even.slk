@@ -1,0 +1,55 @@
+/*
+ x::ll<n> & n=5 & x.next.next!=null
+
+
+   pred --> over_approx
+  
+  under_approx --> pred
+*/
+
+data node {
+  int val;
+  node next;
+}.
+
+pred even<n> == self=null & n=0 
+  or self::node<v,r> * r::node<_,r2> * r2::even<n-2>
+//!!! new inv(even): n>=0
+ .
+
+// add counter i for number recursive calls
+pred even_new<n,i> == self=null & n=0 & i=0
+  or self::node<v,r> * r::node<_,r2> * r2::even_new<n-2,i-1>
+//!!! new inv(even_new): n=2*i & i>=0
+ .
+
+pred odd_new<n,i> == self::node<_,null> & n=1 & i=0
+  or self::node<v,r> * r::node<_,r2> * r2::odd_new<n-2,i-1>
+//!!! new inv(odd_new): n=1+(2*i) & i>=0 & self!=Cnull
+.
+
+pred meven<n> == self=null & n=0
+     or self::node<_,r> * r::modd<n-1>
+.
+//!!! new inv(meven): n>=0
+
+pred modd<n> == 
+     self::node<_,r> * r::meven<n-1>
+.
+//!!! new inv(modd): self!=Cnull & n>=1
+
+
+pred meven_new<n,i> == self=null & n=0 & i=0
+     or self::node<_,r> * r::modd_new<n-1,i-1>
+//inv i>=0 & n=2*i
+.
+//!!! new inv(meven): n>=0
+
+pred modd_new<n,i> == 
+     self::node<_,r> * r::meven_new<n-1,i>
+//inv i>=0 & n=2*i+1
+.
+// fix-point computation for mutual-recursion is inaccurate!
+//!!! new inv(meven_new): i>=0 & n>=0
+//!!! new inv(modd_new): self!=Cnull & n>=1 & i>=0
+

@@ -1,0 +1,7 @@
+
+meven_new:={[n_62,i_63] -> [] -> []: (n_62=0 && i_63=0) ||  exists (flted_17_20,flted_17_21,Anon_12: (self>0 && modd_new(flted_17_21,flted_17_20)) && (flted_17_21+1=n_62 && flted_17_20+1=i_63))
+};
+
+modd_new:={[n_64,i_65] -> [] -> []:  exists (i_17,flted_23_16,Anon_13: ( meven_new(flted_23_16,i_17)) && (flted_23_16+1=n_64 && i_17=i_65))
+};
+bottomupgen([meven_new,modd_new], [1,1], SimHeur);

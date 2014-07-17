@@ -1,0 +1,29 @@
+/*
+ x::ll<n> & n=5 & x.next.next!=null
+
+
+   pred --> over_approx
+  
+  under_approx --> pred
+*/
+
+data node {
+  int val;
+  node next;
+}.
+
+
+pred meven_new<n,i> == self=null & n=0 & i=0
+     or self::node<_,r> * r::modd_new<n-1,i-1>
+//inv i>=0 & n=2*i
+.
+//!!! new inv(meven): n>=0
+
+pred modd_new<n,i> == 
+     self::node<_,r> * r::meven_new<n-1,i>
+//inv i>=0 & n=2*i+1
+.
+// fix-point computation for mutual-recursion is inaccurate!
+//!!! new inv(meven_new): i>=0 & n>=0
+//!!! new inv(modd_new): self!=Cnull & n>=1 & i>=0
+
