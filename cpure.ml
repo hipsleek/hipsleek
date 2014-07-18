@@ -11684,11 +11684,12 @@ and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (rel : p_formu
   TODO: if B is partially concrete -> check its concrete part.
 *)
 and translate_acyclic_pure_x (f: formula) : formula =
+  (*attempt to concretize bag constraints*)
   let f = concretize_bag_pure f in
+  let concrete_bags = get_concretized_bag_pure f in
+  (*extract acyclic relations, and translate them*)
   let rel_sv = mk_spec_var Globals.acyclic_name in
   let (nf,rels) = extract_rel_pure f rel_sv in
-  let concrete_bags = get_concretized_bag_pure f in
-  (*Make sure the #args and typ is correct*)
   let fs = List.map (create_acyclic_rel concrete_bags) rels in
   let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) f fs in
   nf
