@@ -14,9 +14,16 @@ relation acyclic(bag((int,int)) g).
 
 //checkentail B={tup2(1,2),tup2(1,2)} |- cyclic(B).
 
+/*
 checkentail B={tup2(1,2),tup2(1,2)} & acyclic(B) |- true.
 expect Valid.
 
 checkentail B={tup2(1,2),tup2(2,1)} & acyclic(B) |- false.
 expect Valid.
+*/
 
+checkentail B={tup2(1,2),tup2(2,1)} |- true & cyclic(B).
+expect Valid.
+
+checkentail B={tup2(1,2),tup2(1,2)} |- true & cyclic(B).
+expect Fail.

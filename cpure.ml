@@ -9480,6 +9480,16 @@ let is_lexvar (f:formula) : bool =
                 | _ -> false)
     | _ -> false
 
+let is_cyclic_rel (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.cyclic_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
+
 let rec has_lexvar (f: formula) : bool =
   match f with
   | BForm _ -> is_lexvar f
@@ -11602,6 +11612,30 @@ and concretize_bag_pure (pf : formula) : formula =
   Debug.no_1 "concretize_bag_pure" !print_formula !print_formula
       concretize_bag_pure_x pf
 
+(* Convert all cyclic(B) into acyclic(B) *)
+and from_cyclic_to_acyclic_rel_pure_x (pf : formula) : formula =
+  let f_bf arg bf =
+    let pf, lbl = bf in
+    (match pf with
+      | RelForm (SpecVar (t,id,pr),exps,pos) ->
+            (*convert*)
+            if (id = Globals.cyclic_name) then
+              let npf = RelForm (SpecVar (t,Globals.acyclic_name,pr),exps,pos) in 
+              Some ((npf,lbl), [])
+            else Some (bf, [])
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, _ = trans_formula pf arg f f_arg f_comb in
+  npf
+
+and from_cyclic_to_acyclic_rel_pure (pf : formula) : formula =
+  Debug.no_1 "from_cylic_to_acyclic_rel_pure" !print_formula !print_formula
+  from_cyclic_to_acyclic_rel_pure_x pf
+
 (*
   pf: (A & acylic(X) & B)
   rel_name: acylic
@@ -11628,6 +11662,32 @@ and extract_rel_pure (pf : formula) (rel_name : spec_var): formula * (p_formula 
   let pr_out = pr_pair !print_formula (pr_list !print_p_formula) in
   Debug.no_2 "extract_rel_pure" !print_formula !print_sv pr_out
   extract_rel_pure_x pf rel_name
+
+and extract_cyclic_rel_pure_x (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.cyclic_name in
+  extract_rel_pure pf rel_sv
+
+and extract_cyclic_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let pr_out = pr_pair !print_formula (pr_list !print_p_formula) in
+  Debug.no_1 "extract_cyclic_rel_pure" !print_formula pr_out
+  extract_cyclic_rel_pure_x pf
+
+
+(* Check whether there is cyclic(B) *)
+and has_cyclic_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.cyclic_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+and has_cyclic_rel_pure f0 =
+  Debug.no_1 "has_cyclic_rel_pure" !print_formula string_of_bool
+      has_cyclic_rel_pure_x f0
 
 (*
   Expect: acylic(B)

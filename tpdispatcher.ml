@@ -2231,7 +2231,23 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 				end
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
-  let ante = CP. translate_acyclic_pure ante in
+  (**************************************)
+  let ante,conseq = 
+    if (is_cyclic_rel conseq) then
+      (*
+        ante & acyclic(B) |- false
+        -------------------------------
+        ante |- cyclic(B) 
+      *)
+      let conseq = CP.from_cyclic_to_acyclic_rel_pure conseq in
+      let ante = CP.mkAnd ante conseq no_pos in
+      let ante = CP. translate_acyclic_pure ante in
+      let conseq = CP.mkFalse no_pos in
+      (ante,conseq)
+    else
+      (ante,conseq)
+  in
+  (**************************************)
   let ante, conseq = CP.translate_tup2_imply ante conseq in
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
