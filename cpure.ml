@@ -11466,6 +11466,133 @@ and translate_tup2_imply (ante : formula) (conseq : formula) : formula * formula
   Debug.no_2 "translate_tup2_imply" !print_formula !print_formula pr_out
   translate_tup2_imply_x ante conseq
 
+(*
+  Identify concretized bag constraints
+  Input: B=union(S1,S2) & S1={a} & S2={b}
+  Output: [(S1,{a}), (S2,{b})]
+*)
+
+and get_concretized_bag_pure_x (pf : formula) : (spec_var * exp list) list =
+  let f_bf arg bf =
+    let pf, _ = bf in
+    (match pf with
+      | Eq (e1,e2,pos) ->
+            (match e1,e2 with
+              | Var (sv,_), Bag (el,_)
+              | Bag (el,_), Var (sv,_) -> Some (bf, [sv,el])
+              | _ -> Some (bf,[]))
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let _, ls = trans_formula pf arg f f_arg f_comb in
+  ls
+
+and get_concretized_bag_pure (pf : formula) : (spec_var * exp list) list =
+  let pr_out = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_1 "get_concretized_bag_pure" !print_formula pr_out
+      get_concretized_bag_pure_x pf
+
+(* and is_concrete_bag_exp e : bool = *)
+(*   (match e with *)
+(*     | Bag (exps,_) -> *)
+(*           List.forall  *)
+(*     | _ -> false) *)
+
+(*
+  pf: B=union(S1,S2) & S1={a} & S2={b}
+  args: [(S1,{a}), (S2,{b})]
+  Out: B=bag{a,b} & S1={a} & S2={b}
+*)
+and apply_concretized_bag_pure_x (pf : formula) (args: (spec_var * exp list) list): formula =
+  let f_bf arg bf =
+    let pf, lbl = bf in
+    (match pf with
+      | Eq (e1,e2,pos) ->
+            (match e1,e2 with (*Also need to support BagIntersect and BagDiff*)
+              | Var (sv,l1), BagUnion (el,l2)
+              | BagUnion (el,l2), Var (sv,l1) ->
+                    let helper_one x =
+                      (match x with
+                        | Var (v2,_) ->
+                              (try
+                                let (_, exps) = List.find (fun (v1,exps) -> eq_spec_var v1 v2) args in
+                                (*replace v2 by its concrete value*)
+                                Some exps
+                              with Not_found -> None)
+                        | Bag (es,_) -> Some es
+                        | _ -> None)
+                    in
+                    let rec helper el : (bool * exp list) =
+                      (match el with
+                        | [] -> (true, [])
+                        | x::xs ->
+                              let nx = helper_one x in
+                              (match nx with
+                                | None -> (false,[])
+                                | Some x2 ->
+                                      let b,nxs = helper xs in
+                                      (b,x2@nxs)))
+                    in
+                    let flag,nel = helper el in
+                    if (flag) then
+                      (*All elements in el are conrete.
+                        Convert union into a big bag*)
+                      let npf = Eq (Var (sv,l1),Bag (nel,l2),pos) in
+                      let nbf = npf, lbl in
+                      Some (nbf,[]) (*dummy []*)
+                    else
+                      (*Failed to concretize*)
+                      Some (bf,[]) (*dummy []*)
+              | _ -> Some (bf,[]) (*dummy []*) 
+            )
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let nf, _ = trans_formula pf arg f f_arg f_comb in
+  nf
+
+and apply_concretized_bag_pure (pf : formula) (args: (spec_var * exp list) list): formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_2 "apply_concretized_bag_pure" !print_formula pr1 !print_formula
+      apply_concretized_bag_pure_x pf args
+
+(*
+  Attempt to concretize bags constraints, wherever possible.
+  E.g.
+  B=union(S1,S2) & S1={a} & S2={b}
+  ==>
+  B=union({a},{b}) & S1={a} & S2={b}
+  B={a,b} & S1={a} & S2={b}
+
+  Method: a fixpoint operation over two phases:
+  (1) get_concretized_bag_pure
+  (2) if fixpoint reached -> stop.
+  Otherwise, attemp to do concretization
+*)
+
+and concretize_bag_pure_x (pf : formula) : formula =
+  let rec helper_loop (pf : formula) (args: (spec_var * exp list) list): formula =
+    let ls = get_concretized_bag_pure pf in
+    let vs,_ = List.split args in
+    let new_vs,_ = List.split ls in
+    if (Gen.BList.difference_eq eq_spec_var new_vs vs) =[] then
+      pf (* Reach a fixpoint*)
+    else
+      (*if found new concretized vars --> iterate*)
+      let npf = apply_concretized_bag_pure pf ls in
+      helper_loop npf ls
+  in
+  helper_loop pf []
+
+and concretize_bag_pure (pf : formula) : formula =
+  Debug.no_1 "concretize_bag_pure" !print_formula !print_formula
+      concretize_bag_pure_x pf
 
 let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =

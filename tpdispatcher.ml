@@ -1531,6 +1531,7 @@ let rec tp_is_sat_no_cache_xx (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   let f = simplify_with_pairwise 0 f in
   let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
+  let f = CP.concretize_bag_pure f in
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let f = CP.infer_level_pure f in (*add l.mu>0*)
@@ -2231,6 +2232,7 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 				end
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante = CP. concretize_bag_pure ante in
   let ante, conseq = CP.translate_tup2_imply ante conseq in
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)

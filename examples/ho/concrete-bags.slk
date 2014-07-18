@@ -1,0 +1,15 @@
+/*
+  -tp mona
+
+  Convert using "concretize_bag_pure":
+   B=union(S1,{1,2}) & S1=union(S2,{3,4}) & S2={5,6,1,2}
+   ==>
+    B={5,6,1,2,3,4,1,2} & S1={5,6,1,2,3,4} & S2={5,6,1,2}
+
+   Currently, only support union() and Bag().
+
+*/
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) & S2={5,6,1,2} |- true.
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) |- true.
