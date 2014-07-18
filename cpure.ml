@@ -3092,7 +3092,9 @@ and b_apply_subs_x sst bf =
     | LexVar t_info ->
         let ann = t_info.lex_ann in
         let ann = match ann with
-        | TUnk (id, args) -> TUnk (id, List.map (fun (t, a, p) -> (t, subs_ident sst a, p)) args)
+        | TUnk (id, args) -> TUnk (id, List.map (fun (t, a, p) -> 
+            let nv = match (subs_one sst (SpecVar (t, a, p))) with
+            | SpecVar (nt, na, np) -> (nt, na, np) in nv) args)
         | _ -> ann in
         LexVar { t_info with
           lex_ann = ann;
@@ -3179,15 +3181,6 @@ and subs_one sst v =
   let rec helper sst v = match sst with
     | [] -> v
     | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
-  in helper sst v
-  
-and subs_ident sst v = 
-  let rec helper sst v = match sst with
-    | [] -> v
-    | (fr, t)::sst -> 
-      if (String.compare (name_of_spec_var fr) v == 0) 
-      then name_of_spec_var t 
-      else helper sst v
   in helper sst v
 
 and e_apply_subs sst e = match e with
