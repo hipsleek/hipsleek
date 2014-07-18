@@ -67,8 +67,16 @@ let is_self_spec_var sv = match sv with
 let is_res_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = res_name
 
+let is_tup2_typ sv = match sv with
+  | SpecVar (Globals.Tup2 _,_,_) -> true
+  | _ -> false
+
 let is_bag_typ sv = match sv with
   | SpecVar (BagT _,_,_) -> true
+  | _ -> false
+
+let is_bag_tup2_typ sv = match sv with
+  | SpecVar (BagT t,_,_) -> (match t with | Globals.Tup2 _ -> true | _ -> false)
   | _ -> false
 
 let is_rel_typ sv = match sv with
@@ -11593,6 +11601,101 @@ and concretize_bag_pure_x (pf : formula) : formula =
 and concretize_bag_pure (pf : formula) : formula =
   Debug.no_1 "concretize_bag_pure" !print_formula !print_formula
       concretize_bag_pure_x pf
+
+(*
+  pf: (A & acylic(X) & B)
+  rel_name: acylic
+  out: (A&B, [acylic(X)])
+*)
+and extract_rel_pure_x (pf : formula) (rel_name : spec_var): formula * (p_formula list)  =
+  let f_bf arg bf =
+    let pf, _ = bf in
+    (match pf with
+      | RelForm (sv,_,pos) ->
+            (*extract*)
+            if (eq_spec_var sv rel_name) then Some (mkTrue_b pos, [pf])
+            else Some (bf, [])
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, ls = trans_formula pf arg f f_arg f_comb in
+  (npf,ls)
+
+and extract_rel_pure (pf : formula) (rel_name : spec_var): formula * (p_formula list)  =
+  let pr_out = pr_pair !print_formula (pr_list !print_p_formula) in
+  Debug.no_2 "extract_rel_pure" !print_formula !print_sv pr_out
+  extract_rel_pure_x pf rel_name
+
+(*
+  Expect: acylic(B)
+  - rel is a RelForm
+  - #exps = 1
+  - sv is of typ Tup2
+  - sv is concrete (i.e. it is in the concrete_bags)
+
+  Out: the formula forall (v1,v2) \in B. v1<v2
+*)
+and create_acyclic_rel_x (concrete_bags:(spec_var * exp list) list) (rel : p_formula) : formula =
+  let str = !print_p_formula rel in
+  (match rel with
+    | RelForm (sv,exps,pos) ->
+          if (List.length exps !=1) then
+            report_error no_pos ("translate_acyclic_pure: expect a single arg in " ^ str ^ " ! \n")
+          else
+            let e = List.hd exps in
+            (match e with
+              | Var (sv,_) ->
+                    if (is_bag_tup2_typ sv) then
+                      (try
+                        let _, exps = (List.find (fun (v1,_) -> eq_spec_var v1 sv) concrete_bags) in
+                        (*consistent*)
+                        List.fold_left (fun res e ->
+                        match e with
+                          | Tup2 ((e1,e2),_) ->
+                                let lt_f = mkLtExp e1 e2 no_pos in
+                                mkAnd res lt_f no_pos
+                          | _ -> report_error no_pos ("translate_acyclic_pure: expect Tup2 only !\n")
+                        ) (mkTrue no_pos) exps
+                      with Not_found ->
+                        report_error no_pos ("translate_acyclic_pure: expect concrete" ^ (!print_sv sv) ^ " !\n"))
+                    else
+                      report_error no_pos ("translate_acyclic_pure: expect v of typ Tup2 in " ^ str ^ " !\n")
+              | _ -> report_error no_pos ("translate_acyclic_pure: expect acyclic(v)! \n"))
+    | _ -> report_error no_pos ("translate_acyclic_pure: expecting RelForm! \n"))
+
+and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (rel : p_formula) : formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_2 "create_acyclic_rel"
+      pr1
+      !print_p_formula
+      !print_formula
+      create_acyclic_rel_x concrete_bags rel
+
+
+(*
+  forall acyclic(B) in f.
+  (1) B is a set of pairs. Otherwise, undefined (error)
+  (2) B is concrete. Otherwise, undefined
+  then, forall (v1,v2) \in B. v1<v2
+
+  TODO: if B is partially concrete -> check its concrete part.
+*)
+and translate_acyclic_pure_x (f: formula) : formula =
+  let f = concretize_bag_pure f in
+  let rel_sv = mk_spec_var Globals.acyclic_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let concrete_bags = get_concretized_bag_pure f in
+  (*Make sure the #args and typ is correct*)
+  let fs = List.map (create_acyclic_rel concrete_bags) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) f fs in
+  nf
+
+and translate_acyclic_pure (f: formula) : formula =
+  Debug.no_1 "translate_acyclic_pure" !print_formula !print_formula
+  translate_acyclic_pure_x f
 
 let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =

@@ -678,6 +678,9 @@ let this = "this"
 
 let is_self_ident id = self=id
 
+let acyclic_name = "acyclic"
+let cyclic_name = "cyclic"
+
 let thread_name = "thread"  (*special thread id*)
 let thread_typ = Int  (*special thread id*)
 let proc_typ = Void  (*special thread id*)
