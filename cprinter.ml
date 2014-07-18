@@ -1185,7 +1185,7 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid; *)
 	      (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
               pr_spec_var sv; fmt_string "::";
-              (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+              (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
               else pr_angle (c^perm_str) (fun (x,y) -> 
                   (* prints absent field as "#" *)
                   (* if is_absent y then fmt_string "#" *)
@@ -2024,6 +2024,8 @@ and pr_formula_for_spec e =
 
 and pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
+and prtt_pr_formula_wrap e = (wrap_box ("H",1) prtt_pr_formula) e
+
 and pr_formula_guard ((e,g):formula_guard)=
   let s1 = (prtt_pr_formula e) in
   match g with
@@ -2221,7 +2223,7 @@ let pr_hprel_short hpa=
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
 
-let pr_hprel_short_inst cprog hpa=
+let pr_hprel_short_inst cprog post_hps hpa=
   fmt_open_box 1;
   (* fmt_string "hprel(2)"; *)
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
@@ -2348,8 +2350,8 @@ let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
-let string_of_hprel_short_inst prog hp =
-  poly_string_of_pr (pr_hprel_short_inst prog) hp
+let string_of_hprel_short_inst prog post_hps hp =
+  poly_string_of_pr (pr_hprel_short_inst prog post_hps) hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
 
@@ -2450,7 +2452,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
-          pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
+          pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog [])) (hprel); 
           f b;
           fmt_print_newline ();
           fmt_close_box ();
@@ -3012,28 +3014,37 @@ let pr_context_short (ctx : context) =
       e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars,e.es_infer_hp_rel(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars,es_infer_hp_rel(* , vars_ref *)) =
+  begin
     fmt_open_vbox 0;
     let f1 = f
       (* if !Globals.print_en_tidy *)
       (* then Cformula.shorten_formula f *)
       (* else f *)
-    in pr_formula_wrap f1;
-    pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
-    pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
-    pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
-    (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
-    pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
-    pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
-    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
-    pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
-    (* pr_vwrap "es_trace: " pr_es_trace trace; *)
-    (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *)
-    pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
-    pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
-	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars;
-        pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; 
+    in
+     (* if true then begin *)
+(*     pr_formula_wrap f1; *)
+(*     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh; *)
+(*     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms; *)
+(*     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv; *)
+(*     (\*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*\) *)
+(*     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;  *)
+(*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
+(*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
+(*     pr_wrap_opt "es_var_measures 2: " pr_var_measures vm; *)
+(*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
+(*     (\* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *\) *)
+(*     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp; *)
+(*     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces; *)
+(* 	pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) evars; *)
+(*         pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
+(* end *)
+(*   else begin *)
+     prtt_pr_formula_wrap f1 ;
+       pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel;
+  (* end *)
     fmt_string "\n";
     fmt_close_box();
+  end
   in 
   let pr_disj ls = 
     if (List.length ls == 1) then pr (List.hd ls)

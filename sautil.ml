@@ -1694,7 +1694,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
 
 let simp_match_hp_w_unknown prog unk_hps link_hps cs=
   let pr1 = !CP.print_svl in
-  let pr2 = Cprinter.string_of_hprel_short_inst prog in
+  let pr2 = Cprinter.string_of_hprel_short_inst prog [] in
   Debug.no_3 "simp_match_hp_w_unknown" pr1 pr1 pr2 pr2
       (fun _ _ _ -> simp_match_hp_w_unknown_x prog unk_hps link_hps cs)
       unk_hps link_hps cs

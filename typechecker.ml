@@ -2211,7 +2211,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
-			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog [] x) in
                           (* let pr = if !Globals.print_html then Cprinter.string_of_html_hprel_short *)
                           let pr_len x = string_of_int (List.length x) in
                           print_endline (pr (ras1));
@@ -2809,13 +2809,16 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
-			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog sel_post_hp_rels x) in
                           (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)
                           let pr_len x = string_of_int (List.length x) in
                           (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
                           (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
                           (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
-                          print_endline (pr (ras1));
+                          let old_print_imm = !print_ann in
+                          let _= if !print_html then let _ = print_ann:= false in () else () in
+                          let _  = print_endline (pr (ras1)) in
+                          let _ = print_ann:=  old_print_imm in
                           (* print_endline (pr (hp_lst_assume)); *)
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                           if !Globals.testing_flag then print_endline "<rstop>*************************************"
