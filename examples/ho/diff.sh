@@ -9,6 +9,8 @@ echo "======= bag-of-pairs.slk ======"
 diff test-cases/bag-of-pairs.slk.res test-cases/bag-of-pairs.slk.n
 echo "======= wait2z.slk ======"
 diff test-cases/wait2z.slk.res test-cases/wait2z.slk.n
+echo "======= wait2.slk ======"
+diff test-cases/wait2.slk.res test-cases/wait2.slk.n
 echo "======= latch.slk  ======"
 diff test-cases/latch.slk.res test-cases/latch.slk.n
 

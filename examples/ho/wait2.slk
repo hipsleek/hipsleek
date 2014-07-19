@@ -47,20 +47,15 @@ relation acyclic(bag((int,int)) g).
 
 */
 
-//VALID (1)
+// (1)
 checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT<C>.
 print residue.
 expect Valid.
-
 
 // (2)
 checkentail x::WAIT<B> & cyclic(B) |- x::WAIT<C> & cyclic(C).
 print residue.
 expect Valid.
-/* 
- works with -tp z3
- but not -tp zm
-*/
 
 // (3)
 checkentail x::WAIT<B> & B={} |- x::WAIT<C> & cyclic(C).
@@ -68,7 +63,7 @@ print residue.
 expect Fail.
 
 // (4)
-checkentail B={} & B=C |- acyclic(C).
+checkentail B={} & B=C & acyclic(C) |- true.
 print residue.
 expect Valid.
 
@@ -102,8 +97,10 @@ checkentail S = union(S1,{tup2(c1,c2)}) & c1=c2
 expect Valid.
 print residue.
 
-//(10)this is ok for z3, but not for Mona
+//(10)
 checkentail cyclic(B) & B=C |- cyclic(C).
+expect Valid.
+
 
 /*
    D= {..} |- |D|>4

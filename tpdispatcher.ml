@@ -1533,6 +1533,7 @@ let disj_cnt a c s =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
+  let f = CP.concretize_bag_pure f in
   let f = CP.translate_acyclic_pure f in
   let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
   let f = if (!Globals.allow_locklevel) then
@@ -2241,20 +2242,29 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = 
     if (is_cyclic_rel conseq) then
       (*
-        ante & acyclic(B) |- false
-        -------------------------------
-        ante |- cyclic(B) 
+        CASE 1:
+
+        ante & acyclic(B) |- false      concrete(B,ante)
+        -----------------------------------------------
+                      ante |- cyclic(B)
       *)
-      let conseq = CP.from_cyclic_to_acyclic_rel_pure conseq in
-      let ante = CP.mkAnd ante conseq no_pos in
-      let ante = CP. translate_acyclic_pure ante in
-      let conseq = CP.mkFalse no_pos in
-      (ante,conseq)
+      let ante = concretize_bag_pure ante in
+      let _ , c_rels = CP.extract_cyclic_rel_pure conseq in
+      if (check_concrete_cyclic_rel_pure ante c_rels) then
+        (* CASE 1 *)
+        let to_ante = CP.from_cyclic_to_acyclic_rel_pure conseq in
+        let new_ante = CP.mkAnd ante to_ante no_pos in
+        let new_ante = CP. translate_acyclic_pure new_ante in
+        let new_conseq = CP.mkFalse no_pos in
+        (new_ante,new_conseq)
+      else
+        (ante,conseq)
     else
       (ante,conseq)
   in
-  (**************************************)
+  let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
   let ante, conseq = CP.translate_tup2_imply ante conseq in
+  (**************************************)
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let ante = CP.infer_level_pure ante in (*add l.mu>0*)
@@ -2397,8 +2407,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           (*TO CHECK*)
         let is_rel_ante = is_relation_constraint ante in
         let is_rel_conseq = is_relation_constraint conseq in
-        let is_bag_ante = is_bag_constraint ante in
-        let is_bag_conseq = is_bag_constraint conseq in
+        let is_bag_ante = is_bag_constraint_weak ante in
+        let is_bag_conseq = is_bag_constraint_weak conseq in
         let is_float_ante = is_float_formula ante in
         let is_float_conseq = is_float_formula conseq in
         if (is_rel_ante || is_rel_conseq) && (is_bag_ante || is_bag_conseq) && (is_float_ante || is_float_conseq) then
@@ -2427,14 +2437,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             (b_no_float && b_no_bag)
           else
             if (is_rel_ante) || (is_rel_conseq) then
-              let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in
-              let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in
+              (* let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in *)
+              (* let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in *)
               z3_imply ante conseq
             else if (is_bag_ante) || (is_bag_conseq) then
               mona_imply ante_w conseq_s
             else if (is_float_ante || is_float_conseq) then
               redlog_imply ante_w conseq_s
-            else z3_imply ante_w conseq_s
+            else
+              z3_imply ante_w conseq_s
     | ZM -> 
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           ((* called_prover := "mona "; *) mona_imply ante_w conseq_s)

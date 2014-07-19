@@ -9,6 +9,8 @@ echo "======= bag-of-pairs.slk ======"
 ../../sleek bag-of-pairs.slk -tp parahip | grep Entail > test-cases/bag-of-pairs.slk.res
 echo "======= wait2z.slk ======"
 ../../sleek wait2z.slk -tp parahip | grep "Entail\|Validate" > test-cases/wait2z.slk.res
+echo "======= wait2.slk ======"
+../../sleek wait2.slk -tp parahip | grep "Entail\|Validate" > test-cases/wait2.slk.res
 echo "======= latch.slk ======"
 ../../sleek latch.slk -tp parahip | grep Entail > test-cases/latch.slk.res
 #================HIP==========================
