@@ -5,6 +5,10 @@ echo "======= thread-split.ss  ======"
 diff test-cases/thread-split.slk.res test-cases/thread-split.slk.n
 echo "======= thread-dead.ss  ======"
 diff test-cases/thread-dead.slk.res test-cases/thread-dead.slk.n
+echo "======= bag-of-pairs.slk ======"
+diff test-cases/bag-of-pairs.slk.res test-cases/bag-of-pairs.slk.n
+echo "======= wait2z.slk ======"
+diff test-cases/wait2z.slk.res test-cases/wait2z.slk.n
 echo "======= latch.slk  ======"
 diff test-cases/latch.slk.res test-cases/latch.slk.n
 

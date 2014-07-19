@@ -5,6 +5,10 @@ echo "======= thread-split.slk ======"
 ../../sleek thread-split.slk | grep Entail > test-cases/thread-split.slk.n
 echo "======= thread-dead.slk ======"
 ../../sleek thread-dead.slk | grep Entail > test-cases/thread-dead.slk.n
+echo "======= bag-of-pairs.slk ======"
+../../sleek bag-of-pairs.slk -tp mona | grep Entail > test-cases/bag-of-pairs.slk.n
+echo "======= wait2z.slk ======"
+../../sleek wait2z.slk -tp mona | grep "Entail\|Validate" > test-cases/wait2z.slk.n
 echo "======= latch.slk ======"
 ../../sleek latch.slk | grep Entail > test-cases/latch.slk.n
 
