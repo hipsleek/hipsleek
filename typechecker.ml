@@ -2633,7 +2633,10 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
         (* let pr1 = if !Globals.print_html then pr_list_ln Cprinter.string_of_html_hprel_def_short else pr1 in *)
         (* print_endline (rel_defs # string_of_reverse); *)
+        let old_print_imm = !print_ann in
+         let _= if !print_html then let _ = print_ann:= false in () else () in
         print_endline (pr1 defs);
+          let _ = print_ann:=  old_print_imm in
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline "*************************************";
         let _ = CF.rel_def_stk # reset in
