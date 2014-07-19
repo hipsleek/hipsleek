@@ -29,9 +29,10 @@ let test_db = false
 (* let tp = ref OmegaCalc *)
 let pure_tp = ref OM
 (* let tp = ref OZ *)
-let tp = ref Redlog
+(* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
-(* let tp = ref PARAHIP *)
+(*For conc-r, z3 for relations, mona for bags, redlog for fractions *)
+let tp = ref PARAHIP
 (* let tp = ref Z3 *)
 
 let provers_process = ref None
@@ -411,7 +412,10 @@ let set_tp tp_str =
   else if tp_str = "rm" then
     pure_tp := RM
   else if tp_str = "parahip" then
-    pure_tp := PARAHIP
+    (pure_tp := PARAHIP;
+    prover_str := "z3"::!prover_str;
+    prover_str := "mona"::!prover_str;
+    prover_str := "redcsl"::!prover_str;)
   else if tp_str = "zm" then
     (pure_tp := ZM; 
     prover_str := "z3"::!prover_str;
@@ -1670,13 +1674,15 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           if (is_relation_constraint wf) then
             let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
             z3_is_sat f
-          else
-          if (is_bag_constraint wf ) then
+          else if (is_bag_constraint wf ) then
             let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
             mona_is_sat f
-          else
-            let f = CP.drop_rel_formula (CP.drop_bag_formula wf) in
+          else if (is_float_formula wf ) then
+            let f = CP.drop_bag_formula (CP.drop_rel_formula wf) in
             redlog_is_sat f
+          else
+            (* Anything else -> z3: faster *)
+            z3_is_sat f
     | ZM ->
         if (is_bag_constraint wf) then mona_is_sat wf
         else z3_is_sat wf
@@ -2424,10 +2430,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
               let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in
               let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in
               z3_imply ante conseq
-            else
-              if (is_bag_ante) || (is_bag_conseq) then
-                mona_imply ante_w conseq_s
-              else redlog_imply ante_w conseq_s
+            else if (is_bag_ante) || (is_bag_conseq) then
+              mona_imply ante_w conseq_s
+            else if (is_float_ante || is_float_conseq) then
+              redlog_imply ante_w conseq_s
+            else z3_imply ante_w conseq_s
     | ZM -> 
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           ((* called_prover := "mona "; *) mona_imply ante_w conseq_s)
