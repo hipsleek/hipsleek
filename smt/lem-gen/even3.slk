@@ -1,0 +1,22 @@
+/*
+ x::ll<n> & n=5 & x.next.next!=null
+
+
+   pred --> over_approx
+  
+  under_approx --> pred
+*/
+
+data node {
+  int val;
+  node next;
+}.
+
+pred mut<k,n,i> == self=null & n=0 & i=0 & k=0
+     or self::node<_,r> * r::mut<1,n-1,i-1> & k=0
+     or self::node<_,r> * r::mut<0,n-1,i> & k=1
+//inv k=0 & i>=0 & n=2*i | k=1 & i>=0 & n=2*i+1
+.
+
+// --inv
+// !!! new inv(mut): n>=(2*i) & i>=0 & n=k+(2*i)

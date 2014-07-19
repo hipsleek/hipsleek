@@ -1,0 +1,4 @@
+K:={[n,k,i]: k=0 & i>=0 & n=2*i | k=1 & i>=0 & n=2*i+1};
+I:={[n,k,i]: n>=(2*i) & i>=0 & n=k+(2*i) & 0<=k<=1};
+K subset I;
+I subset K;
