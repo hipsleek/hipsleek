@@ -3171,7 +3171,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = Debug.tinfo_hprint (add_str "c_lhs 1 " Cprinter.string_of_formula) c_lhs no_pos in
   (*translate TrueFlow to NormalFlow*)
   (* let c_lhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int  c_lhs in *)
-  let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
+  let c_lhs =
+    if (coer.I.coercion_kind = LEM_PROP) then
+      c_lhs (* LEM_PROP lemmas do not have self *)
+    else
+    CF.add_origs_to_node self c_lhs [coer.I.coercion_name]
+  in
   let _ = Debug.tinfo_hprint (add_str "c_lhs 2 " Cprinter.string_of_formula) c_lhs no_pos in
   let c_lhs = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula c_lhs else c_lhs in
   let _ = Debug.tinfo_hprint (add_str "c_lhs 3 " Cprinter.string_of_formula) c_lhs no_pos in
@@ -3220,7 +3225,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*LDK: In the body of a coercions, there may be multiple nodes with
     a same name with self => only add [coercion_name] to origins of the
     first node*)
-  let c_rhs = 
+  let c_rhs = if (coer.I.coercion_kind = LEM_PROP) then c_rhs else
     match (coercion_lhs_type) with
       | Simple ->
             if (Perm.allow_perm ()) then
@@ -3260,7 +3265,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
-  let cs_body_norm = CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] false in
+  let cs_body_norm =
+    if (coer.I.coercion_kind = LEM_PROP) then
+      cs_body_norm
+    else
+    CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] false
+  in
   let cs_body_norm = CF.add_struc_original false cs_body_norm in
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
@@ -3304,7 +3314,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
       with | _ -> "" in
   let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
-  if lhs_name = "" then raise (Failure "root pointer of node on LHS must be self")
+  if lhs_name = "" && (coer.I.coercion_kind != LEM_PROP) then raise (Failure "root pointer of node on LHS must be self")
   else
     (  
         let args = CF.fv_simple_formula c_lhs in 

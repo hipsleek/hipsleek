@@ -81,6 +81,7 @@ type file_offset =
 let convert_lem_kind (l: lemma_kind_t) =
     match l with
       | TLEM           -> LEM
+      | TLEM_PROP      -> LEM_PROP
       | TLEM_TEST      -> LEM_TEST
       | TLEM_TEST_NEW  -> LEM_TEST_NEW
       | TLEM_UNSAFE    -> LEM_UNSAFE

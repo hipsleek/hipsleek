@@ -650,6 +650,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
       | LEM            -> manage_lemmas lst iprog cprog 
+      | LEM_PROP       -> (manage_unsafe_lemmas lst iprog cprog )
       | LEM_TEST       -> (manage_test_lemmas lst iprog cprog )
       | LEM_TEST_NEW   -> (manage_test_new_lemmas lst iprog cprog )
       | LEM_UNSAFE     -> manage_unsafe_lemmas lst iprog cprog 
