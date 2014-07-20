@@ -28,7 +28,9 @@ lemma "error2" self::LatchIn{%P}<a> * self::CNT<n> & n<0 ->  emp & flow __Fail.
 */
 
 //synchronization lemma
-lemma "wait-for" self::CNT<a> * c::CNT<b> * x::WAIT<B> & a>0 & b<0 ->  self::CNT<a> * c::CNT<b> * x::WAIT<B1> & B1=union(B,{tup2(c,self)}) & a>0 & b<0.
+//lemma "wait-for" self::CNT<a> * c::CNT<b> * x::WAIT<B> & a>0 & b<0 ->  self::CNT<a> * c::CNT<b> * x::WAIT<B1> & B1=union(B,{tup2(c,self)}) & a>0 & b<0.
+
+lemma "error3" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail.
 
 //VALID
 //checkentail c::LatchIn{z::cell<10>}<z> * c::CNT<(-1)> |- true & flow __Fail.
@@ -41,4 +43,5 @@ lemma "wait-for" self::CNT<a> * c::CNT<b> * x::WAIT<B> & a>0 & b<0 ->  self::CNT
 //checkentail x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> |- (exists S1: x::WAIT<S1> * c1::CNT<1> * c2::CNT<(-1)> & S1=union(S,{tup2(c2,c1)})).
 //print residue.
 
-checkentail x::cell<1> |- [a,v] a::cell<v>.
+checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- true & flow __Fail.
+expect Valid.
