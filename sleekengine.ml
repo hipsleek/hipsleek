@@ -1959,6 +1959,12 @@ let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype:
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
+let process_check_norm_x (f : meta_formula) = () (* TO IMPLEMENT*)
+
+let process_check_norm (f : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_1 "process_check_norm" pr (fun _ -> "?") process_check_norm_x f
+
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in

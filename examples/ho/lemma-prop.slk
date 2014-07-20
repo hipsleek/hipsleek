@@ -1,0 +1,16 @@
+//CountDownLatch
+
+pred_prim WAIT<b:bag((object,object))>.
+pred_prim CNT<n:int>.
+
+
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> & a>0 & b<0 & v notin S & v=tup2(c1,c2)->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(B,{tup2(c,self)}) & a>0 & b<0.
+
+
+//VALID
+//checkentail x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> |- (exists S1: x::WAIT<S1> * c1::CNT<1> * c2::CNT<(-1)> & S1=union(S,{tup2(c2,c1)})).
+//print residue.
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.

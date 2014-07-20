@@ -840,6 +840,7 @@ non_empty_command:
       | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
+      | t= checknorm_cmd         -> CheckNorm t
       | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t= validate_cmd     -> Validate t
@@ -1947,6 +1948,9 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 (*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
 
 (********** Procedures and Coercion **********)
+
+checknorm_cmd:
+  [[ `CHECKNORM; b=meta_constr -> b ]];
 
 checkeq_cmd:
   [[ `CHECKEQ; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `EQV; b=meta_constr -> 
