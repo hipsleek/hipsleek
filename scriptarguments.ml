@@ -567,6 +567,9 @@ let common_arguments = [
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 
+  ("--prove-invalid",Arg.Set Globals.prove_invalid,"enable prove invalid");
+  ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
+
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   

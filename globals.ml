@@ -1,7 +1,7 @@
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
-    
+
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
@@ -1290,7 +1290,7 @@ let dis_bk ()=
   ()
 
 let dis_pred_sat () = 
-  print_endline_q "Disabling baga inv gen .."; 
+  print_endline_q "Disabling pred sat .."; 
   (* let _ = gen_baga_inv := false in *)
   let _ = prove_invalid := false in
   (*baga bk*)
