@@ -1959,7 +1959,17 @@ let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype:
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
-let process_check_norm_x (f : meta_formula) = () (* TO IMPLEMENT*)
+let process_check_norm_x (f : meta_formula) =
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nCheckNorm "^nn in  
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### f = " ^ (string_of_meta_formula f)) else () in
+  let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
+  let (n_tl,cf) = meta_to_formula f false [] []  in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
+  let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
+  let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
+  let _ = print_string ("Norm " ^ num_id^": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
+  () (* TO IMPLEMENT*)
 
 let process_check_norm (f : meta_formula) =
   let pr = string_of_meta_formula in

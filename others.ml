@@ -17,6 +17,7 @@ type proving_kind =
 	| PK_Check_Specs
 	| PK_Verify_Lemma
 	| PK_Lemma_Norm
+	| PK_Lemma_Prop
 	| PK_Term_Dec
 	| PK_Term_Bnd
 	| PK_Sleek_Entail of int
@@ -47,6 +48,7 @@ let string_of_proving_kind pk =
     | PK_Check_Specs -> "Check_Specs"
     | PK_Verify_Lemma -> "Verify_Lemma"
     | PK_Lemma_Norm -> "Lemma_Norm"
+    | PK_Lemma_Prop -> "Lemma_Prop"
     | PK_Term_Dec -> "Term_Dec"
     | PK_Term_Bnd -> "Term_Bnd"
     | PK_Sleek_Entail(n) -> "Sleek_Entail("^(string_of_int n)^")"

@@ -647,9 +647,14 @@ let mk_mem_formula vs =
   { mem_formula_mset = CP.DisjSetSV.one_list_dset vs}
 
 (* returns false if unsatisfiable *)
-let is_sat_mem_formula (mf:mem_formula) : bool =
+let is_sat_mem_formula_x (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
   (CP.DisjSetSV.is_sat_dset d)
+
+let is_sat_mem_formula (mf:mem_formula) : bool =
+  Debug.no_1 "is_sat_mem_formula"
+      !print_mem_formula string_of_bool
+      is_sat_mem_formula_x mf
 
 let is_mem_mem_formula_x (e:CP.spec_var) (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in

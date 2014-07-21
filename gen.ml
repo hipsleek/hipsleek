@@ -1393,7 +1393,7 @@ struct
   (* a singleton difference set *)
   let singleton_dset (e:ptr) : dpart = [[e]]
 
-  let is_dupl_dset (xs:dpart) : bool = 
+  let is_dupl_dset (xs:dpart) : bool =
     List.exists (check_dups) xs
 
   let is_mem_dset e (el:dpart): bool =
@@ -1463,7 +1463,7 @@ struct
     List.exists (is_conflict_list) s
 
   (* false result denotes contradiction *)
-  let is_sat_dset (xs:dpart) : bool = 
+  let is_sat_dset (xs:dpart) : bool =
     let r = not(is_dupl_dset xs) in
     begin
       (* print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r)); *)
