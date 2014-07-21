@@ -2180,6 +2180,12 @@ let rec string_of_formula_list_noparen l = match l with
 
 let string_of_formula_list l = "["^(string_of_formula_list_noparen l)^"]" ;;
 
+let rec string_of_formula_list_ln l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_formula h 
+  | h::t -> (string_of_formula h) ^ " ;\n" ^ (string_of_formula_list_noparen t)
+;;
+
 
 let string_of_formula_base (e:formula_base) : string =  poly_string_of_pr  pr_formula_base e
 

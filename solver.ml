@@ -12902,7 +12902,7 @@ and find_possible_matches_x (hs1 : h_formula list) (hs2 : h_formula list) : ((h_
               let x_name = get_node_name x in
               if (h_name = x_name) then
                 (* A possible match (h,x) *)
-                let m1 = ([(h,x)],xs) in
+                let m1 = ([(x,h)],xs) in
                 m1::m2
               else
                 m2
@@ -12923,7 +12923,7 @@ and find_possible_matches_x (hs1 : h_formula list) (hs2 : h_formula list) : ((h_
       ) ls
       in List.concat res
     in
-    let res = List.fold_left helper (find_one (List.hd hs1) hs2) (List.tl hs1) in
+    let res = List.fold_left helper (find_one (List.hd hs2) hs1) (List.tl hs2) in
     res
 
 and find_possible_matches (hs1 : h_formula list) (hs2 : h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
