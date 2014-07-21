@@ -1677,7 +1677,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             z3_is_sat f
           else if (is_bag_constraint wf ) then
             let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
-            mona_is_sat f
+            let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs f) in
+            let bag_f = conj_of_list bag_cnts no_pos in
+            let no_bag_f =  conj_of_list others no_pos in
+            (* Approx: mona can only deal with natural numbers (non negative) *)
+            (mona_is_sat bag_f && z3_is_sat no_bag_f)
           else if (is_float_formula wf ) then
             let f = CP.drop_bag_formula (CP.drop_rel_formula wf) in
             redlog_is_sat f
@@ -2441,7 +2445,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
               (* let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in *)
               z3_imply ante conseq
             else if (is_bag_ante) || (is_bag_conseq) then
-              mona_imply ante_w conseq_s
+              if not (is_bag_conseq) then
+                let ante_no_bag = CP.drop_bag_formula ante_w in
+                z3_imply ante_no_bag conseq_s
+              else
+                mona_imply ante_w conseq_s
             else if (is_float_ante || is_float_conseq) then
               redlog_imply ante_w conseq_s
             else

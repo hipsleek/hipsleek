@@ -15,11 +15,21 @@ pred_prim CNT<n:int>.
 
 //check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
 
+
 /*
 checkentail x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}
             |- (exists c11,c22,xx,a,b,SS,v :  c11::CNT<a> * c22::CNT<b> * xx::WAIT<SS> & a>0 & b<0 & v notin SS & v=tup2(c11,c22) & c1=c11 & c2=c22 & x=xx).
 print residue.
+
 */
 
-//mona cannot deal with negative number
+
+
+//note that mona cannot deal with negative numbers
 checkentail flted_18_20=1 & flted_18_19+1=0  & S={} |- false.
+expect Fail.
+
+
+
+
+
