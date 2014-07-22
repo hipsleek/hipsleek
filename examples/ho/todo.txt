@@ -83,6 +83,19 @@ lemma_prop "wait-for" c1::CNT<a>@L * x::WAIT<S> & a notin S ->
 x::WAIT<S1> & S1=union(S,{a}).
 
 ===================================================================
+# lemma-prop2.slk
+
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> 
+  & a>0 & b<0 & v notin S & v=tup2(c1,c2)
+ ->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c1,c2)}) & a>0 & b<0.
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+//output one state
+
+ wrong to have false here!
+
+ CheckNorm (1) :  hfalse&false&{FLOW,(21,22)=__norm}[]
+*/
 ===================================================================
 ===================================================================
 ===================================================================
