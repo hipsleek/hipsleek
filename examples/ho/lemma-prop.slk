@@ -10,8 +10,7 @@ check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
 //output one state
 
 check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> * c3::CNT<(-1)> & S={}.
-//output two states since there are two normalization
-//can improve by fixpoint
+//output one state since there are two normalization applications
 
 checkentail flted_18_20=1 & flted_18_19+1=0  & S={} |- false.
 expect Fail.

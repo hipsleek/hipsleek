@@ -1967,8 +1967,8 @@ let process_check_norm_x (f : meta_formula) =
   let (n_tl,cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
-  let newfs = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
-  let _ = print_string (num_id^": " ^ (Cprinter.string_of_formula_list_ln newfs) ^ "\n\n") in
+  let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
+  let _ = print_string (num_id^": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
   () (* TO IMPLEMENT*)
 
 let process_check_norm (f : meta_formula) =

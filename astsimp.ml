@@ -3974,6 +3974,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
                 else
               (
+                  if (List.length args != List.length proc_decl.I.proc_args) then
+                    report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
+                  else
                   List.map2 (fun p1 t2 ->
                       let t1 = p1.I.param_type in
                       match t1, t2 with

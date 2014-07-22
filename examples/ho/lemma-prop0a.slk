@@ -9,6 +9,11 @@ x::WAIT<S1> & S1=union(S,{a}).
 
 
 check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<22> & S={}.
+// 1 state
+
+check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<23> & S={}.
+// 1 state
+
 /*
 # lemma-prop0a.slk
 
