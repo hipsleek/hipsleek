@@ -1,3 +1,7 @@
+/*
+  Use: -tp parahip
+*/
+
 //CountDownLatch
 
 pred_prim WAIT<b:bag((object,object))>.
