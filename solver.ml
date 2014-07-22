@@ -12943,7 +12943,16 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
   *)
   let rec process_one_prop_w_coer_x pairs (lhs_h : h_formula) lhs_p (lhs_fl : flow_formula) (rhs : formula) : ( CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
     let to_lhs = List.fold_left (fun pf (h1,h2) -> 
-        let eq = CP.mkEqVar (get_node_var h1) (get_node_var h2) no_pos in
+        (* TOCGHECK: perm & ho_args *)
+        let n1 = (get_node_var h1) in
+        let n2 = (get_node_var h2) in
+        let args1 = get_node_args h1 in
+        let args2 = get_node_args h2 in
+        let eqns = List.combine (n1::args1) (n2::args2) in
+        let eq = List.fold_left (fun pf (v1,v2) ->
+                let eq = CP.mkEqVar v1 v2 no_pos in
+                CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) eqns
+        in
         CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) pairs
     in
     (* inst_vars to bind the LHS and RHS of coer *)
