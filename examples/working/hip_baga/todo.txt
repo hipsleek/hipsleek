@@ -72,6 +72,10 @@ Why is this so?
 There are some problems in new way to prove invalid.
 
 Run with --dis-prove-invalid --baga-xpure --> OK.
+
+--inv-baga (always infer; if stronger use it)
+
+
 ===========================================================
 ===========================================================
 ===========================================================

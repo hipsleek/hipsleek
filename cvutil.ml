@@ -962,7 +962,7 @@ and conv_from_ef_disj disj =
 and xpure_heap_mem_enum_new
       (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) 
       =
-  if !Globals.baga_xpure then
+  if !Globals.gen_baga_inv (* baga_xpure *) then
       let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
       let ans = conv_from_ef_disj disj in
       ans
