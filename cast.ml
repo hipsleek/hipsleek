@@ -121,9 +121,11 @@ and view_decl = {
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     (* exact baga *)
-    mutable view_baga_inv : Excore.ef_pure_disj option; 
+    mutable view_baga_inv : Excore.ef_pure_disj option;
+    (* over-approx baga *)
+    mutable view_baga_over_inv : Excore.ef_pure_disj option;
     (* necessary baga *)
-    mutable view_baga_under_inv : Excore.ef_pure_disj option; 
+    mutable view_baga_under_inv : Excore.ef_pure_disj option;
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;

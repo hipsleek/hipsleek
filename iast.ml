@@ -88,6 +88,7 @@ and view_decl =
     view_is_prim : bool;
     view_invariant : P.formula;
     view_baga_inv : ibaga_pure option;
+    view_baga_over_inv : ibaga_pure option;
     view_baga_under_inv : ibaga_pure option;
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)

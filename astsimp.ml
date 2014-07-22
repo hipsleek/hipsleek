@@ -2091,6 +2091,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_formula = cf;
           C.view_x_formula = memo_pf_P;
           C.view_baga_inv = vbi;
+          C.view_baga_over_inv = None;
           C.view_baga_under_inv = vbui;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
@@ -2217,13 +2218,16 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   match vd.Cast.view_baga_inv with
                     | None -> true
                     | Some uv ->
-                          let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in
+                          let _ = Debug.binfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in
                           Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
               ) lst in
+            let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in
+            Debug.binfo_hprint pr lst no_pos;
             if (not baga_stronger) then (
-              Debug.binfo_pprint "not baga_stronger";
-              Globals.dis_inv_baga ()
+              (* Debug.binfo_pprint "not baga_stronger\n" no_pos; *)
+              (* Globals.dis_inv_baga () *)
             ) else
+              (* update with stronger baga invariant *)
               ()
               (* let new_map = List.combine views_list new_invs_list in *)
               (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)

@@ -980,9 +980,11 @@ prop_extn:
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
-          ->  { vh with view_formula = (fst vb);
+          ->  let (oi, oboi) = oi in
+              { vh with view_formula = (fst vb);
               view_invariant = oi;
               view_baga_inv = obi;
+              view_baga_over_inv = oboi;
               view_baga_under_inv = obui;
               view_mem = mpb;
               view_is_prim = false;
@@ -998,10 +1000,12 @@ view_decl:
 
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      -> { vh with
+      -> let (oi, oboi) = oi in
+          { vh with
           (* view_formula = None; *)
           view_invariant = oi;
           view_baga_inv = obi;
+          view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
           view_kind = Iast.View_PRIM;
           view_is_prim = true;
@@ -1009,9 +1013,11 @@ prim_view_decl:
 
 view_decl_ext:
   [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      -> { vh with view_formula = (fst vb);
+      -> let (oi, oboi) = oi in
+          { vh with view_formula = (fst vb);
           view_invariant = oi;
           view_baga_inv = obi;
+          view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
           view_kind = Iast.View_EXTN;
           view_inv_lock = li;
@@ -1039,9 +1045,11 @@ view_decl_spec:
                   compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then
         report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)
       else
+        let (oi, oboi) = oi in
         { vh with view_formula = (fst vb);
             view_invariant = oi;
             view_baga_inv = obi;
+            view_baga_over_inv = oboi;
             view_baga_under_inv = obui;
             view_kind = Iast.View_SPEC;
             view_parent_name = Some va.view_name;
@@ -1064,7 +1072,7 @@ baga_invs:
 baga_under_invs:
     [[`INV_SAT; bil = LIST0 baga_inv SEP `OR -> bil]];
 
-opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
+opt_inv: [[t=OPT inv -> un_option t ((P.mkTrue no_pos), Some [([], P.mkTrue no_pos)])]];
 
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
@@ -1105,8 +1113,13 @@ opt_derv: [[t=OPT derv -> un_option t false ]];
 derv : [[ `DERV -> true ]];
 
 inv: 
-  [[`INV; pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
-   |`INV; h=ho_fct_header -> (P.mkTrue no_pos)]];
+  [[`INV; pc=pure_constr; ob=opt_branches ->
+      let f = P.mkAnd pc ob (get_pos_camlp4 _loc 1) in
+      (f, Some [([], f)])
+   |`INV; h=ho_fct_header ->
+         let f = P.mkTrue no_pos in
+         (f, Some [([], f)])
+   |`INV; bil = LIST0 baga_inv SEP `OR -> (P.mkTrue no_pos, Some bil)]];
 
 baga_formula:
     [[pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
@@ -1220,6 +1233,7 @@ view_header:
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_baga_inv = None;
+          view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = get_mater_vars l;
@@ -1261,6 +1275,7 @@ view_header_ext:
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_baga_inv = None;
+          view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = get_mater_vars l;
@@ -2294,7 +2309,9 @@ hopred_decl:
        | `HPRED; h=hpred_header; `JOIN; s=split_combine 
                                       -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos)
 	   | `HPRED; h=hpred_header;  `EQEQ; s=shape; oi= opt_inv; `SEMICOLON 
-           -> mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi]];
+           -> 
+               let (oi, _) = oi in
+               mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi]];
 
 shape: [[ t= formulas -> fst t]];
 
