@@ -772,6 +772,8 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 
+(* Enable exhaustive normalization using lemmas *)
+let allow_exhaustive_norm = ref true
 
 let dis_show_diff = ref false
 

@@ -764,6 +764,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
+    | HVar _ -> []
     | ThreadNode ({h_formula_thread_node = p1;}) -> (
         match rhs_node with
         | HRel _ -> []

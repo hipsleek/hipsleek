@@ -3222,6 +3222,46 @@ and check_barrier_inconsistency_list_failesc_context prog lcl (sv:CP.spec_var) p
       context_list_proofs = prf_l; } in
   (result, proof)
 
+(*
+  Return: None -> consistent
+          Some res -> inconsistent with FailCtx "res"
+
+*)
+and check_consistency_context_x prog ctx pos =
+  let rec helper ctx = match ctx with
+    | OCtx (c1, c2) ->
+          let rs1 = helper c1 in
+          let rs2 = helper c2 in
+          (match rs1,rs2 with
+            | None, None -> None
+            | Some res, _ 
+            | _ ,  Some res -> Some res)
+    | Ctx es ->
+          let f = es.es_formula in
+          if (CF.formula_is_eq_flow f !bfail_flow_int)
+          then
+            (*if detecting inconsistency (i.e. flow __Fail)*)
+            let err_msg = "__Fail: inconsistencies detected" in
+            let fe = mk_failure_must err_msg "__Fail: inconsistencies detected" in
+            let res = 
+              (CF.mkFailCtx_in (Basic_Reason 
+                  ({fc_message =err_msg;
+                  fc_current_lhs = es;
+                  fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
+                  fc_prior_steps = es.es_prior_steps;
+                  fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
+                  fc_failure_pts =[];}, fe, es.es_trace)), Failure)
+            in Some res
+          else None
+  in helper ctx
+
+and check_consistency_context prog ctx pos =
+  let pr1 (res,prf) = Cprinter.string_of_list_context res in
+  let pr_out = pr_option pr1 in
+  Debug.no_1 "check_consistency_context"
+      Cprinter.string_of_context_short
+      pr_out
+      (fun _ -> check_consistency_context_x prog ctx pos) ctx
 
 (**************************************************************)
 (* heap entailment                                            *)
@@ -4272,7 +4312,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                   else (*if not -> do not consider ls_var as a ref-vars*)
                                                     ref_vars,new_post
                                               in
-	                                          let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+	                                      let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+                                              let fet es = {es with CF.es_formula = CF.subst_hvar es.CF.es_formula es.CF.es_ho_vars_map ; CF.es_ho_vars_map = [];} in
+                                              let rs1 = CF.transform_context (fun es -> CF.Ctx (fet es)) rs1 in
+
 					          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
                                                   let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
@@ -4303,6 +4346,13 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 if (isFailCtx res) then Some (res,prf)
                                                 else None
                                               else None
+                                              in
+                                              let res,rs4 =
+                                                if (res=None && !Globals.allow_exhaustive_norm) then
+                                                  let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs4 in
+                                                  let res_norm = check_consistency_context prog rs_norm pos in
+                                                  (res_norm,rs4)
+                                                else res,rs4
                                               in
                                               (* let res = if (!Globals.perm = Bperm) then *)
                                               (*       let hfv = (CF.fv_heap_of new_post) in *)
@@ -12694,6 +12744,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                 | ViewNode vn -> vn.h_formula_view_name
                 | DataNode dn -> dn.h_formula_data_name
                 | ThreadNode tn -> tn.h_formula_thread_name
+                | HVar v -> (CP.name_of_spec_var v)
                 | HTrue -> "htrue"
                 | _ -> let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
                   ""
