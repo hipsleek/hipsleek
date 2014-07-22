@@ -560,6 +560,16 @@ checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
 expect Valid.
 
 ====================================================================
+
+sleek --eps 
+
+#loop 
+
+Checking lemmas/odd-lseg.slk (runs with extra options:  
+   --elp --dis-lem-gen )
+Unexpected result with : baga-test.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
+
 ====================================================================
 ====================================================================
 ====================================================================
