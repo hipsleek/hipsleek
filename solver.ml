@@ -13096,11 +13096,12 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
               | Some (nvars,nh,np,nfl) ->
                     let b = mkBase nh np TypeTrue nfl [] no_pos in
                     let new_f = normalize_combine coer_rhs b no_pos in
-                    let qvars, new_f = split_quantifiers new_f in
+                    let new_f = add_quantifiers nvars new_f in
+                    let new_f = elim_exists new_f in
+                    let _ , new_f = split_quantifiers new_f in
                     let nh,np,nfl,_,_ = split_components new_f in
-                    let qvars = nvars@qvars in
                     let (nvars2,h2,p2,fl2) = process_coers coers nh np nfl in
-                    (qvars@nvars2,h2,p2,fl2))
+                    (nvars2,h2,p2,fl2))
 
   in
   let res = process_coers coers h p fl in
@@ -13134,11 +13135,13 @@ and prop_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl list): f
               let np = remove_dupl_conj_mix_formula np in
               let b = Base {b with formula_base_heap=nh;formula_base_pure=np;formula_base_flow=nfl} in
               let nf = add_quantifiers vars b in
+              let nf = elim_exists nf in
               nf
         | Exists e ->
               let qvars,nf = split_quantifiers f in
               let nf = helper nf in
               let nf = add_quantifiers qvars nf in
+              let nf = elim_exists nf in
               nf
         | Or o ->
               Or {o with formula_or_f1 = helper o.formula_or_f1; formula_or_f2 = helper o.formula_or_f2}
