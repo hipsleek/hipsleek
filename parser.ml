@@ -1220,6 +1220,7 @@ view_header:
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_baga_inv = None;
+          view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = get_mater_vars l;
@@ -1261,6 +1262,7 @@ view_header_ext:
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_baga_inv = None;
+          view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = get_mater_vars l;

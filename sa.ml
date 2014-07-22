@@ -3974,6 +3974,7 @@ let build_horm_view_x templ_view_decls horm_dd=
     Iast.view_typed_vars = view.Iast.view_typed_vars;
     Iast.view_invariant = n_view_invariant;
     Iast.view_baga_inv = None;
+    Iast.view_baga_over_inv = None;
     Iast.view_baga_under_inv = None;
     Iast.view_mem = view.Iast.view_mem;
     Iast.view_formula = n_view_formula;

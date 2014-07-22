@@ -221,6 +221,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		I.view_is_prim = false;
 		I.view_invariant = IP.mkTrue no_pos;
                 I.view_baga_inv = None;
+                I.view_baga_over_inv = None;
                 I.view_baga_under_inv = None;
                 I.view_mem = None;
 		I.view_materialized_vars = [];
