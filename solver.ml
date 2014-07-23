@@ -4349,9 +4349,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               in
                                               let res,rs4 =
                                                 if (res=None && !Globals.allow_exhaustive_norm) then
-                                                  let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs4 in
-                                                  let res_norm = check_consistency_context prog rs_norm pos in
-                                                  (res_norm,rs4)
+                                                  let tmp = transform_context (prop_entail_state_w_lemma prog) rs4 in
+                                                  let tmp = transform_context (normalize_entail_state_w_lemma prog) tmp in
+                                                  let res_norm = check_consistency_context prog tmp pos in
+                                                  (res_norm,tmp)
                                                 else res,rs4
                                               in
                                               (* let res = if (!Globals.perm = Bperm) then *)
@@ -13484,6 +13485,20 @@ and normalize_entail_state_w_lemma prog (es:CF.entail_state) =
   Debug.no_1 "normalize_entail_state_w_lemma"
       Cprinter.string_of_estate Cprinter.string_of_context
       (fun _ -> normalize_entail_state_w_lemma_x prog es) es
+
+and prop_entail_state_w_lemma_x prog (es:CF.entail_state) =
+  let es = CF.clear_entailment_vars es in
+  (* create a tmp estate for propagation *)
+  let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
+  let left_co = Lem_store.all_lemma # get_left_coercion in
+  CF.Ctx {es with CF.es_formula = prop_formula_w_coers 5 prog tmp_es es.CF.es_formula 
+          left_co (* prog.prog_left_coercions *)}
+
+(* Exhaustively apply propagation lemmas to entail_state *)
+and prop_entail_state_w_lemma prog (es:CF.entail_state) =
+  Debug.no_1 "prop_entail_state_w_lemma"
+      Cprinter.string_of_estate Cprinter.string_of_context
+      (fun _ -> prop_entail_state_w_lemma_x prog es) es
 
 and normalize_list_failesc_context_w_lemma_x prog lctx =
   (* if not (Perm.allow_perm ()) then lctx *)

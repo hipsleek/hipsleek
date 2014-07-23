@@ -441,5 +441,5 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-pred_prim WAIT<b:bag((object,object))>;
+pred_prim WAIT<b:bag((Object,Object))>;
 
