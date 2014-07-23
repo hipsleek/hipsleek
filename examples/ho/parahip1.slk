@@ -1,0 +1,8 @@
+/*
+ -tp parahip
+*/
+
+
+checkentail B={} &  B_102=B & S_132=B_102 |- S_132=B.
+print residue.
+expect Valid.

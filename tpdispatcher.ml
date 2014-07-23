@@ -2446,7 +2446,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
               z3_imply ante conseq
             else if (is_bag_ante) || (is_bag_conseq) then
               if not (is_bag_conseq) then
-                let ante_no_bag = CP.drop_bag_formula ante_w in
+                let ante_no_bag = CP.drop_bag_formula_weak ante_w in
                 z3_imply ante_no_bag conseq_s
               else
                 mona_imply ante_w conseq_s

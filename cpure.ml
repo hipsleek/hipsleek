@@ -11452,7 +11452,7 @@ and drop_bag_formula_weak (pf : formula) : formula =
       drop_bag_formula_weak_x pf
 
 (* Weak: ignore bag vars *)
-and is_bag_constraint_weak (e: formula) : bool =  
+and is_bag_constraint_weak_x (e: formula) : bool =  
   let f_e e = match e with
     | Bag _
     | BagUnion _
@@ -11463,6 +11463,9 @@ and is_bag_constraint_weak (e: formula) : bool =
   let or_list = List.fold_left (||) false in
   fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
 
+and is_bag_constraint_weak (e: formula) : bool =  
+  Debug.no_1 "is_bag_constraint_weak" !print_formula string_of_bool
+  is_bag_constraint_weak_x (e: formula)
 (*
   Convert: tup2(a1,a2) --> tup2_a1_a2.
   Return: new formula * (tup2_a1_a2, tup2(a1,a2)) list
