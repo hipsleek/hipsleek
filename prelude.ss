@@ -440,3 +440,6 @@ RS_mem malloc1(int n)
  requires n>0
  ensures  res=null or res::RS_mem<n>;
 */
+
+pred_prim WAIT<b:bag((object,object))>;
+

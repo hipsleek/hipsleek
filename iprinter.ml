@@ -861,6 +861,7 @@ let string_of_coerc_origin orig = match orig with
 
 let string_of_coerc_decl c = 
   (string_of_coerc_type c.coercion_type) ^ "coerc " ^c.coercion_name ^ "\n"
+  ^ "\t kind: " ^ (string_of_lemma_kind c.coercion_kind) ^ "\n"
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"

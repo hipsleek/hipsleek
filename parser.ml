@@ -2573,9 +2573,12 @@ decl:
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
   (* | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]]; *)
-  | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> Coercion_list
+  | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
+        let k = convert_lem_kind kind in
+        let c = {c with coercion_kind = k;} in
+        Coercion_list
         { coercion_list_elems = [c];
-          coercion_list_kind  = (convert_lem_kind kind)}
+          coercion_list_kind  = k}
   | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
 
 dir_path: [[t = LIST1 file_name SEP `DIV ->

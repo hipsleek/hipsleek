@@ -1748,3 +1748,14 @@ let smt_return_must_on_error ()=
     (* let _ = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()
+
+let string_of_lemma_kind (l: lemma_kind) =
+    match l with
+      | LEM           -> "LEM"
+      | LEM_PROP      -> "LEM_PROP"
+      | LEM_TEST      -> "LEM_TEST"
+      | LEM_TEST_NEW  -> "LEM_TEST_NEW"
+      | LEM_UNSAFE    -> "LEM_UNSAFE"
+      | LEM_SAFE      -> "LEM_SAFE"
+      | LEM_INFER     -> "LEM_INFER"
+      | LEM_INFER_PRED   -> "LEM_INFER_PRED"
