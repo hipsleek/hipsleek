@@ -1784,8 +1784,26 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-      let _ = 
-        if not(CF.isFailCtx rs) then
+      let (baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
+        | None ->
+              let f1 = CF.mkTrue (CF.mkTrueFlow ()) pos in
+              let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in
+              (f1, f2)
+        | Some disj ->
+              let f1 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos in
+              let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in
+              (f1, f2)
+      in
+      let (baga_rs1, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
+      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
+      let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in
+      let baga_over_formula = match vdef.C.view_baga_over_inv with
+        | None -> CF.mkTrue (CF.mkTrueFlow ()) pos
+        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
+      in
+      let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
+      let _ =
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) && not(CF.isFailCtx baga_over_rs) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
 	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
@@ -2057,7 +2075,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         | Some vbi -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
       let _ = match vboi with
         | None -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
-        | Some vbi -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
+        | Some vbi -> Debug.binfo_hprint (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
       let _ = match vbui with
         | None -> Debug.binfo_hprint (add_str ("baga under inv("^vn^")") (fun x -> x)) "None" no_pos
         | Some vbui -> Debug.binfo_hprint (add_str ("baga under inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbui no_pos in
@@ -2175,22 +2193,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0 =
     if !Globals.gen_baga_inv then
       let _ = Debug.binfo_pprint "Generate baga inv\n" no_pos in
-      (* let args_map = view_args_map in *)
-      (* let _ = List.iter (fun vd -> *)
-      (*     let self_var = Cpure.SpecVar(UNK, self, Unprimed) in *)
-      (*     let args = self_var::vd.Cast.view_vars in *)
-      (*     Hashtbl.add args_map vd.Cast.view_name args; *)
-      (* ) cviews0 in *)
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
-      (* let ls_mut_rec_views1 = List.rev ls_mut_rec_views in *)
-      (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
-      (*     if List.mem cv.C.view_name (List.flatten ls) then *)
-      (*       ls *)
-      (*     else *)
-      (*       ls@[[cv.C.view_name]] *)
-      (* ) ls_mut_rec_views1 cviews0 in *)
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
@@ -2204,49 +2209,56 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
-          if !Globals.gen_baga_inv then
+          (* if !Globals.gen_baga_inv then *)
             let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
             ) cviews0 in
-            (* let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in *)
-            let new_invs_list = Expure.fix_ef view_list cviews0 in
-            let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in
-            let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v ->
-                Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in
-            let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
+            let _ = Expure.fix_ef view_list cviews0 in ()
+            (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
+            (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
+            (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
+            (*     Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in *)
+            (* let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in *)
             (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
-            let lst = List.combine view_list new_invs_list in
-            let baga_stronger = List.for_all
-              (fun (vd,bi) ->
-                  (* let uv = Excore.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in *)
-                  match vd.Cast.view_baga_inv with
-                    | None -> true
-                    | Some uv ->
-                          let _ = Debug.binfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in
-                          Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
-              ) lst in
-            let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in
-            Debug.binfo_hprint pr lst no_pos;
-            if (not baga_stronger) then (
+            (* let lst = List.combine view_list new_invs_list in *)
+            (* let baga_stronger = List.for_all *)
+            (*   (fun (vd,bi) -> *)
+            (*       match vd.Cast.view_baga_inv with *)
+            (*         | None -> true *)
+            (*         | Some uv -> *)
+            (*               let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in *)
+            (*               Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv *)
+            (*   ) lst in *)
+            (* let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in *)
+            (* Debug.binfo_hprint pr lst no_pos; *)
+            (* if (not baga_stronger) then ( *)
+            (*     () *)
               (* Debug.binfo_pprint "not baga_stronger\n" no_pos; *)
               (* Globals.dis_inv_baga () *)
-            ) else
+            (* ) else *)
+            (*   () *)
               (* update with stronger baga invariant *)
-              ()
+              (* () *)
               (* let new_map = List.combine views_list new_invs_list in *)
               (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)
       ) ls_mut_rec_views1 in
-      let cviews1 = if !Globals.gen_baga_inv then
+      let cviews1 = (* if !Globals.gen_baga_inv then *)
         List.map (fun cv ->
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
             let _ = print_string_quiet "\n" in
-            {cv with C.view_baga_inv = Some inv}
+            match cv.Cast.view_baga_inv with
+              | None -> {cv with C.view_baga_inv = Some inv}
+              | Some inv0 ->
+                    if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then
+                      {cv with C.view_baga_inv = Some inv}
+                    else
+                      cv
         ) cviews0
-      else
-        cviews0
+      (* else *)
+      (*   cviews0 *)
       in
-      let _ = if !Globals.gen_baga_inv then (
+      let _ = (* if !Globals.gen_baga_inv then *) (
         Debug.binfo_pprint "end gen baga\n" no_pos;
         Globals.dis_inv_baga ()
       ) in

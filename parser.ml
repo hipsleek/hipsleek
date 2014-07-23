@@ -1119,7 +1119,15 @@ inv:
    |`INV; h=ho_fct_header ->
          let f = P.mkTrue no_pos in
          (f, Some [([], f)])
-   |`INV; bil = LIST0 baga_inv SEP `OR -> (P.mkTrue no_pos, Some bil)]];
+   |`INV; bil = LIST0 baga_inv SEP `OR ->
+         let pf =  List.fold_left (fun pf0 (idl,pf2) ->
+             let pf1 = List.fold_left (fun pf0 id ->
+                 let sv = (id,Unprimed) in
+                 P.mkAnd pf0 (P.mkNeqExp (P.Var (sv,no_pos)) (P.Null no_pos) no_pos) no_pos
+             ) (P.mkTrue no_pos) idl in
+             P.mkOr pf0 (P.mkAnd pf1 pf2 no_pos) None no_pos
+         ) (P.mkFalse no_pos) bil in
+         (pf, Some bil)]];
 
 baga_formula:
     [[pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
