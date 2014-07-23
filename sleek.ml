@@ -343,7 +343,12 @@ let main () =
         begin
             print_string ("\n")
         end
-      (* | Not_found -> print_string ("Not found exception caught!\n") *)
+    | _ -> 
+          begin
+            dummy_exception();
+            print_endline "SLEEK FAILURE (END)";
+            Log.last_cmd # dumping "sleek_dumEND)";
+          end
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
