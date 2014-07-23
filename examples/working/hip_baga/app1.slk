@@ -14,11 +14,18 @@ pred ll<n> == self=null & n=0
 .
 
 /*
-# app.slk
+# app1.slk
 
-!!! baga inv(ll):None
-!!! baga under inv(ll):None
-Fatal error: exception Failure("cannot find baga inv")
+inv_exact BG([],self=null & n=0) | BG([self],n>0)
+
+When inv_exact given, we should use it for both
+over_baga and under_baga.
+
+why did we have failure below?
+
+Starting Omega...oc
+Fatal error: exception Failure("view defn for ll does not entail supplied invariant
+
 */
 
 checkentail x::ll<n> & n<0 |- false.
