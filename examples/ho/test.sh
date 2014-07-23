@@ -25,3 +25,5 @@ echo "======= latch.ss  ======"
 ../../hip latch.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch.ss.res
 echo "======= latch2.ss  ======"
 ../../hip latch2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch2.ss.res
+echo "======= latch-exp1.ss  ======"
+../../hip latch-exp1.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.res

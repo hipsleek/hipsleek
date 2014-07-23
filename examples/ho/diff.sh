@@ -26,3 +26,5 @@ echo "======= latch.ss  ======"
 diff test-cases/latch.ss.res test-cases/latch.ss.n
 echo "======= latch2.ss  ======"
 diff test-cases/latch2.ss.res test-cases/latch2.ss.n
+echo "======= latch-exp1.ss  ======"
+diff test-cases/latch-exp1.ss.res test-cases/latch-exp1.ss.n
