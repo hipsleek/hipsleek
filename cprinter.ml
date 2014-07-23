@@ -3415,6 +3415,7 @@ let pr_view_decl v =
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap_opt  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
   pr_vwrap_opt  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
+  pr_vwrap_opt  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
