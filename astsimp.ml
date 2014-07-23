@@ -2069,7 +2069,15 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let vbi = conv_baga_inv vdef.I.view_baga_inv in
       let vboi = conv_baga_inv vdef.I.view_baga_over_inv in
+      let vboi = match vboi with
+        | Some _ -> vboi
+        | None -> vbi
+      in
       let vbui = conv_baga_inv vdef.I.view_baga_under_inv in
+      let vbui = match vbui with
+        | Some _ -> vbui
+        | None -> vbi
+      in
       let _ = match vbi with
         | None -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
         | Some vbi -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
@@ -2113,16 +2121,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_formula = cf;
           C.view_x_formula = memo_pf_P;
           C.view_baga_inv = vbi;
-          C.view_baga_over_inv = (
-              match vboi with
-                | Some _ -> vboi
-                | None -> vbi
-          );
-          C.view_baga_under_inv = (
-              match vbui with
-                | Some _ -> vbui
-                | None -> vbi
-          );
+          C.view_baga_over_inv = vboi;
+          C.view_baga_under_inv = vbui;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
           C.view_baga = [];

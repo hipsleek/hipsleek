@@ -1072,7 +1072,7 @@ baga_invs:
 baga_under_invs:
     [[`INV_SAT; bil = LIST0 baga_inv SEP `OR -> bil]];
 
-opt_inv: [[t=OPT inv -> un_option t ((P.mkTrue no_pos), Some [([], P.mkTrue no_pos)])]];
+opt_inv: [[t=OPT inv -> un_option t ((P.mkTrue no_pos), None)]];
 
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
@@ -1120,7 +1120,7 @@ inv:
          let f = P.mkTrue no_pos in
          (f, Some [([], f)])
    |`INV; bil = LIST0 baga_inv SEP `OR ->
-         let pf =  List.fold_left (fun pf0 (idl,pf2) ->
+        let pf =  List.fold_left (fun pf0 (idl,pf2) ->
              let pf1 = List.fold_left (fun pf0 id ->
                  let sv = (id,Unprimed) in
                  P.mkAnd pf0 (P.mkNeqExp (P.Var (sv,no_pos)) (P.Null no_pos) no_pos) no_pos
