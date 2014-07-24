@@ -30,6 +30,7 @@ pred_prim LatchOut{(+)P}<>;
 pred_prim CNT<n:int>;
 
 
+
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 /*
@@ -48,13 +49,14 @@ lemma "wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f
 
 lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
 
+*/
+
 //synchronization lemma
-//lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
 
 //normalization of dead threads
 lemma "thrd_normalize" self::THRD2{%Q}<c1,c2,g> * self::DEAD<> -> %Q;
 
-*/
 
 /********************************************/
 /********************************************/
@@ -103,7 +105,9 @@ void thread1(CDL c1, CDL c2, WAIT g)
   ensures g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)};
 {
   await(c1);
+  dprint;
   //countDown(c2);
+  //dprint;
 }
 
 
