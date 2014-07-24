@@ -1647,6 +1647,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           else
             redlog_is_sat wf
     | PARAHIP ->
+          
           if (is_relation_constraint wf) && (is_bag_constraint wf) && (CP.is_float_formula wf) then
             (* Mixed bag constraints, relations and float constraints *)
             (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
@@ -1668,9 +1669,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             let f_no_bag = CP.drop_bag_formula wf in
             let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
             in
-            let b1 = mona_is_sat f_no_float in
+            let f_no_float_bag_only = CP.collect_all_constraints is_bag_constraint f_no_float in
+            let f_no_float_no_bag = CP.drop_bag_formula f_no_float in
+            let b =  z3_is_sat f_no_float_no_bag in
+            let b1 = mona_is_sat f_no_float_bag_only in
             let b2 = redlog_is_sat f_no_bag in
-            (b1 && b2)
+            (b && b1 && b2)
           else
           if (is_relation_constraint wf) then
             let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
@@ -2447,10 +2451,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             else if (is_bag_ante) || (is_bag_conseq) then
               if not (is_bag_conseq) then
                 let ante_no_bag = CP.drop_bag_formula_weak ante_w in
+                let ante_bag = CP.collect_all_constraints is_bag_constraint ante_w in
                 let res1 = z3_imply ante_no_bag conseq_s in
                 if (res1) then res1 else
                   (* z3 may fail due to insufficient information -> try mona *)
-                  mona_imply ante_w conseq_s
+                  mona_imply ante_bag conseq_s
               else
                 mona_imply ante_w conseq_s
             else if (is_float_ante || is_float_conseq) then

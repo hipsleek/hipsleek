@@ -13033,6 +13033,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
                 let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in
                 None
           | Ctx es ->
+                let _ = print_endline ("es = " ^ (Cprinter.string_of_estate es)) in
                 let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in
                 let h1,p1,fl1,_,_ = split_components new_ante in
                 Some (inst_vars,h1,p1,fl1))

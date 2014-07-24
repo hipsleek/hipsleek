@@ -12859,3 +12859,20 @@ let mk_self t =
       | Some t -> t 
   in
   SpecVar (t, self, Unprimed)
+
+(* collect constraints satisfying high-order "pred" and their related constraints.
+   (i.e. collect a slice of constraints satisfying "pred")
+
+   pred: constraint type, e.g is_bag_constraint, is_float_formula, is_relation_constraint.
+*)
+let collect_all_constraints_x (pred: formula -> bool) (f:formula) =
+  let ls = split_conjunctions f in
+  let ls_pred = List.filter (fun f -> pred f) ls in
+  let fvars = List.concat (List.map fv ls_pred) in
+  find_rel_constraints f fvars
+
+let collect_all_constraints (pred: formula -> bool) (f:formula) =
+  Debug.ho_1 "collect_all_constraints"
+      !print_formula !print_formula
+      (fun _ -> collect_all_constraints_x pred f) f
+
