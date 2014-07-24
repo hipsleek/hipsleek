@@ -124,6 +124,7 @@ and view_decl = {
     mutable view_baga_inv : Excore.ef_pure_disj option;
     (* over-approx baga *)
     mutable view_baga_over_inv : Excore.ef_pure_disj option;
+    mutable view_baga_x_over_inv : Excore.ef_pure_disj option;
     (* necessary baga *)
     mutable view_baga_under_inv : Excore.ef_pure_disj option;
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)

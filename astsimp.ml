@@ -1718,7 +1718,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           let ls_disj = CP.list_of_disjs xform1 in
           let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
-          
           (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
           (* let _ = print_endline ("\n xform2: " ^ (Cprinter.string_of_mix_formula xform2)) in *)
 	  (* let formula1 = CF.formula_of_mix_formula xform pos in *)
@@ -1727,13 +1726,31 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
 	  (* let _ = if not(CF.isFailCtx rs) then *)
           (* if disj user-supplied inv; just use it *)
-          Debug.tinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
-          Debug.tinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+          Debug.binfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
+          Debug.binfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+          let compute_unfold_baga baga_over body =
+              match baga_over with 
+                | None -> None
+                | Some lst -> 
+                      if List.length lst == 1 then
+	                let unf_baga = Cvutil.xpure_symbolic_baga prog body lst in
+                        Some unf_baga
+                      else baga_over
+          in
           if do_not_compute_flag then 
             vdef.C.view_xpure_flag <- true
           else
-	    (vdef.C.view_x_formula <- xform2;
-            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
+            begin
+              let baga_over = vdef.C.view_baga_over_inv in
+              let body = C.formula_of_unstruc_view_f vdef in
+              let u_b = compute_unfold_baga baga_over body in
+              Debug.binfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
+              Debug.binfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              vdef.C.view_baga_x_over_inv <- u_b ;
+	      vdef.C.view_x_formula <- xform2;
+              vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
+            end
           ;
           vdef.C.view_addr_vars <- addr_vars;
           (* let xf = pure_of_mix xform' in *)
@@ -2059,14 +2076,22 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         match baga_inv with
           | None -> None
           | Some lst ->
-                Some (List.map (fun (idl,pf) ->
+                let rr = List.map (fun (idl,pf) ->
                     let svl = List.map (fun c -> trans_var (c,Unprimed) n_tl pos) idl in
                     (* let svl, _, _, _ = Immutable.split_sv svl vdef in *)
                     let cpf = trans_pure_formula pf n_tl in
                     let cpf = Cpure.arith_simplify 1 cpf in
                     (svl,cpf)
-                ) lst)
+                ) lst in
+                Some rr
       in
+      let unfold_once baga =
+        match baga with
+          | None -> None
+          | Some lst -> 
+                if List.length lst == 1 then
+                  Some lst (* unfold once *)
+                else baga in 
       let vbi = conv_baga_inv vdef.I.view_baga_inv in
       let (vboi,vbui,user_inv) = match vbi with
         | Some ef -> 
@@ -2118,6 +2143,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_x_formula = memo_pf_P;
           C.view_baga_inv = vbi;
           C.view_baga_over_inv = vboi;
+          C.view_baga_x_over_inv = vboi;
           C.view_baga_under_inv = vbui;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
