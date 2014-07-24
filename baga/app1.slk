@@ -16,6 +16,10 @@ pred ll<n> == self=null & n=0
 /*
 # app1.slk
 
+GOT below which seems less accurate.
+!!! baga_over(unfolded):Some([([], self=Cnull & n=0),([self], true)])
+
+Expecting:
 inv_exact BG([],self=null & n=0) | BG([self],n>0)
 
 When inv_exact given, we should use it for both
