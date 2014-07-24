@@ -2068,16 +2068,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 ) lst)
       in
       let vbi = conv_baga_inv vdef.I.view_baga_inv in
-      let vboi = conv_baga_inv vdef.I.view_baga_over_inv in
-      let vboi = match vboi with
-        | Some _ -> vboi
-        | None -> vbi
-      in
-      let vbui = conv_baga_inv vdef.I.view_baga_under_inv in
-      let vbui = match vbui with
-        | Some _ -> vbui
-        | None -> vbi
-      in
+      let (vboi,vbui,user_inv) = match vbi with
+        | Some ef -> 
+              let new_f = Excore.EPureI.ef_conv_disj ef in
+                    (vbi,vbi,Mcpure.mix_of_pure new_f)
+        | _ -> (conv_baga_inv vdef.I.view_baga_over_inv,
+          conv_baga_inv vdef.I.view_baga_under_inv,memo_pf_N) in
       let _ = match vbi with
         | None -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
         | Some vbi -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
@@ -2127,7 +2123,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_addr_vars = [];
           C.view_baga = [];
           C.view_complex_inv = None;
-          C.view_user_inv = memo_pf_N;
+          C.view_user_inv = user_inv;
           C.view_mem = mem_form;
           C.view_inv_lock = inv_lock;
           C.view_un_struc_formula = n_un_str;
@@ -2142,7 +2138,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_prune_conditions_baga = [];
           C.view_ef_pure_disj = None;
           C.view_prune_invariants = []} in
-      (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+      (Debug.dinfo_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
   )

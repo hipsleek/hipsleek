@@ -618,9 +618,9 @@ let smart_string_of_spec_var x =
     | CP.SpecVar(t,id,p) ->
           let n=String.length id in
           if n>=4 then 
-            (* let s=String.sub id 0 4 in *)
-            (* if s="Anon" && !Globals.print_en_tidy then "_" *)
-            (* else *) string_of_spec_var x
+            let s=String.sub id 0 4 in
+            if s="Anon" && !Globals.print_en_tidy then "_"
+            else string_of_spec_var x
           else string_of_spec_var x
 
 let pr_spec_var x = fmt_string (smart_string_of_spec_var x)
@@ -3073,11 +3073,11 @@ let pr_context_short (ctx : context) =
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
-    let f1 = f
-      (* if !Globals.print_en_tidy *)
-      (* then Cformula.shorten_formula f *)
-      (* else f *)
-    in pr_formula_wrap f1;
+    let f1 = 
+      if !Globals.print_en_tidy
+      then Cfout.shorten_formula f
+      else 
+        f in pr_formula_wrap f1;
     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
