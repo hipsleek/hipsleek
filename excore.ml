@@ -665,7 +665,7 @@ struct
 *)
 
   let mk_epure (pf:formula) = 
-    [([], subs_null pf)]
+    [([], (* subs_null *) pf)]
 
   let to_cpure (ep : epure) = ep
 
