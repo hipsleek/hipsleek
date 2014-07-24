@@ -2278,12 +2278,22 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
             let _ = print_string_quiet "\n" in
             match cv.Cast.view_baga_inv with
-              | None -> {cv with C.view_baga_inv = Some inv}
+              | None -> {cv with
+                    C.view_baga_inv = Some inv;
+                    C.view_baga_over_inv = Some inv;
+                    C.view_baga_under_inv = Some inv;
+                    C.view_baga_x_over_inv = Some inv;
+                    C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                }
               | Some inv0 ->
-                    if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then
-                      {cv with C.view_baga_inv = Some inv}
-                    else
-                      cv
+                    if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then {cv with
+                        C.view_baga_inv = Some inv;
+                        C.view_baga_over_inv = Some inv;
+                        C.view_baga_under_inv = Some inv;
+                        C.view_baga_x_over_inv = Some inv;
+                        C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                      }
+                    else cv
         ) cviews0
       (* else *)
       (*   cviews0 *)
