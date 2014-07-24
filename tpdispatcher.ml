@@ -1673,8 +1673,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             let f_no_float_no_bag = CP.drop_bag_formula f_no_float in
             let b =  z3_is_sat f_no_float_no_bag in
             let b1 = mona_is_sat f_no_float_bag_only in
+            (* let b1 = mona_is_sat f_no_float in *)
             let b2 = redlog_is_sat f_no_bag in
-            (b && b1 && b2)
+            (* (b1 && b2) *)
+            b && b1 && b2
           else
           if (is_relation_constraint wf) then
             let f = CP.drop_bag_formula (CP.drop_float_formula wf) in

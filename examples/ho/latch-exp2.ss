@@ -30,7 +30,7 @@ pred_prim LatchOut{(+)P}<>;
 pred_prim CNT<n:int>;
 
 
-lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a>@D * self::CNT<b>@D;
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 /*
 lemma "combine1" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>;
@@ -103,7 +103,7 @@ void thread1(CDL c1, CDL c2, WAIT g)
   ensures g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)};
 {
   await(c1);
-  countDown(c2);
+  //countDown(c2);
 }
 
 

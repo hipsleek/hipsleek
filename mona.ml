@@ -14,9 +14,11 @@ let is_mona_running = ref false
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
 let test_number = ref 0
-(* let mona_cycle = ref 10000 *)
-let mona_cycle = ref 90
-let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
+let mona_cycle = ref 10000
+(* let mona_cycle = ref 90 *)
+(* default timeout is 10 seconds *)
+(* let mona_timeout = ref 5.0 *)
+let mona_timeout = ref 10.0
 let max_BUF_SIZE = 16384
 
 let result_file_name = "res"
