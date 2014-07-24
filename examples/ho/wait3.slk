@@ -19,7 +19,7 @@ relation acyclic(bag((int,int)) g).
 //synchronization lemma
 lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0.
 
-/*
+
 // (1)
 checkentail x::WAIT(0.4)<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT(0.5)<C>.
 print residue.
@@ -39,8 +39,7 @@ expect Valid. //2 residue
 checkentail x::WAIT(0.3)<B> * x::WAIT(0.2)<B> & B={} |- x::WAIT(0.5)<B>.
 print residue.
 expect Valid. //1 residue
-*/
 
-// (5)
-check_normalize x::WAIT(0.5)<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+
+
 

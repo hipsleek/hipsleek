@@ -13000,8 +13000,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
         let n2 = (get_node_var h2) in
         let args1 = get_node_args h1 in
         let args2 = get_node_args h2 in
-        let perm_vars1 = Perm.fv_cperm (get_node_perm h1) in
-        let perm_vars2 = Perm.fv_cperm (get_node_perm h2) in
+        let perm_vars1, perm_vars2 = Perm.get_perm_var_lists (get_node_perm h1) (get_node_perm h2) in
         let eqns = List.combine (n1::args1@perm_vars1) (n2::args2@perm_vars2) in
         let eq = List.fold_left (fun pf (v1,v2) ->
                 let eq = CP.mkEqVar v1 v2 no_pos in

@@ -12872,7 +12872,7 @@ let collect_all_constraints_x (pred: formula -> bool) (f:formula) =
   find_rel_constraints f fvars
 
 let collect_all_constraints (pred: formula -> bool) (f:formula) =
-  Debug.ho_1 "collect_all_constraints"
+  Debug.no_1 "collect_all_constraints"
       !print_formula !print_formula
       (fun _ -> collect_all_constraints_x pred f) f
 
