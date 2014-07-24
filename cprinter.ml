@@ -3857,6 +3857,7 @@ let string_of_coerc_opt op c =
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
     ^"\n coercion_origin: "^(string_of_coercion_origin c.Cast.coercion_origin)
+    ^"\n coercion_kind: " ^ (string_of_lemma_kind c.Cast.coercion_kind)
     ^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

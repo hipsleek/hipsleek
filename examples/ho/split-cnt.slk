@@ -15,6 +15,7 @@ checkentail c1::CNT<0> * c2::CNT<0> |-  c1::CNT<0>.
 print residue.
 // one residue
 
+/*
 checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<1>@S1.
 print residue.
 // one residue
@@ -30,6 +31,7 @@ print residue.
 checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<1>@S2.
 print residue.
 // two residues
+*/
 
 /*
  <1>emp&flted_9_40=0 & flted_9_39=0&{FLOW,(21,22)=__norm}[]

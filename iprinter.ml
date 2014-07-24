@@ -937,6 +937,7 @@ let string_of_lem_kind l =
   match l with
     | LEM          -> "lemmas(to be proved and saved)"
     | LEM_PROP     -> "propagation lemmas"
+    | LEM_SPLIT     -> "split lemmas"
     | LEM_TEST     -> "testing lemmas"
     | LEM_TEST_NEW -> "testing lemmas(empty context)"
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
