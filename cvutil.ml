@@ -1402,7 +1402,9 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
       (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
 and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) baga : Excore.EPureI.epure_disj
-      = baga
+      =
+  let new_baga = Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
+  new_baga
 
 and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
   Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula 

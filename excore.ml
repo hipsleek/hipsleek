@@ -218,6 +218,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   (* let _ = Debug.ninfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in *)
   (* let _ = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let _ = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
+  let pure = Omega.simplify pure in
   let p_aset = pure_ptr_equations pure in
   let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
@@ -564,7 +565,7 @@ struct
   (* let unsat_disj disj = is_false_disj (norm_disj disj) *)
 
   let elim_exists (svl:spec_var list) (b,f) : epure =
-    let (b,f) = ef_elim_exists_2 svl (Elt.conv_var b,f) in
+    let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
 
   let elim_exists (svl:spec_var list) (b,f) : epure =
