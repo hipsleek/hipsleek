@@ -42,3 +42,8 @@ b_96<0 & flted_19_76=a_95 & flted_19_75=b_96 & S=S_97 & flted_19_76=1 &
 flted_19_75+1=0 & flted_19_74+1=0 & S={} & c2!=c3&{FLOW,(21,22)=__norm}[]
 
 */
+check_normalize emp & x+1<0.
+
+checkentail x+1<=0 |- false.
+
+checkentail S={x} & x+1<=0 |- false.
