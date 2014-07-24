@@ -1704,6 +1704,7 @@ let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
         h_formula_view_node = dn.h_formula_data_node;
         h_formula_view_name = vname;
         h_formula_view_derv = dn.h_formula_data_derv;
+        h_formula_view_split = dn.h_formula_data_split;
         h_formula_view_imm = dn.h_formula_data_imm;
         h_formula_view_perm = dn.h_formula_data_perm;
         h_formula_view_ho_arguments = []; (* TODO:HO *)

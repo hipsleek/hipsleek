@@ -2729,10 +2729,10 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
@@ -2782,7 +2782,7 @@ let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2802,7 +2802,7 @@ let gen_normalize_lemma_comb ddef =
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in

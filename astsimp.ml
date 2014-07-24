@@ -6013,6 +6013,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                    IF.h_formula_heap_name = c;
                    IF.h_formula_heap_deref = deref;
                    IF.h_formula_heap_derv = dr;
+                   IF.h_formula_heap_split = split;
                    IF.h_formula_heap_imm = imm;
                    IF.h_formula_heap_imm_param = ann_param;
                    IF.h_formula_heap_perm = perm; (*LDK*)
@@ -6043,7 +6044,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 (* dereference to a basic type *)
                 if (deref = 1) then (
                   let base_heap_id = base_heap_id ^ "_star" in
-                  let hf = IF.mkHeapNode n base_heap_id ho_exps 0 dr imm full inv pd perm exps ann_param pi l in
+                  let hf = IF.mkHeapNode n base_heap_id ho_exps 0 dr split imm full inv pd perm exps ann_param pi l in
                   (hf, [])
                 )
                 else (
@@ -6062,13 +6063,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     new_vars := !new_vars @ [(fresh_var, Unprimed)];
                     p1 := (fresh_var, Unprimed);
                     s := !s ^ "_star";
-                    let h = IF.mkHeapNode !p1 !s ho_exps 0 dr imm inv full pd perm [!p2] ann_param None l in
+                    let h = IF.mkHeapNode !p1 !s ho_exps 0 dr split imm inv full pd perm [!p2] ann_param None l in
                     heaps := !heaps @ [h];
                   done;
                   s := !s ^ "_star";
                   let e = IF.P.Var (!p1, l) in
-                  let h1 = IF.mkHeapNode n !s ho_exps 0 dr imm full inv pd perm [e] ann_param None l in
-                  let h2 = IF.mkHeapNode p base_heap_id ho_exps 0 dr imm full inv pd perm exps ann_param pi l in
+                  let h1 = IF.mkHeapNode n !s ho_exps 0 dr split imm full inv pd perm [e] ann_param None l in
+                  let h2 = IF.mkHeapNode p base_heap_id ho_exps 0 dr split imm full inv pd perm exps ann_param pi l in
                   let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                   (hf, !new_vars)
                 )
@@ -6089,13 +6090,13 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   new_vars := !new_vars @ [(fresh_var, Unprimed)];
                   p1 := (fresh_var, Unprimed);
                   s := !s ^ "_star";
-                  let h = IF.mkHeapNode !p1 !s ho_exps 0 dr imm full inv pd perm [!p2] ann_param None l in
+                  let h = IF.mkHeapNode !p1 !s ho_exps 0 dr split imm full inv pd perm [!p2] ann_param None l in
                   heaps := !heaps @ [h];
                 done;
                 s := !s ^ "_star";
                 let e = IF.P.Var (!p1, l) in
-                let h1 = IF.mkHeapNode n !s ho_exps 0 dr imm full inv pd perm [e] ann_param None l in
-                let h2 = IF.mkHeapNode p c ho_exps 0 dr imm full inv pd perm exps ann_param pi l in
+                let h1 = IF.mkHeapNode n !s ho_exps 0 dr split imm full inv pd perm [e] ann_param None l in
+                let h2 = IF.mkHeapNode p c ho_exps 0 dr split imm full inv pd perm exps ann_param pi l in
                 let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                 (hf, !new_vars)
               )
@@ -6121,7 +6122,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_thread_perm = perm; (*LDK*)
                      IF.h_formula_thread_pos = pos;
                      IF.h_formula_thread_label = pi;} ->
-          let dataNode = IF.mkHeapNode (v,p) c [] 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+          let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
           let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
           let new_dl = trans_pure_formula dl tl in
           let new_dl = Cpure.arith_simplify 5 new_dl in
@@ -6133,6 +6134,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               CF.h_formula_thread_delayed = new_dl;
               CF.h_formula_thread_perm = CF.get_node_perm dataNode2;
               CF.h_formula_thread_derv = CF.get_node_derv dataNode2;
+              CF.h_formula_thread_split = CF.get_node_split dataNode2;
               CF.h_formula_thread_origins = CF.get_node_origins dataNode2;
               CF.h_formula_thread_original = CF.get_node_original dataNode2;
               CF.h_formula_thread_pos = CF.get_node_pos dataNode2;
@@ -6143,6 +6145,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_name = c;
                      IF.h_formula_heap_deref = deref;
                      IF.h_formula_heap_derv = dr;
+                     IF.h_formula_heap_split = split;
                      IF.h_formula_heap_imm = imm;
                      IF.h_formula_heap_imm_param = ann_param;
                      IF.h_formula_heap_perm = perm; (*LDK*)
@@ -6258,6 +6261,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
 		  CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
                   CF.h_formula_data_name = rootptr_type_name;
                   CF.h_formula_data_derv = dr;
+                  CF.h_formula_data_split = split;
                   CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
                   CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param1;
                   CF.h_formula_data_perm = permvar; (*??? TO CHECK: temporarily*)
@@ -6312,6 +6316,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                     CF.h_formula_view_node = new_v;
                     CF.h_formula_view_name = c;
                     CF.h_formula_view_derv = dr;
+                    CF.h_formula_view_split = split;
                     CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann imm;
                     CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                     CF.h_formula_view_arguments = hvars;
@@ -6367,6 +6372,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.DataNode {CF.h_formula_data_node = new_v;
                                CF.h_formula_data_name = c;
                                CF.h_formula_data_derv = dr;
+                               CF.h_formula_data_split = split;
                                CF.h_formula_data_imm = Immutable.iformula_ann_to_cformula_ann imm;
                                CF.h_formula_data_param_imm = Immutable.iformula_ann_opt_to_cformula_ann_lst ann_param;
                                CF.h_formula_data_perm = permvar; (*LDK*)
@@ -6957,7 +6963,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                      IF.h_formula_thread_perm = perm; (*LDK*)
                      IF.h_formula_thread_pos = pos;
                      IF.h_formula_thread_label = pi;} ->
-          let dataNode = IF.mkHeapNode (v,p) c [] 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+          let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
           let new_used_names1, evars1, datanode2, pf = linearize_heap used_names dataNode in
           let rsr2, new_used_names2, evars2 = case_normalize_renamed_formula prog avail_vars posib_expl rsr ann_vars in
           let node3 = match datanode2 with
@@ -8891,6 +8897,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_original = true;
         CF.h_formula_data_holes =[];
         CF.h_formula_data_derv = false;
+        CF.h_formula_data_split = SPLIT0;
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
@@ -9579,6 +9586,7 @@ let plugin_inferred_iviews views iprog cprog=
               IF.h_formula_heap_name = id^"_"^pname;
               IF.h_formula_heap_deref = 0;
               IF.h_formula_heap_derv = false;
+              IF.h_formula_heap_split = SPLIT0;
               IF.h_formula_heap_imm = IP.ConstAnn(Mutable);
               IF.h_formula_heap_imm_param = [];
               IF.h_formula_heap_full = false;

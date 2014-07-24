@@ -98,6 +98,12 @@ and primed =
   | Primed
   | Unprimed
 
+(* indicate whether lemma_split is applicable or not*)
+and split_ann =
+    SPLIT0 (* do not split, exact match - DEFAULT *)
+  | SPLIT1 (* always split *)
+  | SPLIT2 (* both split and match *)
+
 and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
@@ -309,6 +315,12 @@ let is_float_type (t:typ) = match t with
 
 (*Remove all blanks in a string*)
 let remove_blanks = Str.global_replace (Str.regexp " ") ""
+
+let string_of_split_ann a =
+  match a with
+    | SPLIT0 -> ""
+    | SPLIT1 -> "@S1"
+    | SPLIT2 -> "@S2"
 
 let string_of_heap_ann a =
   match a with

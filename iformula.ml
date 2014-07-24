@@ -154,6 +154,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_name : ident;
                        h_formula_heap_deref : int;
                        h_formula_heap_derv : bool; 
+                       h_formula_heap_split : split_ann; 
                        h_formula_heap_imm : P.ann;
                        h_formula_heap_imm_param : P.ann option list;
                        h_formula_heap_full : bool;
@@ -178,6 +179,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_name : ident;
                         h_formula_heap2_deref : int;
                         h_formula_heap2_derv : bool;
+                        h_formula_heap2_split : split_ann;
                         h_formula_heap2_imm : P.ann;
                         h_formula_heap2_imm_param : P.ann option list;
                         h_formula_heap2_full : bool;
@@ -495,11 +497,12 @@ and mkThreadNode c id rsr dl perm ofl l =
              h_formula_thread_label = ofl;
              h_formula_thread_pos = l }
 
-and mkHeapNode_x c id ho deref dr i f inv pd perm hl hl_i ofl l=
+and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
              h_formula_heap_derv = dr;
+             h_formula_heap_split = split;
              h_formula_heap_imm = i;
              h_formula_heap_imm_param = hl_i;
              h_formula_heap_full = f;
@@ -511,15 +514,16 @@ and mkHeapNode_x c id ho deref dr i f inv pd perm hl hl_i ofl l=
              h_formula_heap_label = ofl;
              h_formula_heap_pos = l }
 
-and mkHeapNode  c id ho deref dr i f inv pd perm hl hl_i ofl l=
+and mkHeapNode  c id ho deref dr split i f inv pd perm hl hl_i ofl l=
   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
-      (fun _ -> mkHeapNode_x c id ho deref dr i f inv pd perm hl hl_i ofl l ) c
+      (fun _ -> mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l ) c
 
-and mkHeapNode2 c id ho deref dr i f inv pd perm ohl hl_i ofl l = 
+and mkHeapNode2 c id ho deref dr split i f inv pd perm ohl hl_i ofl l = 
   HeapNode2 { h_formula_heap2_node = c;
               h_formula_heap2_name = id;
               h_formula_heap2_deref = deref;
               h_formula_heap2_derv = dr;
+              h_formula_heap2_split = split;
               h_formula_heap2_imm = i;
               h_formula_heap2_imm_param = hl_i;
               h_formula_heap2_full = f;
@@ -1206,6 +1210,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_name = c; 
                h_formula_heap_deref = deref;
                h_formula_heap_derv = dr;
+               h_formula_heap_split = split;
                h_formula_heap_imm = imm;
                h_formula_heap_imm_param = imm_p;
                h_formula_heap_full = full;
@@ -1226,6 +1231,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
                  h_formula_heap_derv = dr;
+                 h_formula_heap_split = split;
                  h_formula_heap_imm = imm;
                  h_formula_heap_imm_param = imm_p;
                  h_formula_heap_full = full;
@@ -1240,6 +1246,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                 h_formula_heap2_name = c;
                 h_formula_heap2_deref = deref;
                 h_formula_heap2_derv = dr; 
+                h_formula_heap2_split = split; 
                 h_formula_heap2_imm = imm;
                 h_formula_heap2_imm_param = imm_p; 
                 h_formula_heap2_full = full;
@@ -1261,6 +1268,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                   h_formula_heap2_name = c;
                   h_formula_heap2_deref = deref;
                   h_formula_heap2_derv = dr; 
+                  h_formula_heap2_split = split; 
                   h_formula_heap2_imm = imm;
                   h_formula_heap2_imm_param = imm_p; 
                   h_formula_heap2_full = full;
@@ -1506,6 +1514,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
                  h_formula_heap_derv = dr;
+                 h_formula_heap_split = split;
                  h_formula_heap_imm = imm;
                  h_formula_heap_imm_param = imm_p; 
                  h_formula_heap_full = full;
@@ -1525,6 +1534,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                    h_formula_heap_name = subst_data_name s c;
                    h_formula_heap_deref = deref;
                    h_formula_heap_derv = dr;
+                   h_formula_heap_split = split;
                    h_formula_heap_imm = imm;
                    h_formula_heap_imm_param = imm_p; 
                    h_formula_heap_full = full;
@@ -1539,6 +1549,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                   h_formula_heap2_name = c;
                   h_formula_heap2_deref = deref;
                   h_formula_heap2_derv = dr;
+                  h_formula_heap2_split = split;
                   h_formula_heap2_imm = imm;
                   h_formula_heap2_imm_param = imm_p;
                   h_formula_heap2_full = full;
@@ -1558,6 +1569,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                     h_formula_heap2_name = subst_data_name s c;
                     h_formula_heap2_deref = deref;
                     h_formula_heap2_derv = dr;
+                    h_formula_heap2_split = split;
                     h_formula_heap2_imm = imm;
                     h_formula_heap2_imm_param = imm_p;
                     h_formula_heap2_full =full;

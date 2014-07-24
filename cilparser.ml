@@ -1040,7 +1040,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false (Ipure.ConstAnn Mutable) false false false None 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None 
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) fb.IF.formula_base_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Base { fb with
@@ -1059,7 +1059,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
                   IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 
-                      [] (*TODO:HO*) 0 false 
+                      [] (*TODO:HO*) 0 false SPLIT0
                       (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) fe.IF.formula_exists_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Exists { fe with

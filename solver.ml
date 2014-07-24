@@ -4232,7 +4232,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             let rs2 = if (!Globals.allow_threads_as_resource) then
                                                   (*Threas as resource*)
                                                   let dl = CP.remove_redundant (MCP.pure_of_mix df) in
-                                                  let ht = CF.mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true new_post dl None pos in
+                                                  let ht = CF.mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false SPLIT0 None [] true new_post dl None pos in
                                                   let f = CF.formula_of_heap ht no_pos in
 	                                              let rs1 = compose_context_formula ctx11 f new_ref_vars true Flow_replace pos in
                                                   rs1
@@ -10010,6 +10010,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_node = List.hd new_v2 (*var_to_fold*);
       h_formula_view_name = c2;
       h_formula_view_derv = get_view_derv ln2;
+      h_formula_view_split = get_view_split ln2;
       h_formula_view_imm = get_view_imm ln2;
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;

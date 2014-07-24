@@ -1589,6 +1589,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                         CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
+		        CF.h_formula_data_split = SPLIT0; (*TO CHECK: assume false*)
 		        CF.h_formula_data_imm = imm_node;
                         CF.h_formula_data_param_imm = pimm;
                         CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_perm_exp else None; (*LDK: belong to HIP, deal later ???*)
@@ -1937,6 +1938,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		CF.h_formula_data_derv = false;
+		CF.h_formula_data_split = SPLIT0;
 		CF.h_formula_data_imm = CP.ConstAnn(Mutable);
                 CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     

@@ -122,7 +122,8 @@ let rec rev_trans_heap f = match f with
         IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
             b.CF.h_formula_data_name [] (* TODO:HO *)
             0
-            b.CF.h_formula_data_derv 
+            b.CF.h_formula_data_derv
+            b.CF.h_formula_data_split
             (IP.ConstAnn(Mutable))
             true false false
             (Perm.rev_trans_perm b.CF.h_formula_data_perm)
@@ -132,7 +133,8 @@ let rec rev_trans_heap f = match f with
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
           b.CF.h_formula_view_name  [] (* IMP_TODO:HO *) 
           0
-          b.CF.h_formula_view_derv 
+          b.CF.h_formula_view_derv
+          b.CF.h_formula_view_split
           (IP.ConstAnn(Mutable))
           true false false
           (Perm.rev_trans_perm b.CF.h_formula_view_perm)

@@ -669,6 +669,8 @@ let pr_imm x = fmt_string (string_of_imm x)
 
 let pr_derv x = fmt_string (string_of_derv x)
 
+let pr_split x = fmt_string (string_of_split_ann x)
+
 let string_of_ident x = x
 
 let pr_ident x = fmt_string (string_of_ident x)
@@ -1186,6 +1188,7 @@ let rec pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+	  h_formula_data_split = split;
 	  h_formula_data_imm = imm;
 	  h_formula_data_param_imm = ann_param;
       h_formula_data_arguments = svs;
@@ -1228,6 +1231,7 @@ let rec pr_h_formula h =
                   (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
 	      (* if (!Globals.allow_imm) then *) pr_imm imm;
 	      pr_derv dr;
+	      pr_split split;
               if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if !print_derv then
@@ -1242,6 +1246,7 @@ let rec pr_h_formula h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+	  h_formula_view_split = split;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs;
@@ -1276,6 +1281,7 @@ let rec pr_h_formula h =
               pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
 	      pr_imm imm;
 	      pr_derv dr;
+	      pr_split split;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if (!Globals.print_derv) then
                 begin
@@ -1294,6 +1300,7 @@ let rec pr_h_formula h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1311,7 +1318,8 @@ let rec pr_h_formula h =
 	      begin
               pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
-	          pr_derv dr;
+	      pr_derv dr;
+	      pr_split split;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if !print_derv then
                 begin
@@ -1388,6 +1396,7 @@ and prtt_pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+	  h_formula_data_split = split;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -1425,6 +1434,7 @@ and prtt_pr_h_formula h =
 			  pr_angle (c^perm_str) pr_spec_var svs ;
 			  pr_imm imm;
 			  pr_derv dr;
+			  pr_split split;
 			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1438,6 +1448,7 @@ and prtt_pr_h_formula h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1460,6 +1471,7 @@ and prtt_pr_h_formula h =
 			  pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
+			  pr_split split;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 		  (* if original then fmt_string "[Orig]" *)
@@ -1468,8 +1480,9 @@ and prtt_pr_h_formula h =
         fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
-	  h_formula_view_derv = dr;
-	  h_formula_view_imm = imm;
+      h_formula_view_derv = dr;
+      h_formula_view_split = split;
+      h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_args_orig = svs_orig;  
@@ -1499,6 +1512,7 @@ and prtt_pr_h_formula h =
 	    pr_angle (c^perm_str) pr_view_arg params;
 	    pr_imm imm;
 	    pr_derv dr;
+	    pr_split split;
 	    (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 	    if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	    (* if original then fmt_string "[Orig]" *)
@@ -1550,6 +1564,7 @@ and prtt_pr_h_formula_inst prog h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+	  h_formula_data_split = split;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -1587,6 +1602,7 @@ and prtt_pr_h_formula_inst prog h =
 			  pr_angle (c^perm_str) pr_spec_var svs ;
 			  pr_imm imm;
 			  pr_derv dr;
+			  pr_split split;
 			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1600,6 +1616,7 @@ and prtt_pr_h_formula_inst prog h =
                    h_formula_thread_delayed = dl;
                    h_formula_thread_resource = rsr;
 	               h_formula_thread_derv = dr;
+	               h_formula_thread_split = split;
                    h_formula_thread_perm = perm; (*LDK*)
                    h_formula_thread_origins = origs;
                    h_formula_thread_original = original;
@@ -1622,6 +1639,7 @@ and prtt_pr_h_formula_inst prog h =
 			  pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
+			  pr_split split;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 		  (* if original then fmt_string "[Orig]" *)
@@ -1631,6 +1649,7 @@ and prtt_pr_h_formula_inst prog h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+	  h_formula_view_split = split;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
@@ -1660,7 +1679,7 @@ and prtt_pr_h_formula_inst prog h =
 				  fmt_string "::"; 
 				  pr_angle (c^perm_str) pr_view_arg params;
 				  pr_imm imm;
-				  pr_derv dr;
+				  pr_split split;
 				  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 				  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 				  (* if original then fmt_string "[Orig]" *)
@@ -1716,6 +1735,7 @@ and pr_h_formula_for_spec h =
   | DataNode ({h_formula_data_node = sv;
     h_formula_data_name = c;
     h_formula_data_derv = dr;
+    h_formula_data_split = split;
     h_formula_data_imm = imm;
     h_formula_data_arguments = svs;
     h_formula_data_holes = hs; (* An Hoa *)
@@ -1747,6 +1767,7 @@ and pr_h_formula_for_spec h =
     pr_angle (c^perm_str) pr_spec_var svs ;
     pr_imm imm;
     pr_derv dr;
+    pr_split split;
     if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1759,6 +1780,7 @@ and pr_h_formula_for_spec h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1775,6 +1797,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv; fmt_string "::";
     pr_sharp_angle (c^perm_str) fmt_string [arg_str];
     pr_derv dr;
+    pr_split split;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
     if (!print_derv) then
@@ -1783,6 +1806,7 @@ and pr_h_formula_for_spec h =
   | ViewNode ({h_formula_view_node = sv; 
     h_formula_view_name = c; 
     h_formula_view_derv = dr;
+    h_formula_view_split = split;
     h_formula_view_imm = imm;
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
@@ -1806,6 +1830,7 @@ and pr_h_formula_for_spec h =
     if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
 (*    pr_imm imm;*)
     pr_derv dr;
+    pr_split split;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
     pr_prunning_conditions ann pcond;
@@ -4302,7 +4327,8 @@ let rec html_of_h_formula h = match h with
 			String.concat html_op_conjconj (List.map html_of_h_formula args)						
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
-                h_formula_data_derv = dr;
+                                h_formula_data_derv = dr;
+                                h_formula_data_split = split;
 				h_formula_data_imm = imm;
                 h_formula_data_param_imm = ann_param; (* (andreeac) add param ann to html printer *)
 				h_formula_data_arguments = svs;
@@ -4318,7 +4344,8 @@ let rec html_of_h_formula h = match h with
       h_formula_thread_name = c;
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
-	  h_formula_thread_derv = dr;
+      h_formula_thread_derv = dr;
+      h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -4330,6 +4357,7 @@ let rec html_of_h_formula h = match h with
 	| ViewNode ({h_formula_view_node = sv; 
 				h_formula_view_name = c; 
 				h_formula_view_derv = dr;
+				h_formula_view_split = split;
 				h_formula_view_imm = imm;
 				h_formula_view_arguments = svs; 
                                 h_formula_view_args_orig = svs_orig;  

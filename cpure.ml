@@ -28,8 +28,10 @@ let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
-type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
-        TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
+type ann = ConstAnn of heap_ann 
+           | PolyAnn of spec_var
+           | TempAnn of ann 
+           | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
            | NoAnn
 
 (* type view_arg = SVArg of spec_var | AnnArg of ann *)

@@ -237,6 +237,7 @@ h_formula_phase_pos : loc }
 and h_formula_thread = {  h_formula_thread_node : CP.spec_var;
                         h_formula_thread_name : ident;
 			h_formula_thread_derv : bool;
+                        h_formula_thread_split : split_ann;
                         h_formula_thread_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of thread nodes*)
                         h_formula_thread_origins : ident list;
@@ -249,6 +250,7 @@ and h_formula_thread = {  h_formula_thread_node : CP.spec_var;
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
 			h_formula_data_derv : bool;
+			h_formula_data_split : split_ann;
                         h_formula_data_imm : ann;
                         h_formula_data_param_imm : ann list;
                         h_formula_data_perm : cperm; (* option; *) (*LDK: permission*)
@@ -265,6 +267,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
+                        h_formula_view_split : split_ann;
                         h_formula_view_imm : ann;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
@@ -331,10 +334,11 @@ let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
-let mkThreadNode c n derv perm origins original rsr dl lbl pos = 
+let mkThreadNode c n derv split perm origins original rsr dl lbl pos = 
   ThreadNode { h_formula_thread_node = c;
                h_formula_thread_name = n;
-			   h_formula_thread_derv = derv;
+	       h_formula_thread_derv = derv;
+	       h_formula_thread_split = split;
                h_formula_thread_perm = perm;
                h_formula_thread_origins = origins;
                h_formula_thread_original = original;
@@ -1797,6 +1801,12 @@ and get_node_derv (h : h_formula) = match h with
   | DataNode ({h_formula_data_derv = c}) -> c
   | _ -> failwith ("get_node_derv: invalid argument")
 
+and get_node_split (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_split = c}) 
+  | ViewNode ({h_formula_view_split = c}) 
+  | DataNode ({h_formula_data_split = c}) -> c
+  | _ -> failwith ("get_node_split: invalid argument")
+
 and get_node_pos (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_pos = c}) 
   | ViewNode ({h_formula_view_pos = c}) 
@@ -1922,9 +1932,17 @@ and get_view_derv (h : h_formula) = match h with
   | ViewNode ({h_formula_view_derv = dr}) -> dr
   | _ -> failwith ("get_view_derv: not a view")
 
+and get_view_split (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_split = dr}) -> dr
+  | _ -> failwith ("get_view_split: not a view")
+
 and get_data_derv (h : h_formula) = match h with
   | DataNode ({h_formula_data_derv = dr}) -> dr
   | _ -> failwith ("get_data_derv not a data")
+
+and get_data_split (h : h_formula) = match h with
+  | DataNode ({h_formula_data_split = dr}) -> dr
+  | _ -> failwith ("get_data_split not a data")
 
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
@@ -3058,6 +3076,7 @@ and h_subst sst (f : h_formula) =
   | DataNode ({h_formula_data_node = x; 
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
+							h_formula_data_split = split; 
 							h_formula_data_imm = imm; 
 	                        h_formula_data_param_imm = ann_param;
 							h_formula_data_perm = perm; (*LDK*)
@@ -3072,6 +3091,7 @@ and h_subst sst (f : h_formula) =
 		DataNode ({h_formula_data_node = CP.subst_var_par sst x; 
 							h_formula_data_name = c; 
 							h_formula_data_derv = dr; 
+							h_formula_data_split = split; 
 							h_formula_data_imm = subs_imm_par sst imm;  
 	                        h_formula_data_param_imm = List.map (subs_imm_par sst) ann_param;
 							h_formula_data_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
@@ -3086,6 +3106,7 @@ and h_subst sst (f : h_formula) =
   | ThreadNode ({h_formula_thread_node = x; 
 							h_formula_thread_name = c; 
 							h_formula_thread_derv = dr; 
+							h_formula_thread_split = split; 
 							h_formula_thread_perm = perm; (*LDK*)
 							h_formula_thread_delayed = dl;
 							h_formula_thread_resource = rsr; 
@@ -3101,6 +3122,7 @@ and h_subst sst (f : h_formula) =
 		ThreadNode ({h_formula_thread_node = CP.subst_var_par sst x; 
 							h_formula_thread_name = c; 
 							h_formula_thread_derv = dr; 
+							h_formula_thread_split = split; 
 							h_formula_thread_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
 							h_formula_thread_delayed = ndl;
 							h_formula_thread_resource = subst sst rsr;
@@ -3320,6 +3342,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | DataNode ({h_formula_data_node = x; 
 	h_formula_data_name = c; 
     h_formula_data_derv = dr;
+    h_formula_data_split = split;
     h_formula_data_imm = imm; 
     h_formula_data_param_imm = ann_param;
     h_formula_data_perm = perm; (*LDK*)
@@ -3334,6 +3357,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         DataNode ({h_formula_data_node = subst_var s x; 
 		h_formula_data_name = c; 
         h_formula_data_derv = dr;
+        h_formula_data_split = split;
     	h_formula_data_perm = subst_var_perm () s perm; (*LDK*)
         h_formula_data_imm = apply_one_imm s imm;  
 	    h_formula_data_param_imm = List.map (apply_one_imm s) ann_param;
@@ -13232,6 +13256,7 @@ and merge_two_nodes dn1 dn2 =
 	| DataNode { h_formula_data_node = dnsv1;
 		h_formula_data_name = n1;
 		h_formula_data_derv = dr1;
+		h_formula_data_split = split1;
 		h_formula_data_imm = i1;
         h_formula_data_param_imm = ann_p1;
 		h_formula_data_arguments = args1;
@@ -13246,6 +13271,7 @@ and merge_two_nodes dn1 dn2 =
 			| DataNode { h_formula_data_node = dnsv2;
 						h_formula_data_name = n2;
 						h_formula_data_derv = dr2;
+						h_formula_data_split = split2;
 						h_formula_data_imm = i2;
                         h_formula_data_param_imm = ann_p2;
 						h_formula_data_arguments = args2;
@@ -13282,7 +13308,9 @@ and merge_two_nodes dn1 dn2 =
                             (* let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
-						                h_formula_data_derv = dr1; (*TO CHECK*)
+						                                h_formula_data_derv = dr1; (*TO CHECK*)
+						                                h_formula_data_split = split1; (*TO CHECK*)
+
 										h_formula_data_imm = i1;
 	                                    h_formula_data_param_imm = combine_param_ann ann_p1 ann_p2;
 										h_formula_data_arguments = args;
@@ -14032,6 +14060,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
+	  h_formula_data_split = SPLIT0;
 	  h_formula_data_imm = CP.ConstAnn(Mutable);
       h_formula_data_param_imm = []; (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
@@ -14049,6 +14078,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
+      h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
@@ -14120,6 +14150,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_data_node = var;
       h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
+	  h_formula_data_split = SPLIT0;
 	  h_formula_data_imm = CP.ConstAnn(Mutable);
       h_formula_data_param_imm = [];    (* list should have the same size as h_formula_data_arguments *)
 	  h_formula_data_perm = None;
@@ -14137,6 +14168,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
+      h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
@@ -14208,6 +14240,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
+      h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
       h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
@@ -15078,6 +15111,7 @@ let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;
   h_formula_view_name = view_name;
   h_formula_view_derv = false;
+  h_formula_view_split = SPLIT0;
   h_formula_view_arguments = view_args;
   h_formula_view_ho_arguments = [];   (* TODO;HO *)
   h_formula_view_annot_arg = [];

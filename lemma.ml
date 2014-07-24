@@ -131,12 +131,12 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
   let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name) [] (* TODO:HO *)
-    0  false  (IP.ConstAnn Mutable) false false false None
+    0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view1.C.view_vars) []  None pos1 in
   let chf1 = CF.mkViewNode (CP.SpecVar (Named view1.C.view_name,self, Unprimed)) view1.C.view_name
     view1.C.view_vars no_pos in
   let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name) [] (* TODO:HO *)
-    0  false (IP.ConstAnn Mutable) false false false None
+    0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
   let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
     view2.C.view_vars no_pos in
@@ -1341,7 +1341,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         ) vd.C.view_vars in
         let head = (
           IF.mkHeapNode head_node (vd.C.view_name) [] (* TODO:HO *)
-              0 false  (IP.ConstAnn Mutable) false false false None
+              0 false SPLIT0 (IP.ConstAnn Mutable) false false false None
               head_params [] None vpos
         ) in
         Iformula.mkBase head (Ipure.mkTrue vpos) Iformula.top_flow [] vpos
@@ -1368,7 +1368,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         let pred2 = (
           (* this is the original hformula view *)
           IF.mkHeapNode pred2_node (vd.C.view_name) [] (* TODO:HO *)
-              0 false (IP.ConstAnn Mutable) false false false None
+              0 false SPLIT0 (IP.ConstAnn Mutable) false false false None
               pred2_params [] None vpos 
         ) in
 
@@ -1429,7 +1429,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           let pred1 = (
             (* this is a derived hformula view *)
             IF.mkHeapNode pred1_node (vd.C.view_name) [] (* TODO:HO *)
-                0 false (IP.ConstAnn Mutable) true false false None
+                0 false SPLIT0 (IP.ConstAnn Mutable) true false false None
                 pred1_params [] None vpos 
           ) in
           Debug.ninfo_hprint (add_str "pred1" !IF.print_h_formula) pred1 vpos;
@@ -1473,7 +1473,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
                   Ipure_D.Var((fresh_name (), Unprimed), vpos)
                 ) ddecl.I.data_fields in
                 IF.mkHeapNode (fwp_name, Unprimed) dname [] (* TODO:HO *)
-                    0 false  (IP.ConstAnn Lend) false false false None
+                    0 false SPLIT0 (IP.ConstAnn Lend) false false false None
                     params [] None vpos
               in
               let rlemma_name1 = "rlem1_" ^ vd.C.view_name in

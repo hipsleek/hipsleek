@@ -148,6 +148,7 @@ let hn_trans cprog vnames hn = match hn with
                 IF.h_formula_heap_name = id;
                 IF.h_formula_heap_deref = 0;
                 IF.h_formula_heap_derv = false;
+                IF.h_formula_heap_split = SPLIT0;
                 IF.h_formula_heap_imm = IP.ConstAnn(Mutable);
                 IF.h_formula_heap_imm_param = [];
                 IF.h_formula_heap_full = false;
@@ -339,6 +340,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
 	            CF.h_formula_view_node = r;
 	            CF.h_formula_view_name = view_name;
                     CF.h_formula_view_derv = false;
+                    CF.h_formula_view_split = SPLIT0;
 	            CF.h_formula_view_imm = CP.ConstAnn(Mutable);
                     CF.h_formula_view_perm = None;
                     CF.h_formula_view_arguments = tl;

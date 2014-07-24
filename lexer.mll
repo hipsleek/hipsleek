@@ -344,6 +344,8 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
+  | "@S1" { SPLIT1Ann }
+  | "@S2" { SPLIT2Ann }
   | "@M" { MUT }
   | "@S" { SAT }
   (* | "@VAL" {VAL} *)

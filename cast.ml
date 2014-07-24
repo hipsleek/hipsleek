@@ -1654,6 +1654,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+							   F.h_formula_data_split = subnode.F.h_formula_data_split;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1675,6 +1676,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1697,6 +1700,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
