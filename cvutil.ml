@@ -960,15 +960,15 @@ and conv_from_ef_disj disj =
   Debug.no_1 "conv_from_ef_disj" Cprinter.string_of_ef_pure_disj pr (fun _ -> conv_from_ef_disj_x disj) disj
 
 and xpure_heap_mem_enum_new
-      (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) 
+      (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
       =
-  if !Globals.baga_xpure (* gen_baga_inv *) (* baga_xpure *) then
+  if !Globals.baga_xpure then
       let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
       let ans = conv_from_ef_disj disj in
       ans
   else if !Globals.en_slc_ps || not(!Globals.gen_baga_inv) then
     (* using mcpure slicing - to fix *)
-    xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) 
+    xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
   else
     (* to call xpure_heap_enum_baga *)
     (* if !Globals.baga_xpure then *)
@@ -1401,17 +1401,16 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
   Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula
       (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
-and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) baga : Excore.EPureI.epure_disj
-      =
+and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) baga : Excore.EPureI.epure_disj =
   let new_baga = Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
   new_baga
 
-and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
-  Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula 
+and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) =
+  Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula
       (fun (p1,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
-"^(Cprinter.string_of_mem_formula p4)) 
+"^(Cprinter.string_of_mem_formula p4))
       (fun h0 -> xpure_symbolic_orig prog h0) h0
-      
+
 (* xpure approximation without memory enumeration *)
 and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) =
   (*use different xpure functions*)

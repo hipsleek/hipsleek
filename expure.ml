@@ -17,7 +17,7 @@ let find_baga_inv view =
     | Some efpd -> efpd
     | None -> 
           begin
-            match view.Cast.view_baga_over_inv with
+            match view.Cast.view_baga_x_over_inv with
               | Some efpd -> efpd
               | None -> failwith "cannot find baga inv 2"
           end
