@@ -42,6 +42,5 @@ expect Valid. //1 residue
 */
 
 // (5)
-//check_normalize x::WAIT(0.5)<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+check_normalize x::WAIT(0.5)<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
 
-checkentail x+1=0 & S={} |- false.
