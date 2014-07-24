@@ -21,8 +21,19 @@ Starting Omega...oc
 Fatal error: exception Failure("view defn for ll does not entail supplied invariant
 Two problems
   (1) why --esl not working (FIXED)
-  (2) seems that user_inv is true
+  (2) seems that user_inv is true (FIXED)
 ==============================================
+# sleek10.slk
+
+pred ll<n> == self = null & n = 0
+         or self::node<_,r> * r::ll<n - 1>
+.
+
+!! baga_over:None
+
+without invariant, we can use
+a default of "true" for baga_over too
+rather than None
 ==============================================
 ==============================================
 ==============================================
