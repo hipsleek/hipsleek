@@ -571,13 +571,32 @@ Unexpected result with : baga-test.slk (failed check(s): {E15#Fail})
 Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
 
 ====================================================================
-Total number of errors: 17 in files:
-  sleek12-lend.slk(no result (!!!check script options, provers, etc)) baga-test-eps.slk({E7#Valid}) baga-test.slk({E15#Fail},{E7#Valid}) infer/infer5.slk({E3#Fail}) infer/infer8.slk({E18#Valid},{E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) infer/infer10.slk({E1#Valid}) inflem.slk(no result (!!!check script options, provers, etc)) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/lseg1.slk(no result (!!!check script options, provers, etc)) lemmas/rlseg.slk(no result (!!!check script options, provers, etc)) lemmas/app-tail.slk({E1#Valid}) lemmas/ll.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/nlseg3.slk(no result (!!!check script options, provers, etc)) lemmas/dseg-new.slk(no result (!!!check script options, provers, etc)) lemmas/dseg1.slk(no result (!!!check script options, provers, etc)).
-Total verification time: 50.58 second
+
+Total number of errors: 12 in files:
+  baga-test-eps.slk({E7#Valid}) 
+  baga-test.slk({E15#Fail},{E7#Valid}) 
+
+  infer/infer5.slk({E3#Fail}) infer/infer8.slk({E18#Valid},{E30#Valid}) 
+  infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+  infer/infer10.slk({E1#Valid}) 
+
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
 
 --dis-baga-xpure
 Total number of errors: 7 in files:
-  baga-test.slk({E3#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}).
+  baga-test.slk({E3#Valid}) 
+
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================

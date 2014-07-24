@@ -35,8 +35,54 @@ without invariant, we can use
 a default of "true" for baga_over too
 rather than None
 ==============================================
+# baga1.slk
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([], self!=Cnull)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+However, I expect to get:
+    inv BG([self,k],true)
 ==============================================
+# baga1.slk
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([], self!=Cnull)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+However, I expect to get:
+    inv BG([self,k],true)
 ==============================================
+# baga2.slk
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+//inv self!=null
+inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([self,k], true)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+which is less accurate than the given baga.
+However, I expect to get:
+    inv BG([self,k],true)
 ==============================================
 ==============================================
 ==============================================
