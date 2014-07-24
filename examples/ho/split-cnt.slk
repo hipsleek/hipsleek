@@ -6,16 +6,17 @@ pred_prim CNT<n:int>.
 
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
-checkentail c1::CNT<0> & c2::CNT<0> |- c1::CNT<0> & c2::CNT<0>.
+checkentail c1::CNT<0> * c2::CNT<0> |- c1::CNT<0> * c2::CNT<0>.
 print residue.
 
 /*
- <1>emp&flted_5_40=0 & flted_5_39=0&{FLOW,(21,22)=__norm}[]
-[[ SEARCH ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
-<2>c2::CNT{}<b_73>&flted_5_40=0 & flted_5_39=0 & 0<=b_73 & b_73<=flted_5_39 & 0<=b_73 & b_73<=flted_5_39 & 0<=b_73 & 0<=0 & flted_5_39=b_73+0&{FLOW,(21,22)=__norm}[]
-[[ SEARCH ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> split) ==>  Match ==> ]]
-<3>emp&flted_5_40=0 & flted_5_39=0 & 0<=b_61 & b_61<=flted_5_40 & 0<=b_61 & b_61<=flted_5_40 & 0<=b_61 & 0<=0 & flted_5_40=b_61+0&{FLOW,(21,22)=__norm}[]
-[[ SEARCH ==>  (Lemma ==> split) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
-<4>c2::CNT{}<b_95>&flted_5_40=0 & flted_5_39=0 & 0<=b_61 & b_61<=flted_5_40 & 0<=b_61 & 0<=b_95 & b_61<=flted_5_40 & b_95<=flted_5_39 & 0<=b_95 & 0<=b_61 & b_61<=flted_5_40 & b_95<=flted_5_39 & 0<=b_95 & 0<=b_61 & flted_5_40=b_61+0 & 0<=0 & flted_5_39=b_95+0&{FLOW,(21,22)=__norm}[]
-[[ SEARCH ==>  (Lemma ==> split) ==>  Match ==>  SEARCH ==>  (Lemma ==> split) ==>  Match ==> ]]
+ <1>emp&flted_9_40=0 & flted_9_39=0&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  SEARCH ==>  COND ==>  Match(c1,c1) ==>  SEARCH ==>  COND ==>  Match(c2,c2) ==> ]]
+<2>c2::CNT{}<b_62>&flted_9_40=0 & flted_9_39=0 & 0<=b_62 & b_62<=flted_9_39 & 0<=b_62 & 0<=0 & flted_9_39=b_62+0&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  SEARCH ==>  COND ==>  Match(c1,c1) ==>  SEARCH ==>  (Lemma ==> split(c2,c2)) ==>  Match(c2,c2) ==> ]]
+<3>c1::CNT{}<b_73>&flted_9_40=0 & flted_9_39=0 & 0<=b_73 & b_73<=flted_9_40 & 0<=b_73 & 0<=0 & flted_9_40=b_73+0&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==>  SEARCH ==>  COND ==>  Match(c2,c2) ==> ]]
+<4>c2::CNT{}<b_83> * c1::CNT{}<b_73>&flted_9_40=0 & flted_9_39=0 & 0<=b_83 & b_83<=flted_9_39 & 0<=b_83 & 0<=b_73 & b_73<=flted_9_40 & b_83<=flted_9_39 & 0<=b_73 & 0<=b_83 & flted_9_40=b_73+0 & 0<=0 & flted_9_39=b_83+0&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==>  SEARCH ==>  (Lemma ==> split(c2,c2)) ==>  Match(c2,c2) ==> ]]
+
 */

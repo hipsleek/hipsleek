@@ -1869,11 +1869,15 @@ and get_node_label (h : h_formula) = match h with
   | DataNode ({h_formula_data_label = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument")
   
-and get_node_var (h : h_formula) = match h with
+and get_node_var_x (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_node = c}) 
   | ViewNode ({h_formula_view_node = c}) 
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
+
+and get_node_var (h : h_formula) =
+  Debug.no_1 "get_node_var" !print_h_formula !print_sv
+      get_node_var_x h
 
 and set_node_var newc (h : h_formula) = match h with
   | ThreadNode w -> ThreadNode {w with h_formula_thread_node = newc;}

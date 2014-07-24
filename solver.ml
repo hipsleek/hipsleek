@@ -12491,8 +12491,14 @@ and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_form
 and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = (*if false, split permission*)
   if !perm =NoPerm then false
   else 
-    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
-    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
+    let r_perm = match r_perm with 
+      | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos)
+      | Some v -> v
+    in
+    let l_perm = match l_perm with 
+      | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos)
+      | Some v -> v
+    in
     let nfv = CP.fresh_perm_var()  in
     let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in
     (*let add2 = CP.BForm ((CP.Eq (l_perm, r_perm, no_pos), None),None) in*)

@@ -148,12 +148,17 @@ let pr_simpl_match_res (c:match_res):unit =
 (*   fmt_string "\n RHS "; pr_h_formula c.match_res_rhs_node; *)
 (*   fmt_string ")" *)
 
+let string_of_match_res_pair (c:match_res) : string =
+  (try 
+    let lhs_n = CF.get_node_var c.match_res_lhs_node in
+    let rhs_n = CF.get_node_var c.match_res_rhs_node in
+    pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var (lhs_n,rhs_n)
+  with _ -> "(UNK)")
+
 let rec pr_action_name a = match a with
   | Undefined_action e -> fmt_string "Undefined_action"
   | M_match e ->
-        let lhs_n = CF.get_node_var e.match_res_lhs_node in
-        let rhs_n = CF.get_node_var e.match_res_rhs_node in
-        let str = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var (lhs_n,rhs_n) in
+        let str = string_of_match_res_pair e in
         fmt_string ("Match" ^ str)
   | M_split_match e -> fmt_string "Split&Match "
   | M_fold e -> fmt_string "Fold"
@@ -163,9 +168,7 @@ let rec pr_action_name a = match a with
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
   | M_lemma (e,s) ->
-        let lhs_n = CF.get_node_var e.match_res_lhs_node in
-        let rhs_n = CF.get_node_var e.match_res_rhs_node in
-        let str = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var (lhs_n,rhs_n) in
+        let str = string_of_match_res_pair e in
         fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ str ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
