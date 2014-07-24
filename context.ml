@@ -150,7 +150,11 @@ let pr_simpl_match_res (c:match_res):unit =
 
 let rec pr_action_name a = match a with
   | Undefined_action e -> fmt_string "Undefined_action"
-  | M_match e -> fmt_string "Match"
+  | M_match e ->
+        let lhs_n = CF.get_node_var e.match_res_lhs_node in
+        let rhs_n = CF.get_node_var e.match_res_rhs_node in
+        let str = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var (lhs_n,rhs_n) in
+        fmt_string ("Match" ^ str)
   | M_split_match e -> fmt_string "Split&Match "
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
@@ -158,8 +162,12 @@ let rec pr_action_name a = match a with
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
-  | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
-        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ ")"))
+  | M_lemma (e,s) ->
+        let lhs_n = CF.get_node_var e.match_res_lhs_node in
+        let rhs_n = CF.get_node_var e.match_res_rhs_node in
+        let str = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var (lhs_n,rhs_n) in
+        fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ str ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
   | M_infer_heap p -> fmt_string ("InferHeap")
   | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData")
