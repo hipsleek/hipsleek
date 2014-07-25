@@ -122,15 +122,12 @@ void main(ref WAIT g)
 
   thrd tid =  create_thrd(); //create thread1
 
-  fork_thrd(tid,c1,c2,g);
+  fork_thrd(tid,c1,c2,g); //wait< c1->c2 >
 
-  await(c2);
+  await(c2); //wait< c2->c1 >
   countDown(c1);
 
-  dprint;
+  join_thrd(tid,c1,c2,g); //ERROR, since wait<S> & cyclic(S)
 
-  join_thrd(tid,c1,c2,g); //ERROR, since c::CNT<1> * c::CNT<-1>
-
-  dprint;
 }
 
