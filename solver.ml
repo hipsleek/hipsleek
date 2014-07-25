@@ -9469,11 +9469,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_lhs, to_ho_lhs, to_bound =
                 if (l_ho_args=[]) then (to_lhs, CP.mkTrue no_pos, [])
                 else
-                  let to_ho_lhs = to_lhs in
+                  let ls = CP.split_conjunctions to_lhs in
+                  let ls_ho_lhs, ls_lhs = List.partition (fun f -> Gen.BList.intersect_eq CP.eq_spec_var (CP.fv f) l_args != [] ) ls in
+                  let to_ho_lhs = CP.join_conjunctions ls_ho_lhs in
+                  let to_lhs = CP.join_conjunctions ls_lhs in
                   let to_bound = List.map (fun ((_,v),_) -> v) other_subs in
                   (*Only consider variables that have bindings*)
                   let to_bound = List.filter (fun v -> Gen.BList.mem_eq CP.eq_spec_var v (CP.fv to_ho_lhs)) to_bound in
-                  (CP.mkTrue no_pos, to_ho_lhs, to_bound)
+                  (to_lhs, to_ho_lhs, to_bound)
               in
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
