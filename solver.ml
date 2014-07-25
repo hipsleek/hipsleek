@@ -13105,7 +13105,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
               | None -> process_coers xs h p fl (*Use the next coer *)
               | Some (nvars,nh,np,nfl) ->
                     let b = mkBase nh np TypeTrue nfl [] no_pos in
-                    let new_f = normalize_combine coer_rhs b no_pos in
+                    let new_f = normalize_replace b coer_rhs no_pos in
                     let new_f = add_quantifiers nvars new_f in
                     let new_f = elim_exists new_f in
                     let _ , new_f = split_quantifiers new_f in
