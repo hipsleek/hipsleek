@@ -15,6 +15,9 @@ echo "======= latch.slk ======"
 ../../sleek latch.slk -tp parahip | grep Entail > test-cases/latch.slk.res
 echo "======= split-cnt.slk ======"
 ../../sleek split-cnt.slk -tp parahip | grep "Entail\|Validate" > test-cases/split-cnt.slk.res
+echo "======= latch4.slk ======"
+../../sleek latch4.slk -tp parahip | grep "Entail\|Validate" > test-cases/latch4.slk.res
+
 
 #================HIP==========================
 #================HIP==========================
