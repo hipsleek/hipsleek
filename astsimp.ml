@@ -1726,8 +1726,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	  (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
 	  (* let _ = if not(CF.isFailCtx rs) then *)
           (* if disj user-supplied inv; just use it *)
-          Debug.binfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
-          Debug.binfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+          Debug.dinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
+          Debug.dinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
           let compute_unfold_baga baga_over body =
               match baga_over with 
                 | None -> None
@@ -1745,7 +1745,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               let body = C.formula_of_unstruc_view_f vdef in
               let u_b = compute_unfold_baga baga_over body in
               Debug.binfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
-              Debug.binfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
+              Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
               Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
@@ -2062,6 +2062,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
         vdef.I.view_name  mutrec_vnames then inv_pf
       else Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str data_name transed_views inv_pf in
+      Debug.dinfo_hprint (add_str "inv_pf" Cprinter.string_of_pure_formula) inv_pf no_pos;
+      Debug.dinfo_hprint (add_str "new_pf" Cprinter.string_of_pure_formula) new_pf no_pos;
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -2099,17 +2101,28 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                     (vbi,vbi,Mcpure.mix_of_pure new_f)
         | _ -> (conv_baga_inv vdef.I.view_baga_over_inv,
           conv_baga_inv vdef.I.view_baga_under_inv,memo_pf_N) in
-      let _ = match vbi with
-        | None -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
-        | Some vbi -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
-      let _ = match vboi with
-        | None -> Debug.binfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
-        | Some vbi -> Debug.binfo_hprint (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
-      let _ = match vbui with
-        | None -> Debug.binfo_hprint (add_str ("baga under inv("^vn^")") (fun x -> x)) "None" no_pos
-        | Some vbui -> Debug.binfo_hprint (add_str ("baga under inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbui no_pos in
-      let _ = Debug.binfo_pprint "\n" no_pos in
+      (* let _ = match vbi with *)
+      (*   | None -> Debug.dinfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos *)
+      (*   | Some vbi -> Debug.dinfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in *)
+      let vboi = match vboi with
+        | None -> 
+              begin
+                Debug.dinfo_hprint (add_str "pure to_be added" Cprinter.string_of_pure_formula) new_pf no_pos;
+                (Some [([],new_pf)])
+                (* Debug.ninfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos *)
+              end
+        | Some vbi -> vboi
+              (* Debug.dinfo_hprint (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos  *)
+      in
+      (* let _ = match vbui with *)
+      (*   | None -> Debug.dinfo_hprint (add_str ("baga under inv("^vn^")") (fun x -> x)) "None" no_pos *)
+      (*   | Some vbui -> Debug.dinfo_hprint (add_str ("baga under inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbui no_pos in *)
+      (* let _ = Debug.dinfo_pprint "\n" no_pos in *)
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
+      let pr = Cprinter.string_of_ef_pure_disj in
+      Debug.binfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
+      Debug.binfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
+      Debug.binfo_hprint (add_str "vbi" (pr_option pr)) vbi no_pos;
       let cvdef ={
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;

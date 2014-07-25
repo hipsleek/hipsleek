@@ -215,14 +215,14 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let (baga,pure) = epf in
   (* let _ = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let _ = Debug.ninfo_pprint "==============" no_pos in *)
-  let _ = Debug.binfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
+  let _ = Debug.dinfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let _ = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let _ = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
   let pure = wrap_exists_svl pure svl in
-  let _ = Debug.binfo_hprint (add_str "pure1 = " !print_pure_formula) pure no_pos in
+  let _ = Debug.dinfo_hprint (add_str "pure1 = " !print_pure_formula) pure no_pos in
   let pure = Omega.simplify pure in
-  let _ = Debug.binfo_hprint (add_str "pure2 = " !print_pure_formula) pure no_pos in
+  let _ = Debug.dinfo_hprint (add_str "pure2 = " !print_pure_formula) pure no_pos in
   let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
