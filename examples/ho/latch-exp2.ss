@@ -43,8 +43,9 @@ lemma "error1" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail;
 
 lemma "error2" self::LatchIn{%P}<> * self::CNT<n> & n<0 ->  emp & flow __Fail;
 
+lemma_split "wait-split" self::WAIT<S> -> self::WAIT<S> * self::WAIT<S>;
 
-lemma_split "wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0;
+//lemma_split "frac-wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0;
 
 lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
 

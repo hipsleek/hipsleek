@@ -1779,7 +1779,22 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ThreadNode dt, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
-            | ViewNode vl, ViewNode vr -> 
+            | ViewNode vl, ViewNode vr ->
+                  let vl_name = vl.h_formula_view_name in
+                  let vr_name = vr.h_formula_view_name in
+                  let vl_view_orig = vl.h_formula_view_original in
+                  let vr_view_orig = vr.h_formula_view_original in
+                  let vl_view_origs = vl.h_formula_view_origins in
+                  let vr_view_origs = vr.h_formula_view_origins in
+                  let s_eq = (String.compare vl_name vr_name)==0 in
+                  let vl_b = vl_view_origs!=[] in
+                  let vr_b = vr_view_origs!=[] in
+                  let flag = (s_eq && 
+                      ((vl_view_orig==false && vl_b) 
+                      || ((vr_view_orig==false && vr_b)))) in
+                  if flag then
+                    (0,M_match m_res) (*force a MATCH after each lemma*)
+                  else
                   let a1 = (match ms with
                     | View_mater -> 
                           let _ = pr_debug "unfold for meterialised!\n" in  
