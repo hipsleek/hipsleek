@@ -111,11 +111,26 @@ print residue.
 // --baga-xpure (1) why is inf_b_91=1 inferred?
 //         this seems to be due to baga enumeration
 // --dis-baga-xpure (2) why this fail?
+// --imm (3) why did it fail?
 
  <1>emp&flted_22_60=1 & Anon_16=flted_22_60 & Anon_15=inf_Anon_90 & Anon_17=inf_Anon_94 & inf_b_91=1 & inf_flted_22_95=Cnull&{FLOW,(21,22)=__norm}[]
  inferred heap: [y::node<inf_Anon_94,inf_flted_22_95>; 
                  x::node<inf_Anon_90,inf_b_91>]
  inferred pure: [inf_flted_22_95=Cnull; inf_b_91=1]
+
+Using xpure_heap_sym
+--------------------
+@8!infer5.slk:12: 33: >>>>>> infer_pure_m <<<<<<
+@8!infer5.slk:12: 33: Did not manage to infer a useful precondition
+@8!infer5.slk:12: 33: LHS : : x!=y & y!=Cnull & x!=Cnull & b!=Cnull & x!=b & y!=b
+@8!infer5.slk:12: 33: RHS : : inf_flted_12_104=Cnull & inf_b_112=b
+@8!infer5.slk:12: 33: LHS REL : :None
+@8!infer5.slk:12: 33: new_p_ass: : ((y=1 & inf_flted_12_104!=Cnull) | ((y+1)<=x & y=Cnull & 
+
+Using xpure_heap
+----------------
+
+
 ==============================================
 ==============================================
 ==============================================

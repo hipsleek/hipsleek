@@ -1571,16 +1571,16 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | HEmp   -> (mkMTrue no_pos, []) in
   helper h0
 
-let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
-  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+  if (!Globals.allow_imm) || (!Globals.allow_field_ann) || sym_flag then
     xpure_heap_symbolic 1 prog h0 p0 which_xpure
   else
     let a, c = xpure_heap_mem_enum prog h0 p0 which_xpure in
     (a, [], c)
 
-let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
-  let (mf,svl,diff) as x = xpure_heap_x prog h0 p0 which_xpure in
+let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+  let (mf,svl,diff) as x = xpure_heap_x prog h0 p0 which_xpure sym_flag in
   if (!Globals.ineq_opt_flag) then x
   else
     let diff_m = dlist_2_pure diff in
@@ -1589,12 +1589,20 @@ let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which
 
 (*For fractional permissons, the pure constraint of the LHS is required*)
 let xpure_heap i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula)=
+  let sym_flag = false in
   let _ = smart_same_flag := true in
   let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
   Debug.no_3_num i "xpure_heap"
       Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
-      (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure) h0 p0 which_xpure
+      (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 
+let xpure_heap_sym i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula)=
+  let sym_flag = true in
+  let _ = smart_same_flag := true in
+  let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
+  Debug.no_3_num i "xpure_heap"
+      Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
+      (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 
 (* TODO : if no complex & --eps then then return true else xpure1 generated;
    what if user invariant has a disjunct? *)

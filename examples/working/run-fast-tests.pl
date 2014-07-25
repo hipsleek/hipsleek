@@ -1726,6 +1726,7 @@ $output_file = "log";
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", "", "Fail.Fail.Valid"],
                       ["infer/infer5.slk", "", "", "Valid.Valid.Fail.Valid."],
+                      ["infer/infer5a.slk", "", "", "Fail.Valid."],
                       ["infer/infer6.slk", "", "", "Valid."],
                       ["infer/infer7.slk", "", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
                       ["infer/infer8.slk", "", "", "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
