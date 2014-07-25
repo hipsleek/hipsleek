@@ -50,7 +50,11 @@ lemma_split "wait-split" self::WAIT<S> -> self::WAIT<S> * self::WAIT<S>;
 lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
 
 //synchronization lemma
-lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
+
+//lemma_prop "frac-wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
+
+lemma "deadlock" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail;
 
 //normalization of dead threads
 lemma "thrd_normalize" self::THRD2{%Q}<c1,c2,g> * self::DEAD<> -> %Q;
@@ -66,7 +70,7 @@ global WAIT g; //ghost
 /****************THREADS*********************/
 thrd create_thrd() // with %P
   requires true
-  ensures (exists c1,c2,g,S: res::THRD{g::WAIT<S>@S1 * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2, g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)} }<c1,c2,g>);
+  ensures (exists c1,c2,g,B: res::THRD{g::WAIT<B>@S1 * c1::LatchOut{emp}<> * c1::CNT<0>@S1 * c2::LatchIn{emp}<> * c2::CNT<1>@S1 & B={} & c1!=c2, g::WAIT<B1> * c1::CNT<(-1)> * c2::CNT<0> & B1={tup2(c1,c2)} }<c1,c2,g>);
 
 void fork_thrd(thrd t,CDL c1,CDL c2,WAIT g)
   requires t::THRD{%P,%Q}<c1,c2,g> * %P
@@ -99,8 +103,8 @@ void await(CDL c)
 /********************************************/
 
 void thread1(CDL c1, CDL c2, WAIT g)
-  requires g::WAIT<S> * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2 
-  ensures g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)};
+  requires g::WAIT<B>@S1 * c1::LatchOut{emp}<> * c1::CNT<0>@S1 * c2::LatchIn{emp}<> * c2::CNT<1>@S1 & c1!=c2 & B={}
+  ensures g::WAIT<B1> * c1::CNT<(-1)> * c2::CNT<0> & B1={tup2(c1,c2)};
 {
   await(c1);
   countDown(c2);
@@ -115,8 +119,6 @@ void main(ref WAIT g)
   assume c1'!=c2';
 
   thrd tid =  create_thrd(); //create thread1
-
-  //thread1(c1,c2,g);
 
   fork_thrd(tid,c1,c2,g);
 

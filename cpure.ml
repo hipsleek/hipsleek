@@ -11606,7 +11606,7 @@ and get_concrete_bag_pure (pf : formula) : (spec_var * exp list) list =
   args: [(S1,{a}), (S2,{b})]
   Out: B=bag{a,b} & S1={a} & S2={b}
 *)
-and apply_concrete_bag_pure_x (pf : formula) (args: (spec_var * exp list) list): formula =
+and apply_concrete_bag_pure_x (f0 : formula) (args: (spec_var * exp list) list): formula =
   let f_bf arg bf =
     let pf, lbl = bf in
     (match pf with
@@ -11618,7 +11618,8 @@ and apply_concrete_bag_pure_x (pf : formula) (args: (spec_var * exp list) list):
                       (match x with
                         | Var (v2,_) ->
                               (try
-                                let (_, exps) = List.find (fun (v1,exps) -> eq_spec_var v1 v2) args in
+                                let vars = find_closure_pure_formula v2 f0 in
+                                let (_, exps) = List.find (fun (v1,exps) -> Gen.BList.mem_eq eq_spec_var v1 vars) args in
                                 (*replace v2 by its concrete value*)
                                 Some exps
                               with Not_found -> None)
@@ -11654,7 +11655,7 @@ and apply_concrete_bag_pure_x (pf : formula) (args: (spec_var * exp list) list):
   let f_arg = voidf2, voidf2, voidf2 in
   let f_comb = List.concat in
   let arg = () in
-  let nf, _ = trans_formula pf arg f f_arg f_comb in
+  let nf, _ = trans_formula f0 arg f f_arg f_comb in
   nf
 
 and apply_concrete_bag_pure (pf : formula) (args: (spec_var * exp list) list): formula =
