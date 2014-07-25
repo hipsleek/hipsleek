@@ -442,5 +442,5 @@ RS_mem malloc1(int n)
 */
 
 pred_prim WAIT<b:bag((Object,Object))>;
-relation cyclic(bag((Object,Object)) g);
-relation acyclic(bag((Object,Object)) g);
+relation cyclic(bag((Object,Object)) g).
+relation acyclic(bag((Object,Object)) g).
