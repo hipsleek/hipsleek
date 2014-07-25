@@ -12869,6 +12869,7 @@ and normalize_context_perm prog ctx = match ctx with
 	| Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 	  
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
+  if (!Globals.check_coercions) then f else
   if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then f
   else if !Globals.perm = Dperm then normalize_formula_perm prog f 
   else if coers==[] then f
@@ -13041,7 +13042,6 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
                 let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in
                 None
           | Ctx es ->
-                let _ = print_endline ("es = " ^ (Cprinter.string_of_estate es)) in
                 let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in
                 let h1,p1,fl1,_,_ = split_components new_ante in
                 Some (inst_vars,h1,p1,fl1))

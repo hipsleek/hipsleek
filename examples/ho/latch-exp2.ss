@@ -31,9 +31,8 @@ pred_prim CNT<n:int>;
 
 
 
-lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
-/*
 lemma "combine1" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>;
 
 lemma "combine2" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>;
@@ -45,11 +44,9 @@ lemma "error1" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail;
 lemma "error2" self::LatchIn{%P}<> * self::CNT<n> & n<0 ->  emp & flow __Fail;
 
 
-lemma "wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0;
+lemma_split "wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0;
 
 lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
-
-*/
 
 //synchronization lemma
 lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
@@ -68,7 +65,7 @@ global WAIT g; //ghost
 /****************THREADS*********************/
 thrd create_thrd() // with %P
   requires true
-  ensures (exists c1,c2,g,S: res::THRD{g::WAIT(0.5)<S> * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2, g::WAIT(0.5)<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)} }<c1,c2,g>);
+  ensures (exists c1,c2,g,S: res::THRD{g::WAIT<S>@S1 * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2, g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)} }<c1,c2,g>);
 
 void fork_thrd(thrd t,CDL c1,CDL c2,WAIT g)
   requires t::THRD{%P,%Q}<c1,c2,g> * %P
@@ -101,36 +98,36 @@ void await(CDL c)
 /********************************************/
 
 void thread1(CDL c1, CDL c2, WAIT g)
-  requires g::WAIT<S> * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2
+  requires g::WAIT<S> * c1::LatchOut{emp}<> * c1::CNT<0> * c2::LatchIn{emp}<> * c2::CNT<1> & S={} & c1!=c2 
   ensures g::WAIT<S1> * c1::CNT<(-1)> * c2::CNT<0> & S1={tup2(c1,c2)};
 {
   await(c1);
-  dprint;
-  //countDown(c2);
-  //dprint;
+  countDown(c2);
 }
 
 
-/* void main(ref WAIT g) */
-/*   requires g::WAIT<S> & S={} ensures true; */
-/* { */
-/*   CDL c1 = create_latch(1); */
-/*   CDL c2 = create_latch(1); */
-/*   assume c1'!=c2'; */
+void main(ref WAIT g)
+  requires g::WAIT<S> & S={} ensures true;
+{
+  CDL c1 = create_latch(1);
+  CDL c2 = create_latch(1);
+  assume c1'!=c2';
 
-/*   thrd tid =  create_thrd(); //create thread1 */
+  thrd tid =  create_thrd(); //create thread1
 
-/*   //thread1(c1,c2,g); */
+  //thread1(c1,c2,g);
 
-/*   fork_thrd(tid,c1,c2,g); */
+  fork_thrd(tid,c1,c2,g);
 
-/*   await(c2); */
-/*   countDown(c1); */
+  dprint;
 
-/*   dprint; */
+  await(c2);
+  countDown(c1);
 
-/*   join_thrd(tid,c1,c2,g); //ERROR, since c::CNT<1> * c::CNT<-1> */
+  dprint;
 
-/*   dprint; */
-/* } */
+  join_thrd(tid,c1,c2,g); //ERROR, since c::CNT<1> * c::CNT<-1>
+
+  dprint;
+}
 
