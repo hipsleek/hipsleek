@@ -13,6 +13,8 @@ echo "======= wait2.slk ======"
 ../../sleek wait2.slk -tp parahip | grep "Entail\|Validate" > test-cases/wait2.slk.n
 echo "======= latch.slk ======"
 ../../sleek latch.slk -tp parahip | grep Entail > test-cases/latch.slk.n
+echo "======= split-cnt.slk ======"
+../../sleek split-cnt.slk -tp parahip | grep "Entail\|Validate" > test-cases/split-cnt.slk.n
 
 #================HIP==========================
 #================HIP==========================

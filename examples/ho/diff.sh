@@ -13,6 +13,8 @@ echo "======= wait2.slk ======"
 diff test-cases/wait2.slk.res test-cases/wait2.slk.n
 echo "======= latch.slk  ======"
 diff test-cases/latch.slk.res test-cases/latch.slk.n
+echo "======= split-cnt.slk  ======"
+diff test-cases/split-cnt.slk.res test-cases/split-cnt.slk.n
 
 #================HIP==========================
 #================HIP==========================

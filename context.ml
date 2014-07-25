@@ -1009,9 +1009,9 @@ and lookup_lemma_action_x prog (c:match_res) :action =
     | Root ->
           (match lhs_node,rhs_node with
             | ThreadNode {CF.h_formula_thread_name = dl_name},
-              ThreadNode {CF.h_formula_thread_name = dr_name}
+              ThreadNode {CF.h_formula_thread_name = dr_name;CF.h_formula_thread_split = dr_split}
             | DataNode {CF.h_formula_data_name = dl_name},
-              DataNode {CF.h_formula_data_name = dr_name} ->
+              DataNode {CF.h_formula_data_name = dr_name;CF.h_formula_data_split = dr_split} ->
                   (*              let dl_data_orig = dl.h_formula_data_original in
                                   let dr_data_orig = dr.h_formula_data_original in
                                   let dl_data_derv = dl.h_formula_data_derv in
@@ -1024,8 +1024,16 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                   (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
                   let l = 
                     (* WN_all_lemma - is this overriding of lemmas? *)
-                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (*prog.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion)) dl_name dr_name in
-                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (*prog.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion)) dr_name dl_name in
+                    let left_lemmas = (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (*prog.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion)) in
+                    let right_lemmas = (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (*prog.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion)) in
+                    let left_lemmas =
+                      if (dr_split = SPLIT0) then
+                        (*do not split --> not apply lemma_split *)
+                        List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_lemmas
+                      else left_lemmas
+                    in
+                    let left_ls = look_up_coercion_with_target left_lemmas dl_name dr_name in
+                    let right_ls = look_up_coercion_with_target right_lemmas dr_name dl_name in
                     let simple_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Simple) (*prog.prog_right_coercions*) ((Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion))) dr_name dl_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
@@ -1043,6 +1051,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                   let vr_view_orig = vr.h_formula_view_original in
                   let vl_view_derv =  vl.h_formula_view_derv in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  let vr_view_split = vr.h_formula_view_split in
                   (*Are they in LOCKED state*)
                   let is_l_lock = match vl_vdef.view_inv_lock with
                     | Some _ -> true
@@ -1074,8 +1083,16 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                   let l = if flag
                   then begin
                     (*expecting ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)*)
-                    let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*)) vl_name vr_name in
-                    let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*)) vr_name vl_name in
+                    let left_lemmas = (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) (Lem_store.all_lemma # get_left_coercion)) in
+                    let left_lemmas =
+                      if (vr_view_split = SPLIT0) then
+                        (*do not split --> not apply lemma_split *)
+                        List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_lemmas
+                      else left_lemmas
+                    in
+                    let right_lemmas = (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*)) in
+                    let left_ls = look_up_coercion_with_target left_lemmas vl_name vr_name in
+                    let right_ls = look_up_coercion_with_target right_lemmas vr_name vl_name in
                     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                     left_act@right_act
@@ -1106,9 +1123,15 @@ and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
 
-and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
+and search_lemma_candidates flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
   if flag_lem then 
     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+    let left_ls =
+      if (vr_view_split = SPLIT0) then
+        (*do not split --> not apply lemma_split *)
+        List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_ls
+      else left_ls
+    in
     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
@@ -1271,6 +1294,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               ThreadNode ({CF.h_formula_thread_original = dr_orig;
                          CF.h_formula_thread_origins = dr_origins;
                          CF.h_formula_thread_derv = dr_derv;
+                         CF.h_formula_thread_split = dr_split;
                          CF.h_formula_thread_name = dr_name;
                         })
 	        (** ThreadNode is treated in a similar way to DataNode *)
@@ -1282,6 +1306,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               DataNode ({CF.h_formula_data_original = dr_orig;
                          CF.h_formula_data_origins = dr_origins;
                          CF.h_formula_data_derv = dr_derv;
+                         CF.h_formula_data_split = dr_split;
                          CF.h_formula_data_name = dr_name;
                         }) -> 
 		  (**TO CHECK: follow view nodes *)
@@ -1317,6 +1342,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     begin
                       (* WN_all_lemma - is this overriding of lemmas? *)
                       let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) dl_name dr_name) in
+                      let left_ls =
+                        if (dr_split = SPLIT0) then
+                        (*do not split --> not apply lemma_split *)
+                          List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_ls
+                        else left_ls
+                      in
                       let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr_name dl_name) in
                       let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in
@@ -1344,6 +1375,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let vr_view_origs = vr.h_formula_view_origins in
                 let vl_view_derv =  vl.h_formula_view_derv in
                 let vr_view_derv = vr.h_formula_view_derv in
+                let vr_view_split = vr.h_formula_view_split in
                 let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 1" no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
@@ -1393,7 +1425,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                      let uf_i = if new_orig then 0 else 1 in
                      let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                     if flag  then
+                     if flag then
                        [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
                      else
                        let a1 = (2,M_base_case_unfold m_res) in
@@ -1407,13 +1439,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                                (* (1,Cond_action [a21;a22]) *) a22
                            else
-                             let m_act = (1,M_match m_res) in
-                             let unk_act=
-                               if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
-                                 (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))])
-                               else
-                                 m_act
-                             in  unk_act
+                             if (vr_view_split=SPLIT1) then
+                               (* SPLIT only, no match *)
+                               (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                             else
+                               (*allow matching*)
+                               let m_act = (1,M_match m_res) in
+                               let unk_act=
+                                 if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
+                                   (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))])
+                                 else
+                                   m_act
+                               in  unk_act
                        ) in
                        let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                     let a3 = (
@@ -1462,7 +1499,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     ) in
                     let a7 =
                         if (!Globals.smart_lem_search) then
-                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
+                          let lem_act = search_lemma_candidates flag_lem ann_derv vr_view_split  (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
                           if lem_act = [] then a6 else
                             match a6 with
                               | Some a ->  Some (1, Cond_action ([a]@lem_act))
@@ -1517,7 +1554,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   else  [] *)
                 (* ) in *)
                 let l3 = (* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res (* else [] *) in
+                  search_lemma_candidates flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res (* else [] *) in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
