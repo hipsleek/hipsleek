@@ -34,3 +34,7 @@ echo "======= latch-exp1.ss  ======"
 diff test-cases/latch-exp1.ss.res test-cases/latch-exp1.ss.n
 echo "======= latch-exp2.ss  ======"
 diff test-cases/latch-exp2.ss.res test-cases/latch-exp2.ss.n
+echo "======= lock-exp.ss  ======"
+diff test-cases/lock-exp.ss.res test-cases/lock-exp.ss.n
+echo "======= lock-exp2.ss  ======"
+diff test-cases/lock-exp2.ss.res test-cases/lock-exp2.ss.n

@@ -34,3 +34,7 @@ echo "======= latch-exp1.ss  ======"
 ../../hip latch-exp1.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.n
 echo "======= latch-exp2.ss  ======"
 ../../hip latch-exp2.ss -tp parahip | grep -E 'Proc|assert:|cause:' > test-cases/latch-exp2.ss.n
+echo "======= lock-exp.ss  ======"
+../../hip lock-exp.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.n
+echo "======= lock-exp2.ss  ======"
+../../hip lock-exp2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.n
