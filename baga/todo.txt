@@ -141,7 +141,23 @@ Using xpure_heap
 
 
 ==============================================
-==============================================
+# app-inv.slk --dis-baga-xpure
+
+  inv: n>=0
+  
+  why did below fail for --dis-baga-xpure
+
+checkentail xxx::ll<nnnn> & nnnn<0 |- false.
+print residue.
+expect Valid.
+
+why below not triggered by --dis-baga-xpure
+(below from --baga-xpure)
+ id: 50<-1; prover: Z3; loc: app-inv_slk_7:5_7:34; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  nnnn<0 & (((xxx=Cnull & nnnn=0) | (xxx=1 & 1<=nnnn)))
+ res: UNSAT
+ ==============================================
 ==============================================
 ==============================================
 ==============================================

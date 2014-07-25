@@ -16,7 +16,7 @@ pred ll<n> == self=null & n=0
   why did below fail for --dis-baga-xpure
 */
 
-checkentail x::ll<n> & n<0 |- false.
+checkentail xxx::ll<nnnn> & nnnn<0 |- false.
 print residue.
 expect Valid.
 
