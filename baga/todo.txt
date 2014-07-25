@@ -86,10 +86,19 @@ However, I expect to get:
 ==============================================
 # baga1.slk
 
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+
 Could Omega.simplify be improved to preserve disequality?
 
 !!! pure1 = : exists(q:k=q & self!=q)
 !!! pure2 = : (k<self | self<k)
+
+!!! baga_over(unfolded):Some([([k,self], (k<self | self<k))])
+
+# use Omega.gist to remove self!=k
 ==============================================
 # infer4.slk
 
@@ -102,7 +111,7 @@ GOT:
 
  should be q!=null 
 ==============================================
-# infer5.slk
+# infer5.slk  (FIXED)
 
 //(3)
 infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.

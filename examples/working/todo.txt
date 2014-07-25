@@ -573,7 +573,6 @@ Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
 ====================================================================
 
 Total number of errors: 7 in files:
-  baga-test-2.slk(no result (!!!check script options, provers, etc)) 
   inflem.slk({E2#Valid}) 
   lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
   lemmas/app-tail.slk({E1#Valid}) 
@@ -583,8 +582,7 @@ Total number of errors: 7 in files:
 
 --dis-baga-xpure
 Total number of errors: 7 in files:
-Total number of errors: 7 in files:
-  baga-test-2.slk(no result (!!!check script options, provers, etc)) 
+  baga-test.slk({E3#Valid}) 
   inflem.slk({E2#Valid}) 
   lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
   lemmas/app-tail.slk({E1#Valid}) 
