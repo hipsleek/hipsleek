@@ -3415,7 +3415,7 @@ and normalize i (f1 : formula) (f2 : formula) (pos : loc) =
 and normalize_x (f1 : formula) (f2 : formula) (pos : loc) = 
   normalize_keep_flow f1 f2 Flow_combine pos
 
-(*LDK*)
+(*the flow of f2*)
 and normalize_replace (f1 : formula) (f2 : formula) (pos : loc) = 
   Debug.no_2 "normalize_replace" !print_formula !print_formula !print_formula
       (fun _ _ -> normalize_replace_x f1 f2 pos) f1 f2

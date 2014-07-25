@@ -47,7 +47,9 @@ lemma_split "wait-split" self::WAIT<S> -> self::WAIT<S> * self::WAIT<S>;
 
 //lemma_split "frac-wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0;
 
-lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
+lemma "wait-combine" self::WAIT<S1> * self::WAIT<S2> -> self::WAIT<S> & S=union(S1,S2);
+
+//lemma "frac-wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2);
 
 //synchronization lemma
 lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0;
@@ -121,8 +123,6 @@ void main(ref WAIT g)
   thrd tid =  create_thrd(); //create thread1
 
   fork_thrd(tid,c1,c2,g);
-
-  dprint;
 
   await(c2);
   countDown(c1);

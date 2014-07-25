@@ -12572,7 +12572,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
     (* try to check whether the current estate with h=anode*rest and pure=p *)
     (* can entail the lhs of an coercion *)
     let process_one_x estate anode rest coer h p fl =
-      let f = mkBase rest p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+      let f = mkBase rest p CF.TypeTrue fl [] no_pos in
       let coer_lhs = coer.coercion_head in
       let coer_rhs = coer.coercion_body in
       (* compute free vars in extra heap and guard *)
@@ -12725,7 +12725,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                   let _ = print_string ("[solver.+ml] Warning: normalize_w_coers: process_one: expect only one context \n") in
                   (false,estate,h,p,mkNormalFlow ())
             | Ctx es ->
-                  let new_ante = normalize_combine coer_rhs_new es.es_formula no_pos in
+                  let new_ante = normalize_replace es.es_formula coer_rhs_new no_pos in
                   (* let new_ante = add_mix_formula_to_formula p new_ante in *)
                   let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
                   let h1,p1,fl1,_,_ = split_components new_ante in
