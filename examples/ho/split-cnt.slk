@@ -38,13 +38,30 @@ expect Valid.
 // one residue
 
 // (5)
+checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<2>@S1.
+print residue.
+expect Fail.
+// one residue
+
+// (6)
 checkentail c1::CNT<2> * c2::CNT<0> |- c1::CNT<1>.
 expect Fail.
 print residue.
 // FAIL
 
-// (6)
+// (7)
 checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<1>@S2.
 expect Valid.
 print residue.
 // two residues
+
+// (8)
+checkentail c1::CNT<0> * c2::CNT<0> |- c1::CNT<1>@S2.
+expect Fail.
+print residue.
+
+// (9)
+checkentail c1::CNT<2> * c2::CNT<0> |- c1::CNT<1>@S2.
+expect Valid.
+print residue.
+// one answer
