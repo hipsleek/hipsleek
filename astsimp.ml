@@ -1787,9 +1787,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let old_baga_imm_flag = !Globals.baga_imm in
       let _ = Globals.baga_imm := true in
       let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in
+      let _ = Debug.binfo_hprint (add_str "xform'" Cprinter.string_of_mix_formula) xform' no_pos in
       let _ = Globals.baga_imm := old_baga_imm_flag in
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
+      let _ = Debug.binfo_hprint (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
       let xform1 =
         if vdef.C.view_kind = C.View_EXTN then
           let r = Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
@@ -1800,6 +1802,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let formula1 = CF.formula_of_mix_formula xform1 pos in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
       let (baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
         | None ->
@@ -1820,7 +1825,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let _ =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) && not(CF.isFailCtx baga_over_rs) then
+        if not(CF.isFailCtx rs) (* && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) && not(CF.isFailCtx baga_over_rs) *) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
 	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
@@ -2120,9 +2125,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let _ = Debug.dinfo_pprint "\n" no_pos in *)
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let pr = Cprinter.string_of_ef_pure_disj in
-      Debug.binfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
-      Debug.binfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
-      Debug.binfo_hprint (add_str "vbi" (pr_option pr)) vbi no_pos;
+      Debug.ninfo_hprint (add_str "name" (fun x -> x)) vn no_pos;
+      Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
+      Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
+      Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbi no_pos;
       let cvdef ={
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;

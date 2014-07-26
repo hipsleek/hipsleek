@@ -157,7 +157,22 @@ why below not triggered by --dis-baga-xpure
  raw proof:no proof raw result:no result
  Sat:  nnnn<0 & (((xxx=Cnull & nnnn=0) | (xxx=1 & 1<=nnnn)))
  res: UNSAT
- ==============================================
+==============================================
+# examples/working/hip_baga/cll.ss
+
+Message: view defn for hd does not entail supplied invariant
+
+With inv in cll:
+
+!!! xform': ((self=Cnull & n=0) | 
+(exists(r:exists(flted_18_22:exists(self_23:self_23=self & 
+(((1<=flted_18_22 & r!=Cnull & self_23!=r) | (self_23=r & 
+flted_18_22=0)))) & flted_18_22+1=n)) & self!=Cnull))
+
+With inv_exact in cll:
+!!! xform': ((self=Cnull & n=0) | (exists(flted_18_22:flted_18_22+1=n) & 
+exists(self_23:self_23=self) & self!=Cnull))
+
 ==============================================
 ==============================================
 ==============================================
