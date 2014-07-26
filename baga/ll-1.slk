@@ -9,7 +9,7 @@ pred ll<> == self = null
 	or self::node<next = r> * r::ll<>
 	inv true.
 
-lemma "V1" self::ll_s<n> -> self::ll<>.
+lemma_unsafe "V1" self::ll_s<n> -> self::ll<>.
 
 /*
 # baga/ll-1.slk --elp
@@ -20,3 +20,16 @@ Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flte
 Failed to prove V1:==> in current context.
 
 */
+
+/*
+checkentail_exact self::ll_s<n> |- self::ll<>.
+
+checkentail_exact self=null & n=0 |- self::ll<>.
+
+*/
+/*
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::ll<>.
+*/
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::node<_,q>* q::ll<>.
