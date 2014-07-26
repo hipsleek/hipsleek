@@ -1,24 +1,35 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
 data node { int val ; node next }.
 
-pred ll<n> == self = null & n = 0
-	or self::node<next = r> * r::ll<n1> & n=n1+1 & n1>=0.
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
 
-/*
---inv-baga
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
 
-loop 1: ({}, self=null n=0)
+lemma "V1" self::ll_s<n> -> self::ll<>.
 
-loop 2:
-({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1))
- omega_simplify (n=1 \/ n>=1)), output n>=1
+lemma "V2" self::ll_s<n> <- self::ll<>.
 
-loop 3:
-  ({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1)) \/ ({self}, self!=null,  ((n=n1+1 /\ n1>=1) \/ n>=1))
+lemma "V3" self::ll_s<n> <-> self::ll<>.
 
- omega_simplify ((n=n1+1 /\ n1>=1) \/ n>=1) outpur n>=1 (elim ex. quantifier n1)
+lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
 
-({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1)) \/ ({self}, self!=null,  n>=1) == ({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1))
+lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
 
-fixpoint
+lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
 
-*/
+lemma "F7" self::ll<> -> self::ll_s<n>.
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+lemma "F9" self::ll<> <-> self::ll_s<n>.
+
+
+checkentail x::ll_s<n> |- x::ll<>.
+expect Valid.
+
+checkentail x::ll_s<n> |- x::ll<> * y::ll<>.
+expect Fail.

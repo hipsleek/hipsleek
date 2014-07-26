@@ -1744,9 +1744,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               let baga_over = vdef.C.view_baga_over_inv in
               let body = C.formula_of_unstruc_view_f vdef in
               let u_b = compute_unfold_baga baga_over body in
-              Debug.binfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
+              Debug.tinfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.tinfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1787,11 +1787,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let old_baga_imm_flag = !Globals.baga_imm in
       let _ = Globals.baga_imm := true in
       let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in
-      let _ = Debug.binfo_hprint (add_str "xform'" Cprinter.string_of_mix_formula) xform' no_pos in
+      let _ = Debug.dinfo_hprint (add_str "xform'" Cprinter.string_of_mix_formula) xform' no_pos in
       let _ = Globals.baga_imm := old_baga_imm_flag in
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
-      let _ = Debug.binfo_hprint (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
+      let _ = Debug.dinfo_hprint (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
       let xform1 =
         if vdef.C.view_kind = C.View_EXTN then
           let r = Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
@@ -1804,7 +1804,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
-      let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
       let (baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
         | None ->

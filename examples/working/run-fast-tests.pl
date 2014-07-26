@@ -1782,7 +1782,8 @@ $output_file = "log";
         ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
         ["lemmas/nlseg3.slk", "", "", "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", "Valid.Valid", ""],
-        ["lemmas/nlseg4e1.slk", "", "Valid.Valid", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        # below loops with --imm
+        ["lemmas/nlseg4e1.slk", "--dis-imm", "Valid.Valid", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", "Valid.Valid", ""],
         # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],

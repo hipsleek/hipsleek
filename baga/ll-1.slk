@@ -1,0 +1,22 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma "V1" self::ll_s<n> -> self::ll<>.
+
+/*
+# baga/ll-1.slk --elp
+
+Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flted_5_58=0) | (r_60=1 & self_V1=2 & 
+1<=flted_5_58)) |-  self_V1=Cnull. LOCS:[5;4;0;1;8] (must-bug),valid]
+
+Failed to prove V1:==> in current context.
+
+*/
