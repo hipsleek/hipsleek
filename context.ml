@@ -1,3 +1,4 @@
+
 open Globals
 open Cformula
 open Cast
@@ -934,13 +935,15 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
               ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
   in
+  (* todo:Long *)
+  (* why is l empty? *)
   let l = helper f0 in
   let pr1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
-  let _ = DD.tinfo_hprint (add_str "l" (pr_list pr)) l no_pos in 
+  let _ = DD.tinfo_hprint (add_str "l_xxx" (pr_list pr)) l no_pos in 
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
@@ -2277,7 +2280,8 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
   (* let _ = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
-  let _ = DD.tinfo_hprint (add_str "r" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
+  (* Todo:Long *)
+  let _ = DD.tinfo_hprint (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"

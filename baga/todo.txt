@@ -224,6 +224,55 @@ date:        Wed Jul 02 16:43:57 2014 +0800
 summary:     x
 
 12324 was OK
+=================================
+latest smt2014 code (at context.ml)
+
+why is l_xxx empty?
+
+!!! l_xxx:[]
+!!! r:[([],?)]
+!!! **** sel_hp_rel **********************
+!!! hp_rel:[]
+!!! sel_hp_rel:[]
+!!! sel_post_hp_rel:[]
+!!! weighted action:[(1): Prio:-1COND =>[Prio:2BaseCaseFold =>
+                                      LHS: emp
+                                      RHS: q::ll<>;Prio:2UnmatchedRHSData =>  q::ll<>]]
+!!! sorted action:[(1): Prio:2COND =>[Prio:2BaseCaseFold =>
+                                     LHS: emp
+                                     RHS: q::ll<>;Prio:2UnmatchedRHSData =>  q::ll<>]]
+
+324 code
+--------
+!!! l:[(lhs_rest: emp,lhs_node: r::ll_s<flted_34_48>,holes:[],match_type: Root)]
+!!! r:[([ 
+  Type: Root
+  LHS: r::ll_s<flted_34_48>
+  RHS: q::ll<>
+ lhs_rest: emp
+ rhs_rest: emp],?)]
+!!! **** sel_hp_rel **********************
+!!! hp_rel:[]
+!!! sel_hp_rel:[]
+!!! sel_post_hp_rel:[]
+!!! VIEW vs VIEW
+
+!!! weighted action:[(1): Prio:1SEARCH =>[
+        Prio:1COND =>[Prio:3BaseCaseUnfold =>
+                                              LHS: r::ll_s<flted_34_48>
+                                              RHS: q::ll<>];
+        Prio:1(Lemma ==> V1) =>
+                                LHS: r::ll_s<flted_34_48>
+                                RHS: q::ll<>
+        ]]
+!!! sorted action:[(1): Prio:1SEARCH =>[
+        Prio:1(Lemma ==> V1) =>
+                                LHS: r::ll_s<flted_34_48>
+                                RHS: q::ll<>;
+        Prio:3COND =>[Prio:3BaseCaseUnfold =>
+                                              LHS: r::ll_s<flted_34_48>
+                                              RHS: q::ll<>]
+        ]]
 ==============================================
 ==============================================
 ==============================================
