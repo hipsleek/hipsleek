@@ -203,6 +203,27 @@ MaybeErr Context:
 
 Entail 1: Fail.(cex)(must) cause:base case unfold failed
 ==============================================
+# baga/ll-1.slk --elp
+
+lemma_unsafe "V1" self::ll_s<n> -> self::ll<>.
+
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::node<_,q>* q::ll<>.
+
+Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flted_5_58=0) | (r_60=1 & self_V1=2 & 
+1<=flted_5_58)) |-  self_V1=Cnull. LOCS:[5;4;0;1;8] (must-bug),valid]
+
+Failed to prove V1:==> in current context.
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -g
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+
+12324 was OK
 ==============================================
 ==============================================
 ==============================================
