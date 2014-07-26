@@ -226,7 +226,7 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
-  let _ = Debug.ninfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in
+  let _ = Debug.ninfo_hprint (add_str "eqmap = " EMapSV.string_of) p_aset no_pos in
   (* let new_pure = EMapSV.domain eset2 in *)
   let mk_subs =
       List.map
