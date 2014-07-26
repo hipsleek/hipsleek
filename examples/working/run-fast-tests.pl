@@ -1722,6 +1722,8 @@ $output_file = "log";
                       ["baga-test-2.slk", "--dis-baga-xpure", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
               ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","","","Valid.Valid."],
+                      ["infer/app-inv.slk", "--inv", "", "Valid.Valid.Fail.Valid.Valid.Valid."],
+                      ["infer/app-inv2.slk", "--inv", "", "Valid.Valid.Valid.Fail."],
                       ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", "", "Fail.Fail.Valid"],
