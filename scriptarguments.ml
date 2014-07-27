@@ -572,7 +572,7 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-  
+  ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");

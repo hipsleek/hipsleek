@@ -606,11 +606,82 @@ Total number of errors: 1 in files:
   lemmas/rlseg.slk({L3#Valid}).
 
 
+Total number of errors: 14 in files:
+  cll-d.slk({E1#Valid}) sleek3.slk({E1#Valid}) sleek9.slk({E3#Valid},{E4#Valid}) baga-test.slk({E15#Valid},{E3#Valid}) baga-test-2.slk({E3#Valid}) infer/app-inv.slk({E1#Valid}) infer/app-inv2.slk({E1#Valid}) infer/infer5a.slk({E2#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}).
+
+====================================================================
+# hip --eps --baga-xpure
+
+rb.ss (very long)
+Total number of errors: 22 in files:
+ error at: cll.ss delete
+error at: heaps.ss deleteoneel
+error at: heaps.ss deletemax
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss f1
+error at: ../../modular_examples/dll-modular.ss f2
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/dll-modular.ss test_fold
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+.
+Total verification time: 1573.67 second
+	Time spent in main process: 1324.09 second
+	Time spent in child processes: 249.58 second
+	Number of false contexts: 383
+
+# hip --eps --dis-baga-xpure
+Total number of errors: 22 in files:
+error at: cll.ss delete
+error at: heaps.ss deleteoneel
+error at: heaps.ss deletemax
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss f1
+error at: ../../modular_examples/dll-modular.ss f2
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/dll-modular.ss test_fold
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+.
+Total verification time: 237.68 second
+	Time spent in main process: 196.22 second
+	Time spent in child processes: 41.45 second
+	Number of false contexts: 383
+
+#hip --eps (default)
+All test results were as expected.
+Total verification time: 231.97 second
+	Time spent in main process: 160.11 second
+	Time spent in child processes: 71.86 second
+	Number of false contexts: 424
 ====================================================================
 ====================================================================
 ====================================================================
-====================================================================
-====================================================================
+===================================================================
 ====================================================================
 ====================================================================
 ====================================================================

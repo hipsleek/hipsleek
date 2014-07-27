@@ -1705,6 +1705,7 @@ $output_file = "log";
 # the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 %sleek_files=(
     "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
+                      ["cll-d.slk", "", "", "Valid."],
                       ["sleek1.slk", "", "", "Fail."],
                       ["sleek10.slk", "", "", "Valid.Fail."],
                       ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],

@@ -274,6 +274,31 @@ why is l_xxx empty?
                                               RHS: q::ll<>]
         ]]
 ==============================================
+# cll-d.slk
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+checkentail 
+  x1::node<_,r>& //extra stuff cause failure?
+ x'=null
+ & 0<n 
+ & flted+1=n 
+ & flted=0 
+ |-  (exists flted: x'::hd<flted>&flted+1=n ). 
+//expect Valid.
+
+Entail 1: Fail.(cex)(must) cause:do_unmatched_rhs : x'::hd<flted_85>
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -b
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+
 ==============================================
 ==============================================
 ==============================================
