@@ -1820,19 +1820,22 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               (f1, f2)
         | Some disj ->
               let f1 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos in
-              let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in
+              (* let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in *)
+              let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in
               (f1, f2)
       in
       let (baga_rs1, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
-      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
-      let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in
+      (* let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in *)
+      (* let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in *)
+      (* let _ = Debug.ninfo_hprint (add_str "context1" Cprinter.string_of_context) ctx1 no_pos in *)
+      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let baga_over_formula = match vdef.C.view_baga_over_inv with
         | None -> CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let _ =
-        if not(CF.isFailCtx rs) (* && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) && not(CF.isFailCtx baga_over_rs) *) then
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) (* && not(CF.isFailCtx baga_rs2) *) && not(CF.isFailCtx baga_over_rs) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
 	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
@@ -2102,22 +2105,23 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let unfold_once baga =
         match baga with
           | None -> None
-          | Some lst -> 
+          | Some lst ->
                 if List.length lst == 1 then
                   Some lst (* unfold once *)
-                else baga in 
+                else baga in
       let vbi = conv_baga_inv vdef.I.view_baga_inv in
-      let (vboi,vbui,user_inv) = match vbi with
-        | Some ef -> 
+      let (vboi,vbui,user_inv,user_x_inv) = match vbi with
+        | Some ef ->
               let new_f = Excore.EPureI.ef_conv_disj ef in
-                    (vbi,vbi,Mcpure.mix_of_pure new_f)
+              let new_mix_f = Mcpure.mix_of_pure new_f in
+                    (vbi,vbi,new_mix_f,new_mix_f)
         | _ -> (conv_baga_inv vdef.I.view_baga_over_inv,
-          conv_baga_inv vdef.I.view_baga_under_inv,memo_pf_N) in
+          conv_baga_inv vdef.I.view_baga_under_inv,memo_pf_N,memo_pf_P) in
       (* let _ = match vbi with *)
       (*   | None -> Debug.dinfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos *)
       (*   | Some vbi -> Debug.dinfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in *)
       let vboi = match vboi with
-        | None -> 
+        | None ->
               begin
                 Debug.dinfo_hprint (add_str "pure to_be added" Cprinter.string_of_pure_formula) new_pf no_pos;
                 (Some [([],new_pf)])
@@ -2166,7 +2170,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_materialized_vars = mvars;
           C.view_data_name = data_name;
           C.view_formula = cf;
-          C.view_x_formula = memo_pf_P;
+          C.view_x_formula = user_x_inv;
           C.view_baga_inv = vbi;
           C.view_baga_over_inv = vboi;
           C.view_baga_x_over_inv = vboi;

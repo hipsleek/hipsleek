@@ -1514,7 +1514,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     let _ = Debug.ninfo_hprint (add_str "view_name" (fun x -> x)) vdef.view_name no_pos in
                     let _ = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) diff_flag no_pos in
                     let _ = Debug.ninfo_hprint (add_str "xp_no" string_of_int) xp_no no_pos in
-                    let vinv = (* if (xp_no=1 && diff_flag) then vdef.view_x_formula else *) vdef.view_user_inv in
+                    let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
                     let _ = Debug.ninfo_hprint (add_str "vinv" !Cast.print_mix_formula) vinv no_pos in
                     (*add fractional invariant*)
                     let frac_inv_mix = MCP.OnePF frac_inv in
