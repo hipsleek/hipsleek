@@ -540,7 +540,7 @@ and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cfo
   let pr_svl = Cprinter.string_of_spec_var_list in
   Debug.no_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
-  
+
 (*
   spatial context
   type: Cast.prog_decl ->
@@ -636,7 +636,7 @@ and imm_split_lhs_node estate l_node r_node =
   let pr_es = Cprinter.string_of_entail_state in
   let pr_out = pr_pair pr_es pr_none in
   Debug.no_3 "imm_split_lhs_node" pr_es pr_node pr_node pr_out imm_split_lhs_node_x estate l_node r_node
-  
+
 (*  *)
 and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   let unlinked_nodes = ref ([]: CP.spec_var list) in
@@ -751,14 +751,21 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
             cmm
     | _ -> []
 
-and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:P.spec_var list)  l_asset*) r_aset (lhs_f:Cformula.h_formula) = 
+and coerc_mater_match_gen_x l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:P.spec_var list)  l_asset*) r_aset (lhs_f:Cformula.h_formula) =
   let coerc_left = Lem_store.all_lemma # get_left_coercion in
-  let cmml = coerc_mater_match coerc_left l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in 
+  let cmml = coerc_mater_match coerc_left l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in
   let coerc_right = Lem_store.all_lemma # get_right_coercion in
   (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in *)
   let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in
   cmml(* @cmmr *)
 
+and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) =
+  let pr = Cprinter.string_of_h_formula in
+  let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
+  let pr2 ls = pr_list pr4 ls in
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  Debug.no_3 "coerc_mater_match_gen" pr_id pr_svl pr_svl pr2
+      (fun _ _ _ -> coerc_mater_match_gen_x l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
 
 and spatial_ctx_extract_x prog (f0 : h_formula)
     (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
@@ -813,8 +820,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         | HRel (hp,_,_) ->
             let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
             let p1_eq = p1::p1_eq in
-            let cmm = coerc_mater_match_with_unk_hp prog c 
-                (CP.name_of_spec_var hp) vs1 [] aset f f0 p1_eq in 
+            let cmm = coerc_mater_match_with_unk_hp prog c
+                (CP.name_of_spec_var hp) vs1 [] aset f f0 p1_eq in
             cmm
         | _ -> 
             (* if (subtype_ann imm1 imm) then *)
@@ -826,22 +833,25 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
                 [(Hole hole_no, f, [(f, hole_no)], Root)]
               else
-                begin
-                  match rhs_node with
-                    | ViewNode {h_formula_view_name = r_vn} ->
-                          let _ = DD.ninfo_hprint (add_str " l_view_name" pr_id) c no_pos in
-                          let _ = DD.ninfo_hprint (add_str " r_vn" pr_id) r_vn no_pos in
-                          if String.compare r_vn c = 0 then [(HEmp, f, [], Root)] else []
-                    | _ ->  [(HEmp, f, [], Root)]
-                end
+                [(HEmp, f, [], Root)]
+                    (********** Loc: TODO multiple matching, the former is empty*********)
+                (* begin *)
+                (*   match rhs_node with *)
+                (*     | ViewNode {h_formula_view_name = r_vn} -> *)
+                (*           let _ = DD.ninfo_hprint (add_str " l_view_name" pr_id) c no_pos in *)
+                (*           let _ = DD.ninfo_hprint (add_str " r_vn" pr_id) r_vn no_pos in *)
+                (*           if String.compare r_vn c = 0 then [(HEmp, f, [], Root)] else [] *)
+                (*     | _ ->  [(HEmp, f, [], Root)] *)
+                (* end *)
+                    (*********************** END LOC TOD**********************)
             else
               let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
-              let cmm = coerc_mater_match_gen c vs1 aset f in 
-              (*LDK: currently, assume that frac perm does not effect 
+              let cmm = coerc_mater_match_gen c vs1 aset f in
+              (*LDK: currently, assume that frac perm does not effect
                 the choice of lemmas (coercions)*)
               vmm@cmm
       )
-    | HRel (hp,e,_) -> 
+    | HRel (hp,e,_) ->
         spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap
     | Star ({h_formula_star_h1 = f1;
              h_formula_star_h2 = f2;
@@ -849,7 +859,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let l1 = helper f1 in
         let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
           (mkStarH lhs1 f2 pos, node1, hole1, match1)
-        ) l1 in  
+        ) l1 in
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
           (mkStarH f1 lhs2 pos, node2, hole2, match2)
@@ -862,7 +872,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let l1 = helper f1 in
         let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
           (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)
-        ) l1 in  
+        ) l1 in
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
           (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)
@@ -902,35 +912,34 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
           let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
             (mkConjStarH lhs1 f2 pos , node1, hole1, match1)
-          ) l1 in  
+          ) l1 in
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
             (mkConjStarH f1 lhs2 pos , node2, hole2, match2)
           ) l2 in
           res1 @ res2
-        else 
+        else
           let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
               ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level 2\n")
-            
     | ConjConj({h_formula_conjconj_h1 = f1;
                 h_formula_conjconj_h2 = f2;
                 h_formula_conjconj_pos = pos}) ->
-        if (!Globals.allow_mem) then 
+        if (!Globals.allow_mem) then
           let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
             (mkConjConjH lhs1 f2 pos , node1, hole1, match1)
-          ) l1 in  
+          ) l1 in
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
             (mkConjConjH f1 lhs2 pos , node2, hole2, match2)
           ) l2 in
           res1 @ res2
-        else 
+        else
           let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
               ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level 3\n")
-    | _ -> 
+    | _ ->
           let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = "
               ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
@@ -943,7 +952,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
-  let _ = DD.tinfo_hprint (add_str "l_xxx" (pr_list pr)) l no_pos in 
+  let _ = DD.ninfo_hprint (add_str "l_xxx" (pr_list pr)) l no_pos in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
