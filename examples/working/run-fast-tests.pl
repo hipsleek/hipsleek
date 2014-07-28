@@ -1706,6 +1706,8 @@ $output_file = "log";
 %sleek_files=(
     "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
                       ["cll-d.slk", "", "", "Valid."],
+                      ["label-basic.slk", "", "", "Fail.Valid.Valid.Fail."],
+                      ["label-dll.slk", "", "", "Fail.Valid.Valid.Valid."],
                       ["sleek1.slk", "", "", "Fail."],
                       ["sleek10.slk", "", "", "Valid.Fail."],
                       ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],

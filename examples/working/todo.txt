@@ -642,13 +642,16 @@ Total verification time: 1573.67 second
 	Time spent in child processes: 249.58 second
 	Number of false contexts: 383
 
-# hip --eps --dis-baga-xpure
-Total number of errors: 22 in files:
+(FIXED)
+
 error at: cll.ss delete
 error at: heaps.ss deleteoneel
 error at: heaps.ss deletemax
 error at: rb.ss remove_min
 error at: rb.ss del
+
+# hip --eps --dis-baga-xpure
+Total number of errors: 22 in files:
 error at: ../../modular_examples/dll-modular.ss append
 error at: ../../modular_examples/dll-modular.ss append1
 error at: ../../modular_examples/dll-modular.ss append2

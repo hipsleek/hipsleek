@@ -9977,10 +9977,11 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
             CF.mk_failure_must "99" Globals.sl_error, estate.es_trace)) (mk_cex true), NoAlias)
       | Some vd ->
-            let old_classic_flag = !do_classic_frame_rule in
-            let _ = do_classic_frame_rule := (is_empty_heap rhs_rest) in
+            (* WN->Loc : this caused failure for cll-d.slk *)
+            (* let old_classic_flag = !do_classic_frame_rule in *)
+            (* let _ = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
             let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
-            let _ = do_classic_frame_rule := old_classic_flag in
+            (* let _ = do_classic_frame_rule := old_classic_flag in *)
             r
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 

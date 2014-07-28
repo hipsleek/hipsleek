@@ -291,6 +291,10 @@ checkentail
 
 Entail 1: Fail.(cex)(must) cause:do_unmatched_rhs : x'::hd<flted_85>
 
+@10! is_folding: :true
+@10! !Globals.do_classic_frame_rule:true
+@10! is_rhs_emp:false
+
 chinwn@loris-7:~/hg/sl_term$ hg bisect -b
 The first bad revision is:
 changeset:   12325:3a374f17c051
@@ -298,6 +302,13 @@ branch:      smt2014
 user:        locle
 date:        Wed Jul 02 16:43:57 2014 +0800
 summary:     x
+
+            (* WN->Loc : this caused failure for cll-d.slk *)
+            (* let old_classic_flag = !do_classic_frame_rule in *)
+            (* let _ = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
+            let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+            (* let _ = do_classic_frame_rule := old_classic_flag in *)
+            r
 
 ==============================================
 ==============================================
