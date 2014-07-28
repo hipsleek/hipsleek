@@ -577,15 +577,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
-      | (TUnk _, _)
-      | (_, TUnk _) ->
+      | (TUnk (unk_src_order, _), _) ->
           (* Collect temporal relation here *)
           (* No need to collect from primitive calls and *)
           (* terminating methods in other scc groups *)
-          let unk_src_order = match t_ann_s with
-          | TUnk (i, _) -> i
-          | _ -> 0
-          in
           let _ =
             match t_ann_d, dst_lv with
             | Term, [] -> ()
@@ -598,6 +593,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
               let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
               Tnt.tu_call_stk # push trans 
           in (estate, lhs_p, rhs_p, None)
+      | (_, TUnk _) ->
+          let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
+          let _ = Tnt.tu_call_stk # push trans in
+          (estate, lhs_p, rhs_p, None) 
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
