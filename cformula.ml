@@ -13520,8 +13520,7 @@ let rec has_lexvar_formula f =
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
 
-     
-let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f  = 
+let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f = 
   let helper = norm_struc_with_lexvar is_primitive proc_name proc_args in
   match struc_f with
   | ECase ef -> ECase { ef with formula_case_branches = map_l_snd helper ef.formula_case_branches }
@@ -13531,7 +13530,7 @@ let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f  =
   | EAssume _ ->
       let lexvar = 
         if is_primitive then CP.mkLexVar Term [] [] no_pos
-        else if !Globals.en_tnt_infer then CP.mkLexVar (TUnk (proc_name, proc_args)) [] [] no_pos
+        else if !Globals.en_tnt_infer then CP.mkLexVar (TUnk (0, TSingle (proc_name, proc_args))) [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in 
       mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = helper ef.formula_inf_continuation }
@@ -13540,8 +13539,8 @@ let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f  =
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
  * --dis-call-num and --dis-phase-num are not enabled (default) *)      
- 
-let rec add_term_nums_struc struc_f log_vars call_num add_phase = match struc_f with
+let rec add_term_nums_struc struc_f log_vars call_num add_phase = 
+  match struc_f with
   | ECase ef ->
       let n_cl, pvs  = map_l_snd_res (fun c-> add_term_nums_struc c log_vars call_num add_phase) ef.formula_case_branches in
       (ECase { ef with formula_case_branches = n_cl }, List.concat pvs)
@@ -13575,12 +13574,16 @@ and add_term_nums_formula f log_vars call_num add_phase =
       let n_f1, pv1 = add_term_nums_formula f1 log_vars call_num add_phase in
       let n_f2, pv2 = add_term_nums_formula f2 log_vars call_num add_phase in
       (Or { orf with formula_or_f1 = n_f1; formula_or_f2 = n_f2 }, pv1 @ pv2)
-
+      
 and fresh_phase_var_opt add_phase = 
   if add_phase then
     let pv_name = fresh_any_name "pv" in
     Some (CP.SpecVar(Int, pv_name, Unprimed))
   else None
+  
+let add_term_nums_struc struc_f log_vars call_num add_phase =
+  Debug.no_1 "add_term_nums_struc" !print_struc_formula (fun (spec, _) -> !print_struc_formula spec)
+    (fun _ -> add_term_nums_struc struc_f log_vars call_num add_phase) struc_f
 
 (* Termination: Count the number of Term in a specification *)  
 let rec count_term_struc (sf: struc_formula) : int = match sf with 

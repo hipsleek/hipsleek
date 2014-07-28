@@ -161,7 +161,13 @@ type term_ann =
   | Loop    (* definitely loops *)
   | MayLoop (* don't know *)
   | Fail of term_fail    (* failed because of invalid trans *)
-  | TUnk of (ident * (typ * ident * primed) list) (* For TNT inference *)
+  (* For TNT inference *)
+  (* The first element denotes call order of the method *)
+  | TUnk of (int * tunk)
+
+and tunk =
+  | TSingle of (ident * (typ * ident * primed) list) (* caller's prototype *)
+  | TSeq of tunk * tunk (* Used for modelling complex (mutually) recursive pattern *)
 
 and term_fail =
   | TermErr_May
@@ -546,15 +552,23 @@ let rec s_p_i_list l c = match l with
 let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
 ;;
 
+let rec string_of_tunk = function
+  | TSingle (pname, args) ->
+    let string_of_args args = "[" ^ (String.concat ","
+      (List.map (fun (_, n, p) -> string_of_primed_ident (n, p)) args)) ^ "]" in 
+    "(" ^ pname ^ ")" ^ (string_of_args args)
+  | TSeq (unk_src, unk_dst) ->
+    (string_of_tunk unk_src) ^ " -> " ^ 
+    (string_of_tunk unk_dst)
+
 let string_of_term_ann a =
   match a with
     | Term -> "Term"
     | Loop -> "Loop"
     | MayLoop -> "MayLoop"
-    | TUnk (pname, args) ->
-      let string_of_args args = "[" ^ (String.concat "," 
-        (List.map (fun (_, n, p) -> string_of_primed_ident (n, p)) args)) ^ "]" in 
-      "TUnk" ^ "(" ^ pname ^ ")" ^ (string_of_args args)
+    | TUnk (i, tunk) -> 
+      "TUnk" ^ ("[" ^ (string_of_int i) ^ "]") ^ 
+      (string_of_tunk tunk)
     | Fail f -> match f with
         | TermErr_May -> "TermErr_May"
         | TermErr_Must -> "TermErr_Must"

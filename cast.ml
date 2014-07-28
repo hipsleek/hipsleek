@@ -2204,7 +2204,6 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
         Debug.devel_zprint (lazy (">>>>>> [term.ml][Adding Call Number and Phase Logical Vars] <<<<<<")) no_pos;
         Debug.devel_hprint (add_str ("Mutual Groups") (pr_list (pr_pair string_of_int (pr_list pr)))) mutual_grps no_pos;
         Debug.devel_pprint "\n" no_pos
-
       end;
     let pvs = List.map (fun (n, procs) ->
         let mn = List.hd procs in
@@ -2246,7 +2245,7 @@ and add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: boo
 and add_term_nums_proc_scc (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool) =
   let pr ps = pr_list (fun p -> p.proc_name) ps in
   Debug.no_1 "add_term_nums_proc_scc" pr !P.print_svl
-      (fun _ -> add_term_nums_proc_scc_x (procs: proc_decl list) tbl log_vars (add_call: bool) (add_phase: bool)) procs
+    (fun _ -> add_term_nums_proc_scc_x procs tbl log_vars add_call add_phase) procs
 
 (* adding call number and phase variables into spec *)
 and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase = 
@@ -2263,7 +2262,6 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       proc_static_specs = n_ss; 
       proc_dynamic_specs = n_ds; 
     }, pvl1 @ pvl2)
-
 
 let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
 	let name = unmingle_name p.proc_name in

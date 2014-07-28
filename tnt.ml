@@ -63,9 +63,6 @@ let string_of_trans_TUnk trans =
 let rec string_of_pw_trans_elem = function 
   | TAnn ann -> string_of_term_ann ann
   | TPwe pwe -> string_of_pw_elem_wo_cond pwe
-  | TSeq (p1, p2) -> 
-    (string_of_pw_trans_elem p1) ^ "; " ^ 
-    (string_of_pw_trans_elem p2)
 
 let string_of_pw_trans_typ = function 
   | Ret pwe -> "" 
@@ -96,7 +93,7 @@ let rec get_pw_elem_context ctx =
   | F.Ctx es ->
     begin match es.F.es_var_measures with
     | None -> []
-    | Some (TUnk (id, args), _, _) ->
+    | Some (TUnk (_, TSingle (id, args)), _, _) -> (* TODO: TSeq *)
       let args = List.map (fun (t, n, p) -> P.SpecVar (t, n, p)) args in
       let p = F.get_pure es.F.es_formula in
       let simpl_p = P.mkExists_with_simpl 
@@ -135,7 +132,7 @@ let build_trans_TUnk ctx src dst =
 let build_tu_rels_with_trans unsat pw_elem_ls trans_ls =
   let get_feasible_pwe_rhs lhs dst ctx =
     match dst with
-    | TUnk (idd, to_args) ->
+    | TUnk (_, TSingle (idd, to_args)) ->
       let to_args = List.map (fun (t, n, p) -> P.SpecVar (t, n, p)) to_args in
       let rhs_pw_elems = List.filter (fun pwe -> eq_ident pwe.pw_ident idd) pw_elem_ls in
       List.fold_left (fun acc rhs ->
@@ -157,7 +154,7 @@ let build_tu_rels_with_trans unsat pw_elem_ls trans_ls =
   let helper trans =
     let ctx = trans.trans_ctx in
     match trans.trans_src with
-    | TUnk (ids, _) ->
+    | TUnk (_, TSingle (ids, _)) ->
       let lhs_pw_elems = List.filter (fun pwe -> eq_ident pwe.pw_ident ids) pw_elem_ls in
       let feasible_pw_trans = List.fold_left (fun acc lhs ->
         let enhanced_lhs_ctx = F.mkAnd_pure ctx (MCP.mix_of_pure lhs.pw_cond) no_pos in
@@ -189,6 +186,6 @@ let process_infer unsat =
   let tu_rels = build_tu_rels_with_trans unsat pw_elem_ls trans_TUnk_ls in
   
   let _ = print_endline (pr_list string_of_pw_elem pw_elem_ls) in
-  (* let _ = print_endline (pr_list string_of_trans_TUnk trans_TUnk_ls) in *)
+  let _ = print_endline (pr_list string_of_trans_TUnk trans_TUnk_ls) in
   let _ = print_endline (pr_list string_of_pw_trans tu_rels) in
   ()

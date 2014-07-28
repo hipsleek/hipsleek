@@ -3090,11 +3090,15 @@ and b_apply_subs_x sst bf =
     | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
     (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info ->
+        let rec tunk_apply_subs sst tunk = match tunk with
+        | TSingle (id, args) -> TSingle (id, List.map (fun (t, a, p) -> 
+            let nv = match (subs_one sst (SpecVar (t, a, p))) with
+            | SpecVar (nt, na, np) -> (nt, na, np) in nv) args) 
+        | TSeq (tunk_src, tunk_dst) -> TSeq (tunk_apply_subs sst tunk_src, tunk_dst)
+        in
         let ann = t_info.lex_ann in
         let ann = match ann with
-        | TUnk (id, args) -> TUnk (id, List.map (fun (t, a, p) -> 
-            let nv = match (subs_one sst (SpecVar (t, a, p))) with
-            | SpecVar (nt, na, np) -> (nt, na, np) in nv) args)
+        | TUnk (i, tunk) -> TUnk (i, tunk_apply_subs sst tunk)
         | _ -> ann in
         LexVar { t_info with
           lex_ann = ann;
@@ -9587,7 +9591,6 @@ let rec add_term_nums_pure f log_vars call_num phase_var =
   | Forall (sv, f, lbl, pos) ->
       let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
       (Forall (sv, n_f, lbl, pos), pv)
-  
   | Exists (sv, f, lbl, pos) ->
       let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
       (Exists (sv, n_f, lbl, pos), pv)
@@ -9601,7 +9604,6 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar t_info ->
 		    let t_ann = t_info.lex_ann in
 				let ml = t_info.lex_exp in
-(*				let il = t_info.lex_tmp in*)
 				let pos = t_info.lex_loc in
         (match t_ann with
           | Term ->
@@ -9632,13 +9634,18 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                 | Some i -> let c=(mkIConst i pos) in
                   (c::v_ml,c::v_il)
               in (LexVar { t_info with lex_exp = n_ml; lex_tmp = n_il; }, pv)
+          | TUnk (_, tunk) -> begin
+            match call_num with
+            | None -> (pf, [])
+            | Some i -> (LexVar { t_info with lex_ann = TUnk (i, tunk); }, [])
+            end
           | _ -> (pf, []))
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
 
-let  add_term_nums_pure  bf log_vars call_num phase_var =
+let add_term_nums_pure bf log_vars call_num phase_var =
   Debug.no_2 "add_term_nums_pure" (pr_option string_of_int) (pr_option !print_sv) (pr_pair !print_formula !print_svl)
-      (fun _ _ -> add_term_nums_pure bf log_vars call_num phase_var) call_num phase_var
+    (fun _ _ -> add_term_nums_pure bf log_vars call_num phase_var) call_num phase_var
 
 let rec count_term_pure f = 
   match f with
@@ -9663,6 +9670,7 @@ and count_term_b_formula bf =
   | LexVar t_info ->
       (match t_info.lex_ann with
         | Term -> 1
+        | TUnk _ -> 1
         | _ -> 0)
   | _ -> 0
 
