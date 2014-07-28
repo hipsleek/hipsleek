@@ -2732,6 +2732,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   (*     else pf *)
                   (* in *)
 		  let nox = CF.formula_of_pure_N  pf proc.proc_loc in 
+      (* TNT: Reset the piecewise counter *)
+      let _ = if !Globals.en_tnt_infer then Tnt.reset_pw_cnt () else () in
 		  let init_form = nox in
 		  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled  proc.proc_loc in
                   (*add default full permission = 1.0 to ante; 

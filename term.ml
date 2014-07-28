@@ -581,6 +581,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (_, TUnk _) ->
           (* Collect temporal relation here *)
           (* No need to collect from primitive calls *)
+          (* and terminating methods in other scc groups *)
           let _ =
             match t_ann_d, dst_lv with
             | Term, [] -> ()

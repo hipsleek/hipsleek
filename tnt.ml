@@ -15,6 +15,7 @@ type pw_elem = {
   pw_num: int;
   pw_args: P.spec_var list;
   pw_ctx: F.formula;
+  (* Distinct condition for a piecewise element *)
   pw_cond: P.formula;
 }
 
@@ -31,13 +32,13 @@ type pw_trans = {
   pw_trans_rel: pw_trans_typ;
 }
 
-let cnt_number = ref 0
+let pw_cnt_number = ref 0
 
-let fresh_cnt () =
-  cnt_number := !cnt_number + 1;
-  !cnt_number
+let fresh_pw_cnt () =
+  pw_cnt_number := !pw_cnt_number + 1;
+  !pw_cnt_number
   
-let reset_cnt () = cnt_number := 0
+let reset_pw_cnt () = pw_cnt_number := 0
   
 let diff = Gen.BList.difference_eq P.eq_spec_var
 
@@ -59,9 +60,12 @@ let string_of_trans_TUnk trans =
   (string_of_term_ann trans.trans_src) ^ " -> " ^ 
   (string_of_term_ann trans.trans_dst)
   
-let string_of_pw_trans_elem = function 
+let rec string_of_pw_trans_elem = function 
   | TAnn ann -> string_of_term_ann ann
   | TPwe pwe -> string_of_pw_elem_wo_cond pwe
+  | TSeq (p1, p2) -> 
+    (string_of_pw_trans_elem p1) ^ "; " ^ 
+    (string_of_pw_trans_elem p2)
 
 let string_of_pw_trans_typ = function 
   | Ret pwe -> "" 
@@ -100,7 +104,7 @@ let rec get_pw_elem_context ctx =
         (diff (P.fv p) args) 
         p None (P.pos_of_formula p) in
       [{ pw_ident = id;
-         pw_num = fresh_cnt ();
+         pw_num = fresh_pw_cnt ();
          pw_args = args;
          pw_ctx = es.F.es_formula; 
          pw_cond = simpl_p; }]
@@ -113,7 +117,7 @@ let get_pw_elem_partial_context ctx =
   List.concat (List.map (fun (_, c) -> get_pw_elem_context c) ctx_lst)
 
 let get_pw_elem_list_partial_context ctx =
-  reset_cnt ();
+  (* reset_pw_cnt (); *)
   List.concat (List.map get_pw_elem_partial_context ctx)
 
 let rec grp_pw_elem_by_id pwt = 
