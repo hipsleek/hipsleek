@@ -620,33 +620,20 @@ Total number of errors: 14 in files:
 
 rb.ss (very long)
 Total number of errors: 22 in files:
- error at: cll.ss delete
-error at: heaps.ss deleteoneel
-error at: heaps.ss deletemax
-error at: rb.ss remove_min
-error at: rb.ss del
-error at: ../../modular_examples/dll-modular.ss append
-error at: ../../modular_examples/dll-modular.ss append1
-error at: ../../modular_examples/dll-modular.ss append2
-error at: ../../modular_examples/dll-modular.ss delete
-error at: ../../modular_examples/dll-modular.ss delete1
-error at: ../../modular_examples/dll-modular.ss f1
-error at: ../../modular_examples/dll-modular.ss f2
-error at: ../../modular_examples/dll-modular.ss insert
-error at: ../../modular_examples/dll-modular.ss test_del
-error at: ../../modular_examples/dll-modular.ss test_del2
-error at: ../../modular_examples/dll-modular.ss test_fold
-error at: ../../modular_examples/selection-modular.ss delete_min
-error at: ../../modular_examples/selection-modular.ss find_min
-error at: ../../modular_examples/selection-modular.ss selection_sort
-error at: ../../modular_examples/qsort-modular.ss append_bll
-error at: ../../modular_examples/qsort-modular.ss partition
-error at: ../../modular_examples/qsort-modular.ss qsort
 .
 Total verification time: 1573.67 second
 	Time spent in main process: 1324.09 second
 	Time spent in child processes: 249.58 second
 	Number of false contexts: 383
+
+Checking ../../modular_examples/dll-modular.ss (runs with extra options: --overeps)
+Checking ../../modular_examples/selection-modular.ss (runs with extra options: --overeps --lda)
+Checking ../../modular_examples/qsort-modular.ss (runs with extra options: --overeps --lda)
+All test results were as expected.
+Total verification time: 1596.18 second
+	Time spent in main process: 1344.02 second
+	Time spent in child processes: 252.16 second
+	Number of false contexts: 413
 
 (FIXED)
 
@@ -702,6 +689,44 @@ Total verification time: 231.97 second
 	Time spent in child processes: 71.86 second
 	Number of false contexts: 424
 ====================================================================
+# cvutil.ml
+
+Fix below caused extra failures. Why?
+
+  if !Globals.baga_xpure 
+      &&  not(!Globals.en_slc_ps) 
+  then
+      let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+      let ans = conv_from_ef_disj disj in
+      ans
+
+Total number of errors: 26 in files:
+error at: dll.ss test_del2
+error at: selection.ss delete_min
+error at: selection.ss selection_sort
+error at: avl-orig-2.ss get_max
+error at: avl-orig-2.ss insert
+error at: avl-orig-2.ss rotate_left_child
+error at: avl-orig-2.ss rotate_right_child
+error at: avl-orig3.ss get_max
+error at: avl-orig3.ss insert
+error at: avl-orig3.ss rotate_left_child
+error at: avl-orig3.ss rotate_right_child
+error at: bubble.ss bubble
+error at: bubble.ss bsort
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_5
+error at: rb.ss del_5r
+error at: rb.ss del_2
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: rb.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
 ====================================================================
 ====================================================================
 ===================================================================
