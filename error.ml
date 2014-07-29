@@ -48,7 +48,7 @@ let report_error e =
   (if proving_loc#is_avail then
     Printf.printf "\nLast Proving Location: %s\n"
         proving_loc#string_of);
-  (Printf.printf "\nERROR: at %s \nMessage: %s\n " 
+  (Printf.printf "\nERROR: at %s \nMessage: %s\n "
       (string_of_loc e.error_loc)
       e.error_text);
   flush stdout;
@@ -56,7 +56,7 @@ let report_error e =
 
 let report_no_pattern () = report_error {error_loc=no_pos; error_text="HIP/SLEEK error, unhandled pattern"}
 (*asankhs: Lets not use such wording in external errors and exceptions - very poor coding, lazy programmers !!!*)
-  
+
 let report_error1 e s=
   (Printf.printf "%s\n" e.error_text);
  (if post_pos#is_avail then
@@ -69,7 +69,9 @@ let report_error1 e s=
   failwith s
 
 let report_warning e =
-  if (not !suppress_warning_msg) then 
+  if (not !en_warning_msg) then
+    report_error e
+  else if (not !suppress_warning_msg) then
     begin
     Printf.printf "\nWARNING: %s:%s\n"
         (string_of_loc e.error_loc)

@@ -707,7 +707,9 @@ let common_arguments = [
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-  ("--smt-compete", 
+  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--smt-compete",
      Arg.Unit
       (fun _ ->
           Globals.show_unexpected_ents := false;

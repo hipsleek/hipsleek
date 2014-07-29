@@ -1132,6 +1132,7 @@ let simplify_error = ref false
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
+let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1151,7 +1152,7 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5 
+let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1230,9 +1231,9 @@ let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *
 
 let show_unexpected_ents = ref true
 
-  let print_endline_q s = 
-    if !smt_compete_mode then () 
-    else print_endline s 
+  let print_endline_q s =
+    if !smt_compete_mode then ()
+    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false

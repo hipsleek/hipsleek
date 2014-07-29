@@ -1855,13 +1855,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n") 
+        else report_error pos ("view defn for "^vn^" does not entail supplied invariant\n")
       in ()
     else ()
   in
   check_and_compute ()
 
-and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self 
+and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self
   (* Gen.BList.difference_eq (=) vdef.I.view_pt_by_self [data_name] *)
 
 and trans_view_kind vk=
@@ -1876,11 +1876,11 @@ and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_
   let p1 = add_param_ann_constraints_to_pure h1 None in
   let p2 = add_param_ann_constraints_to_pure h2 None in
   let p = CF.add_mix_formula_to_mix_formula p1 p2 in
-  (match p_f with 
+  (match p_f with
     | Some x -> CF.add_mix_formula_to_mix_formula p x
     | None -> p)
 
-and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula = 
+and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula =
   let mix_f = 
     match h_f with
       | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
