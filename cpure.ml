@@ -11825,6 +11825,60 @@ and has_acyclic_rel_pure f0 =
       has_acyclic_rel_pure_x f0
 
 (*
+  Expect: waitS(G,S,d)
+  - rel is a RelForm
+  - #exps = 3
+  - G is of typ Tup2
+  - S is concrete (i.e. it or its closure is in the concrete_bags)
+  (sv closure is found in f)
+  - G = {tup2(c,d) | c in S}
+
+  Out: the formula forall (v1,v2) \in B. v1<v2
+*)
+and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula)  : formula =
+  let str = !print_p_formula rel in
+  (match rel with
+    | RelForm (sv,exps,pos) ->
+          if (List.length exps !=3) then
+            report_error no_pos ("create_waitS_rel: expect three args in " ^ str ^ " ! \n")
+          else
+            let g = List.hd exps in
+            let s = List.hd (List.tl exps) in
+            let d = List.hd (List.tl (List.tl exps)) in
+            (match s with
+              | Var (sv,_) ->
+                    (*Find all variable equal to sv*)
+                    let vars = find_closure_pure_formula sv f in
+                    if (is_bag_typ sv) then
+                      (try
+                        let _, exps = (List.find (fun (v1,_) -> Gen.BList.mem_eq eq_spec_var v1 vars) concrete_bags) in
+                        (*consistent*)
+                        let tups = List.fold_left (fun res e ->
+                            let tup = Tup2 ((e,d),no_pos) in
+                            tup::res) [] exps
+                        in
+                        let comprehension = Bag (tups, no_pos) in
+                        mkEqExp g comprehension no_pos
+                      with Not_found ->
+                          (*If the concrete bags cannot be found, keep the relation *)
+                          let _ = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in
+                          BForm ((rel, None) , None)
+                      )
+                    else
+                      report_error no_pos ("create_waitS_rel: expect v of typ Bag in " ^ str ^ " !\n")
+              | _ -> report_error no_pos ("create_waitS_rel: expect waitS(G,S,d)! \n"))
+    | _ -> report_error no_pos ("create_waitS_rel: expecting RelForm! \n"))
+
+and create_waitS_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula) : formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_3 "create_waitS_rel"
+      pr1
+      !print_formula
+      !print_p_formula
+      !print_formula
+      create_waitS_rel_x concrete_bags f rel
+
+(*
   Expect: acylic(B)
   - rel is a RelForm
   - #exps = 1
@@ -11898,6 +11952,21 @@ and translate_acyclic_pure_x (f: formula) : formula =
 and translate_acyclic_pure (f: formula) : formula =
   Debug.no_1 "translate_acyclic_pure" !print_formula !print_formula
   translate_acyclic_pure_x f
+
+and translate_waitS_pure_x (f: formula) : formula =
+  (*attempt to concretize bag constraints*)
+  let concrete_bags = get_concrete_bag_pure f in
+  (*extract waitS relations, and translate them*)
+  let rel_sv = mk_spec_var Globals.waitS_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  nf
+
+and translate_waitS_pure (f: formula) : formula =
+  Debug.no_1 "translate_waitS_pure" !print_formula !print_formula
+  translate_waitS_pure_x f
+
 
 and find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =

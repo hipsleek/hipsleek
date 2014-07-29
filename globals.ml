@@ -690,6 +690,7 @@ let this = "this"
 
 let is_self_ident id = self=id
 
+let waitS_name = "waitS"
 let acyclic_name = "acyclic"
 let cyclic_name = "cyclic"
 

@@ -2250,6 +2250,7 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (**************************************)
+  let ante = CP. translate_waitS_pure ante in
   let ante,conseq = 
     if (is_cyclic_rel conseq) then
       (*

@@ -1,0 +1,4 @@
+// Interpreted relation G = {tup2(c,d) | c in S}
+relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+
+checkentail waitS(G,S,d) & S={c1,c2} |- G={tup2(c1,d),tup2(c2,d)}.
