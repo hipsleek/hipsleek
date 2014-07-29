@@ -2089,7 +2089,7 @@ and prtt_pr_formula_inst prog e =
   if !Globals.print_en_tidy then
     prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e)
   else
-    prtt_pr_formula_inst prog e
+    prtt_pr_formula_inst_1 prog e
 
 and pr_formula_for_spec e =
   let print_fun = fun fml ->
