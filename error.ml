@@ -69,9 +69,9 @@ let report_error1 e s=
   failwith s
 
 let report_warning e =
-  if (not !en_warning_msg) then
-    report_error e
-  else if (not !suppress_warning_msg) then
+  if (!suppress_warning_msg) then ()
+  else if (not !en_warning_msg) then report_error1 e "Warning->ERROR"
+  else 
     begin
     Printf.printf "\nWARNING: %s:%s\n"
         (string_of_loc e.error_loc)
@@ -83,8 +83,8 @@ let report_warning e =
         (* print_string ("report_warning: after flush" *)
         (*               ^ "\n\n"); *)
     end 
-  else ()
   (* failwith "Error detected : error.ml B" *)
+
 exception Malformed_barrier of string
 (*
 let process_exct e=

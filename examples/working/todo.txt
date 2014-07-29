@@ -728,6 +728,65 @@ error at: ../../modular_examples/dll-modular.ss test_del2
 error at: ../../modular_examples/selection-modular.ss delete_min
 error at: ../../modular_examples/selection-modular.ss selection_sort
 ====================================================================
+# (default) sleek -flags "print-dis-tidy"
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+Total verification time: 40.41 second
+	Time spent in main process: 30.39 second
+	Time spent in child processes: 10.02 second
+	Number of false contexts: 0
+
+# (default) sleek "--baga-xpure --eps"
+
+Unexpected result with : baga-test-2.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : 
+infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : 
+infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+LOOP at odd-lseg.slk
+
+===================================================================
+sleek (smt2104) --eps
+
+Unexpected result with : infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc))
+
+--inv not working with --eps
+
+ll:={[self,n_33] -> [] -> []: (0=0 && ) ||  
+  exists (flted_7_16,Anon_12,NODq: (self>0 && ll(NODq,flted_7_16)) && )
+};
+bottomupgen([ll], [1], SimHeur);
+ 
+
+--en-inf not working with --eps
+
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+< Entail 14: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_55_110>@ rem br[{1,2}]
+---
+> Entail 14: Fail.(cex)(must) cause: true |-  exists(flted_55_97:flted_55_97=2 & (((x=null & flted_55_97=\inf) | x=1))). LOCS:[55;0] (must-bug)
+55c55
+< Entail 71: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_231_404>@ rem br[{1,2}]
+---
+> Entail 71: Fail.(cex)(must) cause: true |-  exists(flted_231_384:flted_231_384=2 & (((x=null & flted_231_384=\inf) | 
+> x=1))). LOCS:[231;0] (must-bug)
+259c260
+<  <1>emp&(([null=flted][null=p][x!=null][a=m & a<=m1 & m1=\inf & m1=\inf]))&{FLOW,(21,22)=__norm}[]
+---
+>  <1>emp&a=m & m<=m1 & a<=m1 & m1=\inf & m1=\inf & p=flted & flted=null&{FLOW,(21,22)=__norm}[]
+< Entail 77: Fail.(cex)(may) cause: ((x=null & r=v & x=null & m=\inf) | (x=null & r=v & x!=null)) |-  r=min(v,m). LOCS:[252] (may-bug)
+---
+> Entail 77: Valid. 
+263c264
+< Entail 78: Fail.(cex)(may) cause: ((null=null & m=\inf) | null!=null) |-  r=min(v,m). LOCS:[0;255] (may-bug)
+---
+> Entail 78: Valid. 
+
+Unexpected result with : inflem.slk (failed check(s): {E2#Valid}) 
+
 ====================================================================
 ===================================================================
 ====================================================================
