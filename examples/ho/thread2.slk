@@ -1,0 +1,28 @@
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
+pred_prim threadR[F,G]<>
+ inv true.
+
+data cell {
+  int x;
+}.
+
+lemma t::threadR[P * Q,G]<> ==> t::thrd[P,G]<> * t::thrd[Q,G]<> .
+
+checkentail t::threadR[y::cell<5>*x::cell<4>,G]<> 
+    |- t::threadR[x::cell<a>,_]<>.
+print residue.
+
+/*
+checkentail t::threadR<y::cell<5>> |- t::threadR<P>.
+print residue.
+
+checkentail t::threadR<y::cell<5>*x::cell<4>> 
+    |- t::threadR<x::cell<a>>.
+print residue.
+
+checkentail t::thrd<# y::cell<5>*x::cell<4> & true #> 
+    |- t::thrd<#x::cell<a> & true #>.
+print residue.
+*/
+
