@@ -3626,28 +3626,29 @@ and all_components (f:formula) = (*the above misses some *)
 						e.formula_exists_flow, e.formula_exists_label, e.formula_exists_and, e.formula_exists_pos)
 	 | Or ({formula_or_pos = pos}) ->  Err.report_error {Err.error_loc = pos;Err.error_text = "all_components: don't expect OR"}
 
-and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f with
-  | Exists ({formula_exists_qvars = qvars; 
-	formula_exists_heap =  h; 
-	formula_exists_pure = p; 
+and split_quantifiers (f : formula) : (CP.spec_var list * formula) =
+  match f with
+  | Exists ({formula_exists_qvars = qvars;
+	formula_exists_heap =  h;
+	formula_exists_pure = p;
 	formula_exists_type = t;
 	formula_exists_flow = fl;
 	formula_exists_and = a;
 	formula_exists_label = lbl;
-	formula_exists_pos = pos}) -> 
+	formula_exists_pos = pos}) ->
         (qvars, mkBase_w_lbl h p t fl a pos lbl)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument (formula_or)")
 
 and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match f with
-  | Base ({formula_base_heap = h; 
-	formula_base_pure = p; 
+  | Base ({formula_base_heap = h;
+	formula_base_pure = p;
 	formula_base_type = t;
 	formula_base_flow = fl;
         formula_base_and = a;
 		formula_base_label = lbl;
         formula_base_pos = pos}) -> mkExists_w_lbl qvars h p t fl a pos lbl
-  | Exists ({formula_exists_qvars = qvs; 
+  | Exists ({formula_exists_qvars = qvs;
 	formula_exists_heap = h; 
 	formula_exists_pure = p; 
 	formula_exists_type = t;
@@ -12800,7 +12801,7 @@ let propagate_perm_struc_formula e (permvar:cperm_var)=
 
 
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
-  let f_e_f e = None  in
+  let f_e_f e = None in
   let f_f e = Some (propagate_perm_formula e permvar) in
   let f_h_f f = None in
   let f_p_t1 e = Some e in

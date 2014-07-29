@@ -246,17 +246,25 @@ let rearrange_entailment prog lhs rhs=
       (fun _ _ -> rearrange_entailment_x prog lhs rhs)
       lhs rhs
 
-let shorten_formula f =
-  let f0 = simplify_pure_f f in
-  let fvars = fv f0 in
-  let qvars,_ = split_quantifiers f0 in
-  (* let _ = print_endline ((pr_list !print_sv) fv) in *)
-  let vars = CP.remove_dups_svl (fvars@qvars) in
-  let n_tbl = Hashtbl.create 1 in
-  let new_svl,_ = shorten_svl vars n_tbl in
-  (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
-  (* subst_avoid_capture vars new_svl f *)
-  subst_all (List.combine vars new_svl) f0
+let rec shorten_formula f =
+  let helper f =
+    let f0 = simplify_pure_f f in
+    let fvars = fv f0 in
+    let qvars,_ = split_quantifiers f0 in
+    (* let _ = print_endline ((pr_list !print_sv) fv) in *)
+    let vars = CP.remove_dups_svl (fvars@qvars) in
+    let n_tbl = Hashtbl.create 1 in
+    let new_svl,_ = shorten_svl vars n_tbl in
+    (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
+    (* subst_avoid_capture vars new_svl f *)
+    subst_all (List.combine vars new_svl) f0
+  in
+  match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          let new_f1 = shorten_formula f1 in
+          let new_f2 = shorten_formula f2 in
+          mkOr new_f1 new_f2 pos
+    | _ -> helper f
 
 (* let rearrange_context bc = *)
 (*   let rec helper ctx = *)
