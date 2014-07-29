@@ -8549,7 +8549,10 @@ and coerc_spec prog c =
   if !Globals.dis_ps then [c]
   else 
     let prun_f = Cvutil.prune_preds prog true  in
-    [{c with C.coercion_head = prun_f c.C.coercion_head; C.coercion_body = prun_f c.C.coercion_body}]
+    [{c with C.coercion_head = prun_f c.C.coercion_head; 
+        C.coercion_body = prun_f c.C.coercion_body
+        ; C.coercion_body_norm = Cvutil.prune_pred_struc prog true c.C.coercion_body_norm
+    }]
         
 
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl = 
