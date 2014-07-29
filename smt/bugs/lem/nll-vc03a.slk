@@ -1,0 +1,79 @@
+
+data node {
+  node next1;
+}.
+
+data node2 {
+  node2 next2;
+  node down;
+}.
+
+pred lso<out:node> ==
+ self = out
+or (exists u: self::node<next1 = u> * u::lso<out> & self != out).
+
+pred nll<out:node2,boundary:node> ==
+ self = out
+or (exists u,Z1: self::node2<next2 = u,down = Z1> * Z1::lso<boundary> * u::nll<out,boundary> & self != out).
+
+lemma_unsafe "llem_lso" self::lso<out> -> 
+ (exists u_19: self::lso<u_19> * u_19::lso<out>).
+
+lemma_unsafe "llem_nll" self::nll<out,boundary> -> (exists boundary_107,u_14: 
+    self::nll<u_14,boundary> * u_14::nll<out,boundary_107>&boundary_107=boundary).
+
+
+lemma_unsafe  "rev_80"  self::lso<out>&self!=out
+-> (exists u_19: u_19::node<out> * self::lso<u_19>).
+
+/* this lemma is repeated
+lemma_unsafe  "llem_lso":  self::lso<out>
+-> (exists u_191: self::lso<u_191> * u_191::lso<out>)
+*/
+
+lemma_unsafe "rlem_lso"  self::lso<out>
+ <-(exists u_104,f_r_105: self::lso<u_104> * u_104::lso<out> * 
+    out::node<f_r_105>@L).
+
+lemma_unsafe  "rlem_nll" self::nll<out,boundary> <-(exists boundary_165,u_166,f_r_167,f_r_168: 
+self::nll<u_166,boundary> * u_166::nll<out,boundary_165> 
+ * out::node2<f_r_167,f_r_168>@L&boundary_165=boundary).
+
+// two lemmas below are missing
+lemma_unsafe "rlem_lso"  self::lso<out>
+ <-(exists u_104,f_r_105: self::lso<u_104> * u_104::lso<out> & out=null). 
+
+lemma_unsafe  "rlem_nll" self::nll<out,boundary> <-(exists boundary_165,u_166,f_r_167,f_r_168: 
+self::nll<u_166,boundary> * u_166::nll<out,boundary_165> & out=null & boundary_165=boundary).
+
+/*
+===========
+LEFT LEMMAS
+===========
+[Lemma "llem_lso":  self::lso<out>&{FLOW,(1,24)=__flow}[]==> (exists u_19: self::lso<u_19> * u_19::lso<out>&{FLOW,(1,24)=__flow})[],
+
+Lemma "llem_nll":  self::nll<out,boundary>&{FLOW,(1,24)=__flow}[]==> (exists boundary_107,u_14: self::nll<u_14,boundary> * 
+u_14::nll<out,boundary_107>&boundary_107=boundary&{FLOW,(1,24)=__flow})[],
+
+Lemma "rev_80":  self::lso<out>&self!=out&{FLOW,(1,24)=__flow}[]==> (exists u_19: u_19::node<out> * self::lso<u_19>&self!=out&
+{FLOW,(1,24)=__flow})[],
+
+Lemma "llem_lso":  self::lso<out>&{FLOW,(21,22)=__norm}[]==> (exists u_191: self::lso<u_191> * u_191::lso<out>&{FLOW,(21,22)=__norm})[]]
+
+============
+RIGHT LEMMAS
+============
+[Lemma "rlem_lso":  self::lso<out>&{FLOW,(1,24)=__flow}[]<== (exists u_104,f_r_105: self::lso<u_104> * u_104::lso<out> * 
+out::node<f_r_105>@L&{FLOW,(1,24)=__flow})[],
+Lemma "rlem_nll":  self::nll<out,boundary>&{FLOW,(1,24)=__flow}[]<== (exists boundary_165,u_166,f_r_167,f_r_168: self::nll<u_166,boundary> * 
+u_166::nll<out,boundary_165> * out::node2<f_r_167,f_r_168>@L&
+boundary_165=boundary&{FLOW,(1,24)=__flow})[]]
+
+
+*/
+
+checkentail_exact x1::node2<next2 = x2,down = x1_1> * x1_1::node<next1 = x1_2> * x1_2::lso<x1_3> * x1_3::node<next1 = null> * x2::node2<next2 = null,down = x2_1> * x2_1::node<next1 = x2_2> * x2_2::node<next1 = null>
+         |- x1::nll<null,null>.
+
+expect Valid.
+

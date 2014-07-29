@@ -1,0 +1,19 @@
+data node {
+    int val;
+    node next
+}.
+
+//== non-touching linked list segment 
+pred tlseg<p> == self = p
+    or self::tlseg<r> * r::node<v,p> & p != self.
+
+checkentail x::tlseg<y> * y::tlseg<z> * z::node<_,_>@L |- x::tlseg<z>.
+            
+checkentail x::tlseg<z> |- x::tlseg<y> * y::tlseg<z>.
+
+/*
+// This entailment should succeed but fail.
+// --> cannot generate distributive lemma
+
+checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<f_r_29>.
+*/

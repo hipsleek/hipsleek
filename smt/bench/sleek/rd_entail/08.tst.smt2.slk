@@ -1,0 +1,17 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred BSLL<y> ==
+ self = y
+or (exists xp,yp: xp::GTyp<f0 = yp,f1 = y> * self::BSLL<xp> & xp != null).
+
+pred DLL<y,z,w> ==
+ self = y & z = w
+or (exists zp: self::GTyp<f0 = zp,f1 = w> * zp::DLL<y,z,self> & null != self).
+
+checkentail x::DLL<y,z,w>
+         |- z::BSLL<w>.
+

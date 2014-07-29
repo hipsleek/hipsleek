@@ -1,0 +1,11 @@
+data node {
+     node next;
+}.
+
+pred ll<y,n> ==
+     self = y & n = 0
+     or (exists x: self::node<x> * x::ll<y,n-1> & n > 0).
+
+// expect: ((self = y /\ n = 0) \/ (self > 0 /\ n > 0))
+
+checkentail true |- true.

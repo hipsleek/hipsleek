@@ -1,0 +1,39 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2:GTyp,x3:GTyp> ==
+self::one<> * x2::one<> * x3::one<> * self::Q<x2,x3>.
+
+pred Q<y2:GTyp,y3:GTyp> ==
+ self::zero<> * y2::zero<> * y3::zero<>
+or (exists x1,x2,x3: x1::succ3circuit<x2,x3,self,y2,y3> * x1::Q<x2,x3>).
+
+pred succ3circuit<x2:GTyp,x3:GTyp,y1:GTyp,y2:GTyp,y3:GTyp> ==
+(exists z3: self::notg<y1> * self::xorg<x2,y2> * self::andg<x2,z3> * z3::xorg<x3,y3>).
+
+pred notg<y:GTyp> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y:GTyp,z:GTyp> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y:GTyp,z:GTyp> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+null != self.
+
+pred zero<> ==
+null = self.
+
+checkentail x0::P<x1,x2>
+         |- false.

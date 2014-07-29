@@ -1,0 +1,30 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+//(3) nlseg3d.slk
+checkentail x::node<_>@A * x::node<_>@A   |-  false.
+print residue.
+
+
+checkentail x::node<_>@A * x::node<_>@A   |-  x!=null.
+print residue.
+
+// this cause a false context but is unsound
+// for both --imm and --dis-imm
+
+/*
+# nlseg3d1.slk
+
+loris@loris-desktop:/home2/loris/hg/sl_default/smt/acc-fold$ ../../sleek nlseg3d1.slk -dre "xpure"
+Starting Omega...oc
+
+xpure_heap_mem_enum@2@1
+xpure_heap_mem_enum inp1 : x::node<_>@A * x::node<_>@A
+xpure_heap_mem_enum inp2 : true
+xpure_heap_mem_enum inp3 :1
+xpure_heap_mem_enum@2 EXIT: false #  [[x,x]]
+*/

@@ -1,0 +1,44 @@
+
+data Dll_t {
+  Dll_t next;
+  Dll_t prev;
+}.
+
+pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
+ self = nx & bk = pr
+or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
+
+/*
+# vc-08.slk --elg
+
+Qn : Not sure what is induct_f?
+
+!!! new_induct_f: (exists u_13: self::Dll_t<u_13,pr> * (emp)&self!=u_13&
+{FLOW,(1,24)=__flow})[]
+!!! tmp_sf: EBase (exists f_r_43,f_r_44,f_r_45: self::dll<f_r_43,f_r_44,f_r_45>&
+       {FLOW,(1,24)=__flow})[]
+!!! new_induct_f |- tmp_sf: true
+
+Qn : Two lemmas generated : Can we print them using binfo 
+    or print_endline_quiet?
+
+Updated lemma store with unsafe repo::[rlem_dll,llem_dll]
+
+LOc : since this is a non-touching predicate, the lemma
+below is incorrect. We currently generate intsead:
+
+  self::dll<bk,pr,n>
+  <- self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> * n::node<_,bk>@L
+
+
+lemma_unsafe 
+self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> 
+-->self::dll<bk,pr,n>
+*/
+
+checkentail w_emp::Dll_t<next = t_emp,prev = u_emp> *
+            x_emp::dll<u_emp,null,w_emp> *
+            t_emp::dll<y_emp,w_emp,z_emp> & x_emp != w_emp & w_emp != t_emp & w_emp != z_emp
+         |- x_emp::dll<y_emp,null,z_emp>.
+
+expect Valid.

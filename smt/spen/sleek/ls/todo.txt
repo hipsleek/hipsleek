@@ -1,0 +1,63 @@
+===================================
+ls-vc02.slk:
+
+data pto {
+     pto next;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in Sll_t) (?out Sll_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u Sll_t)) (tobool (ssep
+      (pto ?in (ref next ?u))
+      (lso ?u ?out))
+)))))
+*/
+
+pred lso<out> == self=out
+     or (exists u: self::pto<u> * u::lso<out>).
+
+// Fail -> expected Valid.
+
+checkentail x_emp::pto<y_emp> * y_emp::lso<w_emp> *
+            w_emp::pto<z_emp> |-
+            x_emp::lso<z_emp>.
+
+
+fixed with lemma:
+
+lemma self::lso<out> <-> (exists u: self::lso<u> * u::lso<out>).
+
+===================================
+ls-vc03.slk:
+
+data pto {
+     pto next;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in Sll_t) (?out Sll_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u Sll_t)) (tobool (ssep
+      (pto ?in (ref next ?u))
+      (lso ?u ?out))
+)))))
+*/
+
+
+pred lso<out> == self=out
+     or (exists u: self::pto<u> * u::lso<out>).
+
+// Fail -> expected Valid.
+
+checkentail x_emp::pto<y_emp> * y_emp::lso<w_emp> *
+            w_emp::lso<z_emp> * z_emp::pto<u_emp> *
+            u_emp::pto<v_emp> * v_emp::lso<r_emp> *
+            r_emp::pto<s_emp> |-
+            x_emp::lso<s_emp>.
+
+===================================
+===================================
+===================================

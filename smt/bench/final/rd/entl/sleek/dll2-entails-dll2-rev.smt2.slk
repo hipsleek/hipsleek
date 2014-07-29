@@ -1,0 +1,23 @@
+
+data DLL2_t {
+  DLL2_t prev;
+  DLL2_t next;
+  DLL2_t prev2;
+  DLL2_t next2;
+  DLL2_t down;
+}.
+
+pred DLL2_plus<p:DLL2_t,tl:DLL2_t,n:DLL2_t> ==
+ (exists down_hd: self::DLL2_t<next2 = n,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> & self = tl)
+or (exists x,down_hd: self::DLL2_t<next2 = x,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> * x::DLL2_plus<self,tl,n>).
+
+pred DLL2_plus_rev<p:DLL2_t,tl:DLL2_t,n:DLL2_t> ==
+ (exists down_hd: self::DLL2_t<next2 = n,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> & self = tl)
+or (exists x,down_hd: tl::DLL2_t<next2 = n,prev2 = x,down = down_hd> * down_hd::DLL1_plus<tl> * self::DLL2_plus_rev<p,x,tl>).
+
+pred DLL1_plus<p:DLL2_t> ==
+ self::DLL2_t<next = null,prev = p,prev2 = _,next2 = _,down = _>
+or (exists x: self::DLL2_t<next = x,prev = p,prev2 = _,next2 = _,down = _> * x::DLL1_plus<self>).
+
+checkentail_exact x::DLL2_plus<y,u,v>
+         |- x::DLL2_plus_rev<y,u,v>.

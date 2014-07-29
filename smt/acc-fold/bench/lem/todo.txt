@@ -1,0 +1,103 @@
+# lseg_nt0.slk
+
+lemma_safe self::lseg<p> & self!=p 
+        -> (exists u: self::lseg<u>*u::node<p>).
+// cannot be proven?
+
+lemma_safe self::lseg<p> 
+        <- (exists u: self::lseg<u>*u::node<p> & self!=p).
+// cannot be proven?
+===========================================================
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+# dllseg.slk
+
+Why isn't lem-gen-unsafe working here?
+
+!!! Updated lemma store with unsafe repo::[]
+===========================================================
+# dllseg0e1.slk
+
+lemma_safe self::dllseg<p,pr,last> & self!=p 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+
+Entailing lemma lem_14: Fail. (must) cause: base case unfold failed
+
+Failed to prove lem_14:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Why is lemma not provable?
+===========================================================
+lemma_unsafe self::node<pr,u1>* u1::dllseg<p,self,last> 
+       <-> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+
+checkentail_exact self::node<pr,u1>* u1::dllseg<p,self,last> 
+        |- (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>)
+           .
+expect Valid.
+// complex lemma not working..
+
+/*
+# dllseg0e2.slk
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: u1::dllseg<p,self,last>
+  RHS: last::node<l2_138,p_139>
+ lhs_rest: self::node<pr,u1>
+ rhs_rest: 
+  self::dllseg<last_136,pr_137,l2_140>
+
+Validate 1: Not Expected.
+===========================================================
+# lseg0e1.slk
+
+lemma_safe self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+// complex lemma proving not working..
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! 
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Fail. (may) cause: OrR[UnionR[ u1_79::node<a_77> * a_77::lseg<p_76>&p_76=p_78 & p_78=p&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2), a_77::lseg<p_76>&p_76=p_78 & p_78=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2)],valid]
+	 "==>" implication: : Fail. (may) cause: OrR[ last_161::node<p_160>&p_158=last_161 & p_160=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),val
+id]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================

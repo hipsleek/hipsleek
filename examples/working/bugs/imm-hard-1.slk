@@ -1,0 +1,20 @@
+
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- y!=x. 
+print residue.
+// x * y
+// (3) Valid
+expect Valid.
+
+/*
+# imm-hard-1.slk
+
+why fail with and without --imm?
+
+
+*/

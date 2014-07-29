@@ -1,0 +1,70 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+//lemma_safe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+//lemma_safe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>*p::node<_>@L).
+
+lemma_unsafe self::lseg<p> & self!=p 
+        -> (exists u: self::lseg<u>*u::node<p>).
+
+checkentail_exact
+ self::lseg<p> & self!=p 
+        |- (exists u: self::lseg<u>*u::node<p>).
+
+
+checkentail_exact
+ self=p & self!=p 
+        |- (exists u: self::lseg<u>*u::node<p>).
+
+
+checkentail_exact
+ self::node<q>*q::lseg<p> & self!=p 
+        |- self::lseg<u>*u::node<p>.
+
+
+checkentail_exact
+ self::node<q>*q::lseg<p> & self!=p 
+        |- case {
+           self=u -> [] self::lseg<u>*u::node<p>;
+          self!=u -> [] self::lseg<u>*u::node<p>;
+           }.
+//(9)
+checkentail_exact
+ self::node<q>*q::lseg<p> & self!=p & q=p
+        |- self::lseg<u>*u::node<p>.
+
+//(10)
+checkentail_exact
+ self::node<q>*q::lseg<p> & self!=p & q!=p
+        |- self::lseg<u>*u::node<p>.
+
+
+/*
+checkentail_exact
+ self::node<q> & self!=p & q=p
+        |- self::lseg<u>*u::node<p>.
+
+checkentail_exact
+ self::node<q>*q::node<qq>*qq::lseg<p> & self!=p 
+        |- self::lseg<u>*u::node<p>.
+
+checkentail_exact
+ self::node<q>*q::node<qq>*qq::lseg<p> & self!=p & qq=p
+        |- self::lseg<u>*u::node<p>.
+
+checkentail_exact
+ self::node<q>*q::node<qq>*qq::lseg<p> & self!=p & qq!=p
+        |- self::lseg<u>*u::node<p>.
+*/
+
+/*
+checkentail_exact
+ q::node<qq>*qq::lseg<p> & self!=p & qq=p& u=q
+        |- u::node<p>.
+*/

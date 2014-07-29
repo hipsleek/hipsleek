@@ -1,0 +1,13 @@
+//(set-info :status unsat)
+
+data Sll_t {
+  Sll_t f;
+}.
+
+pred ls<out> ==
+ self = out
+or (exists u: self::Sll_t<f = u> * u::ls<out>).
+
+checkentail x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & x1 != x3 & x1 != x2 & null != x1 & null != const_1 & null = null
+         |- x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
+

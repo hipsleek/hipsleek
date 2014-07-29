@@ -1,0 +1,14 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+pred tdlle<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::tdlle<pr,u,v> * v::node2<u,last> * last::node2<v,out>).
+
+
+checkentail x::tdlle<pr,last,out> |- x::tdlle<pr,last1,out1> * out1::tdlle<last1,last,out>.
+
+checkentail x::tdlle<pr,last1,out1> * out1::tdlle<last1,last,out> |- x::tdlle<pr,last,out>.

@@ -1,0 +1,32 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+/*
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::dll<self,last,out> & self != out).
+*/
+
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::dll<pr,u,last> * last::node2<u,out> & self != null).
+
+pred lseg<y:node2> ==
+ self = y
+or (exists xp,yp: self::node2<xp,yp> * xp::lseg<y> & y != null).
+
+checkentail x::dll<pr,last,out> & x!=out |- last::node2<xx,last1>*last1::lseg<out>. 
+
+checkentail x::dll<pr,last,out> |- last::lseg<out>. 
+
+/*
+lemma_safe self::dll<pr,last,out> <->
+    self::dll<pr,last1,out1> * out1::dll<last1,last,out>.
+*/
+
+checkentail x::dll<pr,last,out> |- x::dll<pr,last1,out1> * out1::dll<last1,last,out>.
+
+checkentail x::dll<pr,last1,out1> * out1::dll<last1,last,out> * out::node2<_,_>@L |-
+				x::dll<pr,last,out>.

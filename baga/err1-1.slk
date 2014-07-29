@@ -1,0 +1,35 @@
+
+
+//1. must failure. cause:22  n=1 |-  5<n (must-bug).
+//checkentail n = 1 |- n > 5 & flow __Err.
+
+checkentail n = 1 |- n > 5 .
+
+expect Fail_Must.
+
+
+
+//2. must
+checkentail n>1 |- n> 5.
+
+expect Fail_Must.
+
+
+//3. valid
+checkentail n > 1 or n > 3 |- n > 1.
+
+expect Valid.
+
+
+//4. must failure. cause:22  2<=n |-  2<n (may-bug).
+checkentail n > 1 |- n > 2.
+print residue.
+
+expect Fail_Must.
+
+//5. must failure. cause:22  n=1 |-  n<1 (must-bug).
+checkentail n = 1 |- n < 1.
+print residue.
+
+expect Fail_Must.
+

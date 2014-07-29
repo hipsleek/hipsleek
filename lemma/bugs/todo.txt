@@ -367,7 +367,7 @@ res:  1[
    ]
 
 ======================================================================
-# app-tail7.slk --eps
+# app-tail7.slk --eps (FIXED)
 
 
 This view is actually a lemma which is being used for folding.

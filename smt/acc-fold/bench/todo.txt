@@ -1,0 +1,81 @@
+# elseg-bad.slk
+
+  unsound lemma proving example
+   self::elseg<p> -> (ex u: self::elseg<u>*u::elseg<p>)
+
+// this is actually sound, so lemma proving OK here.
+=========================================================================
+# append.ss
+
+sll,dll
+
+to check sleek for append_sll_cll (2 entailments fail due to "residue is forbidden")
+
+=========================================================================
+# tll.ss
+
+tree with linked-leaves
+
+=========================================================================
+# odd-lseg1.slk
+
+lemma proving incomplete
+// seems that deep unfold is missing ..
+
+lemma_safe self::olseg<p> <- (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+
+=========================================================================
+checkentail_exact
+ self::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<u_48> * 
+    u_48::node<p>
+ |- self::olseg<p>.
+print residue.
+/*
+# odd-lseg2.slk
+
+why self triggered lemma but not non-self
+
+<1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_11) ==>  COND ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
+=========================================================================
+# printing of lem proving formula enabled
+
+  lsegex_last0 unfold only LHS
+  odd-lseg0 unfolded both LHS and RHS
+
+Why this discrepancy?
+
+=========================================================================
+# odd-lseg9a.slk
+
+lemma_unsafe self::olseg<p> *p::node<z> <-> 
+    (exists uu: self::node<uu>*uu::olseg<z>).
+
+(1) add a message that unsafe lemma dded
+(2) complex lemma cannot be proven
+(3) complex lemma cannot be applied
+=========================================================================
+../../../sleek lsegex3.slk --gen-smt
+
+Why exception below? Which smt file generated?
+
+ <1>emp&x!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_12) ==> (left: lem_12) ==>  Match ==>  Match ==> ]]
+
+Fatal error: exception Not_found
+=========================================================================
+../../../sleek odd-lseg3.slk  --inv-baga -tp om
+
+performance issue with Omega ..
+
+ log(bigger)(>4s)(1):(10.,[(SAT:1303<139:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 12.02075 second(s)
+	Time spent in main process: 0.576035 second(s)
+	Time spent in child processes: 11.444715 second(s)
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================

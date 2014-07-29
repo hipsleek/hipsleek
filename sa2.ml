@@ -418,11 +418,11 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
     if (List.length new_cs > 1) then
       begin
         step_change # inc;
-        (* Debug.binfo_start "split_base"; *)
-        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
-        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
-        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
-        (* Debug.binfo_end "split_base"; *)
+        (* Debug.ninfo_start "split_base"; *)
+        (* Debug.ninfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
+        (* Debug.ninfo_pprint "=============>>>>" no_pos; *)
+        (* Debug.ninfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* Debug.ninfo_end "split_base"; *)
         res
       end
     else res
@@ -1693,7 +1693,7 @@ and infer_shapes_init_post prog (constrs0: CF.hprel list) non_ptr_unk_hps sel_po
 and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path (constrs0: CF.hprel list) callee_hps non_ptr_unk_hps sel_lhps sel_rhps sel_post_hps
       unk_hpargs link_hpargs need_preprocess hp_rel_unkmap detect_dang pre_defs post_defs def_hps=
   (*if rhs is emp heap, should retain the constraint*)
-  let pre_constrs, pre_oblg = List.partition (fun cs -> Sautil.is_empty_heap_f cs.CF.hprel_rhs) constrs0 in
+  let pre_constrs, pre_oblg = List.partition (fun cs -> Cfutil.is_empty_heap_f cs.CF.hprel_rhs) constrs0 in
   let ho_constrs0, nondef_post_hps = List.fold_left (collect_ho_ass iprog cprog is_pre def_hps) ([],[]) pre_oblg in
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then ([],[],unk_hpargs,hp_rel_unkmap) else

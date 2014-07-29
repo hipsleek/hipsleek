@@ -1,0 +1,51 @@
+data node {
+    int val;
+    node next
+}.
+
+//== touching linked list segment 
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p>.
+
+HeapPred UU(node a,  node c, node d).
+
+pred ls_ho<p> == self = p
+    or self::node<v,r> * UU(self,r,p) * r::ls_ho<p> .
+
+
+/*
+infer [] self::lseg<p> |- self::ls_ho<p>.
+print residue.
+*/
+
+//lemma_unsafe self::lseg<p> <-> self::ls_ho<p>.
+
+/*
+infer []  self::node<v,r> * r::lseg<p> |- self::node<v,r> * htrue 
+       * r::ls_ho<p>.
+*/
+
+/*
+checkentail_exact   self::node<v,r> * htrue * r::ls_ho<p> |- self::node<v,r> * r::lseg<p> .
+
+expect Fail.
+*/
+
+/*
+infer [UU]  self::node<v,r> * UU(self,r,p) * r::ls_ho<p> |- self::node<v,r> * r::lseg<p> .
+
+expect Valid.
+*/
+
+/*
+infer []  self::node<v,r> * r::lseg<p> |- self::node<v,r> * UU(self,r,p)
+       * r::ls_ho<p>.
+*/
+
+/*
+Maybe we need to use syntax of form:
+
+pred ls_ho[UU]<p> == self = p
+    or self::node<v,r> * UU(self,r,p) * r::ls_ho<p> .
+
+*/

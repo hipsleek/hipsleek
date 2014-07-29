@@ -58,7 +58,8 @@ type proof =
   | PEEx of eex_step
   | Search of proof list
   | ClassicSepLogic of classic_seplogic_step
-  | Unknown 
+  | Unknown
+  | CyclicProof of ( CF.formula *  CF.formula)
 
 and ex_step = { ex_step_ante : CF.context;
 				ex_step_conseq : CF.formula;
@@ -367,6 +368,8 @@ let rec string_of_proof prf0 : string =
   | ClassicSepLogic ({ classic_seplogic_step_ctx = ctx;
                        classic_seplogic_step_conseq = conseq; }) ->
       let s = Cprinter.string_of_context ctx in
+      Buffer.add_string buffer ("<Classic>\n<Info>" ^ s ^ "</Info>\n</Classic>")
+  | CyclicProof (lhs,rhs) ->  let s = (Cprinter.string_of_formula lhs) ^" |- " ^(Cprinter.string_of_formula rhs)in
       Buffer.add_string buffer ("<Classic>\n<Info>" ^ s ^ "</Info>\n</Classic>")
 	| _ -> Buffer.add_string buffer "<Failure></Failure>" 
 	in

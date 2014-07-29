@@ -1,0 +1,75 @@
+dll-vc01.smt2.slk
+Validate 1: Expected.
+
+
+UNSAT
+dll-vc02.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+dll-vc03.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+dll-vc04.smt2.slk
+Validate 1: Expected.
+
+
+SAT
+dll-vc05.smt2.slk
+Validate 1: Expected.
+
+
+UNSAT
+dll-vc06.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+dll-vc07.smt2.slk
+Validate 1: Expected.
+
+
+UNSAT
+dll-vc08.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+dll-vc09.smt2.slk
+Validate 1: Expected.
+
+
+UNSAT
+dll-vc10.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+dll-vc11.smt2.slk
+Validate 1: Expected.
+
+
+UNSAT
+dll-vc12.smt2.slk
+Validate 1: Expected.
+
+
+SAT
+dll-vc13.smt2.slk
+Validate 1: Expected.
+
+
+SAT

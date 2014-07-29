@@ -1,0 +1,43 @@
+
+data node {
+     node next;
+}.
+
+pred bsll<y> ==
+     self = y
+     or (exists u: self::bsll<u> * u::node<y>).
+
+/*
+# bseg.slk --elg
+
+ self::bsll<u>*u::node<p> 
+   <-> (exists w: self::node<w>*w::bsll<p>)
+
+Updated lemma store with unsafe repo::[rlem_bsll,llem_bsll]
+!!! gen_lemmas:    Lemma "llem_bsll":  
+   self::bsll<y>&{FLOW,(1,24)=__flow}[]
+  ==> (exists u_12: self::bsll<y> * self::bsll<u_12>&{FLOW,(1,24)=__flow})[]
+    
+Lemma "rlem_bsll":  
+  self::bsll<y>&{FLOW,(1,24)=__flow}[]
+ <== (exists u_43: self::bsll<y> * self::bsll<u_43>&{FLOW,(1,24)=__flow})[]Stop z3... 4 invocations S
+
+
+
+(1) Why is node duplicated?
+data node {
+  node nextREC_11;
+}
+data node {
+  node nextREC_11;
+}
+
+b2 type can be determined but not bsll
+I wonder why. They look similar.
+For b2, y is determined indirectly from self.
+
+For bsll, self should be determined indirectly from y.
+
+
+!!! 
+*/

@@ -1343,7 +1343,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       (*Maybe we only need to translate for primitive types*)
                       (*If this argument var needs to be translate*)
                       if (List.mem e0.exp_var_name vars)  
-                        & (param.param_mod = RefMod) then
+                        && (param.param_mod = RefMod) then
                         (*addressable variable that are passed by reference*)
                         (true,arg) (*need to be processed*)
                       else

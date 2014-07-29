@@ -24,7 +24,7 @@ sll1<S> == self = null & S = {}
 	or self::node<v2, r> * r::sll1<S1> & S = union(S1, {v2}) & 
 	forall(x: (x notin S1 | v2 <= x));
 
-lemma self::sll1<S> -> self::ll1<S>;
+lemma self::sll1<S> <-> self::ll1<S>;
 
 
 bool bubble(node xs)

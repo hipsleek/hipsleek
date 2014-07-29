@@ -1,0 +1,9 @@
+data node {
+     node prev;
+     node next;
+}.
+
+pred tdll<pr,last,out> ==
+    self=out & last=pr
+or  (exists u: self::tdll<pr,u,last> * last::node<u,out> & self != out).
+

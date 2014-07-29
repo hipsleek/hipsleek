@@ -1,0 +1,133 @@
+========================================
+
+Now we don't use SCC but infer inv for all views together.
+===> Use SCC: DONE
+
+========================================
+
+FIXED
+
+sleek:
+
+pred dll<y,z,w> ==
+     self = y & z = w
+     or (exists u: self::node<u,w> * u::dll<y,z,self>).
+
+!!! baga inv(dll):[([], self=y & z=w),([self], true)]
+
+slsat:
+
+DLL {
+	x=y * z=w => DLL(x,y,z,w) |
+	x->z',w * DLL(z',y,z,x) => DLL(x,y,z,w)
+}
+
+nil!=x * x->z',w * DLL_1(z',y,z,x) => DLL(x,y,z,w) has base {({x,z}, nil!=x * nil!=z * x!=z), ({x,z}, x=z * nil!=x)}
+x=y * z=w => DLL(x,y,z,w) has base {({}, x=y * z=w)}
+
+========================================
+
+FIXED
+
+sleek:
+
+pred bsll<y> ==
+     self = y
+     or (exists u,v: self::bsll<u> * u::node<v,y>).
+
+!!! baga inv(bsll):[([], self=y)]
+
+slsat:
+
+BSLL {
+	x=y => BSLL(x,y) |
+	BSLL(x,x') * x'->y',y => BSLL(x,y)
+}
+
+x'!=nil * x'->y',y * BSLL_3(x,x') => BSLL(x,y) has base {({x}, nil!=x)}
+x=y => BSLL(x,y) has base {({}, x=y)}
+
+========================================
+
+FIXED
+
+data node {
+     node left;
+     node right;
+}.
+
+pred bintree<> ==
+     self = null
+     or (exists l,r: self::node<l,r> * l::bintree<> * r::bintree<>).
+
+pred bintreeseg<y> ==
+     self = y
+     or (exists l,r: self::node<l,r> * l::bintreeseg<y> * r::bintree<>)
+     or (exists l,r: self::node<l,r> * l::bintree<> * r::bintreeseg<y>).
+
+expected:
+
+bintree : [([],self=null),([self],true)]
+
+bintreeseg : [([],self=y),([self],true)]
+
+========================================
+# sleek2.slk: FIXED
+
+baga computation gave a Not_found exception.
+
+this error disappears with --dis-inv-baga
+
+========================================
+# bseg3.slk: FIXED
+
+Normalization.
+
+========================================
+# issues with --inv-baga
+
+Unexpected result with : baga-test.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : infer/infer16.slk (failed check(s): {E2#Valid},{E5#Valid}) 
+--dseg-new.slk take too long
+--dseg1.slk take too long
+
+========================================
+# dseg1.slk
+
+ERROR: at _0:0_0:0 
+Message: not handle checkeq 2 formula that have forall and exists yet
+ 
+Last Proving Location: 1 File "dseg1.slk",Line:8,Col:5
+
+ERROR: at _0:0_0:0 
+Message: not handle checkeq 2 formula that have forall and exists yet
+
+2nd lemma failed. ==> is this correct?
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
+========================================
