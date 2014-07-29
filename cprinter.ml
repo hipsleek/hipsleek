@@ -2058,7 +2058,7 @@ and prtt_pr_formula e =
           else
             fmt_string ("\nAND "); pr_one_formula_list a
 
-and prtt_pr_formula_inst prog e =
+and prtt_pr_formula_inst_1 prog e =
   let f_b e =  pr_bracket formula_wo_paren (prtt_pr_formula_inst prog) e in
   match e with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -2085,8 +2085,14 @@ and prtt_pr_formula_inst prog e =
           else
             fmt_string ("\nAND "); pr_one_formula_list a
 
+and prtt_pr_formula_inst prog e =
+  if !Globals.print_en_tidy then
+    prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e)
+  else
+    prtt_pr_formula_inst prog e
+
 and pr_formula_for_spec e =
-  let print_fun = fun fml -> 
+  let print_fun = fun fml ->
     let h,p,_,_,_ = Cformula.split_components fml in
     (pr_h_formula_for_spec h);
     fmt_string " & ";
@@ -2701,8 +2707,8 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
           let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
 		  let f_b e =  pr_bracket struc_formula_wo_paren pr_struc_formula e in
 	      pr_list_vbox_wrap "eor " f_b (arg1@arg2)*)
-	
-let rec pr_struc_formula_for_spec (e:struc_formula) = 
+
+let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
     pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
