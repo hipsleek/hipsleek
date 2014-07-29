@@ -257,14 +257,18 @@ let rec shorten_formula f =
     let new_svl,_ = shorten_svl vars n_tbl in
     (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
     (* subst_avoid_capture vars new_svl f *)
-    subst_all (List.combine vars new_svl) f0
+    let new_f = subst_all (List.combine vars new_svl) f0 in
+    new_f
   in
   match f with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
           let new_f1 = shorten_formula f1 in
           let new_f2 = shorten_formula f2 in
-          mkOr new_f1 new_f2 pos
-    | _ -> helper f
+          let new_f = mkOr new_f1 new_f2 pos in
+          new_f
+    | _ ->
+          let new_f = helper f in
+          new_f
 
 (* let rearrange_context bc = *)
 (*   let rec helper ctx = *)

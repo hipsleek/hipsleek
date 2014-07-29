@@ -1990,10 +1990,10 @@ and pr_formula_1 e =
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula h; 
-          (if not(MP.isConstMTrue p) then 
+          pr_h_formula h;
+          (if not(MP.isConstMTrue p) then
             (pr_cut_after "&" ; pr_mix_formula p))
-          ; pr_cut_after  "&" ; 
+          ; pr_cut_after  "&" ;
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           ;if (a==[]) then ()
@@ -2087,9 +2087,12 @@ and prtt_pr_formula_inst_1 prog e =
             fmt_string ("\nAND "); pr_one_formula_list a
 
 and prtt_pr_formula_inst prog e =
-  if !Globals.print_en_tidy then
-    prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e)
-  else
+  (* if !Globals.print_en_tidy then *)
+  (*   let _ = print_endline "prtt" in *)
+  (*   let pr = prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e) in *)
+  (*   let _ = print_endline "after prtt" in *)
+  (*   pr *)
+  (* else *)
     prtt_pr_formula_inst_1 prog e
 
 and pr_formula_for_spec e =
