@@ -1535,6 +1535,7 @@ let disj_cnt a c s =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   let f = CP.concretize_bag_pure f in
+  let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
   let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
   let f = if (!Globals.allow_locklevel) then
@@ -2248,34 +2249,54 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
+let tp_imply_translate_cyclic ante conseq =
+  (*
+    CASE 1:
+
+    ante & acyclic(B) |- false      concrete(B,ante)
+    -----------------------------------------------
+    ante |- cyclic(B)
+  *)
+  let ante = concretize_bag_pure ante in
+  let _ , c_rels = CP.extract_cyclic_rel_pure conseq in
+  if (check_concrete_cyclic_rel_pure ante c_rels) then
+    (* CASE 1 *)
+    let to_ante = CP.from_cyclic_to_acyclic_rel_pure conseq in
+    let new_ante = CP.mkAnd ante to_ante no_pos in
+    let new_ante = CP. translate_acyclic_pure new_ante in
+    let new_conseq = CP.mkFalse no_pos in
+    (new_ante,new_conseq)
+  else
+    (ante,conseq)
+
+let tp_imply_translate_waitS_x ante conseq =
+  let ante = concretize_bag_pure ante in
+  let new_ante = CP.translate_waitS_pure ante in
+  let concrete_bags = get_concrete_bag_pure ante in
+  let concrete_bags = List.map (fun (v,exps) ->
+      let vars = find_closure_pure_formula v ante in
+      List.map (fun v -> (v,exps)) vars ) concrete_bags in
+  let concrete_bags = List.concat concrete_bags in
+  (* Use concrete bag in ante to instantiate conseq*)
+  let nf , rels = CP.extract_waitS_rel_pure conseq in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let new_conseq = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  (new_ante, new_conseq)
+
+let tp_imply_translate_waitS ante conseq =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair pr pr in
+  Debug.no_2 "tp_imply_translate_waitS" pr pr pr_out
+      tp_imply_translate_waitS_x ante conseq
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (**************************************)
-  let ante = CP. translate_waitS_pure ante in
-  let ante,conseq = 
-    if (is_cyclic_rel conseq) then
-      (*
-        CASE 1:
-
-        ante & acyclic(B) |- false      concrete(B,ante)
-        -----------------------------------------------
-                      ante |- cyclic(B)
-      *)
-      let ante = concretize_bag_pure ante in
-      let _ , c_rels = CP.extract_cyclic_rel_pure conseq in
-      if (check_concrete_cyclic_rel_pure ante c_rels) then
-        (* CASE 1 *)
-        let to_ante = CP.from_cyclic_to_acyclic_rel_pure conseq in
-        let new_ante = CP.mkAnd ante to_ante no_pos in
-        let new_ante = CP. translate_acyclic_pure new_ante in
-        let new_conseq = CP.mkFalse no_pos in
-        (new_ante,new_conseq)
-      else
-        (ante,conseq)
-    else
-      (ante,conseq)
-  in
+  let ante = if (has_waitS_rel_pure ante) then CP.translate_waitS_pure ante else ante in
+  let ante,conseq = if (is_waitS_rel conseq) then tp_imply_translate_waitS ante conseq else (ante,conseq) in
+  let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
   let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
   let ante, conseq = CP.translate_tup2_imply ante conseq in
+  (**************************************)
   (**************************************)
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)

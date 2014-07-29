@@ -9503,6 +9503,16 @@ let is_cyclic_rel (f:formula) : bool =
             | _ -> false)
     | _ -> false)
 
+let is_waitS_rel (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.waitS_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
+
 let rec has_lexvar (f: formula) : bool =
   match f with
   | BForm _ -> is_lexvar f
@@ -11756,6 +11766,10 @@ and extract_cyclic_rel_pure (pf : formula) : formula * (p_formula list)  =
   Debug.no_1 "extract_cyclic_rel_pure" !print_formula pr_out
   extract_cyclic_rel_pure_x pf
 
+and extract_waitS_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.waitS_name in
+  extract_rel_pure pf rel_sv
+
 (*
   Check whether relation cylcic(B) is concrete:
   - B is a bag constraints
@@ -11824,6 +11838,21 @@ and has_acyclic_rel_pure f0 =
   Debug.no_1 "has_acyclic_rel_pure" !print_formula string_of_bool
       has_acyclic_rel_pure_x f0
 
+and has_waitS_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.waitS_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+and has_waitS_rel_pure f0 =
+  Debug.no_1 "has_waitS_rel_pure" !print_formula string_of_bool
+      has_waitS_rel_pure_x f0
+
 (*
   Expect: waitS(G,S,d)
   - rel is a RelForm
@@ -11835,7 +11864,7 @@ and has_acyclic_rel_pure f0 =
 
   Out: the formula forall (v1,v2) \in B. v1<v2
 *)
-and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula)  : formula =
+and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula) : formula =
   let str = !print_p_formula rel in
   (match rel with
     | RelForm (sv,exps,pos) ->
@@ -11861,7 +11890,7 @@ and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (r
                         mkEqExp g comprehension no_pos
                       with Not_found ->
                           (*If the concrete bags cannot be found, keep the relation *)
-                          let _ = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in
+                          (* let _ = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in *)
                           BForm ((rel, None) , None)
                       )
                     else
