@@ -441,7 +441,7 @@ let process_lemma ldef =
 let print_residue residue =
   if (not !Globals.smt_compete_mode) then
           match residue with
-            | None -> 
+            | None ->
                   let _ = Debug.ninfo_pprint "inside p res" no_pos in
                   print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
@@ -452,12 +452,12 @@ let print_residue residue =
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-                  else 
+                  else
                     print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
                         (Cprinter.string_of_list_context ls_ctx)^"\n")
 
 let process_list_lemma ldef_lst  =
-  let lem_infer_fnct r1 r2 = 
+  let lem_infer_fnct r1 r2 =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk

@@ -1970,7 +1970,7 @@ and prtt_pr_formula_base_inst prog e =
             (pr_cut_after "&" ; pr_mix_formula p))
           (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
-and pr_formula e =
+and pr_formula_1 e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula e in
   match e with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1998,6 +1998,12 @@ and pr_formula e =
           ;if (a==[]) then ()
           else
             fmt_string ("\nAND "); pr_one_formula_list a
+
+and pr_formula e =
+  if (!Globals.print_en_tidy) then
+    pr_formula_1 (Cfout.shorten_formula e)
+  else
+    pr_formula_1 e
 
 and slk_formula e =
   let f_b e =  pr_bracket formula_wo_paren slk_formula e in
@@ -2521,7 +2527,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
 let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
     | [] -> ()
-    | (ctx,(a,b))::xs -> 
+    | (ctx,(a,b))::xs ->
           begin
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
@@ -2563,26 +2569,26 @@ let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_tra
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = () in
-  pr_numbered_list_formula_trace_ho e (count:int) f 
+  pr_numbered_list_formula_trace_ho e (count:int) f
 
-let string_of_numbered_list_formula (e:list_formula) : string =  
+let string_of_numbered_list_formula (e:list_formula) : string =
    poly_string_of_pr (pr_numbered_list_formula 1) e
 
-let string_of_numbered_list_formula_trace (e: (context * (formula*formula_trace)) list) : string =  
+let string_of_numbered_list_formula_trace (e: (context * (formula*formula_trace)) list) : string =
   poly_string_of_pr (pr_numbered_list_formula_trace e) 1
   (* pr_numbered_list_formula_trace e 1 *)
 
-let string_of_numbered_list_formula_trace_inst prog (e: (context * (formula*formula_trace)) list) : string =  
+let string_of_numbered_list_formula_trace_inst prog (e: (context * (formula*formula_trace)) list) : string =
   poly_string_of_pr (pr_numbered_list_formula_trace_inst prog e) 1
 
-let string_of_numbered_list_formula_no_trace (e: (context * (formula*formula_trace)) list) : string =  
+let string_of_numbered_list_formula_no_trace (e: (context * (formula*formula_trace)) list) : string =
   poly_string_of_pr (pr_numbered_list_formula_no_trace e) 1
   (* pr_numbered_list_formula_no_trace e 1 *)
 
-let string_of_list_f (f:'a->string) (e:'a list) : string =  
+let string_of_list_f (f:'a->string) (e:'a list) : string =
   "["^(String.concat "," (List.map f e))^"]"
 
-let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit = 
+let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit =
   poly_printer_of_pr fmt pr_list_formula e
 
 let string_of_pure_formula_branches (f, l) : string =  
@@ -4014,7 +4020,7 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
 	 ^ procsstr
    ^ "\n"
 ;;
-                                         
+
 (*
   Created 22-Feb-2006
   Pretty printing fo the AST for the core language
