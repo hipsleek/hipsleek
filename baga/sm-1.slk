@@ -1,4 +1,4 @@
-data node {
+.data node {
 	int val; 
 	node next; 
 }.

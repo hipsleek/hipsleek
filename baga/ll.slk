@@ -11,6 +11,7 @@ pred ll<> == self = null
 
 lemma "V1" self::ll_s<n> -> self::ll<>.
 
+/*
 lemma "V2" self::ll_s<n> <- self::ll<>.
 
 lemma "V3" self::ll_s<n> <-> self::ll<>.
@@ -26,10 +27,10 @@ lemma "F7" self::ll<> -> self::ll_s<n>.
 lemma "V8" self::ll<> <- self::ll_s<n>.
 
 lemma "F9" self::ll<> <-> self::ll_s<n>.
-
+*/
 
 checkentail x::ll_s<n> |- x::ll<>.
-expect Valid.
+//expect Valid.
 
-checkentail x::ll_s<n> |- x::ll<> * y::ll<>.
-expect Fail.
+//expect Fail.
+//checkentail x::ll_s<n> |- x::ll<> * y::ll<>.

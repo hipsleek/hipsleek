@@ -141,7 +141,7 @@ Using xpure_heap
 
 
 ==============================================
-# app-inv.slk --dis-baga-xpure
+# app-inv.slk --dis-baga-xpure  (FIXED)
 
   inv: n>=0
   
@@ -158,7 +158,7 @@ why below not triggered by --dis-baga-xpure
  Sat:  nnnn<0 & (((xxx=Cnull & nnnn=0) | (xxx=1 & 1<=nnnn)))
  res: UNSAT
 ==============================================
-# examples/working/hip_baga/cll.ss
+# examples/working/hip_baga/cll.ss  (FIXED)
 
 Message: view defn for hd does not entail supplied invariant
 
@@ -174,7 +174,7 @@ With inv_exact in cll:
 exists(self_23:self_23=self) & self!=Cnull))
 
 ==============================================
-# baga/ll-1.slk --elp
+# baga/ll-1.slk --elp (FIXED)
 
 lemma "V1" self::ll_s<n> -> self::ll<>.
 
@@ -183,7 +183,7 @@ Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flte
 
 Failed to prove V1:==> in current context.
 ==============================================
-# baga/ll-1.slk --elp
+# baga/ll-1.slk --elp  (FIXED)
 
 
 checkentail_exact self::node<_,r> * r::ll_s<n - 1>
@@ -225,7 +225,7 @@ summary:     x
 
 12324 was OK
 =================================
-latest smt2014 code (at context.ml)
+latest smt2014 code (at context.ml)  (FIXED)
 
 why is l_xxx empty?
 
@@ -274,7 +274,7 @@ why is l_xxx empty?
                                               RHS: q::ll<>]
         ]]
 ==============================================
-# cll-d.slk
+# cll-d.slk (FIXED)
 
 pred hd<n> == self = null & n = 0
 	or self::node<_, r> * r::cll<self, n-1>  
@@ -311,6 +311,31 @@ summary:     x
             r
 
 ==============================================
+# eps-ll-1.slk --eps --pcp
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+--eps folding lemma not properly specialized.
+
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+
+Starting z3... 
+Starting Omega...oc
+
+Warning: ::0: 0: right hand side node is not specialized!
+
+Lemma "V8":  self::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]<== (exists n_56: self::ll_s<n_56>@ rem br[{1,2}]&(([0<=n_56]))&
+{FLOW,(21,22)=__norm})[]
+ head match:ll
+ body view:ll_s
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll_s])]
+ coercion_case: Simple
+ head_norm:  self::ll<>&{FLOW,(21,22)=__norm}[]
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
 ==============================================
 ==============================================
 ==============================================

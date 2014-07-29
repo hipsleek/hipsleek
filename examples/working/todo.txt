@@ -675,7 +675,21 @@ Total verification time: 237.68 second
 	Time spent in child processes: 41.45 second
 	Number of false contexts: 383
 
+(* without Omega simplify *)
+Total verification time: 254.68 second
+	Time spent in main process: 206.29 second
+	Time spent in child processes: 48.39 second
+	Number of false contexts: 413
+
+All test results were as expected.
+Total verification time: 254.77 second
+	Time spent in main process: 206.51 second
+	Time spent in child processes: 48.26 second
+	Number of false contexts: 413
+
+(* with Omega simplify *)
 #hip --eps (default)
+
 All test results were as expected.
 Total verification time: 231.97 second
 	Time spent in main process: 160.11 second
