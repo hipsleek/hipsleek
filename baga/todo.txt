@@ -319,10 +319,18 @@ lemma "V8" self::ll<> <- self::ll_s<n>.
 
  body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
 
+Solution : to invoke 
+--------------------
+prune_preds@10
+prune_preds inp1 :true
+prune_preds inp2 : x::ll<>&{FLOW,(21,22)=__norm}[]
+prune_preds@10 EXIT: x::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]
+
 Starting z3... 
 Starting Omega...oc
 
 Warning: ::0: 0: right hand side node is not specialized!
+
 
 Lemma "V8":  self::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]<== (exists n_56: self::ll_s<n_56>@ rem br[{1,2}]&(([0<=n_56]))&
 {FLOW,(21,22)=__norm})[]

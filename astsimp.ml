@@ -1414,11 +1414,12 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           (* (\* Loc: to compute invs for mut-rec views *\) *)
           (* let cviewsa = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviewsb in *)
           let cviewsa = trans_views prog ls_mut_rec_views (List.map (fun v -> (v,[])) tmp_views) in
-           let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
-           let cviews_derv = List.fold_left (fun norm_views v ->
-               let der_view = Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
-               (norm_views@[der_view])
-           ) cviewsa tmp_views_derv1 in
+          let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
+          let _ = Debug.binfo_hprint (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
+          let cviews_derv = List.fold_left (fun norm_views v ->
+              let der_view = Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
+              (norm_views@[der_view])
+          ) cviewsa tmp_views_derv1 in
           let cviews = (* cviews_orig@ *)cviews_derv in
       let cviews1 =
         (*todo: after elim useless, update methos specs. tmp: do not elim*)
