@@ -2283,20 +2283,72 @@ let tp_imply_translate_waitS_x ante conseq =
   let new_conseq = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
   (new_ante, new_conseq)
 
+(* For waitS() relation *)
 let tp_imply_translate_waitS ante conseq =
   let pr = Cprinter.string_of_pure_formula in
   let pr_out = pr_pair pr pr in
   Debug.no_2 "tp_imply_translate_waitS" pr pr pr_out
       tp_imply_translate_waitS_x ante conseq
 
+(* check for concrete(S) *)
+let tp_imply_concrete_rel_x ante conseq : bool =
+  let ante = CP.concretize_bag_pure ante in
+  let concrete_bags = get_concrete_bag_pure ante in
+  let concrete_bags = List.map (fun (v,exps) ->
+      let vars = find_closure_pure_formula v ante in
+      List.map (fun v -> (v,exps)) vars ) concrete_bags
+  in
+  let concrete_bags = List.concat concrete_bags in
+  let nf, rels = CP.extract_concrete_rel_pure conseq in
+  let helper rel =
+    (match rel with
+      | RelForm (_,exps,_) ->
+            let vs = afv (List.hd exps) in (* vs = [S]*)
+            List.for_all (fun v1 -> List.exists (fun (v2,_) -> CP.eq_spec_var v1 v2) concrete_bags) vs
+      | _ -> report_error no_pos ("tp_imply_concrete_rel: expect RelForm only"))
+  in
+  let res = and_list (List.map helper rels) in
+  res
+
+(* check for concrete(S) *)
+let tp_imply_concrete_rel ante conseq : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = string_of_bool in
+  Debug.no_2 "tp_imply_concrete_rel" pr pr pr_out
+      tp_imply_concrete_rel_x ante conseq
+
+(*
+  Preprocess ante and conseq before doing
+  actual tp_imply
+
+  Return:
+  None -> continue normally with the return ante, conseq. (default is (true,ante,conseq))
+  Some res -> stop with res
+*)
+let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) =
+  if (CP.is_concrete_rel conseq) then
+    let res = tp_imply_concrete_rel ante conseq in
+    (Some res, ante, conseq)
+  else
+    let ante = if (has_waitS_rel_pure ante) then CP.translate_waitS_pure ante else ante in
+    let ante,conseq = if (is_waitS_rel conseq) then tp_imply_translate_waitS ante conseq else (ante,conseq) in
+    let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
+    let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
+    let ante, conseq = CP.translate_tup2_imply ante conseq in
+    (None, ante, conseq)
+
+
+let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_triple (pr_option string_of_bool) pr pr in
+  Debug.no_2 "tp_imply_preprocess" pr pr pr_out
+      tp_imply_preprocess_x ante conseq
+
+
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (**************************************)
-  let ante = if (has_waitS_rel_pure ante) then CP.translate_waitS_pure ante else ante in
-  let ante,conseq = if (is_waitS_rel conseq) then tp_imply_translate_waitS ante conseq else (ante,conseq) in
-  let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
-  let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
-  let ante, conseq = CP.translate_tup2_imply ante conseq in
-  (**************************************)
+  let res,ante,conseq = tp_imply_preprocess ante conseq in
+  match res with | Some ret -> ret | None -> (*continue normally*)
   (**************************************)
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)

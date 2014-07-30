@@ -1,3 +1,7 @@
+/*
+  Just an experiment. Currently not used.
+*/
+
 // Interpreted relation G = {tup2(c,d) | c in S}
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
 

@@ -9513,6 +9513,16 @@ let is_waitS_rel (f:formula) : bool =
             | _ -> false)
     | _ -> false)
 
+let is_concrete_rel (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.concrete_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
+
 let rec has_lexvar (f: formula) : bool =
   match f with
   | BForm _ -> is_lexvar f
@@ -11770,6 +11780,11 @@ and extract_waitS_rel_pure (pf : formula) : formula * (p_formula list)  =
   let rel_sv = mk_spec_var Globals.waitS_name in
   extract_rel_pure pf rel_sv
 
+and extract_concrete_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.concrete_name in
+  extract_rel_pure pf rel_sv
+
+
 (*
   Check whether relation cylcic(B) is concrete:
   - B is a bag constraints
@@ -11849,9 +11864,26 @@ and has_waitS_rel_pure_x f0 =
   in
   fold_formula f0 (nonef, f_bf, nonef) or_list
 
+(* Whether fo includes a relation waitS(...) *)
 and has_waitS_rel_pure f0 =
   Debug.no_1 "has_waitS_rel_pure" !print_formula string_of_bool
       has_waitS_rel_pure_x f0
+
+and has_concrete_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.concrete_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+(* Whether fo includes a relation concrete(S)*)
+and has_concrete_rel_pure f0 =
+  Debug.no_1 "has_concrete_rel_pure" !print_formula string_of_bool
+      has_concrete_rel_pure_x f0
 
 (*
   Expect: waitS(G,S,d)
@@ -11994,6 +12026,12 @@ and translate_waitS_pure_x (f: formula) : formula =
 
 and translate_waitS_pure (f: formula) : formula =
   Debug.no_1 "translate_waitS_pure" !print_formula !print_formula
+  translate_waitS_pure_x f
+
+(*Check whether the concrete(S) relations
+in concrete are satisfiable in f *)
+and check_concrete_rel_pure (f: formula) (concrete:formula) : formula =
+  Debug.no_1 "check_concrete_rel_pure" !print_formula !print_formula
   translate_waitS_pure_x f
 
 
