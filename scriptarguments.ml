@@ -325,8 +325,10 @@ let common_arguments = [
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
-  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
-  ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing (with shorter names)");
+  ("--dis-print-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing (with shorter names)");
+  ("--print-inline", Arg.Set Globals.print_en_inline,"enable printing (with fewer intermediates)");
+  ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,

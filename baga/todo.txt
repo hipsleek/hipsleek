@@ -345,6 +345,21 @@ Lemma "V8":  self::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]<== (exists n_56: 
  coercion_case: Simple
  coercion_origin: user-given
 ==============================================
+# pr2.slk
+
+checkentail x_1 = x_2+1  |- x_2 = x_1-1.
+
+>> simple soln : use an object mapping that can be reset
+
+--print-tidy
+run_infer:
+ emp&x=1+x1&{FLOW,(21,22)=__norm}[] [] 
+ |-  EBase emp&x+1=x1&{FLOW,(21,22)=__norm}[]
+
+--dis-print-tidy
+run_infer:
+ emp&x_1=1+x_2&{FLOW,(21,22)=__norm}[] [] 
+  |-  EBase emp&x_2+1=x_1&{FLOW,(21,22)=__norm}[]
 ==============================================
 ==============================================
 ==============================================

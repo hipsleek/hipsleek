@@ -1,0 +1,9 @@
+
+checkentail x_1 = x_2+1  |- x_2 = x_1-1.
+
+/*
+run_infer:
+ emp&x=1+x1&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&x+1=x1&{FLOW,(21,22)=__norm}[]
+
+*/
+

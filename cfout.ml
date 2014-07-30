@@ -310,3 +310,11 @@ let rec shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let tidy_print e =
+    if (!Globals.print_en_tidy) then (shorten_formula e)
+    else e 
+
+let inline_print e =
+    if (!Globals.print_en_inline) then (shorten_formula e)
+    else e 

@@ -2002,10 +2002,10 @@ and pr_formula_1 e =
             fmt_string ("\nAND "); pr_one_formula_list a
 
 and pr_formula e =
-  if (!Globals.print_en_tidy) then
-    pr_formula_1 (Cfout.shorten_formula e)
-  else
-    pr_formula_1 e
+  let e = Cfout.tidy_print e  in
+    (* if (!Globals.print_en_tidy) then (Cfout.shorten_formula e) *)
+    (* else e in *)
+  pr_formula_1 e
 
 and slk_formula e =
   let f_b e =  pr_bracket formula_wo_paren slk_formula e in
@@ -2088,10 +2088,10 @@ and prtt_pr_formula_inst_1 prog e =
             fmt_string ("\nAND "); pr_one_formula_list a
 
 and prtt_pr_formula_inst prog e =
-  if !Globals.print_en_tidy then
-    prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e)
-  else
-    prtt_pr_formula_inst_1 prog e
+  let e = Cfout.tidy_print e in
+    (* if (!Globals.print_en_tidy) then (Cfout.shorten_formula e) *)
+    (* else e in *)
+  prtt_pr_formula_inst_1 prog e
 
 and pr_formula_for_spec e =
   let print_fun = fun fml ->
@@ -3087,11 +3087,8 @@ let pr_context_short (ctx : context) =
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
-    let f1 = 
-      if !Globals.print_en_tidy
-      then Cfout.shorten_formula f
-      else 
-        f in pr_formula_wrap f1;
+    let f1 = Cfout.tidy_print f in
+    pr_formula_wrap f1;
     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
