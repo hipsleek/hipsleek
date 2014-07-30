@@ -12028,13 +12028,6 @@ and translate_waitS_pure (f: formula) : formula =
   Debug.no_1 "translate_waitS_pure" !print_formula !print_formula
   translate_waitS_pure_x f
 
-(*Check whether the concrete(S) relations
-in concrete are satisfiable in f *)
-and check_concrete_rel_pure (f: formula) (concrete:formula) : formula =
-  Debug.no_1 "check_concrete_rel_pure" !print_formula !print_formula
-  translate_waitS_pure_x f
-
-
 and find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with

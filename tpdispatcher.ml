@@ -2318,7 +2318,7 @@ let tp_imply_concrete_rel ante conseq : bool =
       tp_imply_concrete_rel_x ante conseq
 
 (*
-  Preprocess ante and conseq before doing
+  Preprocess/translate ante and conseq before doing
   actual tp_imply
 
   Return:
@@ -2335,22 +2335,8 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
     let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
     let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
     let ante, conseq = CP.translate_tup2_imply ante conseq in
-    (None, ante, conseq)
-
-
-let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) = 
-  let pr = Cprinter.string_of_pure_formula in
-  let pr_out = pr_triple (pr_option string_of_bool) pr pr in
-  Debug.no_2 "tp_imply_preprocess" pr pr pr_out
-      tp_imply_preprocess_x ante conseq
-
-
-let tp_imply_no_cache ante conseq imp_no timeout process =
-  (**************************************)
-  let res,ante,conseq = tp_imply_preprocess ante conseq in
-  match res with | Some ret -> ret | None -> (*continue normally*)
-  (**************************************)
-  let ante,conseq = if (!Globals.allow_locklevel) then
+    let ante,conseq =
+      if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let ante = CP.infer_level_pure ante in (*add l.mu>0*)
         let ante = CP.translate_waitlevel_pure ante in
@@ -2367,7 +2353,21 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         (* let conseq = CP.drop_svl_pure conseq [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
         (* let conseq = CP.drop_locklevel_pure conseq in *)
         (ante,conseq)
-  in
+    in (None, ante, conseq)
+
+
+let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_triple (pr_option string_of_bool) pr pr in
+  Debug.no_2 "tp_imply_preprocess" pr pr pr_out
+      tp_imply_preprocess_x ante conseq
+
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  (**************************************)
+  let res,ante,conseq = tp_imply_preprocess ante conseq in
+  match res with | Some ret -> ret | None -> (*continue normally*)
+  (**************************************)
   (* ============================================================== *)
   (* superceded by add_imm_inv which is only done for ante of imply *)
   (* ============================================================== *)
