@@ -2529,6 +2529,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
       | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
       | (Tsconst(t1,_), Tsconst(t2,_)) -> Tree_shares.Ts.eq t1 t2
       | (Subtract(e11, e12, _), Subtract(e21, e22, _))
+      | (Tup2 ((e11,e12),_), Tup2  ((e21,e22),_))
       | (Max(e11, e12, _), Max(e21, e22, _))
       | (Min(e11, e12, _), Min(e21, e22, _))
       | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
@@ -12018,6 +12019,8 @@ and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (r
   TODO: if B is partially concrete -> check its concrete part.
 *)
 and translate_acyclic_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
   (*attempt to concretize bag constraints*)
   let concrete_bags = get_concrete_bag_pure f in
   (*extract acyclic relations, and translate them*)
@@ -12032,6 +12035,8 @@ and translate_acyclic_pure (f: formula) : formula =
   translate_acyclic_pure_x f
 
 and translate_waitS_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
   (*attempt to concretize bag constraints*)
   let concrete_bags = get_concrete_bag_pure f in
   (*extract waitS relations, and translate them*)

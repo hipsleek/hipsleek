@@ -1850,6 +1850,12 @@ and get_node_args (h : h_formula) = match h with
   | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
   | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
 
+and get_node_ho_args (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_ho_arguments = c}) -> c
+  | DataNode _ -> []
+  | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
+  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
+
 and get_node_annot_args_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> List.map fst c
   | DataNode _ -> []

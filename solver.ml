@@ -12327,7 +12327,8 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
 
           (*temporarily skip this step. What is it for???*)
 	  (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
-
+          let ho_ps1  = CF.get_node_ho_args anode in
+          let ho_ps2  = CF.get_node_ho_args head_node in
           if (is_cycle_coer coer origs)
 	  then
             (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
@@ -12389,7 +12390,46 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             let new_ctx1 = Ctx new_estate in
             let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
             (*prove extra heap + guard*)
-            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in 
+            let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+
+            let _ = print_endline ("ho_ps1 = " ^ (pr_list Cprinter.string_of_formula ho_ps1)) in
+            let _ = print_endline ("ho_ps2 = " ^ (pr_list Cprinter.string_of_formula ho_ps2)) in
+
+            (*=====================================================*)
+            (***********Handle high-order argument: BEGIN**********)
+            if (List.length ho_ps1 != List.length ho_ps2) then
+              let _ = print_endline ("apply_left_coercion_complex: ho_args mismatched between anode and head_node") in
+              Debug.tinfo_zprint (lazy ("apply_left_coercion_complex: ho_args mismatched between anode and head_node")) no_pos;
+              (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed left coercion application, ho_args mismatched between anode and head_node";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
+              CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)), [])
+            else
+            let coer_rhs_new =
+              if (ho_ps1=[]) then coer_rhs_new else
+                let args = List.combine ho_ps1 ho_ps2 in
+                let match_one_ho_arg_left ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+                  (* lhs <==> rhs: instantiate any high-order variables in rhs
+                     Currently assume that only HVar is in the rhs
+                  *)
+                  let hvars = CF.extract_hvar_f rhs in
+                  [List.hd hvars, lhs]
+                in
+                let maps = List.map match_one_ho_arg_left args in
+                let maps = List.concat maps in
+                let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
+                coer_rhs_new
+            in
+            let _ = print_endline ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in
+
+            (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
+            (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
+            (***********Handle high-order argument: END**********)
+
 	    Debug.devel_zprint (lazy ("apply_left_coercion_complex: check extra heap")) pos;
 	    Debug.devel_zprint (lazy ("apply_left_coercion_complex: new_ctx after folding: "
 	    ^ (Cprinter.string_of_spec_var p2) ^ "\n"
@@ -12692,14 +12732,14 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let coer_rhs_new =
         if (ho_ps1=[]) then coer_rhs_new else
           let args = List.combine ho_ps1 ho_ps2 in
-          let match_one_ho_arg ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+          let match_one_ho_arg_normalize ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
             (* lhs <==> rhs: instantiate any high-order variables in rhs
                Currently assume that only HVar is in the rhs
             *)
             let hvars = CF.extract_hvar_f rhs in
             [List.hd hvars, lhs]
           in
-          let maps = List.map match_one_ho_arg args in
+          let maps = List.map match_one_ho_arg_normalize args in
           let maps = List.concat maps in
           let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
           coer_rhs_new

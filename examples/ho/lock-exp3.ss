@@ -5,9 +5,14 @@
 
 class lck extends Object {}
 
-data cell{
-  int v;
-}
+//Thread: initial state 
+pred_prim THRD{(-)P,(+)Q}<l1:lck,l2:lck,ls:LockSet,g:WAIT>;
+
+//Thread: forked state
+pred_prim THRD2{(+)Q@Split}<l1:lck,l2:lck,ls:LockSet,g:WAIT>;
+
+//Thread: dead state
+pred_prim DEAD<>;
 
 //Lock: initial state 
 pred_prim Lock{(+)P}<>;
@@ -18,12 +23,42 @@ pred_prim WAITS<b:bag(Object),Object>;
 
 pred_prim LockSet<S:bag(lck)>;
 
-lemma_split "frac-lock-split" self::Lock{%P}(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::Lock{%P}(f1)<> * self::Lock{%P}(f2)<> & 0.0<f<=1.0;
+lemma_split "frac-lock-split" self::Lock{%PP}(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::Lock{%PP}(f1)<> * self::Lock{%PP}(f2)<> & 0.0<f<=1.0;
 
-lemma "frac-lock-combine" self::Lock{%P}(f1)<> * self::Lock{%P}(f2)<> -> self::Lock{%P}(f1+f2)<>;
+lemma "frac-lock-combine" self::Lock{%PPP}(f1)<> * self::Lock{%PPP}(f2)<> -> self::Lock{%PPP}(f1+f2)<>;
 
-lemma "error1" self::Held{%P}<> * self::Unheld<> ->  emp & flow __Fail;
+lemma "error1" self::Held{%PPPP}<> * self::Unheld<> ->  emp & flow __Fail;
 
+
+
+lemma_split "wait-split" self::WAIT<S> -> self::WAIT<S> * self::WAIT<S>;
+
+lemma "wait-combine" self::WAIT<S1> * self::WAIT<S2> -> self::WAIT<S> & S=union(S1,S2);
+
+lemma "deadlock" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail;
+
+//normalization of dead threads
+lemma "thrd_normalize" self::THRD2{%Q}<l1,l2,ls,g> * self::DEAD<> -> %Q;
+
+/********************************************/
+/****************THREADS*********************/
+thrd create_thrd() // with %P
+  requires true
+  ensures (exists l1,l2,ls,g,S,S1,G,G1: res::THRD{l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S> * g::WAIT<G>@S1 & G={} & S={} & l1!=l2,
+                                        l1::Lock{emp}(0.5)<> * l2::Lock{emp}(0.5)<> * ls::LockSet<S1> * g::WAIT<G1> & G1={tup2(l1,l2)} & S1={} }<l1,l2,ls,g>);
+
+void fork_thrd(thrd t,lck l1,lck l2, LockSet ls, WAIT g)
+  requires t::THRD{%P,%Q}<l1,l2,ls,g> * %P
+  ensures  t::THRD2{%Q}<l1,l2,ls,g>;
+
+void join_thrd(thrd t, lck l1,lck l2, LockSet ls, WAIT g)
+  requires t::THRD2{%Q}<l1,l2,ls,g>
+  ensures  t::DEAD<> * %Q;
+  requires t::DEAD<>
+  ensures  t::DEAD<>;
+
+/********************************************/
+/****** LOCKS *******************************/
 lck create_lock() // with %P
   requires emp
   ensures res::Lock{emp}<>;
@@ -40,6 +75,8 @@ void release_lock(lck l,LockSet ls)
 void dispose_lock(lck l)
   requires l::Lock{%P}<>
   ensures l::Unheld<> * %P;
+/********************************************/
+/********************************************/
 
 /* void thread1(lck l1, LockSet ls, WAIT g) */
 /*   requires l1::Lock{emp}(f1)<> * ls::LockSet<S> * g::WAIT<G> & S={} & G={} */
@@ -50,9 +87,9 @@ void dispose_lock(lck l)
 /* } */
 
 void thread1(lck l1, lck l2, LockSet ls,WAIT g)
-  requires l1::Lock{emp}(f1)<> * l2::Lock{emp}(f2)<> * ls::LockSet<S> 
-           * g::WAIT<G> & G={} & S={} & l1!=l2
-  ensures l1::Lock{emp}(f1)<> * l2::Lock{emp}(f2)<> * ls::LockSet<S1>
+  requires l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S>
+           * g::WAIT<G>@S1 & G={} & S={} & l1!=l2
+  ensures l1::Lock{emp}(0.5)<> * l2::Lock{emp}(0.5)<> * ls::LockSet<S1>
   * g::WAIT<G1> & G1={tup2(l1,l2)} & S1={};
 {
   acquire_lock(l1,ls,g);
@@ -60,21 +97,44 @@ void thread1(lck l1, lck l2, LockSet ls,WAIT g)
 
   release_lock(l1,ls);
   release_lock(l2,ls);
-  dprint;
 }
 
-/* void main(LockSet ls) */
-/*   requires ls::LockSet<S> & S={} */
-/*   ensures ls::LockSet<S> & S={}; */
-/* { */
-/*   lck x = create_lock(); */
+void thread2(lck l1, lck l2, LockSet ls,WAIT g)
+  requires l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S> 
+           * g::WAIT<G> & G={} & S={} & l1!=l2
+  ensures l1::Lock{emp}(0.5)<> * l2::Lock{emp}(0.5)<> * ls::LockSet<S1>
+  * g::WAIT<G1> & G1={tup2(l2,l1)} & S1={};
+{
+  acquire_lock(l2,ls,g);
+  acquire_lock(l1,ls,g);
 
-/*   acquire_lock(x,ls); */
-/*   release_lock(x,ls); */
+  release_lock(l1,ls);
+  release_lock(l2,ls);
+}
 
-/*   acquire_lock(x,ls); */
-/*   release_lock(x,ls); */
+// ls for main thread, ls1,ls2 for the two child thread
+void main(LockSet ls,LockSet ls1, LockSet ls2,WAIT g)
+  requires ls::LockSet<S> * ls1::LockSet<S> * ls2::LockSet<S> * g::WAIT<G> & G={} & S={}
+  ensures ls::LockSet<S> * ls1::LockSet<S> * ls2::LockSet<S>  * g::WAIT<G1> & S={};
+{
+  lck l1 = create_lock();
+  lck l2 = create_lock();
+  assume l1'!=l2';
 
-/*   dispose_lock(x); */
+  thrd tid =  create_thrd(); //create thread1
 
-/* } */
+  fork_thrd(tid,l1,l2,ls1,g);
+
+  /* acquire_lock(l2,ls,g); */
+  /* acquire_lock(l1,ls,g); // l1 -> l2 */
+
+  /* release_lock(l1,ls); */
+  /* release_lock(l2,ls); */
+
+  /* join_thrd(tid,l1,l2,ls1,g); // l2 -> l1 */
+  /* //WAIT{l1 -> l2, l2 -> l1} --> ERROR */
+
+  /* dispose_lock(l1); */
+  /* dispose_lock(l2); */
+
+}
