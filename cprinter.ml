@@ -173,28 +173,28 @@ let op_cons = ":::"
 (** add a bracket around e if is simple yields false *)
 (* 
   hard to read wo brackets..
-   [ G(x_25) ::=  x_25::node<flted_13_14,right>@M&0<=flted_13_14 | flted_13_14=0] 
+   [ G(x_25) ::=  x_25::node<flted_13_14,right>@M&0<=flted_13_14 | flted_13_14=0]
 *)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
- if (isSimple e) then pr_elem e
- else (fmt_string "("; pr_elem e; fmt_string ")")
+  if (isSimple e) then pr_elem e
+  else (fmt_string "("; pr_elem e; fmt_string ")")
 
 (** invoke f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
-let pr_list_open_sep (f_open:unit -> unit) 
+let pr_list_open_sep (f_open:unit -> unit)
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
   let rec helper xs = match xs with
     | [] -> failwith "impossible to be [] in pr_list_open_sep"
     | [x] -> (f_elem x)
-    | y::ys -> (f_elem y; f_sep(); helper ys) 
+    | y::ys -> (f_elem y; f_sep(); helper ys)
   in match xs with
     | [] -> f_empty()
-    | xs -> f_open(); (helper xs); f_close() 
+    | xs -> f_open(); (helper xs); f_close()
 
-let pr_list_open_sep (f_open:unit -> unit) 
+let pr_list_open_sep (f_open:unit -> unit)
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
-  Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) 
+  Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit)
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) xs) (List.length xs)
 
@@ -246,11 +246,11 @@ let pr_cut_before_no op =  pr_op_sep_gen "B" op
 (*   (fun () -> fmt_string ")"; fmt_close();)  *)
 (*   fmt_space x *)
 
-(** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box 
-    @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *) 
+(** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box
+    @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *)
 let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_o x = match x with
-    | Some(s,i) -> 
+    | Some(s,i) ->
           if s="V" then fmt_open_vbox i
           else if s="H" then fmt_open_hbox ()
           else  fmt_open_box i; (* must be B *)
@@ -259,26 +259,26 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
     | Some(s,i) -> fmt_close();
     | None -> () in
   let opt_cut () = match box_opt with
-    | Some(s,i) -> 
+    | Some(s,i) ->
           if s="V" then fmt_cut()
           else  ()
     | None -> () in
   let f_s x sep = match x with
     | Some s -> if s="A" then (fmt_string sep_str; fmt_cut())
-      else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut()) 
+      else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut())
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
-    | None -> fmt_string sep_str in 
-  pr_list_open_sep 
+    | None -> fmt_string sep_str in
+  pr_list_open_sep
       (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
-      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
-      (fun () -> f_s sep_opt sep_str) 
-      f_empty  f xs
+      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt))
+      (fun () -> f_s sep_opt sep_str)
+      f_empty f xs
 
- (** invoke pr_args_gen  *)   
+ (** invoke pr_args_gen  *)
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
- (** invoke pr_args_gen and print nothing when xs  is empty  *)      
+ (** invoke pr_args_gen and print nothing when xs  is empty  *)
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> ()) box_opt sep_opt op open_str close_str sep_str f xs
 
@@ -466,9 +466,10 @@ let pr_fn_args op f xs = match xs with
   | _ -> (pr_tuple op f xs)
 
 (** print infix form : x1 op .. op xn *)
-let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
-  
-  (** print infix form : x1 op .. op xn *)
+let pr_list_op sep f xs =
+  pr_args None (Some "A") "" "" "" sep f xs
+
+(** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox sep f xs = 
   pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
 
@@ -1339,7 +1340,7 @@ and prtt_pr_h_formula h =
   let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e in
   match h with
     | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
-	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
+	  let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
@@ -1501,7 +1502,7 @@ and prtt_pr_h_formula h =
 	      fmt_string ((string_of_spec_var r) ^ "(");
 	      (match args with
 		| [] -> ()
-		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in
 		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")");
 	    end
     | HTrue -> fmt_string "htrue"
@@ -1510,31 +1511,31 @@ and prtt_pr_h_formula h =
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
-and prtt_pr_h_formula_inst prog h = 
-  let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e 
+and prtt_pr_h_formula_inst prog h =
+  let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e
   in
   match h with
-    | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
-	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
+    | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) ->
+	  let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
-    | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
-	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
+    | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) ->
+	  let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
-          fmt_string "("; pr_list_op op_phase f_b args; fmt_string ")" 
-    | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) -> 
+          fmt_string "("; pr_list_op op_phase f_b args; fmt_string ")"
+    | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) ->
 	      let arg1 = bin_op_to_list op_conjsep_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_conjsep_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_conjsep_short f_b args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
-	  h_formula_data_derv = dr;
-	  h_formula_data_imm = imm;
+      h_formula_data_derv = dr;
+      h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
-		h_formula_data_holes = hs; (* An Hoa *)
+      h_formula_data_holes = hs; (* An Hoa *)
       h_formula_data_perm = perm; (*LDK*)
       h_formula_data_origins = origs;
       h_formula_data_original = original;
@@ -1544,11 +1545,11 @@ and prtt_pr_h_formula_inst prog h =
 	  (** [Internal] Replace the specvars at positions of holes with '-' **)
           (*TO CHECK: this may hide some potential errors*)
           let perm_str = string_of_cperm perm in
-	  let rec replace_holes svl hs n = 
+	  let rec replace_holes svl hs n =
 	    if hs = [] then svl
 	    else let sv = List.hd svl in
 	    match sv with
-	      | CP.SpecVar (t,vn,vp) -> 
+	      | CP.SpecVar (t,vn,vp) ->
 		    if (List.hd hs = n) then
 		      CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
 		    else
@@ -1560,7 +1561,7 @@ and prtt_pr_h_formula_inst prog h =
 			begin
 			  fmt_string "\sepnode{";pr_spec_var sv; fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs ;fmt_string "}";
 			end
-			else 
+			else
 			begin
 			  (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
 			  (* pr_formula_label_opt pid; *)
@@ -1966,8 +1967,8 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-          prtt_pr_h_formula_inst prog h ; 
-          (if not( MP.isTrivMTerm p) then 
+          prtt_pr_h_formula_inst prog h;
+          (if not( MP.isTrivMTerm p) then
             (pr_cut_after "&" ; pr_mix_formula p))
           (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -2087,12 +2088,9 @@ and prtt_pr_formula_inst_1 prog e =
             fmt_string ("\nAND "); pr_one_formula_list a
 
 and prtt_pr_formula_inst prog e =
-  (* if !Globals.print_en_tidy then *)
-  (*   let _ = print_endline "prtt" in *)
-  (*   let pr = prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e) in *)
-  (*   let _ = print_endline "after prtt" in *)
-  (*   pr *)
-  (* else *)
+  if !Globals.print_en_tidy then
+    prtt_pr_formula_inst_1 prog (Cfout.shorten_formula e)
+  else
     prtt_pr_formula_inst_1 prog e
 
 and pr_formula_for_spec e =

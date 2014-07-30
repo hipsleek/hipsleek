@@ -246,16 +246,34 @@ let rearrange_entailment prog lhs rhs=
       (fun _ _ -> rearrange_entailment_x prog lhs rhs)
       lhs rhs
 
+let elim_imm_vars_pf pf =
+  let p_aset = CP.pure_ptr_equations pf in
+  let p_aset = CP.EMapSV.build_eset p_aset in
+  pf
+
+let rec elim_imm_vars_f f =
+  match f with
+    | Base b -> Base {b with formula_base_pure = MCP.mix_of_pure (elim_imm_vars_pf (MCP.pure_of_mix b.formula_base_pure));}
+    | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (elim_imm_vars_pf (MCP.pure_of_mix e.formula_exists_pure));}
+    | Or orf -> Or {orf with formula_or_f1 = elim_imm_vars_f orf.formula_or_f1;
+          formula_or_f2 = elim_imm_vars_f orf.formula_or_f2}
+
 let rec shorten_formula f =
   let helper f =
     let f0 = simplify_pure_f f in
+    let f0 = elim_imm_vars_f f0 in
     let fvars = fv f0 in
     let qvars,_ = split_quantifiers f0 in
-    (* let _ = print_endline ((pr_list !print_sv) fv) in *)
     let vars = CP.remove_dups_svl (fvars@qvars) in
+    let vars = List.filter (fun sv ->
+        let sv_name = CP.name_of_spec_var sv in
+        if (String.length sv_name <= 2) then
+          true
+        else
+          (String.compare (String.sub (sv_name) 0 2) "HP") != 0
+    ) vars in
     let n_tbl = Hashtbl.create 1 in
     let new_svl,_ = shorten_svl vars n_tbl in
-    (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
     (* subst_avoid_capture vars new_svl f *)
     let new_f = subst_all (List.combine vars new_svl) f0 in
     new_f
