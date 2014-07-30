@@ -19,6 +19,8 @@ echo "======= latch4.slk  ======"
 diff test-cases/latch4.slk.res test-cases/latch4.slk.n
 echo "======= concrete.slk  ======"
 diff test-cases/concrete.slk.res test-cases/concrete.slk.n
+echo "======= concrete-bags.slk  ======"
+diff test-cases/concrete-bags.slk.res test-cases/concrete-bags.slk.n
 
 #================HIP==========================
 #================HIP==========================

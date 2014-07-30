@@ -11627,6 +11627,19 @@ and get_concrete_bag_pure (pf : formula) : (spec_var * exp list) list =
   Out: B=bag{a,b} & S1={a} & S2={b}
 *)
 and apply_concrete_bag_pure_x (f0 : formula) (args: (spec_var * exp list) list): formula =
+  (* Check whether x is concrete in f0 given args*)
+  let helper_one x =
+    (match x with
+      | Var (v2,_) ->
+            (try
+              let vars = find_closure_pure_formula v2 f0 in
+              let (_, exps) = List.find (fun (v1,exps) -> Gen.BList.mem_eq eq_spec_var v1 vars) args in
+              (*replace v2 by its concrete value*)
+              Some exps
+            with Not_found -> None)
+      | Bag (es,_) -> Some es
+      | _ -> None)
+  in
   let f_bf arg bf =
     let pf, lbl = bf in
     (match pf with
@@ -11634,18 +11647,6 @@ and apply_concrete_bag_pure_x (f0 : formula) (args: (spec_var * exp list) list):
             (match e1,e2 with (*Also need to support BagIntersect and BagDiff*)
               | Var (sv,l1), BagUnion (el,l2)
               | BagUnion (el,l2), Var (sv,l1) ->
-                    let helper_one x =
-                      (match x with
-                        | Var (v2,_) ->
-                              (try
-                                let vars = find_closure_pure_formula v2 f0 in
-                                let (_, exps) = List.find (fun (v1,exps) -> Gen.BList.mem_eq eq_spec_var v1 vars) args in
-                                (*replace v2 by its concrete value*)
-                                Some exps
-                              with Not_found -> None)
-                        | Bag (es,_) -> Some es
-                        | _ -> None)
-                    in
                     let rec helper el : (bool * exp list) =
                       (match el with
                         | [] -> (true, [])
@@ -11667,7 +11668,21 @@ and apply_concrete_bag_pure_x (f0 : formula) (args: (spec_var * exp list) list):
                     else
                       (*Failed to concretize*)
                       Some (bf,[]) (*dummy []*)
-              | _ -> Some (bf,[]) (*dummy []*) 
+              | Var (sv,l1), BagDiff (e1,e2,l2)
+              | BagDiff (e1,e2,l2), Var (sv,l1) ->
+                    let ne1 = helper_one e1 in
+                    let ne2 = helper_one e2 in
+                    (match ne1,ne2 with
+                      | Some xs1, Some xs2 ->
+                            (*diff(xs1,xs2) : trust the eqExp_f : TOCHECK *)
+                            let x = Gen.BList.difference_eq (eqExp_f eq_spec_var) xs1 xs2 in
+                            let npf = Eq (Var (sv,l1),Bag (x,l2),pos) in
+                            let nbf = npf, lbl in
+                            Some (nbf,[]) (*dummy []*)
+                      | _ ->
+                            (*Failed to concretize*)
+                            Some (bf,[])) (*dummy []*)
+              | _ -> Some (bf,[]) (*dummy []*)
             )
       | _ -> None)
   in
@@ -11709,6 +11724,8 @@ and concretize_bag_pure_x (pf : formula) : formula =
       let npf = apply_concrete_bag_pure pf ls in
       helper_loop npf ls
   in
+  (*Ensure do at least once, e.g. for C=diff({1,2,3},{3,4,5}) *)
+  let pf = apply_concrete_bag_pure pf [] in
   helper_loop pf []
 
 and concretize_bag_pure (pf : formula) : formula =

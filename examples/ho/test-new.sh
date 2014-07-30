@@ -19,6 +19,8 @@ echo "======= latch4.slk ======"
 ../../sleek latch4.slk -tp parahip | grep "Entail\|Validate" > test-cases/latch4.slk.n
 echo "======= concrete.slk ======"
 ../../sleek concrete.slk -tp parahip | grep "Entail\|Validate" > test-cases/concrete.slk.n
+echo "======= concrete-bags.slk ======"
+../../sleek concrete-bags.slk -tp parahip | grep "Entail\|Validate" > test-cases/concrete-bags.slk.n
 
 #================HIP==========================
 #================HIP==========================
