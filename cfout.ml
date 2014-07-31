@@ -264,15 +264,41 @@ let rearrange_entailment prog lhs rhs=
       (fun _ _ -> rearrange_entailment_x prog lhs rhs)
       lhs rhs
 
-let elim_imm_vars_pf pf =
-  let p_aset = CP.pure_ptr_equations pf in
-  let p_aset = CP.EMapSV.build_eset p_aset in
-  pf
+let elim_imm_vars_pf f =
+  match f with
+    | Base b -> Base {b with formula_base_pure = MCP.mix_of_pure (CP.elim_idents (MCP.pure_of_mix b.formula_base_pure));}
+    | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.elim_idents (MCP.pure_of_mix e.formula_exists_pure));}
+    | _ -> f
 
 let rec elim_imm_vars_f f =
+  let get_subs_list pf =
+    let fl = CP.split_conjunctions pf in
+    let subs_list = List.fold_left (fun acc f ->
+        match f with
+          | CP.BForm ((p_f, _), _) -> (
+                match p_f with
+                  | CP.Eq (Var (sv1, _), Var (sv2, _), _) -> acc@[(sv1,sv2)]
+                  | _ -> acc
+            )
+          | _ -> acc
+    ) [] fl in
+    subs_list
+  in
   match f with
-    | Base b -> Base {b with formula_base_pure = MCP.mix_of_pure (elim_imm_vars_pf (MCP.pure_of_mix b.formula_base_pure));}
-    | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (elim_imm_vars_pf (MCP.pure_of_mix e.formula_exists_pure));}
+    | Base b ->
+          let sst_list = get_subs_list (MCP.pure_of_mix b.formula_base_pure) in
+          let f = List.fold_left (fun f (sv1,sv2) ->
+              subst_avoid_capture [sv1] [sv2] f
+          ) f sst_list in
+          let f = elim_imm_vars_pf f in
+          f
+    | Exists e ->
+          let sst_list = get_subs_list (MCP.pure_of_mix e.formula_exists_pure) in
+          let f = List.fold_left (fun f (sv1,sv2) ->
+              subst_avoid_capture [sv1] [sv2] f
+          ) f sst_list in
+          let f = elim_imm_vars_pf f in
+          f
     | Or orf -> Or {orf with formula_or_f1 = elim_imm_vars_f orf.formula_or_f1;
           formula_or_f2 = elim_imm_vars_f orf.formula_or_f2}
 
@@ -328,10 +354,10 @@ let rec shorten_formula f =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
-let tidy_print e =
-    if (!Globals.print_en_tidy) then (shorten_formula e)
-    else e 
-
 let inline_print e =
-    if (!Globals.print_en_inline) then (shorten_formula e)
-    else e 
+    if (!Globals.print_en_inline) then elim_imm_vars_f e
+    else e
+
+let tidy_print e =
+    if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
+    else e

@@ -2920,8 +2920,8 @@ and subst_x sst (f : formula) =
 									formula_exists_label = lbl;
 									formula_exists_pos = pos})
   in helper f
-  
-  
+
+
 and subst_all sst (f : formula) =
   let rec helper f = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
