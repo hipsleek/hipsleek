@@ -229,7 +229,9 @@ let rearrange_rel (rel: hprel) =
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
 
-
+(*
+print_tidy for verification condition + entailment
+*)
 let rearrange_entailment_x prog lhs0 rhs0=
   let lhs = simplify_pure_f lhs0 in
   let rhs = simplify_pure_f rhs0 in
