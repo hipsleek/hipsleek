@@ -1,0 +1,41 @@
+data node {
+  node x;
+}.
+
+checkentail_exact x::node<_> |- (exists y: y::node<_>).
+expect Valid.
+
+checkentail_exact x::node<_> |- y::node<_>.
+expect Fail_Must.
+
+
+//infer_exact
+infer [x,y] x::node<_> |- y::node<_>.
+print residue.
+expect Valid.
+
+/*
+ must - contradiction
+        but rhs not false
+
+*/
+
+checkentail_exact true |- false.
+expect Fail_Must.
+
+checkentail_exact x::node<_> |- false.
+expect Fail_Must.
+
+pred ll<n> == self=null & n=0
+ or self::node<q>*q::ll<n-1>
+ inv n>=0.
+
+checkentail_exact x::ll<n> & n<0 |- false.
+expect Valid.
+
+pred ll2<n> == self=null & n=0
+ or self::node<q>*q::ll2<n-1>
+ inv true.
+
+checkentail_exact x::ll2<n> & n<0 |- false.
+expect Valid.

@@ -1,0 +1,39 @@
+12 files
+
+1. parser:
+2. adding expect (from spen):
+3. sleek run
+  - date:
+  - date:
+
+
+=========================================
+adding expect from spen (Long) DONE
+
+=========================================
+sleek run, list all inconsistent results (Long)
+
+./run-all.plx
+
+=========================================
+#dll-vc05.smt2.slk (LONG)
+ --inv-baga
+
+=========================================
+# dll-vc06.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,nx> * nx::Dll_t<n,bk1> -> self::dll<nx,pr,n>.
+
+=========================================
+# dll-vc08.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> -> self::dll<bk,pr,n>.
+
+=========================================
+=========================================
+=========================================
+=========================================

@@ -81,6 +81,10 @@ and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * stri
 (* return p_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * string list) =
   match pf with
+    | Frm (sv, _)    -> (
+      let pred = spass_dfg_of_spec_var sv in
+      (pred, [], [pred]) 
+    ) 
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
   | BVar (sv, _)    -> (
@@ -219,6 +223,7 @@ and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
 
 and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
+    | Frm (sv, _)    -> spass_tptp_of_spec_var sv
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then "$true" else "$false"
   | BVar (sv, _)    -> spass_tptp_of_spec_var sv
@@ -299,6 +304,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
+    | Frm _               -> false
   | LexVar _             -> false
   | BConst _             -> true
   | BVar _               -> true

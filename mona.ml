@@ -299,7 +299,7 @@ let replace_known var1_lst var2_lst unk_lst (c:order_atom): order_atom =
  *)
 
 let solve_constraints_x (cons: order_atom list) (sv_lst: CP.spec_var list)=
-  let unk_no = List.length sv_lst in
+  (* let unk_no = List.length sv_lst in *)
 
   let rec aux var1_lst var2_lst unk_lst cons =
     let cons = Gen.BList.remove_dups_eq eq_order_atom cons in 
@@ -542,7 +542,7 @@ and find_order (f : CP.formula) vs =
 
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
-  | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) or (find_order_formula f2 vs))
+  | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) || (find_order_formula f2 vs))
         (* make sure everything is renamed *)
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
@@ -600,7 +600,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	          | Not_found -> ((Hashtbl.add vs sv1 1); true)
 	          | _ -> false
           in
-	      rsv1 or (find_order_exp e1 2 vs)
+	  rsv1 || (find_order_exp e1 2 vs)
     | CP.BagMax(sv1, sv2, l1) 
     | CP.BagMin(sv1, sv2, l1) ->
           let r1 = 
@@ -627,7 +627,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	          | Not_found -> ((Hashtbl.add vs sv1 2); true)
           in
           (r1 || r2)
-    | CP.BagSub(e1, e2, _) ->  ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs)) 
+    | CP.BagSub(e1, e2, _) ->  ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
     | CP.ListIn(e1, e2, _)
     | CP.ListNotIn(e1, e2, _) 
     | CP.ListAllN(e1, e2, _)
@@ -641,18 +641,18 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
       	  let r1 = exp_order e1 vs in 
 	  let r2 = exp_order e2 vs in
 	  if (r1 == 1 || r2 == 1) then
-	    ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs)) 
+	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
 	  else
-	    ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs)) 
+	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
     | CP.EqMax(e1, e2, e3, _)
     | CP.EqMin(e1, e2, e3, _) -> 
           let r1 = exp_order e1 vs in
 	  let r2 = exp_order e2 vs in
 	  let r3 = exp_order e3 vs in
 	  if (r1 == 1 || r2 == 1 || r3 == 1) then
-	    ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs) or (find_order_exp e3 1 vs)) 
+	    ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs) || (find_order_exp e3 1 vs)) 
 	  else
-	    ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs) or (find_order_exp e3 0 vs)) 
+	    ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs) || (find_order_exp e3 0 vs)) 
     | CP.BVar(sv1, l1) -> 
           begin
             try 
@@ -671,13 +671,13 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
       	  let r1 = exp_order e1 vs in
 	      let r2 = exp_order e2 vs in
 	      if (CP.is_bag e1) || (CP.is_bag e2) || (r1 == 2) || (r2 == 2) then
-	        ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs)) 
+	        ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs)) 
 	      else 
 	        if (r1 == 1 || r2 == 1) then
-	          ((find_order_exp e1 1 vs) or (find_order_exp e2 1 vs)) 
+	          ((find_order_exp e1 1 vs) || (find_order_exp e2 1 vs)) 
 	        else
-	          ((find_order_exp e1 0 vs) or (find_order_exp e2 0 vs)) 
-    | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 0 vs)) false el
+	          ((find_order_exp e1 0 vs) || (find_order_exp e2 0 vs)) 
+    | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 0 vs)) false el
     | _ -> false
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
@@ -704,24 +704,24 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
           with
 	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
         end
-  | CP.Bag(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 1 vs)) false el
+  | CP.Bag(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 1 vs)) false el
   | CP.BagIntersect(el, l) 
-  | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b 2 vs)) false el
-  | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs))    
+  | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 2 vs)) false el
+  | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))    
   | CP.Add(e1, e2, l) ->
         (* let _ = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
         if (CP.exp_contains_spec_var e1) && (CP.exp_contains_spec_var e2) then (* non-monadic formula ==> need second order *)
-          ((find_order_exp e1 2 vs) or (find_order_exp e2 2 vs))
+          ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))
         else
-          ((find_order_exp e1 order vs) or (find_order_exp e2 order vs))
+          ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
   | CP.Subtract(e1, e2, l)
   | CP.Mult(e1, e2, l)
   | CP.Div(e1, e2, l)
   | CP.Max(e1, e2, l)
   | CP.Min(e1, e2, l) 
-  | CP.ListCons(e1, e2, l) -> ((find_order_exp e1 order vs) or (find_order_exp e2 order vs))
+  | CP.ListCons(e1, e2, l) -> ((find_order_exp e1 order vs) || (find_order_exp e2 order vs))
   | CP.List(el, l)
-  | CP.ListAppend(el, l) -> List.fold_left (fun a b -> a or (find_order_exp b order vs)) false el
+  | CP.ListAppend(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b order vs)) false el
   | CP.ListHead(e, l)
   | CP.ListTail(e, l)
   | CP.ListLength(e, l)
@@ -925,6 +925,7 @@ and mona_of_b_formula_x b f vs =
   let ret =
 	let (pf, _) = b in
     match pf with
+      | CP.Frm (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
       | CP.XPure _ -> "(0=0)" (* WN : weakening *)
       | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
       | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
@@ -1135,6 +1136,7 @@ and mona_of_formula_x f initial_f vs =
 
 (* pretty printing for boolean vars *)
 and print_b_formula b f = match b with
+  | CP.Frm (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
   | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.Lt (a1, a2, _) -> (mona_of_exp a1 f) ^ "<" ^ (mona_of_exp a2 f)
@@ -1240,7 +1242,7 @@ let set_process (proc: prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    let _ = print_string_if (not !Globals.smt_compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
@@ -1275,11 +1277,12 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = print_endline_if (not !Globals.smt_compete_mode) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
   (* Log.logtime_wrapper "restart mona" restart reason  *)
+  if (not !Globals.smt_compete_mode) then
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
@@ -1335,7 +1338,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
-	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
+	    print_endline_if (not !Globals.smt_compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in

@@ -1,0 +1,42 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+/*
+# eps-ll-1.slk --eps --pcp
+
+--eps folding lemma not properly specialized.
+
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+
+Starting z3... 
+Starting Omega...oc
+
+Warning: ::0: 0: right hand side node is not specialized!
+
+Lemma "V8":  self::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]<== (exists n_56: self::ll_s<n_56>@ rem br[{1,2}]&(([0<=n_56]))&
+{FLOW,(21,22)=__norm})[]
+ head match:ll
+ body view:ll_s
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll_s])]
+ coercion_case: Simple
+ head_norm:  self::ll<>&{FLOW,(21,22)=__norm}[]
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+*/
+
+checkentail x::ll_s<n> |- x::ll<>.
+

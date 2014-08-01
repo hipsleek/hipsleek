@@ -46,7 +46,7 @@ type proof_log = {
 (* 	| POST *)
 (* 	| PRE *)
 (* 	| BINDING *)
-(*     | ASSERTION *)
+(*  | ASSERTION *)
 
 type sleek_log_entry = {
     sleek_proving_id :int;
@@ -190,11 +190,11 @@ let pr_sleek_log_entry e=
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_ante))
+  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_ante))
   else fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
   fmt_string "\n |- ";
   if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_conseq))
+  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_conseq))
   else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq);
   fmt_string ". \n";
   (if !print_clean_flag then 
@@ -216,7 +216,66 @@ let pr_sleek_log_entry e=
     | None -> fmt_string ("res : EXCEPTION");
   fmt_close()
 
-let string_of_sleek_log_entry e= Cprinter.poly_string_of_pr pr_sleek_log_entry e
+let string_of_sleek_log_entry e = Cprinter.poly_string_of_pr pr_sleek_log_entry e
+
+let sleek_tidy_formula f = 
+  (* if (!Globals.print_en_tidy)                                              *)
+  (* then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula f)) *)
+  (* else fmt_string (Cprinter.sleek_of_formula f)                            *)
+  fmt_string (Cprinter.sleek_of_formula f)
+
+let slk_sleek_log_entry prog e =
+  let frm, expected = match e.sleek_proving_res with
+  | None -> None, "Fail"
+  | Some res ->
+    let r = CF.formula_of_list_context res in
+    let hole_matching, expected = match res with
+    | CF.FailCtx _ -> [], "Fail"
+    | CF.SuccCtx ls -> (List.concat (List.map CF.collect_hole ls)), "Valid"
+    in
+    let hole_matching = List.map (fun (h, i) -> (i, h)) hole_matching in
+    Some (CF.restore_hole_formula r hole_matching), expected
+  in
+  let conseq = 
+    if !Globals.sleek_gen_vc then e.sleek_proving_conseq
+    else (* !Globals.sleek_gen_vc_exact *)
+      match frm with
+      | None -> e.sleek_proving_conseq
+      | Some r -> 
+        let conseq = e.sleek_proving_conseq in
+        let comb_conseq = CF.mkStar_combine conseq r 
+          CF.Flow_combine (CF.pos_of_formula conseq) in
+        let ante_fv = CF.fv e.sleek_proving_ante in
+        (* let cons_fv = CF.fv conseq in *)
+        let comb_cons_fv = CF.fv comb_conseq in
+        let ex_vars = Gen.BList.difference_eq CP.eq_spec_var comb_cons_fv ante_fv in
+        (* let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in *)
+        CF.push_exists ex_vars comb_conseq
+  in
+  let tidy_ante,tidy_conseq = Cfout.rearrange_entailment prog e.sleek_proving_ante conseq in
+  fmt_open_box 1;
+  fmt_string("\n");
+  let src = e.sleek_src_no in
+  let par_id = e.sleek_parent_no in
+  let rest = if src!=3 then " src:"^(string_of_int src) else "" in
+  let rest = if par_id>=(0) then "<:"^(string_of_int par_id)^rest else rest in
+  fmt_string ("// id: " ^ (string_of_int e.sleek_proving_id)^rest);
+  fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos));
+  fmt_string ("; kind: " ^ (e.sleek_proving_kind));
+  fmt_string (if !Globals.sleek_gen_vc_exact then "\n checkentail_exact" else "\n checkentail");
+  sleek_tidy_formula tidy_ante (* e.sleek_proving_ante *);
+  fmt_string "\n |- ";
+  sleek_tidy_formula tidy_conseq (* conseq *);
+  fmt_string ".\n";
+  fmt_string ("expect " ^ expected ^ ".");
+  (if !print_clean_flag then 
+	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante conseq in
+	  fmt_string ("\n clean checkentail" ^ (Cprinter.sleek_of_formula ante)
+      ^ "\n |- " ^ (Cprinter.sleek_of_formula conseq)^".\n")
+   else ());
+  fmt_close()
+
+let sleek_of_sleek_log_entry prog e = Cprinter.poly_string_of_pr (slk_sleek_log_entry prog) e
 
 class last_commands =
 object (self)
@@ -654,6 +713,42 @@ let sleek_log_to_text_file slfn (src_files) =
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
     close_out oc
+    
+let sleek_log_to_sleek_file slfn src_files prog prim_names =
+    (* let tstartlog = Gen.Profiling.get_time () in *)
+  let lgs = sleek_log_stk # len in
+  let _ = Debug.info_zprint  (lazy  ("Number of sleek log entries "^(string_of_int (lgs)))) no_pos in
+  Debug.info_zprint  (lazy  ("Logging "^slfn^"\n")) no_pos;
+  (* let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in *)
+  let fn = slfn in
+    let oc =
+      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      (* let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in *)
+      open_out fn
+    in
+    let ls = sleek_log_stk # get_stk in
+    let ls = 
+      if (!Globals.sleek_log_filter)
+        then List.filter (fun e -> not(e.sleek_proving_avoid)) ls 
+      else ls
+    in
+    let ls = List.sort (fun e1 e2 -> compare e1.sleek_proving_id e2.sleek_proving_id) ls in
+    let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl 
+      (List.filter (fun d -> not (Gen.BList.mem_eq (=) d.Cast.data_name prim_names)) prog.Cast.prog_data_decls)) in
+    let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl 
+      (List.filter (fun v -> not (Gen.BList.mem_eq (=) v.Cast.view_name prim_names)) prog.Cast.prog_view_decls)) in
+    let str_lem =  
+      let lem = (Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion) in
+      if lem = [] then "" 
+      else "/*\n" ^ (Cprinter.string_of_coerc_decl_list lem) ^ "\n*/"
+    in
+    let str_ent = String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls) in
+    let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_lem ^ "\n" ^ str_ent in
+    let _= fprintf oc "%s" str in
+    if !Globals.dump_sleek_proof then printf "%s" str;
+    (* let tstoplog = Gen.Profiling.get_time () in *)
+    (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
+    close_out oc
 
 let sleek_log_to_text_file2 (src_files) =
   (* let _ = print_endline "sleek_log_2" in *)
@@ -661,7 +756,7 @@ let sleek_log_to_text_file2 (src_files) =
   let pr = pr_list pr_id in
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
 
-let process_proof_logging src_files  =
+let process_proof_logging src_files prog prim_names =
   (* Debug.info_zprint  (lazy  ("process_proof_logging\n")) no_pos; *)
   if !Globals.proof_logging_txt (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
     begin
@@ -671,6 +766,7 @@ let process_proof_logging src_files  =
       let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
       (* let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in *)
       let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
+      let slkfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".slk" in
       (* let _=  *)
       (*   (\* if (!Globals.sleek_logging_txt || !Globals.proof_logging_txt)  *\) *)
       (*   (\* then  *\) *)
@@ -692,15 +788,25 @@ let process_proof_logging src_files  =
         (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
       with _ -> ()
       in
+      let _ = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
+      then 
+        begin
+          sleek_log_to_sleek_file slkfn src_files prog prim_names;
+        end
+      else try Sys.remove slkfn 
+        (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
+      with _ -> ()
+      in
       let tstoplog = Gen.Profiling.get_time () in
       let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-                                                                                                         (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
+      (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
     end
   else ()
 
-let process_proof_logging src_files  =
+let process_proof_logging src_files prog prim_names =
   let pr = pr_list pr_id in
-  Debug.no_1 "process_proof_logging" pr pr_none process_proof_logging src_files
+  Debug.no_1 "process_proof_logging" pr pr_none 
+    (fun _ -> process_proof_logging src_files prog prim_names) src_files
 
 
 (* let add_sleek_log_entry e= *)

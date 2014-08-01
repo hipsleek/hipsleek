@@ -1,0 +1,71 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+//!!! baga inv(P):[]
+/*
+!!! baga inv(Q):[(BAGA:[],EQ:[[_null,self,y2]],INEQ:[(_null,y3)]),
+(BAGA:[],EQ:[[_null,self,y2,y3]],INEQ:[]),
+(BAGA:[],EQ:[[_null,self,y3]],INEQ:[(_null,y2)]),
+(BAGA:[],EQ:[[_null,y2]],INEQ:[(_null,self),(_null,y3)]),
+(BAGA:[],EQ:[[_null,y2,y3]],INEQ:[(_null,self)]),
+(BAGA:[],EQ:[[_null,y3]],INEQ:[(_null,self),(_null,y2)])]
+*/
+
+pred succ3rec<x2:GTyp,x3:GTyp,y1:GTyp,y2:GTyp,y3:GTyp> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3
+or x2::succ2rec<x3,y2,y3> * self::one<> * y1::zero<>.
+/*
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+*/
+
+pred succ2rec<x2:GTyp,y1:GTyp,y2:GTyp> ==
+ self::zero<> * y1::one<> & x2 = y2
+or x2::succ1rec<y2> * self::one<> * y1::zero<>.
+//!!! baga inv(succ2rec):[(BAGA:[],EQ:[[_null,self],[x2,y2]],INEQ:[(_null,y1)]),
+//(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])]
+
+pred succ1rec<y1:GTyp> ==
+self::zero<> * y1::one<>.
+//!!! baga inv(succ1rec):[(BAGA:[],EQ:[[_null,self]],INEQ:[(_null,y1)])]
+
+pred zero<> ==
+null = self.
+//!!! baga inv(zero):[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+
+pred one<> ==
+null != self.
+//!!! baga inv(one):[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+
+pred P<x2:GTyp,x3:GTyp> ==
+self::one<> * x2::one<> * x3::one<> * self::Q<x2,x3>.
+
+pred Q<y2:GTyp,y3:GTyp> ==
+ self::zero<> * y2::zero<> * y3::zero<>
+or (exists x1,x2,x3: x1::succ3rec<x2,x3,self,y2,y3> * x1::Q<x2,x3>).
+
+checkentail_exact x0::P<x1,x2>
+         |- false.
+
+expect Fail.
+
+/*
+# succ-rec03.slk
+
+Isn't false correct for P(..)?
+
+
+Below is for Trung:
+--------------------
+WARNING: succ-rec03.defs.smt2.slk_28:5_28:10:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: 1 File "succ-rec03.defs.smt2.slk",Line:8,Col:0
+
+ERROR: at succ-rec03.defs.smt2.slk_28:5_28:10 
+Message: compute_view_fw_bw: data not found: 
+*/

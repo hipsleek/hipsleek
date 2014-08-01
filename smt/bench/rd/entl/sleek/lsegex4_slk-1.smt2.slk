@@ -1,0 +1,26 @@
+
+data node {
+  node nxt;
+}.
+
+pred lseg<p:node> ==
+ self = p
+or (exists a: self::node<nxt = a> * a::lseg<p>).
+
+pred right1<p:node> ==
+(exists u: self::lseg<u> * u::node<nxt = p>).
+
+pred right2<p:node> ==
+(exists u: self::lseg<u> * u::lseg<p>).
+
+pred right3<p:node> ==
+(exists u,u2: self::lseg<u> * u::lseg<u2> * u2::lseg<p>).
+
+pred right4<> ==
+(exists u,w: self::lseg<u> * u::lseg<w>).
+
+pred right5<> ==
+(exists w: self::lseg<w>).
+
+checkentail x::lseg<p> & x != p
+         |- x::right1<p>.

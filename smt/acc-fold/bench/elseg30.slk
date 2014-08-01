@@ -1,0 +1,30 @@
+data node {
+   node nxt;
+}.
+
+pred elseg<p> == self=p
+  or (exists a,b: self::node<a> * a::node<b> * b::elseg<p>)
+ inv true.
+
+lemma_safe self::elseg<p> <- (exists u: self::elseg<u>*u::elseg<p>).
+
+lemma_safe self::elseg<p> -> (exists u: self::elseg<u>*u::elseg<p>).
+
+
+checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |- z::elseg<p>.
+expect Valid.
+print residue.
+
+
+checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |-  (exists a,b: z::node<a> * a::node<b> * b::elseg<p>).
+expect Valid.
+print residue.
+
+
+checkentail_exact x::elseg<q>*q::node<p> |-  a::node<b> * b::elseg<p>.
+expect Valid.
+print residue.
+
+checkentail_exact  x::node<a1> * a1::node<b1> * b1::elseg<q>*q::node<p>  & x=a|-  a::node<b> * b::elseg<p>.
+expect Valid.
+print residue.

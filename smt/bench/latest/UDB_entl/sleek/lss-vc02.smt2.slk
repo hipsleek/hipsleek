@@ -1,0 +1,15 @@
+
+data Sll_t {
+  Sll_t next1;
+  Sll_t next2;
+}.
+
+pred lsso<out:Sll_t> ==
+ self = out
+or (exists u: self::Sll_t<next1 = u,next2 = u> * u::lsso<out>).
+
+checkentail_exact x_emp::Sll_t<next1 = y_emp,next2 = y_emp> * y_emp::Sll_t<next1 = u_emp,next2 = u_emp> * u_emp::Sll_t<next1 = w_emp,next2 = w_emp> * w_emp::Sll_t<next1 = z_emp,next2 = z_emp>
+         |- x_emp::lsso<z_emp>.
+
+expect Valid.
+

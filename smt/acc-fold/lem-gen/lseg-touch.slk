@@ -1,0 +1,24 @@
+data node {
+    int val;
+    node next
+}.
+
+//== touching linked list segment 
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p>.
+
+/*
+Updated lemma store with unsafe repo::[rlem_lseg,llem_lseg]
+!!! gen_lemmas:    Lemma "llem_lseg":  
+self::lseg<p>&{FLOW,(1,24)=__flow}[]
+==> (exists p_1: self::lseg<p_1> * p_1::lseg<p>&{FLOW,(1,24)=__flow})[]
+    Lemma "rlem_lseg":  
+self::lseg<p>&{FLOW,(1,24)=__flow}[]
+ <== (exists p_44: self::lseg<p_44> * p_44::lseg<p>&{FLOW,(1,24)=__flow})[]
+*/
+
+lemma_safe self::lseg<y> <-> self::lseg<x> * x::lseg<y>.
+
+checkentail x::lseg<y> * y::lseg<z> |- x::lseg<z>.
+            
+checkentail x::lseg<z> |- x::lseg<y> * y::lseg<z>.

@@ -1,0 +1,82 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+lemma_unsafe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+// (1)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
+print residue.
+// valid with @L residue
+
+// (2)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<uu>.
+print residue.
+// valid with @L residue
+// problem : answers but first one did not have p=uu?.
+
+
+// (3)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<p>.
+print residue.
+// why does "rewrite cannot be applied mean?"
+
+// (4)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+// fail for classic
+
+// (5)
+checkentail
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+/*
+Why an extra residue?
+
+Entail 5: Valid. 
+ <1>p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>u_608::nlseg<p> * p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==> (left: lem_11) ==>  Match ==> ]]
+*/
+
+
+//(6)
+checkentail
+    (exists u :self::node<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+/*
+// 2 identical residue..
+ <1>p::node<_>&self!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  Fold ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>p::node<_>&self!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  Fold ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  Match ==>  SEARCH ==>  Fold ==> ]]
+*/
+
+//(7)
+checkentail
+    (exists u :self::node<u> * u::nlseg<p> & self!=p)
+       |- self::nlseg<p>.
+print residue.
+// self!=p repeated
+// <1>emp&self!=p & self!=p&{FLOW,(21,22)=__norm}[]

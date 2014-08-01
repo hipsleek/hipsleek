@@ -11,3 +11,5 @@ print residue.
 checkentail x::ll<4> |- x::node<a,b> .
 print residue.
 
+infer[x] x::ll<m>  |- x=null.
+print residue.

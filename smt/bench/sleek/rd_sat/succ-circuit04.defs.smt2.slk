@@ -1,0 +1,40 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2,x3,x4> ==
+self::one<> * x2::one<> * x3::one<> * x4::one<> * self::Q<x2,x3,x4>.
+
+pred Q<y2,y3,y4> ==
+ self::zero<> * y2::zero<> * y3::zero<> * y4::zero<>
+or (exists x1,x2,x3,x4: x1::succ4circuit<x2,x3,x4,self,y2,y3,y4> * x1::Q<x2,x3,x4>).
+
+pred succ4circuit<x2,x3,x4,y1,y2,y3,y4> ==
+(exists z3,z4: self::notg<y1> * self::xorg<x2,y2> * self::andg<x2,z3> * z3::xorg<x3,y3> * z3::andg<x3,z4> * x4::xorg<y4,z4>).
+
+pred notg<y> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y,z> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y,z> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+null != self.
+
+pred zero<> ==
+null = self.
+
+checkentail x0::P<x1,x2,x3>
+         |- false.
+

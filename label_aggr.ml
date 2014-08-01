@@ -79,22 +79,26 @@ let emap_key_pair_in_list pair_keys list_pair_keys =
 (* filters ep by eliminating those pairs which 
    (i)  are already present in em_i or 
    (ii) capture an alias between vars from two different partitions in em_i, but this info is already captured by other pair(s) *)
-let filter_redundant_eset_pairs ep em_i = 
-  let covered_keys = ref [] in
-  List.filter (fun (v1,v2) -> 
-      let key1 = (EMapSV.find em_i v1) in
-      let key2 = (EMapSV.find em_i v2) in
-      (* same non-empy keys --> same partition in em_i *)
-      if (List.length (key1@key2) > 0) && (emap_eq_keys key1 key2) then false
-      else 
-        (* different non-empty partitions from em_i for which alias info is already available *)
-        if (List.length key1 > 0 && List.length key2 > 0) && (emap_key_pair_in_list (key1,key2) !covered_keys ) then false
-        else
-          begin
-            covered_keys := (key1,key2)::(!covered_keys);
-            true
-          end
-  )  ep
+
+(* WN : keys for eset has changed to some random value *)
+
+let filter_redundant_eset_pairs ep em_i =
+  ep
+  (* let covered_keys = ref [] in *)
+  (* List.filter (fun (v1,v2) ->  *)
+  (*     let key1 = (EMapSV.find em_i v1) in *)
+  (*     let key2 = (EMapSV.find em_i v2) in *)
+  (*     (\* same non-empy keys --> same partition in em_i *\) *)
+  (*     if (List.length (key1@key2) > 0) && (emap_eq_keys key1 key2) then false *)
+  (*     else  *)
+  (*       (\* different non-empty partitions from em_i for which alias info is already available *\) *)
+  (*       if (List.length key1 > 0 && List.length key2 > 0) && (emap_key_pair_in_list (key1,key2) !covered_keys ) then false *)
+  (*       else *)
+  (*         begin *)
+  (*           covered_keys := (key1,key2)::(!covered_keys); *)
+  (*           true *)
+  (*         end *)
+  (* )  ep *)
 
 let formula_of_filtered_eset eset em_i pos =
   let ep = EMapSV.get_equiv eset in

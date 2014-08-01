@@ -10,6 +10,7 @@ open Cast
 open Gen.Basic
 
 open Label
+open Expure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
@@ -297,7 +298,7 @@ let check_defn pre_rel pre rel_dfn =
 let check_oblg pre_rel pre reloblgs pre_rel_df =
   let check1 = TP.imply_raw pre reloblgs in
   let check2 = check_defn pre_rel pre pre_rel_df in
-  check1 & check2
+  check1 && check2
 
 let filter_disj (p:CP.formula) (t:CP.formula list) =
   let ps = CP.list_of_disjs p in
@@ -376,7 +377,7 @@ let update_rel rel pre_rel new_args old_rhs =
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3), 
     CP.BForm ((CP.RelForm (name1,_,_),_),_),
     CP.BForm ((CP.RelForm (name2,_,_),_),_) ->
-    if name=name1 & name=name2 then
+    if name=name1 && name=name2 then
       CP.BForm ((CP.RelForm (name,args@new_args,o1),o2),o3)
     else report_error no_pos "Not support topdown fixpoint for mutual recursion"
   | _,_,_ -> report_error no_pos "Expecting a relation"
@@ -700,6 +701,7 @@ let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
     (!CP.print_svl post_rel_ids) ^"." in
   (*write to file*)
   let out_chn =
+    (* TODO : Warning 14: illegal backslash escape in string *)
     let reg = Str.regexp "\.ss" in
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" file_name) in
     (* let _ = print_endline (file_name1 ^ ".slk") in *)

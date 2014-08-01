@@ -323,7 +323,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
       let _ = prog.Iast.prog_view_decls <- prog.Iast.prog_view_decls@[n_iview] in
       ()
   in
-  let der_view0 = trans_view_fnc prog tis n_iview in
+  let der_view0 = trans_view_fnc prog [] cviews tis n_iview in
   let der_view = {der_view0 with Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains;} in
   der_view
 

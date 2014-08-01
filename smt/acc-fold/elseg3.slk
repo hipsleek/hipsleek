@@ -1,0 +1,10 @@
+data node {
+   node nxt;
+}.
+
+pred elseg<p> == self=p
+  or (exists a,b: self::node<a> * a::node<b> * b::elseg<p>)
+ inv true.
+
+checkentail_exact x::node<a>* a::node<b>*b::elseg<p> |- x::elseg<p>.
+print residue.

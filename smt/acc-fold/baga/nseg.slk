@@ -1,0 +1,10 @@
+data node {
+   node nxt;
+}.
+
+pred klseg<p> == self=p
+  or (exists a: self::node<a> * a::klseg<p> & self!=p)
+ inv true.
+
+
+

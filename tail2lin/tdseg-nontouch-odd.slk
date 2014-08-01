@@ -1,0 +1,30 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+pred tdll<pr,last,out> ==
+    self::node2<pr,out> & self!=out & self=last
+ or (exists u,v: self::tdll<pr,u,v> * v::node2<u,last> * last::node2<v,out> & self != out).
+
+/**
+
+pred tdllA<pr,last,out> ==
+     pr=last
+ or (exists u,v: self::tdllA<pr,u,v> * v::node2<u,last> * last::node2<v,out> & self != out).
+
+pred tdll<pr,last,out> ==  self::node2<pr,out0> * out0::tdllA<self,last,out> & self!=out0.
+
+*/
+
+
+/*
+lemma_safe self::dll<pr,last,out> <->
+    self::dll<pr,last1,out1> * out1::dll<last1,last,out>.
+*/
+
+checkentail x::dll<pr,last,out> |- x::dll<pr,last1,out1> * out1::dll<last1,last,out>.
+
+checkentail x::dll<pr,last1,out1> * out1::dll<last1,last,out> * out::node2<_,_>@L |-
+				x::dll<pr,last,out>.

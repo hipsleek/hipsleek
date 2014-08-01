@@ -1,0 +1,41 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2:GTyp> ==
+self::one<> * x2::one<> * self::Q<x2>.
+
+pred Q<y2:GTyp> ==
+ self::zero<> * y2::zero<>
+or (exists x1,x2: x1::succ2circuit<x2,self,y2> * x1::Q<x2>).
+
+pred succ2circuit<x2:GTyp,y1:GTyp,y2:GTyp> ==
+self::notg<y1> * self::xorg<x2,y2>.
+
+pred notg<y:GTyp> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y:GTyp,z:GTyp> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y:GTyp,z:GTyp> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+null != self.
+
+pred zero<> ==
+null = self.
+
+checkentail_exact x0::P<x1>
+         |- false.
+
+expect Fail.

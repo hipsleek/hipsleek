@@ -63,7 +63,9 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (sv, _) -> omega_of_spec_var sv
+  | Var (SpecVar(_,n,_) as sv, _) -> 
+        if n="null" then "0"
+        else (omega_of_spec_var sv)
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
@@ -109,6 +111,7 @@ ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
+  | Frm _ -> "(0=0)"
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
@@ -209,8 +212,11 @@ let omega_of_formula_old i f  =
 (*   let pr = !print_formula in *)
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
+let is_local_solver = ref (false: bool)
 
- let omegacalc = ref ("oc":string)
+let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+else ref ("oc":string)
+(* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
 (* let omegacalc = ref ("/home/locle/workspace/hg/cparser-1/sleekex/omega_modified/omega_calc/obj/oc": string) *)
@@ -229,7 +235,7 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag then
+	(if !log_all_flag && (not !Globals.smt_compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done
@@ -237,7 +243,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -909,7 +915,10 @@ let simplify (pe : formula) : formula =
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
-let simplify (pe : formula) : formula =
+let simplify (pe : formula) : formula = if not !Globals.oc_simplify then
+  (* let _ = print_endline ("OC.Simplify: " ^ (!print_pure pe) ) in *)
+  pe
+else
   match (do_with_check "" simplify pe)
   with 
     | None -> pe

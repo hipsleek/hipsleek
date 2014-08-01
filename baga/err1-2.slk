@@ -1,0 +1,22 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//1. must failure. cause:15.1 x=null |-  x!=null
+checkentail x=null  |- x::node<_,_>.
+print residue.
+
+expect Fail_Must.
+
+//2. must failure. cause:22  x=1 |-  x=null (must-bug).
+checkentail x::node<_,_> |- x=null.
+print residue.
+
+expect Fail_Must.
+
+//3
+checkentail true |- x::node<_,_>.
+
+expect Fail_Must.

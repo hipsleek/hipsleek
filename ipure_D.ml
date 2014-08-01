@@ -57,6 +57,7 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 
 
 and p_formula = 
+  | Frm of ((ident * primed) * loc)
   | XPure of xpure_view
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)

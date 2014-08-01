@@ -108,9 +108,9 @@ GLOBAL: expression;
         Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
       else
         let tmp = 
-          if is_node y & is_zero x then 
+          if is_node y && is_zero x then 
             Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-          else if is_node x & is_one y then 
+          else if is_node x && is_one y then 
             Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
           else if is_self_var y then 
             Neq (Var(get_var "self" tlist, loc), Null loc, loc)
@@ -138,9 +138,9 @@ GLOBAL: expression;
         BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
-          if is_node x & is_zero y then 
+          if is_node x && is_zero y then 
             Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-          else if is_node y & is_one x then 
+          else if is_node y && is_one x then 
             Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
           else if is_self_var x then 
             Eq (Var(get_var "self" tlist, loc), Null loc, loc)
@@ -154,10 +154,10 @@ GLOBAL: expression;
         BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
-          if is_node y & is_zero x then 
+          if is_node y && is_zero x then 
             Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
           else
-          if is_node x & is_one y then 
+          if is_node x && is_one y then 
             Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
           else
           if is_self_var y then 
