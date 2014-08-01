@@ -1,17 +1,9 @@
 
 checkentail x_1 = x_2+1  |- x_2 = x_1-1.
+print residue.
+// x_1 -> x
+// x_2 -> x1
 
-/*
-run_infer:
- emp&x=1+x1&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&x+1=x1&{FLOW,(21,22)=__norm}[]
-
-new:
-
-run_infer:
- emp&x1=1+x&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&x+1=x1&{FLOW,(21,22)=__norm}[]
-
-*/
-
-checkentail x_1 = x_2+1  |- x_2 = x_1-1.
-
-checkentail x_3 = x_4+1 |- x_4 = x_3-1.
+checkentail x1 = x_2+1  |- x_2 = x1-1.
+print residue.
+// x1 
