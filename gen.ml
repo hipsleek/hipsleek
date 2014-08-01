@@ -1599,8 +1599,9 @@ struct
 	tasks # add_task_instance m1 0.
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
-    else 
-      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+    else
+      (* let _ = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
     if (!Globals.profiling) then

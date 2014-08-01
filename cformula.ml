@@ -14915,6 +14915,21 @@ let translate_waitlevel_formula (f : formula) : formula =
       !print_formula !print_formula
       translate_waitlevel_formula_x f
 
+let translate_waitS_rel_x (f0 : formula) : formula =
+  let f_waitS_pure arg f = Some (CP.translate_waitS_pure f, []) in
+  (* Ignore f_memo *)
+  let f_memo = (fun _ a-> Some (a,[])),(fun a _->(a,[])),(fun _ a-> (a,[[]])),(fun a _ -> (a,[])),(fun a _ -> (a,[])) in
+  let f_pure = f_waitS_pure, nonef2, nonef2 in
+  let f_f = (fun _ -> None), (fun _ _-> None), (fun _ _-> None), f_pure, f_memo in
+  let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
+  let arg = () in
+  fst (trans_formula f0 arg f_f f_arg (fun l1 -> List.concat l1))
+
+let translate_waitS_rel (f : formula) : formula =
+  Debug.no_1 "translate_waitS_rel"
+      !print_formula !print_formula
+      translate_waitS_rel_x f
+
 let infer_lsmu_formula_x (f : formula) : formula =
   let rec helper f =
   match f with

@@ -4312,12 +4312,18 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                   else (*if not -> do not consider ls_var as a ref-vars*)
                                                     ref_vars,new_post
                                               in
-	                                      let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+	                                      let rs1 =CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
                                               let fet es = {es with CF.es_formula = CF.subst_hvar es.CF.es_formula es.CF.es_ho_vars_map ; CF.es_ho_vars_map = [];} in
                                               let rs1 = CF.transform_context (fun es -> CF.Ctx (fet es)) rs1 in
-
-					          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
-                                                  let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
+                                              let f_waitS_rel es = {es with CF.es_formula = CF.translate_waitS_rel es.CF.es_formula;} in
+                                              let rel_sv = CP.mk_spec_var Globals.waitS_name in
+                                              let rs1 =
+                                                if (Gen.BList.mem_eq CP.eq_spec_var_ident rel_sv post_fv)
+                                                then CF.transform_context (fun es -> CF.Ctx (f_waitS_rel es)) rs1 
+                                                else rs1
+                                              in
+					      let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
+                                              let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                                          let rs3 = add_path_id rs2 (pid,i) (-1) in

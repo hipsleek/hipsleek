@@ -672,18 +672,18 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
-		    let _ = Gen.Profiling.push_time "typechecker : check_exp" in
-					let _ = if !Globals.tc_drop_unused then
-							let spec_names = List.map CP.name_of_spec_var ((CF.context_fv ctx1)@(CF.struc_fv post_struc)) in
-							proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd proc.proc_args))
-							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
-							else () in
+		    (* let _ = Gen.Profiling.push_time "typechecker : check_exp" in *)
+		    let _ = if !Globals.tc_drop_unused then
+		      let spec_names = List.map CP.name_of_spec_var ((CF.context_fv ctx1)@(CF.struc_fv post_struc)) in
+		      proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd proc.proc_args))
+		      ;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
+		    else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
                     (* let _ = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
                     (*Clear es_pure before check_post*)
 	            let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
                     let res_ctx = CF.list_failesc_to_partial res_ctx in
-                    let _ = Gen.Profiling.pop_time "typechecker : check_exp" in
+                    (* let _ = Gen.Profiling.pop_time "typechecker : check_exp" in *)
 	            (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	    let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	            (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
@@ -1221,9 +1221,12 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 and check_exp prog proc ctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
-      Gen.Profiling.push_time "check_exp_a"; 
-      let res = check_exp_a prog proc ctx e0 label in
-      Gen.Profiling.pop_time "check_exp_a"; res) ctx e0
+      Gen.Profiling.push_time "check_exp_a";
+      try
+        let res = check_exp_a prog proc ctx e0 label in
+        Gen.Profiling.pop_time "check_exp_a"; res
+      with ex -> Gen.Profiling.pop_time "check_exp_a"; raise ex
+  ) ctx e0
 
 (* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
 and get_xpure_of_formula f = 1
@@ -1481,6 +1484,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
 	    Gen.Profiling.push_time "[check_exp] BConst";
+            try
 	    let res_v = CP.mkRes bool_type in
 	    let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
             (* TODO: Slicing - Can we mark a boolean constant as linking var                 *)
@@ -1496,6 +1500,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	    Gen.Profiling.push_time "[check_exp] BConst";
 	    res
+            with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
 	  end
 
         | Bind ({ exp_bind_type = body_t;
@@ -1721,6 +1726,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_block_local_vars = local_vars;
           exp_block_pos = pos}) -> begin
             Gen.Profiling.push_time "[check_exp] Block";
+            try
             let vss = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) local_vars in
             stk_vars # push_list vss;
 	    let ctx1 = check_exp prog proc ctx e post_start_label in
@@ -1735,6 +1741,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* in *)
             Gen.Profiling.pop_time "[check_exp] Block";
             res
+            with ex -> Gen.Profiling.pop_time "[check_exp] Block"; raise ex
 	  end
         | Cast ({ exp_cast_target_type = target_typ;
                   exp_cast_body = org_exp;
@@ -2372,11 +2379,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.pop_esc_level_list ctx5 pid
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
-    let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
+    let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       let pr = Cprinter.string_of_list_failesc_context in
       Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
-    let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
-      Gen.Profiling.do_1 "check_exp1" check_exp1 ctx in
+    let check_exp1_x (ctx : CF.list_failesc_context) : CF.list_failesc_context =
+      Gen.Profiling.do_1 "check_exp1" check_exp1_a ctx in
 
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
@@ -2395,7 +2402,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       Debug.ninfo_hprint (add_str "check_exp1:failed?:"Cprinter.string_of_list_failesc_context) fl no_pos;
     (* Debug.info_hprint (add_str "check_exp1:CURRENT:"Cprinter.string_of_list_failesc_context) cl no_pos; *)
     (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
-    ((check_exp1 failesc) @ fl)		
+    ((check_exp1_x failesc) @ fl)		
 	
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
