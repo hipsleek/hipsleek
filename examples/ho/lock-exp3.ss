@@ -1,6 +1,10 @@
 /*
   WAIT <S |-> l > is represented as a relation waitS<G,S,d>
   waitS<G,S,d> ==translate== {(c,d) | c in S}
+
+  Working, but pretty slow, maybe due to the translation
+  (and also Mona).
+
  */
 
 class lck extends Object {}

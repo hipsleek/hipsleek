@@ -42,3 +42,5 @@ echo "======= lock-exp.ss  ======"
 ../../hip lock-exp.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.n
 echo "======= lock-exp2.ss  ======"
 ../../hip lock-exp2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.n
+echo "======= lock-exp3.ss (slow) ======"
+../../hip lock-exp3.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp3.ss.n
