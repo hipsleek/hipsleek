@@ -125,16 +125,16 @@ void main(LockSet ls,LockSet ls1, LockSet ls2,WAIT g)
 
   fork_thrd(tid,l1,l2,ls1,g);
 
-  /* acquire_lock(l2,ls,g); */
-  /* acquire_lock(l1,ls,g); // l1 -> l2 */
+  acquire_lock(l2,ls,g);
+  acquire_lock(l1,ls,g); // l1 -> l2
 
-  /* release_lock(l1,ls); */
-  /* release_lock(l2,ls); */
+  release_lock(l1,ls);
+  release_lock(l2,ls);
 
-  /* join_thrd(tid,l1,l2,ls1,g); // l2 -> l1 */
-  /* //WAIT{l1 -> l2, l2 -> l1} --> ERROR */
+  join_thrd(tid,l1,l2,ls1,g); // l2 -> l1
+  //WAIT{l1 -> l2, l2 -> l1} --> ERROR
 
-  /* dispose_lock(l1); */
-  /* dispose_lock(l2); */
+  dispose_lock(l1);
+  dispose_lock(l2);
 
 }

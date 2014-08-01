@@ -11595,7 +11595,22 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (add_str "lhs_b" pr3) 
       (add_str "rhs_b" pr3) pr2
       (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) a estate conseq (Base lhs_b) (Base rhs_b) 
-      
+
+(* lhs <==> rhs: instantiate any high-order variables in rhs
+   Currently assume that only HVar is in the rhs
+*)
+and match_one_ho_arg_simple_x ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+  let hvars = CF.extract_hvar_f rhs in
+  [List.hd hvars, lhs]
+
+and match_one_ho_arg_simple ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list = 
+  let pr1 = (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) in
+  let pr_out = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+  Debug.no_1 "match_one_ho_arg_simple"
+      pr1
+      pr_out
+      match_one_ho_arg_simple_x (lhs,rhs)
+
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -11763,6 +11778,17 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 in
 		let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 		let _ = reset_int2 () in
+
+                let ho_ps1 = CF.get_node_ho_args node in
+                let ho_ps2 = CF.get_node_ho_args lhs_heap in
+                let coer_rhs_new =
+                  if (ho_ps1=[]) then coer_rhs_new else
+                    let args = List.combine ho_ps1 ho_ps2 in
+                    let maps = List.map match_one_ho_arg_simple args in
+                    let maps = List.concat maps in
+                    let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
+                    coer_rhs_new
+                in
 		(*let xpure_lhs = xpure prog f in*)
 		(*************************************************************************************************************************************************************************)
 		(* delay the guard check *)
@@ -12412,14 +12438,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             let coer_rhs_new =
               if (ho_ps1=[]) then coer_rhs_new else
                 let args = List.combine ho_ps1 ho_ps2 in
-                let match_one_ho_arg_left ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
-                  (* lhs <==> rhs: instantiate any high-order variables in rhs
-                     Currently assume that only HVar is in the rhs
-                  *)
-                  let hvars = CF.extract_hvar_f rhs in
-                  [List.hd hvars, lhs]
-                in
-                let maps = List.map match_one_ho_arg_left args in
+                let maps = List.map match_one_ho_arg_simple args in
                 let maps = List.concat maps in
                 let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
                 coer_rhs_new
@@ -12732,14 +12751,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let coer_rhs_new =
         if (ho_ps1=[]) then coer_rhs_new else
           let args = List.combine ho_ps1 ho_ps2 in
-          let match_one_ho_arg_normalize ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
-            (* lhs <==> rhs: instantiate any high-order variables in rhs
-               Currently assume that only HVar is in the rhs
-            *)
-            let hvars = CF.extract_hvar_f rhs in
-            [List.hd hvars, lhs]
-          in
-          let maps = List.map match_one_ho_arg_normalize args in
+          let maps = List.map match_one_ho_arg_simple args in
           let maps = List.concat maps in
           let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
           coer_rhs_new
