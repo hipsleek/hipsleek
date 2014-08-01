@@ -1,0 +1,8 @@
+checkentail (r & (a|b)| !r& !(a|b)) & a |- r.
+
+checkentail (r & (a|b)| !r& !(a|b)) & b |- r.
+
+checkentail (r & (a|b)| !r& !(a|b)) & !b |- !r.
+
+checkentail (r & (a|b)| !r& !(a|b)) & !b & !a |- !r.
+
