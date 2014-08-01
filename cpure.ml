@@ -12050,6 +12050,22 @@ and translate_waitS_pure (f: formula) : formula =
   Debug.no_1 "translate_waitS_pure" !print_formula !print_formula
   translate_waitS_pure_x f
 
+and translate_set_comp_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
+  (*attempt to concretize bag constraints*)
+  let concrete_bags = get_concrete_bag_pure f in
+  (*extract waitS relations, and translate them*)
+  let rel_sv = mk_spec_var Globals.set_comp_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  nf
+
+and translate_set_comp_pure (f: formula) : formula =
+  Debug.no_1 "translate_set_comp_pure" !print_formula !print_formula
+  translate_set_comp_pure_x f
+
 and find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with

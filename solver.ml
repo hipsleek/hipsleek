@@ -12652,7 +12652,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         *)
         let head_node = List.hd (CF.split_star_conjunctions lhs_heap) in
         let vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap @ MCP.mfv lhs_guard) (CF.h_fv head_node) in
-        let vars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name)) vars in (*ignore cyclic & acyclic rels *)
+        let vars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name )) vars in (*ignore cyclic & acyclic rels *)
         Gen.BList.remove_dups_eq CP.eq_spec_var vars 
       in
       (* rename the bound vars *)
@@ -13128,7 +13128,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
             (* compute free vars in extra heap and guard *)
             let extra_vars =
               let vars = CF.fv coer_lhs in
-              let vars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name)) vars in (*ignore cyclic & acyclic rels *)
+              let vars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name )) vars in (*ignore cyclic & acyclic rels *)
               Gen.BList.remove_dups_eq CP.eq_spec_var vars 
             in
             (* rename the bound vars *)

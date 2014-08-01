@@ -692,6 +692,7 @@ let is_self_ident id = self=id
 
 let concrete_name = "concrete"
 let waitS_name = "waitS"
+let set_comp_name = "set_comp"
 let acyclic_name = "acyclic"
 let cyclic_name = "cyclic"
 
