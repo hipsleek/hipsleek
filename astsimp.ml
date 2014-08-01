@@ -1821,13 +1821,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               (f1, f2)
         | Some disj ->
               let f1 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos in
-              (* let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in *)
-              let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in
+              let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in
+              (* let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in *)
               (f1, f2)
       in
       let (baga_rs1, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
-      (* let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in *)
-      (* let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in *)
+      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
+      let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in
       (* let _ = Debug.ninfo_hprint (add_str "context1" Cprinter.string_of_context) ctx1 no_pos in *)
       let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let baga_over_formula = match vdef.C.view_baga_over_inv with
@@ -1835,8 +1835,15 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
+      let baga_under_formula = match vdef.C.view_baga_under_inv with
+        | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
+        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos
+      in
+      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in
+      let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in
       let _ =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) (* && not(CF.isFailCtx baga_rs2) *) && not(CF.isFailCtx baga_over_rs) then
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) (* && not(CF.isFailCtx baga_rs2) *) &&
+          not(CF.isFailCtx baga_over_rs) && not(CF.isFailCtx baga_under_rs) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
 	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
