@@ -2249,7 +2249,7 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
-let tp_imply_translate_cyclic ante conseq =
+let tp_imply_translate_cyclic_x ante conseq =
   (*
     CASE 1:
 
@@ -2268,6 +2268,13 @@ let tp_imply_translate_cyclic ante conseq =
     (new_ante,new_conseq)
   else
     (ante,conseq)
+
+(* For cyclic() relation *)
+let tp_imply_translate_cyclic ante conseq =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair pr pr in
+  Debug.no_2 "tp_imply_translate_cyclic" pr pr pr_out
+      tp_imply_translate_cyclic_x ante conseq
 
 let tp_imply_translate_waitS_x ante conseq =
   let ante = concretize_bag_pure ante in
@@ -2521,6 +2528,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             let b_no_bag = redlog_imply ante_no_bag conseq_no_bag in
             (b_no_float && b_no_bag)
           else
+            if (is_bag_ante || is_bag_conseq) && (is_rel_ante || is_rel_conseq) then
+              let ante_no_rel = CP.drop_rel_formula ante in
+              let ante_no_bag = CP.drop_bag_formula ante in
+              let conseq_no_rel = CP.drop_rel_formula conseq in
+              let conseq_no_bag = CP.drop_bag_formula conseq in
+              let b_no_rel = mona_imply ante_no_rel conseq_no_rel in
+              let b_no_bag = z3_imply ante_no_bag conseq_no_bag in
+              (b_no_rel && b_no_bag)
+            else
             if (is_rel_ante) || (is_rel_conseq) then
               (* let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in *)
               (* let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in *)

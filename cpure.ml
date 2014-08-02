@@ -9494,7 +9494,7 @@ let is_lexvar (f:formula) : bool =
                 | _ -> false)
     | _ -> false
 
-let is_cyclic_rel (f:formula) : bool =
+let is_cyclic_rel_x (f:formula) : bool =
   (match f with
     | BForm ((b,_),_) -> 
           (match b with
@@ -9503,6 +9503,10 @@ let is_cyclic_rel (f:formula) : bool =
                   else false
             | _ -> false)
     | _ -> false)
+
+let is_cyclic_rel (f:formula) : bool =
+  Debug.no_1 "is_cyclic_rel" !print_formula string_of_bool
+      is_cyclic_rel_x f
 
 let is_waitS_rel (f:formula) : bool =
   (match f with

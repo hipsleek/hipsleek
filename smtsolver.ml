@@ -105,6 +105,7 @@ let smt_of_typed_spec_var sv =
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
 let rec smt_of_exp a =
+  let str = !Cpure.print_exp a in
   match a with
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> smt_of_spec_var sv
@@ -124,7 +125,7 @@ let rec smt_of_exp a =
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
-  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2 should not appear here)")
+  | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here : "  ^ str)
   | CP.List _ 
   | CP.ListCons _
   | CP.ListHead _
