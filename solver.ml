@@ -11804,6 +11804,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		(* let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
 		(* let _ = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
 		let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
+                let new_f = Cformula.translate_set_comp_rel new_f in
 		(* add the guard to the consequent  - however, the guard check is delayed *)
                 (* ?? *)
 		let formula,to_aux_conseq = 
@@ -12019,6 +12020,16 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                         coer_rhs_new
                   in
 
+                  let ho_ps1 = CF.get_node_ho_args node in
+                  let ho_ps2 = CF.get_node_ho_args lhs_heap in
+                  let coer_rhs_new =
+                    if (ho_ps1=[]) then coer_rhs_new else
+                      let args = List.combine ho_ps1 ho_ps2 in
+                      let maps = List.map match_one_ho_arg_simple args in
+                      let maps = List.concat maps in
+                      let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
+                      coer_rhs_new
+                  in
                   (* Currently, I am trying to change in advance at the trans_one_coer *)
                   (* Add origins to the body of the coercion which consists of *)
                   (*   several star-conjunction nodes. If there are multiple nodes *)
@@ -12042,6 +12053,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		    (*if ((fun (c1,_,_)-> c1) (TP.imply_one 99 xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
                     (*mark __Error case, return 2 or 1*)
 		    let new_f = normalize_replace coer_rhs_new f pos in
+                    let new_f = Cformula.translate_set_comp_rel new_f in
 		    (* if (not(!lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
 		    (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
                     let f1 = CF.formula_is_eq_flow coer_rhs_new !error_flow_int in
@@ -12070,6 +12082,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		            let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			    (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		            let new_f = mkOr f1 f2 pos in
+                            let new_f = Cformula.translate_set_comp_rel new_f in
 			    (* if (not(!lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
 			    (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
 			    (1, new_f)
@@ -12481,6 +12494,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
                     (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
                     let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
                     let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
+                    let new_ante = Cformula.translate_set_comp_rel new_ante in
                     let new_es = {new_estate with es_formula=new_ante; es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace); es_heap = HEmp} in
                     let new_ctx = (Ctx new_es) in
 
@@ -12766,6 +12780,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
       (***********Handle high-order argument: END**********)
       (*=====================================================*)
+      let coer_rhs_new = CF.translate_set_comp_rel coer_rhs_new in
 
       Debug.tinfo_pprint  ("normalize_w_coers: process_one: check extra heap") no_pos;
       Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
@@ -12789,6 +12804,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                   let new_ante = normalize_replace es.es_formula coer_rhs_new no_pos in
                   (* let new_ante = add_mix_formula_to_formula p new_ante in *)
                   let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
+                  let new_ante = Cformula.translate_set_comp_rel new_ante in
                   let h1,p1,fl1,_,_ = split_components new_ante in
                   let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;

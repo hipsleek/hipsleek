@@ -1463,7 +1463,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           it is also considered a split lemma?
         *)
         (*special case, detecting inconsistency using lemmas*)
-        if rhs_length=0  then Normalize true else 
+        if rhs_length=0 then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
