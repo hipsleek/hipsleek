@@ -1,9 +1,12 @@
 /*
-  WAIT <S |-> l > is represented as a relation waitS<G,S,d>
-  waitS<G,S,d> ==translate== {(c,d) | c in S}
 
-  Working, but pretty slow, maybe due to the translation
-  (and also Mona).
+  WAIT <S |-> l > is represented as a built-in
+  prim_pred WAITS<G,S,d>
+
+  //normalization lemma
+  lemma "set_comp" self::WAITS<G,S,d> & concrete(S) -> emp & set_comp(G,S,d);
+
+  set_comp(G,S,d) will be translated under the hook
 
  */
 
@@ -32,15 +35,19 @@ lemma "frac-lock-combine" self::Lock{%PPP}(f1)<> * self::Lock{%PPP}(f2)<> -> sel
 lemma "error1" self::Held{%PPPP}<> * self::Unheld<> ->  emp & flow __Fail;
 
 
-
 lemma_split "wait-split" self::WAIT<S> -> self::WAIT<S> * self::WAIT<S>;
 
 lemma "wait-combine" self::WAIT<S1> * self::WAIT<S2> -> self::WAIT<S> & S=union(S1,S2);
 
-lemma "deadlock" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail;
-
 //normalization of dead threads
 lemma "thrd_normalize" self::THRD2{%Q}<l1,l2,ls,g> * self::DEAD<> -> %Q;
+
+lemma "deadlock" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail;
+
+//normalization lemma
+lemma "set_comp" self::WAITS<G,S,d> & concrete(S) -> emp & set_comp(G,S,d);
+
+
 
 /********************************************/
 /****************THREADS*********************/
@@ -68,7 +75,7 @@ lck create_lock() // with %P
 void acquire_lock(lck l, LockSet ls, WAIT g)
   requires l::Lock{%P}(f)<> * ls::LockSet<S> * g::WAIT<G>
   ensures l::Lock{%P}(f)<> * %P * l::Held{%P}<> * ls::LockSet<S1> 
-          * g::WAIT<G1> & G1=union(G,G2) & waitS(G2,S,l) & S1=union(S,{l});
+  * g::WAIT<G1> * g::WAITS<G2,S,l> & G1=union(G,G2) & S1=union(S,{l});
 
 void release_lock(lck l,LockSet ls)
   requires l::Held{%P}<> * %P * ls::LockSet<S>
@@ -80,7 +87,7 @@ void dispose_lock(lck l)
 /********************************************/
 /********************************************/
 
-/* void thread1(lck l1, LockSet ls, WAIT g) */
+/* void thread(lck l1, LockSet ls, WAIT g) */
 /*   requires l1::Lock{emp}(f1)<> * ls::LockSet<S> * g::WAIT<G> & S={} & G={} */
 /*   ensures l1::Lock{emp}(f1)<> * ls::LockSet<S> * g::WAIT<G> & S={} & G={}; */
 /* { */
@@ -102,7 +109,7 @@ void thread1(lck l1, lck l2, LockSet ls,WAIT g)
 }
 
 void thread2(lck l1, lck l2, LockSet ls,WAIT g)
-  requires l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S> 
+  requires l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S>
            * g::WAIT<G> & G={} & S={} & l1!=l2
   ensures l1::Lock{emp}(0.5)<> * l2::Lock{emp}(0.5)<> * ls::LockSet<S1>
   * g::WAIT<G1> & G1={tup2(l2,l1)} & S1={};
