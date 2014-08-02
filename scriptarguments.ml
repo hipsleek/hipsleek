@@ -556,6 +556,8 @@ let common_arguments = [
   (* incremental spec *)
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
+  ("--inv-test", Arg.Set Globals.do_test_inv, "Enable explicit checking of invariant (for run-fast-test)");
+  ("--dis-inv-test", Arg.Clear Globals.do_test_inv, "Disable explicit checking of invariant (for run-fast-test)");
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");

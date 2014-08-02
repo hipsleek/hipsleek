@@ -788,6 +788,16 @@ Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
 Unexpected result with : inflem.slk (failed check(s): {E2#Valid}) 
 
 ====================================================================
+# sleek3.slk
+
+Entailing lemma lem_12: Valid.
+
+Valid Lemmas : [lem_12:==>] added to lemma store.
+
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Fail.", "Valid.Fail.Valid."],
+
 ===================================================================
 ====================================================================
 ====================================================================

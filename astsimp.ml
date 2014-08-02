@@ -1848,6 +1848,19 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1 pos in
       let over_fail = (CF.isFailCtx baga_over_rs) in
       let under_fail = (CF.isFailCtx baga_under_rs) in
+      let do_test_inv msg inv fail_res =
+        if !Globals.do_test_inv then
+          match inv with
+            | Some f -> 
+                  if fail_res then
+                    print_endline_quiet ("Failure.("^msg^")") 
+                  else 
+                    print_endline_quiet ("Valid.("^msg^")")
+            | None -> ()
+        else ()
+      in
+      let _ = do_test_inv "Over" over_f over_fail in
+      let _ = do_test_inv "Under" under_f under_fail in
       let _ =
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) (* && not(CF.isFailCtx baga_rs2) *) &&
           not(over_fail) && not(under_fail) then
@@ -1872,7 +1885,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         else 
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
-          report_error pos ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2)
+          let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
+          if !Globals.do_test_inv then report_warning pos msg
+          else report_error pos msg
       in ()
     else ()
   in

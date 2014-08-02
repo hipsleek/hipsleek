@@ -1711,7 +1711,11 @@ $output_file = "log";
                       ["sleek1.slk", "", "", "Fail."],
                       ["sleek10.slk", "", "", "Valid.Fail."],
                       ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      # why did not detect missing Valid
                       ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Valid.", "Valid.Fail.Valid."],
+                      # why did not detect Valid but expect Fail
+                      ["sleek3.slk", "--elp", "Fail.", "Valid.Fail.Valid."],
                       ["sleek4.slk", "", "", "Valid.Valid."],
                       ["sleek6.slk", "", "", "Valid.Valid."],
                       ["sleek7.slk", " --dis-lem-gen ", "Valid.", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
@@ -1720,6 +1724,8 @@ $output_file = "log";
                       ["sleek9.slk", " --dis-lem-gen ", "Valid.Valid.","Valid.Fail.Valid.Valid."],
                       ["sleek12-lend.slk", "", "", "Valid.Fail.Valid."],
                       ["sleek13-lend.slk", "", "", "Valid.Valid.Valid.Fail."],
+                      ["lst-under1.slk", "--inv-test", "Valid.Fail.", "Valid.Fail."],
+                      ["lst-under2.slk", "--inv-test", "Valid.Fail.", "Valid.Fail."],
                       ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
