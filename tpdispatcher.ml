@@ -27,12 +27,11 @@ let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
-(* let pure_tp = ref OM *)
+let pure_tp = ref OM
 (* let tp = ref OZ *)
-(* let tp = ref Redlog *)
+let tp = ref Redlog
 (* let tp = ref AUTO *)
-let pure_tp = ref PARAHIP
-let tp = ref PARAHIP
+(* let tp = ref PARAHIP *)
 (* let tp = ref Z3 *)
 
 let provers_process = ref None

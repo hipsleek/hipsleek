@@ -44,7 +44,7 @@ let enable_para () =
   perm:= (match !perm with
     | NoPerm -> Frac (*the default is fractional permission*)
     | _ -> !perm);
-  ann_vp:= false;
+  ann_vp:= true;
   allow_ls:= true;
   (*
     need to enable filtering_flag, so that we could prove more programs.

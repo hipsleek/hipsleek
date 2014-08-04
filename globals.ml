@@ -901,11 +901,11 @@ let allow_locklevel = ref false (*enable locklevel during verification*)
   true -> threads as resource
   false -> threads as AND-conjunctions
 *)
-let allow_threads_as_resource = ref true
+let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 let infer_vp = ref true (* infer vperm automatically*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
