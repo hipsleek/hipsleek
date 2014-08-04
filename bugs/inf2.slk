@@ -1,4 +1,4 @@
-checkentail \inf +(~\inf)>=0 |- false.
+checkentail \inf - \inf>=0 |- false.
 
 checkentail !(\inf - \inf<0) |- false.
 

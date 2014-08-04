@@ -264,6 +264,7 @@ let common_arguments = [
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--en-inf-qe", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
 	Globals.allow_inf_qe := true;
     (*Globals.early_contra_flag := false;
     Globals.simpl_unfold2 := true;
@@ -274,6 +275,8 @@ let common_arguments = [
     Globals.ann_vp := false;),
 	"enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+    Globals.allow_norm := false;
 	Globals.allow_inf_qe_coq := true;
     Globals.early_contra_flag := false;
     (*Globals.simpl_unfold2 := true;
@@ -284,6 +287,7 @@ let common_arguments = [
     Globals.ann_vp := false;),
     "use the quantifier elimination procedure implemented in coq for PAinfinity ");
   ("--en-inf-qe-coq-simp", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
 	Globals.allow_inf_qe_coq := true;
     Globals.allow_inf_qe_coq_simp := true;
     Globals.early_contra_flag := false;
@@ -295,6 +299,8 @@ let common_arguments = [
     Globals.ann_vp := false;),
     "use the quantifier elimination procedure with simplification implemented in coq for PAinfinity ");
   ("--en-qe-fix", Arg.Unit( fun _ ->
+	Globals.allow_inf := true;
+	Globals.allow_inf_qe := true;
 	Globals.allow_qe_fix := true;),
     "use the quantifier elimination procedure for inference ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");

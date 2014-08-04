@@ -2126,7 +2126,10 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 
 and mkNot_s f :formula = mkNot f None no_pos
 
-and mkNot_dumb f lbl1 pos0:formula =  match f with
+and mkNot_dumb f lbl1 pos0:formula = 
+if(not !Globals.allow_norm  && !Globals.allow_inf_qe_coq) then Not (f, lbl1,pos0)
+else 
+ match f with
   | BForm (bf,lbl) -> begin
       let (pf,il) = bf in
       match pf with
@@ -5626,7 +5629,7 @@ and arith_simplify_x (pf : formula) :  formula =
   (* temporarily do not prevent this simplification because it helps
   convert proofs into normal form such as those of Mona (e.g. Mona
   does not allow subtraction*)
-  (* if (not !Globals.allow_norm) then pf else *)
+  if (not !Globals.allow_norm) && !Globals.allow_inf_qe_coq then pf else
   let rec helper pf = match pf with
     |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
     |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
