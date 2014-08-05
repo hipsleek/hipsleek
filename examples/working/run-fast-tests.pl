@@ -2085,8 +2085,10 @@ sub sleek_process_file  {
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
-      $lem = index($script_arguments, "--elp");
-      if (("$param" =~ "lemmas") ) {  $lem = 1; }
+      $lem0 = index($script_arguments, "--elp");
+      print "\n lem fst : $lem0";
+      if($lem0 >= 0 ) { $lem0 = 1; }
+      if (("$param" =~ "lemmas") ) {  $lem0 = 1; }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
@@ -2101,7 +2103,8 @@ sub sleek_process_file  {
       foreach $test (@{$t_list})
       {
           my $extra_options = $test->[1];
-          my $leme = index($extra_options, "--elp") + $lem;
+          my $leme = index($extra_options, "--elp");
+          if($leme >= 0) { $lem = 1;} else { $lem = $lem0; }
           if ("$extra_options" eq "") {
               print "Checking $test->[0]\n";
           } else {
@@ -2143,11 +2146,11 @@ sub sleek_process_file  {
               }
           }
           #print "\n!!!!!Ent Res: $entail_results \n";
-          #print "\n!!!!!Exp Res: $test->[2] $leme\n";
+          #print "\n!!!!!Exp Res: $test->[2] $lem\n";
           #print "\n!!!!!Exp Res: $test->[2] $lemmas_results\n";
 
           my @failures = ();
-          if  (($leme >= 0 )  && ($lemmas_results ne $test->[2])){
+          if  (($lem >= 0 )  && ($lemmas_results ne $test->[2])){
               if (!$lemmas_results) { @failures = ('no result (!!!check script options, provers, etc)');}
                 else                { @failures = grep_failures($lemmas_results, $test->[2],"L");}
           }
