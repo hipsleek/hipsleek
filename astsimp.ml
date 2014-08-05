@@ -1793,13 +1793,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let old_baga_imm_flag = !Globals.baga_imm in
       let _ = Globals.baga_imm := true in
       let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in
-      let _ = Debug.binfo_hprint (add_str "xform'" Cprinter.string_of_mix_formula) xform' no_pos in
+      let _ = Debug.ninfo_hprint (add_str "xform'" Cprinter.string_of_mix_formula) xform' no_pos in
       let _ = Globals.baga_imm := old_baga_imm_flag in
       let _ = Debug.ninfo_hprint (add_str "view_name" (fun x -> x)) vn no_pos in
       let _ = Debug.ninfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) vdef.C.view_x_formula no_pos in
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
-      let _ = Debug.binfo_hprint (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
+      let _ = Debug.ninfo_hprint (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
       let xform1 =
         if vdef.C.view_kind = C.View_EXTN then
           let r = Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name

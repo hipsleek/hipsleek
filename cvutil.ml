@@ -1523,7 +1523,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
                     let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
                     let vinv1 = subst_m_fun vinv in
-                    let _ = Debug.binfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
                     (vinv1, ba) in
                   (match lbl_lst with
                     | None -> helper ()
