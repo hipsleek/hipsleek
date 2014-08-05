@@ -1768,6 +1768,7 @@ let process_shape_extract sel_vnames=
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
+  let _ = Debug.binfo_pprint ("run_entail_check_1") no_pos in
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
       let res, _, _ = r in
@@ -1777,9 +1778,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
        else () in
       r
   ) iconseq0
-  
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  let with_timeout = 
+  let _ = Debug.binfo_pprint ("run_entail_check_2") no_pos in
+  let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
     (false, fctx,[]) in
@@ -1946,7 +1948,7 @@ let process_sat_check_x (f : meta_formula) = true
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
-  Debug.no_1 "process_entail_check_helper" pr (fun _ -> "?") process_sat_check_x f
+  Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
