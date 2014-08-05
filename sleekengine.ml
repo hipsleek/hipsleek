@@ -1768,7 +1768,6 @@ let process_shape_extract sel_vnames=
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  let _ = Debug.binfo_pprint ("run_entail_check_1") no_pos in
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
       let res, _, _ = r in
@@ -1780,7 +1779,6 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
   ) iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  let _ = Debug.binfo_pprint ("run_entail_check_2") no_pos in
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
