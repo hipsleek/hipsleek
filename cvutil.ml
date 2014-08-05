@@ -1435,9 +1435,11 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * C
       formula_exists_pure = qp;
       formula_exists_pos = pos}) ->
           let pqh, addrs', _ = xpure_h prog qh qp 1 in
+          let _ = Debug.ninfo_hprint (add_str "pqh" Cprinter.string_of_mix_formula) pqh no_pos in
           let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
           let tmp1 = MCP.merge_mems qp pqh true in
           let res_form = MCP.memo_pure_push_exists qvars tmp1 in
+          let _ = Debug.ninfo_hprint (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
           (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in
   (* let _ = Debug.binfo_hprint (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
@@ -1521,7 +1523,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                     let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
                     let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
                     let vinv1 = subst_m_fun vinv in
-                    let _ = Debug.ninfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
+                    let _ = Debug.binfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
                     (vinv1, ba) in
                   (match lbl_lst with
                     | None -> helper ()

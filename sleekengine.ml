@@ -1942,6 +1942,12 @@ let print_exc (check_id: string) =
   dummy_exception() ; 
   print_string ("exception caught " ^ check_id ^ " check\n")
 
+let process_sat_check_x (f : meta_formula) = true
+
+let process_sat_check (f : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_1 "process_entail_check_helper" pr (fun _ -> "?") process_sat_check_x f
+
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)

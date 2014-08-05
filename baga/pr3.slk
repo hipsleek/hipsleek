@@ -9,4 +9,7 @@ checkentail x::ll_s<n> & m2=m3 & n=m1+1 & m1=m2 & m3=1 |- true.
 checkentail false |- x::ll_s<n> & m2=m3 & n=m1+1 & m1=m2 & m3=1.
 
 // conseq is struc formula --> not shorten
-checkentail x::ll_s<n> & n=2 |- x::ll_s<n_123> & m2=m3 & n_123=m1+1 & m1=m2 & m3=1 .
+checkentail x::ll_s<n> & n=2 |- x::ll_s<n_123> & m2=m3 & n_123=m1+1 & m1=m2 & m3=1.
+
+// no problem with explicit exists
+checkentail x::ll_s<n> & n=2 |- (exists n_123: x::ll_s<n_123> & n_123=2).

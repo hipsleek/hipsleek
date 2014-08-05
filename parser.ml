@@ -834,6 +834,7 @@ non_empty_command:
       | t=let_decl            -> t
       | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
+      | t= checksat_cmd     -> SatCheck t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
@@ -1972,6 +1973,10 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
+
+checksat_cmd:
+  [[ `CHECKSAT; t=meta_constr -> t
+  ]];
 
 ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
 
