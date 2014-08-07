@@ -1004,7 +1004,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
-  let fv_idents = 
+  let fv_idents =
     if !Globals.dis_impl_var then
       let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
       Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
@@ -1016,7 +1016,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
+  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
@@ -1930,19 +1930,28 @@ let print_exception_result s (num_id: string) =
   let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
   ()
 
+let print_sat_result (unsat: bool) (num_id: string) =
+  let res = if unsat then "UNSAT\n\n" else "SAT\n\n" in
+  silenced_print print_string (num_id^": "^res); flush stdout
+
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
+  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "")
     (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
-
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
-  dummy_exception() ; 
+  dummy_exception() ;
   print_string ("exception caught " ^ check_id ^ " check\n")
 
-let process_sat_check_x (f : meta_formula) = true
+let process_sat_check_x (f : meta_formula) =
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nCheck Sat "^(string_of_int nn) in
+  let (_,f) = meta_to_formula f false [] [] in
+  let f = Cvutil.prune_preds !cprog true f in
+  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  print_sat_result res num_id
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
@@ -1955,15 +1964,15 @@ let process_sat_check (f : meta_formula) =
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
-    try 
-      let valid, rs, _(*sel_hps*) = 
+    try
+      let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
-		let _ = if !Globals.trace_failure then 
-		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in 
+		let _ = if !Globals.trace_failure then
+		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
         false

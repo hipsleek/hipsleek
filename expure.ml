@@ -15,13 +15,13 @@ open Cprinter
 let find_baga_inv view =
   match view.Cast.view_baga_inv with
     | Some efpd -> efpd
-    | None -> 
+    | None ->
           begin
             match view.Cast.view_baga_x_over_inv with
               | Some efpd -> efpd
               | None -> failwith "cannot find baga inv 2"
           end
-  
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
