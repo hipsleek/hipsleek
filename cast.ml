@@ -2024,7 +2024,6 @@ let vdef_lemma_fold prog coer =
    Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
-  let _ = Debug.binfo_pprint "get_xpure_one" no_pos in
   match rm_br with
     | Some l -> let n=(List.length l) in
       if n<(List.length vdef.view_prune_branches) then
