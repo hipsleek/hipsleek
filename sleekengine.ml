@@ -1950,7 +1950,7 @@ let process_sat_check_x (f : meta_formula) =
   let num_id = "\nCheck Sat "^(string_of_int nn) in
   let (_,f) = meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  let res = Solver.unsat_base_nth 1 !cprog (ref 0) 1 f in
   print_sat_result res num_id
 
 let process_sat_check (f : meta_formula) =

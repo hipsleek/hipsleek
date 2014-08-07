@@ -8863,7 +8863,7 @@ and slicing_label_inference_view (view : I.view_decl) : I.view_decl =
           let str_lp = pr_list (fun (p, cutsize) -> (pr_list (pr_list Iprinter.string_of_var) p) ^ (string_of_int cutsize) ^ "\n") lp in
 
           print_string (str_lp)
-  ) lg in  
+  ) lg in
   view
 
 and trans_view_to_graph (lbf : IP.b_formula list) =
@@ -9041,12 +9041,11 @@ and check_barrier_wf prog bd =
             if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
             else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
             else (*check precision P * P = false , shold be redundant at this point*)
-              
               let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
               (* WN_all_lemma *)
               let f = Solver.normalize_formula_w_coers 8 prog empty_es f (Lem_store.all_lemma # get_left_coercion) (*prog.C.prog_left_coercions*) in
               Gen.Profiling.inc_counter "barrier_proofs";
-              if Solver.unsat_base_nth 3 prog (ref 0) f then (p1,p2)  
+              if Solver.unsat_base_nth 3 prog (ref 0) 0 f then (p1,p2)
               else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
       | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
     (*the pre sum totals full barrier fs get residue F1*)
@@ -9056,7 +9055,7 @@ and check_barrier_wf prog bd =
     (*let tot_pre = Solver.normalize_frac_formula prog tot_pre in*)
     (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
     Gen.Profiling.inc_counter "barrier_proofs";
-    if Solver.unsat_base_nth 4 prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
+    if Solver.unsat_base_nth 4 prog (ref 0) 0 tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
     else
       let tot_pre_bar = f_gen_tot fs in
       let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
@@ -9069,8 +9068,8 @@ and check_barrier_wf prog bd =
         let tot_post = Solver.normalize_formula_w_coers 10 prog empty_es tot_post (Lem_store.all_lemma # get_left_coercion) (*prog.C.prog_left_coercions*) in
         (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
         Gen.Profiling.inc_counter "barrier_proofs";
-        if Solver.unsat_base_nth 5 prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
-        else 
+        if Solver.unsat_base_nth 5 prog (ref 0) 0 tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
+        else
           let tot_post_bar = f_gen_tot ts in
           let _ = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
           let _ = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
@@ -9101,8 +9100,8 @@ and check_barrier_wf prog bd =
       (*should be made to use "and" on xpures to detect the contradiction, probably by looking only at the pures after normalization*)
         let nf = CF.mkStar f1 f2 CF.Flow_combine no_pos in
         (* WN_all_lemma - is this overriding of lemmas? *)
-        let nf = Solver.normalize_formula_w_coers 11 prog empty_es nf (Lem_store.all_lemma # get_left_coercion)(*prog.C.prog_left_coercions*) in   
-      if  Solver.unsat_base_nth 6 prog (ref 0) nf then () 
+        let nf = Solver.normalize_formula_w_coers 11 prog empty_es nf (Lem_store.all_lemma # get_left_coercion)(*prog.C.prog_left_coercions*) in
+      if  Solver.unsat_base_nth 6 prog (ref 0) 0 nf then ()
       else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st)^"  for preconditions: \n f1:   "^
           (Cprinter.string_of_formula f1)^"\n f2:    "^(Cprinter.string_of_formula f2))) in
     let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
