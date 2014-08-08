@@ -22,6 +22,11 @@ let find_baga_inv view =
               | None -> failwith "cannot find baga inv 2"
           end
 
+let find_baga_under_inv view =
+  match view.Cast.view_baga_under_inv with
+    | Some efpd -> efpd
+    | None -> Excore.EPureI.mk_false_disj
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
@@ -46,7 +51,8 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
               with Not_found -> failwith "cannot find in init_map too"
             else
               let view = List.find (fun v -> v.Cast.view_name = vnf.Cformula.h_formula_view_name) all_views in
-              find_baga_inv view
+              if !do_under_baga_approx then find_baga_under_inv view
+              else find_baga_inv view
           in
           let _ = Debug.ninfo_hprint (add_str "vnf.Cformula.h_formula_view_name" pr_id) vnf.Cformula.h_formula_view_name no_pos in
           let _ = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in

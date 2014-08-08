@@ -1930,9 +1930,12 @@ let print_exception_result s (num_id: string) =
   let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
   ()
 
-let print_sat_result (unsat: bool) (num_id: string) =
-  let res = if unsat then "UNSAT\n\n" else "SAT\n\n" in
-  silenced_print print_string (num_id^": "^res); flush stdout
+let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
+  let res = 
+    if unsat then "UNSAT\n\n" 
+    else if sat then "SAT\n\n"
+    else "UNKNOWN\n\n" 
+  in silenced_print print_string (num_id^": "^res); flush stdout
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
@@ -1947,11 +1950,15 @@ let print_exc (check_id: string) =
 
 let process_sat_check_x (f : meta_formula) =
   let nn = (sleek_proof_counter#inc_and_get) in
-  let num_id = "\nCheck Sat "^(string_of_int nn) in
+  let num_id = "\nCheckSat "^(string_of_int nn) in
   let (_,f) = meta_to_formula f false [] [] in
   let f = Cvutil.prune_preds !cprog true f in
-  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
-  print_sat_result res num_id
+  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) 0 f) in
+  let res = Solver.unsat_base_nth 1 !cprog (ref 0) 0 f in
+  let sat_res = 
+    if res then false 
+    else wrap_under_baga unsat_command f (* WN: invoke SAT checking *) 
+  in print_sat_result res sat_res num_id
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in

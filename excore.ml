@@ -435,6 +435,7 @@ struct
   (* let mk_spec_var e = SpecVar (UNK,Elt.string_of e,Unprimed) *)
   (* type baga_ty = .. *)
   let mk_false = ([], mkFalse no_pos)
+  let mk_false_disj = []
   let mk_true = [([], mkTrue no_pos)]
 
   let is_false (e:epure) = (e == mk_false)
@@ -710,6 +711,7 @@ struct
   let emap_empty = (EM.mkEmpty, [])
   let emap_empty_sv = (EMapSV.mkEmpty, [])
   let mk_false = ([Elt.zero], emap_empty, [])
+  let mk_false_disj = []
   let mk_true = [([], emap_empty_sv, [])]
 
   let is_false (e:epure) = (e == mk_false)
