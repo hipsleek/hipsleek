@@ -2693,7 +2693,7 @@ and unsat_base_x prog (sat_subno:  int ref) (is_sat : int) f  : bool=
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let t1 = Expure.build_ef_heap_formula h views (* is_sat *) in
+    let t1 = Expure.build_ef_heap_formula h views is_sat in
     let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     let d = Excore.EPureI.elim_unsat_disj d in
@@ -7519,7 +7519,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let lhs_baga =
     if !Globals.gen_baga_inv then
       let views = prog.Cast.prog_view_decls in
-      let t1 = Expure.build_ef_heap_formula curr_lhs_h views (* 0 *) in
+      let t1 = Expure.build_ef_heap_formula curr_lhs_h views 0 in
       let _ = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
       let _ = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in

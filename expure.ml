@@ -12,25 +12,25 @@ open Cpure
 open Excore
 open Cprinter
 
-let find_baga_inv view is_sat =
+let find_baga_inv view  =
   match view.Cast.view_baga_inv with
     | Some efpd -> efpd
     | None ->
-          if is_sat = 0 then
-            begin
+          (* if is_sat = 0 then *)
+          (*   begin *)
               match view.Cast.view_baga_x_over_inv with
                 | Some efpd -> efpd
                 | None -> failwith "cannot find baga inv 2"
-            end
-         else if is_sat = 1 then
-           (* let _ = print_endline "use baga under" in *)
-           begin
-             match view.Cast.view_baga_under_inv with
-               | Some efpd -> efpd
-               | None -> failwith "cannot find baga inv 2"
-           end
-         else
-           failwith "not support"
+            (* end *)
+         (* else if is_sat = 1 then *)
+         (*   (\* let _ = print_endline "use baga under" in *\) *)
+         (*   begin *)
+         (*     match view.Cast.view_baga_under_inv with *)
+         (*       | Some efpd -> efpd *)
+         (*       | None -> failwith "cannot find baga inv 2" *)
+         (*   end *)
+         (* else *)
+         (*   failwith "not support" *)
 
 let find_baga_under_inv view =
   match view.Cast.view_baga_under_inv with
