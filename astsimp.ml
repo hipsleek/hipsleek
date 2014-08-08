@@ -1863,7 +1863,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _ = do_test_inv "Over" over_f over_fail in
       let _ = do_test_inv "Under" under_f under_fail in
       let _ =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) (* && not(CF.isFailCtx baga_rs2) *) &&
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
           not(over_fail) && not(under_fail) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in

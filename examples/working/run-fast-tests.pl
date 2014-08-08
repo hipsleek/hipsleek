@@ -1728,7 +1728,7 @@ $output_file = "log";
                       ["lst-under2.slk", "--inv-test", "Valid.Fail.", "Valid.Fail."],
                       ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
+                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","","","Valid.Valid."],
                       ["infer/app-inv.slk", "--inv --dis-eps", "", "Valid.Valid.Fail.Valid.Valid.Valid."],
