@@ -2670,20 +2670,20 @@ and find_unsat prog f =
   let pr_l = pr_list pr_f in
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
 
-and unsat_base_x prog (sat_subno:  int ref) (is_sat : int) f  : bool=
+and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
     (* let _ = print_endline (Cprinter.string_of_mix_formula npf) in *)
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
-      let r = 
+      let r =
 	let sat,npf = MCP.check_pointer_dis_sat npf in
 	if  sat then
           let _ = Debug.ninfo_hprint (add_str "npf a" Cprinter.string_of_mix_formula) npf no_pos in
           not (TP.is_sat_mix_sub_no npf sat_subno true true)
 	else true in
-      (*let _ = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true)) 
-	then print_string ("diff: "^(Cprinter.string_of_mix_formula  npf)^"\n") 
+      (*let _ = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true))
+	then print_string ("diff: "^(Cprinter.string_of_mix_formula  npf)^"\n")
 	else () in*)
       r
     else
@@ -2693,7 +2693,7 @@ and unsat_base_x prog (sat_subno:  int ref) (is_sat : int) f  : bool=
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let t1 = Expure.build_ef_heap_formula h views is_sat in
+    let t1 = Expure.build_ef_heap_formula h views in
     let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     let d = Excore.EPureI.elim_unsat_disj d in
@@ -2737,7 +2737,7 @@ and unsat_base_x prog (sat_subno:  int ref) (is_sat : int) f  : bool=
 	  (* let npf = MCP.merge_mems qp ph true in *)
           (* tp_call_wrapper npf *)
 
-and unsat_base_a prog (sat_subno:  int ref) (is_sat : int) f  : bool=
+and unsat_base_a prog (sat_subno:  int ref) f  : bool=
   (*need normal lize heap_normal_form*)
   (* if !Globals.sep_unsat && !Frame.seg_opz then *)
   (*   let is_heap_conflict,_ = Frame.check_unsat_w_norm prog f in *)
@@ -2745,17 +2745,17 @@ and unsat_base_a prog (sat_subno:  int ref) (is_sat : int) f  : bool=
   (*       else *)
   (*         unsat_base_x prog sat_subno f *)
   (* else *)
-   unsat_base_x prog sat_subno is_sat f
+   unsat_base_x prog sat_subno f
 
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
 
 
-and unsat_base_nth (n:int) prog (sat_subno:  int ref) (is_sat : int) f  : bool =
+and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool =
   (*unsat_base_x prog sat_subno f*)
   Debug.no_2_num n "unsat_base_nth"
       Cprinter.string_of_formula string_of_int string_of_bool
-      (fun _ _ -> unsat_base_a prog sat_subno is_sat f) f n
+      (fun _ _ -> unsat_base_a prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
@@ -2790,7 +2790,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
     (* | None   ->  *)
     (* es.es_formula  *)
    let _ = reset_int2 () in
-  let b = unsat_base_nth 1 prog sat_subno 0 temp_f in
+  let b = unsat_base_nth 1 prog sat_subno temp_f in
   let f = es.es_formula in
   (* Slicing: Set the flag memo_group_unsat to false *)
   let f = reset_unsat_flag_formula f in
@@ -2833,7 +2833,7 @@ and elim_unsat_all_x prog (f : formula): formula = match f with
           else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in
 	  TP.incr_sat_no ();
 	(*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)*)
-        let is_ok = unsat_base_nth 2 prog sat_subno 0 f in
+        let is_ok = unsat_base_nth 2 prog sat_subno f in
 	if not is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -7519,7 +7519,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let lhs_baga =
     if !Globals.gen_baga_inv then
       let views = prog.Cast.prog_view_decls in
-      let t1 = Expure.build_ef_heap_formula curr_lhs_h views 0 in
+      let t1 = Expure.build_ef_heap_formula curr_lhs_h views in
       let _ = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
       let _ = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in

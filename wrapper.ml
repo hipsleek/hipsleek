@@ -4,7 +4,7 @@ open Gen.Basic
 let wrap_under_baga f a =
   let flag = !do_under_baga_approx in
   do_under_baga_approx := true;
-  try 
+  try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
     do_under_baga_approx := flag;
@@ -18,7 +18,7 @@ let wrap_classic et f a =
   do_classic_frame_rule := (match et with
     | None -> !opt_classic
     | Some b -> b);
-  try 
+  try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
     do_classic_frame_rule := flag;
