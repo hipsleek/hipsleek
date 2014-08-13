@@ -1401,7 +1401,7 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
   Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula
       (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
-and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) baga : Excore.EPureI.epure_disj =
+and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) : Excore.EPureI.epure_disj =
   let new_baga = Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
   new_baga
 
@@ -1409,10 +1409,23 @@ and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.
   Debug.no_1_num i "xpure_symbolic" Cprinter.string_of_formula
       (fun (p1,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4))
-      (fun h0 -> xpure_symbolic_orig prog h0) h0
+      (fun h0 -> xpure_symbolic_new_orig prog h0) h0
+
+and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
+      if !Globals.baga_xpure then
+        let nb = xpure_symbolic_baga prog f0 in
+        let ans = xpure_symbolic_orig prog f0 in
+        if !Globals.do_under_baga_approx then
+          let _ = Debug.binfo_hprint (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in
+          let _ = Debug.binfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in
+          (* Long : to perform conversion here *)
+          ans
+        else ans
+      else xpure_symbolic_orig prog f0
 
 (* xpure approximation without memory enumeration *)
-and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) =
+and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : 
+      (MCP.mix_formula * CP.spec_var list * CF.mem_formula) =
   (*use different xpure functions*)
   let xpure_h = (* if (Perm.allow_perm ()) then xpure_heap_symbolic_perm else *) xpure_heap_symbolic 4 in (*TO CHECK: temporarily use xpure_heap_symbolic only*)
   let mset = formula_2_mem f0 prog in 
