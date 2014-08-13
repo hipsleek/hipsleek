@@ -15,6 +15,9 @@ pred ll<n,m> == self=null & n=0 & m=0
 inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<n & m>0)
 //inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<m & n<=m<=2*n)
   .
+
+
+
 /*
 # ll-under1.slk
 GOT:

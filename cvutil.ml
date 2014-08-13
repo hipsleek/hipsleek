@@ -1412,16 +1412,22 @@ and xpure_symbolic i (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.
       (fun h0 -> xpure_symbolic_new_orig prog h0) h0
 
 and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
-      if !Globals.baga_xpure then
-        let nb = xpure_symbolic_baga prog f0 in
-        let ans = xpure_symbolic_orig prog f0 in
-        if !Globals.do_under_baga_approx then
-          let _ = Debug.binfo_hprint (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in
-          let _ = Debug.binfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in
-          (* Long : to perform conversion here *)
-          ans
-        else ans
-      else xpure_symbolic_orig prog f0
+  if !Globals.baga_xpure && !Globals.do_under_baga_approx then
+    (* let nb = xpure_symbolic_baga prog f0 in *)
+    (* let ans = xpure_symbolic_orig prog f0 in *)
+    (* if !Globals.do_under_baga_approx then *)
+      let nb = xpure_symbolic_baga prog f0 in
+      let _ = Debug.ninfo_hprint (add_str "f(using under)" Excore.EPureI.string_of_disj) nb no_pos in
+      (* let _ = Debug.ninfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
+      (* Long : to perform conversion here *)
+      let f = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj nb) in
+      let addr = Cpure.SV.conv_var (List.fold_left (fun acc (baga,_) -> acc@baga) [] nb) in
+      let mset = formula_2_mem f0 prog in
+      let ans = (f, addr, mset) in
+      let _ = Debug.ninfo_hprint (add_str "new" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in
+      ans
+    (* else xpure_symbolic_orig prog f0 *)
+  else xpure_symbolic_orig prog f0
 
 (* xpure approximation without memory enumeration *)
 and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : 

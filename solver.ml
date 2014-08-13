@@ -4757,23 +4757,23 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
         formula_exists_label = l;
         formula_exists_pos = pos }) ->  if not(Mem.check_mem_sat h prog.prog_view_decls) 
 	then (match ctx0 with
-	  | Ctx estate ->(*let msg = "Memory Spec Error Heap not Satisfiable" in 
+	  | Ctx estate ->(*let msg = "Memory Spec Error Heap not Satisfiable" in
 	    		   let fail_ctx = (mkFailContext msg estate conseq None pos) in
 	    		   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
 	    		   in mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex)), Failure*)
                 (SuccCtx[false_ctx_with_flow_and_orig_ante estate fl lhs pos],UnsatAnte)
 	  | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n"))
-     	else 
+     	else
 	  helper_lhs h (fun xh -> CF.mkExists qvars xh p t fl a pos)
-      | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n")	
-            
+      | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n")
+
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   Debug.no_2 "heap_entail_init"
       Cprinter.string_of_list_context
       Cprinter.string_of_formula
       (fun (rs, _) -> Cprinter.string_of_list_context rs)
       (fun cl conseq -> heap_entail_init_x prog is_folding cl conseq pos) cl conseq
-      
+
 and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with
     | FailCtx fr -> (cl,Failure)
@@ -4781,15 +4781,15 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
 	  reset_formula_point_id();
 	  let conseq = rename_labels_formula conseq in
 	  let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
-	  let rec prepare_es es = {es with 
+	  let rec prepare_es es = {es with
 	      es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 	      es_residue_pts  = residue_labels_in_formula es.es_formula   ;(* residue pts from antecedent *)
 	      es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
 	      (* es_orig_ante   = es.es_formula; *)
-	      es_orig_conseq = struc_formula_of_formula conseq pos;} in	
+	      es_orig_conseq = struc_formula_of_formula conseq pos;} in
 	  let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es (reset_original_es es)))),(fun c->c)) cl in
 	  let conseq_new = conseq in
-	  heap_entail prog is_folding  cl_new conseq_new pos
+	  heap_entail prog is_folding cl_new conseq_new pos
 
 and heap_entail p is_folding  cl conseq pos : (list_context * proof) =
   let pr = Cprinter.string_of_list_context in
@@ -4799,9 +4799,9 @@ and heap_entail p is_folding  cl conseq pos : (list_context * proof) =
       (fun cl conseq -> heap_entail_x p is_folding  cl conseq pos) cl conseq
 
 and heap_entail_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
-  match cl with 
+  match cl with
     | FailCtx _ -> (cl, Failure)
-    | SuccCtx cl -> 
+    | SuccCtx cl ->
           if !Globals.use_set || Gen.is_empty cl then
             let tmp1 = List.map (fun c -> heap_entail_one_context 3 prog is_folding  c conseq None None None pos) cl in
             let tmp2, tmp_prfs = List.split tmp1 in
@@ -4822,8 +4822,8 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
-    let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es -> 
-	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx 
+    let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es ->
+	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx
     else ctx
     in
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
@@ -4835,13 +4835,13 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
     	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
     	else
           if !Globals.delay_proving_sat 
-          then  ctx 
-          else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true) 
+          then ctx
+          else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
       in
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
-        heap_entail_after_sat prog is_folding ctx conseq pos ([])	
+        heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -5083,7 +5083,7 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
       (fun _ -> f is_folding) estate 
 
-and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) = 
+and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) =
   let pr1 = (fun _ -> "prog_decl") in
   let pr2 = string_of_bool in
   let pr3 = Cprinter.string_of_context in
@@ -5094,17 +5094,17 @@ and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos :
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
-  (** [Internal] Collect the data and view nodes in a h_formula. 
+  (** [Internal] Collect the data and view nodes in a h_formula.
       @return The list of all DataNode and ViewNode **)
   Debug.vv_trace "heap_entail_conjunct_lhs" ;
     let rec collect_data_view (f : h_formula) = match f with
       | Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
-      | StarMinus { h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}	
+      | StarMinus { h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}
       | Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
       | ConjStar { h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
-      | ConjConj { h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
+      | ConjConj { h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}
       | Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
-	    List.append (collect_data_view h1) (collect_data_view h2) 
+	    List.append (collect_data_view h1) (collect_data_view h2)
       | DataNode _ | ViewNode _ -> [f]
       | ThreadNode _ -> [f]
       | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HRel _ -> []
@@ -5419,8 +5419,8 @@ and log_contra_detect hec_num conseq result pos =
     (* let _ = hec_stack # pop in *)
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
-      | None   -> es.es_formula in 
-    let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
+      | None   -> es.es_formula in
+    let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
   let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
@@ -5428,7 +5428,6 @@ and log_contra_detect hec_num conseq result pos =
   match es_opt with
     | Some es -> f es
     | None    -> ()
-          
 
 (* 23.10.2008 *)
 (* for empty RHS heap:
@@ -6634,7 +6633,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (* Trung: TODO remove it later *)
   (* let _ = Solver_dp.prove_entailment conseq conseq in *)
-  let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
+  let hec is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   (* let _, rhs_pure, _, _, _  = CF.split_components conseq in *)
   (* let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in *)
   (* let eqns = (MCP.ptr_equations_without_null rhs_pure) in *)
@@ -6660,10 +6659,10 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let _ = hec_stack # push slk_no in
-    let logger fr tt timeout = 
+    let logger fr tt timeout =
       let _ =
-        Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule 
-            caller avoid hec_num slk_no ante conseq consumed_heap evars 
+        Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule
+            caller avoid hec_num slk_no ante conseq consumed_heap evars
             (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
     in
@@ -6727,7 +6726,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
             (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
       let ctx0 = Ctx{estate with es_formula = ante;} in
       (*Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:\nRamify:\n" ^ (Cprinter.string_of_formula ante0)^ "\nto:\n" ^ (Cprinter.string_of_formula ante))) pos;*)
-      
+
       match ctx0 with
       | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
       | Ctx estate -> (

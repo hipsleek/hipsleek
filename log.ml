@@ -202,7 +202,7 @@ let pr_sleek_log_entry e=
   (* then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_conseq)) *)
   (* else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq); *)
   fmt_string ". \n";
-  (if !print_clean_flag then 
+  (if !print_clean_flag then
 	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
 	  fmt_string ("\n clean checkentail"^(Cprinter.string_of_formula ante)^"\n |- "^(Cprinter.string_of_formula conseq)^". \n")
    else ());
