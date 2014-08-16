@@ -1859,9 +1859,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           match inv with
             | Some f ->
                   if fail_res then
-                    print_endline_quiet ("Failure.("^msg^")")
+                    print_endline_quiet ("Inv Check: Fail.("^msg^")")
                   else
-                    print_endline_quiet ("Valid.("^msg^")")
+                    print_endline_quiet ("Inv Check: Valid.("^msg^")")
             | None -> ()
         else ()
       in
