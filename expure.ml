@@ -12,16 +12,31 @@ open Cpure
 open Excore
 open Cprinter
 
-let find_baga_inv view =
+let find_baga_inv view  =
   match view.Cast.view_baga_inv with
     | Some efpd -> efpd
-    | None -> 
-          begin
-            match view.Cast.view_baga_x_over_inv with
-              | Some efpd -> efpd
-              | None -> failwith "cannot find baga inv 2"
-          end
-  
+    | None ->
+          (* if is_sat = 0 then *)
+          (*   begin *)
+              match view.Cast.view_baga_x_over_inv with
+                | Some efpd -> efpd
+                | None -> failwith "cannot find baga inv 2"
+            (* end *)
+         (* else if is_sat = 1 then *)
+         (*   (\* let _ = print_endline "use baga under" in *\) *)
+         (*   begin *)
+         (*     match view.Cast.view_baga_under_inv with *)
+         (*       | Some efpd -> efpd *)
+         (*       | None -> failwith "cannot find baga inv 2" *)
+         (*   end *)
+         (* else *)
+         (*   failwith "not support" *)
+
+let find_baga_under_inv view =
+  match view.Cast.view_baga_under_inv with
+    | Some efpd -> efpd
+    | None -> Excore.EPureI.mk_false_disj
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
@@ -46,7 +61,8 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
               with Not_found -> failwith "cannot find in init_map too"
             else
               let view = List.find (fun v -> v.Cast.view_name = vnf.Cformula.h_formula_view_name) all_views in
-              find_baga_inv view
+              if !do_under_baga_approx then find_baga_under_inv view
+              else find_baga_inv view
           in
           let _ = Debug.ninfo_hprint (add_str "vnf.Cformula.h_formula_view_name" pr_id) vnf.Cformula.h_formula_view_name no_pos in
           let _ = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
@@ -110,7 +126,7 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
     | Exists (sv, pf, _, _) ->
           let efpd = build_ef_pure_formula pf in
           EPureI.elim_exists_disj [sv] efpd
-    (* | Not -> ??? *) 
+    (* | Not -> ??? *)
     | _ -> EPureI.mk_epure pf
 
 and build_ef_pure_formula (pf : formula) : ef_pure_disj =

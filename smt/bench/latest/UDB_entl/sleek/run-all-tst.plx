@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 
-@files = <*.tst.*.slk>;
+@files = <append_*.slk>;
 
 foreach $file (@files) {
     print $file . "\n";
 
-    system("../../../../../sleek " . $file ." --smt-compete-test");
+    system("../../../../../sleek " . $file ." --smt-test");
 }
 

@@ -325,8 +325,10 @@ let common_arguments = [
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
-  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
-  ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing (with shorter names)");
+  ("--dis-print-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing (with shorter names)");
+  ("--print-inline", Arg.Set Globals.print_en_inline,"enable printing (with fewer intermediates)");
+  ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
@@ -488,6 +490,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
@@ -553,6 +556,8 @@ let common_arguments = [
   (* incremental spec *)
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
+  ("--inv-test", Arg.Set Globals.do_test_inv, "Enable explicit checking of invariant (for run-fast-test)");
+  ("--dis-inv-test", Arg.Clear Globals.do_test_inv, "Disable explicit checking of invariant (for run-fast-test)");
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
@@ -707,7 +712,9 @@ let common_arguments = [
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-  ("--smt-compete", 
+  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--smt-compete",
      Arg.Unit
       (fun _ ->
           Globals.show_unexpected_ents := false;

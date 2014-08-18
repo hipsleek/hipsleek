@@ -13,30 +13,39 @@ open Cformula
 module CP = Cpure
 module MCP = Mcpure
 
+let n_tbl = Hashtbl.create 1
+let id_tbl = Hashtbl.create 1
 
-let shorten_svl fv  n_tbl =
+let shorten_svl fv =
   (* let n_tbl = Hashtbl.create 1 in *)
-  let reg = Str.regexp "[0-9]*_.*" in 
+  let reg = Str.regexp "[0-9]*_.*" in
   let n_svl = List.map (fun sv ->
       match sv with
           CP.SpecVar(t,id,pr) ->
-              let cut_id = Str.global_replace reg "" (id ) in
               let new_id =
-                if Hashtbl.mem n_tbl (cut_id,pr)
+                if Hashtbl.mem id_tbl (id,pr)
                 then
-                  begin
-                    Hashtbl.add n_tbl (cut_id,pr) ((Hashtbl.find n_tbl (cut_id,pr)) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl (cut_id,pr))
-                  end
+                  Hashtbl.find id_tbl (id,pr)
                 else
-                  begin
-                    Hashtbl.add n_tbl (cut_id,pr) 0;
-                    cut_id
-                  end
+                  let cut_id = Str.global_replace reg "" (id) in
+                  if Hashtbl.mem n_tbl (cut_id,pr)
+                  then
+                    begin
+                      let off = (Hashtbl.find n_tbl (cut_id,pr)) + 1 in
+                      let new_id = cut_id ^ string_of_int(off) in
+                      Hashtbl.add id_tbl (id,pr) new_id;
+                      Hashtbl.add n_tbl (cut_id,pr) off;
+                      new_id
+                    end
+                  else
+                    begin
+                      Hashtbl.add id_tbl (id,pr) cut_id;
+                      Hashtbl.add n_tbl (cut_id,pr) 0;
+                      cut_id
+                    end
               in
               CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
-  ) fv in
-  (n_svl,  n_tbl)
+  ) fv in n_svl
 
 let get_all_data_fields prog=
   let fields = List.fold_left (fun r d ->
@@ -45,42 +54,50 @@ let get_all_data_fields prog=
   ) [] prog.Cast.prog_data_decls in
   fields
 
-let shorten_svl_avoid_field prog fv n_tbl =
+let shorten_svl_avoid_field prog fv =
   let fields = get_all_data_fields prog in
-   let _ = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
+  let _ = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
   let pad = "0" in
   (* let n_tbl = Hashtbl.create 1 in *)
-  let reg = Str.regexp "[0-9]*_.*" in 
+  let reg = Str.regexp "[0-9]*_.*" in
   let n_svl = List.map (fun sv ->
       match sv with
           CP.SpecVar(t,id,pr) ->
-               let cut_id0 = Str.global_replace reg "" (id ) in
+              let cut_id0 = Str.global_replace reg "" (id ) in
               let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then
-                cut_id0 ^ pad 
+                cut_id0 ^ pad
               else cut_id0
               in
               let new_id =
-                if Hashtbl.mem n_tbl (cut_id,pr)
+                if Hashtbl.mem id_tbl (id,pr)
                 then
-                  begin
-                    Hashtbl.add n_tbl (cut_id,pr) ((Hashtbl.find n_tbl (cut_id,pr)) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl (cut_id,pr))
-                  end
+                  Hashtbl.find id_tbl (id,pr)
                 else
-                  begin
-                    Hashtbl.add n_tbl (cut_id,pr) 0;
-                    cut_id
-                  end
+                  let cut_id = Str.global_replace reg "" (id) in
+                  if Hashtbl.mem n_tbl (cut_id,pr)
+                  then
+                    begin
+                      let off = (Hashtbl.find n_tbl (cut_id,pr)) + 1 in
+                      let new_id = cut_id ^ string_of_int(off) in
+                      Hashtbl.add id_tbl (id,pr) new_id;
+                      Hashtbl.add n_tbl (cut_id,pr) off;
+                      new_id
+                    end
+                  else
+                    begin
+                      Hashtbl.add id_tbl (id,pr) cut_id;
+                      Hashtbl.add n_tbl (cut_id,pr) 0;
+                      cut_id
+                    end
               in
               CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
-  ) fv in
-  (n_svl,  n_tbl)
+  ) fv in n_svl
 
 let rearrange_h_formula_x args0 hf0 =
   let rec helper fv hfl =
     match fv with
       | [] -> hfl
-      | v :: fvt -> 
+      | v :: fvt ->
             (List.filter (fun hf -> contains_spec_var hf v) hfl)@(helper fvt (List.filter (fun hf -> not (contains_spec_var hf v)) hfl))
   in
   match hf0 with
@@ -174,7 +191,7 @@ let rearrange_def def=
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
   let n_tbl = Hashtbl.create 1 in
-  let new_svl,_ = shorten_svl svl_rp n_tbl in 
+  let new_svl = shorten_svl svl_rp in 
   let new_body2 =
     List.map (fun ((p, f_opt) as o) ->
         match f_opt with
@@ -204,7 +221,7 @@ let rearrange_rel (rel: hprel) =
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
   let n_tbl = Hashtbl.create 1 in
-  let new_svl,_ = shorten_svl fv n_tbl in
+  let new_svl = shorten_svl fv in
   {rel with hprel_lhs = subst_avoid_capture fv new_svl (rearrange_formula lfv rel.hprel_lhs);
       hprel_guard = (match rel.hprel_guard with
          | None -> None
@@ -212,17 +229,18 @@ let rearrange_rel (rel: hprel) =
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
 
-
+(*
+print_tidy for verification condition + entailment
+*)
 let rearrange_entailment_x prog lhs0 rhs0=
   let lhs = simplify_pure_f lhs0 in
   let rhs = simplify_pure_f rhs0 in
-  let tbl0 = Hashtbl.create 1 in
   let l_quans, l_bare =  split_quantifiers lhs in
   let r_quans, r_bare =  split_quantifiers rhs in
   let l_svl = (CP.remove_dups_svl (fv l_bare)) in
   let r_svl = (CP.remove_dups_svl (fv r_bare)) in
   let all_svl = CP.remove_dups_svl (l_svl@r_svl@l_quans@r_quans) in
-  let new_svl,_ = shorten_svl_avoid_field prog all_svl tbl0 in
+  let new_svl = shorten_svl_avoid_field prog all_svl in
   let sst0 = List.combine all_svl new_svl in
   let _ = Debug.ninfo_hprint (add_str "sst0" (pr_list (pr_pair !CP.print_sv !CP.print_sv) )) sst0 no_pos in
   let n_lhs = subst_avoid_capture all_svl new_svl (rearrange_formula l_svl l_bare) in
@@ -246,17 +264,72 @@ let rearrange_entailment prog lhs rhs=
       (fun _ _ -> rearrange_entailment_x prog lhs rhs)
       lhs rhs
 
-let shorten_formula f =
-  let f0 = simplify_pure_f f in
-  let fvars = fv f0 in
-  let qvars,_ = split_quantifiers f0 in
-  (* let _ = print_endline ((pr_list !print_sv) fv) in *)
-  let vars = CP.remove_dups_svl (fvars@qvars) in
-  let n_tbl = Hashtbl.create 1 in
-  let new_svl,_ = shorten_svl vars n_tbl in
-  (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
-  (* subst_avoid_capture vars new_svl f *)
-  subst_all (List.combine vars new_svl) f0
+let elim_imm_vars_pf f =
+  match f with
+    | Base b -> Base {b with formula_base_pure = MCP.mix_of_pure (CP.elim_idents (MCP.pure_of_mix b.formula_base_pure));}
+    | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.elim_idents (MCP.pure_of_mix e.formula_exists_pure));}
+    | _ -> f
+
+let rec elim_imm_vars_f f =
+  let get_subs_list pf =
+    let fl = CP.split_conjunctions pf in
+    let subs_list = List.fold_left (fun acc f ->
+        match f with
+          | CP.BForm ((p_f, _), _) -> (
+                match p_f with
+                  | CP.Eq (Var (sv1, _), Var (sv2, _), _) -> acc@[(sv1,sv2)]
+                  | _ -> acc
+            )
+          | _ -> acc
+    ) [] fl in
+    subs_list
+  in
+  match f with
+    | Base b ->
+          let sst_list = get_subs_list (MCP.pure_of_mix b.formula_base_pure) in
+          let f = List.fold_left (fun f (sv1,sv2) ->
+              subst_avoid_capture [sv1] [sv2] f
+          ) f sst_list in
+          let f = elim_imm_vars_pf f in
+          f
+    | Exists e ->
+          let sst_list = get_subs_list (MCP.pure_of_mix e.formula_exists_pure) in
+          let f = List.fold_left (fun f (sv1,sv2) ->
+              subst_avoid_capture [sv1] [sv2] f
+          ) f sst_list in
+          let f = elim_imm_vars_pf f in
+          f
+    | Or orf -> Or {orf with formula_or_f1 = elim_imm_vars_f orf.formula_or_f1;
+          formula_or_f2 = elim_imm_vars_f orf.formula_or_f2}
+
+let rec shorten_formula f =
+  let helper f =
+    let f0 = simplify_pure_f f in
+    let f0 = elim_imm_vars_f f0 in
+    let fvars = fv f0 in
+    let qvars,_ = split_quantifiers f0 in
+    let vars = CP.remove_dups_svl (fvars@qvars) in
+    let vars = List.filter (fun sv ->
+        let sv_name = CP.name_of_spec_var sv in
+        if (String.length sv_name <= 2) then
+          true
+        else
+          (String.compare (String.sub (sv_name) 0 2) "HP") != 0
+    ) vars in
+    let new_svl = shorten_svl vars in
+    (* subst_avoid_capture vars new_svl f *)
+    let new_f = subst_all (List.combine vars new_svl) f0 in
+    new_f
+  in
+  match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          let new_f1 = shorten_formula f1 in
+          let new_f2 = shorten_formula f2 in
+          let new_f = mkOr new_f1 new_f2 pos in
+          new_f
+    | _ ->
+          let new_f = helper f in
+          new_f
 
 (* let rearrange_context bc = *)
 (*   let rec helper ctx = *)
@@ -280,3 +353,11 @@ let shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let inline_print e =
+    if (!Globals.print_en_inline) then elim_imm_vars_f e
+    else e
+
+let tidy_print e =
+    if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
+    else e

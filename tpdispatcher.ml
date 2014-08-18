@@ -3195,7 +3195,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
   else is_sat_sub_no_c 3 f sat_subno false
 
-let is_sat_sub_no i (f : CP.formula) sat_subno : bool =  
+let is_sat_sub_no i (f : CP.formula) sat_subno : bool =
   Debug.no_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 

@@ -1085,6 +1085,7 @@ let print_mvars = ref false
 let print_type = ref false
 
 let print_en_tidy = ref true
+let print_en_inline = ref true
 
 let print_html = ref false
 
@@ -1132,6 +1133,7 @@ let simplify_error = ref false
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
+let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1151,7 +1153,7 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5 
+let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1218,6 +1220,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
@@ -1230,17 +1233,18 @@ let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *
 
 let show_unexpected_ents = ref true
 
-  let print_endline_q s = 
-    if !smt_compete_mode then () 
-    else print_endline s 
+  let print_endline_q s =
+    if !smt_compete_mode then ()
+    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
-let baga_xpure = ref false (* change to true later *)
-let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
+let do_under_baga_approx = ref false (* flag to choose under_baga *)
+let baga_xpure = ref true (* change to true later *)
+let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)
 let get_model = ref false

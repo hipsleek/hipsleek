@@ -1,0 +1,17 @@
+
+checkentail x_1 = x_2+1  |- (exists x: x_2 = x-1).
+print residue.
+// ### ante =  emp&x2=1+x&{FLOW,(21,22)=__norm}[]
+// ### conseq =  EBase (exists x1: emp&x+1=x1&{FLOW,(21,22)=__norm})[]
+// x_2 -> x
+// x_1 -> x2
+// x -> x1
+
+checkentail  (exists x: x_2 = x-1) |- x_1=x_2+1.
+print residue.
+//### ante =  emp&x+1=x3&{FLOW,(21,22)=__norm}[]
+//### conseq =  EBase emp&x2=1+x&{FLOW,(21,22)=__norm}[]
+// x_2 -> x
+// x --> x3
+// x_1 --> x2
+

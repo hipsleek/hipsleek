@@ -189,15 +189,20 @@ let pr_sleek_log_entry e=
   fmt_string ("; infer_vars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
-  if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_ante))
-  else fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
+  let f = Cfout.tidy_print e.sleek_proving_ante in
+  fmt_string (Cprinter.string_of_formula f);
+  (* if (!Globals.print_en_tidy) *)
+  (* then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_ante)) *)
+  (* else fmt_string (Cprinter.string_of_formula e.sleek_proving_ante); *)
   fmt_string "\n |- ";
-  if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_conseq))
-  else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq);
+  (* WN -> Long : won't we get inconsistent vars *)
+  let f = Cfout.tidy_print e.sleek_proving_conseq in
+  fmt_string (Cprinter.string_of_formula f);
+  (* if (!Globals.print_en_tidy) *)
+  (* then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_conseq)) *)
+  (* else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq); *)
   fmt_string ". \n";
-  (if !print_clean_flag then 
+  (if !print_clean_flag then
 	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
 	  fmt_string ("\n clean checkentail"^(Cprinter.string_of_formula ante)^"\n |- "^(Cprinter.string_of_formula conseq)^". \n")
    else ());
