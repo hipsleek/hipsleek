@@ -1955,7 +1955,7 @@ let simplify (f:CP.formula):CP.formula =
 let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
-	  
+
 let rec simplify_raw (f: CP.formula) = 
   if not(!Globals.infer_raw_flag) then simplify f
   else
@@ -2111,6 +2111,24 @@ let om_pairwisecheck f =
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
+
+let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  if not !tp_batch_mode then Omega.start ();
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let f = CP.mkOr f1 f2 None no_pos in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = Omega.pairwisecheck2 f1 f2 in
+  let logger fr tt timeout =
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise" logger fn f in
+  if not !tp_batch_mode then Omega.stop ();
+  res
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
