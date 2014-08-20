@@ -2054,7 +2054,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         | Some a -> 
               let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
               let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
@@ -6909,6 +6909,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
           CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
+    | BExpr _ -> (*Loc: todo*) report_error no_pos "to transform BExpr to equiv formula"
 
 and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with
