@@ -6909,7 +6909,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
           CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
-    | BExpr _ -> (*Loc: todo*) report_error no_pos "to transform BExpr to equiv formula"
+    | IP.BExpr f1 -> report_error no_pos "trans_pure_exp BExpr"
+          (* let nf1 = IP.transform_bexp f1 in *)
+          (* BExpr (trans_pure_formula nf1 tlist) *)
 
 and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with

@@ -626,7 +626,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (n_tl,r) = must_unify Int et n_tl pos in
       let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
       (n_tlist,r)
-  | IP.BExpr pf -> (gather_type_info_p_formula prog pf tlist, Bool)
+  | IP.BExpr f1 -> (gather_type_info_pure prog f1 tlist, Bool)
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
   match p0 with

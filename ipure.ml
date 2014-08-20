@@ -272,7 +272,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ArrayAt (a, i, _) -> 
       let ifv = List.flatten (List.map afv i) in
       Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
-  | BExpr pf -> pfv pf
+  | BExpr f1 -> fv f1
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -400,6 +400,9 @@ and mkEq a1 a2 pos =
 	  | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
   else 
 	Eq (a1, a2, pos)
+
+(* and mkBExpr e f= *)
+(*   BExpr pf *)
 
 and mkAnd_x f1 f2 pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f1
@@ -596,7 +599,7 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
-  | BExpr pf -> pos_of_pf pf
+  | BExpr f1 -> pos_of_formula f1
 
 
 and fresh_old_name (s: string):string =
@@ -815,7 +818,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListReverse (a1, pos) -> ListReverse (e_apply_one p a1, pos)
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
-  | BExpr pf -> BExpr (p_apply_one p pf)
+  | BExpr f1 -> BExpr (apply_one p f1)
 
 and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
@@ -1019,7 +1022,7 @@ and find_lexp_exp (e: exp) ls =
   | ListReverse (e, _) -> find_lexp_exp e ls
   | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-  | BExpr pf -> find_lexp_p_formula (pf: p_formula) ls
+  | BExpr f1 -> find_lexp_formula (f1: formula) ls
 
 and list_of_conjs (f: formula) : formula list =
   match f with
@@ -1086,7 +1089,19 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Func _ -> true
   | ArrayAt _ -> true 
   | InfConst _ -> Error.report_no_pattern ()
-  | BExpr pf ->  p_contain_vars_exp pf
+  | BExpr f1 ->  f_contain_vars_exp f1
+
+and f_contain_vars_exp f=
+  let recf = f_contain_vars_exp in
+  match f with
+  | BForm ((pf,_),_) ->  p_contain_vars_exp pf
+  | And (f1, f2, _)
+  | Or (f1, f2, _, _)
+      -> (recf f1) || (recf f2)
+  | AndList fs -> List.exists (fun (_,f1) -> recf f1) fs
+  | Not (f1, _, _)
+  | Forall (_,f1,_,_)
+  | Exists (_,f1,_,_) -> recf f1
 
 and p_contain_vars_exp (pf) : bool = match pf with
   | Frm _ 
@@ -1296,7 +1311,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
       (ArrayAt (a, ne1, l), r)
-  | BExpr pf -> (e, None) (* BExpr (float_out_p_formula_min_max (pf: p_formula) []) *)
+  | BExpr f1 -> (e, None) (* BExpr (float_out_p_formula_min_max (pf: p_formula) []) *)
 
 (* and float_out_b_formula_min_max (b: b_formula): b_formula = *)
 (*   let (pf,il) = b in *)
@@ -2107,3 +2122,78 @@ let rec transform_formula_x f (e : formula) : formula =
 and transform_formula f (e:formula) :formula =
   Debug.no_1 "IP.transform_formula" !print_formula !print_formula
       (fun _ -> transform_formula_x f e ) e
+
+let is_esv e= match e with
+  | Var _ -> true
+  | _ -> false
+
+let is_bexp_p pf= match pf with
+  | BVar _ -> true
+  | _ -> false
+
+let is_bexp_b bf=
+  let (pf,_) = bf in
+  is_bexp_p pf
+
+let rec is_bexp_x f=
+  let recf = is_bexp_x in
+  match f with
+    | BForm (bf,_) -> is_bexp_b bf
+    | And (f1,f2,_) -> (recf f1)&&(recf f2)
+    | AndList fs -> List.for_all (fun (_,f1) -> recf f1) fs
+    | Or (f1,f2,_,_) -> (recf f1)&&(recf f2)
+    | Not (f1, _, _)
+    | Forall (_,f1,_,_)
+    | Exists (_,f1,_,_) -> (recf f1)
+
+let is_bexp f=
+  let pr = !print_formula in
+  Debug.no_1 "is_bexp" pr string_of_bool
+      (fun _ -> is_bexp_x f) f
+
+
+(* let rec transform_bexp_p f0 a b pf = *)
+(*   let f0 = BForm ((pf, a),b) in *)
+(*   match pf with *)
+(*     | Eq (e1, e2, p) -> begin *)
+(*         match e1,e2 with *)
+(*           | Var (idp,p), BExpr f2 -> *)
+(*                 let p = pos_of_pf pf in *)
+(*                 let f1 = BForm ((BVar (idp,p), a), b) in *)
+(*                 let f11 = And (f1, f2, p) in *)
+(*                 let f22 = And (Not (f1, None, p), Not (f2, None, p), p) in *)
+(*                 And (f11, f22, p) *)
+(*           | _ -> f0 *)
+(*       end *)
+(*     | _ -> f0 *)
+
+(* let rec transform_bexp_x f= *)
+(*   let recf = transform_bexp_x in *)
+(*   match f with *)
+(*     | BForm ((pf,a),b) -> transform_bexp_p a b pf *)
+(*     | And (f1,f2,l) -> And (recf f1,recf f2,l) *)
+(*     | AndList fs ->AndList ( List.map (fun (a,f1) -> (a, recf f1)) fs) *)
+(*     | Or (f1,f2,c,l) -> Or(recf f1,recf f2,c,l) *)
+(*     | Not (f1, a, b) -> Not (recf f1, a,b) *)
+(*     | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c) *)
+(*     | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c) *)
+
+(*
+ v=e --> v & e | !v & !e
+ e1 = e2 --> e1 & e2 | !(e1) & !e2
+ e1!=e2 <--> (e1 & !e2 | !e2 & e1)
+*)
+let rec transform_bexp_x f0 lb sl e f2=
+  match e with
+    | Var (idp,p) ->
+          let p = pos_of_formula f0 in
+          let f1 = BForm ((BVar (idp,p), lb), sl) in
+          let f11 = And (f1, f2, p) in
+          let f22 = And (Not (f1, None, p), Not (f2, None, p), p) in
+          Or (f11, f22, None, p)
+    | _ -> f0
+
+let transform_bexp f0 lb sl e f=
+  let pr = !print_formula in
+  Debug.no_1 "transform_bexp" pr pr
+      (fun _ -> transform_bexp_x f0 lb sl e f) f

@@ -251,7 +251,7 @@ let rec string_of_formula_exp = function
 (* | BagUnion of (exp list * loc) *)
 (* | BagIntersect of (exp list * loc) *)
 (* | BagDiff of (exp * exp * loc) *)
-  | P.BExpr pf -> "BExpr(" ^ string_of_p_formula pf ^ ")"
+  | P.BExpr f1 -> "BExpr(" ^ string_of_pure_formula f1 ^ ")"
 
 and string_of_p_formula pf =
 match pf with 
@@ -326,17 +326,16 @@ and string_of_data_param_list params anns = match (params, anns) with
   | (h::t1, [])                -> (string_of_formula_exp h) ^ "," ^ (string_of_data_param_list t1 [])
   | (h::t1, a::t2)             -> (string_of_data_param h a) ^ "," ^ (string_of_data_param_list t1 t2)
   | (_, _)                     -> ""
-;;
 
 (* pretty printing for boolean constraints *)
-let string_of_slicing_label sl =
+and string_of_slicing_label sl =
   match sl with
 	| None -> ""
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
 
-let string_of_b_formula (pf,il) =
+and string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ (string_of_p_formula pf)
 (* match pf with  *)
   (* | P.BConst (b,l)              -> string_of_bool b *)
@@ -395,7 +394,7 @@ let string_of_b_formula (pf,il) =
   (* | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")" *)
   (* | P.XPure _ -> Error.report_no_pattern() *)
    (* | _ -> "bag constraint" *)
-;;
+
 
 (*  | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
@@ -405,14 +404,14 @@ let string_of_b_formula (pf,il) =
 	  (* lists and list formulae *)
 *)
 
-let concat_string_list_string strings =
+and concat_string_list_string strings =
     ""
 		
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
-  | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
-  | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
-  | P.AndList b -> List.fold_left  (fun a (l,c)-> 
+and string_of_pure_formula = function
+  | P.BForm (bf,lbl)                    -> string_of_b_formula bf
+  | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"
+  | P.AndList b -> List.fold_left  (fun a (l,c)->
 		let l_s = (string_of_spec_label l) ^": " in
 		a ^ "\n" ^ (if a = "" then "" else " && ") ^ "\n" ^ l_s^(string_of_pure_formula c)) "" b
   | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
@@ -421,7 +420,7 @@ let rec string_of_pure_formula = function
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
   | P.Exists (x, f,lbl, l)            -> "ex " ^ (string_of_id x)
         ^ " (" ^ (string_of_pure_formula f) ^ ")"
-;;    
+;;
 
 (* TOCHECK : what is the purpose? *)
 let is_bool_f = function 

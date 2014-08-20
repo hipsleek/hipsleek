@@ -123,7 +123,7 @@ and exp =
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
   | Func of (ident * (exp list) * loc)
-  | BExpr of p_formula
+  | BExpr of formula
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
