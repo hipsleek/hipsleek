@@ -1013,7 +1013,7 @@ let print_type = ref false
 
 let print_en_tidy = ref true
 
-let print_html = ref true
+let print_html = ref false
 
 (* let enable_sat_statistics = ref false *)
 
