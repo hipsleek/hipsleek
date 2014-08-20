@@ -1,0 +1,14 @@
+//(1) False context?
+checkentail a & b |- a.
+print residue.
+
+//(2) False context?
+checkentail a & c |- c.
+
+//(3) 
+checkentail a |- a &b.
+
+//(3) 
+checkentail a |- a .
+
+checkentail a |- b.
