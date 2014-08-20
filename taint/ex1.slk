@@ -1,12 +1,33 @@
 pred_prim ann<n:int, b:bool>.
 
-
+//1
 checkentail r=(a|b) |- r & (a|b) | !r & !(a|b).
 //checkentail r & (a|b) | !r & !(a|b)  |- r & (a|b) | !r & !(a|b).
 print residue.
 
-//(1)
-checkentail (a=r) |- (r & (a)) | (!r & !(a)).
+//2
+checkentail (a|b)=r |- r & (a|b) | !r & !(a|b).
+print residue.
+
+//(3)
+checkentail r!=(a|b) |- r & !(a|b) | !r & (a|b).
+print residue.
+
+//(4)
+checkentail (a|b)!=r |- r & !(a|b) | !r & (a|b).
+print residue.
+
+//5
+checkentail (r&s) =(a|b) |- (r&s) & (a|b) | !(r&s) & !(a|b).
+print residue.
+
+//6
+checkentail (r&s) !=(a|b) |- (r&s) & !(a|b) | !(r&s) & (a|b).
+print residue.
+
+//7
+checkentail (r&s|t) =(a|b) |- (r&s|t) & (a|b) | !(r&s|t) & !(a|b).
+print residue.
 
 /*
 

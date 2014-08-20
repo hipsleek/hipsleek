@@ -2152,20 +2152,48 @@ let is_bexp f=
       (fun _ -> is_bexp_x f) f
 
 
-(* let rec transform_bexp_p f0 a b pf = *)
-(*   let f0 = BForm ((pf, a),b) in *)
-(*   match pf with *)
-(*     | Eq (e1, e2, p) -> begin *)
-(*         match e1,e2 with *)
-(*           | Var (idp,p), BExpr f2 -> *)
-(*                 let p = pos_of_pf pf in *)
-(*                 let f1 = BForm ((BVar (idp,p), a), b) in *)
-(*                 let f11 = And (f1, f2, p) in *)
-(*                 let f22 = And (Not (f1, None, p), Not (f2, None, p), p) in *)
-(*                 And (f11, f22, p) *)
-(*           | _ -> f0 *)
-(*       end *)
-(*     | _ -> f0 *)
+let rec transform_bexp_p_x f0 a b pf0 =
+  let helper pf = match pf with
+    | Eq (e1, e2, p) -> begin
+        match e2 with
+          | BExpr f2 -> begin
+              let p = pos_of_pf pf in
+              let f1 = match e1 with
+                | Var (idp,p) -> BForm ((BVar (idp,p), a), b)
+                | BExpr f -> f
+                | _ -> raise Not_found
+              in
+              let f11 = And (f1, f2, p) in
+              let f22 = And (Not (f1, None, p), Not (f2, None, p), p) in
+              Or (f11, f22, None, p)
+            end
+          | _ -> raise Not_found
+      end
+    | Neq (e1, e2, p) -> begin
+        match e2 with
+          | BExpr f2 -> begin
+              let p = pos_of_pf pf in
+              let f1 = match e1 with
+                | Var (idp,p) -> BForm ((BVar (idp,p), a), b)
+                | BExpr f -> f
+                | _ -> raise Not_found
+              in
+              let f11 = And (f1, Not (f2, None, p), p) in
+              let f22 = And (Not (f1, None, p), f2, p) in
+              Or (f11, f22, None, p)
+            end
+          | _ -> raise Not_found
+      end
+    | _ -> raise Not_found
+  in
+  try
+    helper pf0
+  with _ -> f0
+
+let transform_bexp_p f0 lb sl pf =
+  let pr1 = !print_formula in
+  Debug.no_1 "transform_bexp_p" pr1 pr1
+      (fun _ -> transform_bexp_p_x f0 lb sl pf) f0
 
 (* let rec transform_bexp_x f= *)
 (*   let recf = transform_bexp_x in *)
