@@ -380,7 +380,7 @@ let create_specs hprel_defs prog proc_name =
     let short_final_spec = 
       if (!Globals.print_en_tidy) then
         let sfv = Cformula.struc_fv final_spec in
-        let sfv_short = Cformula.shorten_svl sfv in
+        let sfv_short = Cfout.shorten_svl sfv in
         Cformula.subst_struc_avoid_capture sfv sfv_short final_spec
       else
         final_spec

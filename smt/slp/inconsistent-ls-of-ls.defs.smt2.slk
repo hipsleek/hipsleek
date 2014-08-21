@@ -1,0 +1,31 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred R<> == self::P1<> & self!=null.
+
+pred P<> ==
+self::Q<self> & null != self.
+
+pred P1<> ==
+     self=null
+ or self::Q<self> & null != self.
+
+pred Q<y:GTyp> ==
+ (exists d,c: self::GTyp<f0 = d,f1 = c> * d::P<> & null = y & null != self)
+or (exists d,c: y::GTyp<f0 = d,f1 = c> * self::Q<c> & null != y).
+
+
+checkentail_exact x0::P<>
+         |- false.
+expect Valid.
+
+
+
+checkentail_exact x0::R<>
+         |- false.
+
+expect Valid.
+

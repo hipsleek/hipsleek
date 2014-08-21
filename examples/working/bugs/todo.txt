@@ -27,11 +27,114 @@ For simplification, we should translate
 That way we can simplify the above to k=0 
 (which is translated to k=null) for this example.
 ==================================================
+# baga-test-eps.slk
+
+in new smt2014 branch, unsat is not being detected
+in two examples below. I think this is due to new unsat
+we currently have? Please make the new unsat into an option
+that is disabled by default, if this is the case.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+Why is UNSAT on lhs not being detected?
+
+//(1) (3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+//(5) --eps
+// (15) Valid
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+expect Valid.
+
+--inv-baga (FIXED)
+
+Unexpected: 2 3 5 
 ==================================================
+# baga-test-eps.slk  -dre "proc_sleek_result"
+
+Why is SuccCtx below considered a Must error?
+
+Entail 5: Fail.(must) cause: true |-  false. LOCS:[0;46] (RHS: contradiction)
+
+proc_sleek_result_validate lc@5
+proc_sleek_result_validate lc inp1 : 1[
+   x::l7<q> * y::l7<q_158>&x!=null & y!=null & q_158=q&{FLOW,(3,4)=__Error}[]
+   ]
+proc_sleek_result_validate lc@5 EXIT:Valid
+Validate 5: Expecting Fail BUT got : Valid
+
 ==================================================
+# run-fast-test 
+
+Why below when sleek generates output for below?
+
+Total number of errors: 2 in files:
+  baga-test-eps.slk(no result (!!!check script options, provers, etc))
+  imm/imm-hard.slk(no result (!!!check script options, provers, etc)).
 ==================================================
+# example/working/bugs/imm-hard-1.slk
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- y!=x. 
+print residue.
+// x * y
+// (3) Valid
+expect Valid.
+
+why fail with and without --imm?
+
 ==================================================
-==================================================
+orrect behavior:
+gather_type_info_b_formula@9@8@7@5@4@3
+gather_type_info_b_formula inp1 :self = null
+gather_type_info_b_formula inp2 :[(self:14:node)(q:13:node)]
+gather_type_info_b_formula@9 EXIT:[(self:14:node)(TVar__15:15:null)(q:13:node)]
+
+leads to:
+compute_invariants@41@39
+compute_invariants inp1 :[self,q]
+compute_invariants inp2 : ,[{1} -> {[]} [ q=null; self=null]; 
+{2} -> {[self,q]} [ q!=null; self!=null]]
+compute_invariants@41 EXIT: ,
+  [{1,2} -> {[]} []; 
+   {1} -> {[]} [ q=null; self=null];
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+-------------------------------------------------------------------------------------------------
+-
+incorrect behavior:
+gather_type_info_pure@9@8@6@5@4@3
+gather_type_info_pure inp1 :self = null
+gather_type_info_pure inp2 :[(self:18:node)(q:17:node)]
+gather_type_info_pure@9
+EXIT:[(TVar__20:20:node)(self:18:node)(TVar__19:19:node)(q:17:node)]
+
+leads to:
+compute_invariants@42@40
+compute_invariants inp1 :[self,q]
+compute_invariants inp2 : ,
+     [{1} -> {[]} []; 
+     {2} -> {[self,q]} [ self!=null]]
+compute_invariants@42 EXIT: ,[\
+  {1,2} -> {[]} []; 
+  {1} -> {[]} [];  // q=_ & self=_
+  {2} -> {[self,q]} [self!=null]]
+-------------------------------------------------------------------------------------------------
+-
+the problem is that due to the fact that there is no type for null, the prunning
+conditions for base case are incorrect:
+{1} -> {[]} [ q=null; self=null]; 
+vs
+ {1} -> {[]} [];
+
+===================================================
 ==================================================
 ==================================================
 ==================================================

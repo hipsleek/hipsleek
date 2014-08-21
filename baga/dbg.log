@@ -1,0 +1,9 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+#process_action,Loop
+#process_fold_result
+process_one
+#do_fold
+heap_entail_one_context
+heap_entail_empty_rhs_heap
+heap_entail_conjunct_helper,Trace

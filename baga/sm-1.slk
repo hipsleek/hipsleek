@@ -1,0 +1,25 @@
+.data node {
+	int val; 
+	node next; 
+}.
+
+pred sll<"n":n, "v":sm, "v":lg> == 
+	self::node<sm, null> & ["n":n=1; "v":sm = lg] or 
+        self::node<sm, q> * q::sll<n1, qs, lg> & q != null & ["n":n1=n-1; "v":sm <= qs]
+        inv true & ["n":n >= 1; "v":sm <= lg].
+
+checkentail tmp_1514::sll<n_1472,mi_1475,l_1516>@M * 
+v_node_69_943'::node<mi_1452@M,tmp_1514@M>@M&
+AndList( "":x_1515!=null & x_1515!=null & !(v_bool_63_944') & 
+           x_1515!=null & !(v_bool_63_944') & res=v_node_69_943'
+ ; "n":1<=n_1449 & 0<n_1440 & 0<n_1440 & 0<n & n=n_1440 & 0<=n & 0<=n_1440 & 
+   n_1440=n_1449 & 0<=n_1440 & 1<n_1449 & n_1449=n1_1467+1 & 0<=n_1449 & 
+   n1_1467=n_1472 & 0<=n1_1467 & 0<=n_1472
+ ; "v":s=sm & l=lg & mi=mi_1441 & sm<=mi & mi<lg & mi_1441=mi_1452 & 
+   s<=mi_1441 & mi_1441<l & s=s_1450 & l=l_1451 & mi_1441=mi_1452 & 
+   s<=mi_1441 & mi_1441<l & mi_1452<=mi1_1468 & s_1450<=mi_1452 & 
+   mi_1452<l_1451 & s_1450=sm_1473 & l_1451=lg_1474 & mi1_1468=mi_1475 & 
+   s_1450<=mi1_1468 & mi1_1468<l_1451 & l_1516<lg_1474 & sm_1473<=mi_1475 & 
+   mi_1475<lg_1474) 
+ |-  (exists n_1517,mi_1518,l_1519: res::sll<n_1517,mi_1518,l_1519>@M).
+

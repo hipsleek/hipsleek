@@ -1,0 +1,54 @@
+data node {
+    int val;
+    node next
+}.
+
+//==================
+// nontouching, segmented
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p> & self!= p.
+
+lemma_safe self::lseg<z> -> self::lseg<y> * y::lseg<z>.
+
+//==================
+// list segment with its length
+pred lseg_length<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_length<p,m> & self!= p & n = m+1
+inv n >= 0.
+
+lemma_safe self::lseg_length<z,n> ->
+    self::lseg_length<y,n1> * y::lseg_length<z,n2> & n=n1+n2.
+
+//==================
+// list segment with its sum.
+pred lseg_sum<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_sum<p,m> & self!= p & n = m+v.
+
+lemma_safe self::lseg_sum<z,n> ->
+    self::lseg_sum<y,n1> * y::lseg_sum<z,n2> & n=n1+n2.
+
+//==================
+// list segment with its bag of value.
+pred lseg_bag<p,S> == self = p & S = {}
+    or self::node<v,r> * r::lseg_bag<p,R> & self!= p & S = union(R,{v}).
+
+lemma_safe self::lseg_bag<z,S> ->
+    self::lseg_bag<y,S1> * y::lseg_bag<z,S2> & S = union(S1,S2).
+
+//==================
+// list segment with arbitrary property.
+pred lseg_unk1<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_unk1<p,m> & self!= p & n = m + 2*v.
+
+lemma_safe self::lseg_unk1<z,n> ->
+    self::lseg_unk1<y,n1> * y::lseg_unk1<z,n2> & n = n1 + n2.
+// question: how to infer n = n1 + n2 ???
+
+//==================
+// list segment with arbitrary property.
+pred lseg_unk2<p,n> == self = p & n = 2
+    or self::node<v,r> * r::lseg_unk2<p,m> & self!= p & n = m.
+
+lemma_safe self::lseg_unk2<z,n> ->
+    self::lseg_unk2<y,n1> * y::lseg_unk2<z,n2> & n = n1 & n = n2.
+// question: how to infer n = n1 + n2 ???

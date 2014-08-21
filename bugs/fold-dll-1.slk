@@ -1,0 +1,53 @@
+/*
+(define-fun dll ((?fr Dll_t) (?bk Dll_t) (?pr Dll_t) (?nx Dll_t))
+
+
+  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr))  (distinct ?bk ?pr)
+    (exists ((?u Dll_t))  (and (distinct ?fr ?nx) (tobool (ssep
+
+
+      (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
+      (dll ?u ?bk ?fr ?nx))
+
+
+))))))
+*/
+
+data node {
+  node prev;
+  node next;
+}.
+
+pred dll<bk,pr,nx> ==
+   self=nx & bk=pr
+// or bk!=pr
+or self::node<pr,u> * u::dll<bk,self,nx> & self!=nx.
+
+/*
+checkentail_exact
+ self::node<pr,u> * u::dll<bk,self,nx> & self!=nx |- self::dll<a,b,c>.
+print residue.
+
+checkentail
+ self=nx & bk=pr |- self::dll<bk,pr,nx>.
+print residue.
+
+checkentail
+ self=nx & bk=pr |- self::dll<bk,pr,a>.
+print residue.
+*/
+
+checkentail
+ self=nx & bk=pr |- self::dll<bk,b,a>.
+print residue.
+/*
+why fail?
+                          es_must_error: Some(Cannot infer heap and pure 2)
+                          es_trace:  COND ==>  UnmatchedRHSData ==> 
+                          es_infer_vars_rel: []] <1>emp&self=nx & bk=pr&{FLOW,(21,22)=__norm}[]
+*/
+/*
+checkentail_exact
+ bk=pr |- self::dll<bk,pr,nx>.
+print residue.
+*/

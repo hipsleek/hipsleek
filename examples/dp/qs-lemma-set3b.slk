@@ -1,0 +1,16 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+
+checkentail emp&exists(p_110:p_110!=self) & exists(u_112:val<=u_112 & u1<=u_112) & 
+exists(l_111:l_111<=val & l_111<=l1) & exists(l_142:l_142<=l1) & 
+exists(u_143:u1<=u_143) & next=next1 & val=val1 & u2<=u & l<=l2 & u1=u2 & 
+l1=l2 & p=y & val1<=u2 & l2<=val1 & p!=self
+//&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l2,u2: emp & l2<=l & u<=u2 & p1!=self l2<=val & val<=u2 & 
+u1=u2 & l1=l2 & p=p1).
+
+

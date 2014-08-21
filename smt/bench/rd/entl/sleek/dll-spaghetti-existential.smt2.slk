@@ -1,0 +1,20 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred DLL<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ emp & p = tl & self = n
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
+
+pred DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+pred DLL_plus_rev<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: tl::DLL_t<next = n,prev = x> * self::DLL_plus_rev<p,x,tl>).
+
+checkentail hd0::DLL_plus<null,tl0,hd1> * hd1::DLL_plus<tl0,tl1,hd2> * hd2::DLL_plus<tl1,tl2,hd3> * hd3::DLL_plus<tl2,tl3,hd4> * hd4::DLL_plus<tl3,tl4,hd5> * hd5::DLL_plus<tl4,tl5,hd6> * hd6::DLL_plus<tl5,tl6,hd7> * hd7::DLL_plus<tl6,tl7,hd8> * hd8::DLL_plus<tl7,tl8,hd9> * hd9::DLL_plus<tl8,tl9,hd10> * hd10::DLL_plus<tl9,tl10,hd11> * hd11::DLL_plus<tl10,tl11,hd12> * hd12::DLL_plus<tl11,tl12,hd13> * hd13::DLL_plus<tl12,tl13,hd14> * hd14::DLL_plus<tl13,tl14,hd15> * hd15::DLL_plus<tl14,tl15,hd16> * hd16::DLL_plus<tl15,tl16,hd17> * hd17::DLL_plus<tl16,tl17,hd18> * hd18::DLL_plus<tl17,tl18,hd19> * hd19::DLL_plus<tl18,tl19,hd20> * hd20::DLL_plus<tl19,tl20,null>
+         |- (exists hd1,tl1,hd2,tl2,hd3,tl3,hd4,tl4,hd5,tl5,hd6,tl6,hd7,tl7,hd8,tl8,hd9,tl9,hd10,tl10,hd11,tl11,hd12,tl12,hd13,tl13,hd14,tl14,hd15,tl15,hd16,tl16,hd17,tl17,hd18,tl18,hd19,tl19: hd0::DLL_plus_rev<null,tl0,hd1> * hd1::DLL_plus_rev<tl0,tl1,hd2> * hd2::DLL_plus_rev<tl1,tl2,hd3> * hd3::DLL_plus_rev<tl2,tl3,hd4> * hd4::DLL_plus_rev<tl3,tl4,hd5> * hd5::DLL_plus_rev<tl4,tl5,hd6> * hd6::DLL_plus_rev<tl5,tl6,hd7> * hd7::DLL_plus_rev<tl6,tl7,hd8> * hd8::DLL_plus_rev<tl7,tl8,hd9> * hd9::DLL_plus_rev<tl8,tl9,hd10> * hd10::DLL_plus_rev<tl9,tl10,hd11> * hd11::DLL_plus<tl10,tl11,hd12> * hd12::DLL_plus<tl11,tl12,hd13> * hd13::DLL_plus<tl12,tl13,hd14> * hd14::DLL_plus<tl13,tl14,hd15> * hd15::DLL_plus<tl14,tl15,hd16> * hd16::DLL_plus<tl15,tl16,hd17> * hd17::DLL_plus<tl16,tl17,hd18> * hd18::DLL_plus<tl17,tl18,hd19> * hd19::DLL_plus<tl18,tl19,hd20> * hd20::DLL_plus<tl19,tl20,null>).

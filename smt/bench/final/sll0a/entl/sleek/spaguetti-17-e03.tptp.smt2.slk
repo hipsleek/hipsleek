@@ -1,0 +1,12 @@
+
+data Sll_t {
+  Sll_t next;
+}.
+
+pred ls<out:Sll_t> ==
+ self = out
+or (exists u: self::Sll_t<next = u> * u::ls<out> & self != out).
+
+checkentail_exact x5::ls<x4> * x5::ls<x8> * x13::ls<x16> * x16::ls<x17> * x16::ls<x8> * x1::ls<x17> * x4::ls<x11> * x8::ls<x17> * x17::ls<x9> * x2::ls<x13> * x2::ls<x4> * x12::ls<x17> * x9::ls<x8> * x11::ls<x15> * x6::ls<x8> * emp & null = null & x11 != x16 & x7 != x9 & x7 != x15 & x7 != x14 & x9 != x10 & x2 != x11 & x2 != x3 & x14 != x17 & x15 != x17 & x8 != x9 & x8 != x17 & x4 != x11 & x1 != x11 & x10 != x13 & x10 != x15 & x13 != x15 & x5 != x17
+         |- emp & x1 != x1.
+expect Valid.

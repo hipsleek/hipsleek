@@ -84,6 +84,7 @@ and cvc3_of_exp a = match a with
 and cvc3_of_b_formula b =
   let (pf,_) = b in
   match pf with
+  | CP.Frm (sv, _) -> (cvc3_of_spec_var sv) ^ " > 0"
   (* | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)" *)
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "( 0 > 0)"
       (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)

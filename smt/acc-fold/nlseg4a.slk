@@ -1,0 +1,64 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+// lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_safe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+
+//1
+checkentail_exact (exists u_38,a: u_38::nlseg<p> * p::node<a>@L&self_lem_12=u_38)
+ or (exists q_48,a_49,u_38,a: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    u_38::nlseg<p> * p::node<a>@L&self_lem_12!=u_38 & q_48=u_38)
+  |-  (exists p_33: self_lem_12::nlseg<p_33>&p=p_33).
+
+
+//2
+checkentail (exists u_38,a: u_38::nlseg<p> * p::node<a>@L&self_lem_12=u_38)
+  |-  (exists p_33: self_lem_12::nlseg<p_33>&p=p_33).
+
+//3
+checkentail (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    q_48::nlseg<p> & p!=null & self_lem_12!=q_48)
+  |-  (exists p_33: self_lem_12::nlseg<p_33>&p=p_33).
+
+//4
+checkentail (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    q_48::nlseg<p> * p::node<_>@L & self_lem_12!=q_48)
+  |-  
+ (exists u,p_33 : self_lem_12::nlseg<u> * u::nlseg<p_33> * p_33::node<_>@L & p=p_33).
+print residue.
+
+//5 Valid
+checkentail (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    q_48::nlseg<p> & p!=null & p!=q_48 & p!=self_lem_12 & self_lem_12!=q_48)
+  |-  
+ (exists u,p_33 : self_lem_12::nlseg<u> * u::nlseg<p_33>  & p=p_33 & p_33!=u & p_33!=self_lem_12 & p_33!=null).
+print residue.
+/**
+<1>(exists q_344: emp&p!=null & p!=q_344 & p!=self_lem_12 & q_344!=self_lem_12 & q_344!=self_lem_12&{FLOW,(21,22)=__norm})
+*/
+
+//6 Fail.(must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
+checkentail_exact (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    q_48::nlseg<p> & p!=null & p!=q_48 & p!=self_lem_12 & self_lem_12!=q_48)
+  |-  
+ (exists u,p_33 : self_lem_12::nlseg<u> * u::nlseg<p_33>  & p=p_33 & p_33!=u & p_33!=self_lem_12 & p_33!=null).
+print residue.
+
+
+/*
+# nlseg4.slk
+
+ rev lemma cannot be proven yet!
+
+*/

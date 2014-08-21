@@ -113,6 +113,8 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | BagMax _ -> failwith ("compute_fo_b_formula: BagMin/BagMax not supported.")
 				  | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.")
 					(* Booleans *)
+                                  | Frm (sv, _) ->
+					ignore (compute_fo_var sv SO var_map) (* make boolean var second order for now *)
 				  | BConst _ -> compute_fo_b_formula rest var_map
 				  | BVar (sv, _) ->
 					  ignore (compute_fo_var sv SO var_map) (* make boolean var second order for now *)
@@ -347,6 +349,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
   in
   let (pf,il) = bf0 in
 	match pf with
+          | Frm _
 	  | BConst _
 	  | BVar _
 	  | EqMin _

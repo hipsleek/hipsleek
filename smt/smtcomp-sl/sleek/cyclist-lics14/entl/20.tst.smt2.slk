@@ -1,0 +1,14 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred ls<y> ==
+ self = y
+or (exists xp: self::GTyp<f0 = xp> * xp::ls<y> & self != y & null != self).
+
+checkentail x::ls<y> * y::ls<null>
+         |- x::ls<null>.
+
+expect unknown.

@@ -125,6 +125,7 @@ and cvcl_of_exp a = match a with
 and cvcl_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (sv, _) -> (cvcl_of_spec_var sv) ^ " = 1"
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
   | CP.XPure _ -> "(TRUE)" (* WN : weakening *)
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)

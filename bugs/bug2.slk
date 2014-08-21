@@ -1,0 +1,10 @@
+
+data node {
+ node next;
+}.
+
+
+checkentail_exact  x::node<_>
+  |- (exists y: y::node<_>).
+
+print residue.

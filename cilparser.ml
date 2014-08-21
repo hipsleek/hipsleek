@@ -1515,6 +1515,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
   )
   and helper_p_formula (p : Ipure.p_formula) : Ipure.p_formula = (
       match p with
+        | Ipure.Frm a -> Ipure.Frm a
         | Ipure.XPure xv ->
               Ipure.XPure xv
         | Ipure.BConst (b, pos) ->

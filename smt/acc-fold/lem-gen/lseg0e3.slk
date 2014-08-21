@@ -1,0 +1,38 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_unsafe self::node<u1>* u1::lseg<p> 
+       -> (exists last: self::lseg<last>*last::node<p>).
+
+//unfold lhs
+/*checkentail_exact (exists p_38,u1_39: self_lem_11::node<u1_39>&u1_39=p_38 & p_38=p)
+ or (exists p_46,a_47,p_38,u1_39: self_lem_11::node<u1_39> *
+    u1_39::node<a_47> * a_47::lseg<p_46>&p_46=p_38 & p_38=p)
+    |- (exists p_31,last_30: self_lem_11::lseg<last_30> *
+       last_30::node<p_31>&p_31=p).
+expect Valid.
+*/
+
+//unfold lhs -base case -OK
+/*
+ checkentail_exact
+ (exists p_38,u1_39: self_lem_11::node<u1_39>&u1_39=p_38 & p_38=p)
+    |- (exists p_31,last_30: self_lem_11::lseg<last_30> *
+       last_30::node<p_31>&p_31=p).
+expect Valid.
+*/
+
+//unfold lhs - inductive case
+checkentail_exact 
+ (exists p_46,a_47,p_38,u1_39: self_lem_11::node<u1_39> *
+    u1_39::node<a_47> * a_47::lseg<p_46>&p_46=p_38 & p_38=p)
+    |- (exists p_31,last_30: self_lem_11::lseg<last_30> *
+       last_30::node<p_31>&p_31=p).
+expect Valid.
+
+

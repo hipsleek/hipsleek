@@ -1,0 +1,13 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+checkentail_exact uu::lseg<p> |- uu::node<p>.
+print residue.
+
+checkentail uu::lseg<p> |- uu::node<p>.
+print residue.

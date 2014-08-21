@@ -1,0 +1,29 @@
+
+data node2 {
+	int val; 
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<"n":n> == 
+	self = null & ["n":n = 0] or 
+	self::node2<_ , q> * q::dll<n1> & ["n":n1=n-1]
+	inv true & ["n":n >= 0].
+
+// Fail.Valid.Valid.Valid
+
+checkentail
+  x::dll<m>@M &
+  ["": x=x' & t_31'=0 & v_int_22_859'=1;
+   "n":0<m] 
+  |- emp & Term.
+print residue.
+
+checkentail x::dll<m> |- m>=0.
+print residue.
+
+checkentail x::dll<m> |- true & ["n":m>=0].
+
+
+checkentail x::dll<m> & x!=null |- true & ["n":m>0].
+//expect Valid.

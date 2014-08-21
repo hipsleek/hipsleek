@@ -1,0 +1,30 @@
+data node1 {
+  node1 next1;
+}.
+
+data node2 {
+  node2 next2;
+  node1 down;
+}.
+
+pred lso<out:node1> ==
+ self = out
+or (exists u: self::node1<u> * u::lso<out> & self != out).
+
+pred nlcl<out:node2> ==
+ self = out
+or (exists u,Z1: self::node2<u,Z1> * Z1::lso<Z1> * u::nlcl<out> & self != out).
+
+/*
+--lem-gen-unsafe
+
+ERROR: at _0:0_0:0 
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types node1 and node2 are inconsistent
+ 
+Last Proving Location: 1 File "nlcl-01.slk",Line:16,Col:4
+
+ERROR: at _0:0_0:0 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(0,0),(0,0)} types node1 and node2 are inconsistent")
+
+
+*/

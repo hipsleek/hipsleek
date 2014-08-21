@@ -1,0 +1,31 @@
+
+data Dll_t {
+  Dll_t next;
+  Dll_t prev;
+}.
+
+pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
+ self = nx & bk = pr
+or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
+
+/*
+lemma_unsafe self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> -> self::dll<bk,pr,n>.
+*/
+
+// Can lemma application solve the below?
+// list * node * list |- list
+checkentail w_emp::Dll_t<next = t_emp,prev = u_emp> *
+            x_emp::dll<u_emp,null,w_emp> *
+            t_emp::dll<y_emp,w_emp,z_emp> & x_emp != w_emp & w_emp != t_emp & w_emp != z_emp
+         |- x_emp::dll<y_emp,null,z_emp>.
+expect Valid.
+
+// Lemma application can solve the below
+// list * list * node |- list
+checkentail 
+            x_emp::dll<u_emp,null,w_emp> *
+            w_emp::dll<y_emp,u_emp,z_emp> *
+            z_emp::Dll_t<_,_>@L
+         |- x_emp::dll<y_emp,null,z_emp>.
+
+expect Valid.

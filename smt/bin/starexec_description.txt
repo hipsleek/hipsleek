@@ -1,0 +1,1 @@
+./sleek $1 --smt-compete

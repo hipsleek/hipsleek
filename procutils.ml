@@ -91,8 +91,9 @@ struct
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      | Timeout ->  
-            Printf.eprintf " Timeout after %s secs" (string_of_float tsec);
+      | Timeout ->
+            if !smt_compete_mode then Printf.eprintf "" else
+            Printf.eprintf " Timeout after %s secs" (string_of_float tsec) ;
           (with_timeout ())
       | exc -> begin
           Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
@@ -146,10 +147,10 @@ struct
     let (prover_name, prover_proc, prover_arg_array) = prover in
     let _ = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
     try
-        let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
-        let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
-        set_process process;
-        prelude ()
+      let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
+      let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
+      set_process process;
+      prelude ()
     with
       | e -> begin
           let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^ "\n") in

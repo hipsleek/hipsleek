@@ -1,0 +1,15 @@
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
+pred_prim threadR<F:formula>
+ inv true.
+
+data cell {
+  int x;
+}.
+
+checkentail t::threadR<y::cell<5>> |- t::threadR<P>.
+print residue.
+
+checkentail t::threadR<y::cell<5>*x::cell<4>> 
+    |- t::threadR<x::cell<a>>.
+print residue.

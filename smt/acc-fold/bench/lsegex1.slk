@@ -1,0 +1,22 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+//lemma_safe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe self::lseg<p> -> (exists u: self::lseg<u>*u::lseg<p>).
+
+checkentail_exact x::lseg<p> |- (exists u: x::lseg<u> * u::node<p>).
+print residue.
+
+/*
+# lsegex1.slk
+
+why did this fail?
+
+*/
+

@@ -1,0 +1,12 @@
+data node {
+     node prev;
+     node next;
+}.
+
+pred dll<p> ==
+     self = null
+     or (exists q: self::node<p,q> * q::dll<self>).
+
+// expect: true
+
+checkentail true |- true.

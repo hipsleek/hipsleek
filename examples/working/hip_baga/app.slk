@@ -1,0 +1,34 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_, q> * q::ll<n-1>
+  //inv n>=0
+  //inv BG([],n>=0) 
+  //inv BG([],self=null & n=0) | BG([self],n>)
+  inv_exact BG([],self=null & n=0) | BG([self],n>0)
+  /* inv_sat BG([],self=null & n=0) | BG([self],n>0) */
+  // under
+.
+
+/*
+# app.slk
+
+!!! baga inv(ll):None
+!!! baga under inv(ll):None
+Fatal error: exception Failure("cannot find baga inv")
+*/
+
+checkentail x::ll<n> & n<0 |- false.
+print residue.
+// should succeed
+
+checkentail x=null |- x!=null.
+print residue.
+// should be a must-failure
+
+// should be a must-failure
+checkentail x=1 |- x>1.
+print residue.

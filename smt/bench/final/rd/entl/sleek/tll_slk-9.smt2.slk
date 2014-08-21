@@ -1,0 +1,41 @@
+
+data node {
+  node parent;
+  node left;
+  node right;
+  node next;
+}.
+
+pred tree<> ==
+ (exists p_35,D1_36,r_37,n_38: self::node<parent = p_35,left = D1_36,right = r_37,next = n_38> & r_37 = null)
+or (exists p_39,l_40,r_41,D2_42: self::node<parent = p_39,left = l_40,right = r_41,next = D2_42> * l_40::tree<> * r_41::tree<> & r_41 != null).
+
+pred tll<p:node,ll:node,lr:node> ==
+ (exists lr_28,p_21,D1_22,l_23: self::node<parent = p_21,left = D1_22,right = l_23,next = lr_28> & l_23 = null & self = ll & lr_28 = lr)
+or (exists p_29,self_30,ll_31,self_32,z_33,lr_34,l_24,r_25,D2_26,z_27: self::node<parent = p_29,left = l_24,right = r_25,next = D2_26> * l_24::tll<self_30,ll_31,z_27> * r_25::tll<self_32,z_33,lr_34> & r_25 != null & p_29 = p & self_30 = self & ll_31 = ll & self_32 = self & z_33 = z_27 & lr_34 = lr).
+
+pred right_nil<> ==
+(exists p,l,r,n: self::node<parent = p,left = l,right = r,next = n> & r = null).
+
+pred eright_nil<> ==
+(exists p0,l0,r0,n0,p1,l1,r1,n1: self::node<parent = p0,left = l0,right = r0,next = n0> & p0 = p1 & l0 = l1 & r0 = r1 & n0 = n1 & r1 = null).
+
+pred right_nnil<> ==
+(exists p,l,r,n: self::node<parent = p,left = l,right = r,next = n> * l::tree<> * r::tree<> & r != null).
+
+pred eright_nnil<> ==
+(exists p0,l0,r0,n0,p1,l1,r1,n1: self::node<parent = p0,left = l0,right = r0,next = n0> * l1::tree<> * r1::tree<> & p0 = p1 & l0 = l1 & r0 = r1 & n0 = n1 & r1 = null).
+
+pred enode<p:node,l:node,r:node,n:node> ==
+(exists p0,l0,r0,n0: self::node<parent = p0,left = l0,right = r0,next = n0> & p0 = p & l0 = l & r0 = r & n0 = n).
+
+pred etll<p:node,t:node,r:node> ==
+(exists p1,t1: self::tll<p1,r,t1> & p1 = p & t1 = t).
+
+pred ltll<p:node,l:node,r:node,D:node,v:node,t:node> ==
+(exists l1: self::node<parent = p,left = l,right = r,next = D> * l::tll<self,v,l1> * r::tll<self,l1,t>).
+
+checkentail_exact l::tree<> * r::tree<> * xprm::node<parent = pprm,left = l,right = r,next = D> & vprm = r & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t
+         |- l::tree<> * vprm::tree<> * xprm::node<parent = pprm,left = l,right = r,next = D> & vprm = r & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t.
+
+expect Valid.

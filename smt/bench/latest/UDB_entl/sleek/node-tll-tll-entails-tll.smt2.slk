@@ -1,0 +1,17 @@
+
+data TLL_t {
+  TLL_t left;
+  TLL_t right;
+  TLL_t next;
+  TLL_t parent;
+}.
+
+pred TLL_plus<par:TLL_t,ll:TLL_t,lr:TLL_t> ==
+ self::TLL_t<left = null,right = null,parent = par,next = lr> & self = ll
+or (exists l,r,z: self::TLL_t<left = l,right = r,parent = par,next = null> * l::TLL_plus<self,ll,z> * r::TLL_plus<self,z,lr>).
+
+checkentail_exact (exists l,r,z: a::TLL_t<left = l,right = r,parent = null,next = null> * l::TLL_plus<a,c,z> * r::TLL_plus<a,z,null>)
+         |- a::TLL_plus<null,c,null>.
+
+expect Valid.
+

@@ -19,25 +19,25 @@ type mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_values : (ident * (P.exp list)) list;
 			mem_formula_field_layout : (ident * (P.ann list)) list;
-			mem_formula_guards : P.formula list; 
+			mem_formula_guards : P.formula list;
 		}
 
-and assume_formula = 
+and assume_formula =
 	{
-		formula_assume_simpl : formula; 
+		formula_assume_simpl : formula;
 		formula_assume_struc : struc_formula;
 		formula_assume_lbl : formula_label;
 		formula_assume_ensures_type : ensures_type;
 	}
 
-and struc_formula = 
+and struc_formula =
 	| ECase of struc_case_formula
 	| EBase of struc_base_formula
 	| EAssume of assume_formula (*(formula*formula_label*ensures_type)*)
 		(*could be generalized to have a struc_formula type instead of simple formula*)
 		(* spec feature to induce inference *)
 	| EInfer of struc_infer_formula
-	| EList of (spec_label_def*struc_formula) list 
+	| EList of (spec_label_def*struc_formula) list
 
 
 and struc_infer_formula =
@@ -53,7 +53,7 @@ and struc_infer_formula =
 and struc_case_formula =
 	{
 		formula_case_branches : (P.formula * struc_formula ) list;
-		formula_case_pos : loc 		
+		formula_case_pos : loc
 	}
 
 and struc_base_formula =
@@ -104,7 +104,7 @@ and formula_or = { formula_or_f1 : formula;
 
 and h_formula = (* heap formula *)
   | Phase of h_formula_phase
-  | Conj of h_formula_conj  
+  | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj
   | Star of h_formula_star
@@ -121,7 +121,7 @@ and h_formula = (* heap formula *)
     e.g. t::thread(0.5)<x::node<>> *)
   | ThreadNode of h_formula_thread
   | HRel of (ident * (P.exp list) * loc)
-  | HTrue 
+  | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
 
@@ -457,7 +457,7 @@ and mkConj f1 f2 pos =
   else Conj { h_formula_conj_h1 = f1;
               h_formula_conj_h2 = f2;
               h_formula_conj_pos = pos }
-              
+
 and mkConjStar f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
@@ -465,7 +465,7 @@ and mkConjStar f1 f2 pos =
   else ConjStar { h_formula_conjstar_h1 = f1;
               h_formula_conjstar_h2 = f2;
               h_formula_conjstar_pos = pos }
-              
+
 and mkConjConj f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
@@ -847,7 +847,7 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
 	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
 		mkExists new_qvars h p f a pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
-	
+
 and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
 	  let new_f1 = push_exists qvars f1 in
@@ -1400,6 +1400,37 @@ let get_heap_nodes (f0:h_formula) =
     | HTrue
     | HFalse
     | HEmp -> [],[]
+  in
+  helper f0
+
+let get_heaps (f0:h_formula) =
+  let rec helper f =match f with
+    | Conj ({h_formula_conj_h1 = h1; 
+      h_formula_conj_h2 = h2; 
+      h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+      h_formula_conjstar_h2 = h2; 
+      h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+      h_formula_starminus_h2 = h2; 
+      h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+      h_formula_star_h2 = h2; 
+      h_formula_star_pos = pos}) ->
+         (helper h1)@(helper h2)
+    | HeapNode _
+    | HeapNode2 _
+    | ThreadNode _
+    | HRel _
+    | HTrue
+    | HFalse -> [f]
+    | HEmp -> []
   in
   helper f0
 
@@ -2234,7 +2265,7 @@ and isImm(a : P.ann) : bool =
     | _ -> false
 
 let eq_var (sv1 : (ident * primed)) (sv2 : (ident * primed)) = match (sv1, sv2) with
-  | ((v1, p1), (v2, p2)) -> v1 = v2 & p1 = p2
+  | ((v1, p1), (v2, p2)) -> v1 = v2 && p1 = p2
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_var vl rl
 
@@ -2836,3 +2867,113 @@ let struc_formula_collect_pre_hprel f0 =
   let pr2 = pr_list (pr_pair pr_id (pr_list pr_id)) in
   Debug.no_1 "struc_formula_collect_pre_hprel" pr1 pr2
       (fun _ -> struc_formula_collect_pre_hprel_x f0) f0
+
+
+let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
+    : h_formula = 
+  let r =  f e in 
+  match r with
+  | Some e1 -> e1
+  | None  -> (
+      match e with  
+      | Star s ->
+          let new_h1 = transform_h_formula f s.h_formula_star_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_star_h2 in
+          Star {s with h_formula_star_h1 = new_h1;
+                       h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+          let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
+          StarMinus {s with h_formula_starminus_h1 = new_h1;
+                            h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conj_h1 in
+          Conj {s with h_formula_conj_h1 = new_h1;
+                       h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
+          ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                           h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
+          ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                          h_formula_conjconj_h2 = new_h2;}
+      | Phase s ->
+          let new_rd = transform_h_formula f s.h_formula_phase_rd in
+          let new_rw = transform_h_formula f s.h_formula_phase_rw in
+          Phase {s with h_formula_phase_rd = new_rd;
+                        h_formula_phase_rw = new_rw;}
+      | HeapNode _ | HeapNode2 _ | ThreadNode _
+      | HRel _ | HTrue | HFalse | HEmp -> e
+    )
+
+and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
+    : h_formula =
+  let pr = !print_h_formula in
+  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
+
+let transform_formula_x f (e:formula):formula =
+  let rec helper f e = (
+    let (_, f_f, f_h_f, f_p_t) = f in
+    let r =  f_f e in 
+    match r with
+    | Some e1 -> e1
+    | None  -> (
+        match e with     
+        | Base b ->
+            let new_heap = transform_h_formula f_h_f b.formula_base_heap in
+            let new_pure = P.transform_formula f_p_t b.formula_base_pure in
+            Base { b with formula_base_heap = new_heap;
+                          formula_base_pure = new_pure; }
+        | Or o -> 
+            Or {o with formula_or_f1 = helper f o.formula_or_f1;
+                       formula_or_f2 = helper f o.formula_or_f2;}
+        | Exists e ->
+            let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
+            let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
+            Exists { e with formula_exists_heap = new_heap;
+                            formula_exists_pure = new_pure;}
+      )
+  ) in
+  helper f e
+
+
+let transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
+
+let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
+  let (f_e_f, f_f, f_h_f, f_p_t) = f in
+  let r = f_e_f e in 
+  match r with
+  | Some e1 -> e1
+  | None -> (
+      match e with
+      | ECase c -> 
+          let br' = List.map (fun (c1,c2)->
+            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
+          ) c.formula_case_branches in
+          ECase {c with formula_case_branches = br';}
+      | EBase b ->
+          let new_base = transform_formula f b.formula_struc_base in
+          let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
+          EBase{b with formula_struc_base = new_base;
+                       formula_struc_continuation = new_cont;}
+      | EAssume b->
+          let new_simpl = transform_formula f b.formula_assume_simpl in
+          let new_struc = transform_struc_formula f b.formula_assume_struc in
+          EAssume {b with formula_assume_simpl = new_simpl;
+                          formula_assume_struc = new_struc;}
+      | EInfer b ->
+          let new_cont = transform_struc_formula f b.formula_inf_continuation in
+          EInfer {b with formula_inf_continuation = new_cont;}
+      | EList b -> EList (map_l_snd (transform_struc_formula f) b)
+    )
+
+and transform_struc_formula f (e:struc_formula) : struc_formula =
+  let pr = !print_struc_formula in
+  Debug.no_1 "IF.transform_struc_formula" pr pr
+      (fun _ -> transform_struc_formula_x f e) e

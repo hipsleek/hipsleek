@@ -1,0 +1,18 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred List<y:GTyp> ==
+ self::GTyp<f0 = y,f1 = _> & null != self
+or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::List<y> & null != self).
+
+/*
+lemma_unsafe  self::List<y> * y::GTyp<f0 = z,f1 = _> -> self::List<z>.
+*/
+
+checkentail_exact x::List<y> * y::GTyp<f0 = z,f1 = _>
+         |- x::List<z>.
+
+expect Valid.

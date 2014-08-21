@@ -1,0 +1,45 @@
+
+data node {
+     node next;
+}.
+
+pred b1<y> ==
+     (self:node) = y
+     or (exists u: self::b1<u> * u::node<y>).
+
+
+/*
+# bseg2.slk --pcp
+
+fix_ef@1
+fix_ef inp1 :[b1]
+fix_ef inp2 :10
+fix_ef@1 EXIT:[[([], self=y)]]
+
+!!! baga inv(b1):[([], self=y)]Stop Omega... 10 invocations
+
+Above fixpoint is incorrect. It should have been:
+   ([],self=y) \/ ([self],true)
+
+The iterations are:
+
+
+b1<self,y> = ([],self=y) \/ false
+
+b1<self,y> = ([],self=y) \/ (ex u: b1(self,u) * ([u],true))
+           = ([],self=y) \/ (ex u: ([],self=u) * ([u],true))
+           = ([],self=y) \/ (ex u: ([u],self=u))
+           = ([],self=y) \/ ([self],(ex u: self=u) // this is critical step
+           = ([],self=y) \/ ([self],true)
+
+b1<self,y> = ([],self=y) \/ (ex u: b1(self,u) * ([u],true))
+           = ([],self=y) \/ (ex u: ([],self=u)\/([self],true)) * ([u],true))
+           = ([],self=y) \/ (ex u: ([u],self=u)\/([self,u],true)))
+           = ([],self=y) \/ (ex u: ([u],self=u))\/(ex u: ([self,u],true))
+           = ([],self=y) \/ ([self],true)\/ ([self],true)) // duplicate elim
+           = ([],self=y) \/ ([self],true)
+
+
+
+
+*/

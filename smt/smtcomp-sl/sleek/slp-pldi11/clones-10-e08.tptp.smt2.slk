@@ -1,0 +1,13 @@
+//(set-info :status sat)
+
+data Sll_t {
+  Sll_t f;
+}.
+
+pred ls<out> ==
+ self = out
+or (exists u: self::Sll_t<f = u> * u::ls<out>).
+
+checkentail x38::ls<x37> * x39::Sll_t<f = x38> * x37::Sll_t<f = x39> * x34::ls<x33> * x35::Sll_t<f = x34> * x33::Sll_t<f = x35> * x30::ls<x29> * x31::Sll_t<f = x30> * x29::Sll_t<f = x31> * x26::ls<x25> * x27::Sll_t<f = x26> * x25::Sll_t<f = x27> * x22::ls<x21> * x23::Sll_t<f = x22> * x21::Sll_t<f = x23> * x18::ls<x17> * x19::Sll_t<f = x18> * x17::Sll_t<f = x19> * x14::ls<x13> * x15::Sll_t<f = x14> * x13::Sll_t<f = x15> * x10::ls<x9> * x11::Sll_t<f = x10> * x9::Sll_t<f = x11> * x6::ls<x5> * x7::Sll_t<f = x6> * x5::Sll_t<f = x7> * x2::ls<x1> * x3::Sll_t<f = x2> * x1::Sll_t<f = x3> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & x38 != x39 & x37 != x39 & null != x39 & null != x38 & null != x37 & x34 != x35 & x33 != x35 & null != x35 & null != x34 & null != x33 & x30 != x31 & x29 != x31 & null != x31 & null != x30 & null != x29 & x26 != x27 & x25 != x27 & null != x27 & null != x26 & null != x25 & x22 != x23 & x21 != x23 & null != x23 & null != x22 & null != x21 & x18 != x19 & x17 != x19 & null != x19 & null != x18 & null != x17 & x14 != x15 & x13 != x15 & null != x15 & null != x14 & null != x13 & x10 != x11 & x9 != x11 & null != x11 & null != x10 & null != x9 & x6 != x7 & x5 != x7 & null != x7 & null != x6 & null != x5 & x2 != x3 & x1 != x3 & null != x3 & null != x2 & null != x1 & null = null
+         |- x40::Sll_t<f = x39> * x38::ls<x40> * x39::Sll_t<f = x38> * x36::Sll_t<f = x35> * x34::ls<x36> * x35::Sll_t<f = x34> * x32::Sll_t<f = x31> * x30::ls<x32> * x31::Sll_t<f = x30> * x28::Sll_t<f = x27> * x26::ls<x28> * x27::Sll_t<f = x26> * x24::Sll_t<f = x23> * x22::ls<x24> * x23::Sll_t<f = x22> * x20::Sll_t<f = x19> * x18::ls<x20> * x19::Sll_t<f = x18> * x16::Sll_t<f = x15> * x14::ls<x16> * x15::Sll_t<f = x14> * x12::Sll_t<f = x11> * x10::ls<x12> * x11::Sll_t<f = x10> * x8::Sll_t<f = x7> * x6::ls<x8> * x7::Sll_t<f = x6> * x4::Sll_t<f = x3> * x2::ls<x4> * x3::Sll_t<f = x2> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
+
