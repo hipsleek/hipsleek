@@ -1,0 +1,33 @@
+data node {node next; }.
+
+
+pred ll<> == self = null
+	or self::node<r> * r::ll<>.
+
+
+HeapPred H(node a).
+
+//1
+infer [H] H(x) |- x::node<p>.
+
+print residue.
+
+/*
+expected: 
+
+  R1=  U(p)
+  H(x) ==> x::node<p> * U(p).
+
+  R2=  x=null \mustF
+  H(x) ===> x=null.
+*/
+
+
+//2
+infer [H] H(x) * y::node<p> & x!=y |- x::node<p>.
+print residue.
+
+
+//3
+infer [H] H(x) |- x=null.
+print residue.

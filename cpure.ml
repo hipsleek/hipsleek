@@ -9059,7 +9059,7 @@ let rec contains_neq (f:formula) : bool =  match f with
     | AndList l -> exists_l_snd contains_exists l
 
 
-let neg_eq_neq f0=
+let neg_eq_neq_x f0=
   let rec helper f= match f with
     | BForm (bf,a) ->
           (match bf with
@@ -9077,6 +9077,11 @@ let neg_eq_neq f0=
     | _ -> f
   in
   helper f0
+
+let neg_eq_neq f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "neg_eq_neq" pr1 pr1
+      (fun _ -> neg_eq_neq_x f0) f0
 
 (*neg(x!=y) == x=y; neg(x!=null) === x=null*)
 let rec neg_neq_x f=
