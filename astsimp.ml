@@ -1324,9 +1324,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      :: prog3.I.prog_data_decls;} in
+          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
   let prog2 = I.add_normalize_lemmas prog2 in

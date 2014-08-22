@@ -1,6 +1,7 @@
 data node {node next; }.
 
-checkentail x=null & flow __Error |- x!=null.
+//checkentail x=null & flow __Error |- x!=null.
+
 
 checkentail x=null |- x=null.
 print residue.

@@ -2220,6 +2220,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge brk_top "__others") in
   let _ = (exlist # add_edge spec_flow "__others") in
   let _ = (exlist # add_edge error_flow top_flow) in
+  let _ = (exlist # add_edge mayerror_flow top_flow) in
   let _ = (exlist # add_edge bfail_flow top_flow) in
   ()
 
@@ -2227,10 +2228,10 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
   let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
   let _ = if clean then (exlist # remove_dupl ) in
-	if (exlist # has_cycles) then begin
-	  print_string ("Error: Exception hierarchy has cycles\n");
-	  failwith ("Exception hierarchy has cycles\n");
-	end 
+  if (exlist # has_cycles) then begin
+    print_string ("Error: Exception hierarchy has cycles\n");
+    failwith ("Exception hierarchy has cycles\n");
+  end
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = exlist # string_of in

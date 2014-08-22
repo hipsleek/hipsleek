@@ -5320,7 +5320,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                     estate with es_formula =
                         match fc with
                           | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                          | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                          | CF.Failure_May _ -> CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                                 (* this denotes a maybe error *)
                           | CF.Failure_Bot _
                           | CF.Failure_Valid -> estate.es_formula
@@ -8103,7 +8103,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             estate with es_formula =
                 match fc_kind with
                   | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                  | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                  | CF.Failure_May _ -> CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                         (* this denotes a maybe error *)
                   | CF.Failure_Bot _ -> estate.es_formula
                   | CF.Failure_Valid -> estate.es_formula
@@ -10370,7 +10370,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                 estate with es_formula =
                     match fc with
                       | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                      | CF.Failure_May _ -> CF.substitute_flow_into_f !top_flow_int estate.es_formula
+                      | CF.Failure_May _ -> CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                             (* this denotes a maybe error *)
                       | CF.Failure_Bot _
                       | CF.Failure_Valid -> estate.es_formula
@@ -11373,7 +11373,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     match relass with
                       | [] -> if Infer.no_infer_all_all estate then
                           (*/sa/error/ex2.slk: unmatch rhs: may failure *)
-                          let may_estate = {estate with es_formula = CF.substitute_flow_into_f !top_flow_int estate.es_formula} in
+                          let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                           (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                           CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
                         else

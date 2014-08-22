@@ -1,6 +1,2 @@
-heap_entail_empty_rhs_heap
-check_maymust_failure
-hloc_enum_to_symb
-build_and_failures
-elim_equi_ante
-get_equi_vars
+compute_hierarchy_aux
+build_exc_hierarchy

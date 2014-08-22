@@ -396,7 +396,7 @@ let process_source_full source =
     let prim_names = 
       (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
-      ["__Exc"; "__Fail"; "__Error"]
+      ["__Exc"; "__Fail"; "__Error"; "__MayError"]
     in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
