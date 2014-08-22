@@ -2607,10 +2607,13 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
     (* to transform heap to pure formula, use baga *)
     let old_baga_flag = !baga_xpure in
     let _ = baga_xpure := true in
-    let prhs_guard,_,_ = Cvutil.xpure_heap_symbolic 10 prog rhs_hf (Mcpure.mkMTrue pos) 0 in
+    let prhs_guard,_,_ = (Cvutil.xpure_heap_symbolic 10 prog rhs_hf (Mcpure.mkMTrue pos) 0) in
     let _ = baga_xpure := old_baga_flag in
-    if MCP.isConstMTrue prhs_guard then None else
-      let neg_prhs = MCP.mix_of_pure (CP.neg_eq_neq (MCP.pure_of_mix prhs_guard)) in
+    let prhs_guard1 =  MCP.pure_of_mix prhs_guard in
+    (* tranform pointers: x>0, x=1 -> x!=null *)
+    let prhs_guard2 = Cputil.hloc_enum_to_symb prhs_guard1 in
+    if CP.isConstTrue prhs_guard2 then None else
+      let neg_prhs = MCP.mix_of_pure (CP.neg_eq_neq prhs_guard2) in
       let ass_rhs = CF.mkBase HEmp neg_prhs TypeTrue (mkTrueFlow ()) [] pos in
       let knd = CP.RelAssume lhs_hps in
       let ehp_rel = CF.mkHprel knd [] [] [] lhs None ass_rhs es_cond_path in
@@ -2788,7 +2791,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*   lookup_eq_hprel_ass rvhp_rels ass new_lhs new_rhs *)
   (* in *)
   let m = [] in
-  let hp_rels, n_es_heap_opt=
+  let hp_rels, n_es_heap_opt, ass_lhs=
     (* if b && m <> [] then [] else *)
       let knd = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)) in
       let before_lhs = CF.Base new_lhs_b in
@@ -2813,7 +2816,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"
-      )
+      ), lhs
   in
   let hp_rel_list0 = hp_rels@defined_hprels in
   let ex_ass = (rel_ass_stk # get_stk) in
@@ -2824,7 +2827,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (* let _ = DD.info_hprint (add_str  "  new_post_hps" !CP.print_svl) new_post_hps pos in *)
   let _ = DD.tinfo_hprint (add_str  "  hp_rels" (pr_list_ln Cprinter.string_of_hprel))  hp_rels pos in
   let _ = DD.tinfo_hprint (add_str  "  hp_rel_list"  (pr_list_ln Cprinter.string_of_hprel)) hp_rel_list pos in
-  r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list, n_es_heap_opt
+  r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list, n_es_heap_opt, ass_lhs
 
 
 let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lselected_hpargs0
@@ -3141,13 +3144,13 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
               | [] -> lhs_b1
               | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
             in
-            let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt =
+            let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
               generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                   no_es_history lselected_hpargs2 rselected_hpargs
                   hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
             (* generate assumption for memory error *)
-            let oerror_es = generate_error_constraints prog es (CF.Base n_lhs_b1) rhs
+            let oerror_es = generate_error_constraints prog es ass_lhs rhs
               (List.map fst lselected_hpargs2) es_cond_path pos in
             (*update residue*)
             (*the new hprel generate may be from post-preds, update them*)

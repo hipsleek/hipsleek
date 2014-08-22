@@ -14,7 +14,7 @@ pred ll_one<> == self::node<null>
 
 HeapPred H(node a).
 
-/*
+
 //1
 infer [H] H(x) |- x::node<p>.
 
@@ -41,14 +41,13 @@ print residue.
 infer [H] H(x) |- x=null.
 print residue.
 
-*/
 
 //4.
 infer [H] H(x) |- x::ll<>.
 print residue.
 
-/*
+
 //5.
 infer [H] H(x) |- x::ll_one<>.
 print residue.
-*/
+

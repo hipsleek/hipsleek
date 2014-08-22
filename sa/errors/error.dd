@@ -5,3 +5,4 @@ infer_collect_hp_rel_error
 xpure_heap_symbolic
 neg_eq_neq
 generate_error_constraints
+hloc_enum_to_symb
