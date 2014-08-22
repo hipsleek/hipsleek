@@ -1,0 +1,43 @@
+data node {node next; }.
+
+checkentail x=null |- x::node<p>.
+print residue.
+
+/*
+# ex2.slk --efa
+
+why can't we have residue with error status?
+why can't we have the original state x=null in residue state?
+
+expecting residue of :
+  (x=null) & _Flow=MUST_ERRE
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&x=null&{FLOW,(3,4)=__Error}[]
+                          es_gen_impl_vars: [p]
+                          es_must_error: Some( true |-  x=1. LOCS:[15;0] (must-bug); true)
+                          es_infer_vars_rel: []] <1>emp&x=null&{FLOW,(3,4)=__Error}[]
+[[empty]]
+*/
+
+checkentail true |- x::node<p>.
+print residue.
+/*
+# ex2.slk --efa
+
+# why did we get a must failure? shouldn't this be a may failure?
+
+
+expecting residue of :
+  true & _Flow=MAY_ERR
+
+Entail 2: Fail.(cex)(must) cause:do_unmatched_rhs : x::node<p>
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&{FLOW,(21,22)=__norm}[]
+                          es_gen_impl_vars: [x; p]
+                          es_must_error: Some(do_unmatched_rhs : x::node<p>; true)
+                          es_trace:  COND ==>  UnmatchedRHSData ==> 
+                          es_infer_vars_rel: []] <1>emp&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/

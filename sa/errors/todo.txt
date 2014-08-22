@@ -53,6 +53,28 @@ ll-last2
 case spec
 
 =====================================================================
+# sa/errors/ex2.slk --efa
+
+checkentail x=null |- x::node<p>.
+print residue.
+
+why can't we have residue with error status?
+why can't we have the original state x=null in residue state?
+
+expecting residue of :
+  (x=null) & _Flow=MUST_ERRE
+
+checkentail true |- x::node<p>.
+print residue.
+/*
+# ex2.slk --efa
+
+# why did we get a must failure? shouldn't this be a may failure?
+
+
+expecting residue of :
+  true & _Flow=MAY_ERR
+
 =====================================================================
 =====================================================================
 =====================================================================
