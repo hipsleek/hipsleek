@@ -275,8 +275,22 @@ let string_of_slicing_label sl =
 	| None -> ""
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
+    
+let rec string_of_term_ann a =
+  match a with
+    | P.Term -> "Term"
+    | P.Loop -> "Loop"
+    | P.MayLoop -> "MayLoop"
+    | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.Fail f -> match f with
+        | P.TermErr_May -> "TermErr_May"
+        | P.TermErr_Must -> "TermErr_Must"
 
-let string_of_b_formula (pf,il) =
+and string_of_term_id uid = 
+  "@" ^ (string_of_int uid.P.tu_id) ^ 
+  "<#" ^ (string_of_pure_formula uid.P.tu_cond) ^ "#>"
+
+and string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
@@ -333,7 +347,6 @@ let string_of_b_formula (pf,il) =
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
    (* | _ -> "bag constraint" *)
-;;
 
 (*  | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
@@ -343,11 +356,8 @@ let string_of_b_formula (pf,il) =
 	  (* lists and list formulae *)
 *)
 
-let concat_string_list_string strings =
-    ""
-		
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
+and string_of_pure_formula f = match f with 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 

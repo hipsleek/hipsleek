@@ -845,6 +845,20 @@ let pr_slicing_label sl =
 		pr_list_none pr_formula_exp el;
 		fmt_string ("]");
 		fmt_string (">")
+    
+let rec string_of_term_ann a =
+  match a with
+    | P.Term -> "Term"
+    | P.Loop -> "Loop"
+    | P.MayLoop -> "MayLoop"
+    | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.Fail f -> match f with
+        | P.TermErr_May -> "TermErr_May"
+        | P.TermErr_Must -> "TermErr_Must"
+
+and string_of_term_id uid = 
+  "@" ^ (string_of_int uid.P.tu_id) ^ 
+  "<#" ^ (!P.print_formula uid.P.tu_cond) ^ "#>"
 
 let pr_var_measures (t_ann, ls1,ls2) = 
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in

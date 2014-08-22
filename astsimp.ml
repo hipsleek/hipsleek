@@ -6433,8 +6433,8 @@ and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula
           CP.mkExists [ sv ] pf lbl pos
               
 and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
-  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0           
-      
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0                 
+                  
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  match pf with
@@ -6444,7 +6444,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
           let cle = List.map (fun e -> trans_pure_exp e tlist) ls1 in
           let clt = List.map (fun e -> trans_pure_exp e tlist) ls2 in
           CP.LexVar {
-              CP.lex_ann = t_ann;
+              CP.lex_ann = trans_term_ann t_ann tlist;
               CP.lex_exp = cle;
               CP.lex_tmp = clt;
               CP.lex_loc = pos; }
@@ -6530,6 +6530,20 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
   match sl with
     | None -> (npf, None)
     | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist in (npf, Some (il,lbl,nel))
+
+and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
+  let trans_term_fail f = match f with
+    | IP.TermErr_May -> CP.TermErr_May
+    | IP.TermErr_Must -> CP.TermErr_Must in
+  let trans_term_id uid tlist = {
+    CP.tu_id = uid.IP.tu_id;
+    CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; } in 
+  match ann with
+    | IP.Term -> CP.Term
+    | IP.Loop -> CP.Loop
+    | IP.MayLoop -> CP.MayLoop
+    | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
+    | IP.Fail f -> CP.Fail (trans_term_fail f)
                                                                        
 and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp" 

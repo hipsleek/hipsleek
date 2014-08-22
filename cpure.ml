@@ -157,6 +157,22 @@ and lex_info = {
     lex_loc : loc; (* location of LexVar *)
 }
 
+and term_ann = 
+  | Term    (* definite termination *)
+  | Loop    (* definite non-termination *)
+  | MayLoop (* possibly non-termination *)
+  | Fail of term_fail (* Failure because of invalid trans *)
+  | TermU of uid  (* unknown, need to be inferred *)
+
+and uid = {
+  tu_id: int;
+  tu_cond: formula; 
+}
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
+
 and p_formula =
   | XPure of xpure_view
   | LexVar of lex_info

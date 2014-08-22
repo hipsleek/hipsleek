@@ -11,6 +11,7 @@ open Exc.GTable
 open Perm
 open Label_only
 open Label 
+open Cpure
 
 module Err = Error
 module CP = Cpure

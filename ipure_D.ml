@@ -56,7 +56,6 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-
 and p_formula = 
   | XPure of xpure_view
   | BConst of (bool * loc)
@@ -86,6 +85,22 @@ and p_formula =
   | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
   (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
+
+and term_ann = 
+  | Term    (* definite termination *)
+  | Loop    (* definite non-termination *)
+  | MayLoop (* possibly non-termination *)
+  | Fail of term_fail (* Failure because of invalid trans *)
+  | TermU of uid  (* unknown, need to be inferred *)
+
+and uid = {
+  tu_id: int;
+  tu_cond: formula; 
+}
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
 
 (* Expression *)
 and exp = 

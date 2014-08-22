@@ -1642,13 +1642,19 @@ pure_constr:
        | Pure_c (P.Ann_Exp (P.Var (v,_), Bool, _)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
+  
+termu_id: [[ `AT; `INT_LITER (i,_) -> i ]];
+
+termu_cond: [[ `TOPAREN; c = pure_constr; `TCPAREN -> c ]];
 
 ann_term: 
-    [[
-        `TERM -> Term
-      | `LOOP -> Loop
-      | `MAYLOOP -> MayLoop
-      | `TERMU -> TermU
+    [[  `TERM -> P.Term
+      | `LOOP -> P.Loop
+      | `MAYLOOP -> P.MayLoop
+      | `TERMU; id = OPT termu_id; c = OPT termu_cond -> 
+          P.TermU ({ 
+            P.tu_id = un_option id 0; 
+            P.tu_cond = un_option c (P.mkTrue no_pos); })
     ]];
 
 cexp:

@@ -7511,7 +7511,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     let t_ann, ml, il = Term.find_lexvar_es estate in
                     let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
                     let term_measures, term_res, term_err_msg =
-                      Some (Fail TermErr_May, ml, il),
+                      Some (CP.Fail CP.TermErr_May, ml, il),
                       (term_pos, t_ann_trans, orig_ante, 
                       Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                       Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))

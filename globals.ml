@@ -85,17 +85,6 @@ and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
-and term_ann = 
-  | Term    (* definite termination *)
-  | Loop    (* definite non-termination *)
-  | MayLoop (* possibly non-termination *)
-  | Fail of term_fail (* Failure because of invalid trans *)
-  | TermU   (* unknown, need to be inferred *)
-
-and term_fail =
-  | TermErr_May
-  | TermErr_Must
-
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -309,16 +298,6 @@ let string_of_vp_ann a =
     | VP_Value -> "@value"
     (* | VP_Ref-> "@p_ref" *)
   )
-
-let string_of_term_ann a =
-  match a with
-    | Term -> "Term"
-    | Loop -> "Loop"
-    | MayLoop -> "MayLoop"
-    | TermU -> "TermU"
-    | Fail f -> match f with
-        | TermErr_May -> "TermErr_May"
-        | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
