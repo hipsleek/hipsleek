@@ -1,0 +1,7 @@
+data node {node next; }.
+
+checkentail x=null & flow __Error |- x!=null.
+//  x=null & flow __Error
+
+checkentail x=null & flow __Error 
+   or x=null |- x!=null.
