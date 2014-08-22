@@ -8168,21 +8168,26 @@ let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 let elim_equi_var f qvar=
   let st, pp1 = get_subst_equation_formula f qvar false in
   if not (Gen.is_empty st) then
-	subst_term st pp1
+    subst_term st pp1
   else f
 
-let rec get_equi_vars (f : formula) : (spec_var list) = match f with
-	| BForm ((b,a),l) -> get_equi_vars_b b
-	| And (f1,f2,l) ->
-		let g1 = get_equi_vars f1 in
-		let g2 = get_equi_vars f2 in
-			g1@g2
-	| Or (f1,f2,l,p) ->
-        	let g1 = get_equi_vars f1 in
-		    let g2 = get_equi_vars f2 in
-			g1@g2
-    | Not (nf,_,_) -> get_equi_vars nf
-	| _ -> []
+let rec get_equi_vars_x (f : formula) : (spec_var list) = match f with
+  | BForm ((b,a),l) -> get_equi_vars_b b
+  | And (f1,f2,l) ->
+	let g1 = get_equi_vars_x f1 in
+	let g2 = get_equi_vars_x f2 in
+	g1@g2
+  | Or (f1,f2,l,p) ->
+        let g1 = get_equi_vars_x f1 in
+	let g2 = get_equi_vars_x f2 in
+	g1@g2
+  | Not (nf,_,_) -> get_equi_vars_x nf
+  | _ -> []
+
+and get_equi_vars f=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_equi_vars" pr1 !print_svl
+      (fun _ -> get_equi_vars_x f) f
 
 and get_equi_vars_b f =
   let helper e=
@@ -8191,14 +8196,18 @@ and get_equi_vars_b f =
       | _ -> []
   in
   match f with
-	| Eq (e1,e2,_) -> (helper e1)@(helper e2)
-	| _ -> []
+    | Eq (e1,e2,_) -> (helper e1)@(helper e2)
+    | Neq (e1,e2,_) -> (helper e1)@(helper e2)
+    | _ -> []
 
 let elim_equi_ante_x ante cons=
   let cv = fv cons in
   let eav_all = get_equi_vars ante in
-  let eav = List.filter (fun v -> not(List.mem v cv)) eav_all in
-  List.fold_left elim_equi_var ante eav
+  let eav = List.filter (fun v -> not(mem_svl v cv)) eav_all in
+  let _ = Debug.ninfo_hprint (add_str "cv" !print_svl) cv no_pos in
+  let _ = Debug.ninfo_hprint (add_str "eav" !print_svl) eav no_pos in
+  if eav =[] then ante else
+    List.fold_left elim_equi_var ante eav
 
 let elim_equi_ante ante cons=
   Debug.no_2 "elim_equi_ante"

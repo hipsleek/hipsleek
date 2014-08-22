@@ -21,6 +21,14 @@ let hloc_enum_to_symb_pf pf0=
             else pf
           | _ -> pf
       end
+    | Eq (e1, e2,l) -> begin
+        match e1,e2 with
+          | Var _, IConst (i, l1) -> if i!=0 then
+              let n_e2 = Null l1 in
+              Neq (e1, n_e2, l)
+            else pf
+          | _ -> pf
+      end
     | _ -> pf
   in
   recf pf0
