@@ -4887,7 +4887,24 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
                 {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}
               else es in
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
-              let tmp, prf = heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
+              (* treat err states as unreachable states *)
+              let oerr_es, osafe_es = Cfutil.partition_error_es es in
+              let tmp0, prf = match osafe_es with
+                | Some es1 ->
+                      heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos
+                | None -> (SuccCtx [ctx], UnsatAnte)
+              in
+              let tmp = match oerr_es with
+                | None -> tmp0
+                | Some error_es -> begin
+                    let err_states = SuccCtx [(Ctx error_es)] in
+                    let lc = match osafe_es with
+                      | Some _ -> or_list_context err_states tmp0
+                      | None -> err_states
+                    in
+                    lc
+                  end
+              in
 	      (filter_set tmp, prf)
             end
 	  in wrap_trace es.es_path_label exec ()
@@ -5210,7 +5227,10 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
           (* (fun (_,b) -> string_of_bool b)  *)
           (fun _ _ -> process_entail_state es) es.es_formula conseq
-    in (* End of process_entail_state *)
+    in
+    (*********************************************)
+    (* End of process_entail_state *)
+    (*********************************************)
     (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
     (* Now moving to typechecker for an earlier lexvar strip *)
     let ctx = Term.strip_lexvar_lhs ctx in
@@ -5221,7 +5241,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
       match ctx with 
         | Ctx es -> process_entail_state es 
         | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
-    else (* Dummy result & set dup = false to do the usual checking. *)
+    else
+      (* Dummy result & set dup = false to do the usual checking. *)
       match ctx with 
         | Ctx es -> ((FailCtx (Trivial_Reason (CF.mk_failure_must "Dummy list_context" Globals.sl_error, es.es_trace) , (mk_cex true)), Prooftracer.TrueConseq) ,false) 
         | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
@@ -6724,7 +6745,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
       let ante0 = estate.es_formula in
       (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
       let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
-            (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
+      (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
       let conseq = if(!Globals.allow_mem) then Mem.remove_accs_from_formula conseq else conseq in (* Make x::node<_,_>@A to x!= null on RHS *)
             (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
       let ctx0 = Ctx{estate with es_formula = ante;} in
@@ -6736,6 +6757,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
           let ante = estate.es_formula in
                     Debug.tinfo_hprint (add_str "ctx0.es_heap after" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
           (*let _ = print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante)) in*)
+          let _ = Debug.ninfo_hprint (add_str "heap_entail_conjunct_helper:es_form " Cprinter.string_of_formula) estate.es_formula no_pos in
           match ante with
           | Exists {formula_exists_qvars = qvars;
                     formula_exists_heap = qh;
