@@ -251,9 +251,13 @@ let pr_term_res_stk stk =
     if (!Globals.term_verbosity == 0) then err@ok
     else err
   in 
-  List.iter (fun r -> 
-    pr_term_res (!Globals.term_verbosity == 0) r; 
-    fmt_print_newline ();) stk
+  if !Globals.term_verbosity != 0 && stk = [] then
+    fmt_string "SUCCESS\n"
+  else
+    fmt_print_newline ();
+	  List.iter (fun r -> 
+	    pr_term_res (!Globals.term_verbosity == 0) r; 
+	    fmt_print_newline ();) stk
 
 let pr_term_err_stk stk =
   List.iter (fun m -> fmt_string m; fmt_print_newline ()) stk
@@ -1322,18 +1326,20 @@ let term_check_output () =
      not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
   begin
     fmt_string "\nTermination checking result: ";
-    if (!Globals.term_verbosity == 0) then 
-    begin
-      fmt_string "\n";
-      pr_term_res_stk (term_res_stk # get_stk)
-    end
-    else
-    begin
-      let err_msg = term_err_stk # get_stk in
-      if err_msg = [] then fmt_string "SUCCESS\n"
-      else pr_term_err_stk (term_err_stk # get_stk)
-    end;
+    pr_term_res_stk (term_res_stk # get_stk);
     fmt_print_newline ()
+    (* if (!Globals.term_verbosity == 0) then          *)
+    (* begin                                           *)
+    (*   fmt_string "\n";                              *)
+    (*   pr_term_res_stk (term_res_stk # get_stk)      *)
+    (* end                                             *)
+    (* else                                            *)
+    (* begin                                           *)
+    (*   let err_msg = term_err_stk # get_stk in       *)
+    (*   if err_msg = [] then fmt_string "SUCCESS\n"   *)
+    (*   else pr_term_err_stk (term_err_stk # get_stk) *)
+    (* end;                                            *)
+    (* fmt_print_newline ()                            *)
   end
 
 let rec get_loop_ctx c =
