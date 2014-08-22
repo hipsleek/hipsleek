@@ -11608,7 +11608,12 @@ and get_concrete_bag_pure_x (pf : formula) : (spec_var * exp list) list =
               | _ -> Some (bf,[]))
       | _ -> None)
   in
-  let f = (nonef2,f_bf,nonef2) in
+  let f_f arg pf =
+    match pf with
+      | Or _ -> Some (pf,[])
+      | _ -> None
+  in
+  let f = (f_f,f_bf,nonef2) in
   let f_arg = voidf2, voidf2, voidf2 in
   let f_comb = List.concat in
   let arg = () in
@@ -11776,7 +11781,14 @@ and extract_rel_pure_x (pf : formula) (rel_name : spec_var): formula * (p_formul
             else Some (bf, [])
       | _ -> None)
   in
-  let f = (nonef2,f_bf,nonef2) in
+  let f_f arg pf =
+    match pf with
+      | Or _ ->
+            let _ = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in
+            Some (pf,[])
+      | _ -> None
+  in
+  let f = (f_f,f_bf,nonef2) in
   let f_arg = voidf2, voidf2, voidf2 in
   let f_comb = List.concat in
   let arg = () in
