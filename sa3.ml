@@ -2845,7 +2845,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
   in
   let ls_cond_danghps_constrs = if !Globals.sa_dnc then
     Sacore.partition_constrs_4_paths link_hpargs_w_path constrs0
-  else if !Globals.sae then
+  else if (* !Globals.sae *) false then
     Saerror.partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name
   else
     let cond_path, link_hpargs1 =
@@ -2886,7 +2886,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         link_hpargs)
     in
     (* let _ = List.map (fun (sp, spl) -> print_endline ("local: " ^ (Cprinter.string_of_spec_var sp))) local_unk_hpargs in *)
-    let is = if !Globals.sa_dnc or !Globals.sae then
+    let is = if !Globals.sa_dnc (* || !Globals.sae *) then
       (* let _ = print_endline "sa_dnc" in *)
       (*for the local_unk_hps, we fresh them and subst/remove them in local branch*)
       (* let _ = print_endline ("local length: " ^ string_of_int (List.length local_unk_hpargs)) in *)
@@ -3058,7 +3058,9 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else (n_cmb_defs2, n_all_hp_defs2)
   in
   let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
-  let _ = if (!Globals.sae) then Saerror.create_specs (CF.rel_def_stk # get_stk) prog proc_name else () in
+  let _ = if (* (!Globals.sae) *) false then
+    Saerror.create_specs (CF.rel_def_stk # get_stk) prog proc_name
+  else () in
   ((* (n_cmb_defs3@tupled_defs) *)[],(* cmb_defs, *) n_all_hp_defs3, CP.remove_dups_svl (dang_hps@link_hps))
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
