@@ -1,0 +1,6 @@
+checkentail x > 0 & x' = x - 1 & TermU@1<#true#>{x} |- TermU@1{x'}.
+print residue.
+
+checkentail x > 0 & TermU{x} |- true.
+
+checkentail x <= 0 & TermU{x} |- true.
