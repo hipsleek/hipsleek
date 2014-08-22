@@ -86,10 +86,11 @@ and heap_ann = Lend | Imm | Mutable | Accs
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
 and term_ann = 
-  | Term    (* definitely terminates *)
-  | Loop    (* definitely loops *)
-  | MayLoop (* don't know *)
-  | Fail of term_fail    (* failed because of invalid trans *)
+  | Term    (* definite termination *)
+  | Loop    (* definite non-termination *)
+  | MayLoop (* possibly non-termination *)
+  | Fail of term_fail (* Failure because of invalid trans *)
+  | TermU   (* unknown, need to be inferred *)
 
 and term_fail =
   | TermErr_May
@@ -314,6 +315,7 @@ let string_of_term_ann a =
     | Term -> "Term"
     | Loop -> "Loop"
     | MayLoop -> "MayLoop"
+    | TermU -> "TermU"
     | Fail f -> match f with
         | TermErr_May -> "TermErr_May"
         | TermErr_Must -> "TermErr_Must"
@@ -1390,7 +1392,7 @@ let path_trace_lt p1 p2 =
     | [],[] -> false
     | [],xs -> true
     | xs,[] -> false
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 && b1=b2 && lt zt1 zt2)
   in lt (List.rev p1) (List.rev p2)
 
 let path_trace_gt p1 p2 =
@@ -1398,7 +1400,7 @@ let path_trace_gt p1 p2 =
     | [],[] -> false
     | [],xs -> false
     |  xs,[] -> true
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
  

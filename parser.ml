@@ -1645,9 +1645,10 @@ pure_constr:
 
 ann_term: 
     [[
-     `TERM -> Term
+        `TERM -> Term
       | `LOOP -> Loop
       | `MAYLOOP -> MayLoop
+      | `TERMU -> TermU
     ]];
 
 cexp:

@@ -43,7 +43,7 @@ type sleek_token =
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
-  | TEMPL | TERM | LOOP | MAYLOOP
+  | TEMPL | TERM | LOOP | MAYLOOP | TERMU
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -140,6 +140,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+    | TERMU -> "TermU"
     | VALIDATE -> "validate"
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 

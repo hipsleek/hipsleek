@@ -242,10 +242,11 @@ module Make (Token : SleekTokenS)
    ("set",SET);
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
+   ("template", TEMPL);
    ("Term", TERM);
-    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
+   ("TermU", TERMU);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
