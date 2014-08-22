@@ -303,10 +303,12 @@ let main () =
               if !inter then (* check for interactivity *)
                 print_string !prompt;
                 let input = read_line () in
+                (* let _ = print_string("here") in  *)
                 match input with
                   | "" -> ()
                   | _ ->
                       try
+                        
                           let term_indx = String.index input terminator in
                           let s = String.sub input 0 (term_indx+1) in
                           Buffer.add_string buffer s;

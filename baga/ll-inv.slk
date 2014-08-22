@@ -1,0 +1,40 @@
+/* avl trees */
+
+/* representation of a node in an avl tree */
+data node {
+  int val;
+  node next;
+}.
+
+
+pred ll<n,m> == self=null & n=0 & m=0
+   or self::node<_,q>*q::ll<n-1,m-1>
+   or self::node<_,q>*q::ll<n-1,m-2>
+//inv_exact BG([],self=null & n=0 & m=0) | BG([self],0<m & n<=m<=2*n)
+.
+
+checkentail x::ll<n,m> |- n>=0.
+checkentail x::ll<n,m> & x=null |- n=0 & m=0.
+checkentail x::ll<n,m> & x!=null |- 0<m & n<=m<=2*n.
+
+
+/*
+# ll-under1.slk
+GOT:
+checkentail emp&((self=null & n=0 & m=0) | (self=1 & 0<m & n<=m & m<=(n+n)))&
+{FLOW,(1,24)=__flow}[]
+ |-  emp&12((self=null & n=0 & m=0) | self!=null | self!=null)&
+{FLOW,(1,24)=__flow}[]. 
+res:  1[
+   emp&((self=null & n=0 & m=0) | (self=1 & 0<m & n<=m & m<=(n+n)))&{FLOW,(1,24)=__flow}[]
+   ]
+
+EXPECT:
+BG([],self=null & n=0 & m=0) 
+| BG([self],0<n & m>0)
+ |- self=null & n=0 & m=0
+   or (BG[self],true) *
+     (BG([],q=null & n-1=0 & m-1=0) | BG([q],0<n-1 & m-1>0))
+   or (BG[self],true) *
+     (BG([],q=null & n-1=0 & m-2=0) | BG([q],0<n-1 & m-2>0))
+*/

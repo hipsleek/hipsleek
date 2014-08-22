@@ -804,16 +804,17 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
  **************************************************************)
 
 type output_configuration = {
-  print_input                   : bool ref; (* print generated SMT input *)
-  print_original_solver_output : bool ref; (* print solver original output *)
+    (* transferred to Globals *)
+  (* print_original_solver_input                   : bool ref; (\* print generated SMT input *\) *)
+  (* print_original_solver_output : bool ref; (\* print solver original output *\) *)
   print_implication            : bool ref; (* print the implication problems sent to this smt_imply *)
   suppress_print_implication   : bool ref; (* temporary suppress all printing *)
 }
 
 (* Global collection of printing control switches, set by scriptarguments *)
 let outconfig = {
-  print_input = ref false;
-  print_original_solver_output = ref false;
+  (* print_original_solver_input = ref false; *)
+  (* print_original_solver_output = ref false; *)
   print_implication = ref false; 
   suppress_print_implication = ref false;
 }
@@ -829,11 +830,11 @@ let process_stdout_print ante conseq input output res =
   begin
     if !(outconfig.print_implication) then 
       print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
-    if !(outconfig.print_input) then (
+    if !(Globals.print_original_solver_input) then (
       print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
       flush stdout;
     );
-    if !(outconfig.print_original_solver_output) then (
+    if !(Globals.print_original_solver_output) then (
       print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
       print_endline (match output.sat_result with
         | UnSat -> ">>> VERDICT: UNSAT/VALID!"
@@ -842,7 +843,7 @@ let process_stdout_print ante conseq input output res =
         | Aborted -> ">>> VERDICT: ABORTED! CONSIDERED AS FAILED.");
       flush stdout;
     );
-    if (!(outconfig.print_implication) || !(outconfig.print_input) || !(outconfig.print_original_solver_output)) then
+    if (!(outconfig.print_implication) || !(Globals.print_original_solver_input) || !(Globals.print_original_solver_output)) then
       print_string "\n";
   end
 

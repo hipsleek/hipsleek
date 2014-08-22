@@ -392,8 +392,48 @@ let cexp_to_pure2 fct f01 f02 =
               Pure_f (P.mkAnd f1 tmp (get_pos 2))
           | _ -> report_error (get_pos 1) "error should be an equality exp"
         )
-      | _ -> report_error (get_pos 1) "error should be a binary exp" 
+      | _ -> begin
+          if P.is_esv f2 && P.is_bexp f1 then
+            begin
+              let f = f1 in
+              let e1 = f2 in
+              let e2 = P.BExpr f in
+              let pf = fct e1 e2 in
+              let f0 = P.BForm(((fct e1 e2), None), None) in
+              let nf =  P.transform_bexp_p f0 None None pf in
+              Pure_f nf
+            end
+          else
+            report_error (get_pos 1) "error should be a binary exp" 
+        end
     )
+  | Pure_c e1, Pure_f f -> begin
+      if P.is_esv e1 && P.is_bexp f then
+        begin
+          let e2 = P.BExpr f in
+          let pf = fct e1 e2 in
+          let f0 = P.BForm(((fct e1 e2), None), None) in
+          (* let nf =  P.transform_bexp f0 None None e1 f in *)
+          let nf =  P.transform_bexp_p f0 None None pf in
+          Pure_f nf
+        end
+      else
+        report_error (get_pos 1) "with 2 convert bexpr  1" 
+    end
+  | Pure_f f1, Pure_f f2 -> begin
+      if  P.is_bexp f1 && P.is_bexp f2 then
+        begin
+          let e1 = P.BExpr f1 in
+          let e2 = P.BExpr f2 in
+          let pf = fct e1 e2 in
+          let f0 = P.BForm(((fct e1 e2), None), None) in
+          (* let nf =  P.transform_bexp f0 None None e1 f in *)
+          let nf =  P.transform_bexp_p f0 None None pf in
+          Pure_f nf
+        end
+      else
+        report_error (get_pos 1) "with 2 convert bexpr 2" 
+    end
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
@@ -1744,9 +1784,13 @@ cexp_w:
     [ lc=SELF; `NEQ; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
         set_slicing_utils_pure_double f (if !opt_ineq (* && (is_ineq_linking_constraint lc cl) *) then true else false)
-    | lc=SELF; `EQ;   cl=SELF  ->
-        let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-        set_slicing_utils_pure_double f false
+    | lc=SELF; `EQ;   cl=SELF  -> begin
+          (* let _ = print_endline "xxxx" in *)
+          (* let _ = DD.info_hprint (add_str "lc" string_of_pure_double) lc no_pos in *)
+          (* let _ = DD.info_hprint (add_str "cl" string_of_pure_double) cl no_pos in *)
+          let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
+          set_slicing_utils_pure_double f false
+    end
     ]  
   | "bconstr" 
     [ lc=SELF; `LTE; cl=SELF ->

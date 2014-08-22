@@ -760,6 +760,10 @@ let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
 
+
+let print_original_solver_output = ref false
+let print_original_solver_input = ref false
+
 let cond_path_trace = ref true
 
 let pred_syn_modular = ref true

@@ -111,9 +111,9 @@ let common_arguments = [
    "Try induction in case of failure implication."); (* An Hoa *)
   ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-  ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
+  ("--smtout", Arg.Set Globals.print_original_solver_output,
    "Print the original output given by the SMT solver."); (* An Hoa *)
-  ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
+  ("--smtinp", Arg.Set Globals.print_original_solver_input,
    "Print the program generated SMT input."); (* An Hoa *)
   ("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
    "Do not use Omega to simplify the arithmetic constraints when using other solver");

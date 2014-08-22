@@ -1729,16 +1729,34 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           (* if disj user-supplied inv; just use it *)
           Debug.dinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
           Debug.dinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+          let simplify lst =
+            let group lst =
+              let rec grouping acc = function
+                | [] -> acc
+                | hd::_ as l ->
+                      let l1,l2 = List.partition (Excore.EPureI.is_eq_baga hd) l in
+                      grouping (l1::acc) l2
+              in
+              grouping [] lst
+            in
+            let groups = group lst in
+            let lst = List.map (fun l ->
+                List.fold_left (fun (baga,f1) (_,f2) ->
+                    (baga,Tpdispatcher.tp_pairwisecheck2 f1 f2)
+                ) (List.hd l) (List.tl l)
+            ) groups in
+            lst
+          in
           let compute_unfold_baga baga_over body =
-              match baga_over with 
+              match baga_over with
                 | None -> None
-                | Some lst -> 
+                | Some lst ->
                       if List.length lst == 1 then
 	                let unf_baga = Cvutil.xpure_symbolic_baga prog body in
-                        Some unf_baga
-                      else baga_over
+                        Some (simplify unf_baga)
+                      else Some (simplify lst) (* baga_over *)
           in
-          if do_not_compute_flag then 
+          if do_not_compute_flag then
             vdef.C.view_xpure_flag <- true
           else
             begin
@@ -1752,7 +1770,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -2036,7 +2054,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         | Some a -> 
               let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
               let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
@@ -6910,6 +6928,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
           CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
+    | IP.BExpr f1 -> report_error no_pos "trans_pure_exp BExpr"
+          (* let nf1 = IP.transform_bexp f1 in *)
+          (* BExpr (trans_pure_formula nf1 tlist) *)
 
 and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with
