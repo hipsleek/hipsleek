@@ -7719,7 +7719,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let _ = Debug.ninfo_hprint (add_str " folding [heap_entail_empty_heap] pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in
         let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
         let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
-        let _ = Debug.info_hprint (add_str " folding [heap_entail_empty_heap] tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in
+        let _ = Debug.ninfo_hprint (add_str " folding [heap_entail_empty_heap] tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in
         Debug.ninfo_hprint (add_str "contra detect, res" string_of_bool) contr pos;
         (* let _ =  rhs_pure_stk # push  pp_rhs in *)
         (contr, tmp_rhs)

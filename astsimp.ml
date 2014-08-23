@@ -2610,21 +2610,21 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
           bwf := remove_dups_str_list (new_bwfs @ !bwf)
       | _ -> ()
     ) body_nodes in
-    Debug.binfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
+    Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
           "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
         ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)
       ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
     (* now unfold the inductive formula then collect forward, backward info *)
-    Debug.binfo_hprint (add_str "induct_f" (!CF.print_formula)) induct_f no_pos;
+    Debug.ninfo_hprint (add_str "induct_f" (!CF.print_formula)) induct_f no_pos;
     if (vdecl.C.view_mutual_rec_views = []) then (
       (* handle self recursive view *)
       List.iter (fun base_f -> 
         let unfold_f = replace_view_node_by_formula induct_f vdecl base_f in
-        Debug.binfo_hprint (add_str "self recursive, unfold_f " (!CF.print_formula)) unfold_f no_pos;
+        Debug.ninfo_hprint (add_str "self recursive, unfold_f " (!CF.print_formula)) unfold_f no_pos;
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
         fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
-        Debug.binfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
+        Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)
           ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
@@ -2646,11 +2646,11 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
         ) base_fs)
       ) [induct_f] rec_views in
       List.iter (fun unfold_f ->
-        Debug.binfo_hprint (add_str "mutual recursive, unfold_f" (!CF.print_formula)) unfold_f no_pos;
+        Debug.ninfo_hprint (add_str "mutual recursive, unfold_f" (!CF.print_formula)) unfold_f no_pos;
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
         fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
-        Debug.binfo_hprint (add_str "forward, backward 3 " (fun (x,y,z,t) -> 
+        Debug.ninfo_hprint (add_str "forward, backward 3 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; " ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; " ^ "bwf: " ^ (pr_list idf t)
           ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;

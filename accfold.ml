@@ -589,7 +589,7 @@ let detect_cts_fold_sequence (lhf: CF.h_formula) (rhf: CF.h_formula)
       lhf rhf root_sv root_view
 
 (* prefix for the name of relation 'size_of_view' *)
-let prefix_sizeof = "size_of_"
+let prefix_sizeof = "rs_"
 
 (*
  * Compute the size relation of a view
