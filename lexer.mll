@@ -247,6 +247,7 @@ module Make (Token : SleekTokenS)
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
    ("TermU", TERMU);
+   ("TermR", TERMR);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -353,6 +354,7 @@ rule tokenizer file_name = parse
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
+  | "@term" { TERM_INFER }
   | "@xpost" { XPOST }
 (*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}

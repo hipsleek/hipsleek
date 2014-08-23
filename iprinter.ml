@@ -282,13 +282,15 @@ let rec string_of_term_ann a =
     | P.Loop -> "Loop"
     | P.MayLoop -> "MayLoop"
     | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
     | P.Fail f -> match f with
         | P.TermErr_May -> "TermErr_May"
         | P.TermErr_Must -> "TermErr_Must"
 
 and string_of_term_id uid = 
-  "@" ^ (string_of_int uid.P.tu_id) ^ 
-  "<#" ^ (string_of_pure_formula uid.P.tu_cond) ^ "#>"
+  "@" ^ uid.P.tu_fname ^ 
+  "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
+  (!P.print_formula uid.P.tu_cond) ^ "]"
 
 and string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 

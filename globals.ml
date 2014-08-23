@@ -1163,6 +1163,9 @@ type ensures_type = bool option
 type assert_type = bool option
 type entail_type = bool option
 
+type infer_type = 
+  | INF_TERM (* For infer@term *)
+
 (* Options for abduction *)
 let do_abd_from_post = ref false
 

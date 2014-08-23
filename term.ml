@@ -624,8 +624,12 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
+      | (_, TermR uid) ->
+        let _ = Ti.add_ret_trel_stk xpure_lhs_h1 estate.CF.es_term_res (uid, dst_il) in
+        (estate, lhs_p, rhs_p, None)
       | (TermU _, _)
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
+      | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
@@ -667,7 +671,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (*print_string ("got exception\n "^(!Mprint_mix_formula rhs_p)^"\n");*)(estate, lhs_p, rhs_p, None)
+  with _ -> (estate, lhs_p, rhs_p, None)
 
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
@@ -684,7 +688,6 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   else
     check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
-(* TODO: consider --eps *)
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !MCP.print_mix_formula in
   let pr2 = !CF.print_entail_state in
@@ -695,10 +698,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
-    if not(es.es_var_measures==None) 
-      (* this is to ensure we strip lexvar only once *)
-    then Ctx es
-    else
+    if (es.es_var_measures == None) || (CF.has_lexvar_formula es.CF.es_formula) 
+    (* This is to ensure we strip Lexvar only once or when necessary *)
+    then
       let _, pure_f, _, _, _ = CF.split_components es.CF.es_formula in
       let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
       (* Using transform_formula to update the pure part of es_f *)
@@ -710,15 +712,21 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
       let f_p_f pf = Some (MCP.pure_of_mix other_p) in
       let f_b _ = None in
       let f_e _ = None in
+      let termr, lexvar = List.partition is_TermR_formula lexvar in
       match lexvar with
-        | [] -> Ctx es
-        | lv::[] -> 
-              let t_ann, ml, il, _ = find_lexvar_formula lv in 
-              Ctx { es with 
-                  es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
-                  es_var_measures = Some (t_ann, ml, il); 
-              }
-        | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+      | [] -> Ctx es
+      | lv::[] ->
+        let t_ann, ml, il, _ = find_lexvar_formula lv in 
+        let termr_info = List.map (fun tr ->
+          let tr, _, il, _ = find_lexvar_formula tr in
+          (tr, il)) termr in
+        Ctx { es with
+          es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
+          es_var_measures = Some (t_ann, ml, il);
+          es_term_res = termr_info; 
+        }
+      | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+    else Ctx es
   in CF.transform_context es_strip_lexvar_lhs ctx
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =

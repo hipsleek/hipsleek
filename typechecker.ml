@@ -357,7 +357,7 @@ and check_bounded_term_x prog ctx post_pos =
   if (!Globals.dis_term_chk || !Globals.dis_bnd_chk 
       || not (!Globals.term_bnd_pre_flag)) then (ctx, [])
   else 
-    let ctx = Term.strip_lexvar_lhs ctx in
+    (* let ctx = Term.strip_lexvar_lhs ctx in *)
     match ctx with
       | CF.Ctx es ->  
             let m = match es.CF.es_var_measures with
@@ -421,7 +421,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************)
-	    let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
+            let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
             let ctx,ext_base = if (!Globals.ann_vp) && (not has_lexvar) then
               check_varperm prog proc spec ctx b.CF.formula_struc_base pos_spec 
             else (ctx,b.CF.formula_struc_base)
@@ -434,7 +434,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
 	    (* Termination: Move lexvar to es_var_measures *)
-	    let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
+	    (* let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in *)
             let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[],[], [], [],true) | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) in            stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with

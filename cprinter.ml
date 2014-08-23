@@ -852,13 +852,15 @@ let rec string_of_term_ann a =
     | P.Loop -> "Loop"
     | P.MayLoop -> "MayLoop"
     | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
     | P.Fail f -> match f with
         | P.TermErr_May -> "TermErr_May"
         | P.TermErr_Must -> "TermErr_Must"
 
 and string_of_term_id uid = 
-  "@" ^ (string_of_int uid.P.tu_id) ^ 
-  "<#" ^ (!P.print_formula uid.P.tu_cond) ^ "#>"
+  "@" ^ uid.P.tu_fname ^ 
+  "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
+  (!P.print_formula uid.P.tu_cond) ^ "]"
 
 let pr_var_measures (t_ann, ls1,ls2) = 
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -2844,6 +2846,9 @@ let pr_estate (es : entail_state) =
     fmt_string (string_of_term_ann t_ann);
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
   )) es.es_var_measures;
+  pr_wrap_test "es_term_res: " Gen.is_empty (pr_seq "" (fun (t_ann, t_args) -> 
+    fmt_string (string_of_term_ann t_ann);
+    pr_seq "" pr_formula_exp t_args)) es.es_term_res;
   pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack;
   pr_wrap_test "es_term_err: " Gen.is_None (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);
   (*

@@ -160,12 +160,14 @@ and lex_info = {
 and term_ann = 
   | Term    (* definite termination *)
   | Loop    (* definite non-termination *)
-  | MayLoop (* possibly non-termination *)
+  | MayLoop (* possible non-termination *)
   | Fail of term_fail (* Failure because of invalid trans *)
-  | TermU of uid  (* unknown, need to be inferred *)
+  | TermU of uid  (* unknown precondition, need to be inferred *)
+  | TermR of uid  (* unknown postcondition, need to be inferred *)
 
 and uid = {
   tu_id: int;
+  tu_fname: ident;
   tu_cond: formula; 
 }
 
@@ -10190,6 +10192,20 @@ let is_term pf =
 let is_term f =
   match f with
     | BForm ((bf,_),_) -> is_term bf
+    | _ -> false
+
+let is_TermR pf =
+  match pf with
+  | LexVar t_info -> begin 
+    match t_info.lex_ann with
+    | TermR _ -> true
+    | _ -> false 
+    end
+  | _ -> false
+
+let is_TermR_formula f = 
+  match f with
+    | BForm ((bf,_),_) -> is_TermR bf
     | _ -> false
 
 let is_rel_assume rt = match rt with

@@ -89,12 +89,14 @@ and p_formula =
 and term_ann = 
   | Term    (* definite termination *)
   | Loop    (* definite non-termination *)
-  | MayLoop (* possibly non-termination *)
+  | MayLoop (* possible non-termination *)
   | Fail of term_fail (* Failure because of invalid trans *)
-  | TermU of uid  (* unknown, need to be inferred *)
+  | TermU of uid  (* unknown precondition, need to be inferred *)
+  | TermR of uid  (* unknown postcondition, need to be inferred *)
 
 and uid = {
   tu_id: int;
+  tu_fname: ident;
   tu_cond: formula; 
 }
 

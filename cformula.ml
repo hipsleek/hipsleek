@@ -8294,8 +8294,10 @@ think it is used to instantiate when folding.
 
   (* For Termination checking *)
   (* Term ann with Lexical ordering *)
-  es_var_measures : (term_ann * CP.exp list * CP.exp list) option; 
-  es_var_stack :  string list; 
+  es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
+  (* For TNT inference: List of unknown returned context *)
+  es_term_res: (CP.term_ann * CP.exp list) list;
+  es_var_stack :  string list;
   (* this should store first termination error detected *)
   (* in case an error has already been detected *)
   (* we will not do any further termination checking *)
@@ -8567,6 +8569,7 @@ let empty_es flowt grp_lbl pos =
   es_cond_path  = [] ;
   es_prior_steps  = [];
   es_var_measures = None;
+  es_term_res = [];
   es_var_stack = [];
   (*es_cache_no_list = [];*)
   es_cont = [];
@@ -9694,6 +9697,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_hp_rel = es.es_infer_hp_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_var_measures = es.es_var_measures;
+        es_term_res = es.es_term_res;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
     }
@@ -12110,9 +12114,9 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_path_label = es.es_path_label;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-      (* WN : what is the purpose of es_var_stack?*)
+          es_term_res = es.es_term_res; 
           es_var_stack = es.es_var_stack;
-      es_pure = es.es_pure;
+          es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_templ = es.es_infer_vars_templ;
@@ -12154,9 +12158,9 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_cond_path = es.es_cond_path ;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-      (* WN : what is the purpose of es_var_stack?*)
+          es_term_res = es.es_term_res;
           es_var_stack = es.es_var_stack;
-      es_pure = es.es_pure;
+          es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_templ = es.es_infer_vars_templ;

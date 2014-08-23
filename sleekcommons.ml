@@ -69,7 +69,7 @@ type command =
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
+  | InferCmd of (ident list * meta_formula * meta_formula * entail_type * infer_type option)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)

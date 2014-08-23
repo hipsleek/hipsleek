@@ -1643,18 +1643,28 @@ pure_constr:
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
   
-termu_id: [[ `AT; `INT_LITER (i,_) -> i ]];
+termu_id: 
+  [[ `AT; `IDENTIFIER fn -> (fn, 0, P.mkTrue no_pos)
+   | `AT; elem = termu_elem -> let (i, c) = elem in ("", i, c)
+   | `AT; `IDENTIFIER fn; elem = termu_elem -> let (i, c) = elem in (fn, i, c) 
+  ]];
 
-termu_cond: [[ `TOPAREN; c = pure_constr; `TCPAREN -> c ]];
+termu_elem: 
+  [[ `OSQUARE; `INT_LITER (i,_); `CSQUARE -> (i, P.mkTrue no_pos) 
+   | `OSQUARE; c = pure_constr; `CSQUARE -> (0, c)
+   | `OSQUARE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CSQUARE -> (i, c)
+  ]];
 
 ann_term: 
     [[  `TERM -> P.Term
       | `LOOP -> P.Loop
       | `MAYLOOP -> P.MayLoop
-      | `TERMU; id = OPT termu_id; c = OPT termu_cond -> 
-          P.TermU ({ 
-            P.tu_id = un_option id 0; 
-            P.tu_cond = un_option c (P.mkTrue no_pos); })
+      | `TERMU; tid = OPT termu_id ->
+          let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
+          P.TermU ({ P.tu_id = id; P.tu_fname = fn; P.tu_cond = c; })
+      | `TERMR; tid = OPT termu_id ->
+          let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
+          P.TermR ({ P.tu_id = id; P.tu_fname = fn; P.tu_cond = c; })
     ]];
 
 cexp:
@@ -2089,14 +2099,20 @@ shapeExtract_cmd:
    let il1 = un_option il1 [] in
    (il1)
    ]];
+  
+infer_type:
+   [[ `TERM_INFER -> INF_TERM ]];
+  
+id_list_w_sqr:
+    [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
 
 infer_cmd:
-  [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,None)
+  [[ `INFER; il = OPT id_list_w_sqr; k = OPT infer_type; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let il = un_option il [] in (il,t,b,None,k)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some true)
+    let il = un_option il [] in (il,t,b,Some true,None)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some false)
+    let il = un_option il [] in (il,t,b,Some false,None)
 
   ]];
 

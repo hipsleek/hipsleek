@@ -1,6 +1,8 @@
-checkentail x > 0 & x' = x - 1 & TermU@1<#true#>{x} |- TermU@1{x'}.
+infer[] @term x > 0 & x' = x - 1 & TermU@fact[1, true]{x} |- TermU@[1]{x'}.
 print residue.
 
-checkentail x > 0 & TermU{x} |- true.
+infer @term x <= 0 & TermU{x} |- TermR{x}.
 
-checkentail x <= 0 & TermU{x} |- true.
+infer @term x > 0 & TermU{x} & TermR{x-1} & TermR{x + 1} |- TermR{x}.
+
+
