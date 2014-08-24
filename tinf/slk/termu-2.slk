@@ -1,0 +1,19 @@
+infer @term x >= 0 & x' = x & TermU@f[true]{x, y} |- TermU@g[true]{x'}.
+//print residue.
+
+infer @term x < 0 & TermU@f[true]{x, y} |- TermR@f[true]{x, y}.
+//print residue.
+
+infer @term x >= 0 & x' = x & TermU@f[true]{x, y} & TermR@g[true]{x'}|- TermR@f[true]{x, y}.
+//print residue.
+
+infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g[true]{x} |- TermU@f[true]{x', y'}.
+//print residue.
+
+infer @term x < 0 & TermU@g[true]{x} |- TermR@g[true]{x}.
+//print residue.
+
+infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g[true]{x} & TermR@f[true]{x', y'}|- TermR@g[true]{x}.
+//print residue.
+
+
