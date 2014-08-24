@@ -12425,3 +12425,9 @@ let get_cond_tann tann =
   | TermU uid -> uid.tu_cond
   | TermR uid -> uid.tu_cond
   | _ -> mkTrue no_pos
+
+let get_fn_tann tann =
+  match tann with
+  | TermU uid -> uid.tu_fname
+  | TermR uid -> uid.tu_fname
+  | _ -> ""
