@@ -25,4 +25,12 @@ pred ll<m,n> == self=null & m=0 & n=0
 // new inv: (self=null & m=0 & n=0) | (self!=null & m>=1 & n>=1) | (self!=null & m>=1 & n>=2)
 // new inv (pair wise check) : (self=null & m=0 & n=0) | (self!=null & m>=1 & n>=1)
 // check: new inv |- ll_body -> still fail
+//
+// other way:
+// rec case: m>=0 & n>=0 & H1(self) & H2(m) & H3(n) & H4(m,n) |-
+//           self!=null & ((m-1>=0 & n-1>=0) | (m-1>=0 & n-2>=0))
+// H1(self) == self!=null & H2(m) == m>=1 & H3(n) == n>=1 & H4(m,n) == m<=n<=2m
+//
+// new inv: (self=null & m=0 & n=0) | (self!=null & 1<=m<=n<=2m)
+// check: new inv |- ll_body -> valid
 
