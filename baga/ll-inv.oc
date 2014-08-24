@@ -9,3 +9,10 @@ A2:={[m,n]: m<=2n & (n+1)<=m};
 # A1 subset A2;
 # A2 subset A1;
 PairWiseCheck (A1 union A2);
+
+A1:={[m,n]: m>=1 & n>=1};
+A2:={[m,n]: m>=1 & n>=2};
+
+# A1 subset A2;
+# A2 subset A1;
+PairWiseCheck (A1 union A2);
