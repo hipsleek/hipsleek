@@ -18,6 +18,19 @@ let string_of_vres t =
     | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
     | VR_Unknown s -> "UNKNOWN("^s^")"
 
+
+
+(* let transfrom_bexpr_x lhs rhs tl= *)
+(*   (lhs, rhs) *)
+
+(* let transfrom_bexpr lhs rhs tl= *)
+(*   let pr1 = !CP.print_formula in *)
+(*   let pr2 = Typeinfer.string_of_tlist in *)
+(*   Debug.no_3 "transfrom_bexpr" pr1 pr1 pr2 (pr_pair pr1 pr1) *)
+(*       (fun _ _ _ -> transfrom_bexpr_x lhs rhs tl) *)
+(*       lhs rhs tl *)
+
+
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
@@ -1014,6 +1027,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
+  (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq_fvs = CF.struc_fv conseq in
   let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) ->

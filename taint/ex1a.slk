@@ -24,7 +24,7 @@ checkentail r=(a|b) |- r=a.
 checkentail r=a | r=b |- r=(a|b).
 */
 
-checkentail rrr=(a|b) |- rrr=a | rrr=b .
+//checkentail rrr=(a|b) |- rrr=a | rrr=b .
 
 print residue.
 
@@ -66,6 +66,7 @@ type-checking problem here..
   e1=e2 <--> e1 & e2 | !e1&!e2
 */
 
+/*
 //2
 checkentail (a|b)=r |- r & (a|b) | !r & !(a|b).
 print residue.
@@ -89,7 +90,7 @@ print residue.
 //7
 checkentail (r&s|t) =(a|b) |- (r&s|t) & (a|b) | !(r&s|t) & !(a|b).
 print residue.
-
+*/
 /*
 
  v=e --> v & e | !v & !e
