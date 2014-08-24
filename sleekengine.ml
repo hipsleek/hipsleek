@@ -1015,6 +1015,19 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  let conseq_fvs = CF.struc_fv conseq in
+  let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) ->
+      try
+        let sv2 = List.find (fun (CP.SpecVar (t2, id2, p2)) -> String.compare id1 id2 = 0 &&
+                p1=p2 && t1!=t2) conseq_fvs
+        in
+        sst0@[(sv1,sv2)]
+      with _ ->  sst0
+  ) [] fvs
+  in
+  let ante1 = CF.subst sst ante in
+  let ante = Cfutil.transform_bexpr ante1 in
+  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in

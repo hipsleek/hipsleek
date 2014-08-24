@@ -12333,3 +12333,59 @@ let mk_self t =
       | Some t -> t 
   in
   SpecVar (t, self, Unprimed)
+(*
+ v=e --> v & e | !v & !e
+ e1 = e2 --> e1 & e2 | !(e1) & !e2
+ e1!=e2 <--> (e1 & !e2 | !e2 & e1)
+*)
+let transform_bexpr_pf a lbl  pf0=
+  let f0 = BForm ((pf0,a), lbl) in
+  let rec recf pf=match pf with
+    | Eq (e1,e2,p) -> begin
+        match e1,e2 with
+          | Var (s1,p1), Var (s2,p2) ->
+                if type_of_spec_var s1 = Bool && type_of_spec_var s2 = Bool then
+                  let bsv1 = BVar (s1,p1) in
+                  let bsv2 = BVar (s2,p2) in
+                  let p1 = BForm ((bsv1,a), lbl) in
+                  let p2 = BForm ((bsv2,a), lbl) in
+                  let p11 = And (p1,p2, p) in
+                  let p22 = And (Not (p1, lbl,p), Not (p2,lbl,p), p) in
+                  Or (p11,p22, lbl, p)
+                else f0
+          | _ -> f0
+      end
+    | Neq (e1,e2,p) -> begin
+           match e1,e2 with
+          | Var (s1,p1), Var (s2,p2) ->
+                if type_of_spec_var s1 = Bool && type_of_spec_var s2 = Bool then
+                  let bsv1 = BVar (s1,p1) in
+                  let bsv2 = BVar (s2,p2) in
+                  let p1 = BForm ((bsv1,a), lbl) in
+                  let p2 = BForm ((bsv2,a), lbl) in
+                  let p11 = And (Not (p1, lbl,p),p2, p) in
+                  let p22 = And (p1, Not (p2,lbl,p), p) in
+                  Or (p11,p22, lbl, p)
+                else f0
+          | _ -> f0
+      end
+    | _ -> f0
+  in
+  recf pf0
+
+let transform_bexpr_x p0=
+  let rec recf p= match p with
+    | BForm  ((pf, a), lbl) -> transform_bexpr_pf a lbl pf
+    | And  (f1, f2, p) ->  And  (recf f1, recf f2, p)
+    | AndList ps -> AndList (List.map (fun (a,f1) -> (a, recf f1)) ps)
+    | Or (f1, f2, lbl, p) -> Or (recf f1, recf f2, lbl, p)
+    | Not (f1, lbl, p) -> Not (recf f1, lbl, p)
+    | Forall (sv, f1, lbl, p) -> Forall (sv, recf f1, lbl, p)
+    | Exists (sv, f1, lbl, p ) -> Exists (sv, recf f1, lbl, p )
+  in
+  recf p0
+
+let transform_bexpr p=
+  let pr1 = !print_formula in
+  Debug.no_1 "CP.transform_bexpr" pr1 pr1
+      (fun _ -> transform_bexpr_x p) p
