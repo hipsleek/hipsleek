@@ -957,7 +957,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
         CP.SpecVar (HpT, v, Unprimed)
       with _ ->
-          Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
+        Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
@@ -1867,11 +1867,11 @@ let process_pairwise (f : meta_formula) =
     print_result rs num_id
   with _ -> print_exc num_id
 
-
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype itype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-    try 
+    try
+      let _ = en_slk_infer_term itype in
       let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
@@ -1885,7 +1885,6 @@ let process_capture_residue (lvar : ident) =
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
 
 let process_print_command pcmd0 = 
   match pcmd0 with
@@ -1920,20 +1919,20 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   if var = "residue" then
     match !CF.residues with
       | None -> print_string ": no residue \n"
-      | Some (ls_ctx, print) ->(
-        if (print) then (
-	  if(List.length fl = 1) then (
-	    let f = List.hd fl in
-	    let cfs = CF.list_formula_of_list_context ls_ctx in
-	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
-	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
-	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
-	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
-	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
-	  )
-	  else  print_string ("ERROR: Input is 1 formula only\n")
-	)
-      )
+      | Some (ls_ctx, print) -> begin
+        if (print) then begin
+      	  if(List.length fl = 1) then (
+      	    let f = List.hd fl in
+      	    let cfs = CF.list_formula_of_list_context ls_ctx in
+      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
+      	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
+      	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
+      	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+      	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+      	  )
+	        else print_string ("ERROR: Input is 1 formula only\n")
+	      end
+      end
   else if (var = "assumption") then(
     match !CF.residues with
       | None -> print_string ": no residue \n"

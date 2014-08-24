@@ -12419,3 +12419,9 @@ let overapp_ptrs p=
    let pr1 = !print_formula in
   Debug.no_1 "overapp_ptrs" pr1 pr1
       (fun _ -> overapp_ptrs_x p) p
+      
+let get_cond_tann tann = 
+  match tann with
+  | TermU uid -> uid.tu_cond
+  | TermR uid -> uid.tu_cond
+  | _ -> mkTrue no_pos

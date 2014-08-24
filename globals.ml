@@ -1166,6 +1166,15 @@ type entail_type = bool option
 type infer_type = 
   | INF_TERM (* For infer@term *)
 
+let slk_infer_term = ref false
+
+let en_slk_infer_term itype = match itype with
+  | Some INF_TERM -> slk_infer_term := true
+  | _ -> slk_infer_term := false
+
+let dis_slk_infer_term itype = 
+  slk_infer_term := false
+
 (* Options for abduction *)
 let do_abd_from_post = ref false
 

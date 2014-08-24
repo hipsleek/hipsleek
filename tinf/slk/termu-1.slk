@@ -1,8 +1,10 @@
-infer[] @term x > 0 & x' = x - 1 & TermU@fact[1, true]{x} |- TermU@[1]{x'}.
-print residue.
+infer @term x = 0 & TermU{x} |- TermR{x}.
+//print residue.
 
-infer @term x <= 0 & TermU{x} |- TermR{x}.
+infer @term x != 0 & x' = x - 1 & TermU{x} & TermR{x'} |- TermR{x}.
+//print residue.
 
-infer @term x > 0 & TermU{x} & TermR{x-1} & TermR{x + 1} |- TermR{x}.
+infer @term x != 0 & x' = x - 1 & TermU{x} |- TermU{x'}.
+//print residue.
 
 

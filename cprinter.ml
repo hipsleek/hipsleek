@@ -862,7 +862,7 @@ and string_of_term_id uid =
   "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
   (!P.print_formula uid.P.tu_cond) ^ "]"
 
-let pr_var_measures (t_ann, ls1,ls2) = 
+let pr_var_measures (t_ann, ls1, ls2) = 
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
   fmt_string (string_of_term_ann t_ann);
   pr_s "" pr_formula_exp ls1;
@@ -2284,6 +2284,53 @@ let pr_templ_assume (ante, cons) =
 
 let string_of_templ_assume = poly_string_of_pr pr_templ_assume
 
+let pr_tr (tann, targs) = 
+  pr_var_measures (tann, [], targs)
+
+let pr_trrel (ctx, lhs_trrel, rhs_trrel) = 
+  fmt_open_box 1;
+  pr_formula ctx;
+  fmt_string ": ";
+  pr_seq "" pr_tr lhs_trrel;
+  fmt_string " -> ";
+  pr_tr rhs_trrel;
+  fmt_close ()
+
+let string_of_trrel = poly_string_of_pr pr_trrel
+
+let pr_trrel_pure (ctx, lhs_trrel, rhs_trrel) = 
+  fmt_open_box 1;
+  pr_mix_formula ctx;
+  fmt_string ": ";
+  pr_seq "" pr_tr lhs_trrel;
+  fmt_string " -> ";
+  pr_tr rhs_trrel;
+  fmt_close ()
+
+let string_of_trrel_pure = poly_string_of_pr pr_trrel_pure
+
+let pr_turel (ctx, lhs_turel, rhs_turel) = 
+  fmt_open_box 1;
+  pr_formula ctx;
+  fmt_string ": ";
+  pr_wrap_opt "" pr_var_measures lhs_turel;
+  fmt_string " -> ";
+  pr_tr rhs_turel;
+  fmt_close ()
+
+let string_of_turel = poly_string_of_pr pr_turel
+
+let pr_turel_pure (ctx, lhs_turel, rhs_turel) = 
+  fmt_open_box 1;
+  pr_mix_formula ctx;
+  fmt_string ": ";
+  pr_tr lhs_turel;
+  fmt_string " -> ";
+  pr_tr rhs_turel;
+  fmt_close ()
+
+let string_of_turel_pure = poly_string_of_pr pr_turel_pure
+
 let pr_path_of (path, off)=
    (* fmt_string "PATH format"; *)
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
@@ -2484,6 +2531,8 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
+          let trrel = collect_tr_rel ctx in
+          let turel = collect_tu_rel ctx in
           let term_err = collect_term_err ctx in
           fmt_open_vbox 0;
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
@@ -2493,6 +2542,10 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
+          pr_wrap_test "inferred TermR rel: " 
+            (fun trrel -> not !Globals.slk_infer_term || Gen.is_empty trrel)  (pr_seq "" pr_trrel) trrel; 
+          pr_wrap_test "inferred TermU rel: " 
+            (fun turel -> not !Globals.slk_infer_term || Gen.is_empty turel)  (pr_seq "" pr_turel) turel; 
           f b;
           fmt_print_newline ();
           fmt_close_box ();
@@ -2846,9 +2899,9 @@ let pr_estate (es : entail_state) =
     fmt_string (string_of_term_ann t_ann);
     pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
   )) es.es_var_measures;
-  pr_wrap_test "es_term_res: " Gen.is_empty (pr_seq "" (fun (t_ann, t_args) -> 
+  pr_wrap_test "es_term_res_lhs: " Gen.is_empty (pr_seq "" (fun (t_ann, t_args) -> 
     fmt_string (string_of_term_ann t_ann);
-    pr_seq "" pr_formula_exp t_args)) es.es_term_res;
+    pr_seq "" pr_formula_exp t_args)) es.es_term_res_lhs;
   pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack;
   pr_wrap_test "es_term_err: " Gen.is_None (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);
   (*
