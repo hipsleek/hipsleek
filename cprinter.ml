@@ -75,6 +75,10 @@ let pr_pair_aux pr_1 pr_2 (a,b) =
 let pr_opt f x = match x with
     | None -> fmt_string "None"
     | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
+
+let pr_opt_silent f x = match x with
+    | None -> fmt_string ""
+    | Some v -> f v
   
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
 (*   if not(Gen.is_empty lst) then f a *)
@@ -759,7 +763,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
     | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
-	| P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
+    | P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -845,30 +849,6 @@ let pr_slicing_label sl =
 		pr_list_none pr_formula_exp el;
 		fmt_string ("]");
 		fmt_string (">")
-    
-let rec string_of_term_ann a =
-  match a with
-    | P.Term -> "Term"
-    | P.Loop -> "Loop"
-    | P.MayLoop -> "MayLoop"
-    | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
-    | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
-    | P.Fail f -> match f with
-        | P.TermErr_May -> "TermErr_May"
-        | P.TermErr_Must -> "TermErr_Must"
-
-and string_of_term_id uid = 
-  "@" ^ uid.P.tu_fname ^ 
-  "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
-  (!P.print_formula uid.P.tu_cond) ^ "]"
-
-let pr_var_measures (t_ann, ls1, ls2) = 
-  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-  fmt_string (string_of_term_ann t_ann);
-  pr_s "" pr_formula_exp ls1;
-  if ls2!=[] then
-    pr_set pr_formula_exp ls2
-  else ()
 
 let sort_exp a b =
   match a with
@@ -903,6 +883,41 @@ let pr_xpure_view xp = match xp with
 
 let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
 
+let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
+let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
+let string_of_formula_type (t:formula_type):string = match t with | Globals.Simple -> "Simple" | _ -> "Complex"
+let string_of_formula_label (i,s) s2:string = s2 (*((string_of_int i)^":#"^s^":#"^s2)*)
+let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
+let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
+let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
+let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
+let string_of_formula_label_only x :string = string_of_formula_label x ""
+let pr_formula_label = pr_pair string_of_int pr_id
+let pr_control_path_id_opt h = pr_option pr_formula_label h
+
+let string_of_iast_label_table table =
+  let string_of_row row =
+    let string_of_label_loc (_, path_label, loc) =
+      Printf.sprintf "%d: %s" path_label (string_of_full_loc loc)
+    in
+    let path_id, desc, labels, loc = row in
+    Printf.sprintf "\nid: %s; labels: %s; loc: %s" 
+      (string_of_control_path_id_opt path_id desc)
+      (List.fold_left (fun s label_loc -> s ^ (string_of_label_loc label_loc) ^ ", ") "" labels)
+      (string_of_full_loc loc)
+  in
+  List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
+
+
+let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
+let pr_formula_label l  = fmt_string (string_of_formula_label l "")
+let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
+let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
+let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
+let pr_spec_label_def l  = fmt_string (LO2.string_of l)
+let pr_spec_label_def_opt l = fmt_string (LO2.string_of_opt l)
+let pr_spec_label l  = fmt_string (LO.string_of l)
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -912,11 +927,8 @@ let rec pr_b_formula (e:P.b_formula) =
   (* pr_slicing_label il; *)
   match pf with
     | P.LexVar t_info -> 
-      fmt_string (string_of_term_ann t_info.CP.lex_ann);
+      pr_term_ann t_info.CP.lex_ann;
       pr_s "" pr_formula_exp t_info.CP.lex_exp
-      (* ;if ls2!=[] then *)
-      (*   pr_set pr_formula_exp ls2 *)
-      (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
@@ -957,45 +969,9 @@ let rec pr_b_formula (e:P.b_formula) =
 		| [] -> ()
 		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
-;;
-
-let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
-let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
-let string_of_formula_type (t:formula_type):string = match t with | Globals.Simple -> "Simple" | _ -> "Complex"
-let string_of_formula_label (i,s) s2:string = s2 (*((string_of_int i)^":#"^s^":#"^s2)*)
-let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
-let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
-let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
-let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
-let string_of_formula_label_only x :string = string_of_formula_label x ""
-let pr_formula_label = pr_pair string_of_int pr_id
-let pr_control_path_id_opt h = pr_option pr_formula_label h
-
-let string_of_iast_label_table table =
-  let string_of_row row =
-    let string_of_label_loc (_, path_label, loc) =
-      Printf.sprintf "%d: %s" path_label (string_of_full_loc loc)
-    in
-    let path_id, desc, labels, loc = row in
-    Printf.sprintf "\nid: %s; labels: %s; loc: %s" 
-      (string_of_control_path_id_opt path_id desc)
-      (List.fold_left (fun s label_loc -> s ^ (string_of_label_loc label_loc) ^ ", ") "" labels)
-      (string_of_full_loc loc)
-  in
-  List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
-
-
-let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
-let pr_formula_label l  = fmt_string (string_of_formula_label l "")
-let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
-let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
-let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label_list l
-let pr_spec_label_def l  = fmt_string (LO2.string_of l)
-let pr_spec_label_def_opt l = fmt_string (LO2.string_of_opt l)
-let pr_spec_label l  = fmt_string (LO.string_of l)
 
 (** print a pure formula to formatter *)
-let rec pr_pure_formula  (e:P.formula) = 
+and pr_pure_formula  (e:P.formula) = 
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
@@ -1024,7 +1000,33 @@ let rec pr_pure_formula  (e:P.formula) =
           pr_formula_label_opt lbl; 
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
-;;
+
+and pr_term_ann ann = 
+  match ann with
+  | P.Term -> fmt_string "Term"
+  | P.Loop -> fmt_string "Loop"
+  | P.MayLoop -> fmt_string "MayLoop"
+  | P.TermU uid -> fmt_string "TermU"; pr_term_id uid
+  | P.TermR uid -> fmt_string "TermR"; pr_term_id uid
+  | P.Fail f -> match f with
+    | P.TermErr_May -> fmt_string "TermErr_May"
+    | P.TermErr_Must -> fmt_string "TermErr_Must"
+
+and pr_term_id uid = 
+  fmt_string ("@" ^ uid.P.tu_fname ^ "[" ^ (string_of_int uid.P.tu_id) ^ ", ");
+  pr_pure_formula uid.P.tu_cond; 
+  fmt_string "]";
+  pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
+    pr_term_ann s;
+    pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls)) uid.P.tu_sol
+
+and pr_var_measures (t_ann, ls1, ls2) = 
+  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+  pr_term_ann t_ann;
+  pr_s "" pr_formula_exp ls1;
+  pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls2
+  
+let string_of_term_ann = poly_string_of_pr pr_term_ann
 
 let pr_prune_status st = match st with
   | Implied_N -> fmt_string "(IN)"

@@ -162,13 +162,14 @@ and term_ann =
   | Loop    (* definite non-termination *)
   | MayLoop (* possible non-termination *)
   | Fail of term_fail (* Failure because of invalid trans *)
-  | TermU of uid  (* unknown precondition, need to be inferred *)
-  | TermR of uid  (* unknown postcondition, need to be inferred *)
+  | TermU of uid (* unknown precondition with sol *)
+  | TermR of uid (* unknown postcondition *)
 
 and uid = {
   tu_id: int;
   tu_fname: ident;
   tu_cond: formula; 
+  tu_sol: (term_ann * exp list) option;
 }
 
 and term_fail =

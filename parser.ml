@@ -2107,7 +2107,7 @@ id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
 
 infer_cmd:
-  [[ `INFER; il = OPT id_list_w_sqr; k = OPT infer_type; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+  [[ `INFER; k = OPT infer_type; il = OPT id_list_w_sqr; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (il,t,b,None,k)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (il,t,b,Some true,None)

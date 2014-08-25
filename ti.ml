@@ -171,6 +171,13 @@ let add_call_trel_stk ctx lhs rhs =
     call_trel_stk # push trel
   else ()
   
+let update_call_trel rel ilhs irhs = 
+  let _, lhs_args = rel.termu_lhs in
+  let _, rhs_args = rel.termu_rhs in
+  { rel with
+    termu_lhs = ilhs, lhs_args;  
+    termu_rhs = irhs, rhs_args; }
+  
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
   
 let inst_lhs_trel rel fn_cond_w_ids =  
@@ -178,9 +185,9 @@ let inst_lhs_trel rel fn_cond_w_ids =
   let inst_lhs = match lhs_ann with
     | CP.TermU uid -> 
       let fn = uid.CP.tu_fname in
-      let (_, fparams), cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
+      let _, cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
       let rcond_w_ids = List.filter (fun (_, c) -> is_rec c) cond_w_ids in
-      let rcond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) cond_w_ids in
+      let rcond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) rcond_w_ids in
       let tuc = uid.CP.tu_cond in
       let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
       let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) rcond_w_ids in
@@ -199,27 +206,28 @@ let inst_rhs_trel inst_lhs rel fn_cond_w_ids =
     | CP.TermU uid -> 
       let fn = uid.CP.tu_fname in
       let (_, fparams), cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
-      let cond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) cond_w_ids in
       let tuc = uid.CP.tu_cond in
       let eh_ctx = mkAnd ctx tuc in
       let sst = List.combine fparams rhs_args in
-      let subst_cond_w_ids = List.map (fun (i, c) -> (i, CP.subst_term_avoid_capture sst c)) cond_w_ids in 
-      let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) subst_cond_w_ids in
+      let subst_cond_w_ids = List.map (fun (i, c) -> 
+        (i, trans_trrel_sol (CP.subst_term_avoid_capture sst) c)) cond_w_ids in 
+      let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx (get_cond c))) subst_cond_w_ids in
       List.map (fun (i, c) -> CP.TermU { uid with 
         CP.tu_id = cantor_pair uid.CP.tu_id i; 
-        CP.tu_cond = mkAnd tuc c; }) fs_rconds
+        CP.tu_cond = mkAnd tuc (get_cond c); 
+        CP.tu_sol = match c with 
+          | Base _ -> Some (Term, [])
+          | MayTerm _ -> Some (MayLoop, [])
+          | _ -> uid.CP.tu_sol }) fs_rconds
     | _ -> [rhs_ann] 
-  in inst_rhs
-
+  in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
+  
 let inst_call_trel rel fn_cond_w_ids =
   let inst_lhs = inst_lhs_trel rel fn_cond_w_ids in
-  let pairs = List.concat (List.map (fun ilhs -> 
-    let inst_rhs = inst_rhs_trel ilhs rel fn_cond_w_ids in
-    List.map (fun irhs -> (ilhs, irhs)) inst_rhs) inst_lhs) in
-  let pr = string_of_term_ann in
-  let _ = print_endline (pr_list (pr_pair pr pr) pairs) in
-  ()
-
+  let inst_rels = List.concat (List.map (fun ilhs -> 
+    inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
+  inst_rels
+  
 (* Main Inference Function *)  
 let solve () = 
   let _ = print_endline "TERMINATION INFERENCE" in
@@ -237,7 +245,9 @@ let solve () =
       (pr_list (fun ((fn, _), s) -> "\t" ^ fn ^ ": " ^ (pr_list pr_cond s) ^ "\n") fn_cond_w_ids)) in
   
   let turels = call_trel_stk # get_stk in
-  let irels = List.map (fun rel -> inst_call_trel rel fn_cond_w_ids) turels in
+  let irels = List.concat (List.map (fun rel -> 
+    inst_call_trel rel fn_cond_w_ids) turels) in
+  let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in 
   ()
   
   
