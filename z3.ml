@@ -415,6 +415,7 @@ type smt_output = {
   original_output_text : string list;   (* original (command line) output text of the solver; included in order to support printing *)
   sat_result : sat_type; (* satisfiability information *)
   (* expand with other information : proof, time, error, warning, ... *)
+  cex : CP.formula option;
 }
 
 let string_of_smt_output output =
@@ -469,7 +470,7 @@ let sat_type_from_string r input=
     with
       | Not_found -> Unknown
 
-let parse_model_to_pure_formula model =
+let parse_model_to_pure_formula_x model =
   let rec helper acc model =
     let line = List.hd model in
     if line = ")" then acc
@@ -490,36 +491,49 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let _ = Debug.binfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
+
+let parse_model_to_pure_formula model =
+  let pr1 = pr_list pr_id in
+  let pr2 = !print_pure in
+  Debug.no_1 "parse_model_to_pure_formula" pr1 pr2
+      (fun _ -> parse_model_to_pure_formula_x model) model
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let _ = Debug.binfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let _ = Debug.ninfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let _ = Debug.binfo_pprint "model:" no_pos in
-  let _ = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
-  let _ =
+  let _ = Debug.ninfo_pprint "model:" no_pos in
+  (* let _ = List.map (fun s -> Debug.ninfo_pprint s no_pos) model in *)
+  let ocex =
     if solver_sat_result = "sat" then
-      parse_model_to_pure_formula model
+      let cex_f = (parse_model_to_pure_formula model) in
+      let _ = Debug.ninfo_pprint ("counter example: " ^ (!print_pure cex_f)) no_pos in
+      Some cex_f
     else
-      Cpure.mkTrue no_pos
+      (* Cpure.mkTrue no_pos *) None
   in
   { original_output_text = output;
-    sat_result = sat_type_from_string solver_sat_result input; }
+    sat_result = sat_type_from_string solver_sat_result input;
+    cex = ocex;
+  }
 
 let iget_answer chn input=
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
-    sat_result = sat_type_from_string solver_sat_result input; }
+    sat_result = sat_type_from_string solver_sat_result input;
+    cex = None;
+  }
 
 let get_answer chn input=
   let output = collect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
-    sat_result = sat_type_from_string solver_sat_result input; }
+    sat_result = sat_type_from_string solver_sat_result input;
+    cex = None;
+  }
 
 let remove_file filename =
   try
@@ -593,7 +607,9 @@ let run st prover input timeout =
           print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
-          { original_output_text = []; sat_result = Aborted; }
+          { original_output_text = []; sat_result = Aborted;
+          cex = None;
+          }
   ) in
   let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   remove_file infile;
@@ -666,7 +682,7 @@ let check_formula f bget_cex timeout =
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
       let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
-    { original_output_text = []; sat_result = Unknown; } 
+    { original_output_text = []; sat_result = Unknown; cex=None;} 
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
   let tstoplog = Gen.Profiling.get_time () in
