@@ -29,7 +29,7 @@ echo "======= thread-split.ss  ======"
 echo "======= thread-dead.ss  ======"
 ../../hip thread-dead.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/thread-dead.ss.res
 echo "======= mapreduce.ss  ======"
-../../hip mapreduce.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/mapreduce.res
+../../hip mapreduce.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/mapreduce.res
 echo "======= latch.ss  ======"
 ../../hip latch.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch.ss.res
 echo "======= latch2.ss  ======"

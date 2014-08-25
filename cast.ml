@@ -3330,3 +3330,39 @@ let categorize_view (prog: prog_decl) : prog_decl =
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
  
+
+(*
+   A h_formula is resourceless if
+   - prim_pred
+   - ho_args = [] 
+*)
+let is_resourceless_h_formula_x prog (h: CF.h_formula) =
+  let rec helper h =
+    match h with
+      | CF.HEmp -> true
+      | CF.HFalse -> true
+      | CF.ViewNode v ->
+            let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
+            (vdef.view_is_prim && v.h_formula_view_ho_arguments=[])
+      | CF.DataNode _
+      | CF.ThreadNode _ -> false
+      | CF.Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | CF.StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | CF.Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | CF.ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | CF.ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | CF.Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) && (helper h2))
+      | _ -> false
+  in helper h
+
+let is_resourceless_h_formula prog (h: CF.h_formula) =
+  Debug.no_1 "is_resourceless_h_formula"
+      !print_h_formula string_of_bool
+      (fun _ -> is_resourceless_h_formula_x prog h) h

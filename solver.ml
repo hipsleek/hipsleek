@@ -6977,26 +6977,35 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let prep_h1 = (
                                 (* preproces h1 for checking HEmp in classic reasoning *) 
                                 if (!Globals.do_classic_frame_rule && (h2 = HEmp)) then (
+                                  let _ = print_endline ("I am here 0") in
+                                  let _ = print_endline ("rhs_rest_emp (before): " ^ (string_of_bool !rhs_rest_emp)) in
+                                  (* Why "do_unfold_for_classic_reasoning" could change !rhs_rest_emp?*)
                                   let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
+                                  let _ = print_endline ("rhs_rest_emp (after): " ^ (string_of_bool !rhs_rest_emp)) in
                                   match prep_ante with
                                   | CF.Or _ -> h1
                                   | _ -> let h,_,_,_,_ = split_components prep_ante in h
                                 ) 
                                 else h1
                               ) in
-                              let _ = DD.ninfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
-                              let _ = DD.ninfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
-                              let _ = DD.ninfo_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
-                              (* let _ = DD.info_hprint (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in *)
-                              (* let is_classic_lend = (is_classic_lending_hformula (prep_h1)) in *)
-                              (* let _ = DD.ninfo_hprint (add_str "is_classic_lend" string_of_bool) (is_classic_lend) no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
+                              let _ = print_endline ("I am here 1") in
+                              let _ = DD.tinfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
+                              let _ = DD.tinfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
+                              let _ = DD.tinfo_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
+                              let _ = DD.tinfo_hprint (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in
+                              let _ = DD.tinfo_hprint (add_str "is_folding: " string_of_bool) (is_folding) no_pos in
+                              let _ = DD.tinfo_hprint (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in
+                              let _ = DD.tinfo_hprint (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in
+                              let is_classic_lend = (is_classic_lending_hformula (prep_h1)) in
+                              let _ = DD.ninfo_hprint (add_str "is_classic_lend" string_of_bool) (is_classic_lend) no_pos in
+                              let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in
                               (*use global var is dangerous, should pass as parameter*)
-                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp 
-                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse)
+                              (*Do "h2 = HEmp" and "is_rhs_emp" 
+                                already imply "!rhs_rest_emp" *)
+                              if (!Globals.do_classic_frame_rule && is_rhs_emp
+                                  (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
+                                  && not (is_resourceless_h_formula prog prep_h1)
+                                  (* && (prep_h1 != HEmp) && (prep_h1 != HFalse) *)
                                   && (not ( Cformula.is_HRel prep_h1))
                                   && not (is_classic_lending_hformula(prep_h1))
                                   && (h2 = HEmp)) then (
@@ -7039,7 +7048,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
                                 (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
 
-
+                                let _ = print_endline ("I am here 2") in
                                 let _ = DD.tinfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
                                 let _ = DD.tinfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
                                 let _ = DD.tinfo_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in

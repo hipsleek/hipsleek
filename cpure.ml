@@ -11784,7 +11784,7 @@ and extract_rel_pure_x (pf : formula) (rel_name : spec_var): formula * (p_formul
   let f_f arg pf =
     match pf with
       | Or _ ->
-            let _ = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in
+            (* let _ = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in *)
             Some (pf,[])
       | _ -> None
   in

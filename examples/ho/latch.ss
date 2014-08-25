@@ -1,3 +1,7 @@
+/*
+  Example with simple CountDownLatch
+ */
+
 //CountDownLatch
 data CDL{
 }
@@ -18,6 +22,7 @@ lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::C
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>;
 
+/********************************************/
 CDL create_latch(int n) // with %P
   requires n>0
   ensures (exists x: res::LatchIn{x::cell<10>}<x> * res::LatchOut{x::cell<10>}<x> * res::CNT<n>);
@@ -29,18 +34,24 @@ void countDown(CDL c, cell a)
 void await(CDL c,cell a)
   requires c::LatchOut{%P}<a> * c::CNT<0>
   ensures c::CNT<(-1)> * %P;
+/********************************************/
+
+void destroyCell(cell c)
+  requires c::cell<_>
+  ensures emp;
 
 void main()
   requires emp ensures emp;
 {
   cell x = new cell(10);
   CDL c = create_latch(1);
-  //dprint;
+
   countDown(c,x);
-  //dprint;
+
   await(c,x);
-  //dprint;
+
   assert x'::cell<10>;
-  //dprint;
+
+  dprint;
 }
 

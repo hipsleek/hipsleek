@@ -16198,4 +16198,3 @@ let star_elim_useless_emp h =
       | None -> HEmp
       | _    -> h
   in new_h
-
