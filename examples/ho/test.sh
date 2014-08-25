@@ -31,18 +31,18 @@ echo "======= thread-dead.ss  ======"
 echo "======= mapreduce.ss  ======"
 ../../hip mapreduce.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/mapreduce.res
 echo "======= latch.ss  ======"
-../../hip latch.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch.ss.res
+../../hip latch.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/latch.ss.res
 echo "======= latch2.ss  ======"
-../../hip latch2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch2.ss.res
+../../hip latch2.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/latch2.ss.res
 echo "======= latch-exp1.ss  ======"
-../../hip latch-exp1.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.res
+../../hip latch-exp1.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.res
 echo "======= latch-exp2.ss  ======"
-../../hip latch-exp2.ss -tp parahip | grep -E 'Proc|assert:|cause:' > test-cases/latch-exp2.ss.res
+../../hip latch-exp2.ss -tp parahip --classic | grep -E 'Proc|assert:|cause:' > test-cases/latch-exp2.ss.res
 echo "======= lock-exp.ss  ======"
-../../hip lock-exp.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.res
+../../hip lock-exp.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.res
 echo "======= lock-exp2.ss  ======"
-../../hip lock-exp2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.res
+../../hip lock-exp2.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.res
 echo "======= lock-exp3.ss (slow)  ======"
-../../hip lock-exp3.ss -tp parahip -perm fperm | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp3.ss.res
+../../hip lock-exp3.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp3.ss.res
 echo "======= lock-exp4.ss (slow)  ======"
-../../hip lock-exp4.ss -tp parahip -perm fperm | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp4.ss.res
+../../hip lock-exp4.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp4.ss.res

@@ -18,6 +18,7 @@ lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::C
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>;
 
+/********************************************/
 CDL create_latch(int n) // with %P
   requires n>0
   ensures (exists x: res::LatchIn{x::cell<10>}<x> * res::LatchOut{x::cell<10>}<x> * res::CNT<n>);
@@ -33,6 +34,11 @@ void await(CDL c,cell a)
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<n> & n<0
   ensures c::CNT<n>;
+/********************************************/
+
+void destroyCell(cell c)
+  requires c::cell<_>
+  ensures emp;
 
 void main()
   requires emp ensures emp;
@@ -62,6 +68,6 @@ void main()
 
   assert x'::cell<10>;
 
-  //dprint; //STATE EXPLOSION
+  destroyCell(x);
 }
 

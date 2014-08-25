@@ -52,6 +52,6 @@ void main()
 
   assert x'::cell<10>;
 
-  dprint;
+  destroyCell(x);
 }
 

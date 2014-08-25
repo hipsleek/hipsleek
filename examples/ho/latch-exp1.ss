@@ -94,10 +94,7 @@ void main()
 
   countDown(c);
 
-  dprint;
-
   join_thrd(tid,c); //ERROR, since c::CNT<1> * c::CNT<-1>
 
-  dprint;
 }
 

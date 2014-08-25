@@ -15,6 +15,7 @@ lemma "frac-lock-combine" self::Lock{%P}(f1)<> * self::Lock{%P}(f2)<> -> self::L
 
 lemma "error1" self::Held{%P}<> * self::Unheld<> ->  emp & flow __Fail;
 
+/*****************************************/
 lck create_lock() // with %P
   requires emp
   ensures res::Lock{emp}<>;
@@ -30,6 +31,7 @@ void release_lock(lck l)
 void dispose_lock(lck l)
   requires l::Lock{%P}<>
   ensures l::Unheld<> * %P;
+/*****************************************/
 
 void main() requires emp ensures emp;
 {

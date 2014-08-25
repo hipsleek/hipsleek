@@ -5,6 +5,7 @@
   Working, but pretty slow, maybe due to the translation
   (and also Mona).
 
+  Deadlock due to unordered locking
  */
 
 class lck extends Object {}

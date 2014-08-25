@@ -31,18 +31,18 @@ echo "======= thread-dead.ss  ======"
 echo "======= mapreduce.ss  ======"
 ../../hip mapreduce.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/mapreduce.n
 echo "======= latch.ss  ======"
-../../hip latch.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch.ss.n
+../../hip latch.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/latch.ss.n
 echo "======= latch2.ss  ======"
-../../hip latch2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch2.ss.n
+../../hip latch2.ss -tp parahip --classic  | grep -E 'Proc|assert:' > test-cases/latch2.ss.n
 echo "======= latch-exp1.ss  ======"
-../../hip latch-exp1.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.n
+../../hip latch-exp1.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/latch-exp1.ss.n
 echo "======= latch-exp2.ss  ======"
-../../hip latch-exp2.ss -tp parahip | grep -E 'Proc|assert:|cause:' > test-cases/latch-exp2.ss.n
+../../hip latch-exp2.ss -tp parahip --classic | grep -E 'Proc|assert:|cause:' > test-cases/latch-exp2.ss.n
 echo "======= lock-exp.ss  ======"
-../../hip lock-exp.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.n
+../../hip lock-exp.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/lock-exp.ss.n
 echo "======= lock-exp2.ss  ======"
-../../hip lock-exp2.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.n
+../../hip lock-exp2.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/lock-exp2.ss.n
 echo "======= lock-exp3.ss (slow) ======"
-../../hip lock-exp3.ss -tp parahip -perm fperm | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp3.ss.n
+../../hip lock-exp3.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp3.ss.n
 echo "======= lock-exp4.ss (slow) ======"
-../../hip lock-exp4.ss -tp parahip -perm fperm | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp4.ss.n
+../../hip lock-exp4.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp4.ss.n
