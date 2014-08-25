@@ -7491,12 +7491,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   else (* let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in *)
     (* Temporarily suppress output of implication checking *)
     let _ = Smtsolver.suppress_all_output () in
+    let _ = Z3.suppress_all_output () in
     let _ = Tpdispatcher.push_suppress_imply_output_state () in
     let _ = Tpdispatcher.suppress_imply_output () in
     let inst = pure_match evarstoi lhs_p rhs_p in (* Do matching! *)
     let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
     (* Unsuppress the printing *)
     let _ = Smtsolver.unsuppress_all_output ()  in
+    let _ = Z3.unsuppress_all_output ()  in
     let _ = Tpdispatcher.restore_suppress_imply_output_state () in
     (* let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in *)
     lhs_p

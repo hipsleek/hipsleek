@@ -1062,6 +1062,7 @@ let generate_pure_rel hprel=
   (*add map*)
   let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
   let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  let _= Z3.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
   n_p_hprel
 
 let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
@@ -1081,7 +1082,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
     (* PURE_RELATION_OF_HEAP_PRED *)
     let p_hp_decl = generate_pure_rel hp_decl in
     let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
-    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let _ = Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
+    let _ = Z3.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let hf =
       F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
                List.map (fun sv -> P.mkVar sv pos) unk_args,

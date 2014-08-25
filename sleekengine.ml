@@ -385,7 +385,8 @@ let process_rel_def rdef =
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
 			let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
+			let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+                        Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -404,7 +405,8 @@ let process_hp_def hpdef =
               let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
 	      (* Forward the relation to the smt solver. *)
               let args = fst (List.split chpdef.Cast.hp_vars_inst) in
-	      Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
+	      let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in
+              Z3.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
 	  with
 	    | _ ->  
                   begin
@@ -418,11 +420,12 @@ let process_hp_def hpdef =
 (** An Hoa : process axiom
  *)
 let process_axiom_def adef = begin
-	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
-	let cadef = Astsimp.trans_axiom iprog adef in
-		!cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
-	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion;
+  iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
+  let cadef = Astsimp.trans_axiom iprog adef in
+  !cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
+  (* Forward the axiom to the smt solver. *)
+  let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+  Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion;
 end
 
 (*this function is never called. it is replaced by process_list_lemma
