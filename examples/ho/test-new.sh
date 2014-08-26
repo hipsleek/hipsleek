@@ -57,3 +57,5 @@ echo "======= multi-join1.ss  ======"
 ../../hip multi-join1.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/multi-join1.ss.n
 echo "======= multi-join2.ss  ======"
 ../../hip multi-join2.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:' > test-cases/multi-join2.ss.n
+echo "======= threadpool.ss  ======"
+../../hip threadpool.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:' > test-cases/threadpool.ss.n
