@@ -1,13 +1,2 @@
 #partition_error_es
 #heap_entail_after_sat
-#check_post
-#heap_entail_struc
-#heap_entail_struc_init
-#heap_entail_one_context_struc
-#heap_entail_after_sat_struc
-#heap_entail_conjunct_lhs_struc
-#heap_entail_one_context
-#heap_entail_after_sat
-#heap_entail_conjunct_lhs
-#heap_entail_conjunct
-#heap_entail_conjunct_helper

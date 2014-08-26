@@ -2,10 +2,12 @@ data node {node next; }.
 
 //checkentail x=null & flow __Error |- x!=null.
 
-
+//1
 checkentail x=null |- x=null.
 print residue.
 
+
+//2
 checkentail x=null |- x::node<p>.
 print residue.
 
@@ -26,6 +28,7 @@ Error Context: length= 1 [es_formula: emp&x=null&{FLOW,(3,4)=__Error}[]
 [[empty]]
 */
 
+//3
 checkentail true |- x::node<p>.
 print residue.
 
@@ -48,3 +51,10 @@ Error Context: length= 1 [es_formula: emp&{FLOW,(21,22)=__norm}[]
                           es_infer_vars_rel: []] <1>emp&{FLOW,(21,22)=__norm}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 */
+
+//4
+checkentail x=null  |- x::node<p> & flow __Error.
+
+print residue.
+
+expect Valid.
