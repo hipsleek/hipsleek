@@ -16,7 +16,7 @@ let add_ret_trel_stk ctx lhs rhs =
   if !Globals.slk_infer_term then 
     let trel = {
       ret_ctx = ctx;
-      termr_fname = CP.get_fn_tann (fst rhs);
+      termr_fname = CP.fn_of_term_ann (fst rhs);
       termr_params = List.concat (List.map CP.afv (snd rhs));
       termr_lhs = lhs;
       termr_rhs = rhs; } in 
@@ -112,7 +112,7 @@ let inst_lhs_trel rel fn_cond_w_ids =
 let inst_rhs_trel inst_lhs rel fn_cond_w_ids = 
   let rhs_ann = fst rel.termu_rhs in
   let rhs_args = snd rel.termu_rhs in
-  let cond_lhs = CP.get_cond_tann inst_lhs in
+  let cond_lhs = CP.cond_of_term_ann inst_lhs in
   let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) cond_lhs in
   let inst_rhs = match rhs_ann with
     | CP.TermU uid -> 
@@ -140,67 +140,70 @@ let inst_call_trel rel fn_cond_w_ids =
     inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
    
-let solve_turel_one_scc tg scc =
+let solve_turel_one_scc prog tg scc =
+  let update_ann scc f ann = (* Only update nodes in scc *)
+    let ann_id = CP.id_of_term_ann ann in
+    if Gen.BList.mem_eq (==) ann_id scc 
+    then f ann
+    else ann
+  in
+  
   let outside_scc_succ = outside_succ_scc tg scc in
   
-  let result = 
+  let update = 
     if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
-      then (CP.Term, []) (* Term or MayLoop *)
-      else (CP.Loop, []) (* Loop *)
+      then update_ann scc (update_sol_tnt_elem (CP.Term, [])) (* Term or MayLoop *)
+      else update_ann scc (update_sol_tnt_elem (CP.Loop, [])) (* Loop *)
     
     else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
             (List.exists (fun v -> CP.is_MayLoop v) outside_scc_succ) 
-      then (CP.MayLoop, []) (* MayLoop *)
+    then update_ann scc (update_sol_tnt_elem (CP.MayLoop, [])) (* MayLoop *)
   
     else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
-    if is_acyclic_scc tg scc 
-    then (CP.Term, []) (* Term *)
-    else (* Term with a ranking function for each scc's node *)
-      (CP.Term, [])
+      if is_acyclic_scc tg scc 
+      then update_ann scc (update_sol_tnt_elem (CP.Term, [])) (* Term *)
+      else (* Term with a ranking function for each scc's node *)
+        let rank_of_ann = find_ranking_function_scc prog tg scc in
+        update_ann scc (fun ann -> 
+          let res = (CP.Term, rank_of_ann ann) in 
+          update_sol_tnt_elem res ann)
   
     else (* Error: One of scc's succ is Unknown *)
       Error.report_error {
         Error.error_loc = no_pos;
         Error.error_text = "TNT[ti]: One of analyzed scc's successors is Unknown."; }
   in
-  let update_vertex = update_sol_tnt_elem result in
-  let ntg = map_scc tg scc update_vertex in
+  let ntg = map_scc tg scc update in
   ntg
 
-let solve_turel_iter turels fn_cond_w_ids = 
+let solve_turel_iter prog turels fn_cond_w_ids = 
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel rel fn_cond_w_ids) turels) in
-  let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in 
+  (* let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in  *)
   
   let tg = graph_of_trels irels in
-  (* let scc_list = Array.to_list (TGC.scc_array tg) in *)
-  let scc_list = TGC.scc_list tg in
-  let _ = print_endline (print_graph_by_rel tg) in
-  let _ = print_endline (print_scc_list_num scc_list) in
-  let _ = print_endline (print_scc_array_num (TGC.scc_array tg)) in
-  let _ = TG.iter_vertex (fun v -> print_endline (string_of_int v)) tg in
-  
-  let tg = List.fold_left (fun tg -> solve_turel_one_scc tg) tg scc_list in
+  let scc_list = Array.to_list (TGC.scc_array tg) in
+  let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
   let _ = print_endline (print_graph_by_rel tg) in
   ()
   
 let tnt_finalize () = ()
   
-let tnt_main_loop iter_num turels fn_cond_w_ids =
+let tnt_main_loop iter_num prog turels fn_cond_w_ids =
   if iter_num < !Globals.tnt_thres then
-    solve_turel_iter turels fn_cond_w_ids
+    solve_turel_iter prog turels fn_cond_w_ids
   else tnt_finalize ()  
   
   
 (* Main Inference Function *)  
-let solve () = 
+let solve prog = 
   let _ = print_endline "TERMINATION INFERENCE" in
   let trrels = ret_trel_stk # get_stk in
   let fn_cond_w_ids = case_split_init trrels in
   
   let turels = call_trel_stk # get_stk in
-  tnt_main_loop 0 turels fn_cond_w_ids 
+  tnt_main_loop 0 prog turels fn_cond_w_ids 
   
   
   

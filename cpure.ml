@@ -169,7 +169,7 @@ and uid = {
   tu_id: int;
   tu_fname: ident;
   tu_cond: formula; 
-  tu_sol: (term_ann * exp list) option;
+  tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
 }
 
 and term_fail =
@@ -273,79 +273,6 @@ and rounding_func =
   | Floor
 
 and infer_rel_type =  (rel_cat * formula * formula)
-
-let rec compare_term_ann a1 a2 =
-  match a1, a2 with 
-  | Term, Term -> 0
-  | Loop, Loop -> 0
-  | MayLoop, MayLoop -> 0
-  | Fail f1, Fail f2 -> compare_term_fail f1 f2
-  | TermU u1, TermU u2 -> compare_uid u1 u2
-  | TermR u1, TermR u2 -> compare_uid u1 u2
-  | _ -> 1
-
-and compare_uid u1 u2 = compare u1.tu_id u2.tu_id
-
-and compare_term_fail f1 f2 = 
-  match f1, f2 with
-  | TermErr_May, TermErr_May -> 0
-  | TermErr_Must, TermErr_Must -> 0
-  | _ -> 1
-
-let eq_term_ann a1 a2 = 
-  compare_term_ann a1 a2 == 0
-  
-let rec is_MayLoop ann = 
-  match ann with
-  | MayLoop -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_MayLoop s
-    end
-  | _ -> false 
-    
-let rec is_Loop ann = 
-  match ann with
-  | Loop -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_Loop s
-    end
-  | _ -> false
-
-let rec is_Term ann = 
-  match ann with
-  | Term -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_Term s
-    end
-  | _ -> false
-
-let term_id = 1
-let loop_id = 2
-let mayLoop_id = 3 
-let termErr_id = 4
-
-let id_of_term_ann ann = 
-  match ann with
-  | Term -> term_id
-  | Loop -> loop_id
-  | MayLoop -> mayLoop_id
-  | Fail _ -> termErr_id
-  | TermU uid -> uid.tu_id
-  | TermR uid -> uid.tu_id
-
-let subst_sol_term_ann sol ann =
-  match ann with
-  | TermU uid -> TermU { uid with 
-      tu_sol = match uid.tu_sol with
-      | None -> Some sol 
-      | _ -> uid.tu_sol }
-  | _ -> ann
 
 let is_False cp = match cp with
   | BForm (p,_) -> 
@@ -12493,14 +12420,87 @@ let overapp_ptrs p=
   Debug.no_1 "overapp_ptrs" pr1 pr1
       (fun _ -> overapp_ptrs_x p) p
       
-let get_cond_tann tann = 
-  match tann with
+let rec compare_term_ann a1 a2 =
+  match a1, a2 with 
+  | Term, Term -> 0
+  | Loop, Loop -> 0
+  | MayLoop, MayLoop -> 0
+  | Fail f1, Fail f2 -> compare_term_fail f1 f2
+  | TermU u1, TermU u2 -> compare_uid u1 u2
+  | TermR u1, TermR u2 -> compare_uid u1 u2
+  | _ -> 1
+
+and compare_uid u1 u2 = compare u1.tu_id u2.tu_id
+
+and compare_term_fail f1 f2 = 
+  match f1, f2 with
+  | TermErr_May, TermErr_May -> 0
+  | TermErr_Must, TermErr_Must -> 0
+  | _ -> 1
+
+let eq_term_ann a1 a2 = 
+  compare_term_ann a1 a2 == 0
+  
+let rec is_MayLoop ann = 
+  match ann with
+  | MayLoop -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_MayLoop s
+    end
+  | _ -> false 
+    
+let rec is_Loop ann = 
+  match ann with
+  | Loop -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Loop s
+    end
+  | _ -> false
+
+let rec is_Term ann = 
+  match ann with
+  | Term -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Term s
+    end
+  | _ -> false
+
+let term_id = 1
+let loop_id = 2
+let mayLoop_id = 3 
+let termErr_id = 4
+
+let id_of_term_ann ann = 
+  match ann with
+  | Term -> term_id
+  | Loop -> loop_id
+  | MayLoop -> mayLoop_id
+  | Fail _ -> termErr_id
+  | TermU uid -> uid.tu_id
+  | TermR uid -> uid.tu_id
+
+let cond_of_term_ann ann =
+  match ann with
   | TermU uid -> uid.tu_cond
   | TermR uid -> uid.tu_cond
   | _ -> mkTrue no_pos
 
-let get_fn_tann tann =
-  match tann with
+let fn_of_term_ann ann =
+  match ann with
   | TermU uid -> uid.tu_fname
   | TermR uid -> uid.tu_fname
   | _ -> ""
+
+let subst_sol_term_ann sol ann =
+  match ann with
+  | TermU uid -> TermU { uid with 
+      tu_sol = match uid.tu_sol with
+      | None -> Some sol 
+      | _ -> uid.tu_sol }
+  | _ -> ann

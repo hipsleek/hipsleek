@@ -5,6 +5,7 @@ module MCP = Mcpure
 open Cprinter
 open Globals
 open Gen
+open Tlutils
 
 (* Auxiliary methods *)
 let diff = Gen.BList.difference_eq CP.eq_spec_var
@@ -22,8 +23,9 @@ let simplify f args =
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
-
 let mkNot f = CP.mkNot f None no_pos
+let mkGt e1 e2 = CP.mkPure (CP.mkGt e1 e2 no_pos)
+let mkGte e1 e2 = CP.mkPure (CP.mkGte e1 e2 no_pos)
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -50,6 +52,10 @@ let print_tnt_elem = string_of_tnt_elem
 
 let update_sol_tnt_elem s ann =
   CP.subst_sol_term_ann s ann
+  
+let tnt_elem_of_ann elem_list ann =
+  try List.find (fun (a, _) -> CP.eq_term_ann a ann) elem_list
+  with _ -> (ann, [])
 
 (* Temporal Relation at Return *)
 type ret_trel = {
@@ -179,10 +185,13 @@ let print_graph_by_num g =
     (string_of_int s) ^ " -> " ^
     (string_of_int d) ^ "\n" ^ a)  g ""
     
+let print_edge e = 
+  let _, rel, _ = e in
+  print_call_trel rel
+    
 let print_graph_by_rel g = 
   TG.fold_edges (fun s d a -> 
-    let _, rel, _ = TG.find_edge g s d in
-    (print_call_trel rel) ^ "\n" ^ a)  g ""
+    (print_edge (TG.find_edge g s d)) ^ "\n" ^ a)  g ""
   
 let print_scc_num = pr_list string_of_int
 
@@ -234,27 +243,18 @@ let no_outgoing_edge_scc g scc =
   (outside_succ_scc_num g scc) = []   
 
 (* Methods to update rels in graph *)
-let update_edge g f e =
+let update_edge g f_rel e =
   let s, rel, d = e in
-  let nrel = f rel in
+  let nrel = f_rel rel in
   TG.add_edge_e (TG.remove_edge_e g e) (s, nrel, d)
   
-let update_trel f rel =
+let update_trel f_ann rel =
   let lhs, _ = rel.termu_lhs in
   let rhs, _ = rel.termu_rhs in 
-  update_call_trel rel (f lhs) (f rhs)
+  update_call_trel rel (f_ann lhs) (f_ann rhs)
   
-let update_ann scc f ann =
-  let ann_id = CP.id_of_term_ann ann in
-  if Gen.BList.mem_eq (==) ann_id scc 
-  then f ann
-  else ann
-  
-let map_scc g scc f = 
-  let f_edge g e =
-    update_edge g (fun rel -> 
-      update_trel (fun ann -> 
-        update_ann scc f ann) rel) e 
+let map_scc g scc f_ann = 
+  let f_edge g e = update_edge g (update_trel f_ann) e 
   in
   let outgoing_scc_edges =
     List.concat (List.map (fun s ->
@@ -271,6 +271,44 @@ let map_scc g scc f =
       ) [] pred) scc)
   in
   List.fold_left (fun g e -> f_edge g e) g (outgoing_scc_edges @ incoming_scc_edges)
-  
 
+(* This method returns all edges within a scc *)    
+let find_scc_edges g scc = 
+  let find_edges_vertex s =
+    let succ = TG.succ g s in
+    let scc_succ = Gen.BList.intersect_eq (==) succ scc in
+    List.concat (List.map (fun d -> TG.find_all_edges g s d) scc_succ)
+  in
+  List.concat (List.map (fun v -> find_edges_vertex v) scc)
+
+(* Ranking function synthesis *)
+let rank_templ_of_tnt_elem (ann, args) =
+  match ann with
+  | CP.TermU uid ->
+    let templ_id = uid.CP.tu_fname ^ "_r_" ^ (string_of_int uid.CP.tu_id) in 
+    let templ_decl = CP.mkTemplate templ_id args no_pos in
+    CP.Template templ_decl, templ_id
+  | _ -> CP.mkIConst (-1) no_pos, ""
+
+let templ_constr_of_rel rel =
+  let src_rank, src_rank_id = rank_templ_of_tnt_elem rel.termu_lhs in
+  let dst_rank, dst_rank_id = rank_templ_of_tnt_elem rel.termu_rhs in
+  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) (CP.cond_of_term_ann (fst rel.termu_lhs)) in
+  let dec = mkGt src_rank dst_rank in
+  let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
+  let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let _ = Template.collect_templ_assume_init es 
+    (MCP.mix_of_pure ctx) dec no_pos in
+  [src_rank_id; dst_rank_id]
+  
+let find_ranking_function_scc prog g scc =
+  let scc_edges = find_scc_edges g scc in
+  let _ = print_endline (pr_list print_edge scc_edges) in
+  let inf_templs = List.fold_left (fun a (_, rel, _) -> 
+    a @ (templ_constr_of_rel rel)) [] scc_edges in
+  let _ = Template.collect_and_solve_templ_assumes_common prog inf_templs in
+  
+  let src_of_edges = List.map (fun (_, rel, _) -> rel.termu_lhs) scc_edges in
+  fun ann ->
+    [fst (rank_templ_of_tnt_elem (tnt_elem_of_ann src_of_edges ann))]
   

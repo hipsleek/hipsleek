@@ -256,7 +256,7 @@ let parse_file (parse) (source_file : string) =
   !cprog.C.prog_view_decls <- cviews;
   List.iter proc_one_cmd cmds;
   (* Solving termination relation assumptions in Sleek *)
-  Ti.solve ()
+  Ti.solve !cprog
 
 let main () = 
   let _ = Globals.is_sleek_running := true in
