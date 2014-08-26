@@ -1,0 +1,45 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1> 
+ inv true.
+
+ {[],true} // over-approx
+
+ ([],self=null & n=0) or ([self]:true) 
+
+ ([],self=null & n=0) or ([self]:n=1} or  ([self]:true}
+
+ ([],self=null & n=0) or ([self]:n=1} 
+
+ ([],self=null & n=0) or ([self]:1<=n<=2} 
+
+ ([],self=null & n=0) or ([self]:1<=n<=3}
+
+ ([],self=null & n=0) or ([self]:1<=n<=4} // widen
+
+ ([],self=null & n=0) or ([self]:1<=n} 
+
+=======================================
+
+ {[],n>=0} // over-approx
+
+ ([],self=null & n=0) or ([self]:n>0) // under-approx.. 
+
+=======================================
+
+pred ll<n,m> == self=null & n=0 & m=0
+   or self::node<_,q>*q::ll<n-1,m-1>
+   or self::node<_,q>*q::ll<n-1,m-2>
+//inv BG([],n>=0 & m>=0) 
+//inv_sat BG([],n>=0 & m>=0) 
+//inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<n & m>0)
+inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<m & n<=m<=2*n)
+
+=======================
+
+ inv BG([],n>=0 & m>=0) 
