@@ -12,6 +12,7 @@ node get_next(node x)
      ensures x::node<q> & res=q;
 }
 
+//  requires x=null ensures true  & flow __Error;
 // requires x::node<q>@L ensures res=p;
 {
   return x.next;

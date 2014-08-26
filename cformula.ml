@@ -7034,9 +7034,12 @@ let get_null_svl f0=
   let rec helper f=
     match f with
       | Base fb ->
-          MCP.get_null_ptrs fb.formula_base_pure
-      | Exists fe ->
-          MCP.get_null_ptrs fe.formula_exists_pure
+            let null_ptrs = MCP.get_null_ptrs fb.formula_base_pure in
+            let eqs = (MCP.ptr_equations_without_null fb.formula_base_pure) in
+            find_close null_ptrs eqs
+      | Exists _ ->
+          let _, base1 = split_quantifiers f in
+          helper base1
       | Or orf -> ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
   in
   helper f0

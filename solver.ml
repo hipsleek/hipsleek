@@ -4910,13 +4910,28 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 	  in wrap_trace es.es_path_label exec ()
 
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
+  (* let new_slk_log slk_no result es =  *)
+  (*   (\* let avoid = CF.is_emp_term conseq in *\) *)
+  (*   (\* let avoid = avoid || (not (hec_stack # is_empty)) in *\) *)
+  (*   let caller = hec_stack # string_of_no_ln in *)
+  (*   (\* let slk_no = (\\* if avoid then 0 else *\\) (next_sleek_int ()) in *\) *)
+  (*   (\* let _ = hec_stack # push slk_no in *\) *)
+  (*   (\* let r = hec a b c in *\) *)
+  (*   (\* let _ = hec_stack # pop in *\) *)
+  (*   let _ = Log.add_sleek_logging false 0. estate.es_infer_vars *)
+  (*     !Globals.do_classic_frame_rule caller (\* avoid *\) false  *)
+  (*     hec_num slk_no estate.es_formula *)
+  (*     conseq es.es_heap es.es_evars (Some result) pos *)
+  (*   in *)
+  (*   () *)
+  (* in *)
   (*11/02/2014: not sure what it supposed to do.
     Temporarily always returns (true,false, None) for permissions*)
   let pr_hdebug = Debug.tinfo_hprint in
   if (Perm.allow_perm ()) then (true,false, None) else
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag) 
+  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) 
   then
     let _ = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
@@ -4975,6 +4990,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                     (CP.join_conjunctions l_ps1, rele_rhs_xpure)
                 in
                 (*skip*-list*)
+                (* let slk_no = Log.last_cmd # start_sleek 1 in *)
                 let res_ctx_opt = if CP.is_neq_null_exp pf then None else
                   let p_contr_lhs = (CP.join_conjunctions ([lhs_p;pf])) in
                   let _ = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
@@ -4995,6 +5011,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                     | Some res_ctx ->
                           (* contra due to HP args *)
                           let res_es_opt = Cformula.estate_opt_of_list_context res_ctx in
+                          (* let _ = new_slk_log slk_no res_ctx new_estate in *)
                           match res_es_opt with
                             | Some res_es0 ->
                                   let res_es =
@@ -11402,10 +11419,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     begin
                     match relass with
                       | [] -> if Infer.no_infer_all_all estate then
-                          (*/sa/error/ex2.slk: unmatch rhs: may failure *)
-                          let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                          CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                          let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
+                          let root = Cformula.get_ptr_from_data rhs in
+                          if CP.mem_svl root lhs_null_ptrs then
+                            let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
+                          CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
+                          else
+                            (*/sa/error/ex2.slk: unmatch rhs: may failure *)
+                            let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                            (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                            CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
                         else
                             let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
