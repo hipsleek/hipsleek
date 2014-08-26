@@ -46,3 +46,6 @@ echo "======= lock-exp3.ss (slow)  ======"
 ../../hip lock-exp3.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp3.ss.res
 echo "======= lock-exp4.ss (slow)  ======"
 ../../hip lock-exp4.ss -tp parahip -perm fperm --classic | grep -E 'Proc|assert:|cause:' > test-cases/lock-exp4.ss.res
+
+echo "======= fibonacci.ss  ======"
+../../hip fibonacci.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/fibonacci.ss.res
