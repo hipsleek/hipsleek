@@ -1121,6 +1121,21 @@ let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
 
+(* TNT Inference *)
+type infer_type = 
+  | INF_TERM (* For infer@term *)
+
+let slk_infer_term = ref false
+
+let en_slk_infer_term itype = match itype with
+  | Some INF_TERM -> slk_infer_term := true
+  | _ -> slk_infer_term := false
+
+let dis_slk_infer_term itype = 
+  slk_infer_term := false
+  
+let tnt_thres = ref 5
+
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
@@ -1162,18 +1177,6 @@ let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 type ensures_type = bool option
 type assert_type = bool option
 type entail_type = bool option
-
-type infer_type = 
-  | INF_TERM (* For infer@term *)
-
-let slk_infer_term = ref false
-
-let en_slk_infer_term itype = match itype with
-  | Some INF_TERM -> slk_infer_term := true
-  | _ -> slk_infer_term := false
-
-let dis_slk_infer_term itype = 
-  slk_infer_term := false
 
 (* Options for abduction *)
 let do_abd_from_post = ref false

@@ -927,7 +927,7 @@ let rec pr_b_formula (e:P.b_formula) =
   (* pr_slicing_label il; *)
   match pf with
     | P.LexVar t_info -> 
-      pr_term_ann t_info.CP.lex_ann;
+      pr_term_ann false t_info.CP.lex_ann;
       pr_s "" pr_formula_exp t_info.CP.lex_exp
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
@@ -1001,32 +1001,33 @@ and pr_pure_formula  (e:P.formula) =
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
 
-and pr_term_ann ann = 
+and pr_term_ann pr_short ann = 
   match ann with
   | P.Term -> fmt_string "Term"
   | P.Loop -> fmt_string "Loop"
   | P.MayLoop -> fmt_string "MayLoop"
-  | P.TermU uid -> fmt_string "TermU"; pr_term_id uid
-  | P.TermR uid -> fmt_string "TermR"; pr_term_id uid
+  | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
+  | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
 
-and pr_term_id uid = 
+and pr_term_id pr_short uid = 
   fmt_string ("@" ^ uid.P.tu_fname ^ "[" ^ (string_of_int uid.P.tu_id) ^ ", ");
   pr_pure_formula uid.P.tu_cond; 
   fmt_string "]";
-  pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
-    pr_term_ann s;
+  if pr_short then () 
+  else pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
+    pr_term_ann pr_short s;
     pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls)) uid.P.tu_sol
 
 and pr_var_measures (t_ann, ls1, ls2) = 
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
-  pr_term_ann t_ann;
+  pr_term_ann false t_ann;
   pr_s "" pr_formula_exp ls1;
   pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls2
   
-let string_of_term_ann = poly_string_of_pr pr_term_ann
+let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
 
 let pr_prune_status st = match st with
   | Implied_N -> fmt_string "(IN)"
@@ -2286,16 +2287,18 @@ let pr_templ_assume (ante, cons) =
 
 let string_of_templ_assume = poly_string_of_pr pr_templ_assume
 
-let pr_tr (tann, targs) = 
+let pr_tnt_elem (tann, targs) = 
   pr_var_measures (tann, [], targs)
+  
+let string_of_tnt_elem = poly_string_of_pr pr_tnt_elem
 
 let pr_trrel (ctx, lhs_trrel, rhs_trrel) = 
   fmt_open_box 1;
   pr_formula ctx;
   fmt_string ": ";
-  pr_seq "" pr_tr lhs_trrel;
+  pr_seq "" pr_tnt_elem lhs_trrel;
   fmt_string " -> ";
-  pr_tr rhs_trrel;
+  pr_tnt_elem rhs_trrel;
   fmt_close ()
 
 let string_of_trrel = poly_string_of_pr pr_trrel
@@ -2304,9 +2307,9 @@ let pr_trrel_pure (ctx, lhs_trrel, rhs_trrel) =
   fmt_open_box 1;
   pr_mix_formula ctx;
   fmt_string ": ";
-  pr_seq "" pr_tr lhs_trrel;
+  pr_seq "" pr_tnt_elem lhs_trrel;
   fmt_string " -> ";
-  pr_tr rhs_trrel;
+  pr_tnt_elem rhs_trrel;
   fmt_close ()
 
 let string_of_trrel_pure = poly_string_of_pr pr_trrel_pure
@@ -2317,7 +2320,7 @@ let pr_turel (ctx, lhs_turel, rhs_turel) =
   fmt_string ": ";
   pr_wrap_opt "" pr_var_measures lhs_turel;
   fmt_string " -> ";
-  pr_tr rhs_turel;
+  pr_tnt_elem rhs_turel;
   fmt_close ()
 
 let string_of_turel = poly_string_of_pr pr_turel
@@ -2326,9 +2329,9 @@ let pr_turel_pure (ctx, lhs_turel, rhs_turel) =
   fmt_open_box 1;
   pr_mix_formula ctx;
   fmt_string ": ";
-  pr_tr lhs_turel;
+  pr_tnt_elem lhs_turel;
   fmt_string " -> ";
-  pr_tr rhs_turel;
+  pr_tnt_elem rhs_turel;
   fmt_close ()
 
 let string_of_turel_pure = poly_string_of_pr pr_turel_pure

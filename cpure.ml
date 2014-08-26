@@ -274,6 +274,65 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+let rec compare_term_ann a1 a2 =
+  match a1, a2 with 
+  | Term, Term -> 0
+  | Loop, Loop -> 0
+  | MayLoop, MayLoop -> 0
+  | Fail f1, Fail f2 -> compare_term_fail f1 f2
+  | TermU u1, TermU u2 -> compare_uid u1 u2
+  | TermR u1, TermR u2 -> compare_uid u1 u2
+  | _ -> 1
+
+and compare_uid u1 u2 = compare u1.tu_id u2.tu_id
+
+and compare_term_fail f1 f2 = 
+  match f1, f2 with
+  | TermErr_May, TermErr_May -> 0
+  | TermErr_Must, TermErr_Must -> 0
+  | _ -> 1
+
+let eq_term_ann a1 a2 = 
+  compare_term_ann a1 a2 == 0
+  
+let rec is_MayLoop ann = 
+  match ann with
+  | MayLoop -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_MayLoop s
+    end
+  | _ -> false 
+    
+let rec is_Loop ann = 
+  match ann with
+  | Loop -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Loop s
+    end
+  | _ -> false
+
+let rec is_Term ann = 
+  match ann with
+  | Term -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Term s
+    end
+  | _ -> false
+
+let subst_sol_term_ann sol ann =
+  match ann with
+  | TermU uid -> TermU { uid with 
+      tu_sol = match uid.tu_sol with
+      | None -> Some sol 
+      | _ -> uid.tu_sol }
+  | _ -> ann
+
 let is_False cp = match cp with
   | BForm (p,_) -> 
         begin
@@ -4462,7 +4521,6 @@ let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp EMapSV.mkEmpty e1 e2
 let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
 
 let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula EMapSV.mkEmpty b1 b2
-
 
 let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
 

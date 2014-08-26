@@ -5,48 +5,12 @@ module MCP = Mcpure
 open Cprinter
 open Globals
 open Gen
+open Ti2
 
-(* Auxiliary methods *)
-let diff = Gen.BList.difference_eq CP.eq_spec_var
-
-let om_simplify = Omega.simplify
-
-let eq_str s1 s2 = String.compare s1 s2 == 0
-
-let simplify f args = 
-  let bnd_vars = diff (CP.fv f) args in
-  if bnd_vars == [] then f else
-    CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
-      (diff (CP.fv f) args) f None (CP.pos_of_formula f)
-  
-let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
-
-let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
-
-let mkNot f = CP.mkNot f None no_pos
-
-let rec partition_by_key key_of key_eq ls = 
-  match ls with
-  | [] -> []
-  | e::es ->
-    let ke = key_of e in 
-    let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
-    (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
-
+(*******************************)
 (* Temporal Relation at Return *)
-type ret_trel = {
-  ret_ctx: MCP.mix_formula;
-  (* Collect from RHS *)
-  termr_fname: ident;
-  termr_params: CP.spec_var list;
-  termr_lhs: (CP.term_ann * CP.exp list) list;
-  termr_rhs: CP.term_ann * CP.exp list;
-}
-
+(*******************************)
 let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
-
-let print_ret_trel rel = 
-  string_of_trrel_pure (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
 
 let add_ret_trel_stk ctx lhs rhs =
   if !Globals.slk_infer_term then 
@@ -59,59 +23,6 @@ let add_ret_trel_stk ctx lhs rhs =
     ret_trel_stk # push trel
   else ()
   
-type trrel_sol = 
-  | Base of CP.formula
-  | Rec of CP.formula (* Recursive case *)
-  | MayTerm of CP.formula (* Both base and rec cases may be reachable from this case *)
-  
-let print_trrel_sol s = 
-  let pr = !CP.print_formula in
-  match s with
-  | Base c -> (pr c) ^ "@B"
-  | Rec c -> (pr c) ^ "@R"
-  | MayTerm c -> (pr c) ^ "@ML"
-
-let trans_trrel_sol f = function
-  | Base c -> Base (f c)
-  | Rec c -> Rec (f c)
-  | MayTerm c -> MayTerm (f c)
-
-let fold_trrel_sol f = function
-  | Base c -> 
-    let cs = f c in
-    List.map (fun c -> Base c) cs 
-  | Rec c -> 
-    let cs = f c in
-    List.map (fun c -> Rec c) cs 
-  | MayTerm c -> 
-    let cs = f c in
-    List.map (fun c -> MayTerm c) cs 
-
-let simplify_trrel_sol = trans_trrel_sol om_simplify
-
-let split_disj_trrel_sol s =
-  fold_trrel_sol CP.split_disjunctions s
-     
-let is_base = function
-  | Base _ -> true
-  | _ -> false
-
-let is_rec = function
-  | Rec _ -> true
-  | _ -> false
-
-let is_mayterm = function
-  | MayTerm _ -> true
-  | _ -> false
-
-let get_cond = function
-  | Base c -> c
-  | Rec c -> c
-  | MayTerm c -> c
-
-let get_rec_conds conds = 
-  List.map get_cond (List.filter is_rec conds)
-
 let rec solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
   let rec_cond, conds = List.fold_left (fun (rc, ca) cond ->
@@ -150,17 +61,26 @@ let solve_trrel_list trrels =
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
   conds
   
+let case_split_init trrels = 
+  let fn_trrels = 
+    let key_of r = (r.termr_fname, r.termr_params) in
+    let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
+    partition_by_key key_of key_eq trrels 
+  in
+  let fn_cond_w_ids = List.map (fun (fn, trrels) -> 
+    (fn, List.map (fun c -> fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
+  let _ = 
+    let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
+    print_endline ("BASE/REC CASE SPLITTING:\n" ^ 
+      (pr_list (fun ((fn, _), s) -> 
+        "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
+        (pr_list pr_cond s) ^ "\n") fn_cond_w_ids))
+  in fn_cond_w_ids 
+  
+(*****************************)
 (* Temporal Relation at Call *)
-type call_trel = {
-  call_ctx: MCP.mix_formula;
-  termu_lhs: CP.term_ann * CP.exp list;
-  termu_rhs: CP.term_ann * CP.exp list;
-}
-
+(*****************************)
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
-
-let print_call_trel rel = 
-  string_of_turel_pure (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
 
 let add_call_trel_stk ctx lhs rhs =
   if !Globals.slk_infer_term then 
@@ -170,15 +90,6 @@ let add_call_trel_stk ctx lhs rhs =
       termu_rhs = rhs; } in 
     call_trel_stk # push trel
   else ()
-  
-let update_call_trel rel ilhs irhs = 
-  let _, lhs_args = rel.termu_lhs in
-  let _, rhs_args = rel.termu_rhs in
-  { rel with
-    termu_lhs = ilhs, lhs_args;  
-    termu_rhs = irhs, rhs_args; }
-  
-let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
   
 let inst_lhs_trel rel fn_cond_w_ids =  
   let lhs_ann = fst rel.termu_lhs in
@@ -228,27 +139,66 @@ let inst_call_trel rel fn_cond_w_ids =
     inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
   
+let solve_turel_one_scc tg scc =
+  let outside_scc_succ = outside_succ_scc tg scc in
+  
+  let result = 
+    if List.for_all (fun v -> CP.is_Loop (fst v)) outside_scc_succ then
+      if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
+      then (CP.Term, []) (* Term or MayLoop *)
+      else (CP.Loop, []) (* Loop *)
+    
+    else if (List.exists (fun v -> CP.is_Loop (fst v)) outside_scc_succ) ||
+            (List.exists (fun v -> CP.is_MayLoop (fst v)) outside_scc_succ) 
+      then (CP.MayLoop, []) (* MayLoop *)
+  
+    else if List.for_all (fun v -> CP.is_Term (fst v)) outside_scc_succ then
+    if is_acyclic_scc tg scc 
+    then (CP.Term, []) (* Term *)
+    else (* Term with a ranking function for each scc's node *)
+      (CP.Term, [])
+  
+    else (* Error: One of scc's succ is Unknown *)
+      Error.report_error {
+        Error.error_loc = no_pos;
+        Error.error_text = "TNT[ti]: One of analyzed scc's successors is Unknown."; }
+  in
+  let update_vertex = update_sol_tnt_elem result in
+  let ntg = map_scc tg scc update_vertex in
+  ntg
+      
+(* TNT Graph *)
+let solve_turel_iter turels fn_cond_w_ids = 
+  let irels = List.concat (List.map (fun rel -> 
+    inst_call_trel rel fn_cond_w_ids) turels) in
+  let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in 
+  
+  let tg = graph_of_trels irels in
+  let scc_list = TGC.scc_list tg in
+  let _ = print_endline (print_graph tg) in
+  let _ = print_endline (print_scc_list scc_list) in
+  let _ = print_endline (print_scc_array (TGC.scc_array tg)) in
+  
+  let tg = List.fold_left (fun tg -> solve_turel_one_scc tg) tg scc_list in
+  let _ = print_endline (print_graph tg) in
+  ()
+  
+let tnt_finalize () = ()
+  
+let tnt_main_loop iter_num turels fn_cond_w_ids =
+  if iter_num < !Globals.tnt_thres then
+    solve_turel_iter turels fn_cond_w_ids
+  else tnt_finalize ()  
+  
+  
 (* Main Inference Function *)  
 let solve () = 
   let _ = print_endline "TERMINATION INFERENCE" in
   let trrels = ret_trel_stk # get_stk in
-  let fn_trrels = 
-    let key_of r = (r.termr_fname, r.termr_params) in
-    let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
-    partition_by_key key_of key_eq trrels 
-  in
-  let fn_cond_w_ids = List.map (fun (fn, trrels) -> 
-    (fn, List.map (fun c -> fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
-  let _ = 
-    let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
-    print_endline ("BASE/REC CASE SPLITTING: \n" ^ 
-      (pr_list (fun ((fn, _), s) -> "\t" ^ fn ^ ": " ^ (pr_list pr_cond s) ^ "\n") fn_cond_w_ids)) in
+  let fn_cond_w_ids = case_split_init trrels in
   
   let turels = call_trel_stk # get_stk in
-  let irels = List.concat (List.map (fun rel -> 
-    inst_call_trel rel fn_cond_w_ids) turels) in
-  let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in 
-  ()
+  tnt_main_loop 0 turels fn_cond_w_ids 
   
   
   
