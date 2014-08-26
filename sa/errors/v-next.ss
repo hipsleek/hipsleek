@@ -3,6 +3,7 @@ data node {
 }
 
 node get_next(node x)
+
  case {
    x=null -> 
      ensures true & flow __Error;
@@ -10,7 +11,8 @@ node get_next(node x)
      requires x::node<q>@L 
      ensures res=q;
 }
-//  requires x::node<null> ensures x::node<p> & res=p;
+
+// requires x::node<q>@L ensures res=p;
 {
   return x.next;
 }

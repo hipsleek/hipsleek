@@ -629,11 +629,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
 	        (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhps,sel_posthps, unk_map,List.for_all pr_id bl) 
       | CF.EAssume {
-			CF.formula_assume_vars = var_ref;
-			CF.formula_assume_simpl = post_cond;
-			CF.formula_assume_lbl = post_label;
-			CF.formula_assume_ensures_type = etype;
-			CF.formula_assume_struc = post_struc} ->
+	    CF.formula_assume_vars = var_ref;
+	    CF.formula_assume_simpl = post_cond;
+	    CF.formula_assume_lbl = post_label;
+	    CF.formula_assume_ensures_type = etype;
+	    CF.formula_assume_struc = post_struc} ->
             (* let _ = cond_path # reset in *)
             (* let _ = cond_path # push 0 in *)
             let ctx = CF.add_path_id ctx (None,0) 0 in
@@ -868,10 +868,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	        with
                   | Err.Ppf (e, ifk) ->
                         (match ifk with
-                          | 1 -> if CF.is_error_flow post_cond  then
-                              (spec, [],[],[],[],[], [], true) else
-                                let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                                (Err.report_error1 e "Proving precond failed")
+                          | 1 -> (* let _ = DD.info_hprint (add_str "must excp" (pr_id)) "xxx" no_pos in *)
+                                if CF.is_error_flow post_cond  then
+                                  (spec, [],[],[],[],[], [], true) else
+                                    let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
+                                    (Err.report_error1 e "Proving precond failed")
                           | 3 ->
                                 if CF.is_top_flow post_cond then
                                   (spec, [],[],[],[],[],[], true) else
@@ -1651,7 +1652,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
                       (* let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-                      if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
+                      if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
                         begin
 		          (* Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")  *)
                           (*     ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (\* add branch info *\) *)

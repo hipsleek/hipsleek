@@ -15355,10 +15355,15 @@ let get_bar_conds b_name self l_f =
 	get_bar_conds b_name self l_f
 	
 	                      
-let rec is_error_flow f =  match f with
+let rec is_error_flow_x f =  match f with
   | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow
   | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow
-  | Or b ->  is_error_flow b.formula_or_f1 && is_error_flow b.formula_or_f2 
+  | Or b ->  is_error_flow_x b.formula_or_f1 && is_error_flow_x b.formula_or_f2
+
+let is_error_flow f=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_error_flow" pr1 string_of_bool
+      (fun _ -> is_error_flow_x f) f
 
 let rec is_mayerror_flow f =  match f with
   | Base b-> subsume_flow_f !mayerror_flow_int b.formula_base_flow
