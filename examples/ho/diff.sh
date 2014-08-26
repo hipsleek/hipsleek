@@ -51,3 +51,5 @@ echo "======= fibonacci.ss  ======"
 diff test-cases/fibonacci.ss.res test-cases/fibonacci.ss.n
 echo "======= parallel-mergesort.ss  ======"
 diff test-cases/parallel-mergesort.ss.res test-cases/parallel-mergesort.ss.n
+echo "======= parallel-quicksort.ss  ======"x
+diff test-cases/parallel-quicksort.ss.res test-cases/parallel-quicksort.ss.n

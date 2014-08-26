@@ -51,3 +51,5 @@ echo "======= fibonacci.ss  ======"
 ../../hip fibonacci.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/fibonacci.ss.res
 echo "======= parallel-mergesort.ss  ======"
 ../../hip parallel-mergesort.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/parallel-mergesort.ss.res
+echo "======= parallel-quicksort.ss  ======"
+../../hip parallel-quicksort.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/parallel-quicksort.ss.res
