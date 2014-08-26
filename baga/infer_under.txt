@@ -62,7 +62,7 @@ pred ll<n,m> == self=null & n=0 & m=0
 
  ==> widen: ([],self=null & n=0 & m=0) or ([self],1<=n & n<=m & m<=2n)
 
-=======================
+========================================
 
  inv BG([],n>=0 & m>=0)
 
@@ -77,3 +77,21 @@ pred ll<n,m> == self=null & n=0 & m=0
  ==> ([],self=null & n=0 & m=0) or ([self], (n=1 & 1<=m & m<=2) // 2nd step
 
  ==> Similar to above example
+
+========================================
+
+pred avl<size, height> == self = null & size = 0 & height = 0
+  or self::node<_, height, p, q> * p::avl<size1, height1> * q::avl<size2, height2> & size = 1+size1+size2 &
+  height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1
+  inv true.
+
+  ([],self=null & size=0 & height=0) or ([self],true) // 1st step
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) // 2nd step
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) or ([self],size=2 & height=2) or ([self],size=3 & height=2)
+
+  ==> ([],self=null & size=0 & height=0) or ([self],height<=size & size <=(2*height-1) & height<=2) // 3rd step, lost info height>=1
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & size=size1+1 & height=height1+1)
+  or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & height2<=size2 & size2<=(2*height2-1) & height2<=2 & size=size1+size2+1 & height=max(height1+height2)+1) ==> how to continue
