@@ -1,0 +1,23 @@
+data node {
+     node left;
+     node right;
+}.
+
+pred tree<h> == self=null & h=0
+     or self::node<l,r> * l::tree<h1> * r::tree<h2> & h=max(h1,h2)+1
+     inv h>=0.
+
+// tree_body |- h>=0
+// h>=0 |- tree_body -> fail
+//
+// base case: h>=0 & H1(self) & H2(h)|- self=null & h=0
+// <=> H1(self) == self=null & H2(h) == h=0
+// h>=0 & H1(self) & H2(n) <=> self=null & h=0
+//
+// rec case:  h>=0 & H1(self) & H2(h) |- self!=null & (exists h1>=0, h2>=0: h=max(h1,h2)+1)
+// <=> H1(self) == self!=null & H2(h) == h>=1
+// h>=0 & H1(self) & H2(h) <=> self!=null & h>=1
+//
+// new inv: (self=null & h=0) | (self!=null & h>=1)
+// check: new inv |- ll_body -> valid
+

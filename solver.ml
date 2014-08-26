@@ -7516,12 +7516,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   else (* let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in *)
     (* Temporarily suppress output of implication checking *)
     let _ = Smtsolver.suppress_all_output () in
+    let _ = Z3.suppress_all_output () in
     let _ = Tpdispatcher.push_suppress_imply_output_state () in
     let _ = Tpdispatcher.suppress_imply_output () in
     let inst = pure_match evarstoi lhs_p rhs_p in (* Do matching! *)
     let lhs_p = MCP.memoise_add_pure_N lhs_p inst in 
     (* Unsuppress the printing *)
     let _ = Smtsolver.unsuppress_all_output ()  in
+    let _ = Z3.unsuppress_all_output ()  in
     let _ = Tpdispatcher.restore_suppress_imply_output_state () in
     (* let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in *)
     lhs_p
@@ -8120,12 +8122,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         may bug -> sleek_maybug_flow
       *)
       let cex = Slsat.check_sat_empty_rhs_with_uo estate_orig lhs (MCP.pure_of_mix rhs_p) rhs_matched_set in
+      let is_sat = CF.is_sat_fail cex in
       if not !disable_failure_explaining then
         let new_estate = {
             estate with es_formula =
                 match fc_kind with
                   | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                  | CF.Failure_May _ -> CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
+                  | CF.Failure_May _ -> if is_sat then
+                      CF.substitute_flow_into_f !error_flow_int estate.es_formula
+                    else CF.substitute_flow_into_f !top_flow_int estate.es_formula
                         (* this denotes a maybe error *)
                   | CF.Failure_Bot _ -> estate.es_formula
                   | CF.Failure_Valid -> estate.es_formula
@@ -8137,7 +8142,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	        fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula rhs_p pos) pos;
 	        fc_current_conseq = CF.formula_of_heap HFalse pos;
 	        fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];} in
-        (Musterr.build_and_failures 1 "213" Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace, prf)
+        let must_list1, may_list1 = if is_sat then (must_list@may_list, []) else
+          (must_list, may_list)
+        in
+        (Musterr.build_and_failures 1 "213" Globals.logical_error (contra_list, must_list1, may_list1) fc_template cex new_estate.es_trace, prf)
       else
         (* let _ = Globals. smt_return_must_on_error () in *)
         (CF.mkFailCtx_in (Basic_Reason ({

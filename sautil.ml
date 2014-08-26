@@ -301,6 +301,7 @@ let add_raw_rel prog args pos=
   in
   let _ = prog.Cast.prog_rel_decls <- (rel_decl :: prog.Cast.prog_rel_decls) in
   let _= Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
+  let _= Z3.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
   CP.mkRel_sv rel_decl.Cast.rel_name
 
 let fresh_raw_hp_rel prog is_pre is_unk hp pos =

@@ -8647,7 +8647,7 @@ and steps = string list
      cex_sat: bool;
  }
 
- and fail_explaining = {
+  and fail_explaining = {
      fe_kind: failure_kind; (*may/must*)
      fe_name: string;
      fe_locs: (*Globals.loc*) int list; (*line number*)

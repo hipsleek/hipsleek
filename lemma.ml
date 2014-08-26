@@ -573,6 +573,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
       match rel_args_opt with
         | Some (rel, args) ->
               let _= Smtsolver.add_relation (CP.name_of_spec_var rel) args rel_f in
+              let _= Z3.add_relation (CP.name_of_spec_var rel) args rel_f in
               ()
         | None -> report_error no_pos "Lemma.manage_infer_pred_lemmas: should rel name"
   ) rel_defs in

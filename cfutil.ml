@@ -2284,6 +2284,21 @@ let norm_rename_clash_args_node_x init_args0 f0=
      | _ -> raise Not_found
 
 
+ let transform_bexpr_x f0=
+   let rec recf f=match f with
+     | Base fb ->
+           Base {fb with formula_base_pure =  MCP.mix_of_pure (CP.transform_bexpr (MCP.pure_of_mix fb.formula_base_pure))}
+     | Exists fe ->
+           Exists {fe with formula_exists_pure = MCP.mix_of_pure (CP.transform_bexpr (MCP.pure_of_mix fe.formula_exists_pure))}
+     | Or orf -> Or {orf with formula_or_f1 = recf orf.formula_or_f1;
+           formula_or_f2 = recf orf.formula_or_f2}
+   in
+   recf f0
+
+let transform_bexpr f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "CF.transform_bexpr" pr1 pr1
+      (fun _ -> transform_bexpr_x f0) f0
  let partition_error_es_x es=
    let rec recf f= match f with
      | Base fb -> if subsume_flow_f !Exc.GTable.error_flow_int fb.formula_base_flow then

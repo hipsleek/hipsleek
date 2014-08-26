@@ -18,6 +18,19 @@ let string_of_vres t =
     | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
     | VR_Unknown s -> "UNKNOWN("^s^")"
 
+
+
+(* let transfrom_bexpr_x lhs rhs tl= *)
+(*   (lhs, rhs) *)
+
+(* let transfrom_bexpr lhs rhs tl= *)
+(*   let pr1 = !CP.print_formula in *)
+(*   let pr2 = Typeinfer.string_of_tlist in *)
+(*   Debug.no_3 "transfrom_bexpr" pr1 pr1 pr2 (pr_pair pr1 pr1) *)
+(*       (fun _ _ _ -> transfrom_bexpr_x lhs rhs tl) *)
+(*       lhs rhs tl *)
+
+
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
@@ -373,7 +386,8 @@ let process_rel_def rdef =
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
 			let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
+			let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+                        Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -392,7 +406,8 @@ let process_hp_def hpdef =
               let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
 	      (* Forward the relation to the smt solver. *)
               let args = fst (List.split chpdef.Cast.hp_vars_inst) in
-	      Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
+	      let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in
+              Z3.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
 	  with
 	    | _ ->  
                   begin
@@ -406,11 +421,12 @@ let process_hp_def hpdef =
 (** An Hoa : process axiom
  *)
 let process_axiom_def adef = begin
-	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
-	let cadef = Astsimp.trans_axiom iprog adef in
-		!cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
-	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion;
+  iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
+  let cadef = Astsimp.trans_axiom iprog adef in
+  !cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
+  (* Forward the axiom to the smt solver. *)
+  let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+  Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion;
 end
 
 (*this function is never called. it is replaced by process_list_lemma
@@ -1015,7 +1031,21 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
+  (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  let conseq_fvs = CF.struc_fv conseq in
+  let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) ->
+      try
+        let sv2 = List.find (fun (CP.SpecVar (t2, id2, p2)) -> String.compare id1 id2 = 0 &&
+                p1=p2 && t1!=t2) conseq_fvs
+        in
+        sst0@[(sv1,sv2)]
+      with _ ->  sst0
+  ) [] fvs
+  in
+  let ante1 = CF.subst sst ante in
+  let ante = Cfutil.transform_bexpr ante1 in
+  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
