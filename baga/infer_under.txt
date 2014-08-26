@@ -95,3 +95,20 @@ pred avl<size, height> == self = null & size = 0 & height = 0
 
   ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & size=size1+1 & height=height1+1)
   or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & height2<=size2 & size2<=(2*height2-1) & height2<=2 & size=size1+size2+1 & height=max(height1+height2)+1) ==> how to continue
+
+=======================================
+
+pred dll<p,n> == self = null & n = 0
+  or self::node2<_ ,p , q> * q::dll<self, n-1>
+
+  ([],true)
+
+  ([],self=null & n=0)
+
+  ([],self=null & n=0) or ([self],n=1)
+
+  ([],self=null & n=0) or ([self],1<=n<=2)
+
+  ([],self=null & n=0) or ([self],1<=n<=3)
+
+  widen: ([],self=null & n=0) or ([self],1<=n)
