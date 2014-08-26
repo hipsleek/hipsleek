@@ -178,6 +178,7 @@ let solve_turel_iter turels fn_cond_w_ids =
   let _ = print_endline (print_graph tg) in
   let _ = print_endline (print_scc_list scc_list) in
   let _ = print_endline (print_scc_array (TGC.scc_array tg)) in
+  let _ = TG.iter_vertex (fun v -> print_endline (print_tnt_elem v)) tg in
   
   let tg = List.fold_left (fun tg -> solve_turel_one_scc tg) tg scc_list in
   let _ = print_endline (print_graph tg) in
