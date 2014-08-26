@@ -325,6 +325,20 @@ let rec is_Term ann =
     end
   | _ -> false
 
+let term_id = 1
+let loop_id = 2
+let mayLoop_id = 3 
+let termErr_id = 4
+
+let id_of_term_ann ann = 
+  match ann with
+  | Term -> term_id
+  | Loop -> loop_id
+  | MayLoop -> mayLoop_id
+  | Fail _ -> termErr_id
+  | TermU uid -> uid.tu_id
+  | TermR uid -> uid.tu_id
+
 let subst_sol_term_ann sol ann =
   match ann with
   | TermU uid -> TermU { uid with 
@@ -346,7 +360,7 @@ let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false
 
-let rec is_forall p= match p with
+let rec is_forall p = match p with
   | Forall _ -> true
   | And (p1,p2,_) -> is_forall p1 || is_forall p2
   | AndList ps -> List.exists (fun (_, p1) -> is_forall p1) ps

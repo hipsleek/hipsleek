@@ -86,6 +86,7 @@ let add_call_trel_stk ctx lhs rhs =
   if !Globals.slk_infer_term then 
     let trel = {
       call_ctx = ctx;
+      trel_id = fresh_int ();
       termu_lhs = lhs;
       termu_rhs = rhs; } in 
     call_trel_stk # push trel
@@ -107,7 +108,7 @@ let inst_lhs_trel rel fn_cond_w_ids =
         CP.tu_cond = mkAnd tuc c; }) fs_rconds
     | _ -> [lhs_ann] 
   in inst_lhs
-  
+
 let inst_rhs_trel inst_lhs rel fn_cond_w_ids = 
   let rhs_ann = fst rel.termu_rhs in
   let rhs_args = snd rel.termu_rhs in
@@ -138,21 +139,21 @@ let inst_call_trel rel fn_cond_w_ids =
   let inst_rels = List.concat (List.map (fun ilhs -> 
     inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
-  
+   
 let solve_turel_one_scc tg scc =
   let outside_scc_succ = outside_succ_scc tg scc in
   
   let result = 
-    if List.for_all (fun v -> CP.is_Loop (fst v)) outside_scc_succ then
+    if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
       then (CP.Term, []) (* Term or MayLoop *)
       else (CP.Loop, []) (* Loop *)
     
-    else if (List.exists (fun v -> CP.is_Loop (fst v)) outside_scc_succ) ||
-            (List.exists (fun v -> CP.is_MayLoop (fst v)) outside_scc_succ) 
+    else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
+            (List.exists (fun v -> CP.is_MayLoop v) outside_scc_succ) 
       then (CP.MayLoop, []) (* MayLoop *)
   
-    else if List.for_all (fun v -> CP.is_Term (fst v)) outside_scc_succ then
+    else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
     if is_acyclic_scc tg scc 
     then (CP.Term, []) (* Term *)
     else (* Term with a ranking function for each scc's node *)
@@ -166,22 +167,22 @@ let solve_turel_one_scc tg scc =
   let update_vertex = update_sol_tnt_elem result in
   let ntg = map_scc tg scc update_vertex in
   ntg
-      
-(* TNT Graph *)
+
 let solve_turel_iter turels fn_cond_w_ids = 
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel rel fn_cond_w_ids) turels) in
   let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in 
   
   let tg = graph_of_trels irels in
+  (* let scc_list = Array.to_list (TGC.scc_array tg) in *)
   let scc_list = TGC.scc_list tg in
-  let _ = print_endline (print_graph tg) in
-  let _ = print_endline (print_scc_list scc_list) in
-  let _ = print_endline (print_scc_array (TGC.scc_array tg)) in
-  let _ = TG.iter_vertex (fun v -> print_endline (print_tnt_elem v)) tg in
+  let _ = print_endline (print_graph_by_rel tg) in
+  let _ = print_endline (print_scc_list_num scc_list) in
+  let _ = print_endline (print_scc_array_num (TGC.scc_array tg)) in
+  let _ = TG.iter_vertex (fun v -> print_endline (string_of_int v)) tg in
   
   let tg = List.fold_left (fun tg -> solve_turel_one_scc tg) tg scc_list in
-  let _ = print_endline (print_graph tg) in
+  let _ = print_endline (print_graph_by_rel tg) in
   ()
   
 let tnt_finalize () = ()
