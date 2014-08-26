@@ -11670,11 +11670,32 @@ and subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
 and subst_hvar_x f0 subst=
   List.fold_left (fun f (fr,t) -> subst_one_hvar f (fr,t)) f0 subst
 
-and subst_hvar f subst=
+and subst_hvar f subst =
   let pr1 = !print_formula in
   let pr2 = pr_list (pr_pair !print_sv !print_formula) in
   Debug.no_2 "subst_hvar" pr1 pr2 pr1
       subst_hvar_x f subst
+
+(* subst and clear hvar in es *)
+and subst_hvar_es_x es subst : context =
+  let new_es_f = subst_hvar es.es_formula subst in
+  let rec helper f =
+    match f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 =  f2; formula_or_pos = pos}) ->
+            let c1 = helper f1 in
+            let c2 = helper f2 in
+            let res = (mkOCtx c1 c2 pos ) in
+	    res
+      | _ ->
+            Ctx {es with es_formula = f; es_ho_vars_map = [];}
+  in helper new_es_f
+
+and subst_hvar_es es subst : context =
+  let pr1 = !print_entail_state in
+  let pr2 = pr_list (pr_pair !print_sv !print_formula) in
+  let pr_out = !print_context in
+  Debug.no_2 "subst_hvar_es" pr1 pr2 pr_out
+      subst_hvar_es_x es subst
 
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 

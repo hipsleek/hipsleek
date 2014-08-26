@@ -4313,8 +4313,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                     ref_vars,new_post
                                               in
 	                                      let rs1 =CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
-                                              let fet es = {es with CF.es_formula = CF.subst_hvar es.CF.es_formula es.CF.es_ho_vars_map ; CF.es_ho_vars_map = [];} in
-                                              let rs1 = CF.transform_context (fun es -> CF.Ctx (fet es)) rs1 in
+                                              let rs1 = CF.transform_context (fun es -> CF.subst_hvar_es es es.CF.es_ho_vars_map) rs1 in
                                               let f_waitS_rel es = {es with CF.es_formula = CF.translate_waitS_rel es.CF.es_formula;} in
                                               let rel_sv = CP.mk_spec_var Globals.waitS_name in
                                               let rs1 =
