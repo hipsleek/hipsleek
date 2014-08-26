@@ -1,0 +1,39 @@
+checkentail true & flow __norm 
+   or true & flow __Error  |- true & flow __norm.
+expect Fail.
+
+
+checkentail true & flow __norm 
+   or x=1 & flow __Error  |- 
+    true & flow __norm
+    or 
+    x>2 & flow __Error
+   .
+expect Fail.
+
+
+checkentail true & flow __norm 
+   or x=1 & flow __Error  |- 
+    x>0 & flow __Error
+    or 
+    true & flow __norm
+   .
+expect Valid.
+
+/*
+
+
+ (true)norm \/ (true)Err |- (true)norm --> fail
+
+ (true)norm \/ (true)Err |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)Err --> fail
+
+ (true)norm |- (true)MayErr --> valid
+
+ (true)Err <--> (true)Err \/ (false)Err
+
+*/
+

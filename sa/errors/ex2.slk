@@ -10,6 +10,7 @@ print residue.
 //2
 checkentail x=null |- x::node<p>.
 print residue.
+// x=null & flow __Error
 
 /*
 # ex2.slk --efa
@@ -31,6 +32,7 @@ Error Context: length= 1 [es_formula: emp&x=null&{FLOW,(3,4)=__Error}[]
 //3
 checkentail true |- x::node<p>.
 print residue.
+// true & flow __MayError
 
 /*
 # ex2.slk --efa
@@ -56,5 +58,22 @@ Error Context: length= 1 [es_formula: emp&{FLOW,(21,22)=__norm}[]
 checkentail x=null  |- x::node<p> & flow __Error.
 
 print residue.
+expect Fail.
 
-expect Valid.
+
+/*
+
+ (true)norm \/ (true)Err |- (true)norm --> fail
+
+ (true)norm \/ (true)Err |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)Err --> fail
+
+ (true)norm |- (true)MayErr --> valid
+
+ (true)Err <--> (true)Err \/ (false)Err
+
+*/
+
