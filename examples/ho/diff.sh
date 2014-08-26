@@ -59,3 +59,6 @@ echo "======= multi-join2.ss  ======"
 diff test-cases/multi-join2.ss.res test-cases/multi-join2.ss.n
 echo "======= threadpool.ss  ======"
 diff test-cases/threadpool.ss.res test-cases/threadpool.ss.n
+echo "======= deadpool.ss  ======"
+diff test-cases/deadpool.ss.res test-cases/deadpool.ss.n
+

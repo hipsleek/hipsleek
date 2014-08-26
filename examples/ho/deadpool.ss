@@ -1,11 +1,10 @@
 /*
 
-  Implement a thread pool using a linked list where
-  threads are stored in data structures.
+  Forking and storing threads in a threadPool (i.e. the thread pool)
+  Joined threads are dead, and are in deadPool
 
-  Forking and storing threads in a ThreadPool (i.e. the thread pool)
+  In this program, assume a pool of threads where each with a read permission to a cell x
 
-  In this program, create a pool of threads, each with a read permission to a cell x
  */
 
 /**************************************/
@@ -46,10 +45,15 @@ data item{
   item next;
 }
 
-/* A list of threads, i.e. a thread pool */
-pool<x,n,M> == self=null & n=0 & M>0
-  or self::item<t,p> * p::pool<x,n-1,M> * t::THRD2{x::cell(1/M)<_>@S1 & true}<x,M>
+/* A list of live threads, i.e. a thread pool */
+threadPool<x,n,M> == self=null & n=0 & M>0
+  or self::item<t,p> * p::threadPool<x,n-1,M> * t::THRD2{x::cell(1/M)<_>@S1 & true}<x,M>
   inv n>=0 & M>0;
+
+/* A list of dead threads, i.e. a thread pool */
+deadPool<n> == self=null & n=0
+  or self::item<t,p> * p::deadPool<n-1> * t::dead<>
+  inv n>=0;
 
 //permission splitting. Allow f2=0, if any.
 lemma_split "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
@@ -71,10 +75,10 @@ item forkHelper(cell x, int n, int M)
   case{//more precise
   n=0 -> requires emp ensures emp & res=null;
   n>0 -> requires x::cell(f)<_> & f=n/M & M>=n
-         ensures res::pool<x,n,M>;
+         ensures res::threadPool<x,n,M>;
   }
   /* requires x::cell(f)<_> & f=n/M & M>=n & n>=0 */
-  /* ensures res::pool<x,n,M> & n>0 or res=null & n=0; */
+  /* ensures res::threadPool<x,n,M> & n>0 or res=null & n=0; */
 {
   if (n==0){return null;}
   else{
@@ -90,14 +94,15 @@ item forkHelper(cell x, int n, int M)
 // sharing read accesses to the cell x.
 item forkThreads(cell x, int n)
   requires x::cell<_> & n>0
-  ensures res::pool<x,n,n>;
+  ensures res::threadPool<x,n,n>;
 {
   return forkHelper(x,n,n);
 }
 
 void joinHelper(item tp, cell x, int n, int M)
-  requires tp::pool<x,n,M> & M>=n & n>=0
-  ensures x::cell(n/M)<_> & n>0 or emp & n=0;
+  requires tp::threadPool<x,n,M> & M>=n & n>=0
+  ensures x::cell(n/M)<_> * tp::deadPool<n> & n>0
+     or tp::deadPool<n> & n=0;
 {
   if (tp==null){return;}
   else{
@@ -105,7 +110,6 @@ void joinHelper(item tp, cell x, int n, int M)
     joinHelper(node,x,n-1,M);
     thrd t = tp.t;
     join_thrd(t);
-    destroyItem(tp);
   }
 }
 
@@ -113,8 +117,8 @@ void joinHelper(item tp, cell x, int n, int M)
 // Join all threads in the thread pool
 // and get back the full ownership of x.
 void joinThreads(item tp, cell x, int n)
-  requires tp::pool<x,n,n> & n>0
-  ensures x::cell<_>;
+  requires tp::threadPool<x,n,n> & n>0
+  ensures x::cell<_> * tp::deadPool<n>;
 {
   joinHelper(tp,x,n,n);
 }
@@ -126,6 +130,18 @@ void destroyCell(cell x)
 void destroyItem(item x)
   requires x::item<_,_>
   ensures emp;
+
+void destroyDeadPool(item tp)
+  requires tp::deadPool<n>
+  ensures emp;
+{
+  if (tp ==null){
+    return;
+  }else{
+    destroyDeadPool(tp.next);
+    destroyItem(tp);
+  }
+}
 
 //receive certain input
 int input()
@@ -154,4 +170,6 @@ void main()
   joinThreads(tp,x,n);
 
   destroyCell(x);
+
+  destroyDeadPool(tp);
 }
