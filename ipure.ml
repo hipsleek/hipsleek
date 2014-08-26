@@ -2134,7 +2134,7 @@ let is_bexp_p pf= match pf with
   | Lte _ 
   | Gte _ 
   | Eq _
-  | neq _ -> true
+  | Neq _ -> true
   | _ -> false
 
 let is_bexp_b bf=
