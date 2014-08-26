@@ -47,3 +47,7 @@ diff test-cases/lock-exp3.ss.res test-cases/lock-exp3.ss.n
 echo "======= lock-exp4.ss  ======"
 diff test-cases/lock-exp4.ss.res test-cases/lock-exp4.ss.n
 
+echo "======= fibonacci.ss  ======"
+diff test-cases/fibonacci.ss.res test-cases/fibonacci.ss.n
+echo "======= parallel-mergesort.ss  ======"
+diff test-cases/parallel-mergesort.ss.res test-cases/parallel-mergesort.ss.n
