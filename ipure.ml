@@ -2128,7 +2128,13 @@ let is_esv e= match e with
   | _ -> false
 
 let is_bexp_p pf= match pf with
-  | BVar _ -> true
+  | BVar _
+  | Lt _
+  | Gt _ 
+  | Lte _ 
+  | Gte _ 
+  | Eq _
+  | neq _ -> true
   | _ -> false
 
 let is_bexp_b bf=
