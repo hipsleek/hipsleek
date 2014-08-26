@@ -53,3 +53,5 @@ echo "======= parallel-mergesort.ss  ======"
 ../../hip parallel-mergesort.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/parallel-mergesort.ss.res
 echo "======= parallel-quicksort.ss  ======"
 ../../hip parallel-quicksort.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/parallel-quicksort.ss.res
+echo "======= multi-join1.ss  ======"
+../../hip multi-join1.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/multi-join1.ss.res
