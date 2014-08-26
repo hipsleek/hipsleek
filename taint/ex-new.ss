@@ -5,7 +5,7 @@
 
 */
 
-pred_prim int ann<n:int,b:bool>;
+pred_prim /* int */ ann<n:int,b:bool>;
 // need to support output type of primitive predicate
 
 int read() 
@@ -14,7 +14,7 @@ int read()
 
 int add(int x, int y) 
   requires x::ann<i,a>@L*y::ann<j,b>@L
-  ensures  res::ann<i+j,r> & r = (a|b) );
+  ensures  res::ann<i+j,r> & r = (a|b);
 // need to support boolean operator
 
 void sanitize(int x)
@@ -22,7 +22,7 @@ void sanitize(int x)
   ensures x::ann<a,b> & !b;
 
 void print_int(int x)
-  requires x::ann<_,b> & !b
+  requires x::ann<_,b>@L & !b
   ensures true;
 
 void main()
@@ -33,4 +33,16 @@ void main()
   v = read();
   sanitize(v);
   print_int(v);
+}
+
+bool eqInt(int x, int y)
+  requires x::ann<i,a1>@L * y::ann<j,a2>@L
+  ensures  res & i=j | !res & !(i=j);
+
+bool foo(int x, int y)
+  requires x::ann<v1,a1> * y::ann<v2,a2>
+  ensures true;
+{
+  if (eqInt(x,y)) return true;
+  else return false;
 }
