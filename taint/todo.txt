@@ -1,4 +1,4 @@
-# ex-3.ss
+# ex-3.ss: fIXED
 
 parser error:
 
