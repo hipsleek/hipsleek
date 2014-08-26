@@ -11,6 +11,20 @@ open Gen.Basic
 open Cpure
 (* open Cprinter *)
 
+let simplify_conj simp f =
+  match f with
+  | AndList ls -> AndList (List.map (fun (l,f) -> (l,simp f)) ls)
+  | rest -> simp rest
+
+let simplify_with_label simp (f:formula) = 
+  let ls = split_disjunctions f in
+  let ls = List.map (simplify_conj simp) ls in
+  join_disjunctions ls
+  
+let simplify_with_label_omega (f:formula) = 
+  let simp = Omega.simplify in
+  simplify_with_label simp f
+
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 
 (* let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized") *)
@@ -215,14 +229,19 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   let (baga,pure) = epf in
   (* let _ = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
   (* let _ = Debug.ninfo_pprint "==============" no_pos in *)
-  (* let _ = Debug.ninfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in *)
+  let _ = Debug.dinfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
   (* let _ = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let _ = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
-  let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
+  let _ = Debug.tinfo_hprint (add_str "pure = " !print_pure_formula) pure no_pos in
+  let pure = wrap_exists_svl pure svl in
+  let _ = Debug.tinfo_hprint (add_str "pure1 = " !print_pure_formula) pure no_pos in
+  let pure = simplify_with_label_omega (* Omega.simplify *) pure in
+  let _ = Debug.tinfo_hprint (add_str "pure2 = " !print_pure_formula) pure no_pos in
+  let _ = Debug.tinfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
-  let _ = Debug.ninfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in
+  let _ = Debug.ninfo_hprint (add_str "eqmap = " EMapSV.string_of) p_aset no_pos in
   (* let new_pure = EMapSV.domain eset2 in *)
   let mk_subs =
       List.map
@@ -416,6 +435,7 @@ struct
   (* let mk_spec_var e = SpecVar (UNK,Elt.string_of e,Unprimed) *)
   (* type baga_ty = .. *)
   let mk_false = ([], mkFalse no_pos)
+  let mk_false_disj = []
   let mk_true = [([], mkTrue no_pos)]
 
   let is_false (e:epure) = (e == mk_false)
@@ -564,7 +584,7 @@ struct
   (* let unsat_disj disj = is_false_disj (norm_disj disj) *)
 
   let elim_exists (svl:spec_var list) (b,f) : epure =
-    let (b,f) = ef_elim_exists_2 svl (Elt.conv_var b,f) in
+    let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
 
   let elim_exists (svl:spec_var list) (b,f) : epure =
@@ -664,7 +684,7 @@ struct
 *)
 
   let mk_epure (pf:formula) = 
-    [([], subs_null pf)]
+    [([], (* subs_null *) pf)]
 
   let to_cpure (ep : epure) = ep
 
@@ -691,6 +711,7 @@ struct
   let emap_empty = (EM.mkEmpty, [])
   let emap_empty_sv = (EMapSV.mkEmpty, [])
   let mk_false = ([Elt.zero], emap_empty, [])
+  let mk_false_disj = []
   let mk_true = [([], emap_empty_sv, [])]
 
   let is_false (e:epure) = (e == mk_false)

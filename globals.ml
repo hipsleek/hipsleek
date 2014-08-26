@@ -1,7 +1,7 @@
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
-    
+
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
@@ -61,6 +61,9 @@ and control_path_id_strict = formula_label
 
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
+
+let gen_lemma_action_invalid = -1
+
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
@@ -816,21 +819,22 @@ let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for
 
 let lemma_gen_unsafe = ref false     (* generating (without proving) both fold and unfold lemmas for special predicates *)
 
+let lemma_rev_unsafe = ref false     (* generating (without proving) both rev lemmas for special predicates *)
+
+
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 
-let acc_fold = ref true
+let acc_fold = ref false
 
-let cts_acc_fold = ref true
+let cts_acc_fold = ref false
 
 let seg_fold = ref false
 
-let trans_pred = ref true
+let trans_pred = ref false
 
 let smart_lem_search = ref false
 
 let fold_contra_detect = ref false
-
-let fold_contra_detect = ref true
 
 let sa_en_split = ref false
 
@@ -1109,6 +1113,7 @@ let print_mvars = ref false
 let print_type = ref false
 
 let print_en_tidy = ref true
+let print_en_inline = ref true
 
 let print_html = ref false
 
@@ -1156,6 +1161,7 @@ let simplify_error = ref false
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
+let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1175,7 +1181,7 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5 
+let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1242,6 +1248,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
@@ -1254,17 +1261,18 @@ let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *
 
 let show_unexpected_ents = ref true
 
-  let print_endline_q s = 
-    if !smt_compete_mode then () 
-    else print_endline s 
+  let print_endline_q s =
+    if !smt_compete_mode then ()
+    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
-let prove_invalid = ref true
+let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
-let baga_xpure = ref false (* change to true later *)
-let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
+let do_under_baga_approx = ref false (* flag to choose under_baga *)
+let baga_xpure = ref true (* change to true later *)
+let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 (* get counter example *)
 let get_model = ref false
@@ -1320,7 +1328,7 @@ let dis_bk ()=
   ()
 
 let dis_pred_sat () = 
-  print_endline_q "Disabling baga inv gen .."; 
+  print_endline_q "Disabling pred sat .."; 
   (* let _ = gen_baga_inv := false in *)
   let _ = prove_invalid := false in
   (*baga bk*)
@@ -1448,6 +1456,8 @@ let reset_int2 () =
 (* let fresh_int () = *)
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
+
+let string_compare s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in

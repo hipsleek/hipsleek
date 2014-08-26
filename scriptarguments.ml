@@ -325,8 +325,10 @@ let common_arguments = [
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
-  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
-  ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing (with shorter names)");
+  ("--dis-print-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing (with shorter names)");
+  ("--print-inline", Arg.Set Globals.print_en_inline,"enable printing (with fewer intermediates)");
+  ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
@@ -490,6 +492,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
@@ -555,6 +558,8 @@ let common_arguments = [
   (* incremental spec *)
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
+  ("--inv-test", Arg.Set Globals.do_test_inv, "Enable explicit checking of invariant (for run-fast-test)");
+  ("--dis-inv-test", Arg.Clear Globals.do_test_inv, "Disable explicit checking of invariant (for run-fast-test)");
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
@@ -569,9 +574,12 @@ let common_arguments = [
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 
+  ("--prove-invalid",Arg.Set Globals.prove_invalid,"enable prove invalid");
+  ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
+
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-  
+  ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -636,6 +644,7 @@ let common_arguments = [
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
+  ("--lem-rev-unsafe", Arg.Set Globals.lemma_rev_unsafe, "enable generating (without proving) both rev lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--dis-lem-gen", 
       Arg.Unit (fun _ -> 
@@ -732,7 +741,9 @@ let common_arguments = [
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-  ("--smt-compete", 
+  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--smt-compete",
      Arg.Unit
       (fun _ ->
           Globals.show_unexpected_ents := false;
@@ -793,7 +804,8 @@ let common_arguments = [
           Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_gen_unsafe:=true; *)
+           Globals.lemma_rev_unsafe:=true;
           Globals.lemma_syn := true;
           (* Globals.acc_fold := true; *)
           (* Globals.smart_lem_search := true; *)

@@ -457,7 +457,7 @@ and mkConj f1 f2 pos =
   else Conj { h_formula_conj_h1 = f1;
               h_formula_conj_h2 = f2;
               h_formula_conj_pos = pos }
-              
+
 and mkConjStar f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
@@ -465,7 +465,7 @@ and mkConjStar f1 f2 pos =
   else ConjStar { h_formula_conjstar_h1 = f1;
               h_formula_conjstar_h2 = f2;
               h_formula_conjstar_pos = pos }
-              
+
 and mkConjConj f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
@@ -847,7 +847,7 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
 	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
 		mkExists new_qvars h p f a pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
-	
+
 and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
 	  let new_f1 = push_exists qvars f1 in

@@ -122,9 +122,12 @@ and view_decl = {
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     (* exact baga *)
-    mutable view_baga_inv : Excore.ef_pure_disj option; 
+    mutable view_baga_inv : Excore.ef_pure_disj option;
+    (* over-approx baga *)
+    mutable view_baga_over_inv : Excore.ef_pure_disj option;
+    mutable view_baga_x_over_inv : Excore.ef_pure_disj option;
     (* necessary baga *)
-    mutable view_baga_under_inv : Excore.ef_pure_disj option; 
+    mutable view_baga_under_inv : Excore.ef_pure_disj option;
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -2017,20 +2020,20 @@ let vdef_lemma_fold prog coer  =
 (*     let _ = cfd # set vd2 in *)
 (*     vd2 *)
 
-let vdef_lemma_fold prog coer  = 
+let vdef_lemma_fold prog coer =
   let op = coer.coercion_fold_def in
   let pr _ = pr_option !print_view_decl_short (op # get) in
    Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
   match rm_br with
-    | Some l -> let n=(List.length l) in  
+    | Some l -> let n=(List.length l) in
       if n<(List.length vdef.view_prune_branches) then
         (* if !force_verbose_xpure then Some vdef.view_x_formula  else *) None
-      else (match vdef.view_complex_inv with 
+      else (match vdef.view_complex_inv with
         | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
-    | None -> Some vdef.view_x_formula 
+    | None -> Some vdef.view_x_formula
 
 let get_xpure_one vdef rm_br  =
   let pr mf = !print_mix_formula mf in

@@ -430,7 +430,7 @@ let process_lemma ldef =
 let print_residue residue =
   if (not !Globals.smt_compete_mode) then
           match residue with
-            | None -> 
+            | None ->
                   let _ = Debug.ninfo_pprint "inside p res" no_pos in
                   print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
@@ -441,12 +441,12 @@ let print_residue residue =
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-                  else 
+                  else
                     print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
                         (Cprinter.string_of_list_context ls_ctx)^"\n")
 
 let process_list_lemma ldef_lst  =
-  let lem_infer_fnct r1 r2 = 
+  let lem_infer_fnct r1 r2 =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
@@ -632,6 +632,7 @@ let convert_data_and_pred_to_cast_x () =
               let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
               (cviews0@[der_view])
           ) cviews0 tmp_views_derv1 in
+  let _ = Debug.tinfo_hprint (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
@@ -985,7 +986,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
-  let fv_idents = 
+  let fv_idents =
     if !Globals.dis_impl_var then
       let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
       Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
@@ -997,7 +998,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
+  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
@@ -1341,7 +1342,7 @@ let process_shape_rec sel_hps=
   let ls_pdefs = List.map (fun hp ->
       List.fold_left (transfrom_assumption hp) [] constrs2
   ) sel_hps in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
+  let _ (*unk_hps*) = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
   (* let defs = List.map snd !sleek_hprel_defns in *)
   let hp_defs = List.map (transform_to_hpdef) ls_pdefs in
   let _ = sleek_hprel_defns := !sleek_hprel_defns@(List.map (fun a -> ([],a)) hp_defs) in
@@ -1383,7 +1384,7 @@ let process_validate exp_res ils_es =
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   let res_str = ref "" in
   (*get current residue -> FAIL? VALID*)
-  let rs = !CF.residues in
+  let _ (*rs*) = !CF.residues in
   (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
@@ -1466,8 +1467,8 @@ let process_validate exp_res ils_es =
           let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in
           let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
           (*for each succ context: validate residue + inferred results*)
-          let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
-          let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
+          let _ (*ls_expect_es*) = List.map (preprocess_iestate act_vars) ils_es in
+          (* let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in *)
           (* let _ = if b then *)
           (*   print_endline (validate_id ^ "SUCCast.") *)
           (* else *)
@@ -1652,7 +1653,7 @@ let process_pred_norm_disj ids=
   (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
   (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+  let _ (*sel_hp_defs*) = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
         | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
           if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
@@ -1667,7 +1668,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, (* ls_inferred_hps *) _ ,_=
+  let (*ls_hprel*) _, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)
@@ -1758,9 +1759,9 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
        else () in
       r
   ) iconseq0
-  
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  let with_timeout = 
+  let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
     (false, fctx,[]) in
@@ -1911,17 +1912,39 @@ let print_exception_result s (num_id: string) =
   let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
   ()
 
+let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
+  let res =
+    if unsat then "UNSAT\n\n"
+    else if sat then "SAT\n\n"
+    else "UNKNOWN\n\n"
+  in silenced_print print_string (num_id^": "^res); flush stdout
+
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
+  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "")
     (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
-
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
-  dummy_exception() ; 
+  dummy_exception() ;
   print_string ("exception caught " ^ check_id ^ " check\n")
+
+let process_sat_check_x (f : meta_formula) =
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nCheckSat "^(string_of_int nn) in
+  let (_,f) = meta_to_formula f false [] [] in
+  let f = Cvutil.prune_preds !cprog true f in
+  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  let sat_res =
+    if res then false
+    else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
+  in print_sat_result res sat_res num_id
+
+let process_sat_check (f : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
@@ -1930,15 +1953,15 @@ let print_exc (check_id: string) =
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
-    try 
-      let valid, rs, _(*sel_hps*) = 
+    try
+      let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
-		let _ = if !Globals.trace_failure then 
-		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in 
+		let _ = if !Globals.trace_failure then
+		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
         false
@@ -2248,7 +2271,8 @@ let heaps_of_command (cmd: command) : (string list) =
   | ShapeDeclDang _ | ShapeDeclUnknown _ | ShapeSConseq _
   | PredSplit _ | PredNormDisj _ | RelInfer _ | ShapeSAnte _
   | CaptureResidue _ | PrintCmd _ | Time _ | EmptyCmd  -> []
-  | LetDef (_, mf) | Simplify mf | Slk_Hull mf | Slk_PairWise mf ->
+  | LetDef (_, mf) | SatCheck mf
+  | Simplify mf | Slk_Hull mf | Slk_PairWise mf ->
       heaps_of_metaform mf
   | EntailCheck (mf1, mf2,_) | EqCheck (_, mf1, mf2)
   | InferCmd (_, mf1, mf2, _) | RelDefn (_, mf1, mf2, _) ->

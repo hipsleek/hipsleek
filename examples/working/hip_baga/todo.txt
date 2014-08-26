@@ -68,7 +68,37 @@ m=n-1 & 2<=n
 
 The results are wrong when inv_exact is used.
 Why is this so?
+
+There are some problems in new way to prove invalid.
+
+# below is not working!
+
+Run with --dis-prove-invalid --baga-xpure --> OK.
+
+--inv-baga (always infer; if stronger use it)
+
+
 ===========================================================
+# app.slk
+
+Isn't baga invariant present in below..
+
+pred ll<n> == self=null & n=0
+  or self::node<_, q> * q::ll<n-1>
+  //inv n>=0
+  inv BG([],n>=0) 
+  //inv_exact BG([],self=null & n=0) | BG([self],n>0)
+  /* inv_sat BG([],self=null & n=0) | BG([self],n>0) */
+  // under
+.
+
+/*
+
+!!! baga inv(ll):None
+!!! baga under inv(ll):None
+Fatal error: exception Failure("cannot find baga inv")
+*/
+
 ===========================================================
 ===========================================================
 ===========================================================

@@ -119,7 +119,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let ante = Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) in
-  let _ = Debug.ninfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in 
+  let _ = Debug.ninfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in
   let _ = Debug.ninfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
@@ -166,8 +166,8 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = if !Globals.print_core || !Globals.print_core_all
   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
   ^" "^(pr_list !CP.print_sv isvl)
-  ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
-  else () 
+  ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n")
+  else ()
   in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
   let _ = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
@@ -177,14 +177,14 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
-    let _ = Debug.tinfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let _ = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
     let _ = Globals.disable_failure_explaining := true in
     let _ = Globals.smt_is_must_failure := None in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-    if (!Globals.prove_invalid) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+    if (!Globals.prove_invalid && not(!Globals.baga_xpure)) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
       (* TODO : new unsat checking for LHS from Loc *)
       (* need to document; and generalize? *)
       let _ = Globals.smt_is_must_failure := None in
@@ -206,7 +206,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       (* let _ = Globals.disable_failure_explaining := false in *)
       (* let _ = Globals.smt_is_must_failure := (Some false) in *)
-      let ctx = 
+      let ctx =
         if !Globals.delay_proving_sat then ctx
         else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
       let _ = if (CF.isAnyFalseCtx ctx) then
@@ -223,12 +223,12 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       (* else ctx *)
       (* in *)
       (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
-      let rs1, _ = 
+      let rs1, _ =
         if not !Globals.disable_failure_explaining then
-          Solver.heap_entail_struc_init_bug_inv cprog false false 
+          Solver.heap_entail_struc_init_bug_inv cprog false false
               (CF.SuccCtx[ctx]) conseq no_pos None
         else
-          Solver.heap_entail_struc_init cprog false false 
+          Solver.heap_entail_struc_init cprog false false
               (CF.SuccCtx[ctx]) conseq no_pos None
       in
       (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)

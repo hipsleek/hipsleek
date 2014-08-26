@@ -1309,6 +1309,11 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       []
     )
     else (
+        let vns = Cformula.get_views induct_f in
+        let other_vnodes = List.filter (fun vn ->
+            String.compare vn.CF.h_formula_view_name vname != 0
+        ) vns in
+        if (!Globals.seg_fold) && other_vnodes !=[] then [] else
       (* create distributive lemma like: 
               pred -> pred1 * pred2
               pred <- pred1 * pred2          *)
@@ -1543,12 +1548,19 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     let vnode = CF.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
      CF.formula_of_heap vnode no_pos
   in
+  let exchange_two r1 args1 r2 args2=
+    (* exchange root and fwd ptrs of hd, hv *)
+    let sst_root = gen_sst_4_exchange_sv (r2, r1) in
+    let sst_args = List.fold_left (fun r pr_sv -> r@(gen_sst_4_exchange_sv pr_sv)) [] 
+      ((List.combine args2 args1)) in
+    (sst_root, sst_args)
+  in
   let self_sv = CP.SpecVar (Named vd.Cast.view_data_name ,self, Unprimed) in
   let view_f =  gen_view_formula vd in
   let rev_order pr_fwd_ptrs_pos (f,p)=
     let _ = Debug.ninfo_hprint (add_str "f" Cprinter.prtt_string_of_formula) f no_pos in
     let hds, hvs,_ = CF.get_hp_rel_formula f in
-    (****support one view one data node. to extend****)
+    (****support one view, one data node. to extend****)
     match hds, hvs with
       | [hd],[hv] -> begin
           if str_cmp hd.CF.h_formula_data_name dname && str_cmp hv.CF.h_formula_view_name vname then
@@ -1568,6 +1580,36 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
               [(rev_f1,p)]
             with _ -> []
           else []
+        end
+      | [hd1;hd2],[hv] -> begin
+           if str_cmp hd1.CF.h_formula_data_name dname && str_cmp hd2.CF.h_formula_data_name dname && str_cmp hv.CF.h_formula_view_name vname then
+            try
+              let view_fwd_para_pos, data_fwd_f_pos = look_up_fwd_ptr_pos pr_fwd_ptrs_pos hd1.CF.h_formula_data_name in
+              (* get para sv from view_fwd_para_pos *)
+              let view_fwd_ptrs = Cfutil.retrieve_args_from_locs hv.CF.h_formula_view_arguments [view_fwd_para_pos] in
+              (* get field sv from data_fwd_f_pos *)
+              let dfield_fwd_ptrs1 = Cfutil.retrieve_args_from_locs hd1.CF.h_formula_data_arguments [data_fwd_f_pos] in
+              (* let dfield_fwd_ptrs2 = Cfutil.retrieve_args_from_locs hd2.CF.h_formula_data_arguments [data_fwd_f_pos] in *)
+              (* exchange root and fwd ptrs of hd, hv *)
+              (* let sst_root1 = gen_sst_4_exchange_sv (hv.CF.h_formula_view_node, hd1.CF.h_formula_data_node) in *)
+              (* let sst_root2 = gen_sst_4_exchange_sv (hd1.CF.h_formula_data_node, hd2.CF.h_formula_data_node) in *)
+              (* let sst_root = sst_root1@sst_root2 in *)
+              (* let sst_args = List.fold_left (fun r pr_sv -> r@(gen_sst_4_exchange_sv pr_sv)) [] ((List.combine view_fwd_ptrs dfield_fwd_ptrs1)) in *)
+              let sst_root, sst_args = exchange_two hd1.CF.h_formula_data_node dfield_fwd_ptrs1
+                hv.CF.h_formula_view_node  view_fwd_ptrs  in
+              let rev_f0 = CF.formula_trans_heap_node (subst_h_root sst_root) f in
+              let _ = Debug.ninfo_hprint (add_str "rev_f0" Cprinter.prtt_string_of_formula) rev_f0 no_pos in
+              let rev_f1 = CF.formula_trans_heap_node (subst_h_args sst_args) rev_f0 in
+              let _ = Debug.ninfo_hprint (add_str "rev_f1" Cprinter.prtt_string_of_formula) rev_f1 no_pos in
+              (* let sst_root2, sst_args2 = exchange_two hd1.CF.h_formula_data_node dfield_fwd_ptrs1 *)
+              (*   hd2.CF.h_formula_data_node view_fwd_ptrs  in *)
+              (* let rev_f20 = CF.formula_trans_heap_node (subst_h_root sst_root2) rev_f1 in *)
+              (* let _ = Debug.info_hprint (add_str "rev_f20" Cprinter.prtt_string_of_formula) rev_f20 no_pos in *)
+              (* let rev_f21 = CF.formula_trans_heap_node (subst_h_args sst_args2) rev_f20 in *)
+              (* let _ = Debug.info_hprint (add_str "rev_f21" Cprinter.prtt_string_of_formula) rev_f21 no_pos in *)
+              [(rev_f1,p)]
+            with _ -> []
+           else []
         end
       | _ -> []
   in
@@ -1591,17 +1633,18 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     (* not support backward yet. to extend *)
     || vd.Cast.view_backward_fields != []
   then [] else begin
-    let lemma_name = "rev" in
+    let lemma_name = "rev_"^vname in
     let base_p = CP.conj_of_list (List.map snd base_brs) no_pos in
     let neg_base_p = CP.mkNot_s base_p in
     let pr_fwd_ptrs = List.combine vd.Cast.view_forward_ptrs vd.Cast.view_forward_fields in
     let pr_fwd_ptrs_pos = List.fold_left (fun r pr -> r@(find_pos pr)) [] pr_fwd_ptrs in
     let rev_indc_brs = List.fold_left (fun r (f,p) ->
-        let p = if CP.isConstTrue p then neg_base_p else p in
+        let p = if (CP.isConstTrue p) && not (CP.isConstFalse neg_base_p) then neg_base_p else p in
         let rev_fs = rev_order pr_fwd_ptrs_pos (f,p) in
         r@rev_fs
     ) [] indc_brs in
     let i_coers = List.fold_left (fun r (f,p) ->
+        let _ = Debug.ninfo_hprint (add_str "p" Cprinter.string_of_pure_formula) p no_pos in
         let ihd = Rev_ast.rev_trans_formula (CF.mkAnd_pure view_f (Mcpure.mix_of_pure p) vpos) in
         let ibody = Rev_ast.rev_trans_formula f in
         let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_SAFE LEM_GEN I.Left [] ihd ibody in
@@ -1631,6 +1674,8 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     let _ = manage_unsafe_lemmas (gen_lemmas) iprog cprog in ()
   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then
     let _ = manage_safe_lemmas gen_lemmas iprog cprog in ()
+  else if (!Globals.lemma_rev_unsafe) then
+    let _ = manage_unsafe_lemmas rev_rec_lemmas iprog cprog in ()
   else ();
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
      "    " ^ (Cprinter.string_of_coerc_med lem)
@@ -1641,6 +1686,7 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
       no_pos in
   (
 )
+
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
 let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;
