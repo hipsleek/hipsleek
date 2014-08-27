@@ -7,6 +7,6 @@ print residue.
 infer @term x != 0 & x' = x - 1 & TermU{x} |- TermU{x'}.
 print residue.
 
-term_infer.
+//term_infer.
 
 
