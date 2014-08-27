@@ -1,0 +1,7 @@
+termAssume x = 0 & TermU{x} --> TermR{x}.
+
+termAssume x != 0 & x' = x - 1 & TermU{x} & TermR{x'} --> TermR{x}.
+
+termAssume x != 0 & x' = x - 1 & TermU{x} --> TermU{x'}.
+
+term_infer.
