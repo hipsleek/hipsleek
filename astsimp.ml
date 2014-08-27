@@ -1729,32 +1729,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           (* if disj user-supplied inv; just use it *)
           Debug.dinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
           Debug.dinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
-          let simplify lst =
-            let group lst =
-              let rec grouping acc = function
-                | [] -> acc
-                | hd::_ as l ->
-                      let l1,l2 = List.partition (Excore.EPureI.is_eq_baga hd) l in
-                      grouping (l1::acc) l2
-              in
-              grouping [] lst
-            in
-            let groups = group lst in
-            let lst = List.map (fun l ->
-                List.fold_left (fun (baga,f1) (_,f2) ->
-                    (baga,Tpdispatcher.tp_pairwisecheck2 f1 f2)
-                ) (List.hd l) (List.tl l)
-            ) groups in
-            lst
-          in
           let compute_unfold_baga baga_over body =
               match baga_over with
                 | None -> None
                 | Some lst ->
                       if List.length lst == 1 then
 	                let unf_baga = Cvutil.xpure_symbolic_baga prog body in
-                        Some (simplify unf_baga)
-                      else Some (simplify lst) (* baga_over *)
+                        Some (Expure.simplify unf_baga)
+                      else Some (Expure.simplify lst) (* baga_over *)
           in
           if do_not_compute_flag then
             vdef.C.view_xpure_flag <- true

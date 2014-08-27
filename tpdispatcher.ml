@@ -2133,6 +2133,8 @@ let om_pairwisecheck f =
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  let _ = Debug.binfo_hprint (add_str "f1" Cprinter.string_of_pure_formula) f1 no_pos in
+  let _ = Debug.binfo_hprint (add_str "f2" Cprinter.string_of_pure_formula) f2 no_pos in
   if not !tp_batch_mode then Omega.start ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2146,7 +2148,7 @@ let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
       (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
     (tp,simpl_no)
   in
-  let res = Timelog.log_wrapper "pairwise" logger fn f in
+  let res = Timelog.log_wrapper "pairwise2" logger fn f in
   if not !tp_batch_mode then Omega.stop ();
   res
 

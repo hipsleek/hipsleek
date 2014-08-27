@@ -939,10 +939,10 @@ let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
     match ((omega_of_formula_old 21 pe1), (omega_of_formula_old 21 pe2)) with
       | (Some fstr1, Some fstr2) ->
             let vars_list1 = get_vars_formula pe1 in
-            let vstr1 = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list1) in
             let vars_list2 = get_vars_formula pe2 in
-            let vstr2 = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list2) in
-            let fomega =  "pairwisecheck ({[" ^ vstr1 ^ "] : (" ^ fstr1 ^ ")} union {[" ^ vstr2 ^ "] : (" ^ fstr2 ^ ")});" ^ Gen.new_line_str in
+            let vars_list = vars_list1@vars_list2 in
+            let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+            let fomega =  "pairwisecheck ({[" ^ vstr ^ "] : (" ^ fstr1 ^ ")} union {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")});" ^ Gen.new_line_str in
             let _ = set_proof_string ("PAIRWISE:"^fomega) in
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
