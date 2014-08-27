@@ -456,16 +456,17 @@ let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
 let print_residue residue =
+  (* let _ = Debug.info_pprint "inside p res" no_pos in *)
   if (not !Globals.smt_compete_mode) then
           match residue with
             | None ->
-                  let _ = Debug.ninfo_pprint "inside p res" no_pos in
+                  (* let _ = Debug.ninfo_pprint "inside p res" no_pos in *)
                   print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
                   (*       (CF.list_formula_of_list_context s))^"\n") *)
                   (*print all posible outcomes and their traces with numbering*)
             | Some (ls_ctx, print) ->
-                  if (print) then
+                  if (print) || not !Globals.disable_failure_explaining then
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )

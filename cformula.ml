@@ -9448,9 +9448,12 @@ let is_bot_status (f:list_context) = (get_bot_status f) != None
 let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) cex : context option =
      match (get_must_es_msg_ft ft) with
           | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft,cex) } ) 
-          | _ ->  None
+          | _ -> None
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
+(*
+ Loc: error calculus: has 4 point values. These values are paired with program states. all is normal state.
+*)
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
     | FailCtx (ft,cex) -> (* Loc: to check cex here*)
