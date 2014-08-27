@@ -13,7 +13,7 @@ open Ti2
 let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let add_ret_trel_stk ctx lhs rhs =
-  if !Globals.slk_infer_term then 
+  (* if !Globals.slk_infer_term then  *)
     let trel = {
       ret_ctx = ctx;
       termr_fname = CP.fn_of_term_ann (fst rhs);
@@ -21,7 +21,7 @@ let add_ret_trel_stk ctx lhs rhs =
       termr_lhs = lhs;
       termr_rhs = rhs; } in 
     ret_trel_stk # push trel
-  else ()
+  (* else () *)
   
 let rec solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
@@ -83,14 +83,14 @@ let case_split_init trrels =
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let add_call_trel_stk ctx lhs rhs =
-  if !Globals.slk_infer_term then 
+  (* if !Globals.slk_infer_term then  *)
     let trel = {
       call_ctx = ctx;
       trel_id = fresh_int ();
       termu_lhs = lhs;
       termu_rhs = rhs; } in 
     call_trel_stk # push trel
-  else ()
+  (* else () *)
   
 let inst_lhs_trel rel fn_cond_w_ids =  
   let lhs_ann = fst rel.termu_lhs in

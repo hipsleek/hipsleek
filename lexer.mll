@@ -354,7 +354,9 @@ rule tokenizer file_name = parse
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
-  | "@term" { TERM_INFER }
+  | "@term" { TREL_INFER }
+  | "termAssume" { TREL_ASSUME }
+  | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
 (*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}

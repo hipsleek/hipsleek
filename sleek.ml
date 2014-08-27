@@ -130,6 +130,8 @@ let proc_gen_cmd cmd =
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
     | TemplSolv idl -> process_templ_solve idl
+    | TermInfer -> process_term_infer ()
+    | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =
@@ -159,7 +161,7 @@ let parse_file (parse) (source_file : string) =
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
-      | TemplSolv _
+      | TemplSolv _ | TermInfer
       | Time _ | EmptyCmd | _ -> () 
   in
   let proc_one_def c =
@@ -225,6 +227,8 @@ let parse_file (parse) (source_file : string) =
             else Gen.Profiling.pop_time s
       (* | LemmaDef ldef -> process_list_lemma ldef *)
       | TemplSolv idl -> process_templ_solve idl
+      | TermInfer -> process_term_infer ()
+      | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
       | TemplDef _
       | EmptyCmd -> () in
@@ -254,9 +258,7 @@ let parse_file (parse) (source_file : string) =
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
-  List.iter proc_one_cmd cmds;
-  (* Solving termination relation assumptions in Sleek *)
-  Ti.solve !cprog
+  List.iter proc_one_cmd cmds
 
 let main () = 
   let _ = Globals.is_sleek_running := true in

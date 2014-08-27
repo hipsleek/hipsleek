@@ -432,6 +432,20 @@ let strip_lexvar_mix_formula mf =
   let pr0 = !print_formula in
   let pr = !MCP.print_mix_formula in
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
+  
+let strip_lexvar_formula (f: CF.formula) =
+  let _, fp, _, _, _ = CF.split_components f in
+  let (lexvar, other_p) = strip_lexvar_mix_formula fp in
+  let termr, lexvar = List.partition is_TermR_formula lexvar in
+  match lexvar with
+  | [] -> fp, None, [] 
+  | lv::[] ->
+    let t_ann, ml, il, _ = find_lexvar_formula lv in 
+    let termr_info = List.map (fun tr ->
+      let tr, _, il, _ = find_lexvar_formula tr in
+      (tr, il)) termr in
+    other_p, Some (t_ann, ml, il), termr_info
+  | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
 let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
@@ -704,6 +718,29 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
    Debug.no_3(* _loop *) "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
+    
+let check_term_assume lhs rhs = 
+  let pos = proving_loc # get in
+  let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
+  let _, rhs_p, _, _, _ = CF.split_components rhs in
+  let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
+  match rhs_lex with
+  | [] -> ()
+  | rlex::[] ->
+    let t_ann_d, _, dst_il, _ = find_lexvar_formula rlex in
+    let t_ann_s, _, src_il = match lhs_lex with 
+    | Some (t_ann, el, il) -> (t_ann, el, il)
+    | None -> raise LexVar_Not_found
+    in begin match (t_ann_s, t_ann_d) with
+    | (_, TermR _) ->
+      let term_res_rhs = (t_ann_d, dst_il) in
+      Ti.add_ret_trel_stk lhs_p lhs_termr term_res_rhs
+    | (TermU _, _) ->
+      let term_res_lhs = (t_ann_s, src_il) in
+      let term_res_rhs = (t_ann_d, dst_il) in
+      Ti.add_call_trel_stk lhs_p term_res_lhs term_res_rhs
+    | _ -> () end
+  | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =

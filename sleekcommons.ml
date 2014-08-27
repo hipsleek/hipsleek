@@ -75,6 +75,8 @@ type command =
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
   | TemplSolv of ident list
+  | TermInfer
+  | TermAssume of (meta_formula * meta_formula)
   | EmptyCmd 
 
 and print_cmd =
@@ -144,6 +146,8 @@ let string_of_command c = match c with
   | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
   | TemplSolv _ -> "TemplSolv"
+  | TermInfer -> "TermInfer"
+  | TermAssume _ -> "TermAssume"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

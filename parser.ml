@@ -866,7 +866,9 @@ non_empty_command:
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
       | t = templ_solve_cmd -> TemplSolv t
-	  | t=macro				  -> EmptyCmd]];
+      | t = term_infer_cmd -> TermInfer
+      | t = term_assume_cmd -> TermAssume t
+      | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -1940,6 +1942,12 @@ checkentail_cmd:
 
 templ_solve_cmd: 
   [[ `TEMPL_SOLVE; il = OPT id_list_w_brace -> un_option il [] ]];
+  
+term_infer_cmd:
+  [[ `TERM_INFER ]];
+  
+term_assume_cmd:
+  [[ `TREL_ASSUME; t=meta_constr; `CONSTR; b=meta_constr -> (t, b) ]];
 
 ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
 
@@ -2101,7 +2109,7 @@ shapeExtract_cmd:
    ]];
   
 infer_type:
-   [[ `TERM_INFER -> INF_TERM ]];
+   [[ `TREL_INFER -> INF_TERM ]];
   
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];

@@ -757,7 +757,7 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_v
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr2 (_,f) = pr_f f in
-  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr2
+  Debug.no_1 "Sleekengine.meta_to_formula" pr_meta pr2
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
@@ -970,6 +970,15 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = (sleek_proof_counter#get) in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
+  
+let process_term_assume (iante: meta_formula) (iconseq: meta_formula) = 
+  let stab = [] in
+  let (stab, ante) = meta_to_formula iante false [] stab in
+  let fvs = CF.fv ante in
+  let fv_idents = List.map CP.name_of_spec_var fvs in
+  let (stab, conseq) = meta_to_formula iconseq false fv_idents stab in
+  let _ = Term.check_term_assume ante conseq in
+  ()
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1802,6 +1811,10 @@ let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype:
 
 let process_templ_solve (idl: ident list) = 
   Template.collect_and_solve_templ_assumes !cprog idl
+
+(* Solving termination relation assumptions in Sleek *)  
+let process_term_infer () = 
+  Ti.solve !cprog
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)
