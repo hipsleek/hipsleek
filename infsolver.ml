@@ -4200,7 +4200,9 @@ module InfSolverExtract =
   
   module Three_Val_Rel = None3ValRel
   
-  module IS = InfSolver(Coq_sv)(Bool_Val)(None_False_Bool)
+  module Three_Val_False = NoneAlwaysFalse(Three_Val)
+  
+  module IS = InfSolver(Coq_sv)(Three_Val)(Three_Val_Rel)
   
   (** val coq_Z_of_bool : bool -> z **)
   
@@ -4507,7 +4509,10 @@ module InfSolverExtract =
   (** val convert_ZF_to_IAZF_BF : coq_ZE coq_ZBF -> IS.IA.coq_ZBF **)
   
   let rec convert_ZF_to_IAZF_BF = function
-  | ZBF_Const b -> IS.IA.ZBF_Const b
+  | ZBF_Const b ->
+    if b
+    then IS.IA.ZBF_Const Three_Val.VTrue
+    else IS.IA.ZBF_Const Three_Val.VFalse
   | ZBF_Lt (e1, e2) ->
     IS.IA.ZBF_Lt ((convert_ZF_to_IAZF_Exp e1), (convert_ZF_to_IAZF_Exp e2))
   | ZBF_Lte (e1, e2) ->
@@ -4564,7 +4569,10 @@ module InfSolverExtract =
   (** val convert_FAZF_to_ZF_BF : IS.FA.coq_ZBF -> Coq_sv.var coq_ZBF **)
   
   let rec convert_FAZF_to_ZF_BF = function
-  | IS.FA.ZBF_Const b -> ZBF_Const b
+  | IS.FA.ZBF_Const b ->
+    (match b with
+     | Three_Val.VTrue -> ZBF_Const true
+     | _ -> ZBF_Const false)
   | IS.FA.ZBF_Lt (e1, e2) ->
     ZBF_Lt ((convert_FAZF_to_ZF_Exp e1), (convert_FAZF_to_ZF_Exp e2))
   | IS.FA.ZBF_Lte (e1, e2) ->
