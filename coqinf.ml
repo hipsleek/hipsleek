@@ -35,8 +35,7 @@ struct
   let string2var = implode
 end
 
-module CoqInfSolver = Infsolver.InfSolver(StrSV)
-(*module CoqInfSolver = Infsolver.InfSolver*)
+module CoqInfSolver = Infsolver.InfSolverExtract(StrSV)
 
 open CoqInfSolver
 
