@@ -39,24 +39,6 @@ let rec partition_by_key key_of key_eq ls =
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
 
-(* (* Element of Temporal Relation *)                             *)
-(* type tnt_elem = CP.term_ann * CP.exp list                      *)
-
-(* let compare_tnt_elem e1 e2 =                                   *)
-(*   CP.compare_term_ann (fst e1) (fst e2)                        *)
-  
-(* let eq_tnt_elem e1 e2 =                                        *)
-(*   compare_tnt_elem e1 e2 == 0                                  *)
-  
-(* let print_tnt_elem = string_of_tnt_elem                        *)
-
-(* let update_sol_tnt_elem s ann =                                *)
-(*   CP.subst_sol_term_ann s ann                                  *)
-  
-(* let tnt_elem_of_ann elem_list ann =                            *)
-(*   try List.find (fun (a, _) -> CP.eq_term_ann a ann) elem_list *)
-(*   with _ -> (ann, [])                                          *)
-
 (* Temporal Relation at Return *)
 type ret_trel = {
   ret_ctx: MCP.mix_formula;

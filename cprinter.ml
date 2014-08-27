@@ -1025,7 +1025,7 @@ and pr_term_id pr_short uid =
 
 and pr_var_measures (t_ann, ls1, ls2) = 
   let pr_rank op f xs = pr_args None None op "[" "]" "," f xs in
-  let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
+  let pr_args op f xs = pr_args None None op "{" "}" "," f xs in
   pr_term_ann false t_ann;
   pr_wrap_test "" Gen.is_empty (pr_rank "" pr_formula_exp) ls1;
   pr_wrap_test "" Gen.is_empty (pr_args "" pr_formula_exp) ls2
