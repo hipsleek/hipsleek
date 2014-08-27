@@ -1008,7 +1008,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref false (*enable compilation flag for website*)
+let web_compile_flag = ref true (*enable compilation flag for website*)
 
 
 (* Decide whether normalization/simplification
@@ -1152,9 +1152,9 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
-let enable_time_stats = ref true
+let enable_time_stats = ref false
 
-let enable_count_stats = ref true
+let enable_count_stats = ref false
 
 let enable_fast_imply = ref false
 
@@ -1170,7 +1170,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -1265,7 +1265,7 @@ let disable_pre_sat = ref true
 let do_infer_inv = ref false
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
+let opt_classic = ref true                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
@@ -1327,7 +1327,7 @@ let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
 
 let dis_inv_baga () = 
-  print_endline_q "Disabling baga inv gen .."; 
+  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
   let _ = gen_baga_inv := false in
   ()
 
@@ -1340,7 +1340,7 @@ let dis_bk ()=
   ()
 
 let dis_pred_sat () = 
-  print_endline_q "Disabling baga inv gen .."; 
+  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
   (* let _ = gen_baga_inv := false in *)
   let _ = pred_sat := false in
   (*baga bk*)

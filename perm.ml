@@ -82,7 +82,9 @@ let set_perm perm_str =
   else if perm_str = "cperm" then perm:=Count
   else if perm_str = "dperm" then perm:=Dperm 
   else if perm_str = "bperm" then perm:=Bperm 
-  else perm:= NoPerm
+  else 
+    let _ = allow_norm := false in
+    perm:=Frac  (*default is fracperm for conc-r*)
 
 (*Some constants*)
 module PERM_const =

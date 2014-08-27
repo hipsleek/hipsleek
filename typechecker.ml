@@ -2192,9 +2192,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
                     (* get source code position of failed branches *)
-                    (if (!Globals.web_compile_flag) then
-                          let _ = Debug.print_info "procedure call" ("\nProving precondition in method " ^ mn ^ " has failed \n") pos in
-                          res
+                    (
+                     if (!Globals.web_compile_flag) then
+                       let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
+                       let s,_= CF.get_failure_list_failesc_context res in
+                       let _ = print_string (to_print ^s^"\n") in
+                       res
                      else
                     (*FAILURE explaining*)
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
@@ -2575,7 +2578,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
               try
                 let cur_r = (fn prog p) in
                 let _ = if not cur_r then
-                  let _ = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name)  no_pos in
+                  let _ = if not !Globals.web_compile_flag then Debug.info_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name)  no_pos in
                   ()
                 else () in
                 tot_r && cur_r
@@ -2719,7 +2722,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
                   stk_vars # push_list args;
                   let pr_flag = not(!phase_infer_ind) in
-		  if !Globals.print_proc && pr_flag then 
+		  if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then 
 		    print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 		  if pr_flag then
                     begin
@@ -2729,11 +2732,14 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		      Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                     end;
                   let _ = if proc0.Cast.proc_sel_hps = [] then () else
+                    begin
+                    if (not !Globals.web_compile_flag) then
                     print_endline "";
                     print_endline "\n\n*************************************";
                     print_endline "******* SPECIFICATION ********";
                     print_endline "*************************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
+                    end
                   in
                   (*****LOCKSET variable: ls'=ls *********)
                   let args = 
@@ -3100,10 +3106,16 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     begin
 		      if pp then
                         (* let _ = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
-                        print_string ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                        if !Globals.web_compile_flag then
+                          print_string ("\nProcedure <b>"^proc.proc_name^"</b> <font color=\"blue\">SUCCESS</font>.\n")
+                        else
+                          print_string ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
 	              else 
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
-                        print_string ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
+                        if !Globals.web_compile_flag then
+                          print_string ("\nProcedure <b>"^proc.proc_name^"</b> result <font color=\"red\">FAIL</font>.\n")
+                        else
+                          print_string ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
                     end;
 	      	  pp
 	        end
