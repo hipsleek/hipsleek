@@ -2201,17 +2201,6 @@ let transform_bexp_p f0 lb sl pf =
   Debug.no_1 "transform_bexp_p" pr1 pr1
       (fun _ -> transform_bexp_p_x f0 lb sl pf) f0
 
-(* let rec transform_bexp_x f= *)
-(*   let recf = transform_bexp_x in *)
-(*   match f with *)
-(*     | BForm ((pf,a),b) -> transform_bexp_p a b pf *)
-(*     | And (f1,f2,l) -> And (recf f1,recf f2,l) *)
-(*     | AndList fs ->AndList ( List.map (fun (a,f1) -> (a, recf f1)) fs) *)
-(*     | Or (f1,f2,c,l) -> Or(recf f1,recf f2,c,l) *)
-(*     | Not (f1, a, b) -> Not (recf f1, a,b) *)
-(*     | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c) *)
-(*     | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c) *)
-
 (*
  v=e --> v & e | !v & !e
  e1 = e2 --> e1 & e2 | !(e1) & !e2
@@ -2231,3 +2220,23 @@ let transform_bexp f0 lb sl e f=
   let pr = !print_formula in
   Debug.no_1 "transform_bexp" pr pr
       (fun _ -> transform_bexp_x f0 lb sl e f) f
+
+let rec transform_bexp_form f=
+  let recf = transform_bexp_form in
+  match f with
+    | BForm ((pf,a),b) -> begin
+        match pf with
+          | Eq (e1, e2, p)
+          | Neq (e1, e2, p) -> begin
+              match e1,e2 with
+                | Var _, BExpr f2 -> transform_bexp f a b e1 f2
+                | _ -> f
+            end
+          | _ -> f
+        end
+    | And (f1,f2,l) -> And (recf f1,recf f2,l)
+    | AndList fs ->AndList ( List.map (fun (a,f1) -> (a, recf f1)) fs)
+    | Or (f1,f2,c,l) -> Or(recf f1,recf f2,c,l)
+    | Not (f1, a, b) -> Not (recf f1, a,b)
+    | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c)
+    | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c)

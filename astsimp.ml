@@ -6059,12 +6059,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
           let (n_tl,n_f1)= helper b.IF.formula_or_f1 tl in
           let (n_tl,n_f2) = helper b.IF.formula_or_f2 n_tl in
           (n_tl,CF.mkOr n_f1 n_f2 b.IF.formula_or_pos)
-      | IF.Base {
+      | IF.Base ( {
             IF.formula_base_heap = h;
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
-            IF.formula_base_pos = pos} ->(
+            IF.formula_base_pos = pos} as fb) ->(
             let (n_tl,rl) = res_retrieve tl clean_res fl in
             let n_tl = 
               if sep_collect then
@@ -6072,6 +6072,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 gather_type_info_heap prog h n_tl
               else n_tl in
             let _ = List.map (fun x -> helper_one_formula x tl) a in
+            (* transform bexpr *)
+            (* let nh, ps = IF.transform_bexp_hf prog h in *)
+            (* let np = if ps = [] then p else List.fold_left (fun r p1 -> Ipure.mkAnd r p1 pos) p ps in *)
+            (* let f1 = IF.Base {fb with IF.formula_base_heap = nh; *)
+            (*     IF.formula_base_pure = np *)
+            (* } in *)
             let (n_tl,ch, newvars) = linearize_formula prog f0 n_tl in
             let n_tlist = (
               if sep_collect then
@@ -6103,13 +6109,22 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               else n_tl 
             ) in 
             let n_tl = List.fold_right helper_one_formula a n_tl in
-            let f1 = IF.Base {
+            let f1 = IF.Base ( {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
-                IF.formula_base_pos = pos; } in
+                IF.formula_base_pos = pos; }) in
 	    (* let _ = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
+            (* transform bexp *)
+            (* let nh, ps = IF.transform_bexp_hf prog h in *)
+            (* let np = if ps = [] then p else List.fold_left (fun r p1 -> Ipure.mkAnd r p1 pos) p ps in *)
+            (* let f2 = IF.Base ( { *)
+            (*     IF.formula_base_heap = nh; *)
+            (*     IF.formula_base_pure = np; *)
+            (*     IF.formula_base_flow = fl; *)
+            (*     IF.formula_base_and = a; *)
+            (*     IF.formula_base_pos = pos; }) in *)
             let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
             (* let _ = print_string ("Cform ch: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
             let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
@@ -6728,7 +6743,8 @@ else ()
   
 and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
-  match f0 with
+  let f1 = Ipure.transform_bexp_form f0 in
+  match f1 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf tlist , lbl) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 tlist in

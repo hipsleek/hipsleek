@@ -2977,3 +2977,26 @@ and transform_struc_formula f (e:struc_formula) : struc_formula =
   let pr = !print_struc_formula in
   Debug.no_1 "IF.transform_struc_formula" pr pr
       (fun _ -> transform_struc_formula_x f e) e
+
+let transform_bexp_hf_x prog hf0=
+  let trans_bexp_arg (eas, ps) ae= match ae with
+    | Ipure.BExpr f -> let pos = Ipure.pos_of_exp ae in
+      let be_id = Globals.fresh_any_name "be" in
+      let e = Ipure.Var ((be_id, Unprimed), pos) in
+      let p = Ipure.transform_bexp (Ipure.mkTrue pos) None None e f in
+      (* let nae = Ipure.BVar ((be_id, Unprimed), pos) in *)
+      (eas@[e], ps@[p])
+    | _ -> (eas@[ae], ps)
+  in
+  let rec recf hf= match hf with
+    | HeapNode hn ->
+          let neargs, ps_bexp = List.fold_left trans_bexp_arg ([],[]) hn.h_formula_heap_arguments in
+          (HeapNode {hn with h_formula_heap_arguments = neargs}, ps_bexp)
+    | _ -> hf,[]
+  in
+  recf hf0
+
+let transform_bexp_hf prog hf0=
+  let pr1 = !print_h_formula in
+  Debug.no_1 "transform_bexp_hf" pr1 (pr_pair pr1 (pr_list !Ipure.print_formula))
+      (fun _ -> transform_bexp_hf_x prog hf0) hf0

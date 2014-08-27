@@ -1754,7 +1754,9 @@ cexp_data_p:
     [[t = cexp_w -> match t with
       | Pure_c f -> (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
-      | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
+      (* | _ -> report_error (get_pos_camlp4 _loc 1) "3 expected cexp, found pure_constr" *)
+      | Pure_f f -> (BExpr f, None)
+    ]
     ];
 
 (*opt_slicing_label: [[ t = OPT slicing_label -> un_option t false ]];*)
