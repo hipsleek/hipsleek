@@ -14,7 +14,8 @@ int read()
 
 int add(int x, int y) 
   requires x::ann<i,a>@L*y::ann<j,b>@L
-  ensures  res::ann<i+j,r> & r = (a|b);
+  //ensures  res::ann<i+j,r> & r = (a|b);
+  ensures  res::ann<i+j,(a|b)>;
 // need to support boolean operator
 
 void sanitize(int x)
@@ -37,7 +38,7 @@ void main()
 
 bool eqInt(int x, int y)
   requires x::ann<i,a1>@L * y::ann<j,a2>@L
-  ensures  res & i=j | !res & !(i=j);
+  ensures  res=(i=j);
 
 bool foo(int x, int y)
   requires x::ann<v1,a1> * y::ann<v2,a2>
@@ -46,3 +47,9 @@ bool foo(int x, int y)
   if (eqInt(x,y)) return true;
   else return false;
 }
+
+/*
+  requires x<<y & y<=z  --> x<=z
+
+  
+ */

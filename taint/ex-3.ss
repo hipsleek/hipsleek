@@ -10,8 +10,8 @@ pred_prim /* int */ ann<n:int,b:bool>;
 
 bool eqInt(int x, int y)
   requires x::ann<i,a1>@L * y::ann<j,a2>@L
-  ensures  res = (i>j);
-  //ensures  res = (i=j);
+//ensures  res = (i>j);
+  ensures  res = (i=j);
   //ensures  res & i=j | !res & !(i=j);
 
 /*
