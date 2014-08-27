@@ -8913,12 +8913,25 @@ let isFailCtx cl =
   Debug.no_1 "isFailCtx" 
       !print_list_context_short string_of_bool isFailCtx cl
 
-let get_must_error_from_ctx cs = 
-  match cs with 
-    | [Ctx es] -> (match es.es_must_error with
-        | None -> None
-        | Some (msg,_,cex) -> Some (msg,cex))
-    | _ -> None
+(* let combine_ctx_list_err ctxs= *)
+(*   let extract_failure_kind es= *)
+(*     if is_error_flow es.es_formula then *)
+(*       Failure_Must, !print_formula es.es_formula *)
+(*     else if is_mayerror_flow es.es_formula  then *)
+(*       Failure_May, !print_formula es.es_formula *)
+(*     else Valid,"Valid" *)
+(*   in *)
+(*   let fold_helper (m1,n1,e1) (Ctx es)= *)
+(*     let m2, n2 = extract_failure_kind es in *)
+    
+(*   in *)
+
+(* let get_must_error_from_ctx cs =  *)
+(*   match cs with  *)
+(*     | [Ctx es] -> (match es.es_must_error with *)
+(*         | None -> None *)
+(*         | Some (msg,_,cex) -> Some (msg,cex)) *)
+(*     | cl -> None *)
 
 let get_bot_status_from_ctx cs=
   match cs with
@@ -8955,9 +8968,9 @@ let rec set_must_error_from_ctx cs msg ft cex=
     | [] -> []
     | es::ls -> (set_must_error_from_one_ctx es msg ft cex):: (set_must_error_from_ctx ls msg ft cex)
 
-let isFailCtx_gen cl = match cl with
-	| FailCtx _ -> true
-	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
+(* let isFailCtx_gen cl = match cl with *)
+(* 	| FailCtx _ -> true *)
+(* 	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None *)
     (* | _ -> false *)
 
 let mk_failure_bot_raw msg = Failure_Bot msg
@@ -9201,6 +9214,77 @@ let gen_ror (m1,n1,e1) (m2,n2,e2)=
   in
   Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
 
+let rec is_error_flow_x f =  match f with
+  | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow
+  | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow
+  | Or b ->  is_error_flow_x b.formula_or_f1 && is_error_flow_x b.formula_or_f2
+
+let is_error_flow f=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_error_flow" pr1 string_of_bool
+      (fun _ -> is_error_flow_x f) f
+
+let rec is_mayerror_flow f =  match f with
+  | Base b-> subsume_flow_f !mayerror_flow_int b.formula_base_flow
+  | Exists b-> subsume_flow_f !mayerror_flow_int b.formula_exists_flow
+  | Or b ->  is_mayerror_flow b.formula_or_f1 && is_mayerror_flow b.formula_or_f2 
+
+let rec is_top_flow f =   match f with
+  | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval
+  | Exists b-> equal_flow_interval !top_flow_int b.formula_exists_flow.formula_flow_interval
+  | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2 
+
+let get_error_flow f = flow_formula_of_formula f
+let get_top_flow f = flow_formula_of_formula f
+
+let combine_ctx_list_err ctxs=
+  let extract_failure_kind es=
+    if is_error_flow es.es_formula then
+      let msg = !print_formula es.es_formula in
+      Failure_Must (msg ), msg
+    else if is_mayerror_flow es.es_formula  then
+      let msg = !print_formula es.es_formula in
+      Failure_May (msg), msg
+    else Failure_Valid,"Valid"
+  in
+  let rec extract_failure_kind_ctx ctx=
+    match ctx with
+      | (Ctx es) ->  let m,n = extract_failure_kind es in
+        (m,n, Some es)
+      | OCtx (ctx1, ctx2) ->
+            let r1 = extract_failure_kind_ctx ctx1 in
+            let r2 = extract_failure_kind_ctx ctx2 in
+            gen_lor r1 r2
+  in
+  let rec fold_helper (m1,n1,e1) ctx=
+    match ctx with
+      | (Ctx es) ->
+            let m2, n2 = extract_failure_kind es in
+            gen_lor (m1,n1,e1) (m2, n2, Some es)
+      | OCtx (ctx1, ctx2) ->
+            let r = fold_helper (m1,n1,e1) ctx1 in
+            fold_helper r ctx2
+  in
+  match ctxs with
+    | [] -> None
+    | es0::rest -> begin
+        let r0 = extract_failure_kind_ctx es0 in
+          let m,n,es = List.fold_left fold_helper r0 rest in
+          match m with
+            | Failure_Must msg | Failure_May msg -> Some (msg, mk_cex false)
+            | _ -> None
+      end
+
+let get_must_error_from_ctx cs = 
+  match cs with 
+    | [Ctx es] -> (match es.es_must_error with
+        | None -> None
+        | Some (msg,_,cex) -> Some (msg,cex))
+    | cl -> combine_ctx_list_err cl
+
+let isFailCtx_gen cl = match cl with
+	| FailCtx _ -> true
+	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -9463,7 +9547,8 @@ let convert_must_failure_to_value_orig (l:list_context) : list_context =
           (match (convert_must_failure_4_fail_type "" ft cex) with
             | Some ctx -> SuccCtx [ctx]
             | None -> l)
-    | SuccCtx _ -> l
+    | SuccCtx _ ->
+          l
 
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
  let pr = !print_list_context_short in
@@ -15361,28 +15446,28 @@ let get_bar_conds b_name self l_f =
 	get_bar_conds b_name self l_f
 	
 	                      
-let rec is_error_flow_x f =  match f with
-  | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow
-  | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow
-  | Or b ->  is_error_flow_x b.formula_or_f1 && is_error_flow_x b.formula_or_f2
+(* let rec is_error_flow_x f =  match f with *)
+(*   | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow *)
+(*   | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow *)
+(*   | Or b ->  is_error_flow_x b.formula_or_f1 && is_error_flow_x b.formula_or_f2 *)
 
-let is_error_flow f=
-  let pr1 = !print_formula in
-  Debug.no_1 "is_error_flow" pr1 string_of_bool
-      (fun _ -> is_error_flow_x f) f
+(* let is_error_flow f= *)
+(*   let pr1 = !print_formula in *)
+(*   Debug.no_1 "is_error_flow" pr1 string_of_bool *)
+(*       (fun _ -> is_error_flow_x f) f *)
 
-let rec is_mayerror_flow f =  match f with
-  | Base b-> subsume_flow_f !mayerror_flow_int b.formula_base_flow
-  | Exists b-> subsume_flow_f !mayerror_flow_int b.formula_exists_flow
-  | Or b ->  is_mayerror_flow b.formula_or_f1 && is_mayerror_flow b.formula_or_f2 
+(* let rec is_mayerror_flow f =  match f with *)
+(*   | Base b-> subsume_flow_f !mayerror_flow_int b.formula_base_flow *)
+(*   | Exists b-> subsume_flow_f !mayerror_flow_int b.formula_exists_flow *)
+(*   | Or b ->  is_mayerror_flow b.formula_or_f1 && is_mayerror_flow b.formula_or_f2  *)
 
-let rec is_top_flow f =   match f with
-  | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval
-  | Exists b-> equal_flow_interval !top_flow_int b.formula_exists_flow.formula_flow_interval
-  | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2 
+(* let rec is_top_flow f =   match f with *)
+(*   | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval *)
+(*   | Exists b-> equal_flow_interval !top_flow_int b.formula_exists_flow.formula_flow_interval *)
+(*   | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2  *)
 
-let get_error_flow f = flow_formula_of_formula f
-let get_top_flow f = flow_formula_of_formula f
+(* let get_error_flow f = flow_formula_of_formula f *)
+(* let get_top_flow f = flow_formula_of_formula f *)
 
 
 let trivFlowDischarge_x ctx f = 
