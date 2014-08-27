@@ -9224,10 +9224,17 @@ let is_error_flow f=
   Debug.no_1 "is_error_flow" pr1 string_of_bool
       (fun _ -> is_error_flow_x f) f
 
-let rec is_mayerror_flow f =  match f with
-  | Base b-> subsume_flow_f !mayerror_flow_int b.formula_base_flow
-  | Exists b-> subsume_flow_f !mayerror_flow_int b.formula_exists_flow
-  | Or b ->  is_mayerror_flow b.formula_or_f1 && is_mayerror_flow b.formula_or_f2 
+let rec is_mayerror_flow_x f =  match f with
+  | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow &&
+        subsume_flow_f !norm_flow_int b.formula_base_flow
+  | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow &&
+        subsume_flow_f !norm_flow_int b.formula_exists_flow
+  | Or b ->  is_mayerror_flow_x b.formula_or_f1 && is_mayerror_flow_x b.formula_or_f2 
+
+let is_mayerror_flow f=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_mayerror_flow" pr1 string_of_bool
+      (fun _ -> is_mayerror_flow_x f) f
 
 let rec is_top_flow f =   match f with
   | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval

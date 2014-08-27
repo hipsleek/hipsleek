@@ -2299,6 +2299,7 @@ let transform_bexpr f0=
   let pr1 = !print_formula in
   Debug.no_1 "CF.transform_bexpr" pr1 pr1
       (fun _ -> transform_bexpr_x f0) f0
+
  let partition_error_es_x es=
    let rec recf f= match f with
      | Base fb -> if subsume_flow_f !Exc.GTable.error_flow_int fb.formula_base_flow then
