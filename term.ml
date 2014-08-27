@@ -441,10 +441,9 @@ let strip_lexvar_formula (f: CF.formula) =
   | [] -> fp, None, [] 
   | lv::[] ->
     let t_ann, ml, il, _ = find_lexvar_formula lv in 
-    let termr_info = List.map (fun tr ->
-      let tr, _, il, _ = find_lexvar_formula tr in
-      (tr, il)) termr in
-    other_p, Some (t_ann, ml, il), termr_info
+    let termr_lex = List.map (fun f ->
+      let tr, _, _, _ = find_lexvar_formula f in tr) termr in
+    other_p, Some (t_ann, ml, il), termr_lex
   | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
@@ -640,16 +639,13 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       match (t_ann_s, t_ann_d) with
       | (_, TermR _) ->
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let term_res_rhs = (t_ann_d, dst_il) in
-        let _ = Ti.add_ret_trel_stk ctx estate.CF.es_term_res_lhs term_res_rhs in
-        let estate = { estate with CF.es_term_res_rhs = Some term_res_rhs } in
+        let _ = Ti.add_ret_trel_stk ctx estate.CF.es_term_res_lhs t_ann_d in
+        let estate = { estate with CF.es_term_res_rhs = Some t_ann_d } in
         (estate, lhs_p, rhs_p, None)
       | (TermU _, _) ->
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let term_res_lhs = (t_ann_s, src_il) in
-        let term_res_rhs = (t_ann_d, dst_il) in
-        let _ = Ti.add_call_trel_stk ctx term_res_lhs term_res_rhs in
-        let estate = { estate with CF.es_term_call_rhs =  Some term_res_rhs; } in
+        let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
+        let estate = { estate with CF.es_term_call_rhs =  Some t_ann_d; } in
         (estate, lhs_p, rhs_p, None)
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
       | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
@@ -727,18 +723,15 @@ let check_term_assume lhs rhs =
   match rhs_lex with
   | [] -> ()
   | rlex::[] ->
-    let t_ann_d, _, dst_il, _ = find_lexvar_formula rlex in
-    let t_ann_s, _, src_il = match lhs_lex with 
+    let t_ann_d, _, _, _ = find_lexvar_formula rlex in
+    let t_ann_s, _, _ = match lhs_lex with 
     | Some (t_ann, el, il) -> (t_ann, el, il)
     | None -> raise LexVar_Not_found
     in begin match (t_ann_s, t_ann_d) with
     | (_, TermR _) ->
-      let term_res_rhs = (t_ann_d, dst_il) in
-      Ti.add_ret_trel_stk lhs_p lhs_termr term_res_rhs
+      Ti.add_ret_trel_stk lhs_p lhs_termr t_ann_d
     | (TermU _, _) ->
-      let term_res_lhs = (t_ann_s, src_il) in
-      let term_res_rhs = (t_ann_d, dst_il) in
-      Ti.add_call_trel_stk lhs_p term_res_lhs term_res_rhs
+      Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
     | _ -> () end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 
@@ -763,13 +756,12 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
       | [] -> Ctx es
       | lv::[] ->
         let t_ann, ml, il, _ = find_lexvar_formula lv in 
-        let termr_info = List.map (fun tr ->
-          let tr, _, il, _ = find_lexvar_formula tr in
-          (tr, il)) termr in
+        let termr_lex = List.map (fun f ->
+          let tr, _, _, _ = find_lexvar_formula f in tr) termr in
         Ctx { es with
           es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
           es_var_measures = Some (t_ann, ml, il);
-          es_term_res_lhs = termr_info; 
+          es_term_res_lhs = termr_lex; 
         }
       | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
     else Ctx es

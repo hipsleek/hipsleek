@@ -16,7 +16,10 @@ infer @term x < 0 & TermU@g[true]{x} |- TermR@g[true]{x}.
 infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g[true]{x} & TermR@f[true]{x', y'}|- TermR@g[true]{x}.
 //print residue.
 
+term_infer.
+
 ////////////////////////////////////////////////
+/*
 template int rg(int x).
 template int rf(int x, int y).
 
@@ -32,4 +35,4 @@ infer[rg, rf] x >= 0 & x >= 0 & x' = x - 1 & y' = 0 |- rg(x) > rf(x', y') & rg(x
 
 template_solve.
 
-
+*/

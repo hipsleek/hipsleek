@@ -1014,19 +1014,21 @@ and pr_term_ann pr_short ann =
     | P.TermErr_Must -> fmt_string "TermErr_Must"
 
 and pr_term_id pr_short uid = 
-  fmt_string ("@" ^ uid.P.tu_fname ^ "[" ^ (string_of_int uid.P.tu_id) ^ ", ");
+  let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
+  fmt_string ("@" ^ uid.P.tu_fname ^ "{" ^ (string_of_int uid.P.tu_id) ^ ", ");
   pr_pure_formula uid.P.tu_cond; 
-  fmt_string "]";
+  fmt_string "}";
+  pr_args "" pr_formula_exp uid.P.tu_args;
   if pr_short then () 
   else pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
-    pr_term_ann pr_short s;
-    pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls)) uid.P.tu_sol
+    pr_var_measures (s, ls, []))) uid.P.tu_sol
 
 and pr_var_measures (t_ann, ls1, ls2) = 
-  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+  let pr_rank op f xs = pr_args None None op "[" "]" "," f xs in
+  let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
   pr_term_ann false t_ann;
-  pr_s "" pr_formula_exp ls1;
-  pr_wrap_test "" Gen.is_empty (pr_set pr_formula_exp) ls2
+  pr_wrap_test "" Gen.is_empty (pr_rank "" pr_formula_exp) ls1;
+  pr_wrap_test "" Gen.is_empty (pr_args "" pr_formula_exp) ls2
   
 let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
 
@@ -2288,18 +2290,13 @@ let pr_templ_assume (ante, cons) =
 
 let string_of_templ_assume = poly_string_of_pr pr_templ_assume
 
-let pr_tnt_elem (tann, targs) = 
-  pr_var_measures (tann, [], targs)
-  
-let string_of_tnt_elem = poly_string_of_pr pr_tnt_elem
-
 let pr_trrel (ctx, lhs_trrel, rhs_trrel) = 
   fmt_open_box 1;
   pr_formula ctx;
   fmt_string ": ";
-  pr_seq "" pr_tnt_elem lhs_trrel;
+  pr_seq "" (pr_term_ann false) lhs_trrel;
   fmt_string " -> ";
-  pr_tnt_elem rhs_trrel;
+  (pr_term_ann false) rhs_trrel;
   fmt_close ()
 
 let string_of_trrel = poly_string_of_pr pr_trrel
@@ -2308,9 +2305,9 @@ let pr_trrel_pure (ctx, lhs_trrel, rhs_trrel) =
   fmt_open_box 1;
   pr_mix_formula ctx;
   fmt_string ": ";
-  pr_seq "" pr_tnt_elem lhs_trrel;
-  fmt_string " -> ";
-  pr_tnt_elem rhs_trrel;
+  pr_seq "" (pr_term_ann false) lhs_trrel;
+  fmt_string " --> ";
+  (pr_term_ann false) rhs_trrel;
   fmt_close ()
 
 let string_of_trrel_pure = poly_string_of_pr pr_trrel_pure
@@ -2320,8 +2317,8 @@ let pr_turel (ctx, lhs_turel, rhs_turel) =
   pr_formula ctx;
   fmt_string ": ";
   pr_wrap_opt "" pr_var_measures lhs_turel;
-  fmt_string " -> ";
-  pr_tnt_elem rhs_turel;
+  fmt_string " --> ";
+  (pr_term_ann false) rhs_turel;
   fmt_close ()
 
 let string_of_turel = poly_string_of_pr pr_turel
@@ -2330,9 +2327,9 @@ let pr_turel_pure (ctx, lhs_turel, rhs_turel) =
   fmt_open_box 1;
   pr_mix_formula ctx;
   fmt_string ": ";
-  pr_tnt_elem lhs_turel;
-  fmt_string " -> ";
-  pr_tnt_elem rhs_turel;
+  (pr_term_ann false) lhs_turel;
+  fmt_string " --> ";
+  (pr_term_ann false) rhs_turel;
   fmt_close ()
 
 let string_of_turel_pure = poly_string_of_pr pr_turel_pure
@@ -2902,12 +2899,9 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_path_label: " Gen.is_empty pr_path_trace es.es_path_label; *)
   pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) es.es_cond_path;
   pr_wrap_test "es_var_measures 1: " Gen.is_None (pr_opt (fun (t_ann, l1, l2) ->
-    fmt_string (string_of_term_ann t_ann);
-    pr_seq "" pr_formula_exp l1; pr_set pr_formula_exp l2;
-  )) es.es_var_measures;
-  pr_wrap_test "es_term_res_lhs: " Gen.is_empty (pr_seq "" (fun (t_ann, t_args) -> 
-    fmt_string (string_of_term_ann t_ann);
-    pr_seq "" pr_formula_exp t_args)) es.es_term_res_lhs;
+    pr_term_ann false t_ann; pr_seq "" pr_formula_exp l1; 
+    pr_set pr_formula_exp l2;)) es.es_var_measures;
+  pr_wrap_test "es_term_res_lhs: " Gen.is_empty (pr_seq "" (pr_term_ann false)) es.es_term_res_lhs;
   pr_wrap_test "es_var_stack: " Gen.is_empty (pr_seq "" (fun s -> fmt_string s)) es.es_var_stack;
   pr_wrap_test "es_term_err: " Gen.is_None (pr_opt (fun msg -> fmt_string msg)) (es.es_term_err);
   (*

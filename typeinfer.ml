@@ -705,6 +705,8 @@ and gather_type_info_b_formula_x prog b0 tlist =
   | IP.LexVar(t_ann, ls1, ls2, pos) ->
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) tlist ls1  in
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
+      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl 
+        (IP.args_of_term_ann t_ann) in
       n_tl
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in

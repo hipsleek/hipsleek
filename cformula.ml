@@ -8296,9 +8296,9 @@ think it is used to instantiate when folding.
   (* Term ann with Lexical ordering *)
   es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
   (* For TNT inference: List of unknown returned context *)
-  es_term_res_lhs: (CP.term_ann * CP.exp list) list;
-  es_term_res_rhs: (CP.term_ann * CP.exp list) option;
-  es_term_call_rhs: (CP.term_ann * CP.exp list) option;
+  es_term_res_lhs: CP.term_ann list;
+  es_term_res_rhs: CP.term_ann option;
+  es_term_call_rhs: CP.term_ann option;
   es_var_stack :  string list;
   (* this should store first termination error detected *)
   (* in case an error has already been detected *)
@@ -9370,14 +9370,14 @@ let rec collect_tr_rel ctx =
   match ctx with
   | Ctx es -> (match es.es_term_res_rhs with
     | None -> []
-    | Some (tann, targs) -> [(es.es_formula, es.es_term_res_lhs, (tann, targs))])
+    | Some tann -> [(es.es_formula, es.es_term_res_lhs, tann)])
   | OCtx (ctx1, ctx2) -> (collect_tr_rel ctx1) @ (collect_tr_rel ctx2) 
 
 let rec collect_tu_rel ctx = 
   match ctx with
   | Ctx es -> (match es.es_term_call_rhs with
     | None -> []
-    | Some (tann, targs) -> [(es.es_formula, es.es_var_measures, (tann, targs))])
+    | Some tann -> [(es.es_formula, es.es_var_measures, tann)])
   | OCtx (ctx1, ctx2) -> (collect_tu_rel ctx1) @ (collect_tu_rel ctx2) 
 
 let rec collect_rel ctx = 

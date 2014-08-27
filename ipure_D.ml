@@ -97,6 +97,7 @@ and term_ann =
 and uid = {
   tu_id: int;
   tu_fname: ident;
+  tu_args: exp list;
   tu_cond: formula; 
 }
 
@@ -169,7 +170,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
 
 (* module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);;  *)
 
-let string_of_ann ann=
+let string_of_ann ann =
   match ann with
     | ConstAnn ha -> "ConstAnn " ^ (string_of_heap_ann ha)
     | PolyAnn _ -> "PolyAnn"

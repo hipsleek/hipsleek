@@ -1606,3 +1606,9 @@ let mkAndList_opt f =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   let pr2 = !print_formula in
   Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 
+  
+let args_of_term_ann ann =
+  match ann with
+  | TermU uid -> uid.tu_args
+  | TermR uid -> uid.tu_args
+  | _ -> []

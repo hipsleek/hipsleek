@@ -168,6 +168,7 @@ and term_ann =
 and uid = {
   tu_id: int;
   tu_fname: ident;
+  tu_args: exp list;
   tu_cond: formula; 
   tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
 }
@@ -12496,6 +12497,12 @@ let fn_of_term_ann ann =
   | TermU uid -> uid.tu_fname
   | TermR uid -> uid.tu_fname
   | _ -> ""
+
+let args_of_term_ann ann =
+  match ann with
+  | TermU uid -> uid.tu_args
+  | TermR uid -> uid.tu_args
+  | _ -> []
 
 let subst_sol_term_ann sol ann =
   match ann with

@@ -39,23 +39,23 @@ let rec partition_by_key key_of key_eq ls =
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
 
-(* Element of Temporal Relation *)
-type tnt_elem = CP.term_ann * CP.exp list
+(* (* Element of Temporal Relation *)                             *)
+(* type tnt_elem = CP.term_ann * CP.exp list                      *)
 
-let compare_tnt_elem e1 e2 =
-  CP.compare_term_ann (fst e1) (fst e2)
+(* let compare_tnt_elem e1 e2 =                                   *)
+(*   CP.compare_term_ann (fst e1) (fst e2)                        *)
   
-let eq_tnt_elem e1 e2 =
-  compare_tnt_elem e1 e2 == 0
+(* let eq_tnt_elem e1 e2 =                                        *)
+(*   compare_tnt_elem e1 e2 == 0                                  *)
   
-let print_tnt_elem = string_of_tnt_elem
+(* let print_tnt_elem = string_of_tnt_elem                        *)
 
-let update_sol_tnt_elem s ann =
-  CP.subst_sol_term_ann s ann
+(* let update_sol_tnt_elem s ann =                                *)
+(*   CP.subst_sol_term_ann s ann                                  *)
   
-let tnt_elem_of_ann elem_list ann =
-  try List.find (fun (a, _) -> CP.eq_term_ann a ann) elem_list
-  with _ -> (ann, [])
+(* let tnt_elem_of_ann elem_list ann =                            *)
+(*   try List.find (fun (a, _) -> CP.eq_term_ann a ann) elem_list *)
+(*   with _ -> (ann, [])                                          *)
 
 (* Temporal Relation at Return *)
 type ret_trel = {
@@ -63,8 +63,8 @@ type ret_trel = {
   (* Collect from RHS *)
   termr_fname: ident;
   termr_params: CP.spec_var list;
-  termr_lhs: tnt_elem list;
-  termr_rhs: tnt_elem;
+  termr_lhs: CP.term_ann list;
+  termr_rhs: CP.term_ann;
 }
 
 let print_ret_trel rel = 
@@ -127,8 +127,8 @@ let get_rec_conds conds =
 type call_trel = {
   call_ctx: MCP.mix_formula;
   trel_id: int;
-  termu_lhs: tnt_elem;
-  termu_rhs: tnt_elem;
+  termu_lhs: CP.term_ann;
+  termu_rhs: CP.term_ann;
 }
 
 let print_call_trel rel = 
@@ -141,16 +141,14 @@ let eq_trel r1 r2 = r1.trel_id == r2.trel_id
 let dummy_trel = {
   call_ctx = MCP.mix_of_pure (CP.mkTrue no_pos);
   trel_id = -1;
-  termu_lhs = (MayLoop, []);
-  termu_rhs = (MayLoop, []); 
+  termu_lhs = MayLoop;
+  termu_rhs = MayLoop; 
 }
   
 let update_call_trel rel ilhs irhs = 
-  let _, lhs_args = rel.termu_lhs in
-  let _, rhs_args = rel.termu_rhs in
   { rel with
-    termu_lhs = ilhs, lhs_args;  
-    termu_rhs = irhs, rhs_args; }
+    termu_lhs = ilhs;  
+    termu_rhs = irhs; }
     
 (* TNT Graph *)
 module TNTElem = struct
@@ -174,8 +172,8 @@ module TGC = Graph.Components.Make(TG)
 let graph_of_trels trels =
   let tg = TG.empty in
   let tg = List.fold_left (fun g rel ->
-    let src = CP.id_of_term_ann (fst rel.termu_lhs) in
-    let dst = CP.id_of_term_ann (fst rel.termu_rhs) in
+    let src = CP.id_of_term_ann rel.termu_lhs in
+    let dst = CP.id_of_term_ann rel.termu_rhs in
     let lbl = rel in
     TG.add_edge_e g (TG.E.create src lbl dst)) tg trels
   in tg
@@ -200,7 +198,29 @@ let print_scc_list_num scc_list =
   (pr_list (fun scc -> (print_scc_num scc) ^ "\n") scc_list)
 
 let print_scc_array_num scc_array =
-  print_scc_list_num (Array.to_list scc_array)  
+  print_scc_list_num (Array.to_list scc_array) 
+  
+module TEG = Graph.Persistent.Digraph.Concrete(TNTElem)    
+module TEC = Graph.Components.Make(TEG)
+
+let init_graph_test _ =
+  let print_graph_by_num g = 
+  TEG.fold_edges (fun s d a -> 
+    (string_of_int s) ^ " -> " ^
+    (string_of_int d) ^ "\n" ^ a)  g ""
+  in
+   
+  let teg = TEG.empty in
+  let teg = TEG.add_edge teg 2 1 in
+  let teg = TEG.add_edge teg 2 2 in
+  let teg = TEG.add_edge teg 3 2 in
+  let _ = print_endline ("TEST: " ^ (print_graph_by_num teg)) in
+  let _ = print_endline ("SCC: " ^ (print_scc_list_num (TEC.scc_list teg))) in
+  let _ = print_endline ("SCC: " ^ (print_scc_list_num (Array.to_list (TEC.scc_array teg)))) in
+  
+  let teg = TEG.remove_vertex teg 2 in
+  let _ = print_endline (print_graph_by_num teg) in
+  teg 
   
 (* A scc is acyclic iff it has only one node and *)
 (* this node is not a successor of itself *) 
@@ -216,7 +236,7 @@ let succ_vertex g v =
   let succ = TG.succ g v in
   List.map (fun sc ->
     let _, rel, _ = TG.find_edge g v sc in
-    fst rel.termu_rhs) succ 
+    rel.termu_rhs) succ 
 
 (* Returns a set of successors of a scc *)  
 let succ_scc g scc =
@@ -230,7 +250,7 @@ let outside_scc_succ_vertex g scc v =
   let outside_scc_succ = Gen.BList.difference_eq (==) succ scc in
   List.map (fun sc ->
     let _, rel, _ = TG.find_edge g v sc in
-    fst rel.termu_rhs) outside_scc_succ
+    rel.termu_rhs) outside_scc_succ
     
 let outside_succ_scc g scc =
   List.concat (List.map (outside_scc_succ_vertex g scc) scc)
@@ -249,9 +269,7 @@ let update_edge g f_rel e =
   TG.add_edge_e (TG.remove_edge_e g e) (s, nrel, d)
   
 let update_trel f_ann rel =
-  let lhs, _ = rel.termu_lhs in
-  let rhs, _ = rel.termu_rhs in 
-  update_call_trel rel (f_ann lhs) (f_ann rhs)
+  update_call_trel rel (f_ann rel.termu_lhs) (f_ann rel.termu_rhs)
   
 let map_scc g scc f_ann = 
   let f_edge g e = update_edge g (update_trel f_ann) e 
@@ -282,18 +300,18 @@ let find_scc_edges g scc =
   List.concat (List.map (fun v -> find_edges_vertex v) scc)
 
 (* Ranking function synthesis *)
-let rank_templ_of_tnt_elem (ann, args) =
+let rank_templ_of_term_ann ann =
   match ann with
   | CP.TermU uid ->
     let templ_id = uid.CP.tu_fname ^ "_r_" ^ (string_of_int uid.CP.tu_id) in 
-    let templ_exp = CP.mkTemplate templ_id args no_pos in
+    let templ_exp = CP.mkTemplate templ_id uid.CP.tu_args no_pos in
     CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
   | _ -> CP.mkIConst (-1) no_pos, [], []
 
 let templ_constr_of_rel rel =
-  let src_rank, src_templ_id, src_templ_decl = rank_templ_of_tnt_elem rel.termu_lhs in
-  let dst_rank, dst_templ_id, dst_templ_decl = rank_templ_of_tnt_elem rel.termu_rhs in
-  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) (CP.cond_of_term_ann (fst rel.termu_lhs)) in
+  let src_rank, src_templ_id, src_templ_decl = rank_templ_of_term_ann rel.termu_lhs in
+  let dst_rank, dst_templ_id, dst_templ_decl = rank_templ_of_term_ann rel.termu_rhs in
+  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) (CP.cond_of_term_ann rel.termu_lhs) in
   let dec = mkGt src_rank dst_rank in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
   let inf_templs = src_templ_id @ dst_templ_id in
@@ -301,22 +319,23 @@ let templ_constr_of_rel rel =
   let es = { es with CF.es_infer_vars_templ = inf_templs } in
   let _ = Template.collect_templ_assume_init es 
     (MCP.mix_of_pure ctx) (mkAnd dec bnd) no_pos in
-  src_templ_id @ dst_templ_id,
-  src_templ_decl @ dst_templ_decl
+  inf_templs, src_templ_decl @ dst_templ_decl
   
 let find_ranking_function_scc prog g scc =
   let scc_edges = find_scc_edges g scc in
-  let _ = print_endline (pr_list print_edge scc_edges) in
+  (* let _ = print_endline (pr_list print_edge scc_edges) in *)
   let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
     let id, decl = templ_constr_of_rel rel in
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
-  let prog = { prog with Cast.prog_templ_decls = prog.Cast.prog_templ_decls @ templ_decls } in
+  let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
+  let prog = { prog with Cast.prog_templ_decls = 
+    Gen.BList.remove_dups_eq Cast.eq_templ_decl 
+      (prog.Cast.prog_templ_decls @ templ_decls) } in
   let _ = Template.collect_and_solve_templ_assumes_common false prog 
     (List.map CP.name_of_spec_var inf_templs) in
   
-  let src_of_edges = List.map (fun (_, rel, _) -> rel.termu_lhs) scc_edges in
   fun ann ->
-    let templ, _, _ = rank_templ_of_tnt_elem (tnt_elem_of_ann src_of_edges ann) in
+    let templ, _, _ = rank_templ_of_term_ann ann in
     [templ]
     
   

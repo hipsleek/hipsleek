@@ -1652,21 +1652,26 @@ termu_id:
   ]];
 
 termu_elem: 
-  [[ `OSQUARE; `INT_LITER (i,_); `CSQUARE -> (i, P.mkTrue no_pos) 
-   | `OSQUARE; c = pure_constr; `CSQUARE -> (0, c)
-   | `OSQUARE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CSQUARE -> (i, c)
+  [[ `OBRACE; `INT_LITER (i,_); `CBRACE -> (i, P.mkTrue no_pos) 
+   | `OBRACE; c = pure_constr; `CBRACE -> (0, c)
+   | `OBRACE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CBRACE -> (i, c)
   ]];
+  
+termu_args: 
+  [[ `OPAREN; t=LIST0 cexp SEP `COMMA; `CPAREN -> t ]];
 
 ann_term: 
     [[  `TERM -> P.Term
       | `LOOP -> P.Loop
       | `MAYLOOP -> P.MayLoop
-      | `TERMU; tid = OPT termu_id ->
+      | `TERMU; tid = OPT termu_id; targs = termu_args ->
           let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermU ({ P.tu_id = id; P.tu_fname = fn; P.tu_cond = c; })
-      | `TERMR; tid = OPT termu_id ->
+          P.TermU ({ P.tu_id = id; P.tu_fname = fn; 
+                     P.tu_args = targs; P.tu_cond = c; })
+      | `TERMR; tid = OPT termu_id; targs = termu_args ->
           let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermR ({ P.tu_id = id; P.tu_fname = fn; P.tu_cond = c; })
+          P.TermR ({ P.tu_id = id; P.tu_fname = fn; 
+                     P.tu_args = targs; P.tu_cond = c; })
     ]];
 
 cexp:
@@ -1916,17 +1921,17 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
-opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
+opt_measures_seq: [[ il = OPT measures_seq -> un_option il [] ]];
 
-measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+measures_seq: [[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
+opt_measures_seq_sqr: [[ il = OPT measures_seq_sqr -> un_option il [] ]];
 
-measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
+measures_seq_sqr: [[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
+opt_cexp_list: [[t=LIST0 cexp SEP `COMMA -> t]];
 
-(*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
+(* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
 
 (********** Procedures and Coercion **********)
 

@@ -2453,4 +2453,4 @@ let update_mut_vars_bu iprog cprog scc_procs =
   in
   new_scc_procs
 
-
+let eq_templ_decl t1 t2 = String.compare t1.templ_name t2.templ_name == 0
