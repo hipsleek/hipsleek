@@ -54,12 +54,13 @@ Error Context: length= 1 [es_formula: emp&{FLOW,(21,22)=__norm}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 */
 
+/*
 //4
 checkentail x=null  |- x::node<p> & flow __Error.
 
 print residue.
 expect Fail.
-
+*/
 
 /*
 
