@@ -1,0 +1,7 @@
+include "/usr/local/lib/mona_predicates.mona";
+var1 m, v, n;
+
+# Mona does not allow arithemtic expression of two variables
+# the below example is failed.
+# Error message: 'v' used as a constant. Execution aborted
+(ex1 x: x = m+v) | (n = 0 );

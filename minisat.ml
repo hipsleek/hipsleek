@@ -97,6 +97,7 @@ let rec minisat_of_exp e0 = match e0 with
 
 let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match pf with
+    | Frm (sv, _)    -> ""
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
   | XPure _ -> "" (* WN : weakening *)
@@ -162,6 +163,7 @@ let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) 
 
 let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match pf with
+    | Frm _ -> ""
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper BConst EXIT!")  in*) ""
   | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper Bvar EXIT!")  in*) ""
@@ -233,7 +235,8 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 let return_pure bf f= match bf with
   | (pf,_)-> match pf with 
       | Eq _ -> f
-      | Neq _ -> f  
+      | Neq _ -> f
+      | Frm _ -> f
       | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
       | BVar(_,_)->f
 	  | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
@@ -402,6 +405,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
+    | Frm _               -> false
   | LexVar _             -> false
   | BConst (a,_)         ->  true (*true*)
   | BVar _               -> false (*true*)
@@ -611,7 +615,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 			(* let _=Gen.Profiling.push_time("stat_CNF_generation_of_B") in *)
 			let (ante_str,ge,gd,gr_e)=rtc_generate_B cnf_ante in
 			 (*start generating cnf for the given CNF formula*)
-				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
+				  let temp= if(ante_str <> "0" && ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
 				  	let final_res= temp(*result*)^"\n" in
 						(* let _=Gen.Profiling.pop_time("stat_CNF_generation_of_B") in  *)
 							(true,final_res,ge,gd,gr_e)

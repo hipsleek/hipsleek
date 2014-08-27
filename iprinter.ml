@@ -190,7 +190,7 @@ let string_of_loc p =
   ^ (string_of_int (p.end_pos.Lexing.pos_cnum - p.end_pos.Lexing.pos_bol))
 
 (* pretty printing for an expression for a formula *)
-let rec string_of_formula_exp = function 
+let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
   | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":"^(string_of_typ t) ^ ")"
   | P.Var (x, l)        -> string_of_id x
@@ -201,24 +201,24 @@ let rec string_of_formula_exp = function
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
-  | P.Add (e1, e2, l)	      -> (match e1 with 
-	  | P.Null _ 
-	  | P.Var _ 
-	  | P.IConst _ 
-	  | P.Max _ 
-	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
-	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
-		^ (match e2 with 
+  | P.Add (e1, e2, l)	      -> (match e1 with
+	  | P.Null _
+	  | P.Var _
+	  | P.IConst _
+	  | P.Max _
+	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"
+	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+")
+		^ (match e2 with
 		  | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
 		  | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
   | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
-    then 
+    then
       if need_parenthesis e2
-      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"
 	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
-    else 
-	  (string_of_formula_exp e1) 
-	  ^ "-" ^ (string_of_formula_exp e2)										    
+    else
+	  (string_of_formula_exp e1)
+	  ^ "-" ^ (string_of_formula_exp e2)
   | P.Mult (e1, e2, _) ->
         "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
@@ -264,7 +264,8 @@ and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_
 and string_of_data_param_list params anns = match (params, anns) with 
   | ([], [])                   -> ""
   | (h::[], a::[])             -> string_of_data_param h a
-  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ ", " ^ (string_of_data_param_list t1 t2)
+  | (h::t1, [])                -> (string_of_formula_exp h) ^ "," ^ (string_of_data_param_list t1 [])
+  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ "," ^ (string_of_data_param_list t1 t2)
   | (_, _)                     -> ""
 ;;
 
@@ -277,7 +278,8 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> string_of_bool b 
+  | P.BConst (b,l)              -> string_of_bool b
+  | P.Frm (x,l) -> (string_of_id x) ^ "@F"
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
         (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
@@ -844,8 +846,15 @@ let string_of_coerc_type c = match c with
   | Equiv -> "<=>"
   | Right -> "<="
 
-let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
-							 (string_of_formula c.coercion_body)^"\n" 
+let string_of_coerc_origin orig = match orig with
+  | LEM_USER -> "user-given"
+  | LEM_GEN -> "generated"
+
+let string_of_coerc_decl c = 
+  (string_of_coerc_type c.coercion_type) ^ "coerc " ^c.coercion_name ^ "\n"
+  ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
+  ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
+  ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
 
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
@@ -1048,6 +1057,7 @@ Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

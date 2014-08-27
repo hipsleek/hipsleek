@@ -1,0 +1,17 @@
+
+data node {
+     node next;
+     node prev;
+}.
+
+pred dll<y,z,w> ==
+     self = y & z = w
+     or (exists u: self::node<u,w> * u::dll<y,z,self>).
+
+pred bsll<y> ==
+     self = y
+     or (exists u,v: self::bsll<u> * u::node<v,y>).
+
+pred sll<y> ==
+     self = y
+     or (exists u: self::node<u,_> * u::sll<y>).

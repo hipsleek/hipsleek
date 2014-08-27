@@ -1,0 +1,63 @@
+data node2 {
+     node2 fst;
+     node2 snd;
+}.
+
+
+pred ll<n> == self = null & n=0
+    or self::node2<_,r> * r::ll<n-1>
+ inv n>=0.
+// --inv produced
+// !!! new inv: : self=null & n>=0
+
+
+pred ll2<n> == self = null & n=0
+    or self::node2<_,r> * r::ll2<n-1>
+ inv true.
+// --inv produced
+// !!! new inv: : self=null & n>=0
+
+
+pred ll3<n> == self::node2<_,null> & n=1
+    or self::node2<_,r> * r::ll3<n-1>
+ inv true.
+
+/*
+# inv1.slk --inv
+
+Can we print name of predicate tgt
+with the inferred invariant?
+
+!!! new inv: : n>=0
+
+!!! new inv: : n>=1 & self!=null
+
+!!! new inv: : n>=0
+
+ inv n>=0.
+
+ xform: (self!=null & n>0 | (n=0 & self=null))
+
+ xform: (({self},self!=null & n>0) | ({},(n=0 & self=null)))
+
+
+x::node<_> * x::node<_> -->   Baga[x,x]
+x::node<_> * y::node<_> -->   Baga[x,y]
+
+Baga{a,b} ==> a>0 & b>0 > a!=b
+
+*/
+
+/*
+   inv: true
+   xform: (self!=null | (n=0 & self=null))
+
+Can we have more accurate pred inv inference?
+
+--en-disj-compute
+pred inv computed not accurate
+
+ inv_lock: None
+  xform: (self!=null | (n=0 & self=null))
+
+*/

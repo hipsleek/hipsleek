@@ -2,21 +2,21 @@
   let $a = <formula>.
   let $b = compose.
   let $c = <formula>.
-  
+
   Nested composition? How to perform the composition and keep the simplified result?
-  
+
   let $a = compose ...
   let $b = compose[x]($a, ...).
 
   checkentail $a |- $b.
   What problem: not really, just do the composition.
-  
-  Is it better to keep the mapping as 
+
+  Is it better to keep the mapping as
   var -> (CF.formula, IF.formula option)
 
   let $a = <formula>. --> translate with no quantification
   let $b = compose($a, ...) --> compose with no quantification, don't allow $b to be used in consequent position
-  
+
   residue will not be used in consequent position.
 *)
 
@@ -43,13 +43,14 @@ type command =
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | SatCheck of (meta_formula)
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
-  | Validate of ( (ident list * meta_formula * (meta_formula * meta_formula) list) list)
+  | Validate of (validate_result * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapeLFP of (ident list)
@@ -73,12 +74,12 @@ type command =
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
-  | EmptyCmd 
+  | EmptyCmd
 
 and print_cmd =
   | PVar of ident
   | PCmd of ident
-	  
+
 and meta_formula =
   | MetaVar of ident
   | MetaForm of IF.formula
@@ -87,6 +88,11 @@ and meta_formula =
   | MetaEForm of Iformula.struc_formula
   | MetaEFormCF of CF.struc_formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
+
+and validate_result = 
+  | VR_Valid
+  | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
+  | VR_Unknown of string
 
 (*
   The second component is IF.formula and not CF.formula since
@@ -110,6 +116,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | SatCheck _ -> "SatCheck"
   | Simplify _ -> "Simplify"
   | Slk_Hull _ -> "Slk_Hull"
   | Slk_PairWise _ -> "Slk_PairWise"
@@ -156,6 +163,22 @@ let string_of_meta_formula (mf : meta_formula) =
   | MetaEForm sf -> "IFORMStruc:"^Iprinter.string_of_struc_formula sf
   | MetaEFormCF sf -> "CFORMStruc:"^Cprinter.string_of_struc_formula sf
   | MetaCompose _ -> "" (* TODO Implement *)
+
+let rec fv_meta_formula (mf: meta_formula) =
+  let ident_of_sv v = match v with
+  | CP.SpecVar (_, id, primed) -> (id, primed)
+  in
+  match mf with
+  | MetaVar i -> [(i, Unprimed)]
+  | MetaForm iform -> IF.heap_fv iform
+  | MetaFormCF cform -> List.map ident_of_sv (CF.fv cform)
+  | MetaFormLCF lcform -> 
+    List.map ident_of_sv (List.concat (List.map CF.fv lcform))
+  | MetaEForm isf -> IF.struc_hp_fv isf
+  | MetaEFormCF csf -> List.map ident_of_sv (CF.struc_fv csf)
+  | MetaCompose (idl, m1, m2) -> 
+    (List.map (fun i -> (i, Unprimed)) idl) @ 
+    (fv_meta_formula m1) @ (fv_meta_formula m2)
 
 let clear_var_table () = H.clear var_tab
 

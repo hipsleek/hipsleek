@@ -758,7 +758,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (*                      let rel1 =  Infer.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_zprint (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                       (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
-                      (* let _ = print_string ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
+                     (*  let _ = print_string ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                       let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -1374,14 +1374,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let _ = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
                       let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
                         let t0 = Gen.unsome (type_of_exp rhs) in
-                        let t = if is_null_type t0 then
-                          let svl = CF.fv c1.CF.es_formula in
-                          try
-                            let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in
-                            CP.type_of_spec_var orig_sv
-                          with _ -> t0
-                        else t0
-                        in
+                        let t = t0 in
+                        (* let t = if is_null_type t0 then                                                              *)
+                        (*   let svl = CF.fv c1.CF.es_formula in                                                        *)
+                        (*   try                                                                                        *)
+                        (*     let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in *)
+                        (*     CP.type_of_spec_var orig_sv                                                              *)
+                        (*   with _ -> t0                                                                               *)
+                        (* else t0                                                                                      *)
+                        (* in                                                                                           *)
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
@@ -1453,7 +1454,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		let res = List.map (fun (lbl,c2)-> 
 		    let list_context_res,prf =process_ctx c2 in					
 		    match list_context_res with
-		      | CF.FailCtx t -> [([(lbl,t)],esc_skeletal,[])],prf
+		      | CF.FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])],prf
 		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls,prf) n in
 		let res_l,prf_l =List.split res in
 		let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in
@@ -1963,7 +1964,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    res
 	  end;
         | Null pos ->
-	      let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Named "", res_name, Unprimed)) pos) (CP.Null pos) pos in
+	      let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Globals.null_type, res_name, Unprimed)) pos) (CP.Null pos) pos in
 	      let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	      let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	      res
@@ -2209,7 +2210,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = Infer.scc_rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
-                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
+                          let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                           (* let pr = if !Globals.print_html then Cprinter.string_of_html_hprel_short *)
@@ -2401,9 +2402,11 @@ and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
+  (*fresh views: h_formula_view_original = true*)
+  let ctx = CF.fresh_view_list_partial_context ctx0 in
   (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
   if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
@@ -2455,7 +2458,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
         Debug.devel_pprint to_print pos;
         final_state
-      else ctx
+      else
+        ctx
     in
     (* let _ = DD.info_zprint (lazy (("       sleek-logging (POST): "  ^ "\n" ^ (to_print)))) pos in *)
     let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
@@ -2620,7 +2624,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs1 = pre_preds@post_pred@rem in
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs" pr_id) "" no_pos in *)
-        let defs = if !Globals.print_en_tidy then List.map CF.rearrange_def defs1 else defs1 in
+        let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in *)
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
@@ -2800,7 +2804,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let _ = Infer.rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
-                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
+                          let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                           (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)

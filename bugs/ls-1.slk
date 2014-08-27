@@ -9,7 +9,9 @@ pred lseg<p> == self = p
 	or self::node<q> * q::lseg<p> & self!=p 
   inv true.
 
-//checkentail x::node<q> & x!=q |- x::lseg<r>.
+checkentail_exact x::node<q> & x!=q 
+                   |- (exists r: x::lseg<r>).
+print residue.
 
 //checkentail x::node<q> & x!=q |- x::lseg<q>.
 

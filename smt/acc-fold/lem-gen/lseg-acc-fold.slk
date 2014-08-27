@@ -1,0 +1,49 @@
+data node {
+    int val;
+    node next
+}.
+
+pred lseg<p> == self = p
+    or self::node<_,r> * r::lseg<p> & p != self.
+
+// the below entailment should be Valid, but in fact it's Failed.
+//checkentail_exact r::node<_,p> * t::node<_,q> & p=t & q!=r |-  r::tlseg<s>.
+//print residue.
+
+//checkentail_exact r::node<_,p> * p::node<_,q> * q::lseg<u> & u!=r |-  r::lseg<s>.
+//print residue.
+
+// OK
+// checkentail_exact r::node<_,p> & p!=r |-  r::lseg<s>.
+// print residue.
+
+//OK
+//checkentail_exact r::node<_,p> * p::node<_,q> & q!=r & q!= p|-  r::lseg<s>.
+//print residue.
+
+//OK
+//checkentail_exact r::node<_,p> * p::node<_,q> * q::lseg<u> & u!=r & u!= p|-  r::lseg<s>.
+//print residue.
+
+//checkentail_exact r::node<_,p> * p::lseg<q> * q::node<_,u> * u::node<_,_>@L |-  r::lseg<s>.
+//print residue.
+
+//pred lseg<p> == self = p
+//    or self::node<_,r> * r::lseg<p> & p != self.
+
+// Not OK bt acc-fold and non-acc-fold
+//checkentail r::node<_,p> * p::lseg<q> * q::node<_,u>@L  |-  r::lseg<q>.
+//print residue.
+
+// Not OK
+//checkentail r::node<_,p> * p::lseg<q> & q!=p & q!=r   |-  r::lseg<s>.
+
+//OK
+//checkentail r::node<_,p> * p::lseg<q> & p!=r &q!=p & q!=r   |-  r::lseg<s>.
+
+
+checkentail_exact r::node<_,p> * p::node<_,q> * q::lseg<u> * u::node<_,v>@L  |-  r::lseg<s>.
+print residue.
+
+
+//checkentail_exact r::node<_,p> * p::node<_,q> & q!=r |-  r::tlseg<s>.

@@ -1,0 +1,23 @@
+
+data DLL2_t {
+  DLL2_t prev;
+  DLL2_t next;
+  DLL2_t prev2;
+  DLL2_t next2;
+  DLL2_t down;
+}.
+
+pred DLL2_plus<p:DLL2_t,tl:DLL2_t,n:DLL2_t> ==
+ (exists down_hd: self::DLL2_t<next2 = n,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> & self = tl)
+or (exists x,down_hd: self::DLL2_t<next2 = x,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> * x::DLL2_plus<self,tl,n>).
+
+pred DLL2_plus_rev<p:DLL2_t,tl:DLL2_t,n:DLL2_t> ==
+ (exists down_hd: self::DLL2_t<next2 = n,prev2 = p,down = down_hd> * down_hd::DLL1_plus<self> & self = tl)
+or (exists x,down_hd: tl::DLL2_t<next2 = n,prev2 = x,down = down_hd> * down_hd::DLL1_plus<tl> * self::DLL2_plus_rev<p,x,tl>).
+
+pred DLL1_plus<p:DLL2_t> ==
+ self::DLL2_t<next = null,prev = p,prev2 = _,next2 = _,down = _>
+or (exists x: self::DLL2_t<next = x,prev = p,prev2 = _,next2 = _,down = _> * x::DLL1_plus<self>).
+
+checkentail hd0::DLL2_plus<null,tl0,hd1> * hd1::DLL2_plus<tl0,tl1,hd2> * hd2::DLL2_plus<tl1,tl2,hd3> * hd3::DLL2_plus<tl2,tl3,hd4> * hd4::DLL2_plus<tl3,tl4,hd5> * hd5::DLL2_plus<tl4,tl5,hd6> * hd6::DLL2_plus<tl5,tl6,hd7> * hd7::DLL2_plus<tl6,tl7,hd8> * hd8::DLL2_plus<tl7,tl8,hd9> * hd9::DLL2_plus<tl8,tl9,hd10> * hd10::DLL2_plus<tl9,tl10,hd11> * hd11::DLL2_plus<tl10,tl11,hd12> * hd12::DLL2_plus<tl11,tl12,hd13> * hd13::DLL2_plus<tl12,tl13,hd14> * hd14::DLL2_plus<tl13,tl14,hd15> * hd15::DLL2_plus<tl14,tl15,hd16> * hd16::DLL2_plus<tl15,tl16,hd17> * hd17::DLL2_plus<tl16,tl17,hd18> * hd18::DLL2_plus<tl17,tl18,hd19> * hd19::DLL2_plus<tl18,tl19,hd20> * hd20::DLL2_plus<tl19,tl20,null>
+         |- hd0::DLL2_plus_rev<null,tl0,hd1> * hd1::DLL2_plus_rev<tl0,tl1,hd2> * hd2::DLL2_plus_rev<tl1,tl2,hd3> * hd3::DLL2_plus_rev<tl2,tl3,hd4> * hd4::DLL2_plus_rev<tl3,tl4,hd5> * hd5::DLL2_plus_rev<tl4,tl5,hd6> * hd6::DLL2_plus_rev<tl5,tl6,hd7> * hd7::DLL2_plus_rev<tl6,tl7,hd8> * hd8::DLL2_plus_rev<tl7,tl8,hd9> * hd9::DLL2_plus_rev<tl8,tl9,hd10> * hd10::DLL2_plus_rev<tl9,tl10,hd11> * hd11::DLL2_plus_rev<tl10,tl11,hd12> * hd12::DLL2_plus_rev<tl11,tl12,hd13> * hd13::DLL2_plus_rev<tl12,tl13,hd14> * hd14::DLL2_plus_rev<tl13,tl14,hd15> * hd15::DLL2_plus_rev<tl14,tl15,hd16> * hd16::DLL2_plus_rev<tl15,tl16,hd17> * hd17::DLL2_plus_rev<tl16,tl17,hd18> * hd18::DLL2_plus_rev<tl17,tl18,hd19> * hd19::DLL2_plus_rev<tl18,tl19,hd20> * hd20::DLL2_plus_rev<tl19,tl20,null>.

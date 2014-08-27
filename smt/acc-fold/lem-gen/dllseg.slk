@@ -1,0 +1,38 @@
+data node {
+   node prev;
+   node nxt;
+}.
+
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+/*
+# dllseg.slk
+
+Why isn't lem-gen-unsafe working here?
+
+!!! Updated lemma store with unsafe repo::[]
+
+
+lemma_unsafe self::dllseg<p> <- (exists u: self::dllseg<u>*u::dllseg<p>).
+
+lemma_unsafe self::dllseg<p> -> (exists u: self::dllseg<u>*u::dllseg<p>).
+
+lemma_unsafe self::dllseg<p> & self!=p 
+        -> (exists u: self::dllseg<u>*u::node<p>).
+
+
+*/
+
+checkentail_exact x::dllseg<u,pr,last> * u::node<last,p> |- x::dllseg<p,pr,last>.
+expect Valid.
+
+/*
+checkentail_exact x::dllseg<u> * u::dllseg<p> |- x::dllseg<p>.
+expect Valid.
+
+checkentail_exact x::dllseg<u> * u::node<u2>*u2::dllseg<p> |- x::dllseg<p>.
+expect Valid.
+*/
+

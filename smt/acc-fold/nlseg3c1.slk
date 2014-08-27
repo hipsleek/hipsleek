@@ -1,0 +1,25 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+
+/*
+# nlseg3c1.slk --inv
+
+this is non-recursive. why is there a bad mutual
+recursion detected
+
+../../sleek nlseg3c1.slk --inv
+Starting Omega...oc
+fixcalc: bad mutual recursion detected :"node"
+
+ERROR: at _0:0_0:0 
+Message: something wrong with fixcalc
+ Fatal error: exception Failure("something wrong with fixcalc")
+*/

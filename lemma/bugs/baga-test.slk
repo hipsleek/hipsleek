@@ -1,0 +1,16 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+// should be valid with --eps
+// approx by non-eps cause failure. expected: VALID, not FAIL
+// (15) Fail
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+print residue.

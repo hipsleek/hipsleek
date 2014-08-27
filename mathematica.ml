@@ -332,6 +332,7 @@ let rec math_of_exp e0 : string=
 let rec math_of_b_formula b : string =
   let (pf,_) = b in
   match pf with
+  | CP.Frm (fv, _) -> "(" ^ math_of_spec_var fv ^ " > 0)"
   | CP.BConst (c, _) ->
       if c then "True"
       else "False"

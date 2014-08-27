@@ -1,0 +1,32 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+lemma_unsafe self::olseg<p> <- (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+// above lemma should be provable
+// lack of deep unfold ..
+
+checkentail_exact
+  self::node<uu>*uu::olseg<u>*u::node<p>
+  |- self::olseg<p>.
+print residue.
+
+
+checkentail_exact
+  self::node<uu>*uu::node<u>*u::node<p> 
+  |- self::olseg<p>.
+print residue.
+
+checkentail_exact
+  selfx::node<uu2>*uu2::node<u2>*u2::node<q2>*q2::olseg<ur2>*ur2::node<p>
+  |- selfx::olseg<p>.
+print residue.
+/*
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_11) ==>  COND ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
+*/
+

@@ -1,0 +1,18 @@
+data node {
+  node parent;
+  node left;
+  node right;
+  node next;
+}.
+
+pred right_nil<> == 
+  (exists p,l,r,n: self::node<p,l,r,n> & r = null).
+
+pred eright_nil<> == 
+  (exists p0,l0,r0,n0,p1,l1,r1,n1: 
+	  self::node<p0,l0,r0,n0> & p0=p1 & l0=l1 & r0=r1 & l0=l1 & r1 = null).
+
+checkentail_exact x'::right_nil<> |- x'::eright_nil<>.
+expect Valid.
+
+

@@ -1,0 +1,31 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+checkentail_exact
+    x::node<q>*q::node<r>*r::node<null>@L
+       |- x::node<uu>.
+print residue.
+
+checkentail_exact
+    x::node<q>*q::node<r>@L*r::node<null>@L
+       |- x::node<uu>.
+print residue.
+
+checkentail_exact
+    x::node<q>*q::node<r>@L*r::node<null>
+       |- x::node<uu>.
+print residue.
+/*
+# nlseg4d2.slk
+
+Below should fail as q::node<r> is not a @L node
+
+Entail 1: Valid. 
+
+ <1>(exists flted_9_21: q::node<r> * r::node<flted_9_21>@L&flted_9_21=null & uu=q&{FLOW,(21,22)=__norm})[]
+[[ Match ==> ]]
+*/

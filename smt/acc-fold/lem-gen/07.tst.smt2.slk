@@ -1,0 +1,22 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred SLL<y:GTyp> ==
+ self = y
+or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::SLL<y> & null != self).
+
+pred DLL<y:GTyp,z:GTyp,w:GTyp> ==
+ self = y & z = w
+or (exists zp: self::GTyp<f0 = zp,f1 = w> * zp::DLL<y,z,self> & null != self).
+
+/*
+lemma_unsafe  self::DLL<y,z,w> -> self::SLL<y>.
+*/
+
+checkentail x::DLL<y,z,w>
+         |- x::SLL<y>.
+
+expect Valid.

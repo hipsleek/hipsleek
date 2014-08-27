@@ -1,0 +1,44 @@
+data node2 {
+     node2 fst;
+     node2 snd;
+}.
+
+
+pred P<> == 
+  self=null 
+  or self::Q<self> & self!=null
+  inv true.
+
+pred Q<y> == 
+   self::node2<d,c>*d::P<> & y=null & self!=null
+   or y::node2<d,c>*self::Q<c> & y!=null
+  inv self!=null.
+//  inv y=null & self!=null | self!=y & y!=null & self!=null.
+
+pred K<> == 
+  self::node2<_,_>
+  inv true.
+
+pred ll<n> == self = null & n=0
+    or self::node2<_,r> * r::ll<n-1>.
+
+/*
+   inv: true
+   xform: (self!=null | (n=0 & self=null))
+
+   (1) self::ll<n> == ([],false)
+   (2) self::ll<n> == ([],self=null & n=0) \/ ([self],false)
+                   == ([],self=null & n=0) 
+   (3) self::ll<n> == ([],self=null & n=0) \/ ([self],(ex r: r=null & n=1)
+                   == ([],self=null & n=0) \/ ([self],n=1)
+   (4) self::ll<n> == ([],self=null & n=0) \/ ([self],n>=1)
+
+   // fixcalc
+   (1) self::ll<n> == (false)
+   (2) self::ll<n> == (self=null & n=0) \/ false)
+   (3) self::ll<n> == (self=null & n=0) \/ (self!=null & n=1)
+   (4) self::ll<n> == (self=null & n=0) \/ (self!=null & n>=1)
+       self::ll<n> == n>=0
+
+Can we have more accurate pred inv inference?
+*/

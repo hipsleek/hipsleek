@@ -1,0 +1,149 @@
+data node {
+  int val;
+  node next;
+}.
+ pred lseg<p:node> == 
+  emp&self=p or
+(exists p_23: self::node<Anon_13,q> * q::lseg<p_23>&p_23=p)
+  inv true.
+ pred ll<> == 
+  emp&self=null or
+self::node<Anon_12,q> * q::ll<>
+  inv true.
+ pred clist<> == 
+  (exists self_22: self::node<Anon_14,p> * p::lseg<self_22>&self_22=self)
+  inv self!=null.
+ 
+// id: 1; line: 20; kind: BIND
+ checkentail_exact (exists Anon_1026,q_1027: x'::node<Anon_1026,q_1027> * q_1027::ll<>&
+x!=null & y'=y & x'=x)
+ |-  (exists Anon_1029,q_1030: x'::node<val_20_995',next_20_996'>@L * 
+q_1030::ll<>&x!=null & y'=y & x'=x & val_20_995'=Anon_1029 & 
+next_20_996'=q_1030).
+expect Valid.
+ 
+// id: 3; line: 20; kind: PRE
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+v_node_20_997'=q_1030 & v_node_20_997'=null
+ |-  x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+v_node_20_997'=q_1030 & v_node_20_997'=null.
+expect Valid.
+ 
+// id: 7; line: 21; kind: BIND
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003'
+ |-  x'::node<val_21_998',next_21_999'>@L * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003' & 
+val_21_998'=Anon_1029 & next_21_999'=q_1030.
+expect Valid.
+ 
+// id: 9; line: 21; kind: PRE_REC
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003' & 
+v_node_21_1000'=q_1030
+ |-  v_node_21_1000'::ll<> * x'::node<Anon_1029,q_1030>&v_node_21_1000'!=null & 
+v_node_21_1000'!=null & x!=null & y'=y & x'=x & q_1030!=null & 
+v_bool_20_1003' & q_1030!=null & v_bool_20_1003' & v_node_21_1000'=q_1030.
+expect Valid.
+ 
+// id: 12; line: 21; kind: PRE_REC
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003' & 
+v_node_21_1000'=q_1030
+ |-  v_node_21_1000'::ll<>&y'=v_node_21_1000' & v_node_21_1000'!=null.
+expect Fail.
+ 
+// id: 14; line: 25; kind: BIND
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030=null & !(v_bool_20_1003') & q_1030=null & !(v_bool_20_1003')
+ |-  x'::node<val_25_1001',next_25_1002'> * q_1030::ll<>&x!=null & y'=y & x'=x & 
+q_1030=null & !(v_bool_20_1003') & q_1030=null & !(v_bool_20_1003') & 
+val_25_1001'=Anon_1029 & next_25_1002'=q_1030.
+expect Valid.
+ 
+// id: 16; line: 15; kind: POST
+ checkentail_exact x'::node<Anon_1029,q_1030> * q_1030::lseg<y'>&x!=null & y'=y & x'=x & 
+q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003'
+ |-  (exists y_54,Anon_1050,q_1051: x::lseg<y_54>&y_54=y & x!=null & y'=y & 
+x'=x & q_1030!=null & v_bool_20_1003' & q_1030!=null & v_bool_20_1003' & 
+Anon_1050=Anon_1029 & q_1051=q_1030).
+expect Valid.
+ 
+// id: 23; line: 15; kind: POST
+ checkentail_exact q_1030::ll<> * x'::node<Anon_1029,y'>&x!=null & y'=y & x'=x & q_1030=null & 
+!(v_bool_20_1003') & q_1030=null & !(v_bool_20_1003') & next_25_1048=q_1030
+ |-  (exists y_54,Anon_1058,q_1059: x::lseg<y_54> * q_1030::ll<>&y_54=y & 
+x!=null & y'=y & x'=x & q_1030=null & !(v_bool_20_1003') & q_1030=null & 
+!(v_bool_20_1003') & next_25_1048=q_1030 & Anon_1058=Anon_1029 & q_1059=y').
+expect Valid.
+ 
+// id: 31; line: 20; kind: BIND
+ checkentail_exact (exists Anon_1070,q_1071: x'::node<Anon_1070,q_1071> * q_1071::ll<>&
+x!=null & y=x & y'=y & x'=x)
+ |-  (exists Anon_1073,q_1074: x'::node<val_20_995',next_20_996'>@L * 
+q_1074::ll<>&x!=null & y=x & y'=y & x'=x & val_20_995'=Anon_1073 & 
+next_20_996'=q_1074).
+expect Valid.
+ 
+// id: 33; line: 20; kind: PRE
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+v_node_20_997'=q_1074 & v_node_20_997'=null
+ |-  x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+v_node_20_997'=q_1074 & v_node_20_997'=null.
+expect Valid.
+ 
+// id: 35; line: 20; kind: PRE
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+v_node_20_997'=q_1074 & v_node_20_997'!=null
+ |-  x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+v_node_20_997'=q_1074 & v_node_20_997'!=null.
+expect Valid.
+ 
+// id: 37; line: 21; kind: BIND
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003'
+ |-  x'::node<val_21_998',next_21_999'>@L * q_1074::ll<>&x!=null & y=x & y'=y & 
+x'=x & q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003' & 
+val_21_998'=Anon_1073 & next_21_999'=q_1074.
+expect Valid.
+ 
+// id: 39; line: 21; kind: PRE_REC
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003' & 
+v_node_21_1000'=q_1074
+ |-  v_node_21_1000'::ll<> * x'::node<Anon_1073,q_1074>&v_node_21_1000'!=null & 
+v_node_21_1000'!=null & x!=null & y=x & y'=y & x'=x & q_1074!=null & 
+v_bool_20_1003' & q_1074!=null & v_bool_20_1003' & v_node_21_1000'=q_1074.
+expect Valid.
+ 
+// id: 42; line: 21; kind: PRE_REC
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003' & 
+v_node_21_1000'=q_1074
+ |-  v_node_21_1000'::ll<>&y'=v_node_21_1000' & v_node_21_1000'!=null.
+expect Fail.
+ 
+// id: 48; line: 25; kind: BIND
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::ll<>&x!=null & y=x & y'=y & x'=x & 
+q_1074=null & !(v_bool_20_1003') & q_1074=null & !(v_bool_20_1003')
+ |-  x'::node<val_25_1001',next_25_1002'> * q_1074::ll<>&x!=null & y=x & y'=y & 
+x'=x & q_1074=null & !(v_bool_20_1003') & q_1074=null & !(v_bool_20_1003') & 
+val_25_1001'=Anon_1073 & next_25_1002'=q_1074.
+expect Valid.
+ 
+// id: 50; line: 18; kind: POST
+ checkentail_exact x'::node<Anon_1073,q_1074> * q_1074::lseg<y'>&x!=null & y=x & y'=y & x'=x & 
+q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003'
+ |-  (exists Anon_1096,p_1097: x::clist<>&x!=null & y=x & y'=y & x'=x & 
+q_1074!=null & v_bool_20_1003' & q_1074!=null & v_bool_20_1003' & 
+Anon_1096=Anon_1073 & p_1097=q_1074).
+expect Valid.
+ 
+// id: 55; line: 18; kind: POST
+ checkentail_exact q_1074::ll<> * x'::node<Anon_1073,y'>&x!=null & y=x & y'=y & x'=x & 
+q_1074=null & !(v_bool_20_1003') & q_1074=null & !(v_bool_20_1003') & 
+next_25_1095=q_1074
+ |-  (exists Anon_1102,p_1103: x::clist<> * q_1074::ll<>&x!=null & y=x & y'=y & 
+x'=x & q_1074=null & !(v_bool_20_1003') & q_1074=null & !(v_bool_20_1003') & 
+next_25_1095=q_1074 & Anon_1102=Anon_1073 & p_1103=y').
+expect Valid.

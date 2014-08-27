@@ -1,0 +1,83 @@
+data node {
+  node parent;
+  node left;
+  node right;
+  node next;
+}.
+ pred tree<> == 
+  (exists flted_11_35: self::node<Anon_14,D1,flted_11_35,Anon_15>&
+  flted_11_35=null) or
+self::node<Anon_16,l,r,D2> * l::tree<> * r::tree<>&
+  r!=null
+  inv self!=null.
+
+ pred tll<p:node,ll:node,lr:node> == 
+  (exists p_26,lr_27,flted_16_25: self::node<p_26,D1,flted_16_25,lr_27>&
+  flted_16_25=null & self=ll & p_26=p & lr_27=lr) or
+(exists p_28,self_29,
+  ll_30,self_31,z_32,lr_33: self::node<p_28,l,r,D2> * 
+  l::tll<self_29,ll_30,z> * r::tll<self_31,z_32,lr_33>&r!=null & p_28=p & 
+  self_29=self & ll_30=ll & self_31=self & z_32=z & lr_33=lr)
+  inv self!=null.
+
+// id: 2; line: 25; kind: BIND
+ checkentail (exists flted_11_1116,Anon_1117,D1_1118,
+Anon_1119: x'::node<Anon_1117,D1_1118,flted_11_1116,Anon_1119>&
+flted_11_1116=null)
+ |-  x'::node<parent_25_1060',left_25_1061',right_25_1062',next_25_1063'>.
+expect Valid.
+
+
+// id: 4; line: 25; kind: BIND
+ checkentail (exists Anon_1120,D2_1121,l_1122,
+r_1123: x'::node<Anon_1120,l_1122,r_1123,D2_1121> * l_1122::tree<> * 
+r_1123::tree<>&r_1123!=null)
+ |-  x'::node<parent_25_1060',left_25_1061',right_25_1062',next_25_1063'>.
+expect Valid.
+
+ 
+// id: 14; line: 28; kind: BIND
+ checkentail x'::node<p',D1_1127,flted_11_1125,Anon_1128>&flted_11_1125=null
+ |-  x'::node<parent_28_1069',left_28_1070',right_28_1071',next_28_1072'>.
+expect Valid.
+ 
+// id: 16; line: 33; kind: BIND
+ checkentail l_1131::tree<> * r_1132::tree<> * x'::node<p',l_1131,r_1132,D2_1130>&
+r_1132!=null & x'=x & p'=p
+ |-  x'::node<parent_33_1073',left_33_1074',right_33_1075',next_33_1076'>@L.
+expect Valid.
+ 
+// id: 18; line: 33; kind: PRE_REC
+ checkentail l_1131::tree<> * r_1132::tree<> * x'::node<p',l_1131,r_1132,D2_1130>&
+r_1132!=null & v_node_33_1077'=r_1132
+ |- l_1131::tree<> * v_node_33_1077'::tree<> * x'::node<p',l_1131,r_1132,D2_1130>.
+expect Valid.
+ 
+// id: 21; line: 34; kind: BIND
+ checkentail l_1131::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>&r_1132!=null & t'=t & x'=x & p'=p
+ |-  l_1131::tree<> * x'::node<parent_34_1078',left_34_1079',right_34_1080',next_34_1081'> //@L
+ * r_1132::tll<x',l_87',t'>.
+expect Valid.
+ 
+// id: 23; line: 34; kind: PRE_REC
+ checkentail l_1131::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>&r_1132!=null & t'=t & x'=x & p'=p  & !(v_bool_26_1084') & v_node_34_1082'=l_1131
+ |-  v_node_34_1082'::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>.
+expect Valid.
+ 
+// id: 26; line: 23; kind: POST
+ checkentail x'::node<p',D1_1127,flted_11_1125,t'>&flted_11_1125=null & t'=t & x'=x & 
+p'=p & flted_11_1125=null & v_bool_26_1084' & res=x'
+ |-  (exists p_85,t_86: x::tll<p_85,res,t_86>&p_85=p & t_86=t).
+expect Valid.
+ 
+// id: 32; line: 23; kind: POST
+ checkentail (exists l_87': x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'> * l_1131::tll<x',v_node_34_1083',l_87'>&
+r_1132!=null & t'=t & x'=x & p'=p & 
+ !(v_bool_26_1084') & l_1131!=null & res=v_node_34_1083')
+ |-  (exists p_85,t_86: x::tll<p_85,res,t_86>&p_85=p & t_86=t).
+expect Valid.
+

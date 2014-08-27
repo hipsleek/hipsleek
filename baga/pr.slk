@@ -1,0 +1,21 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_, q> * q::ll<n-1>
+  //inv n>=0
+  //inv BG([],n>=0) 
+  //inv BG([],self=null & n=0) | BG([self],n>0)
+  inv_exact BG([],self=null & n=0) | BG([self],n>0)
+  /* inv_sat BG([],self=null & n=0) | BG([self],n>0) */
+  // under
+.
+
+checkentail x::ll<4+6> |- true.
+print residue.
+
+checkentail x::ll<y_234> & y_234=x_11 & x_11=4+6 |- true.
+print residue.
+

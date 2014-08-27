@@ -1,0 +1,55 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+lemma_unsafe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+
+/*
+eps/at-2a.slk --eps
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Entailing lemma lseg2: Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
+
+checkentail_exact
+  self::lseg2<q, n1> * q::lseg2<p, n2> & n=n1+n2
+  |- self::lseg2<p, n>.
+
+*/
+
+checkentail_exact
+  //self::lseg2<q, n1> * 
+  q::lseg2<p, n2> & n=n1+n2
+  & self=q & n1=0
+  |- self::lseg2<p, n>.
+
+
+checkentail_exact
+  //self::lseg2<q, n1> * 
+  self::node<_, r> * r::lseg2<q, n1-1> *
+  q::lseg2<p, n2> & n=n1+n2
+  |- self::lseg2<p, n>.
+
+
+checkentail_exact
+  //self::lseg2<q, n1> * 
+  self::node<_, r> * r::lseg2<q, n1-1> *
+  q::lseg2<p, n2> & n=n1+n2
+  |- (exists p,n : self::lseg2<p, n>).
+print residue.
+
+
+checkentail self::node<_,r> * r::lseg2<p1,flted> * 
+  q::lseg2<p,n2>  & 0<=flted & n1=1+flted & n=n1+n2 & p1=q & self!=null 
+ |-  (exists p,n: self::lseg2<p,n>@M). 

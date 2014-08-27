@@ -1,0 +1,99 @@
+Starting z3... 
+
+!!! baga inv(one):[(BAGA:[],EQ:emap[],INEQ:[(_,self)])]
+
+!!! baga inv(zero):[(BAGA:[],EQ:emap[{_,self}],INEQ:[])]
+
+!!! baga inv(andg):[
+(BAGA:[],EQ:emap[{_,self,z}],INEQ:[]),
+(BAGA:[],EQ:emap[{_,y,z}],INEQ:[]),
+(BAGA:[],EQ:emap[],INEQ:[(_,self),(_,y),(_,z)])]
+
+!!! baga inv(notg):[
+(BAGA:[],EQ:emap[{_,self}],INEQ:[(_,y)]),
+(BAGA:[],EQ:emap[{_,y}],INEQ:[(_,self)])]
+
+!!! baga inv(xorg):[
+(BAGA:[],EQ:emap[{_,self,y,z}],INEQ:[]),
+(BAGA:[],EQ:emap[{_,self}],INEQ:[(_,y),(_,z)]),
+(BAGA:[],EQ:emap[{_,y}],INEQ:[(_,self),(_,z)]),
+(BAGA:[],EQ:emap[{_,z}],INEQ:[(_,self),(_,y)])]
+
+!!! baga inv(succ6circuit):[
+(BAGA:[],EQ:emap[{_,x3,y1,y2}],INEQ:[(_,self),(_,x2),(_,x4),(_,x5),(_,x6),(_,y3),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,y1,y2,y3,y4,y5,y6}],INEQ:[(_,self),(_,x2),(_,x3),(_,x4),(_,x5),(_,x6)]),
+(BAGA:[],EQ:emap[{_,x3,x6,y1,y2,y6}],INEQ:[(_,self),(_,x2),(_,x4),(_,x5),(_,y3),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x6,y1,y2,y3,y4,y5}],INEQ:[(_,self),(_,x2),(_,x3),(_,x4),(_,x5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x3,x5,y1,y2,y5}],INEQ:[(_,self),(_,x2),(_,x4),(_,x6),(_,y3),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x5,y1,y2,y3,y4}],INEQ:[(_,self),(_,x2),(_,x3),(_,x4),(_,x6),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x3,x5,x6,y1,y2,y5,y6}],INEQ:[(_,self),(_,x2),(_,x4),(_,y3),(_,y4)]),
+(BAGA:[],EQ:emap[{_,x5,x6,y1,y2,y3,y4,y6}],INEQ:[(_,self),(_,x2),(_,x3),(_,x4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x4,y1,y2,y3}],INEQ:[(_,self),(_,x2),(_,x3),(_,x5),(_,x6),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x3,x4,y1,y2,y4}],INEQ:[(_,self),(_,x2),(_,x5),(_,x6),(_,y3),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x4,x6,y1,y2,y3,y6}],INEQ:[(_,self),(_,x2),(_,x3),(_,x5),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x3,x4,x6,y1,y2,y4,y6}],INEQ:[(_,self),(_,x2),(_,x5),(_,y3),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x4,x5,y1,y2,y3,y5}],INEQ:[(_,self),(_,x2),(_,x3),(_,x6),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x3,x4,x5,y1,y2,y4,y5}],INEQ:[(_,self),(_,x2),(_,x6),(_,y3),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x4,x5,x6,y1,y2,y3,y5,y6}],INEQ:[(_,self),(_,x2),(_,x3),(_,y4)]),
+(BAGA:[],EQ:emap[{_,x3,x4,x5,x6,y1,y2,y4,y5,y6}],INEQ:[(_,self),(_,x2),(_,y3)]),
+(BAGA:[],EQ:emap[{_,x2,y1}],INEQ:[(_,self),(_,x3),(_,x4),(_,x5),(_,x6),(_,y2),(_,y3),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x6,y1,y6}],INEQ:[(_,self),(_,x3),(_,x4),(_,x5),(_,y2),(_,y3),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x2,x5,y1,y5}],INEQ:[(_,self),(_,x3),(_,x4),(_,x6),(_,y2),(_,y3),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x5,x6,y1,y5,y6}],INEQ:[(_,self),(_,x3),(_,x4),(_,y2),(_,y3),(_,y4)]),
+(BAGA:[],EQ:emap[{_,x2,x4,y1,y4}],INEQ:[(_,self),(_,x3),(_,x5),(_,x6),(_,y2),(_,y3),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x4,x6,y1,y4,y6}],INEQ:[(_,self),(_,x3),(_,x5),(_,y2),(_,y3),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x2,x4,x5,y1,y4,y5}],INEQ:[(_,self),(_,x3),(_,x6),(_,y2),(_,y3),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x4,x5,x6,y1,y4,y5,y6}],INEQ:[(_,self),(_,x3),(_,y2),(_,y3)]),
+(BAGA:[],EQ:emap[{_,x2,x3,y1,y3}],INEQ:[(_,self),(_,x4),(_,x5),(_,x6),(_,y2),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x6,y1,y3,y6}],INEQ:[(_,self),(_,x4),(_,x5),(_,y2),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x5,y1,y3,y5}],INEQ:[(_,self),(_,x4),(_,x6),(_,y2),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x5,x6,y1,y3,y5,y6}],INEQ:[(_,self),(_,x4),(_,y2),(_,y4)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x4,y1,y3,y4}],INEQ:[(_,self),(_,x5),(_,x6),(_,y2),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x4,x6,y1,y3,y4,y6}],INEQ:[(_,self),(_,x5),(_,y2),(_,y5)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x4,x5,y1,y3,y4,y5}],INEQ:[(_,self),(_,x6),(_,y2),(_,y6)]),
+(BAGA:[],EQ:emap[{_,x2,x3,x4,x5,x6,y1,y3,y4,y5,y6}],INEQ:[(_,self),(_,y2)]),
+(BAGA:[],EQ:emap[{_,self}],INEQ:[(_,x2),(_,x3),(_,x4),(_,x5),(_,x6),(_,y1),(_,y2),(_,y3),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x6,y6}],INEQ:[(_,x2),(_,x3),(_,x4),(_,x5),(_,y1),(_,y2),(_,y3),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x5,y5}],INEQ:[(_,x2),(_,x3),(_,x4),(_,x6),(_,y1),(_,y2),(_,y3),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x5,x6,y5,y6}],INEQ:[(_,x2),(_,x3),(_,x4),(_,y1),(_,y2),(_,y3),(_,y4)]),
+(BAGA:[],EQ:emap[{_,self,x4,y4}],INEQ:[(_,x2),(_,x3),(_,x5),(_,x6),(_,y1),(_,y2),(_,y3),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x4,x6,y4,y6}],INEQ:[(_,x2),(_,x3),(_,x5),(_,y1),(_,y2),(_,y3),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x4,x5,y4,y5}],INEQ:[(_,x2),(_,x3),(_,x6),(_,y1),(_,y2),(_,y3),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x4,x5,x6,y4,y5,y6}],INEQ:[(_,x2),(_,x3),(_,y1),(_,y2),(_,y3)]),
+(BAGA:[],EQ:emap[{_,self,x3,y3}],INEQ:[(_,x2),(_,x4),(_,x5),(_,x6),(_,y1),(_,y2),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x3,x6,y3,y6}],INEQ:[(_,x2),(_,x4),(_,x5),(_,y1),(_,y2),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x3,x5,y3,y5}],INEQ:[(_,x2),(_,x4),(_,x6),(_,y1),(_,y2),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x3,x5,x6,y3,y5,y6}],INEQ:[(_,x2),(_,x4),(_,y1),(_,y2),(_,y4)]),
+(BAGA:[],EQ:emap[{_,self,x3,x4,y3,y4}],INEQ:[(_,x2),(_,x5),(_,x6),(_,y1),(_,y2),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x3,x4,x6,y3,y4,y6}],INEQ:[(_,x2),(_,x5),(_,y1),(_,y2),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x3,x4,x5,y3,y4,y5}],INEQ:[(_,x2),(_,x6),(_,y1),(_,y2),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x3,x4,x5,x6,y3,y4,y5,y6}],INEQ:[(_,x2),(_,y1),(_,y2)]),
+(BAGA:[],EQ:emap[{_,self,x2,y2}],INEQ:[(_,x3),(_,x4),(_,x5),(_,x6),(_,y1),(_,y3),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x6,y2,y6}],INEQ:[(_,x3),(_,x4),(_,x5),(_,y1),(_,y3),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x2,x5,y2,y5}],INEQ:[(_,x3),(_,x4),(_,x6),(_,y1),(_,y3),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x5,x6,y2,y5,y6}],INEQ:[(_,x3),(_,x4),(_,y1),(_,y3),(_,y4)]),
+(BAGA:[],EQ:emap[{_,self,x2,x4,y2,y4}],INEQ:[(_,x3),(_,x5),(_,x6),(_,y1),(_,y3),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x4,x6,y2,y4,y6}],INEQ:[(_,x3),(_,x5),(_,y1),(_,y3),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x2,x4,x5,y2,y4,y5}],INEQ:[(_,x3),(_,x6),(_,y1),(_,y3),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x4,x5,x6,y2,y4,y5,y6}],INEQ:[(_,x3),(_,y1),(_,y3)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,y2,y3}],INEQ:[(_,x4),(_,x5),(_,x6),(_,y1),(_,y4),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x6,y2,y3,y6}],INEQ:[(_,x4),(_,x5),(_,y1),(_,y4),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x5,y2,y3,y5}],INEQ:[(_,x4),(_,x6),(_,y1),(_,y4),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x5,x6,y2,y3,y5,y6}],INEQ:[(_,x4),(_,y1),(_,y4)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x4,y2,y3,y4}],INEQ:[(_,x5),(_,x6),(_,y1),(_,y5),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x4,x6,y2,y3,y4,y6}],INEQ:[(_,x5),(_,y1),(_,y5)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x4,x5,y2,y3,y4,y5}],INEQ:[(_,x6),(_,y1),(_,y6)]),
+(BAGA:[],EQ:emap[{_,self,x2,x3,x4,x5,x6,y2,y3,y4,y5,y6}],INEQ:[(_,y1)])]
+Starting Omega...oc
+Stop z3... 38 invocations Stop Omega... 15 invocations 
+SAT Count   : 17
+SAT % Hit   : 35.29%
+IMPLY Count : 27
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.060004 (seconds)
+
+!!! log(small):(0.751428,65)
+Total verification time: 3.788235 second(s)
+	Time spent in main process: 3.080192 second(s)
+	Time spent in child processes: 0.708043 second(s)
+

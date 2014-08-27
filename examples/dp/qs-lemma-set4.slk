@@ -1,0 +1,96 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,S> ==
+  self = y & S={}
+or self::node<val,next> * next::bseg<y,l,S1>
+       & self != y & S=union({self},S1) & l<=val
+  inv (y notin S).
+
+lemma_unsafe self::bseg<p,l,S> 
+  <- self::bseg<p,l2,S> & l<=l2.
+
+/*
+checkentail
+  self::bseg<p,l2,S> & l<=l2
+  |- self::bseg<p,l,S>.
+*/
+checkentail 
+   self::node<val,next> * next::bseg<p,l2,S1>
+      & self != p & S=union({self},S1) & l2<=val
+      & l<=l2
+|- self::bseg<p,l,S> .
+
+/*
+ ------------ Check precondition
+id: 0; caller: []; line: 8; classic: false; kind: Pred_Check_Inv; hec_num: 2; evars: []; infer_vars: []; c_heap: emp
+ checkentail emp&((self=y & S={}) | (exists(S1:y <notin> S1  & S=union({self},S1)) & 
+self!=y & self!=null))&{FLOW,(1,24)=__flow}[]
+ |-  emp&y <notin> S &{FLOW,(1,24)=__flow}[]. 
+res:  1[
+   emp&((self=y & S={}) | (exists(S1:y <notin> S1  & S=union({self},S1)) & self!=y & self!=null))&{FLOW,(1,24)=__flow}[]
+   ]
+
+ ------------- Apply lemma
+id: 1; caller: []; line: 25; classic: false; kind: Sleek_Entail(1); hec_num: 5; evars: [p_84,l_85,S_86]; infer_vars: []; c_heap: emp
+ checkentail self::node<val,next>@M * next::bseg<p,l2,S1>@M&l<=l2 & l2<=val & 
+S=union({self},S1) & p!=self&{FLOW,(21,22)=__norm}[]
+ |-  (exists p,l,S: self::bseg<p,l,S>@M&{FLOW,(21,22)=__norm})[]. 
+res:  3[
+   self::node<val,next>@M * next::bseg<p,l2,S1>@M&p!=self & S=union({self},S1) & l2<=val & l<=l2 & exists(S_86:S_86={}) & exists(p_84:p_84=self)&{FLOW,(21,22)=__norm}[];
+   emp&p!=self & S=union({self},S1) & l2<=val & l<=l2 & val=val_87 & next=next_88 & S1=S1_89 & exists(l_85:l_85<=val_87 & l2=l_85) & exists(p_84:p_84!=self & p=p_84) & exists(S_86:S_86=union({self},S1_89))&{FLOW,(21,22)=__norm}[];
+   emp&p!=self & S=union({self},S1) & l2<=val & l<=l2 & val=val_87 & next=next_88 & exists(l_85:l_85<=val_87 & l_85<=l2) & exists(p_84:p_84!=self) & exists(S_86:S_86=union({self},S1_89))&{FLOW,(21,22)=__norm}[]
+   ]
+
+ -------------- apply lemma (1)
+id: 15; caller: []; line: 25; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [p_84,l_85,S_86]; infer_vars: []; c_heap: emp
+ checkentail self::node<val,next>@M * next::bseg<p,l2,S1>@M&exists(p_84:p_84=self) & 
+exists(S_86:S_86={}) & l<=l2 & l2<=val & S=union({self},S1) & p!=self&
+{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l1,S1: emp&S1={} & p1=self & S=S1 & l=l1 & p=p1&
+{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    AndR[ p <notin> S1  & self!=null & exists(p_84:p_84=self) & p!=self |-  p=self. LOCS:[11;22;25;23;8];  p!=self & exists(p_84:p_84=self) & self!=null & p <notin> S1  & 
+S=union({self},S1) |-  S={}. LOCS:[25;22;11;23;8] (must-bug).]
+                   fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+
+
+ ------------- matching directly (no using lemma) --> FAIL
+id: 16; caller: []; line: 25; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [p_84,l_85,S_86]; infer_vars: []; c_heap: next::bseg<p,l2,S1>@M * self::node<val,next>@M
+ checkentail emp&exists(S_86:S_86=union({self},S)) & exists(p_84:p_84!=self & p=p_84) & 
+exists(l_85:l_85<=val & l2=l_85) & S=S1 & next=next1 & val=val1 & l<=l2 & 
+l2<=val1 & S1=union({self},S1) & p!=self&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l1,S2: emp&l1=l2 & p=p1 & l1<=val & S2=union({self},S) & 
+p1!=self & S1=S2 & l=l1&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                     exists(l_85:l_85<=val & l2=l_85) & l<=l2 & l2<=val |-  l=l2. LOCS:[25;24;23;9] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+
+ -------------- apply lemma (2)
+id: 17; caller: []; line: 25; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [p_84,l_85,S_86]; infer_vars: []; c_heap: next::bseg<p,l2,S1>@M * self::node<val,next>@M
+ checkentail emp&exists(S_86:S_86=union({self},S)) & exists(p_84:p_84!=self) & 
+exists(l_85:l_85<=val & l_85<=l2) & next=next1 & val=val1 & l<=l2 & 
+l2<=val1 & S1=union({self},S1) & p!=self&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l1,S2: emp&l1<=l2 & p1!=self & S2=union({self},S) & l1<=val & 
+S1=S2 & l=l1 & p=p1&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                     self!=null & (((next!=null & next!=p & p <notin> S1_38  & S1=union({next},
+S1_38)) | (next=p & S1={}))) & exists(S_86:S_86=union({self},S1_89)) & 
+exists(p_84:p_84!=self) & S=union({self},S1) & p!=self |-  S=union({self},S1_89). LOCS:[9;22;1;11;0;8;25;23;10] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+*/

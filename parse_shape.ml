@@ -69,7 +69,7 @@ GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
       let typ,size = parse_lbl x in
       let heap = mkViewNode y typ [] loc in
       let pure = match size with
-        | 1 -> mkNeqVar y (SpecVar (Named "", "null", Unprimed)) loc
+        | 1 -> mkNeqVar y Cpure.SV.zero (* (SpecVar (Named "", "null", Unprimed)) *) loc
         | _ -> mkTrue loc
       in
       normalize_combine_heap (formula_of_pure_formula pure loc) heap

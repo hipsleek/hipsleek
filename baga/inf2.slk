@@ -1,0 +1,3 @@
+checkentail  x=null & r=v & x=null & m=\inf | x=null & r=v & x!=null |- r=min(v,m).
+
+

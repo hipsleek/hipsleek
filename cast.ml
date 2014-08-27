@@ -8,12 +8,12 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-type n
 
 
 module F = Cformula
 module CF = Cformula
 module P = Cpure
+module CP = Cpure
 module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
@@ -23,7 +23,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 
 type typed_ident = (typ * ident)
 
-and prog_decl = { 
+and prog_decl = {
     mutable prog_data_decls : data_decl list;
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
@@ -37,8 +37,8 @@ and prog_decl = {
     (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list
 }
-    
-and prog_or_branches = (prog_decl * 
+
+and prog_or_branches = (prog_decl *
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
 
 and data_field_ann =
@@ -46,16 +46,16 @@ and data_field_ann =
   | REC
   | F_NO_ANN
 
-and data_decl = { 
+and data_decl = {
     data_name : ident;
     data_pos : loc;
     data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
-    
+
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
-    
+
 and mater_property = {
     mater_var : P.spec_var;
     mater_full_flag : bool;
@@ -74,7 +74,7 @@ and barrier_decl = {
     barrier_prune_conditions_perm: (Tree_shares.Ts.t_sh* (formula_label list)) list ;
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-}  
+}
 
 and view_kind =
   | View_PRIM
@@ -83,15 +83,25 @@ and view_kind =
   | View_SPEC
   | View_DERV
 
-and view_decl = { 
-    view_name : ident; 
+and view_decl = {
+    view_name : ident;
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
+    view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_type_of_self : typ option;
+    view_is_touching : bool;
+    view_is_segmented : bool;
+    view_is_tail_recursive: bool;        (* true if view is tail-recursively defined *)
+    view_residents: P.spec_var list;     (* list of pointers reside in the memory allocated of view *) 
+    view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)
+    view_forward_fields: (data_decl * ident) list;               (* definition of the view          *) 
+    view_backward_ptrs: P.spec_var list;
+    view_backward_fields: (data_decl * ident) list;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
@@ -110,12 +120,20 @@ and view_decl = {
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
+    (* exact baga *)
+    mutable view_baga_inv : Excore.ef_pure_disj option;
+    (* over-approx baga *)
+    mutable view_baga_over_inv : Excore.ef_pure_disj option;
+    mutable view_baga_x_over_inv : Excore.ef_pure_disj option;
+    (* necessary baga *)
+    mutable view_baga_under_inv : Excore.ef_pure_disj option;
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
-    (* if view has only a single eqn, then place complex subpart into complex_inv *)  
+    (* if view has only a single eqn, then place complex subpart into complex_inv *)
     view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+    view_linear_formula : (Cformula.formula * formula_label) list ;
     view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
@@ -124,15 +142,17 @@ and view_decl = {
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
     view_pos : loc;
-    view_raw_base_case: Cformula.formula option;}
+    view_raw_base_case: Cformula.formula option;
+    view_ef_pure_disj : Excore.ef_pure_disj option
+}
 
-(* An Hoa : relation *)					
-and rel_decl = { 
-    rel_name : ident; 
+(* An Hoa : relation *)
+and rel_decl = {
+    rel_name : ident;
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
 
-and hp_decl = { 
+and hp_decl = {
     hp_name : ident;
     mutable hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
     hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
@@ -231,6 +251,7 @@ and coercion_decl = {
     coercion_case : coercion_case; (*Simple or Complex*)
     coercion_type_orig: coercion_type option; 
     coercion_kind: lemma_kind;
+    coercion_origin: lemma_origin;
 }
 
 and coercion_type = Iast.coercion_type
@@ -257,26 +278,26 @@ and sharp_val =
 
 (* An Hoa : The exp_assign in core representation does not allow lhs to be another expression so array modification statement is necessary *)
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
-   exp_arraymod_rhs : exp; 
+   exp_arraymod_rhs : exp;
    exp_arraymod_pos : loc } *)
-	
-and exp_assert = { 
+
+and exp_assert = {
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
     exp_assert_path_id : formula_label;
     exp_assert_type : assert_type;
     exp_assert_pos : loc }
 
-and exp_assign = 
+and exp_assign =
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
     exp_assign_pos : loc }
-	
-and exp_bconst = { 
+
+and exp_bconst = {
     exp_bconst_val : bool;
     exp_bconst_pos : loc }
 
-and exp_bind = { 
+and exp_bind = {
     exp_bind_type : typ; (* the type of the entire bind construct, i.e. the type of the body *)
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
@@ -495,6 +516,10 @@ let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been in
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
+(* imply function has not been initialized yet *)
+let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
+
+
 (** An Hoa [22/08/2011] Extract data field information **)
 
 let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
@@ -613,7 +638,7 @@ let subst_mater_list_nth i fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list pr_no  subst_mater_list fr t l
+  Debug.no_3_num i "subst_mater_list" pr_svl pr_svl !print_mater_prop_list !print_mater_prop_list  subst_mater_list fr t l
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -884,7 +909,7 @@ let rec type_of_exp (e : exp) = match e with
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
-  | Null _ -> Some (Named "")
+  | Null _ -> Some (Globals.null_type (* Named "" *))
 	| EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
@@ -952,6 +977,21 @@ let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   ) defs in
   ext_views
 
+
+let extract_view_x_invs transed_views=
+  List.fold_left (fun r vdcl ->
+      if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_x_formula) then
+        if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_user_inv) then r
+        else
+          r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_user_inv))]
+      else
+      r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_x_formula))]
+  ) [] transed_views
+
 let look_up_view_inv defs act_args name inv_compute_fnc =
   let vdcl = look_up_view_def_raw 46 defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
@@ -965,7 +1005,7 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
         try
           (*case Globals.do_infer_inv = false*)
           let _ = Globals.do_infer_inv := true in
-          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula p1 in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula  vdcl.view_data_name defs p1 in
           let _ = Globals.do_infer_inv := false in
           new_pf
         with _ -> p1
@@ -1174,6 +1214,13 @@ let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match dd
 	  else look_up_data_def pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a data/class declaration"}
+
+let rec look_up_data_def_raw (ddefs : data_decl list) (name : string) =
+  match ddefs with
+  | d :: rest -> 
+      if d.data_name = name then d 
+      else look_up_data_def_raw rest name
+  | [] -> raise Not_found
 
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
@@ -1913,10 +1960,11 @@ let vdef_lemma_fold prog coer  =
   let cfd = coer.coercion_fold_def in
   let lhs = coer.coercion_head in
   (* body contains orig=false but not body_norm*)
-  let rhs = CF.formula_to_struc_formula coer.coercion_body in
+  (* let rhs = CF.formula_to_struc_formula coer.coercion_body in *)
+  let rhs = (* CF.formula_to_struc_formula *) coer.coercion_body_norm in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
-  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
-  if cfd # is_init then cfd # get
+  if cfd # is_init then                 (* how do we use cfd? why do we need it? *)
+    cfd # get
   else
     let vd2 = match lhs with
       | CF.Base bf ->
@@ -1932,14 +1980,16 @@ let vdef_lemma_fold prog coer  =
                         (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
                         let rhs = CF.subst_struc subs rhs in
-                        Some {vd with view_formula = rhs}
+                        (* let un_struc =  CF.struc_to_view_un_s (CF.label_view rhs) in *)
+                        let un_struc =  CF.get_view_branches (CF.label_view rhs) in
+                        Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
                       with  
                         | Not_found -> None
                       )
                 | _ -> None 
             end
       | _ -> None in
-    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
+    (* let _ = Debug.info_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
     let _ = cfd # set vd2 in
     vd2
 
@@ -1968,30 +2018,31 @@ let vdef_lemma_fold prog coer  =
 (*     let _ = cfd # set vd2 in *)
 (*     vd2 *)
 
-let vdef_lemma_fold prog coer  = 
+let vdef_lemma_fold prog coer =
   let op = coer.coercion_fold_def in
   let pr _ = pr_option !print_view_decl_short (op # get) in
    Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
   match rm_br with
-    | Some l -> let n=(List.length l) in  
-      if n<(List.length vdef.view_prune_branches) then None
-      else (match vdef.view_complex_inv with 
+    | Some l -> let n=(List.length l) in
+      if n<(List.length vdef.view_prune_branches) then
+        (* if !force_verbose_xpure then Some vdef.view_x_formula  else *) None
+      else (match vdef.view_complex_inv with
         | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
-    | None -> Some vdef.view_x_formula 
+    | None -> Some vdef.view_x_formula
 
 let get_xpure_one vdef rm_br  =
   let pr mf = !print_mix_formula mf in
   Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
-let any_xpure_1 prog (f:F.h_formula) : bool = 
+let any_xpure_1 prog (f:F.h_formula) : bool =
   let ff e = match e with
 	| F.ViewNode ({ F.h_formula_view_node = p;
 	  F.h_formula_view_name = c;
 	  F.h_formula_view_remaining_branches = rm_br;
-	  F.h_formula_view_pos = pos}) ->      
+	  F.h_formula_view_pos = pos}) ->
           let vdef = look_up_view_def_num 1 pos prog.prog_view_decls c in
           (match get_xpure_one vdef rm_br with
             | None -> Some false
@@ -2431,4 +2482,850 @@ let update_mut_vars_bu iprog cprog scc_procs =
   in
   new_scc_procs
 
+let get_emp_map_x cprog=
+  let helper vdef=
+    let o_base = if !Globals.norm_cont_analysis then
+      let _ = Debug.ninfo_hprint (add_str "vdef.view_seg_opz" (pr_opt !Cpure.print_formula)) vdef.view_seg_opz no_pos in
+      vdef.view_seg_opz
+    else
+      match vdef.view_base_case with
+        | None -> None
+        | Some (p,_) -> begin
+            let neq_null_svl = Cpure.get_neq_null_svl p in
+            if neq_null_svl != [] then None else
+              Some p
+          end
+    in
+    (vdef.view_name, P.SpecVar (Named vdef.view_data_name, self, Unprimed)::vdef.view_vars, o_base)
+  in
+  List.map helper cprog.prog_view_decls
 
+let get_emp_map cprog=
+  let pr1 = fun _ -> "cprog" in
+  let pr3 = fun p -> match p with
+    | None -> "None"
+    | Some f -> !Cpure.print_formula f
+  in
+  let pr2 = pr_list (pr_triple pr_id !Cpure.print_svl pr3) in
+  Debug.no_1 "get_emp_map" pr1 pr2
+      (fun _ -> get_emp_map_x cprog) cprog
+
+(*
+  is complex: both lhs and rhs <=4 pred instance for segmentation optimization
+*)
+let is_complex_entailment_4graph_x prog ante conseq=
+  (* let _ = Debug.info_hprint (add_str "is_complex_entailment_4graph" pr_id) "start" no_pos in *)
+  let is_null_node (Cpure.SpecVar (_,id,_)) = String.compare id null_name = 0
+  in
+   let seg_opz_views = List.fold_left (fun r vdecl ->
+       match vdecl.view_seg_opz with
+         | Some _ -> r@[vdecl.view_name]
+         | None -> r
+   ) [] prog.prog_view_decls in
+   let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
+   if List.length seg_opz_views  > 1 then false else
+   let ldnodes, lvnodes,_ = (Cformula.get_hp_rel_formula ante) in
+   let rvnodes = (Cformula.get_views_struc conseq) in
+   let rdnodes = Cformula.get_datas_struc conseq in
+   let lvleng =  List.length lvnodes in
+   let rvleng =  List.length rvnodes in
+   if (rvleng = 1 && rdnodes = [] &&  lvleng = 0) ||
+     (lvleng < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold)
+     || List.exists (fun vn -> is_null_node vn.Cformula.h_formula_view_node) (rvnodes@lvnodes)
+   then
+     false else
+     begin try
+       (*explicit quantifiers in rhs*)
+       let is_rhs_ex_quans = match conseq with
+         | CF.EBase eb ->
+           let quans,bare = CF.split_quantifiers eb.CF.formula_struc_base in
+           let _ = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
+           if quans = [] then false else
+             let _, mf, _, _, _ = CF.split_components bare in
+             let eqnull_svl =  Mcpure.get_null_ptrs mf in
+             let eqs = (Mcpure.ptr_equations_without_null mf) in
+             let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
+             (*temporal dis null*)
+             if (eqnull_svl != []) then
+               if not (rdnodes = [] (* && ldnodes = [] *)) then true else
+                 Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
+             else
+               Cpure.diff_svl quans (svl_eqs) != []
+         | _ -> true
+       in
+       let _ = Debug.ninfo_hprint (add_str "is_rhs_ex_quans" string_of_bool) is_rhs_ex_quans no_pos in
+       if is_rhs_ex_quans then false else
+         let vnodes = lvnodes@rvnodes in
+         let n_seg_vnodes = List.fold_left (fun count vn ->
+             if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) vn.Cformula.h_formula_view_name seg_opz_views then count+1 else count
+         ) 0 vnodes in
+         n_seg_vnodes >=  ((* graph_norm_instance_threshold + *) graph_norm_instance_threshold)
+     with _ -> false
+     end
+
+let is_complex_entailment_4graph prog ante conseq=
+  let pr1 = !Cformula.print_formula in
+  let pr2 = !Cformula.print_struc_formula in
+  Debug.no_2 "is_complex_entailment_4graph" pr1 pr2 string_of_bool
+      (fun _ _ -> is_complex_entailment_4graph_x prog ante conseq) ante conseq
+
+(* 
+ * + Return:
+ *     - true if vdecl is a touching predicate,
+ *     - otherwise return false 
+ * + Note: 
+ *    - check only inductive cases (contain heap nodes)
+ *    - generated disequality constrains between forward_poiters and self
+ *    - if all the constrains are implied by the pure part of view's definietion,
+ *      then the view is nontouching
+ *)
+let is_touching_view_x (vdecl: view_decl) : bool =
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
+  let vname = vdecl.view_name in
+  let pos = vdecl.view_pos in
+  let forward_ptrs = vdecl.view_forward_ptrs in
+  let is_touching_branch branch = (
+    let (_,mf,_,_,_) = F.split_components branch in
+    let self_sv = P.SpecVar (Named vdecl.view_data_name, self, Unprimed) in
+    let nontouching_cond = (
+      let conds = List.map (fun y -> P.mkNeqVar self_sv y pos) forward_ptrs in
+      List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
+    ) in
+    let pf = MP.pure_of_mix mf in
+    (* to ensure nontouching property, the pure part of a branch must *)
+    (* imply the nontouching condition                                *)
+    not (!imply_raw pf nontouching_cond)
+  ) in
+  let branches, _ = List.split vdecl.view_un_struc_formula in
+  List.for_all is_touching_branch branches
+
+let is_touching_view (vdecl: view_decl) : bool =
+  let pr = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_touching_view" pr pr_out is_touching_view_x vdecl
+
+(* 
+ * + Return:
+ *     - true if vdecl is a segmented predicate,
+ *     - otherwise return false 
+ * + Note: 
+ *    - check only inductive cases (contain heap nodes)
+ *    - generated equality constrains between forward_pointers and null
+ *    - if all the constrains is implied by the pure part of view's definietion,
+ *      then the view is nonsegmented
+ *)
+(* TRUNG TODO: check segmented condition *)
+let is_segmented_view_x (vdecl: view_decl) : bool =
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
+  let pos = vdecl.view_pos in
+  let forward_ptrs = vdecl.view_forward_ptrs in
+  let is_segmented_branch branch = (
+    let (_,mf,_,_,_) = CF.split_components branch in
+    let pf = MP.pure_of_mix mf in
+    List.exists (fun sv ->
+      let null_cond = P.mkNull sv pos in
+      not (!imply_raw pf null_cond)
+    ) forward_ptrs
+  ) in
+  let branches, _ = List.split vdecl.view_un_struc_formula in
+  let segmented = (List.for_all is_segmented_branch branches) in
+  segmented
+
+let is_segmented_view (vdecl: view_decl) : bool =
+  let pr = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
+
+module ViewGraph = struct
+  module Vertex = struct
+    type t = ident
+    let compare = String.compare
+    let hash = Hashtbl.hash
+    let equal v1 v2 = (String.compare v1 v2 == 0)
+  end
+
+  type vertex_env = (string * string) list (* list of vertex name & its typename *)
+
+  module Label = struct
+    type t = | DataField of (ident * ident)   (* data name + field name *)
+             | ViewField of (ident * ident)   (* view name + field name *)
+             | Equality
+
+    let compare e1 e2 = match e1, e2 with
+      | DataField (d1,f1), DataField (d2,f2) ->
+          let compare_host = (String.compare d1 d2) in
+          if (compare_host != 0) then compare_host
+          else String.compare f1 f2
+      | DataField _, _ -> -1
+      | ViewField _, DataField _ -> 1
+      | ViewField (v1,f1), ViewField (v2,f2) -> 
+          let compare_host = (String.compare v1 v2) in
+          if (compare_host != 0) then compare_host
+          else String.compare f1 f2
+      | ViewField _, Equality -> -1
+      | Equality, Equality -> 0
+      | Equality, _ -> 1
+
+    let default = Equality
+  end
+  
+  module Weight = struct
+    type label = Label.t
+    type t = int
+    let weight lbl = match lbl with
+      | Label.Equality -> 0       (* to make sure the shortest always choose *)
+      | Label.DataField _ -> 1    (* equality, then data field, then view field *)
+      | Label.ViewField _ -> 100
+    let zero = 0
+    let add =  (+)
+    let compare = compare
+  end
+  
+  include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Vertex) (Label)
+
+  let update_vertex_env env vname vtype =
+    if (List.exists (fun (v,t) ->
+      (String.compare v vname == 0) && (String.compare t vtype == 0)
+    ) env) then env
+    else env @ [(vname, vtype)]
+
+  let get_type_of_vertex env vname =
+    List.fold_left (fun types (v,t) ->
+      if (String.compare v vname == 0) then types @ [t]
+      else types
+    ) [] env
+
+  let get_vertex_of_type env typ =
+    List.fold_left (fun vertices (v,t) ->
+      if (String.compare t typ == 0) then vertices @ [v]
+      else vertices
+    ) [] env
+
+  let make_edge lbl v1 v2 = (v1, lbl, v2)
+  
+  let get_label e =
+    let (_, lbl, _) = e in
+    lbl
+
+  let is_field_label lbl =
+    match lbl with
+    | Label.DataField _ -> true
+    | Label.ViewField _ -> true
+    | _ -> false
+
+  let is_equality_label lbl =
+    match lbl with
+    | Label.Equality -> true
+    | _ -> false
+  
+  let is_data_field_label lbl =
+    match lbl with
+    | Label.DataField _ -> true
+    | _ -> false
+
+  let is_view_field_label lbl =
+    match lbl with
+    | Label.ViewField _ -> true
+    | _ -> false
+
+  let equal_label lbl1 lbl2 =
+    match lbl1, lbl2 with
+    | Label.Equality, Label.Equality -> true
+    | Label.Equality, _ -> false
+    | Label.DataField (x1, x2), Label.DataField (y1, y2) ->
+        (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0) 
+    | Label.DataField _, _ -> false
+    | Label.ViewField (x1, x2), Label.ViewField (y1, y2) ->
+        (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0) 
+    | Label.ViewField _, _ -> false
+
+  let string_of_label e =  match e with
+    | Label.Equality -> "equality"
+    | Label.DataField (h,f) -> "data:" ^ h^"."^f
+    | Label.ViewField (h,f) -> "view:" ^ h^"."^f
+
+  let string_of_graph g =
+    let str = ref "view_graph:\n" in
+    str := !str ^ "    vertices: ";
+    let _ = iter_vertex (fun v -> str := !str ^ v ^ ", ") g in
+    str := !str ^ "\n    edges: ";
+    let _ = iter_edges_e (fun e ->
+      let (s,l,d)  = e in 
+      str := !str ^ "<" ^ (string_of_label l) ^ "> : "
+             ^ s ^ " --> " ^ d ^ ";;   ";
+    ) g in
+    str := !str ^ "\n";
+    !str
+end
+
+(*
+ * a view is tail recursively defined if there is a case
+ * that self points to the view itself
+ *)
+let is_tail_recursive_view_x (vd: view_decl) : bool =
+  let vname = vd.view_name in
+  let collect_view_pointed_by_self f = (
+    let views = ref [] in
+    let (hf,_,_,_,_) = CF.split_components f in
+    let f_hf hf = (match hf with
+      | CF.ViewNode vn ->
+          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
+          let _ = (
+            if (String.compare nname self = 0) then
+              views := vn.CF.h_formula_view_name :: !views
+            else ()
+          ) in
+          Some hf
+      | _ -> None
+    ) in
+    let _ = CF.transform_h_formula f_hf hf in
+    !views
+  ) in
+  let is_tail_recursive_branch (f: CF.formula) = (
+    let views = collect_view_pointed_by_self f in
+    List.exists (fun vn -> String.compare vn vname = 0) views
+  ) in
+  let branches, _ = List.split vd.view_un_struc_formula in
+  let tail_recursive = (List.exists is_tail_recursive_branch branches) in
+  tail_recursive
+
+let is_tail_recursive_view (vd: view_decl) : bool =
+  let pr_view = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_tail_recursive_view" pr_view pr_out
+      (fun _ -> is_tail_recursive_view_x vd) vd
+
+
+let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let view_type = Named vd.view_data_name in
+  let self_var = CP.SpecVar (view_type, self, Unprimed) in
+  let subs = [(self_var, vn.CF.h_formula_view_node)] in
+  let subs = List.fold_left2 (fun subs sv1 sv2 ->
+    subs @ [(sv1, sv2)]
+  ) subs vd.view_vars vn.CF.h_formula_view_arguments in
+  subs
+
+let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_subs = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  let pr_vn vn = !print_h_formula (CF.ViewNode vn) in
+  Debug.no_1 "collect_subs_from_view_node" pr_vn pr_subs
+    (fun _ -> collect_subs_from_view_node_x vn vd) vn
+
+let collect_subs_from_view_formula_x (f: CF.formula) (vd: view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let is_view_var v = (
+    List.exists (fun sv -> CP.eq_spec_var v sv) vd.view_vars
+  ) in
+  let is_self v = String.compare (CP.name_of_spec_var v) self = 0 in
+  let subs_list = ref [] in
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_h_f _ = None in
+  let f_m mp = Some mp in
+  let f_a _ = None in
+  let f_pf pf = None in
+  let f_b bf= (
+    let pf, a = bf in
+    match pf with
+    | CP.Eq (CP.Var (sv1, _), CP.Var(sv2, _), _) ->
+        let new_subs = (
+          (* in tail-recursive predicates, self must be substituted *)
+          if (is_self sv1) then (
+            if (vd.view_is_tail_recursive) then [(sv1,sv2)]
+            else [(sv2,sv1)]
+          )
+          else if (is_self sv2) then (
+            if (vd.view_is_tail_recursive) then [(sv2,sv1)]
+            else [(sv1,sv2)]
+          )
+          (* otherwise only subs a view var by a non-view var *)
+          else if (is_view_var sv1) && (not (is_view_var sv2)) then
+            [(sv1,sv2)]
+          else if (is_view_var sv2) && (not (is_view_var sv1)) then
+            [(sv2,sv1)]
+          (* othersise do randomly *)
+          else [(sv1, sv2)]
+        ) in
+        let _ = subs_list := !subs_list @ new_subs in
+        (Some (pf,a))
+    | _ -> None
+  ) in
+  let f_e _ = None in
+  let _ = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
+  !subs_list
+
+let collect_subs_from_view_formula (f: CF.formula) (vd: view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_f = !print_formula in
+  let pr_out = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  Debug.no_1 "collect_subs_from_view_formula" pr_f pr_out
+      (fun _ -> collect_subs_from_view_formula_x f vd) f
+
+(* split view formula to base cases and inductive cases *) 
+let split_view_branches (vd: view_decl) : (CF.formula list * CF.formula list) =
+  let vname = vd.view_name in
+  let branches,_ = List.split vd.view_un_struc_formula in
+  let base_fs, induct_fs = List.partition (fun f ->
+    let views = CF.get_views f in
+    let induct_views = List.filter (fun vd ->
+      eq_str vd.CF.h_formula_view_name vname
+    ) views in
+    (List.length induct_views = 0)
+  ) branches in
+  (base_fs, induct_fs)
+
+(* unfold the occurences of a view in a formula by its base case *)
+let unfold_base_case_formula (f: CF.formula) (vd: view_decl) (base_f: CF.formula) =
+  let vname = vd.view_name in 
+  let extra_pure = ref [] in
+  let replace_hf hf = (match hf with
+    | CF.ViewNode vn ->
+        if (String.compare vn.CF.h_formula_view_name vname = 0) then
+          let subs = collect_subs_from_view_node vn vd in
+          let replacing_f = CF.subst_one_by_one subs base_f in
+          let (replacing_hf,extra_pf,_,_,_) = CF.split_components replacing_f in
+          let extra_qvars = CF.get_exists replacing_f in
+          extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
+          Some replacing_hf                  (* replace the heap part *)
+        else (Some hf)
+    | _ -> None) in
+  let f_ef _ = None in
+  let f_f _ = None in
+  let f_m mp = Some mp in
+  let f_a a = Some a in
+  let f_pf pf = Some pf in
+  let f_b bf= Some bf in
+  let f_e e = Some e in
+  let new_f = CF.transform_formula (f_ef, f_f, replace_hf, (f_m, f_a, f_pf, f_b, f_e)) f in
+  let pos = CF.pos_of_formula new_f in
+  let new_f = List.fold_left (fun f (mf,qv) ->
+    let nf = CF.mkAnd_pure f mf pos in       (* add the pure part back *)
+    CF.push_exists qv nf
+  ) new_f !extra_pure in
+  new_f
+
+(*
+ * compute the possible pointers that reside in the memory allocated of view
+ * they are the pointer from self to the last nodes in predicates
+ *)
+let compute_view_residents_x (vd: view_decl) : P.spec_var list =
+  let vname = vd.view_name in
+  let dname = vd.view_data_name in
+  let self_var = P.SpecVar (Named dname, self, Unprimed) in
+  let branches, _ = List.split vd.view_un_struc_formula in
+  let base_fs, induct_fs = split_view_branches vd in
+  if (List.length base_fs != 1) then []
+  (* consider only the predicates have 1 base case*)
+  else (
+    let base_f = List.hd base_fs in
+    (* collect residents which are obvious nodes *)
+    let residents = ref [] in
+    let collect_node hf = (match hf with
+      | CF.ViewNode {CF.h_formula_view_node = sv; CF.h_formula_view_imm = imm}
+      | CF.DataNode {CF.h_formula_data_node = sv; CF.h_formula_data_imm = imm} ->
+          let _ = if not (P.isLend imm) then residents := !residents @ [sv] in
+          Some hf
+      | _ -> None
+    ) in
+    let _ = List.iter (fun f->
+      let (hf,pf,_,_,_) = CF.split_components f in
+      let _ = CF.transform_h_formula collect_node hf in
+      let eqs = MP.ptr_equations_without_null pf in
+      residents := CF.find_close !residents eqs;
+    ) branches in
+    residents := P.intersect_svl !residents (vd.view_cont_vars @ [self_var]);
+    let _ = List.iter (fun f ->
+      (* unfold the inductive formulathen collect residents *)
+      let new_f = unfold_base_case_formula f vd base_f in
+      let (hf,pf,_,_,_) = CF.split_components new_f in
+      let _ = CF.transform_h_formula collect_node hf in
+      let eqs = MP.ptr_equations_without_null pf in
+      residents := CF.find_close !residents eqs;
+    ) induct_fs in
+    residents := P.intersect_svl !residents (vd.view_cont_vars @ [self_var]);
+    residents := P.remove_dups_svl !residents;
+    !residents;
+  )
+
+let compute_view_residents (vd: view_decl) : P.spec_var list =
+  let pr_vd = !print_view_decl in
+  let pr_out = pr_list !P.print_sv in
+  Debug.no_1 "compute_view_residents" pr_vd pr_out
+      (fun _ -> compute_view_residents_x vd) vd
+
+let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bwp bwf =
+  let (hf,pf,_,_,_) = CF.split_components f in
+  let eqs = MP.ptr_equations_without_null pf in
+  let dname = ddecl.data_name in
+  let vname = vdecl.view_name in
+  let self_var = CP.SpecVar (Named dname, self, Unprimed) in
+  let self_closure = CF.find_close [self_var] eqs in
+  let is_core_dnode node = eq_str (CF.get_node_name node) dname in
+  let is_core_vnode node = eq_str (CF.get_node_name node) vname in
+  let core_dnodes = List.filter is_core_dnode (CF.get_dnodes f) in
+  let core_vnodes = List.filter is_core_vnode (CF.get_vnodes f) in
+  let core_nodes = core_dnodes @ core_vnodes in
+  let core_ptrs = List.map CF.get_node_var core_nodes in
+  let is_first_node node = CP.mem_svl (CF.get_node_var node) self_closure in
+  let first_node = List.hd (List.filter is_first_node core_nodes) in 
+  let last_nodes = (
+    let remove_dups_hfl hfl = (
+      let eq_hf hf1 hf2 = (
+        let sv1 = CF.get_node_var hf1 in
+        let sv2 = CF.get_node_var hf2 in
+        CP.eq_spec_var sv1 sv2
+      ) in
+      Gen.BList.remove_dups_eq eq_hf hfl 
+    ) in
+    let get_dnode_field_value dnode field ddecl = (
+      List.hd (List.concat (List.map2 (fun ((_,fld),_) arg ->
+        if (eq_str fld field) then [arg] else []
+      ) ddecl.data_fields dnode.CF.h_formula_data_arguments))
+    ) in
+    let get_vnode_ptr_value vnode ptr vdecl = (
+      List.hd (List.concat (List.map2 (fun sv arg ->
+        if (CP.eq_spec_var sv ptr) then [arg] else []
+      ) vdecl.view_vars vnode.CF.h_formula_view_arguments))
+    ) in
+    (* propagate forward pointers, fields to find last node *)
+    let rec propagate_forward (fw_ptrs: CP.spec_var list) (fw_fields: ident list) (nodes: CF.h_formula list) = (
+      if (fw_fields = []) then []
+      else match nodes with
+        | [] -> []
+        | ((CF.ViewNode vnode) as node)::rest when (is_core_vnode node) ->
+            let fw_ptrs = List.map (fun ptr ->
+              get_vnode_ptr_value vnode ptr vdecl
+            ) fw_ptrs in
+            let fw_ptrs = CF.find_close fw_ptrs eqs in
+            let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
+            (* if it points to outsides, then it's last node *)
+            if (fw_ptrs = []) then [node]
+            else
+              let is_fw_node n = CP.mem_svl (CF.get_node_var n) fw_ptrs in
+              let fw_nodes = List.filter is_fw_node core_nodes in
+              propagate_forward fw_ptrs fw_fields (remove_dups_hfl (rest@fw_nodes))
+        | ((CF.DataNode dnode) as node)::rest when (is_core_dnode node) ->
+            let fw_ptrs = List.map (fun fld ->
+              get_dnode_field_value dnode fld ddecl
+            )fw_fields in
+            let fw_ptrs = CF.find_close fw_ptrs eqs in
+            let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
+            (* if it points to outsides, then it's last node *)
+            if (fw_ptrs = []) then [node]
+            else
+              let is_fw_node n = CP.mem_svl (CF.get_node_var n) fw_ptrs in
+              let fw_nodes = List.filter is_fw_node core_nodes in
+              propagate_forward fw_ptrs fw_fields ( remove_dups_hfl (rest@fw_nodes))
+        | _ -> []
+    ) in
+    (* propagate backward pointers, fields to find last node *)
+    let rec propagate_backward (bw_ptrs: CP.spec_var list) (bw_fields: ident list) (nodes: CF.h_formula list) = (
+      match nodes with
+      | [] -> []
+      | ((CF.ViewNode vnode) as node)::rest when (is_core_vnode node) ->
+          let node_closure = CF.find_close [(CF.get_node_var node)] eqs in
+          let bw_nodes = List.concat (List.map (fun ptr ->
+            List.concat (List.map (fun n -> match n with
+              | CF.ViewNode vn ->
+                  let ptr = get_vnode_ptr_value vn ptr vdecl in
+                  if (CP.mem_svl ptr node_closure) then [n]
+                  else []
+              | _ -> []
+            ) core_dnodes)
+          ) bw_ptrs) in
+          if (bw_nodes = []) then [node]
+          else propagate_backward bw_ptrs bw_fields (remove_dups_hfl (bw_nodes@rest))
+      | ((CF.DataNode dnode) as node)::rest when (is_core_dnode node) ->
+          let node_closure = CF.find_close [(CF.get_node_var node)] eqs in
+          let bw_nodes = List.concat (List.map (fun fld ->
+            List.concat (List.map (fun n -> match n with
+              | CF.DataNode dn ->
+                  let ptr = get_dnode_field_value dn fld ddecl in
+                  if (CP.mem_svl ptr node_closure) then [n]
+                  else []
+              | _ -> []
+            ) core_dnodes)
+          ) bw_fields) in
+          if (bw_nodes = []) then [node]
+          else propagate_backward bw_ptrs bw_fields (remove_dups_hfl (bw_nodes@rest))
+      | _ -> []
+    ) in
+    let nodes1 = (propagate_forward fwp fwf [first_node]) in
+    let nodes2 = (propagate_backward bwp bwf [first_node]) in
+    let eq_node node1 node2 = CP.eq_spec_var (CF.get_node_var node1) (CF.get_node_var node2) in
+    Gen.BList.remove_dups_eq eq_node (nodes1 @ nodes2)
+  ) in
+  Debug.ninfo_hprint (add_str "first node" !print_h_formula) first_node no_pos;
+  Debug.ninfo_hprint (add_str "last nodes" (pr_list !print_h_formula )) last_nodes no_pos;
+  (* find forward, backward field using first and last nodes *)
+  let collect_field node ptrs = (match node with
+    | CF.DataNode dn -> 
+        let ptrs_closure = CF.find_close ptrs eqs in
+        List.concat (List.map2 (fun arg ((_,fld),_) ->
+          if (CP.mem_svl arg ptrs_closure) then [fld] else []
+        ) dn.CF.h_formula_data_arguments ddecl.data_fields)
+    | _ -> []
+  ) in
+  let new_bwf = Gen.BList.remove_dups_eq eq_str (collect_field first_node bwp) in
+  let new_fwf = List.concat (List.map (fun node -> collect_field node fwp) last_nodes) in
+  let new_fwf = Gen.BList.remove_dups_eq eq_str new_fwf in
+  (* find forward, backward pointer using first and last nodes *)
+  let collect_pointer node fields = (match node with
+    | CF.DataNode dn ->
+        List.concat (List.map2 (fun arg ((_,fld),_) ->
+          if (List.exists (fun s -> eq_str s fld) fields) then (
+            let closure = CF.find_close [arg] eqs in
+            Cpure.intersect_svl closure vdecl.view_cont_vars
+          ) else []
+        ) dn.CF.h_formula_data_arguments ddecl.data_fields)
+    | _ -> []
+  ) in
+  let new_bwp = CP.remove_dups_svl (collect_pointer first_node bwf) in
+  let new_fwp = List.concat (List.map (fun node -> collect_pointer node fwf) last_nodes) in
+  let new_fwp = CP.remove_dups_svl new_fwp in
+  (new_fwp, new_fwf, new_bwp, new_bwf)
+  (* Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) ->  *)
+  (*       "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "                       *)
+  (*     ^ "fwf: " ^ (pr_list idf y) ^ "; "                                *)
+  (*     ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "                       *)
+  (*     ^ "bwf: " ^ (pr_list idf t)                                       *)
+  (*   ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;                                   *)
+
+
+
+let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
+    : (  CP.spec_var list * (data_decl * ident) list
+       * CP.spec_var list * (data_decl * ident) list ) =
+  let pos = vdecl.view_pos in
+  let vname = vdecl.view_name in
+  let dname = vdecl.view_data_name in
+  let self_sv = CP.SpecVar (Named dname, self, Unprimed) in
+  let _ = if (eq_str dname "") then (
+    report_warning pos "compute_view_fw_bw: data name in view is empty";
+  ) in
+  let ddecl = (
+    try look_up_data_def_raw prog.prog_data_decls dname 
+    with _ ->
+        if !Globals.smt_compete_mode then raise Not_found else
+          report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
+  ) in
+  let base_fs, induct_fs = split_view_branches vdecl in
+  if (List.length base_fs != 1) then ([],[],[],[])
+  (* consider only the predicates have 1 base case*)
+  else (
+    (* extract inductive information, nodes from head and tail part of formula *)
+    let extract_head_body_node f = (
+      let views = CF.get_views f in
+      let induct_views = List.filter (fun vd ->
+        eq_str vd.CF.h_formula_view_name vname
+      ) views in
+      if (List.length induct_views != 1) then None
+      (* consider only view has 1 inductive view in its formula definition *)
+      else (
+        let head_node = (
+          let is_self_node hf = (match hf with
+            | CF.DataNode dn when (eq_str (CP.name_of_sv dn.CF.h_formula_data_node) self) -> [hf]
+            | CF.ViewNode vn when (eq_str (CP.name_of_sv vn.CF.h_formula_view_node) self) -> [hf]
+            | _ -> []
+          ) in
+          let self_nodes = CF.get_one_kind_heap is_self_node f in
+          if (self_nodes = []) then
+            let _ = report_warning pos "compute_fw_bw: self points to nowhere" in CF.HEmp
+          else (List.hd self_nodes)
+        ) in
+        let body_nodes = (
+          let is_body_node hf = (match hf with
+            | CF.DataNode {CF.h_formula_data_name = dn; CF.h_formula_data_node = sv} ->
+                if (eq_str dn dname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
+                else []
+            | CF.ViewNode {CF.h_formula_view_name = vn; CF.h_formula_view_node = sv} ->
+                if (eq_str vn vname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
+                else []
+            | _ -> []
+          ) in
+          CF.get_one_kind_heap is_body_node f
+        ) in
+        Some (head_node, body_nodes)
+      )
+    ) in
+    let get_residents hf vd = (match hf with
+      | CF.DataNode dn -> [dn.CF.h_formula_data_node]
+      | CF.ViewNode vn -> (* prerequisite: view_decl of vn must be vd *)
+          let residents = List.concat (List.map2 (fun v1 v2 ->
+            if (List.exists (fun v -> CP.eq_spec_var v2 v) vd.view_residents) then [v1]
+            else []
+          ) vn.CF.h_formula_view_arguments vd.view_vars) in
+          residents @ [vn.CF.h_formula_view_node]
+      | _ -> [] 
+    ) in
+    let head_body_info = List.map extract_head_body_node induct_fs in
+    (* do fix point iteration to find forward, backward info *)
+    let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
+    let fwp_m, fwf_m, bwp_m, bwf_m = ref true, ref true, ref true, ref true in
+    while (!fwp_m || !fwf_m || !bwp_m || !bwf_m) do
+      fwp_m := false; fwf_m := false; bwp_m := false; bwf_m := false;
+      List.iter2 (fun f head_body ->
+        match head_body with
+        | None -> ()
+        | Some (head_node, body_nodes) -> (
+            (* find forward, backward info from head and body node *)
+            let head_ptrs = get_residents head_node vdecl in
+            let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
+            Debug.ninfo_hprint (add_str "head_node" !CF.print_h_formula) head_node no_pos;
+            Debug.ninfo_hprint (add_str "body_nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
+            Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !CP.print_sv)) head_ptrs no_pos;
+            Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !CP.print_sv)) body_ptrs no_pos;
+            let (hf,pf,_,_,_) = CF.split_components f in
+            let eqs = MP.ptr_equations_without_null pf in
+            let _ = match head_node with
+              | CF.ViewNode vn -> 
+                  List.iter2 (fun sv1 sv2 ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
+                    Debug.ninfo_hprint (add_str "fwp - sv1" !print_sv) sv1 no_pos;
+                    Debug.ninfo_hprint (add_str "fwp - sv2" !print_sv) sv2 no_pos;
+                    Debug.ninfo_hprint (add_str "fwp - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                    if (List.length rch_ptrs > 0) && (not (CP.mem_svl sv2 !fwp)) then (
+                      fwp := sv2::!fwp; fwp_m := true;
+                    )
+                  ) vn.CF.h_formula_view_arguments vdecl.view_vars;
+              | CF.DataNode dn ->
+                  List.iter2 (fun sv1 ((_,fld),_) ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
+                    let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
+                    Debug.ninfo_hprint (add_str "fwf - sv1" (!print_sv)) sv1 no_pos;
+                    Debug.ninfo_hprint (add_str "fwf - fld" idf) fld no_pos;
+                    Debug.ninfo_hprint (add_str "fwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                    if (List.length rch_ptrs > 0) && (not (List.exists (fun s -> eq_str s fld) !fwf)) then (
+                      fwf := fld::!fwf; fwf_m := true;
+                    )
+                  ) dn.CF.h_formula_data_arguments ddecl.data_fields;
+              | _ -> ()
+            in
+            let new_bwps, new_bwfs = ref [], ref [] in 
+            let _ = List.iter (fun body_node ->
+              match body_node with
+              | CF.ViewNode vn ->
+                  let p_bwps = List.concat (List.map2 (fun sv1 sv2 ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
+                    if (List.length rch_ptrs > 0) then [sv2] else []
+                  ) vn.CF.h_formula_view_arguments vdecl.view_vars) in
+                  Debug.ninfo_hprint (add_str "p_bwps" (pr_list !CP.print_sv)) p_bwps no_pos;
+                  if (!new_bwps = []) then new_bwps := p_bwps
+                  else if (p_bwps != []) then
+                    new_bwps := Cpure.intersect_svl !new_bwps p_bwps;
+                  Debug.ninfo_hprint (add_str "new_bwps" (pr_list !CP.print_sv)) !new_bwps no_pos;
+              | CF.DataNode dn ->
+                  let p_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
+                    Debug.ninfo_hprint (add_str "bwf - sv1" (!print_sv)) sv1 no_pos;
+                    Debug.ninfo_hprint (add_str "bwf - fld" idf) fld no_pos;
+                    Debug.ninfo_hprint (add_str "bwf - rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                    if (List.length rch_ptrs > 0) then [fld] else []
+                  ) dn.CF.h_formula_data_arguments ddecl.data_fields) in
+                  Debug.ninfo_hprint (add_str "p_bwfs" (pr_list idf)) p_bwfs no_pos;
+                  if (!new_bwfs = []) then new_bwfs := p_bwfs
+                  else if (p_bwfs != []) then
+                    new_bwfs := Gen.BList.intersect_eq eq_str !new_bwfs p_bwfs;
+                  Debug.ninfo_hprint (add_str "new_bwfs" (pr_list idf)) !new_bwfs no_pos;
+              | _ -> ()
+            ) body_nodes in
+            let new_bwps = CP.remove_dups_svl (!new_bwps @ !bwp) in
+            if (List.length new_bwps != List.length !bwp) then (
+              bwp := new_bwps; bwp_m := true;
+            );
+            let new_bwfs = Gen.BList.remove_dups_eq eq_str (!new_bwfs @ !bwf) in
+            if (List.length new_bwfs != List.length !bwf) then (
+              bwf := new_bwfs; bwf_m := true;
+            );
+
+            Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
+                  "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
+                ^ "fwf: " ^ (pr_list idf y) ^ "; " 
+                ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
+                ^ "bwf: " ^ (pr_list idf t)
+              ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
+
+            (* unfold the inductive formulathen collect residents *)
+            let base_f = List.hd base_fs in
+            Debug.ninfo_hprint (add_str "f" (!CF.print_formula)) f no_pos;
+            let f = unfold_base_case_formula f vdecl base_f in
+            Debug.ninfo_hprint (add_str "unfold_f" (!CF.print_formula)) f no_pos;
+            let new_fwp, new_fwf, new_bwp, new_bwf = 
+              collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in
+            if (List.length new_fwp > List.length !fwp) then (fwp := new_fwp; fwp_m := true);
+            if (List.length new_fwf > List.length !fwf) then (fwf := new_fwf; fwf_m := true);
+            if (List.length new_bwp > List.length !bwp) then (bwp := new_bwp; bwp_m := true);
+            if (List.length new_bwf > List.length !bwf) then (bwf := new_bwf; bwf_m := true);
+
+            Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
+                  "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
+                ^ "fwf: " ^ (pr_list idf y) ^ "; " 
+                ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
+                ^ "bwf: " ^ (pr_list idf t)
+              ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
+          )
+      ) induct_fs head_body_info;
+      Debug.ninfo_hprint (add_str "loop flag: " (fun (x,y,z,t) ->
+            "fwp_m: " ^ (string_of_bool x) ^ "; "
+          ^ "fwf_m: " ^ (string_of_bool y) ^ "; " 
+          ^ "bwp_m: " ^ (string_of_bool z) ^ "; "
+          ^ "bwf_m: " ^ (string_of_bool t)
+        )) (!fwp_m,!fwf_m,!bwp_m,!bwf_m) no_pos;
+    done;
+    let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
+    let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
+    (!fwp, fwf, !bwp, bwf)
+  )
+
+let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
+    : (  CP.spec_var list * (data_decl * ident) list
+       * CP.spec_var list * (data_decl * ident) list ) =
+  let pr_vd = !print_view_decl in
+  let pr_svl = pr_list !CP.print_sv in
+  let pr_idl = pr_list idf in
+  let pr_out (fwp,fwf,bwp,bwf) = (
+    let fwp_s = pr_svl fwp in
+    let fwf_s = pr_list (fun(d,f) -> d.data_name^"."^f) fwf in
+    let bwp_s = pr_svl bwp in
+    let bwf_s = pr_list (fun(d,f) -> d.data_name^"."^f) bwf in
+    ("(fwp = " ^ fwp_s ^ "  ;; fwf = " ^ fwf_s 
+     ^ "  ;; bwp = " ^ bwp_s ^ "  ;; bwf = " ^ bwf_s ^ ")") 
+  ) in
+  Debug.no_1 "compute_view_forward_backward_info" pr_vd pr_out
+       (fun _ -> compute_view_forward_backward_info_x vdecl prog) vdecl
+
+let categorize_view (prog: prog_decl) : prog_decl =
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
+  let vdecls = prog.prog_view_decls in
+  let new_vdecls = List.map (fun vd ->
+    (* view residents *)
+    let residents = compute_view_residents vd in
+    let vd = { vd with view_residents = residents } in
+    (* forward & backward pointers, fields *)
+    let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd prog in
+    let vd = {vd with view_forward_ptrs = fwp;
+                      view_backward_ptrs = bwp;
+                      view_forward_fields = fwf;
+                      view_backward_fields = bwf;} in
+    (* touching & segmented is computed only when the forward and backward pointers is available *)
+    let touching = is_touching_view vd in
+    let segmented = is_segmented_view vd in
+    let vd = { vd with view_is_touching = touching;
+                       view_is_segmented = segmented; } in
+    (* is tail-recursively defined view? *)
+    let tail_recursive = is_tail_recursive_view vd in
+    let vd = { vd with view_is_tail_recursive = tail_recursive } in
+    vd
+  ) vdecls in
+  { prog with prog_view_decls = new_vdecls }
+ 

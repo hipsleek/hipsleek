@@ -1,0 +1,50 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+lemma_unsafe "L1" self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe "L2" self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+// nlseg4e2.slk
+
+// two problems with lemma application
+
+// (1)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<uu>.
+print residue.
+// valid with @L residue
+// problem : answers but first one did not have p=uu?.
+/*
+ <1>p::node<_>@L&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
+<2>p::node<_>@L&p=uu&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+*/
+
+// (2)
+checkentail
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+/*
+Why an extra residue?
+
+Entail 5: Valid. 
+ <1>p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>u_608::nlseg<p> * p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==> (left: lem_11) ==>  Match ==> ]]
+*/
+
+

@@ -1,0 +1,18 @@
+data node {
+    int val;
+    node next
+}.
+
+// tail-recursively defined linked list
+pred tlseg<p> == self = p
+    or self::tlseg<r> * r::node<v,p> & p != self.
+
+// the below entailment should be Valid, but in fact it's Failed.
+checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<q>.
+print residue.
+
+checkentail_exact r::node<v,p> * p::node<_,q> & q!=r & q!=p |-  r::tlseg<q>.
+print residue.
+
+checkentail_exact r::node<v,p> * p::node<_,q> * q::node<_,_>@L |-  r::tlseg<q>.
+print residue.

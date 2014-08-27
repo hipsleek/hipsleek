@@ -14,6 +14,7 @@ lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
 lemma_safe "two" self::rlseg<p1> * p1::node<_,p> -> self::rlseg<p>.
 */
 
+/*
 lemma_safe "three" self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,p>.
 
 
@@ -23,3 +24,9 @@ lemma_safe "t1b" self::rlseg<p1>* p1::node<_,p> <-
     self::node<_,q>*q::rlseg<p>  .
 
 lemma_safe "t2" self::node<_,q>*q::rlseg<p>  <- self::rlseg<p1>* p1::node<_,p>.
+*/
+
+
+lemma_safe "threea" self::node<_,q>*q::rlseg<p>  -> self::rlseg<p1>* p1::node<_,p>.
+
+

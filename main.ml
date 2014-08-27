@@ -54,7 +54,7 @@ let parse_file_full file_name (primitive: bool) =
         let index = try String.rindex file_name '.' with _ -> 0 in
         let length = (String.length file_name) - index in
         let ext = String.lowercase(String.sub file_name index length) in
-        if (ext = ".c") or (ext = ".cc") or (ext = ".cpp") or (ext = ".h") then
+        if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
         else
           "default"
@@ -302,6 +302,11 @@ let process_source_full source =
     let iprims_list = process_intermediate_prims prims_list in
 		(* let _ = print_endline ("process_source_full: after  process_intermediate_prims") in *)
     let iprims = Iast.append_iprims_list_head iprims_list in
+    let prim_names = 
+      (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
+      (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
+      ["__Exc"; "__Fail"; "__Error"]
+    in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
 		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
@@ -431,12 +436,12 @@ let process_source_full source =
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError1(s) detected at main "^"\n");
-      let _ = Log.process_proof_logging !Globals.source_files in
+      let _ = Log.process_proof_logging !Globals.source_files cprog prim_names in
       raise e
     end);
 	if (!Globals.reverify_all_flag)
 	then
-          let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
+          let _ =  Debug.ninfo_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	
@@ -456,7 +461,7 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = Log.process_proof_logging !Globals.source_files
+    let _ = Log.process_proof_logging !Globals.source_files cprog prim_names
     (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
       (* begin *)
       (*   let tstartlog = Gen.Profiling.get_time () in *)

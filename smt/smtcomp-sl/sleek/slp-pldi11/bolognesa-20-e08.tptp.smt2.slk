@@ -1,0 +1,13 @@
+//(set-info :status sat)
+
+data Sll_t {
+  Sll_t f;
+}.
+
+pred ls<out> ==
+ self = out
+or (exists u: self::Sll_t<f = u> * u::ls<out>).
+
+checkentail x16::Sll_t<f = x19> * x17::Sll_t<f = x13> * x12::Sll_t<f = x8> * x20::Sll_t<f = x1> * x2::ls<x8> * x4::ls<x8> * x18::Sll_t<f = x12> * x5::ls<x15> * x14::ls<x20> * x15::ls<x6> * x13::ls<x7> * x19::Sll_t<f = x1> * x1::Sll_t<f = x12> * x8::Sll_t<f = x7> * x9::Sll_t<f = x11> * x7::Sll_t<f = x10> * x3::Sll_t<f = x7> * x6::Sll_t<f = x3> * x11::ls<x17> * x10::Sll_t<f = x17> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & null = null
+         |- x10::ls<x17> * x14::ls<x20> * x16::ls<x19> * x5::ls<x6> * x2::ls<x8> * x18::ls<x12> * x20::ls<x1> * x6::ls<x3> * x3::ls<x7> * x9::ls<x11> * x19::ls<x8> * x4::ls<x7> * x11::ls<x10> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
+

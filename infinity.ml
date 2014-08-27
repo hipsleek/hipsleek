@@ -503,7 +503,8 @@ let convert_var_to_inf (pf:CP.formula) : CP.formula =
 
 let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool = 
   let (p_f,bf_ann) = bf in
-  match p_f with 
+  match p_f with
+    | CP.Frm _
     | CP.XPure _
     | CP.LexVar _
     | CP.BConst _
@@ -870,7 +871,8 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
       | _ -> p_f,tbf
     )
     else
-    (match p_f with 
+    (match p_f with
+      | CP.Frm _
       | CP.XPure _
       | CP.LexVar _
       | CP.BConst _

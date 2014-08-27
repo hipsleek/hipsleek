@@ -1,0 +1,22 @@
+data Sll_t {
+        Sll_t f;
+}.
+
+pred ls<out> == self=out
+  or (exists u: self::Sll_t<f:u> * u::ls<out> ).
+
+// checkentail s_formula & pure |- s_formula & pure
+
+checkentail x_emp::Sll_t<y_emp> 
+            * z_emp::Sll_t<t_emp> 
+            & null=null 
+         |- x_emp::Sll_t<y_emp> 
+            * z_emp::Sll_t<t_emp> 
+            & const_1 = const_1.
+print residue.
+
+checkentail x_emp::Sll_t<y_emp> 
+            * z_emp::Sll_t<t_emp> 
+            & null=null 
+         |- false.
+print residue.
