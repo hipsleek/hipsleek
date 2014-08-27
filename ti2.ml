@@ -286,29 +286,37 @@ let rank_templ_of_tnt_elem (ann, args) =
   match ann with
   | CP.TermU uid ->
     let templ_id = uid.CP.tu_fname ^ "_r_" ^ (string_of_int uid.CP.tu_id) in 
-    let templ_decl = CP.mkTemplate templ_id args no_pos in
-    CP.Template templ_decl, templ_id
-  | _ -> CP.mkIConst (-1) no_pos, ""
+    let templ_exp = CP.mkTemplate templ_id args no_pos in
+    CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
+  | _ -> CP.mkIConst (-1) no_pos, [], []
 
 let templ_constr_of_rel rel =
-  let src_rank, src_rank_id = rank_templ_of_tnt_elem rel.termu_lhs in
-  let dst_rank, dst_rank_id = rank_templ_of_tnt_elem rel.termu_rhs in
+  let src_rank, src_templ_id, src_templ_decl = rank_templ_of_tnt_elem rel.termu_lhs in
+  let dst_rank, dst_templ_id, dst_templ_decl = rank_templ_of_tnt_elem rel.termu_rhs in
   let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) (CP.cond_of_term_ann (fst rel.termu_lhs)) in
   let dec = mkGt src_rank dst_rank in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
+  let inf_templs = src_templ_id @ dst_templ_id in
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let es = { es with CF.es_infer_vars_templ = inf_templs } in
   let _ = Template.collect_templ_assume_init es 
-    (MCP.mix_of_pure ctx) dec no_pos in
-  [src_rank_id; dst_rank_id]
+    (MCP.mix_of_pure ctx) (mkAnd dec bnd) no_pos in
+  src_templ_id @ dst_templ_id,
+  src_templ_decl @ dst_templ_decl
   
 let find_ranking_function_scc prog g scc =
   let scc_edges = find_scc_edges g scc in
   let _ = print_endline (pr_list print_edge scc_edges) in
-  let inf_templs = List.fold_left (fun a (_, rel, _) -> 
-    a @ (templ_constr_of_rel rel)) [] scc_edges in
-  let _ = Template.collect_and_solve_templ_assumes_common prog inf_templs in
+  let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
+    let id, decl = templ_constr_of_rel rel in
+    (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
+  let prog = { prog with Cast.prog_templ_decls = prog.Cast.prog_templ_decls @ templ_decls } in
+  let _ = Template.collect_and_solve_templ_assumes_common false prog 
+    (List.map CP.name_of_spec_var inf_templs) in
   
   let src_of_edges = List.map (fun (_, rel, _) -> rel.termu_lhs) scc_edges in
   fun ann ->
-    [fst (rank_templ_of_tnt_elem (tnt_elem_of_ann src_of_edges ann))]
+    let templ, _, _ = rank_templ_of_tnt_elem (tnt_elem_of_ann src_of_edges ann) in
+    [templ]
+    
   

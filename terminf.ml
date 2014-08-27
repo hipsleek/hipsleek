@@ -366,7 +366,7 @@ let infer_lex_template_init prog (inf_templs: ident list)
     (* infer_loop_template_init prog dec_templ_assumes *)
 
 let infer_rank_template_init prog (inf_templs: ident list) =
-  let res, templ_assumes, templ_unks = collect_and_solve_templ_assumes_common prog inf_templs in
+  let res, templ_assumes, templ_unks = collect_and_solve_templ_assumes_common false prog inf_templs in
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
@@ -379,7 +379,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
         let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
         match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
-      let _ = collect_and_solve_templ_assumes_common prog (List.map name_of_spec_var inf_ptempls) in ()
+      let _ = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
       let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes

@@ -251,20 +251,24 @@ let solve_templ_assume _ =
     let unks = remove_dups (List.concat (List.map fv constrs)) in
     let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
     templ_assumes, templ_unks, res
-  
-let collect_and_solve_templ_assumes_common prog (inf_templs: ident list) =
+
+let silent_pr silent str =
+  if silent then ()
+  else print_endline str  
+      
+let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) =
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
-    let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in 
+    let _ = silent_pr silent ("TEMPLATE INFERENCE: Unsat.") in 
     res, templ_assumes, templ_unks
   | Sat model ->
     (* let _ = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in *)
     (* let _ = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in         *)
     let templ_decls = prog.C.prog_templ_decls in
     let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
-    print_endline "**** TEMPLATE INFERENCE RESULT ****";
-    print_endline (pr_list (fun tdef -> 
+    silent_pr silent "**** TEMPLATE INFERENCE RESULT ****";
+    silent_pr silent (pr_list (fun tdef -> 
       (Cprinter.string_of_templ_decl tdef) ^ "\n") res_templ_decls);
     res, templ_assumes, templ_unks
   | _ -> 
@@ -272,7 +276,7 @@ let collect_and_solve_templ_assumes_common prog (inf_templs: ident list) =
     res, templ_assumes, templ_unks
 
 let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
-  let res, templ_assumes, _ = collect_and_solve_templ_assumes_common prog inf_templs in
+  let res, templ_assumes, _ = collect_and_solve_templ_assumes_common false prog inf_templs in
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
@@ -285,7 +289,7 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
         let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
         match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
-      let _ = collect_and_solve_templ_assumes_common prog (List.map name_of_spec_var inf_ptempls) in ()
+      let _ = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else ()
   | _ -> ()
 

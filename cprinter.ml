@@ -812,14 +812,15 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Template t -> 
       fmt_string ((string_of_spec_var t.P.templ_id) ^ 
         (pr_list_round_sep "," !P.print_exp t.P.templ_args))
-      (*
-      if !Globals.gen_templ_slk then 
-        fmt_string ((string_of_spec_var t.P.templ_id) ^ 
-          (pr_list_round_sep "," !P.print_exp t.P.templ_args))
-      else
-        (fmt_string ((string_of_spec_var t.P.templ_id) ^ ": ");
-        pr_formula_exp (P.exp_of_template t))
-      *)
+      (* pr_opt pr_formula_exp t.P.templ_body *)
+      
+      (* if !Globals.gen_templ_slk then                            *)
+      (*   fmt_string ((string_of_spec_var t.P.templ_id) ^         *)
+      (*     (pr_list_round_sep "," !P.print_exp t.P.templ_args))  *)
+      (* else                                                      *)
+      (*   (fmt_string ((string_of_spec_var t.P.templ_id) ^ ": "); *)
+      (*   pr_formula_exp (P.exp_of_template t))                   *)
+      
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()

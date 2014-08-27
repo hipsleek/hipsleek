@@ -135,6 +135,16 @@ let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   | [] -> FuncT (Void, ret_typ)
   | _ -> List.fold_right (fun p_typ r_typ -> FuncT (p_typ, r_typ)) param_typ ret_typ
 
+let rec ret_typ_of_FuncT typ = 
+  match typ with
+  | FuncT (_, r_typ) -> ret_typ_of_FuncT r_typ
+  | _ -> typ
+
+let rec param_typ_of_FuncT typ = 
+  match typ with
+  | FuncT (p_typ, r_typ) -> p_typ::(param_typ_of_FuncT r_typ) 
+  | _ -> []
+
 let rec cmp_typ t1 t2=
   match t1,t2 with
     | UNK, UNK

@@ -914,4 +914,24 @@ let templ_assume_scc_stk: templ_assume Gen.stack = new Gen.stack
 let pr_templ_assume ta = 
   Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)
   
-
+let templ_decl_of_templ_exp texp =
+  let pos = texp.templ_pos in
+  let tname = name_of_spec_var texp.templ_id in
+  let ftype = type_of_spec_var texp.templ_id in
+  let rtype = ret_typ_of_FuncT ftype in
+  let ptypes = param_typ_of_FuncT ftype in
+  let ptypes_with_id = snd (List.fold_left (fun (i, a) t -> 
+    (i + 1, a @ [(i + 1, t)])) (0, []) ptypes) in 
+  let params = List.map (fun (i, t) -> 
+    SpecVar (t, tname ^ "_p_" ^ (string_of_int i), Unprimed)) ptypes_with_id in
+  let unk_coes = List.map (fun (i, t) -> 
+    SpecVar (t, tname ^ "_" ^ (string_of_int i), Unprimed)) ptypes_with_id in
+  let unk_const = SpecVar (Int, tname ^ "_" ^ (string_of_int 0), Unprimed) in
+  let unk_exps = List.map (fun v -> mkVar v pos) (unk_const::unk_coes) in
+  let body = List.fold_left (fun a (c, v) -> mkAdd a (mkMult c (mkVar v pos) pos) pos)
+    (List.hd unk_exps) (List.combine (List.tl unk_exps) params) in
+  { Cast.templ_name = tname;
+    Cast.templ_ret_typ = rtype;
+    Cast.templ_params = params;
+    Cast.templ_body = Some body;
+    Cast.templ_pos = pos; }
