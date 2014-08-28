@@ -298,7 +298,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref Frac
+let perm = ref NoPerm
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -972,7 +972,7 @@ let graph_norm_decl_threshold = ref 1
 
 let slice_one = ref (0:int)
 
-let allow_imm = ref true (*imm will delay checking guard conditions*)
+let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
@@ -1008,7 +1008,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref true (*enable compilation flag for website*)
+let web_compile_flag = ref false (*enable compilation flag for website*)
 
 
 (* Decide whether normalization/simplification
@@ -1152,9 +1152,9 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
-let enable_time_stats = ref false
+let enable_time_stats = ref true
 
-let enable_count_stats = ref false
+let enable_count_stats = ref true
 
 let enable_fast_imply = ref false
 
@@ -1170,7 +1170,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
@@ -1196,7 +1196,7 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5 
+let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1265,7 +1265,7 @@ let disable_pre_sat = ref true
 let do_infer_inv = ref false
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref true                (* option --classic is turned on or not? *)
+let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
