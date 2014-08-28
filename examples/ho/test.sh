@@ -25,7 +25,7 @@ echo "======= concrete-bags.slk ======"
 #================HIP==========================
 #================HIP==========================
 echo "======= thread-split.ss  ======"
-../../hip thread-split.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/thread-split.ss.res
+../../hip thread-split.ss -tp parahip --classic | grep -E 'Proc|assert:' > test-cases/thread-split.ss.res
 echo "======= thread-dead.ss  ======"
 ../../hip thread-dead.ss -tp parahip | grep -E 'Proc|assert:' > test-cases/thread-dead.ss.res
 echo "======= mapreduce.ss  ======"

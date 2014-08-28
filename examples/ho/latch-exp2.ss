@@ -78,8 +78,8 @@ void fork_thrd(thrd t,CDL c1,CDL c2,WAIT g)
   requires t::THRD{%P,%Q}<c1,c2,g> * %P
   ensures  t::THRD2{%Q}<c1,c2,g>;
 
-void join_thrd(thrd t, CDL c1,CDL c2,WAIT g)
-  requires t::THRD2{%Q}<c1,c2,g>
+void join_thrd(thrd t)
+  requires exists c1,c2,g: t::THRD2{%Q}<c1,c2,g>
   ensures  t::DEAD<> * %Q;
   requires t::DEAD<>
   ensures  t::DEAD<>;
@@ -127,7 +127,7 @@ void main(ref WAIT g)
   await(c2); //wait< c2->c1 >
   countDown(c1);
 
-  join_thrd(tid,c1,c2,g); //ERROR, since wait<S> & cyclic(S)
+  join_thrd(tid); //ERROR, since wait<S> & cyclic(S)
 
 }
 

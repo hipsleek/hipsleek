@@ -3113,7 +3113,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 	              else 
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                         if !Globals.web_compile_flag then
-                          print_string ("\nProcedure <b>"^proc.proc_name^"</b> result <font color=\"red\">FAIL</font>.\n")
+                          begin
+                            print_string ("\nProcedure <b>"^proc.proc_name^"</b> result <font color=\"red\">FAIL</font>.\n");
+                            (if proving_loc#is_avail then
+                              Printf.printf "\nLast Proving Location: %s\n"
+                                  proving_loc#string_of 
+                            else ())
+                          end
                         else
                           print_string ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
                     end;

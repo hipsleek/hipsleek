@@ -1,9 +1,9 @@
 #Compare old result with new result
 #================SLEEK==========================
 #================SLEEK==========================
-echo "======= thread-split.ss  ======"
+echo "======= thread-split.slk  ======"
 diff test-cases/thread-split.slk.res test-cases/thread-split.slk.n
-echo "======= thread-dead.ss  ======"
+echo "======= thread-dead.slk  ======"
 diff test-cases/thread-dead.slk.res test-cases/thread-dead.slk.n
 echo "======= bag-of-pairs.slk ======"
 diff test-cases/bag-of-pairs.slk.res test-cases/bag-of-pairs.slk.n

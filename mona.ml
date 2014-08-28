@@ -1280,7 +1280,7 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline_if (not !Globals.smt_compete_mode) ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = print_endline_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =

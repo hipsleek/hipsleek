@@ -56,8 +56,8 @@ void fork_thrd(thrd t,CDL c)
   requires t::THRD{%P,%Q}<c> * %P
   ensures  t::THRD2{%Q}<c>;
 
-void join_thrd(thrd t, CDL c)
-  requires t::THRD2{%Q}<c>
+void join_thrd(thrd t)
+  requires exists c: t::THRD2{%Q}<c>
   ensures  t::DEAD<> * %Q;
 
 /********************************************/
@@ -94,7 +94,7 @@ void main()
 
   countDown(c);
 
-  join_thrd(tid,c); //ERROR, since c::CNT<1> * c::CNT<-1>
+  join_thrd(tid); //ERROR, since c::CNT<1> * c::CNT<-1>
 
 }
 

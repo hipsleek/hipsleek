@@ -1,5 +1,7 @@
 /*
 
+  Deadlock due to unordered locking
+
   WAIT <S |-> l > is represented as a built-in
   prim_pred WAITS<G,S,d>
 
@@ -60,8 +62,8 @@ void fork_thrd(thrd t,lck l1,lck l2, LockSet ls, WAIT g)
   requires t::THRD{%P,%Q}<l1,l2,ls,g> * %P
   ensures  t::THRD2{%Q}<l1,l2,ls,g>;
 
-void join_thrd(thrd t, lck l1,lck l2, LockSet ls, WAIT g)
-  requires t::THRD2{%Q}<l1,l2,ls,g>
+void join_thrd(thrd t)
+  requires exists l1,l2,ls,g: t::THRD2{%Q}<l1,l2,ls,g>
   ensures  t::DEAD<> * %Q;
   requires t::DEAD<>
   ensures  t::DEAD<>;
@@ -86,14 +88,6 @@ void dispose_lock(lck l)
   ensures l::Unheld<> * %P;
 /********************************************/
 /********************************************/
-
-/* void thread(lck l1, LockSet ls, WAIT g) */
-/*   requires l1::Lock{emp}(f1)<> * ls::LockSet<S> * g::WAIT<G> & S={} & G={} */
-/*   ensures l1::Lock{emp}(f1)<> * ls::LockSet<S> * g::WAIT<G> & S={} & G={}; */
-/* { */
-/*   acquire_lock(l1,ls,g); */
-/*   release_lock(l1,ls); */
-/* } */
 
 void thread1(lck l1, lck l2, LockSet ls,WAIT g)
   requires l1::Lock{emp}(0.5)<>@S1 * l2::Lock{emp}(0.5)<>@S1 * ls::LockSet<S>
@@ -140,7 +134,7 @@ void main(LockSet ls,LockSet ls1, LockSet ls2,WAIT g)
   release_lock(l1,ls);
   release_lock(l2,ls);
 
-  join_thrd(tid,l1,l2,ls1,g); // l2 -> l1
+  join_thrd(tid); // l2 -> l1
   //WAIT{l1 -> l2, l2 -> l1} --> ERROR
 
   dispose_lock(l1);

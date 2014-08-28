@@ -46,8 +46,8 @@ void fork_thrd(thrd t,cell x, cell y)
   requires t::THRD{%P,%Q}<x,y> * %P
   ensures  t::THRD2{%Q}<x,y>;
 
-void join_thrd(thrd t, cell x, cell y)
-  requires t::THRD2{%Q}<x,y>
+void join_thrd(thrd t)
+  requires exists x,y: t::THRD2{%Q}<x,y>
   ensures  t::dead<> * %Q;
 
 // this new thread adds 3 to x
@@ -59,11 +59,16 @@ void fork_thrd2(thrd t2,thrd t, cell x)
   requires t2::THRD3{%P,%Q}<t,x> * %P
   ensures  t2::THRD4{%Q}<t,x>;
 
-void join_thrd2(thrd t2, thrd t, cell x)
-  requires t2::THRD4{%Q}<t,x>
+void join_thrd2(thrd t2)
+  requires exists t,x: t2::THRD4{%Q}<t,x>
   ensures  t2::dead<> * %Q;
 
+void destroy(cell c)
+  requires c::cell<_>
+  ensures emp;
+
 void main()
+  requires emp ensures emp;
 {
   cell x = new cell(1);
   cell y = new cell(2);
@@ -76,15 +81,19 @@ void main()
 
   //dprint;//2 threads here
 
-  join_thrd2(tid2,tid1,x); //x=3
+  join_thrd2(tid2); //x=3
   //after joining with tid2, we know that tid1 is already dead
   //hence, we recover both x and y
 
-  dprint; //tid1 still pending here. still need smart normalization here
+  //dprint; //tid1 still pending here. still need smart normalization here
 
   y.v = y.v +2; //y=3, y is released using "normalize" lemma
 
-  dprint; // all threads are dead
+  //dprint; // all threads are dead
 
   assert x'::cell<3> * y'::cell<3>;
+
+  destroy(x);
+  destroy(y);
+
 }

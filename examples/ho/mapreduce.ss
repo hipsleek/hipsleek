@@ -1,3 +1,12 @@
+/*
+  Implement map/reduce using multi-join.
+
+  A mapper perfoms map operation. Two reducers join 
+  with the mapper, own corresponding resource, and
+  perform their corresponding reduce operation.
+
+ */
+
 data node {
   int val; 
   node next;	
@@ -36,8 +45,8 @@ void fork_mapper(thrd t,list l, list ol, list el)
   requires t::MTHRD{%P,%Q}<l,ol,el> * %P
   ensures  t::MTHRD2{%Q}<l,ol,el>;
 
-void join_mapper(thrd t,list l, list ol, list el)
-  requires t::MTHRD2{%Q}<l,ol,el>
+void join_mapper(thrd t)
+  requires exists l,ol, el: t::MTHRD2{%Q}<l,ol,el>
   ensures  t::DEAD<> * %Q;
 
 thrd create_reducer1()
@@ -53,8 +62,8 @@ void fork_reducer(thrd t, thrd m,list l, count c)
   requires t::RTHRD{%P,%Q}<m,l,c> * %P
   ensures  t::RTHRD2{%Q}<m,l,c>;
 
-void join_reducer(thrd t, thrd m, list l, count c)
-  requires t::RTHRD2{%Q}<m,l,c>
+void join_reducer(thrd t)
+  requires exists m,l,c: t::RTHRD2{%Q}<m,l,c>
   ensures  t::DEAD<> * %Q;
 
 //*****************************
@@ -133,8 +142,7 @@ void reducer1(thrd m, list ol, count c)
   requires m::MTHRD2{ol::list<hol> * hol::ll<n> & n>=0 &true}<_,ol,_> * c::count<_>
   ensures ol::list<hol> * hol::ll<n> * m::DEAD<> * c::count<n>; //'
 {
-  list l1,l2; //dummy
-  join_mapper(m,l1,ol,l2);
+  join_mapper(m);
   int t = countList(ol);
   c.val = t;
 }
@@ -143,8 +151,7 @@ void reducer2(thrd m, list el, count  c)
   requires m::MTHRD2{el::list<hel> * hel::ll<n> & n>=0 &true}<_,_,el> * c::count<_>
   ensures el::list<hel> * hel::ll<n> * m::DEAD<> * c::count<n>; //'
 {
-  list l1,l2; //dummy
-  join_mapper(m,l1,l2,el);
+  join_mapper(m);
   int t = countList(el);
   c.val = t;
 }
@@ -173,9 +180,8 @@ void main()
   // the second reducer counts in ol
   fork_reducer(r2,m,el,c2);
 
-  //join_mapper(m,l,ol,el); //no longer need this due to the normalization lemma
-  join_reducer(r1,m,ol,c1);
-  join_reducer(r2,m,el,c2);
+  join_reducer(r1);
+  join_reducer(r2);
 
 
   int n1 = countList(l);

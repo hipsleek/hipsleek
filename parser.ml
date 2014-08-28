@@ -1861,7 +1861,7 @@ cexp_w:
             report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
           else
             begin
-              if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+              if not(rel_names # mem id) then if not !Globals.web_compile_flag then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
               Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
             end
     | peek_cexp_list; ocl = opt_comma_list -> 

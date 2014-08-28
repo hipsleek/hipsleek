@@ -1,11 +1,13 @@
 /*
+
+  Deadlock due to unordered locking
+
   WAIT <S |-> l > is represented as a relation waitS<G,S,d>
   waitS<G,S,d> ==translate== {(c,d) | c in S}
 
   Working, but pretty slow, maybe due to the translation
   (and also Mona).
 
-  Deadlock due to unordered locking
  */
 
 class lck extends Object {}
@@ -54,8 +56,8 @@ void fork_thrd(thrd t,lck l1,lck l2, LockSet ls, WAIT g)
   requires t::THRD{%P,%Q}<l1,l2,ls,g> * %P
   ensures  t::THRD2{%Q}<l1,l2,ls,g>;
 
-void join_thrd(thrd t, lck l1,lck l2, LockSet ls, WAIT g)
-  requires t::THRD2{%Q}<l1,l2,ls,g>
+void join_thrd(thrd t)
+  requires exists l1,l2,ls,g: t::THRD2{%Q}<l1,l2,ls,g>
   ensures  t::DEAD<> * %Q;
   requires t::DEAD<>
   ensures  t::DEAD<>;
@@ -134,7 +136,7 @@ void main(LockSet ls,LockSet ls1, LockSet ls2,WAIT g)
   release_lock(l1,ls);
   release_lock(l2,ls);
 
-  join_thrd(tid,l1,l2,ls1,g); // l2 -> l1
+  join_thrd(tid); // l2 -> l1
   //WAIT{l1 -> l2, l2 -> l1} --> ERROR
 
   dispose_lock(l1);
