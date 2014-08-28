@@ -16,28 +16,6 @@
 */
 
 /*
-//1.
-checkentail true & flow __norm  or true & flow __Error  |- true & flow __norm.
-print residue.
-expect Fail.
-
-
-//2.
-checkentail true & flow __norm  or x=1 & flow __Error  |- 
-    true & flow __norm    or     x>2 & flow __Error
-   .
-expect Fail.
-*/
-
-//3.
-checkentail true & flow __norm   or x=1 & flow __Error  |- 
-   x>0 & flow __Error  or  true & flow __norm
-   .
-expect Valid.
-
-
-
-/*
 
    S1 & F1 |- D * R1
    S2 & F2 |- D * R2
@@ -61,5 +39,50 @@ expect Valid.
    [x] true   |- x::node(..) --> {x=null & Error, x::node<..> & OK} 
 
 */
+/*
+//1.
+checkentail true & flow __norm   |-  true & flow __norm .
+expect Valid.
+
+//2.
+checkentail  x=1 & flow __Error  |-   x>0 & flow __Error  .
+expect Valid.
+
+
+//3.
+checkentail  false  |-   x>0 & flow __norm  .
+expect Valid.
+
+
+//4.
+checkentail  x=1 & flow __Error  |-   x>0 & flow __norm  .
+expect Fail.
+
+
+
+//5.
+checkentail  x=1 & flow __norm  |-   x>0 & flow __Error.
+expect Fail.
+
+
+//6.
+checkentail x=1 & flow __norm  or true & flow __Error  |- true & flow __norm.
+print residue.
+expect Fail.
+
+
+//7.
+checkentail true & flow __norm  or x=1 & flow __Error  |- 
+    true & flow __norm    or     x>2 & flow __Error
+   .
+expect Fail.
+*/
+
+//8.
+checkentail y=0 & flow __norm   or x=1 & flow __Error  |- 
+   x>0 & flow __Error  or  true & flow __norm
+   .
+expect Valid.
+
 
 

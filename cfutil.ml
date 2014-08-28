@@ -2340,3 +2340,50 @@ let transform_bexpr f0=
    let pr2 = pr_option pr1 in
    Debug.no_1 "partition_error_es" pr1 (pr_pair pr2 pr2)
        (fun _ -> partition_error_es_x es) es
+
+
+let obtain_subsume_es_x es conseq=
+  let conseq_flow = flow_formula_of_formula conseq in
+   let rec recf f= match f with
+     | Base fb -> if subsume_flow_ff conseq_flow fb.formula_base_flow then
+         [f], None
+       else [], Some f
+     | Exists fe -> if subsume_flow_ff conseq_flow fe.formula_exists_flow then
+         [f], None
+       else [], Some f
+     | Or orf -> begin
+           let err_f1, of1 = recf orf.formula_or_f1 in
+           let err_f2, of2 = recf orf.formula_or_f2 in
+           let new_f = match of1, of2 with
+             | Some f1,Some f2 -> Some (Or{orf with formula_or_f1 = f1;
+                   formula_or_f2 = f2
+               })
+             | None, Some _ -> of2
+             | Some _, None -> of1
+             | _ -> None
+           in
+           (err_f1@err_f2, new_f)
+       end
+   in
+   let sub_fs, opt_f = recf es.es_formula in
+   let pos = pos_of_formula es.es_formula in
+   let sub_es = match sub_fs with
+     | [] -> None
+     | a::rest -> let sub_f = List.fold_left (fun f1 f2 -> mkOr f1 f2 pos)  a rest in
+       Some ({es with es_formula = sub_f})
+   in
+   let other_es = match opt_f with
+     | Some f -> Some ({es with es_formula = f})
+     | None -> None
+   in
+   (sub_es, other_es)
+
+(*
+filter es that <= conseq flow
+*)
+ let obtain_subsume_es es conseq=
+   let pr1 = Cprinter.string_of_entail_state in
+   let pr2 = pr_option pr1 in
+   let pr3 = !print_formula in
+   Debug.no_2 "obtain_subsume_es" pr1 pr3 (pr_pair pr2 pr2)
+       (fun _ _ -> obtain_subsume_es_x es conseq) es conseq

@@ -9081,7 +9081,7 @@ let rec context_is_eq_flow (f:context) (ff)  : bool=
 let list_context_is_eq_flow (f:list_context) (ff)  : bool=
   match f with
     | FailCtx _ -> false
-    | SuccCtx ls -> List.for_all (fun f -> context_is_eq_flow f ff) ls
+    | SuccCtx ls -> if ls = [] then false else List.for_all (fun f -> context_is_eq_flow f ff) ls
 
 
 (* let rec get_must_failure_ft (ft:fail_type) = *)
@@ -9282,8 +9282,9 @@ let combine_ctx_list_err ctxs=
             | _ -> None
       end
 
-let get_must_error_from_ctx cs = 
-  match cs with 
+let get_must_error_from_ctx cs =
+  match cs with
+    | [] -> (Some ("empty residual state", mk_cex false))
     | [Ctx es] -> (match es.es_must_error with
         | None -> None
         | Some (msg,_,cex) -> Some (msg,cex))
@@ -9291,7 +9292,7 @@ let get_must_error_from_ctx cs =
 
 let isFailCtx_gen cl = match cl with
 	| FailCtx _ -> true
-	| SuccCtx cs -> (get_must_error_from_ctx cs) !=None
+	| SuccCtx cs -> if cs = [] then true else (get_must_error_from_ctx cs) !=None
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -9412,13 +9413,13 @@ let get_must_failure_x (ft:list_context) =
           (*     let _ = print_flush (!print_list_context_short ft) in *)
           (*     raise a) *)
       end
-	| SuccCtx cs -> begin
-            let s_opt = get_must_error_from_ctx cs in
-            match s_opt with
-              | Some (s,cex) -> Some (s, cex)
-              | None -> None
-          end
-    (* | _ -> None *)
+    | SuccCtx cs -> begin
+        let s_opt = get_must_error_from_ctx cs in
+          match s_opt with
+            | Some (s,cex) -> Some (s, cex)
+            | None -> None
+      end
+          (* | _ -> None *)
 
 let get_must_failure (ft:list_context)=
   let pr1 = !print_list_context in
@@ -10140,7 +10141,7 @@ let or_context_list (cl10 : context list) (cl20 : context list) : context list =
 	| [] -> []
   in
 	if Gen.is_empty cl20 then
-	  []
+	  [] (* cl10 *)
 	else helper cl10 
 
 let or_context_list cl10 cl20 =

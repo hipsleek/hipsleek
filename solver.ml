@@ -3448,17 +3448,17 @@ and heap_entail_struc_init_bug_orig (prog : prog_decl) (is_folding : bool)  (has
   (CF.convert_must_failure_to_value_orig ans, prf)
 
 and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (has_post: bool) (cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in
-  let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in
-  if f1 && f2 then
-    begin
-      (* let _ = print_string ("\n (andreeac) coseq init:" ^ (Cprinter.string_of_struc_formula conseq)) in *)
-      let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in
-      (* let _ = print_string ("\n (andreeac) coseq after:" ^ (Cprinter.string_of_struc_formula conseq)) in *)
-      let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in
-      (CF.invert_outcome ans,prf)
-    end
-  else
+  (* let f1 = CF.struc_formula_is_eq_flow conseq !error_flow_int in *)
+  (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
+  (* if f1 && f2 then *)
+  (*   begin *)
+  (*     (\* let _ = print_string ("\n (andreeac) coseq init:" ^ (Cprinter.string_of_struc_formula conseq)) in *\) *)
+  (*     let conseq = (CF.struc_formula_subst_flow conseq (CF.mkNormalFlow())) in *)
+  (*     (\* let _ = print_string ("\n (andreeac) coseq after:" ^ (Cprinter.string_of_struc_formula conseq)) in *\) *)
+  (*     let (ans,prf) = heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid in *)
+  (*     (CF.invert_outcome ans,prf) *)
+  (*   end *)
+  (* else *)
     heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid 
 
 and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
@@ -4888,23 +4888,41 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               else es in
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
               (* treat err states as unreachable states *)
-              let oerr_es, osafe_es = Cfutil.partition_error_es es in
-              let tmp0, prf = match osafe_es with
+              (* let osubsumed_es, non_subsume_es = Cfutil.partition_error_es es in *)
+              (* let tmp0, prf = match osafe_es with *)
+              (*   | Some es1 -> *)
+              (*         heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos *)
+              (*   | None -> (SuccCtx [ctx], UnsatAnte) *)
+              (* in *)
+              (* let tmp = match oerr_es with *)
+              (*   | None -> tmp0 *)
+              (*   | Some error_es -> begin *)
+              (*       let err_states = SuccCtx [(Ctx error_es)] in *)
+              (*       let lc = match osafe_es with *)
+              (*         | Some _ -> or_list_context err_states tmp0 *)
+              (*         | None -> err_states *)
+              (*       in *)
+              (*       lc *)
+              (*     end *)
+              (* in *)
+              let osubsumed_es, non_subsume_es = Cfutil.obtain_subsume_es es conseq in
+              let tmp0, prf = match osubsumed_es with
                 | Some es1 ->
                       heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos
-                | None -> (SuccCtx [ctx], UnsatAnte)
+                | None -> (SuccCtx [], UnsatAnte)
               in
-              let tmp = match oerr_es with
-                | None -> tmp0
-                | Some error_es -> begin
-                    let err_states = SuccCtx [(Ctx error_es)] in
-                    let lc = match osafe_es with
-                      | Some _ -> or_list_context err_states tmp0
-                      | None -> err_states
-                    in
-                    lc
-                  end
-              in
+              let tmp = tmp0 in
+              (* let tmp = match oerr_es with *)
+              (*   | None -> tmp0 *)
+              (*   | Some error_es -> begin *)
+              (*       let err_states = SuccCtx [(Ctx error_es)] in *)
+              (*       let lc = match osafe_es with *)
+              (*         | Some _ -> or_list_context err_states tmp0 *)
+              (*         | None -> err_states *)
+              (*       in *)
+              (*       lc *)
+              (*     end *)
+              (* in *)
 	      (filter_set tmp, prf)
             end
 	  in wrap_trace es.es_path_label exec ()
