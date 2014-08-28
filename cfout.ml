@@ -277,7 +277,7 @@ let rec elim_imm_vars_f f =
         match f with
           | CP.BForm ((p_f, _), _) -> (
                 match p_f with
-                  | CP.Eq (Var (sv1, _), Var (sv2, _), _) -> acc@[(sv1,sv2)]
+                  | CP.Eq (CP.Var (sv1, _), CP.Var (sv2, _), _) -> acc@[(sv1,sv2)]
                   | _ -> acc
             )
           | _ -> acc
