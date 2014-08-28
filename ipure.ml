@@ -2221,7 +2221,7 @@ let transform_bexp f0 lb sl e f=
   Debug.no_1 "transform_bexp" pr pr
       (fun _ -> transform_bexp_x f0 lb sl e f) f
 
-let rec transform_bexp_form f=
+let rec transform_bexp_form f: formula=
   let recf = transform_bexp_form in
   match f with
     | BForm ((pf,a),b) -> begin

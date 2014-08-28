@@ -19,6 +19,7 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 
 lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
+
 //lemma self::ll_tail<t, n> <- self::lseg<n-1, t> * t::node<_, null>.
 //FAIL w eps, VALID w/o eps
 
@@ -42,3 +43,4 @@ checkentail x::ll_tail<r3, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r
 checkentail x::ll_tail<p, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.
 print residue.
 // valid with r3=p
+
