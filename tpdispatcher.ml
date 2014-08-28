@@ -364,6 +364,7 @@ let set_tp tp_str =
   in the presence of floating point constraints*)
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
+  let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
   let prover_str = ref [] in
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
@@ -404,9 +405,9 @@ let set_tp tp_str =
     if is_smtsolver_z3 tp_str then
        (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
+    (pure_tp := Redlog; prover_str := redcsl_str::!prover_str;)
   else if tp_str = "OCRed" then
-    (pure_tp := OCRed; prover_str := "oc"::"redcsl"::!prover_str;)
+    (pure_tp := OCRed; prover_str := "oc"::redcsl_str::!prover_str;)
   else if tp_str = "math" then
     (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
@@ -415,7 +416,7 @@ let set_tp tp_str =
     (pure_tp := PARAHIP;
     prover_str := "z3"::!prover_str;
     prover_str := "mona"::!prover_str;
-    prover_str := "redcsl"::!prover_str;)
+    prover_str := redcsl_str::!prover_str;)
   else if tp_str = "zm" then
     (pure_tp := ZM; 
     prover_str := "z3"::!prover_str;

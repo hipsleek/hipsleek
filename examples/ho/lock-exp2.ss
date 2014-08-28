@@ -41,7 +41,6 @@ void main() requires emp ensures emp;
   acquire_lock(l,a);
   assert a'::cell<v> & v>0 ; //'
   a.val = a.val +1;
-  dprint;
   release_lock(l,a);
 
   acquire_lock(l,a);

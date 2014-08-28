@@ -11979,7 +11979,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
               let flag = if !allow_imm then false else not (apply_coer) in
               if (flag || (is_cycle_coer coer origs))
 	      then
-                let _ = print_string("xxxx Rewrite cannot be applied : "^("0")^"\n") in
+                let _ = if not !Globals.web_compile_flag then print_string("xxxx Rewrite cannot be applied : "^("0")^"\n") in
 	        (Debug.devel_zprint (lazy("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)))
                     pos; (0, mkTrue (mkTrueFlow ()) no_pos))
 	      else
