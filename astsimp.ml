@@ -1730,15 +1730,15 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           Debug.dinfo_hprint (add_str "xform1" !CP.print_formula) xform1 pos;
           Debug.dinfo_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
           let compute_unfold_baga baga_over body =
-              match baga_over with 
+              match baga_over with
                 | None -> None
-                | Some lst -> 
+                | Some lst ->
                       if List.length lst == 1 then
 	                let unf_baga = Cvutil.xpure_symbolic_baga prog body in
-                        Some unf_baga
-                      else baga_over
+                        Some (Expure.simplify unf_baga)
+                      else Some (Expure.simplify lst) (* baga_over *)
           in
-          if do_not_compute_flag then 
+          if do_not_compute_flag then
             vdef.C.view_xpure_flag <- true
           else
             begin
@@ -1752,7 +1752,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1814,8 +1814,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let formula1_under = wrap_under_baga form_body_inv vdef in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.ninfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1851,7 +1851,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in
       let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
-      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let over_fail = (CF.isFailCtx baga_over_rs) in
       let under_fail = (CF.isFailCtx baga_under_rs) in
       let do_test_inv msg inv fail_res =
@@ -2036,7 +2035,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         | Some a -> 
               let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
               let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
@@ -6042,12 +6041,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
           let (n_tl,n_f1)= helper b.IF.formula_or_f1 tl in
           let (n_tl,n_f2) = helper b.IF.formula_or_f2 n_tl in
           (n_tl,CF.mkOr n_f1 n_f2 b.IF.formula_or_pos)
-      | IF.Base {
+      | IF.Base ( {
             IF.formula_base_heap = h;
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
-            IF.formula_base_pos = pos} ->(
+            IF.formula_base_pos = pos} as fb) ->(
             let (n_tl,rl) = res_retrieve tl clean_res fl in
             let n_tl = 
               if sep_collect then
@@ -6055,6 +6054,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 gather_type_info_heap prog h n_tl
               else n_tl in
             let _ = List.map (fun x -> helper_one_formula x tl) a in
+            (* transform bexpr *)
+            (* let nh, ps = IF.transform_bexp_hf prog h in *)
+            (* let np = if ps = [] then p else List.fold_left (fun r p1 -> Ipure.mkAnd r p1 pos) p ps in *)
+            (* let f1 = IF.Base {fb with IF.formula_base_heap = nh; *)
+            (*     IF.formula_base_pure = np *)
+            (* } in *)
             let (n_tl,ch, newvars) = linearize_formula prog f0 n_tl in
             let n_tlist = (
               if sep_collect then
@@ -6086,13 +6091,22 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               else n_tl 
             ) in 
             let n_tl = List.fold_right helper_one_formula a n_tl in
-            let f1 = IF.Base {
+            let f1 = IF.Base ( {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
-                IF.formula_base_pos = pos; } in
+                IF.formula_base_pos = pos; }) in
 	    (* let _ = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
+            (* transform bexp *)
+            (* let nh, ps = IF.transform_bexp_hf prog h in *)
+            (* let np = if ps = [] then p else List.fold_left (fun r p1 -> Ipure.mkAnd r p1 pos) p ps in *)
+            (* let f2 = IF.Base ( { *)
+            (*     IF.formula_base_heap = nh; *)
+            (*     IF.formula_base_pure = np; *)
+            (*     IF.formula_base_flow = fl; *)
+            (*     IF.formula_base_and = a; *)
+            (*     IF.formula_base_pos = pos; }) in *)
             let (n_tl,ch, newvars) = linearize_formula prog f1 n_tl in
             (* let _ = print_string ("Cform ch: "^(Cprinter.string_of_formula ch) ^"\n" ) in *)
             let qsvars = List.map (fun qv -> trans_var qv n_tl pos) qvars in
@@ -6711,7 +6725,8 @@ else ()
   
 and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
-  match f0 with
+  let f1 = Ipure.transform_bexp_form f0 in
+  match f1 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf tlist , lbl) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 tlist in
@@ -6891,6 +6906,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
           CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
+    | IP.BExpr f1 -> report_error no_pos "trans_pure_exp BExpr"
+          (* let nf1 = IP.transform_bexp f1 in *)
+          (* BExpr (trans_pure_formula nf1 tlist) *)
 
 and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with

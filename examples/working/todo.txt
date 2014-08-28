@@ -802,6 +802,28 @@ Valid Lemmas : [lem_12:==>] added to lemma store.
 Total number of errors: 2 in files:
   sleek3.slk({L1#Fail}) baga-test-2.slk({E15#Fail}).
 ====================================================================
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  sleek9.slk(no result  for {E}) lemmas/app-tail.slk(no result  for {E}) lemmas/ll_tail.slk(no result  for {E}) lemmas/sll_tailL.slk(no result for {L}) lemmas/dseg-new.slk(no result for {L}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+!!! formula1: emp&((tx=self & n=1 & self!=null) | (2<=n & self!=null))&
+{FLOW,(1,24)=__flow}[]
+!!! formula1_under: emp&n=1 & tx>0&{FLOW,(1,24)=__flow}[]
+!!! WARNING logtime exception:10.
+Stop Omega... 30 invocations 
+SAT Count   : 31
+SAT % Hit   : 64.51%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.00274 (seconds)
+
+!!! log(small):(0.013134,54)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(pairwise:53<1:TIMEOUT:OM*EXC*,10.)])
+
 ====================================================================
 ====================================================================
 ====================================================================

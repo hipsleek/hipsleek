@@ -182,6 +182,7 @@ let is_type_var t =
   | TVar _ -> true
   | _ -> false
 
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
@@ -757,6 +758,10 @@ let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
+
+
+let print_original_solver_output = ref false
+let print_original_solver_input = ref false
 
 let cond_path_trace = ref true
 

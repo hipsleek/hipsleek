@@ -111,9 +111,9 @@ let common_arguments = [
    "Try induction in case of failure implication."); (* An Hoa *)
   ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-  ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
+  ("--smtout", Arg.Set Globals.print_original_solver_output,
    "Print the original output given by the SMT solver."); (* An Hoa *)
-  ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
+  ("--smtinp", Arg.Set Globals.print_original_solver_input,
    "Print the program generated SMT input."); (* An Hoa *)
   ("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
    "Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -213,6 +213,8 @@ let common_arguments = [
    "Log all formulae sent to Omega Calculator in file allinput.oc");
   ("--log-z3", Arg.Set Smtsolver.log_all_flag,
    "Log all formulae sent to z3 in file allinput.z3");
+  ("--log-z3n", Arg.Set Z3.log_all_flag,
+  "Log all formulae sent to z3 in file allinput.z3n");
   ("--log-isabelle", Arg.Set Isabelle.log_all_flag,
    "Log all formulae sent to Isabelle in file allinput.thy");
   ("--log-coq", Arg.Set Coq.log_all_flag,
@@ -344,7 +346,7 @@ let common_arguments = [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3-4.2"; "z3-4.3.1"; "zm"; "om";
+  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");

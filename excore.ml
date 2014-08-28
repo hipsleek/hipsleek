@@ -441,10 +441,11 @@ struct
   let is_false (e:epure) = (e == mk_false)
   let string_of (x:epure) = pr_pair (pr_list Elt.string_of) !print_pure_formula x
   let string_of_disj lst = pr_list_ln string_of lst
-  let mk_data sv = [([sv], mkTrue no_pos)] 
+  let mk_data sv = [([sv], mkTrue no_pos)]
 
   let merge_baga b1 b2 = Elt.merge_baga b1 b2
 
+  let is_eq_baga (b1,_) (b2,_) = Elt.is_eq_baga b1 b2
 
   (* convert ptr to integer constraints *)
   (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)

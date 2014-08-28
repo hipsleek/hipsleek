@@ -25,6 +25,11 @@ checksat x::ll<n> & n>3.
 // no output?
 // Entail UNKNOWN.
 
+checkentail x::ll<n> & n=0 |- false.
+
+checkentail x::ll<n> & n<0 |- false.
+
+checkentail x::ll<n> & n>3 |- false.
 
 checkentail x::ll<n> & n>0 |- x!=null.
 

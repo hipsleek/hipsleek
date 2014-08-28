@@ -1,0 +1,152 @@
+
+//1
+//checkentail r=(a|b) |- r & (a|b) | !r & !(a|b).
+//checkentail r & (a|b) | !r & !(a|b)  |- r & (a|b) | !r & !(a|b).
+print residue.
+
+
+//checkentail r & (a|b) | !r & !(a|b) |- r=(a|b).
+
+
+/*
+checkentail r=a |- r=(a|b).
+checkentail r & a | !r & !a |- r=(a|b).
+checkentail r & a |- r=(a|b).
+
+
+checkentail !r & !a |- !r & !(a|b).
+
+checkentail !r & !a |- !r & !a & !b.
+
+
+checkentail r=(a|b) |- r=a.
+
+checkentail r=a | r=b |- r=(a|b).
+*/
+
+//checkentail rrr=(a|b) |- rrr=a | rrr=b .
+
+print residue.
+
+/*
+
+# ex1a.slk --esl
+ 
+id: 3<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: Early_Contra_Detect
+ raw proof:IMPLY:complement {[a, rrr, b] : (( (not ((((rrr > 0) & ((a > 0) | (b > 0))) | ( (not ((rrr > 0)))  &  (not (((a > 0) | (b > 0)))) ))))  | ((rrr = a) | (rrr = b))))};
+ raw result: {[a,rrr,b]: b+1, a+1 <= rrr <= 0}
+ Imply: ante: ((rrr & ((a | b))) | (!(rrr) & !(((a | b)))))
+	     conseq:  1(rrr=a | rrr=b)
+ res: false
+*/
+
+checkentail rrr=a | rrr=b |- rrr=(a|b)  .
+
+/*
+# ex1a.slk --esl --pcp --print-type
+
+type-checking problem here..
+
+ ### ante =  emp&(rrr:TVar[22]=a:TVar[22] | rrr:TVar[22]=b:TVar[22])&
+{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase emp&((rrr:boolean & ((a:boolean | b:boolean))) | (!(rrr:boolean) & 
+       !(((a:boolean | b:boolean)))))&{FLOW,(21,22)=__norm}[]
+
+ 
+ raw proof:IMPLY:complement {[rrr, a, b] : (( (not (((rrr = a) | (rrr = b))))  | (((rrr > 0) & ((a > 0) | (b > 0))) | ( (not ((rrr > 0)))  &  (not (((a > 0) | (b > 0)))) ))))};
+ raw result: {[rrr,a,rrr]: rrr <= 0 && 1 <= a}
+ Imply: ante: (rrr=a | rrr=b)
+	     conseq:  1((rrr & ((a | b))) | (!(rrr) & !(((a | b)))))
+ res: false
+*/
+
+/*
+   r=(a|b) <--> r=a | r=b
+
+  e1=e2 <--> e1 & e2 | !e1&!e2
+*/
+
+/*
+//2
+checkentail (a|b)=r |- r & (a|b) | !r & !(a|b).
+print residue.
+
+//(3)
+checkentail r!=(a|b) |- r & !(a|b) | !r & (a|b).
+print residue.
+
+//(4)
+checkentail (a|b)!=r |- r & !(a|b) | !r & (a|b).
+print residue.
+
+//5
+checkentail (r&s) =(a|b) |- (r&s) & (a|b) | !(r&s) & !(a|b).
+print residue.
+
+//6
+checkentail (r&s) !=(a|b) |- (r&s) & !(a|b) | !(r&s) & (a|b).
+print residue.
+
+//7
+checkentail (r&s|t) =(a|b) |- (r&s|t) & (a|b) | !(r&s|t) & !(a|b).
+print residue.
+*/
+/*
+
+ v=e --> v & e | !v & !e
+
+ e1 = e2 --> e1 & e2 | !(e1) & !e2
+
+ e1!=e2 <--> (e1 & !e2 | !e2 & e1)
+
+*/
+
+/*
+//(1.5)
+//checkentail (exists a r:a=r |- (r & (a)) | (!r & !(a)).
+
+//(2)
+//checkentail a=r |- (r & (a|b)) .
+
+
+// r=(a|b)  <-> r & (a|b) | !r & !(a|b) 
+
+//(3)
+//checkentail 
+//     x::ann<i,r> & (r & (a|b) | !r & !(a|b))
+//    |- x::ann<i,a>.
+
+
+//(4)
+//checkentail (r & (a|b)) | (!r & !(a|b)) |- r=a .
+
+//(5)
+//checkentail x::ann<i,a>  
+//     |- (exists r:x::ann<i,r> & (r & (a|b) | !r & !(a|b))).
+
+
+//(6)
+//checkentail a=r |- (r & (a)) | (!r & !(a)).
+
+//(7)
+
+//(8)
+checkentail (1=1|true) |- true.
+
+checkentail b & c |- b.
+
+checkentail b |- b & c.
+
+/*
+  ante |- conseq
+
+  not(not(ante) | conseq)
+
+  ante /\ not(conseq)
+*/
+
+//(8)
+//checkentail true |- i=j.
+*/
+
+

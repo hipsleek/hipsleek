@@ -1,0 +1,114 @@
+data node {
+  int val;
+  node next;
+}.
+
+=====================================
+
+pred ll<n> == self=null & n=0
+   or self::node<_,q>*q::ll<n-1>
+ inv true.
+
+ {[],true} // over-approx
+
+ ([],self=null & n=0) or ([self]:true)
+
+ ([],self=null & n=0) or ([self]:n=1} or ([self]:true}
+
+ ([],self=null & n=0) or ([self]:n=1}
+
+ ([],self=null & n=0) or ([self]:1<=n<=2}
+
+ ([],self=null & n=0) or ([self]:1<=n<=3}
+
+ ([],self=null & n=0) or ([self]:1<=n<=4} // widen
+
+ ([],self=null & n=0) or ([self]:1<=n}
+
+=======================================
+
+ {[],n>=0} // over-approx
+
+ ([],self=null & n=0) or ([self]:n>0) // under-approx..
+
+=======================================
+
+pred ll<n,m> == self=null & n=0 & m=0
+   or self::node<_,q>*q::ll<n-1,m-1>
+   or self::node<_,q>*q::ll<n-1,m-2>
+ inv true.
+ //inv BG([],n>=0 & m>=0)
+ //inv_sat BG([],n>=0 & m>=0)
+ //inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<n & m>0)
+ //inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<m & n<=m<=2*n)
+
+ {[],true} // over-approx
+
+ ([],self=null & n=0 & m=0) or ([self],true) // 1st step
+
+ ([],self=null & n=0 & m=0) or ([self],n=1 & m=1) or ([self],n=1 & m=2)
+
+ ==> ([],self=null & n=0 & m=0) or ([self],1<=m & m<=2) // using pair wise check, lost n=1 info
+
+ ==> ([],self=null & n=0 & m=0) or ([self],n=1 & 1<=m & m<=2) // 2nd step
+
+ ([],self=null & n=0 & m=0) or ([self],n=1 & m=1) or ([self],n=2 & 2<=m & m<=3) or ([self],n=1 & m=2) or ([self],n=2 & 3<=m & m<=4)
+
+ ==> ([],self=null & n=0 & m=0) or ([self],1<=n & n<=m & m<=2n & n<=2) // 3rd step using pair wise check
+
+ ([],self=null & n=0 & m=0) or ([self],n=1 & m=1) or ([self],2<=n & n<=m & m<=(2n-1) & n<=3) or ([self],n=1 & m=2) or ([self],2<=n & n<=(m-1) m<=2n & n<=3)
+
+ ==> ([],self=null & n=0 & m=0) or ([self],1<=n & n<=m & m<=2n & n<=3) // 4th step using pair wise check
+
+ ==> widen: ([],self=null & n=0 & m=0) or ([self],1<=n & n<=m & m<=2n)
+
+========================================
+
+ inv BG([],n>=0 & m>=0)
+
+ ([],self=null & n=0 & m=0) or ([self], n>=1 & m>=1) or ([self], n>=1 & m>=2)
+
+ ==> drop ([self], n>=1 & m>=1) or ([self], n>=1 & m>=2) because they are over
+
+ ==> ([],self=null & n=0 & m=0) // 1st step
+
+ ([],self=null & n=0 & m=0) or ([self], n=1 & m=1) or ([self], n=1 & m=2)
+
+ ==> ([],self=null & n=0 & m=0) or ([self], (n=1 & 1<=m & m<=2) // 2nd step
+
+ ==> Similar to above example
+
+========================================
+
+pred avl<size, height> == self = null & size = 0 & height = 0
+  or self::node<_, height, p, q> * p::avl<size1, height1> * q::avl<size2, height2> & size = 1+size1+size2 &
+  height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1
+  inv true.
+
+  ([],self=null & size=0 & height=0) or ([self],true) // 1st step
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) // 2nd step
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) or ([self],size=2 & height=2) or ([self],size=3 & height=2)
+
+  ==> ([],self=null & size=0 & height=0) or ([self],height<=size & size <=(2*height-1) & height<=2) // 3rd step, lost info height>=1
+
+  ([],self=null & size=0 & height=0) or ([self],size=1 & height=1) or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & size=size1+1 & height=height1+1)
+  or ([self],height1<=size1 & size1<=(2*height1-1) & height1<=2 & height2<=size2 & size2<=(2*height2-1) & height2<=2 & size=size1+size2+1 & height=max(height1+height2)+1) ==> how to continue
+
+=======================================
+
+pred dll<p,n> == self = null & n = 0
+  or self::node2<_ ,p , q> * q::dll<self, n-1>
+
+  ([],true)
+
+  ([],self=null & n=0)
+
+  ([],self=null & n=0) or ([self],n=1)
+
+  ([],self=null & n=0) or ([self],1<=n<=2)
+
+  ([],self=null & n=0) or ([self],1<=n<=3)
+
+  widen: ([],self=null & n=0) or ([self],1<=n)

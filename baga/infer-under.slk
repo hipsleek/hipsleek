@@ -1,0 +1,13 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     .
+
+// over inv     : true
+// under inv    : None
+// over body    : emp&((self=null & n=0) | self!=null)
+// under body   : emp&n=0 & self=null
+

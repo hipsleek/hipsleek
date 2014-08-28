@@ -145,6 +145,7 @@ type tp_type =
   | CM (* CVC3 then MONA *)
   | Coq
   | Z3
+  | Z3N
   | OCRed
   | Redlog
   | Mathematica
@@ -172,6 +173,7 @@ let string_of_prover prover = match prover with
 	| CM  -> "CM"
 	| Coq -> "COQ"
 	| Z3 -> "Z3"
+        | Z3N -> "Z3N"
 	| OCRed -> "OC and REDLOG"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> "Redlog, Mona"

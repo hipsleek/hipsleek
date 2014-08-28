@@ -1,0 +1,14 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv BG([],self=null & n=0) | BG([self], n>0)
+     .
+
+// over inv     : [([], self=null & n=0),([self], 0<n)]
+// under inv    : None
+// over body    : emp&((self=null & n=0) | (((n=1 | 2<=n)) & self!=null))
+// under body   : emp&n=0 & self=null
+
