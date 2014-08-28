@@ -170,6 +170,7 @@ and uid = {
   tu_fname: ident;
   tu_args: exp list;
   tu_cond: formula; 
+  tu_icond: formula;
   tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
 }
 
@@ -1929,6 +1930,14 @@ and exp_of_template t = match t.templ_body with
       List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
         (List.hd t.templ_unks) (List.combine (List.tl t.templ_unks) t.templ_args)
   | Some b -> b
+
+and template_of_exp e = match e with
+  | Template t -> t
+  | _ -> report_error no_pos "[cpure.ml][template_of_exp]: The expression is not a template."
+
+and exp_of_template_exp e = match e with
+  | Template t -> exp_of_template t
+  | _ -> e
 
 and mkTemplate id (args: exp list) pos =
   let mkUnk i pos = mkVar (SpecVar (Int, id ^ "_" ^ (string_of_int i), Unprimed)) pos in

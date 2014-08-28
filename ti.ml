@@ -93,7 +93,7 @@ let add_call_trel_stk ctx lhs rhs =
   (* else () *)
 
 (* Initial instantiation of temporal relation *)      
-let inst_lhs_trel rel fn_cond_w_ids =  
+let inst_lhs_trel_base rel fn_cond_w_ids =  
   let lhs_ann = rel.termu_lhs in
   let inst_lhs = match lhs_ann with
     | CP.TermU uid -> 
@@ -106,11 +106,13 @@ let inst_lhs_trel rel fn_cond_w_ids =
       let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) rcond_w_ids in
       List.map (fun (i, c) -> CP.TermU { uid with 
         CP.tu_id = cantor_pair uid.CP.tu_id i; 
-        CP.tu_cond = mkAnd tuc c; }) fs_rconds
+        CP.tu_cond = mkAnd tuc c; 
+        (* Update condition of interest for abduction *)
+        CP.tu_icond = c; }) fs_rconds
     | _ -> [lhs_ann] 
   in inst_lhs
 
-let inst_rhs_trel inst_lhs rel fn_cond_w_ids = 
+let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids = 
   let rhs_ann = rel.termu_rhs in
   let cond_lhs = CP.cond_of_term_ann inst_lhs in
   let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) cond_lhs in
@@ -135,10 +137,10 @@ let inst_rhs_trel inst_lhs rel fn_cond_w_ids =
     | _ -> [rhs_ann] 
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
   
-let inst_call_trel rel fn_cond_w_ids =
-  let inst_lhs = inst_lhs_trel rel fn_cond_w_ids in
+let inst_call_trel_base rel fn_cond_w_ids =
+  let inst_lhs = inst_lhs_trel_base rel fn_cond_w_ids in
   let inst_rels = List.concat (List.map (fun ilhs -> 
-    inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
+    inst_rhs_trel_base ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
 
 (* Main algorithm *)
@@ -168,20 +170,23 @@ let solve_turel_one_scc prog tg scc =
       if is_acyclic_scc tg scc 
       then update_ann scc (CP.subst_sol_term_ann (CP.Term, [])) (* Term *)
       else (* Term with a ranking function for each scc's node *)
-        let res, rank_of_ann = find_ranking_function_scc prog tg scc in
+        let res, rank_of_ann = infer_ranking_function_scc prog tg scc in
         match res with
         | Tlutils.Sat _ -> 
           update_ann scc (fun ann -> 
             let res = (CP.Term, rank_of_ann ann) in 
             CP.subst_sol_term_ann res ann)
-        | _ -> raise (Restart_with_Cond tg)
+        | _ ->
+          let abd_cond = infer_abductive_icond prog tg scc in 
+          let tg = update_graph_with_icond tg scc abd_cond in
+          raise (Restart_with_Cond tg)
   
     else (* Error: One of scc's succ is Unknown *)
       Error.report_error {
         Error.error_loc = no_pos;
         Error.error_text = "TNT[ti]: One of analyzed scc's successors is Unknown."; }
   in
-  let ntg = map_scc tg scc update in
+  let ntg = map_ann_scc tg scc update in
   ntg
   
 let finalize_turel_graph () = ()   
@@ -200,7 +205,7 @@ let rec solve_turel_graph iter_num prog tg =
 
 let solve_turel_init prog turels fn_cond_w_ids = 
   let irels = List.concat (List.map (fun rel -> 
-    inst_call_trel rel fn_cond_w_ids) turels) in
+    inst_call_trel_base rel fn_cond_w_ids) turels) in
   (* let _ = print_endline (pr_list (fun ir ->  *)
   (*   (print_call_trel ir) ^ "\n") irels) in   *)
   let tg = graph_of_trels irels in
@@ -208,6 +213,9 @@ let solve_turel_init prog turels fn_cond_w_ids =
   
 (* Main Inference Function *)  
 let solve prog = 
+  let pr_templassume = !print_relassume in
+  let _ = print_relassume := false in
+  
   let _ = print_endline "TERMINATION INFERENCE" in
   let trrels = ret_trel_stk # get_stk in
   let _ = ret_trel_stk # reset in

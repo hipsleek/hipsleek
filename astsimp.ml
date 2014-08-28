@@ -6540,6 +6540,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
     CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; 
+    CP.tu_icond = CP.mkTrue no_pos;
     CP.tu_sol = None; } in 
   match ann with
     | IP.Term -> CP.Term
