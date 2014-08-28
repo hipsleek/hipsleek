@@ -181,29 +181,7 @@ let print_scc_list_num scc_list =
 
 let print_scc_array_num scc_array =
   print_scc_list_num (Array.to_list scc_array) 
-  
-module TEG = Graph.Persistent.Digraph.Concrete(TNTElem)    
-module TEC = Graph.Components.Make(TEG)
-
-let init_graph_test _ =
-  let print_graph_by_num g = 
-  TEG.fold_edges (fun s d a -> 
-    (string_of_int s) ^ " -> " ^
-    (string_of_int d) ^ "\n" ^ a)  g ""
-  in
-   
-  let teg = TEG.empty in
-  let teg = TEG.add_edge teg 2 1 in
-  let teg = TEG.add_edge teg 2 2 in
-  let teg = TEG.add_edge teg 3 2 in
-  let _ = print_endline ("TEST: " ^ (print_graph_by_num teg)) in
-  let _ = print_endline ("SCC: " ^ (print_scc_list_num (TEC.scc_list teg))) in
-  let _ = print_endline ("SCC: " ^ (print_scc_list_num (Array.to_list (TEC.scc_array teg)))) in
-  
-  let teg = TEG.remove_vertex teg 2 in
-  let _ = print_endline (print_graph_by_num teg) in
-  teg 
-  
+ 
 (* A scc is acyclic iff it has only one node and *)
 (* this node is not a successor of itself *) 
 let is_acyclic_scc g scc =
@@ -313,11 +291,10 @@ let find_ranking_function_scc prog g scc =
   let prog = { prog with Cast.prog_templ_decls = 
     Gen.BList.remove_dups_eq Cast.eq_templ_decl 
       (prog.Cast.prog_templ_decls @ templ_decls) } in
-  let _ = Template.collect_and_solve_templ_assumes_common false prog 
+  let res, _, _ = Template.collect_and_solve_templ_assumes_common false prog 
     (List.map CP.name_of_spec_var inf_templs) in
-  
-  fun ann ->
-    let templ, _, _ = rank_templ_of_term_ann ann in
-    [templ]
+  let rank_of_ann = fun ann ->
+    let templ, _, _ = rank_templ_of_term_ann ann in [templ]
+  in res, rank_of_ann
     
   

@@ -91,7 +91,8 @@ let add_call_trel_stk ctx lhs rhs =
       termu_rhs = rhs; } in 
     call_trel_stk # push trel
   (* else () *)
-  
+
+(* Initial instantiation of temporal relation *)      
 let inst_lhs_trel rel fn_cond_w_ids =  
   let lhs_ann = rel.termu_lhs in
   let inst_lhs = match lhs_ann with
@@ -139,7 +140,10 @@ let inst_call_trel rel fn_cond_w_ids =
   let inst_rels = List.concat (List.map (fun ilhs -> 
     inst_rhs_trel ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
-   
+
+(* Main algorithm *)
+exception Restart_with_Cond of TG.t
+       
 let solve_turel_one_scc prog tg scc =
   let update_ann scc f ann = (* Only update nodes in scc *)
     let ann_id = CP.id_of_term_ann ann in
@@ -164,10 +168,13 @@ let solve_turel_one_scc prog tg scc =
       if is_acyclic_scc tg scc 
       then update_ann scc (CP.subst_sol_term_ann (CP.Term, [])) (* Term *)
       else (* Term with a ranking function for each scc's node *)
-        let rank_of_ann = find_ranking_function_scc prog tg scc in
-        update_ann scc (fun ann -> 
-          let res = (CP.Term, rank_of_ann ann) in 
-          CP.subst_sol_term_ann res ann)
+        let res, rank_of_ann = find_ranking_function_scc prog tg scc in
+        match res with
+        | Tlutils.Sat _ -> 
+          update_ann scc (fun ann -> 
+            let res = (CP.Term, rank_of_ann ann) in 
+            CP.subst_sol_term_ann res ann)
+        | _ -> raise (Restart_with_Cond tg)
   
     else (* Error: One of scc's succ is Unknown *)
       Error.report_error {
@@ -176,31 +183,31 @@ let solve_turel_one_scc prog tg scc =
   in
   let ntg = map_scc tg scc update in
   ntg
+  
+let finalize_turel_graph () = ()   
+  
+let rec solve_turel_graph iter_num prog tg = 
+  if iter_num < !Globals.tnt_thres then
+    try
+      let scc_list = Array.to_list (TGC.scc_array tg) in
+      (* let _ = print_endline (print_scc_list_num scc_list) in *)
+      let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
+      let _ = print_endline (print_graph_by_rel tg) in
+      ()
+    with Restart_with_Cond tg -> 
+      solve_turel_graph (iter_num + 1) prog tg
+  else finalize_turel_graph ()
 
-let solve_turel_iter prog turels fn_cond_w_ids = 
+let solve_turel_init prog turels fn_cond_w_ids = 
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel rel fn_cond_w_ids) turels) in
-  (* let _ = print_endline (pr_list (fun ir -> (print_call_trel ir) ^ "\n") irels) in  *)
-  
+  (* let _ = print_endline (pr_list (fun ir ->  *)
+  (*   (print_call_trel ir) ^ "\n") irels) in   *)
   let tg = graph_of_trels irels in
-  let scc_list = Array.to_list (TGC.scc_array tg) in
-  let _ = print_endline (print_scc_list_num scc_list) in
-  let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
-  let _ = print_endline (print_graph_by_rel tg) in
-  ()
-  
-let tnt_finalize () = ()
-  
-let tnt_main_loop iter_num prog turels fn_cond_w_ids =
-  if iter_num < !Globals.tnt_thres then
-    solve_turel_iter prog turels fn_cond_w_ids
-  else tnt_finalize ()  
-  
+  solve_turel_graph 0 prog tg
   
 (* Main Inference Function *)  
 let solve prog = 
-  let _ = init_graph_test () in
-  
   let _ = print_endline "TERMINATION INFERENCE" in
   let trrels = ret_trel_stk # get_stk in
   let _ = ret_trel_stk # reset in
@@ -208,7 +215,7 @@ let solve prog =
   
   let turels = call_trel_stk # get_stk in
   let _ = call_trel_stk # reset in
-  tnt_main_loop 0 prog turels fn_cond_w_ids 
+  solve_turel_init prog turels fn_cond_w_ids
   
   
   

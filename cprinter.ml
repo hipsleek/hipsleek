@@ -811,7 +811,7 @@ let rec pr_formula_exp (e:P.exp) =
 		in fmt_string  (")"))
     | P.Template t -> 
       fmt_string ((string_of_spec_var t.P.templ_id) ^ 
-        (pr_list_round_sep "," !P.print_exp t.P.templ_args))
+      (pr_list_round_sep "," !P.print_exp t.P.templ_args))
       (* pr_opt pr_formula_exp t.P.templ_body *)
       
       (* if !Globals.gen_templ_slk then                            *)

@@ -9,6 +9,7 @@ infer @term x != 0 & x' = x - 1 & TermU(x) |- TermU(x').
 
 term_infer.
 
+/*
 infer @term x >= 0 & x' = x & TermU@f{true}(x, y) |- TermU@g{true}(x').
 //print residue.
 
@@ -28,5 +29,5 @@ infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g{true}(x) & TermR@f{true}(x', 
 //print residue.
 
 term_infer.
-
+*/
 
