@@ -1225,6 +1225,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+let do_infer_inv_under = ref false
 let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
