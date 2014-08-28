@@ -3,7 +3,7 @@
 
  (true)norm \/ (true)Err |- (true)norm --> fail
 
- (true)norm \/ (true)Err |- (true)norm \/ (true)Err --> valid
+ {(true)norm ; (true)Err} |- (true)norm \/ (true)Err --> valid
 
  (true)norm |- (true)norm \/ (true)Err --> valid
 
@@ -21,7 +21,7 @@
    S2 & F2 |- D * R2
 -------------------------------
     S1 & F1
-  or s2 & F2  |- D * (R1 \/ R2)
+    or s2 & F2  |- D * (R1 \/ R2)
 
 
     if F<:Fi
@@ -39,6 +39,7 @@
    [x] true   |- x::node(..) --> {x=null & Error, x::node<..> & OK} 
 
 */
+
 /*
 //1.
 checkentail true & flow __norm   |-  true & flow __norm .
@@ -76,13 +77,19 @@ checkentail true & flow __norm  or x=1 & flow __Error  |-
     true & flow __norm    or     x>2 & flow __Error
    .
 expect Fail.
-*/
+
 
 //8.
 checkentail y=0 & flow __norm   or x=1 & flow __Error  |- 
    x>0 & flow __Error  or  true & flow __norm
    .
+expect Fail.
+
+
+*/
+
+//9.
+checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
+   x>0 & flow __Error  or  true & flow __norm
+   .
 expect Valid.
-
-
-

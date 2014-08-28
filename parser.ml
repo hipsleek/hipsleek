@@ -2014,10 +2014,14 @@ checkeq_cmd:
     let il = un_option il [] in (il,t,b)
   ]];
 
+opt_list_meta_constr:[[t=LIST0 meta_constr SEP `SEMICOLON -> t]];
+
 checkentail_cmd:
-  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
-   | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
-   | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
+  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, None)
+   | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, Some true)
+   | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, Some false)
+   |`CHECKENTAIL; `OBRACE; t=opt_list_meta_constr ; `CBRACE ; `DERIVE; b=extended_meta_constr -> (t, b, None)
+  ]];
 
 checksat_cmd:
   [[ `CHECKSAT; t=meta_constr -> t

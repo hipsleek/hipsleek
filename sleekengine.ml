@@ -988,6 +988,7 @@ let run_pairwise (iante0 : meta_formula) =
   let r = Tpdispatcher.tp_pairwisecheck pf in
   r
 
+
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
@@ -1070,6 +1071,13 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = (sleek_proof_counter#get) in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
+
+
+let run_infer_one_pass_set_states (ivars: ident list) (iante0s : meta_formula list) (iconseq0 : meta_formula) =
+  match iante0s with
+    | [] -> report_error no_pos "empty state"
+    | ante::rest -> run_infer_one_pass ivars ante iconseq0
+
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1818,9 +1826,9 @@ let process_shape_extract sel_vnames=
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
+let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
-      let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
+      let (r, (cante, cconseq)) = run_infer_one_pass_set_states [] iante0 conseq in
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then
          let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
@@ -1829,7 +1837,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
       r
   ) iconseq0
 
-let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
+let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
@@ -1837,10 +1845,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 
-let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
+let run_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  Debug.no_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
+  Debug.no_2 "run_entail_check" (pr_list pr) pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
@@ -2019,7 +2027,7 @@ let process_sat_check (f : meta_formula) =
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
+let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
     try
@@ -2040,9 +2048,9 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
+let process_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
-  Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
+  Debug.no_2 "process_entail_check_helper" (pr_list pr) pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)
