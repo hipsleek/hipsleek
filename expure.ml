@@ -43,6 +43,33 @@ let simplify lst =
   ) groups in
   lst
 
+let widen_x f1 f2 =
+  let _ = Debug.ninfo_hprint (add_str "f1" string_of_pure_formula) f1 no_pos in
+  let _ = Debug.ninfo_hprint (add_str "f2" string_of_pure_formula) f2 no_pos in
+  let conjs = split_conjunctions f1 in
+  let conjs = List.filter (fun conj ->
+      let pf = mkAnd f2 (mkNot conj None no_pos) no_pos in
+      let f = Mcpure.mix_of_pure pf in
+      let _ = Debug.ninfo_hprint (add_str "f" string_of_pure_formula) (Mcpure.pure_of_mix f) no_pos in
+      not (!is_sat_raw f)
+  ) conjs in
+  let f = List.fold_left (fun acc conj ->
+      mkAnd acc conj no_pos
+  ) (mkTrue no_pos) conjs in
+  let _ = Debug.ninfo_hprint (add_str "widen f" string_of_pure_formula) f no_pos in
+  f
+
+let widen f1 f2 =
+  Debug.no_2 "widen" string_of_pure_formula string_of_pure_formula
+      string_of_pure_formula (fun _ _ ->
+          widen_x f1 f2) f1 f2
+
+let widen_disj a c =
+  let pair_list = List.combine a c in
+  List.map (fun ((b1,f1), (b2,f2)) ->
+      (b1,widen f1 f2)
+  ) pair_list
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
@@ -215,7 +242,8 @@ let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : 
   let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
   let pair_list = List.combine lhs_list rhs_list in
   let r_list = List.map (fun (a, c) ->
-      EPureI.imply_disj a c) pair_list in
+      EPureI.imply_disj a c
+  ) pair_list in
   not (List.exists (fun r -> r = false) r_list)
 
 let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
@@ -229,11 +257,11 @@ let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : 
 let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
-  let rec helper view_list inv_list =
+  let rec helper num view_list inv_list =
     let _ = List.iter (fun (vc,inv) ->
-        Debug.binfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
+        Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
     ) (List.combine view_list inv_list) in
-    if fix_test view_list inv_list
+    if (num = 0) || (fix_test view_list inv_list)
     then
       inv_list
     else
@@ -243,9 +271,19 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       let inv_list = List.fold_left (fun inv_list vc ->
           inv_list@[(build_ef_view vc all_views)]
       ) [] view_list in
-      helper view_list inv_list
+      helper (num - 1) view_list inv_list
   in
-  let inv_list = helper view_list inv_list in
+  let inv_list = helper 10 view_list inv_list in
+  let lhs_list = inv_list in
+  let rhs_list = List.map (fun vd ->
+      Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
+  let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
+  let pair_list = List.combine lhs_list rhs_list in
+  let inv_list = List.map (fun (a, c) ->
+      if EPureI.imply_disj a c
+      then a
+      else widen_disj c a
+  ) pair_list in
   let _ = List.iter (fun (vc,inv) ->
       (* this version is being printed *)
       (* let _ = Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in *)

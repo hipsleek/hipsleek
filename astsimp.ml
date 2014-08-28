@@ -1887,7 +1887,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else 
+        else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
