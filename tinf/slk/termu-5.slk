@@ -4,10 +4,10 @@ UTPost@f fpost(int x, int y).
 infer [@term] x < 0 & fpre(x, y) |- fpost(x, y).
 //print residue.
 
-infer [@term] x >= 0 & x' = x + y & y' = y - 1 & fpre(x, y) & fpost(x', y') |- fpost(x, y).
+infer [@term] x >= 0 & x' = x + y & y' = y & fpre(x, y) & fpost(x', y') |- fpost(x, y).
 //print residue.
 
-infer [@term] x >= 0 & x' = x + y & y' = y - 1 & fpre(x, y) |- fpre(x', y').
+infer [@term] x >= 0 & x' = x + y & y' = y & fpre(x, y) |- fpre(x', y').
 //print residue.
 
 term_infer.

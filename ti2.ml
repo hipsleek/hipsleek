@@ -148,8 +148,14 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
         (fun () -> pr_pure_formula c) " -> " )
         (fun () -> pr_tnt_case_spec s; fmt_string ";")
     ) cl 
-  | Unknown -> fmt_string "Unk"
-  | Sol (ann, rnk) -> pr_var_measures (ann, rnk, [])
+  | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
+  | Sol (ann, rnk) ->
+    match ann with
+    | CP.Loop -> fmt_string "requires Loop ensures false"
+    | _ -> 
+      fmt_string "requires ";
+      pr_var_measures (ann, rnk, []);
+      fmt_string " ensures true"
 
 (* let rec print_tnt_case_spec spec =                                            *)
 (*   match spec with                                                             *)
