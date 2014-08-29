@@ -1633,6 +1633,9 @@ opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 
+pure_constr_w_brace:
+  [[ `OBRACE; c = pure_constr; `CBRACE -> c ]];
+
 (* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
 (*                   | t= pure_constr ->t *)
 (* ]]; *)
@@ -1848,7 +1851,8 @@ cexp_w:
           try
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
             let pos = get_pos_camlp4 _loc 1 in
-            let ann = P.mkUtAnn id is_pre fname cl pos in
+            (* let cond = un_option c (P.mkTrue pos) in *)
+            let ann = P.mkUtAnn id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
             if not (rel_names # mem id) then 
@@ -2129,15 +2133,20 @@ infer_type:
   
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
+    
+id_list_w_itype:
+  [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il) 
+   | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il [])
+   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
+  ]];
 
 infer_cmd:
-  [[ `INFER; k = OPT infer_type; il = OPT id_list_w_sqr; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,None,k)
+  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let k, il = un_option il_w_itype (None, []) in (il,t,b,None,k)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (il,t,b,Some true,None)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (il,t,b,Some false,None)
-
   ]];
 
 captureresidue_cmd:

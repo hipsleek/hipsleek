@@ -350,13 +350,13 @@ and mkTemplate id args pos = Template {
   templ_pos = pos;
 }
 
-and mkUtAnn id is_pre fname args pos = 
+and mkUtAnn id is_pre fname cond args pos = 
   let uid = {
     tu_id = 0;
     tu_sid = id;
     tu_fname = fname;
     tu_args = args;
-    tu_cond = mkTrue pos;
+    tu_cond = cond;
     tu_pos = pos;
   } in
   if is_pre then TermU uid
