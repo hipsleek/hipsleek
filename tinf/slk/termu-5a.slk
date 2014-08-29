@@ -1,0 +1,10 @@
+infer @term x < 0 & TermU(x, y) |- TermR(x, y).
+//print residue.
+
+infer @term x >= 0 & x' = x + y & y' = y - 1 & TermU(x, y) & TermR(x', y') |- TermR(x, y).
+//print residue.
+
+infer @term x >= 0 & x' = x + y & y' = y - 1 & TermU(x, y) |- TermU(x', y').
+//print residue.
+
+term_infer.

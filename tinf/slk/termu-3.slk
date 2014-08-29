@@ -1,0 +1,15 @@
+infer @term x <= 0 & TermU(x) |- TermR(x).
+//print residue.
+
+infer @term x > 0 & x' = x + 1 & TermU(x) & TermR(x') |- TermR(x).
+//print residue.
+
+infer @term x > 0 & x' = x + 1 & TermU(x) |- TermU(x').
+//print residue.
+
+infer @term x > 0 & x' = x + 1 & TermU(x) |- MayLoop.
+//print residue.
+
+term_infer.
+
+

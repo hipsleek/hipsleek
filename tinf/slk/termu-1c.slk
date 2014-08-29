@@ -1,0 +1,16 @@
+infer @term x <= 0 & TermU(x) |- TermR(x).
+//print residue.
+
+infer @term x > 0 & x' = x - 1 & x' > 0 & TermU(x) & TermR(x') |- TermR(x).
+//print residue.
+
+infer @term x > 0 & x' = x - 1 & x' <= 0 & TermU(x) & TermR(x') |- TermR(x).
+//print residue.
+
+infer @term x > 0 & x' = x - 1 & x' > 0 & TermU(x) |- TermU(x').
+//print residue.
+
+infer @term x > 0 & x' = x - 1 & x' <= 0 & TermU(x) |- Term.
+//print residue.
+
+term_infer.
