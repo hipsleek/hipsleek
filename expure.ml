@@ -43,31 +43,31 @@ let simplify lst =
   ) groups in
   lst
 
-let widen_x f1 f2 =
-  let _ = Debug.ninfo_hprint (add_str "f1" string_of_pure_formula) f1 no_pos in
-  let _ = Debug.ninfo_hprint (add_str "f2" string_of_pure_formula) f2 no_pos in
-  let conjs = split_conjunctions f1 in
-  let conjs = List.filter (fun conj ->
-      let pf = mkAnd f2 (mkNot conj None no_pos) no_pos in
-      let f = Mcpure.mix_of_pure pf in
-      let _ = Debug.ninfo_hprint (add_str "f" string_of_pure_formula) (Mcpure.pure_of_mix f) no_pos in
-      not (!is_sat_raw f)
-  ) conjs in
-  let f = List.fold_left (fun acc conj ->
-      mkAnd acc conj no_pos
-  ) (mkTrue no_pos) conjs in
-  let _ = Debug.ninfo_hprint (add_str "widen f" string_of_pure_formula) f no_pos in
-  f
+(* let widen_x f1 f2 = *)
+(*   let _ = Debug.ninfo_hprint (add_str "f1" string_of_pure_formula) f1 no_pos in *)
+(*   let _ = Debug.ninfo_hprint (add_str "f2" string_of_pure_formula) f2 no_pos in *)
+(*   let conjs = split_conjunctions f1 in *)
+(*   let conjs = List.filter (fun conj -> *)
+(*       let pf = mkAnd f2 (mkNot conj None no_pos) no_pos in *)
+(*       let f = Mcpure.mix_of_pure pf in *)
+(*       let _ = Debug.ninfo_hprint (add_str "f" string_of_pure_formula) (Mcpure.pure_of_mix f) no_pos in *)
+(*       not (!is_sat_raw f) *)
+(*   ) conjs in *)
+(*   let f = List.fold_left (fun acc conj -> *)
+(*       mkAnd acc conj no_pos *)
+(*   ) (mkTrue no_pos) conjs in *)
+(*   let _ = Debug.ninfo_hprint (add_str "widen f" string_of_pure_formula) f no_pos in *)
+(*   f *)
 
-let widen f1 f2 =
-  Debug.no_2 "widen" string_of_pure_formula string_of_pure_formula
-      string_of_pure_formula (fun _ _ ->
-          widen_x f1 f2) f1 f2
+(* let widen f1 f2 = *)
+(*   Debug.no_2 "widen" string_of_pure_formula string_of_pure_formula *)
+(*       string_of_pure_formula (fun _ _ -> *)
+(*           widen_x f1 f2) f1 f2 *)
 
-let widen_disj a c =
-  let pair_list = List.combine a c in
+let widen_disj disj1 disj2 =
+  let pair_list = List.combine disj1 disj2 in
   List.map (fun ((b1,f1), (b2,f2)) ->
-      (b1,widen f1 f2)
+      (b1,Fixcalc.widen f1 f2)
   ) pair_list
 
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
@@ -235,21 +235,22 @@ let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list)
 (* let rhs_list = inv_list in *)
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply_disj a c) pair_list in *)
-let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
   let lhs_list = inv_list in
   let rhs_list = List.map (fun vd ->
       Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
   let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
   let pair_list = List.combine lhs_list rhs_list in
-  let r_list = List.map (fun (a, c) ->
-      EPureI.imply_disj a c
+  let inv_r_list = List.map (fun (a, c) ->
+      (a, EPureI.imply_disj a c)
   ) pair_list in
+  let (_, r_list) = List.split inv_r_list in
   not (List.exists (fun r -> r = false) r_list)
 
-let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
   let pr1 x = string_of_int (List.length x) in
   let pr2 = pr_list EPureI.string_of_disj in
-  Debug.no_2 "fix_test" pr1 pr2 string_of_bool (fun _ _ -> (fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
+  Debug.no_2 "fix_test" pr1 pr2 string_of_bool (fun _ _ -> (fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
 
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
@@ -261,7 +262,7 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
     let _ = List.iter (fun (vc,inv) ->
         Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
     ) (List.combine view_list inv_list) in
-    if (num = 0) || (fix_test view_list inv_list)
+    if (num = 0) || (fix_test num view_list inv_list)
     then
       inv_list
     else
