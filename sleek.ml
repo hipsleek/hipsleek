@@ -95,6 +95,7 @@ let proc_gen_cmd cmd =
     | FuncDef fdef -> process_func_def fdef
     | RelDef rdef -> process_rel_def rdef
     | TemplDef tdef -> process_templ_def tdef
+    | UtDef utdef -> process_ut_def utdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
@@ -154,6 +155,7 @@ let parse_file (parse) (source_file : string) =
       | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
       | TemplDef tdef -> process_templ_def tdef
+      | UtDef utdef -> process_ut_def utdef
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
@@ -230,7 +232,7 @@ let parse_file (parse) (source_file : string) =
       | TermInfer -> process_term_infer ()
       | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
-      | TemplDef _
+      | TemplDef _ | UtDef _ 
       | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;
@@ -273,6 +275,7 @@ let main () =
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
                 I.prog_templ_decls = [];
+                I.prog_ut_decls = [];
                 I.prog_hp_decls = [];
 			    I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)

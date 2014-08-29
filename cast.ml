@@ -29,6 +29,7 @@ and prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
     mutable prog_templ_decls: templ_decl list;
+    mutable prog_ut_decls: ut_decl list;
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -140,6 +141,15 @@ and templ_decl = {
   templ_body: P.exp option;
   templ_pos: loc;
 }
+
+(* Unknown Temporal Declaration *)
+and ut_decl = {
+  ut_name: ident;
+  ut_params: P.spec_var list;
+  ut_is_pre: bool;
+  ut_pos: loc;
+}
+
 
 and hp_decl = { 
     hp_name : ident;
@@ -477,6 +487,9 @@ and exp = (* expressions keep their types *)
 
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
+
+(* Stack of Unknown Temporal Declarations *)
+let ut_decls: ut_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
@@ -998,6 +1011,9 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
 
 let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
   List.find (fun d -> d.templ_name = name) defs
+
+let look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
+  List.find (fun d -> d.ut_name = name) defs
 
 let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name

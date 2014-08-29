@@ -228,8 +228,8 @@ let no_outgoing_edge_scc g scc =
 (* Methods to update rels in graph *)
 let update_trel f_ann rel =
   update_call_trel rel (f_ann rel.termu_lhs) (f_ann rel.termu_rhs)
-  
-let map_scc g scc f_edge = 
+
+let edges_of_scc g scc =   
   let outgoing_scc_edges =
     List.concat (List.map (fun s ->
       let succ = TG.succ g s in
@@ -243,8 +243,11 @@ let map_scc g scc f_edge =
         if Gen.BList.mem_eq (==) s scc (* Excluding duplicate edges *)
         then a else a @ (TG.find_all_edges g s d)
       ) [] pred) scc)
-  in
-  List.fold_left (fun g e -> f_edge g e) g (outgoing_scc_edges @ incoming_scc_edges)
+  in (outgoing_scc_edges @ incoming_scc_edges)
+  
+let map_scc g scc f_edge = 
+  let scc_edges = edges_of_scc g scc in
+  List.fold_left (fun g e -> f_edge g e) g scc_edges
 
 let update_edge g f_rel e =
   let s, rel, d = e in
@@ -306,9 +309,16 @@ let infer_ranking_function_scc prog g scc =
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
   let res = solve_templ_assume prog templ_decls inf_templs in
-  let rank_of_ann = fun ann ->
-    let templ, _, _ = templ_of_term_ann ann in [templ]
-  in res, rank_of_ann
+  match res with
+  | Sat model ->
+    let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+    let rank_of_ann = fun ann ->
+      let rank_templ, _, _ = templ_of_term_ann ann in
+      let rank_exp = Tlutils.subst_model_to_exp sst 
+        (CP.exp_of_template_exp rank_templ) in
+      [rank_exp]
+    in Some rank_of_ann
+  | _ -> None
 
 (* Abductive Inference *)
 let infer_abductive_icond_edge prog g e =
@@ -354,7 +364,7 @@ let infer_abductive_icond prog g scc =
 (* Update rels in graph with abductive conditions *)
 let inst_lhs_trel_abd rel abd_conds =  
   let lhs_ann = rel.termu_lhs in
-  let inst_lhs, inst_id = match lhs_ann with
+  let inst_lhs = match lhs_ann with
     | CP.TermU uid -> 
       begin try
         let tid = uid.CP.tu_id in
@@ -369,56 +379,64 @@ let inst_lhs_trel_abd rel abd_conds =
                 CP.tu_id = cantor_pair tid i;
                 CP.tu_cond = mkAnd tuc c;
                 CP.tu_icond = c; }]
-          else []) [(1, abd_cond); (2, not_abd_cond)]), [tid]
-      with Not_found -> [lhs_ann], [] end
-    | _ -> [lhs_ann], []
-  in inst_lhs, inst_id
+          else []) [(1, abd_cond); (2, not_abd_cond)])
+      with Not_found -> [lhs_ann] end
+    | _ -> [lhs_ann]
+  in inst_lhs
   
 let inst_rhs_trel_abd inst_lhs rel abd_conds = 
   let rhs_ann = rel.termu_rhs in
   let cond_lhs = CP.cond_of_term_ann inst_lhs in
   let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) cond_lhs in
-  let inst_rhs, inst_id = match rhs_ann with
+  let inst_rhs = match rhs_ann with
     | CP.TermU uid ->
-      begin try
-        let tid = uid.CP.tu_id in
-        let params, abd_cond = List.assoc tid abd_conds in
-        let not_abd_cond = mkNot abd_cond in
-        let args = uid.CP.tu_args in
-        let sst = List.combine params args in
-        let abd_cond = CP.subst_term_avoid_capture sst abd_cond in
-        let not_abd_cond = CP.subst_term_avoid_capture sst not_abd_cond in
-        
-        let tuc = uid.CP.tu_cond in
-        let eh_ctx = mkAnd ctx tuc in
-        List.concat (List.map (fun (i, c) -> 
-          if (is_sat (mkAnd eh_ctx c)) then
-            [ CP.TermU { uid with
+      let tid = uid.CP.tu_id in
+      let tuc = uid.CP.tu_cond in
+      let eh_ctx = mkAnd ctx tuc in
+      if not (is_sat eh_ctx) then []
+      else
+        begin try
+          let params, abd_cond = List.assoc tid abd_conds in
+          let not_abd_cond = mkNot abd_cond in
+          let args = uid.CP.tu_args in
+          let sst = List.combine params args in
+          let abd_cond = CP.subst_term_avoid_capture sst abd_cond in
+          let not_abd_cond = CP.subst_term_avoid_capture sst not_abd_cond in
+          List.concat (List.map (fun (i, c) -> 
+            if (is_sat (mkAnd eh_ctx c)) then
+              [ CP.TermU { uid with
                 CP.tu_id = cantor_pair tid i;
                 CP.tu_cond = mkAnd tuc c;
                 CP.tu_icond = c; }]
-          else []) [(1, abd_cond); (2, not_abd_cond)]), [tid]
-      with Not_found -> [rhs_ann], [] end
-    | _ -> [rhs_ann], []
-  in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs, inst_id
+            else []) [(1, abd_cond); (2, not_abd_cond)])
+        with Not_found -> [rhs_ann] end
+    | _ -> [rhs_ann]
+  in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
   
 let inst_call_trel_abd rel abd_conds =
-  let inst_lhs, inst_id = inst_lhs_trel_abd rel abd_conds in
-  let inst_rels, inst_id = List.fold_left (fun (arel, aid) ilhs ->
-    let inst_rels, inst_id = inst_rhs_trel_abd ilhs rel abd_conds in
-    (arel @ inst_rels, aid @ inst_id)) ([], inst_id) inst_lhs in 
-  inst_rels, inst_id  
-      
+  let inst_lhs = inst_lhs_trel_abd rel abd_conds in
+  let inst_rels = List.concat (List.map (fun ilhs -> 
+    inst_rhs_trel_abd ilhs rel abd_conds) inst_lhs) in
+  inst_rels
+
 let update_graph_with_icond g scc abd_conds =
   let f_e g e =
     let _, rel, _ = e in
-    let inst_rels, inst_id = inst_call_trel_abd rel abd_conds in
+    let inst_rels = inst_call_trel_abd rel abd_conds in
     List.fold_left (fun g rel -> 
       let s = CP.id_of_term_ann rel.termu_lhs in
       let d = CP.id_of_term_ann rel.termu_rhs in
       TG.add_edge_e g (s, rel, d)) g inst_rels
   in  
-  let g = map_scc g scc f_e in g 
+  let scc_edges = edges_of_scc g scc in
+  let g = List.fold_left (fun g v -> TG.remove_vertex g v) g scc in
+  List.fold_left (fun g e -> f_e g e) g scc_edges
+  
+type tnt_case = CP.formula * CP.term_ann * (CP.exp list)  
+  
+let case_spec_of_graph g =
+  let _ = print_endline (print_graph_by_rel g) in
+  ()
   
     
   

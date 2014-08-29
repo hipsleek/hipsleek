@@ -55,6 +55,7 @@ type decl =
   | Coercion_list of coercion_decl_list
   | Include of string
   | Template of templ_decl
+  | Ut of ut_decl
 		
 
 type member = 
@@ -112,6 +113,7 @@ let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let templ_names = new Gen.stack (* List of declared templates' names *)
+let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -866,6 +868,7 @@ non_empty_command:
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
       | t = templ_solve_cmd -> TemplSolv t
+      | t = ut_decl -> UtDef t
       | t = term_infer_cmd -> TermInfer
       | t = term_assume_cmd -> TermAssume t
       | t=macro				  -> EmptyCmd]];
@@ -1665,13 +1668,15 @@ ann_term:
       | `LOOP -> P.Loop
       | `MAYLOOP -> P.MayLoop
       | `TERMU; tid = OPT termu_id; targs = termu_args ->
+          let pos = get_pos_camlp4 _loc 1 in
           let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermU ({ P.tu_id = id; P.tu_fname = fn; 
-                     P.tu_args = targs; P.tu_cond = c; })
+          P.TermU ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn; 
+                     P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; })
       | `TERMR; tid = OPT termu_id; targs = termu_args ->
+          let pos = get_pos_camlp4 _loc 1 in
           let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermR ({ P.tu_id = id; P.tu_fname = fn; 
-                     P.tu_args = targs; P.tu_cond = c; })
+          P.TermR ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn; 
+                     P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; })
     ]];
 
 cexp:
@@ -1835,15 +1840,21 @@ cexp_w:
        * in our formula.
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-       else if templ_names # mem id then
+        else if templ_names # mem id then
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
           report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
-        else
-            begin
-              if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-            end
+        else begin
+          try
+            let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
+            let pos = get_pos_camlp4 _loc 1 in
+            let ann = P.mkUtAnn id is_pre fname cl pos in
+            Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
+          with Not_found -> 
+            if not (rel_names # mem id) then 
+              print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+            Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+        end
     | peek_cexp_list; ocl = opt_comma_list -> 
         Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
     | t = cid ->
@@ -2440,6 +2451,32 @@ templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_o
 
 templ_body: [[ `EQEQ; pc = cexp -> pc ]];
 
+(* Unknown Temporal Definition *)
+ut_fname: [[ `AT; `IDENTIFIER fn -> fn ]];
+
+ut_decl: 
+  [[ `UTPRE; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
+      let fname = un_option fn "" in
+      let _ = ut_names # push (id, fname, true) in
+      let utdef = { 
+        ut_name = id;
+        ut_fname = fname;
+        ut_typed_params = tl;
+        ut_is_pre = true;
+        ut_pos = get_pos_camlp4 _loc 1; } 
+      in utdef 
+  | `UTPOST; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
+      let fname = un_option fn "" in
+      let _ = ut_names # push (id, fname, false) in
+      let utdef = { 
+        ut_name = id;
+        ut_fname = fname;
+        ut_typed_params = tl;
+        ut_is_pre = false;
+        ut_pos = get_pos_camlp4 _loc 1; } 
+      in utdef 
+  ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2491,6 +2528,7 @@ hprogn:
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
       let templ_defs = new Gen.stack in (* List of template definitions *)
+      let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2509,6 +2547,7 @@ hprogn:
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
+        | Ut utdef -> ut_defs # push utdef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -2535,6 +2574,7 @@ hprogn:
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let templ_lst = templ_defs # get_stk in
+    let ut_lst = ut_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -2552,6 +2592,7 @@ hprogn:
         let tl,_ = List.split x.rel_typed_vars in
         (RelT tl,x.rel_name)) (rel_lst); (* WN *)
     prog_templ_decls = templ_lst;
+    prog_ut_decls = ut_lst;
     prog_hp_decls = hp_lst ;
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -2572,6 +2613,7 @@ decl:
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
+  |  r=ut_decl; `DOT -> Ut r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

@@ -703,10 +703,9 @@ and gather_type_info_b_formula_x prog b0 tlist =
       let (n_tl,n_ty) = gather_type_info_exp prog a2 n_tl (Cpure.ann_type) in
       n_tl
   | IP.LexVar(t_ann, ls1, ls2, pos) ->
-      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) tlist ls1  in
+      let n_tl = gather_type_info_term_ann prog t_ann tlist in
+      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls1  in
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
-      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl 
-        (IP.args_of_term_ann t_ann) in
       n_tl
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
@@ -799,6 +798,25 @@ and gather_type_info_b_formula_x prog b0 tlist =
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
     )
+
+and gather_type_info_term_ann prog tann tlist =
+  match tann with
+  | IP.TermU tid
+  | IP.TermR tid -> begin try
+      let pos = tid.IP.tu_pos in
+      let sid = tid.IP.tu_sid in
+      let utdef = I.look_up_ut_def_raw prog.I.prog_ut_decls sid in
+      let param_types = List.map (fun (t, n) -> trans_type prog t pos) utdef.I.ut_typed_params in
+      let exp_et_list = List.combine tid.IP.tu_args param_types in
+      let n_tlist = List.fold_left (fun tl (arg, et) -> 
+        fst (gather_type_info_exp prog arg tl et)) tlist exp_et_list in
+      tlist
+    with
+    | Not_found -> failwith ("gather_type_info_term_ann: " ^ tid.IP.tu_sid ^ " cannot be found")
+    | Invalid_argument _ -> failwith ("number of arguments for unknown temporal " ^ tid.IP.tu_sid ^ " does not match")
+    | _ -> failwith ("type error: unknown temporal " ^ tid.IP.tu_sid)
+    end
+  | _ -> tlist
 
 and guess_type_of_exp_arith a0 tlist =
   match a0 with

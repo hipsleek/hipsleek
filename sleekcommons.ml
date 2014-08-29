@@ -39,6 +39,7 @@ type command =
   | FuncDef of I.func_decl
   | RelDef of I.rel_decl (* An Hoa *)
   | TemplDef of I.templ_decl
+  | UtDef of I.ut_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
@@ -110,6 +111,7 @@ let string_of_command c = match c with
   | FuncDef  _ -> "FuncDef"  
   | RelDef  _ -> "RelDef" 
   | TemplDef _ -> "TemplDef"
+  | UtDef _ -> "UtDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"

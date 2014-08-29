@@ -32,7 +32,7 @@ let rec coq_of_typ = function
   | Pointer _
   | Tree_sh 	  -> "int"
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
-  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | HpT->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT | HpT->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;

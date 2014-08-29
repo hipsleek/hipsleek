@@ -348,7 +348,19 @@ and mkTemplate id args pos = Template {
   templ_unks = [];
   templ_body = None; (* Need to fill in trans_exp *)
   templ_pos = pos;
-} 
+}
+
+and mkUtAnn id is_pre fname args pos = 
+  let uid = {
+    tu_id = 0;
+    tu_sid = id;
+    tu_fname = fname;
+    tu_args = args;
+    tu_cond = mkTrue pos;
+    tu_pos = pos;
+  } in
+  if is_pre then TermU uid
+  else TermR uid 
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 

@@ -45,6 +45,7 @@ type sleek_token =
   | THEN | THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP | TERMU | TERMR 
   | TERM_INFER | TREL_INFER | TREL_ASSUME
+  | UTPRE | UTPOST
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -143,6 +144,8 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | TERMU -> "TermU"
     | TERMR -> "TermR"
+    | UTPRE -> "UTPre"
+    | UTPOST -> "UTPost"
     | TREL_INFER -> "@term"
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"

@@ -508,6 +508,7 @@ class ['a] stack  =
      method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     method find f = List.find f stk
      (* method exists (i:'a) = List.mem i stk  *)
      (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
      method exists f = List.exists f stk 

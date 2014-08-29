@@ -68,6 +68,7 @@ I.prog_func_decls = [];
 I.prog_rel_decls = [];
 I.prog_rel_ids = [];
 I.prog_templ_decls = [];
+I.prog_ut_decls = [];
 I.prog_hp_decls = [];
 I.prog_hp_ids = [];
 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -91,6 +92,7 @@ let cprog = ref {
     (*	Cast.prog_func_decls = [];*)
     Cast.prog_rel_decls = []; (* An Hoa *)
     Cast.prog_templ_decls = [];
+    Cast.prog_ut_decls = [];
     Cast.prog_hp_decls = [];
     Cast.prog_view_equiv = [];
     Cast.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -119,6 +121,7 @@ let clear_iprog () =
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];
   iprog.I.prog_templ_decls <- [];
+  iprog.I.prog_ut_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
@@ -127,6 +130,7 @@ let clear_cprog () =
   !cprog.Cast.prog_rel_decls <- [];
   !cprog.Cast.prog_hp_decls <- [];
   !cprog.Cast.prog_templ_decls <- [];
+  !cprog.Cast.prog_ut_decls <- [];
   (*!cprog.Cast.prog_left_coercions <- [];*)
   (*!cprog.Cast.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
@@ -357,6 +361,15 @@ let process_templ_def tdef =
       !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
     with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
   else print_endline (tdef.I.templ_name ^ " is already defined.")
+
+let process_ut_def utdef =
+  if Astsimp.check_data_pred_name iprog utdef.I.ut_name then
+	  let tmp = iprog.I.prog_ut_decls in
+	  try
+      iprog.I.prog_ut_decls <- (utdef::iprog.I.prog_ut_decls);
+      !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
+    with _ -> dummy_exception (); iprog.I.prog_ut_decls <- tmp 
+  else print_endline (utdef.I.ut_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in

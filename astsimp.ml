@@ -1396,6 +1396,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
       let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
+      let cuts = List.map (trans_ut prog) prog.I.prog_ut_decls in
 	  let tmp_views = order_views prog.I.prog_view_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
@@ -1472,6 +1473,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
+        C.prog_ut_decls = cuts;
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -2112,6 +2114,19 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
     C.templ_body = c_body;
     C.templ_pos = pos; } in
   C.templ_decls # push c_templ; c_templ
+  
+and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
+  let pos = utdef.I.ut_pos in
+  let c_params = List.map (fun (t, n) -> 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) utdef.I.ut_typed_params in 
+  let n_tl = List.map (fun (t, n) -> 
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) utdef.I.ut_typed_params in
+  let c_ut = {
+    C.ut_name = utdef.I.ut_name;
+    C.ut_params = c_params;
+    C.ut_is_pre = utdef.I.ut_is_pre;
+    C.ut_pos = pos; } in
+  C.ut_decls # push c_ut; c_ut
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -2941,7 +2956,11 @@ and ident_to_spec_var id n_tl p prog =
               let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
               let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
               CP.SpecVar (ftyp, id, pr)
-            with _ -> v
+            with _ -> 
+              try
+                let _ = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
+                CP.SpecVar(UtT, id, pr)
+              with _ -> v
     else v
 
 and ident_list_to_spec_var_list ivs n_tl prog =
@@ -4935,6 +4954,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: RelT can only be used for constraints"
     | FuncT _ ->
           failwith "default_value: FuncT can only be used for constraints"
+    | UtT ->
+          failwith "default_value: UtT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -9253,7 +9274,11 @@ let check_data_pred_name iprog name : bool =
           with | Not_found -> begin
             try
               let _ = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false 
-            with | Not_found -> true
+            with | Not_found -> begin
+              try
+                let _ = I.look_up_ut_def_raw iprog.I.prog_ut_decls name in false 
+              with | Not_found -> true
+              end
 		        end
           end
         end

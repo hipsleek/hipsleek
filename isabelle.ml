@@ -45,6 +45,7 @@ let rec isabelle_of_typ = function
   | NUM
   | RelT _
   | FuncT _
+  | UtT
   | HpT
   | AnnT->
         Error.report_error {Error.error_loc = no_pos; 

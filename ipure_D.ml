@@ -96,9 +96,11 @@ and term_ann =
 
 and uid = {
   tu_id: int;
+  tu_sid: ident;
   tu_fname: ident;
   tu_args: exp list;
   tu_cond: formula; 
+  tu_pos: loc;
 }
 
 and term_fail =

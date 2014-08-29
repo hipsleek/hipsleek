@@ -243,6 +243,8 @@ module Make (Token : SleekTokenS)
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
    ("template", TEMPL);
+   ("UTPre", UTPRE);
+   ("UTPost", UTPOST);
    ("Term", TERM);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);

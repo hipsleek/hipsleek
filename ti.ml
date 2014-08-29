@@ -170,15 +170,16 @@ let solve_turel_one_scc prog tg scc =
       if is_acyclic_scc tg scc 
       then update_ann scc (CP.subst_sol_term_ann (CP.Term, [])) (* Term *)
       else (* Term with a ranking function for each scc's node *)
-        let res, rank_of_ann = infer_ranking_function_scc prog tg scc in
+        let res = infer_ranking_function_scc prog tg scc in
         match res with
-        | Tlutils.Sat _ -> 
+        | Some rank_of_ann -> 
           update_ann scc (fun ann -> 
             let res = (CP.Term, rank_of_ann ann) in 
             CP.subst_sol_term_ann res ann)
-        | _ ->
+        | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
           let tg = update_graph_with_icond tg scc abd_cond in
+          (* let _ = print_endline (print_graph_by_rel tg) in *)
           raise (Restart_with_Cond tg)
   
     else (* Error: One of scc's succ is Unknown *)
@@ -195,9 +196,10 @@ let rec solve_turel_graph iter_num prog tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
+      (* let _ = print_endline (print_graph_by_rel tg) in *)
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
-      let _ = print_endline (print_graph_by_rel tg) in
+      let _ = case_spec_of_graph tg in
       ()
     with Restart_with_Cond tg -> 
       solve_turel_graph (iter_num + 1) prog tg
