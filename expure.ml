@@ -235,22 +235,26 @@ let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list)
 (* let rhs_list = inv_list in *)
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply_disj a c) pair_list in *)
-let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : (ef_pure_disj list * bool) =
   let lhs_list = inv_list in
   let rhs_list = List.map (fun vd ->
       Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
   let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
   let pair_list = List.combine lhs_list rhs_list in
   let inv_r_list = List.map (fun (a, c) ->
-      (a, EPureI.imply_disj a c)
+      let r = EPureI.imply_disj a c in
+      if r || (num > 0) then
+        (a, r)
+      else
+        (widen_disj c a, r)
   ) pair_list in
-  let (_, r_list) = List.split inv_r_list in
-  not (List.exists (fun r -> r = false) r_list)
+  let (new_inv_list, r_list) = List.split inv_r_list in
+  (new_inv_list, not (List.exists (fun r -> r = false) r_list))
 
-let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : (ef_pure_disj list * bool) =
   let pr1 x = string_of_int (List.length x) in
   let pr2 = pr_list EPureI.string_of_disj in
-  Debug.no_2 "fix_test" pr1 pr2 string_of_bool (fun _ _ -> (fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
+  Debug.no_2 "fix_test" pr1 pr2 (pr_pair pr2 string_of_bool) (fun _ _ -> (fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
 
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
@@ -262,7 +266,8 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
     let _ = List.iter (fun (vc,inv) ->
         Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
     ) (List.combine view_list inv_list) in
-    if (num = 0) || (fix_test num view_list inv_list)
+    let (inv_list, fixed) = fix_test num view_list inv_list in
+    if fixed
     then
       inv_list
     else
@@ -275,16 +280,16 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       helper (num - 1) view_list inv_list
   in
   let inv_list = helper 10 view_list inv_list in
-  let lhs_list = inv_list in
-  let rhs_list = List.map (fun vd ->
-      Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
-  let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
-  let pair_list = List.combine lhs_list rhs_list in
-  let inv_list = List.map (fun (a, c) ->
-      if EPureI.imply_disj a c
-      then a
-      else widen_disj c a
-  ) pair_list in
+  (* let lhs_list = inv_list in *)
+  (* let rhs_list = List.map (fun vd -> *)
+  (*     Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in *)
+  (* let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in *)
+  (* let pair_list = List.combine lhs_list rhs_list in *)
+  (* let inv_list = List.map (fun (a, c) -> *)
+  (*     if EPureI.imply_disj a c *)
+  (*     then a *)
+  (*     else widen_disj c a *)
+  (* ) pair_list in *)
   let _ = List.iter (fun (vc,inv) ->
       (* this version is being printed *)
       (* let _ = Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in *)
