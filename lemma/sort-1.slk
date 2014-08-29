@@ -8,7 +8,7 @@ pred sortl<n, mi> == self = null & n = 0
 	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
 	inv n >= 0.
 
-lemma self::sortl<n, mi> -> self::ll<n>.
+lemma_safe self::sortl<n, mi> <- self::ll<n>.
 
 /*
 checkentail x = null & n = 0

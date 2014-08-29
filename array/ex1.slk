@@ -1,0 +1,27 @@
+pred_prim arr<low:int,high:int,s:bag(int)>
+  inv low<=high.
+
+checkentail x::arr<1,2,{1}> |- x::arr<a,b,S>.
+print residue.
+
+checkentail x::arr<1,2,{1}> |- x::arr<a,3,S>.
+print residue.
+
+
+checkentail x::arr<1,2,{1}> |- x::arr<a,b,S>. // & b>3.
+print residue.
+
+
+lemma self::arr<i,k,S> & i<=j<k 
+  <-> self::arr<i,j,S1> * self::arr<j+1,k,S2>
+    & S=union(S1,S2).
+
+
+checkentail x::arr<1,3,{1}> |- x::arr<2,2,S>@L.
+print residue.
+
+checkentail x::arr<1,3,{1}> |- x::arr<1,1,S>@L.
+print residue.
+
+checkentail x::arr<1,3,{1}> |- x::arr<3,3,S>@L.
+print residue.
