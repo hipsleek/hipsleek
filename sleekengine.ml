@@ -1061,7 +1061,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
-  CF.residues := Some (rs, res);
+  (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
@@ -1074,9 +1074,20 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
 
 
 let run_infer_one_pass_set_states (ivars: ident list) (iante0s : meta_formula list) (iconseq0 : meta_formula) =
+  let run_infer_fct ante = run_infer_one_pass ivars ante iconseq0 in
   match iante0s with
     | [] -> report_error no_pos "empty state"
-    | ante::rest -> run_infer_one_pass ivars ante iconseq0
+    | ante::rest ->
+          let ((r0, rs0, v0), pr0) = run_infer_fct ante in
+          let (r, list_rs) =
+            List.fold_left (fun (acc_r, acc_rs) antei ->
+                let ((ri, rsi,_),_) = run_infer_fct antei in
+                (acc_r||ri, acc_rs@[rsi])
+            ) (r0, [rs0]) rest
+          in
+          let comb_rs = CF.union_context_left list_rs in
+          let _ = CF.residues := Some (comb_rs, r) in
+          ((r, comb_rs, v0), pr0)
 
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
@@ -1852,6 +1863,7 @@ let run_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  Debug.ninfo_hprint (add_str "valid: " string_of_bool) valid no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in

@@ -40,7 +40,7 @@
 
 */
 
-/*
+
 //1.
 checkentail true & flow __norm   |-  true & flow __norm .
 expect Valid.
@@ -86,10 +86,25 @@ checkentail y=0 & flow __norm   or x=1 & flow __Error  |-
 expect Fail.
 
 
-*/
 
 //9.
 checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
    x>0 & flow __Error  or  true & flow __norm
    .
+print residue.
+expect Valid.
+
+
+//10.
+checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
+   x>0 & flow __Error  or  y<0 & flow __norm
+   .
+print residue.
+expect Valid.
+
+//11.
+checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
+   x=0 & flow __Error  or  true & flow __norm
+   .
+print residue.
 expect Valid.

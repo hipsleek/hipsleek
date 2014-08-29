@@ -1,6 +1,6 @@
 #partition_error_es
-obtain_subsume_es
-heap_entail_after_sat
+#obtain_subsume_es
+#heap_entail_after_sat
 #is_error_flow
 #heap_entail_struc_init_bug_inv
 #convert_must_failure_to_value_orig
@@ -10,5 +10,6 @@ heap_entail_after_sat
 #get_must_failure
 #heap_entail_struc_init_bug_inv
 #heap_entail_struc_init
-heap_entail_conjunct_lhs_struc
-heap_entail_after_sat_struc
+#heap_entail_conjunct_lhs_struc
+#heap_entail_after_sat_struc
+list_context_union

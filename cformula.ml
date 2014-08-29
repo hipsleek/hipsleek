@@ -9263,19 +9263,21 @@ let combine_ctx_list_err ctxs=
             let r2 = extract_failure_kind_ctx ctx2 in
             gen_lor r1 r2
   in
-  let rec fold_helper (m1,n1,e1) ctx=
-    match ctx with
-      | (Ctx es) ->
-            let m2, n2 = extract_failure_kind es in
-            gen_lor (m1,n1,e1) (m2, n2, Some es)
-      | OCtx (ctx1, ctx2) ->
-            let r = fold_helper (m1,n1,e1) ctx1 in
-            fold_helper r ctx2
+  let rec fold_helper (* (m1,n1,e1) *) acc_r ctxi=
+    let ri = extract_failure_kind_ctx ctxi in
+    gen_ror acc_r ri
+    (* match ctx with *)
+    (*   | (Ctx es) -> *)
+    (*         let m2, n2 = extract_failure_kind es in *)
+    (*         gen_lor (m1,n1,e1) (m2, n2, Some es) *)
+    (*   | OCtx (ctx1, ctx2) -> *)
+    (*         let r = fold_helper (m1,n1,e1) ctx1 in *)
+    (*         fold_helper r ctx2 *)
   in
   match ctxs with
     | [] -> None
-    | es0::rest -> begin
-        let r0 = extract_failure_kind_ctx es0 in
+    | ctx0::rest -> begin
+        let r0 = extract_failure_kind_ctx ctx0 in
           let m,n,es = List.fold_left fold_helper r0 rest in
           match m with
             | Failure_Must msg | Failure_May msg -> Some (msg, mk_cex false)
@@ -10348,11 +10350,12 @@ let list_context_union c1 c2 =
       pr pr pr
       list_context_union_x c1 c2
 
-let rec union_context_left c_l = match (List.length c_l) with
-  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
+let rec union_context_left c_l = (* match (List.length c_l) with *) match c_l with
+  | [] ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "union_context_left: folding empty context list \n"}
-  | 1 -> (List.hd c_l)
-  | _ ->  List.fold_left list_context_union (List.hd c_l) (List.tl c_l)
+  | [a] -> a (* (List.hd c_l) *)
+  | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
+        List.fold_left list_context_union a rest
  
 (*should use union_context_left directly*)
 and fold_context_left_x c_l = union_context_left c_l 
