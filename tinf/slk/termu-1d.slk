@@ -1,7 +1,5 @@
-UTPre@f fpre(int x).
-UTPost@f fpost(int x).
-
-template int f(int x).
+UTPre fpre(int x).
+UTPost fpost(int x).
 
 infer @term x = 0 & fpre(x) |- fpost(x).
 //print residue.

@@ -167,11 +167,13 @@ and term_ann =
 
 and uid = {
   tu_id: int;
+  tu_sid: ident;
   tu_fname: ident;
   tu_args: exp list;
   tu_cond: formula; 
   tu_icond: formula;
   tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
+  tu_pos: loc;
 }
 
 and term_fail =

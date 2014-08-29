@@ -6558,11 +6558,13 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     | IP.TermErr_Must -> CP.TermErr_Must in
   let trans_term_id uid tlist = {
     CP.tu_id = uid.IP.tu_id;
+    CP.tu_sid = uid.IP.tu_sid;
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
     CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; 
     CP.tu_icond = CP.mkTrue no_pos;
-    CP.tu_sol = None; } in 
+    CP.tu_sol = None; 
+    CP.tu_pos = uid.IP.tu_pos; } in 
   match ann with
     | IP.Term -> CP.Term
     | IP.Loop -> CP.Loop
