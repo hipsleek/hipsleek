@@ -9266,13 +9266,6 @@ let combine_ctx_list_err ctxs=
   let rec fold_helper (* (m1,n1,e1) *) acc_r ctxi=
     let ri = extract_failure_kind_ctx ctxi in
     gen_ror acc_r ri
-    (* match ctx with *)
-    (*   | (Ctx es) -> *)
-    (*         let m2, n2 = extract_failure_kind es in *)
-    (*         gen_lor (m1,n1,e1) (m2, n2, Some es) *)
-    (*   | OCtx (ctx1, ctx2) -> *)
-    (*         let r = fold_helper (m1,n1,e1) ctx1 in *)
-    (*         fold_helper r ctx2 *)
   in
   match ctxs with
     | [] -> None

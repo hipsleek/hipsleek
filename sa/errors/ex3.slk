@@ -4,7 +4,7 @@ data node {node next; }.
 checkentail x=null & flow __Error |- x!=null.
 
 print residue.
-//  x=null & flow __Error
+expect Fail.
 
 
 
