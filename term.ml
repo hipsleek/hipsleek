@@ -639,14 +639,20 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       match (t_ann_s, t_ann_d) with
       | (_, TermR _) ->
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let _ = Ti.add_ret_trel_stk ctx estate.CF.es_term_res_lhs t_ann_d in
-        let estate = { estate with CF.es_term_res_rhs = Some t_ann_d } in
-        (estate, lhs_p, rhs_p, None)
+        let estate =
+          if estate.CF.es_infer_tnt then
+            let _ = Ti.add_ret_trel_stk ctx estate.CF.es_term_res_lhs t_ann_d in
+            { estate with CF.es_term_res_rhs = Some t_ann_d }
+          else estate 
+        in (estate, lhs_p, rhs_p, None)
       | (TermU _, _) ->
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
-        let estate = { estate with CF.es_term_call_rhs =  Some t_ann_d; } in
-        (estate, lhs_p, rhs_p, None)
+        let estate =
+          if estate.CF.es_infer_tnt then
+            let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
+            { estate with CF.es_term_call_rhs =  Some t_ann_d; }
+          else estate
+        in (estate, lhs_p, rhs_p, None)
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
       | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
       | (Term, Term)

@@ -284,11 +284,26 @@ let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
 let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
-      | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel;
+      | Ctx estate -> Ctx { estate with 
+          es_infer_vars = infer_vars; 
+          es_infer_vars_rel = iv_rel;
           es_infer_vars_templ = iv_templ;
           es_infer_vars_hp_rel = v_hp_rel;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
+  
+let init_infer_type ctx itype =
+  let rec helper ctx it =
+    match ctx with
+    | Ctx es -> begin 
+      match it with
+      | INF_TERM -> Ctx { es with es_infer_tnt = true; }
+      end
+    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
+  in 
+  match itype with
+  | None -> ctx
+  | Some it -> helper ctx it
 
 (* let conv_infer_heap hs = *)
 (*   let rec helper hs h = match hs with *)

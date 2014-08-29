@@ -120,7 +120,7 @@ let proc_gen_cmd cmd =
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | InferCmd (ivars, iante, iconseq, etype, itype) -> (process_infer ivars iante iconseq etype itype;())
+    | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype; ())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef -> process_list_lemma ldef 
     | PrintCmd pcmd -> process_print_command pcmd
@@ -216,7 +216,7 @@ let parse_file (parse) (source_file : string) =
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (ivars, iante, iconseq,etype, itype) -> (process_infer ivars iante iconseq etype itype;())	
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())	
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> 
             let _ = Debug.ninfo_pprint "at print" no_pos in

@@ -1138,15 +1138,6 @@ let phase_infer_ind = ref false
 type infer_type = 
   | INF_TERM (* For infer@term *)
 
-let slk_infer_term = ref false
-
-let en_slk_infer_term itype = match itype with
-  | Some INF_TERM -> slk_infer_term := true
-  | _ -> slk_infer_term := false
-
-let dis_slk_infer_term itype = 
-  slk_infer_term := false
-  
 let tnt_thres = ref 5
 
 (* Template: Option for Template Inference *)

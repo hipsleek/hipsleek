@@ -13,15 +13,13 @@ open Ti2
 let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let add_ret_trel_stk ctx lhs rhs =
-  (* if !Globals.slk_infer_term then  *)
-    let trel = {
-      ret_ctx = ctx;
-      termr_fname = CP.fn_of_term_ann rhs;
-      termr_params = List.concat (List.map CP.afv (CP.args_of_term_ann rhs));
-      termr_lhs = lhs;
-      termr_rhs = rhs; } in 
-    ret_trel_stk # push trel
-  (* else () *)
+  let trel = {
+    ret_ctx = ctx;
+    termr_fname = CP.fn_of_term_ann rhs;
+    termr_params = List.concat (List.map CP.afv (CP.args_of_term_ann rhs));
+    termr_lhs = lhs;
+    termr_rhs = rhs; } in 
+  ret_trel_stk # push trel
   
 let rec solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
@@ -83,15 +81,13 @@ let case_split_init trrels =
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let add_call_trel_stk ctx lhs rhs =
-  (* if !Globals.slk_infer_term then  *)
-    let trel = {
-      call_ctx = ctx;
-      trel_id = fresh_int ();
-      termu_lhs = lhs;
-      termu_rhs = rhs; } in 
-    call_trel_stk # push trel
-  (* else () *)
-
+  let trel = {
+    call_ctx = ctx;
+    trel_id = fresh_int ();
+    termu_lhs = lhs;
+    termu_rhs = rhs; } in 
+  call_trel_stk # push trel
+  
 (* Initial instantiation of temporal relation *)      
 let inst_lhs_trel_base rel fn_cond_w_ids =  
   let lhs_ann = rel.termu_lhs in

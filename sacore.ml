@@ -2492,7 +2492,7 @@ let do_entail_check_x vars iprog cprog cs=
         CF.do_unfold_view cprog pr_views cs.CF.hprel_rhs
   in
   let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
-  let (valid, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars cprog [] ante conseq in
+  let (valid, rs,v_hp_rel) = Sleekcore.sleek_entail_check None vars cprog [] ante conseq in
   (* let valid = ((not (CF.isFailCtx rs))) in *)
   let _ = if not valid then
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
@@ -3949,7 +3949,7 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   let split_map_hprel_subst = check_split_global iprog prog split_cands in
   let ss_preds = List.map (fun (_,_,_,_,a,b,c) -> (a,b)) split_map_hprel_subst in
   (*prove and do split*)
-  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check svl prog [] f1) in
+  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check None svl prog [] f1) in
   let sing_hp_defs2, split_map_hprel_subst1 = List.fold_left (fun (hp_defs0, r_split) split ->
       let is_succ, hp_defs1, n_split = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
       if is_succ then

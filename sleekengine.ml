@@ -856,7 +856,7 @@ let run_pairwise (iante0 : meta_formula) =
   let r = Tpdispatcher.tp_pairwisecheck pf in
   r
 
-let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
@@ -972,16 +972,16 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       with _ ->
         Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
-  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars !cprog [] ante conseq in
+  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check itype vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   (res, rs,v_hp_rel)
 
-let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let nn = (sleek_proof_counter#get) in
-  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
+  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass itype ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
   
 let process_term_assume (iante: meta_formula) (iconseq: meta_formula) = 
@@ -1663,7 +1663,7 @@ let process_shape_extract sel_vnames=
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  wrap_classic etype (run_infer_one_pass [] iante0) iconseq0
+  wrap_classic etype (run_infer_one_pass None [] iante0) iconseq0
   
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout = 
@@ -1893,12 +1893,11 @@ let process_pairwise (f : meta_formula) =
     print_result rs num_id
   with _ -> print_exc num_id
 
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype itype =
+let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
     try
-      let _ = en_slk_infer_term itype in
-      let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
+      let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass itype ivars iante0) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
         (* print_exc num_id *)

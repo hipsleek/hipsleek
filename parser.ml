@@ -2142,11 +2142,11 @@ id_list_w_itype:
 
 infer_cmd:
   [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let k, il = un_option il_w_itype (None, []) in (il,t,b,None,k)
+    let k, il = un_option il_w_itype (None, []) in (k,il,t,b,None)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some true,None)
+    let il = un_option il [] in (None,il,t,b,Some true)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some false,None)
+    let il = un_option il [] in (None,il,t,b,Some false)
   ]];
 
 captureresidue_cmd:

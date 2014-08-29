@@ -33,7 +33,7 @@ module SY_CEQ = Syn_checkeq
 
 let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
-let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
+let sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
   let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
@@ -79,6 +79,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
+  let ctx = Infer.init_infer_type ctx itype in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -119,13 +120,13 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
 (*
 proof_traces: (formula*formula) list===> for cyclic proofs
 *)
-let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
+let sleek_entail_check itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
   Debug.no_4 "sleek_entail_check" !CP.print_svl pr1 pr2 pr4 pr3
-      (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
+      (fun _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
       isvl ante conseq proof_traces
 
 let sleek_sat_check isvl cprog f=
@@ -153,9 +154,9 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
     else ([],[])
     in
     let r =
-      let b1, _, _ = (sleek_entail_check [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
+      let b1, _, _ = (sleek_entail_check None [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
       if b1 then
-        let b2,_,_ = (sleek_entail_check [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
+        let b2,_,_ = (sleek_entail_check None [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
             f2 (CF.struc_formula_of_formula f1 no_pos)) in
         b2
       else

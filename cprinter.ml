@@ -2545,10 +2545,10 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
-          pr_wrap_test "inferred TermR rel: " 
-            (fun trrel -> (* not !Globals.slk_infer_term || *) Gen.is_empty trrel)  (pr_seq "" pr_trrel) trrel; 
-          pr_wrap_test "inferred TermU rel: " 
-            (fun turel -> (* not !Globals.slk_infer_term || *) Gen.is_empty turel)  (pr_seq "" pr_turel) turel; 
+          pr_wrap_test "inferred UTPost rel: " 
+            (fun trrel -> Gen.is_empty trrel)  (pr_seq "" pr_trrel) trrel; 
+          pr_wrap_test "inferred UTPre rel: " 
+            (fun turel -> Gen.is_empty turel)  (pr_seq "" pr_turel) turel; 
           f b;
           fmt_print_newline ();
           fmt_close_box ();
