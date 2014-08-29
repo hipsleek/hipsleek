@@ -108,3 +108,18 @@ checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |-
    .
 print residue.
 expect Valid.
+
+
+//12
+checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
+   true & flow __norm
+.
+print residue.
+expect Valid.
+
+//13
+checkentail { y=0 & flow __norm   ; x=1 & flow __Error }  |- 
+   true & flow __MayError
+.
+print residue.
+expect Valid.
