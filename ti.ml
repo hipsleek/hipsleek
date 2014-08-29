@@ -150,28 +150,38 @@ let solve_turel_one_scc prog tg scc =
     else ann
   in
   
+  let subst sol ann =
+    let fn = CP.fn_of_term_ann ann in
+    let cond = CP.cond_of_term_ann ann in
+    (* Update TNT case spec with solution *)
+    let _ = add_sol_case_spec_proc fn cond sol in
+    (* let _ = pr_proc_case_specs () in *)
+    
+    CP.subst_sol_term_ann sol ann
+  in 
+  
   let outside_scc_succ = outside_succ_scc tg scc in
   
   let update = 
     if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
-      then update_ann scc (CP.subst_sol_term_ann (CP.Term, [])) (* Term or MayLoop *)
-      else update_ann scc (CP.subst_sol_term_ann (CP.Loop, [])) (* Loop *)
+      then update_ann scc (subst (CP.Term, [])) (* Term or MayLoop *)
+      else update_ann scc (subst (CP.Loop, [])) (* Loop *)
     
     else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
             (List.exists (fun v -> CP.is_MayLoop v) outside_scc_succ) 
-    then update_ann scc (CP.subst_sol_term_ann (CP.MayLoop, [])) (* MayLoop *)
+    then update_ann scc (subst (CP.MayLoop, [])) (* MayLoop *)
   
     else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
-      then update_ann scc (CP.subst_sol_term_ann (CP.Term, [])) (* Term *)
+      then update_ann scc (subst (CP.Term, [])) (* Term *)
       else (* Term with a ranking function for each scc's node *)
         let res = infer_ranking_function_scc prog tg scc in
         match res with
         | Some rank_of_ann -> 
           update_ann scc (fun ann -> 
             let res = (CP.Term, rank_of_ann ann) in 
-            CP.subst_sol_term_ann res ann)
+            subst res ann)
         | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
           let tg = update_graph_with_icond tg scc abd_cond in
@@ -186,7 +196,8 @@ let solve_turel_one_scc prog tg scc =
   let ntg = map_ann_scc tg scc update in
   ntg
   
-let finalize_turel_graph () = ()   
+let finalize_turel_graph tg = 
+  pr_proc_case_specs ()  
   
 let rec solve_turel_graph iter_num prog tg = 
   if iter_num < !Globals.tnt_thres then
@@ -195,13 +206,18 @@ let rec solve_turel_graph iter_num prog tg =
       (* let _ = print_endline (print_graph_by_rel tg) in *)
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
-      let _ = case_spec_of_graph tg in
-      ()
+      finalize_turel_graph tg
     with Restart_with_Cond tg -> 
+      (* TODO: Duplicate on nodes that have been analyzed *)
       solve_turel_graph (iter_num + 1) prog tg
-  else finalize_turel_graph ()
+  else finalize_turel_graph tg
 
 let solve_turel_init prog turels fn_cond_w_ids = 
+  (* Update TNT case spec with base condition *)
+  let _ = List.iter add_case_spec_of_trrel_sol_proc
+    (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
+  (* let _ = pr_proc_case_specs () in *)
+  
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in
   (* let _ = print_endline (pr_list (fun ir ->  *)

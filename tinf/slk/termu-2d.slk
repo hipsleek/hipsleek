@@ -6,22 +6,22 @@ UTPost@g gpost(int x).
 
 template int f(int x, int y).
 
-infer @term x >= 0 & x' = x & fpre(x, y) |- gpre(x').
+infer [@term] x >= 0 & x' = x & fpre(x, y) |- gpre(x').
 //print residue.
 
-infer @term x < 0 & fpre(x, y) |- fpost(x, y).
+infer [@term] x < 0 & fpre(x, y) |- fpost(x, y).
 //print residue.
 
-infer @term x >= 0 & x' = x & fpre(x, y) & gpost(x')|- fpost(x, y).
+infer [@term] x >= 0 & x' = x & fpre(x, y) & gpost(x') |- fpost(x, y).
 //print residue.
 
-infer @term x >= 0 & x' = x - 1 & y' = 0 & gpre(x) |- fpre(x', y').
+infer [@term] x >= 0 & x' = x - 1 & y' = 0 & gpre(x) |- fpre(x', y').
 //print residue.
 
-infer @term x < 0 & gpre(x) |- gpost(x).
+infer [@term] x < 0 & gpre(x) |- gpost(x).
 //print residue.
 
-infer @term x >= 0 & x' = x - 1 & y' = 0 & gpre(x) & fpost(x', y')|- gpost(x).
+infer [@term] x >= 0 & x' = x - 1 & y' = 0 & gpre(x) & fpost(x', y') |- gpost(x).
 //print residue.
 
 term_infer.

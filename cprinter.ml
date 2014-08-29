@@ -1030,6 +1030,8 @@ and pr_var_measures (t_ann, ls1, ls2) =
   pr_wrap_test "" Gen.is_empty (pr_rank "" pr_formula_exp) ls1;
   pr_wrap_test "" Gen.is_empty (pr_args "" pr_formula_exp) ls2
   
+let string_of_var_measures = poly_string_of_pr pr_var_measures
+  
 let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
 
 let pr_prune_status st = match st with

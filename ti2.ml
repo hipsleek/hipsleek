@@ -21,6 +21,7 @@ let simplify f args =
       (diff (CP.fv f) args) f None (CP.pos_of_formula f)
   
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
+let imply a c = Tpdispatcher.imply_raw a c
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
 let mkNot f = CP.mkNot f None no_pos
@@ -131,6 +132,80 @@ let update_call_trel rel ilhs irhs =
   { rel with
     termu_lhs = ilhs;  
     termu_rhs = irhs; }
+    
+(* TNT Case Spec *)
+type tnt_case_spec = 
+  | Sol of (CP.term_ann * CP.exp list)
+  | Unknown
+  | Cases of (CP.formula * tnt_case_spec) list
+
+let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
+  match spec with
+  | Cases cl ->
+    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    (
+      fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
+        (fun () -> pr_pure_formula c) " -> " )
+        (fun () -> pr_tnt_case_spec s; fmt_string ";")
+    ) cl 
+  | Unknown -> fmt_string "Unk"
+  | Sol (ann, rnk) -> pr_var_measures (ann, rnk, [])
+
+(* let rec print_tnt_case_spec spec =                                            *)
+(*   match spec with                                                             *)
+(*   | Sol (ann, rnk) -> string_of_var_measures (ann, rnk, [])                   *)
+(*   | Unknown -> "Unk"                                                          *)
+(*   | Cases cl -> "[" ^ (String.concat "; " (List.map print_tnt_case cl)) ^ "]" *)
+    
+(* and print_tnt_case (c, spec) =                                                *)
+(*   (!CP.print_formula c) ^ " -> " ^ (print_tnt_case_spec spec)                 *)
+
+let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
+
+let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
+  Hashtbl.create 20
+
+let pr_proc_case_specs _ = 
+  Hashtbl.iter (fun proc spec ->
+    print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs
+  
+let case_spec_of_trrel_sol sol =
+  match sol with
+  | Base c -> (c, Sol (CP.Term, []))
+  | Rec c -> (c, Unknown)
+  | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
+
+let add_case_spec_of_trrel_sol_proc (fn, sols) =
+  let cases = List.map case_spec_of_trrel_sol sols in
+  Hashtbl.add proc_case_specs fn (Cases cases)
+  
+  
+let rec update_case_spec spec cond f = 
+  match spec with
+  | Sol _ -> spec
+  | Unknown -> f spec
+  | Cases cases -> 
+    let rec helper cases =
+      match cases with
+      | [] -> cases
+      | (c, case)::rem ->
+        if imply cond c then (c, (update_case_spec case cond f))::rem
+        else (c, case)::(helper rem)
+    in Cases (helper cases)
+    
+let update_case_spec_proc fn cond f = 
+  try
+    let spec = Hashtbl.find proc_case_specs fn in
+    let nspec = update_case_spec spec cond f in
+    Hashtbl.replace proc_case_specs fn nspec
+  with _ -> () 
+  
+let add_sol_case_spec_proc fn cond sol = 
+  update_case_spec_proc fn cond (fun _ -> Sol sol)
+  
+let update_case_spec_with_icond_proc fn cond icond = 
+  update_case_spec_proc fn cond (fun _ -> 
+    Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
 (* TNT Graph *)
 module TNTElem = struct
@@ -346,9 +421,13 @@ let infer_abductive_icond_edge prog g e =
     | Sat model -> 
       let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
       let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
-      let cond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+      let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+      
       (* let _ = print_endline ("ABD: " ^ (!CP.print_formula cond)) in *)
-      Some (uid.CP.tu_id, (params, cond))
+      (* Update TNT case spec with new abductive case *)
+      let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in 
+      
+      Some (uid.CP.tu_id, (params, icond))
     | _ -> None end
   | _ -> None    
       
@@ -431,12 +510,4 @@ let update_graph_with_icond g scc abd_conds =
   let scc_edges = edges_of_scc g scc in
   let g = List.fold_left (fun g v -> TG.remove_vertex g v) g scc in
   List.fold_left (fun g e -> f_e g e) g scc_edges
-  
-type tnt_case = CP.formula * CP.term_ann * (CP.exp list)  
-  
-let case_spec_of_graph g =
-  let _ = print_endline (print_graph_by_rel g) in
-  ()
-  
-    
   
