@@ -278,6 +278,21 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+let rec map_term_ann f_f f_e ann = 
+  match ann with
+  | TermU uid -> TermU (map_ann_uid f_f f_e uid)
+  | TermR uid -> TermR (map_ann_uid f_f f_e uid)
+  | _ -> ann
+
+and map_ann_uid f_f f_e uid = 
+  { uid with
+    tu_args = List.map f_e uid.tu_args;
+    tu_cond = f_f uid.tu_cond;
+    tu_icond = f_f uid.tu_icond;
+    tu_sol = map_opt (fun (ann, el) ->
+      (map_term_ann f_f f_e ann),
+      List.map f_e el) uid.tu_sol; }
+
 let is_False cp = match cp with
   | BForm (p,_) -> 
         begin
@@ -3208,6 +3223,7 @@ and b_apply_subs_x sst bf =
     (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info -> 
         LexVar { t_info with
+          lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   in
@@ -3458,7 +3474,8 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, a_apply_par_term_list sst args, pos) (* An Hoa *)
     | LexVar t_info -> 
-          LexVar { t_info with 
+      LexVar { t_info with 
+        lex_ann = map_term_ann (apply_par_term sst) (a_apply_par_term sst) t_info.lex_ann; 
 	      lex_exp = a_apply_par_term_list sst t_info.lex_exp;
 	      lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
   in (npf,il)
@@ -3572,7 +3589,8 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | RelForm (r, args, pos) -> RelForm (r, List.map (a_apply_one_term (fr, t)) args, pos) (* An Hoa *)
     | LexVar t_info -> 
-          LexVar { t_info with
+      LexVar { t_info with
+        lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
 	      lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
 	      lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
   in (npf,il)
@@ -4852,6 +4870,7 @@ and b_apply_one_exp (fr, t) bf =
   | RelForm (r, args, pos) -> RelForm (r, e_apply_one_list_exp (fr, t) args, pos) (* An Hoa *)
   | LexVar t_info -> 
       LexVar { t_info with
+        lex_ann = map_term_ann (apply_one_exp (fr, t)) (e_apply_one_exp (fr, t)) t_info.lex_ann;
 			  lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
   in (npf,il)

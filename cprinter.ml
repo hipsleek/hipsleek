@@ -1022,6 +1022,20 @@ and pr_term_id pr_short uid =
   if pr_short then () 
   else pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
     pr_var_measures (s, ls, []))) uid.P.tu_sol
+    
+and pr_term_ann_assume ann = 
+  match ann with
+  | P.Term -> fmt_string "Term"
+  | P.Loop -> fmt_string "Loop"
+  | P.MayLoop -> fmt_string "MayLoop"
+  | P.TermU uid 
+  | P.TermR uid ->
+    let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
+    fmt_string uid.P.tu_sid;
+    pr_args "" pr_formula_exp uid.P.tu_args
+  | P.Fail f -> match f with
+    | P.TermErr_May -> fmt_string "TermErr_May"
+    | P.TermErr_Must -> fmt_string "TermErr_Must"
 
 and pr_var_measures (t_ann, ls1, ls2) = 
   let pr_rank op f xs = pr_args None None op "[" "]" "," f xs in
@@ -2314,6 +2328,19 @@ let pr_trrel_pure (ctx, lhs_trrel, rhs_trrel) =
 
 let string_of_trrel_pure = poly_string_of_pr pr_trrel_pure
 
+let pr_trrel_assume (ctx, lhs_trrel, rhs_trrel) = 
+  (* fmt_open_box 1; *)
+  fmt_string "termAssume ";
+  pr_mix_formula ctx;
+  if lhs_trrel != [] then (fmt_string " & ";
+  pr_args None None "" "" "" " & " pr_term_ann_assume lhs_trrel);
+  fmt_string " --> ";
+  pr_term_ann_assume rhs_trrel;
+  fmt_string "."
+  (* fmt_close () *)
+
+let string_of_trrel_assume = poly_string_of_pr pr_trrel_assume
+
 let pr_turel (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;
   pr_formula ctx;
@@ -2324,6 +2351,19 @@ let pr_turel (ctx, lhs_turel, rhs_turel) =
   fmt_close ()
 
 let string_of_turel = poly_string_of_pr pr_turel
+
+let pr_turel_assume (ctx, lhs_turel, rhs_turel) = 
+  (* fmt_open_box 1; *)
+  fmt_string "termAssume ";
+  pr_mix_formula ctx;
+  fmt_string " & ";
+  pr_term_ann_assume lhs_turel;
+  fmt_string " --> ";
+  pr_term_ann_assume rhs_turel;
+  fmt_string "."
+  (* fmt_close () *)
+
+let string_of_turel_assume = poly_string_of_pr pr_turel_assume
 
 let pr_turel_pure (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;

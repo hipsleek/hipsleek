@@ -244,10 +244,10 @@ let solve prog =
   let turels = call_trel_stk # get_stk in
   let _ = call_trel_stk # reset in
   let _ = print_endline "Temporal Assumptions:" in
-  let _ = List.iter (fun trrel -> 
-    print_endline (print_ret_trel trrel)) trrels in
-  let _ = List.iter (fun turel -> 
-    print_endline (print_call_trel turel)) turels in
+  let _ = List.iter (fun trrel -> print_endline 
+    ((print_ret_trel trrel) ^ "\n")) trrels in
+  let _ = List.iter (fun turel -> print_endline 
+    ((print_call_trel turel) ^ "\n")) turels in
   
   let fn_cond_w_ids = case_split_init trrels in
   let _ = solve_turel_init prog turels fn_cond_w_ids in

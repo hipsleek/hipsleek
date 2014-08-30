@@ -438,12 +438,12 @@ let strip_lexvar_formula (f: formula) =
   let _, fp, _, _, _ = split_components f in
   let (lexvar, other_p) = strip_lexvar_mix_formula fp in
   let termr, lexvar = List.partition is_TermR_formula lexvar in
+  let termr_lex = List.map (fun f ->
+    let tr, _, _, _ = find_lexvar_formula f in tr) termr in
   match lexvar with
-  | [] -> fp, None, [] 
+  | [] -> other_p, None, termr_lex
   | lv::[] ->
     let t_ann, ml, il, _ = find_lexvar_formula lv in 
-    let termr_lex = List.map (fun f ->
-      let tr, _, _, _ = find_lexvar_formula f in tr) termr in
     other_p, Some (t_ann, ml, il), termr_lex
   | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
@@ -630,7 +630,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
-      let t_ann_s, src_lv, src_il = find_lexvar_es estate in
+      let t_ann_s, src_lv, src_il = find_lexvar_es estate in 
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
@@ -729,21 +729,23 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
+  let _ = print_endline (!MCP.print_mix_formula lhs_p) in
   let _, rhs_p, _, _, _ = split_components rhs in
   let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
   match rhs_lex with
   | [] -> ()
   | rlex::[] ->
     let t_ann_d, _, _, _ = find_lexvar_formula rlex in
-    let t_ann_s, _, _ = match lhs_lex with 
-    | Some (t_ann, el, il) -> (t_ann, el, il)
-    | None -> raise LexVar_Not_found
-    in begin match (t_ann_s, t_ann_d) with
-    | (_, TermR _) ->
-      Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
-    | (TermU _, _) ->
-      Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
-    | _ -> () end
+    begin match t_ann_d with
+    | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
+    | _ -> 
+      let t_ann_s, _, _ = match lhs_lex with 
+      | Some (t_ann, el, il) -> (t_ann, el, il)
+      | None -> raise LexVar_Not_found in
+      begin match t_ann_s with
+      | TermU _ -> Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
+      | _ -> () end
+    end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 
 let strip_lexvar_lhs (ctx: context) : context =

@@ -51,7 +51,7 @@ type ret_trel = {
 }
 
 let print_ret_trel rel = 
-  string_of_trrel_pure (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
+  string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
   
 type trrel_sol = 
   | Base of CP.formula
@@ -121,7 +121,7 @@ type call_trel = {
 }
 
 let print_call_trel rel = 
-  string_of_turel_pure (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
+  string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
   
 let compare_trel r1 r2 = compare r1.trel_id r2.trel_id
   
