@@ -1651,35 +1651,35 @@ pure_constr:
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
   
-termu_id: 
-  [[ `AT; `IDENTIFIER fn -> (fn, 0, P.mkTrue no_pos)
-   | `AT; elem = termu_elem -> let (i, c) = elem in ("", i, c)
-   | `AT; `IDENTIFIER fn; elem = termu_elem -> let (i, c) = elem in (fn, i, c) 
-  ]];
+(* termu_id:                                                                       *)
+(*   [[ `AT; `IDENTIFIER fn -> (fn, 0, P.mkTrue no_pos)                            *)
+(*    | `AT; elem = termu_elem -> let (i, c) = elem in ("", i, c)                  *)
+(*    | `AT; `IDENTIFIER fn; elem = termu_elem -> let (i, c) = elem in (fn, i, c)  *)
+(*   ]];                                                                           *)
 
-termu_elem: 
-  [[ `OBRACE; `INT_LITER (i,_); `CBRACE -> (i, P.mkTrue no_pos) 
-   | `OBRACE; c = pure_constr; `CBRACE -> (0, c)
-   | `OBRACE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CBRACE -> (i, c)
-  ]];
+(* termu_elem:                                                                     *)
+(*   [[ `OBRACE; `INT_LITER (i,_); `CBRACE -> (i, P.mkTrue no_pos)                 *)
+(*    | `OBRACE; c = pure_constr; `CBRACE -> (0, c)                                *)
+(*    | `OBRACE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CBRACE -> (i, c)      *)
+(*   ]];                                                                           *)
   
-termu_args: 
-  [[ `OPAREN; t=LIST0 cexp SEP `COMMA; `CPAREN -> t ]];
+(* termu_args:                                                                     *)
+(*   [[ `OPAREN; t=LIST0 cexp SEP `COMMA; `CPAREN -> t ]];                         *)
 
 ann_term: 
     [[  `TERM -> P.Term
       | `LOOP -> P.Loop
       | `MAYLOOP -> P.MayLoop
-      | `TERMU; tid = OPT termu_id; targs = termu_args ->
-          let pos = get_pos_camlp4 _loc 1 in
-          let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermU ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn; 
-                     P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; })
-      | `TERMR; tid = OPT termu_id; targs = termu_args ->
-          let pos = get_pos_camlp4 _loc 1 in
-          let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in
-          P.TermR ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn; 
-                     P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; })
+      (* | `TERMU; tid = OPT termu_id; targs = termu_args ->                 *)
+      (*     let pos = get_pos_camlp4 _loc 1 in                              *)
+      (*     let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in     *)
+      (*     P.TermU ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn;        *)
+      (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
+      (* | `TERMR; tid = OPT termu_id; targs = termu_args ->                 *)
+      (*     let pos = get_pos_camlp4 _loc 1 in                              *)
+      (*     let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in     *)
+      (*     P.TermR ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn;        *)
+      (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
     ]];
 
 cexp:

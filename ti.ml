@@ -201,7 +201,7 @@ let solve_turel_one_scc prog tg scc =
   ntg
   
 let finalize_turel_graph tg = 
-  let _ = print_endline (print_graph_by_rel tg) in
+  (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs ()  
   
 let rec solve_turel_graph iter_num prog tg = 

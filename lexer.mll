@@ -248,8 +248,8 @@ module Make (Token : SleekTokenS)
    ("Term", TERM);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
-   ("TermU", TERMU);
-   ("TermR", TERMR);
+   (* ("TermU", TERMU); *)
+   (* ("TermR", TERMR); *)
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -262,7 +262,7 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
-         ("validate", VALIDATE);
+   ("validate", VALIDATE);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);

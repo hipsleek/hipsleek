@@ -2759,7 +2759,7 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
     (
       fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
-        (fun () -> pr_struc_formula_for_spec c2; fmt_string ";")
+        (fun () -> pr_struc_formula_for_spec c2)
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->

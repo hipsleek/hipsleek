@@ -43,7 +43,7 @@ type sleek_token =
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
-  | TEMPL | TERM | LOOP | MAYLOOP | TERMU | TERMR 
+  | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *) 
   | TERM_INFER | TREL_INFER | TREL_ASSUME
   | UTPRE | UTPOST
   | UNFOLD | UNION
@@ -142,8 +142,8 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
-    | TERMU -> "TermU"
-    | TERMR -> "TermR"
+    (* | TERMU -> "TermU" *)
+    (* | TERMR -> "TermR" *)
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
     | TREL_INFER -> "@term"
