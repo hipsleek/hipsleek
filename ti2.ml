@@ -36,6 +36,12 @@ let rec partition_by_key key_of key_eq ls =
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
     
+let seq_num = ref 0    
+    
+let tnt_fresh_int () = 
+  seq_num := !seq_num + 1;
+  !seq_num
+    
 (* This method returns a unique number for (a, b) *)
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
@@ -119,6 +125,9 @@ type call_trel = {
   termu_lhs: CP.term_ann;
   termu_rhs: CP.term_ann;
 }
+
+let print_call_trel_debug rel = 
+  string_of_turel_pure (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
 
 let print_call_trel rel = 
   string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
@@ -273,7 +282,7 @@ let print_graph_by_num g =
     
 let print_edge e = 
   let _, rel, _ = e in
-  print_call_trel rel
+  print_call_trel_debug rel
     
 let print_graph_by_rel g = 
   TG.fold_edges (fun s d a -> 

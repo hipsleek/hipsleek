@@ -69,7 +69,7 @@ let case_split_init trrels =
     partition_by_key key_of key_eq trrels 
   in
   let fn_cond_w_ids = List.map (fun (fn, trrels) -> 
-    (fn, List.map (fun c -> fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
+    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
   let _ = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline ("\nBase/Rec Case Splitting:\n" ^ 
@@ -86,7 +86,7 @@ let call_trel_stk: call_trel Gen.stack = new Gen.stack
 let add_call_trel_stk ctx lhs rhs =
   let trel = {
     call_ctx = ctx;
-    trel_id = fresh_int ();
+    trel_id = tnt_fresh_int ();
     termu_lhs = lhs;
     termu_rhs = rhs; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
@@ -201,6 +201,7 @@ let solve_turel_one_scc prog tg scc =
   ntg
   
 let finalize_turel_graph tg = 
+  let _ = print_endline (print_graph_by_rel tg) in
   pr_proc_case_specs ()  
   
 let rec solve_turel_graph iter_num prog tg = 
@@ -229,6 +230,11 @@ let solve_turel_init prog turels fn_cond_w_ids =
   let tg = graph_of_trels irels in
   solve_turel_graph 0 prog tg
   
+let finalize () =
+  ret_trel_stk # reset;
+  call_trel_stk # reset;
+  Hashtbl.reset proc_case_specs
+  
 (* Main Inference Function *)  
 let solve prog = 
   (* Temporarily disable template assumption printing *)
@@ -240,20 +246,17 @@ let solve prog =
   let _ = print_endline "*************************" in
   
   let trrels = ret_trel_stk # get_stk in
-  let _ = ret_trel_stk # reset in
   let turels = call_trel_stk # get_stk in
-  let _ = call_trel_stk # reset in
+  
   let _ = print_endline "Temporal Assumptions:" in
-  let _ = List.iter (fun trrel -> print_endline 
-    ((print_ret_trel trrel) ^ "\n")) trrels in
-  let _ = List.iter (fun turel -> print_endline 
-    ((print_call_trel turel) ^ "\n")) turels in
+  let _ = List.iter (fun trrel -> print_endline ((print_ret_trel trrel) ^ "\n")) trrels in
+  let _ = List.iter (fun turel -> print_endline ((print_call_trel turel) ^ "\n")) turels in
   
   let fn_cond_w_ids = case_split_init trrels in
   let _ = solve_turel_init prog turels fn_cond_w_ids in
   
   let _ = print_relassume := pr_templassume in
-  ()
+  finalize ()
   
   
   

@@ -1,7 +1,10 @@
-termAssume x = 0 & TermU{x} --> TermR{x}.
+UTPre fpre(int x).
+UTPost fpost(int x).
 
-termAssume x != 0 & x' = x - 1 & TermU{x} & TermR{x'} --> TermR{x}.
+termAssume x = 0 & fpre(x) --> fpost(x).
 
-termAssume x != 0 & x' = x - 1 & TermU{x} --> TermU{x'}.
+termAssume x != 0 & x' = x - 1 & fpre(x) & fpost(x') --> fpost(x).
+
+termAssume x != 0 & x' = x - 1 & fpre(x) --> fpre(x').
 
 term_infer.

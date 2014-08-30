@@ -1,33 +1,14 @@
-infer @term x = 0 & TermU(x) |- TermR(x).
+UTPre fpre(int x).
+UTPost fpost(int x).
+
+infer [@term] x = 0 & fpre(x) |- fpost(x).
 //print residue.
 
-infer @term x != 0 & x' = x - 1 & TermU(x) & TermR(x') |- TermR(x).
+infer [@term] x != 0 & x' = x - 1 & fpre(x) & fpost(x') |- fpost(x).
 //print residue.
 
-infer @term x != 0 & x' = x - 1 & TermU(x) |- TermU(x').
-//print residue.
-
-term_infer.
-
-/*
-infer @term x >= 0 & x' = x & TermU@f{true}(x, y) |- TermU@g{true}(x').
-//print residue.
-
-infer @term x < 0 & TermU@f{true}(x, y) |- TermR@f{true}(x, y).
-//print residue.
-
-infer @term x >= 0 & x' = x & TermU@f{true}(x, y) & TermR@g{true}(x') |- TermR@f{true}(x, y).
-//print residue.
-
-infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g{true}(x) |- TermU@f{true}(x', y').
-//print residue.
-
-infer @term x < 0 & TermU@g{true}(x) |- TermR@g{true}(x).
-//print residue.
-
-infer @term x >= 0 & x' = x - 1 & y' = 0 & TermU@g{true}(x) & TermR@f{true}(x', y') |- TermR@g{true}(x).
+infer [@term] x != 0 & x' = x - 1 & fpre(x) |- fpre(x').
 //print residue.
 
 term_infer.
-*/
 
