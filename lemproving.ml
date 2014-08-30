@@ -135,7 +135,7 @@ let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (le
     (*   CF.residues := Some (lc,b)); *)
     res
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []))) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []), CF.mk_cex true )) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl) =
@@ -387,9 +387,9 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
       if !Globals.disable_failure_explaining then ""
       else
         match CF.get_must_failure ctx with
-          | Some s -> "(must) cause: " ^ s 
+          | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns
           | _ -> (match CF.get_may_failure ctx with
-              | Some s -> "(may) cause: " ^ s
+              | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
               | None -> "INCONSISTENCY : expected failure but success instead"
             )
       in if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")

@@ -931,6 +931,31 @@ else
 (*   let pr = !print_formula in *)
 (*   Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe  *)
 
+let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
+  begin
+    omega_subst_lst := [];
+    let pe1 = drop_varperm_formula pe1 in
+    let pe2 = drop_varperm_formula pe2 in
+    match ((omega_of_formula_old 21 pe1), (omega_of_formula_old 21 pe2)) with
+      | (Some fstr1, Some fstr2) ->
+            let vars_list1 = get_vars_formula pe1 in
+            let vars_list2 = get_vars_formula pe2 in
+            let vars_list = vars_list1@vars_list2 in
+            let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+            let fomega =  "pairwisecheck ({[" ^ vstr ^ "] : (" ^ fstr1 ^ ")} union {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")});" ^ Gen.new_line_str in
+            let _ = set_proof_string ("PAIRWISE:"^fomega) in
+	        (*test*)
+	        (*print_endline (Gen.break_lines fomega);*)
+	    if !log_all_flag then begin
+              output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
+              output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
+              flush log_all;
+            end;
+            let rel = send_and_receive fomega !in_timeout (* 0. *) in
+	        match_vars (remove_dups_svl ((fv pe1)@(fv pe2))) rel
+      | _ -> Cpure.mkOr pe1 pe2 None no_pos
+  end
+
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin

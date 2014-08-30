@@ -128,6 +128,7 @@ module Make (Token : SleekTokenS)
    ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("checksat", CHECKSAT);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
@@ -194,6 +195,9 @@ module Make (Token : SleekTokenS)
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+         ("inv_exact", INV_EXACT);
+         ("inv_sat", INV_SAT);
+         ("BG", BG);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA TLEM);

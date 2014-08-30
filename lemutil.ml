@@ -7,7 +7,7 @@ open Lemma
 
 module C = Cast
 module I = Iast
-module CF=Cformula
+(* module CF=Cformula *)
 module CP=Cpure
 
 let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
@@ -28,23 +28,23 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
     match rem_hpdefs with
       | [] -> (r_unk_hps@[hp], r_hpdefs)
       | ((* (k, _,_,_) as *) hpdef)::rest -> begin
-          match hpdef.CF.def_cat with
+          match hpdef.Cformula.def_cat with
             | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
                 (*to remove after improve the algo with nested*)
                 let _ = List.map (fun (f,_) ->
-                    let hps = CF.get_hp_rel_name_formula f in
+                    let hps = Cformula.get_hp_rel_name_formula f in
                     if CP.diff_svl hps [hp] != [] then
                       raise Not_found
                     else []
-                )  hpdef.CF.def_rhs in
+                )  hpdef.Cformula.def_rhs in
                 (r_unk_hps, r_hpdefs@[hpdef])
               else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
             | _ -> look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
         end
   in
   let heap_remove_unk_hps unk_hps hn = match hn with
-    | CF.HRel (hp,eargs, pos)-> begin
-        if CP.mem_svl hp unk_hps then CF.HTrue else hn
+    | Cformula.HRel (hp,eargs, pos)-> begin
+        if CP.mem_svl hp unk_hps then Cformula.HTrue else hn
       end
     | _ -> hn
   in
@@ -52,12 +52,12 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
   (*for each proving: generate lemma; cyclic proof*)
   try begin
   let bc = back_up_progs iprog0 cprog0 in
-  let hps = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@(CF.get_hp_rel_name_formula f2)) in
+  let hps = CP.remove_dups_svl ((Cformula.get_hp_rel_name_formula f1)@(Cformula.get_hp_rel_name_formula f2)) in
   let unk_hps, known_hpdefs = List.fold_left (look_up_hpdef hpdefs) ([],[]) hps in
   (*remove unk_hps*)
   let f11,f21 = if unk_hps = [] then (f1, f2) else
-    (CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f1,
-    CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f2)
+    (Cformula.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f1,
+    Cformula.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f2)
   in
   (*transform hpdef to view;
     if preds are unknown -> HTRUE
@@ -77,13 +77,13 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left to_infer_hps12 if12 if22 in
     let r1,_ = manage_test_new_lemmas1 [l_coer] iprog0 cprog0 in
-    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (CF.struc_formula_of_formula f2 no_pos)) in *)
-    (* let r1,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
+    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (Cformula.struc_formula_of_formula f2 no_pos)) in *)
+    (* let r1,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (Cformula.struc_formula_of_formula f23 no_pos) in *)
     (* let r1,_,_ = fnc f13 f23 in *)
     if not r1 then false else
       let r_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left to_infer_hps21 if22 if12 in
       let r2,_ = manage_test_new_lemmas1 [r_coer] iprog0 cprog0 in
-      (* let r2,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
+      (* let r2,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (Cformula.struc_formula_of_formula f13 no_pos) in *)
       (* let r2,_,_ = fnc f23 f13 in *)
       r2
   in
@@ -104,11 +104,11 @@ let norm_checkeq_views_x iprog cprog cviews0=
   (************************************************)
   let gen_view_formula vdcl=
     let self_sv = CP.SpecVar (Named vdcl.Cast.view_data_name ,self, Unprimed) in
-    let vnode = CF.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
-     CF.formula_of_heap vnode no_pos
+    let vnode = Cformula.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
+     Cformula.formula_of_heap vnode no_pos
   in
   let extract_unknown_preds vdcl=
-    let hps = List.fold_left (fun r (f,_) -> r@(CF.get_hp_rel_name_formula f)) [] vdcl.Cast. view_un_struc_formula in
+    let hps = List.fold_left (fun r (f,_) -> r@(Cformula.get_hp_rel_name_formula f)) [] vdcl.Cast. view_un_struc_formula in
     List.map CP.name_of_spec_var hps
   in
   let checkeq_view vdecl1 vdecl2=
@@ -139,3 +139,4 @@ let norm_checkeq_views iprog cprog cviews=
   let pr2 prog = (pr_list (pr_pair pr_id pr_id)) prog.Cast.prog_view_equiv in
   Debug.no_2 "norm_checkeq_views" pr2 pr1 pr2
       (fun _ _ -> norm_checkeq_views_x iprog cprog cviews) cprog cviews
+

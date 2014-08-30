@@ -97,6 +97,7 @@ let proc_gen_cmd cmd =
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | SatCheck f -> (process_sat_check f;())
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
@@ -183,6 +184,7 @@ let parse_file (parse) (source_file : string) =
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
+      | SatCheck f -> (process_sat_check f; ())
       | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
       | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
       | Simplify f -> process_simplify f
@@ -300,10 +302,12 @@ let main () =
               if !inter then (* check for interactivity *)
                 print_string !prompt;
                 let input = read_line () in
+                (* let _ = print_string("here") in  *)
                 match input with
                   | "" -> ()
                   | _ ->
                       try
+                        
                           let term_indx = String.index input terminator in
                           let s = String.sub input 0 (term_indx+1) in
                           Buffer.add_string buffer s;
@@ -345,7 +349,12 @@ let main () =
         begin
             print_string ("\n")
         end
-      (* | Not_found -> print_string ("Not found exception caught!\n") *)
+    | _ -> 
+          begin
+            dummy_exception();
+            print_endline "SLEEK FAILURE (END)";
+            Log.last_cmd # dumping "sleek_dumEND)";
+          end
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)

@@ -87,6 +87,9 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      I.view_inv_lock = None;
 	      I.view_is_prim = false;
 	      I.view_invariant = IP.mkTrue no_pos;
+              I.view_baga_inv = None;
+              I.view_baga_over_inv = None;
+              I.view_baga_under_inv = None;
               I.view_mem = None;
 	      I.view_materialized_vars = [];
 	      I.try_case_inference = false; }

@@ -1,0 +1,18 @@
+
+data node2 {
+	int val; 
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<"n":n> == 
+	self = null & ["n":n = 0] or 
+	self::node2<_ , q> * q::dll<n1> & ["n":n1=n-1]
+	inv true & ["n":n >= 0].
+
+// Fail.Valid.Valid.Valid
+
+
+checkentail x::dll<m> |- true & ["n":m>=0].
+
+

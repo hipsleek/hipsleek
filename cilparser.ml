@@ -1275,6 +1275,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Func (id, el, pos) -> 
               e (* TODO *)
+        | Ipure.BExpr _ -> e
   ) in
   match exp with
     | Iast.Assert a -> (

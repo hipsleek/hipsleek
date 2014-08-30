@@ -111,9 +111,9 @@ let common_arguments = [
    "Try induction in case of failure implication."); (* An Hoa *)
   ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-  ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
+  ("--smtout", Arg.Set Globals.print_original_solver_output,
    "Print the original output given by the SMT solver."); (* An Hoa *)
-  ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
+  ("--smtinp", Arg.Set Globals.print_original_solver_input,
    "Print the program generated SMT input."); (* An Hoa *)
   ("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
    "Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -213,6 +213,8 @@ let common_arguments = [
    "Log all formulae sent to Omega Calculator in file allinput.oc");
   ("--log-z3", Arg.Set Smtsolver.log_all_flag,
    "Log all formulae sent to z3 in file allinput.z3");
+  ("--log-z3n", Arg.Set Z3.log_all_flag,
+  "Log all formulae sent to z3 in file allinput.z3n");
   ("--log-isabelle", Arg.Set Isabelle.log_all_flag,
    "Log all formulae sent to Isabelle in file allinput.thy");
   ("--log-coq", Arg.Set Coq.log_all_flag,
@@ -326,8 +328,10 @@ let common_arguments = [
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
-  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
-  ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing (with shorter names)");
+  ("--dis-print-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing (with shorter names)");
+  ("--print-inline", Arg.Set Globals.print_en_inline,"enable printing (with fewer intermediates)");
+  ("--dis-print-inline", Arg.Clear Globals.print_en_inline,"disable printing (with fewer intermediates)");
   ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
@@ -343,7 +347,7 @@ let common_arguments = [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
+  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
@@ -489,6 +493,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
@@ -554,6 +559,8 @@ let common_arguments = [
   (* incremental spec *)
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
+  ("--inv-test", Arg.Set Globals.do_test_inv, "Enable explicit checking of invariant (for run-fast-test)");
+  ("--dis-inv-test", Arg.Clear Globals.do_test_inv, "Disable explicit checking of invariant (for run-fast-test)");
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
@@ -568,10 +575,12 @@ let common_arguments = [
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 
+  ("--prove-invalid",Arg.Set Globals.prove_invalid,"enable prove invalid");
+  ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
+
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-  ("--dis-classic", Arg.Clear Globals.opt_classic, "Use classical reasoning in separation logic");
-  
+  ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -630,8 +639,10 @@ let common_arguments = [
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
+  ("--lem-rev-unsafe", Arg.Set Globals.lemma_rev_unsafe, "enable generating (without proving) both rev lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
+  ("--seg-fold", Arg.Set Globals.seg_fold, "enable seg folding");
   ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
   ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  
   ("--dlg",
@@ -702,7 +713,11 @@ let common_arguments = [
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
-  ("--smt-compete", 
+  ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
+  ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
+  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--smt-compete",
      Arg.Unit
       (fun _ ->
           Globals.show_unexpected_ents := false;
@@ -751,7 +766,34 @@ let common_arguments = [
           Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
-   "SMT competition mode - essential printing only + show unexpected ents");
+  "SMT competition mode - essential printing only + show unexpected ents");
+  ("--smt-test", 
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := true;
+          (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := true;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=false;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          (* Globals.lemma_gen_unsafe:=true; *)
+           Globals.lemma_rev_unsafe:=true;
+          Globals.lemma_syn := true;
+          (* Globals.acc_fold := true; *)
+          (* Globals.smart_lem_search := true; *)
+          Globals.seg_fold := true;
+          Globals.en_pred_sat ();
+          (* Globals.gen_baga_inv := false; *)
+          (* Globals.do_infer_inv := true; *)
+          Globals.graph_norm := true;
+          (* Globals.is_solver_local := false; *)
+          Globals.disable_failure_explaining := false;
+          Globals.smt_compete_mode :=true;
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+  "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

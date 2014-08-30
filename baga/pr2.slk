@@ -1,0 +1,9 @@
+
+checkentail x_1 = x_2+1  |- x_2 = x_1-1.
+print residue.
+// x_1 -> x
+// x_2 -> x1
+
+checkentail x1 = x_2+1  |- x_2 = x1-1.
+print residue.
+// x1 

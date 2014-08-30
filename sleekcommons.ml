@@ -43,6 +43,7 @@ type command =
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | SatCheck of (meta_formula)
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
@@ -116,6 +117,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | SatCheck _ -> "SatCheck"
   | Simplify _ -> "Simplify"
   | Slk_Hull _ -> "Slk_Hull"
   | Slk_PairWise _ -> "Slk_PairWise"

@@ -83,6 +83,8 @@ let suppress_imply_out = ref true;;
 
 Smtsolver.set_generated_prover_input := set_generated_prover_input;;
 Smtsolver.set_prover_original_output := set_prover_original_output;;
+Z3.set_generated_prover_input := set_generated_prover_input;;
+Z3.set_prover_original_output := set_prover_original_output;;
 Omega.set_generated_prover_input := set_generated_prover_input;;
 Omega.set_prover_original_output := set_prover_original_output;;
 
@@ -328,6 +330,7 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
+          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else prover in
           let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
           if exit_code > 0 then
             if  (Sys.file_exists prover) then
@@ -404,6 +407,10 @@ let set_tp tp_str =
     (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
     if is_smtsolver_z3 tp_str then
        (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+    else if tp_str = "z3n" then
+      (Z3.smtsolver_name := tp_str; pure_tp := Z3N; prover_str := "z3n"::!prover_str;)
+    else if tp_str = "z3-4.3.1" then
+      (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.3.1"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := redcsl_str::!prover_str;)
   else if tp_str = "OCRed" then
@@ -436,7 +443,7 @@ let set_tp tp_str =
   else if tp_str = "spass" then
     (pure_tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else if tp_str = "minisat" then
-    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)	
+    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)
   else if tp_str = "log" then
     (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
@@ -469,6 +476,7 @@ let string_of_tp tp = match tp with
   | CM -> "cm"
   | Coq -> "coq"
   | Z3 -> "z3"
+  | Z3N -> "z3n"
   | Redlog -> "redlog"
   | OCRed -> "OC/redlog"
   | Mathematica -> "mathematica"
@@ -496,6 +504,7 @@ let name_of_tp tp = match tp with
   | CM -> "CVC Lite and Mona"
   | Coq -> "Coq"
   | Z3 -> "Z3"
+  | Z3N -> "Z3N"
   | Redlog -> "Redlog"
   | OCRed -> "OC/Redlog"
   | Mathematica -> "Mathematica"
@@ -519,6 +528,7 @@ let log_file_of_tp tp = match tp with
   | OCRed -> "allinput.rl"
   | Mathematica -> "allinput.math"
   | Z3 -> "allinput.z3"
+  | Z3N -> "allinput.z3n"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
   | SPASS -> "allinput.spass"
@@ -555,6 +565,7 @@ let start_prover () =
     )
   | DP -> Smtsolver.start();
   | Z3 -> Smtsolver.start();
+  | Z3N -> Z3.start();
   | SPASS -> Spass.start();
   | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
@@ -598,6 +609,9 @@ let stop_prover () =
     )
   | DP -> Smtsolver.stop()
   | Z3 -> (Smtsolver.stop();
+    (*in the website, use z3, oc keeps running although hip is stopped*)
+    if !Omega.is_omega_running then Omega.stop ();)
+  | Z3N -> (Z3.stop();
     (*in the website, use z3, oc keeps running although hip is stopped*)
     if !Omega.is_omega_running then Omega.stop ();)
   | SPASS -> Spass.stop();
@@ -1570,6 +1584,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let mona_is_sat f = Mona.is_sat_ops pr_weak pr_strong f sat_no in
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
+  let z3n_is_sat f = Z3.is_sat_ops_cex pr_weak_z3 pr_strong_z3 f sat_no in
 
   (* let _ = Gen.Profiling.push_time "tp_is_sat" in *)
   let res = (
@@ -1593,6 +1608,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           | _ -> Cvc3.is_sat f sat_no
       )
     | Z3 -> z3_is_sat f
+    | Z3N -> z3n_is_sat f
     | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq ->
         if (is_list_constraint wf) then (coq_is_sat wf)
@@ -1864,6 +1880,11 @@ let simplify (f : CP.formula) : CP.formula =
         let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
         CP.arith_simplify 13 f
       in
+      let z3n_simplify f =
+        if is_array_constraint f then f else
+        let f = wrap_pre_post norm_pure_input norm_pure_result Z3.simplify f in
+        CP.arith_simplify 13 f
+      in
       if !external_prover then 
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
@@ -1903,6 +1924,8 @@ let simplify (f : CP.formula) : CP.formula =
                         if is_bag_constraint f then Mona.simplify f
                         else omega_simplify f
                   | Z3 -> z3_simplify f
+                        (* Smtsolver.simplify f *)
+                  | Z3N -> z3n_simplify f
                         (* Smtsolver.simplify f *)
                   | Redlog -> Redlog.simplify f
                   | OCRed -> Redlog.simplify f
@@ -1975,7 +1998,7 @@ let simplify (f:CP.formula):CP.formula =
 let simplify_tp (f:CP.formula):CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "TP.simplify" pr pr simplify f
-	  
+
 let rec simplify_raw (f: CP.formula) = 
   if not(!Globals.infer_raw_flag) then simplify f
   else
@@ -2084,6 +2107,7 @@ let hull (f : CP.formula) : CP.formula =
           if is_bag_constraint f then Mona.hull f
           else om_hull f
     | Z3 -> Smtsolver.hull f
+    | Z3N -> Z3.hull f
     | Redlog -> Redlog.hull f
     | OCRed -> Redlog.hull f
     | Mathematica -> Mathematica.hull f
@@ -2132,6 +2156,24 @@ let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
+let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  if not !tp_batch_mode then Omega.start ();
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let f = CP.mkOr f1 f2 None no_pos in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = Omega.pairwisecheck2 f1 f2 in
+  let logger fr tt timeout =
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise2" logger fn f in
+  if not !tp_batch_mode then Omega.stop ();
+  res
+
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
   let simpl_num = next_proof_no () in
@@ -2158,6 +2200,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         if is_bag_constraint f then Mona.pairwisecheck f
         else om_pairwisecheck f
     | Z3 -> Smtsolver.pairwisecheck f
+    | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | OCRed -> Redlog.pairwisecheck f
     | Mathematica -> Mathematica.pairwisecheck f
@@ -2403,6 +2446,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong a c imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong a c in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 a c timeout in
+  let z3n_imply a c = Z3.imply_ops_cex pr_weak_z3 pr_strong_z3 a c timeout in
   if not !tp_batch_mode then start_prover ();
   let r = (
     match !pure_tp with
@@ -2426,6 +2470,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
       )
     | Z3 -> z3_imply ante conseq
+    | Z3N -> z3n_imply ante conseq
     | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
     | Coq ->
         if (is_list_constraint ante) || (is_list_constraint conseq) then
@@ -2896,8 +2941,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
-        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
-        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
+        (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
+        (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -3341,7 +3386,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
   else is_sat_sub_no_c 3 f sat_subno false
 
-let is_sat_sub_no i (f : CP.formula) sat_subno : bool =  
+let is_sat_sub_no i (f : CP.formula) sat_subno : bool =
   Debug.no_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 

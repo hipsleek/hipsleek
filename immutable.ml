@@ -67,7 +67,7 @@ let subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp)
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   let pr_exp = CP.ArithNormalizer.string_of_exp in
-  let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l" pr_exp) (add_str "r" pr_exp)) ) in
+  let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l(subtype)" pr_exp) (add_str "r(subtype_" pr_exp)) ) in
   Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
 
 (* bool denotes possible subyping *)

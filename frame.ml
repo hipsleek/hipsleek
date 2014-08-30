@@ -844,7 +844,7 @@ let force_spatial_no_dups_x maybe_emps non_emps (r,chains)=
               find_non_emp rest (done_ls@[(r_n,ptrs,end_ptrs)])
   in
   let emps = find_non_emp chains [] in
-  let end_links = List.map snd emps in
+  (* let end_links = List.map snd emps in *)
   (emps,(r,(* filter_out end_links chains [] *) chains))
 
 let force_spatial_no_dups maybe_emps non_emps (r,chains)=

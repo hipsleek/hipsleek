@@ -12,6 +12,37 @@ open Cpure
 open Excore
 open Cprinter
 
+let find_baga_inv view  =
+  match view.Cast.view_baga_inv with
+    | Some efpd -> efpd
+    | None ->
+          match view.Cast.view_baga_x_over_inv with
+            | Some efpd -> efpd
+            | None -> failwith "cannot find baga inv 2"
+
+let find_baga_under_inv view =
+  match view.Cast.view_baga_under_inv with
+    | Some efpd -> efpd
+    | None -> Excore.EPureI.mk_false_disj
+
+let simplify lst =
+  let group lst =
+    let rec grouping acc = function
+      | [] -> acc
+      | hd::_ as l ->
+            let l1,l2 = List.partition (Excore.EPureI.is_eq_baga hd) l in
+            grouping (l1::acc) l2
+    in
+    grouping [] lst
+  in
+  let groups = group lst in
+  let lst = List.map (fun l ->
+      List.fold_left (fun (baga,f1) (_,f2) ->
+          (baga,Tpdispatcher.tp_pairwisecheck2 f1 f2)
+      ) (List.hd l) (List.tl l)
+  ) groups in
+  lst
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
@@ -30,9 +61,14 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
     | Cformula.ViewNode vnf ->
           let svl = vnf.Cformula.h_formula_view_node::vnf.Cformula.h_formula_view_arguments in
           let efpd =
-            try
-              Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
-            with Not_found -> failwith "cannot find in init_map too"
+            if !Globals.gen_baga_inv then
+              try
+                Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
+              with Not_found -> failwith "cannot find in init_map too"
+            else
+              let view = List.find (fun v -> v.Cast.view_name = vnf.Cformula.h_formula_view_name) all_views in
+              if !do_under_baga_approx then find_baga_under_inv view
+              else find_baga_inv view
           in
           let _ = Debug.ninfo_hprint (add_str "vnf.Cformula.h_formula_view_name" pr_id) vnf.Cformula.h_formula_view_name no_pos in
           let _ = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
@@ -96,7 +132,7 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
     | Exists (sv, pf, _, _) ->
           let efpd = build_ef_pure_formula pf in
           EPureI.elim_exists_disj [sv] efpd
-    (* | Not -> ??? *) 
+    (* | Not -> ??? *)
     | _ -> EPureI.mk_epure pf
 
 and build_ef_pure_formula (pf : formula) : ef_pure_disj =
@@ -157,7 +193,7 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
   (* NOTE : should be already sorted/normalized! *)
   (* let disj = List.sort EPureI.epure_compare disj in *)
   let disj_n = EPureI.norm_disj disj in
-  disj_n
+  simplify disj_n
 
 let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list) : ef_pure_disj =
   let pr_view_name vd = vd.Cast.view_name in
@@ -194,6 +230,9 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
   let rec helper view_list inv_list =
+    let _ = List.iter (fun (vc,inv) ->
+        Debug.binfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
+    ) (List.combine view_list inv_list) in
     if fix_test view_list inv_list
     then
       inv_list

@@ -67,6 +67,8 @@ and view_kind =
   | View_DERV
   | View_SPEC
 
+and ibaga_pure = (ident list * P.formula) list
+
 and view_decl = 
     { view_name : ident; 
     mutable view_data_name : ident;
@@ -86,6 +88,9 @@ and view_decl =
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
+    view_baga_inv : ibaga_pure option;
+    view_baga_over_inv : ibaga_pure option;
+    view_baga_under_inv : ibaga_pure option;
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
@@ -1567,7 +1572,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
           | _ -> henv
         ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
         (dl, vl, henv)
-      with Not_found ->
+      with | Invalid_argument _ | Not_found ->
         (* let _ = print_endline ("== not found ddecl!") in *)
         let dl, vl = 
           if (String.compare v self = 0) then ([], [c])

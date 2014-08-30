@@ -121,7 +121,13 @@ and view_decl = {
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
+    (* exact baga *)
     mutable view_baga_inv : Excore.ef_pure_disj option;
+    (* over-approx baga *)
+    mutable view_baga_over_inv : Excore.ef_pure_disj option;
+    mutable view_baga_x_over_inv : Excore.ef_pure_disj option;
+    (* necessary baga *)
+    mutable view_baga_under_inv : Excore.ef_pure_disj option;
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -1057,6 +1063,7 @@ let generate_pure_rel hprel=
   (*add map*)
   let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
   let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  let _= Z3.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
   n_p_hprel
 
 let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
@@ -1076,7 +1083,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
     (* PURE_RELATION_OF_HEAP_PRED *)
     let p_hp_decl = generate_pure_rel hp_decl in
     let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
-    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let _ = Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
+    let _ = Z3.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let hf =
       F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
                List.map (fun sv -> P.mkVar sv pos) unk_args,
@@ -2020,20 +2028,20 @@ let vdef_lemma_fold prog coer  =
 (*     let _ = cfd # set vd2 in *)
 (*     vd2 *)
 
-let vdef_lemma_fold prog coer  = 
+let vdef_lemma_fold prog coer =
   let op = coer.coercion_fold_def in
   let pr _ = pr_option !print_view_decl_short (op # get) in
    Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
   match rm_br with
-    | Some l -> let n=(List.length l) in  
+    | Some l -> let n=(List.length l) in
       if n<(List.length vdef.view_prune_branches) then
         (* if !force_verbose_xpure then Some vdef.view_x_formula  else *) None
-      else (match vdef.view_complex_inv with 
+      else (match vdef.view_complex_inv with
         | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
-    | None -> Some vdef.view_x_formula 
+    | None -> Some vdef.view_x_formula
 
 let get_xpure_one vdef rm_br  =
   let pr mf = !print_mix_formula mf in
@@ -2525,6 +2533,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
          | None -> r
    ) [] prog.prog_view_decls in
    let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
+   if List.length seg_opz_views  > 1 then false else
    let ldnodes, lvnodes,_ = (Cformula.get_hp_rel_formula ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
    let rdnodes = Cformula.get_datas_struc conseq in

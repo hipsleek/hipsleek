@@ -18,15 +18,36 @@ let string_of_vres t =
     | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
     | VR_Unknown s -> "UNKNOWN("^s^")"
 
+
+
+(* let transfrom_bexpr_x lhs rhs tl= *)
+(*   (lhs, rhs) *)
+
+(* let transfrom_bexpr lhs rhs tl= *)
+(*   let pr1 = !CP.print_formula in *)
+(*   let pr2 = Typeinfer.string_of_tlist in *)
+(*   Debug.no_3 "transfrom_bexpr" pr1 pr1 pr2 (pr_pair pr1 pr1) *)
+(*       (fun _ _ _ -> transfrom_bexpr_x lhs rhs tl) *)
+(*       lhs rhs tl *)
+
+
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
-      if CF.is_must_failure lc then VR_Fail 1
-      else VR_Fail (-1)
+      if CF.is_must_failure lc then
+        if CF.is_sat_failure lc then
+          (* must fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
+      else
+        if CF.is_may_failure lc then
+          (* may fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
     | CF.SuccCtx c -> 
       match CF.get_must_error_from_ctx c with
       | None -> VR_Valid
-      | _ -> VR_Fail 1
+      | (Some (_,cex)) -> if Cformula.is_sat_fail cex then VR_Fail 1 else (VR_Fail (-1))
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
@@ -364,7 +385,8 @@ let process_rel_def rdef =
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
 			let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
+			let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+                        Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -383,7 +405,8 @@ let process_hp_def hpdef =
               let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
 	      (* Forward the relation to the smt solver. *)
               let args = fst (List.split chpdef.Cast.hp_vars_inst) in
-	      Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
+	      let _ = Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula in
+              Z3.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
 	  with
 	    | _ ->  
                   begin
@@ -397,11 +420,12 @@ let process_hp_def hpdef =
 (** An Hoa : process axiom
  *)
 let process_axiom_def adef = begin
-	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
-	let cadef = Astsimp.trans_axiom iprog adef in
-		!cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
-	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion;
+  iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
+  let cadef = Astsimp.trans_axiom iprog adef in
+  !cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
+  (* Forward the axiom to the smt solver. *)
+  let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+  Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion;
 end
 
 (*this function is never called. it is replaced by process_list_lemma
@@ -433,7 +457,7 @@ let process_lemma ldef =
 let print_residue residue =
   if (not !Globals.smt_compete_mode) then
           match residue with
-            | None -> 
+            | None ->
                   let _ = Debug.ninfo_pprint "inside p res" no_pos in
                   print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
@@ -444,12 +468,12 @@ let print_residue residue =
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-                  else 
+                  else
                     print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
                         (Cprinter.string_of_list_context ls_ctx)^"\n")
 
 let process_list_lemma ldef_lst  =
-  let lem_infer_fnct r1 r2 = 
+  let lem_infer_fnct r1 r2 =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
@@ -600,15 +624,15 @@ let convert_data_and_pred_to_cast_x () =
   let _ = if !Globals.smt_compete_mode then
     let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
-    let _ = if num_vdecls <= gen_baga_inv_threshold then
-        (* let _ = Globals.gen_baga_inv := false in *)
-      (* let _ = Globals.dis_pred_sat () in *)
-        ()
-    else
-      let _ = Globals.lemma_gen_unsafe := false in
-      (* let _ = Globals.lemma_syn := false in *)
-      ()
-    in
+    (* let _ = if num_vdecls <= gen_baga_inv_threshold then *)
+    (*     (\* let _ = Globals.gen_baga_inv := false in *\) *)
+    (*   (\* let _ = Globals.dis_pred_sat () in *\) *)
+    (*     () *)
+    (* else *)
+    (*   let _ = Globals.lemma_gen_unsafe := false in *)
+    (*   (\* let _ = Globals.lemma_syn := false in *\) *)
+    (*   () *)
+    (* in *)
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
       let _ = Globals.graph_norm := false in
       ()
@@ -633,6 +657,7 @@ let convert_data_and_pred_to_cast_x () =
               let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
               (cviews0@[der_view])
           ) cviews0 tmp_views_derv1 in
+  let _ = Debug.tinfo_hprint (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
@@ -665,11 +690,12 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = (* if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
-  (*   (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
-  (*   || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then *)
-  (*   cprog5 *)
-  (* else *)
+  let cprog6 =  if
+    (* !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
+   (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
+    || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn)) then
+    cprog5
+  else
     try
       Cast.categorize_view cprog5
     with _ -> cprog5
@@ -994,7 +1020,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
-  let fv_idents = 
+  let fv_idents =
     if !Globals.dis_impl_var then
       let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
       Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
@@ -1004,9 +1030,23 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
+  (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
+  let conseq_fvs = CF.struc_fv conseq in
+  let sst = List.fold_left (fun sst0 ((CP.SpecVar (t1, id1, p1)) as sv1) ->
+      try
+        let sv2 = List.find (fun (CP.SpecVar (t2, id2, p2)) -> String.compare id1 id2 = 0 &&
+                p1=p2 && t1!=t2) conseq_fvs
+        in
+        sst0@[(sv1,sv2)]
+      with _ ->  sst0
+  ) [] fvs
+  in
+  let ante1 = CF.subst sst ante in
+  let ante = Cfutil.transform_bexpr ante1 in
+  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
+  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
@@ -1658,8 +1698,8 @@ let process_pred_split ids=
 
 let process_pred_norm_disj ids=
   let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
+  (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
   let sel_hp_defs = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
@@ -1676,7 +1716,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps,_=
+  let ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)
@@ -1767,11 +1807,11 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
        else () in
       r
   ) iconseq0
-  
+
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  let with_timeout = 
+  let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
@@ -1798,7 +1838,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s ->
+            | Some (s, cex) ->
                   (* let reg1 = Str.regexp "base case unfold failed" in *)
                   (* let _ = try *)
                   (*   if Str.search_forward reg1 s 0 >=0 then *)
@@ -1807,10 +1847,11 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                   (*   () *)
                   (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
                   (* in *)
-                  let _ = smt_is_must_failure := (Some true) in
-                  "(must) cause:"^s
+                  let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in
+                  let _ = smt_is_must_failure := (Some is_sat) in
+                  ns
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> begin
+                | Some (s, cex) -> begin
                       (* try *)
                       (*   let reg1 = Str.regexp "Nothing_to_do" in *)
                       (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
@@ -1821,9 +1862,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                       (*     else *)
                       (*       () *)
                       (*   in *)
-                    let _ = smt_is_must_failure := (Some false) in
-                    "(may) cause:"^s
-                      (* with _ -> *)
+                    let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in
+                    let _ = smt_is_must_failure := (Some is_sat) in
+                    ns
+                        (* with _ -> *)
                       (*     let _ = smt_is_must_failure := (Some false) in *)
                       (*     "(may) cause:"^s *)
                   end
@@ -1836,7 +1878,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let timeout = 
         if !Globals.sleek_timeout_limit > 0. then
           match CF.get_may_failure residue with
-            | Some "timeout" -> " (timeout) "
+            | Some ("timeout",_) -> " (timeout) "
             | _ -> ""
         else ""
       in
@@ -1918,17 +1960,39 @@ let print_exception_result s (num_id: string) =
   let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
   ()
 
+let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
+  let res =
+    if unsat then "UNSAT\n\n"
+    else if sat then "SAT\n\n"
+    else "UNKNOWN\n\n"
+  in silenced_print print_string (num_id^": "^res); flush stdout
+
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
+  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "")
     (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
-
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
-  dummy_exception() ; 
+  dummy_exception() ;
   print_string ("exception caught " ^ check_id ^ " check\n")
+
+let process_sat_check_x (f : meta_formula) =
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nCheckSat "^(string_of_int nn) in
+  let (_,f) = meta_to_formula f false [] [] in
+  let f = Cvutil.prune_preds !cprog true f in
+  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in
+  let sat_res =
+    if res then false
+    else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
+  in print_sat_result res sat_res num_id
+
+let process_sat_check (f : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
@@ -1937,15 +2001,15 @@ let print_exc (check_id: string) =
 let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let num_id = "\nEntail "^(string_of_int nn) in
-    try 
-      let valid, rs, _(*sel_hps*) = 
+    try
+      let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
       print_entail_result [] (*sel_hps*) valid rs num_id
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
-		let _ = if !Globals.trace_failure then 
-		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in 
+		let _ = if !Globals.trace_failure then
+		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
         false
