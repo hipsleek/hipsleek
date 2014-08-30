@@ -19,6 +19,7 @@ let add_ret_trel_stk ctx lhs rhs =
     termr_params = List.concat (List.map CP.afv (CP.args_of_term_ann rhs));
     termr_lhs = lhs;
     termr_rhs = rhs; } in 
+  (* let _ = print_endline (print_ret_trel trel) in *)
   ret_trel_stk # push trel
   
 let rec solve_rec_trrel rtr conds = 
@@ -69,7 +70,7 @@ let case_split_init trrels =
     (fn, List.map (fun c -> fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
   let _ = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
-    print_endline ("BASE/REC CASE SPLITTING:\n" ^ 
+    print_endline ("\nBase/Rec Case Splitting:\n" ^ 
       (pr_list (fun ((fn, _), s) -> 
         "\t" ^ (if fn = "" then "" else fn ^ ": ") ^ 
         (pr_list pr_cond s) ^ "\n") fn_cond_w_ids))
@@ -86,6 +87,7 @@ let add_call_trel_stk ctx lhs rhs =
     trel_id = fresh_int ();
     termu_lhs = lhs;
     termu_rhs = rhs; } in 
+  (* let _ = print_endline (print_call_trel trel) in *)
   call_trel_stk # push trel
   
 (* Initial instantiation of temporal relation *)      
@@ -227,17 +229,29 @@ let solve_turel_init prog turels fn_cond_w_ids =
   
 (* Main Inference Function *)  
 let solve prog = 
+  (* Temporarily disable template assumption printing *)
   let pr_templassume = !print_relassume in
   let _ = print_relassume := false in
   
-  let _ = print_endline "TERMINATION INFERENCE" in
+  let _ = print_endline "*************************" in
+  let _ = print_endline "* TERMINATION INFERENCE *" in
+  let _ = print_endline "*************************" in
+  
   let trrels = ret_trel_stk # get_stk in
   let _ = ret_trel_stk # reset in
-  let fn_cond_w_ids = case_split_init trrels in
-  
   let turels = call_trel_stk # get_stk in
   let _ = call_trel_stk # reset in
-  solve_turel_init prog turels fn_cond_w_ids
+  let _ = print_endline "Temporal Assumptions:" in
+  let _ = List.iter (fun trrel -> 
+    print_endline (print_ret_trel trrel)) trrels in
+  let _ = List.iter (fun turel -> 
+    print_endline (print_call_trel turel)) turels in
+  
+  let fn_cond_w_ids = case_split_init trrels in
+  let _ = solve_turel_init prog turels fn_cond_w_ids in
+  
+  let _ = print_relassume := pr_templassume in
+  ()
   
   
   

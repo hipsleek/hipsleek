@@ -2694,11 +2694,13 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 				  wrap_box ("B",0) pr_struc_formula s)
 				  else ()) b
     | EInfer {
+      formula_inf_tnt = itnt;
       formula_inf_post = postf;
       formula_inf_xpost = postxf;
       formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
-          let ps =if (lvars==[] && postf) then "@post " else "" in
+          let ps = if (lvars==[] && postf) then "@post " else "" in
+          let ps = ps ^ (if itnt then "@term " else "") in
       fmt_open_vbox 2;
       fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();
@@ -2930,7 +2932,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
-   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
    if (es.es_var_zero_perm!=[]) then
@@ -2952,7 +2954,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
-   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   fmt_close ()
 
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es

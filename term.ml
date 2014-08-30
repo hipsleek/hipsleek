@@ -10,6 +10,7 @@ open Globals
 open Others
 open Cprinter
 open Cpure
+open Cformula
 
 type phase_trans = int * int
 
@@ -645,14 +646,17 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             { estate with CF.es_term_res_rhs = Some t_ann_d }
           else estate 
         in (estate, lhs_p, rhs_p, None)
-      | (TermU _, _) ->
-        let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let estate =
-          if estate.CF.es_infer_tnt then
-            let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
-            { estate with CF.es_term_call_rhs =  Some t_ann_d; }
-          else estate
-        in (estate, lhs_p, rhs_p, None)
+      | (TermU _, _) -> begin
+        match t_ann_d with
+        | Term -> (estate, lhs_p, rhs_p, None)
+        | _ -> 
+          let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
+          let estate =
+            if estate.CF.es_infer_tnt then
+              let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
+              { estate with CF.es_term_call_rhs =  Some t_ann_d; }
+            else estate
+          in (estate, lhs_p, rhs_p, None) end
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
       | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
       | (Term, Term)
@@ -717,10 +721,11 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !MCP.print_mix_formula in
   let pr2 = !CF.print_entail_state in
   let f = wrap_proving_kind PK_Term_Dec (check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
-   Debug.no_3(* _loop *) "trans_lexvar_rhs" pr2 pr pr
-    (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+  Debug.no_3(* _loop *) "check_term_rhs" 
+    pr2 pr pr (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
-    
+
+(* For temination assumption (termAssume) checking *)        
 let check_term_assume lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
@@ -743,7 +748,7 @@ let check_term_assume lhs rhs =
 
 let strip_lexvar_lhs (ctx: CF.context) : CF.context =
   let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
-    if (es.es_var_measures == None) || (CF.has_lexvar_formula es.CF.es_formula) 
+    if (es.es_var_measures = None) || (CF.has_lexvar_formula es.CF.es_formula) 
     (* This is to ensure we strip Lexvar only once or when necessary *)
     then
       let _, pure_f, _, _, _ = CF.split_components es.CF.es_formula in
@@ -758,17 +763,20 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
       let f_b _ = None in
       let f_e _ = None in
       let termr, lexvar = List.partition is_TermR_formula lexvar in
+      let termr_lex = List.map (fun f ->
+        let tr, _, _, _ = find_lexvar_formula f in tr) termr in
       match lexvar with
-      | [] -> Ctx es
+      | [] ->
+        if termr_lex = [] then Ctx es
+        else Ctx { es with es_term_res_lhs = termr_lex; }
       | lv::[] ->
-        let t_ann, ml, il, _ = find_lexvar_formula lv in 
-        let termr_lex = List.map (fun f ->
-          let tr, _, _, _ = find_lexvar_formula f in tr) termr in
-        Ctx { es with
-          es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
-          es_var_measures = Some (t_ann, ml, il);
-          es_term_res_lhs = termr_lex; 
-        }
+        if (es.es_var_measures = None) then
+          let t_ann, ml, il, _ = find_lexvar_formula lv in 
+          Ctx { es with
+            es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
+            es_var_measures = Some (t_ann, ml, il);
+            es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
+        else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
       | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
     else Ctx es
   in CF.transform_context es_strip_lexvar_lhs ctx

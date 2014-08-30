@@ -5591,6 +5591,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
           Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
         else
           (n_tl, CF.EInfer {
+              CF.formula_inf_tnt = b.IF.formula_inf_tnt;
               CF.formula_inf_post = b.IF.formula_inf_post;
               CF.formula_inf_xpost = b.IF.formula_inf_xpost;
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;

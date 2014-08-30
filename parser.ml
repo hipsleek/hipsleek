@@ -2746,8 +2746,10 @@ spec_list_grp:
 
 spec: 
   [[
-    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
+     let (itype, ivl) = ivl_w_itype in
      F.EInfer {
+       F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
        F.formula_inf_transpec = transpec;
@@ -2792,6 +2794,12 @@ spec:
 			F.mkEAssume f sf (fresh_formula_label ol) (Some false)
 	  
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  ]];
+
+cid_list_w_itype:
+  [[ `OSQUARE; t = infer_type; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
+   | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il [])
+   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

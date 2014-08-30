@@ -191,6 +191,7 @@ let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t =
   Hashtbl.create 20
 
 let pr_proc_case_specs _ = 
+  print_endline "Termination Inference Result:";
   Hashtbl.iter (fun proc spec ->
     print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs
   

@@ -206,6 +206,7 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_cond_path = es.es_cond_path ;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
+  es_infer_tnt = es.es_infer_tnt;
 	(* es_var_label = es.es_var_label; *)
 	(* es_var_ctx_lhs = es.es_var_ctx_lhs; *)
     es_infer_vars = es.es_infer_vars;
@@ -2363,6 +2364,7 @@ and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
   Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro (fun _ _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       estate fold_rs0 (p2::vs2) base2
+      
 and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
@@ -8322,6 +8324,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_path_label = estate.es_path_label;
         es_cond_path = estate.es_cond_path ;
         es_var_measures = estate.es_var_measures;
+        es_infer_tnt = estate.es_infer_tnt;
         es_var_stack = estate.es_var_stack;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
@@ -8517,6 +8520,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_templ = estate.es_infer_templ;
                  es_infer_templ_assume = estate.es_infer_templ_assume;
+                 es_infer_tnt = estate.es_infer_tnt;
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;

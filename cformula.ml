@@ -101,6 +101,7 @@ and assume_formula =
 
 and struc_infer_formula =
   {
+    formula_inf_tnt: bool; (* true if termination to be inferred *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -12187,6 +12188,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_cond_path = es.es_cond_path ;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
+          es_infer_tnt = es.es_infer_tnt;
           es_term_res_lhs = es.es_term_res_lhs;
           es_term_res_rhs = es.es_term_res_rhs;
           es_term_call_rhs = es.es_term_call_rhs;
@@ -13627,7 +13629,6 @@ let rec has_lexvar_formula f =
       CP.has_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
-
      
 let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
   | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_lexvar is_primitive) ef.formula_case_branches }
