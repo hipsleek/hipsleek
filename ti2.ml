@@ -106,6 +106,12 @@ let get_cond = function
 let get_rec_conds conds = 
   List.map get_cond (List.filter is_rec conds)  
   
+let params_of_term_ann prog ann =
+  let sid = CP.sid_of_term_ann ann in
+  let ut_decl = List.find (fun utd -> 
+    String.compare utd.Cast.ut_name sid == 0) prog.Cast.prog_ut_decls in
+  ut_decl.Cast.ut_params
+  
 (* Temporal Relation at Call *)
 type call_trel = {
   call_ctx: MCP.mix_formula;
@@ -432,7 +438,8 @@ let infer_abductive_icond_edge prog g e =
     let abd_ctx = mkAnd eh_ctx abd_cond in    
         
     let tuic = uid.CP.tu_icond in
-    let params = List.concat (List.map CP.afv uid.CP.tu_args) in
+    (* let params = List.concat (List.map CP.afv uid.CP.tu_args) in *)
+    let params = params_of_term_ann prog rel.termu_rhs in
     let args = CP.args_of_term_ann rel.termu_rhs in
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
     

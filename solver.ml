@@ -1988,7 +1988,7 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
   let fvars = CP.fv f in
 
   (* 27.05.2008 *)
-  if !Globals.move_exist_to_LHS & (not(Gen.is_empty (Gen.BList.difference_eq CP.eq_spec_var fvars evars)) & not(Gen.is_empty evars))	then
+  if !Globals.move_exist_to_LHS && (not(Gen.is_empty (Gen.BList.difference_eq CP.eq_spec_var fvars evars)) && not(Gen.is_empty evars))	then
     (* there still are free vars whose bondings were not moved to the LHS --> existentially quantify the whole formula and move it to the LHS *)
     (* Ex.:  ex e. f1<e & e<=g or ex e. (f=1 & e=2 \/ f=2 & e=3) *)
     (*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
@@ -2046,7 +2046,7 @@ and remove_conj_list (f : (CP.formula list) list) (conj : CP.formula) pos : (boo
   | h :: rest ->
         let b1, l1 = remove_conj_new h conj pos in
         let b2, l2 = remove_conj_list rest conj pos in
-        (b1 & b2, l1::l2)
+        (b1 && b2, l1::l2)
   | [] -> (true, [])		
 
 and remove_conj_new (f : CP.formula list) (conj : CP.formula) pos : (bool * CP.formula list) = match f with
@@ -4947,7 +4947,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
 
   let new_slk_log slk_no result es = 
     let avoid = CF.is_emp_term conseq in
-    let avoid = avoid or (not (hec_stack # is_empty)) in
+    let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     (* let slk_no = (\* if avoid then 0 else *\) (next_sleek_int ()) in *)
     (* let _ = hec_stack # push slk_no in *)
@@ -5320,7 +5320,7 @@ and handle_disjunctive_conseq (ctx:context) (conseq:CF.formula) : context * CF.f
 and log_contra_detect hec_num conseq result pos =
   let new_slk_log result es =
     let avoid = CF.is_emp_term conseq in
-    let avoid = avoid or (not (hec_stack # is_empty)) in
+    let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 2) in
     (* let _ = hec_stack # push slk_no in *)
@@ -5990,7 +5990,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
          h3 = nested phase 
       *)
       let h1, h2, h3 = split_phase(*_debug_lhs*) 2 h in
-      if ((is_empty_heap h1) && (is_empty_heap h3)) or ((is_empty_heap h2) && (is_empty_heap h3))
+      if ((is_empty_heap h1) && (is_empty_heap h3)) || ((is_empty_heap h2) && (is_empty_heap h3))
       then
         (* lhs contains only one phase (no need to split) *)
         let new_ctx = CF.set_context_formula ctx0 (func (choose_not_empty_heap h1 h2 h3)) in
@@ -6563,8 +6563,8 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     (* let _ = DD.info_zprint  (lazy  ("  ctx0: " ^ (Cprinter.string_of_context ctx0))) pos in *)
     let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
-    let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
-    let avoid = avoid or (not (hec_stack # is_empty)) in
+    let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
+    let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let _ = Log.last_sleek_command # set (Some (ante,conseq)) in *)
@@ -7808,7 +7808,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in *)
       let lhs_zero_vars = List.concat (List.map func old_lhs_zero_vars) in
       (* let _ = print_endline ("zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)
-      let _ = if (!Globals.ann_vp) && (lhs_zero_vars!=[] or rhs_vperms!=[]) then
+      let _ = if (!Globals.ann_vp) && (lhs_zero_vars!=[] || rhs_vperms!=[]) then
         Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^(string_of_vp_ann VP_Zero)^ (Cprinter.string_of_spec_var_list lhs_zero_vars) ^ " |- "  ^ (pr_list Cprinter.string_of_pure_formula rhs_vperms)^"\n") pos
       in
       let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in
@@ -12485,7 +12485,7 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
     formula_or_pos = pos}) ->
         let ef1, flag1 = helper f1 in
         let ef2, flag2 = helper f2 in
-	(mkOr ef1 ef2 pos, flag1 & flag2)
+	(mkOr ef1 ef2 pos, flag1 && flag2)
   | Base _ -> (f0, false)
   | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
     formula_exists_heap = h;

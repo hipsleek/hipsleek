@@ -990,7 +990,7 @@ let process_term_assume (iante: meta_formula) (iconseq: meta_formula) =
   let fvs = CF.fv ante in
   let fv_idents = List.map CP.name_of_spec_var fvs in
   let (stab, conseq) = meta_to_formula iconseq false fv_idents stab in
-  let _ = Term.check_term_assume ante conseq in
+  let _ = Term.check_term_assume !cprog ante conseq in
   ()
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=

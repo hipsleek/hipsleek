@@ -12497,6 +12497,15 @@ let id_of_term_ann ann =
   | TermU uid -> uid.tu_id
   | TermR uid -> uid.tu_id
 
+let sid_of_term_ann ann = 
+  match ann with
+  | Term -> string_of_int term_id
+  | Loop -> string_of_int loop_id
+  | MayLoop -> string_of_int mayLoop_id
+  | Fail _ -> string_of_int termErr_id
+  | TermU uid -> uid.tu_sid
+  | TermR uid -> uid.tu_sid
+
 let cond_of_term_ann ann =
   match ann with
   | TermU uid -> uid.tu_cond

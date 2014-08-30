@@ -1,5 +1,5 @@
-(* module CP = Cpure *)
-module CF = Cformula
+module CP = Cpure
+(* module CF = Cformula *)
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
@@ -52,7 +52,7 @@ type term_status =
  * Termination Annotation transition,
  * Context and 
  * Its termination status *)
-type term_res = term_trans_loc * term_ann_trans option * CF.formula option * term_status
+type term_res = term_trans_loc * term_ann_trans option * formula option * term_status
 
 (* We are only interested in two kinds 
  * of constraints in phase inference:
@@ -84,7 +84,7 @@ let phase_constr_stk : formula Gen.stack = new Gen.stack
 (* Using hash table to store inferred 
  * phase transition constraints by 
  * inference by mutual scc group *)
-let phase_constr_tbl : (int, (ident * formula list) list) Hashtbl.t = 
+let phase_constr_tbl : (int, (ident * CP.formula list) list) Hashtbl.t = 
   Hashtbl.create 20
 
 (* Printing Utilities *)
@@ -204,12 +204,12 @@ let pr_term_status_short = function
 
 let string_of_term_status = poly_string_of_pr pr_term_status
 
-let pr_term_ctx (ctx: CF.formula) =
-  let h_f, p_f, _, _, _ = CF.split_components ctx in
+let pr_term_ctx (ctx: formula) =
+  let h_f, p_f, _, _, _ = split_components ctx in
   begin
     fmt_string "Current context";
     fmt_print_newline ();
-    pr_wrap_test "heap: " CF.is_empty_heap pr_h_formula h_f;
+    pr_wrap_test "heap: " is_empty_heap pr_h_formula h_f;
     pr_wrap_test "pure: " MCP.isConstMTrue pr_mix_formula p_f;
     fmt_print_newline ();
   end 
@@ -310,7 +310,7 @@ let find_lexvar_b_formula (bf: b_formula) : (term_ann * exp list * exp list * lo
   | LexVar t_info -> (t_info.lex_ann, t_info.lex_exp, t_info.lex_tmp, t_info.lex_loc)
   | _ -> raise LexVar_Not_found
 
-let rec find_lexvar_formula (f: formula) : (term_ann * exp list * exp list * loc) =
+let rec find_lexvar_formula (f: CP.formula) : (term_ann * exp list * exp list * loc) =
   match f with
   | BForm (bf, _) -> find_lexvar_b_formula bf
   | And (f1, f2, _) ->
@@ -337,14 +337,14 @@ let rec syn_simplify_lexvar bnd_measures =
       else if (is_lt eq_spec_var s d) then (false, [])
       else (true, bnd_measures) 
 
-let find_lexvar_es (es: CF.entail_state) : 
+let find_lexvar_es (es: entail_state) : 
   (term_ann * exp list * exp list) =
-  match es.CF.es_var_measures with
+  match es.es_var_measures with
   | None -> raise LexVar_Not_found
   | Some (t_ann, el, il) -> (t_ann, el, il)
   
-let is_Loop_es (es: CF.entail_state): bool =
-  match es.CF.es_var_measures with
+let is_Loop_es (es: entail_state): bool =
+  match es.es_var_measures with
   | Some (Loop, _, _) -> true
   | _ -> false
 
@@ -430,12 +430,12 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
     (List.concat lexvar, MCP.MemoF mp)
 
 let strip_lexvar_mix_formula mf =
-  let pr0 = !print_formula in
+  let pr0 = !CP.print_formula in
   let pr = !MCP.print_mix_formula in
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
   
-let strip_lexvar_formula (f: CF.formula) =
-  let _, fp, _, _, _ = CF.split_components f in
+let strip_lexvar_formula (f: formula) =
+  let _, fp, _, _, _ = split_components f in
   let (lexvar, other_p) = strip_lexvar_mix_formula fp in
   let termr, lexvar = List.partition is_TermR_formula lexvar in
   match lexvar with
@@ -463,7 +463,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
            it will be converted to Term[call] using
            the call hierarchy. No need for Term[-1]
            and some code dealing with primitives below *)
-        let orig_ante = estate.CF.es_formula in
+        let orig_ante = estate.es_formula in
         (* [s1,s2] |- [d1,d2] -> [(s1,d1), (s2,d2)] *)
         let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
         (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
@@ -505,9 +505,9 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
             let f = 
               if flag then BForm ((mkGt s d pos, None), None) (* s>d *)
               else BForm ((mkEq s d pos, None), None) in (* s=d *)
-              (false, mkAnd f res pos)) measure (true, mkTrue pos)) in
+              (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
-            mkOr acc (lex_formula m) None pos) (mkFalse pos) lst_measures in
+            CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
           DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
           (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check 5 pos & rank_formula(I,O) *)
@@ -606,8 +606,8 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 
 let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let pr = !MCP.print_mix_formula in
-  let pr1 = !print_formula in
-  let pr2 = !CF.print_entail_state in
+  let pr1 = !CP.print_formula in
+  let pr2 = !print_entail_state in
   let pr3 = pr_list !print_exp in
   Debug.no_5 "check_term_measures" pr2 
     (add_str "lhs_p" pr)
@@ -627,7 +627,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let _ = DD.trace_hprint (add_str "es" !CF.print_entail_state) estate pos in
+      let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
@@ -641,9 +641,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (_, TermR _) ->
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
         let estate =
-          if estate.CF.es_infer_tnt then
-            let _ = Ti.add_ret_trel_stk ctx estate.CF.es_term_res_lhs t_ann_d in
-            { estate with CF.es_term_res_rhs = Some t_ann_d }
+          if estate.es_infer_tnt then
+            let _ = Ti.add_ret_trel_stk prog ctx estate.es_term_res_lhs t_ann_d in
+            { estate with es_term_res_rhs = Some t_ann_d }
           else estate 
         in (estate, lhs_p, rhs_p, None)
       | (TermU _, _) -> begin
@@ -652,9 +652,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         | _ -> 
           let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
           let estate =
-            if estate.CF.es_infer_tnt then
+            if estate.es_infer_tnt then
               let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
-              { estate with CF.es_term_call_rhs =  Some t_ann_d; }
+              { estate with es_term_call_rhs =  Some t_ann_d; }
             else estate
           in (estate, lhs_p, rhs_p, None) end
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
@@ -710,7 +710,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = Mmix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
-  if !Globals.dis_term_chk || estate.CF.es_term_err != None then
+  if !Globals.dis_term_chk || estate.es_term_err != None then
     (* Remove LexVar in RHS *)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
     (estate, lhs_p, rhs_p, None)
@@ -719,17 +719,17 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !MCP.print_mix_formula in
-  let pr2 = !CF.print_entail_state in
+  let pr2 = !print_entail_state in
   let f = wrap_proving_kind PK_Term_Dec (check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
   Debug.no_3(* _loop *) "check_term_rhs" 
     pr2 pr pr (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
 
 (* For temination assumption (termAssume) checking *)        
-let check_term_assume lhs rhs = 
+let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
-  let _, rhs_p, _, _, _ = CF.split_components rhs in
+  let _, rhs_p, _, _, _ = split_components rhs in
   let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
   match rhs_lex with
   | [] -> ()
@@ -740,18 +740,18 @@ let check_term_assume lhs rhs =
     | None -> raise LexVar_Not_found
     in begin match (t_ann_s, t_ann_d) with
     | (_, TermR _) ->
-      Ti.add_ret_trel_stk lhs_p lhs_termr t_ann_d
+      Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
     | (TermU _, _) ->
       Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
     | _ -> () end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 
-let strip_lexvar_lhs (ctx: CF.context) : CF.context =
-  let es_strip_lexvar_lhs (es: CF.entail_state) : CF.context =
-    if (es.es_var_measures = None) || (CF.has_lexvar_formula es.CF.es_formula) 
+let strip_lexvar_lhs (ctx: context) : context =
+  let es_strip_lexvar_lhs (es: entail_state) : context =
+    if (es.es_var_measures = None) || (has_lexvar_formula es.es_formula) 
     (* This is to ensure we strip Lexvar only once or when necessary *)
     then
-      let _, pure_f, _, _, _ = CF.split_components es.CF.es_formula in
+      let _, pure_f, _, _, _ = split_components es.es_formula in
       let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
       (* Using transform_formula to update the pure part of es_f *)
       let f_e_f _ = None in
@@ -768,32 +768,34 @@ let strip_lexvar_lhs (ctx: CF.context) : CF.context =
       match lexvar with
       | [] ->
         if termr_lex = [] then Ctx es
-        else Ctx { es with es_term_res_lhs = termr_lex; }
+        else Ctx { es with
+          es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula; 
+          es_term_res_lhs = termr_lex; }
       | lv::[] ->
         if (es.es_var_measures = None) then
           let t_ann, ml, il, _ = find_lexvar_formula lv in 
           Ctx { es with
-            es_formula = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.CF.es_formula;
+            es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
             es_var_measures = Some (t_ann, ml, il);
             es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
         else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
       | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
     else Ctx es
-  in CF.transform_context es_strip_lexvar_lhs ctx
+  in transform_context es_strip_lexvar_lhs ctx
 
-let strip_lexvar_lhs (ctx: CF.context) : CF.context =
+let strip_lexvar_lhs (ctx: context) : context =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
 
 (* End of LexVar handling *) 
 
 (* HIP: Collecting information for termination proof *)
-let report_term_error (ctx: CF.formula) (reason: term_reason) pos : term_res =
+let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
   let err = (pos, None, Some ctx, TermErr reason) in
   add_term_res_stk err;
   err
 
-let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
+let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   let _ = 
     begin
       DD.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
@@ -801,9 +803,9 @@ let add_unreachable_res (ctx: CF.list_failesc_context) pos : term_res =
     end
   in
   let term_pos = (post_pos # get, proving_loc # get) in
-  let succ_ctx = CF.succ_context_of_list_failesc_context ctx in
-  let orig_ante_l = List.concat (List.map CF.collect_orig_ante succ_ctx) in
-  let orig_ante = CF.formula_of_disjuncts orig_ante_l in
+  let succ_ctx = succ_context_of_list_failesc_context ctx in
+  let orig_ante_l = List.concat (List.map collect_orig_ante succ_ctx) in
+  let orig_ante = formula_of_disjuncts orig_ante_l in
   let term_res = (term_pos, None, Some orig_ante, Unreachable) in
   add_term_res_stk term_res;
   term_res
@@ -892,7 +894,7 @@ let add_phase_constr (lp: formula list) =
  * p2>p1 -> p2 --> p1
  * p2>=p1 -> {p2,p1} 
  * [x>y, y>=z] --> [[x], [y,z]] *)
-let rec phase_constr_of_formula_list (fl: formula list) : phase_constr list =
+let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   let fl = List.concat (List.map split_conjunctions fl) in
   List.fold_left (fun a f -> 
     let c = phase_constr_of_formula f in 
@@ -900,7 +902,7 @@ let rec phase_constr_of_formula_list (fl: formula list) : phase_constr list =
     | Some c -> c::a
     | None -> a) [] fl
   
-and phase_constr_of_formula (f: formula) : phase_constr option =
+and phase_constr_of_formula (f: CP.formula) : phase_constr option =
   match f with
   | BForm (bf, _) -> phase_constr_of_b_formula bf
   | _ -> None 
@@ -1140,7 +1142,7 @@ let value_of_var (v: spec_var) l : int =
  * + None -> exception
  * + Some [] -> all_zero
  * + Some _ *)
-let phase_num_infer_one_scc (pl : formula list) =
+let phase_num_infer_one_scc (pl : CP.formula list) =
   (* Phase Numbering *) 
   (* let pr_v = !print_sv in *)
   (* let pr_vl = pr_list pr_v in *)
@@ -1171,9 +1173,9 @@ let phase_num_infer_one_scc (pl : formula list) =
   in
   l
 
-let phase_num_infer_one_scc (pl: formula list)  =
+let phase_num_infer_one_scc (pl: CP.formula list)  =
   let pr = fun _ -> "" in
-  let pr2 = (add_str "Phase Ctr" (pr_list !print_formula)) in
+  let pr2 = (add_str "Phase Ctr" (pr_list !CP.print_formula)) in
   Debug.no_1 "phase_num_infer_one_scc" pr2 pr phase_num_infer_one_scc pl
 
 (* Infer the phase numbers at the end of check_prog *) 
@@ -1183,7 +1185,7 @@ let phase_num_infer_by_scc () =
   Hashtbl.iter (fun i pl -> 
     let cl = List.concat (List.map (fun (_, l) -> l) pl) in
     Debug.trace_hprint (add_str ("scc " ^ (string_of_int i))
-      (pr_list !print_formula)) cl no_pos;
+      (pr_list !CP.print_formula)) cl no_pos;
     let _ = phase_num_infer_one_scc cl in ()
   ) phase_constr_tbl
 
@@ -1193,7 +1195,7 @@ let phase_num_infer_by_scc () =
 
 (* this method adds phase constraint into a table indexed by call number *)
 (* it seems to be done on a per-call basis *)
-let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: formula list) =
+let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
   let index = proc.Cast.proc_call_order in
   let pname = proc.Cast.proc_name in
   let con = (pname, lp) in
@@ -1202,9 +1204,9 @@ let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: formula list) =
     Hashtbl.replace phase_constr_tbl index (con::cons)
   with Not_found -> Hashtbl.add phase_constr_tbl index [con]
 
-let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: formula list) =
+let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
   let pr = fun _ -> "" in
-  let pr1 = add_str "phase ctr added" (pr_list !print_formula) in
+  let pr1 = add_str "phase ctr added" (pr_list !CP.print_formula) in
   Debug.no_1 "add_phase_constr_by_scc" pr1 pr (add_phase_constr_by_scc proc) lp
 
 let subst_phase_num_exp subst exp = 
@@ -1218,7 +1220,7 @@ let subst_phase_num_exp subst exp =
 
 (* Substitute the value of phase variables into specification *)
 (* If all values are zero then the phase fields will be removed *)  
-let subst_phase_num_struc rem_phase subst (struc: CF.struc_formula) : CF.struc_formula =
+let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula =
   let f_e _ = None in
   let f_f _ = None in
   let f_h _ = None in
@@ -1265,31 +1267,31 @@ let subst_phase_num_struc rem_phase subst (struc: CF.struc_formula) : CF.struc_f
 
   (* Remove inferred variables from EInfer *)
   let f_ext ext = match ext with
-    | CF.EInfer ({ CF.formula_inf_vars = iv; CF.formula_inf_continuation = cont } as e) ->
+    | EInfer ({ formula_inf_vars = iv; formula_inf_continuation = cont } as e) ->
           let lv = fst (List.split subst) in
           let n_iv = Gen.BList.difference_eq eq_spec_var iv lv in
-          let n_cont = CF.transform_struc_formula e_f cont in
+          let n_cont = transform_struc_formula e_f cont in
           if Gen.is_empty n_iv then Some n_cont
-          else Some (CF.EInfer { e with 
-              CF.formula_inf_vars = n_iv;
-              CF.formula_inf_continuation = n_cont })
+          else Some (EInfer { e with 
+              formula_inf_vars = n_iv;
+              formula_inf_continuation = n_cont })
     | _ -> None
   in
   
   let s_f = f_ext, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
-  let n_struc = CF.transform_struc_formula s_f struc in
+  let n_struc = transform_struc_formula s_f struc in
   let _ = 
     begin
       (* Debug.trace_hprint (add_str ("proc name") (pr_id)) pname no_pos; *)
       Debug.trace_hprint (add_str ("subst") (pr_list (pr_pair !print_sv string_of_int))) subst no_pos;
-      Debug.trace_hprint (add_str ("OLD_SPECS") (!CF.print_struc_formula)) struc no_pos;
-      Debug.trace_hprint (add_str ("NEW_SPECS") (!CF.print_struc_formula)) n_struc no_pos;
+      Debug.trace_hprint (add_str ("OLD_SPECS") (!print_struc_formula)) struc no_pos;
+      Debug.trace_hprint (add_str ("NEW_SPECS") (!print_struc_formula)) n_struc no_pos;
     end 
   in
   n_struc
 
-let subst_phase_num_struc rp subst (struc: CF.struc_formula) : CF.struc_formula =
-  let pr = !CF.print_struc_formula in
+let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
+  let pr = !print_struc_formula in
   let pr0 = !print_svl in
   let pr1 = pr_list (pr_pair !print_sv string_of_int) in
   Debug.no_3 (* (fun _ -> not (Gen.is_empty struc)) *) 
@@ -1328,7 +1330,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 let cl = List.concat (snd (List.split cons)) in
                 let inf_num = phase_num_infer_one_scc cl in
                 Debug.trace_hprint (add_str "list of ctr" 
-                    (pr_list !print_formula)) cl no_pos;
+                    (pr_list !CP.print_formula)) cl no_pos;
                 let subst =
                   match inf_num with
                     | None -> []
@@ -1407,25 +1409,25 @@ let term_check_output () =
 
 let rec get_loop_ctx c =
   match c with
-    | CF.Ctx es -> (match es.es_var_measures with
+    | Ctx es -> (match es.es_var_measures with
         | None -> []
         | Some (a,_,_) -> if a==Loop then [es] else []
       )
-    | CF.OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
+    | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 
 let get_loop_only sl =
   let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
   List.concat ls
 
-let add_unsound_ctx (es: CF.entail_state) pos = 
+let add_unsound_ctx (es: entail_state) pos = 
   let term_pos = (post_pos # get, no_pos) in
-  let term_res = (term_pos, None, Some es.CF.es_formula, UnsoundLoop) in
+  let term_res = (term_pos, None, Some es.es_formula, UnsoundLoop) in
   add_term_res_stk term_res;
   add_term_err_stk (string_of_term_res term_res)
 
 (* if Loop, check that ctx is false *)
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) 
-  (ctx : CF.list_partial_context) post pos (pid:formula_label) : bool  =
+  (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
   Debug.trace_hprint (add_str "proc name" pr_id) proc.Cast.proc_name pos;
   let good_ls = List.filter (fun (fl,sl) -> fl==[]) ctx in (* Not a fail context *)
   let loop_es = List.concat (List.map (fun (fl,sl) -> get_loop_only sl) good_ls) in
@@ -1438,7 +1440,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl)
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
       let unsound_ctx = List.find_all (fun es -> 
-        (is_Loop_es es) && not (CF.isAnyConstFalse es.es_formula)) loop_es in
+        (is_Loop_es es) && not (isAnyConstFalse es.es_formula)) loop_es in
       if unsound_ctx == [] then true
       else
         begin
@@ -1448,8 +1450,8 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl)
         end;
     end
 
-let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : CF.list_partial_context) post pos (pid:formula_label) : bool  =
-  let pr = !CF.print_list_partial_context in
+let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
+  let pr = !print_list_partial_context in
   Debug.no_2 "check_loop_safety" 
     pr_id pr string_of_bool (fun _ _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name ctx
 
