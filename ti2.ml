@@ -157,17 +157,36 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
       pr_var_measures (ann, rnk, []);
       fmt_string " ensures true"
 
-(* let rec print_tnt_case_spec spec =                                            *)
-(*   match spec with                                                             *)
-(*   | Sol (ann, rnk) -> string_of_var_measures (ann, rnk, [])                   *)
-(*   | Unknown -> "Unk"                                                          *)
-(*   | Cases cl -> "[" ^ (String.concat "; " (List.map print_tnt_case cl)) ^ "]" *)
-    
-(* and print_tnt_case (c, spec) =                                                *)
-(*   (!CP.print_formula c) ^ " -> " ^ (print_tnt_case_spec spec)                 *)
-
 let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
 
+let struc_formula_of_ann (ann, rnk) =
+  let pos = no_pos in
+  let p_pre = CP.mkLexVar_pure ann rnk [] in
+  let p_post = match ann with
+    | Loop -> CP.mkFalse pos 
+    | _ -> CP.mkTrue pos
+  in
+  let f_pre = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_pre) in
+  let f_post = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_post) in
+  let lbl = fresh_formula_label "" in
+  let post = CF.mkEAssume [] f_post (CF.mkEBase f_post None pos) lbl None in
+  let spec = CF.mkEBase f_pre (Some post) pos  in
+  spec
+
+let rec struc_formula_of_tnt_case_spec spec =
+  match spec with
+  | Sol s -> struc_formula_of_ann s
+  | Unknown -> struc_formula_of_ann (MayLoop, [])
+  | Cases cases -> CF.ECase {
+      CF.formula_case_branches = List.map (fun (c, s) -> 
+        (c, struc_formula_of_tnt_case_spec s)) cases;
+      CF.formula_case_pos = no_pos; }
+      
+let print_tnt_case_spec spec =
+  let struc = struc_formula_of_tnt_case_spec spec in
+  string_of_struc_formula_for_spec struc 
+
+(* Stack for TNT case specs of all methods *)
 let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
   Hashtbl.create 20
 
@@ -184,7 +203,6 @@ let case_spec_of_trrel_sol sol =
 let add_case_spec_of_trrel_sol_proc (fn, sols) =
   let cases = List.map case_spec_of_trrel_sol sols in
   Hashtbl.add proc_case_specs fn (Cases cases)
-  
   
 let rec update_case_spec spec cond f = 
   match spec with

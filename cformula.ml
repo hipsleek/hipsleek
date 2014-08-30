@@ -745,7 +745,8 @@ and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula =
   let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
   formula_of_mix_formula mix_f pos 
 
-and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula=  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
+and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula =  
+  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
 
 and mkEBase_w_vars ee ei ii f ct pos = EBase{
       formula_struc_explicit_inst = ei;
@@ -1390,6 +1391,7 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
     formula_base_and = a;
     formula_base_label = lbl;
 	formula_base_pos = pos})
+  
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a: one_formula list)(pos : loc) : formula= 
   mkBase_w_lbl h p t fl a pos None
 
@@ -2803,7 +2805,8 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
     | Exists b -> Exists {b with  formula_exists_pure = add_mix_formula_to_mix_formula f1_mix b.formula_exists_pure;}
 
 (*add f1 into p*)
-and add_mix_formula_to_mix_formula (f1: MCP.mix_formula) (f2: MCP.mix_formula) :MCP.mix_formula =  (MCP.merge_mems f1 f2 true)
+and add_mix_formula_to_mix_formula (f1: MCP.mix_formula) (f2: MCP.mix_formula) :MCP.mix_formula = 
+  (MCP.merge_mems f1 f2 true)
 
 and one_formula_subst sst (f : one_formula) = 
   let sst = List.filter (fun (fr,t) -> 
