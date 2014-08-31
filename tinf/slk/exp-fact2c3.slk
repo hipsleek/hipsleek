@@ -1,0 +1,44 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
+ termAssume //x'!=0
+    x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ //termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
+/*
+# exp-fact2c3.slk
+
+If we merge the first 2 term assume of
+rec post, we will end up with the desired result.
+
+f:  case {
+  1<=x -> requires emp & Term[7,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[5]
+ ensures emp & true; 
+  }
+
+*/

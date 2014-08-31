@@ -3,9 +3,13 @@ UTPost@f fpost().
 
 infer [@term] x=0 & Term[] |- fpost().
 
-infer [@term] x!=0 & fpre(x) & x'=x-1 |- fpre(x').
+infer [@term] x!=0 & fpre(x) & x'=x-1 & x'!=0 |- fpre(x').
 
-infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost() |- fpost().
+infer [@term] x!=0 & fpre(x) & x'=x-1 & x'=0 |- fpre(x').
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost() & x'=0 |- fpost().
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost() & x'!=0 |- fpost().
 
 term_infer.
 
