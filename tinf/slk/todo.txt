@@ -126,16 +126,6 @@ f:  case {
  ensures emp & true; 
 
 ============================================================
-# fact2b.ss
-
-why give printing when no termination inference
-or verification is requested?
-
-*************************
-* TERMINATION INFERENCE *
-*************************
-Temporal Assumptions:
-============================================================
 # fact2a.ss
 
 Why continue with term inference after post-cond 
@@ -163,14 +153,6 @@ why did this fail  detect loop?
 
 It also obtained a worse result than the
 given partial spec.
-========================================================
-# exp-fact2c.slk
-
-shouldn't this be a type error?
-
-Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
-
-
 ============================================================
 ============================================================
 ============================================================

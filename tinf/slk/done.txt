@@ -1,0 +1,22 @@
+============================================================
+# fact2b.ss
+
+why give printing when no termination inference
+or verification is requested?
+
+*************************
+* TERMINATION INFERENCE *
+*************************
+Temporal Assumptions:
+
+>> DONE
+============================================================
+# exp-fact2c.slk
+
+shouldn't this be a type error?
+
+Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
+
+>> Due to fpost(x) in the third infer command
+>> infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x) |- fpost().
+========================================================
