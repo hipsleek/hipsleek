@@ -41,6 +41,12 @@ let seq_num = ref 0
 let tnt_fresh_int () = 
   seq_num := !seq_num + 1;
   !seq_num
+  
+let scc_num = ref 0    
+    
+let scc_fresh_int () = 
+  scc_num := !scc_num + 1;
+  !scc_num
     
 (* This method returns a unique number for (a, b) *)
 (* It is used to generate num for new instantiated TermU *)    
@@ -211,7 +217,7 @@ let pr_proc_case_specs _ =
 
 let case_spec_of_trrel_sol sol =
   match sol with
-  | Base c -> (c, Sol (CP.Term, []))
+  | Base c -> (c, Sol (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
   | Rec c -> (c, Unknown)
   | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
 
@@ -261,7 +267,7 @@ let update_specs_prog prog =
   let n_tbl = Cast.proc_decls_map (fun proc ->
     update_spec_proc proc) prog.Cast.new_proc_decls in
   { prog with Cast.new_proc_decls = n_tbl }
-    
+  
 (* TNT Graph *)
 module TNTElem = struct
   type t = int

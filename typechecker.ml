@@ -3425,15 +3425,15 @@ let rec check_prog iprog (prog : prog_decl) =
     | Some cout -> close_out cout
     | _ -> ()
   in 
-  let _ = Term.term_check_output () in
-  if !Globals.reverify_flag then
-    begin
-      print_endline ("\n!!! Re-verifying Inference Result");
-      (* print_string (Cprinter.string_of_program prog) *)
-      Globals.reverify_flag := false;
-      ignore (check_prog iprog prog)
-    end
-  else ()
+  let _ = Term.term_check_output () in ()
+  (* if !Globals.reverify_flag then                             *)
+  (*   begin                                                    *)
+  (*     print_endline ("\n!!! Re-verifying Inference Result"); *)
+  (*     (* print_string (Cprinter.string_of_program prog) *)   *)
+  (*     Globals.reverify_flag := false;                        *)
+  (*     ignore (check_prog iprog prog)                         *)
+  (*   end                                                      *)
+  (* else ()                                                    *)
 	    
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 

@@ -169,7 +169,7 @@ let solve_turel_one_scc prog tg scc =
   let update = 
     if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
-      then update_ann scc (subst (CP.Term, [])) (* Term or MayLoop *)
+      then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term or MayLoop *)
       else update_ann scc (subst (CP.Loop, [])) (* Loop *)
     
     else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
@@ -183,8 +183,9 @@ let solve_turel_one_scc prog tg scc =
         let res = infer_ranking_function_scc prog tg scc in
         match res with
         | Some rank_of_ann -> 
+          let scc_num = CP.mkIConst (scc_fresh_int ()) no_pos in
           update_ann scc (fun ann -> 
-            let res = (CP.Term, rank_of_ann ann) in 
+            let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
             subst res ann)
         | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
