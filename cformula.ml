@@ -15787,3 +15787,15 @@ let shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let rec is_inf_tnt_struc_formula f =
+  match f with 
+  | EList el -> List.exists (fun (_, f) -> is_inf_tnt_struc_formula f) el 
+  | ECase ec -> List.exists (fun (_, f) -> is_inf_tnt_struc_formula f) ec.formula_case_branches
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_tnt_struc_formula c
+    end
+  | EAssume _ -> false
+  | EInfer ei -> (ei.formula_inf_tnt) || (is_inf_tnt_struc_formula ei.formula_inf_continuation)
