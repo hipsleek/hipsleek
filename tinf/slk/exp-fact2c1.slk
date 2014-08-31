@@ -12,28 +12,27 @@ term_infer.
 /*
 # exp-fact2c1.slk
 
-Why isn't case splitting done?
-
-Shouldinfer:
- termAssume x=0 &Term[] --> fpost().
-
 Temporal Assumptions:
- termAssume x=x'+1 & x!=0 & fpost() --> fpost().
+ termAssume 1<=r & res=r+1 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
 
- termAssume x=0 --> fpost().
+ termAssume res=1 & x=0 --> fpost(x).
 
  termAssume x=x'+1 & x!=0 & fpre(x) --> fpre(x').
 
 
 Base/Rec Case Splitting:
-[	f: [[2] true@ML]
+[	f: [[2] 1<=x@R,[3] x<=(0-1)@R,[4] x=0@B]
 ]
+Starting z3... 
 Termination Inference Result:
 f:  case {
-  true -> requires emp & MayLoop[]
+  1<=x -> requires emp & Term[3,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[1]
  ensures emp & true; 
   }
-
 
 
 */
