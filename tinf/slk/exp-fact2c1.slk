@@ -1,0 +1,39 @@
+UTPre@f fpre(int x).
+UTPost@f fpost().
+
+infer [@term] x=0 & Term[] |- fpost().
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost() |- fpost().
+
+term_infer.
+
+/*
+# exp-fact2c1.slk
+
+Why isn't case splitting done?
+
+Shouldinfer:
+ termAssume x=0 &Term[] --> fpost().
+
+Temporal Assumptions:
+ termAssume x=x'+1 & x!=0 & fpost() --> fpost().
+
+ termAssume x=0 --> fpost().
+
+ termAssume x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] true@ML]
+]
+Termination Inference Result:
+f:  case {
+  true -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
+
+
+*/

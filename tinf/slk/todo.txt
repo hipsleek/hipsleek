@@ -80,11 +80,92 @@ Got below but should attempt to infer false on conseq
 
 
 ========================================================
+# fact.ss
+
+non-linear cannot be handled. Can we at least remove or
+transform them, so they can be partially handled.
+
+Temporal Assumptions:
+ termAssume 1<=v_int_16_922 & x'=v_int_16_919+1 & !(v_bool_15_880') & 
+x'!=0 & !(v_bool_15_880') & x=x' & x'!=0 & v_int_16_879'=x'*v_int_16_922 & 
+res=v_int_16_879' & fpost(v_int_16_877') --> fpost(x).
+
+ termAssume x'=0 & x=x' & v_bool_15_880' & x'=x' & v_bool_15_880' & 
+v_int_15_875'=1 & res=v_int_15_875' --> fpost(x).
+
+ termAssume x'!=0 & x=x' & !(v_bool_15_880') & x'!=0 & !(v_bool_15_880') & 
+x'=v_int_16_877'+1 & fpre(x) --> fpre(v_int_16_877').
+
+Starting Omega...oc
+Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
 ============================================================
+# fact2.ss
+
+int fact(int x)
+  infer [@term]
+  requires true & fpre(x)
+  ensures res>=1 & fpost(); //maybe just use TPost@f
+
+
+ Derived x-1 as ranking function;maybe can have a simplification which
+ returns x instead?
+
+
+Termination Inference Result:
+f:  case {
+  1<=x -> requires emp & Term[-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[]
+ ensures emp & true; 
+
 ============================================================
+# fact2b.ss
+
+why give printing when no termination inference
+or verification is requested?
+
+*************************
+* TERMINATION INFERENCE *
+*************************
+Temporal Assumptions:
 ============================================================
+# fact2a.ss
+
+Why continue with term inference after post-cond 
+proving has failed?
+
+Post condition cannot be derived:
+  (may) cause:  res=v_int_13_948+1 |-  1<=res. LOCS:[13;8] (may-bug)
+
 ============================================================
+# fact2c.ss
+
+int fact(int x)
+  infer [@term]
+  case {
+    x = 0 -> requires Term[] ensures res>=1 & fpost();
+    x != 0 -> requires fpre(x) ensures res>=1 & fpost();
+  }
+
+{
+  if (x==0) return 1;
+  else return 1+fact(x - 1);
+}
+
+why did this fail  detect loop?
+
+It also obtained a worse result than the
+given partial spec.
 ========================================================
+# exp-fact2c.slk
+
+shouldn't this be a type error?
+
+Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
+
+
 ============================================================
 ============================================================
 ============================================================

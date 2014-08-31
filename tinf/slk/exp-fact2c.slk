@@ -1,0 +1,20 @@
+UTPre@f fpre(int x).
+UTPost@f fpost().
+
+infer [@term] x=0 & Term[] |- fpost().
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x) |- fpost().
+
+term_infer.
+
+/*
+# exp-fact2c.slk
+
+shouldn't this be a type error?
+
+Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
+
+
+*/
