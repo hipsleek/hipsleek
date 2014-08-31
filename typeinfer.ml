@@ -523,9 +523,9 @@ and gather_type_info_exp_x prog a0 tlist et =
       (n_tl,n_typ)
   | IP.Tup2 ((p1,p2), pos) ->
       let (new_et, n_tl) = fresh_tvar tlist in
-      let (n_tl1,t1) = gather_type_info_exp p1 n_tl new_et in
+      let (n_tl1,t1) = gather_type_info_exp prog p1 n_tl new_et in
       let (new_et2, n_tl2) = fresh_tvar n_tl1 in
-      let (n_tl3,t2) = gather_type_info_exp_x p2 n_tl2 new_et2 in
+      let (n_tl3,t2) = gather_type_info_exp_x prog p2 n_tl2 new_et2 in
       let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
       (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->

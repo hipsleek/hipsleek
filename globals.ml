@@ -766,6 +766,8 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
+
 let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
@@ -1357,7 +1359,7 @@ let dis_bk ()=
   ()
 
 let dis_pred_sat () = 
-  if (not !web_compile_flag) then print_endline_q "DDisabling pred sat." .;
+  if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
   (* let _ = gen_baga_inv := false in *)
   let _ = prove_invalid := false in
   (*baga bk*)

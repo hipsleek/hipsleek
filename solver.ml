@@ -2672,7 +2672,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    (* let _ = print_endline (Cprinter.string_of_mix_formula npf) in *)
+    let _ = print_endline (Cprinter.string_of_mix_formula npf) in
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
@@ -2721,7 +2721,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       formula_base_pure = p;
       formula_base_pos = pos}) ->
           if !Globals.gen_baga_inv then tp_syn h p
-          else tp_syn h p
+          else tp_sem h p
           (* let p = MCP.translate_level_mix_formula p in *)
 	  (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
 	  (* let npf = MCP.merge_mems p ph true in *)
@@ -3253,7 +3253,7 @@ and check_consistency_context_x prog ctx pos =
                   fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
                   fc_prior_steps = es.es_prior_steps;
                   fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
-                  fc_failure_pts =[];}, fe, es.es_trace)), Failure)
+                  fc_failure_pts =[];}, fe, es.es_trace)) (mk_cex true), Failure)
             in Some res
           else None
   in helper ctx
@@ -3883,7 +3883,7 @@ and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
   let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
   rs, prf
 
-and compose_thread_post_condition prog es new_es_f post res2 pos =
+and compose_thread_post_condition_x prog es new_es_f post res2 pos =
   (**********Compose variable permissions >>> *******)
   (* let ps,new_post = CF.filter_varperm_formula post in *)
   (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
@@ -3934,6 +3934,12 @@ and compose_thread_post_condition prog es new_es_f post res2 pos =
           | None -> (SuccCtx [rs_norm] ,TrueConseq))
     end
 
+and compose_thread_post_condition prog es new_es_f post res2 pos =
+  Debug.no_2 "compose_thread_post_condition"
+      Cprinter.string_of_formula
+      Cprinter.string_of_formula
+      pr_none
+      (fun _ _ -> compose_thread_post_condition_x prog es new_es_f post res2 pos) new_es_f post
 
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) = 
   let slk_entail ctx conseq = heap_entail_conjunct_lhs_struc_x p is_folding has_post ctx conseq tid delayed_f join_id pos pid in
@@ -9662,7 +9668,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                         [None,Some (List.hd formulas), None])
                           | FailCtx _ ->
                                 let err_str = "matching of ho_args failed" in
-                                let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos, CF.mk_failure_must ("105" ^ err_str) Globals.sl_error, new_estate.es_trace)), NoAlias) in
+                                let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos, CF.mk_failure_must ("105" ^ err_str) Globals.sl_error, new_estate.es_trace)) (mk_cex true), NoAlias) in
                                 [Some rs,None,None])
                       else if ((List.length hvars) == 1) then
                         (*One hvar in rhs => bind hvar with lhs*)
@@ -12562,7 +12568,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
-              CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)), [])
+              CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) (mk_cex true), [])
             else
             let coer_rhs_new =
               if (ho_ps1=[]) then coer_rhs_new else

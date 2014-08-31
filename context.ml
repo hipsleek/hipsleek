@@ -1147,7 +1147,7 @@ and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
 
-and search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs)
+and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs)
       (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res lhs rhs remap=
   let extract_node_info hnode=
     match hnode with
@@ -1542,7 +1542,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     ) in
                     let a7 =
                         if (!Globals.smart_lem_search ) then
-                          let lem_act = search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+                          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
                           if lem_act = [] then a6 else
                             match a6 with
                               | Some a ->  Some (1, Cond_action ([a]@lem_act))
@@ -1597,7 +1597,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   else  [] *)
                 (* ) in *)
                 let l3 = if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset else [] in
+                  search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
@@ -2007,6 +2007,7 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (
         let vr_view_origs = vr.h_formula_view_origins in
         let vl_view_derv =  vl.h_formula_view_derv in
         let vr_view_derv = vr.h_formula_view_derv in
+        let vr_view_split = vr.h_formula_view_split in
         let m_res = { match_res_lhs_node = ViewNode vl;
         match_res_lhs_rest = lhs_rest;
         match_res_holes = [];
@@ -2040,7 +2041,7 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (
           ) in
           let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
           let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-          let lem_act = search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
           if lem_act = [] then [] else
             [(1,norm_search_action lem_act)]
       with _ -> []

@@ -5542,6 +5542,10 @@ and purge_mult_x (e :  exp):  exp = match e with
   | Div (e1, e2, l) ->
         let t1 = purge_mult e1 in
         let t2 = purge_mult e2 in
+        if (!Globals.no_float_simpl) then
+          (*Avoid losing precision, e.g. 1/3 = 0.33333*)
+          Div (t1, t2, l)
+        else
         begin
           match t1 with
             | IConst (v1, _) ->
