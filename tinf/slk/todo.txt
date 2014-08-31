@@ -14,7 +14,7 @@ or verification is requested?
 *************************
 Temporal Assumptions:
 
->> DONE
+>> FIXED
 ============================================================
 # termu-1c3.ss
 
@@ -145,7 +145,7 @@ Post condition cannot be derived:
   (may) cause:  res=v_int_13_948+1 |-  1<=res. LOCS:[13;8] (may-bug)
 
 ============================================================
-# fact2c.ss
+DONE # fact2c.ss
 
 int fact(int x)
   infer [@term]
@@ -163,6 +163,10 @@ why did this fail  detect loop?
 
 It also obtained a worse result than the
 given partial spec.
+
+>> We need fpost(x) to determine base case correctly.
+>> FIXED: only collect temporal relations from methods in same scc
+
 ========================================================
 DONE # exp-fact2c.slk
 

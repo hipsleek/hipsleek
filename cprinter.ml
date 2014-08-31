@@ -2310,6 +2310,7 @@ let pr_templ_assume (ante, cons) =
 
 let string_of_templ_assume = poly_string_of_pr pr_templ_assume
 
+(* TNT Return Relation *)
 let pr_trrel (ctx, lhs_trrel, rhs_trrel) = 
   fmt_open_box 1;
   pr_formula ctx;
@@ -2345,6 +2346,7 @@ let pr_trrel_assume (ctx, lhs_trrel, rhs_trrel) =
 
 let string_of_trrel_assume = poly_string_of_pr pr_trrel_assume
 
+(* TNT Call Relation *)
 let pr_turel (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;
   pr_formula ctx;
@@ -2355,6 +2357,17 @@ let pr_turel (ctx, lhs_turel, rhs_turel) =
   fmt_close ()
 
 let string_of_turel = poly_string_of_pr pr_turel
+
+let pr_turel_pure (ctx, lhs_turel, rhs_turel) = 
+  fmt_open_box 1;
+  pr_mix_formula ctx;
+  fmt_string ": ";
+  (pr_term_ann false) lhs_turel;
+  fmt_string " --> ";
+  (pr_term_ann false) rhs_turel;
+  fmt_close ()
+
+let string_of_turel_pure = poly_string_of_pr pr_turel_pure
 
 let pr_turel_assume (ctx, lhs_turel, rhs_turel) = 
   (* fmt_open_box 1; *)
@@ -2369,16 +2382,16 @@ let pr_turel_assume (ctx, lhs_turel, rhs_turel) =
 
 let string_of_turel_assume = poly_string_of_pr pr_turel_assume
 
-let pr_turel_pure (ctx, lhs_turel, rhs_turel) = 
+let pr_turel_debug (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;
   pr_mix_formula ctx;
   fmt_string ": ";
-  (pr_term_ann false) lhs_turel;
+  (pr_term_ann true) lhs_turel;
   fmt_string " --> ";
-  (pr_term_ann false) rhs_turel;
+  (pr_term_ann true) rhs_turel;
   fmt_close ()
 
-let string_of_turel_pure = poly_string_of_pr pr_turel_pure
+let string_of_turel_debug = poly_string_of_pr pr_turel_debug
 
 let pr_path_of (path, off)=
    (* fmt_string "PATH format"; *)

@@ -133,7 +133,7 @@ type call_trel = {
 }
 
 let print_call_trel_debug rel = 
-  string_of_turel_pure (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
+  string_of_turel_debug (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
 
 let print_call_trel rel = 
   string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)

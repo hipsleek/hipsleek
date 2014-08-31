@@ -13650,7 +13650,8 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
  * variables to specifications if the option 
  * --dis-call-num and --dis-phase-num are not enabled (default) *)      
  
-let rec add_term_nums_struc struc_f log_vars call_num add_phase = match struc_f with
+let rec add_term_nums_struc struc_f log_vars call_num add_phase = 
+  match struc_f with
   | ECase ef ->
       let n_cl, pvs  = map_l_snd_res (fun c-> add_term_nums_struc c log_vars call_num add_phase) ef.formula_case_branches in
       (ECase { ef with formula_case_branches = n_cl }, List.concat pvs)

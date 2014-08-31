@@ -9803,7 +9803,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | LexVar t_info ->
 		    let t_ann = t_info.lex_ann in
 				let ml = t_info.lex_exp in
-(*				let il = t_info.lex_tmp in*)
+        (* let il = t_info.lex_tmp in *)
 				let pos = t_info.lex_loc in
         (match t_ann with
           | Term ->
@@ -9829,11 +9829,17 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                   | Some pv -> let nv = mkVar pv pos
                     in ([nv], nv::ml, [pv])
               in 
-              let n_ml,n_il = match call_num with
-                | None -> (v_ml,v_il)
-                | Some i -> let c=(mkIConst i pos) in
-                  (c::v_ml,c::v_il)
+              let n_ml, n_il = match call_num with
+                | None -> (v_ml, v_il)
+                | Some i -> let c = (mkIConst i pos) in
+                  (c::v_ml, c::v_il)
               in (LexVar { t_info with lex_exp = n_ml; lex_tmp = n_il; }, pv)
+          | TermU _
+          | TermR _ -> begin
+            match call_num with
+            | None -> (pf, [])
+            | Some i -> (LexVar { t_info with lex_exp = (mkIConst i pos)::t_info.lex_exp; }, [])
+            end
           | _ -> (pf, []))
     | _ -> (pf, [])
   in ((n_pf, ann), pv)

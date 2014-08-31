@@ -210,7 +210,10 @@ let rec solve_turel_graph iter_num prog tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
-      (* let _ = print_endline (print_graph_by_rel tg) in *)
+      let _ = 
+        print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
+        print_endline (print_graph_by_rel tg) 
+      in
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
       finalize_turel_graph prog tg
@@ -223,12 +226,16 @@ let solve_turel_init prog turels fn_cond_w_ids =
   (* Update TNT case spec with base condition *)
   let _ = List.iter add_case_spec_of_trrel_sol_proc
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
-  (* let _ = pr_proc_case_specs () in *)
+  (* let _ =                                  *)
+  (*   print_endline ("Initial Case Spec:");  *)
+  (*   pr_proc_case_specs ()                  *)
+  (* in                                       *)
   
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in
-  (* let _ = print_endline (pr_list (fun ir ->  *)
-  (*   (print_call_trel ir) ^ "\n") irels) in   *)
+  let _ = print_endline ("Initial Inst Assumption:\n" ^ 
+    (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in
+    
   let tg = graph_of_trels irels in
   solve_turel_graph 0 prog tg
 

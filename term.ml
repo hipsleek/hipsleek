@@ -637,26 +637,43 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
+      
+      let get_call_order lv =
+        match lv with
+        | (IConst (i, _))::_ -> i
+        | _ -> 0
+      in
+      
+      let process_turel is_ret es =
+        let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
+        let es = if es.es_infer_tnt then
+            if is_ret then 
+              let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d in
+              { es with es_term_res_rhs = Some t_ann_d }
+            else
+              let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
+              { es with es_term_call_rhs =  Some t_ann_d; }
+          else es 
+        in es
+      in
+      
       match (t_ann_s, t_ann_d) with
       | (_, TermR _) ->
-        let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let estate =
-          if estate.es_infer_tnt then
-            let _ = Ti.add_ret_trel_stk prog ctx estate.es_term_res_lhs t_ann_d in
-            { estate with es_term_res_rhs = Some t_ann_d }
-          else estate 
-        in (estate, lhs_p, rhs_p, None)
+        let estate = process_turel true estate in
+        (estate, lhs_p, rhs_p, None)
       | (TermU _, _) -> begin
         match t_ann_d with
-        | Term -> (estate, lhs_p, rhs_p, None)
+        | Term -> (* Only add Call Relation of methods in the same scc *) 
+          let termu_src_order = get_call_order src_lv in
+          let term_dst_order = get_call_order dst_lv in
+          if termu_src_order > term_dst_order then
+            (estate, lhs_p, rhs_p, None)
+          else
+            let estate = process_turel false estate in
+            (estate, lhs_p, rhs_p, None)
         | _ -> 
-          let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-          let estate =
-            if estate.es_infer_tnt then
-              let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
-              { estate with es_term_call_rhs =  Some t_ann_d; }
-            else estate
-          in (estate, lhs_p, rhs_p, None) end
+          let estate = process_turel false estate in
+          (estate, lhs_p, rhs_p, None) end
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
       | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
       | (Term, Term)
