@@ -200,9 +200,10 @@ let solve_turel_one_scc prog tg scc =
   let ntg = map_ann_scc tg scc update in
   ntg
   
-let finalize_turel_graph tg = 
+let finalize_turel_graph prog tg = 
+  let _ = print_endline "Termination Inference Result:" in
   (* let _ = print_endline (print_graph_by_rel tg) in *)
-  pr_proc_case_specs ()  
+  pr_proc_case_specs ()
   
 let rec solve_turel_graph iter_num prog tg = 
   if iter_num < !Globals.tnt_thres then
@@ -211,11 +212,11 @@ let rec solve_turel_graph iter_num prog tg =
       (* let _ = print_endline (print_graph_by_rel tg) in *)
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
-      finalize_turel_graph tg
+      finalize_turel_graph prog tg
     with Restart_with_Cond tg -> 
       (* TODO: Duplicate on nodes that have been analyzed *)
       solve_turel_graph (iter_num + 1) prog tg
-  else finalize_turel_graph tg
+  else finalize_turel_graph prog tg
 
 let solve_turel_init prog turels fn_cond_w_ids = 
   (* Update TNT case spec with base condition *)
@@ -229,34 +230,36 @@ let solve_turel_init prog turels fn_cond_w_ids =
   (*   (print_call_trel ir) ^ "\n") irels) in   *)
   let tg = graph_of_trels irels in
   solve_turel_graph 0 prog tg
-  
+
 let finalize () =
   ret_trel_stk # reset;
   call_trel_stk # reset;
   Hashtbl.reset proc_case_specs
-  
+
 (* Main Inference Function *)  
 let solve prog = 
-  (* Temporarily disable template assumption printing *)
-  let pr_templassume = !print_relassume in
-  let _ = print_relassume := false in
-  
-  let _ = print_endline "*************************" in
-  let _ = print_endline "* TERMINATION INFERENCE *" in
-  let _ = print_endline "*************************" in
-  
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
+
+  if trrels = [] && turels = [] then ()
+  else
+    let _ = print_endline "*************************" in
+    let _ = print_endline "* TERMINATION INFERENCE *" in
+    let _ = print_endline "*************************" in
+
+    (* Temporarily disable template assumption printing *)
+    let pr_templassume = !print_relassume in
+    let _ = print_relassume := false in
+
+    let _ = print_endline "Temporal Assumptions:" in
+    let _ = List.iter (fun trrel -> print_endline ((print_ret_trel trrel) ^ "\n")) trrels in
+    let _ = List.iter (fun turel -> print_endline ((print_call_trel turel) ^ "\n")) turels in
   
-  let _ = print_endline "Temporal Assumptions:" in
-  let _ = List.iter (fun trrel -> print_endline ((print_ret_trel trrel) ^ "\n")) trrels in
-  let _ = List.iter (fun turel -> print_endline ((print_call_trel turel) ^ "\n")) turels in
+    let fn_cond_w_ids = case_split_init trrels in
+    let _ = solve_turel_init prog turels fn_cond_w_ids in
   
-  let fn_cond_w_ids = case_split_init trrels in
-  let _ = solve_turel_init prog turels fn_cond_w_ids in
-  
-  let _ = print_relassume := pr_templassume in
-  finalize ()
+    let _ = print_relassume := pr_templassume in
+    ()
   
   
   

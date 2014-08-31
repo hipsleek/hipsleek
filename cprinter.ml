@@ -1002,7 +1002,7 @@ and pr_pure_formula  (e:P.formula) =
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
 
-and pr_term_ann pr_short ann = 
+and pr_term_ann_debug pr_short ann = 
   match ann with
   | P.Term -> fmt_string "Term"
   | P.Loop -> fmt_string "Loop"
@@ -1036,6 +1036,10 @@ and pr_term_ann_assume ann =
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
+
+and pr_term_ann debug ann =
+  if debug then pr_term_ann_debug false ann
+  else pr_term_ann_assume ann
 
 and pr_var_measures (t_ann, ls1, ls2) = 
   let pr_rank op f xs = pr_args None None op "[" "]" "," f xs in

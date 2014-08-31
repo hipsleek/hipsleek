@@ -1827,7 +1827,10 @@ let process_templ_solve (idl: ident list) =
 
 (* Solving termination relation assumptions in Sleek *)  
 let process_term_infer () = 
-  Ti.solve !cprog
+  begin 
+    Ti.solve !cprog; 
+    Ti.finalize ()
+  end
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)

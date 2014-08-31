@@ -2725,9 +2725,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     end;
                   let _ = if proc0.Cast.proc_sel_hps = [] then () else
                     print_endline "";
-                    print_endline "\n\n*************************************";
+                    print_endline "\n\n******************************";
                     print_endline "******* SPECIFICATION ********";
-                    print_endline "*************************************";
+                    print_endline "******************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
                   in
                   (*****LOCKSET variable: ls'=ls *********)
@@ -3301,7 +3301,7 @@ let ext_pure_check_procs iprog prog proc_names error_traces=
   let _ = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
   []
 
-let check_prog iprog (prog : prog_decl) =
+let rec check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
     Some (open_out (!Globals.cpfile))
   )
@@ -3354,7 +3354,7 @@ let check_prog iprog (prog : prog_decl) =
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
-            b,Term.phase_num_infer_whole_scc prog scc 
+            b, Term.phase_num_infer_whole_scc prog scc 
           end
         else true,prog
       in
@@ -3400,6 +3400,8 @@ let check_prog iprog (prog : prog_decl) =
         else Template.collect_and_solve_templ_assumes prog inf_templs 
       in
       let _ = Ti.solve prog in
+      let prog = Ti2.update_specs_prog prog in
+      let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
       let updated_scc = List.fold_left (fun r proc_id ->
           try
@@ -3423,7 +3425,15 @@ let check_prog iprog (prog : prog_decl) =
     | Some cout -> close_out cout
     | _ -> ()
   in 
-  Term.term_check_output ()
+  let _ = Term.term_check_output () in
+  if !Globals.reverify_flag then
+    begin
+      print_endline ("\n!!! Re-verifying Inference Result");
+      (* print_string (Cprinter.string_of_program prog) *)
+      Globals.reverify_flag := false;
+      ignore (check_prog iprog prog)
+    end
+  else ()
 	    
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 

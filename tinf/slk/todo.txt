@@ -24,6 +24,9 @@ infer [@term] x>=0 & fpre(x) & x'=x-1 |- fpre(x').
 infer [@term] x>=0 & fpre(x) & x'=x-1 & fpost(x') |- fpost(x).
 
 infer [@term] x<0 & Term[] |- fpost(x).
+
+>> Due to case spec, we need to prove postconditions of two
+cases (x' >= 0 and x' < 0) when the input x >= 0.
 ============================================================
 # termu-1c4.ss
 
@@ -41,6 +44,8 @@ checkentail Term[] |- fpost@f().
 
 checkentail Loop |- fpost@f().
 // should check for false leh..
+
+>> We need parameters for fpost to do exists elim (mostly for sleek).
 
 ========================================================
 infer [@term] x<0 & Term[] |- fpost().

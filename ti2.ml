@@ -206,10 +206,9 @@ let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t =
   Hashtbl.create 20
 
 let pr_proc_case_specs _ = 
-  print_endline "Termination Inference Result:";
   Hashtbl.iter (fun proc spec ->
     print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs
-  
+
 let case_spec_of_trrel_sol sol =
   match sol with
   | Base c -> (c, Sol (CP.Term, []))
@@ -246,6 +245,22 @@ let add_sol_case_spec_proc fn cond sol =
 let update_case_spec_with_icond_proc fn cond icond = 
   update_case_spec_proc fn cond (fun _ -> 
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
+    
+let update_spec_proc proc =
+  let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+  try
+    let ispec = Hashtbl.find proc_case_specs mn in
+    let nspec = struc_formula_of_tnt_case_spec ispec in
+    let _ = proc.Cast.proc_stk_of_static_specs # push nspec in 
+    let nproc = { proc with Cast.proc_static_specs = nspec; }  in
+    (* let _ = Cprinter.string_of_proc_decl_no_body nproc in *)
+    nproc
+  with _ -> proc
+    
+let update_specs_prog prog = 
+  let n_tbl = Cast.proc_decls_map (fun proc ->
+    update_spec_proc proc) prog.Cast.new_proc_decls in
+  { prog with Cast.new_proc_decls = n_tbl }
     
 (* TNT Graph *)
 module TNTElem = struct
