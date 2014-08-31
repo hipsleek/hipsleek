@@ -4,7 +4,17 @@ Why isn't @term entailment logged?
 
 id: 1; caller: []; line: 10; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: []; c_heap: emp
 ============================================================
+DONE # fact2b.ss
 
+why give printing when no termination inference
+or verification is requested?
+
+*************************
+* TERMINATION INFERENCE *
+*************************
+Temporal Assumptions:
+
+>> DONE
 ============================================================
 # termu-1c3.ss
 
@@ -13,7 +23,7 @@ id: 1; caller: []; line: 10; classic: false; kind: POST; hec_num: 2; evars: []; 
 
 Why only 1 logged entry printed?
 ============================================================
-# termu-1c4.ss
+DONE # termu-1c4.ss
 
 why are there 4 termination assumptions?
 
@@ -28,7 +38,7 @@ infer [@term] x<0 & Term[] |- fpost(x).
 >> Due to case spec, we need to prove postconditions of two
 cases (x' >= 0 and x' < 0) when the input x >= 0.
 ============================================================
-# termu-1c4.ss
+DONE # termu-1c4.ss
 
 UTPre@f fpre(int x).
 UTPost@f fpost(int x).
@@ -153,6 +163,15 @@ why did this fail  detect loop?
 
 It also obtained a worse result than the
 given partial spec.
+========================================================
+DONE # exp-fact2c.slk
+
+shouldn't this be a type error?
+
+Entailment Problem (3) Failure("number of arguments for unknown temporal fpost does not match")
+
+>> Due to fpost(x) in the third infer command
+>> infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x) |- fpost().
 ============================================================
 ============================================================
 ============================================================
