@@ -674,6 +674,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         | _ -> 
           let estate = process_turel false estate in
           (estate, lhs_p, rhs_p, None) end
+      | (Term, TermU _) -> 
+        let estate = process_turel false estate in
+        (estate, lhs_p, rhs_p, None)
       | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
       | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
       | (Term, Term)
@@ -746,7 +749,6 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
-  let _ = print_endline (!MCP.print_mix_formula lhs_p) in
   let _, rhs_p, _, _, _ = split_components rhs in
   let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
   match rhs_lex with
@@ -757,11 +759,17 @@ let check_term_assume prog lhs rhs =
     | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
     | _ -> 
       let t_ann_s, _, _ = match lhs_lex with 
-      | Some (t_ann, el, il) -> (t_ann, el, il)
-      | None -> raise LexVar_Not_found in
+        | Some (t_ann, el, il) -> (t_ann, el, il)
+        | None -> raise LexVar_Not_found in
       begin match t_ann_s with
       | TermU _ -> Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
-      | _ -> () end
+      | Term -> 
+        begin match t_ann_d with
+        | TermU _ -> Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
+        | _ -> () 
+        end
+      | _ -> () 
+      end
     end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 

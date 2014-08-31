@@ -153,6 +153,22 @@ let update_call_trel rel ilhs irhs =
   { rel with
     termu_lhs = ilhs;  
     termu_rhs = irhs; }
+   
+(* Solution substitution *)
+let subst_sol_term_ann sol ann =
+  match ann with
+  | CP.TermU uid -> CP.TermU { uid with 
+      tu_sol = match uid.tu_sol with
+      | None -> Some sol 
+      | _ -> uid.CP.tu_sol }
+  | CP.Term -> 
+    begin match (fst sol) with
+    | CP.Loop 
+    | CP.MayLoop -> report_error no_pos 
+      "[TNT Inference]: A non-terminating program state is specified with Term."
+    | _ -> ann
+    end
+  | _ -> ann
     
 (* TNT Case Spec *)
 type tnt_case_spec = 

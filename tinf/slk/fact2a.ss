@@ -1,5 +1,5 @@
-UTPre@f fpre(int x).
-UTPost@f fpost().
+UTPre@fact fpre(int x).
+UTPost@fact fpost().
 
 int fact(int x)
   infer [@term]

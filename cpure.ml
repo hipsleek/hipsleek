@@ -9790,7 +9790,6 @@ let rec add_term_nums_pure f log_vars call_num phase_var =
   | Forall (sv, f, lbl, pos) ->
       let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
       (Forall (sv, n_f, lbl, pos), pv)
-  
   | Exists (sv, f, lbl, pos) ->
       let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
       (Exists (sv, n_f, lbl, pos), pv)
@@ -9849,7 +9848,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
 
-let  add_term_nums_pure  bf log_vars call_num phase_var =
+let  add_term_nums_pure bf log_vars call_num phase_var =
   Debug.no_2 "add_term_nums_pure" (pr_option string_of_int) (pr_option !print_sv) (pr_pair !print_formula !print_svl)
       (fun _ _ -> add_term_nums_pure bf log_vars call_num phase_var) call_num phase_var
 
@@ -9876,6 +9875,7 @@ and count_term_b_formula bf =
   | LexVar t_info ->
       (match t_info.lex_ann with
         | Term -> 1
+        | TermU _ -> 1 (* For TNT Inference *)
         | _ -> 0)
   | _ -> 0
 
@@ -12559,11 +12559,3 @@ let args_of_term_ann ann =
   | TermU uid -> uid.tu_args
   | TermR uid -> uid.tu_args
   | _ -> []
-
-let subst_sol_term_ann sol ann =
-  match ann with
-  | TermU uid -> TermU { uid with 
-      tu_sol = match uid.tu_sol with
-      | None -> Some sol 
-      | _ -> uid.tu_sol }
-  | _ -> ann

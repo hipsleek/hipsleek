@@ -157,18 +157,21 @@ let solve_turel_one_scc prog tg scc =
   let subst sol ann =
     let fn = CP.fn_of_term_ann ann in
     let cond = CP.cond_of_term_ann ann in
-    let call_num = CP.call_num_of_term_ann ann in
+    (* Add call number into the result *)
+    (* let call_num = CP.call_num_of_term_ann ann in                    *)
     (* let sol = (fst sol, (CP.mkIConst call_num no_pos)::(snd sol)) in *)
     (* Update TNT case spec with solution *)
     let _ = add_sol_case_spec_proc fn cond sol in
-    (* let _ = pr_proc_case_specs () in *)
+    (* let _ = print_endline ("Case spec @ scc " ^ (print_scc_num scc)) in *)
+    (* let _ = pr_proc_case_specs () in                                    *)
     
-    CP.subst_sol_term_ann sol ann
+    subst_sol_term_ann sol ann
   in 
   
   let outside_scc_succ = outside_succ_scc tg scc in
   
   let update = 
+    (* We assume that all nodes in scc are unknown *)
     if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
            (* Term with phase number or MayLoop *)
@@ -197,9 +200,7 @@ let solve_turel_one_scc prog tg scc =
           raise (Restart_with_Cond tg)
   
     else (* Error: One of scc's succ is Unknown *)
-      Error.report_error {
-        Error.error_loc = no_pos;
-        Error.error_text = "TNT[ti]: One of analyzed scc's successors is Unknown."; }
+      report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown."
   in
   let ntg = map_ann_scc tg scc update in
   ntg

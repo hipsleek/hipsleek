@@ -2233,7 +2233,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
   else 
     let (prim_grp, mutual_grps) = re_proc_mutual (sort_proc_decls (list_of_procs cp)) in
     let log_vars = cp.prog_logical_vars in
-    (* Only add the phase variables into scc group with >1 Term *)
+    (* Only add the phase variables into scc group with >0 Term *)
     let mutual_grps = List.map (fun scc -> (count_term_scc scc, scc)) mutual_grps in
     let mutual_grps = List.filter (fun (c,_) -> c>0) mutual_grps in
     if mutual_grps!=[] then 
