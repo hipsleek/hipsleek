@@ -4,7 +4,7 @@ UTPost@f fpost().
 int fact(int x)
   infer [@term]
   case {
-    x = 0 -> requires Term ensures true;
+    x = 0 -> requires Loop ensures true;
     x != 0 -> requires fpre(x) ensures res>=1 & fpost();
   }
 

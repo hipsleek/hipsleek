@@ -38,13 +38,16 @@ infer [@term] x<0 & Term[] |- fpost(x).
 >> Due to case spec, we need to prove postconditions of two
 cases (x' >= 0 and x' < 0) when the input x >= 0.
 ============================================================
-DONE # termu-1c4.ss
+# termu-1c4.ss
 
 UTPre@f fpre(int x).
 UTPost@f fpost(int x).
 
 Perhaps fpost need not carry any parameter; as
 the purpose is to capture base versus recursive cases.
+
+>> We need parameters for fpost to do exists elim (mostly for sleek).
+
 I guess it is sufficient to declare:
 
 UTPost@f fpost().
@@ -55,7 +58,6 @@ checkentail Term[] |- fpost@f().
 checkentail Loop |- fpost@f().
 // should check for false leh..
 
->> We need parameters for fpost to do exists elim (mostly for sleek).
 
 ========================================================
 infer [@term] x<0 & Term[] |- fpost().
@@ -114,7 +116,7 @@ x'=v_int_16_877'+1 & fpre(x) --> fpre(v_int_16_877').
 Starting Omega...oc
 Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
 ============================================================
-# fact2.ss
+DONE # fact2.ss
 
 int fact(int x)
   infer [@term]
@@ -134,15 +136,19 @@ f:  case {
  ensures false & false; 
   x=0 -> requires emp & Term[]
  ensures emp & true; 
+ 
+>> x-1 is the most correct ranking function for the case x >= 1
 
 ============================================================
-# fact2a.ss
+DONE # fact2a.ss
 
 Why continue with term inference after post-cond 
 proving has failed?
 
 Post condition cannot be derived:
   (may) cause:  res=v_int_13_948+1 |-  1<=res. LOCS:[13;8] (may-bug)
+
+>> FIXED
 
 ============================================================
 DONE # fact2c.ss

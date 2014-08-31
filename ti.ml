@@ -157,6 +157,8 @@ let solve_turel_one_scc prog tg scc =
   let subst sol ann =
     let fn = CP.fn_of_term_ann ann in
     let cond = CP.cond_of_term_ann ann in
+    let call_num = CP.call_num_of_term_ann ann in
+    (* let sol = (fst sol, (CP.mkIConst call_num no_pos)::(snd sol)) in *)
     (* Update TNT case spec with solution *)
     let _ = add_sol_case_spec_proc fn cond sol in
     (* let _ = pr_proc_case_specs () in *)
@@ -169,7 +171,8 @@ let solve_turel_one_scc prog tg scc =
   let update = 
     if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
-      then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term or MayLoop *)
+           (* Term with phase number or MayLoop *)
+      then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else update_ann scc (subst (CP.Loop, [])) (* Loop *)
     
     else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
@@ -178,7 +181,7 @@ let solve_turel_one_scc prog tg scc =
   
     else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
-      then update_ann scc (subst (CP.Term, [])) (* Term *)
+      then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term *)
       else (* Term with a ranking function for each scc's node *)
         let res = infer_ranking_function_scc prog tg scc in
         match res with
@@ -245,13 +248,15 @@ let finalize () =
   Hashtbl.reset proc_case_specs
 
 (* Main Inference Function *)  
-let solve prog = 
+let solve should_infer prog = 
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
 
   if trrels = [] && turels = [] then ()
+  else if not should_infer then
+    print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.")
   else
-    let _ = print_endline "*************************" in
+    let _ = print_endline "\n\n*************************" in
     let _ = print_endline "* TERMINATION INFERENCE *" in
     let _ = print_endline "*************************" in
 

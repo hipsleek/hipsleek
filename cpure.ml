@@ -169,6 +169,7 @@ and uid = {
   tu_id: int;
   tu_sid: ident;
   tu_fname: ident;
+  tu_call_num: int;
   tu_args: exp list;
   tu_cond: formula; 
   tu_icond: formula;
@@ -9805,7 +9806,7 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
 				let ml = t_info.lex_exp in
         (* let il = t_info.lex_tmp in *)
 				let pos = t_info.lex_loc in
-        (match t_ann with
+        begin match t_ann with
           | Term ->
               let v_ml, v_il, pv =
                 (* Termination: If there are logical variables or 
@@ -9834,13 +9835,17 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                 | Some i -> let c = (mkIConst i pos) in
                   (c::v_ml, c::v_il)
               in (LexVar { t_info with lex_exp = n_ml; lex_tmp = n_il; }, pv)
-          | TermU _
-          | TermR _ -> begin
+          | TermU uid
+          | TermR uid -> begin
             match call_num with
             | None -> (pf, [])
-            | Some i -> (LexVar { t_info with lex_exp = (mkIConst i pos)::t_info.lex_exp; }, [])
+            | Some i ->
+              let uid = { uid with tu_call_num = i; } in 
+              (LexVar { t_info with
+                lex_ann = (match t_ann with TermU _ -> TermU uid | _ -> TermR uid);
+                lex_exp = (mkIConst i pos)::t_info.lex_exp; }, [])
             end
-          | _ -> (pf, []))
+          | _ -> (pf, []) end
     | _ -> (pf, [])
   in ((n_pf, ann), pv)
 
@@ -12542,6 +12547,12 @@ let fn_of_term_ann ann =
   | TermU uid -> uid.tu_fname
   | TermR uid -> uid.tu_fname
   | _ -> ""
+
+let call_num_of_term_ann ann =
+  match ann with
+  | TermU uid -> uid.tu_call_num
+  | TermR uid -> uid.tu_call_num
+  | _ -> 0
 
 let args_of_term_ann ann =
   match ann with

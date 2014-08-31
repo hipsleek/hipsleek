@@ -3399,7 +3399,7 @@ let rec check_prog iprog (prog : prog_decl) =
           Terminf.infer_rank_template_init prog inf_templs
         else Template.collect_and_solve_templ_assumes prog inf_templs 
       in
-      let _ = Ti.solve prog in
+      let _ = Ti.solve is_all_verified2 prog in
       let prog = Ti2.update_specs_prog prog in
       let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
@@ -3418,22 +3418,15 @@ let rec check_prog iprog (prog : prog_decl) =
     if !Globals.gen_templ_slk then Template.gen_slk_file prog
     else ()
   in
+  
+  let _ = Term.term_check_output () in
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let _ =  match cout_option with
     | Some cout -> close_out cout
     | _ -> ()
-  in 
-  let _ = Term.term_check_output () in ()
-  (* if !Globals.reverify_flag then                             *)
-  (*   begin                                                    *)
-  (*     print_endline ("\n!!! Re-verifying Inference Result"); *)
-  (*     (* print_string (Cprinter.string_of_program prog) *)   *)
-  (*     Globals.reverify_flag := false;                        *)
-  (*     ignore (check_prog iprog prog)                         *)
-  (*   end                                                      *)
-  (* else ()                                                    *)
+  in ()
 	    
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 

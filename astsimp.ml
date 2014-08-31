@@ -6561,6 +6561,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_id = uid.IP.tu_id;
     CP.tu_sid = uid.IP.tu_sid;
     CP.tu_fname = uid.IP.tu_fname;
+    CP.tu_call_num = 0;
     CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
     CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; 
     CP.tu_icond = CP.mkTrue no_pos;
