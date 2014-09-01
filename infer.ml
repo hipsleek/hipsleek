@@ -83,7 +83,7 @@ let no_infer_vars estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
-let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == [])
+let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula
 
 (* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
 
@@ -1101,6 +1101,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                             let rhs = CF.formula_of_pure_formula rhs_xpure pos in
 
                             let hp_rel = mkHprel_1 knd lhs None rhs es_cond_path in
+                            (* postpone until heap_entail_after_sat *)
                             let _ = rel_ass_stk # push_list ([hp_rel]) in
                             let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in
                             (Some (new_es, CP.mkTrue pos),None,[])
@@ -1255,12 +1256,13 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                 in
                                 let i_hps = [] in
                                 let _ = Log.current_hprel_ass_stk # push_list heap_ass in
+                                (* postpone until heap_entail_after_sat *)
                                 let _ = rel_ass_stk # push_list heap_ass in
-                                      (*drop inferred hpred*)
-                                      let n_es_formula,_ = CF.drop_hrel_f new_estate.CF.es_formula i_hps in
-                                      let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;
-                                          CF.es_formula = n_es_formula;
-                                      } in
+                                (*drop inferred hpred*)
+                                let n_es_formula,_ = CF.drop_hrel_f new_estate.CF.es_formula i_hps in
+                                let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;
+                                    CF.es_formula = n_es_formula;
+                                } in
                                 (rel_ass1, heap_ass,new_es)
                               else
                                 (rel_ass, [],new_estate)
@@ -2616,9 +2618,10 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
       let neg_prhs = MCP.mix_of_pure (CP.neg_eq_neq prhs_guard2) in
       let ass_rhs = CF.mkBase HEmp neg_prhs TypeTrue (mkTrueFlow ()) [] pos in
       let knd = CP.RelAssume lhs_hps in
-      let ehp_rel = CF.mkHprel knd [] [] [] lhs None ass_rhs es_cond_path in
+      let ehp_rel = CF.mkHprel_w_flow knd [] [] [] lhs None ass_rhs es_cond_path !error_flow_int in
       (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
       let hp_rel_list = [ehp_rel] in
+      (* postpone until heap_entail_after_sat *)
       let _ = rel_ass_stk # push_list hp_rel_list in
       let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
       (* update es.formula *)
@@ -2821,6 +2824,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let hp_rel_list0 = hp_rels@defined_hprels in
   let ex_ass = (rel_ass_stk # get_stk) in
   let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
+  (* postpone until heap_entail_after_sat *)
   let _ = rel_ass_stk # push_list (hp_rel_list) in
   let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
   (* let _ = DD.info_hprint (add_str  "  rvhp_rels" !CP.print_svl rvhp_rels) pos in *)
@@ -3108,6 +3112,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
               let lhs = lhs in
               let rhs = CF.Base rhs_b1 in
               let hprel_ass = [CF.mkHprel_1 knd lhs None rhs es_cond_path] in
+              (* postpone until heap_entail_after_sat? *)
               let _ = rel_ass_stk # push_list hprel_ass in
               let _ = Log.current_hprel_ass_stk # push_list hprel_ass in
               let new_es1 = {new_es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @  hprel_ass;

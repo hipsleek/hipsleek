@@ -1192,7 +1192,7 @@ let cpfile = ref ""
   let do_sat_slice = ref false
 
 (* for Termination *)
-let dis_term_chk = ref false
+let dis_term_chk = ref true
 let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false

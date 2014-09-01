@@ -2487,7 +2487,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
 		(*report_error pos ("got difference in assume proving: \n flat: "^(Cprinter.string_of_formula (fst posts))^"\n struc:"*)
 		(*^(Cprinter.string_of_struc_formula (snd posts))^"\n struc rez: "^(string_of_bool (CF.isSuccessListPartialCtx_new rs_struc))^"\n")*)
 	  (*else rs_flat,prf*)
-	  in
+    in
     let _ = PTracer.log_proof prf in
     let _ = if !print_proof then
       begin
@@ -2584,27 +2584,85 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
     (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in *)
     (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)
     let proc = List.hd scc_procs in
-    let scc_hprel, scc_inferred_hps, dang_hps =
-      if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
-        let res =
+    (* ************************************ *)
+    (* *************INTENAL********************* *)
+    let print_hp_defs_one_flow hp_defs flow_int=
+       begin
+        let defs0 = List.sort CF.hp_def_cmp hp_defs in
+        let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d ->
+            match d.CF.def_cat with
+              | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp scc_sel_post_hps) then (r1,r2@[d],r3) else
+                  if (CP.mem_svl hp scc_sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
+              | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
+        let defs1 = pre_preds@post_pred@rem in
+        let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_hp_def defs1 else defs1 in
+        print_endline "\n*************************************";
+        print_endline ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        print_endline "*************************************";
+        if !Globals.testing_flag then print_endline "<dstart>";
+        let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
+        let old_print_imm = !print_ann in
+         let _= if !print_html then let _ = print_ann:= false in () else () in
+        print_endline (pr1 defs);
+          let _ = print_ann:=  old_print_imm in
+        if !Globals.testing_flag then print_endline "<dstop>"; 
+        print_endline "*************************************";
+        ()
+      end;
+    in
+    let do_infer_one_flow hprels flow_int=
+      let _ = Debug.info_hprint (add_str "shape inference for flow" !Cformula.print_flow) flow_int  no_pos in
+      let res =
           if not (!Globals.pred_syn_modular) then
             if not (!Globals.sa_dnc) then
-              let r1,r2,r3 =Sa2.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+              let r1,r2,r3 =Sa2.infer_shapes iprog prog (* proc.proc_name *)"" hprels
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                     (fun ((hp1,_),_) ((hp2, _),_) ->
                         (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
               in (r1,r2,r3)
             else
-              let _ = Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" scc_hprel_ass
+              let _ = Sa2.infer_shapes_new iprog prog (* proc.proc_name *)"" hprels
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                     (fun ((hp1,_),_) ((hp2, _),_) ->
                         (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
               in ([],[], [])
           else
-            Sa3.infer_shapes iprog prog proc.proc_name (* "" *) scc_hprel_ass
+            Sa3.infer_shapes iprog prog proc.proc_name (* "" *) hprels
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                     (fun ((hp1,_),_) ((hp2, _),_) ->
                         (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
+        in res
+    in
+         (* ************************************ *)
+    (* *************END INTENAL********************* *)
+    let scc_hprel, scc_inferred_hps, dang_hps =
+      if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
+        let res =
+          let hprels_flows = Cformula.partition_hprel_flow scc_hprel_ass in
+           List.fold_left (fun (r1,r2,r3) (hprels, flow_n) ->
+               let l1,l2,l3 = do_infer_one_flow hprels flow_n in
+               let _ = print_hp_defs_one_flow l2 flow_n in
+               (* to combine hpdefs of set of states *)
+               r1@l1,r2@l2,r3@l3
+           ) ([],[],[]) hprels_flows
+          (* if not (!Globals.pred_syn_modular) then *)
+          (*   if not (!Globals.sa_dnc) then *)
+          (*     let r1,r2,r3 =Sa2.infer_shapes iprog prog (\* proc.proc_name *\)"" scc_hprel_ass *)
+          (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
+          (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
+          (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
+          (*     in (r1,r2,r3) *)
+          (*   else *)
+          (*     let _ = Sa2.infer_shapes_new iprog prog (\* proc.proc_name *\)"" scc_hprel_ass *)
+          (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
+          (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
+          (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
+          (*     in ([],[], []) *)
+          (* else *)
+          (*   Sa3.infer_shapes iprog prog proc.proc_name (\* "" *\) scc_hprel_ass *)
+          (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
+          (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
+          (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
         in res
       else [],[],[]
     in
@@ -2792,7 +2850,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (********************SHAPE INFER*****************************)
                       (****************************************************************)
                       (*store assumption. solve it when we finish analyse its scc*)
-                      let _ = proc0.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@hp_lst_assume in
+                      let flow_hp_rel_ass = Cformula.partition_hprel_flow hp_lst_assume in
+                      let _ = Debug.ninfo_hprint (add_str "flow_hp_rel_ass" (pr_list_ln (pr_pair ( pr_list_ln Cprinter.string_of_hprel_short) !Cformula.print_flow)) ) (flow_hp_rel_ass)  no_pos in
+                      let _ = proc0.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@flow_hp_rel_ass (*hp_lst_assume*) in
                       let _ = proc0.Cast.proc_hprel_unkmap <- proc.Cast.proc_hprel_unkmap@hp_rel_unkmap in
                       (* let _ = Debug.info_hprint (add_str "proc.Cast.proc_sel_hps"  !CP.print_svl) (proc.Cast.proc_sel_hps)  no_pos in *)
                       (* let _ = Debug.info_hprint (add_str "sel_hp_rels" !CP.print_svl) (sel_hp_rels)  no_pos in *)

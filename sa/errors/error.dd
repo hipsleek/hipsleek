@@ -10,8 +10,10 @@
 #get_must_failure
 #heap_entail_struc_init_bug_inv
 #heap_entail_struc_init
-#heap_entail_conjunct_lhs_struc
+#heap_entail_conjunct_lhs
+#obtain_subsume_es
 #heap_entail_after_sat_struc
 #list_context_union
 #sleek_entail_check
 #run_infer_one_pass
+#early_hp_contra_detection

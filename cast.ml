@@ -182,7 +182,7 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
-    mutable proc_hprel_ass: Cformula.hprel list;
+    mutable proc_hprel_ass: (Cformula.hprel list * nflow) list;
     mutable proc_hprel_unkmap: ((P.spec_var * int list) * P.xpure_view) list;
     mutable proc_sel_hps: P.spec_var list;
     mutable proc_sel_post_hps: P.spec_var list;

@@ -4281,6 +4281,7 @@ type hprel= {
     hprel_rhs: formula;
     hprel_path: cond_path_type;
     hprel_proving_kind: Others.proving_kind;
+    hprel_flow: nflow list;
 }
 
 
@@ -4332,6 +4333,26 @@ let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been init
 (* outcome from shape_infer *)
 let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
   !print_hprel_def_short (==)
+
+let partition_hprel_flow constrs0=
+  let rec helper constrs res=
+    match constrs with
+      | [] -> res
+      | rel::rest -> begin
+          let (same_part), rest1 = List.partition (fun rel1 ->
+              match rel.hprel_flow,rel1.hprel_flow with
+                | [(fl1)],[fl2] -> equal_flow_interval fl1 fl2
+                | _ -> true
+          ) rest in
+          let fl = match rel.hprel_flow with
+            | [] -> !norm_flow_int
+            | a::_ -> a
+          in
+          helper rest1 (res@[(rel::same_part,fl)])
+        end
+  in
+  helper constrs0 []
+
 
 (*for drop non-selective subformulas*)
 let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
@@ -4452,6 +4473,15 @@ let subst_hpdef ss hpdef=
       hprel_def_body = n_body;
   }
 
+let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
+  try
+    let hp1 = get_hpdef_name d1.def_cat in
+    try
+      let hp2 = get_hpdef_name d2.def_cat in
+      String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
+    with _ -> 1
+  with _ -> -1
+
 let hpdef_cmp d1 d2 =
   try
     let hp1 = get_hpdef_name d1.hprel_def_kind in
@@ -4484,6 +4514,20 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hpr
     hprel_rhs = hprel_r;
     hprel_path = hprel_p;
     hprel_proving_kind = Others.find_impt_proving_kind ();
+    hprel_flow = [!norm_flow_int];
+ }
+
+let mkHprel_w_flow knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
+ {  hprel_kind = knd;
+    unk_svl = u_svl;
+    unk_hps = u_hps ;
+    predef_svl = pd_svl;
+    hprel_lhs = hprel_l;
+    hprel_guard = hprel_g;
+    hprel_rhs = hprel_r;
+    hprel_path = hprel_p;
+    hprel_proving_kind = Others.find_impt_proving_kind ();
+    hprel_flow = [nflow];
  }
 
 let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =

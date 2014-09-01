@@ -2539,6 +2539,7 @@ let pr_hprel_short hpa=
   in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
+  fmt_string (String.concat "," (List.map string_of_flow hpa.hprel_flow));
   fmt_close()
 
 let pr_hprel_short_inst cprog post_hps hpa=
@@ -2568,6 +2569,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
   in
   fmt_string " --> ";
   (* prtt_pr_formula_inst cprog *) print_formula hpa.hprel_rhs;
+  fmt_string (String.concat "," (List.map string_of_flow hpa.hprel_flow));
   fmt_close()
 
 let pr_path_of (path, off)=
@@ -3070,7 +3072,7 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
                      | Some false -> "\n ensures_inexact " in
     fmt_string ensures_str;
     prtt_pr_formula_inst_w_flow prog b;
-    fmt_string ";";
+    fmt_string ( ";");
 	if !print_assume_struc then 
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_helper s)

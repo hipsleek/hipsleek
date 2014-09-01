@@ -2387,3 +2387,12 @@ filter es that <= conseq flow
    let pr3 = !print_formula in
    Debug.no_2 "obtain_subsume_es" pr1 pr3 (pr_pair pr2 pr2)
        (fun _ _ -> obtain_subsume_es_x es conseq) es conseq
+
+
+let update_hprel_flow hprels conseq=
+  let flow = (flow_formula_of_formula conseq) in
+  let flow_int = flow.formula_flow_interval in
+  let update_hprel hprel=
+    {hprel with hprel_flow = (* if hprel.hprel_flow=[] then *) [flow_int] (* else  hprel.hprel_flow *);}
+  in
+  List.map update_hprel hprels

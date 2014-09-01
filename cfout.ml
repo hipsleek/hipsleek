@@ -208,8 +208,52 @@ let rearrange_def def=
       hprel_def_body_lib = n_lib;
       hprel_def_hrel = new_hrel;}
 
-(* let rearrange_def def= *)
-(*   let pr1 =  *)
+let rearrange_hp_def def=
+  let new_body1 =
+    begin
+      try
+        let args = match def.def_lhs with
+          | HRel (sv, exp_list, pos) ->
+                List.map (fun exp -> match exp with
+                  | CP.Var(sv, pos) -> sv
+                  | _ -> raise Not_found) exp_list
+          | _ -> raise Not_found
+        in
+        List.map (fun (f, og) ->
+            (rearrange_formula args f, og)
+        ) def.def_rhs
+      with _ -> def.def_rhs
+    end
+  in
+  (*to shorten variable names here*)
+  let args = match def.def_cat with
+    | CP.HPRelDefn (_,r,args) -> r::args
+    | _ -> []
+  in
+  let svll = List.map (fun (f,_) ->
+      fv f
+  ) new_body1 in
+  let svl = List.flatten svll in
+  (* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *)
+  let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in
+  (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
+  (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
+  let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  (* let reg = Str.regexp "_.*" in *)
+  let n_tbl = Hashtbl.create 1 in
+  let new_svl = shorten_svl svl_rp in 
+  let new_body2 =
+    List.map (fun (f, f_opt) ->
+        ((subst_avoid_capture svl_rp new_svl f), f_opt)
+  ) new_body1
+  in
+  let new_hrel = subst_avoid_capture_h svl_rp new_svl def.def_lhs in
+  {def with def_rhs = new_body2;
+      def_lhs = new_hrel;}
+
+
+
 
 let rearrange_rel (rel: hprel) =
   let lfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_lhs)) in
