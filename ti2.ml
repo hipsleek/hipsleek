@@ -53,6 +53,7 @@ let scc_fresh_int () =
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
 
+(* Result for Return Relation Assumptions *)
 type trrel_sol = 
   | Base of CP.formula
   | Rec of CP.formula (* Recursive case *)
@@ -71,15 +72,9 @@ let trans_trrel_sol f = function
   | MayTerm c -> MayTerm (f c)
 
 let fold_trrel_sol f = function
-  | Base c -> 
-    let cs = f c in
-    List.map (fun c -> Base c) cs 
-  | Rec c -> 
-    let cs = f c in
-    List.map (fun c -> Rec c) cs 
-  | MayTerm c -> 
-    let cs = f c in
-    List.map (fun c -> MayTerm c) cs 
+  | Base c -> let cs = f c in List.map (fun c -> Base c) cs 
+  | Rec c -> let cs = f c in List.map (fun c -> Rec c) cs 
+  | MayTerm c -> let cs = f c in List.map (fun c -> MayTerm c) cs 
 
 let simplify_trrel_sol = trans_trrel_sol om_simplify
 
@@ -128,32 +123,7 @@ let subst_sol_term_ann sol ann =
     end
   | _ -> ann
 
-(* TNT Case Spec *)
-type tnt_case_spec = 
-  | Sol of (CP.term_ann * CP.exp list)
-  | Unknown
-  | Cases of (CP.formula * tnt_case_spec) list
-
-let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
-  match spec with
-  | Cases cl ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
-    (
-      fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
-        (fun () -> pr_pure_formula c) " -> " )
-        (fun () -> pr_tnt_case_spec s; fmt_string ";")
-    ) cl 
-  | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
-  | Sol (ann, rnk) ->
-    match ann with
-    | CP.Loop -> fmt_string "requires Loop ensures false"
-    | _ -> 
-      fmt_string "requires ";
-      pr_var_measures (ann, rnk, []);
-      fmt_string " ensures true"
-
-let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
-
+(* Specification *)
 let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
   let p_pre = CP.mkLexVar_pure ann rnk [] in
@@ -165,6 +135,22 @@ let struc_formula_of_ann (ann, rnk) =
   let f_post = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_post) in
   let lbl = fresh_formula_label "" in
   let post = CF.mkEAssume [] f_post (CF.mkEBase f_post None pos) lbl None in
+  let spec = CF.mkEBase f_pre (Some post) pos  in
+  spec
+  
+let struc_formula_of_ann_w_assume assume (ann, rnk) =
+  let pos = no_pos in
+  let p_pre = CP.mkLexVar_pure ann rnk [] in
+  let f_pre = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_pre) in
+  
+  let post = match ann with
+    | Loop ->
+      let f_post = CF.mkBase_simp CF.HEmp (MCP.mkMFalse pos) in
+      CF.EAssume { assume with
+        CF.formula_assume_simpl = f_post;
+        CF.formula_assume_struc = CF.mkEBase f_post None pos; }
+    | _ -> TermUtils.strip_lexvar_post (CF.EAssume assume)
+  in
   let spec = CF.mkEBase f_pre (Some post) pos  in
   spec
 
@@ -180,23 +166,72 @@ let rec struc_formula_of_tnt_case_spec spec =
 let print_tnt_case_spec spec =
   let struc = struc_formula_of_tnt_case_spec spec in
   string_of_struc_formula_for_spec struc 
+  
+let rec merge_tnt_case_spec_into_struc_formula ctx spec sf = 
+  match sf with
+  | CF.ECase ec -> CF.ECase { ec with 
+      CF.formula_case_branches = List.map (fun (c, ef) ->
+        let ctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
+        c, merge_tnt_case_spec_into_struc_formula ctx spec ef) ec.CF.formula_case_branches }
+  | CF.EBase eb -> 
+    let pos = eb.CF.formula_struc_pos in 
+    let base = eb.CF.formula_struc_base in
+    let cont = eb.CF.formula_struc_continuation in
+    
+    let update_ebase b = 
+      if CF.isConstTrueFormula b then
+        match cont with
+        | None -> CF.EBase { eb with CF.formula_struc_base = b; }
+        | Some c -> merge_tnt_case_spec_into_struc_formula ctx spec c
+      else
+        let nctx = CF.normalize 16 ctx b pos in
+        CF.EBase { eb with
+          CF.formula_struc_base = b;
+          CF.formula_struc_continuation = map_opt 
+            (merge_tnt_case_spec_into_struc_formula nctx spec) cont }
+    in
+   
+    let has_lexvar, has_unknown_lexvar = CF.has_unknown_lexvar_formula base in
+    if has_unknown_lexvar then
+      let nbase = snd (TermUtils.strip_lexvar_formula base) in
+      update_ebase nbase
+    else if has_lexvar then
+      CF.EBase { eb with
+        CF.formula_struc_continuation = map_opt 
+          TermUtils.strip_lexvar_post cont }
+    else update_ebase base
+  | CF.EAssume af -> merge_tnt_case_spec_into_assume ctx spec af
+  | CF.EInfer ei -> 
+    let cont = merge_tnt_case_spec_into_struc_formula ctx spec ei.CF.formula_inf_continuation in
+    if ei.CF.formula_inf_tnt then cont
+    else CF.EInfer { ei with CF.formula_inf_continuation = cont }
+  | CF.EList el -> 
+    CF.mkEList_no_flatten (map_l_snd (merge_tnt_case_spec_into_struc_formula ctx spec) el)
+    
+and merge_tnt_case_spec_into_assume ctx spec af =
+  match spec with
+  | Sol s -> struc_formula_of_ann_w_assume af s
+  | Unknown -> struc_formula_of_ann_w_assume af (MayLoop, [])
+  | Cases cases -> CF.ECase {
+      CF.formula_case_branches = List.map (fun (c, s) -> 
+        (c, merge_tnt_case_spec_into_assume ctx s af)) cases;
+      CF.formula_case_pos = no_pos; }
 
 (* Stack for TNT case specs of all methods *)
 let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
   Hashtbl.create 20
 
-let pr_proc_case_specs _ = 
-  Hashtbl.iter (fun proc spec ->
-    print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs
-
-let case_spec_of_trrel_sol sol =
+let case_spec_of_trrel_sol call_num sol =
   match sol with
-  | Base c -> (c, Sol (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
+  | Base c -> (c, Sol (CP.Term, 
+    [CP.mkIConst call_num no_pos; CP.mkIConst (scc_fresh_int ()) no_pos]))
   | Rec c -> (c, Unknown)
   | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
 
-let add_case_spec_of_trrel_sol_proc (fn, sols) =
-  let cases = List.map case_spec_of_trrel_sol sols in
+let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
+  let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
+  let call_num = proc.Cast.proc_call_order in
+  let cases = List.map (case_spec_of_trrel_sol call_num) sols in
   Hashtbl.add proc_case_specs fn (Cases cases)
   
 let rec update_case_spec spec cond f = 
@@ -226,11 +261,25 @@ let update_case_spec_with_icond_proc fn cond icond =
   update_case_spec_proc fn cond (fun _ -> 
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
+let pr_proc_case_specs prog = 
+  (* Hashtbl.iter (fun proc spec ->                                              *)
+  (*   print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs *)
+  Hashtbl.iter (fun mn ispec ->
+    let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
+    let spec = proc.Cast.proc_static_specs in
+    let nspec = merge_tnt_case_spec_into_struc_formula 
+      (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+    print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))) 
+  proc_case_specs
+    
 let update_spec_proc proc =
   let mn = Cast.unmingle_name (proc.Cast.proc_name) in
   try
     let ispec = Hashtbl.find proc_case_specs mn in
-    let nspec = struc_formula_of_tnt_case_spec ispec in
+    let spec = proc.Cast.proc_static_specs in
+    (* let nspec = struc_formula_of_tnt_case_spec ispec in *)
+    let nspec = merge_tnt_case_spec_into_struc_formula 
+      (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
     let _ = proc.Cast.proc_stk_of_static_specs # push nspec in 
     let nproc = { proc with Cast.proc_static_specs = nspec; }  in
     (* let _ = Cprinter.string_of_proc_decl_no_body nproc in *)

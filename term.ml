@@ -1,9 +1,6 @@
 module CP = Cpure
 (* module CF = Cformula *)
 module MCP = Mcpure
-module DD = Debug
-module TP = Tpdispatcher
-(* module Inf = Infer *)
 
 open Gen.Basic
 open Globals
@@ -11,6 +8,7 @@ open Others
 open Cprinter
 open Cpure
 open Cformula
+open TermUtils
 
 type phase_trans = int * int
 
@@ -273,11 +271,6 @@ let pr_phase_constr = function
 let string_of_phase_constr = poly_string_of_pr pr_phase_constr
 (* End of Printing Utilities *)
 
-(* To find a LexVar formula *)
-exception LexVar_Not_found;;
-exception Invalid_Phase_Num;;
-
-
 (* let rec has_variance_struc struc_f =                                    *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f                   *)
   
@@ -303,26 +296,6 @@ exception Invalid_Phase_Num;;
 (*   let vm = fst (List.split v.formula_var_measures) in                                          *)
 (* 	let vi = v.formula_var_infer in                                                               *)
 (*   (Term, vm, vi)                                                                               *)
-
-let find_lexvar_b_formula (bf: b_formula) : (term_ann * exp list * exp list * loc) =
-  let (pf, _) = bf in
-  match pf with
-  | LexVar t_info -> (t_info.lex_ann, t_info.lex_exp, t_info.lex_tmp, t_info.lex_loc)
-  | _ -> raise LexVar_Not_found
-
-let rec find_lexvar_formula (f: CP.formula) : (term_ann * exp list * exp list * loc) =
-  match f with
-  | BForm (bf, _) -> find_lexvar_b_formula bf
-  | And (f1, f2, _) ->
-      (try find_lexvar_formula f1
-      with _ -> find_lexvar_formula f2)
-  | AndList l -> 
-		let rec hlp l = match l with
-			| [] -> raise LexVar_Not_found
-			| (_,h)::t -> (try find_lexvar_formula h
-						with _ -> hlp t) in
-		hlp l
-  | _ -> raise LexVar_Not_found
 
 (* To syntactically simplify LexVar formula *) 
 (* (false,[]) means not decreasing *)
@@ -363,89 +336,6 @@ let norm_term_measures_by_length src dst =
     if dl=0 then None
     else Some ((Gen.BList.take dl src)@one_exp, dst@zero_exp)
   else Some (src, Gen.BList.take sl dst)
-
-let strip_lexvar_pure_only f =
-  let mf_ls = split_conjunctions f in
-  let (lexvar, other_p) = List.partition (is_lexvar) mf_ls in
-  (lexvar, join_conjunctions other_p)
-
-let def_lbl l =
-  LO.is_common l
-  (*     if l==[] then true *)
-  (* else List.exists (fun s -> s="") l *)
-
-let def_lbl l =
-  Debug.no_1 "def_lbl" (LO.string_of) string_of_bool def_lbl l
-
-let strip_lexvar_list ls =
-  let rec aux xs =
-    match xs with
-      | [] -> ([],[])
-      | ((l,f) as ff) ::xs ->
-            let (l0,r0) = aux xs in
-            let (l2,r2) = 
-              if def_lbl l then
-                let (l3,f3) = strip_lexvar_pure_only f in
-                (l3,(l,f3))
-              else ([],ff)
-            in
-            (l2@l0,r2::r0)
-  in aux ls
-
-let strip_lexvar_from_andlist ls =
-  List.fold_left (fun (l,cj) f ->
-      match f with
-        | AndList ls -> 
-              let (l0,nls) = strip_lexvar_list ls in
-              (l0@l,(AndList nls)::cj)
-        | _ -> if is_lexvar f then (f::l,cj)
-            else (l,f::cj)
-  ) ([],[]) ls
-
-let strip_lexvar_from_pure f =
-  let mf_ls = split_conjunctions f in
-  let (lexvar,fs) = strip_lexvar_from_andlist mf_ls in
-  (* let (lexvar, other_p) = List.partition (is_lexvar) mf_ls in *)
-  (lexvar, join_conjunctions fs)
-
-let strip_lexvar_memo_grp mg =
-  let b_lexvar, memo_grp_cons = List.partition (fun mc -> 
-    is_lexvar_b_formula mc.Mcpure_D.memo_formula) mg.Mcpure_D.memo_group_cons in
-  let lexvar, memo_grp_slice = List.split (List.map 
-    (fun f -> strip_lexvar_from_pure f) mg.Mcpure_D.memo_group_slice) in
-  let lexvar = 
-    (List.map (fun mc -> BForm (mc.Mcpure_D.memo_formula, None)) b_lexvar) @ 
-    (List.concat lexvar) in 
-  (lexvar, { mg with
-    Mcpure_D.memo_group_cons = memo_grp_cons;
-    Mcpure_D.memo_group_slice = memo_grp_slice; })
-
-let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
-  match mf with
-  | MCP.OnePF f ->
-    let lexvar, f = strip_lexvar_from_pure f in
-    (lexvar, MCP.OnePF f)
-  | MCP.MemoF mp -> 
-    let lexvar, mp = List.split (List.map strip_lexvar_memo_grp mp) in
-    (List.concat lexvar, MCP.MemoF mp)
-
-let strip_lexvar_mix_formula mf =
-  let pr0 = !CP.print_formula in
-  let pr = !MCP.print_mix_formula in
-  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
-  
-let strip_lexvar_formula (f: formula) =
-  let _, fp, _, _, _ = split_components f in
-  let (lexvar, other_p) = strip_lexvar_mix_formula fp in
-  let termr, lexvar = List.partition is_TermR_formula lexvar in
-  let termr_lex = List.map (fun f ->
-    let tr, _, _, _ = find_lexvar_formula f in tr) termr in
-  match lexvar with
-  | [] -> other_p, None, termr_lex
-  | lv::[] ->
-    let t_ann, ml, il, _ = find_lexvar_formula lv in 
-    other_p, Some (t_ann, ml, il), termr_lex
-  | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
 let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
@@ -509,7 +399,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
           let rank_formula = List.fold_left (fun acc m ->
             CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
-          DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
+          Debug.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
           (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check 5 pos & rank_formula(I,O) *)
           (*let (estate,_,rank_formula,_) = Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
@@ -521,18 +411,18 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
               let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 
               (match es with Some es -> es | None -> estate), true
             else
-              let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
+              let res, _, _ = Tpdispatcher.imply_one 30 lhs rank_formula "" false None 
               in estate, res
           in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
-            DD.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-            DD.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
-            DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
-            DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
-            DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
-            DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_dec_res))) pos;
+            Debug.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
+            Debug.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+            Debug.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
+            Debug.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
+            Debug.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
+            Debug.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_dec_res))) pos;
           end;
 
           (* Do boundedness check at recursive calls *)
@@ -552,7 +442,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
                     let es = Template.collect_templ_assume_init estate lhs_p bnd_formula pos
                     in (match es with Some es -> es | None -> estate), true
                   else
-                    let res, _, _ = TP.imply_one 31 lhs bnd_formula "" false None 
+                    let res, _, _ = Tpdispatcher.imply_one 31 lhs bnd_formula "" false None 
                     in estate, res
                 in 
                 if not entail_bnd_res then
@@ -627,7 +517,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
+      let _ = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in 
@@ -748,7 +638,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 (* For temination assumption (termAssume) checking *)        
 let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
-  let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula lhs in
+  let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula_for_termAssume lhs in
   let _, rhs_p, _, _, _ = split_components rhs in
   let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
   match rhs_lex with
@@ -773,49 +663,6 @@ let check_term_assume prog lhs rhs =
     end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
 
-let strip_lexvar_lhs (ctx: context) : context =
-  let es_strip_lexvar_lhs (es: entail_state) : context =
-    if (es.es_var_measures = None) || (has_lexvar_formula es.es_formula) 
-    (* This is to ensure we strip Lexvar only once or when necessary *)
-    then
-      let _, pure_f, _, _, _ = split_components es.es_formula in
-      let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
-      (* Using transform_formula to update the pure part of es_f *)
-      let f_e_f _ = None in
-      let f_f _ = None in
-      let f_h_f e = Some e in
-      let f_m mp = Some (MCP.memo_of_mix other_p) in
-      let f_a _ = None in
-      let f_p_f pf = Some (MCP.pure_of_mix other_p) in
-      let f_b _ = None in
-      let f_e _ = None in
-      let termr, lexvar = List.partition is_TermR_formula lexvar in
-      let termr_lex = List.map (fun f ->
-        let tr, _, _, _ = find_lexvar_formula f in tr) termr in
-      match lexvar with
-      | [] ->
-        if termr_lex = [] then Ctx es
-        else Ctx { es with
-          es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula; 
-          es_term_res_lhs = termr_lex; }
-      | lv::[] ->
-        if (es.es_var_measures = None) then
-          let t_ann, ml, il, _ = find_lexvar_formula lv in 
-          Ctx { es with
-            es_formula = transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) es.es_formula;
-            es_var_measures = Some (t_ann, ml, il);
-            es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
-        else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-      | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-    else Ctx es
-  in transform_context es_strip_lexvar_lhs ctx
-
-let strip_lexvar_lhs (ctx: context) : context =
-  let pr = Cprinter.string_of_context in
-  Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
-
-(* End of LexVar handling *) 
-
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
   let err = (pos, None, Some ctx, TermErr reason) in
@@ -825,8 +672,8 @@ let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
 let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
   let _ = 
     begin
-      DD.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
-      DD.devel_hprint (add_str "Context" Cprinter.string_of_list_failesc_context) ctx pos
+      Debug.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
+      Debug.devel_hprint (add_str "Context" Cprinter.string_of_list_failesc_context) ctx pos
     end
   in
   let term_pos = (post_pos # get, proving_loc # get) in

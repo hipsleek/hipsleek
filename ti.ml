@@ -25,8 +25,12 @@ let add_ret_trel_stk prog ctx lhs rhs =
   (* let _ = print_endline (print_ret_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel
+
+(* Only merge relations split by post *)    
+let merge_trrels rec_trrels = 
+  rec_trrels
   
-let rec solve_rec_trrel rtr conds = 
+let solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
   let rec_cond, conds = List.fold_left (fun (rc, ca) cond ->
     match cond with
@@ -59,6 +63,7 @@ let solve_trrel_list trrels =
   (* print_endline (pr_list print_ret_trel trrel) *)
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
   let base_conds = List.map solve_base_trrel base_trrels in
+  let rec_trrels = merge_trrels rec_trrels in
   let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in 
   let conds = List.map simplify_trrel_sol conds in
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
@@ -161,8 +166,11 @@ let solve_turel_one_scc prog tg scc =
     let fn = CP.fn_of_term_ann ann in
     let cond = CP.cond_of_term_ann ann in
     (* Add call number into the result *)
-    (* let call_num = CP.call_num_of_term_ann ann in                    *)
-    (* let sol = (fst sol, (CP.mkIConst call_num no_pos)::(snd sol)) in *)
+    let call_num = CP.call_num_of_term_ann ann in
+    let sol = match (fst sol) with
+      | CP.Term -> (fst sol, (CP.mkIConst call_num no_pos)::(snd sol))
+      | _ -> sol 
+    in
     (* Update TNT case spec with solution *)
     let _ = add_sol_case_spec_proc fn cond sol in
     (* let _ = print_endline ("Case spec @ scc " ^ (print_scc_num scc)) in *)
@@ -211,7 +219,7 @@ let solve_turel_one_scc prog tg scc =
 let finalize_turel_graph prog tg = 
   let _ = print_endline "Termination Inference Result:" in
   (* let _ = print_endline (print_graph_by_rel tg) in *)
-  pr_proc_case_specs ()
+  pr_proc_case_specs prog
   
 let rec solve_turel_graph iter_num prog tg = 
   if iter_num < !Globals.tnt_thres then
@@ -231,7 +239,7 @@ let rec solve_turel_graph iter_num prog tg =
 
 let solve_turel_init prog turels fn_cond_w_ids = 
   (* Update TNT case spec with base condition *)
-  let _ = List.iter add_case_spec_of_trrel_sol_proc
+  let _ = List.iter (add_case_spec_of_trrel_sol_proc prog)
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
   (* let _ =                                  *)
   (*   print_endline ("Initial Case Spec:");  *)
@@ -260,9 +268,9 @@ let solve should_infer prog =
   else if not should_infer then
     print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
   else
-    let _ = print_endline "\n\n*************************" in
-    let _ = print_endline "* TERMINATION INFERENCE *" in
-    let _ = print_endline "*************************" in
+    let _ = print_endline "\n\n*****************************" in
+    let _ = print_endline     "*** TERMINATION INFERENCE ***" in
+    let _ = print_endline     "*****************************" in
 
     (* Temporarily disable template assumption printing *)
     let pr_templassume = !print_relassume in

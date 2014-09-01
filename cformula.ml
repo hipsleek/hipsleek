@@ -13628,10 +13628,21 @@ let rec has_lexvar_formula f =
   match f with
   | Base _
   | Exists _ ->
-      let _, pure_f, _, _, a = split_components f in 
+      let _, pure_f, _, _, _ = split_components f in 
       CP.has_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
+      
+let rec has_unknown_lexvar_formula f = 
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, _ = split_components f in 
+      CP.has_unknown_lexvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      let has_lexvar_f1, has_unknown_f1 = has_unknown_lexvar_formula f1 in
+      let has_lexvar_f2, has_unknown_f2 = has_unknown_lexvar_formula f2 in
+      (has_lexvar_f1 || has_lexvar_f2, has_unknown_f1 || has_unknown_f2)
      
 let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
   | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_lexvar is_primitive) ef.formula_case_branches }

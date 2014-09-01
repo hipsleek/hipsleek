@@ -5125,7 +5125,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     in (* End of process_entail_state *)
     (* Termination: Strip the LexVar in the pure part of conjunct LHS *)
     (* Move it to es_var_measures - Important for SLEEK *)
-    let ctx = Term.strip_lexvar_lhs ctx in
+    let ctx = TermUtils.strip_lexvar_lhs ctx in
 
     (* Call the internal function to do the unfolding and do the checking *)
     (* Check duplication only when there are no permissions*)
@@ -7500,7 +7500,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     if not !Globals.dis_term_chk then
       Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     else
-      let _, rhs_p = Term.strip_lexvar_mix_formula rhs_p in
+      let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in
       (estate, lhs_p, rhs_p, None)
   in
   (* Termination: Try to prove rhs_wf with inference *)

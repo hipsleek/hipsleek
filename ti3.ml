@@ -55,3 +55,29 @@ type tntrel =
 let string_of_tntrel = function
   | Ret rrel -> "@Return: " ^ (print_ret_trel rrel)
   | Call crel -> "@Call: " ^ (print_call_trel crel)
+
+(* TNT Case Spec *)
+type tnt_case_spec = 
+  | Sol of (CP.term_ann * CP.exp list)
+  | Unknown
+  | Cases of (CP.formula * tnt_case_spec) list
+
+let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
+  match spec with
+  | Cases cl ->
+    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    (
+      fun (c, s) -> wrap_box ("B",0) (pr_op_adhoc 
+        (fun () -> pr_pure_formula c) " -> " )
+        (fun () -> pr_tnt_case_spec s; fmt_string ";")
+    ) cl 
+  | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
+  | Sol (ann, rnk) ->
+    match ann with
+    | CP.Loop -> fmt_string "requires Loop ensures false"
+    | _ -> 
+      fmt_string "requires ";
+      pr_var_measures (ann, rnk, []);
+      fmt_string " ensures true"
+
+let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
