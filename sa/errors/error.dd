@@ -12,4 +12,6 @@
 #heap_entail_struc_init
 #heap_entail_conjunct_lhs_struc
 #heap_entail_after_sat_struc
-list_context_union
+#list_context_union
+#sleek_entail_check
+#run_infer_one_pass

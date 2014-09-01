@@ -2246,15 +2246,18 @@ and prtt_pr_formula e =
           else
             fmt_string ("\nAND "); pr_one_formula_list a
 
-and prtt_pr_formula_inst_1 prog e =
-  let f_b e =  pr_bracket formula_wo_paren (prtt_pr_formula_inst prog) e in
+and prtt_pr_formula_inst_1 prog print_flow e =
+  let f_b e =  pr_bracket formula_wo_paren (prtt_pr_formula_inst_1 prog print_flow) e in
   match e with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
           let args = arg1@arg2 in
 	      pr_list_vbox_wrap "or " f_b args
-    | Base e -> prtt_pr_formula_base_inst prog e
+    | Base e ->
+          let flow_info = if  print_flow then string_of_flow_formula "" e.formula_base_flow else "" in
+          prtt_pr_formula_base_inst prog e;
+          fmt_string ((flow_info) )
     | Exists ({formula_exists_qvars = svs;
 	  formula_exists_heap = h;
 	  formula_exists_pure = p;
@@ -2267,7 +2270,8 @@ and prtt_pr_formula_inst_1 prog e =
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           prtt_pr_h_formula_inst prog h; pr_cut_after "&" ;
           pr_mix_formula p; pr_cut_after  "&";
-          (* fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") *)
+          let flow_info = if  print_flow then string_of_flow_formula "" fl else "" in
+          fmt_string ((flow_info) );
           (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
           if (a==[]) then ()
           else
@@ -2277,7 +2281,9 @@ and prtt_pr_formula_inst prog e =
   let e = Cfout.tidy_print e in
     (* if (!Globals.print_en_tidy) then (Cfout.shorten_formula e) *)
     (* else e in *)
-  prtt_pr_formula_inst_1 prog e
+  prtt_pr_formula_inst_1 prog false e
+
+and prtt_pr_formula_inst_w_flow prog e =  prtt_pr_formula_inst_1 prog true e
 
 
 and prtt_pr_formula_inst_html prog post_hps e =
@@ -3063,7 +3069,7 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
                      | Some true -> "\n ensures_exact "
                      | Some false -> "\n ensures_inexact " in
     fmt_string ensures_str;
-    prtt_pr_formula_inst prog b;
+    prtt_pr_formula_inst_w_flow prog b;
     fmt_string ";";
 	if !print_assume_struc then 
 	  (fmt_string "struct:";

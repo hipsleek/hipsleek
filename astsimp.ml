@@ -1771,7 +1771,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1833,8 +1833,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let formula1_under = wrap_under_baga form_body_inv vdef in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1863,7 +1863,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let under_f = vdef.C.view_baga_under_inv in
-      Debug.tinfo_hprint (add_str "under(baga)" pr_d) under_f no_pos;
+      Debug.ninfo_hprint (add_str "under(baga)" pr_d) under_f no_pos;
       let baga_under_formula = match under_f with
         | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
         | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos

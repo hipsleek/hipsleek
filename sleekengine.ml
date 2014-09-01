@@ -1086,6 +1086,7 @@ let run_infer_one_pass_set_states (ivars: ident list) (iante0s : meta_formula li
             ) (r0, [rs0]) rest
           in
           let comb_rs = CF.union_context_left list_rs in
+          (* let _ = print_endline ("comb_rs: "^(Cprinter.string_of_list_context comb_rs)) in *)
           let _ = CF.residues := Some (comb_rs, r) in
           ((r, comb_rs, v0), pr0)
 
@@ -2134,7 +2135,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
     try 
-      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
+      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states ivars [iante0]) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
         (* print_exc num_id *)
