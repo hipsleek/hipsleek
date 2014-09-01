@@ -115,6 +115,8 @@ let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
 let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
+let should_infer_tnt = ref true
+
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
@@ -1828,8 +1830,9 @@ let process_templ_solve (idl: ident list) =
 (* Solving termination relation assumptions in Sleek *)  
 let process_term_infer () = 
   begin 
-    Ti.solve true !cprog; 
-    Ti.finalize ()
+    Ti.solve !should_infer_tnt !cprog; 
+    Ti.finalize ();
+    should_infer_tnt := true
   end
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
@@ -1901,11 +1904,18 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let num_id = "\nEntail "^nn in
     try
       let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass itype ivars iante0) iconseq0 in
-      print_entail_result sel_hps valid rs num_id
+      let res = print_entail_result sel_hps valid rs num_id in
+      let _ = match itype with
+      | Some INF_TERM -> should_infer_tnt := !should_infer_tnt && res
+      | _ -> () 
+      in res
     with ex -> 
         (* print_exc num_id *)
-        print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Problem "^nn^(Printexc.to_string ex)^"\n") 
+        (if !Globals.trace_failure then (print_string "caught\n"; Printexc.print_backtrace stdout));
+        let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
+        let _ = match itype with
+        | Some INF_TERM -> should_infer_tnt := false
+        | _ -> () 
         in false
 
 let process_capture_residue (lvar : ident) = 

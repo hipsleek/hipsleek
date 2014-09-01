@@ -2695,9 +2695,23 @@ let rec string_of_spec_var_list_noparen l = match l with
   | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
 ;;
 
+let string_of_inf_cmd i = 
+  match i with 
+  | INF_TERM -> "@term"
+
+let rec string_of_inf_cmd_list il =
+  match il with
+  | [] -> ""
+  | i::[] -> string_of_inf_cmd i
+  | h::t -> (string_of_inf_cmd h) ^ ", " ^ (string_of_inf_cmd_list t)
+
 let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
+
+let string_of_infer_list il vl = 
+  "[" ^ (string_of_inf_cmd_list il) ^ " " ^  
+  (string_of_spec_var_list_noparen vl) ^ "]"
 
 let rec pr_struc_formula  (e:struc_formula) = match e with
     | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
@@ -2804,7 +2818,8 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()
   | EInfer b -> 
-    fmt_string ("infer" ^ (string_of_spec_var_list b.formula_inf_vars)) ;
+    let il = if b.formula_inf_tnt then [INF_TERM] else [] in
+    fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
     pr_struc_formula_for_spec b.formula_inf_continuation
     (* report_error no_pos "Do not expect EInfer at this level" *)
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
@@ -2877,8 +2892,10 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_helper s)
 	 else ()
-  | EInfer b-> fmt_string ("infer" ^ (string_of_spec_var_list b.formula_inf_vars)) ;
-        pr_helper b.formula_inf_continuation
+  | EInfer b-> 
+    let il = if b.formula_inf_tnt then [INF_TERM] else [] in
+    fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
+    pr_helper b.formula_inf_continuation
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_helper c) b
   in
   res

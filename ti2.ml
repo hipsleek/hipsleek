@@ -6,6 +6,7 @@ open Cprinter
 open Globals
 open Gen
 open Tlutils
+open Ti3
 
 (* Auxiliary methods *)
 let diff = Gen.BList.difference_eq CP.eq_spec_var
@@ -52,19 +53,6 @@ let scc_fresh_int () =
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
 
-(* Temporal Relation at Return *)
-type ret_trel = {
-  ret_ctx: MCP.mix_formula;
-  (* Collect from RHS *)
-  termr_fname: ident;
-  termr_params: CP.spec_var list;
-  termr_lhs: CP.term_ann list;
-  termr_rhs: CP.term_ann;
-}
-
-let print_ret_trel rel = 
-  string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
-  
 type trrel_sol = 
   | Base of CP.formula
   | Rec of CP.formula (* Recursive case *)
@@ -124,36 +112,6 @@ let params_of_term_ann prog ann =
     String.compare utd.Cast.ut_name sid == 0) prog.Cast.prog_ut_decls in
   ut_decl.Cast.ut_params
   
-(* Temporal Relation at Call *)
-type call_trel = {
-  call_ctx: MCP.mix_formula;
-  trel_id: int;
-  termu_lhs: CP.term_ann;
-  termu_rhs: CP.term_ann;
-}
-
-let print_call_trel_debug rel = 
-  string_of_turel_debug (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
-
-let print_call_trel rel = 
-  string_of_turel_assume (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
-  
-let compare_trel r1 r2 = compare r1.trel_id r2.trel_id
-  
-let eq_trel r1 r2 = r1.trel_id == r2.trel_id
-
-let dummy_trel = {
-  call_ctx = MCP.mix_of_pure (CP.mkTrue no_pos);
-  trel_id = -1;
-  termu_lhs = MayLoop;
-  termu_rhs = MayLoop; 
-}
-  
-let update_call_trel rel ilhs irhs = 
-  { rel with
-    termu_lhs = ilhs;  
-    termu_rhs = irhs; }
-   
 (* Solution substitution *)
 let subst_sol_term_ann sol ann =
   match ann with
@@ -169,7 +127,7 @@ let subst_sol_term_ann sol ann =
     | _ -> ann
     end
   | _ -> ann
-    
+
 (* TNT Case Spec *)
 type tnt_case_spec = 
   | Sol of (CP.term_ann * CP.exp list)

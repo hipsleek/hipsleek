@@ -64,6 +64,8 @@ type sleek_log_entry = {
     sleek_proving_c_heap: CF.h_formula;
     sleek_proving_evars: CP.spec_var list;
     sleek_proving_infer_vars: CP.spec_var list;
+    sleek_proving_infer_type: infer_type option;
+    sleek_proving_tntrel_ass: Ti3.tntrel list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
     sleek_time : float;
@@ -186,7 +188,7 @@ let pr_sleek_log_entry e=
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
   fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
-  fmt_string ("; infer_vars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_infer_vars)) ;
+  fmt_string ("; infer_vars: " ^ (Cprinter.string_of_infer_list (opt_to_list e.sleek_proving_infer_type) e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   if (!Globals.print_en_tidy)
@@ -201,6 +203,11 @@ let pr_sleek_log_entry e=
 	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
 	  fmt_string ("\n clean checkentail"^(Cprinter.string_of_formula ante)^"\n |- "^(Cprinter.string_of_formula conseq)^". \n")
    else ());
+  (match e.sleek_proving_tntrel_ass with
+        | [] -> ()
+        | _  -> let pr = pr_list_ln Ti3.string_of_tntrel in
+                fmt_string ("tntrel_ass: " ^ (pr e.sleek_proving_tntrel_ass)^"\n")
+  );
   (match e.sleek_proving_hprel_ass with
         | [] -> ()
         | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
@@ -349,7 +356,9 @@ let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
       = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
 
-
+let current_tntrel_ass_stk : Ti3.tntrel Gen.stack_pr = 
+  new Gen.stack_pr Ti3.string_of_tntrel (==) 
+      
 (* let get_sleek_proving_id () = *)
 (*   let r = !sleek_proving_id in *)
 (*   let _ = Globals.add_count sleek_proving_id in *)
@@ -370,7 +379,7 @@ let proof_log_stk : proof_log  Gen.stack_filter
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+let add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
   (* let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in *)
   if !Globals.sleek_logging_txt then
@@ -393,11 +402,13 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
         (* !sleek_proving_kind; *)
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
+        sleek_proving_tntrel_ass = current_tntrel_ass_stk # get_stk;
         sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;
         sleek_proving_rel_ass = current_infer_rel_stk # get_stk;
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
         sleek_proving_infer_vars = infer_vars;
+        sleek_proving_infer_type = infer_type;
         sleek_time = stime;
         sleek_timeout = timeout_flag;
         sleek_proving_res = result;
@@ -408,6 +419,7 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
     let _ = sleek_log_stk # push sleek_log_entry in
     (if not(avoid) then 
       begin
+        current_tntrel_ass_stk # reset;
         current_hprel_ass_stk # reset; 
         current_infer_rel_stk # reset
       end)
@@ -415,13 +427,13 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
   else 
     ()
 
-let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+let add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
   let pr = Cprinter.string_of_formula in
   Debug.no_4 " add_sleek_logging" 
       string_of_bool string_of_int
       pr pr pr_none
-      (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos) avoid slk_no ante conseq
 
 let find_bool_proof_res pno =

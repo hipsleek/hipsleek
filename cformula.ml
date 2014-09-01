@@ -8529,6 +8529,9 @@ if List.length ls == 0 then [] else
 let get_infer_vars_sel_post_hp_partial_ctx_list ls=
 if List.length ls == 0  then [] else 
   get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
+  
+let infer_type_of_entail_state es = 
+  if es.es_infer_tnt then Some INF_TERM else None
 
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with

@@ -7,7 +7,7 @@ infer [@term] x!=0 & fpre(x) & x'=x-1 |- fpre(x').
 
 infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost() & res=1+r & r>=1 |- res>=1 & fpost(x).
 
-//checkentail false |- true.
+checkentail false |- true.
 
 term_infer.
 

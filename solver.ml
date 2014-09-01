@@ -4944,6 +4944,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   let (r_inf_contr,real_c),relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
+  let it = CF.infer_type_of_entail_state estate in
 
   let new_slk_log slk_no result es = 
     let avoid = CF.is_emp_term conseq in
@@ -4953,8 +4954,8 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_sleek_logging false 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
-      conseq es.es_heap es.es_evars (Some result) pos in
+    let _ = Log.add_sleek_logging false 0. it esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no 
+      estate.es_formula conseq es.es_heap es.es_evars (Some result) pos in
     () in
 
 
@@ -5329,7 +5330,8 @@ and log_contra_detect hec_num conseq result pos =
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
       | None   -> es.es_formula in 
-    let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller 
+    let it = CF.infer_type_of_entail_state es in
+    let _ = Log.add_sleek_logging false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
   let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
@@ -6552,11 +6554,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   (*             (es.es_rhs_eqset@eqns) *)
   (*     ;}) ctx0 in *)
   let hec a b c =
-    let (ante,consumed_heap,evars,infer_vars) =
+    let (ante,consumed_heap,evars,infer_type,infer_vars) =
       match ctx0 with
         | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
-          CF.HEmp, [],[])
+          CF.HEmp, [], None, [])
         | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars,
+          CF.infer_type_of_entail_state estate,
           (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ))
     in
     (* WN : what if evars not used in the conseq? *)
@@ -6571,7 +6574,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let _ = hec_stack # push slk_no in
     let logger fr tt timeout = 
       let _ =
-        Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule 
+        Log.add_sleek_logging timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
             caller avoid hec_num slk_no ante conseq consumed_heap evars 
             (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))

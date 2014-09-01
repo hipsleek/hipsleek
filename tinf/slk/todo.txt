@@ -1,4 +1,4 @@
-# termu-1c.ss
+DONE # termu-1c.ss
 
 Why isn't @term entailment logged?
 
@@ -16,7 +16,7 @@ Temporal Assumptions:
 
 >> FIXED
 ============================================================
-# termu-1c3.ss
+DONE # termu-1c3.ss
 
 !!!Number of sleek log entries 7
 !!!Logging logs/sleek_log_termu-1c3_ss.txt
@@ -182,6 +182,9 @@ Entailment Problem (3) Failure("number of arguments for unknown temporal fpost d
 
 >> Due to fpost(x) in the third infer command
 >> infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x) |- fpost().
+
+>> Entail (3) : Failure("number of arguments for unknown temporal fpost does not match")
+>> !!! Termination Inference is not performed due to errors in verification process.
 ============================================================
 # fact2c.ss
 

@@ -6,6 +6,7 @@ open Cprinter
 open Globals
 open Gen
 open Ti2
+open Ti3
 
 (*******************************)
 (* Temporal Relation at Return *)
@@ -22,6 +23,7 @@ let add_ret_trel_stk prog ctx lhs rhs =
     termr_lhs = lhs;
     termr_rhs = rhs; } in 
   (* let _ = print_endline (print_ret_trel trel) in *)
+  Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel
   
 let rec solve_rec_trrel rtr conds = 
@@ -90,6 +92,7 @@ let add_call_trel_stk ctx lhs rhs =
     termu_lhs = lhs;
     termu_rhs = rhs; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
+  Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel
   
 (* Initial instantiation of temporal relation *)      
@@ -255,7 +258,7 @@ let solve should_infer prog =
 
   if trrels = [] && turels = [] then ()
   else if not should_infer then
-    print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.")
+    print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
   else
     let _ = print_endline "\n\n*************************" in
     let _ = print_endline "* TERMINATION INFERENCE *" in
