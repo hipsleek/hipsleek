@@ -2671,7 +2671,10 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     let hp_defs1,tupled_defs = Sautil.partition_tupled is_post2a.CF.is_hp_defs in
     (*before inlining, we try do inter-unify*)
     let hp_defs2 = if !Globals.pred_unify_inter then Sacore.pred_unify_inter prog dang_hps hp_defs1 else hp_defs1 in
-    let hp_defs3 = def_subst_fix prog is_post2a.CF.is_post_hps dang_hps is_post2a.CF.is_prefix_hps (hp_defs2) in
+    let hp_defs3 = if not !Globals.sae then
+      def_subst_fix prog is_post2a.CF.is_post_hps dang_hps is_post2a.CF.is_prefix_hps (hp_defs2)
+    else (hp_defs2)
+    in
     let hp_defs4 = List.map (fun def ->
         let hp0,args0 = CF.extract_HRel def.CF.def_lhs in
         if CP.mem_svl hp0 is_post2a.CF.is_sel_hps then

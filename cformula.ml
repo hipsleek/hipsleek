@@ -4330,11 +4330,16 @@ and infer_state = {
 }
 
 let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+
+let print_hprel_short = ref (fun (c:hprel) -> "printer has not been initialized")
+
 (* outcome from shape_infer *)
 let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
   !print_hprel_def_short (==)
 
-let partition_hprel_flow constrs0=
+let print_flow = ref(fun (c:nflow) -> "printer not initialized")
+
+let partition_hprel_flow_x constrs0=
   let rec helper constrs res=
     match constrs with
       | [] -> res
@@ -4353,6 +4358,11 @@ let partition_hprel_flow constrs0=
   in
   helper constrs0 []
 
+let partition_hprel_flow constrs0=
+  let pr1 = pr_list_ln !print_hprel_short in
+  let pr2 = pr_list_ln (pr_pair pr1 !print_flow) in
+  Debug.no_1 "partition_hprel_flow" pr1 pr2
+      (fun _ -> partition_hprel_flow_x constrs0) constrs0
 
 (*for drop non-selective subformulas*)
 let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
@@ -8759,7 +8769,6 @@ let print_entail_state_short = ref(fun (c:entail_state) -> "printer not initiali
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
 (* let print_flow = ref(fun (c:nflow) -> "printer not initialized") *)
-let print_flow = ref(fun (c:nflow) -> "printer not initialized")
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")

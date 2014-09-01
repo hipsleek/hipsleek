@@ -17,3 +17,5 @@
 #sleek_entail_check
 #run_infer_one_pass
 #early_hp_contra_detection
+#partition_hprel_flow
+def_subst_fix
