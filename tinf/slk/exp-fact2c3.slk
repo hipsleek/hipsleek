@@ -26,6 +26,18 @@ term_infer.
 
 term_infer.
 
+ termAssume x'!=0 & x=x'+1 & x!=0 & !b & fpost(x') --> fpost(x).
+
+ //termAssume x'=0 & x=x'+1 & x!=0 & !b & fpost(x') --> fpost(x).
+
+ termAssume x=0 & b --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
 /*
 # exp-fact2c3.slk
 
