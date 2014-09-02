@@ -12613,13 +12613,13 @@ let get_bar_branches (f0:struc_formula):(formula * formula_label) list=
 	
 let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
   EBase	{
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	(*formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
-	formula_struc_base = mkBase HEmp (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
-	formula_struc_continuation = cont;
-	formula_struc_pos = loc;
+	  formula_struc_explicit_inst = [];
+	  formula_struc_implicit_inst = [];
+	  formula_struc_exists = [];
+	  (*formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
+	  formula_struc_base = mkBase HEmp (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+	  formula_struc_continuation = cont;
+	  formula_struc_pos = loc;
     (*formula_ext_complete = true;*)
   }	
 
@@ -13643,22 +13643,46 @@ let rec has_unknown_lexvar_formula f =
       let has_lexvar_f1, has_unknown_f1 = has_unknown_lexvar_formula f1 in
       let has_lexvar_f2, has_unknown_f2 = has_unknown_lexvar_formula f2 in
       (has_lexvar_f1 || has_lexvar_f2, has_unknown_f1 || has_unknown_f2)
+      
+let rec norm_assume_with_lexvar tpost struc_f =
+  let norm_f = norm_assume_with_lexvar tpost in
+  match struc_f with
+  | ECase ec -> ECase { ec with formula_case_branches = map_l_snd norm_f ec.formula_case_branches }
+  | EBase eb -> EBase { eb with formula_struc_continuation = map_opt norm_f eb.formula_struc_continuation }
+  | EAssume ea -> 
+    if (has_lexvar_formula ea.formula_assume_simpl) then struc_f
+    else
+      let lexvar = CP.mkPure (CP.mkLexVar tpost [] [] no_pos) in
+      let post = fst (combine_and ea.formula_assume_simpl (MCP.mix_of_pure lexvar)) in
+      EAssume { ea with
+        formula_assume_simpl = post;
+        formula_assume_struc = mkEBase post None no_pos }
+  | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
+  | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
      
-let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
-  | ECase ef -> ECase { ef with formula_case_branches = map_l_snd (norm_struc_with_lexvar is_primitive) ef.formula_case_branches }
-  | EBase ef ->
-      if (has_lexvar_formula ef.formula_struc_base) then struc_f
-      else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
+let rec norm_struc_with_lexvar is_primitive is_tnt_inf (tpre, tpost) struc_f =
+  let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf (tpre, tpost) in
+  match struc_f with
+  | ECase ec -> ECase { ec with formula_case_branches = map_l_snd norm_f ec.formula_case_branches }
+  | EBase eb ->
+    let cont = eb.formula_struc_continuation in
+    if (has_lexvar_formula eb.formula_struc_base) then 
+      if not is_tnt_inf then struc_f
+      else EBase { eb with formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
+    else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
-      (* if !en_term_inf && not is_primitive then struc_f *)
-      (* else *)
-        let lexvar = 
-          if is_primitive then CP.mkLexVar Term [] [] no_pos 
-          else CP.mkLexVar MayLoop [] [] no_pos 
-        in
-        mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
-  | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
-  | EList b -> mkEList_no_flatten (map_l_snd (norm_struc_with_lexvar is_primitive) b)
+    let lexvar =
+      if is_primitive then CP.mkLexVar Term [] [] no_pos
+      else if not is_tnt_inf then CP.mkLexVar MayLoop [] [] no_pos 
+      else CP.mkLexVar tpre [] [] no_pos
+    in
+    let assume =
+      if not is_tnt_inf then struc_f
+      else norm_assume_with_lexvar tpost struc_f
+    in mkEBase_with_cont (CP.mkPure lexvar) (Some assume) no_pos
+  | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_struc_with_lexvar is_primitive 
+      (is_tnt_inf || ei.formula_inf_tnt) (tpre, tpost) ei.formula_inf_continuation }
+  | EList b -> mkEList_no_flatten (map_l_snd norm_f b)
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

@@ -14,7 +14,6 @@ open Ti3
 let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let add_ret_trel_stk prog ctx lhs rhs =
-  (* let params = List.concat (List.map CP.afv (CP.args_of_term_ann rhs)) in *)
   let params = params_of_term_ann prog rhs in
   let trel = {
     ret_ctx = ctx;

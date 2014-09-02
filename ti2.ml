@@ -231,7 +231,7 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
         CF.formula_assume_struc = CF.mkEBase f_post None pos; }
     | _ -> TermUtils.strip_lexvar_post (CF.EAssume assume)
   in
-  let spec = CF.mkEBase f_pre (Some post) pos  in
+  let spec = CF.mkEBase f_pre (Some post) pos in
   spec
   
 let struc_formula_of_dead_path _ =

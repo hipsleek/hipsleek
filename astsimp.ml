@@ -1473,7 +1473,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
-        C.prog_ut_decls = cuts;
+        C.prog_ut_decls = cuts @ (C.ut_decls # get_stk);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -2126,7 +2126,7 @@ and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
     C.ut_params = c_params;
     C.ut_is_pre = utdef.I.ut_is_pre;
     C.ut_pos = pos; } in
-  C.ut_decls # push c_ut; c_ut
+  c_ut
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -2758,16 +2758,50 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* Termination: Normalize the specification 
        * with the default termination information
        * Primitive functions: Term[] 
-       * User-defined functions: MayLoop *)
+       * User-defined functions: MayLoop 
+       * or TermR and TermU if @term *)
       let is_primitive = not (proc.I.proc_is_main) in
+      let fname = proc.I.proc_name in
+      let args = List.map (fun p -> 
+        ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in 
+      let pos = proc.I.proc_loc in
+      
+      let utpre_name = fname ^ "pre" in
+      let utpost_name = fname ^ "post" in
+              
+      let utpre_decl = {
+        C.ut_name = utpre_name;
+        C.ut_params = params;
+        C.ut_is_pre = true;
+        C.ut_pos = pos } in
+      let utpost_decl = { utpre_decl with
+        C.ut_name = utpost_name;
+        C.ut_is_pre = false; } in
+        
+      let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
+      
+      let uid = {
+        CP.tu_id = 0;
+        CP.tu_sid = "";
+        CP.tu_fname = fname;
+        CP.tu_call_num = 0;
+        CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+        CP.tu_cond = CP.mkTrue pos; 
+        CP.tu_icond = CP.mkTrue pos;
+        CP.tu_sol = None; 
+        CP.tu_pos = pos; } in
+      let tpre = CP.TermU { uid with CP.tu_sid = utpre_name } in
+      let tpost = CP.TermR { uid with CP.tu_sid = utpost_name } in
+      
       let static_specs_list = 
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive static_specs_list
+          CF.norm_struc_with_lexvar is_primitive false (tpre, tpost) static_specs_list
         else static_specs_list
       in
       let dynamic_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive dynamic_specs_list
+          CF.norm_struc_with_lexvar is_primitive false (tpre, tpost) dynamic_specs_list
         else dynamic_specs_list
       in
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
@@ -2790,7 +2824,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	| None -> None
 	| Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
-      let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
       (** An Hoa : compute the important variables **)
       let ftypes, fnames = List.split args in
       (* fsvars are the spec vars corresponding to the parameters *)
