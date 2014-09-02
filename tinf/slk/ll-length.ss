@@ -1,5 +1,5 @@
-UTPre@fact fpre(int n).
-UTPost@fact fpost(int n).
+UTPre@length fpre(int n).
+UTPost@length fpost(int n).
 
 data node { node next; }
 
