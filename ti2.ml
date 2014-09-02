@@ -70,6 +70,8 @@ let reset_scc_num _ =
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
 
+(******************************************************************************)
+
 (* Result for Return Relation Assumptions *)
 type trrel_sol = 
   | Base of CP.formula
@@ -140,7 +142,59 @@ let subst_sol_term_ann sol ann =
     end
   | _ -> ann
 
+(******************************************************************************)
+
 (* Specification *)
+
+(* Stack for TNT case specs of all methods *)
+let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
+  Hashtbl.create 20
+
+let case_spec_of_trrel_sol call_num sol =
+  match sol with
+  | Base c -> (c, Sol (CP.Term, 
+    [CP.mkIConst call_num no_pos; CP.mkIConst (scc_fresh_int ()) no_pos]))
+  | Rec c -> (c, Unknown)
+  | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
+
+let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
+  let call_num = 
+    try
+      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
+      proc.Cast.proc_call_order
+    with _ -> 0
+  in
+  let cases = List.map (case_spec_of_trrel_sol call_num) sols in
+  Hashtbl.add proc_case_specs fn (Cases cases)
+  
+let rec update_case_spec spec cond f = 
+  match spec with
+  | Sol _ -> spec
+  | Unknown -> f spec
+  | Cases cases -> 
+    let rec helper cases =
+      match cases with
+      | [] -> cases
+      | (c, case)::rem ->
+        if imply cond c then (c, (update_case_spec case cond f))::rem
+        else (c, case)::(helper rem)
+    in Cases (helper cases)
+    
+let update_case_spec_proc fn cond f = 
+  try
+    let spec = Hashtbl.find proc_case_specs fn in
+    let nspec = update_case_spec spec cond f in
+    Hashtbl.replace proc_case_specs fn nspec
+  with _ -> () 
+  
+let add_sol_case_spec_proc fn cond sol = 
+  update_case_spec_proc fn cond (fun _ -> Sol sol)
+  
+let update_case_spec_with_icond_proc fn cond icond = 
+  update_case_spec_proc fn cond (fun _ -> 
+    Cases [(icond, Unknown); (mkNot icond, Unknown)])
+    
+(* From TNT spec to struc formula *)
 (* For SLEEK *)
 let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
@@ -250,54 +304,6 @@ and merge_tnt_case_spec_into_assume ctx spec af =
           if f_is_sat nctx then (c, merge_tnt_case_spec_into_assume ctx s af)
           else (c, struc_formula_of_dead_path ())) cases;
         CF.formula_case_pos = no_pos; }
-
-(* Stack for TNT case specs of all methods *)
-let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
-  Hashtbl.create 20
-
-let case_spec_of_trrel_sol call_num sol =
-  match sol with
-  | Base c -> (c, Sol (CP.Term, 
-    [CP.mkIConst call_num no_pos; CP.mkIConst (scc_fresh_int ()) no_pos]))
-  | Rec c -> (c, Unknown)
-  | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
-
-let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
-  let call_num = 
-    try
-      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
-      proc.Cast.proc_call_order
-    with _ -> 0
-  in
-  let cases = List.map (case_spec_of_trrel_sol call_num) sols in
-  Hashtbl.add proc_case_specs fn (Cases cases)
-  
-let rec update_case_spec spec cond f = 
-  match spec with
-  | Sol _ -> spec
-  | Unknown -> f spec
-  | Cases cases -> 
-    let rec helper cases =
-      match cases with
-      | [] -> cases
-      | (c, case)::rem ->
-        if imply cond c then (c, (update_case_spec case cond f))::rem
-        else (c, case)::(helper rem)
-    in Cases (helper cases)
-    
-let update_case_spec_proc fn cond f = 
-  try
-    let spec = Hashtbl.find proc_case_specs fn in
-    let nspec = update_case_spec spec cond f in
-    Hashtbl.replace proc_case_specs fn nspec
-  with _ -> () 
-  
-let add_sol_case_spec_proc fn cond sol = 
-  update_case_spec_proc fn cond (fun _ -> Sol sol)
-  
-let update_case_spec_with_icond_proc fn cond icond = 
-  update_case_spec_proc fn cond (fun _ -> 
-    Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
 let pr_proc_case_specs prog = 
   Hashtbl.iter (fun mn ispec ->
