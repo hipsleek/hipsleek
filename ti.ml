@@ -28,10 +28,10 @@ let add_ret_trel_stk prog ctx lhs rhs =
 
 (* Only merge relations split by post *)    
 let merge_trrels rec_trrels = 
-  let eq_rec_trrel r1 r2 =
+  let same_path_trrel r1 r2 =
     eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
   in
-  let grp_trrels = partition_eq eq_rec_trrel rec_trrels in
+  let grp_trrels = partition_eq same_path_trrel rec_trrels in
   let merge_trrels = List.map (fun grp ->
     let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
     match grp with
