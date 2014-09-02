@@ -22,7 +22,18 @@ let simplify f args =
       (diff (CP.fv f) args) f None (CP.pos_of_formula f)
   
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
+
 let imply a c = Tpdispatcher.imply_raw a c
+
+(* To be improved *)
+let fp_imply f p =
+  let _, pf, _, _, _ = CF.split_components f in
+  let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
+  res
+  
+let f_is_sat f =
+  let _, pf, _, _, _ = CF.split_components f in
+  Tpdispatcher.is_sat_raw pf
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
 let mkNot f = CP.mkNot f None no_pos
@@ -130,6 +141,7 @@ let subst_sol_term_ann sol ann =
   | _ -> ann
 
 (* Specification *)
+(* For SLEEK *)
 let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
   let p_pre = CP.mkLexVar_pure ann rnk [] in
@@ -143,7 +155,8 @@ let struc_formula_of_ann (ann, rnk) =
   let post = CF.mkEAssume [] f_post (CF.mkEBase f_post None pos) lbl None in
   let spec = CF.mkEBase f_pre (Some post) pos  in
   spec
-  
+
+(* For HIP with given specifications *)  
 let struc_formula_of_ann_w_assume assume (ann, rnk) =
   let pos = no_pos in
   let p_pre = CP.mkLexVar_pure ann rnk [] in
@@ -159,7 +172,15 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
   in
   let spec = CF.mkEBase f_pre (Some post) pos  in
   spec
-
+  
+let struc_formula_of_dead_path _ =
+  let pos = no_pos in
+  let pp = CF.mkBase_simp CF.HEmp (MCP.mkMFalse pos) in
+  let lbl = fresh_formula_label "" in
+  let post = CF.mkEAssume [] pp (CF.mkEBase pp None pos) lbl None in
+  let spec = CF.mkEBase pp (Some post) pos  in
+  spec
+  
 let rec struc_formula_of_tnt_case_spec spec =
   match spec with
   | Sol s -> struc_formula_of_ann s
@@ -218,10 +239,17 @@ and merge_tnt_case_spec_into_assume ctx spec af =
   match spec with
   | Sol s -> struc_formula_of_ann_w_assume af s
   | Unknown -> struc_formula_of_ann_w_assume af (MayLoop, [])
-  | Cases cases -> CF.ECase {
-      CF.formula_case_branches = List.map (fun (c, s) -> 
-        (c, merge_tnt_case_spec_into_assume ctx s af)) cases;
-      CF.formula_case_pos = no_pos; }
+  | Cases cases -> 
+    try (* Sub-case of current context; all other cases are excluded *)
+      let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
+      merge_tnt_case_spec_into_assume ctx (snd sub_case) af
+    with _ -> 
+      CF.ECase {
+        CF.formula_case_branches = List.map (fun (c, s) -> 
+          let nctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
+          if f_is_sat nctx then (c, merge_tnt_case_spec_into_assume ctx s af)
+          else (c, struc_formula_of_dead_path ())) cases;
+        CF.formula_case_pos = no_pos; }
 
 (* Stack for TNT case specs of all methods *)
 let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
@@ -272,8 +300,6 @@ let update_case_spec_with_icond_proc fn cond icond =
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
 let pr_proc_case_specs prog = 
-  (* Hashtbl.iter (fun proc spec ->                                              *)
-  (*   print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs *)
   Hashtbl.iter (fun mn ispec ->
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
@@ -281,7 +307,7 @@ let pr_proc_case_specs prog =
       let nspec = merge_tnt_case_spec_into_struc_formula 
         (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
       print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
-    with _ -> 
+    with _ -> (* Proc Decl is not found - SLEEK *)
       print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs
     
 let update_spec_proc proc =
