@@ -2615,21 +2615,30 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
     (* tranform pointers: x>0, x=1 -> x!=null *)
     let prhs_guard2 = Cputil.hloc_enum_to_symb prhs_guard1 in
     if CP.isConstTrue prhs_guard2 then None else
-      let neg_prhs = MCP.mix_of_pure (CP.neg_eq_neq prhs_guard2) in
-      let ass_rhs = CF.mkBase HEmp neg_prhs TypeTrue (mkTrueFlow ()) [] pos in
-      let knd = CP.RelAssume lhs_hps in
-      let ehp_rel = CF.mkHprel_w_flow knd [] [] [] lhs None ass_rhs es_cond_path !error_flow_int in
-      (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
-      let hp_rel_list = [ehp_rel] in
-      (* postpone until heap_entail_after_sat *)
-      let _ = rel_ass_stk # push_list hp_rel_list in
-      let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-      (* update es.formula *)
-      let n_es_form = mkAnd_pure es.es_formula neg_prhs pos in
-      let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
-      let new_es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
-           CF.es_formula = n_es_form_e} in
-      Some new_es
+      (******************************************)
+      let neg_prhs0 = (CP.neg_eq_neq prhs_guard2) in
+      (* contradict with LHS? *)
+      let _ = baga_xpure := true in
+      let lhs_p,_,_=(Cvutil.xpure_symbolic 10 prog es.es_formula) in
+      let _ = baga_xpure := old_baga_flag in
+      let lhs_extra = CP.mkAnd (MCP.pure_of_mix lhs_p) neg_prhs0 no_pos in
+      if not( TP.is_sat_raw (MCP.mix_of_pure lhs_extra)) then None else
+        (******************************************)
+        let neg_prhs = MCP.mix_of_pure neg_prhs0 in
+        let ass_rhs = CF.mkBase HEmp neg_prhs TypeTrue (mkTrueFlow ()) [] pos in
+        let knd = CP.RelAssume lhs_hps in
+        let ehp_rel = CF.mkHprel_w_flow knd [] [] [] lhs None ass_rhs es_cond_path !error_flow_int in
+        (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
+        let hp_rel_list = [ehp_rel] in
+        (* postpone until heap_entail_after_sat *)
+        let _ = rel_ass_stk # push_list hp_rel_list in
+        let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+        (* update es.formula *)
+        let n_es_form = mkAnd_pure es.es_formula neg_prhs pos in
+        let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
+        let new_es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
+            CF.es_formula = n_es_form_e} in
+        Some new_es
 
 let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
   let pr1 = Cprinter.string_of_formula in

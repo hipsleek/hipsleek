@@ -11457,18 +11457,24 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | None ->
                     begin
                     match relass with
-                      | [] -> if Infer.no_infer_all_all estate then
-                          let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
-                          let root = Cformula.get_ptr_from_data rhs in
-                          if CP.mem_svl root lhs_null_ptrs then
-                            let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
-                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
-                          CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
-                          else
-                            (*/sa/error/ex2.slk: unmatch rhs: may failure *)
-                            let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                            (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                            CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                      | [] ->( if Infer.no_infer_all_all estate then
+                          match rhs with
+                            | DataNode _ | ViewNode _ ->
+                                  let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
+                                  (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
+                                  let root = Cformula.get_ptr_from_data rhs in
+                                  if CP.mem_svl root lhs_null_ptrs then
+                                    let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
+                                    CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
+                                  else
+                                    (*/sa/error/ex2.slk: unmatch rhs: may failure *)
+                                    let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                                    CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                            | _ -> let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                              (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                              CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
                         else
                             let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
@@ -11503,6 +11509,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 (* let res_ctx = Ctx new_estate  in *)
                                 (* (SuccCtx[res_ctx], NoAlias) *)
                                 (res_es0,prf0)
+                        )
                       | [(h1,h2,_)] -> 
                           (* explicitly force unsat checking to be done here *)
                           let ctx1 = (elim_unsat_es_now 11 prog (ref 1) h1) in
