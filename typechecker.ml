@@ -2673,9 +2673,13 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let defs1 = Sautil.combine_hpdef_flow (CF.rel_def_stk # get_stk) in
-    let _ = CF.rel_def_stk # reset in
-    let _ = CF.rel_def_stk # push_list defs1 in
+    let _ = if !Globals.sae then
+      let defs1 = Sautil.combine_hpdef_flow (CF.rel_def_stk # get_stk) in
+      let _ = CF.rel_def_stk # reset in
+      let _ = CF.rel_def_stk # push_list defs1 in
+      ()
+    else ()
+    in
     let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
     else CF.rel_def_stk
     in
