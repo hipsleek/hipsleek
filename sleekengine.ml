@@ -1248,7 +1248,7 @@ let process_shape_infer pre_hps post_hps=
       else Sa3.infer_shapes (* Sa.infer_hps *)
       in
       infer_shape_fnc iprog !cprog "" constrs2
-          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
+          sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false (!norm_flow_int)
     else [],[],[]
   in
   let _ =
@@ -1763,7 +1763,7 @@ let process_shape_infer_prop pre_hps post_hps=
     else Sa3.infer_shapes (* Sa.infer_hps *)
     in
     infer_shape_fnc iprog !cprog "" hp_lst_assume
-        sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false
+        sel_hps sel_post_hps unk_map unk_hpargs link_hpargs false false (!norm_flow_int)
   in
   let _ = if not (!Globals.pred_syn_modular) then
     begin

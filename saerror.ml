@@ -141,10 +141,10 @@ let subst_formula formula hprel_def =
     if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
     then (
         let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
-          | (_, None) -> formula
-          | (_, Some f) -> f
+          | (_, None,_) -> formula
+          | (_, Some f,_) -> f
         in
-        List.fold_left (fun all_formula (_, formula) ->
+        List.fold_left (fun all_formula (_, formula,_) ->
             match formula with
               | None -> all_formula
               | Some f -> Cformula.mkOr all_formula f Globals.no_pos)
@@ -189,8 +189,8 @@ let get_case struc_formula prog args hprel_defs =
                       | Cformula.HRel _ as h_formula -> 
                             let hprel_def = List.find (fun hp -> (String.compare (Cprinter.string_of_h_formula hp.Cformula.hprel_def_hrel) (Cprinter.string_of_h_formula h_formula) == 0)) hprel_defs in
                             let formula = ( match (List.hd hprel_def.Cformula.hprel_def_body) with
-                              | (_, None) -> raise (Failure "fail get_case")
-                              | (_, Some f) -> f
+                              | (_, None,_) -> raise (Failure "fail get_case")
+                              | (_, Some f,_) -> f
                             ) in formula
                       | _ -> formula
                 )
@@ -252,13 +252,13 @@ let group_paths hprel_defs =
     match hprel_defs with
       | [] -> new_hprel_defs
       | hd::tl -> (
-            let (cond_path1, _) = List.hd hd.Cformula.hprel_def_body in
+            let (cond_path1, _,_) = List.hd hd.Cformula.hprel_def_body in
             let grouped_hprel_defs = List.fold_left (fun grouped_hprel_defs hprel_def ->
-                let (cond_path2, _) = List.hd hprel_def.Cformula.hprel_def_body in
+                let (cond_path2, _,_) = List.hd hprel_def.Cformula.hprel_def_body in
                 if (cond_path1 == cond_path2) then (grouped_hprel_defs@[hprel_def]) else grouped_hprel_defs
             ) [] hprel_defs in
             let removed_hprel_defs = List.filter (fun hprel_def ->
-                let (cond_path2, _) = List.hd hprel_def.Cformula.hprel_def_body in
+                let (cond_path2, _,_) = List.hd hprel_def.Cformula.hprel_def_body in
                 not (cond_path1 == cond_path2)
             ) hprel_defs in
             helper removed_hprel_defs new_hprel_defs@[grouped_hprel_defs]
@@ -268,10 +268,13 @@ let group_paths hprel_defs =
 
 let partition_paths hprel_defs prog =
   List.fold_left (fun all_hprel_defs hprel_def ->
-      let new_hprel_defs = List.map (fun hprel_def_body ->
-          Cformula.mk_hprel_def hprel_def.Cformula.hprel_def_kind hprel_def.Cformula.hprel_def_hrel hprel_def.Cformula.hprel_def_guard [hprel_def_body] None) hprel_def.Cformula.hprel_def_body in
-      new_hprel_defs@all_hprel_defs)
-      [] hprel_defs
+      let new_hprel_defs = List.map (fun (a,b,c) ->
+          Cformula.mk_hprel_def hprel_def.Cformula.hprel_def_kind hprel_def.Cformula.hprel_def_hrel
+              hprel_def.Cformula.hprel_def_guard [(a,b)] None hprel_def.Cformula.hprel_def_flow
+      ) hprel_def.Cformula.hprel_def_body
+      in
+      new_hprel_defs@all_hprel_defs
+  ) [] hprel_defs
 
 let rec group_cases pf_sf_l =
   let is_eq pf1 pf2 =

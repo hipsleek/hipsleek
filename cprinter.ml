@@ -2572,12 +2572,21 @@ let pr_hprel_short_inst cprog post_hps hpa=
   fmt_string (String.concat "," (List.map string_of_flow hpa.hprel_flow));
   fmt_close()
 
-let pr_path_of (path, off)=
+let string_of_oflow oflow=
+  let sflow = match oflow with
+    | Some iflow -> string_of_flow iflow
+    | None -> ""
+  in
+  sflow
+
+let pr_path_of (path, off, oflow)=
    (* fmt_string "PATH format"; *)
+  let sflow = string_of_oflow oflow in
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
   ; (match off with
      | None -> fmt_string " NONE"
-     | Some f -> fmt_string (prtt_string_of_formula f))
+     | Some f -> fmt_string ((prtt_string_of_formula f) ^ sflow))
+
 
 let pr_hprel_def hpd=
   fmt_open_box 1;
@@ -2603,8 +2612,9 @@ let pr_hprel_def hpd=
   fmt_string " ::= ";
   fmt_cut () ;
   fmt_string ( match hpd.hprel_def_body_lib with
-    | None -> " NONE"
-    | Some f -> prtt_string_of_formula f);
+    | [] -> " NONE"
+    | [(f,oflow)] -> (prtt_string_of_formula f) ^ string_of_oflow oflow
+    | fs -> String.concat " \/ " (List.map (fun (f, oflow) -> (prtt_string_of_formula f) ^ string_of_oflow oflow ) fs));
   fmt_close()
 
 let pr_hprel_def_short hpd=
@@ -2625,9 +2635,11 @@ let pr_hprel_def_short hpd=
   fmt_string " ::=";
   (* no cut here please *)
   (* fmt_cut(); *)
-  match hpd.hprel_def_body_lib with
-    | None -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
-    | Some f -> prtt_pr_formula f;
+  let _ = match hpd.hprel_def_body_lib with
+    | [] -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body
+    | [(f,oflow)] -> fmt_string ((prtt_string_of_formula f) ^ string_of_oflow oflow)
+    | fs -> fmt_string (String.concat " \/ " (List.map (fun (f, oflow) -> (prtt_string_of_formula f) ^ string_of_oflow oflow ) fs))
+  in
    (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
   (* fmt_string " LIB FORM:\n"; *)
   (* (pr_h_formula hpd.hprel_def_hrel); *)
@@ -2635,6 +2647,11 @@ let pr_hprel_def_short hpd=
   (* fmt_string ( match hpd.hprel_def_body_lib with *)
   (*   | None -> "UNKNOWN" *)
   (*   | Some f -> prtt_string_of_formula f); *)
+  (* let sflow = match hpd.hprel_def_flow with *)
+  (*   | Some iflow -> ( string_of_flow iflow) *)
+  (*   | None -> "" *)
+  (* in *)
+  (* fmt_string sflow; *)
   fmt_close()
 
 let pr_hprel_def_lib hpd=
@@ -2654,9 +2671,12 @@ let pr_hprel_def_lib hpd=
   in
   fmt_string " ::= ";
   fmt_cut() ;
-  fmt_string (match hpd.hprel_def_body_lib with
-    | None -> "NONE"
-    | Some f -> prtt_string_of_formula f);
+  fmt_string (
+      match hpd.hprel_def_body_lib with
+        | [] -> "NONE"
+        | [(f,oflow)] -> ((prtt_string_of_formula f) ^ string_of_oflow oflow)
+        | fs -> (String.concat " \/ " (List.map (fun (f, oflow) -> (prtt_string_of_formula f) ^ string_of_oflow oflow ) fs))
+  );
   fmt_close()
 
 let pr_pair_path_def (path, (hf,body))=
@@ -4708,12 +4728,13 @@ let html_of_partial_context (fs,ss) =
 let html_of_list_partial_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_partial_context lctx)
 ;;
 
-let pr_html_path_of (path, off)=
+
+let pr_html_path_of (path, off, oflow)=
    (* fmt_string "PATH format"; *)
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
   ; (match off with
      | None -> fmt_string " NONE"
-     | Some f -> fmt_string (html_of_formula f))
+     | Some f -> fmt_string ((html_of_formula f) ^ (string_of_oflow oflow)))
 
 let pr_html_hprel_def_short hpd =
   fmt_open_box 1;
@@ -4728,8 +4749,9 @@ let pr_html_hprel_def_short hpd =
   in
   fmt_string " ::=";
   match hpd.hprel_def_body_lib with
-    | None -> (pr_list_op_none " \/ " pr_html_path_of) hpd.hprel_def_body;
-    | Some f -> fmt_string (html_of_formula f);
+    | [] -> (pr_list_op_none " \/ " pr_html_path_of) hpd.hprel_def_body;
+    | [(f,oflow)] -> fmt_string ((prtt_string_of_formula f) ^ string_of_oflow oflow);
+    | fs -> fmt_string (String.concat " \/ " (List.map (fun (f, oflow) -> (prtt_string_of_formula f) ^ string_of_oflow oflow ) fs));
   fmt_close()
 
 let pr_html_hprel_short_inst cprog hpa=

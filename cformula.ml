@@ -4292,10 +4292,11 @@ and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula; (* LHS *)
     hprel_def_guard:  formula option;
-    hprel_def_body: (cond_path_type * (formula option)) list; (* RHS *)
+    hprel_def_body: (cond_path_type * (formula option) * (nflow option)) list; (* RHS *)
     (* hprel_def_body: (cond_path_type * (formula_guard list)) list; (\* RHS *\) *)
-    hprel_def_body_lib: formula option; (* reuse of existing pred *)
+    hprel_def_body_lib: (formula * (nflow option)) list; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
+    hprel_def_flow: nflow option;
 }
 
 (*temporal: name * hrel * guard option * definition body*)
@@ -4325,6 +4326,7 @@ and infer_state = {
     is_post_hps: CP.spec_var list;
     is_prefix_hps: CP.spec_var list;
     is_cond_path: cond_path_type;
+    is_flow: nflow;
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
@@ -4477,7 +4479,7 @@ let h_subst_opt ss hf_opt=
 
 let subst_hpdef ss hpdef=
   let n_guard = subst_opt ss hpdef.hprel_def_guard in
-  let n_body = List.map (fun (p, f_opt) -> (p, subst_opt ss f_opt)) hpdef.hprel_def_body in
+  let n_body = List.map (fun (p, f_opt, flow) -> (p, subst_opt ss f_opt, flow)) hpdef.hprel_def_body in
   { hpdef with
       hprel_def_guard = n_guard;
       hprel_def_body = n_body;
@@ -4543,12 +4545,19 @@ let mkHprel_w_flow knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hpre
 let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
   mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
- let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib= {
+ let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib optflow_int=
+   let libs = match opflib with
+     | None -> []
+     | Some f -> [(f, optflow_int)]
+   in
+   let body = List.map (fun (a,f) -> (a,f, optflow_int)) path_opf in
+   {
      hprel_def_kind = kind;
      hprel_def_hrel = hprel;
      hprel_def_guard = guard_opt;
-     hprel_def_body =  path_opf;
-     hprel_def_body_lib = opflib;
+     hprel_def_body =  body;
+     hprel_def_body_lib = libs;
+     hprel_def_flow = optflow_int;
  }
 
 let pr_h_formula_opt og=

@@ -2443,8 +2443,9 @@ let update_lib_x hpdefs hp_defs sel_hps=
           try
             let def = Cformula.look_up_hpdef hpdefs hp in
             match def.Cformula.hprel_def_body_lib with
-              | None -> hp_def
-              | Some f -> {hp_def with Cformula.def_rhs = [(f,None)]}
+              | [] -> hp_def
+              | [(f,oflow)] -> {hp_def with Cformula.def_rhs = [(f,None)]}
+              | fs -> {hp_def with Cformula.def_rhs = List.map (fun (f, _) -> (f,None)) fs}
           with _ -> hp_def
         else hp_def
         end

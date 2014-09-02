@@ -1,5 +1,6 @@
 open Globals
 open Wrapper
+open Exc.GTable
 open Gen
 open Others
 open Label_only
@@ -24,7 +25,7 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
   (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
   (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
   (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
-  (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
+  (need_preprocess: bool) (detect_dang: bool) (iflow: nflow) -> let a = ([] : CF.hprel list) in
   let b = ([] : CF.hp_rel_def list) in
   let c = ([] : CP.spec_var list) in
   (a, b, c)
@@ -480,7 +481,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                       in
                       let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
                         let _, hp_defs, _ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
-                          [] [] [] true true in
+                          [] [] [] true true (!norm_flow_int) in
                         hp_defs
                       in
                       (*pure fixpoint*)
@@ -510,7 +511,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                     in
                     let hp_defs = if sel_hps = [] || hp_lst_assume = [] then [] else
                       let _, hp_defs,_ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
-                        [] [] [] true true in
+                        [] [] [] true true !norm_flow_int in
                       hp_defs
                     in
                     (* let _ = print_endline ("\nxxxxxx " ^ ((pr_list_ln Cprinter.string_of_list_context) lcs)) in *)

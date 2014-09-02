@@ -153,8 +153,7 @@ let rearrange_formula args0 f0=
 let rearrange_def def=
   let new_body1 =
     match def.hprel_def_body_lib with
-      | Some _ -> def.hprel_def_body
-      | None -> begin
+      | [] -> begin
           try
             let args = match def.hprel_def_hrel with
               | HRel (sv, exp_list, pos) ->
@@ -163,21 +162,22 @@ let rearrange_def def=
                       | _ -> raise Not_found) exp_list
               | _ -> raise Not_found
             in
-            List.map (fun ((p, f_opt) as o) ->
+            List.map (fun ((p, f_opt,c) as o) ->
                 match f_opt with
                   | Some f ->
-                      (p, Some (rearrange_formula args f))
+                      (p, Some (rearrange_formula args f),c)
                   | None -> o
           ) def.hprel_def_body
           with _ -> def.hprel_def_body
         end
+      | _ -> def.hprel_def_body
   in
   (*to shorten variable names here*)
   let args = match def.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> []
   in
-  let svll = List.map (fun (p, f_opt) ->
+  let svll = List.map (fun (p, f_opt,_) ->
                match f_opt with
                  | Some f -> fv f
                  | None -> []
@@ -193,16 +193,16 @@ let rearrange_def def=
   let n_tbl = Hashtbl.create 1 in
   let new_svl = shorten_svl svl_rp in 
   let new_body2 =
-    List.map (fun ((p, f_opt) as o) ->
+    List.map (fun ((p, f_opt,c) as o) ->
         match f_opt with
-          | Some f -> (p, Some (subst_avoid_capture svl_rp new_svl f))
+          | Some f -> (p, Some (subst_avoid_capture svl_rp new_svl f), c)
           | None -> o
   ) new_body1
   in
   let new_hrel = subst_avoid_capture_h svl_rp new_svl def.hprel_def_hrel in
   let n_lib = match def.hprel_def_body_lib with
-    | None -> None
-    | Some f -> Some (subst_avoid_capture svl_rp new_svl f)
+    | [] -> []
+    | ls -> List.map (fun (f, flow) -> (subst_avoid_capture svl_rp new_svl f, flow)) ls
   in
   {def with hprel_def_body = new_body2;
       hprel_def_body_lib = n_lib;

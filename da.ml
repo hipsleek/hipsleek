@@ -437,8 +437,9 @@ let find_rel_args_groups_scc prog scc0 =
     let def =  {CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
       CF.hprel_def_guard = None;
-      CF.hprel_def_body = [([], Some f)];
-      CF.hprel_def_body_lib = None;
+      CF.hprel_def_body = [([], Some f, None)];
+      CF.hprel_def_body_lib = [];
+      CF.hprel_def_flow = None;
     }
     in
     (hp, def, n_hf,n_hps)

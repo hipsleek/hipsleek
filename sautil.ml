@@ -4963,7 +4963,7 @@ let mk_unk_hprel_def hp args defs pos=
   let pr_def = (hp, def) in
   [pr_def]
 
-let mk_link_hprel_def prog cond_path (hp,_)=
+let mk_link_hprel_def prog iflow cond_path (hp,_)=
   let hp_name= CP.name_of_spec_var hp in
   let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
   let args = fst (List.split hprel.C.hp_vars_inst) in
@@ -4973,8 +4973,9 @@ let mk_link_hprel_def prog cond_path (hp,_)=
       CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
       CF.hprel_def_guard = None;
-      CF.hprel_def_body = [(cond_path, None)];
-      CF.hprel_def_body_lib = None;
+      CF.hprel_def_body = [(cond_path, None, Some iflow)];
+      CF.hprel_def_body_lib = [];
+      CF.hprel_def_flow = (Some iflow);
   } in
   def
 
@@ -7361,7 +7362,7 @@ let find_closed_sel_hp_def defs sel_hps dang_hps equivs=
   Debug.no_2 "find_closed_sel_hp_def" pr1 pr2 pr4
       (fun _ _ -> find_closed_sel_hp_def_x defs sel_hps dang_hps equivs) defs sel_hps
 
-let combine_path_defs_x sel_hps1 path_defs=
+let combine_path_defs_x sel_hps1 path_defs iflow=
   let rec look_up rem hp=
     match rem with
       | [] -> []
@@ -7374,14 +7375,15 @@ let combine_path_defs_x sel_hps1 path_defs=
   in
   let combine_path args0 args1 old_paths paths1 old_lib lib1=
     let ss = List.combine args1 args0 in
-    let n_path (path1, ofs1) = (path1, match ofs1 with
+    let n_path (path1, ofs1, oflow) = (path1, (match ofs1 with
       | None -> None
-      | Some f -> Some (CF.subst ss f)
-    )
+      | Some f -> Some (CF.subst ss f))
+    , oflow)
     in
-    let n_lib = match old_lib, lib1 with
-      | Some f1, Some f2 -> Some (CF.mkOr f1 f2 no_pos)
-      | _ -> None
+    let n_lib = (* match old_lib, lib1 with *)
+      (* | Some f1, Some f2 -> Some (CF.mkOr f1 f2 no_pos) *)
+      (* | _ -> None *)
+      old_lib@lib1
     in
     (old_paths@(List.map n_path paths1), n_lib)
   in
@@ -7400,17 +7402,23 @@ let combine_path_defs_x sel_hps1 path_defs=
     in
     match settings with
       | [] -> []
-      | (k, args0, g, path_fs0, lib0)::rest -> let path_fs, lib = norm rest args0 path_fs0 lib0 in
-        [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) g path_fs lib)]
+      | (k, args0, g, path_fs0, lib0)::rest ->
+            let path_fs, lib = norm rest args0 path_fs0 lib0 in
+            let path_fs1 = List.map (fun (a,b,_) -> (a,b)) path_fs in
+            let lib1 = match lib with
+              | [] -> None
+              | (f0,_)::rest -> Some (List.fold_left (fun f1 (f2,_) -> CF.mkOr f1 f2 no_pos) f0 rest)
+            in
+            [(CF.mk_hprel_def k (mkHRel hp args0 no_pos) g path_fs1 lib1 (Some iflow))]
   in
   List.fold_left (fun ls hp -> ls@(combine_one_def hp)) [] sel_hps1
 
-let combine_path_defs sel_hps1 path_defs=
+let combine_path_defs sel_hps1 path_defs iflow=
   let pr1 = !CP.print_svl in
   let pr2a = (pr_list_ln Cprinter.string_of_hprel_def) in
   let pr2 = pr_list_ln pr2a in
   Debug.no_2 "combine_path_defs" pr1 pr2 pr2a
-      (fun _ _ ->  combine_path_defs_x sel_hps1 path_defs)
+      (fun _ _ ->  combine_path_defs_x sel_hps1 path_defs iflow)
       sel_hps1 path_defs
 
 (*find def as the form H1 = H2, subst into views, hpdef, hp_defs*)
@@ -7454,13 +7462,13 @@ let reuse_equiv_hpdefs prog hpdefs hp_defs=
       (fun _ _ -> reuse_equiv_hpdefs_x prog hpdefs hp_defs)
       hpdefs hp_defs
 
-let pred_split_update_hpdefs split_hps hpdefs hp_defs=
+let pred_split_update_hpdefs iflow split_hps hpdefs hp_defs=
   let update_one hpdefs hp=
     try
       let hpdef,rem_hpdefs = CF.look_up_hpdef_with_remain hpdefs hp [] in
       let def = CF.look_up_hp_def hp_defs hp in
       let f = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
-      (rem_hpdefs@[{hpdef with CF.hprel_def_body = [([], Some f)]}])
+      (rem_hpdefs@[{hpdef with CF.hprel_def_body = [([], Some f, Some iflow)]}])
     with _ -> hpdefs
   in
   if split_hps = [] then hpdefs else
@@ -7472,7 +7480,7 @@ let filter_non_sel_x sel_hps0 hp_defs0 hpdefs0=
     match hpdef.CF.hprel_def_kind with
       | CP.HPRelDefn (hp,_,_) ->
             if CP.mem_svl hp cl_sel then
-            let dep_hps = List.fold_left (fun ls (_,f_opt) ->
+            let dep_hps = List.fold_left (fun ls (_,f_opt,_) ->
                 match f_opt with
                   | Some f -> ls@(CF.get_hp_rel_name_formula f)
                   | None -> ls
@@ -7585,3 +7593,44 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   let _ = output_string out_chn str_slk in
   let _ = close_out out_chn in
   ()
+
+(* combine all pred defs with the same name*)
+let combine_hpdef_flow_x hpdefs0=
+  let get_args hpdef= match hpdef.Cformula.hprel_def_kind with
+    | CP.HPRelDefn (_,r,args) -> r::args
+    | _ -> report_error no_pos "sau.combine_hpdef_flow"
+  in
+  let do_combine hpdef0 hpdefs=
+    let args0 = get_args hpdef0 in
+    let bodys, libs = List.fold_left (fun (r1,r2) hpdef1 ->
+        let args1 = get_args hpdef1 in
+        let sst = List.combine args1 args0 in
+        (r1@(List.map (fun (a, optf, oflow) -> (a, Cformula.subst_opt sst optf, oflow) ) hpdef1.Cformula.hprel_def_body),
+        r2@(List.map (fun (f, oflow) -> (Cformula.subst sst f, oflow)) hpdef1.Cformula.hprel_def_body_lib))
+    ) ([],[]) hpdefs in
+    {hpdef0 with Cformula.hprel_def_body = hpdef0.Cformula.hprel_def_body@bodys;
+        Cformula.hprel_def_body_lib = hpdef0.Cformula.hprel_def_body_lib@libs;
+    }
+  in
+  let rec combine_helper hpdefs res=
+    match hpdefs with
+      | [] -> res
+      | hpdef::rest ->
+            let hp = Cformula.get_hpdef_name hpdef.Cformula.hprel_def_kind in
+            let part,rest1 = List.partition (fun hpdef1 ->
+                let hp1 = Cformula.get_hpdef_name hpdef1.Cformula.hprel_def_kind in
+                CP.eq_spec_var hp hp1
+            ) rest in
+            let part1 = if part = [] then hpdef else
+              do_combine hpdef part
+            in
+            combine_helper rest1 (res@[part1])
+  in
+  combine_helper hpdefs0 []
+
+
+let combine_hpdef_flow hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+  Debug.no_1 "combine_hpdef_flow" pr1 pr1
+      (fun _ -> combine_hpdef_flow_x hpdefs)
+      hpdefs

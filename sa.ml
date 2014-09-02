@@ -3593,12 +3593,17 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
           else look_up_lib hp ss
   in
   let mk_hprel_def kind hprel og opf opflib=
+    let libs = match opflib with
+      | None -> []
+      | Some f -> [(f, None)]
+    in
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
         CF.hprel_def_guard = og;
-        CF.hprel_def_body = [([], opf)];
-        CF.hprel_def_body_lib = opflib;
+        CF.hprel_def_body = [([], opf, None)];
+        CF.hprel_def_body_lib = libs;
+        Cformula.hprel_def_flow = None;
     }
   in
   let compute_def_w_lib (hp,d)= let (a,hprel,og,f) = CF.flatten_hp_rel_def d in
