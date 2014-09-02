@@ -255,6 +255,8 @@ let solve_turel_init prog turels fn_cond_w_ids =
   solve_turel_graph 0 prog tg
 
 let finalize () =
+  reset_seq_num ();
+  reset_scc_num ();
   ret_trel_stk # reset;
   call_trel_stk # reset;
   Hashtbl.reset proc_case_specs

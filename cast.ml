@@ -1326,9 +1326,11 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
     | Some _ -> acc
   ) procs None in
   match proc with
-  | None -> Error.report_error {
-      Error.error_loc = pos;
-      Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." }
+  | None -> 
+    (* Error.report_error {                                                                        *)
+    (*   Error.error_loc = pos;                                                                    *)
+    (*   Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." } *)
+    failwith ("look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found.")
   | Some p -> p
   
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)

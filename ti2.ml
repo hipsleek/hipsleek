@@ -43,11 +43,17 @@ let tnt_fresh_int () =
   seq_num := !seq_num + 1;
   !seq_num
   
+let reset_seq_num _ =
+  seq_num := 0
+  
 let scc_num = ref 0    
     
 let scc_fresh_int () = 
   scc_num := !scc_num + 1;
   !scc_num
+  
+let reset_scc_num _ =
+  scc_num := 0
     
 (* This method returns a unique number for (a, b) *)
 (* It is used to generate num for new instantiated TermU *)    
@@ -229,8 +235,12 @@ let case_spec_of_trrel_sol call_num sol =
   | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
 
 let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
-  let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
-  let call_num = proc.Cast.proc_call_order in
+  let call_num = 
+    try
+      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
+      proc.Cast.proc_call_order
+    with _ -> 0
+  in
   let cases = List.map (case_spec_of_trrel_sol call_num) sols in
   Hashtbl.add proc_case_specs fn (Cases cases)
   
@@ -265,12 +275,14 @@ let pr_proc_case_specs prog =
   (* Hashtbl.iter (fun proc spec ->                                              *)
   (*   print_endline (proc ^ ": " ^ (print_tnt_case_spec spec))) proc_case_specs *)
   Hashtbl.iter (fun mn ispec ->
-    let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-    let spec = proc.Cast.proc_static_specs in
-    let nspec = merge_tnt_case_spec_into_struc_formula 
-      (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
-    print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))) 
-  proc_case_specs
+    try
+      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
+      let spec = proc.Cast.proc_static_specs in
+      let nspec = merge_tnt_case_spec_into_struc_formula 
+        (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+      print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
+    with _ -> 
+      print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs
     
 let update_spec_proc proc =
   let mn = Cast.unmingle_name (proc.Cast.proc_name) in
