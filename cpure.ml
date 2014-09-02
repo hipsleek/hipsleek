@@ -1298,6 +1298,22 @@ and isConstBFalse (p:b_formula) =
     | BConst (false, pos) -> true
     | _ -> false
 
+and isBVar (f: formula) = 
+  match f with
+  | BForm ((BVar (_, _), _), _) -> true
+  | Not (f, _, _) -> isBVar f
+  | _ -> false
+
+and getBVar (f: formula) =
+  match f with
+  | BForm ((BVar (bv, _), _), _) -> Some (bv, true)
+  | Not (f, _, _) -> 
+    let bv = getBVar f in
+    begin match bv with
+    | None -> None
+    | Some (bv, v) -> Some (bv, not v) end
+  | _ -> None
+
 and isSubAnn (p:formula) =
   match p with
     | BForm ((Lte (Var (_,_), IConst(_,_), _),_),_) -> true

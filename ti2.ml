@@ -48,6 +48,13 @@ let rec partition_by_key key_of key_eq ls =
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
     
+let rec partition_eq eq ls = 
+  match ls with
+  | [] -> []
+  | e::es -> 
+    let eq_es, neq_es = List.partition (eq e) es in
+    (e::eq_es)::(partition_eq eq neq_es)
+    
 let seq_num = ref 0    
     
 let tnt_fresh_int () = 

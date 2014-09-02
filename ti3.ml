@@ -4,6 +4,7 @@ module MCP = Mcpure
 
 open Globals
 open Cprinter
+open Gen
 
 (* Temporal Relation at Return *)
 type ret_trel = {
@@ -81,3 +82,17 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
       fmt_string " ensures true"
 
 let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
+
+(* Tracking path of a formula *)
+let path_of_formula f =
+  let ls = CP.split_conjunctions f in
+  let bvs = List.concat (List.map (fun f -> opt_to_list (CP.getBVar f)) ls) in
+  bvs
+  
+let rec eq_path_formula f1 f2 =
+  let p1 = path_of_formula f1 in
+  let p2 = path_of_formula f2 in
+  let eq_bv (v1, s1) (v2, s2) =
+    (CP.eq_spec_var v1 v2) && (s1 == s2)
+  in Gen.BList.list_setequal_eq eq_bv p1 p2
+  

@@ -28,10 +28,24 @@ let add_ret_trel_stk prog ctx lhs rhs =
 
 (* Only merge relations split by post *)    
 let merge_trrels rec_trrels = 
-  rec_trrels
+  let eq_rec_trrel r1 r2 =
+    eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
+  in
+  let grp_trrels = partition_eq eq_rec_trrel rec_trrels in
+  let merge_trrels = List.map (fun grp ->
+    let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
+    match grp with
+    | [] -> report_error no_pos "[TNT Inference]: Group of returned temporal assumptions is empty."
+    | r::_ -> { r with ret_ctx = MCP.mix_of_pure (CP.join_disjunctions conds) }) grp_trrels in
+  merge_trrels
   
 let solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
+  let rec_cond = 
+    if CP.is_disjunct rec_cond 
+    then Tpdispatcher.tp_pairwisecheck rec_cond
+    else rec_cond 
+  in
   let rec_cond, conds = List.fold_left (fun (rc, ca) cond ->
     match cond with
     | Base bc -> 
