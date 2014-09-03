@@ -3504,7 +3504,6 @@ let slk_view_decl v =
   fmt_string ".";
   fmt_close_box ();
   pr_mem:=true
-
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
       (fun c-> (fun (c1,c2)-> 

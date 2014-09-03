@@ -16,3 +16,42 @@ A2:={[m,n]: m>=1 & n>=2};
 # A1 subset A2;
 # A2 subset A1;
 PairWiseCheck (A1 union A2);
+
+A1:={[n,i]: n=2 & i=1};
+A2:={[n,i]: n=4 & i=2};
+
+PairWiseCheck (A1 union A2);
+
+A1:={[n,i]: n=2 & i=1};
+A2:={[n,i]: n=4 & i=2};
+
+PairWiseCheck (A1 union A2);
+
+
+Y:={[m,n]:m>=0 & n>=0};
+X subset Y;
+
+
+A1:={[m,n]: m<=2n-1 & n<=m};
+A2:={[m,n]: m<=2n & (n+1)<=m};
+
+# A1 subset A2;
+# A2 subset A1;
+PairWiseCheck (A1 union A2);
+
+A1:={[m,n]: m>=1 & n>=1};
+A2:={[m,n]: m>=1 & n>=2};
+
+# A1 subset A2;
+# A2 subset A1;
+PairWiseCheck (A1 union A2);
+
+A1:={[n,i]: n=2 & i=1};
+A2:={[n,i]: n=4 & i=2};
+
+PairWiseCheck (A1 union A2);
+
+A1:={[n,i]: n=2i & 1<=i<=2};
+A2:={[n,i]: n=6 & i=3};
+
+PairWiseCheck (A1 union A2);
