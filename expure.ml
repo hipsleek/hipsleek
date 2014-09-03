@@ -338,8 +338,8 @@ let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
 let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
-  let view_list = add_index_to_views view_list in
-  let all_views = add_index_to_views all_views in
+  (* let view_list = add_index_to_views view_list in *)
+  (* let all_views = add_index_to_views all_views in *)
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
   let rec helper num view_list inv_list =
