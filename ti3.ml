@@ -42,7 +42,8 @@ let dummy_trel = {
   call_ctx = MCP.mix_of_pure (CP.mkTrue no_pos);
   trel_id = -1;
   termu_lhs = MayLoop;
-  termu_rhs = MayLoop; 
+  termu_rhs = MayLoop;
+  termu_rhs_params = [];
 }
   
 let update_call_trel rel ilhs irhs = 

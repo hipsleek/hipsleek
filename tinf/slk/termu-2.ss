@@ -1,4 +1,5 @@
 void f (int x, int y)
+  infer [@term]
   requires true
   ensures true;
 {
@@ -6,10 +7,11 @@ void f (int x, int y)
   else g(x);
 }
 
-void g (int x)
+void g (int z)
+  infer [@term]
   requires true
   ensures true;
 {
-  if (x < 0) return;
-  else f(x, 0);
+  if (z < 0) return;
+  else f(z - 1, 0);
 }

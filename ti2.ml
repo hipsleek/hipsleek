@@ -618,7 +618,7 @@ let infer_abductive_icond_edge prog g e =
     
     if imply abd_ctx abd_conseq then
       let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
-      Some (uid.CP.tu_id, (params, icond))
+      Some (uid.CP.tu_id, icond)
     else
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
       let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
@@ -639,8 +639,8 @@ let infer_abductive_icond_edge prog g e =
         (* Update TNT case spec with new abductive case *)
         (* if the abductive condition is feasible       *)
         if is_sat (mkAnd abd_ctx icond) then
-          (* let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)
-          Some (uid.CP.tu_id, (params, icond))
+          let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in
+          Some (uid.CP.tu_id, icond)
         else None
       | _ -> None end
   | _ -> None 
@@ -661,7 +661,7 @@ let inst_lhs_trel_abd rel abd_conds =
     | CP.TermU uid -> 
       begin try
         let tid = uid.CP.tu_id in
-        let _, abd_cond = List.assoc tid abd_conds in
+        let abd_cond = List.assoc tid abd_conds in
         let not_abd_cond = mkNot abd_cond in
         
         let tuc = uid.CP.tu_cond in
@@ -689,8 +689,9 @@ let inst_rhs_trel_abd inst_lhs rel abd_conds =
       if not (is_sat eh_ctx) then []
       else
         begin try
-          let params, abd_cond = List.assoc tid abd_conds in
+          let abd_cond = List.assoc tid abd_conds in
           let not_abd_cond = mkNot abd_cond in
+          let params = rel.termu_rhs_params in
           let args = uid.CP.tu_args in
           let sst = List.combine params args in
           let abd_cond = CP.subst_term_avoid_capture sst abd_cond in

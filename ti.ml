@@ -105,12 +105,14 @@ let case_split_init trrels =
 (*****************************)
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
-let add_call_trel_stk ctx lhs rhs =
+let add_call_trel_stk prog ctx lhs rhs =
+  let params = params_of_term_ann prog rhs in
   let trel = {
     call_ctx = ctx;
     trel_id = tnt_fresh_int ();
     termu_lhs = lhs;
-    termu_rhs = rhs; } in 
+    termu_rhs = rhs; 
+    termu_rhs_params = params; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel
@@ -224,7 +226,7 @@ let solve_turel_one_scc prog tg scc =
         | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
           if abd_cond = [] then raise Should_Finalize
-          else if List.exists (fun (_, (_, c)) -> CP.isConstTrue c) abd_cond then
+          else if List.exists (fun (_, c) -> CP.isConstTrue c) abd_cond then
             (* Loop || _ *)
             update_ann scc (subst (CP.MayLoop, []))
           else
