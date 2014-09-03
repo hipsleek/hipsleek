@@ -333,9 +333,8 @@ let rec flatten_one_case_struc c f =
     | _ -> [(c, f)]
     end
   | _ -> [(c, f)]
-  
-        
-let rec flatten_case_struc_x struc_f =
+          
+let rec flatten_case_struc struc_f =
   match struc_f with
   | CF.ECase ec -> 
     let nbranches = List.fold_left (fun ac (c, f) -> 
@@ -350,9 +349,9 @@ let rec flatten_case_struc_x struc_f =
       flatten_case_struc ei.CF.formula_inf_continuation }
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd flatten_case_struc el)
 
-and flatten_case_struc struc_f = 
+let flatten_case_struc struc_f = 
   let pr = string_of_struc_formula_for_spec in
-  Debug.no_1 "flatten_case_struc" pr pr flatten_case_struc_x struc_f
+  Debug.no_1 "flatten_case_struc" pr pr flatten_case_struc struc_f
 
 let tnt_spec_of_proc proc ispec =
   let spec = proc.Cast.proc_static_specs in

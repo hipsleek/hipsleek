@@ -1,10 +1,10 @@
-DONE # termu-1c.ss
+# termu-1c.ss (DONE)
 
 Why isn't @term entailment logged?
 
 id: 1; caller: []; line: 10; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: []; c_heap: emp
 ============================================================
-DONE # fact2b.ss
+# fact2b.ss (DONE)
 
 why give printing when no termination inference
 or verification is requested?
@@ -16,14 +16,14 @@ Temporal Assumptions:
 
 >> FIXED
 ============================================================
-DONE # termu-1c3.ss
+# termu-1c3.ss (DONE)
 
 !!!Number of sleek log entries 7
 !!!Logging logs/sleek_log_termu-1c3_ss.txt
 
 Why only 1 logged entry printed?
 ============================================================
-DONE # termu-1c4.ss
+# termu-1c4.ss (DONE)
 
 why are there 4 termination assumptions?
 
@@ -116,7 +116,7 @@ x'=v_int_16_877'+1 & fpre(x) --> fpre(v_int_16_877').
 Starting Omega...oc
 Omega Error Exp:Globals.Illegal_Prover_Format("[omega.ml] Non-linear arithmetic is not supported by Omega.")
 ============================================================
-DONE # fact2.ss
+# fact2.ss (DONE)
 
 int fact(int x)
   infer [@term]
@@ -140,7 +140,7 @@ f:  case {
 >> x-1 is the most correct ranking function for the case x >= 1
 
 ============================================================
-DONE # fact2a.ss
+# fact2a.ss (DONE)
 
 Why continue with term inference after post-cond 
 proving has failed?
@@ -151,7 +151,7 @@ Post condition cannot be derived:
 >> FIXED
 
 ============================================================
-DONE # fact2c.ss
+# fact2c.ss (DONE)
 
 int fact(int x)
   infer [@term]
@@ -174,7 +174,7 @@ given partial spec.
 >> FIXED: only collect temporal relations from methods in same scc
 
 ========================================================
-DONE # exp-fact2c.slk
+# exp-fact2c.slk (DONE)
 
 shouldn't this be a type error?
 
@@ -249,7 +249,7 @@ f:  case {
   }
 
 ============================================================
-# fact2c2-u.ss
+# fact2c2-u.ss (DONE)
 
 This generated a requires hfalse ensures hfalse.
 
