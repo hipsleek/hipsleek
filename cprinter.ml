@@ -2092,6 +2092,7 @@ and pr_formula_base e =
           ;if (a==[]) then ()
           else
             fmt_string ("\nAND "); pr_one_formula_list a
+          ;
 
 and slk_formula_base e =
   match e with
@@ -2159,7 +2160,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
           (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
 and pr_formula_1 e =
-  let f_b e =  pr_bracket formula_wo_paren pr_formula e in
+  let f_b e =  pr_bracket formula_wo_paren pr_formula_1 e in
   match e with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in

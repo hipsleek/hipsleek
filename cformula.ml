@@ -8633,6 +8633,7 @@ think it is used to instantiate when folding.
   es_aux_conseq : CP.formula;
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type * failure_cex) option;
+  es_may_error : (string * fail_type * failure_cex) option;
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   (*for cyclic proof*)
@@ -8920,6 +8921,7 @@ let empty_es flowt grp_lbl pos =
   es_aux_conseq = CP.mkTrue pos;
    (* es_imm_pure_stk = []; *)
   es_must_error = None;
+  es_may_error = None;
   es_trace = [];
   es_proof_traces = [];
   es_is_normalizing = false;
@@ -9370,9 +9372,24 @@ let get_must_error_from_ctx cs =
         | Some (msg,_,cex) -> Some (msg,cex))
     | cl -> combine_ctx_list_err cl
 
+let get_may_error_from_ctx cs =
+  match cs with
+    | [] -> (Some ("empty residual state", mk_cex false))
+    | [Ctx es] -> (match es.es_may_error with
+        | None -> None
+        | Some (msg,_,cex) -> Some (msg,cex))
+    | cl -> combine_ctx_list_err cl
+
+(* let get_may_error_from_ctx cs= *)
+(*   let pr1 = Cprinter.string_of_list_context in *)
+(*   let pr2 (msg, _) = mgs in *)
+(*   Debug.no_1 "get_may_error_from_ctx" pr1 (pr_option pr2) *)
+(*       (fun _ -> get_may_error_from_ctx cs) cs *)
+
 let isFailCtx_gen cl = match cl with
-	| FailCtx _ -> true
-	| SuccCtx cs -> if cs = [] then true else (get_must_error_from_ctx cs) !=None
+  | FailCtx _ -> true
+  | SuccCtx cs -> if cs = [] then true else
+      ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None)
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -9449,7 +9466,12 @@ let get_may_failure (f:list_context) =
             | None -> 
                   let _ = print_flush (!print_list_context_short f) 
                   in report_error no_pos "Should be a may failure here")
-    | _ -> None
+    | SuccCtx cs -> begin
+        let s_opt = get_may_error_from_ctx cs in
+          match s_opt with
+            | Some (s,cex) -> Some (s, cex)
+            | None -> None
+      end
 
 (* returns Some es if it is a must failure *)
 let rec get_must_es_from_ft ft = 
@@ -9635,7 +9657,7 @@ let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) cex : context op
 
 let convert_may_failure_4_fail_type  (s:string) (ft:fail_type) cex : context option =
      match (get_may_es_msg_ft ft) with
-          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft,cex) } ) 
+          | Some (es,msg) -> Some (Ctx {es with es_may_error = Some (s^msg,ft,cex) } ) 
           | _ -> None
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)

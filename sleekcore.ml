@@ -118,6 +118,7 @@ let sleek_unsat_check isvl cprog ante=
 let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
+  let _ = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) in
   let _ = Debug.ninfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in

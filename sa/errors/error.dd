@@ -21,3 +21,12 @@
 #def_subst_fix
 #combine_hpdef_flow
 #check_proc
+#get_failure_es_ft
+#get_must_failure
+#get_may_failure
+#get_may_error_from_ctx
+#heap_entail_empty_rhs_heap
+#process_action
+#normalize_formula_w_coers
+remove_imm_from_formula
+sleek_entail_check

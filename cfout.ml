@@ -331,6 +331,7 @@ let rec elim_imm_vars_f f =
   match f with
     | Base b ->
           let sst_list = get_subs_list (MCP.pure_of_mix b.formula_base_pure) in
+          (* Long: cause problem of string_of_formula *)
           let f = List.fold_left (fun f (sv1,sv2) ->
               subst_avoid_capture [sv1] [sv2] f
           ) f sst_list in
@@ -402,6 +403,11 @@ let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e
     else e
 
-let tidy_print e =
+let tidy_print_x e =
     if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
     else e
+
+let tidy_print e =
+  let pr1 = !print_formula in
+  Debug.no_1 "tidy_print" pr1 pr1
+      (fun _ -> tidy_print_x e) e
