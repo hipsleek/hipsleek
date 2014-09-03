@@ -27,12 +27,10 @@ let add_ret_trel_stk prog ctx lhs rhs =
 
 (* Only merge relations split by post *)    
 let merge_trrels rec_trrels = 
-  let same_path_trrel r1 r2 =
-    eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
-  in
-  let same_cond_path r1 r2 =
-    CP.eq_term_ann r1.termr_rhs r2.termr_rhs
-  in
+  (* let same_path_trrel r1 r2 =                                                 *)
+  (*   eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx) *)
+  (* in                                                                          *)
+  let same_cond_path r1 r2 = CP.eq_term_ann r1.termr_rhs r2.termr_rhs in
   let grp_trrels = partition_eq same_cond_path rec_trrels in
   (* let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in *)
   let merge_trrels = List.map (fun grp ->
@@ -246,10 +244,10 @@ let rec solve_turel_graph iter_num prog tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
-      (* let _ =                                                       *)
-      (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
-      (*   print_endline (print_graph_by_rel tg)                       *)
-      (* in                                                            *)
+      let _ =
+        print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
+        print_endline (print_graph_by_rel tg)
+      in
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
       finalize_turel_graph prog tg
