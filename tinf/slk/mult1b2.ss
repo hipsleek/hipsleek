@@ -1,4 +1,3 @@
-
 int f2(int x, int y) 
  infer[@term]
 //requires true ensures res=0;

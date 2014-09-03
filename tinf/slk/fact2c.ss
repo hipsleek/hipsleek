@@ -1,11 +1,12 @@
 UTPre@fact fpre(int x).
-UTPost@fact fpost(int x).
+UTPost@fact fpost1(int x).
+UTPost@fact fpost2(int x).
 
 int fact(int x)
   infer [@term]
   case {
-    x = 0 -> requires Term[] ensures res>=1 & fpost(x);
-    x != 0 -> requires fpre(x) ensures res>=1 & fpost(x);
+    x = 0 -> requires Term[] ensures res>=1 & fpost1(x);
+    x != 0 -> requires fpre(x) ensures res>=1 & fpost2(x);
   }
 
 {

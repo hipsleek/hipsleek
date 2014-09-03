@@ -143,7 +143,7 @@ let strip_lexvar_lhs (ctx: context) : context =
         if termr_lex = [] then Ctx es
         else Ctx { es with
           es_formula = es_f; 
-          es_term_res_lhs = termr_lex; }
+          es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
       | lv::[] ->
         if (es.es_var_measures = None) then
           let t_ann, ml, il, _ = find_lexvar_formula lv in 

@@ -13660,28 +13660,34 @@ let rec norm_assume_with_lexvar tpost struc_f =
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
      
-let rec norm_struc_with_lexvar is_primitive is_tnt_inf (tpre, tpost) struc_f =
-  let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf (tpre, tpost) in
+let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
+  let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
   match struc_f with
   | ECase ec -> ECase { ec with formula_case_branches = map_l_snd norm_f ec.formula_case_branches }
   | EBase eb ->
     let cont = eb.formula_struc_continuation in
     if (has_lexvar_formula eb.formula_struc_base) then 
       if not is_tnt_inf then struc_f
-      else EBase { eb with formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
+      else
+        let tpost = CP.mkUTPost uid in
+        EBase { eb with formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
     let lexvar =
       if is_primitive then CP.mkLexVar Term [] [] no_pos
       else if not is_tnt_inf then CP.mkLexVar MayLoop [] [] no_pos 
-      else CP.mkLexVar tpre [] [] no_pos
+      else
+        let tpre = CP.mkUTPre uid in
+        CP.mkLexVar tpre [] [] no_pos
     in
     let assume =
       if not is_tnt_inf then struc_f
-      else norm_assume_with_lexvar tpost struc_f
+      else
+        let tpost = CP.mkUTPost uid in
+        norm_assume_with_lexvar tpost struc_f
     in mkEBase_with_cont (CP.mkPure lexvar) (Some assume) no_pos
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_struc_with_lexvar is_primitive 
-      (is_tnt_inf || ei.formula_inf_tnt) (tpre, tpost) ei.formula_inf_continuation }
+      (is_tnt_inf || ei.formula_inf_tnt) uid ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
 (* Termination: Add the call numbers and the implicit phase 

@@ -30,7 +30,11 @@ let merge_trrels rec_trrels =
   let same_path_trrel r1 r2 =
     eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
   in
-  let grp_trrels = partition_eq same_path_trrel rec_trrels in
+  let same_cond_path r1 r2 =
+    CP.eq_term_ann r1.termr_rhs r2.termr_rhs
+  in
+  let grp_trrels = partition_eq same_cond_path rec_trrels in
+  let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in
   let merge_trrels = List.map (fun grp ->
     let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
     match grp with
@@ -40,10 +44,10 @@ let merge_trrels rec_trrels =
   
 let solve_rec_trrel rtr conds = 
   let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
-  let rec_cond = 
-    if CP.is_disjunct rec_cond 
+  let rec_cond =
+    if CP.is_disjunct rec_cond
     then Tpdispatcher.tp_pairwisecheck rec_cond
-    else rec_cond 
+    else rec_cond
   in
   let rec_cond, conds = List.fold_left (fun (rc, ca) cond ->
     match cond with
@@ -165,8 +169,10 @@ let inst_call_trel_base rel fn_cond_w_ids =
   inst_rels
 
 (* Main algorithm *)
+(* Exceptions to guide the main algorithm *)
 exception Restart_with_Cond of TG.t
-       
+exception Should_Finalize
+
 let solve_turel_one_scc prog tg scc =
   let update_ann scc f ann = (* Only update nodes in scc *)
     let ann_id = CP.id_of_term_ann ann in
@@ -219,9 +225,11 @@ let solve_turel_one_scc prog tg scc =
             subst res ann)
         | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
-          let tg = update_graph_with_icond tg scc abd_cond in
-          (* let _ = print_endline (print_graph_by_rel tg) in *)
-          raise (Restart_with_Cond tg)
+          if abd_cond = [] then raise Should_Finalize
+          else
+            let tg = update_graph_with_icond tg scc abd_cond in
+            (* let _ = print_endline (print_graph_by_rel tg) in *)
+            raise (Restart_with_Cond tg)
   
     else (* Error: One of scc's succ is Unknown *)
       report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown."
@@ -245,9 +253,11 @@ let rec solve_turel_graph iter_num prog tg =
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
       finalize_turel_graph prog tg
-    with Restart_with_Cond tg -> 
+    with 
+    | Restart_with_Cond tg -> 
       (* TODO: Duplicate on nodes that have been analyzed *)
       solve_turel_graph (iter_num + 1) prog tg
+    | _ -> finalize_turel_graph prog tg
   else finalize_turel_graph prog tg
 
 let solve_turel_init prog turels fn_cond_w_ids = 

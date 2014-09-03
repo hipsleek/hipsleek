@@ -12503,7 +12503,8 @@ let rec compare_term_ann a1 a2 =
   | TermR u1, TermR u2 -> compare_uid u1 u2
   | _ -> 1
 
-and compare_uid u1 u2 = compare u1.tu_id u2.tu_id
+and compare_uid u1 u2 = 
+  compare u1.tu_id u2.tu_id
 
 and compare_term_fail f1 f2 = 
   match f1, f2 with
@@ -12590,3 +12591,11 @@ let args_of_term_ann ann =
   | TermU uid -> uid.tu_args
   | TermR uid -> uid.tu_args
   | _ -> []
+
+let mkUTPre uid = 
+  TermU { uid with tu_sid = uid.tu_sid ^ "pre" }
+  
+let mkUTPost uid = 
+  TermR { uid with
+    tu_id = fresh_int (); 
+    tu_sid = uid.tu_sid ^ "post" }

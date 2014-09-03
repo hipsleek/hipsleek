@@ -519,6 +519,8 @@ let find_scc_edges g scc =
     List.concat (List.map (fun d -> TG.find_all_edges g s d) scc_succ)
   in
   List.concat (List.map (fun v -> find_edges_vertex v) scc)
+  
+(* End of TNT Graph *)
 
 (* Template Utilies *)
 let templ_of_term_ann ann =
@@ -590,25 +592,34 @@ let infer_abductive_icond_edge prog g e =
     let args = CP.args_of_term_ann rel.termu_rhs in
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
     
-    let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
-    let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
-    let _ = Tlutils.oc_solver := true in 
-    let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
-    let _ = Tlutils.oc_solver := oc in
-    
-    begin match res with
-    | Sat model -> 
-      let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-      let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
-      let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
-      
-      (* let _ = print_endline ("ABD: " ^ (!CP.print_formula cond)) in *)
-      (* Update TNT case spec with new abductive case *)
-      let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in 
-      
+    if imply abd_ctx abd_conseq then
+      let icond = CP.mkTrue no_pos in 
       Some (uid.CP.tu_id, (params, icond))
-    | _ -> None end
-  | _ -> None    
+    else
+      let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
+      let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
+      let _ = Tlutils.oc_solver := true in 
+      let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
+      let _ = Tlutils.oc_solver := oc in
+      
+      begin match res with
+      | Sat model -> 
+        let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+        let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
+        let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+        
+        (* let _ = print_endline ("LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
+        (* let _ = print_endline ("RHS: " ^ (!CP.print_formula abd_conseq)) in *)
+        (* let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in      *)
+        
+        (* Update TNT case spec with new abductive case *)
+        (* if the abductive condition is feasible       *)
+        if is_sat (mkAnd abd_ctx icond) then
+          let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in 
+          Some (uid.CP.tu_id, (params, icond))
+        else None
+      | _ -> None end
+  | _ -> None 
       
 let infer_abductive_icond_vertex prog g v = 
   let self_loop_edges = TG.find_all_edges g v v in
