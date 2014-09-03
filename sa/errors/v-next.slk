@@ -6,6 +6,7 @@ checkentail x=null or x::node<q> |- x::node<r>.
 print residue.
 
 /*
+# v-next.slk --sa-error
 
 Got:
 Entail 1: Fail.(cex)(must) cause:OrR[do_unmatched_rhs : x::node<r>,valid]
