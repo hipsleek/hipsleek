@@ -282,6 +282,20 @@ as a further simplification step, to give:
 You should implement this as another transformation
 step on case-spec.
 ============================================================
+# mult3a.ss
+ 
+printing problem? how come false & false
+Is it hfalse & false?
+
+Termination Inference Result:
+foo:  case {
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
 ========================================================
 ============================================================
 ============================================================
