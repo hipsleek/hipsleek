@@ -1,0 +1,23 @@
+data node {
+  node next;
+}.
+
+checkentail x=null or x::node<q> |- x::node<r>.
+print residue.
+
+/*
+
+Got:
+Entail 1: Fail.(cex)(must) cause:OrR[do_unmatched_rhs : x::node<r>,valid]
+ <1>emp&{FLOW,(1,25)=__flow}[]
+
+Expects:
+ x=null & __ERROR \/ q=r & x!=null & __NORM
+
+  D1 |- P -> R1
+  D2 |- P -> R2
+ --------------------
+  D1 \/ D2 |- P --> (R1\/R2)
+
+
+*/
