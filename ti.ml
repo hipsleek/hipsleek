@@ -18,7 +18,7 @@ let add_ret_trel_stk prog ctx lhs rhs =
   let trel = {
     ret_ctx = ctx;
     termr_fname = CP.fn_of_term_ann rhs;
-    termr_params = params;
+    termr_rhs_params = params;
     termr_lhs = lhs;
     termr_rhs = rhs; } in 
   (* let _ = print_endline (print_ret_trel trel) in *)
@@ -41,7 +41,7 @@ let merge_trrels rec_trrels =
   merge_trrels
   
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
+  let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then Tpdispatcher.tp_pairwisecheck rec_cond
@@ -72,7 +72,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr = 
-  Base (simplify (MCP.pure_of_mix btr.ret_ctx) btr.termr_params)
+  Base (simplify (MCP.pure_of_mix btr.ret_ctx) btr.termr_rhs_params)
 
 let solve_trrel_list trrels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
@@ -86,7 +86,7 @@ let solve_trrel_list trrels =
   
 let case_split_init trrels = 
   let fn_trrels = 
-    let key_of r = (r.termr_fname, r.termr_params) in
+    let key_of r = (r.termr_fname, r.termr_rhs_params) in
     let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
     partition_by_key key_of key_eq trrels 
   in
@@ -105,12 +105,14 @@ let case_split_init trrels =
 (*****************************)
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
-let add_call_trel_stk ctx lhs rhs =
+let add_call_trel_stk prog ctx lhs rhs =
+  let params = params_of_term_ann prog rhs in
   let trel = {
     call_ctx = ctx;
     trel_id = tnt_fresh_int ();
     termu_lhs = lhs;
-    termu_rhs = rhs; } in 
+    termu_rhs = rhs; 
+    termu_rhs_params = params; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel

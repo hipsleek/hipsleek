@@ -11,9 +11,9 @@ type ret_trel = {
   ret_ctx: MCP.mix_formula;
   (* Collect from RHS *)
   termr_fname: ident;
-  termr_params: CP.spec_var list;
   termr_lhs: CP.term_ann list;
   termr_rhs: CP.term_ann;
+  termr_rhs_params: CP.spec_var list; (* For simplification on condition *)
 }
 
 let print_ret_trel rel = 
@@ -25,6 +25,7 @@ type call_trel = {
   trel_id: int;
   termu_lhs: CP.term_ann;
   termu_rhs: CP.term_ann;
+  termu_rhs_params: CP.spec_var list; (* For substitution on condition *)
 }
 
 let print_call_trel_debug rel = 
@@ -42,7 +43,7 @@ let dummy_trel = {
   trel_id = -1;
   termu_lhs = MayLoop;
   termu_rhs = MayLoop; 
-}
+  termu_rhs_params = []; }
   
 let update_call_trel rel ilhs irhs = 
   { rel with

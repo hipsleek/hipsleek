@@ -541,7 +541,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
               let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d in
               { es with es_term_res_rhs = Some t_ann_d }
             else
-              let _ = Ti.add_call_trel_stk ctx t_ann_s t_ann_d in
+              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d in
               { es with es_term_call_rhs =  Some t_ann_d; }
           else es 
         in es
@@ -652,10 +652,10 @@ let check_term_assume prog lhs rhs =
         | Some (t_ann, el, il) -> (t_ann, el, il)
         | None -> raise LexVar_Not_found in
       begin match t_ann_s with
-      | TermU _ -> Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
+      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
       | Term -> 
         begin match t_ann_d with
-        | TermU _ -> Ti.add_call_trel_stk lhs_p t_ann_s t_ann_d
+        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
         | _ -> () 
         end
       | _ -> () 
