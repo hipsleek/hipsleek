@@ -206,13 +206,13 @@ let update_case_spec_with_icond_proc fn cond icond =
 (* For SLEEK *)
 let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
-  let p_pre = CP.mkLexVar_pure ann rnk [] in
+  let p_pre = MCP.mix_of_pure (CP.mkLexVar_pure ann rnk []) in
   let p_post = match ann with
-    | Loop -> CP.mkFalse pos 
-    | _ -> CP.mkTrue pos
+    | Loop -> MCP.mkMFalse pos 
+    | _ -> MCP.mkMTrue pos
   in
-  let f_pre = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_pre) in
-  let f_post = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_post) in
+  let f_pre = CF.mkBase_simp CF.HEmp p_pre in
+  let f_post = CF.mkBase_simp CF.HEmp p_post in
   let lbl = fresh_formula_label "" in
   let post = CF.mkEAssume [] f_post (CF.mkEBase f_post None pos) lbl None in
   let spec = CF.mkEBase f_pre (Some post) pos  in
@@ -221,8 +221,8 @@ let struc_formula_of_ann (ann, rnk) =
 (* For HIP with given specifications *)  
 let struc_formula_of_ann_w_assume assume (ann, rnk) =
   let pos = no_pos in
-  let p_pre = CP.mkLexVar_pure ann rnk [] in
-  let f_pre = CF.mkBase_simp CF.HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) p_pre) in
+  let p_pre = MCP.mix_of_pure (CP.mkLexVar_pure ann rnk []) in
+  let f_pre = CF.mkBase_simp CF.HEmp p_pre in
   
   let post = match ann with
     | Loop ->
