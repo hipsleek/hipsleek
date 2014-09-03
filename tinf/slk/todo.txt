@@ -297,7 +297,40 @@ foo:  case {
  ensures false & false; 
   }
 ========================================================
+# mult1.ss 
+
+Multiple return LOOP not detected properly.
+
+Got:
+f:  case {
+  0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  }
+
+Should get:
+
+f:  case {
+  0<=x -> requires emp & Loop]
+ ensures false; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  }
 ============================================================
+# mult1b.ss 
+
+ new syntax Term[?]
+
+  case {
+  x<0 -> requires Term[] ensures res=0;
+  x>=0 -> 
+   case {
+    y<0 -> requires true // Term[?] 
+           ensures true;
+    y>=0 -> requires Loop ensures false;
+   }
+}
 ============================================================
 ============================================================
 ============================================================
