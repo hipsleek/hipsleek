@@ -11,7 +11,7 @@ type ret_trel = {
   ret_ctx: MCP.mix_formula;
   (* Collect from RHS *)
   termr_fname: ident;
-  termr_params: CP.spec_var list;
+  termr_rhs_params: CP.spec_var list; (* For simplification on condition *)
   termr_lhs: CP.term_ann list;
   termr_rhs: CP.term_ann;
 }
@@ -25,6 +25,7 @@ type call_trel = {
   trel_id: int;
   termu_lhs: CP.term_ann;
   termu_rhs: CP.term_ann;
+  termu_rhs_params: CP.spec_var list; (* For substitution on condition *)
 }
 
 let print_call_trel_debug rel = 
@@ -95,4 +96,6 @@ let rec eq_path_formula f1 f2 =
   let eq_bv (v1, s1) (v2, s2) =
     (CP.eq_spec_var v1 v2) && (s1 == s2)
   in Gen.BList.list_setequal_eq eq_bv p1 p2
+  
+
   

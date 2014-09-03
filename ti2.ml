@@ -56,6 +56,21 @@ let rec partition_eq eq ls =
     let eq_es, neq_es = List.partition (eq e) es in
     (e::eq_es)::(partition_eq eq neq_es)
     
+(* Partition a list of conditions into disjoint conditions *)
+let rec partition_cond_list cond_list = 
+  match cond_list with
+  | [] -> []
+  | c::cs ->
+    let dcs = partition_cond_list cs in
+    let rec helper c dcs =
+      match dcs with
+      | [] -> [c]
+      | d::ds -> 
+        if not (is_sat (mkAnd c d)) then d::(helper c ds)
+        else if (imply c d) then dcs
+        else (mkAnd c d)::(mkAnd (mkNot c) d)::(helper (mkAnd c (mkNot d)) ds)
+    in helper c dcs   
+    
 let seq_num = ref 0    
     
 let tnt_fresh_int () = 
@@ -201,6 +216,15 @@ let add_sol_case_spec_proc fn cond sol =
 let update_case_spec_with_icond_proc fn cond icond = 
   update_case_spec_proc fn cond (fun _ -> 
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
+    
+let update_case_spec_with_icond_list_proc fn cond icond_lst =
+  let disj_icond_lst = partition_cond_list icond_lst in
+  let disj_icond_lst =
+    let rem_icond = mkNot (CP.join_conjunctions icond_lst) in
+    if is_sat rem_icond then disj_icond_lst @ [rem_icond]
+    else disj_icond_lst
+  in update_case_spec_proc fn cond (fun _ -> 
+    Cases (List.map (fun c -> (c, Unknown)) disj_icond_lst))
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
@@ -593,7 +617,7 @@ let infer_abductive_icond_edge prog g e =
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
     
     if imply abd_ctx abd_conseq then
-      let icond = CP.mkTrue no_pos in 
+      let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
       Some (uid.CP.tu_id, (params, icond))
     else
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
@@ -608,14 +632,14 @@ let infer_abductive_icond_edge prog g e =
         let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
         let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
         
-        (* let _ = print_endline ("LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
-        (* let _ = print_endline ("RHS: " ^ (!CP.print_formula abd_conseq)) in *)
-        (* let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in      *)
+        let _ = print_endline ("LHS: " ^ (!CP.print_formula abd_ctx)) in
+        let _ = print_endline ("RHS: " ^ (!CP.print_formula abd_conseq)) in
+        let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in
         
         (* Update TNT case spec with new abductive case *)
         (* if the abductive condition is feasible       *)
         if is_sat (mkAnd abd_ctx icond) then
-          let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in 
+          (* let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)
           Some (uid.CP.tu_id, (params, icond))
         else None
       | _ -> None end

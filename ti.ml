@@ -18,7 +18,7 @@ let add_ret_trel_stk prog ctx lhs rhs =
   let trel = {
     ret_ctx = ctx;
     termr_fname = CP.fn_of_term_ann rhs;
-    termr_params = params;
+    termr_rhs_params = params;
     termr_lhs = lhs;
     termr_rhs = rhs; } in 
   (* let _ = print_endline (print_ret_trel trel) in *)
@@ -41,7 +41,7 @@ let merge_trrels rec_trrels =
   merge_trrels
   
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_params in
+  let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then Tpdispatcher.tp_pairwisecheck rec_cond
@@ -72,7 +72,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr = 
-  Base (simplify (MCP.pure_of_mix btr.ret_ctx) btr.termr_params)
+  Base (simplify (MCP.pure_of_mix btr.ret_ctx) btr.termr_rhs_params)
 
 let solve_trrel_list trrels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
@@ -86,7 +86,7 @@ let solve_trrel_list trrels =
   
 let case_split_init trrels = 
   let fn_trrels = 
-    let key_of r = (r.termr_fname, r.termr_params) in
+    let key_of r = (r.termr_fname, r.termr_rhs_params) in
     let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
     partition_by_key key_of key_eq trrels 
   in
@@ -224,6 +224,9 @@ let solve_turel_one_scc prog tg scc =
         | None ->
           let abd_cond = infer_abductive_icond prog tg scc in 
           if abd_cond = [] then raise Should_Finalize
+          else if List.exists (fun (_, (_, c)) -> CP.isConstTrue c) abd_cond then
+            (* Loop || _ *)
+            update_ann scc (subst (CP.MayLoop, []))
           else
             let tg = update_graph_with_icond tg scc abd_cond in
             (* let _ = print_endline (print_graph_by_rel tg) in *)
@@ -244,10 +247,10 @@ let rec solve_turel_graph iter_num prog tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
-      (* let _ =                                                       *)
-      (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
-      (*   print_endline (print_graph_by_rel tg)                       *)
-      (* in                                                            *)
+      let _ =
+        print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
+        print_endline (print_graph_by_rel tg)
+      in
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
       finalize_turel_graph prog tg
