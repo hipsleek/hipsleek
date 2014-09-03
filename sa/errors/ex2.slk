@@ -2,6 +2,7 @@ data node {node next; }.
 
 //checkentail x=null & flow __Error |- x!=null.
 
+
 //1
 checkentail x=null |- x=null.
 print residue.
@@ -11,6 +12,8 @@ print residue.
 checkentail x=null |- x::node<p>.
 print residue.
 // x=null & flow __Error
+
+
 
 /*
 # ex2.slk --efa --sa-error

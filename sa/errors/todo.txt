@@ -53,7 +53,7 @@ ll-last2
 case spec
 
 =====================================================================
-# sa/errors/ex2.slk --efa
+# sa/errors/ex2.slk --efa: FIXED
 
 checkentail x=null |- x::node<p>.
 print residue.
@@ -76,7 +76,7 @@ expecting residue of :
   true & _Flow=MAY_ERR
 
 =====================================================================
-# next.ss
+# next.ss: DONE
 
 [ // BIND
 (0)H(x)&true --> x::node<next1> * HP_1196(next1)&
@@ -104,7 +104,7 @@ EXPECTED:
 
 
 =====================================================================
-# ex2.slk --efa --sa-error
+# ex2.slk --efa --sa-error: FIXED
 
 //3
 checkentail true |- x::node<p>.

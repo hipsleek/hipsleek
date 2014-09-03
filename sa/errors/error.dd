@@ -3,7 +3,7 @@
 #heap_entail_after_sat
 #is_error_flow
 #heap_entail_struc_init_bug_inv
-#convert_must_failure_to_value_orig
+#convert_maymust_failure_to_value_orig
 #gen_lor
 #run_entail_check
 #is_mayerror_flow

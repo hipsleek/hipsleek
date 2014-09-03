@@ -459,20 +459,24 @@ let print_residue residue =
   (* let _ = Debug.info_pprint "inside p res" no_pos in *)
   if (not !Globals.smt_compete_mode) then
           match residue with
-            | None ->
+            | None -> begin
                   (* let _ = Debug.ninfo_pprint "inside p res" no_pos in *)
                   print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
                   (*       (CF.list_formula_of_list_context s))^"\n") *)
                   (*print all posible outcomes and their traces with numbering*)
-            | Some (ls_ctx, print) ->
+              end
+            | Some (ls_ctx, print) -> begin
                   if (print) || not !Globals.disable_failure_explaining then
+                    (* let _ = Debug.info_pprint "a" no_pos in *)
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
                   else
+                    (* let _ = Debug.info_pprint "b" no_pos in *)
                     print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
                         (Cprinter.string_of_list_context ls_ctx)^"\n")
+              end
 
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =

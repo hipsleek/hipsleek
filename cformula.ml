@@ -9082,6 +9082,11 @@ let is_must_failure_fe (f:fail_explaining) =
     | Failure_Must _ -> true 
     | _ -> false
 
+let is_may_failure_fe (f:fail_explaining) =
+  match f.fe_kind with
+    | Failure_May _ -> true 
+    | _ -> false
+
 let is_bot_failure_fe (f:fail_explaining) =
   match f.fe_kind with
     | Failure_Bot _ -> true 
@@ -9097,6 +9102,19 @@ let rec is_must_failure_ft (f:fail_type) =
     | Union_Reason (f1,f2) -> (is_must_failure_ft f1) && (is_must_failure_ft f2)
     | _ -> false
 
+and is_may_failure_ft (f:fail_type) =
+  match f with
+    | Basic_Reason (_,fe,_) -> is_may_failure_fe fe
+    | Or_Reason (f1,f2) -> (((is_may_failure_ft f1) || (is_may_failure_ft f2)) ||
+          ((is_bot_failure_ft f1) && (is_may_failure_ft f2)) ||
+          ((is_may_failure_ft f1) && (is_bot_failure_ft f2)) ||
+          ((is_must_failure_ft f1) && not (is_must_failure_ft f2)) ||
+          (not (is_must_failure_ft f1) && (is_must_failure_ft f2))
+      )
+    | And_Reason (f1,f2) -> (is_may_failure_ft f1) || (is_may_failure_ft f2)
+    | Union_Reason (f1,f2) -> (is_may_failure_ft f1) && (is_may_failure_ft f2)
+    | _ -> false
+
 and is_bot_failure_ft (f:fail_type) =
   match f with
     | Basic_Reason (_,fe,_) -> is_bot_failure_fe fe
@@ -9108,6 +9126,11 @@ and is_bot_failure_ft (f:fail_type) =
 let is_must_failure (f:list_context) =
   match f with
     | FailCtx (f,_) -> (is_must_failure_ft f)
+    | _ -> false
+
+let is_may_failure (f:list_context) =
+  match f with
+    | FailCtx (f,_) -> (is_may_failure_ft f)
     | _ -> false
 
 let is_sat_failure f=
@@ -9358,6 +9381,7 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
         (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
         let f = get_failure_fe fe in
         if (is_must_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
+        else if (is_may_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
         else (f,fe.fe_name, None)
     | Or_Reason (f1,f2) -> gen_lor (helper f1) (helper f2)
     | And_Reason (f1,f2) -> gen_rand (helper f1) (helper f2)
@@ -9371,9 +9395,9 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
 
 let get_failure_es_ft (ft:fail_type) : (failure_kind * (entail_state option)) =
   let pr1 (m, e) = let tmp = (!print_failure_kind_full m) in
-                       match e with
-                         | None -> tmp
-                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  match e with
+    | None -> tmp
+    | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
   Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
 
@@ -9483,6 +9507,16 @@ let get_must_failure (ft:list_context)=
   let pr2 = !print_cex in
   Debug.no_1 "get_must_failure" pr1 (pr_option (pr_pair pr_id pr2))
       (fun _ -> get_must_failure_x ft) ft
+
+let get_may_es_msg_ft ft = 
+  let msg,es = get_failure_es_ft ft in
+  (* let es = get_must_es_from_ft ft in *)
+  (* let msg = get_must_failure_ft ft in *)
+  match es,msg with
+    | Some es, Failure_May msg -> Some (es,msg)
+    | None, Failure_May msg -> Some (empty_es ( mkTrueFlow ()) Lab2_List.unlabelled no_pos,msg) (*may be Trivial fail*)
+    (*report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"*)
+    | _, _ -> None
 
 (*todo: revise, pretty printer*)
 let rec get_must_failure_list_partial_context (ls:list_partial_context): (string option)=
@@ -9599,26 +9633,37 @@ let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) cex : context op
           | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft,cex) } ) 
           | _ -> None
 
+let convert_may_failure_4_fail_type  (s:string) (ft:fail_type) cex : context option =
+     match (get_may_es_msg_ft ft) with
+          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft,cex) } ) 
+          | _ -> None
+
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
 (*
  Loc: error calculus: has 4 point values. These values are paired with program states. all is normal state.
 *)
-let convert_must_failure_to_value_orig (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
   match l with 
     | FailCtx (ft,cex) -> (* Loc: to check cex here*)
           (* (match (get_must_es_msg_ft ft) with *)
           (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
           (*   | _ ->  l) *)
-          (match (convert_must_failure_4_fail_type "" ft cex) with
-            | Some ctx -> SuccCtx [ctx]
-            | None -> l)
+          begin
+            match (convert_must_failure_4_fail_type "" ft cex) with
+              | Some ctx -> SuccCtx [ctx]
+              | None -> begin
+                   match (convert_may_failure_4_fail_type "" ft cex) with
+                     | Some ctx -> SuccCtx [ctx]
+                     | None -> l
+                end
+          end
     | SuccCtx _ ->
           l
 
-let convert_must_failure_to_value_orig (l:list_context) : list_context =
+let convert_maymust_failure_to_value_orig (l:list_context) : list_context =
  let pr = !print_list_context_short in
-  Debug.no_1 "convert_must_failure_to_value_orig" pr pr
-  (fun _ -> convert_must_failure_to_value_orig l) l
+  Debug.no_1 "convert_maymust_failure_to_value_orig" pr pr
+  (fun _ -> convert_maymust_failure_to_value_orig l) l
 
 (* let add_must_err (s:string) (fme:branch_ctx list) (e:esc_stack) : esc_stack = *)
 (*   ((-1,"Must Err @"^s),fme) :: e *)
