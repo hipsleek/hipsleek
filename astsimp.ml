@@ -2783,7 +2783,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       
       let uid = {
         CP.tu_id = 0;
-        CP.tu_sid = "";
+        CP.tu_sid = fname;
         CP.tu_fname = fname;
         CP.tu_call_num = 0;
         CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
@@ -2791,17 +2791,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         CP.tu_icond = CP.mkTrue pos;
         CP.tu_sol = None; 
         CP.tu_pos = pos; } in
-      let tpre = CP.TermU { uid with CP.tu_sid = utpre_name } in
-      let tpost = CP.TermR { uid with CP.tu_sid = utpost_name } in
       
       let static_specs_list = 
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive false (tpre, tpost) static_specs_list
+          CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
         else static_specs_list
       in
       let dynamic_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive false (tpre, tpost) dynamic_specs_list
+          CF.norm_struc_with_lexvar is_primitive false uid dynamic_specs_list
         else dynamic_specs_list
       in
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
