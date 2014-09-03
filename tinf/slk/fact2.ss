@@ -1,10 +1,13 @@
 UTPre@f fpre(int x).
-UTPost@f fpost().
+UTPost@f fpost(int x).
 
 int fact(int x)
   infer [@term]
   requires true & fpre(x)
-  ensures res>=1 & fpost(); //maybe just use TPost@f
+  ensures res>=1 & fpost(x); //maybe just use TPost@f
+  
+  //requires true
+  //ensures true;
   /*  
   case {
     x < 0 -> requires Term ensures true;

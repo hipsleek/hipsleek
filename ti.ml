@@ -34,7 +34,7 @@ let merge_trrels rec_trrels =
     CP.eq_term_ann r1.termr_rhs r2.termr_rhs
   in
   let grp_trrels = partition_eq same_cond_path rec_trrels in
-  let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in
+  (* let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in *)
   let merge_trrels = List.map (fun grp ->
     let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
     match grp with
