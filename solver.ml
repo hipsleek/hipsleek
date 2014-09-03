@@ -2672,7 +2672,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    let _ = print_endline (Cprinter.string_of_mix_formula npf) in
+    (* let _ = print_endline (Cprinter.string_of_mix_formula npf) in *)
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
