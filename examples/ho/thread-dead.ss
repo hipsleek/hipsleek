@@ -85,11 +85,11 @@ void main()
   //after joining with tid2, we know that tid1 is already dead
   //hence, we recover both x and y
 
-  //dprint; //tid1 still pending here. still need smart normalization here
+  dprint; //tid1 still pending here. still need smart normalization here
 
   y.v = y.v +2; //y=3, y is released using "normalize" lemma
 
-  //dprint; // all threads are dead
+  dprint; // all threads are dead
 
   assert x'::cell<3> * y'::cell<3>;
 
