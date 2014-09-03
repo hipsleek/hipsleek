@@ -88,24 +88,39 @@ let equal_pw_elem pwe1 pwe2 =
 (*   | TPwe pwe1, TPwe pwe2 -> compare_pw_elem pwe1 pwe2 *)
 (*   | TAnn ann1, TAnn ann2 ->                           *)
 
+let rec get_src_tseq s =
+  match s with
+  | TSeq (s1, s2) -> get_src_tseq s1 
+  | _ -> s
+
+let rec get_pw_elem_tann ann es =
+  match ann with
+  | TUnk (id, args) ->
+    let args = List.map (fun (t, n, p) -> P.SpecVar (t, n, p)) args in
+    let p = F.get_pure es.F.es_formula in
+    let simpl_p = P.mkExists_with_simpl 
+      Tpdispatcher.simplify_raw 
+      (diff (P.fv p) args) 
+      p None (P.pos_of_formula p) in
+    Some { 
+      pw_ident = id;
+      pw_num = fresh_pw_cnt ();
+      pw_args = args;
+      pw_ctx = es.F.es_formula; 
+      pw_cond = simpl_p; }
+  | TSeq _ -> get_pw_elem_tann (get_src_tseq ann) es
+  | _ -> None
+
 let rec get_pw_elem_context ctx = 
   match ctx with
   | F.Ctx es ->
     begin match es.F.es_var_measures with
     | None -> []
-    | Some (TUnk (_, TSingle (id, args)), _, _) -> (* TODO: TSeq *)
-      let args = List.map (fun (t, n, p) -> P.SpecVar (t, n, p)) args in
-      let p = F.get_pure es.F.es_formula in
-      let simpl_p = P.mkExists_with_simpl 
-        Tpdispatcher.simplify_raw 
-        (diff (P.fv p) args) 
-        p None (P.pos_of_formula p) in
-      [{ pw_ident = id;
-         pw_num = fresh_pw_cnt ();
-         pw_args = args;
-         pw_ctx = es.F.es_formula; 
-         pw_cond = simpl_p; }]
-    | _ -> [] end
+    | Some (tann, _, _) ->
+      match (get_pw_elem_tann tann es) with
+      | None -> []
+      | Some pw -> [pw]
+    end
   | F.OCtx (c1, c2) ->
     (get_pw_elem_context c1) @ (get_pw_elem_context c2)
 
@@ -132,7 +147,7 @@ let build_trans_TUnk ctx src dst =
 let build_tu_rels_with_trans unsat pw_elem_ls trans_ls =
   let get_feasible_pwe_rhs lhs dst ctx =
     match dst with
-    | TUnk (_, TSingle (idd, to_args)) ->
+    | TUnk (idd, to_args) ->
       let to_args = List.map (fun (t, n, p) -> P.SpecVar (t, n, p)) to_args in
       let rhs_pw_elems = List.filter (fun pwe -> eq_ident pwe.pw_ident idd) pw_elem_ls in
       List.fold_left (fun acc rhs ->
@@ -154,7 +169,7 @@ let build_tu_rels_with_trans unsat pw_elem_ls trans_ls =
   let helper trans =
     let ctx = trans.trans_ctx in
     match trans.trans_src with
-    | TUnk (_, TSingle (ids, _)) ->
+    | TUnk (ids, _) ->
       let lhs_pw_elems = List.filter (fun pwe -> eq_ident pwe.pw_ident ids) pw_elem_ls in
       let feasible_pw_trans = List.fold_left (fun acc lhs ->
         let enhanced_lhs_ctx = F.mkAnd_pure ctx (MCP.mix_of_pure lhs.pw_cond) no_pos in

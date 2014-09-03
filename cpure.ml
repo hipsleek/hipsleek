@@ -3090,18 +3090,14 @@ and b_apply_subs_x sst bf =
     | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
     (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info ->
-        let rec tunk_apply_subs sst tunk = match tunk with
-        | TSingle (id, args) -> TSingle (id, List.map (fun (t, a, p) -> 
+        let rec tann_apply_subs sst tann = match tann with
+        | TUnk (id, args) -> TUnk (id, List.map (fun (t, a, p) -> 
             let nv = match (subs_one sst (SpecVar (t, a, p))) with
-            | SpecVar (nt, na, np) -> (nt, na, np) in nv) args) 
-        | TSeq (tunk_src, tunk_dst) -> TSeq (tunk_apply_subs sst tunk_src, tunk_dst)
-        in
-        let ann = t_info.lex_ann in
-        let ann = match ann with
-        | TUnk (i, tunk) -> TUnk (i, tunk_apply_subs sst tunk)
-        | _ -> ann in
+            | SpecVar (nt, na, np) -> (nt, na, np) in nv) args)
+        | TSeq (src, dst) -> TSeq (tann_apply_subs sst src, dst)
+        | _ -> tann in
         LexVar { t_info with
-          lex_ann = ann;
+          lex_ann = tann_apply_subs sst t_info.lex_ann;
           lex_exp = e_apply_subs_list sst t_info.lex_exp;
           lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
   in
@@ -9629,15 +9625,16 @@ and add_term_nums_b_formula bf log_vars call_num phase_var =
                   | Some pv -> let nv = mkVar pv pos
                     in ([nv], nv::ml, [pv])
               in 
-              let n_ml,n_il = match call_num with
-                | None -> (v_ml,v_il)
-                | Some i -> let c=(mkIConst i pos) in
+              let n_ml, n_il = match call_num with
+                | None -> (v_ml, v_il)
+                | Some i -> 
+                  let c = (mkIConst i pos) in
                   (c::v_ml,c::v_il)
               in (LexVar { t_info with lex_exp = n_ml; lex_tmp = n_il; }, pv)
-          | TUnk (_, tunk) -> begin
+          | TUnk _ -> begin
             match call_num with
             | None -> (pf, [])
-            | Some i -> (LexVar { t_info with lex_ann = TUnk (i, tunk); }, [])
+            | Some i -> (LexVar { t_info with lex_exp = (mkIConst i pos)::t_info.lex_exp; }, [])
             end
           | _ -> (pf, []))
     | _ -> (pf, [])
@@ -9670,7 +9667,7 @@ and count_term_b_formula bf =
   | LexVar t_info ->
       (match t_info.lex_ann with
         | Term -> 1
-        | TUnk _ -> 1
+        | TUnk _ -> if !Globals.en_tnt_infer then 1 else 0
         | _ -> 0)
   | _ -> 0
 

@@ -13530,7 +13530,9 @@ let rec norm_struc_with_lexvar is_primitive proc_name proc_args struc_f =
   | EAssume _ ->
       let lexvar = 
         if is_primitive then CP.mkLexVar Term [] [] no_pos
-        else if !Globals.en_tnt_infer then CP.mkLexVar (TUnk (0, TSingle (proc_name, proc_args))) [] [] no_pos
+        else if !Globals.en_tnt_infer then 
+          let dummmy_call_num = CP.mkIConst 0 no_pos in
+          CP.mkLexVar (TUnk (proc_name, proc_args)) [dummmy_call_num] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in 
       mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = helper ef.formula_inf_continuation }

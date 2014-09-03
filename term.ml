@@ -577,26 +577,36 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
-      | (TUnk (unk_src_order, _), _) ->
-          (* Collect temporal relation here *)
+      | (TUnk _, _) 
+      | (TSeq _, _) ->
+          (* Collect unknown temporal relation here *)
           (* No need to collect from primitive calls and *)
-          (* terminating methods in other scc groups *)
-          let _ =
+          (* terminating methods in other (lower) scc groups *)
+          let unk_src_order = match src_lv with
+          | (IConst (i, _))::_ -> i
+          | _ -> 0 in
+          let should_build_tseq_residue =
             match t_ann_d, dst_lv with
-            | Term, [] -> ()
+            | Term, [] -> false
             | Term, (IConst (term_dst_order, _))::_ ->
-              if unk_src_order > term_dst_order then ()
+              if unk_src_order > term_dst_order then false
               else
                 let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
-                Tnt.tu_call_stk # push trans
+                let _ = Tnt.tu_call_stk # push trans in true
             | _ ->
               let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
-              Tnt.tu_call_stk # push trans 
-          in (estate, lhs_p, rhs_p, None)
+              let _ = Tnt.tu_call_stk # push trans in true 
+          in
+          let res_estate = if not should_build_tseq_residue then estate
+            else { estate with es_var_measures = Some (TSeq (t_ann_s, t_ann_d), src_lv, src_il) }
+          in (res_estate, lhs_p, rhs_p, None)
       | (_, TUnk _) ->
           let trans = Tnt.build_trans_TUnk estate.es_formula t_ann_s t_ann_d in
           let _ = Tnt.tu_call_stk # push trans in
           (estate, lhs_p, rhs_p, None) 
+      | (_, TSeq _) -> 
+        (* Impossible cases because TSeq cannot appear in callee's specification *)
+        (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
