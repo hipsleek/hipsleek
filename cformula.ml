@@ -13682,7 +13682,7 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf (tpre, tpost) struc_f =
     in mkEBase_with_cont (CP.mkPure lexvar) (Some assume) no_pos
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_struc_with_lexvar is_primitive 
       (is_tnt_inf || ei.formula_inf_tnt) (tpre, tpost) ei.formula_inf_continuation }
-  | EList b -> mkEList_no_flatten (map_l_snd norm_f b)
+  | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

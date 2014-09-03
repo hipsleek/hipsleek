@@ -10,6 +10,7 @@ open Ti3
 
 (* Auxiliary methods *)
 let diff = Gen.BList.difference_eq CP.eq_spec_var
+let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify = Omega.simplify
 
@@ -311,14 +312,60 @@ and merge_tnt_case_spec_into_assume ctx spec af =
           if f_is_sat nctx then (c, merge_tnt_case_spec_into_assume ctx s af)
           else (c, struc_formula_of_dead_path ())) cases;
         CF.formula_case_pos = no_pos; }
+        
+let rec flatten_one_case_struc c f = 
+  match f with
+  | CF.ECase fec ->
+    let cfv = CP.fv c in
+    let should_flatten = List.for_all (fun (fc, _) ->
+      subset (CP.fv fc) cfv) fec.CF.formula_case_branches in
+    if not should_flatten then [(c, f)]
+    else
+      List.fold_left (fun fac (fc, ff) ->
+        let mc = mkAnd c fc in
+        if is_sat mc then fac @ [(mc, ff)]
+        else fac) [] fec.CF.formula_case_branches
+  | CF.EList el -> begin match el with
+    | (_, sf)::[] ->  begin match sf with
+      | CF.ECase _ -> flatten_one_case_struc c sf
+      | _ -> [(c, f)]
+      end
+    | _ -> [(c, f)]
+    end
+  | _ -> [(c, f)]
+  
+        
+let rec flatten_case_struc_x struc_f =
+  match struc_f with
+  | CF.ECase ec -> 
+    let nbranches = List.fold_left (fun ac (c, f) -> 
+      let nf = flatten_case_struc f in
+      let mf = flatten_one_case_struc c nf in 
+      ac @ mf) [] ec.CF.formula_case_branches 
+    in CF.ECase { ec with CF.formula_case_branches = nbranches }
+  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation = 
+      map_opt flatten_case_struc eb.CF.formula_struc_continuation }
+  | CF.EAssume _ -> struc_f
+  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation = 
+      flatten_case_struc ei.CF.formula_inf_continuation }
+  | CF.EList el -> CF.mkEList_no_flatten (map_l_snd flatten_case_struc el)
+
+and flatten_case_struc struc_f = 
+  let pr = string_of_struc_formula_for_spec in
+  Debug.no_1 "flatten_case_struc" pr pr flatten_case_struc_x struc_f
+
+let tnt_spec_of_proc proc ispec =
+  let spec = proc.Cast.proc_static_specs in
+  let spec = merge_tnt_case_spec_into_struc_formula 
+    (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+  let spec = flatten_case_struc spec in
+  spec
     
 let pr_proc_case_specs prog = 
   Hashtbl.iter (fun mn ispec ->
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-      let spec = proc.Cast.proc_static_specs in
-      let nspec = merge_tnt_case_spec_into_struc_formula 
-        (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+      let nspec = tnt_spec_of_proc proc ispec in
       print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
     with _ -> (* Proc Decl is not found - SLEEK *)
       print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs
@@ -327,10 +374,7 @@ let update_spec_proc proc =
   let mn = Cast.unmingle_name (proc.Cast.proc_name) in
   try
     let ispec = Hashtbl.find proc_case_specs mn in
-    let spec = proc.Cast.proc_static_specs in
-    (* let nspec = struc_formula_of_tnt_case_spec ispec in *)
-    let nspec = merge_tnt_case_spec_into_struc_formula 
-      (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+    let nspec = tnt_spec_of_proc proc ispec in
     let _ = proc.Cast.proc_stk_of_static_specs # push nspec in 
     let nproc = { proc with Cast.proc_static_specs = nspec; }  in
     (* let _ = Cprinter.string_of_proc_decl_no_body nproc in *)
