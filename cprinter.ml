@@ -1031,7 +1031,7 @@ and pr_term_ann_assume ann =
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
-    fmt_string (uid.P.tu_sid ^ "#" ^ (string_of_int uid.P.tu_id));
+    fmt_string (uid.P.tu_sid ^ "_" ^ (string_of_int uid.P.tu_id));
     pr_args "" pr_formula_exp uid.P.tu_args
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"

@@ -56,6 +56,21 @@ let rec partition_eq eq ls =
     let eq_es, neq_es = List.partition (eq e) es in
     (e::eq_es)::(partition_eq eq neq_es)
     
+(* Partition a list of conditions into disjoint conditions *)
+let rec partition_cond_list cond_list = 
+  match cond_list with
+  | [] -> []
+  | c::cs ->
+    let dcs = partition_cond_list cs in
+    let rec helper c dcs =
+      match dcs with
+      | [] -> [c]
+      | d::ds -> 
+        if not (is_sat (mkAnd c d)) then d::(helper c ds)
+        else if (imply c d) then dcs
+        else (mkAnd c d)::(mkAnd (mkNot c) d)::(helper (mkAnd c (mkNot d)) ds)
+    in helper c dcs
+    
 let seq_num = ref 0    
     
 let tnt_fresh_int () = 
@@ -77,6 +92,10 @@ let reset_scc_num _ =
 (* This method returns a unique number for (a, b) *)
 (* It is used to generate num for new instantiated TermU *)    
 let cantor_pair a b = (a + b) * (a + b + 1) / 2 + b
+
+let assign_id_to_list ls = 
+  snd (List.fold_left (fun (i, a) e -> 
+    (i + 1, a @ [(i + 1, e)])) (0, []) ls)
 
 (******************************************************************************)
 
@@ -209,6 +228,10 @@ let add_sol_case_spec_proc fn cond sol =
 let update_case_spec_with_icond_proc fn cond icond = 
   update_case_spec_proc fn cond (fun _ -> 
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
+    
+let update_case_spec_with_icond_list_proc fn cond icond_lst =
+  update_case_spec_proc fn cond (fun _ -> 
+    Cases (List.map (fun c -> (c, Unknown)) icond_lst))
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
@@ -601,8 +624,8 @@ let infer_abductive_icond_edge prog g e =
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
     
     if imply abd_ctx abd_conseq then
-      let icond = CP.mkTrue no_pos in 
-      Some (uid.CP.tu_id, icond)
+      let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
+      Some (uid, icond)
     else
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
       let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
@@ -623,8 +646,8 @@ let infer_abductive_icond_edge prog g e =
         (* Update TNT case spec with new abductive case *)
         (* if the abductive condition is feasible       *)
         if is_sat (mkAnd abd_ctx icond) then
-          let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in 
-          Some (uid.CP.tu_id, icond)
+          (* let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)
+          Some (uid, icond)
         else None
       | _ -> None end
   | _ -> None 
@@ -633,7 +656,22 @@ let infer_abductive_icond_vertex prog g v =
   let self_loop_edges = TG.find_all_edges g v v in
   let abd_conds = List.fold_left (fun a e -> a @ 
     opt_to_list (infer_abductive_icond_edge prog g e)) [] self_loop_edges in
-  abd_conds
+  match abd_conds with
+  | [] -> []
+  | (uid, _)::_ -> 
+    let icond_lst = List.map snd abd_conds in
+    let disj_icond_lst = partition_cond_list icond_lst in
+    let full_disj_icond_lst =
+      let rem_icond = mkNot (CP.join_disjunctions disj_icond_lst) in
+      if is_sat rem_icond then disj_icond_lst @ [rem_icond]
+      else disj_icond_lst
+    in
+    let full_disj_icond_lst = List.map om_simplify full_disj_icond_lst in
+    (* let _ = print_endline ("full_disj_icond_lst: " ^      *)
+    (*   (pr_list !CP.print_formula full_disj_icond_lst)) in *)
+    let _ = update_case_spec_with_icond_list_proc 
+      uid.CP.tu_fname uid.CP.tu_cond full_disj_icond_lst
+    in [(uid.CP.tu_id, full_disj_icond_lst)]
   
 let infer_abductive_icond prog g scc =
   List.concat (List.map (fun v -> infer_abductive_icond_vertex prog g v) scc)
@@ -645,8 +683,8 @@ let inst_lhs_trel_abd rel abd_conds =
     | CP.TermU uid -> 
       begin try
         let tid = uid.CP.tu_id in
-        let abd_cond = List.assoc tid abd_conds in
-        let not_abd_cond = mkNot abd_cond in
+        let iconds = List.assoc tid abd_conds in
+        let iconds_w_id = assign_id_to_list iconds in  
         
         let tuc = uid.CP.tu_cond in
         let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
@@ -656,7 +694,7 @@ let inst_lhs_trel_abd rel abd_conds =
                 CP.tu_id = cantor_pair tid i;
                 CP.tu_cond = mkAnd tuc c;
                 CP.tu_icond = c; }]
-          else []) [(1, abd_cond); (2, not_abd_cond)])
+          else []) iconds_w_id)
       with Not_found -> [lhs_ann] end
     | _ -> [lhs_ann]
   in inst_lhs
@@ -673,20 +711,19 @@ let inst_rhs_trel_abd inst_lhs rel abd_conds =
       if not (is_sat eh_ctx) then []
       else
         begin try
-          let abd_cond = List.assoc tid abd_conds in
-          let not_abd_cond = mkNot abd_cond in
+          let iconds = List.assoc tid abd_conds in
           let params = rel.termu_rhs_params in
           let args = uid.CP.tu_args in
           let sst = List.combine params args in
-          let abd_cond = CP.subst_term_avoid_capture sst abd_cond in
-          let not_abd_cond = CP.subst_term_avoid_capture sst not_abd_cond in
+          let iconds = List.map (CP.subst_term_avoid_capture sst) iconds in
+          let iconds_w_id = assign_id_to_list iconds in 
           List.concat (List.map (fun (i, c) -> 
             if (is_sat (mkAnd eh_ctx c)) then
               [ CP.TermU { uid with
                 CP.tu_id = cantor_pair tid i;
                 CP.tu_cond = mkAnd tuc c;
                 CP.tu_icond = c; }]
-            else []) [(1, abd_cond); (2, not_abd_cond)])
+            else []) iconds_w_id)
         with Not_found -> [rhs_ann] end
     | _ -> [rhs_ann]
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs

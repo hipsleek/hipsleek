@@ -1,0 +1,23 @@
+UTPre@f fpre(int x, int y).
+UTPost@f fpost(int x, int y).
+
+ termAssume !(v_bool_12_874') & !(v_bool_10_875') & 0<=x' & 
+!(v_bool_10_875') & x=x' & y=y' & 0<=x' & fpost(y'+
+x',y') --> fpost(x,y).
+
+ termAssume x'=v_int_12_921+y' & v_bool_12_874' & !(v_bool_10_875') & 
+0<=x' & !(v_bool_10_875') & x=x' & y=y' & 
+0<=x' & fpost(v_int_12_872',y') --> fpost(x,y).
+
+ termAssume x'<0 & y=y' & x=x' & v_bool_10_875' & x'<0 & 
+v_bool_10_875' --> fpost(x,y).
+
+ termAssume 0<=x' & y=y' & x=x' & !(v_bool_10_875') & 0<=x' & 
+!(v_bool_10_875') & !(v_bool_12_874') & v_int_13_873'=y'+
+x' & fpre(x,y) --> fpre(v_int_13_873',y').
+
+ termAssume 0<=x' & y=y' & x=x' & !(v_bool_10_875') & 0<=x' & 
+!(v_bool_10_875') & v_bool_12_874' & x'=v_int_12_872'+
+y' & fpre(x,y) --> fpre(v_int_12_872',y').
+
+term_infer.

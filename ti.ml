@@ -224,10 +224,14 @@ let solve_turel_one_scc prog tg scc =
             let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
             subst res ann)
         | None ->
-          let abd_cond = infer_abductive_icond prog tg scc in 
-          if abd_cond = [] then raise Should_Finalize
+          let abd_conds = infer_abductive_icond prog tg scc in 
+          if abd_conds = [] then raise Should_Finalize
+          else if List.exists (fun (_, conds) -> 
+            List.exists CP.isConstTrue conds) abd_conds then
+            (* Loop || _ *)
+            update_ann scc (subst (CP.MayLoop, []))
           else
-            let tg = update_graph_with_icond tg scc abd_cond in
+            let tg = update_graph_with_icond tg scc abd_conds in
             (* let _ = print_endline (print_graph_by_rel tg) in *)
             raise (Restart_with_Cond tg)
   

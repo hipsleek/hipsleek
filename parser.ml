@@ -1852,7 +1852,8 @@ cexp_w:
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
             let pos = get_pos_camlp4 _loc 1 in
             (* let cond = un_option c (P.mkTrue pos) in *)
-            let ann = P.mkUtAnn id is_pre fname (P.mkTrue pos) cl pos in
+            (* let nid = un_option nid 0 in *)
+            let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
             if not (rel_names # mem id) then 
