@@ -17,10 +17,24 @@ int f2(int x, int y)
 }
 
 /*
-# mult1b.ss
+# mult1b2.ss
 
-Good:
+Loop not detected when post is not given false
 
+Got:
+f2:  case {
+  x<0 -> requires emp & Term[29]
+ ensures emp & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & MayLoop[]
+ ensures emp & true; 
+           0<=y -> requires emp & MayLoop[]
+ ensures emp & true; 
+           }
+  
+  }
+
+Expects:
 f2:  case {
   0<=x -> case {
            (0+(0*x)+(1*

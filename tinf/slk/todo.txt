@@ -332,6 +332,37 @@ f:  case {
    }
 }
 ============================================================
+# mult1b2.ss
+
+Loop not detected when post is not given false
+
+Got:
+f2:  case {
+  x<0 -> requires emp & Term[29]
+ ensures emp & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & MayLoop[]
+ ensures emp & true; 
+           0<=y -> requires emp & MayLoop[]
+ ensures emp & true; 
+           }
+  
+  }
+
+Expects:
+f2:  case {
+  0<=x -> case {
+           (0+(0*x)+(1*
+           y))>=0 -> requires emp & Loop[]
+ ensures false & false; 
+           (0+(0*x)+(1*y))<0 -> requires emp & Term[29,4,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  x<=(0-1) -> requires emp & Term[29,1]
+ ensures emp & true; 
+  }
 ============================================================
 ============================================================
 ========================================================

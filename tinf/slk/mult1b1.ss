@@ -9,7 +9,7 @@ int f2(int x, int y)
    case {
     y<0 -> requires true // Term[?] 
            ensures true;
-    y>=0 -> requires true ensures true;
+    y>=0 -> requires Loop ensures false;
    }
 }
 { if (x<0) return 0;
