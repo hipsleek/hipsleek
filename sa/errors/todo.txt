@@ -104,6 +104,17 @@ EXPECTED:
 
 
 =====================================================================
+# ex2.slk --efa --sa-error
+
+//3
+checkentail true |- x::node<p>.
+print residue.
+// true & flow __MayError
+
+Got:
+Entail 3: Fail.(no cex)(may) cause:do_unmatched_rhs : x::node<p>
+
+why residue for (3) not printed nor given warning?
 =====================================================================
 =====================================================================
 =====================================================================

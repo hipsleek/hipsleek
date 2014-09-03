@@ -13,7 +13,14 @@ print residue.
 // x=null & flow __Error
 
 /*
-# ex2.slk --efa
+# ex2.slk --efa --sa-error
+
+Got:
+Entail 3: Fail.(no cex)(may) cause:do_unmatched_rhs : x::node<p>
+
+why residue for (3) not printed nor given warning?
+
+-----
 
 why can't we have residue with error status?
 why can't we have the original state x=null in residue state?
