@@ -332,7 +332,7 @@ f:  case {
    }
 }
 ============================================================
-# mult1b2.ss
+# mult1b2.ss (DONE)
 
 Loop not detected when post is not given false
 
@@ -363,6 +363,23 @@ f2:  case {
   x<=(0-1) -> requires emp & Term[29,1]
  ensures emp & true; 
   }
+  
+>> Due to problem with base/rec case splitting
+>> Solved by using different UTPost for different cases
+
+f2:  case {
+  x<0 -> requires emp & Term[29]
+ ensures emp & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & Term[29,3,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  }
+
 ============================================================
 ============================================================
 ========================================================
