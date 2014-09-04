@@ -842,6 +842,14 @@ Time(cache overhead) : 0.00274 (seconds)
  log(bigger)(>4s)(1):(10.,[(pairwise:53<1:TIMEOUT:OM*EXC*,10.)])
 
 ====================================================================
+run-fast-test
+
+sleek
+hip --eps
+sleek --eps
+Total number of errors: 3 in files:
+  threads/thrd1.slk({E10#Valid},{E11#Fail},{E12#Fail},{E13#Fail},{E14#Valid},{E15#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E6#Valid},{E7#Fail},{E8#Valid},{E9#Fail}) conchip/threads.slk({E3#Valid}) conchip/latch.slk({E5#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ====================================================================
 ====================================================================
 ====================================================================
