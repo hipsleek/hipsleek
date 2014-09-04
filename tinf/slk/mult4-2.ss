@@ -17,6 +17,19 @@ void f(int x,bool b)
 /*
 # mult4-2.ss
 
- our case-analysis work with boolean?
+ our case-analysis don't work with boolean?
+
+Expect one Loop and one Term..
+
+GOT:
+Termination Inference Result:
+f:  case {
+  0<=x & 1<=b -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  b<=0 & 0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
 
 */
