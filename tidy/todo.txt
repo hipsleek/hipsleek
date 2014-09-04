@@ -13,7 +13,7 @@ checkentail x::node<_,p_1234> * y::node<_,p_1> * z::node<_,p_3> |- true.
 print residue.
 // <1>x::node<p> * y::node<p2> * z::node<p3>&{FLOW,(21,22)=__norm}[]
 
-//(4)
+//(4) FIXED
 checkentail x::node<_,p> & p=q |- true.
 print residue.
 

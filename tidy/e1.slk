@@ -71,3 +71,7 @@ print residue.
 Expect:
  <1>x::node<(v*w)+1,z> &{FLOW,(21,22)=__norm}[]
 */
+
+//(9)
+checkentail x::node<1,x_123> & x_123=y  |- true.
+print residue.
