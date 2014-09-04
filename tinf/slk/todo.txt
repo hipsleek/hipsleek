@@ -381,7 +381,7 @@ f2:  case {
   }
 
 ============================================================
-# mult4-2a.ss
+# mult4-2a.ss (DONE)
 
 void f(int x,int b)
   infer [@term]
@@ -413,7 +413,64 @@ f:  case {
 # mult4-2.ss
 
  our case-analysis don't work with boolean?
+ which was translated to b>=1
+
+void f(int x,bool b)
+  infer [@term]
+  requires true
+  ensures true;
+{
+  if (x < 0) return;
+  else {
+    if (b) f(x - 1,b);
+    else f(x + 1,b);
+  }
+}
+  
+
+Expect one Loop and one Term..
+
+GOT:
+Termination Inference Result:
+f:  case {
+  0<=x & 1<=b -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  b<=0 & 0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
 ========================================================
+# fact2.ss --esl
+
+problems with --esl logging
+
+# (1) wWy is fpre_0(..) not present in both lhs & rhs
+
+id: 5; caller: []; line: 19; classic: false; kind: PRE; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&x'!=0 & x=x' & !(v') & v1'=1 & x'=v+1 & 1<=v2'&{FLOW,(24,25)=__norm}[]
+ |-  emp&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Call:  termAssume x'!=0 & x=x' & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & 
+v_int_19_880'=1 & x'=v_int_19_878'+1 & fpre_0(x) --> fpre_0(v_int_19_878').]
+res:  1[
+   emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0&{FLOW,(24,25)=__norm}[]
+   ]
+
+# (2) why is fpost_0(..) not present in LHS?
+
+id: 8; caller: []; line: 19; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&res=v' & v'=v1+1 & x'!=0 & x=x' & !(v1') & x'=v+1 & 1<=v1&
+{FLOW,(24,25)=__norm}[]
+ |-  emp&fpost_0(x)[] & 1<=res&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Return:  termAssume 1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & 
+x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpost_0(v_int_19_878') --> fpost_0(x).]
+res:  1[
+   emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & res=v_int_19_881'&{FLOW,(24,25)=__norm}[]
+   ]
+
+
 ============================================================
 ========================================================
 ============================================================
