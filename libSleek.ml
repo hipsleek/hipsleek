@@ -70,6 +70,7 @@ let process_cmd_list cmds :bool=
   (*proc_one_cmd*) 
   List.fold_left (fun a c-> match c with 
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype) && a
+      | CheckNorm f -> (process_check_norm f; a)
       | EqCheck (lv, if1, if2) -> (process_eq_check lv if1 if2; a)
       | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq) && a
       | CaptureResidue lvar -> (process_capture_residue lvar; a)

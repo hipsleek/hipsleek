@@ -1040,7 +1040,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None 
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) fb.IF.formula_base_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Base { fb with
@@ -1058,7 +1058,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 0 false 
+                  IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 
+                      [] (*TODO:HO*) 0 false SPLIT0
                       (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) fe.IF.formula_exists_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Exists { fe with
@@ -1127,7 +1128,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                     }*)
         | IF.HeapNode _ | IF.HeapNode2 _
         | IF.ThreadNode _ 
-        | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
+        | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp | IF.HVar _ -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
       match p with
@@ -1230,6 +1231,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Tsconst (t, pos) ->
               Ipure.Tsconst (t, pos)
+        | Ipure.Tup2 ((e1, e2), pos) ->
+              Ipure.Tup2 ((helper_exp e1, helper_exp e2), pos)
         | Ipure.Bptriple ((e1, e2, e3), pos) ->
               Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
         | Ipure.Add (e1, e2, pos) ->

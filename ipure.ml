@@ -245,6 +245,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | InfConst _
   | FConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
+  | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
   | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
@@ -576,6 +577,7 @@ and pos_of_exp (e : exp) = match e with
   | FConst (_, p) 
   | Tsconst (_, p)
   | Bptriple (_, p)
+  | Tup2 (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
@@ -795,6 +797,9 @@ and e_apply_one ((fr, t) as p) e = match e with
       Bptriple ((e_apply_one p ec,
                  e_apply_one p et,
                  e_apply_one p ea),pos)
+  | Tup2 ((e1,e2),pos) ->
+      Tup2 ((e_apply_one p e1,
+                 e_apply_one p e2),pos)
   | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
@@ -1001,7 +1006,8 @@ and find_lexp_exp (e: exp) ls =
   | InfConst _
   | FConst _ -> []
   | Ann_Exp(e,_,_) -> find_lexp_exp e ls
-	| Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
+  | Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
+  | Tup2 ((e1, e2), _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1066,6 +1072,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | AConst _ 
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
+  | Tup2 _ (* TOCHECK *)
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1155,6 +1162,18 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
           in res) ec_r [et_r;ea_r]
       in
       (Bptriple ((ec1,et1,ea1),l),r)
+  | Tup2 ((e1,e2),l) -> 
+      let e1,e1_r = float_out_exp_min_max e1 in
+      let e2,e2_r = float_out_exp_min_max e2 in
+      let r = List.fold_left ( fun np1 np2 ->
+          let res = match (np1, np2) with
+		    | None, None -> None
+		    | Some p, None -> Some p
+		    | None, Some p -> Some p
+		    | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+          in res) e1_r [e2_r]
+      in
+      (Tup2 ((e1,e2),l),r)
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1735,6 +1754,7 @@ let rec typ_of_exp (e: exp) : typ =
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
   | Bptriple _ 				  -> Globals.Bptyp
+  | Tup2 ((e1,e2), _)				  -> Globals.Tup2 (typ_of_exp e1,typ_of_exp e2)
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)
@@ -1942,7 +1962,7 @@ let rec transform_exp_x f (e : exp) : exp =
   | Some ne -> ne
   | None -> (match e with
       | Null _  | Var _ | Level _ | IConst _ | AConst _ 
-      | Tsconst _ | Bptriple _ | FConst _ -> e
+      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ -> e
       | Ann_Exp (e,t,l) ->
           let ne = transform_exp f e in
           Ann_Exp (ne,t,l)

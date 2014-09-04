@@ -1,0 +1,43 @@
+
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+/*
+checkentail xxx::cell<1> 
+    |- (exists f,v: v::cell<f>&xxx=v & f=1).
+print residue.
+*/
+
+checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * xxx::cell<3> 
+    |- c::MSG{%P}<xxx> * %P.
+print residue.
+/*
+# msg3a.slk
+
+GOT
+===
+
+ ho_vars: [P --> (exists flted_10_15: v::cell<flted_10_15>&xxx=v & 
+           flted_10_15=1&{FLOW,(21,22)=__norm})[]]
+
+but need to wrap "v" as an existential, as follows:
+Otherwise, v is a free var.  # DONE
+
+ ho_vars: [P --> (exists flted_10_15,v: v::cell<flted_10_15>&xxx=v & 
+           flted_10_15=1&{FLOW,(21,22)=__norm})[]]
+
+*/
+
+/*
+
+ let ch=create() with (exists v: ch::MSG{v::cell<1>}<v>)
+
+ send(ch,v) requires ch::MSG{%P}<v> * %P
+            ensures 
+*/
+
+

@@ -72,6 +72,12 @@ let pr_pair_aux pr_1 pr_2 (a,b) =
   pr_2 b
   (* ;fmt_string ")" *)
 
+let pr_map_aux pr_1 pr_2 (a,b) =
+  (* fmt_string "("; *)
+  pr_1 a; fmt_string " --> ";
+  pr_2 b
+      (* ; fmt_print_newline () *)
+
 let pr_opt f x = match x with
     | None -> fmt_string "None"
     | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
@@ -168,6 +174,7 @@ let op_conjconj = " & "
 let op_f_or = "or" 
 let op_lappend = "app"
 let op_cons = ":::"
+let op_comma = ","
 
 
 (** add a bracket around e if is simple yields false *)
@@ -441,6 +448,8 @@ let pr_sharp_angle op f xs =
 (** print a sequence with cut after separator*)  
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
 
+let pr_seq_ln op f xs = pr_args None (Some "A") op "[" "]" ";\n " f xs
+
 (** print a sequence with cut after separator in a VBOX*)    
 let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
 
@@ -533,10 +542,13 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-
 let string_of_typed_spec_var x = 
   match x with
     | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
+
+let string_of_ho_var (fk,x,sk) = 
+  match x with
+    | P.SpecVar (t, id, p) -> (string_of_ho_flow_kind fk) ^ id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) ^ (string_of_ho_split_kind sk)
 
 let string_of_spec_var x = 
   (* string_of_typed_spec_var x *)
@@ -658,6 +670,8 @@ let pr_imm x = fmt_string (string_of_imm x)
 
 let pr_derv x = fmt_string (string_of_derv x)
 
+let pr_split x = fmt_string (string_of_split_ann x)
+
 let string_of_ident x = x
 
 let pr_ident x = fmt_string (string_of_ident x)
@@ -775,7 +789,8 @@ let rec pr_formula_exp (e:P.exp) =
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
     | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
-	| P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
+    | P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
+    | P.Tup2 ((e1,e2),l) -> fmt_string "("; f_b e1; fmt_string ","; f_b e2; fmt_string ")";
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -1175,6 +1190,7 @@ let rec pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+	  h_formula_data_split = split;
 	  h_formula_data_imm = imm;
 	  h_formula_data_param_imm = ann_param;
       h_formula_data_arguments = svs;
@@ -1217,6 +1233,7 @@ let rec pr_h_formula h =
                   (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
 	      (* if (!Globals.allow_imm) then *) pr_imm imm;
 	      pr_derv dr;
+	      pr_split split;
               if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if !print_derv then
@@ -1231,9 +1248,11 @@ let rec pr_h_formula h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+	  h_formula_view_split = split;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs;
+      h_formula_view_ho_arguments = ho_svs;
       h_formula_view_args_orig = svs_orig;  
       h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
@@ -1245,6 +1264,9 @@ let rec pr_h_formula h =
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
+          let ho_arg_str = match ho_svs with 
+            (* | [] -> "" *)
+            | hs -> "{"^String.concat "," (List.map string_of_formula hs)^"}" in
           let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then
@@ -1258,9 +1280,10 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
               fmt_string "::"; (* to distinguish pred from data *)
-              pr_angle (c^perm_str) pr_view_arg params;
+              pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
 	      pr_imm imm;
 	      pr_derv dr;
+	      pr_split split;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if (!Globals.print_derv) then
                 begin
@@ -1279,6 +1302,7 @@ let rec pr_h_formula h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1296,7 +1320,8 @@ let rec pr_h_formula h =
 	      begin
               pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
-	          pr_derv dr;
+	      pr_derv dr;
+	      pr_split split;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if !print_derv then
                 begin
@@ -1322,6 +1347,7 @@ let rec pr_h_formula h =
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string "emp"
+    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
@@ -1372,6 +1398,7 @@ and prtt_pr_h_formula h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
+	  h_formula_data_split = split;
 	  h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
@@ -1409,6 +1436,7 @@ and prtt_pr_h_formula h =
 			  pr_angle (c^perm_str) pr_spec_var svs ;
 			  pr_imm imm;
 			  pr_derv dr;
+			  pr_split split;
 			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1422,6 +1450,7 @@ and prtt_pr_h_formula h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1444,6 +1473,7 @@ and prtt_pr_h_formula h =
 			  pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
+			  pr_split split;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 		  (* if original then fmt_string "[Orig]" *)
@@ -1452,8 +1482,9 @@ and prtt_pr_h_formula h =
         fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
-	  h_formula_view_derv = dr;
-	  h_formula_view_imm = imm;
+      h_formula_view_derv = dr;
+      h_formula_view_split = split;
+      h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
       h_formula_view_args_orig = svs_orig;  
@@ -1483,6 +1514,7 @@ and prtt_pr_h_formula h =
 	    pr_angle (c^perm_str) pr_view_arg params;
 	    pr_imm imm;
 	    pr_derv dr;
+	    pr_split split;
 	    (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 	    if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	    (* if original then fmt_string "[Orig]" *)
@@ -1507,6 +1539,7 @@ and prtt_pr_h_formula h =
 	    end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
+    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -1533,6 +1566,7 @@ and prtt_pr_h_formula_inst prog h =
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
       h_formula_data_derv = dr;
+	  h_formula_data_split = split;
       h_formula_data_imm = imm;
       h_formula_data_arguments = svs;
       h_formula_data_holes = hs; (* An Hoa *)
@@ -1570,6 +1604,7 @@ and prtt_pr_h_formula_inst prog h =
 			  pr_angle (c^perm_str) pr_spec_var svs ;
 			  pr_imm imm;
 			  pr_derv dr;
+			  pr_split split;
 			  if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1583,6 +1618,7 @@ and prtt_pr_h_formula_inst prog h =
                    h_formula_thread_delayed = dl;
                    h_formula_thread_resource = rsr;
 	               h_formula_thread_derv = dr;
+	               h_formula_thread_split = split;
                    h_formula_thread_perm = perm; (*LDK*)
                    h_formula_thread_origins = origs;
                    h_formula_thread_original = original;
@@ -1605,6 +1641,7 @@ and prtt_pr_h_formula_inst prog h =
 			  pr_spec_var sv; fmt_string "::";
               pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
+			  pr_split split;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 		  (* if original then fmt_string "[Orig]" *)
@@ -1614,6 +1651,7 @@ and prtt_pr_h_formula_inst prog h =
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
 	  h_formula_view_derv = dr;
+	  h_formula_view_split = split;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
@@ -1643,7 +1681,7 @@ and prtt_pr_h_formula_inst prog h =
 				  fmt_string "::"; 
 				  pr_angle (c^perm_str) pr_view_arg params;
 				  pr_imm imm;
-				  pr_derv dr;
+				  pr_split split;
 				  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 				  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 				  (* if original then fmt_string "[Orig]" *)
@@ -1672,6 +1710,7 @@ and prtt_pr_h_formula_inst prog h =
 		  end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
+    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -1698,6 +1737,7 @@ and pr_h_formula_for_spec h =
   | DataNode ({h_formula_data_node = sv;
     h_formula_data_name = c;
     h_formula_data_derv = dr;
+    h_formula_data_split = split;
     h_formula_data_imm = imm;
     h_formula_data_arguments = svs;
     h_formula_data_holes = hs; (* An Hoa *)
@@ -1729,6 +1769,7 @@ and pr_h_formula_for_spec h =
     pr_angle (c^perm_str) pr_spec_var svs ;
     pr_imm imm;
     pr_derv dr;
+    pr_split split;
     if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1741,6 +1782,7 @@ and pr_h_formula_for_spec h =
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
 	  h_formula_thread_derv = dr;
+	  h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -1757,6 +1799,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv; fmt_string "::";
     pr_sharp_angle (c^perm_str) fmt_string [arg_str];
     pr_derv dr;
+    pr_split split;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
     if (!print_derv) then
@@ -1765,6 +1808,7 @@ and pr_h_formula_for_spec h =
   | ViewNode ({h_formula_view_node = sv; 
     h_formula_view_name = c; 
     h_formula_view_derv = dr;
+    h_formula_view_split = split;
     h_formula_view_imm = imm;
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
@@ -1788,6 +1832,7 @@ and pr_h_formula_for_spec h =
     if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
 (*    pr_imm imm;*)
     pr_derv dr;
+    pr_split split;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
     pr_prunning_conditions ann pcond;
@@ -1795,6 +1840,7 @@ and pr_h_formula_for_spec h =
   | HRel a ->  (pr_hrel_formula (HRel a))
   | HTrue -> fmt_bool true
   | HFalse -> fmt_bool false
+  | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
   | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -2173,6 +2219,12 @@ let rec string_of_formula_list_noparen l = match l with
 
 let string_of_formula_list l = "["^(string_of_formula_list_noparen l)^"]" ;;
 
+let rec string_of_formula_list_ln l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_formula h 
+  | h::t -> (string_of_formula h) ^ " ;\n" ^ (string_of_formula_list_noparen t)
+;;
+
 
 let string_of_formula_base (e:formula_base) : string =  poly_string_of_pr  pr_formula_base e
 
@@ -2539,6 +2591,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           begin
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
+          let lho = collect_pre_ho_vars ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
           let term_err = collect_term_err ctx in
@@ -2546,9 +2599,10 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
-          pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
+          pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp);
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
+          pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_spec_var pr_formula)) (lho);
           f b;
           fmt_print_newline ();
           fmt_close_box ();
@@ -2878,6 +2932,7 @@ let pr_estate (es : entail_state) =
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_wrap_test "es_heap: " is_empty_heap pr_h_formula es.es_heap;
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
+  pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_formula)) (es.es_ho_vars_map); 
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   (* pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars; *)
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
@@ -2887,6 +2942,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
   pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
+  pr_wrap_test "es_crt_holes: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_h_formula fmt_int)) (es.es_crt_holes); 
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_wrap_test "es_aux_conseq: "  CP.isConstTrue (pr_pure_formula) es.es_aux_conseq; 
@@ -3082,22 +3138,25 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_heap,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+    | Ctx e -> [(e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (ho_map,f,eh,ep,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
     let f1 = Cfout.tidy_print f in
     pr_formula_wrap f1;
     pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
+    pr_wrap_test "es_pure: " (fun _ -> false)  (pr_mix_formula) ep;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
+    pr_wrap_test "es_ho_vars_map: " (fun _ -> false)(* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map;  
     pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
-    (* pr_vwrap "es_trace: " pr_es_trace trace; *)
+  
+        (* pr_vwrap "es_trace: " pr_es_trace trace; *)
     (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *)
     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
@@ -3410,7 +3469,11 @@ let pr_view_decl v =
     | View_SPEC -> "_spec "
     | View_DERV -> "_derv "
   in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
+  let ho_str = match v.view_ho_vars with
+    (* | [] -> "" *)
+    | s -> "{"^String.concat "," (List.map string_of_ho_var  s)^"}" in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
+      "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
    pr_vwrap  "view_domains: "  fmt_string (String.concat ";" (List.map (fun (v,p1,p2) ->
      "(" ^ v ^ "," ^ (string_of_int p1) ^ "," ^ (string_of_int p2) ^ ")" ) v.view_domains));
@@ -3839,6 +3902,7 @@ let string_of_coerc_opt op c =
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
     ^"\n coercion_origin: "^(string_of_coercion_origin c.Cast.coercion_origin)
+    ^"\n coercion_kind: " ^ (string_of_lemma_kind c.Cast.coercion_kind)
     ^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
@@ -3915,8 +3979,10 @@ let rec string_of_barrier_decl_list l = match l with
 ;;
 
 (* An Hoa : print relations *)
-let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+let string_of_rel_decl_list rdecls =
+  String.concat "\n" (List.map string_of_rel_decl rdecls)
+      (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
+
 
 (* An Hoa : print axioms *)
 let string_of_axiom_decl_list adecls = 
@@ -4137,7 +4203,8 @@ let rec html_of_formula_exp e =
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
     | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
-	| P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"
+    | P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"
+    | P.Tup2 ((e1, e2), l) -> "<tup2>" ^ (html_of_formula_exp e1) ^ "," ^ (html_of_formula_exp e2) ^ "</tup2>"
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)
@@ -4280,7 +4347,8 @@ let rec html_of_h_formula h = match h with
 			String.concat html_op_conjconj (List.map html_of_h_formula args)						
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
-                h_formula_data_derv = dr;
+                                h_formula_data_derv = dr;
+                                h_formula_data_split = split;
 				h_formula_data_imm = imm;
                 h_formula_data_param_imm = ann_param; (* (andreeac) add param ann to html printer *)
 				h_formula_data_arguments = svs;
@@ -4296,7 +4364,8 @@ let rec html_of_h_formula h = match h with
       h_formula_thread_name = c;
       h_formula_thread_delayed = dl;
       h_formula_thread_resource = rsr;
-	  h_formula_thread_derv = dr;
+      h_formula_thread_derv = dr;
+      h_formula_thread_split = split;
       h_formula_thread_perm = perm; (*LDK*)
       h_formula_thread_origins = origs;
       h_formula_thread_original = original;
@@ -4308,6 +4377,7 @@ let rec html_of_h_formula h = match h with
 	| ViewNode ({h_formula_view_node = sv; 
 				h_formula_view_name = c; 
 				h_formula_view_derv = dr;
+				h_formula_view_split = split;
 				h_formula_view_imm = imm;
 				h_formula_view_arguments = svs; 
                                 h_formula_view_args_orig = svs_orig;  
@@ -4325,6 +4395,7 @@ let rec html_of_h_formula h = match h with
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
+  | HVar v-> "<b>HVar "^(string_of_spec_var v)^"</b>"
   | HRel (r, args, l) -> (* "<b>HRel</b>" ^ *) (string_of_spec_var r) ^ "(" ^ (match args with
       | [] -> ""
       | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"

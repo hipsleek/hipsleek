@@ -1,0 +1,49 @@
+/*
+  Use: -tp parahip
+*/
+
+//CountDownLatch
+
+pred_prim WAIT<b:bag((object,object))>.
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> 
+  & a>0 & b<0 & v notin S & v=tup2(c1,c2)
+ ->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c1,c2)}) & a>0 & b<0.
+
+//(1)
+//check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+//output one state
+
+/*
+
+BEFORE being simplified:
+CheckNorm (1) :  (exists c1_91,c2_92,x_86,S1_103: c1_91::CNT{}<a_87> * c2_92::CNT{}<b_88> * 
+x_86::WAIT{}<S1_103>&S1_103=union(S_89,{(c1_91,c2_92)}) & 0<a_87 & b_88<0 & 
+c1=c1_91 & flted_15_74=a_87 & c2=c2_92 & flted_15_73=b_88 & x=x_86 & 
+S=S_89 & flted_15_74=1 & flted_15_73+1=0 & S={}&{FLOW,(21,22)=__norm})[]
+
+AFTER being simplified:
+CheckNorm (1) :  c1::CNT{}<a_87> * c2::CNT{}<b_88> * x::WAIT{}<S1_103>&S1_103=union(S_89,
+{(c1,c2)}) & 0<a_87 & b_88<0 & flted_15_74=a_87 & flted_15_73=b_88 & 
+S=S_89 & flted_15_74=1 & flted_15_73+1=0 & S={}&{FLOW,(21,22)=__norm}[]
+
+*/
+
+//(2)
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> * c3::CNT<(-1)> & S={} & c2 != c3.
+// apply "wait-for" twice
+/*
+CheckNorm (1) :  c1::CNT{}<a_113> * c3::CNT{}<b_114> * x::WAIT{}<S1_140> * c2::CNT{}<b_96>&
+S1_140=union(S_115,{(c1,c3)}) & 0<a_113 & b_114<0 & a_95=a_113 & 
+flted_19_74=b_114 & S1_111=S_115 & S1_111=union(S_97,{(c1,c2)}) & 0<a_95 & 
+b_96<0 & flted_19_76=a_95 & flted_19_75=b_96 & S=S_97 & flted_19_76=1 & 
+flted_19_75+1=0 & flted_19_74+1=0 & S={} & c2!=c3&{FLOW,(21,22)=__norm}[]
+
+*/
+check_normalize emp & x+1<0.
+
+checkentail x+1<=0 |- false.
+
+checkentail S={x} & x+1<=0 |- false.

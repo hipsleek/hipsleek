@@ -519,6 +519,7 @@ sleek
 --eps
   baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
 
+====================================================================
 # baga-test-eps.slk --eps
 
 Unexpected: 13 14 15 

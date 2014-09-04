@@ -39,11 +39,20 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)
+
+type ho_split_kind =
+  | HO_SPLIT
+  | HO_NONE
+
+type ho_flow_kind =
+  | INFLOW
+  | OUTFLOW
+  | NEUTRAL
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -92,6 +101,12 @@ and primed =
   | Primed
   | Unprimed
 
+(* indicate whether lemma_split is applicable or not*)
+and split_ann =
+    SPLIT0 (* do not split, exact match - DEFAULT *)
+  | SPLIT1 (* always split *)
+  | SPLIT2 (* both split and match *)
+
 and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
@@ -129,6 +144,7 @@ let print_arg_kind i= match i with
 
 (* TODO : move typ here in future *)
 type typ =
+  | FORM
   | UNK 
   | TVar of int
   | AnnT
@@ -136,6 +152,7 @@ type typ =
   | Float
   | Int
   | INFInt
+  | Tup2 of typ * typ
   | NUM
   | Void
   | List of typ
@@ -153,6 +170,7 @@ type typ =
 
 let rec cmp_typ t1 t2=
   match t1,t2 with
+    | FORM, FORM
     | UNK, UNK
     | AnnT, AnnT
     | Bool, Bool
@@ -299,6 +317,15 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+(*Remove all blanks in a string*)
+let remove_blanks = Str.global_replace (Str.regexp " ") ""
+
+let string_of_split_ann a =
+  match a with
+    | SPLIT0 -> ""
+    | SPLIT1 -> "@S1"
+    | SPLIT2 -> "@S2"
+
 let string_of_heap_ann a =
   match a with
     | Accs -> "@A"
@@ -329,6 +356,18 @@ let string_of_term_ann a =
     | Fail f -> match f with
         | TermErr_May -> "TermErr_May"
         | TermErr_Must -> "TermErr_Must"
+
+
+let string_of_ho_flow_kind (k:ho_flow_kind) =
+  match k with
+    | INFLOW -> "(-)"
+    | OUTFLOW -> "(+)"
+    | NEUTRAL -> "(.)" (* or "" *)
+
+let string_of_ho_split_kind (k:ho_split_kind) =
+  match k with
+    | HO_SPLIT -> "@Split"
+    | HO_NONE -> ""
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -468,6 +507,7 @@ let set_entail_pos p = entail_pos := p
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
+  | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -476,6 +516,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -504,6 +545,7 @@ let is_HpT x =
 (* aphanumeric name *)
 let rec string_of_typ_alpha = function 
    (* may be based on types used !! *)
+  | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -514,6 +556,7 @@ let rec string_of_typ_alpha = function
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
   | Bptyp		  -> "Bptyp"
+  | Tup2 (t1,t2)  -> "tup2_"^(string_of_typ t1)^"_"^(string_of_typ t2)
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -592,6 +635,7 @@ let is_dont_care_var id =
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
+let nonef2 v1 v2 = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v
@@ -649,6 +693,12 @@ let preprocess_disjunctive_consequence = ref false
 let this = "this"
 
 let is_self_ident id = self=id
+
+let concrete_name = "concrete"
+let waitS_name = "waitS"
+let set_comp_name = "set_comp"
+let acyclic_name = "acyclic"
+let cyclic_name = "cyclic"
 
 let thread_name = "thread"  (*special thread id*)
 let thread_typ = Int  (*special thread id*)
@@ -716,6 +766,8 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
+
 let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
@@ -741,6 +793,8 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 
+(* Enable exhaustive normalization using lemmas *)
+let allow_exhaustive_norm = ref true
 
 let dis_show_diff = ref false
 
@@ -1292,7 +1346,7 @@ let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
 
 let dis_inv_baga () = 
-  print_endline_q "Disabling baga inv gen .."; 
+  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
   let _ = gen_baga_inv := false in
   ()
 
@@ -1305,7 +1359,7 @@ let dis_bk ()=
   ()
 
 let dis_pred_sat () = 
-  print_endline_q "Disabling pred sat .."; 
+  if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
   (* let _ = gen_baga_inv := false in *)
   let _ = prove_invalid := false in
   (*baga bk*)
@@ -1730,3 +1784,15 @@ let smt_return_must_on_error ()=
     (* let _ = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()
+
+let string_of_lemma_kind (l: lemma_kind) =
+    match l with
+      | LEM           -> "LEM"
+      | LEM_PROP      -> "LEM_PROP"
+      | LEM_SPLIT      -> "LEM_SPLIT"
+      | LEM_TEST      -> "LEM_TEST"
+      | LEM_TEST_NEW  -> "LEM_TEST_NEW"
+      | LEM_UNSAFE    -> "LEM_UNSAFE"
+      | LEM_SAFE      -> "LEM_SAFE"
+      | LEM_INFER     -> "LEM_INFER"
+      | LEM_INFER_PRED   -> "LEM_INFER_PRED"

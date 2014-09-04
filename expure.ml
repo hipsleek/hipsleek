@@ -43,6 +43,10 @@ let simplify lst =
   ) groups in
   lst
 
+(* 
+   TODO: This function does not support permissions on heap nodes.
+   Only data nodes with full permissions could have baga.
+*)
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->

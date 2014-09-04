@@ -125,12 +125,14 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
               IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
               IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+              IF.h_formula_heap_split = h0.IF.h_formula_heap2_split;
               IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
               IF.h_formula_heap_imm_param = hanns;
               IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
               IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
               IF.h_formula_heap_arguments = hargs;
+              IF.h_formula_heap_ho_arguments = [];
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
               IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
@@ -147,11 +149,13 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
                   IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
                   IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
                   IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+                  IF.h_formula_heap_split = h0.IF.h_formula_heap2_split;
                   IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
                   IF.h_formula_heap_imm_param = hanns;
                   IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
                   IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
                   IF.h_formula_heap_arguments = hargs;
+                  IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
                   IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
                   IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
                   IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -236,6 +240,12 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   (match (dim_unify d1 d2), (unify x1 x2 tl) with
                   | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
                   | _,(n_tl,_) -> (n_tl,None))
+              | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                    let n_tl, t5 = unify t1 t3 tl in
+                    let n_tl2, t6 = unify t2 t4 n_tl in
+                    match t5,t6 with
+                      | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                      | _ -> (n_tl2,None))
               | _,_ -> (tl,None)
             end
         )
@@ -294,6 +304,13 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
                 match (unify x1 x2 tl) with
                 | (n_tl,Some t) -> (n_tl,Some (List t))
                 | (n_tl,None) -> (n_tl,None)
+              )
+            | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                  let n_tl, t5 = unify t1 t3 tl in
+                  let n_tl2, t6 = unify t2 t4 n_tl in
+                  match t5,t6 with
+                    | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                    | _ -> (n_tl2,None)
               )
             | Array (x1,d1),Array (x2,d2) -> (
                 match (dim_unify d1 d2), (unify x1 x2 tl) with
@@ -406,22 +423,27 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
           with
             | Not_found ->
                   (try
-                    let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-                    in Int
+                    let _ = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+                    in Named c
                   with
-                    | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-                          if CF.view_prim_lst # mem c then Named c
-                          else
-                          (* if !inter then*)
-                          Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text = c ^ " is neither data, enum type, nor prim pred";
-                              }
-                              (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                                let _ = undef_data_types := (c, pos) :: !undef_data_types in
-                                Named c (* Store this temporarily *)*)
-                  ))
+                    | Not_found ->
+                          (try
+                            let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                            in Int
+                          with
+                            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
+                                  if CF.view_prim_lst # mem c then Named c
+                                  else
+                                    (* if !inter then*)
+                                    Err.report_error
+                                        {
+                                            Err.error_loc = pos;
+                                            Err.error_text = c ^ " is neither data, enum type, nor prim pred";
+                                        }
+                                        (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+                                          let _ = undef_data_types := (c, pos) :: !undef_data_types in
+                                          Named c (* Store this temporarily *)*)
+                          )))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
@@ -498,7 +520,14 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.FConst (_,pos) -> 
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)      
+      (n_tl,n_typ)
+  | IP.Tup2 ((p1,p2), pos) ->
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let (n_tl1,t1) = gather_type_info_exp prog p1 n_tl new_et in
+      let (new_et2, n_tl2) = fresh_tvar n_tl1 in
+      let (n_tl3,t2) = gather_type_info_exp_x prog p2 n_tl2 new_et2 in
+      let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
+      (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->
       let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in
@@ -1381,7 +1410,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_thread_label = pi;
                   IF.h_formula_thread_pos = pos } ->
       (* Follow IF.DataNode. May need TOCHECK *)
-      let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+      let dataNode = IF.mkHeapNode (v,p) c [] (* TODO:HO *) 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
       let n_tl = gather_type_info_heap prog dataNode tlist in
       let n_tl2 = gather_type_info_formula prog rsr n_tl false in
       let n_tl3 = gather_type_info_pure prog dl n_tl2 in
@@ -1404,3 +1433,4 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
+    | IF.HVar v -> (v,{sv_info_kind = FORM;id=0})::tlist

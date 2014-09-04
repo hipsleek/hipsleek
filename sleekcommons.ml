@@ -67,6 +67,7 @@ type command =
   | PredNormDisj of (ident list)
   | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
+  | CheckNorm of meta_formula
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
   | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
@@ -141,6 +142,7 @@ let string_of_command c = match c with
   | PredNormDisj _ -> "Pred Normal Disj"
   | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"
+  | CheckNorm _ -> "check_normalize"
   | BarrierCheck _ -> "BarrierCheck"
   | InferCmd _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  

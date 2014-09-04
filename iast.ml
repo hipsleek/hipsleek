@@ -73,6 +73,7 @@ and view_decl =
     { view_name : ident; 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
     mutable view_vars : ident list;
     mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;
@@ -551,6 +552,8 @@ let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
+let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
+let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 
 let find_empty_static_specs iprog = 
@@ -2731,10 +2734,10 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
@@ -2784,7 +2787,7 @@ let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2804,7 +2807,7 @@ let gen_normalize_lemma_comb ddef =
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in

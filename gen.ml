@@ -339,6 +339,12 @@ struct
       | [] -> false
       | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
 
+  let rec get_all_pairs ls = match ls with
+    | [] -> []
+    | c::cs -> 
+          let lst = List.map (fun x -> (c,x)) cs in
+          lst @ (get_all_pairs cs)
+
   let check_no_dups_eq eq n = not(check_dups_eq eq n)
 
   let subset_eq eq l1 l2 =
@@ -1387,7 +1393,7 @@ struct
   (* a singleton difference set *)
   let singleton_dset (e:ptr) : dpart = [[e]]
 
-  let is_dupl_dset (xs:dpart) : bool = 
+  let is_dupl_dset (xs:dpart) : bool =
     List.exists (check_dups) xs
 
   let is_mem_dset e (el:dpart): bool =
@@ -1457,7 +1463,7 @@ struct
     List.exists (is_conflict_list) s
 
   (* false result denotes contradiction *)
-  let is_sat_dset (xs:dpart) : bool = 
+  let is_sat_dset (xs:dpart) : bool =
     let r = not(is_dupl_dset xs) in
     begin
       (* print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r)); *)
@@ -1593,8 +1599,9 @@ struct
 	tasks # add_task_instance m1 0.
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
-    else 
-      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+    else
+      (* let _ = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
     if (!Globals.profiling) then

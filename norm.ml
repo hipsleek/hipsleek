@@ -160,7 +160,7 @@ let view_to_hprel_h_formula hf0=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf,[])
+      | CF.HEmp | CF.HVar _ -> (hf,[])
       | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "NORM.view_to_hprel_h_formula: not handle yet"
   in
   helper hf0
@@ -230,7 +230,7 @@ let hprel_to_view_h_formula hf0=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf)
+      | CF.HEmp | CF.HVar _ -> (hf)
       | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> hf
   in
   helper hf0
@@ -296,7 +296,7 @@ let rec look_for_anonymous_h_formula_x hf0=
       | Hole _ | CF.FrmHole _
       | HTrue
       | HFalse
-      | HEmp -> []
+      | HEmp | HVar _ -> []
   in
   let svl = CP.remove_dups_svl (helper hf0) in
   svl

@@ -29,8 +29,10 @@ let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
-type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
-        TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
+type ann = ConstAnn of heap_ann 
+           | PolyAnn of spec_var
+           | TempAnn of ann 
+           | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
            | NoAnn
 
 (* type view_arg = SVArg of spec_var | AnnArg of ann *)
@@ -68,8 +70,16 @@ let is_self_spec_var sv = match sv with
 let is_res_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = res_name
 
+let is_tup2_typ sv = match sv with
+  | SpecVar (Globals.Tup2 _,_,_) -> true
+  | _ -> false
+
 let is_bag_typ sv = match sv with
   | SpecVar (BagT _,_,_) -> true
+  | _ -> false
+
+let is_bag_tup2_typ sv = match sv with
+  | SpecVar (BagT t,_,_) -> (match t with | Globals.Tup2 _ -> true | _ -> false)
   | _ -> false
 
 let is_rel_typ sv = match sv with
@@ -218,6 +228,7 @@ and exp =
   | InfConst of (ident * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Bptriple of ((spec_var * spec_var * spec_var) * loc) (*triple for bounded permissions*)
+  | Tup2 of ((exp * exp) * loc) (*a pair*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -959,6 +970,7 @@ let rec get_exp_type (e : exp) : typ =
   | FConst _ -> Float
   | AConst _ -> AnnT
   | Tsconst _ -> Tree_sh
+  | Tup2  ((e1,e2),_) -> Globals.Tup2 (get_exp_type e1,get_exp_type e2)
   | Bptriple  _ -> Bptyp
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
@@ -1188,6 +1200,7 @@ and afv (af : exp) : spec_var list =
     | InfConst _
     | Tsconst _
     | FConst _ -> []
+    | Tup2 ((a1,a2),_) -> combine_avars a1 a2
     | Bptriple ((ec,et,ea),_) -> [ec;et;ea]
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
@@ -1524,6 +1537,15 @@ and is_bag (e : exp) : bool =
         if (is_bag_typ sv) then true else false
     | _ -> false
 
+(* ignore bag vars *)
+and is_bag_weak (e : exp) : bool =
+  match e with
+    | Bag _
+    | BagUnion _
+    | BagIntersect _
+    | BagDiff _ -> true
+    | _ -> false
+
 and is_list (e : exp) : bool =
   match e with
     | List _
@@ -1815,7 +1837,8 @@ and is_exp_arith (e:exp) : bool=
   | List _ | ListCons _ | ListHead _ | ListTail _
   | ListLength _ | ListAppend _ | ListReverse _ -> false
   | Tsconst _ -> false
-    | Bptriple _ -> false
+  | Tup2  _ -> false
+  | Bptriple _ -> false
   | Func _ -> true
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
 
@@ -2520,6 +2543,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
       | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
       | (Tsconst(t1,_), Tsconst(t2,_)) -> Tree_shares.Ts.eq t1 t2
       | (Subtract(e11, e12, _), Subtract(e21, e22, _))
+      | (Tup2 ((e11,e12),_), Tup2  ((e21,e22),_))
       | (Max(e11, e12, _), Max(e21, e22, _))
       | (Min(e11, e12, _), Min(e21, e22, _))
       | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) && (helper e12 e22)
@@ -2770,6 +2794,7 @@ and pos_of_exp (e : exp) = match e with
   | AConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | Tup2 (_,p)
   | Bptriple (_,p)
   | Add (_, _, p) 
   | Subtract (_, _, p) 
@@ -3248,6 +3273,9 @@ and e_apply_subs sst e = match e with
       Bptriple ((subs_one sst ec,
                  subs_one sst et,
                  subs_one sst ea),pos)
+  | Tup2 ((e1,e2),pos) ->
+      Tup2 ((e_apply_subs sst e1,
+      e_apply_subs sst e2),pos)
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1, e_apply_subs sst a2, pos))
@@ -3300,6 +3328,9 @@ and e_apply_one (fr, t) e = match e with
       Bptriple ((e_apply_one_spec_var (fr, t) ec,
                  e_apply_one_spec_var (fr, t) et,
                  e_apply_one_spec_var (fr, t) ea),pos)
+  | Tup2 ((e1,e2),pos) ->
+        Tup2 ((e_apply_one (fr, t) e1,
+        e_apply_one (fr, t) e2),pos)
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos))
@@ -3421,6 +3452,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
   | AConst _ 
   | Bptriple _ (*TOCHECK*)
   | Tsconst _ -> e
+  | Tup2 ((a1,a2),pos) -> Tup2 ((a_apply_par_term sst a1,a_apply_par_term sst a2),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -3535,6 +3567,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | FConst _ 
   | Bptriple _ -> e
   | Tsconst _ -> e
+  | Tup2 ((a1,a2),pos) -> Tup2 ((a_apply_one_term (fr,t) a1,a_apply_one_term (fr,t) a2),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -3586,6 +3619,10 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | AConst _ 
     | Tsconst _ -> (false,e)
     | Bptriple _ -> (false,e) (* TOCHECK *)
+    | Tup2 ((a1,a2),pos) ->
+        let b1, r1 = helper crt_var a1 in
+        let b2, r2 = helper crt_var a2 in
+        ((b1||b2), Tup2 ((r1, r2), pos))
     | Add (a1, a2, pos) -> 
         let b1, r1 = helper crt_var a1 in
         let b2, r2 = helper crt_var a2 in
@@ -4703,6 +4740,7 @@ let find_rel_constraints (f:formula) desired :formula =
   
 (*
   Drop bag and list constraints for satisfiability checking.
+  Strict: drop bag vars as well
 *)
 let rec drop_bag_formula (f0 : formula) : formula = match f0 with
   | BForm (bf,lbl) -> BForm (drop_bag_b_formula bf, lbl)
@@ -4861,6 +4899,7 @@ and e_apply_one_exp (fr, t) e = match e with
   | Bptriple _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Level (sv, pos) -> if eq_spec_var sv fr then t else e
+  | Tup2 ((a1, a2), pos) -> Tup2 ((e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
@@ -5083,10 +5122,11 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | Level _ 
     | IConst _ 
     | InfConst _ 
-	| AConst _
-	| Tsconst _
+    | AConst _
+    | Tsconst _
     | FConst _ -> true
-	| Bptriple _ -> false (*TOCHECK*)
+    | Bptriple _ -> false (*TOCHECK*)
+    | Tup2 ((e1,e2),_)
     | Add (e1,e2,_)
     | Subtract (e1,e2,_) -> false
     | Mult _
@@ -5229,6 +5269,8 @@ and simp_mult_x (e : exp) :  exp =
       | Tsconst _ 
       | Bptriple _ 
       | AConst _ -> e0	  
+      |  Tup2 ((e1, e2), l) ->
+             Tup2 ((acc_mult m e1, acc_mult m e2), l)
       | Var (v, l) ->
             (match m with 
               | None -> e0 
@@ -5303,6 +5345,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  Level _ 
     |  Tsconst _
     |  Bptriple _
+    |  Tup2 _ (*TOCHECK*)
     |  InfConst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
@@ -5455,6 +5498,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   | InfConst _
   | Tsconst _
   | Bptriple _
+  | Tup2 _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -5498,6 +5542,10 @@ and purge_mult_x (e :  exp):  exp = match e with
   | Div (e1, e2, l) ->
         let t1 = purge_mult e1 in
         let t2 = purge_mult e2 in
+        if (!Globals.no_float_simpl) then
+          (*Avoid losing precision, e.g. 1/3 = 0.33333*)
+          Div (t1, t2, l)
+        else
         begin
           match t1 with
             | IConst (v1, _) ->
@@ -5722,7 +5770,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (i:int) (pf : formula) :  formula =   
-  Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
+  Debug.no_1 ("arith_simplify LHS") !print_formula !print_formula 
       arith_simplify_x pf
 
 
@@ -5773,8 +5821,12 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         | InfConst _ 
         | AConst _
         | Tsconst _ 
-          | Bptriple _ 
+        | Bptriple _ 
         | FConst _ -> (e,f_comb [])
+        | Tup2 ((e1,e2),l) ->
+            let (ne1,r1) = helper new_arg e1 in
+            let (ne2,r2) = helper new_arg e2 in
+            (Tup2 ((ne1,ne2),l),f_comb[r1;r2])
         | Add (e1,e2,l) ->
             let (ne1,r1) = helper new_arg e1 in
             let (ne2,r2) = helper new_arg e2 in
@@ -5871,8 +5923,12 @@ let rec transform_exp f e  =
       | IConst _
       | AConst _
       | Tsconst _
-		| Bptriple _
+      | Bptriple _
       | FConst _ -> e
+      | Tup2 ((e1,e2),l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Tup2 ((ne1,ne2),l)
       | Add (e1,e2,l) ->
           let ne1 = transform_exp f e1 in
           let ne2 = transform_exp f e2 in
@@ -6315,7 +6371,8 @@ let rec get_head e = match e with
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
     | Tsconst (f,_) -> Tree_shares.Ts.string_of f
-	| Bptriple _ -> "Bptriple"
+    | Bptriple _ -> "Bptriple"
+    | Tup2 ((e,_),_)
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | TypeCast (_, e, _)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -6372,6 +6429,7 @@ and norm_exp (e:exp) =
     | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ 
     | Bptriple _
     | Level _ -> e
+    | Tup2 ((e1,e2),l) -> Tup2 ((helper e1,helper e2),l) 
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -7912,6 +7970,7 @@ and is_bag_b_constraint (pf,_) = match pf with
         -> Some true
     | _ -> None
 
+(* Strict: include bag vars *)
 and is_bag_constraint (e: formula) : bool =  
   let f_e e = match e with
     | Bag _
@@ -8810,6 +8869,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Bptriple _ -> failwith ("not expecting Bptriple, expecting var"^ (!print_sv v) )
+      | Tup2 ((e1,e2),p) -> Tup2 ((helper e1 rhs_e,helper e2 rhs_e),p)
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
@@ -9452,6 +9512,40 @@ let is_lexvar (f:formula) : bool =
                 | LexVar _ -> true
                 | _ -> false)
     | _ -> false
+
+let is_cyclic_rel_x (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.cyclic_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
+
+let is_cyclic_rel (f:formula) : bool =
+  Debug.no_1 "is_cyclic_rel" !print_formula string_of_bool
+      is_cyclic_rel_x f
+
+let is_waitS_rel (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.waitS_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
+
+let is_concrete_rel (f:formula) : bool =
+  (match f with
+    | BForm ((b,_),_) -> 
+          (match b with
+            | RelForm (SpecVar (_,id,_),_,pos) ->
+                  if (id = Globals.concrete_name) then true
+                  else false
+            | _ -> false)
+    | _ -> false)
 
 let rec has_lexvar (f: formula) : bool =
   match f with
@@ -11370,7 +11464,644 @@ and translate_waitlevel_pure (pf : formula) : formula =
   Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf
 
-let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
+(* Strict: do not drop bag vars *)
+and drop_bag_formula_weak_x (pf : formula) : formula =
+  let f_bf arg bf =
+    let pf, lbl = bf in
+    (match pf with
+      | BagIn _
+      | BagNotIn _
+      | BagSub _
+      | BagMin _
+      | BagMax _
+      | ListIn _
+      | ListNotIn _
+      | ListAllN _
+      | ListPerm _ -> Some ((mkTrue_p no_pos,lbl),[])
+      | Eq (e1, e2, pos)
+      | Neq (e1, e2, pos) ->
+	    if (is_bag_weak e1) || (is_bag_weak e2) || (is_list e1) || (is_list e2) then
+	      Some ((mkTrue_p no_pos,lbl),[])
+	    else
+	      Some (bf,[])
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, _ = trans_formula pf arg f f_arg f_comb in
+  npf
+
+and drop_bag_formula_weak (pf : formula) : formula =
+  Debug.no_1 "drop_bag_formula_weak" !print_formula !print_formula
+      drop_bag_formula_weak_x pf
+
+(* Weak: ignore bag vars *)
+and is_bag_constraint_weak_x (e: formula) : bool =  
+  let f_e e = match e with
+    | Bag _
+    | BagUnion _
+    | BagIntersect _
+    | BagDiff _ -> Some true
+    | _ -> Some false
+  in
+  let or_list = List.fold_left (||) false in
+  fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
+
+and is_bag_constraint_weak (e: formula) : bool =  
+  Debug.no_1 "is_bag_constraint_weak" !print_formula string_of_bool
+  is_bag_constraint_weak_x (e: formula)
+(*
+  Convert: tup2(a1,a2) --> tup2_a1_a2.
+  Return: new formula * (tup2_a1_a2, tup2(a1,a2)) list
+*)
+and translate_tup2_pure_x (pf : formula) : formula * ((spec_var * exp) list) =
+  let f_e arg e =
+    match e with
+      | Tup2 ((e1,e2),l) ->
+            let str1 = !print_exp e1 in
+            let str2 = !print_exp e2 in
+            (*Could generate a new fresh variable instead.
+              However, reuse e1,e2 in the new name to
+              make it more meaningful to read *)
+            let id = "tup2_" ^ str1 ^ "_" ^ str2 in
+            let id = remove_blanks id in
+            let sv = mk_spec_var id in
+            Some (Var (sv,l), [(sv,e)])
+      | _ -> None
+  in
+  let f = (nonef2,nonef2,f_e) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let nfp, ls = trans_formula pf arg f f_arg f_comb in
+  (nfp,ls)
+
+
+and translate_tup2_pure (pf : formula) : formula * ((spec_var * exp) list) =
+  let pr1 = pr_list (pr_pair !print_sv !print_exp) in
+  let pr_out = pr_pair !print_formula pr1 in
+  Debug.no_1 "translate_tup2_pure" !print_formula pr_out
+      translate_tup2_pure_x pf
+
+(*
+  Convert: A & v1=tup2(a1,a2) |- B & v2=tup2(b1,b2)
+  into: A & v1=tup2_a1_a2 & (a1=b1 & a2=b2 => tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
+  or A & v1=tup2_a1_a2 & (a1!=b1 | a2!=b2 | tup2_a1_a2=tup2_b1_b2) |- B & v2=tup2_b1_b2
+
+  For v1=tup2(a1,a2) and v2=tup2(b1,b2), infer the following
+  (a1=b1 & a2=b2 => v1=v2) & (a1!=b1 | a2!=b2 => v1!=v2)
+*)
+and translate_tup2_imply_x (ante : formula) (conseq : formula) : formula * formula =
+  let ante, a_ls = translate_tup2_pure ante in
+  let conseq, c_ls = translate_tup2_pure conseq in
+  let ls = Gen.BList.remove_dups_eq (fun (v1,e1) (v2,e2) -> eq_spec_var v1 v2) (a_ls@c_ls) in
+  let translate_one_pair (v1,e1) (v2,e2) : formula =
+    match e1,e2 with
+      | Tup2 ((a1,a2),_), Tup2 ((b1,b2),_) ->
+            (* (a1!=b1 | a2!=b2 | v1=v2) *)
+            let f1 = mkNeqExp a1 b1 no_pos in
+            let f2 = mkNeqExp a2 b2 no_pos in
+            let f3 = mkEqVar v1 v2 no_pos in
+            let f12 = mkOr f1 f2 None no_pos in
+            let f123 = mkOr f12 f3 None no_pos in
+            (* (a1!=b1 | a2!=b2 => v1!=v2) 
+               == (a1=b1 & a2=b2) | v1!=v2
+            *)
+            let ff1 = mkEqExp a1 b1 no_pos in
+            let ff2 = mkEqExp a2 b2 no_pos in
+            let ff3 = mkNeqVar v1 v2 no_pos in
+            let ff12 = mkAnd ff1 ff2 no_pos in
+            let ff123 = mkOr ff12 ff3 None no_pos in
+            (mkAnd f123 ff123 no_pos)
+      | _ -> report_error no_pos ("translate_one_pair: expected Tup2 only\n")
+  in
+  let pairs = Gen.BList.get_all_pairs ls in
+  let new_ante = List.fold_left (fun res (p1,p2) ->
+      let p_f = translate_one_pair p1 p2 in
+      mkAnd res p_f no_pos) ante pairs
+  in
+  (new_ante,conseq)
+
+and translate_tup2_imply (ante : formula) (conseq : formula) : formula * formula =
+  let pr_out = pr_pair !print_formula !print_formula in
+  Debug.no_2 "translate_tup2_imply" !print_formula !print_formula pr_out
+  translate_tup2_imply_x ante conseq
+
+(* Check whether the bag v is concrete in the formula pf *)
+and is_concrete_bag_pure_x (pf : formula) (v:spec_var) : bool =
+  (*Find all logically equal variables of v*)
+  let vars = find_closure_pure_formula v pf in
+  let f_bf bf =
+    let pf, _ = bf in
+    (match pf with
+      | Eq (e1,e2,pos) ->
+            (match e1,e2 with
+              | Var (sv,_), Bag (el,_)
+              | Bag (el,_), Var (sv,_) ->
+                    if (Gen.BList.mem_eq eq_spec_var sv vars) then Some true
+                    else None
+              | _ -> None)
+      | _ -> None)
+  in
+  fold_formula pf (nonef, f_bf, nonef) or_list
+
+and is_concrete_bag_pure (pf : formula) (v:spec_var) : bool =
+  Debug.no_2 "is_concrete_bag_pure" !print_formula !print_sv string_of_bool
+      is_concrete_bag_pure_x pf v
+(*
+  Identify concrete bag constraints
+  Input: B=union(S1,S2) & S1={a} & S2={b}
+  Output: [(S1,{a}), (S2,{b})]
+*)
+
+and get_concrete_bag_pure_x (pf : formula) : (spec_var * exp list) list =
+  let f_bf arg bf =
+    let pf, _ = bf in
+    (match pf with
+      | Eq (e1,e2,pos) ->
+            (match e1,e2 with
+              | Var (sv,_), Bag (el,_)
+              | Bag (el,_), Var (sv,_) -> Some (bf, [sv,el])
+              | _ -> Some (bf,[]))
+      | _ -> None)
+  in
+  let f_f arg pf =
+    match pf with
+      | Or _ -> Some (pf,[])
+      | _ -> None
+  in
+  let f = (f_f,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let _, ls = trans_formula pf arg f f_arg f_comb in
+  ls
+
+and get_concrete_bag_pure (pf : formula) : (spec_var * exp list) list =
+  let pr_out = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_1 "get_concrete_bag_pure" !print_formula pr_out
+      get_concrete_bag_pure_x pf
+
+(* and is_concrete_bag_exp e : bool = *)
+(*   (match e with *)
+(*     | Bag (exps,_) -> *)
+(*           List.forall  *)
+(*     | _ -> false) *)
+
+(*
+  pf: B=union(S1,S2) & S1={a} & S2={b}
+  args: [(S1,{a}), (S2,{b})]
+  Out: B=bag{a,b} & S1={a} & S2={b}
+*)
+and apply_concrete_bag_pure_x (f0 : formula) (args: (spec_var * exp list) list): formula =
+  (* Check whether x is concrete in f0 given args*)
+  let helper_one x =
+    (match x with
+      | Var (v2,_) ->
+            (try
+              let vars = find_closure_pure_formula v2 f0 in
+              let (_, exps) = List.find (fun (v1,exps) -> Gen.BList.mem_eq eq_spec_var v1 vars) args in
+              (*replace v2 by its concrete value*)
+              Some exps
+            with Not_found -> None)
+      | Bag (es,_) -> Some es
+      | _ -> None)
+  in
+  let f_bf arg bf =
+    let pf, lbl = bf in
+    (match pf with
+      | Eq (e1,e2,pos) ->
+            (match e1,e2 with (*Also need to support BagIntersect and BagDiff*)
+              | Var (sv,l1), BagUnion (el,l2)
+              | BagUnion (el,l2), Var (sv,l1) ->
+                    let rec helper el : (bool * exp list) =
+                      (match el with
+                        | [] -> (true, [])
+                        | x::xs ->
+                              let nx = helper_one x in
+                              (match nx with
+                                | None -> (false,[])
+                                | Some x2 ->
+                                      let b,nxs = helper xs in
+                                      (b,x2@nxs)))
+                    in
+                    let flag,nel = helper el in
+                    if (flag) then
+                      (*All elements in el are conrete.
+                        Convert union into a big bag*)
+                      let npf = Eq (Var (sv,l1),Bag (nel,l2),pos) in
+                      let nbf = npf, lbl in
+                      Some (nbf,[]) (*dummy []*)
+                    else
+                      (*Failed to concretize*)
+                      Some (bf,[]) (*dummy []*)
+              | Var (sv,l1), BagDiff (e1,e2,l2)
+              | BagDiff (e1,e2,l2), Var (sv,l1) ->
+                    let ne1 = helper_one e1 in
+                    let ne2 = helper_one e2 in
+                    (match ne1,ne2 with
+                      | Some xs1, Some xs2 ->
+                            (*diff(xs1,xs2) : trust the eqExp_f : TOCHECK *)
+                            let x = Gen.BList.difference_eq (eqExp_f eq_spec_var) xs1 xs2 in
+                            let npf = Eq (Var (sv,l1),Bag (x,l2),pos) in
+                            let nbf = npf, lbl in
+                            Some (nbf,[]) (*dummy []*)
+                      | _ ->
+                            (*Failed to concretize*)
+                            Some (bf,[])) (*dummy []*)
+              | _ -> Some (bf,[]) (*dummy []*)
+            )
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let nf, _ = trans_formula f0 arg f f_arg f_comb in
+  nf
+
+and apply_concrete_bag_pure (pf : formula) (args: (spec_var * exp list) list): formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_2 "apply_concrete_bag_pure" !print_formula pr1 !print_formula
+      apply_concrete_bag_pure_x pf args
+
+(*
+  Attempt to concretize bags constraints, wherever possible.
+  E.g.
+  B=union(S1,S2) & S1={a} & S2={b}
+  ==>
+  B=union({a},{b}) & S1={a} & S2={b}
+  B={a,b} & S1={a} & S2={b}
+
+  Method: a fixpoint operation over two phases:
+  (1) get_concrete_bag_pure
+  (2) if fixpoint reached -> stop.
+  Otherwise, attemp to do concretization
+*)
+
+and concretize_bag_pure_x (pf : formula) : formula =
+  let rec helper_loop (pf : formula) (args: (spec_var * exp list) list): formula =
+    let ls = get_concrete_bag_pure pf in
+    let vs,_ = List.split args in
+    let new_vs,_ = List.split ls in
+    if (Gen.BList.difference_eq eq_spec_var new_vs vs) =[] then
+      pf (* Reach a fixpoint*)
+    else
+      (*if found new concrete vars --> iterate*)
+      let npf = apply_concrete_bag_pure pf ls in
+      helper_loop npf ls
+  in
+  (*Ensure do at least once, e.g. for C=diff({1,2,3},{3,4,5}) *)
+  let pf = apply_concrete_bag_pure pf [] in
+  helper_loop pf []
+
+and concretize_bag_pure (pf : formula) : formula =
+  Debug.no_1 "concretize_bag_pure" !print_formula !print_formula
+      concretize_bag_pure_x pf
+
+(* Convert all cyclic(B) into acyclic(B) *)
+and from_cyclic_to_acyclic_rel_pure_x (pf : formula) : formula =
+  let f_bf arg bf =
+    let pf, lbl = bf in
+    (match pf with
+      | RelForm (SpecVar (t,id,pr),exps,pos) ->
+            (*convert*)
+            if (id = Globals.cyclic_name) then
+              let npf = RelForm (SpecVar (t,Globals.acyclic_name,pr),exps,pos) in 
+              Some ((npf,lbl), [])
+            else Some (bf, [])
+      | _ -> None)
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, _ = trans_formula pf arg f f_arg f_comb in
+  npf
+
+and from_cyclic_to_acyclic_rel_pure (pf : formula) : formula =
+  Debug.no_1 "from_cylic_to_acyclic_rel_pure" !print_formula !print_formula
+  from_cyclic_to_acyclic_rel_pure_x pf
+
+(*
+  pf: (A & acylic(X) & B)
+  rel_name: acylic
+  out: (A&B, [acylic(X)])
+*)
+and extract_rel_pure_x (pf : formula) (rel_name : spec_var): formula * (p_formula list)  =
+  let f_bf arg bf =
+    let pf, _ = bf in
+    (match pf with
+      | RelForm (sv,_,pos) ->
+            (*extract*)
+            if (eq_spec_var sv rel_name) then Some (mkTrue_b pos, [pf])
+            else Some (bf, [])
+      | _ -> None)
+  in
+  let f_f arg pf =
+    match pf with
+      | Or _ ->
+            (* let _ = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in *)
+            Some (pf,[])
+      | _ -> None
+  in
+  let f = (f_f,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, ls = trans_formula pf arg f f_arg f_comb in
+  (npf,ls)
+
+and extract_rel_pure (pf : formula) (rel_name : spec_var): formula * (p_formula list)  =
+  let pr_out = pr_pair !print_formula (pr_list !print_p_formula) in
+  Debug.no_2 "extract_rel_pure" !print_formula !print_sv pr_out
+  extract_rel_pure_x pf rel_name
+
+(* Extract cylcic(B) from pf *)
+and extract_cyclic_rel_pure_x (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.cyclic_name in
+  extract_rel_pure pf rel_sv
+
+and extract_cyclic_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let pr_out = pr_pair !print_formula (pr_list !print_p_formula) in
+  Debug.no_1 "extract_cyclic_rel_pure" !print_formula pr_out
+  extract_cyclic_rel_pure_x pf
+
+and extract_waitS_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.waitS_name in
+  extract_rel_pure pf rel_sv
+
+and extract_concrete_rel_pure (pf : formula) : formula * (p_formula list)  =
+  let rel_sv = mk_spec_var Globals.concrete_name in
+  extract_rel_pure pf rel_sv
+
+
+(*
+  Check whether relation cylcic(B) is concrete:
+  - B is a bag constraints
+  - B is concrete in pf
+*)
+and check_concrete_cyclic_rel_pure_x (pf : formula) (rels: p_formula list) : bool  =
+  let concrete_bags = get_concrete_bag_pure pf in
+  let concrete_vars, _ = List.split concrete_bags in
+  let check_concrete_one_rel rel =
+    let str = !print_p_formula rel in
+    match rel with
+      | RelForm (sv,exps,pos) ->
+            if (List.length exps !=1) then
+              report_error no_pos ("extract_cyclic_rel_pure: expect a single arg in " ^ str ^ " ! \n")
+            else
+              let e = List.hd exps in
+              (match e with
+                | Var (sv,_) ->
+                      if (is_bag_tup2_typ sv) then
+                        let vars = find_closure_pure_formula sv pf in
+                        let res = Gen.BList.intersect_eq eq_spec_var vars concrete_vars in
+                        (res!=[])
+                      else report_error no_pos ("extract_cyclic_rel_pure: expect v of typ Tup2 in " ^ str ^ " !\n")
+                | Bag _ -> true (*concrete bag*) 
+                | _ -> report_error no_pos ("extract_cyclic_rel_pure: expect cyclic(v)! \n"))
+      | _ -> report_error no_pos ("extract_cyclic_rel_pure: expecting RelForm! \n")
+  in
+  (*variables to check for concreteness*)
+  let res = and_list (List.map check_concrete_one_rel rels) in
+  res
+
+and check_concrete_cyclic_rel_pure (pf : formula) (rels: p_formula list) : bool  =
+  let pr1 = pr_list !print_p_formula in
+  Debug.no_2 "check_concrete_cyclic_rel_pure" !print_formula pr1 string_of_bool
+  check_concrete_cyclic_rel_pure_x pf rels
+
+(* Check whether there is cyclic(B) *)
+and has_cyclic_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.cyclic_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+and has_cyclic_rel_pure f0 =
+  Debug.no_1 "has_cyclic_rel_pure" !print_formula string_of_bool
+      has_cyclic_rel_pure_x f0
+
+(* Check whether there is acyclic(B) *)
+and has_acyclic_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.acyclic_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+and has_acyclic_rel_pure f0 =
+  Debug.no_1 "has_acyclic_rel_pure" !print_formula string_of_bool
+      has_acyclic_rel_pure_x f0
+
+and has_waitS_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.waitS_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+(* Whether fo includes a relation waitS(...) *)
+and has_waitS_rel_pure f0 =
+  Debug.no_1 "has_waitS_rel_pure" !print_formula string_of_bool
+      has_waitS_rel_pure_x f0
+
+and has_concrete_rel_pure_x f0 =
+  let f_bf bf = 
+    let pf,_ = bf in
+    (match pf with
+      | RelForm (SpecVar (_,id,_),_,pos) ->
+            if (id = Globals.concrete_name) then Some true
+            else None
+      | _ -> None)
+  in
+  fold_formula f0 (nonef, f_bf, nonef) or_list
+
+(* Whether fo includes a relation concrete(S)*)
+and has_concrete_rel_pure f0 =
+  Debug.no_1 "has_concrete_rel_pure" !print_formula string_of_bool
+      has_concrete_rel_pure_x f0
+
+(*
+  Expect: waitS(G,S,d)
+  - rel is a RelForm
+  - #exps = 3
+  - G is of typ Tup2
+  - S is concrete (i.e. it or its closure is in the concrete_bags)
+  (sv closure is found in f)
+  - G = {tup2(c,d) | c in S}
+
+  Out: the formula forall (v1,v2) \in B. v1<v2
+*)
+and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula) : formula =
+  let str = !print_p_formula rel in
+  (match rel with
+    | RelForm (sv,exps,pos) ->
+          if (List.length exps !=3) then
+            report_error no_pos ("create_waitS_rel: expect three args in " ^ str ^ " ! \n")
+          else
+            let g = List.hd exps in
+            let s = List.hd (List.tl exps) in
+            let d = List.hd (List.tl (List.tl exps)) in
+            (match s with
+              | Var (sv,_) ->
+                    (*Find all variable equal to sv*)
+                    let vars = find_closure_pure_formula sv f in
+                    if (is_bag_typ sv) then
+                      (try
+                        let _, exps = (List.find (fun (v1,_) -> Gen.BList.mem_eq eq_spec_var v1 vars) concrete_bags) in
+                        (*consistent*)
+                        let tups = List.fold_left (fun res e ->
+                            let tup = Tup2 ((e,d),no_pos) in
+                            tup::res) [] exps
+                        in
+                        let comprehension = Bag (tups, no_pos) in
+                        mkEqExp g comprehension no_pos
+                      with Not_found ->
+                          (*If the concrete bags cannot be found, keep the relation *)
+                          (* let _ = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in *)
+                          BForm ((rel, None) , None)
+                      )
+                    else
+                      report_error no_pos ("create_waitS_rel: expect v of typ Bag in " ^ str ^ " !\n")
+              | _ -> report_error no_pos ("create_waitS_rel: expect waitS(G,S,d)! \n"))
+    | _ -> report_error no_pos ("create_waitS_rel: expecting RelForm! \n"))
+
+and create_waitS_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula) : formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_3 "create_waitS_rel"
+      pr1
+      !print_formula
+      !print_p_formula
+      !print_formula
+      create_waitS_rel_x concrete_bags f rel
+
+(*
+  Expect: acylic(B)
+  - rel is a RelForm
+  - #exps = 1
+  - sv is of typ Tup2
+  - sv is concrete (i.e. it or its closure is in the concrete_bags)
+  (sv closure is found in f)
+
+  Out: the formula forall (v1,v2) \in B. v1<v2
+*)
+and create_acyclic_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula)  : formula =
+  let str = !print_p_formula rel in
+  (match rel with
+    | RelForm (sv,exps,pos) ->
+          if (List.length exps !=1) then
+            report_error no_pos ("create_acyclic_rel: expect a single arg in " ^ str ^ " ! \n")
+          else
+            let e = List.hd exps in
+            (match e with
+              | Var (sv,_) ->
+                    (*Find all variable equal to sv*)
+                    let vars = find_closure_pure_formula sv f in
+                    if (is_bag_tup2_typ sv) then
+                      (try
+                        let _, exps = (List.find (fun (v1,_) -> Gen.BList.mem_eq eq_spec_var v1 vars) concrete_bags) in
+                        (*consistent*)
+                        List.fold_left (fun res e ->
+                        match e with
+                          | Tup2 ((e1,e2),_) ->
+                                let lt_f = mkLtExp e1 e2 no_pos in
+                                mkAnd res lt_f no_pos
+                          | _ -> report_error no_pos ("create_acyclic_rel: expect Tup2 only !\n")
+                        ) (mkTrue no_pos) exps
+                      with Not_found ->
+                          (*If the concrete bags cannot be found, keep the relation *)
+                          BForm ((rel, None) , None)
+                          (* report_error no_pos ("create_acyclic_rel: expect concrete " ^ (!print_sv sv) ^ " !\n") *)
+                      )
+                    else
+                      report_error no_pos ("create_acyclic_rel: expect v of typ Tup2 in " ^ str ^ " !\n")
+              | _ -> report_error no_pos ("create_acyclic_rel: expect acyclic(v)! \n"))
+    | _ -> report_error no_pos ("create_acyclic_rel: expecting RelForm! \n"))
+
+and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (rel : p_formula) : formula =
+  let pr1 = pr_list (pr_pair !print_sv (pr_list !print_exp)) in
+  Debug.no_3 "create_acyclic_rel"
+      pr1
+      !print_formula
+      !print_p_formula
+      !print_formula
+      create_acyclic_rel_x concrete_bags f rel
+
+
+(*
+  forall acyclic(B) in f.
+  (1) B is a set of pairs. Otherwise, undefined (error)
+  (2) B is concrete. Otherwise, undefined
+  then, forall (v1,v2) \in B. v1<v2
+
+  TODO: if B is partially concrete -> check its concrete part.
+*)
+and translate_acyclic_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
+  (*attempt to concretize bag constraints*)
+  let concrete_bags = get_concrete_bag_pure f in
+  (*extract acyclic relations, and translate them*)
+  let rel_sv = mk_spec_var Globals.acyclic_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let fs = List.map (create_acyclic_rel concrete_bags nf) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  nf
+
+and translate_acyclic_pure (f: formula) : formula =
+  Debug.no_1 "translate_acyclic_pure" !print_formula !print_formula
+  translate_acyclic_pure_x f
+
+and translate_waitS_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
+  (*attempt to concretize bag constraints*)
+  let concrete_bags = get_concrete_bag_pure f in
+  (*extract waitS relations, and translate them*)
+  let rel_sv = mk_spec_var Globals.waitS_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  nf
+
+and translate_waitS_pure (f: formula) : formula =
+  Debug.no_1 "translate_waitS_pure" !print_formula !print_formula
+  translate_waitS_pure_x f
+
+and translate_set_comp_pure_x (f: formula) : formula =
+  (*could be redundant but more complete*)
+  let f = concretize_bag_pure f in
+  (*attempt to concretize bag constraints*)
+  let concrete_bags = get_concrete_bag_pure f in
+  (*extract waitS relations, and translate them*)
+  let rel_sv = mk_spec_var Globals.set_comp_name in
+  let (nf,rels) = extract_rel_pure f rel_sv in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let nf = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  nf
+
+and translate_set_comp_pure (f: formula) : formula =
+  Debug.no_1 "translate_set_comp_pure" !print_formula !print_formula
+  translate_set_comp_pure_x f
+
+and find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with
       | (v1,v2)::xs -> 
@@ -11395,16 +12126,16 @@ let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list 
   in
   helper_loop [v] vv
 
-let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
+and find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   Debug.no_2 "find_closure" 
       !print_sv
       (pr_list (pr_pair !print_sv !print_sv))
       !print_svl
       find_closure_x v vv
 
-let find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = find_closure v (pure_ptr_equations f)
+and find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = find_closure v (pure_ptr_equations f)
 
-let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list = 
+and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list = 
   Debug.no_2 "find_closure_pure_formula" 
       !print_sv
       !print_formula
@@ -12333,6 +13064,23 @@ let mk_self t =
       | Some t -> t 
   in
   SpecVar (t, self, Unprimed)
+
+(* collect constraints satisfying high-order "pred" and their related constraints.
+   (i.e. collect a slice of constraints satisfying "pred")
+
+   pred: constraint type, e.g is_bag_constraint, is_float_formula, is_relation_constraint.
+*)
+let collect_all_constraints_x (pred: formula -> bool) (f:formula) =
+  let ls = split_conjunctions f in
+  let ls_pred = List.filter (fun f -> pred f) ls in
+  let fvars = List.concat (List.map fv ls_pred) in
+  find_rel_constraints f fvars
+
+let collect_all_constraints (pred: formula -> bool) (f:formula) =
+  Debug.no_1 "collect_all_constraints"
+      !print_formula !print_formula
+      (fun _ -> collect_all_constraints_x pred f) f
+
 (*
  v=e --> v & e | !v & !e
  e1 = e2 --> e1 & e2 | !(e1) & !e2

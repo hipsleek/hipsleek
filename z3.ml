@@ -80,7 +80,8 @@ let rec smt_of_typ t =
   | BagT _ -> "Int"
   | TVar _ -> "Int"
   | Void -> "Int"
-  | List _ -> illegal_format ("z3.smt_of_typ: List not supported for SMT")
+  | Tup2 _ -> "Int" (*TODO: handle this*)
+  | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)
@@ -120,6 +121,7 @@ let rec smt_of_exp a =
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
+  | CP.Tup2 _ 
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _

@@ -125,6 +125,7 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
    ("checksat", CHECKSAT);
@@ -200,6 +201,8 @@ module Make (Token : SleekTokenS)
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA TLEM);
+	 ("lemma_prop", LEMMA TLEM_PROP);
+	 ("lemma_split", LEMMA TLEM_SPLIT);
 	 ("lemma_test", LEMMA TLEM_TEST);
 	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
@@ -345,6 +348,8 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
+  | "@S1" { SPLIT1Ann }
+  | "@S2" { SPLIT2Ann }
   | "@M" { MUT }
   | "@S" { SAT }
   (* | "@VAL" {VAL} *)
@@ -362,6 +367,8 @@ rule tokenizer file_name = parse
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
+  | "@Split" { SPLITANN } (*Split annotation*)
+  | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }
   | '}' { CBRACE }

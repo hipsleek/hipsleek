@@ -31,6 +31,7 @@ let pure_tp = ref OM
 (* let pure_tp = ref Z3 *)
 let tp = ref Redlog
 (* let tp = ref AUTO *)
+(*For conc-r, z3 for relations, mona for bags, redlog for fractions *)
 (* let tp = ref PARAHIP *)
 (* let tp = ref Z3 *)
 
@@ -366,6 +367,7 @@ let set_tp tp_str =
   in the presence of floating point constraints*)
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
+  let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
   let prover_str = ref [] in
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
@@ -410,15 +412,18 @@ let set_tp tp_str =
     else if tp_str = "z3-4.3.1" then
       (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.3.1"::!prover_str;)
   else if tp_str = "redlog" then
-    (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
+    (pure_tp := Redlog; prover_str := redcsl_str::!prover_str;)
   else if tp_str = "OCRed" then
-    (pure_tp := OCRed; prover_str := "oc"::"redcsl"::!prover_str;)
+    (pure_tp := OCRed; prover_str := "oc"::redcsl_str::!prover_str;)
   else if tp_str = "math" then
     (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str;)
   else if tp_str = "rm" then
     pure_tp := RM
   else if tp_str = "parahip" then
-    pure_tp := PARAHIP
+    (pure_tp := PARAHIP;
+    prover_str := "z3"::!prover_str;
+    prover_str := "mona"::!prover_str;
+    prover_str := redcsl_str::!prover_str;)
   else if tp_str = "zm" then
     (pure_tp := ZM; 
     prover_str := "z3"::!prover_str;
@@ -454,7 +459,8 @@ let _ =
   ()
   else ())
   in
-  set_tp !Smtsolver.smtsolver_name (* "z3" *)
+  (* set_tp !Smtsolver.smtsolver_name (\* "z3" *\) *)
+  set_tp "parahip"
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -693,7 +699,8 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
-    | CP.Bptriple _
+  | CP.Bptriple _
+  | CP.Tup2 _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
 
@@ -727,7 +734,8 @@ let rec is_list_exp e = match e with
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
   | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
   | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
-    | CP.Bptriple _
+  | CP.Bptriple _
+  | CP.Tup2 _
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
@@ -1541,6 +1549,10 @@ let disj_cnt a c s =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
+  let f = CP.concretize_bag_pure f in
+  let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
+  let f = CP.translate_acyclic_pure f in
+  let f,_ = CP.translate_tup2_imply f (CP.mkTrue no_pos)in
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let f = CP.infer_level_pure f in (*add l.mu>0*)
@@ -1654,6 +1666,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           else
             redlog_is_sat wf
     | PARAHIP ->
+          
           if (is_relation_constraint wf) && (is_bag_constraint wf) && (CP.is_float_formula wf) then
             (* Mixed bag constraints, relations and float constraints *)
             (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
@@ -1675,20 +1688,31 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             let f_no_bag = CP.drop_bag_formula wf in
             let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
             in
-            let b1 = mona_is_sat f_no_float in
+            let f_no_float_bag_only = CP.collect_all_constraints is_bag_constraint f_no_float in
+            let f_no_float_no_bag = CP.drop_bag_formula f_no_float in
+            let b =  z3_is_sat f_no_float_no_bag in
+            let b1 = mona_is_sat f_no_float_bag_only in
+            (* let b1 = mona_is_sat f_no_float in *)
             let b2 = redlog_is_sat f_no_bag in
-            (b1 && b2)
+            (* (b1 && b2) *)
+            b && b1 && b2
           else
           if (is_relation_constraint wf) then
             let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
             z3_is_sat f
-          else
-          if (is_bag_constraint wf ) then
+          else if (is_bag_constraint wf ) then
             let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
-            mona_is_sat f
-          else
-            let f = CP.drop_rel_formula (CP.drop_bag_formula wf) in
+            let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs f) in
+            let bag_f = conj_of_list bag_cnts no_pos in
+            let no_bag_f =  conj_of_list others no_pos in
+            (* Approx: mona can only deal with natural numbers (non negative) *)
+            (mona_is_sat bag_f && z3_is_sat no_bag_f)
+          else if (is_float_formula wf ) then
+            let f = CP.drop_bag_formula (CP.drop_rel_formula wf) in
             redlog_is_sat f
+          else
+            (* Anything else -> z3: faster *)
+            z3_is_sat f
     | ZM ->
         if (is_bag_constraint wf) then mona_is_sat wf
         else z3_is_sat wf
@@ -2269,8 +2293,101 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 					suppress_imply_output_stack := t;
 				end
 
-let tp_imply_no_cache ante conseq imp_no timeout process =
-  let ante,conseq = if (!Globals.allow_locklevel) then
+let tp_imply_translate_cyclic_x ante conseq =
+  (*
+    CASE 1:
+
+    ante & acyclic(B) |- false      concrete(B,ante)
+    -----------------------------------------------
+    ante |- cyclic(B)
+  *)
+  let ante = concretize_bag_pure ante in
+  let _ , c_rels = CP.extract_cyclic_rel_pure conseq in
+  if (check_concrete_cyclic_rel_pure ante c_rels) then
+    (* CASE 1 *)
+    let to_ante = CP.from_cyclic_to_acyclic_rel_pure conseq in
+    let new_ante = CP.mkAnd ante to_ante no_pos in
+    let new_ante = CP. translate_acyclic_pure new_ante in
+    let new_conseq = CP.mkFalse no_pos in
+    (new_ante,new_conseq)
+  else
+    (ante,conseq)
+
+(* For cyclic() relation *)
+let tp_imply_translate_cyclic ante conseq =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair pr pr in
+  Debug.no_2 "tp_imply_translate_cyclic" pr pr pr_out
+      tp_imply_translate_cyclic_x ante conseq
+
+let tp_imply_translate_waitS_x ante conseq =
+  let ante = concretize_bag_pure ante in
+  let new_ante = CP.translate_waitS_pure ante in
+  let concrete_bags = get_concrete_bag_pure ante in
+  let concrete_bags = List.map (fun (v,exps) ->
+      let vars = find_closure_pure_formula v ante in
+      List.map (fun v -> (v,exps)) vars ) concrete_bags in
+  let concrete_bags = List.concat concrete_bags in
+  (* Use concrete bag in ante to instantiate conseq*)
+  let nf , rels = CP.extract_waitS_rel_pure conseq in
+  let fs = List.map (create_waitS_rel concrete_bags nf) rels in
+  let new_conseq = List.fold_left (fun res f1 -> mkAnd res f1 no_pos) nf fs in
+  (new_ante, new_conseq)
+
+(* For waitS() relation *)
+let tp_imply_translate_waitS ante conseq =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_pair pr pr in
+  Debug.no_2 "tp_imply_translate_waitS" pr pr pr_out
+      tp_imply_translate_waitS_x ante conseq
+
+(* check for concrete(S) *)
+let tp_imply_concrete_rel_x ante conseq : bool =
+  let ante = CP.concretize_bag_pure ante in
+  let concrete_bags = get_concrete_bag_pure ante in
+  let concrete_bags = List.map (fun (v,exps) ->
+      let vars = find_closure_pure_formula v ante in
+      List.map (fun v -> (v,exps)) vars ) concrete_bags
+  in
+  let concrete_bags = List.concat concrete_bags in
+  let nf, rels = CP.extract_concrete_rel_pure conseq in
+  let helper rel =
+    (match rel with
+      | RelForm (_,exps,_) ->
+            let vs = afv (List.hd exps) in (* vs = [S]*)
+            List.for_all (fun v1 -> List.exists (fun (v2,_) -> CP.eq_spec_var v1 v2) concrete_bags) vs
+      | _ -> report_error no_pos ("tp_imply_concrete_rel: expect RelForm only"))
+  in
+  let res = and_list (List.map helper rels) in
+  res
+
+(* check for concrete(S) *)
+let tp_imply_concrete_rel ante conseq : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = string_of_bool in
+  Debug.no_2 "tp_imply_concrete_rel" pr pr pr_out
+      tp_imply_concrete_rel_x ante conseq
+
+(*
+  Preprocess/translate ante and conseq before doing
+  actual tp_imply
+
+  Return:
+  None -> continue normally with the return ante, conseq. (default is (true,ante,conseq))
+  Some res -> stop with res
+*)
+let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) =
+  if (CP.is_concrete_rel conseq) then
+    let res = tp_imply_concrete_rel ante conseq in
+    (Some res, ante, conseq)
+  else
+    let ante = if (has_waitS_rel_pure ante) then CP.translate_waitS_pure ante else ante in
+    let ante,conseq = if (is_waitS_rel conseq) then tp_imply_translate_waitS ante conseq else (ante,conseq) in
+    let ante,conseq = if (is_cyclic_rel conseq) then tp_imply_translate_cyclic ante conseq else (ante,conseq) in
+    let ante = if (has_acyclic_rel_pure ante) then CP.translate_acyclic_pure ante else ante in
+    let ante, conseq = CP.translate_tup2_imply ante conseq in
+    let ante,conseq =
+      if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
         let ante = CP.infer_level_pure ante in (*add l.mu>0*)
         let ante = CP.translate_waitlevel_pure ante in
@@ -2287,7 +2404,21 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         (* let conseq = CP.drop_svl_pure conseq [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
         (* let conseq = CP.drop_locklevel_pure conseq in *)
         (ante,conseq)
-  in
+    in (None, ante, conseq)
+
+
+let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_out = pr_triple (pr_option string_of_bool) pr pr in
+  Debug.no_2 "tp_imply_preprocess" pr pr pr_out
+      tp_imply_preprocess_x ante conseq
+
+
+let tp_imply_no_cache ante conseq imp_no timeout process =
+  (**************************************)
+  let res,ante,conseq = tp_imply_preprocess ante conseq in
+  match res with | Some ret -> ret | None -> (*continue normally*)
+  (**************************************)
   (* ============================================================== *)
   (* superceded by add_imm_inv which is only done for ante of imply *)
   (* ============================================================== *)
@@ -2414,8 +2545,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           (*TO CHECK*)
         let is_rel_ante = is_relation_constraint ante in
         let is_rel_conseq = is_relation_constraint conseq in
-        let is_bag_ante = is_bag_constraint ante in
-        let is_bag_conseq = is_bag_constraint conseq in
+        let is_bag_ante = is_bag_constraint_weak ante in
+        let is_bag_conseq = is_bag_constraint_weak conseq in
         let is_float_ante = is_float_formula ante in
         let is_float_conseq = is_float_formula conseq in
         if (is_rel_ante || is_rel_conseq) && (is_bag_ante || is_bag_conseq) && (is_float_ante || is_float_conseq) then
@@ -2443,14 +2574,33 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             let b_no_bag = redlog_imply ante_no_bag conseq_no_bag in
             (b_no_float && b_no_bag)
           else
-            if (is_rel_ante) || (is_rel_conseq) then
-              let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in
-              let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in
-              z3_imply ante conseq
+            if (is_bag_ante || is_bag_conseq) && (is_rel_ante || is_rel_conseq) then
+              let ante_no_rel = CP.drop_rel_formula ante in
+              let ante_no_bag = CP.drop_bag_formula ante in
+              let conseq_no_rel = CP.drop_rel_formula conseq in
+              let conseq_no_bag = CP.drop_bag_formula conseq in
+              let b_no_rel = mona_imply ante_no_rel conseq_no_rel in
+              let b_no_bag = z3_imply ante_no_bag conseq_no_bag in
+              (b_no_rel && b_no_bag)
             else
-              if (is_bag_ante) || (is_bag_conseq) then
+            if (is_rel_ante) || (is_rel_conseq) then
+              (* let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in *)
+              (* let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in *)
+              z3_imply ante conseq
+            else if (is_bag_ante) || (is_bag_conseq) then
+              if not (is_bag_conseq) then
+                let ante_no_bag = CP.drop_bag_formula_weak ante_w in
+                let ante_bag = CP.collect_all_constraints is_bag_constraint ante_w in
+                let res1 = z3_imply ante_no_bag conseq_s in
+                if (res1) then res1 else
+                  (* z3 may fail due to insufficient information -> try mona *)
+                  mona_imply ante_bag conseq_s
+              else
                 mona_imply ante_w conseq_s
-              else redlog_imply ante_w conseq_s
+            else if (is_float_ante || is_float_conseq) then
+              redlog_imply ante_w conseq_s
+            else
+              z3_imply ante_w conseq_s
     | ZM -> 
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           ((* called_prover := "mona "; *) mona_imply ante_w conseq_s)

@@ -16,7 +16,9 @@ let last_test_number = ref 0
 let test_number = ref 0
 (* let mona_cycle = ref 10000 *)
 let mona_cycle = ref 90
-let mona_timeout = ref 5.0 (* default timeout is 10 seconds *)
+(* default timeout is 10 seconds *)
+(* let mona_timeout = ref 5.0 *)
+let mona_timeout = ref 10.0
 let max_BUF_SIZE = 16384
 
 let result_file_name = "res"
@@ -29,7 +31,7 @@ let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
-let mona_prog = "mona_inter"
+let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -39,7 +41,7 @@ let string_of_hashtbl tab = Hashtbl.fold
 			(string_of_int c2) ^")") tab ""
 
 (* pretty printing for primitive types *)
-let rec mona_of_typ = function
+let rec mona_of_typ t = match t with
   | Bool          -> "int"
   | Tree_sh 	  -> "int"
   | Float         -> 
@@ -54,9 +56,9 @@ let rec mona_of_typ = function
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
-  | UNK           -> 	
+  | UNK |FORM | Tup2 _         ->
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "unexpected UNKNOWN type"}
+        Error.error_text = ("unexpected type for mona: "^(string_of_typ t))}
   | List t        -> "("^(mona_of_typ t)^") list"	(* lists are not supported *)
   | NUM | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
@@ -878,6 +880,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
   | CP.BagIntersect (_, _) -> ([], mona_of_exp e0 f, "") (*TO CHECK: add non-empty case *)
   | CP.BagDiff (_,_,_) -> ([], mona_of_exp e0 f, "")
+  | CP.Tup2 _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support Tup2"^(Cprinter.string_of_formula_exp e0))
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
@@ -1277,7 +1280,7 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline_if (not !Globals.smt_compete_mode) ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = print_endline_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
@@ -1456,7 +1459,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   let t = (if is_sat_b then "SAT no :" else "IMPLY no :")^imp_no in
   (* let hproc exc = (print_endline ("Timeout for MONA "^t));true in *)
   let hproc () =   
-    print_string ("\n[MONA.ml]:Timeout exception "^t^"\n"); flush stdout;
+    if not !Globals.web_compile_flag then print_string ("\n[MONA.ml]:Timeout exception "^t^"\n"); flush stdout;
     restart ("Timeout!");
     is_sat_b in
   let timeout  = if is_sat_b&& !user_sat_timeout then !sat_timeout_limit else !mona_timeout in
@@ -1502,7 +1505,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   with
     |Procutils.PrvComms.Timeout ->
 	 begin
-           print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
+           if not !Globals.web_compile_flag then print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
            restart ("Timeout when checking #" ^ imp_no ^ "!");
            is_sat_b
 	 end

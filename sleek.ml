@@ -118,6 +118,7 @@ let proc_gen_cmd cmd =
     | PredSplit (pred_ids) -> process_pred_split pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
+    | CheckNorm f -> process_check_norm f
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
     | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
@@ -153,7 +154,7 @@ let parse_file (parse) (source_file : string) =
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-      | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
@@ -207,6 +208,7 @@ let parse_file (parse) (source_file : string) =
       | PredSplit ids -> process_pred_split ids
       | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
+      | CheckNorm f -> process_check_norm f
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2

@@ -1,0 +1,47 @@
+//CountDownLatch
+data CDL{
+}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{(-)P}<x:cell>.
+pred_prim LatchOut{(+)P}<x:cell>.
+
+pred_prim WAIT<b:bag((object,object))>.
+pred_prim CNT<n:int>.
+
+relation cyclic(bag((object,object)) g).
+relation acyclic(bag((object,object)) g).
+
+/*
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+
+lemma "normalize" self::LatchOut{%P}<y> * self::CNT<n> & n<0 -> %P.
+
+lemma "error1" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+lemma "error2" self::LatchIn{%P}<a> * self::CNT<n> & n<0 ->  emp & flow __Fail.
+*/
+
+//synchronization lemma
+//lemma "wait-for" self::CNT<a> * c::CNT<b> * x::WAIT<B> & a>0 & b<0 ->  self::CNT<a> * c::CNT<b> * x::WAIT<B1> & B1=union(B,{tup2(c,self)}) & a>0 & b<0.
+
+lemma "error3" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail.
+
+//VALID
+//checkentail c::LatchIn{z::cell<10>}<z> * c::CNT<(-1)> |- true & flow __Fail.
+//print residue.
+
+//checkentail B={tup2(c1,c2),tup2(c2,c1)} |- true & cyclic(B).
+//expect Valid.
+
+//VALID
+//checkentail x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> |- (exists S1: x::WAIT<S1> * c1::CNT<1> * c2::CNT<(-1)> & S1=union(S,{tup2(c2,c1)})).
+//print residue.
+
+checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- true & flow __Fail.
+expect Valid.

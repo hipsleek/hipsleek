@@ -85,6 +85,7 @@ and view_kind =
 
 and view_decl = {
     view_name : ident;
+    view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind)list;
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
     view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
@@ -1434,6 +1435,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
+                | F.HVar _ -> false
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
@@ -1445,14 +1447,15 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
                             | _ -> false)
                       | _ -> false
                 )
-                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+                | _ -> failwith ("Only nodes, HVar, and HRel allowed after split_star_conjunctions 1") 
               in
               only_self) hs  in
           let get_name h = match h with
+            | F.HVar v -> P.name_of_sv v
             | F.DataNode _
             | F.ViewNode _-> F.get_node_name h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
-            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+            | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
           (List.length hs),self_n, List.map get_name hs
       | _ -> 1,false,[]
     in
@@ -1468,7 +1471,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           it is also considered a split lemma?
         *)
         (*special case, detecting inconsistency using lemmas*)
-        if rhs_length=0  then Normalize true else 
+        if rhs_length=0 then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
@@ -1659,6 +1662,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+							   F.h_formula_data_split = subnode.F.h_formula_data_split;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1680,6 +1684,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1702,6 +1708,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
@@ -3331,3 +3339,39 @@ let categorize_view (prog: prog_decl) : prog_decl =
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
  
+
+(*
+   A h_formula is resourceless if
+   - prim_pred
+   - ho_args = [] 
+*)
+let is_resourceless_h_formula_x prog (h: CF.h_formula) =
+  let rec helper h =
+    match h with
+      | CF.HEmp -> true
+      | CF.HFalse -> true
+      | CF.ViewNode v ->
+            let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
+            (vdef.view_is_prim && v.h_formula_view_ho_arguments=[])
+      | CF.DataNode _
+      | CF.ThreadNode _ -> false
+      | CF.Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | CF.StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | CF.Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | CF.ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | CF.ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | CF.Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) && (helper h2))
+      | _ -> false
+  in helper h
+
+let is_resourceless_h_formula prog (h: CF.h_formula) =
+  Debug.no_1 "is_resourceless_h_formula"
+      !print_h_formula string_of_bool
+      (fun _ -> is_resourceless_h_formula_x prog h) h
