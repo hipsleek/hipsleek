@@ -288,6 +288,7 @@ let common_arguments = [
     "use the quantifier elimination procedure implemented in coq for PAinfinity ");
   ("--en-inf-qe-coq-simp", Arg.Unit( fun _ ->
 	Globals.allow_inf := true;
+    Globals.allow_norm := false;
 	Globals.allow_inf_qe_coq := true;
     Globals.allow_inf_qe_coq_simp := true;
     Globals.early_contra_flag := false;

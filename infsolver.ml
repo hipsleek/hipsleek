@@ -2965,41 +2965,6 @@ module Three_Val =
   | VUnknown -> VUnknown
  end
 
-module Bool_Val = 
- struct 
-  type coq_Val = bool
-  
-  (** val truth_and : bool -> bool -> bool **)
-  
-  let truth_and b1 b2 =
-    if b1 then b2 else false
-  
-  (** val truth_or : bool -> bool -> bool **)
-  
-  let truth_or b1 b2 =
-    if b1 then true else b2
-  
-  (** val truth_not : bool -> bool **)
-  
-  let truth_not =
-    negb
-  
-  (** val coq_Top : bool **)
-  
-  let coq_Top =
-    true
-  
-  (** val coq_Btm : bool **)
-  
-  let coq_Btm =
-    false
-  
-  (** val val_eq_dec : coq_Val -> coq_Val -> bool **)
-  
-  let val_eq_dec v1 v2 =
-    if v1 then if v2 then true else false else if v2 then false else true
- end
-
 module type NUMBER = 
  sig 
   type coq_A 
@@ -3155,15 +3120,6 @@ module None3ValRel =
     Three_Val.VUnknown
  end
 
-module NoneAlwaysFalse = 
- functor (VAL:SEM_VAL) ->
- struct 
-  (** val noneVal : VAL.coq_Val **)
-  
-  let noneVal =
-    VAL.coq_Btm
- end
-
 module InfLeqRelation = 
  functor (VAL:SEM_VAL) ->
  functor (S:sig 
@@ -3277,6 +3233,32 @@ module IntToInfinity =
     Some (N.ZE_Fin x)
  end
 
+module type ZERO_FIN = 
+ sig 
+  val zero_times : ZNumLattice.coq_A -> ZNumLattice.coq_A
+ end
+
+module FinZero = 
+ struct 
+  (** val zero_times : ZNumLattice.coq_A -> z **)
+  
+  let zero_times x =
+    Z0
+ end
+
+module type ZERO_INF = 
+ sig 
+  val zero_times : ZInfinity.coq_A -> ZInfinity.coq_A
+ end
+
+module InfZeroAll = 
+ struct 
+  (** val zero_times : ZInfinity.coq_A -> ZInfinity.coq_ZE option **)
+  
+  let zero_times x =
+    Some (ZInfinity.ZE_Fin Z0)
+ end
+
 module ArithSemantics = 
  functor (I:SEMANTICS_INPUT) ->
  functor (V:VARIABLE) ->
@@ -3286,6 +3268,9 @@ module ArithSemantics =
  end) ->
  functor (L:sig 
   val num_leq : I.N.coq_A -> I.N.coq_A -> VAL.coq_Val
+ end) ->
+ functor (ZT:sig 
+  val zero_times : I.N.coq_A -> I.N.coq_A
  end) ->
  struct 
   type coq_ZExp =
@@ -3432,14 +3417,17 @@ module ArithSemantics =
   
   let rec num_mult_nat n0 x =
     match n0 with
-    | O -> I.N.coq_Const0
-    | S n1 -> I.N.num_plus x (num_mult_nat n1 x)
+    | O -> ZT.zero_times x
+    | S n1 ->
+      (match n1 with
+       | O -> x
+       | S n2 -> I.N.num_plus x (num_mult_nat n1 x))
   
   (** val num_mult : z -> I.N.coq_A -> I.N.coq_A **)
   
   let num_mult z0 exp =
     match z0 with
-    | Z0 -> I.N.coq_Const0
+    | Z0 -> ZT.zero_times exp
     | Zpos x -> num_mult_nat (Coq_Pos.to_nat x) exp
     | Zneg x -> I.N.num_neg (num_mult_nat (Coq_Pos.to_nat x) exp)
   
@@ -3674,33 +3662,24 @@ module ArithSemantics =
   | ZF_Exists (v, q, f) -> ZF_Exists (v, q, (simplifyZF f))
  end
 
-module type STRVAR = 
- sig 
-  type var 
-  
-  val var_eq_dec : var -> var -> bool
-  
-  val var2string : var -> char list
-  
-  val string2var : char list -> var
- end
-
 module InfSolver = 
- functor (Coq_sv:STRVAR) ->
+ functor (Coq_sv:VARIABLE) ->
  functor (VAL:SEM_VAL) ->
  functor (S:sig 
   val noneVal : VAL.coq_Val
  end) ->
+ functor (FZT:ZERO_FIN) ->
+ functor (IZT:ZERO_INF) ->
  struct 
   module InfRel = InfLeqRelation(VAL)(S)
   
   module FinRel = FinLeqRelation(VAL)
   
-  module IA = ArithSemantics(PureInfinity)(Coq_sv)(VAL)(S)(InfRel)
+  module IA = ArithSemantics(PureInfinity)(Coq_sv)(VAL)(S)(InfRel)(IZT)
   
-  module FA = ArithSemantics(PureInt)(Coq_sv)(VAL)(S)(FinRel)
+  module FA = ArithSemantics(PureInt)(Coq_sv)(VAL)(S)(FinRel)(FZT)
   
-  module I2F = ArithSemantics(IntToInfinity)(Coq_sv)(VAL)(S)(InfRel)
+  module I2F = ArithSemantics(IntToInfinity)(Coq_sv)(VAL)(S)(InfRel)(IZT)
   
   (** val inf_trans_exp : IA.coq_ZExp -> I2F.coq_ZExp **)
   
@@ -4182,7 +4161,7 @@ module InfSolver =
     int_trans (inf_trans f)
  end
 
-module type Coq_STRVAR = 
+module type STRVAR = 
  sig 
   type var 
   
@@ -4194,15 +4173,9 @@ module type Coq_STRVAR =
  end
 
 module InfSolverExtract = 
- functor (Coq_sv:Coq_STRVAR) ->
+ functor (Coq_sv:STRVAR) ->
  struct 
-  module None_False_Bool = NoneAlwaysFalse(Bool_Val)
-  
-  module Three_Val_Rel = None3ValRel
-  
-  module Three_Val_False = NoneAlwaysFalse(Three_Val)
-  
-  module IS = InfSolver(Coq_sv)(Three_Val)(Three_Val_Rel)
+  module IS = InfSolver(Coq_sv)(Three_Val)(None3ValRel)(FinZero)(InfZeroAll)
   
   (** val coq_Z_of_bool : bool -> z **)
   

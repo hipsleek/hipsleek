@@ -874,23 +874,6 @@ module Three_Val :
   val truth_not : coq_Val_Impl -> coq_Val_Impl
  end
 
-module Bool_Val : 
- sig 
-  type coq_Val = bool
-  
-  val truth_and : bool -> bool -> bool
-  
-  val truth_or : bool -> bool -> bool
-  
-  val truth_not : bool -> bool
-  
-  val coq_Top : bool
-  
-  val coq_Btm : bool
-  
-  val val_eq_dec : coq_Val -> coq_Val -> bool
- end
-
 module type NUMBER = 
  sig 
   type coq_A 
@@ -952,12 +935,6 @@ module FinLeqRelation :
 module None3ValRel : 
  sig 
   val noneVal : Three_Val.coq_Val_Impl
- end
-
-module NoneAlwaysFalse : 
- functor (VAL:SEM_VAL) ->
- sig 
-  val noneVal : VAL.coq_Val
  end
 
 module InfLeqRelation : 
@@ -1081,6 +1058,26 @@ module IntToInfinity :
   val conv : coq_Q -> coq_QT -> N.coq_ZE option
  end
 
+module type ZERO_FIN = 
+ sig 
+  val zero_times : ZNumLattice.coq_A -> ZNumLattice.coq_A
+ end
+
+module FinZero : 
+ sig 
+  val zero_times : ZNumLattice.coq_A -> z
+ end
+
+module type ZERO_INF = 
+ sig 
+  val zero_times : ZInfinity.coq_A -> ZInfinity.coq_A
+ end
+
+module InfZeroAll : 
+ sig 
+  val zero_times : ZInfinity.coq_A -> ZInfinity.coq_ZE option
+ end
+
 module ArithSemantics : 
  functor (I:SEMANTICS_INPUT) ->
  functor (V:VARIABLE) ->
@@ -1090,6 +1087,9 @@ module ArithSemantics :
  end) ->
  functor (L:sig 
   val num_leq : I.N.coq_A -> I.N.coq_A -> VAL.coq_Val
+ end) ->
+ functor (ZT:sig 
+  val zero_times : I.N.coq_A -> I.N.coq_A
  end) ->
  sig 
   type coq_ZExp =
@@ -1205,23 +1205,14 @@ module ArithSemantics :
   val simplifyZF : coq_ZF -> coq_ZF
  end
 
-module type STRVAR = 
- sig 
-  type var 
-  
-  val var_eq_dec : var -> var -> bool
-  
-  val var2string : var -> char list
-  
-  val string2var : char list -> var
- end
-
 module InfSolver : 
- functor (Coq_sv:STRVAR) ->
+ functor (Coq_sv:VARIABLE) ->
  functor (VAL:SEM_VAL) ->
  functor (S:sig 
   val noneVal : VAL.coq_Val
  end) ->
+ functor (FZT:ZERO_FIN) ->
+ functor (IZT:ZERO_INF) ->
  sig 
   module InfRel : 
    sig 
@@ -1628,7 +1619,7 @@ module InfSolver :
   val coq_T : IA.coq_ZF -> FA.coq_ZF
  end
 
-module type Coq_STRVAR = 
+module type STRVAR = 
  sig 
   type var 
   
@@ -1640,23 +1631,8 @@ module type Coq_STRVAR =
  end
 
 module InfSolverExtract : 
- functor (Coq_sv:Coq_STRVAR) ->
+ functor (Coq_sv:STRVAR) ->
  sig 
-  module None_False_Bool : 
-   sig 
-    val noneVal : Bool_Val.coq_Val
-   end
-  
-  module Three_Val_Rel : 
-   sig 
-    val noneVal : Three_Val.coq_Val_Impl
-   end
-  
-  module Three_Val_False : 
-   sig 
-    val noneVal : Three_Val.coq_Val
-   end
-  
   module IS : 
    sig 
     module InfRel : 
