@@ -602,11 +602,6 @@ let is_const_or_tmp (f:exp) = match f with
   | Var(sv,_) -> is_tmp_int sv
   | _ -> false 
 
-let is_bool_exp f = 
-  match f with
-  | Var (v, _) -> is_bool_typ v
-  | _ -> false
-
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
   | InfConst  _ -> true
@@ -1596,7 +1591,7 @@ and exp_is_object_var (e : exp) =
 
 and exp_is_boolean_var (e : exp) =
   match e with
-    | Var (SpecVar (Bool, _, _),_) -> true
+    | Var (v,_) -> is_bool_typ v
     | _ -> false
 
 and get_boolean_var (e : exp) =
@@ -1635,6 +1630,18 @@ and is_list_bform (b: b_formula) : bool =
   match pf with
     | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
     | _ -> false
+
+and is_bool_bform b = 
+  let (pf, _) = b in
+  match pf with
+  | BVar _ -> true
+  | _ -> false
+
+and is_bool_formula f = 
+  match f with
+  | BForm (bf, _) -> is_bool_bform bf
+  | Not (f, _, _) -> is_bool_formula f
+  | _ -> false
 
 and is_arith (e : exp) : bool =
   match e with

@@ -557,7 +557,7 @@ let find_scc_edges g scc =
 let templ_of_term_ann ann =
   match ann with
   | CP.TermU uid ->
-    let args = List.filter (fun e -> not (CP.is_bool_exp e)) uid.CP.tu_args in
+    let args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
     let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
     let templ_exp = CP.mkTemplate templ_id args no_pos in
     CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
@@ -614,43 +614,51 @@ let infer_abductive_icond_edge prog g e =
   | TermU uid ->
     let tuc = uid.CP.tu_cond in
     let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
-    let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann rel.termu_lhs in
-    let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
-    let abd_ctx = mkAnd eh_ctx abd_cond in    
-        
+    
     let tuic = uid.CP.tu_icond in
     (* let params = List.concat (List.map CP.afv uid.CP.tu_args) in *)
     let params = params_of_term_ann prog rel.termu_rhs in
     let args = CP.args_of_term_ann rel.termu_rhs in
     let abd_conseq = CP.subst_term_avoid_capture (List.combine params args) tuic in
     
-    if imply abd_ctx abd_conseq then
-      let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
-      Some (uid, icond)
+    let bool_abd_conseq, abd_conseq = List.partition CP.is_bool_formula 
+      (CP.split_conjunctions abd_conseq) in
+    
+    if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None
     else
-      let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
-      let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
-      let _ = Tlutils.oc_solver := true in 
-      let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
-      let _ = Tlutils.oc_solver := oc in
+      let abd_conseq = CP.join_conjunctions abd_conseq in
+      let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann rel.termu_lhs in
+      let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
+      let abd_ctx = mkAnd eh_ctx abd_cond in    
       
-      begin match res with
-      | Sat model -> 
-        let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-        let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
-        let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+      let _ = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in
+      let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in
+      
+      if imply abd_ctx abd_conseq then
+        let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
+        Some (uid, icond)
+      else
+        let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
+        let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
+        let _ = Tlutils.oc_solver := true in 
+        let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
+        let _ = Tlutils.oc_solver := oc in
         
-        (* let _ = print_endline ("LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
-        (* let _ = print_endline ("RHS: " ^ (!CP.print_formula abd_conseq)) in *)
-        (* let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in      *)
-        
-        (* Update TNT case spec with new abductive case *)
-        (* if the abductive condition is feasible       *)
-        if is_sat (mkAnd abd_ctx icond) then
-          (* let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)
-          Some (uid, icond)
-        else None
-      | _ -> None end
+        begin match res with
+        | Sat model -> 
+          let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+          let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
+          let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+          
+          let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in
+          
+          (* Update TNT case spec with new abductive case *)
+          (* if the abductive condition is feasible       *)
+          if is_sat (mkAnd abd_ctx icond) then
+            (* let _ = update_case_spec_with_icond_proc uid.CP.tu_fname tuc icond in *)
+            Some (uid, icond)
+          else None
+        | _ -> None end
   | _ -> None 
       
 let infer_abductive_icond_vertex prog g v = 
