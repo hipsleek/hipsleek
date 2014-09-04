@@ -27,7 +27,7 @@ Expect:
  <1>x::node<_,q> & p=q&{FLOW,(21,22)=__norm}[]
 */
 
-//(5)
+//(5) FIXED
 checkentail x::node<_,p> & p=null |- true.
 print residue.
 /*

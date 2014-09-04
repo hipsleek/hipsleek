@@ -359,5 +359,8 @@ let inline_print e =
     else e
 
 let tidy_print e =
+  let new_e =
     if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
     else e
+  in
+  Hashtbl.reset n_tbl; Hashtbl.reset id_tbl; new_e
