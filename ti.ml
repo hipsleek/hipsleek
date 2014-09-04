@@ -27,11 +27,12 @@ let add_ret_trel_stk prog ctx lhs rhs =
 
 (* Only merge relations split by post *)    
 let merge_trrels rec_trrels = 
-  (* let same_path_trrel r1 r2 =                                                 *)
-  (*   eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx) *)
-  (* in                                                                          *)
+  let same_flow_path r1 r2 =
+    eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
+  in
   let same_cond_path r1 r2 = CP.eq_term_ann r1.termr_rhs r2.termr_rhs in
-  let grp_trrels = partition_eq same_cond_path rec_trrels in
+  let grp_trrels = partition_eq (fun r1 r2 -> 
+    (same_cond_path r1 r2) && (same_flow_path r1 r2)) rec_trrels in
   (* let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in *)
   let merge_trrels = List.map (fun grp ->
     let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
