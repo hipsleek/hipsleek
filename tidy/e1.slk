@@ -60,3 +60,14 @@ print residue.
 or better use (assuming flted_x is intermediate.
   <1>x::node<2,null>&{FLOW,(21,22)=__norm}[]
 */
+
+//(8)
+checkentail x::node<1+(v*w),z>  |- true.
+print residue.
+
+/*
+ <1>x::node<flted2,z>&flted2=(v*w)+1&{FLOW,(21,22)=__norm}[]
+
+Expect:
+ <1>x::node<(v*w)+1,z> &{FLOW,(21,22)=__norm}[]
+*/
