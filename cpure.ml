@@ -602,6 +602,11 @@ let is_const_or_tmp (f:exp) = match f with
   | Var(sv,_) -> is_tmp_int sv
   | _ -> false 
 
+let is_bool_exp f = 
+  match f with
+  | Var (v, _) -> is_bool_typ v
+  | _ -> false
+
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
   | InfConst  _ -> true
@@ -643,6 +648,11 @@ let get_var (e:exp) =
   match e with 
     | Var (v,_) -> v
     | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
+
+let get_var_opt (e:exp) =
+  match e with 
+    | Var (v, _) -> Some v
+    | _ -> None
 
 let filter_vars lv = 
 	List.fold_left (fun a c -> match c with 
@@ -1425,6 +1435,11 @@ and get_num_int (e : exp) : int =
     | IConst (b,_) -> b
     | _ -> 0
 
+and get_num_int_opt (e : exp) =
+  match e with
+    | IConst (b,_) -> Some b
+    | _ -> None
+
 and get_num_float (e : exp) : float =
   match e with
     | FConst (f, _) -> f
@@ -1578,6 +1593,16 @@ and exp_is_object_var (e : exp) =
   match e with
     | Var(SpecVar (Named _, _, _),_) -> true
     | _ -> false
+
+and exp_is_boolean_var (e : exp) =
+  match e with
+    | Var (SpecVar (Bool, _, _),_) -> true
+    | _ -> false
+
+and get_boolean_var (e : exp) =
+  match e with
+    | Var (SpecVar (Bool, _, _) as v,_) -> Some v
+    | _ -> None
           
 and is_bag (e : exp) : bool =
   match e with
@@ -3466,10 +3491,13 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | BConst _ -> pf
     | XPure _ -> pf (* WN XPure : not possible *)
     | BVar (bv, pos) ->
-          if List.exists (fun (fr,_) -> eq_spec_var bv fr) sst   then
-            failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-          else
-            pf
+      begin try
+        let _, e = List.find (fun (fr,_) -> eq_spec_var bv fr) sst in
+        let v = get_var_opt e in
+        match v with
+        | Some v -> BVar (v, pos)
+        | None -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+      with Not_found -> pf end
     | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)

@@ -557,8 +557,9 @@ let find_scc_edges g scc =
 let templ_of_term_ann ann =
   match ann with
   | CP.TermU uid ->
+    let args = List.filter (fun e -> not (CP.is_bool_exp e)) uid.CP.tu_args in
     let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
-    let templ_exp = CP.mkTemplate templ_id uid.CP.tu_args no_pos in
+    let templ_exp = CP.mkTemplate templ_id args no_pos in
     CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
   | _ -> CP.mkIConst (-1) no_pos, [], []
 
