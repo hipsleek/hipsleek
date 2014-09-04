@@ -631,8 +631,8 @@ let infer_abductive_icond_edge prog g e =
       let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
       let abd_ctx = mkAnd eh_ctx abd_cond in    
       
-      let _ = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in
-      let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in
+      (* let _ = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
+      (* let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
       
       if imply abd_ctx abd_conseq then
         let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)
@@ -650,7 +650,7 @@ let infer_abductive_icond_edge prog g e =
           let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
           let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
           
-          let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in
+          (* let _ = print_endline ("ABD: " ^ (!CP.print_formula icond)) in *)
           
           (* Update TNT case spec with new abductive case *)
           (* if the abductive condition is feasible       *)

@@ -410,7 +410,7 @@ f:  case {
  ensures emp & true; 
   }
 ============================================================
-# mult4-2.ss
+# mult4-2.ss (DONE)
 
  our case-analysis don't work with boolean?
  which was translated to b>=1
@@ -442,7 +442,7 @@ f:  case {
   }
 
 ========================================================
-# fact2.ss --esl
+# fact2.ss --esl (DONE)
 
 problems with --esl logging
 
