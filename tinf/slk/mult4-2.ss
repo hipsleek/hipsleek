@@ -2,15 +2,15 @@ bool nondet ()
   requires Term
   ensures true;
   
-void f(int x,bool b)
+void f(int x,bool bbb)
   infer [@term]
   requires true
   ensures true;
 {
   if (x < 0) return;
   else {
-    if (b) f(x - 1,b);
-    else f(x + 1,b);
+    if (bbb) f(x - 1,bbb);
+    else f(x + 1,bbb);
   }
 }
   
