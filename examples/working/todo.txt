@@ -513,6 +513,21 @@ Entailing lemma three: Fail. Details below:
 	 "==>" implication: : Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
 	 "==>" implication: : Valid.
 ====================================================================
+Before  merging with default:
+
+sleek
+  Total number of errors: 1 in files:
+  lemmas/rlseg.slk({L3#Valid}).
+sleek --eps
+  Total number of errors: 4 in files:
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
+hip --eps
+All test results were as expected.
+Total verification time: 206.84 second
+	Time spent in main process: 143.84 second
+	Time spent in child processes: 63.00 second
+	Number of false contexts: 424
 ====================================================================
 ====================================================================
 ====================================================================
