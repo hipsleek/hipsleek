@@ -39,9 +39,9 @@ let rec isabelle_of_typ = function
   | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-  | List _          -> 	(* lists are not supported *)
+  | List _    | FORM | Tup2 _     -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "list not supported for Isabelle"}
+        Error.error_text = "list/FORM/Tup2 not supported for Isabelle"}
   | NUM
   | RelT _
   | FuncT _
@@ -117,6 +117,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
+  | CP.Tup2 _ -> failwith ("[isabelle.ml]: ERROR in constraints (Tup2 should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
@@ -164,6 +165,7 @@ and isabelle_of_formula_exp_list l = match l with
 and isabelle_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
   | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
@@ -248,7 +250,7 @@ and isabelle_of_formula f =
           else ""
 	| CP.AndList _ -> Gen.report_error no_pos "isabelle.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) ->
-	  if (is_bag_formula p1) & (is_bag_formula p2) then
+	  if (is_bag_formula p1) && (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " & " ^ (isabelle_of_formula p2) ^ ")"
           else
 	      if (is_bag_formula p1) then
@@ -258,7 +260,7 @@ and isabelle_of_formula f =
 		  "(" ^ (isabelle_of_formula p2) ^ ")"
                 else ""
     | CP.Or (p1, p2,_, _) ->
-	if (is_bag_formula p1) & (is_bag_formula p2) then
+	if (is_bag_formula p1) && (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " | " ^ (isabelle_of_formula p2) ^ ")"
           else
 	      if (is_bag_formula p1) then

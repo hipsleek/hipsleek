@@ -1,0 +1,31 @@
+// nlseg2.slk --imm
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+
+/*
+checkentail x::node<y>*y::node<p> |- x::nlseg<p>.
+print residue.
+*/
+
+/*
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+ why @L eaten node up?
+*/
+
+
+checkentail x::node<y>*y::node<p> 
+   |- (exists a: x::node<a> * a::node<p>@L).
+print residue.
+
+/*
+conseq:
+ EBase (exists p_24,a_23: x::node<a_23> * a_23::node<p_24>@L&p=p_24&
+       {FLOW,(21,22)=__norm})[]
+*/

@@ -1,0 +1,14 @@
+
+data node {
+  node nxt;
+}.
+
+pred elseg<p:node> ==
+ self = p
+or (exists a,b: self::node<nxt = a> * a::node<nxt = b> * b::elseg<p>).
+
+pred right<p:node> ==
+(exists u: self::elseg<u> * u::elseg<p>).
+
+checkentail x::node<nxt = a> * a::elseg<p>
+         |- x::elseg<p>.

@@ -1,0 +1,46 @@
+#abduced00.defs.smt2.slk --inv-baga (Long): FIXED
+
+build_ef_heap_formula@2@1
+build_ef_heap_formula inp1 : g::GTyp<a00_156,Anon_12>
+build_ef_heap_formula@2 EXIT:[([g], true)]
+
+build_ef_heap_formula@3@1
+build_ef_heap_formula inp1 : self::I21063<b_157,c_158,d_159,e_160,f_161,g_162,a00_163>
+build_ef_heap_formula@3 EXIT:[]
+
+build_ef_heap_formula@1
+build_ef_heap_formula inp1 : g::GTyp<a00_156,Anon_12> * 
+self::I21063<b_157,c_158,d_159,e_160,f_161,g_162,a00_163>
+build_ef_heap_formula@1 EXIT:[]
+
+build_ef_heap_formula@4
+build_ef_heap_formula inp1 : self::I3724<b_184,c_185,d_186,e_187,f_188,h_189>
+build_ef_heap_formula@4 EXIT:[]
+
+build_ef_heap_formula@5
+build_ef_heap_formula inp1 : self::I21093<b_164,c_165,d_166,e_167,f_168,g_169,h_170>
+build_ef_heap_formula@5 EXIT ExceptionFailure("cannot find in init_map too")Occurred!
+Fatal error: exception Failure("cannot find in init_map too")
+
+
+===================================================================
+elseg4_slk-6.smt2.slk
+
+Entail 1: Fail.(may) cause:OrR[ a_84::node<b_85> * b_85::elseg<p_83> * q::node<p>&p_83=q&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),valid]
+
+it seems that
+ - heaps were not consumed
+
+I feel that the strategy of sleek (context.ml) has been changed. something is changed with the order of actions
+
+===================================================================
+to implement non-tail-rec <-> tail-rec: DONE (Loc)
+
+
+smallfoot-vc28.tptp.smt2.slk
+01.tst.smt2.slk
+
+===================================================================
+===================================================================
+

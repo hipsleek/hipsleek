@@ -19,7 +19,7 @@ let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
-let timeout = ref 10.0 (* default timeout is 15 seconds *)
+let timeout = ref 15.0 (* default timeout is 15 seconds *)
 let dis_omega = ref false
 let pasf = ref false
 
@@ -141,7 +141,7 @@ let stop () =
       let ending_fnc () = 
         let outchannel = !process.outchannel in
         output_string outchannel "quit;\n"; flush outchannel;
-        print_endline "Halting Reduce... "; flush stdout;
+        if not !Globals.web_compile_flag then print_endline "Halting Reduce... "; flush stdout;
         log DEBUG "\n***************";
         log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
         log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
@@ -158,7 +158,7 @@ let stop () =
 let restart reason =
   if !is_reduce_running then begin
     print_string reason;
-    print_endline " Restarting Reduce... "; flush stdout;
+    if not !Globals.web_compile_flag then print_endline " Restarting Reduce... "; flush stdout;
     Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
   end
 
@@ -1188,7 +1188,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
       (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
 
-let imply_ops pr_w pr_s ante conseq imp_no =
+let imply_ops_b pr_w pr_s ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
@@ -1216,10 +1216,41 @@ let imply_ops pr_w pr_s ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+(*Before deligating to Redlog, try to prove using Omega*)
+let imply_ops_a pr_w pr_s ante conseq imp_no =
+  if not (is_linear_formula conseq) then
+    (*Non-linear constraints need to be handled by Redlog*)
+    imply_ops_b pr_w pr_s ante conseq imp_no
+  else
+    if not (CP.is_float_formula conseq) then
+      if not (CP.is_float_formula ante) then
+        if (is_linear_formula ante) then
+          Omega.imply_ops pr_w pr_s ante conseq imp_no false
+        else imply_ops_b pr_w pr_s ante conseq imp_no
+      else
+      (*As the conseq is not a float formula, might want to use Omega*)
+      (*
+        f1 |- conseq
+        -------------
+        f1 & f2 |- conseq
+      *)
+        let ls = CP.split_conjunctions ante in
+        let _,f1 = List.partition (fun f -> CP.is_float_formula f) ls in
+        let f1 = CP.join_conjunctions f1 in
+        let res = if (is_linear_formula f1) then
+              Omega.imply_ops pr_w pr_s f1 conseq imp_no false
+            else false
+        in
+        if res then res
+        else
+          imply_ops_b pr_w pr_s ante conseq imp_no
+    else
+      imply_ops_b pr_w pr_s ante conseq imp_no
+
 let imply_ops pr_w pr_s ante conseq imp_no =
   let pr = !CP.print_formula in
   Debug.no_2 "[redlog.ml]imply_ops" pr pr string_of_bool
-  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+  (fun _ _ -> imply_ops_a pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in

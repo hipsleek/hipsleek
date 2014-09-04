@@ -9,7 +9,10 @@ end;;
 module type EQ_TYPE =
 sig
   type t
+  val zero : t
+  val is_zero : t -> bool
   val eq : t -> t -> bool
+  val compare : t -> t -> int
   val string_of : t -> string
 end;;
 
@@ -34,8 +37,14 @@ struct
   let pr_id x = x
   let pr_string x = "\""^x^"\""
   
+  let print_endline_quiet s = 
+    if !Globals.smt_compete_mode then () 
+    else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
+  let print_string_quiet s = 
+    if !Globals.smt_compete_mode then () 
+    else print_string s 
 
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"
@@ -91,6 +100,7 @@ struct
  let pr_list_round_sep sep f xs = pr_list_brk_sep "(" ")" sep f xs
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
  let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
+ let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
 
  let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 
@@ -115,6 +125,7 @@ struct
 	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
+ let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
  let map_snd_only f x = List.map (fun (l,c)-> f c) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
  let fold_l_snd_f fj f st x = List.fold_left (fun a (_,c)-> fj a (f c)) st  x
@@ -198,7 +209,10 @@ struct
   let report_error pos msg = Error.report_error
      { Error.error_loc = pos; Error.error_text = msg}
 
-  let report_warning pos msg = Error.report_warning
+  let report_warning pos msg = 
+    if !Globals.smt_compete_mode then ()
+    else 
+      Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
 
 end;;
@@ -333,6 +347,12 @@ struct
       | [] -> false
       | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
 
+  let rec get_all_pairs ls = match ls with
+    | [] -> []
+    | c::cs -> 
+          let lst = List.map (fun x -> (c,x)) cs in
+          lst @ (get_all_pairs cs)
+
   let check_no_dups_eq eq n = not(check_dups_eq eq n)
 
   let subset_eq eq l1 l2 =
@@ -399,14 +419,22 @@ struct
   type elist = elem list
   let eq = Elt.eq
   let string_of_elem = Elt.string_of
-
+  (* let rec compare (l1:elist) (l2:elist) = *)
+  (*   begin *)
+  (*     match l1,l2 with *)
+  (*       | [],[] -> 0 *)
+  (*       | [],x::_ -> -1 *)
+  (*       | x::_,[] -> 1 *)
+  (*       | a::t1,b::t2 ->  *)
+  (*             let c = Elt.compare a b in *)
+  (*             if c==0 then *)
+  (*               compare t1 t2 *)
+  (*             else c *)
+    (* end *)
   include BList
-
   let mem x l = List.exists (eq x) l
-
   let string_of (ls:'a list) : string 
         = string_of_f string_of_elem ls
-
 
   let rec check_dups n = 
     match n with
@@ -515,6 +543,8 @@ class ['a] stack  =
      method push_list (ls:'a list) =  stk <- ls@stk
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
+     method pop_list_n (n: int) = 
+       stk <- BList.drop n stk
      method reset = stk <- []
      method clone =
        Oo.copy self
@@ -694,7 +724,7 @@ struct
 
   let warn msg = 
     warning_no #inc;
-    print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
+    Basic.print_string_quiet ("*** Warning: "^ msg ^ "\n"); flush_all()
 
   let warn_if_none ov msg = match ov with
     | None -> warn msg
@@ -708,39 +738,119 @@ struct
 
 end;;
 
+let add_str s f xs = s^":"^(f xs)
+
+type 'a keyt = int option
+
+let key_cnt = new counter 0
+
+let new_key () =
+  let x = key_cnt # inc_and_get in
+  Some x
+
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
   type elem = Elt.t
-  type key = elem list
+  type key = elem keyt
   type emap = (elem * key) list
   type epart = (elem list) list
   type elist = (elem list) 
   type epair = ((elem * elem) list) 
+  open Basic
 
   let eq = Elt.eq 
   let string_of_elem = Elt.string_of 
+  (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
+  (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
 
+  let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
+
+(* TODO : rec03.slk bug here *)
+(* partition@53 *)
+(* partition inp1 :emap[{_null,x3,y1,y2}] *)
+(* [(y1,Some(22)),(_null,Some(22)),(y3,Some(23)),(y2,Some(22)),(x3,Some(22))] *)
+(* partition@53 EXIT:[[_null,x3,y1,y2]] *)
+
+  (* TODO : can we get in sorted order by elem *)
+  (* let partition (s: emap) : epart = *)
+  (*   let s = emap_sort s in *)
+  (*   let rec insert  a k  acc =  *)
+  (*     match acc with *)
+  (*       | [] -> [(k,[a])] *)
+  (*       | ((k2,ls) as p)::xs ->  *)
+  (*             if (k=k2) then (k,a::ls)::xs *)
+  (*             else p::(insert a k xs) in *)
+  (*   let r = List.fold_left (fun acc (a,k) ->  insert a k acc) [] s in *)
+  (*   let r = List.filter (fun (_,x) -> List.length x > 1) r in *)
+  (*   (\* let r = List.rev r in *\) *)
+  (*   let r = List.map ( fun (_,b) -> List.rev b) r in *)
+  (*   r *)
+    (* print_endline ((add_str "emap" string_of_emap) s); *)
+    (* print_endline ((add_str "epart" string_of_epart) r); *)
+
+  (* let partition (s: emap) : epart = *)
+  (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
+
+  let compare_key k1 k2 =
+    match k1,k2 with
+      | None, None -> 0
+      | None, Some _ -> -1
+      | Some _, None -> 1
+      | Some n1, Some n2 -> 
+            if n1=n2 then 0
+            else if n1<n2 then -1 else 1
+  let compare_v (e1,k1) (e2,k2) =
+    let x1 =compare_key k1 k2 in
+    if x1=0 then -(Elt.compare e1 e2)
+    else x1
+
+  let compare_list cmp b1 b2 =
+    let rec aux b1 b2 =
+    match b1,b2 with
+      | [],[] -> 0
+      | [],_ -> -1
+      | _,[] ->1
+      | (x::xs),(y::ys) ->
+            let c = cmp x y in
+            if c==0 then aux xs ys
+            else c
+    in aux b1 b2
 
   let partition (s: emap) : epart =
-    let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-            if k==k2 then (k,a::ls)::xs
-            else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun lst x ->  insert x lst) [] s in
-    List.map ( fun (_,b) -> b) r
+    let s = List.sort compare_v s in
+    let rec aux k ls s =
+      match s with
+        | [] -> [ls]
+        | (e2,k2)::ss -> if k==k2 then aux k (e2::ls) ss
+          else ls::(aux k2 [e2] ss) in
+    let ans = match s with 
+      | [] -> []
+      | (e,k)::ss -> aux k [e] ss in
+    let ans = List.filter (fun x -> List.length x>1) ans in
+    List.sort (compare_list Elt.compare) ans
 
-  let string_of (e: emap) : string =
-    let f = string_of_elem in
-    let ll=partition e in 
-    "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
+    let string_of (e: emap) : string =
+      let f = string_of_elem in
+      let ll = partition e in 
+      (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
+
+      "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
+
+  let key_string_of = pr_option string_of_int
+
+  let string_of_debug (e: emap) : string =
+    (* (string_of e)^"\n"^ *)
+        (pr_list (pr_pair Elt.string_of key_string_of) e)
 
   let un_partition (ll:epart) : emap =
-    let flat xs y = 
-      if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
+    let flat xs = 
+      if (List.length xs>1) then 
+        let newk = new_key () in
+        List.map (fun x -> (x,newk)) xs 
       else [] in
-    List.concat (List.map (fun x -> flat x x) ll)
+    List.concat (List.map (fun x -> flat x) ll)
 
   let mkEmpty : emap = []
 
@@ -753,13 +863,13 @@ struct
         _ -> d
 
   (* find key of e in s *)
-  let find (s : emap) (e:elem) : key  = find_aux s e []
+  let find (s : emap) (e:elem) : key  = find_aux s e None
 
   (* find key of e in s and return remainder after
      all elements equivalent to e is removed *)
   let find_remove (s : emap) (e:elem) : key * emap  = 
-    let r1 = find_aux s e [] in
-    (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
+    let r1 = find_aux s e None in
+    (r1, if r1==None then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
 
   (* returns s |- x=y *)
   let is_equiv (s: emap)  (x:elem) (y:elem) : bool =
@@ -767,7 +877,7 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      (r1==r2 && not(r1==[]))
+      (r1==r2 && not(r1==None))
 
   (* add x=y to e-set s and returning a new e-set with
      extra elements added *)
@@ -776,21 +886,37 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      if r1==[] then
-        if r2==[] then
-          let r3 = [x;y] in
-          (x,r3)::((y,r3)::s)
-        else (x,r2)::s
-      else
-        if r2==[] then (y,r1)::s
-        else
-          if r1==r2 then s
-          else 
-            let r3=r1@r2 in
-            List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+      begin
+      match r1 with
+        | None -> 
+              begin
+                match r2 with
+                  | None ->
+                        let r3 = new_key () in
+                        (x,r3)::((y,r3)::s)
+                  | _ -> (x,r2)::s
+              end
+        | _ -> 
+              begin
+                match r2 with
+                  | None ->  (y,r1)::s
+                  | _ -> 
+                        begin
+                          if r1==r2 then s
+                          else
+                            (* let r3=new_key() in *)
+                            List.map (fun ((a,b) as ar) -> 
+                                if (b==r1) then (a,r2) else ar) s
+                        end
+              end
+      end
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
+    let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
+    let p_aset = List.fold_left (fun eqs (x,y) ->
+        add_equiv eqs x y
+    ) mkEmpty xs in
+    p_aset
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -832,11 +958,17 @@ struct
     else (l1,l2)
 
   (* merge two equivalence sets s1 /\ s2 *)
-  let merge_eset (s1: emap) (s2: emap): emap =
-    let (t1,t2) = order_two s1 s2 in
-    List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
+  let merge_eset (t1: emap) (t2: emap): emap =
+    let r =
+      let (t1,t2) = order_two t1 t2 in
+      List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
+    let pr = string_of_debug in
+    (* let _ = print_endline ("eset1 :"^ (pr t1)) in *)
+    (* let _ = print_endline ("eset2 :"^ (pr t2)) in *)
+    (* let _ = print_endline ("eset_out :"^ (pr r)) in *)
+    r
 
-  (* remove key e from e_set  *)
+    (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 
     List.filter (fun (a,k2) -> not(eq a e)) s
 
@@ -846,7 +978,7 @@ struct
   (* return all elements equivalent to e, including itself *)
   let find_equiv_all  (e:elem) (s:emap) : elist  =
     let r1 = find s e in
-    if (r1==[]) then []
+    if (r1==None) then []
     else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
   
   (* return a distinct element equal to e *)
@@ -860,7 +992,7 @@ struct
   (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
   let find_equiv_elim_sure (e:elem) (s:emap) : elem option * emap  =
     let r1,s1 = find_remove s e in
-    if (r1==[]) then (None,s)
+    if (r1==None) then (None,s)
     else let (ls,ls2) = List.partition (fun (a,k) -> k==r1 ) s1 in
     match ls with
       | [] -> (None,s1)
@@ -876,18 +1008,29 @@ struct
 
   (* make fv=tv and then eliminate fv *)
   (* fv should never be constant *)
-  let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap = 
-    if (eq fv tv) then s
-    else
-      let r1 = find s fv in
-      if (r1==[]) then s
-      else 
-        let ns = add_equiv s fv tv in
-        elim_elems_one ns fv
+  (* let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap =  *)
+  (*   if (eq fv tv) then s *)
+  (*   else *)
+  (*     let r1 = find s fv in *)
+  (*     if (r1==None) then s *)
+  (*     else  *)
+  (*       let ns = add_equiv s fv tv in *)
+  (*       elim_elems_one ns fv *)
 
   (* TODO : will below suffer name-calsh *)
+  (* let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap =  *)
+  (*   List.fold_left (fun e p -> subs_eset p e) s f_t_ls *)
+
+
+  let subs_elem sst a =
+    try 
+      let (_,b) = List.find (fun (x,_) -> Elt.compare a x == 0) sst in
+      b
+    with _ -> a
+
   let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
-    List.fold_left (fun e p -> subs_eset p e) s f_t_ls
+    let new_s = List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s in
+    emap_sort new_s
 
 
   (* returns true if s contains no duplicates *)
@@ -917,7 +1060,7 @@ struct
 
   let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
-    if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
+    if b then  List.map (fun (e,k) -> (f e, k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
@@ -973,8 +1116,11 @@ end;;
 module ID =
 struct 
   type t = string
+  let zero = ""
+  let is_zero t = (t="")
   let eq = fun s1 s2 -> String.compare s1 s2 = 0
   let string_of = fun s -> s
+  let compare = String.compare
 end;;
 
 module EMapID = EqMap(ID);;
@@ -1130,10 +1276,13 @@ sig
   type t
   type ef = t -> t -> bool
   type tlist = t list
+  val zero : t
+  val is_zero : t -> bool
   val eq : ef
   val intersect_eq : ef -> tlist -> tlist -> tlist
   val intersect : tlist -> tlist -> tlist
   val string_of : t -> string
+  val compare : t -> t -> int
 end;;
 
 module type EQ_PTR_TYPE =
@@ -1253,7 +1402,7 @@ struct
   (* a singleton difference set *)
   let singleton_dset (e:ptr) : dpart = [[e]]
 
-  let is_dupl_dset (xs:dpart) : bool = 
+  let is_dupl_dset (xs:dpart) : bool =
     List.exists (check_dups) xs
 
   let is_mem_dset e (el:dpart): bool =
@@ -1323,7 +1472,7 @@ struct
     List.exists (is_conflict_list) s
 
   (* false result denotes contradiction *)
-  let is_sat_dset (xs:dpart) : bool = 
+  let is_sat_dset (xs:dpart) : bool =
     let r = not(is_dupl_dset xs) in
     begin
       (* print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r)); *)
@@ -1459,8 +1608,9 @@ struct
 	tasks # add_task_instance m1 0.
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
-    else 
-      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+    else
+      (* let _ = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
     if (!Globals.profiling) then

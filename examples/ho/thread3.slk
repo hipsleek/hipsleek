@@ -1,0 +1,52 @@
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
+//
+pred_prim threadR{F@Split,G}<>
+ inv true.
+
+pred_prim dead<>
+ inv true.
+
+data cell {
+  int x;
+}.
+
+/*
+  // lemma below is not necessary as we use @Split
+  lemma t::threadR{P * Q,G}<> ==> t::thrd{P,G}<> * t::thrd[Q,G]<>.
+*/
+
+lemma_unsafe t::threadR{%P,%G}<> * t::dead<>@L -> %P.
+
+checkentail t::threadR {y::cell<1111>*x::cell<2222> & true,G} <> 
+    |- t::threadR{x::cell<2222> & true,_}<>.
+print residue.
+
+checkentail t::threadR {y::cell<1111>*x::cell<2222> & true,G} <> 
+    |- t::threadR{A,B}<>.
+print residue.
+
+/*
+# thread2.slk
+
+Why @6 effect not added into @5?
+
+# FIXED float_exp problem ..
+
+*/
+
+//checkentail x::cell<111> |- x::cell<222>.
+
+/*
+checkentail t::threadR<y::cell<5>> |- t::threadR<P>.
+print residue.
+
+checkentail t::threadR<y::cell<5>*x::cell<4>> 
+    |- t::threadR<x::cell<a>>.
+print residue.
+
+checkentail t::thrd<# y::cell<5>*x::cell<4> & true #> 
+    |- t::thrd<#x::cell<a> & true #>.
+print residue.
+*/
+

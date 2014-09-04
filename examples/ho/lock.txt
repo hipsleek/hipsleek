@@ -1,0 +1,9 @@
+lock 
+  requires x::Lock<%R>@L * [[x->0 * x::UNLOCK<> \/ x->1]]
+  ensures  %R * x::UNLOCK<>
+
+
+unlock 
+  requires x::Lock<%R>@L * x::UNLOCK<> * %R * [[x->1]]
+  ensures  emp;
+

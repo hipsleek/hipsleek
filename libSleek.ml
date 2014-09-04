@@ -51,12 +51,11 @@ let process_cmd_list cmds :bool=
    *)
   let udefs = !Astsimp.undef_data_types in
   let _ = match udefs with
-    | [] ->	perform_second_parsing_stage ()
+    | [] ->  ()
     | _ -> let udn,udp = List.hd (List.rev udefs) in
       Error.report_error { Error.error_loc  = udp;
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
    (*proc_one_lemma*)
@@ -71,6 +70,7 @@ let process_cmd_list cmds :bool=
   (*proc_one_cmd*) 
   List.fold_left (fun a c-> match c with 
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype) && a
+      | CheckNorm f -> (process_check_norm f; a)
       | EqCheck (lv, if1, if2) -> (process_eq_check lv if1 if2; a)
       | Infer (ivars, iante, iconseq) -> (process_infer ivars iante iconseq) && a
       | CaptureResidue lvar -> (process_capture_residue lvar; a)

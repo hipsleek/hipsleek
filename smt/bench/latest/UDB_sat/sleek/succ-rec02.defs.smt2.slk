@@ -1,0 +1,31 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2:GTyp> ==
+self::one<> * x2::one<> * self::Q<x2>.
+
+pred Q<y2:GTyp> ==
+ self::zero<> * y2::zero<>
+or (exists x1,x2: x1::succ2rec<x2,self,y2> * x1::Q<x2>).
+
+pred succ2rec<x2:GTyp,y1:GTyp,y2:GTyp> ==
+ self::zero<> * y1::one<> & x2 = y2
+or x2::succ1rec<y2> * self::one<> * y1::zero<>.
+
+pred succ1rec<y1:GTyp> ==
+self::zero<> * y1::one<>.
+
+pred zero<> ==
+null = self.
+
+pred one<> ==
+null != self.
+
+checkentail_exact x0::P<x1>
+         |- false.
+
+expect Fail.
+

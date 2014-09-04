@@ -1,0 +1,53 @@
+pred_prim WAIT<b:bag((int,int))>.
+
+relation cyclic(bag((int,int)) g) == true.
+
+
+/*
+pred WAITFOR<B:BAG('a),c:'b> == self::WAIT<B2> & B2 = {(a,c) | a \in B}.
+
+lemma x::WAIT<B> & cylic(B) --> emp & flow __Fail.
+*/
+
+//lemma "union" self::WAIT<B1> * self::WAIT<B2>  -> self::WAIT<union(B1,B2)>.
+
+//lemma "deadlock" self::WAIT<B> & cyclic(B) ->  emp & flow __Fail.
+
+//checkentail  x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- true & flow __Fail.
+
+//checkentail  x::WAIT<B1> * x::WAIT<B2> & B1={tup2(c1,c2)} & B2={tup2(c2,c1)} |- true & flow __Fail.
+//print residue.
+
+//VALID
+checkentail B={tup2(c1,c2),tup2(c2,c1)} |- cyclic(B).
+print residue.
+
+/*
+   D= {..} |- |D|>4
+
+   D={..}  & |D|=k |- k>4  
+
+
+   D={(a,b),(c,d)} & a<b & c<d |- false
+  --------------------------------------
+   D={(a,b),(c,d)} & acyclic(D) |- false
+   D={(a,b),(c,d)} & acyclic(D) |- false
+  ------------------------------
+       D={..} |- cyclic(D)
+
+   D= {..} & g=cyclic(D) |- g
+
+*/
+
+/*
+global RS stk;
+
+void check_RS(int n)
+  requires stk::RS<_,a>@L & a>=n
+  ensures true;
+
+void check_min_RS()
+  requires stk::RS<m,a>@L & m<=0
+  ensures true;
+*/
+

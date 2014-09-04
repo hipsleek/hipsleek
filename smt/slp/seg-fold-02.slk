@@ -1,0 +1,26 @@
+data Sll_t {
+  Sll_t f;
+}.
+
+pred ls<out> ==
+ emp & self = out
+or (exists u: self::Sll_t<f = u> * u::ls<out> & self !=out).
+
+
+//1 end is a node, not null
+checkentail x::ls<y> * y::ls<c> * c::Sll_t<_> |- x::ls<c>.
+
+expect Valid.
+
+/*
+//2
+checkentail x::Sll_t<a> * a::Sll_t<y> * y::ls<null> |- x::ls<null>.
+
+expect Valid.
+
+
+//3 to revise
+checkentail x::Sll_t<a> * a::ls<b> * b::ls<null> |- x::ls<null>.
+
+expect Valid.
+*/

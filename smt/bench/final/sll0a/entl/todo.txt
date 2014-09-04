@@ -1,0 +1,70 @@
+=========================================
+smallfoot-vc04.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls  nil nil)
+        (ls  nil nil)
+	emp
+))))
+=========================================
+smallfoot-vc05.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls nil nil)
+	emp
+))))
+=========================================
+smallfoot-vc10.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls x1 nil)
+	(ls x1 x1)
+	(ls nil nil)
+	emp
+))))
+=========================================
+smallfoot-vc11.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls nil nil)
+        (ls x1 nil)
+	emp
+))))
+=========================================
+smallfoot-vc23.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls  nil nil)
+	emp
+))))
+=========================================
+smallfoot-vc24.tptp.smt2:
+
+(assert
+  (not
+     (tobool
+     (ssep
+	(ls nil nil)
+	(ls x1 nil)
+	emp
+))))
+=========================================
+=========================================
+=========================================
+=========================================
+=========================================

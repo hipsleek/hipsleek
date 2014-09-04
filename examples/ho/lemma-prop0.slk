@@ -1,0 +1,43 @@
+//CountDownLatch
+
+pred_prim WAIT<b:bag(int)>.
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a>@L * x::WAIT<S> & a notin S ->  
+x::WAIT<S1> & S1=union(S,{a}).
+
+check_normalize x::WAIT<S> * c1::CNT<1> & S={}.
+//output one state
+/*
+# lemma-propo0.slk
+
+a_69 should be bound to flted_10_39
+
+(exists c1_47,x_48,S1_58: x_48::WAIT{}<S1_58> * c1::CNT{}<flted_10_39>&
+S1_58=union(S_50,{a_49}) & c1=c1_47 & x=x_48 & flted_10_39=1 & S={}&
+{FLOW,(21,22)=__norm})[]
+*/
+
+check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<22> & S={}.
+//output one state
+/*
+CheckNorm (2) :  (exists c1_73,x_74,S1_91: x_74::WAIT{}<S1_91> * c1::CNT{}<flted_23_62> * 
+c2::CNT{}<flted_23_61>&S1_91=union(S_76,{a_75}) & c1=c1_73 & 
+flted_23_62=a_75 & x=x_74 & S=S_76 & flted_23_62=22 & flted_23_61=22 & S={}&
+{FLOW,(21,22)=__norm})[] ;
+ (exists c1_73,x_74,S1_92: x_74::WAIT{}<S1_92> * c1::CNT{}<flted_23_62> * 
+c2::CNT{}<flted_23_61>&S1_92=union(S_76,{a_75}) & c2=c1_73 & 
+flted_23_61=a_75 & x=x_74 & S=S_76 & flted_23_62=22 & flted_23_61=22 & S={}&
+{FLOW,(21,22)=__norm})[]
+*/
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<2> & S={}.
+//output one state
+
+//check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> * c3::CNT<(-1)> & S={}.
+//output two states since there are two normalization
+//can improve by fixpoint
+
+//checkentail flted_18_20=1 & flted_18_19+1=0  & S={} |- false.
+//expect Fail.

@@ -1,0 +1,32 @@
+/*
+  -tp parahip
+
+  Convert using "concretize_bag_pure":
+   B=union(S1,{1,2}) & S1=union(S2,{3,4}) & S2={5,6,1,2}
+   ==>
+    B={5,6,1,2,3,4,1,2} & S1={5,6,1,2,3,4} & S2={5,6,1,2}
+
+   Currently, only support Bag(), union() and (limited/syntatic) diff().
+
+*/
+
+relation concrete(bag(int) g).
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) & S2={5,6,1,2} |- concrete(B).
+expect Valid.
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) |- concrete(B).
+expect Fail.
+
+checkentail C=diff({1,2,3},{3,4,5}) |- concrete(C).
+expect Valid.
+
+checkentail C=diff({c1,c2,c3},{c3,c4,c5}) |- concrete(C).
+expect Valid.
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) & C=diff(B,S1) & S2={} |- concrete(C).
+expect Valid.
+
+checkentail B=union(S1,{1,2}) & S1=union(S2,{3,4}) & C=diff(B,S1)|- concrete(C).
+expect Fail.
+

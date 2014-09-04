@@ -46,6 +46,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
+  | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -82,6 +83,10 @@ and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * stri
 (* return p_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * string list) =
   match pf with
+    | Frm (sv, _)    -> (
+      let pred = spass_dfg_of_spec_var sv in
+      (pred, [], [pred]) 
+    ) 
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
   | BVar (sv, _)    -> (
@@ -187,7 +192,8 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
-  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
+  | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -221,6 +227,7 @@ and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
 
 and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
+    | Frm (sv, _)    -> spass_tptp_of_spec_var sv
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then "$true" else "$false"
   | BVar (sv, _)    -> spass_tptp_of_spec_var sv
@@ -296,12 +303,14 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Template _ -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
-  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern(); 
+  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern();
+  | Cpure.Tup2 _      -> Error.report_no_pattern();
   | Cpure.Bptriple _      -> Error.report_no_pattern();
 
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
+    | Frm _               -> false
   | LexVar _             -> false
   | BConst _             -> true
   | BVar _               -> true

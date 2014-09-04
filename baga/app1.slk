@@ -1,0 +1,57 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_, q> * q::ll<n-1>
+  //inv n>=0
+  //inv BG([],n>=0) 
+  //inv BG([],self=null & n=0) | BG([self],n>0)
+  //inv_exact BG([],self=null & n=0) | BG([self],n>0)
+  /* inv_sat BG([],self=null & n=0) | BG([self],n>0) */
+  // under
+.
+
+/*
+# app1.slk
+
+GOT below which seems less accurate.
+!!! baga_over(unfolded):Some([([], self=Cnull & n=0),([self], true)])
+
+Expecting:
+inv_exact BG([],self=null & n=0) | BG([self],n>0)
+
+When inv_exact given, we should use it for both
+over_baga and under_baga.
+
+why did we have failure below?
+
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: 
+  ((self=Cnull & n=0) | self!=Cnull) 
+  |-  ((self=Cnull & n=0) | (0<self & 0<n)). LOCS:[6;7;0;11] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+
+Starting Omega...oc
+Fatal error: exception Failure("view defn for ll does not entail supplied invariant
+Two problems
+  (1) why --esl not working
+  (2) seems that user_inv is true
+
+*/
+
+checkentail x::ll<n> & n<0 |- false.
+print residue.
+// should succeed
+
+checkentail x=null |- x!=null.
+print residue.
+// should be a must-failure
+
+// should be a must-failure
+checkentail x=1 |- x>1.
+print residue.

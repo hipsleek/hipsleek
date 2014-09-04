@@ -1,0 +1,33 @@
+nlcl-vc01.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+nlcl-vc02.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+nlcl-vc03.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT
+nlcl-vc04.smt2.slk
+Validate 1: Expected.
+
+
+SAT
+nlcl-vc05.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+SAT

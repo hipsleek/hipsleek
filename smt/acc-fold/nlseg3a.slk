@@ -1,0 +1,61 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+/*
+  (exists a: self::node<a> & self!=a)
+  (exists a: self::node<a> & emp)
+
+*/
+
+checkentail x::node<y> |- x::node<_>@L.
+print residue.
+
+checkentail x::node<y>@L |- x::node<_>@L.
+print residue.
+
+checkentail x::node<y>*y::node<p> |- x::nlseg<p>.
+print residue.
+
+checkentail x::node<y> |- x::nlseg<p>.
+print residue.
+// fail but need better error message
+
+checkentail x::nlseg<p>  |- x::node<y>*y::node<p>.
+print residue.
+// should fail (unfold to remove @L nodes and replace by relevant pure)
+
+checkentail x::nlseg<p>  |- x::node<y> & x!=y.
+print residue.
+// residue y::node<p>@A
+
+/*
+# nlseg3a.slk --imm -dd
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+ why @L eaten node up?
+
+The view form for folding not quite correct
+since @L node absent ..
+
+!!!nlseg3.slk:11: 37: do_fold: RHS view:  x::nlseg<p_26>
+!!!nlseg3.slk:11: 37: do_fold: view_form:  EBase (* lbl: *){1}->(exists p_27,a_28: x::node<a_28> * a_28::node<p_27>&
+       p_26=p_27&{FLOW,(1,24)=__flow})[]
+
+what happend to @L annotation during folding?
+
+conseq:
+ EBase (* lbl: *){1}->(exists p_27,a_28: x::node<a_28> * a_28::node<p_27>&
+       p_26=p_27&{FLOW,(1,24)=__flow})[]
+!!! es(1): x::node<y> * y::node<p>&{FLOW,(21,22)=__norm}[]
+
+*/
+
+

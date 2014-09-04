@@ -44,16 +44,16 @@ let init_files () =
 	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
   end
 
-
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
 				  | []->
+            (* omega doesn't allow variable name starting with underscore *)
+            let v = if ((String.get v 0) == '_') then "v" ^ v 
+                    else v in
             let ln = (String.length v) in  
             let r_c = if (ln<20) then v
-              else 
-                let v_s = "v"^(String.sub v (ln-20)  20) in
-                if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
+                      else "v" ^ (String.sub v (ln-20)  20) in
             begin
               omega_subst_lst := (r_c,v,t)::!omega_subst_lst; 
 							r_c end
@@ -63,7 +63,9 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (sv, _) -> omega_of_spec_var sv
+  | Var (SpecVar(_,n,_) as sv, _) -> 
+        if n="null" then "0"
+        else (omega_of_spec_var sv)
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
@@ -110,6 +112,7 @@ ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
+  | Frm _ -> "(0=0)"
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
@@ -209,8 +212,11 @@ let omega_of_formula_old i f  =
    let pr = !print_formula in
    Debug.no_1_num i "omega_of_formula_old"
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
+let is_local_solver = ref (false: bool)
 
- let omegacalc = ref ("oc":string)
+let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+else ref ("oc":string)
+(* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
 (* let omegacalc = ref ("/home/locle/workspace/hg/cparser-1/sleekex/omega_modified/omega_calc/obj/oc": string) *)
@@ -229,7 +235,7 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag then
+	(if !log_all_flag && (not !Globals.smt_compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done
@@ -237,7 +243,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -961,7 +967,10 @@ let simplify (pe : formula) : formula =
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
-let simplify (pe : formula) : formula =
+let simplify (pe : formula) : formula = if not !Globals.oc_simplify then
+  (* let _ = print_endline ("OC.Simplify: " ^ (!print_pure pe) ) in *)
+  pe
+else
   match (do_with_check "" simplify pe)
   with 
     | None -> pe
@@ -973,6 +982,31 @@ let simplify (pe : formula) : formula =
 (* let simplify (pe : formula) : formula = *)
 (*   let pr = !print_formula in *)
 (*   Debug.no_1 "Omega.simplify" pr pr (wrap_ptr_to_int_exact simplify) pe  *)
+
+let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
+  begin
+    omega_subst_lst := [];
+    let pe1 = drop_varperm_formula pe1 in
+    let pe2 = drop_varperm_formula pe2 in
+    match ((omega_of_formula_old 21 pe1), (omega_of_formula_old 21 pe2)) with
+      | (Some fstr1, Some fstr2) ->
+            let vars_list1 = get_vars_formula pe1 in
+            let vars_list2 = get_vars_formula pe2 in
+            let vars_list = vars_list1@vars_list2 in
+            let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+            let fomega =  "pairwisecheck ({[" ^ vstr ^ "] : (" ^ fstr1 ^ ")} union {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")});" ^ Gen.new_line_str in
+            let _ = set_proof_string ("PAIRWISE:"^fomega) in
+	        (*test*)
+	        (*print_endline (Gen.break_lines fomega);*)
+	    if !log_all_flag then begin
+              output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
+              output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
+              flush log_all;
+            end;
+            let rel = send_and_receive fomega !in_timeout (* 0. *) in
+	        match_vars (remove_dups_svl ((fv pe1)@(fv pe2))) rel
+      | _ -> Cpure.mkOr pe1 pe2 None no_pos
+  end
 
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)

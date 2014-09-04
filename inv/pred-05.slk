@@ -1,0 +1,12 @@
+data node {
+     node left;
+     node right;
+}.
+
+pred btree<> ==
+     self = null
+     or (exists l,r: self::node<l,r> * l::btree<> * r::btree<>).
+
+// expect: true
+
+checkentail true |- true.

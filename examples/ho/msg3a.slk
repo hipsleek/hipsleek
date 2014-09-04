@@ -1,0 +1,59 @@
+
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+
+checkentail c::MSG{v::cell<1> & true}<v> * xxx::cell<1> 
+    |- c::MSG{%P}<xxx> .
+print residue.
+/*
+# msg3a.slk
+
+This fix should be done at the matching procedure for
+higher-order predicate.
+
+GOT
+===
+Entail 1: Valid. 
+
+ <1>xxx::cell<flted_10_17>&flted_10_17=1 & xxx=v&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists flted_10_15: v::cell<flted_10_15>&flted_10_15=1&
+           {FLOW,(21,22)=__norm})[]]
+
+Expecting:
+Since v is bound, can we try to bind v=x, and then generate
+the following binding for P. can we move the binding xxx=v from
+residue into ho_vars binding:
+
+ <1>xxx::cell<flted_10_17>&flted_10_17=1 {FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists flted_14_31,v: v::cell<flted_14_31>&flted_14_31=1
+             & xxx=v)
+
+When we have the state:
+ c::MSG{v::cell<1> & true}<v>
+
+We need to view it as:
+ (exists v: c::MSG{v::cell<1> & true}<v>)
+
+When we have:
+ c::MSG{%P}<x>
+
+We really need to view x as an instantiation rather
+than a proving location; so as to allow x to be bound into
+%P later.
+
+*/
+
+/*
+
+ let ch=create() with (exists v: ch::MSG{v::cell<1>}<v>)
+
+ send(ch,v) requires ch::MSG{%P}<v> * %P
+            ensures 
+*/
+
+

@@ -1,0 +1,23 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+
+//(1)
+checkentail x::node<_>@A * y::node<_>@A   |-  x!=y.
+print residue.
+// succeed
+
+//(2)
+checkentail x::node<_>@A * y::node<_>@A   |-  x=y.
+print residue.
+// fail
+
+//(3) nlseg3d.slk
+checkentail x::node<_>@A * x::node<_>@A   |-  false.
+print residue.
+// this cause a false context but is unsound
+// for both --imm and --dis-imm

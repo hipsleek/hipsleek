@@ -1,0 +1,10 @@
+/*
+ -tp parahip
+*/
+
+checkentail C=union(B,B) |- C=B.
+expect Valid.
+
+
+
+

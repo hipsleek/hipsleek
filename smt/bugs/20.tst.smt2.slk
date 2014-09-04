@@ -1,0 +1,19 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred ls<y:GTyp> ==
+ self = y
+or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::ls<y> & null != self & self != y).
+
+/*
+lemma_safe self::ls<y> * y::ls<p> <- self::ls<p>.
+*/
+
+checkentail_exact x::ls<y> * y::ls<null>
+         |- x::ls<null>.
+
+expect Valid.
+

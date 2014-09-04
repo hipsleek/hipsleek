@@ -203,11 +203,11 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
 	                if((List.length new_args) == 0) then CF.HEmp,[(sv,args,[])]
 	                else (CF.HRel (sv, new_args, l)),[(sv,args,new_args)]
 	              end
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> hf0,[]
-	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern ()
+      | CF.HEmp | CF.HVar _ -> hf0,[]
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern ()
   in
   helper hf
 
@@ -1933,11 +1933,11 @@ let subst_cs_w_partial_defs_x hp_constrs par_defs=
                 | Some _ ,Some _ -> (*recursive par def -->currently omit*)
                     partition_par_defs ps lpdefs rpdefs
                 | Some f1, None -> (*lhs case*)
-                    let new_lpdef = if Sautil.is_empty_heap_f f1 then [] else
+                    let new_lpdef = if Cfutil.is_empty_heap_f f1 then [] else
                       [(hp_name, hp_args,unk_svl, f1)] in
                     partition_par_defs ps (lpdefs@new_lpdef) rpdefs
                 | None, Some f2 -> (*rhs case*)
-                    let new_rpdef = if Sautil.is_empty_heap_f f2 then [] else
+                    let new_rpdef = if Cfutil.is_empty_heap_f f2 then [] else
                           [(hp_name, hp_args,unk_svl, f2)] in
                     partition_par_defs ps lpdefs (rpdefs@new_rpdef)
                 | None, None -> (*can not happen*)
@@ -3960,7 +3960,9 @@ let build_horm_view_x templ_view_decls horm_dd=
     { Iast.view_name = n_view_name;
     Iast.view_pos = no_pos;
     Iast.view_data_name = data_name;
+    Iast.view_type_of_self = None;
     Iast.view_vars = view.Iast.view_vars;
+    Iast.view_ho_vars = view.Iast.view_ho_vars;
     Iast.view_imm_map = view.Iast.view_imm_map;
     Iast.view_labels = view.Iast.view_labels;
     Iast.view_modes = view.Iast.view_modes;
@@ -3972,6 +3974,9 @@ let build_horm_view_x templ_view_decls horm_dd=
     Iast.view_derv_info = view.Iast.view_derv_info;
     Iast.view_typed_vars = view.Iast.view_typed_vars;
     Iast.view_invariant = n_view_invariant;
+    Iast.view_baga_inv = None;
+    Iast.view_baga_over_inv = None;
+    Iast.view_baga_under_inv = None;
     Iast.view_mem = view.Iast.view_mem;
     Iast.view_formula = n_view_formula;
     Iast.view_inv_lock = n_view_inv_lock;
@@ -3993,8 +3998,7 @@ let build_horm_view templ_view_decls horm_dd=
 let compute_view_data_name templ_ddefs templ_vdefs vdef=
   let data_name =
     if (String.length vdef.Iast.view_data_name) = 0 then
-      let dl = List.map (fun v -> v.Iast.data_name) templ_ddefs in
-      let (cands,_)= Iast.find_data_view dl vdef.Iast.view_formula no_pos in
+      let (cands,_)= Iast.find_data_view vdef templ_ddefs no_pos in
       (* let _ = print_endline ("Feasible self type: " ^ (String.concat "," cands)) in *)
       List.hd cands
     else vdef.Iast.view_data_name

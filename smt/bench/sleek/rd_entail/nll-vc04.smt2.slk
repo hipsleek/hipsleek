@@ -1,0 +1,21 @@
+
+data NLL_lvl1_t {
+  NLL_lvl1_t next1;
+}.
+
+data NLL_lvl2_t {
+  NLL_lvl2_t next2;
+  NLL_lvl1_t down;
+}.
+
+pred lso<out> ==
+ self = out
+or (exists u: self::NLL_lvl1_t<next1 = u> * u::lso<out>).
+
+pred nll<out,boundary> ==
+ self = out
+or (exists u,Z1: self::NLL_lvl2_t<next2 = u,down = Z1> * Z1::lso<boundary> * u::nll<out,boundary>).
+
+checkentail x1::NLL_lvl2_t<next2 = x2,down = x1_1> * x1_1::NLL_lvl1_t<next1 = x1_2> * x1_2::NLL_lvl1_t<next1 = x1_3> * x1_3::NLL_lvl1_t<next1 = null> * x2::nll<x3,null> * x3::NLL_lvl2_t<next2 = null,down = x3_1> * x3_1::NLL_lvl1_t<next1 = x3_2> * x3_2::NLL_lvl1_t<next1 = null>
+         |- x1::nll<null,null>.
+

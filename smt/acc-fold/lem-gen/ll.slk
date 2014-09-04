@@ -1,0 +1,34 @@
+data node {
+    int val;
+    node next
+}.
+
+// nontouching, nonsegmented
+pred ll_s<n> == self = null & n = 0
+    or self::node<v,r> * r::ll_s<n - 1>
+    inv n >= 0.
+
+// touching, segmented
+pred lseg11<p> == self = p
+    or self::node<v,r> * r::lseg11<p> & p = null.
+
+// nontouching, segmented
+pred lseg12<p> == self = p
+    or self::node<v,r> * r::lseg12<p> & self!= p.
+
+// touching, segmented
+pred lseg21<q,m> == self = q & m = 0
+    or self::node<v,r> * r::lseg21<q, m-1>.
+
+// nontouching, segmented
+pred lseg22<q,m> == self = q & m = 0
+    or self::node<v,r> * r::lseg22<q, m-1> & q != self.
+
+// touching, segmented
+pred lseg31<t,u> == self = t & u = null
+    or self::node<v,r> * r::lseg31<t, r>.
+
+// nontouching, segmented
+pred lseg32<t,u> == self = t & u = null
+    or self::node<v,r> * r::lseg32<t, r> & self != t.
+

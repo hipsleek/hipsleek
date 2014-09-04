@@ -1,0 +1,12 @@
+data pto {
+     pto next;
+     pto prev;
+}.
+
+pred dll<ex1,pr,hd> == self=hd & pr=ex1 // self=pr & hd=ex1 --> Valid
+     or (exists u: self::pto<u,pr> * u::dll<ex1,self,hd>).
+
+// Valid -> expected Valid.
+
+checkentail x_emp::pto<w_emp,null> * w_emp::dll<y_emp,x_emp,z_emp> * y_emp::pto<z_emp,_> |-
+            x_emp::dll<y_emp,null,z_emp>.

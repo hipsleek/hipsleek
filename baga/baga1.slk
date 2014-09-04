@@ -1,0 +1,52 @@
+data node {
+  node next;
+}.
+
+// --eps
+//           3
+//Fail.Fail.Valid.Valid.Fail.Valid.
+//  7
+//Valid.Fail.Fail.
+//                             15
+//Valid.Fail.Fail.Valid.Valid.Fail.
+
+/*
+!!! baga inv(l7):[([], self=null & q=null),([q,self], true)]
+!!! baga inv(l6):[([q], self=null),([q,self], true)]
+!!! baga inv(l5):[([k,self], self!=k)]
+!!! baga inv(l4):[([q,self], true)]
+!!! baga inv(l3a):[]
+!!! baga inv(l3):[([self], true)]
+*/
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+.
+
+/*
+# baga1.slk
+
+Could Omega.simplify be improved to preserve disequality?
+
+!!! pure1 = : exists(q:k=q & self!=q)
+!!! pure2 = : (k<self | self<k)
+
+=======
+
+Given
+!!! baga over inv(l5):[([], self!=Cnull)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+However, I expect to get:
+    inv BG([self,k],true)
+
+
+*/
+
+// (7) valid
+checkentail x::l5<c> * c::node<_> |- false.
+expect Valid.
+

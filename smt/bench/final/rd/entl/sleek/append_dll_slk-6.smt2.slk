@@ -1,0 +1,26 @@
+
+data node2 {
+  node2 prev;
+  node2 next;
+}.
+
+pred dll<p:node2> ==
+ self = null
+or (exists p_20,self_21,q_19: self::node2<prev = p_20,next = q_19> * q_19::dll<self_21> & p_20 = p & self_21 = self).
+
+pred dll_e1<q:node2> ==
+(exists p1,s,q1: q1::dll<s> * self::node2<prev = p1,next = q1> & self = s & p1 = q).
+
+pred dll_e2<q:node2> ==
+(exists s,p1,p2,n,q1: self::node2<prev = p1,next = n> * q1::dll<s> & n = q1 & p1 = p2 & s = self & p2 = q).
+
+pred node2_e1<p:node2,q:node2> ==
+(exists p1,n1: self::node2<prev = p1,next = n1> & p1 = p & n1 = q).
+
+pred dll_e3<p:node2> ==
+(exists q: self::dll<q> & q = p).
+
+checkentail_exact q::dll<self> * y::dll<p> * xprm::node2<prev = p1,next = yprm> & yprm != null & next0 = q & q = null & xprm = x & yprm = y & x != null & self = xprm & p1 = q1
+         |- q::dll<self> * y::dll<p> * xprm::node2<prev = p1,next = yprm> & yprm != null & next0 = q & q = null & xprm = x & yprm = y & x != null & self = xprm & p1 = q1.
+
+expect Valid.

@@ -1,0 +1,61 @@
+
+data Dll_t {
+  Dll_t next;
+  Dll_t prev;
+}.
+
+pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
+     self = nx & bk = pr
+or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
+
+checkentail x_emp::Dll_t<next = w_emp,prev = null> *
+            w_emp::dll<y_emp,x_emp,z_emp> *
+            y_emp::Dll_t<next = z_emp,prev = _>
+         |- x_emp::dll<y_emp,null,z_emp>.
+
+expect Fail.
+
+/*
+
+
+!!! baga inv
+dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> 
+  = [([], self=nx & bk=pr),
+
+self::dll<bk,pr,nx> 
+  = ([], self=nx & bk=pr)
+    \/ ([self],self!=nx) * u::dll(bk,self,nx) * 
+  = ([], self=nx & bk=pr),([self], bk=self,self!=nx)
+ 
+self::dll<bk,pr,nx> 
+  = ([], self=nx & bk=pr)
+    \/ ([self],self!=nx) * u::dll(bk,self,nx) 
+  = ([], self=nx & bk=pr)
+    \/ ([self],self!=nx) * [([], u=nx & bk=self),([u], bk=u,u!=nx)]
+  = ([], self=nx & bk=pr)
+    \/ ([self],self!=nx & u=nx & bk=self),([self,u], self!=nx & bk=u & u!=nx)]
+  = [([], self=nx & bk=pr),([self],self!=nx & bk=self),
+           ([self,bk], self!=nx & bk!=nx)]
+
+self::dll<bk,pr,nx> 
+  = ([], self=nx & bk=pr)
+    \/ ([self],self!=nx) * 
+           [([], u=nx & bk=self),([u],u!=nx & bk=self),
+           ([u,bk], u!=nx & bk!=nx)]
+  = ([], self=nx & bk=pr)
+    \/     [([self], bk=self & self!=nx),
+           ([self], bk=self & self!=nx),
+           ([self,bk], u!=nx & bk!=nx &self!=nx)]
+  = ([], self=nx & bk=pr)
+    ([self], bk=self & self!=nx),
+     ([self,bk], bk!=nx &self!=nx)]
+
+!!! baga inv(dll):
+
+[([], self=nx & bk=pr),
+([self], self!=nx & self=bk),
+([bk,self], bk!=nx & self!=nx),
+([self,bk], bk!=nx & self!=nx)] DUPLICATED!
+
+
+*/

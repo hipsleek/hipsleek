@@ -121,11 +121,14 @@ and cvcl_of_exp a = match a with
 	| CP.Template t -> cvcl_of_exp (CP.exp_of_template t)
 	| CP.Bptriple _ ->
       failwith ("cvcl_of_exp: Bptriple not supported in cvclite")
+	| CP.Tup2 _ ->
+      failwith ("cvcl_of_exp: Tup2 not supported in cvclite")
 
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (sv, _) -> (cvcl_of_spec_var sv) ^ " = 1"
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
   | CP.XPure _ -> "(TRUE)" (* WN : weakening *)
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)

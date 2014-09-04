@@ -69,10 +69,13 @@ and view_kind =
   | View_DERV
   | View_SPEC
 
+and ibaga_pure = (ident list * P.formula) list
+
 and view_decl = 
     { view_name : ident; 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
     mutable view_vars : ident list;
     mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;
@@ -81,11 +84,15 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
     mutable view_derv: bool;
+    view_type_of_self : typ option;
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
+    view_baga_inv : ibaga_pure option;
+    view_baga_over_inv : ibaga_pure option;
+    view_baga_under_inv : ibaga_pure option;
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
@@ -160,7 +167,7 @@ and barrier_decl = {
 
 
 and enum_decl = { enum_name : ident;
-enum_fields : (ident * int option) list } 
+enum_fields : (ident * int option) list }
     (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
@@ -170,10 +177,10 @@ and param_modifier =
     (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
 
 and jump_label_type =
-  | NoJumpLabel 
+  | NoJumpLabel
   | JumpLabel of ident
-        
-and rise_type = 
+
+and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
@@ -185,7 +192,7 @@ param_loc : loc }
 (*
   and multi_spec = spec list
 
-  and spec = 
+  and spec =
   | SCase of scase_spec
   | SRequires of srequires_spec
   | SEnsure of sensures_spec
@@ -242,6 +249,7 @@ coercion_body : F.formula;
 coercion_proof : exp;
 coercion_type_orig: coercion_type option; (* store origin type before transforming *)
 coercion_kind : lemma_kind;
+coercion_origin : lemma_origin;
 }
 
 and coercion_decl_list = {
@@ -564,6 +572,8 @@ let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
+let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
+let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 
 let find_empty_static_specs iprog = 
@@ -1425,225 +1435,381 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   let ddef = look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
+and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
+  if (cmp_typ old_typ new_typ) then henv
+  else (
+    List.map (fun (id, t) ->
+      if not (is_type_var old_typ) then (
+        let msg = "type substitution error: cannot substitute '"
+                  ^ (string_of_typ old_typ) ^ "' by '"
+                  ^ (string_of_typ new_typ) ^ "'" in
+        report_error no_pos msg
+      )
+      else (
+        if (cmp_typ t old_typ) then (id, new_typ)
+        else (id, t)
+      )
+    ) henv
+  )
 
-and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (ident list) * (ident list) =
+and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+  let pr_typ = string_of_typ in
+  let pr_henv = pr_list (fun (id,t) ->
+    "(" ^ id ^ "," ^ (string_of_typ t) ^ ")"
+  ) in 
+  Debug.no_3 "subs_heap_type_env" pr_henv pr_typ pr_typ pr_henv
+    (fun _ _ _ -> subs_heap_type_env_x henv old_typ new_typ)
+    henv old_typ new_typ
+
+and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
+  try
+    let (_, typ) = List.find (fun (n,t) ->
+      (String.compare n id = 0)
+    ) henv in
+    (typ, henv)
+  with Not_found ->
+    let typ = TVar (fresh_int ()) in
+    let henv = henv @ [(id, typ)] in
+    (typ, henv)
+
+and collect_data_view_from_struc_x (f:F.struc_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list) 
+    : (ident list) * (ident list) * ((ident * typ) list) =
   match f with
   | F.EAssume b ->
-      collect_data_view_from_formula data_names b.F.formula_assume_simpl
+      collect_data_view_from_formula b.F.formula_assume_simpl data_decls henv
   | F.ECase b->
-      let dvll = List.map (fun (_, sf) ->
-        collect_data_view_from_struc data_names sf
-      ) b.F.formula_case_branches in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, sf) ->
+        let (dl2, vl2, henv) = collect_data_view_from_struc sf data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) b.F.formula_case_branches in
+      (dl, vl, henv)
   | F.EBase b->
-      let dl1, vl1 = collect_data_view_from_formula data_names b.F.formula_struc_base in
-      let dl2, vl2 = (
+      let dl1, vl1, henv =
+        let base = b.F.formula_struc_base in
+        collect_data_view_from_formula base data_decls henv in
+      let dl2, vl2, henv = (
         match b.F.formula_struc_continuation with
-        | None -> ([], [])
-        | Some sf -> collect_data_view_from_struc data_names sf
+        | None -> ([], [], henv)
+        | Some sf -> collect_data_view_from_struc sf data_decls henv
       ) in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | F.EInfer b -> collect_data_view_from_struc data_names b.F.formula_inf_continuation
+      (dl, vl, henv)
+  | F.EInfer b ->
+      let cont = b.F.formula_inf_continuation in
+      collect_data_view_from_struc cont data_decls henv
   | F.EList b -> 
-      let dvll = List.map (fun (_, sf) -> collect_data_view_from_struc data_names sf) b in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
-  
-and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
-  let rec helper (h0 : F.h_formula) = (
-    match h0 with
-    | F.HeapNode h -> 
-        let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
-        if v = self then (
-          let deref_str = ref "" in
-          for i = 1 to h.F.h_formula_heap_deref do
-            deref_str := !deref_str ^ "_star"
-          done;
-          let view_data_name = c ^ !deref_str in
-          let dl, vl = (
-            if (List.mem view_data_name data_names) then ([view_data_name], [])
-            else ([], [view_data_name])
-          ) in
-          (dl, vl)
-        )
-        else ([], [])
-    | F.Star h -> 
-        let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          let _ = report_warning pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed") in
-          ([],[])
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | F.Phase h -> 
-        let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | F.Conj h ->
-        let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | _ -> ([], [])
-  ) in
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, sf) ->
+        let (dl2, vl2, henv) = collect_data_view_from_struc sf data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) b in
+      (dl, vl, henv)
+
+and collect_data_view_from_struc (f:F.struc_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list) 
+    : (ident list) * (ident list) * ((ident * typ) list) =
+  let pr_sf = !F.print_struc_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_struc" pr_sf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_struc_x f data_decls henv) f henv
+
+and collect_data_view_from_formula_x (f0 : F.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+
   match f0 with
     | F.Base f ->
-        let dl1, vl1 = helper f.F.formula_base_heap in
-        let dl2, vl2 = collect_data_view_from_pure_formula data_names f.F.formula_base_pure in
+        let dl1, vl1, henv =
+          let heap = f.F.formula_base_heap in
+          collect_data_view_from_h_formula heap data_decls henv in
+        let dl2, vl2, henv = 
+          let pure = f.F.formula_base_pure in
+          collect_data_view_from_pure_formula pure data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
     | F.Exists f -> 
-        let dl1, vl1 = helper f.F.formula_exists_heap in
-        let dl2, vl2 = collect_data_view_from_pure_formula data_names f.F.formula_exists_pure in
+        let dl1, vl1, henv =
+          let heap = f.F.formula_exists_heap in
+          collect_data_view_from_h_formula heap data_decls henv in
+        let dl2, vl2, henv =
+          let pure = f.F.formula_exists_pure in
+          collect_data_view_from_pure_formula pure data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
     | F.Or f -> 
-        let dl1, vl1 = collect_data_view_from_formula data_names f.F.formula_or_f1 in
-        let dl2, vl2 = collect_data_view_from_formula data_names f.F.formula_or_f2 in
+        let dl1, vl1, henv =
+          let f1 = f.F.formula_or_f1 in
+          collect_data_view_from_formula f1 data_decls henv in
+        let dl2, vl2, henv =
+          let f2 = f.F.formula_or_f2 in
+          collect_data_view_from_formula f2 data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
 
-and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
-  let pr1 = !F.print_formula in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_formula" pr1 pr3
-      (fun _ -> collect_data_view_from_formula_x data_names f0) f0
+and collect_data_view_from_formula (f0 : F.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_f = !F.print_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_formula" pr_f pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_formula_x f0 data_decls henv) f0 henv
 
-and collect_data_view_from_pure_formula_x (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) * ((ident * typ) list) =
+  match h0 with
+  | F.HeapNode h -> (
+      let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
+      let deref_str = ref "" in
+      for i = 1 to h.F.h_formula_heap_deref do
+        deref_str := !deref_str ^ "_star"
+      done;
+      let c = c ^ !deref_str in
+      try
+        let ddecl = look_up_data_def_raw data_decls c in
+        let dl, vl = (
+          if (String.compare v self = 0) then ([c], [])
+          else ([], [])
+        ) in
+        let vtyp, henv = get_heap_type henv v in
+        let henv = subs_heap_type_env henv vtyp (Named c) in
+        let henv = List.fold_left2 (fun henv1 arg field ->
+          let ((t1,_), _, _, _) = field in
+          match arg with
+          | P.Var ((id,_),_) ->
+              let t2, henv = get_heap_type henv id in
+              subs_heap_type_env henv t2 t1
+          | P.Ann_Exp (P.Var ((id,_),_), t2, _) ->
+              if not (cmp_typ t1 t2) then
+                let msg = " type error in h_formula: " ^ (!print_h_formula h0) in
+                report_error h.F.h_formula_heap_pos msg
+              else
+                let t3, henv = get_heap_type henv id in
+                subs_heap_type_env henv t3 t1
+          | _ -> henv
+        ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
+        (dl, vl, henv)
+      with | Invalid_argument _ | Not_found ->
+        (* let _ = print_endline ("== not found ddecl!") in *)
+        let dl, vl = 
+          if (String.compare v self = 0) then ([], [c])
+          else ([], []) in
+        (dl, vl, henv)
+    )
+  | F.Star h -> 
+      let h1, h2 = h.F.h_formula_star_h1, h.F.h_formula_star_h2 in
+      let pos = h.F.h_formula_star_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | F.Phase h -> 
+      let h1, h2 = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw in
+      let pos =  h.F.h_formula_phase_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | F.Conj h ->
+      let h1, h2 = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2 in
+      let pos = h.F.h_formula_conj_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | _ -> ([], [], henv)
+
+and collect_data_view_from_h_formula (f0 : F.h_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_hf = !F.print_h_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_h_formula" pr_hf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_h_formula_x f0 data_decls henv) f0 henv
+
+
+and collect_data_view_from_pure_formula_x (f0 : P.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
   match f0 with
-  | P.BForm (bf, _) -> collect_data_view_from_pure_bformula data_names bf
+  | P.BForm (bf, _) -> collect_data_view_from_pure_bformula bf data_decls henv
   | P.And (f1, f2, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_formula data_names f1 in
-      let dl2, vl2 = collect_data_view_from_pure_formula data_names f2 in
+      let dl1, vl1, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_pure_formula f2 data_decls henv in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
+      (dl, vl, henv)
   | P.AndList fs ->
-      let dvll = List.map (fun (_, f1) -> collect_data_view_from_pure_formula data_names f1) fs in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, f1) ->
+        let dl2, vl2, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) fs in
+      (dl, vl, henv)
   | P.Or (f1, f2, _, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_formula data_names f1 in
-      let dl2, vl2 = collect_data_view_from_pure_formula data_names f2 in
+      let dl1, vl1, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_pure_formula f2 data_decls henv in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | P.Not (f1, _, _) -> collect_data_view_from_pure_formula data_names f1
-  | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
-  | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
+      (dl, vl, henv)
+  | P.Not (f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
+  | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
+  | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
 
+and collect_data_view_from_pure_formula (f0 : P.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_f = !P.print_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_pure_formula" pr_f pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_pure_formula_x f0 data_decls henv) f0 henv
 
-and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
-  let pr1 = !P.print_formula in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_pure_formula" pr1 pr3
-      (fun _ -> collect_data_view_from_pure_formula_x data_names f0) f0
-
-and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
+and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
   let pf, _ = bf in
   match pf with
-  | P.XPure _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
-  | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [])
-  | P.Eq (e1, e2, _)
-  | P.Neq (e1, e2, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_exp data_names e1 in
-      let dl2, vl2 = collect_data_view_from_pure_exp data_names e2 in
-      let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-      let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [])
-  | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [])
-  | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
-  | P.VarPerm _ | P.RelForm _ -> ([], [])
-
-and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
-  match e0 with
-  | P.Ann_Exp (e, t, pos) -> (
-      match e with
-      | P.Var ((id, _), _) ->
-            if String.compare id self != 0 then ([],[]) else
-              let t_id = string_of_typ t in
-              if (List.mem t_id data_names) then
-                ([t_id], [])       (* type annotation of self to view decl *)
-              else
-                report_error pos ("self has invalid type: " ^ t_id)
-      | _ -> ([], [])
+  | P.XPure _ | P.Frm _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [], henv)
+  | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [], henv)
+  | P.Eq (e1, e2, pos) | P.Neq (e1, e2, pos) -> (
+      let typ_info = (
+        match (e1, e2) with
+        | P.Var ((id1,_),_), P.Var ((id2,_),_) ->
+            let t1, henv = get_heap_type henv id1 in
+            let t2, henv = get_heap_type henv id2 in
+            Some (t1, t2, henv)
+        | P.Ann_Exp (P.Var ((id1,_),_), typ, _), P.Var ((id2,_),_) ->
+            let t1, henv = get_heap_type henv id1 in
+            let henv = subs_heap_type_env henv t1 typ in
+            let t2, henv = get_heap_type henv id2 in
+            Some (typ, t2, henv)
+        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, _) ->
+            let t1, henv = get_heap_type henv id1 in
+            let t2, henv = get_heap_type henv id2 in
+            let henv = subs_heap_type_env henv t2 typ in
+            Some (t1, typ, henv)
+        | P.Ann_Exp (P.Var ((id1,_),_), typ1, _), P.Ann_Exp (P.Var ((id2,_),_), typ2, _) ->
+            let t1, henv = get_heap_type henv id1 in
+            let henv = subs_heap_type_env henv t1 typ1 in
+            let t2, henv = get_heap_type henv id2 in
+            let henv = subs_heap_type_env henv t1 typ2 in
+            Some (typ1, typ2, henv)
+        | _ -> None
+      ) in
+      let henv = (match typ_info with
+        | None -> henv
+        | Some (t1, t2, henv) ->
+            if (is_type_var t1) then subs_heap_type_env henv t1 t2
+            else if (is_type_var t2) then subs_heap_type_env henv t2 t1
+            else if not (cmp_typ t1 t2) then
+              let msg = "type error in bformula: " ^ (!P.print_b_formula bf) in
+              report_error pos msg
+            else henv
+      ) in
+      ([], [], henv)
     )
-  | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
-  | P.Null _ | P.Level _  | P.Var _ -> ([], [])
-  | P.IConst _ | P.FConst _ | P.AConst _  | P.InfConst _ | P.Tsconst _ -> ([], [])
-  | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])
-  | P.Max _ | P.Min _ | P.TypeCast _ -> ([], [])
-  | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])
-  | P.List _ | P.ListCons _ | P.ListHead _ | P.ListTail _ -> ([], [])
-  | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
+  | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
+  | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
+  | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
+  | P.VarPerm _ | P.RelForm _ -> ([], [], henv)
   | P.ArrayAt _ | P.Func _ | P.Template _ -> ([], [])
 
-and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
-  let pr1 = !P.print_formula_exp in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_pure_exp" pr1 pr3
-      (fun _ -> collect_data_view_from_pure_exp_x data_names e0) e0
+and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_bf = !P.print_b_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_pure_bformula" pr_bf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_pure_bformula_x bf data_decls henv) bf henv
 
-and find_data_view_x (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
-  let (dl,el) = collect_data_view_from_struc data_names f in
-  if (List.length dl>1) then report_error pos ("self points to different data node types")
-  else (dl,el)
+and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos 
+    : (ident list) * (ident list) =
+  let henv = [] in
+  let (dl,el,henv) = collect_data_view_from_struc vdecl.view_formula data_decls henv in
+  match dl with
+  | [] -> (
+      try
+        (* find type of self in the heap type env *)
+        let typ, _ = get_heap_type henv self in
+        let tname = string_of_typ typ in
+        let _ = look_up_data_def_raw data_decls tname in
+        ([tname], el)
+      with Not_found ->
+        ([], el)
+    )
+  | [hd] -> (dl,el)
+  | _ -> report_error pos ("self points to different data node types")
 
-and find_data_view (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
-  let pr1 a= String.concat  "," a in
-  let pr2 = !print_struc_formula in
-  Debug.no_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
-      (fun _ _ -> find_data_view_x data_names f pos) data_names f
+and find_data_view (vdecl: view_decl) (data_decls: data_decl list) pos
+    : (ident list) * (ident list) =
+  let pr_view = !print_view_decl in
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ ")" in
+  Debug.no_1 "find_data_view" pr_view pr_out
+      (fun _ -> find_data_view_x vdecl data_decls pos) vdecl
 
-and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list)
+    : (view_decl * (ident list) * (ident list)) list =
   Debug.no_1 "syn_data_name" pr_no pr_no
       (fun _ -> syn_data_name_x data_decls view_decls) () 
 
-and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list)
+    : (view_decl * (ident list) * (ident list)) list =
   let view_decls_org = view_decls in
-  let data_names = List.map (fun v -> v.data_name) data_decls in
   (* Restore the original list of view_decls and continue with the previous implementation *)
   let view_decls = view_decls_org in
-  let rl = List.map (fun v -> let (a,b)=(find_data_view data_names v.view_formula no_pos) in (v, a, b)) view_decls in
+  let rl = List.map (fun v ->
+    let (a,b)=(find_data_view v data_decls no_pos) in
+    (v, a, b)
+  ) view_decls in
   rl
 
 and fixpt_data_name (view_ans)  =
@@ -1707,7 +1873,8 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
                   let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
                    v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
-          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+          () (* self has unknown type *)
+          (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else v.view_data_name <- List.hd a) vl
 
@@ -2603,10 +2770,10 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
@@ -2638,7 +2805,7 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name kind coer_type ihps ihead ibody=
+let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
   { coercion_type = coer_type;
   coercion_exact = false;
   coercion_infer_vars = ihps;
@@ -2650,12 +2817,13 @@ let mk_lemma lemma_name kind coer_type ihps ihead ibody=
   exp_return_pos = no_pos });
   coercion_type_orig = None;
   coercion_kind = kind;
+  coercion_origin = orig;
   }
 
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2669,12 +2837,13 @@ let gen_normalize_lemma_comb ddef =
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE; (*default. should improve*)
+  coercion_origin = LEM_GEN;
  }
  
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in
@@ -2689,6 +2858,7 @@ let gen_normalize_lemma_comb ddef =
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE;
+  coercion_origin = LEM_GEN;
  }
 
 let add_normalize_lemmas prog4 = 

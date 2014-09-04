@@ -1,0 +1,33 @@
+Benchmarks and tools for the Sleek solver.
+
+http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/
+
+Tools
+=====
+
+A) Translation from SMTLIB v2 format for SL into Sleek format
+
+See smtlib2sl/sl_prob2sleek.? and run in smtlib2/
+
+./compile -sleek <file>.smt2
+
+Output in <file>.smt2.slk
+
+B) Sleek execution
+
+./sleek <file>.smt2.slk
+
+Benchmarks
+==========
+
+A) List segments
+
+B) Linked lists, even-length and odd-length linked lists
+
+C) Verification conditions generated from the verification
+of append method for linked lists
+
+D) Verification conditions generated from the verification
+of tree-linked list data structure
+
+

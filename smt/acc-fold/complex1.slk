@@ -1,0 +1,32 @@
+data node {
+     node next;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+//lemma_unsafe "L1" self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe "L2" self::nlseg<p> * p::node<c> <- self::nlseg<u>*u::nlseg<p>*p::node<c>.
+
+//to prove lemma:
+//checkentail x::nlseg<u>*u::nlseg<p>*p::node<c> |- x::nlseg<p> * p::node<c>.
+
+// unfold lhs (body of lemma) - base case:
+//checkentail  u::nlseg<p> * p::node<c>  & x=u |- x::nlseg<p> * p::node<c>.
+
+// unfold lhs (body of lemma) - inductive case:
+checkentail  (exists a,u: x::node<a> * a::nlseg<u> * u::nlseg<p> * p::node<c> & x!=u)
+             |- x::nlseg<p> * p::node<c>.
+print residue.
+
+// apply lemma (fold):
+checkentail  (exists a,u: x::node<a> * a::nlseg<u> * u::nlseg<p> * p::node<c> & x!=u)
+             |- (exists u1: x::nlseg<u1>*u1::nlseg<p>*p::node<c>).
+print residue.
+
+//fold:
+checkentail  (exists a,u: x::node<a> * a::nlseg<u> * u::nlseg<p> * p::node<c> & x!=u)
+             |- (exists u1,a2: x::node<a2> * a2::nlseg<u1>*u1::nlseg<p>*p::node<c> & x!=u1).
+print residue.

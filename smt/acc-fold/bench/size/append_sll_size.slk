@@ -1,0 +1,85 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists v_19,q_20,m_21: self::node<v_19,q_20> * 
+  q_20::ll<m_21>&n=1+m_21)
+  inv 0<=n.
+
+ 
+// id: 0; line: 6; kind: Pred_Check_Inv
+ checkentail_exact emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n & (((self=null & n=0) | (1<=n & self!=null))).
+expect Valid.
+ 
+// id: 1; line: 15; kind: BIND
+ checkentail_exact (exists v_1015,q_1016,m_1017: x'::node<v_1015,q_1016> * 
+q_1016::ll<m_1017> * y::ll<n2>&n1=1+m_1017 & 0<n1 & y'=y & x'=x)
+ |-  (exists m_1021,v_1019,q_1020: x'::node<val_15_979',next_15_980'> * 
+q_1020::ll<m_1021> * y::ll<n2>&n1=1+m_1021 & 0<n1 & y'=y & x'=x & 
+val_15_979'=v_1019 & next_15_980'=q_1020).
+expect Valid.
+ 
+// id: 3; line: 15; kind: PRE
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & v_node_15_981'=q_1020 & v_node_15_981'=null
+ |-  q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & v_node_15_981'=q_1020 & v_node_15_981'=null.
+expect Valid.
+ 
+// id: 5; line: 15; kind: PRE
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & v_node_15_981'=q_1020 & v_node_15_981'!=null
+ |-  q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & v_node_15_981'=q_1020 & v_node_15_981'!=null.
+expect Valid.
+ 
+// id: 7; line: 16; kind: BIND
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & q_1020!=null & v_bool_15_987' & q_1020!=null & 
+v_bool_15_987'
+ |-  x'::node<val_16_982',next_16_983'> * q_1020::ll<m_1021> * y::ll<n2>&n1=1+
+m_1021 & 0<n1 & y'=y & x'=x & q_1020!=null & v_bool_15_987' & q_1020!=null & 
+v_bool_15_987' & val_16_982'=v_1019 & next_16_983'=q_1020.
+expect Valid.
+ 
+// id: 9; line: 16; kind: PRE_REC
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & q_1020!=null & v_bool_15_987' & q_1020!=null & 
+v_bool_15_987' & v_node_16_984'=q_1020
+ |-  v_node_16_984'::ll<n1_1030> * y'::ll<n2_1031> * x'::node<v_1019,q_1020>&
+0<n1_1030 & 0<n1_1030 & n1=1+m_1021 & 0<n1 & y'=y & x'=x & q_1020!=null & 
+v_bool_15_987' & q_1020!=null & v_bool_15_987' & v_node_16_984'=q_1020 & 
+n1_1030=m_1021 & n2_1031=n2.
+expect Valid.
+ 
+// id: 13; line: 20; kind: BIND
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,q_1020>&n1=1+m_1021 & 
+0<n1 & y'=y & x'=x & q_1020=null & !(v_bool_15_987') & q_1020=null & 
+!(v_bool_15_987')
+ |-  x'::node<val_20_985',next_20_986'> * q_1020::ll<m_1021> * y::ll<n2>&n1=1+
+m_1021 & 0<n1 & y'=y & x'=x & q_1020=null & !(v_bool_15_987') & 
+q_1020=null & !(v_bool_15_987') & val_20_985'=v_1019 & next_20_986'=q_1020.
+expect Valid.
+ 
+// id: 15; line: 12; kind: POST
+ checkentail_exact (exists flted_12_1036: x'::node<v_1019,q_1020> * q_1020::ll<flted_12_1036>&
+n1=1+m_1021 & 0<n1 & y'=y & x'=x & q_1020!=null & v_bool_15_987' & 
+q_1020!=null & v_bool_15_987' & n1_1030=m_1021 & n2_1031=n2 & 0<=n2 & 
+0<=m_1021 & flted_12_1036=n2_1031+n1_1030 & 0<=n1_1030 & 0<=n2_1031)
+ |-  (exists flted_12_44,flted_12_1040: x::ll<flted_12_44>&flted_12_44=n2+n1 & 
+n1=1+m_1021 & 0<n1 & y'=y & x'=x & q_1020!=null & v_bool_15_987' & 
+q_1020!=null & v_bool_15_987' & n1_1030=m_1021 & n2_1031=n2 & 0<=n2 & 
+0<=m_1021 & flted_12_1040=n2_1031+n1_1030 & 0<=n1_1030 & 0<=n2_1031).
+expect Valid.
+ 
+// id: 20; line: 12; kind: POST
+ checkentail_exact q_1020::ll<m_1021> * y::ll<n2> * x'::node<v_1019,y'>&n1=1+m_1021 & 0<n1 & 
+y'=y & x'=x & q_1020=null & !(v_bool_15_987') & q_1020=null & 
+!(v_bool_15_987') & next_20_1039=q_1020
+ |-  (exists flted_12_44: x::ll<flted_12_44> * q_1020::ll<m_1021>&flted_12_44=n2+
+n1 & n1=1+m_1021 & 0<n1 & y'=y & x'=x & q_1020=null & !(v_bool_15_987') & 
+q_1020=null & !(v_bool_15_987') & next_20_1039=q_1020).
+expect Valid.

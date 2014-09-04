@@ -1,0 +1,48 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+/*
+checkentail_exact x::lseg<p> & p=null |- x!=null.
+
+checkentail_exact x::lseg<p> & x!=p |- x=null.
+*/
+checkentail_exact x=null & x=p |- p=null.
+
+checkentail_exact x!=null & x=p |- p!=null.
+
+/*
+omega_of_formula#2@14 EXIT:( (not (((x = 0) & (x = p))))  | (p <= 0))
+
+;Variables declarations
+(declare-fun x () Int)
+(declare-fun p () Int)
+(declare-fun p () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= x 0))
+(assert (= x p))
+;Negation of Consequence
+(assert (not (<= p 0)))
+(check-sat)
+
+omega_of_formula#2@16 EXIT:( (not (((x > 0) & (x = p))))  | (p != 0))
+;Variables declarations
+(declare-fun x () Int)
+(declare-fun p () Int)
+(declare-fun p () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (> x 0))
+(assert (= x p))
+;Negation of Consequence
+(assert (not (not (= p 0))))
+(check-sat)
+
+*/

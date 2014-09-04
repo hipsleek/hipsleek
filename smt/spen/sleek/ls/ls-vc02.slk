@@ -1,0 +1,24 @@
+data pto {
+     pto next;
+}.
+
+/*
+; singly-linked list
+(define-fun lso ((?in Sll_t) (?out Sll_t))
+  Space (tospace (or (= ?in ?out) 
+    (exists ((?u Sll_t)) (tobool (ssep
+      (pto ?in (ref next ?u))
+      (lso ?u ?out))
+)))))
+*/
+
+pred lso<out> == self=out
+     or (exists u: self::pto<u> * u::lso<out>).
+
+// Fail -> expected Valid.
+
+checkentail x_emp::pto<y_emp> * y_emp::lso<w_emp> *
+            w_emp::pto<z_emp> |-
+            x_emp::lso<z_emp>.
+
+expect Valid.

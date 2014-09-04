@@ -1,0 +1,17 @@
+
+data node {
+  node f0;
+}.
+
+pred RList<y:node> ==
+ self::node<y> & null != self
+or (exists xp: xp::node<y> * self::RList<xp> & xp != null).
+
+
+checkentail_exact x::node<y> * y::RList<z>
+         |- x::RList<z>.
+
+print residue.
+
+expect Valid.
+

@@ -1,0 +1,66 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+//lemma_unsafe "V1" self::ll_s<n> -> self::ll<>.
+
+//lemma "V2" self::ll_s<n> <- self::ll<>.
+
+//lemma "V3" self::ll_s<n> <-> self::ll<>.
+
+//lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
+
+//lemma "F7" self::ll<> -> self::ll_s<n>.
+
+// folding lemma not specialised?
+
+lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
+
+lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
+
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+lemma "F9" self::ll<> <-> self::ll_s<n>.
+
+checkentail x::ll_s<n> |- x::ll<>.
+
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::node<_,q>* q::ll<>.
+/*
+# baga/ll-1.slk --elp
+
+Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flted_5_58=0) | (r_60=1 & self_V1=2 & 
+1<=flted_5_58)) |-  self_V1=Cnull. LOCS:[5;4;0;1;8] (must-bug),valid]
+
+Failed to prove V1:==> in current context.
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -g
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+
+12324 was OK
+
+*/
+
+/*
+checkentail_exact self::ll_s<n> |- self::ll<>.
+
+checkentail_exact self=null & n=0 |- self::ll<>.
+
+*/
+/*
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::ll<>.
+*/

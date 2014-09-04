@@ -1,0 +1,13 @@
+data node {
+   node nxt;
+}.
+
+pred elseg<p> == self=p
+  or (exists a,b: self::node<a> * a::node<b> * b::elseg<p>)
+ inv true.
+
+//lemma_safe self::elseg<p> <- (exists u: self::elseg<u>*u::elseg<p>).
+
+//lemma_safe self::elseg<p> -> (exists u: self::elseg<u>*u::elseg<p>).
+
+lemma_safe self::node<x>*x::elseg<q>*q::node<p> -> self::elseg<p>.

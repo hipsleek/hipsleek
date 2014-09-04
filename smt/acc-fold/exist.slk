@@ -1,0 +1,20 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred ll<n> == self = null & n=0 or
+     (exists y: self::node<y> * y::ll<n-1> & n>0)
+     inv n>=0.
+
+lemma_unsafe self::ll<m> & m=n+1 & m>0 <- self::node<yy> * yy::ll<n>. 
+
+ checkentail a::node<b> * b::ll<m> |- a::ll<m+1>.
+ print residue.
+
+/*
+checkentail a::node<z> * z::ll<n> |- a::ll<m>.
+print residue.
+*/

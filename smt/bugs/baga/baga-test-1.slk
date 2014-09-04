@@ -1,0 +1,72 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+//Fail.Fail.Valid.Valid.Fail.Valid.
+//Valid.Fail.Fail.
+//Valid.Fail.Fail.Valid.Valid.Valid.
+
+/*
+!!! baga inv(l7):[([], self=null & q=null),([q,self], true)]
+!!! baga inv(l6):[([q], self=null),([q,self], true)]
+!!! baga inv(l5):[([k,self], self!=k)]
+!!! baga inv(l4):[([q,self], true)]
+!!! baga inv(l3a):[]
+!!! baga inv(l3):[([self], true)]
+*/
+
+
+pred l3<> == 
+  self::node<q>*q::node<_> 
+inv self!=null.
+/*
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+*/
+
+
+pred l4<q:node> == 
+  (exists z,r: self::node<r>*r::node<_> & r=z & z=q)
+inv self!=null.
+// baga {self,q}
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null.
+
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+// baga {q}
+/*
+# baga-test-1.slk
+
+!!! baga inv(l6):
+[(BAGA:[q],EQ:emap[{null,self}],INEQ:[]),
+ (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
+Disabling baga inv gen ..
+
+# why disabling baga_inv with l6 pred?
+
+*/
+
+
+pred l7<q:node> == 
+  self=null & q=null
+  or (exists r:  self::node<r>*r::node<_> & r=q)
+inv true.
+
+/*
+!!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),
+  (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
+
+# why singleton emap {q}. Should be removed..
+
+*/
+

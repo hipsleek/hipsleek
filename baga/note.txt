@@ -1,0 +1,63 @@
+Here are some further thoughs on the above.
+I think you need to work on the theory,
+and perhaps leave the implementation to Long
+based on our baga-inv.
+
+x::ll<n> == x=null & n=0
+   or x::node<q>*q::ll<n-1>
+
+ inv BG([],x=null & n=0) | BG([x],n>0)
+ inv x=null & n=0 |  BG([x],n>0)
+ inv x=null & n=0 | x!=null & n>0
+ inv n>=0 (but this cannot be used for under-approx)
+
+ inv-exact BG([],n=0) | BG([x],n>0)
+
+ inv-sat BG([] & n=0) | BG([x] & n>0).
+ inv-sat BG([] & n=0) | BG([x] & n=1).
+
+
+checkentail_exact x::ll<n> |- false. // SAT
+
+checkentail_exact x::ll<n> & n<0 |- false. // UNSAT
+
+  xpure-inv(RHS(P(..))) --> inv(P(..))
+
+  sat-inv(P(..)) --> xpure-sat(RHS(P(..))
+
+  xpure-exact(RHS(P(..))) <--> exact-inv(P(..))
+
+
+Is sat-inv test correct?
+
+x::ll<n> == x=null & n=0
+   or x::node<q>*q::ll<n-1>
+ inv-sat ([] & x=null & n=0) | ([x] & n=1).
+ inv-sat ([] & x=null & n=0) | ([x] & n>1).
+
+
+ ([] & x=null & n=0) | ([x] & n=1)
+   |- x=null & n=0
+      or ([x],true)*xpure-sat(q::ll<n-1>)
+
+   |- ([],x=null & n=0)
+      or ([x],true)*(([] & q=null & n-1=0)|([q] & n-1=1))
+
+   |- ([],x=null & n=0)
+      or ([x],n=1)
+      or ([x,q],n=2)
+
+ ([] & x=null & n=0) | ([x] & n>1)
+   |- x=null & n=0
+      or ([x],true)*xpure-sat(q::ll<n-1>)
+   |- ([],x=null & n=0)
+      or ([x],true)*(([] & q=null & n-1=0)|([q] & n-1>1))
+
+   |- ([],x=null & n=0)
+      or ([x],q=null & n-1=0)|([x,q] & n-1>1))
+
+   |- ([],x=null & n=0)
+      or ([x],n=1)
+      or ([x,q] & n>2))
+
+

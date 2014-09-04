@@ -1,0 +1,55 @@
+data node {
+   node nxt;
+}.
+
+pred ll<n> == self=null & n=0
+  or (exists a,m: self::node<a> * a::ll<m> & n=m+1)
+ inv n>=0.
+
+checkentail_exact x::ll<n> & n=0 |- x=null.
+expect Valid.
+
+checkentail_exact x::node<q>*q::ll<n> |- (exists m: x::ll<m> & m=n+1).
+expect Valid.
+
+checkentail_exact x::node<q>*q::ll<n> |- (exists m: x::ll<m> & m>n+1).
+expect Fail.
+
+checkentail_exact x::node<q>*q::ll<n> |- (exists m: x::ll<m>).
+expect Valid.
+
+checkentail_exact x::node<q>*q::node<q2>*q2::ll<n> |- (exists m: x::ll<m>).
+expect Valid.
+
+
+checkentail_exact x::ll<n> & n>0 |- (exists q: x::node<q>*q::ll<n-1>).
+expect Valid.
+
+
+checkentail_exact x::ll<n> & n>0 |- (exists q: x::node<q>).
+expect Fail.
+
+
+checkentail_exact x::ll<n> & n>0 |- (exists m,q: x::node<q>*q::ll<m>).
+expect Valid.
+
+
+checkentail_exact x::ll<n> & n>0 |- (exists m,q: x::node<q>*q::ll<m> & m>0).
+expect Fail.
+
+checkentail_exact x::ll<n> & x!=null |- (exists m,q: x::node<q>*q::ll<m>).
+expect Valid.
+
+checkentail_exact x::ll<n> & x!=null |- (exists m,q: x::node<q>*q::ll<m> & m>0).
+expect Fail.
+
+checkentail_exact x::ll<n> & n>4 |- (exists m,q: x::node<q>*q::ll<m> & m>0).
+expect Valid.
+
+
+checkentail_exact x::ll<n> & n<0 |- false.
+expect Valid.
+
+
+checkentail_exact x::ll<n> & n=0 & x!=null |- false.
+expect Valid.

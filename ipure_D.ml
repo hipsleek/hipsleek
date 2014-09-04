@@ -57,6 +57,7 @@ and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
 and p_formula = 
+  | Frm of ((ident * primed) * loc)
   | XPure of xpure_view
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
@@ -120,6 +121,7 @@ and exp =
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
+  | Tup2 of ((exp * exp) * loc) (* a pair *)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -143,6 +145,7 @@ and exp =
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
   | Func of (ident * (exp list) * loc)
+  | BExpr of formula
   | Template of template
 
 and template = {
