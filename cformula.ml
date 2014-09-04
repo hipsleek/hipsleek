@@ -10050,8 +10050,6 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_term_call_rhs = es.es_term_call_rhs;
         es_ho_vars_map = es.es_ho_vars_map;
         es_crt_holes = es.es_crt_holes;
-        es_term_res_rhs = es.es_term_res_rhs;
-        es_term_call_rhs = es.es_term_call_rhs;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
     }

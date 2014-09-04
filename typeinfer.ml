@@ -596,7 +596,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       List.fold_left (fun (tl,e) a -> must_unify a e tl pos) (new_tl,new_et) es_type_list
   | IP.Bag (es,pos) ->
       let (el_t,n_tl) = fresh_tvar tlist in
-      let (n_tlist,t) = List.fold_left (fun (type_list,et) a -> gather_type_info_exp_x prog a type_list et) (n_tl,el_t) es in
+      let (n_tlist,t) = List.fold_left (fun (type_list,et) a -> 
         gather_type_info_exp_x prog a type_list et) (n_tl,el_t) es in
       (n_tlist,BagT t)  
   | IP.Func (id, es, pos) ->

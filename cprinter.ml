@@ -952,6 +952,8 @@ let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label
 let pr_spec_label_def l  = fmt_string (LO2.string_of l)
 let pr_spec_label_def_opt l = fmt_string (LO2.string_of_opt l)
 let pr_spec_label l  = fmt_string (LO.string_of l)
+let string_of_formula_label (i,s) s2:string = (* s2 *) 
+  ((string_of_int i) (* ^":#"^s^":#" *)^s2)
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -1005,9 +1007,6 @@ let rec pr_b_formula (e:P.b_formula) =
 		| [] -> ()
 		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
-let string_of_formula_label (i,s) s2:string = (* s2 *) 
-  ((string_of_int i) (* ^":#"^s^":#" *)^s2)
-
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) = 
@@ -3346,13 +3345,10 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-(*    | Ctx e -> [(e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-*)
-    | Ctx e -> [(e.es_formula,e.es_heap,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
-      e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
+    | Ctx e -> [(e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+      e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-(*  let pr (f,eh,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =*)
-  let pr (ho_map,f,eh,ep,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
     let f1 = Cfout.tidy_print f in
     pr_formula_wrap f1;
@@ -3817,7 +3813,7 @@ let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr p
 let string_of_view_decl_clean (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_clean v
 let sleek_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr slk_view_decl v
 
-let slk_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_slk_view_decl v
+let slk_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr slk_view_decl v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
@@ -4109,7 +4105,7 @@ let rec string_of_data_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
 ;;
 
-(* let slk_of_data_decl = string_of_data_decl*)
+let slk_of_data_decl = string_of_data_decl
 
 let sleek_of_data_decl d = 
   (string_of_data_decl d) ^ ".";;

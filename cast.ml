@@ -11,7 +11,7 @@ open Exc.GTable
 
 
 module F = Cformula
-(* module CF = Cformula *)
+module CF = Cformula
 module P = Cpure
 module CP = Cpure
 module MP = Mcpure
@@ -2031,7 +2031,7 @@ let vdef_lemma_fold prog coer  =
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
                         let rhs = F.subst_struc subs rhs in
                         (* let un_struc =  CF.struc_to_view_un_s (CF.label_view rhs) in *)
-                        let un_struc =  CF.get_view_branches (CF.label_view rhs) in
+                        let un_struc =  F.get_view_branches (F.label_view rhs) in
                         Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
                       with  
                         | Not_found -> None
@@ -2591,11 +2591,11 @@ let is_complex_entailment_4graph_x prog ante conseq=
      begin try
        (*explicit quantifiers in rhs*)
        let is_rhs_ex_quans = match conseq with
-         | CF.EBase eb ->
-           let quans,bare = CF.split_quantifiers eb.CF.formula_struc_base in
+         | F.EBase eb ->
+           let quans,bare = F.split_quantifiers eb.F.formula_struc_base in
            let _ = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
            if quans = [] then false else
-             let _, mf, _, _, _ = CF.split_components bare in
+             let _, mf, _, _, _ = F.split_components bare in
              let eqnull_svl =  Mcpure.get_null_ptrs mf in
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
@@ -2674,7 +2674,7 @@ let is_segmented_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_segmented_branch branch = (
-    let (_,mf,_,_,_) = CF.split_components branch in
+    let (_,mf,_,_,_) = F.split_components branch in
     let pf = MP.pure_of_mix mf in
     List.exists (fun sv ->
       let null_cond = P.mkNull sv pos in
@@ -2820,22 +2820,22 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
   let vname = vd.view_name in
   let collect_view_pointed_by_self f = (
     let views = ref [] in
-    let (hf,_,_,_,_) = CF.split_components f in
+    let (hf,_,_,_,_) = F.split_components f in
     let f_hf hf = (match hf with
-      | CF.ViewNode vn ->
-          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
+      | F.ViewNode vn ->
+          let nname = P.name_of_spec_var vn.F.h_formula_view_node in
           let _ = (
             if (String.compare nname self = 0) then
-              views := vn.CF.h_formula_view_name :: !views
+              views := vn.F.h_formula_view_name :: !views
             else ()
           ) in
           Some hf
       | _ -> None
     ) in
-    let _ = CF.transform_h_formula f_hf hf in
+    let _ = F.transform_h_formula f_hf hf in
     !views
   ) in
-  let is_tail_recursive_branch (f: CF.formula) = (
+  let is_tail_recursive_branch (f: F.formula) = (
     let views = collect_view_pointed_by_self f in
     List.exists (fun vn -> String.compare vn vname = 0) views
   ) in
@@ -2850,14 +2850,14 @@ let is_tail_recursive_view (vd: view_decl) : bool =
       (fun _ -> is_tail_recursive_view_x vd) vd
 
 
-let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
+let collect_subs_from_view_node_x (vn: F.h_formula_view) (vd: view_decl)
     : (CP.spec_var * CP.spec_var) list =
   let view_type = Named vd.view_data_name in
   let self_var = CP.SpecVar (view_type, self, Unprimed) in
-  let subs = [(self_var, vn.CF.h_formula_view_node)] in
+  let subs = [(self_var, vn.F.h_formula_view_node)] in
   let subs = List.fold_left2 (fun subs sv1 sv2 ->
     subs @ [(sv1, sv2)]
-  ) subs vd.view_vars vn.CF.h_formula_view_arguments in
+  ) subs vd.view_vars vn.F.h_formula_view_arguments in
   subs
 
 let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: view_decl)

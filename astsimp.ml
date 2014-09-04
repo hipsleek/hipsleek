@@ -1817,9 +1817,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           else xform
         in CF.formula_of_mix_formula xform1 pos
       in
-      let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (MCP.mfv xform1) in
       (* let formula1 = CF.formula_of_mix_formula xform1 pos in *)
       let formula1 = form_body_inv vdef in
+      let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (CF.fv formula1) in
       let formula1_under = wrap_under_baga form_body_inv vdef in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
@@ -9866,7 +9866,6 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in
-  let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))
   (*detect prdicates for graph optimization*)
   let cprog2 =
      if !Globals.norm_cont_analysis then

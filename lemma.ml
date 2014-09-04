@@ -43,9 +43,9 @@ let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbo
   (*check entailment*)
   let (res,_,_) = (
     if coer_type = I.Left then
-      Sleekcore.sleek_entail_check 4 (*None*) [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
-    else Sleekcore.sleek_entail_check 5 [(cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
-  ) 
+      Sleekcore.sleek_entail_check 4 None [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+    else Sleekcore.sleek_entail_check 5 None [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
+  ) in
   if res then
     let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
     l2r, r2l

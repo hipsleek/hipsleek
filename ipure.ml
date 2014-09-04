@@ -2063,6 +2063,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
       | InfConst _ -> Error.report_no_pattern ()
       | BExpr _ -> e
+      | Template _ -> e
     )
 
 and transform_exp f (e : exp) : exp =

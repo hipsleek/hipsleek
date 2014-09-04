@@ -255,10 +255,7 @@ let rec string_of_formula_exp = function
 (* | BagDiff of (exp * exp * loc) *)
   | P.BExpr f1 -> "BExpr(" ^ string_of_pure_formula f1 ^ ")"
 
-and string_of_p_formula pf =
-match pf with 
-    
-let rec string_of_term_ann a =
+and string_of_term_ann a =
   match a with
     | P.Term -> "Term"
     | P.Loop -> "Loop"
@@ -274,7 +271,8 @@ and string_of_term_id uid =
   "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
   (!P.print_formula uid.P.tu_cond) ^ "]"
 
-and string_of_b_formula (pf,il) =
+and string_of_p_formula pf =
+match pf with 
   | P.BConst (b,l)              -> string_of_bool b
   | P.Frm (x,l) -> (string_of_id x) ^ "@F"
   | P.BVar (x, l)               -> string_of_id x
