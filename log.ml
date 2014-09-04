@@ -430,7 +430,7 @@ let add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag call
 let add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
   let pr = Cprinter.string_of_formula in
-  Debug.no_4 " add_sleek_logging" 
+  Debug.no_4 "add_sleek_logging" 
       string_of_bool string_of_int
       pr pr pr_none
       (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_type infer_vars classic_flag caller avoid hec slk_no ante conseq 
