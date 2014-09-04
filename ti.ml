@@ -16,7 +16,7 @@ let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 let add_ret_trel_stk prog ctx lhs rhs =
   let params = params_of_term_ann prog rhs in
   let trel = {
-    ret_ctx = ctx;
+    ret_ctx = MCP.pure_of_mix ctx;
     termr_fname = CP.fn_of_term_ann rhs;
     termr_rhs_params = params;
     termr_lhs = lhs;
@@ -28,21 +28,21 @@ let add_ret_trel_stk prog ctx lhs rhs =
 (* Only merge relations split by post *)    
 let merge_trrels rec_trrels = 
   let same_flow_path r1 r2 =
-    eq_path_formula (MCP.pure_of_mix r1.ret_ctx) (MCP.pure_of_mix r2.ret_ctx)
+    eq_path_formula r1.ret_ctx r2.ret_ctx
   in
   let same_cond_path r1 r2 = CP.eq_term_ann r1.termr_rhs r2.termr_rhs in
   let grp_trrels = partition_eq (fun r1 r2 -> 
     (same_cond_path r1 r2) && (same_flow_path r1 r2)) rec_trrels in
   (* let _ = List.iter (fun trrels -> print_endline (pr_list print_ret_trel trrels)) grp_trrels in *)
   let merge_trrels = List.map (fun grp ->
-    let conds = List.map (fun r -> MCP.pure_of_mix r.ret_ctx) grp in
+    let conds = List.map (fun r -> r.ret_ctx) grp in
     match grp with
     | [] -> report_error no_pos "[TNT Inference]: Group of returned temporal assumptions is empty."
-    | r::_ -> { r with ret_ctx = MCP.mix_of_pure (CP.join_disjunctions conds) }) grp_trrels in
+    | r::_ -> { r with ret_ctx = CP.join_disjunctions conds }) grp_trrels in
   merge_trrels
   
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify (MCP.pure_of_mix rtr.ret_ctx) rtr.termr_rhs_params in
+  let rec_cond = simplify rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then Tpdispatcher.tp_pairwisecheck rec_cond
@@ -73,7 +73,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr = 
-  Base (simplify (MCP.pure_of_mix btr.ret_ctx) btr.termr_rhs_params)
+  Base (simplify btr.ret_ctx btr.termr_rhs_params)
 
 let solve_trrel_list trrels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
@@ -109,8 +109,10 @@ let call_trel_stk: call_trel Gen.stack = new Gen.stack
 let add_call_trel_stk prog ctx lhs rhs =
   let params = params_of_term_ann prog rhs in
   let trel = {
-    call_ctx = ctx;
     trel_id = tnt_fresh_int ();
+    trel_type = Non;
+    call_ctx = MCP.pure_of_mix ctx;
+    termu_fname = CP.fn_of_term_ann lhs;
     termu_lhs = lhs;
     termu_rhs = rhs; 
     termu_rhs_params = params; } in 
@@ -128,7 +130,7 @@ let inst_lhs_trel_base rel fn_cond_w_ids =
       let rcond_w_ids = List.filter (fun (_, c) -> is_rec c) cond_w_ids in
       let rcond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) rcond_w_ids in
       let tuc = uid.CP.tu_cond in
-      let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
+      let eh_ctx = mkAnd rel.call_ctx tuc in
       let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) rcond_w_ids in
       List.map (fun (i, c) -> CP.TermU { uid with 
         CP.tu_id = cantor_pair uid.CP.tu_id i; 
@@ -141,7 +143,7 @@ let inst_lhs_trel_base rel fn_cond_w_ids =
 let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids = 
   let rhs_ann = rel.termu_rhs in
   let cond_lhs = CP.cond_of_term_ann inst_lhs in
-  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) cond_lhs in
+  let ctx = mkAnd rel.call_ctx cond_lhs in
   let inst_rhs = match rhs_ann with
     | CP.TermU uid -> 
       let fn = uid.CP.tu_fname in
@@ -169,7 +171,29 @@ let inst_call_trel_base rel fn_cond_w_ids =
     inst_rhs_trel_base ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
 
+let add_type_of_turels_cond turels =
+  []
+
+let add_type_of_turels_proc turels rec_conds =
+  List.fold_left (fun ar cond ->
+    let same_cond_turels = List.filter (fun tr -> 
+      imply tr.call_ctx cond) turels in
+    let same_cond_turels_w_typ = add_type_of_turels_cond same_cond_turels in
+    ar @ same_cond_turels_w_typ) [] rec_conds
+      
+let add_type_of_turels turels fn_cond_w_ids =
+  List.fold_left (fun ar ((fn, _), conds) ->
+    let same_fn_turels = List.filter (fun tr -> 
+      String.compare tr.termu_fname fn == 0) turels in
+    let rec_conds = get_rec_conds (List.map (fun (_, c) -> c) conds) in
+    let same_fn_turels_w_typ = add_type_of_turels_proc same_fn_turels rec_conds in
+    ar @ same_fn_turels_w_typ) [] fn_cond_w_ids
+
+(* End of Temporal Relation at Call *)
+
+(******************)
 (* Main algorithm *)
+(******************)
 (* Exceptions to guide the main algorithm *)
 exception Restart_with_Cond of TG.t
 exception Should_Finalize
@@ -273,6 +297,8 @@ let solve_turel_init prog turels fn_cond_w_ids =
   (*   print_endline ("Initial Case Spec:");  *)
   (*   pr_proc_case_specs ()                  *)
   (* in                                       *)
+  
+  let _ = add_type_of_turels turels fn_cond_w_ids in
   
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in

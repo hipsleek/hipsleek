@@ -6554,34 +6554,29 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   (*             (es.es_rhs_eqset@eqns) *)
   (*     ;}) ctx0 in *)
   let hec a b c =
-    let (ante,consumed_heap,evars,infer_type,infer_vars, lex_rhs) =
+    let (ante,consumed_heap,evars,infer_type,infer_vars) =
       match ctx0 with
         | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
-          CF.HEmp, [], None, [], [])
-        | Ctx estate -> 
-          let lex_lhs =
-            (match estate.es_var_measures with
-              | None -> []
-              | Some (ann, rnk, tmp) -> [CP.mkLexVar_pure ann rnk tmp]) @
-            (List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs) 
-          in 
-          let ante = List.fold_left (fun es lv -> fst
+          CF.HEmp, [], None, [])
+        | Ctx estate ->
+          let proving_kind = find_impt_proving_kind () in
+          let lex_lhs = match proving_kind with
+          | PK_POST -> List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
+          | _ -> match estate.es_var_measures with
+            | None -> []
+            | Some (ann, rnk, _) -> 
+              if CP.is_MayLoop ann then []
+              else [CP.mkLexVar_pure ann rnk []]
+          in
+          let es = List.fold_left (fun es lv -> fst
             (CF.combine_and es (MCP.mix_of_pure lv))) estate.es_formula lex_lhs in
-          (ante,estate.es_heap,estate.es_evars,
-          CF.infer_type_of_entail_state estate,
-          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ),
-          (opt_to_list estate.es_term_res_rhs) @ (opt_to_list estate.es_term_call_rhs))
+          (es,estate.es_heap,estate.es_evars,CF.infer_type_of_entail_state estate,
+          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ))
     in
     (* WN : what if evars not used in the conseq? *)
-    (* let _ = DD.info_zprint  (lazy  ("  ctx0: " ^ (Cprinter.string_of_context ctx0))) pos in *)
-    let conseq = 
-      List.fold_left (fun cons ann -> fst 
-        (CF.combine_and cons (MCP.mix_of_pure (CP.mkLexVar_pure ann [] [])))) 
-        conseq lex_rhs
-    in
     let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
-    let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
+    let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.isTrivTerm conseq) in
     let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in

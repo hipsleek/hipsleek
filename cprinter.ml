@@ -2336,7 +2336,7 @@ let string_of_trrel_pure = poly_string_of_pr pr_trrel_pure
 let pr_trrel_assume (ctx, lhs_trrel, rhs_trrel) = 
   (* fmt_open_box 1; *)
   fmt_string "termAssume ";
-  pr_mix_formula ctx;
+  pr_pure_formula ctx;
   if lhs_trrel != [] then (fmt_string " & ";
   pr_args None None "" "" "" " & " pr_term_ann_assume lhs_trrel);
   fmt_string " --> ";
@@ -2360,7 +2360,7 @@ let string_of_turel = poly_string_of_pr pr_turel
 
 let pr_turel_pure (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;
-  pr_mix_formula ctx;
+  pr_pure_formula ctx;
   fmt_string ": ";
   (pr_term_ann false) lhs_turel;
   fmt_string " --> ";
@@ -2372,7 +2372,7 @@ let string_of_turel_pure = poly_string_of_pr pr_turel_pure
 let pr_turel_assume (ctx, lhs_turel, rhs_turel) = 
   (* fmt_open_box 1; *)
   fmt_string "termAssume ";
-  pr_mix_formula ctx;
+  pr_pure_formula ctx;
   fmt_string " & ";
   pr_term_ann_assume lhs_turel;
   fmt_string " --> ";
@@ -2384,7 +2384,7 @@ let string_of_turel_assume = poly_string_of_pr pr_turel_assume
 
 let pr_turel_debug (ctx, lhs_turel, rhs_turel) = 
   fmt_open_box 1;
-  pr_mix_formula ctx;
+  pr_pure_formula ctx;
   fmt_string ": ";
   (pr_term_ann true) lhs_turel;
   fmt_string " --> ";

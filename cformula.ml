@@ -905,7 +905,8 @@ and is_trivial_f f =
 
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
-  | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
+  | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->
+    MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
   
@@ -12146,8 +12147,8 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_var_measures = es.es_var_measures;
           es_infer_tnt = es.es_infer_tnt;
           es_term_res_lhs = es.es_term_res_lhs;
-          es_term_res_rhs = es.es_term_res_rhs; 
-          es_term_call_rhs = es.es_term_call_rhs;
+          (* es_term_res_rhs = es.es_term_res_rhs; *)
+          (* es_term_call_rhs = es.es_term_call_rhs; *)
           es_var_stack = es.es_var_stack;
           es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;

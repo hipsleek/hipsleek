@@ -581,7 +581,7 @@ let templ_rank_constr_of_rel rel =
   let src_rank, src_templ_id, src_templ_decl = templ_of_term_ann rel.termu_lhs in
   let dst_rank, dst_templ_id, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
   let inf_templs = src_templ_id @ dst_templ_id in
-  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) (CP.cond_of_term_ann rel.termu_lhs) in
+  let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let dec = mkGt src_rank dst_rank in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
   let constr = mkAnd dec bnd in
@@ -613,7 +613,7 @@ let infer_abductive_icond_edge prog g e =
   match rel.termu_lhs with
   | TermU uid ->
     let tuc = uid.CP.tu_cond in
-    let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
+    let eh_ctx = mkAnd rel.call_ctx tuc in
     
     let tuic = uid.CP.tu_icond in
     (* let params = List.concat (List.map CP.afv uid.CP.tu_args) in *)
@@ -696,7 +696,7 @@ let inst_lhs_trel_abd rel abd_conds =
         let iconds_w_id = assign_id_to_list iconds in  
         
         let tuc = uid.CP.tu_cond in
-        let eh_ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) tuc in
+        let eh_ctx = mkAnd rel.call_ctx tuc in
         List.concat (List.map (fun (i, c) -> 
           if (is_sat (mkAnd eh_ctx c)) then
             [ CP.TermU { uid with
@@ -711,7 +711,7 @@ let inst_lhs_trel_abd rel abd_conds =
 let inst_rhs_trel_abd inst_lhs rel abd_conds = 
   let rhs_ann = rel.termu_rhs in
   let cond_lhs = CP.cond_of_term_ann inst_lhs in
-  let ctx = mkAnd (MCP.pure_of_mix rel.call_ctx) cond_lhs in
+  let ctx = mkAnd rel.call_ctx cond_lhs in
   let inst_rhs = match rhs_ann with
     | CP.TermU uid ->
       let tid = uid.CP.tu_id in
