@@ -470,6 +470,38 @@ res:  1[
    emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & res=v_int_19_881'&{FLOW,(24,25)=__norm}[]
    ]
 
+========================================================
+# fact2.ss --esl --print-dis-tidy
+
+problems with --esl logging
+
+# fpost_0(v_int_19_878') should not be in LHS!
+
+id: 6; caller: []; line: 19; classic: false; kind: PRE; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & 
+!(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & 
+fpre_0(x)[29] & fpost_0(v_int_19_878')[]&{FLOW,(24,25)=__norm}[]
+ |-  emp&Term[] & fpre_0(v_int_19_878')[]&{FLOW,(1,27)=__flow}[]. 
+tntrel_ass: [@Call:  termAssume x'!=0 & x=x' & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & 
+v_int_19_880'=1 & x'=v_int_19_878'+1 & fpre_0(x) --> fpre_0(v_int_19_878').]
+res:  1[
+   emp&1<=v_int_19_879' & x'=v_int_19_922+1 & v_int_19_880'=1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0&{FLOW,(24,25)=__norm}[]
+   ]
+
+# fpre_0(v_int_19_878') should not be in RHS!
+
+id: 8; caller: []; line: 19; classic: false; kind: POST; hec_num: 2; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & 
+!(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpre_0(x)[29] & fpost_0(v_int_19_878')[]&
+{FLOW,(24,25)=__norm}[]
+ |-  emp&1<=res & fpost_0(x)[] & fpre_0(v_int_19_878')[]&{FLOW,(24,25)=__norm}[]. 
+tntrel_ass: [@Return:  termAssume 1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & 
+x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & 
+res=v_int_19_881' & fpost_0(v_int_19_878') --> fpost_0(x).]
+res:  1[
+   emp&1<=v_int_19_925 & x'=v_int_19_922+1 & !(v_bool_18_882') & x'!=0 & !(v_bool_18_882') & x=x' & x'!=0 & v_int_19_881'=v_int_19_925+1 & res=v_int_19_881'&{FLOW,(24,25)=__norm}[]
+   ]
 
 ============================================================
 ========================================================
