@@ -20,7 +20,7 @@ let print_ret_trel rel =
   
 (* Type for multiple recursive calls in the same context *)
 type call_trel_type =
-  | Non
+  | Sgl
   | Seq
   | Par  
   
