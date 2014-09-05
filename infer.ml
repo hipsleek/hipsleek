@@ -356,26 +356,34 @@ let get_args_h_formula aset (h:h_formula) =
           (*   Some (root, arg,new_arg, [av], *)
           (*   DataNode {h with h_formula_data_arguments=new_arg; *)
           (*     h_formula_data_imm = mkPolyAnn av}) *)
-          if (!Globals.allow_imm) then
-            Some (root, arg,new_arg, [av],
-            DataNode {h with h_formula_data_arguments=new_arg;
-              h_formula_data_imm = CP.mkPolyAnn av;
-              h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
-          else
+          (* if (!Globals.allow_imm) then *)
+            (* Some (root, arg,new_arg, [av], *)
+            (* DataNode {h with h_formula_data_arguments=new_arg; *)
+            (*   h_formula_data_imm =  CP.mkPolyAnn av;  *)
+            (*   h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm }) *)
+          (* else *)
+          (*   Some (root, arg,new_arg, [], *)
+          (*   DataNode {h with h_formula_data_arguments=new_arg}) *)
             Some (root, arg,new_arg, [],
-            DataNode {h with h_formula_data_arguments=new_arg})
+            DataNode {h with h_formula_data_arguments=new_arg;
+              h_formula_data_imm =  CP.ConstAnn(Mutable); 
+              h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
+
     | ViewNode h -> 
           let h = to_unprimed_view_root aset h in
           let root = h.h_formula_view_node in
           let arg = h.h_formula_view_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-          if (!Globals.allow_imm) then
-            Some (root, arg,new_arg, [av],
-            ViewNode {h with h_formula_view_arguments=new_arg; 
-              h_formula_view_imm = mkPolyAnn av} )
-          else
-            Some (root, arg,new_arg, [],
-            ViewNode {h with h_formula_view_arguments=new_arg})
+          (* if (!Globals.allow_imm) then *)
+            (* Some (root, arg,new_arg, [av], *)
+            (* ViewNode {h with h_formula_view_arguments=new_arg; *)
+            (*   h_formula_view_imm = mkPolyAnn av} ) *)
+          (* else *)
+          (*   Some (root, arg,new_arg, [], *)
+          (*   ViewNode {h with h_formula_view_arguments=new_arg}) *)
+          Some (root, arg,new_arg, [],
+              ViewNode {h with h_formula_view_arguments=new_arg;
+              h_formula_view_imm = CP.ConstAnn(Mutable)} )
     | _ -> None
 
 (*
@@ -498,8 +506,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     match_res_holes = [];
                     match_res_type = Root;
                     match_res_rhs_node = rhs;
-                    match_res_rhs_rest = rhs_rest;
-                } in
+                    match_res_rhs_rest = rhs_rest; } in
                 let act = M_match r in
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
@@ -778,7 +785,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
 let infer_lhs_contra_estate i estate lhs_xpure pos msg =
   let pr0 = !print_entail_state_short in
   let pr1 = !print_mix_formula in
-  let pr_f = Cprinter.string_of_formula in
+  (* let pr_f = Cprinter.string_of_formula in *)
   let pr_es (es,e) =  pr_pair pr0 Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
   let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
@@ -2916,6 +2923,11 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
       rvhp_rels leqs all_aset m post_hps unk_map hp_rel_list pos)
       es ass_lhs_b rhs all_aset
 
+let get_eqset puref =
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  eqset
+
 (*
 type: Cast.prog_decl ->
   Cformula.entail_state ->
@@ -2925,11 +2937,6 @@ type: Cast.prog_decl ->
 *)
 let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
-  let get_eqset puref =
-    let (subs,_) = CP.get_all_vv_eqs puref in
-    let eqset = CP.EMapSV.build_eset subs in
-    eqset
-  in
   (**********END INTERNAL***********)
   if CF.isStrictConstTrue_wo_flow es0.CF.es_formula ||
     (CF.get_hp_rel_name_formula es0.CF.es_formula = [] && CF.get_hp_rel_name_h_formula rhs0 = [])
@@ -3338,6 +3345,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS contains hp_rel*)
     let lhrs = CF.get_hp_rel_name_formula lhs in
+    (* Andreea: is below check ok? *)
     if CP.intersect ivs lhrs = [] then
       (false,es)
     else begin

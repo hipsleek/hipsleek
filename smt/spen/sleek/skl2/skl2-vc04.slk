@@ -1,0 +1,39 @@
+data pto {
+     pto n2;
+     pto n1;
+}.
+
+/*
+; one-level skip list (i.e. a SLL)
+(define-fun skl1 ((?hd SL2_t) (?ex SL2_t)) Space
+  (tospace (or (= ?hd ?ex)
+  (exists ((?tl SL2_t))
+  (tobool (ssep
+    (pto ?hd (sref (ref n2 nil) (ref n1 ?tl)))
+    (skl1 ?tl ?ex))
+)))))
+
+; two-level skip list
+(define-fun skl2 ((?hd SL2_t) (?ex SL2_t)) Space
+  (tospace (or (= ?hd ?ex)
+  (exists ((?tl SL2_t) (?Z1 SL2_t))
+  (tobool (ssep
+    (pto ?hd (sref (ref n2 ?tl) (ref n1 ?Z1)))
+    (skl1 ?Z1 ?tl)
+    (skl2 ?tl ?ex))
+)))))
+*/
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::pto<null,tl> * tl::skl1<ex>).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::pto<tl,z1> * z1::skl1<tl> * tl::skl2<ex>).
+
+// Valid --> expected Valid
+
+checkentail x1::pto<x2,x1_1> * x1_1::pto<null,x1_2> *
+            x1_2::skl1<x2> * x2::pto<null,null> |-
+            x1::skl2<null>.
+
+expect Valid.

@@ -1,0 +1,23 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+pred DLL<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ emp & p = tl & self = n
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
+
+/*
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> -> self::DLL<p,tl,n>.
+*/
+
+checkentail_exact a::DLL_plus<null,c,null>
+         |- a::DLL<null,c,null>.
+
+expect Valid.
+

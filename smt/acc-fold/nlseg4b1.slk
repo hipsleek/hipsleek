@@ -1,0 +1,20 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+
+
+//2 Fail.(must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
+checkentail_exact (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
+    q_48::nlseg<p> & p!=null & p!=q_48 & p!=self_lem_12 & self_lem_12!=q_48)
+  |-  
+ (exists u,p_33 : self_lem_12::nlseg<u> * u::nlseg<p_33>  & p=p_33 & p_33!=u & p_33!=self_lem_12 & p_33!=null).
+print residue.
+

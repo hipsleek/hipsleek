@@ -1,0 +1,53 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+// lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+/*
+lemma_unsafe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<p> .
+
+checkentail // _exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
+print residue.
+
+*/
+
+
+checkentail_exact
+    self::node<q>*q::node<_>@L
+       |- (exists uu: self::node<uu> * uu::node<_>@L).
+print residue.
+
+checkentail
+    self::node<q>*q::node<_>
+       |- (exists uu: self::node<uu> * uu::node<_>@L).
+print residue.
+
+checkentail_exact
+    self::node<q>*q::node<_>
+       |- (exists uu: self::node<uu> * uu::node<_>@L).
+print residue.
+
+/*
+@L should not be considered as residue for classic..
+
+ntail 1: Fail.(must) cause:residue is forbidden.(2)
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: Hole[32]&Anon_12=Anon_11&{FLOW,(21,22)=__norm}[]
+                          es_heap: self::node<q>
+*/

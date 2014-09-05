@@ -1,0 +1,281 @@
+  latest/UDB_entl/dll-vc01.smt2: OK
+  latest/FDB_entl/dll-vc01.smt2: OK
+  latest/UDB_entl/dll-vc02.smt2: OK
+  latest/FDB_entl/dll-vc02.smt2: OK
+  latest/UDB_entl/dll-vc03.smt2: OK
+  latest/FDB_entl/dll-vc03.smt2: OK
+  latest/UDB_entl/dll-vc04.smt2: Unexpected: UNSOUND
+  latest/FDB_entl/dll-vc04.smt2: Unexpected: UNSOUND
+  latest/UDB_entl/dll-vc05.smt2: OK
+  latest/FDB_entl/dll-vc05.smt2: OK
+  latest/UDB_entl/dll-vc06.smt2: OK
+  latest/FDB_entl/dll-vc06.smt2: OK
+  latest/UDB_entl/dll-vc09.smt2: OK
+  latest/FDB_entl/dll-vc09.smt2: OK
+  latest/UDB_entl/dll-vc10.smt2: UNK
+  latest/FDB_entl/dll-vc10.smt2: UNK
+  latest/UDB_entl/dll-vc11.smt2: OK
+  latest/FDB_entl/dll-vc11.smt2: OK
+  latest/UDB_entl/dll-vc12.smt2: UNK
+  latest/FDB_entl/dll-vc12.smt2: UNK
+  latest/UDB_entl/dll-vc13.smt2: UNK
+  latest/FDB_entl/dll-vc13.smt2: UNK
+  latest/UDB_entl/nll-vc01.smt2: OK
+  latest/FDB_entl/nll-vc01.smt2: OK
+  latest/UDB_entl/nll-vc02.smt2: OK
+  latest/FDB_entl/nll-vc02.smt2: OK
+  latest/UDB_entl/nll-vc03.smt2: OK
+  latest/FDB_entl/nll-vc03.smt2: OK
+  latest/UDB_entl/nll-vc04.smt2: Timeout
+  latest/FDB_entl/nll-vc04.smt2: Timeout
+  latest/UDB_entl/nll-vc05.smt2: OK
+  latest/FDB_entl/nll-vc05.smt2: OK
+  latest/UDB_entl/nll-vc06.smt2: OK
+  latest/FDB_entl/nll-vc06.smt2: OK
+  latest/UDB_entl/nll-vc07.smt2: Timeout
+  latest/FDB_entl/nll-vc07.smt2: Timeout
+  latest/UDB_entl/nll-vc08.smt2: Timeout
+  latest/FDB_entl/nll-vc08.smt2: Timeout
+  latest/UDB_entl/nll-vc09.smt2: Timeout
+  latest/FDB_entl/nll-vc09.smt2: Timeout
+  latest/UDB_entl/nll-vc10.smt2: Timeout
+  latest/FDB_entl/nll-vc10.smt2: Timeout
+  latest/UDB_entl/nll-vc11.smt2: OK
+  latest/FDB_entl/nll-vc11.smt2: OK
+  latest/UDB_entl/nll-vc12.smt2: OK
+  latest/FDB_entl/nll-vc12.smt2: OK
+  latest/UDB_entl/nll-vc13.smt2: UNK
+  latest/FDB_entl/nll-vc13.smt2: UNK
+  latest/UDB_entl/nll-vc14.smt2: UNK
+  latest/FDB_entl/nll-vc14.smt2: UNK
+  latest/UDB_entl/nll-vc15.smt2: Timeout
+  latest/FDB_entl/nll-vc15.smt2: Timeout
+  latest/UDB_entl/nll-vc16.smt2: Timeout
+  latest/FDB_entl/nll-vc16.smt2: Timeout
+  latest/UDB_entl/elseg4_slk-6.smt2: OK
+  latest/UDB_entl/elseg4_slk-7.smt2: OK
+  latest/UDB_entl/lsegex4_slk-1.smt2: OK
+  latest/UDB_entl/odd-lseg3_slk-5.smt2: OK
+  latest/UDB_entl/skl2-vc01.smt2: OK
+  latest/FDB_entl/skl2-vc01.smt2: OK
+  latest/UDB_entl/skl2-vc02.smt2: OK
+  latest/FDB_entl/skl2-vc02.smt2: OK
+  latest/UDB_entl/skl2-vc03.smt2: Timeout
+  latest/FDB_entl/skl2-vc03.smt2: Timeout
+  latest/UDB_entl/skl2-vc04.smt2: OK
+  latest/FDB_entl/skl2-vc04.smt2: OK
+  latest/UDB_entl/skl3-vc01.smt2: OK
+  latest/FDB_entl/skl3-vc01.smt2: OK
+  latest/UDB_entl/skl3-vc02.smt2: Timeout
+  latest/FDB_entl/skl3-vc02.smt2: Timeout
+  latest/UDB_entl/skl3-vc03.smt2: Timeout
+  latest/FDB_entl/skl3-vc03.smt2: Timeout
+  latest/sll0a_sat/spaguetti-10-e01.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-10-e02.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-10-e03.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-11-e01.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-11-e02.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-20-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-10-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-10-e02.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-10-e03.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-11-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-12-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-15-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-20-e01.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-15-e02.tptp.smt2: OK
+  latest/sll0a_sat/spaguetti-13-e03.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-16-e04.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-17-e02.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-18-e02.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-18-e03.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-18-e08.tptp.smt2: OK
+  latest/sll0a_entl/bolognesa-20-e03.tptp.smt2: OK
+  latest/sll0a_entl/clones-01-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-01-e08.tptp.smt2: OK
+  latest/sll0a_entl/clones-01-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-01-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-02-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-02-e08.tptp.smt2: OK
+  latest/sll0a_entl/clones-02-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-02-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-03-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-03-e08.tptp.smt2: OK
+  latest/sll0a_entl/clones-03-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-03-e10.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc29.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc30.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc32.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc33.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc35.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc37.tptp.smt2: OK
+  latest/UDB_sat/abduced02.defs.smt2: OK
+  latest/UDB_sat/abduced03.defs.smt2: OK
+  latest/UDB_sat/abduced04.defs.smt2: OK
+  latest/UDB_sat/abduced07.defs.smt2: OK
+  latest/UDB_sat/abduced08.defs.smt2: OK
+  latest/UDB_sat/abduced10.defs.smt2: OK
+  latest/UDB_sat/abduced14.defs.smt2: OK
+  latest/UDB_sat/abduced15.defs.smt2: OK
+  latest/UDB_sat/abduced16.defs.smt2: OK
+  latest/UDB_sat/abduced17.defs.smt2: OK
+  latest/UDB_sat/abduced18.defs.smt2: OK
+  latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: OK
+  latest/UDB_sat/succ-circuit03.defs.smt2: OK
+  latest/UDB_sat/succ-circuit04.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit05.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit06.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit07.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit08.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit09.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit10.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit11.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit12.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit13.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit14.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit15.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit16.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit17.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit18.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit19.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit20.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec05.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec06.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec07.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec08.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec09.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec10.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec11.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec12.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec13.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec14.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec15.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec16.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec17.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec18.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec19.defs.smt2: Timeout
+  latest/UDB_sat/succ-rec20.defs.smt2: Timeout
+  latest/UDB_sat/succ-circuit01.defs.smt2: OK
+  latest/UDB_sat/succ-circuit02.defs.smt2: OK
+  latest/UDB_sat/succ-rec01.defs.smt2: OK
+  latest/UDB_sat/succ-rec02.defs.smt2: OK
+  latest/UDB_sat/succ-rec03.defs.smt2: OK
+  latest/sll0a_entl/clones-04-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-04-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-04-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-05-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-05-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-05-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-06-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-06-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-06-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-07-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-07-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-07-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-08-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-08-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-08-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-09-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-09-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-09-e10.tptp.smt2: OK
+  latest/sll0a_entl/clones-10-e07.tptp.smt2: OK
+  latest/sll0a_entl/clones-10-e09.tptp.smt2: OK
+  latest/sll0a_entl/clones-10-e10.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc04.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc05.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc10.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc11.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc24.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc28.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc31.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc41.tptp.smt2: OK
+  latest/sll0a_entl/smallfoot-vc42.tptp.smt2: OK
+  latest/UDB_entl/01.tst.smt2: OK
+  latest/UDB_entl/07.tst.smt2: OK
+  latest/UDB_entl/13.tst.smt2: OK
+  latest/UDB_entl/14.tst.smt2: OK
+  latest/UDB_entl/15.tst.smt2: OK
+  latest/UDB_entl/17.tst.smt2: Timeout
+  latest/UDB_entl/18.tst.smt2: OK
+  latest/UDB_entl/20.tst.smt2: OK
+  latest/UDB_entl/22.tst.smt2: OK
+
+Total number of unexpected results: 2 in files:
+ latest/UDB_entl/dll-vc04.smt2
+ latest/FDB_entl/dll-vc04.smt2
+
+
+Total number of unsound results: 2 in files:
+ latest/UDB_entl/dll-vc04.smt2
+ latest/FDB_entl/dll-vc04.smt2
+
+
+Total number of timeout files: 54 in:
+ latest/UDB_entl/nll-vc04.smt2
+ latest/FDB_entl/nll-vc04.smt2
+ latest/UDB_entl/nll-vc07.smt2
+ latest/FDB_entl/nll-vc07.smt2
+ latest/UDB_entl/nll-vc08.smt2
+ latest/FDB_entl/nll-vc08.smt2
+ latest/UDB_entl/nll-vc09.smt2
+ latest/FDB_entl/nll-vc09.smt2
+ latest/UDB_entl/nll-vc10.smt2
+ latest/FDB_entl/nll-vc10.smt2
+ latest/UDB_entl/nll-vc15.smt2
+ latest/FDB_entl/nll-vc15.smt2
+ latest/UDB_entl/nll-vc16.smt2
+ latest/FDB_entl/nll-vc16.smt2
+ latest/UDB_entl/skl2-vc03.smt2
+ latest/FDB_entl/skl2-vc03.smt2
+ latest/UDB_entl/skl3-vc02.smt2
+ latest/FDB_entl/skl3-vc02.smt2
+ latest/UDB_entl/skl3-vc03.smt2
+ latest/FDB_entl/skl3-vc03.smt2
+ latest/UDB_sat/succ-circuit04.defs.smt2
+ latest/UDB_sat/succ-circuit05.defs.smt2
+ latest/UDB_sat/succ-circuit06.defs.smt2
+ latest/UDB_sat/succ-circuit07.defs.smt2
+ latest/UDB_sat/succ-circuit08.defs.smt2
+ latest/UDB_sat/succ-circuit09.defs.smt2
+ latest/UDB_sat/succ-circuit10.defs.smt2
+ latest/UDB_sat/succ-circuit11.defs.smt2
+ latest/UDB_sat/succ-circuit12.defs.smt2
+ latest/UDB_sat/succ-circuit13.defs.smt2
+ latest/UDB_sat/succ-circuit14.defs.smt2
+ latest/UDB_sat/succ-circuit15.defs.smt2
+ latest/UDB_sat/succ-circuit16.defs.smt2
+ latest/UDB_sat/succ-circuit17.defs.smt2
+ latest/UDB_sat/succ-circuit18.defs.smt2
+ latest/UDB_sat/succ-circuit19.defs.smt2
+ latest/UDB_sat/succ-circuit20.defs.smt2
+ latest/UDB_sat/succ-rec05.defs.smt2
+ latest/UDB_sat/succ-rec06.defs.smt2
+ latest/UDB_sat/succ-rec07.defs.smt2
+ latest/UDB_sat/succ-rec08.defs.smt2
+ latest/UDB_sat/succ-rec09.defs.smt2
+ latest/UDB_sat/succ-rec10.defs.smt2
+ latest/UDB_sat/succ-rec11.defs.smt2
+ latest/UDB_sat/succ-rec12.defs.smt2
+ latest/UDB_sat/succ-rec13.defs.smt2
+ latest/UDB_sat/succ-rec14.defs.smt2
+ latest/UDB_sat/succ-rec15.defs.smt2
+ latest/UDB_sat/succ-rec16.defs.smt2
+ latest/UDB_sat/succ-rec17.defs.smt2
+ latest/UDB_sat/succ-rec18.defs.smt2
+ latest/UDB_sat/succ-rec19.defs.smt2
+ latest/UDB_sat/succ-rec20.defs.smt2
+ latest/UDB_entl/17.tst.smt2
+
+
+Total number of unknown results: 10 in files:
+ latest/UDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc12.smt2
+ latest/FDB_entl/dll-vc12.smt2
+ latest/UDB_entl/dll-vc13.smt2
+ latest/FDB_entl/dll-vc13.smt2
+ latest/UDB_entl/nll-vc13.smt2
+ latest/FDB_entl/nll-vc13.smt2
+ latest/UDB_entl/nll-vc14.smt2
+ latest/FDB_entl/nll-vc14.smt2
+

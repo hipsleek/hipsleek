@@ -1,0 +1,31 @@
+data node {
+   node prev;
+   node nxt;
+}.
+
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+
+lemma_safe self::dllseg<p,pr,last> <- 
+    (exists u,l2: self::dllseg<u,pr,l2>*u::dllseg<p,l2,last>).
+
+lemma_safe self::dllseg<p,pr,last> 
+  -> (exists u,l2: self::dllseg<u,pr,l2>*u::dllseg<p,l2,last>).
+
+lemma_unsafe self::node<pr,u1>* u1::dllseg<p,self,last> 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+// cannot be proven due to complex lemma
+
+lemma_safe self::dllseg<p,pr,last> & self!=p 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+// why lemma cannot be proven?
+// cannot be proven as complex lemma not properly handled?
+
+/*
+dllseg0e1.slk
+
+Why is lemma not provable?
+
+*/

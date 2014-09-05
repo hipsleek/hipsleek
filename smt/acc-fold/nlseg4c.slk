@@ -1,0 +1,44 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+
+lemma_unsafe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+/*
+checkentail (exists u_136: u_136::nlseg<p>&self_lem_13=u_136 & p!=null)
+  |-  (exists p_131: self_lem_13::nlseg<p_131>&p=p_131).
+*/
+
+//1 - orig
+checkentail (exists q_146,a_147,u_136: self_lem_13::node<a_147> *
+    a_147::nlseg<q_146> * u_136::nlseg<p>&self_lem_13!=u_136 & q_146=u_136 &
+    p!=null)
+  |-  (exists p_131: self_lem_13::nlseg<p_131>&p=p_131).
+
+
+//2 - (A) unfold + match
+/*checkentail (exists q_146,a_147,u_136: self_lem_13::node<a_147> *
+    a_147::nlseg<q_146> * u_136::nlseg<p>&self_lem_13!=u_136 & q_146=u_136 &
+    p!=null)
+  |- (exists a,q: self_lem_13::node<a> * a::nlseg<q> & self_lem_13!=q & p=q).
+*/
+/*(exists p_131: self_lem_13::nlseg<p_131>&p=p_131).*/
+
+//3 -(A')  lemma app
+/*
+checkentail (exists q_146,a_147,u_136: self_lem_13::node<a_147> *
+    a_147::nlseg<q_146> * u_136::nlseg<p>&self_lem_13!=u_136 & q_146=u_136 &
+    p!=null)
+  |- (exists u,p_131: self_lem_13::nlseg<u> * u::nlseg<p_131> & p_131!=null &p=p_131).
+print residue.
+*/
+/*(exists p_131: self_lem_13::nlseg<p_131>&p=p_131).*/

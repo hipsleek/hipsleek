@@ -1,0 +1,36 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p> .
+
+
+
+lemma_unsafe "three0" self::node<_,q>*q::rlseg<p>  -> self::rlseg<p1>* p1::node<_,p>.
+
+// base case - valid - ok 
+// checkentail x::node<_,q> & q=p |- x::rlseg<p1>* p1::node<_,p>.
+
+// inductive case - fails - not ok
+checkentail x::node<_,q> * q::node<_,qq> * qq::rlseg<p> |-  x::rlseg<p1>* p1::node<_,p>.
+
+/*
+// inductive case 
+checkentail x::node<_,q> * q::node<_,qq> * qq::rlseg<p> |-  x::rlseg<p1>* p1::node<_,p>.
+
+// inductive case - fold
+checkentail x::node<_,q> * q::node<_,qq> * qq::rlseg<p> |-   x::node<_,q2> * q2::rlseg<p1> * p1::node<_,p>.
+
+// inductive case - match
+checkentail q::node<_,qq> * qq::rlseg<p> & q=q2 |-  q2::rlseg<p1> * p1::node<_,p>.
+
+
+// apply lem ---> valid
+checkentail  q::rlseg<pp>* pp::node<_,p> & q=q2 |-  q2::rlseg<p1> * p1::node<_,p>.
+
+*/

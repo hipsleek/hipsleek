@@ -1,0 +1,20 @@
+//CountDownLatch
+
+pred_prim WAIT<b:bag(int)>.
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a>@L * x::WAIT<S> & a notin S ->  
+x::WAIT<S1> & S1=union(S,{a}).
+
+check_normalize x::WAIT<S> * c1::CNT<2> & S={2}.
+//output one state
+/*
+# lemma-propo0.slk
+
+CheckNorm (1) :  x::WAIT{}<S> * c1::CNT{}<flted_10_39>&flted_10_39=2
+     & S={2} & {FLOW,(21,22)=__norm}[]
+
+*/
+
+

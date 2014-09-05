@@ -1,0 +1,45 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+lemma_unsafe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe self::nlseg<p> <- 
+      (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+
+
+// (1)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<p>.
+print residue.
+// what does "rewrite cannot be applied mean?"
+
+
+//(2)
+checkentail
+    (exists u :self::node<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+/*
+// 2 identical residue..
+ <1>p::node<_>&self!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  Fold ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>p::node<_>&self!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  Fold ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  Match ==>  SEARCH ==>  Fold ==> ]]
+*/
+
+//(3)
+checkentail
+    (exists u :self::node<u> * u::nlseg<p> & self!=p)
+       |- self::nlseg<p>.
+print residue.
+// self!=p repeated
+// <1>emp&self!=p & self!=p&{FLOW,(21,22)=__norm}[]

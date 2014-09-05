@@ -1,0 +1,22 @@
+data node {
+   node nxt;
+}.
+
+checkentail x=null & x=p |- p=null.
+print residue.
+
+checkentail x=null & x=(p:node) |- p=null.
+print residue.
+
+pred_prim stk<x:int>
+inv x>=0.
+
+pred_prim heap<x:int>
+inv x>=0.
+
+
+checkentail x::stk<3> & x=y |- x::stk<m>@L.
+print residue.
+
+checkentail x::stk<3> * y::heap<5> & x=y & y=null |- x=null.
+print residue.

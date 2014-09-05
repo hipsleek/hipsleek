@@ -1,0 +1,100 @@
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<xp> * xp::ls<y> //& null != self 
+   & self != y).
+
+
+lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+
+checkentail x::ls<y> * y::ls<z> * z::node<a>
+         |- x::ls<z> * z::node<a>.
+expect Valid.
+
+checkentail x::ls<y> * y::node<z> * z::node<a>
+         |- x::ls<z> * z::node<a>.
+expect Valid.
+
+checkentail z::node<a>
+         |- z::node<_>@L.
+print residue.
+expect Valid.
+
+checkentail z::ls<y> & z!=y
+         |- z::node<_>@L.
+print residue.
+expect Valid.
+
+checkentail z::node<a>@L
+         |- z::node<_>@L.
+print residue.
+expect Valid.
+
+checkentail z::ls<y>
+         |- z::node<_>@L.
+expect Fail.
+
+checkentail x::ls<y> * y::ls<z> * z::node<a>
+         |- x::ls<z> .
+print residue.
+// valid
+expect Valid.
+
+checkentail x::ls<y> * y::ls<z> * z::node<a>@L
+         |- x::ls<z> .
+print residue.
+// valid
+expect Valid.
+
+checkentail x::ls<y> * y::ls<z> * z::node<a>
+         |- x::ls<z> * z::node<_>@L.
+print residue.
+// expect valid, but failed with Hole problem..
+expect Valid.
+
+
+checkentail x::node<q>*q::ls<y> & x!=y
+         |- x::ls<y>@L .
+expect Valid.
+print residue.
+
+/*
+Entail 1: Fail.(may) cause:UnionR[ z=1 & (((x!=null & y!=x) | y=x)) & (((y!=null & z!=y) | z=y)) |-  y=z. LOCS:[14;1;0;15] (may-bug),Nothing_to_do? 
+  Type: WArg
+  LHS: y::ls<z>
+  RHS: z_56::node<Anon_66>@L
+ lhs_rest: Hole[70]
+ rhs_rest: y::ls<z_65>]
+
+Validate 1: Not Expected.
+*/
+
+/*
+checkentail x::ls<y> * y::node<z> & y!=x
+         |- x::ls<z> .
+expect Valid.
+*/
+/*
+# 22-tst.slk
+
+the 2nd and 3rd requires --inv-baga
+
+lemma_unsafe self::ls<p> * p::node<f0 = z,f1 = _> -> self::ls<z>.
+//above lemma is unsound for non-touching
+
+*/
+
+
+ 
+/*
+ checkentail_exact x::ls<y> * y::node<f0 = z,f1 = _> * z::node<f0=null>
+         |- x::ls<z> * z::ls<null>.
+*/
+
+// (7) fail
+
+
+

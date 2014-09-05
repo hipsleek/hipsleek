@@ -1,0 +1,45 @@
+/*
+ -tp parahip -perm fperm
+*/
+
+
+pred_prim WAIT<b:bag((int,int))>.
+
+pred_prim CNT<n:int>.
+
+// these could be added to prelude ..
+
+relation cyclic(bag((int,int)) g).
+relation acyclic(bag((int,int)) g).
+
+//lemma "wait-split" self::WAIT(f)<S> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::WAIT(f1)<S> * self::WAIT(f2)<S> & 0.0<f<=1.0.
+
+//lemma "wait-combine" self::WAIT(f1)<S1> * self::WAIT(f2)<S2> -> self::WAIT(f1+f2)<S> & S=union(S1,S2).
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S> & a>0 & b<0 & v notin S & v=tup2(c2,c1)->  c1::CNT<a> * c2::CNT<b> * x::WAIT(f)<S1> & S1=union(S,{tup2(c2,c1)}) & a>0 & b<0.
+
+
+// (1)
+checkentail x::WAIT(0.4)<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT(0.5)<C>.
+print residue.
+expect Fail.
+
+// (2)
+checkentail x::WAIT(0.5)<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT(0.5)<C>.
+print residue.
+expect Valid. //1 residue
+
+// (3)
+checkentail x::WAIT(0.6)<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT(0.5)<C>.
+print residue.
+expect Valid. //2 residue
+
+// (4)
+checkentail x::WAIT(0.3)<B> * x::WAIT(0.2)<B> & B={} |- x::WAIT(0.5)<B>.
+print residue.
+expect Valid. //1 residue
+
+
+
+

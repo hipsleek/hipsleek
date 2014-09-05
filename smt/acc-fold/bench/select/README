@@ -1,0 +1,9 @@
+1. Generate example.slk file from example.ss file
+   
+	 ./hip example.ss --gen-vc-exact
+
+   The generated example.slk is put in logs/ folder.
+
+2. Generate smt2 files from example.slk
+  
+	 ./sleek example.slk --gen-smt

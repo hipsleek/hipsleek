@@ -125,8 +125,10 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("checksat", CHECKSAT);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
@@ -168,7 +170,7 @@ module Make (Token : SleekTokenS)
    ("ensures_exact", ENSURES_EXACT);
    ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
-	 ("ex", EXISTS);
+	 (* ("ex", EXISTS); *)
 	 ("exists", EXISTS);
 	 ("extends", EXTENDS);
 	 ("false", FALSE);
@@ -193,9 +195,14 @@ module Make (Token : SleekTokenS)
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+         ("inv_exact", INV_EXACT);
+         ("inv_sat", INV_SAT);
+         ("BG", BG);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA TLEM);
+	 ("lemma_prop", LEMMA TLEM_PROP);
+	 ("lemma_split", LEMMA TLEM_SPLIT);
 	 ("lemma_test", LEMMA TLEM_TEST);
 	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
@@ -262,7 +269,11 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
-   ("validate", VALIDATE);
+   ("expect", VALIDATE);
+   ("Valid", VALID);
+   ("Fail", FAIL);
+   ("Fail_Must", FAIL_MUST);
+   ("Fail_May", FAIL_MAY);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
@@ -344,6 +355,8 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
+  | "@S1" { SPLIT1Ann }
+  | "@S2" { SPLIT2Ann }
   | "@M" { MUT }
   | "@S" { SAT }
   (* | "@VAL" {VAL} *)
@@ -364,6 +377,8 @@ rule tokenizer file_name = parse
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
+  | "@Split" { SPLITANN } (*Split annotation*)
+  | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }
   | '}' { CBRACE }

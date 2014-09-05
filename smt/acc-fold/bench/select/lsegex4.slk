@@ -1,0 +1,51 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_unsafe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_unsafe self::lseg<p> -> (exists u: self::lseg<u>*u::lseg<p>).
+
+//Trung: how to generate this lemmas?
+lemma_unsafe self::lseg<p> & self!=p 
+        -> (exists u: self::lseg<u>*u::node<p>).
+
+pred right1<p> ==
+  (exists u: self::lseg<u> * u::node<p>).
+
+checkentail_exact x::lseg<p> & x!=p |- x::right1<p>.
+expect Valid.
+
+checkentail_exact x::lseg<p> |- x::right1<p>.
+expect Fail.
+
+pred right2<p> ==
+  (exists u: self::lseg<u> * u::lseg<p>).
+
+checkentail_exact x::lseg<p> |-  x::right2<p>.
+expect Valid.
+
+pred right3<p> ==
+   (exists u,u2: self::lseg<u> * u::lseg<u2>* u2::lseg<p>).
+
+checkentail_exact x::lseg<p> |- x::right3<p>.
+expect Valid.
+
+pred right4<> ==
+   (exists u,w: self::lseg<u> * u::lseg<w>).
+
+checkentail_exact x::lseg<p> |-  x::right4<>.
+expect Valid.
+
+
+pred right5<> ==
+    (exists w: self::lseg<w>).
+
+checkentail_exact x::lseg<p> |-   x::right5<>.
+expect Valid.
+
+

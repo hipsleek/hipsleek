@@ -1,0 +1,388 @@
+Problems with Inv Baga 
+====================================
+#dll-vc05.smt2.slk
+
+../../../sleek dll-vc05.smt2.slk
+
+FAIL
+
+../../../sleek dll-vc05.smt2.slk --inv-baga
+
+VALID
+
+---------
+EXPECTED: FAIL
+
+====================================
+#nlcl-vc01.smt2.slk --inv-baga
+
+expected: VALID
+
+====================================
+#nlcl-vc01.smt2.slk
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe
+
+Valid
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+
+Fail
+
+==============
+Expect
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+Valid
+
+====================================
+--inv-baga
+Starting hip-sleek tests:
+Total number of errors: 6 in files:
+  baga-test.slk({E15#Fail}) infer/infer16.slk({E2#Valid},{E5#Valid}) lemmas/sort2.slk({L1#Fail},{L2#Valid},{L3#Valid},{L6#Fail},{L8#Valid},{L9#Fail}) lemmas/app-tail.slk({L2#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/dseg-new.slk({L1#Valid},{L2#Fail},{L3#Valid}).
+====================================
+# baga-test.slk --inv-baga -dre "is_view_a"
+
+What is view17? why did this have arithmetic?
+
+is_view_arith@1
+is_view_arith inp1 : viewl7<q:node>=
+  :EBase (* lbl: *){1}->emp&self=null & q=null&{FLOW,(1,24)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[r;
+            Anon_25](ex)[](* lbl: *){2}->self::node<r> * r::node<Anon_25>&
+            r=q&{FLOW,(1,24)=__flow}[]
+  cont vars:
+  inv: true
+  unstructured formula:
+   (* lbl: *){1}->emp&self=null & q=null&{FLOW,(1,24)=__flow}[]
+   || (* lbl: *){2}->(exists r,Anon_25: self::node<r> * r::node<Anon_25>&r=q&
+      {FLOW,(1,24)=__flow})[]
+  xform: true
+  is_recursive?: false
+  view_data_name: node
+====================================
+bug in /smt/bugs/baga/succ-circuit06.defs.smt2.slk:
+
+(null,null) in INEQ
+
+still run too slow.
+
+====================================
+# solver.ml
+
+1. check baga fixpoint first which is using syntactic imply
+2. if new baga correct, change below for performance
+
+for using syntactic unsat, need to invoke EPureN ..
+
+(* TODO:EXPURE : need to invoke syn UNSAT ofr --inv-baga *)
+and unsat_base_x prog (sat_subno:  int ref) f  : bool=
+  let tp_call_wrapper npf = 
+
+need to build and use syntactic imply below
+      (* TODO-EXPURE : need to build new expure stuff *)
+      let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
+      let split_ante0, new_conseq0 = 
+        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
+        else xx
+
+          (* TODO-EXPURE - need to use syntactic imply & move upwards *)
+          if !Globals.gen_baga_inv then
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+          else 
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+
+====================================
+# cpure.ml & expure.ml & cprinter.ml (DONE)
+
+We need to make baga modular so it is easy to switch between the
+two versions. We need to add similar methods to EPURE and EPUREN
+to make this happen. The three places are:
+
+cprinter.ml
+---------
+(* new EPURE *)
+let string_of_ef_pure = pr_triple (add_str "BAGA" P.string_of_spec_var_list) (add_str "EQ" P.EMapSV.string_of) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
+
+(* old EPURE *)
+let string_of_ef_pure = pr_pair (add_str "BAGA" P.string_of_spec_var_list) (add_str "pure" string_of_pure_formula)
+
+cpure.ml
+--------
+(* TODO : this is an abstract type that should not be exposed *)
+(* 
+   type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list) 
+*)
+(* old extended pure formula *)
+type ef_pure = (spec_var list * formula )
+
+expure.ml
+---------
+(* module EPureI = EPUREN(SV) *)
+module EPureI = EPURE(SV)
+
+Since it is already working for EPUREN,
+let us make the thing compile and run using EPURE.
+For a start, I have added the following methods to
+both EPURE and EPUREN but they have not been tested.
+
+  (* TODO *)
+  let subst_epure sst ((baga,f) as ep) = ep
+
+====================================
+# baga-test-1.slk
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+// baga {q}
+
+
+!!! baga inv(l6):
+[(BAGA:[q],EQ:emap[{null,self}],INEQ:[]),
+ (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
+Disabling baga inv gen ..
+
+# why disabling baga_inv with l6 pred?
+
+====================================
+====================================
+# baga-test-4.slk --inv-baga
+
+null is supposed to be captured a "_".
+Why was it captured as "null" in emap? Has it
+not been captured properly?
+
+!!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),(BAGA:[q,self],EQ:emap[],INEQ:[])]
+
+====================================
+# succ-circuit20.defs.smt2.slk --inv-baga
+
+why disable baga called many times.
+after first call, we should avoid baga computation totally
+
+Why was simplify called? What caused the time-out.
+Is it large formula or wrong format?
+
+Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 12 invocations Stop Omega... 12 invocations Starting Omega...oc
+T
+====================================
+# succ-rec03.slk --inv-baga --dis-check-baga
+
+why a large imply that is not recorded?
+
+!!! log(small):(0.945892,84)
+!!! log(big)(>0.5s)(1):(2.998276,[(imply,2.998276)])
+Total verification time: 0.171307 second(s)
+	Time spent in main process: 0.119472 second(s)
+	Time spent in child processes: 0.051835 second(s)
+
+# succ-rec03.slk --inv-baga --check-baga
+
+semantic imply lead to timeout and wrong answers.
+check if _null properly translated?
+
+!!! ante:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! conseq:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 3 invocations. Stop z3... 3 invocations Starting z3... 
+[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 4 invocations. Stop z3... 4 invocations Starting z3... 
+
+!!! ante:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! conseq:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarti
+
+# many timeouts not recorded..
+
+!!! log(small):(0.245541,94)
+!!! log(big)(>0.5s)(8):(15.042298,[(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,0.622766);(imply,2.419532);(SAT,2.)])
+Total verification time: 0.189718 second(s)
+        Time spent in main process: 0.12858 second(s)
+        Time spent in child processes: 0.061138 second(s)
+====================================
+# rec02.slk --inv-baga (old)
+
+With the old-baga, why do I get null=_null?
+
+!!! baga inv(P):[([], null!=self & null=_null & null!=x2)]
+Starting Omega...oc
+
+# rec03.slk --inv-baga (old vs new)
+
+# first difference detected: 
+
+#!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+--([], x2=y2 & x3=y3 & null=self & null!=y1),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+--([], null=y1 & y1=y2 & y1=x3 & null!=self & null!=y3 & null!=x2 )]
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2) (# old succ3rec #)
+
+# rec03.slk --inv-baga -dre "ex_mk_star"
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+#### should be below : why?
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_24],[y2,y2_25],[y3,y3_26]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_24,y3_26]],INEQ:[(_null,y2_25)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[y2,y2_25],[_null,x3,x3_24,y3,y3_26]],INEQ:[(_null,y2_25)])
+
+# rec03a.slk --inv-baga -dre "ex_mk_star"
+(BAGA:[],EQ:[[_null,self],[x2xxx,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2xxx),(_null,y3)])
+(BAGA:[],EQ:[[_null,x2xxx,y1],[x3,y3]],INEQ:[(_null,self),(_null,y2)]),
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2)
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+
+inconsistent eq2 & part2!
+========================
+!!! eq2:emap[{_null,x3_14,y3_16}]
+!!! part2:[[_null,x2],[x3_14,y3_16]]eset1 :emap[{x3,x3_14};{y2,y2_15};{y3,y3_16}]
+
+====================================
+# rec03.slk --inv-baga (old-baga has 2 versions of _null!)
+
+!!! baga inv(Q):[([], null=self & null=y2 & null=y3),
+([], null=_null & null!=self & _null=y3 & _null=y2),
+([], null!=y2 & null=_null & null!=self & _null=y3),
+([], null!=y2 & null!=y3 & null=_null & null!=self),
+([], null!=y3 & null=_null & null!=self & _null=y2),
+([], null=_null & null!=y2 & _null=y3 & _null=self),
+([], null=_null & null!=y3 & null!=y2 & _null=self),
+([], null=_null & null!=y3 & _null=y2 & _null=self)]
+
+This was caused by elim_exists procedure:
+
+ef_elim_exists@3
+ef_elim_exists inp1 :[self_16,y2_17,x2_18,x1_14,x2_15]
+ef_elim_exists inp2 :([], self_16=self & y2_17=y2 & x2_18=x2_15 & x2_15=y2_17 & Cnull=x1_14 & 
+Cnull!=self_16 & Cnull=x1_14 & Cnull=x2_18)
+ef_elim_exists@3 EXIT:([], Cnull=_null & Cnull!=self & _null=y2)
+
+====================================
+# rec03.slk: FIXED (change EM.subs_eset_par, sort eqs)
+
+
+!!! Inconsistent eqmap @ mk_star:2
+!!! eqmap:[(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))]
+!!! part:[[_null,x2],[x3_24,y3_26]]
+!!! part2:[[_null,x3_24,y3_26]]
+
+!!! Inconsistent eqmap @ mk_star:2
+!!! eqmap:[(y3_18,Some(23)),(y2_17,Some(22)),(self_16,Some(22)),(x3_15,Some(22)),(_null,Some(22))]
+!!! part:[[_null,x3_15,self_16,y2_17]]
+!!! part2:[[_null,self_16,x3_15,y2_17]]
+// why not sorted?
+
+
+./../../sleek rec03.slk --inv-baga --double-check -dre "ex_" > 2
+
+!!! Inconsistent eqmap @ subst_epure
+!!! eqmap:[(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))]
+!!! part:[[_null,x2],[x3_24,y3_26]]
+!!! part2:[[_null,x3_24,y3_26]]
+ex_subst_epure@148@146
+ex_subst_epure inp1 :[(self,x2),(x2,x3_24),(y1,y2_25),(y2,y3_26)]
+ex_subst_epure inp2 :(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])
+ex_subst_epure@148 EXIT:(BAGA:[],EQ:[[_null,x3_24,y2_25]],INEQ:[(_null,x2),(_null,y3_26)])
+
+
+ex_subst_epure@147@146
+ex_subst_epure inp1 :[(self,x2),(x2,x3_24),(y1,y2_25),(y2,y3_26)]
+ex_subst_epure inp2 :(BAGA:[],
+
+Substitutiobn below must be parallel and not sequential
+
+
+    let new_eq = EM.subs_eset_par sst eq in
+
+EQ:([(x2,Some(9)),(y2,Some(9)),(_null,Some(3)),(self,Some(3))],
+[[_null,self],[x2,y2]]),
+INEQ:[(_null,y1)])
+ex_subst_epure@147 EXIT:(BAGA:[],
+
+EQ:([(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))],
+[[_null,x2],[x3_24,y3_26]])
+
+,INEQ:[(_null,y2_25)])
+
+====================================
+# rec03.slk --inv-baga: FIXED -16 and -7
+
+(i) re-sort after substitute
+(ii) handled [x->a; y->a] substitutions
+
+!!! Inconsistent eqmap @ subst_epure
+!!! eqmap:[(self_16,Some(25)),(_null,Some(25)),(x2_14,Some(25)),(y3_18,Some(24)),(y2_17,Some(23)),(x3_1
+5,Some(24))]
+!!! part:[[_null,x2_14,self_16],[x3_15,y3_18]]
+!!! part2:[[_null,self_16,x2_14],[x3_15,y3_18]]
+
+BAD
+===
+<   latest/UDB_entl/append_sll_cll_slk-16.smt2: OK
+---
+>   latest/UDB_entl/append_sll_cll_slk-16.smt2: Unexpected
+221c221
+<   latest/UDB_entl/append_sll_cll_slk-7.smt2: OK
+---
+>   latest/UDB_entl/append_sll_cll_slk-7.smt2: Unexpected
+247c247
+
+GOOD
+====
+131c131
+<   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: Unexpected
+---
+>   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: OK
+
+====================================
+# append-7.slk --inv-baga: 
+
+!!! baga inv(ll):[(BAGA:[],EQ:[[_null,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(lseg):[(BAGA:[],EQ:[[p,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(ll_e1):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(ll_e2):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(clist):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(lseg_e1):[(BAGA:[],EQ:[[p,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(node_e1):[(BAGA:[self],EQ:[],INEQ:[])]
+
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+====================================
+

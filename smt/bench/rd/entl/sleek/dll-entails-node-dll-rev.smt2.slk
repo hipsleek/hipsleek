@@ -1,0 +1,16 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+pred DLL_plus_rev<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: tl::DLL_t<next = n,prev = x> * self::DLL_plus_rev<p,x,tl>).
+
+checkentail a::DLL_plus<null,c,null>
+         |- (exists x,n,b: x::DLL_t<next = n,prev = b> * a::DLL_plus_rev<null,b,x> * n::DLL_plus<x,c,null>).

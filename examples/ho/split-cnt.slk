@@ -1,0 +1,67 @@
+/*
+  Control splitting (using annotation in RHS)
+  default -> no split
+  @S1 -> split only
+  @S2 -> split or match
+*/
+
+pred_prim CNT<n:int>.
+
+// orig - do not split
+// @S1 split - always split
+// @S2 search
+lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b 
+    -> self::CNT<a> * self::CNT<b>.
+
+// (1)
+checkentail c1::CNT<0> * c2::CNT<0> |-  c1::CNT<0>.
+expect Valid.
+print residue.
+// one residue
+
+// (2)
+checkentail c1::CNT<1> * c2::CNT<0> |-  c1::CNT<0>.
+expect Fail.
+print residue.
+// require exact match
+
+// (3)
+checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<1>@S1.
+expect Valid.
+print residue.
+// one residue
+
+// (4)
+checkentail c1::CNT<2> * c2::CNT<0> |- c1::CNT<1>@S1.
+print residue.
+expect Valid.
+// one residue
+
+// (5)
+checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<2>@S1.
+print residue.
+expect Fail.
+// one residue
+
+// (6)
+checkentail c1::CNT<2> * c2::CNT<0> |- c1::CNT<1>.
+expect Fail.
+print residue.
+// FAIL
+
+// (7)
+checkentail c1::CNT<1> * c2::CNT<0> |- c1::CNT<1>@S2.
+expect Valid.
+print residue.
+// two residues
+
+// (8)
+checkentail c1::CNT<0> * c2::CNT<0> |- c1::CNT<1>@S2.
+expect Fail.
+print residue.
+
+// (9)
+checkentail c1::CNT<2> * c2::CNT<0> |- c1::CNT<1>@S2.
+expect Valid.
+print residue.
+// one answer

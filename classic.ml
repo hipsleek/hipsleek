@@ -1,9 +1,9 @@
 module DD = Debug
 open Globals
 open Gen
-open Exc.GTable
-open Label_only
-open Label
+(* open Exc.GTable *)
+(* open Label_only *)
+(* open Label *)
 open Cast
 open Cformula
 

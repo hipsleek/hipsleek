@@ -1,0 +1,32 @@
+
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<>
+ inv true.
+
+
+//checkentail P |- emp.
+
+
+//checkentail %P |- emp.
+
+checkentail c::MSG{x::cell<v> & v>0}<> * x::cell<3>
+    |- emp. //c::MSG{%P}<> .
+
+print residue.
+
+
+checkentail c::MSG{x::cell<v> & v>0}<> * x::cell<3>
+    |- c::MSG{%P}<> .
+print residue.
+
+/* 
+# msg2.slk why is %P not printed in residue?
+
+ Entail 2: Valid. 
+
+ <1>x::cell<flted_21_22>&flted_21_22=3&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  Match ==> ]
+*/

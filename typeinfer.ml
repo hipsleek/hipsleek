@@ -125,12 +125,14 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
               IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
               IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+              IF.h_formula_heap_split = h0.IF.h_formula_heap2_split;
               IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
               IF.h_formula_heap_imm_param = hanns;
               IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
               IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
               IF.h_formula_heap_arguments = hargs;
+              IF.h_formula_heap_ho_arguments = [];
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
               IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
@@ -147,11 +149,13 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
                   IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
                   IF.h_formula_heap_deref = h0.IF.h_formula_heap2_deref;
                   IF.h_formula_heap_derv = h0.IF.h_formula_heap2_derv;
+                  IF.h_formula_heap_split = h0.IF.h_formula_heap2_split;
                   IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
                   IF.h_formula_heap_imm_param = hanns;
                   IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
                   IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
                   IF.h_formula_heap_arguments = hargs;
+                  IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
                   IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
                   IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
                   IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -167,7 +171,7 @@ let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let pr = (* string_of_typ *) pr_none in
+  let pr = string_of_typ in
   let pr_out (_, t) = string_of_typ t in
   Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
@@ -180,7 +184,7 @@ and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
       ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
-  let pr = (* string_of_typ *) pr_none in
+  (* let pr = (\* string_of_typ *\) pr_none in *)
   Debug.no_3 "must_unify_expect" string_of_typ string_of_typ string_of_tlist string_of_tlist_type (fun _ _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
@@ -193,7 +197,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 = (* pr_option pr *) pr_none in
+  let pr2 (_, t) = pr_option pr t in
   Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
@@ -212,8 +216,10 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (tl, Some (Named n2))
-      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (tl, Some (Named n1))
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
+          (tl, Some (Named n2))
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
+          (tl, Some (Named n1))
       | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
@@ -234,6 +240,12 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   (match (dim_unify d1 d2), (unify x1 x2 tl) with
                   | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
                   | _,(n_tl,_) -> (n_tl,None))
+              | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                    let n_tl, t5 = unify t1 t3 tl in
+                    let n_tl2, t6 = unify t2 t4 n_tl in
+                    match t5,t6 with
+                      | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                      | _ -> (n_tl2,None))
               | _,_ -> (tl,None)
             end
         )
@@ -292,6 +304,13 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
                 match (unify x1 x2 tl) with
                 | (n_tl,Some t) -> (n_tl,Some (List t))
                 | (n_tl,None) -> (n_tl,None)
+              )
+            | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                  let n_tl, t5 = unify t1 t3 tl in
+                  let n_tl2, t6 = unify t2 t4 n_tl in
+                  match t5,t6 with
+                    | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                    | _ -> (n_tl2,None)
               )
             | Array (x1,d1),Array (x2,d2) -> (
                 match (dim_unify d1 d2), (unify x1 x2 tl) with
@@ -404,22 +423,27 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
           with
             | Not_found ->
                   (try
-                    let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-                    in Int
+                    let _ = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+                    in Named c
                   with
-                    | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-                          if CF.view_prim_lst # mem c then Named c
-                          else
-                          (* if !inter then*)
-                          Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text = c ^ " is neither data, enum type, nor prim pred";
-                              }
-                              (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                                let _ = undef_data_types := (c, pos) :: !undef_data_types in
-                                Named c (* Store this temporarily *)*)
-                  ))
+                    | Not_found ->
+                          (try
+                            let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                            in Int
+                          with
+                            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
+                                  if CF.view_prim_lst # mem c then Named c
+                                  else
+                                    (* if !inter then*)
+                                    Err.report_error
+                                        {
+                                            Err.error_loc = pos;
+                                            Err.error_text = c ^ " is neither data, enum type, nor prim pred";
+                                        }
+                                        (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+                                          let _ = undef_data_types := (c, pos) :: !undef_data_types in
+                                          Named c (* Store this temporarily *)*)
+                          )))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
@@ -459,17 +483,16 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
 
 and gather_type_info_exp prog a0 tlist et =  
-  Debug.no_eff_3 "gather_type_info_exp" [false;true]
-    Iprinter.string_of_formula_exp string_of_tlist string_of_typ
-    string_of_tlist_type 
+  Debug.no_eff_3 "gather_type_info_exp" [false;true] 
+      Iprinter.string_of_formula_exp string_of_tlist string_of_typ
+     string_of_tlist_type 
     (fun _ _ _ -> gather_type_info_exp_x prog a0 tlist et) a0 tlist et
 
 and gather_type_info_exp_x prog a0 tlist et =
   match a0 with
   | IP.Null pos -> 
-      let t = null_type in
-      let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)
+      let (new_et,n_tl) = fresh_tvar tlist in
+      (n_tl, new_et)
   | IP.Ann_Exp (e,t, _) -> 
       (* TODO WN : check if t<:et *)
       let (n_tl,n_typ) = gather_type_info_exp_x prog e tlist t in
@@ -498,7 +521,14 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.FConst (_,pos) -> 
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)      
+      (n_tl,n_typ)
+  | IP.Tup2 ((p1,p2), pos) ->
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let (n_tl1,t1) = gather_type_info_exp prog p1 n_tl new_et in
+      let (new_et2, n_tl2) = fresh_tvar n_tl1 in
+      let (n_tl3,t2) = gather_type_info_exp_x prog p2 n_tl2 new_et2 in
+      let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
+      (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->
       let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in
@@ -649,6 +679,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (n_tl,r) = must_unify Int et n_tl pos in
       let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
       (n_tlist,r)
+  | IP.BExpr f1 -> (gather_type_info_pure prog f1 tlist, Bool)
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
   match p0 with
@@ -685,15 +716,8 @@ and gather_type_info_pure prog (p0 : IP.formula) (tlist : spec_var_type_list) : 
   Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist
                  (gather_type_info_pure_x prog) p0 tlist
 
-
-and gather_type_info_b_formula prog b0 tlist =
-  Debug.no_eff_2 "gather_type_info_b_formula" [false;true] 
-                 Iprinter.string_of_b_formula string_of_tlist string_of_tlist
-                 (fun _ _ -> gather_type_info_b_formula_x prog b0 tlist) b0 tlist
-      
-and gather_type_info_b_formula_x prog b0 tlist =
-  let (pf,_) = b0 in
-  match pf with
+and gather_type_info_p_formula prog pf tlist =  match pf with
+  | IP.Frm _ -> tlist
   | IP.BConst _ -> tlist
   | IP.BVar ((bv, bp), pos) ->
       let (n_tlist,n_type) = gather_type_info_var bv tlist (C.bool_type) pos in
@@ -703,8 +727,8 @@ and gather_type_info_b_formula_x prog b0 tlist =
       let (n_tl,n_ty) = gather_type_info_exp prog a2 n_tl (Cpure.ann_type) in
       n_tl
   | IP.LexVar(t_ann, ls1, ls2, pos) ->
-      let n_tl = gather_type_info_term_ann prog t_ann tlist in
-      let n_tl = List.fold_left (fun tl e -> fst(gather_type_info_exp prog e tl (Int))) n_tl ls1  in
+      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) tlist ls1  in
+      let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
       let n_tl = List.fold_left (fun tl e -> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
       n_tl
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
@@ -738,12 +762,18 @@ and gather_type_info_b_formula_x prog b0 tlist =
       let (n_tl,t2) = gather_type_info_exp prog e2 n_tl (BagT new_et) in
       let (n_tl,_) = must_unify t1 t2 n_tl pos in
       n_tl
-  | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*)
-      let (new_et,n_tl) = fresh_tvar tlist in
-      let (n_tl,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-      let (n_tl,t2) = gather_type_info_exp prog a2 n_tl new_et in
-      let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
-      n_tl
+  | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
+      (* allow comparision btw 2 pointers having different types *)
+      let (new_et1,n_tl) = fresh_tvar tlist in
+      let (n_tl,t1) = gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
+      let (new_et2,n_tl) = fresh_tvar n_tl in
+      let (n_tl,t2) = gather_type_info_exp prog a2 n_tl new_et2 in
+      match t1, t2 with
+      | Named _, Named _ -> n_tl
+      | _ ->
+          let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
+          n_tl
+    )
   | IP.BagMax ((v1, p1), (v2, p2), pos) 
   | IP.BagMin ((v1, p1), (v2, p2), pos) -> (* V1=BagMin(V2) *)
       let (et,n_tl) = fresh_tvar tlist in
@@ -818,9 +848,131 @@ and gather_type_info_term_ann prog tann tlist =
     end
   | _ -> tlist
 
+and gather_type_info_b_formula prog b0 tlist =
+  Debug.no_eff_2 "gather_type_info_b_formula" [false;true] 
+                 Iprinter.string_of_b_formula string_of_tlist string_of_tlist
+                 (fun _ _ -> gather_type_info_b_formula_x prog b0 tlist) b0 tlist
+
+and gather_type_info_b_formula_x prog b0 tlist =
+  let (pf,_) = b0 in
+  gather_type_info_p_formula prog pf tlist
+  (* match pf with *)
+  (*   | IP.Frm _ -> tlist *)
+  (* | IP.BConst _ -> tlist *)
+  (* | IP.BVar ((bv, bp), pos) -> *)
+  (*     let (n_tlist,n_type) = gather_type_info_var bv tlist (C.bool_type) pos in *)
+  (*     n_tlist *)
+  (* | IP.SubAnn(a1,a2,pos) -> *)
+  (*     let (n_tl,n_ty) = gather_type_info_exp a1 tlist (Cpure.ann_type) in *)
+  (*     let (n_tl,n_ty) = gather_type_info_exp a2 n_tl (Cpure.ann_type) in *)
+  (*     n_tl *)
+  (* | IP.LexVar(t_ann, ls1, ls2, pos) -> *)
+  (*     let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp e tl (Int))) tlist ls1  in *)
+  (*     let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp e tl (Int))) n_tl ls2 in *)
+  (*     n_tl *)
+  (* | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) -> *)
+  (*     let (new_et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (\* tvar, Int, Float *\) *)
+  (*     let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et in *)
+  (*     let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
+  (*     let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
+  (*     let (n_tl,_) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+  (*     n_tl *)
+  (* | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) -> *)
+  (*     let (new_et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (\* tvar, Int, Float *\) *)
+  (*     let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et in *)
+  (*     let (n_tl,t3) = gather_type_info_exp a3 n_tl new_et in (\* tvar, Int, Float *\) *)
+  (*     let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
+  (*     let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
+  (*     let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in *)
+  (*     let (n_tl,t) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+  (*     let (n_tl,t) = must_unify t t3 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+  (*     n_tl *)
+  (* | IP.BagIn ((v, p), e, pos) | IP.BagNotIn ((v, p), e, pos) ->  (\* v in e *\) *)
+  (*     let (new_et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp e n_tl (BagT new_et) in *)
+  (*     let (n_tl,t2) = gather_type_info_var v n_tl new_et pos in *)
+  (*     let (n_tl,_)= must_unify t1 (BagT t2) n_tl pos in *)
+  (*     n_tl *)
+  (* | IP.BagSub (e1, e2, pos) -> *)
+  (*     let (new_et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp e1 n_tl (BagT new_et) in *)
+  (*     let (n_tl,t2) = gather_type_info_exp e2 n_tl (BagT new_et) in *)
+  (*     let (n_tl,_) = must_unify t1 t2 n_tl pos in *)
+  (*     n_tl *)
+  (* | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (\*Need consider*\) ( *)
+  (*     (\* allow comparision btw 2 pointers having different types *\) *)
+  (*     let (new_et1,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et1 in (\* tvar, Int, Float *\) *)
+  (*     let (new_et2,n_tl) = fresh_tvar n_tl in *)
+  (*     let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et2 in *)
+  (*     match t1, t2 with *)
+  (*     | Named _, Named _ -> n_tl *)
+  (*     | _ -> *)
+  (*         let (n_tl,_) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\) *)
+  (*         n_tl *)
+  (*   ) *)
+  (* | IP.BagMax ((v1, p1), (v2, p2), pos)  *)
+  (* | IP.BagMin ((v1, p1), (v2, p2), pos) -> (\* V1=BagMin(V2) *\) *)
+  (*     let (et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_var v1 n_tl et pos in *)
+  (*     let (n_tl,t) = must_unify t1 NUM n_tl pos  in *)
+  (*     let (n_tl,_) = gather_type_info_var v2 n_tl (BagT t) pos in *)
+  (*     n_tl *)
+  (* | IP.VarPerm _ -> tlist (\*TO CHECK: no type info*\) *)
+  (* | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) -> *)
+  (*     let (new_et,n_tl) = fresh_tvar tlist in *)
+  (*     let (n_tl,t1) = gather_type_info_exp e2 n_tl (List new_et) in *)
+  (*     let (n_tl,t2) = gather_type_info_exp e1 n_tl new_et in *)
+  (*     let (n_tl,_) = must_unify t1 (List t2) n_tl pos in *)
+  (*     n_tl *)
+  (* | IP.ListPerm (e1, e2, pos) -> *)
+  (*     let (el_t,n_tl) = fresh_tvar tlist in *)
+  (*     let new_et = List el_t in *)
+  (*     let (n_tl,t1) = gather_type_info_exp_x e1 n_tl new_et in  *)
+  (*     let (n_tl,t2) = gather_type_info_exp_x e2 n_tl new_et in *)
+  (*     let (n_tl,_) = must_unify t1 t2 n_tl pos in *)
+  (*     n_tl *)
+  (* | IP.RelForm (r, args, pos) ->  *)
+  (*     (try *)
+  (*       let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in *)
+  (*       let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in *)
+  (*       let args_exp_types = List.map (fun t -> (t)) args_ctypes in *)
+  (*       let (n_tl,n_typ) = gather_type_info_var r tlist (RelT []) pos in (\*Need to consider about pos*\) *)
+  (*       let tmp_list = List.combine args args_exp_types in *)
+  (*       let n_tlist = List.fold_left (fun tl (arg,et) -> fst(gather_type_info_exp arg tl et )) n_tl tmp_list in *)
+  (*       n_tlist              *)
+  (*     with *)
+  (*       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found") *)
+  (*       | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist        *)
+  (*     ) *)
+  (* | IP.XPure({IP.xpure_view_node = vn ; *)
+  (*             IP.xpure_view_name = r; *)
+  (*             IP.xpure_view_arguments = args; *)
+  (*             IP.xpure_view_pos = pos}) -> ( *)
+  (*     try *)
+  (*       let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in *)
+  (*       if (List.length args) == (List.length hpdef.I.hp_typed_inst_vars) then *)
+  (*         let args_ctypes = List.map (fun (t,n, i) -> trans_type prog t pos) hpdef.I.hp_typed_inst_vars in *)
+  (*         let args_exp_types = List.map (fun t -> (t)) args_ctypes in *)
+  (*         let (n_tl,_) = gather_type_info_var r tlist HpT pos in (\*Need to consider about pos*\) *)
+  (*         let tmp_list = List.combine args args_exp_types in *)
+  (*         let n_tlist = List.fold_left (fun tl (arg,et) -> fst(gather_type_info_var arg tl et pos )) n_tl tmp_list in (\*Need to consider about pos*\) *)
+  (*         n_tlist *)
+  (*       else *)
+  (*         Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); } *)
+  (*     with *)
+  (*       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found") *)
+  (*       | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist *)
+  (*   ) *)
+
 and guess_type_of_exp_arith a0 tlist =
   match a0 with
-    | IP.Null _ -> (tlist,UNK)
+    | IP.Null _ ->
+        let (new_et,n_tl) = fresh_tvar tlist in
+        (n_tl, new_et)
+        (* (tlist,UNK) *)
     | IP.Var ((sv, sp), pos) ->
           begin
             try
@@ -854,7 +1006,9 @@ and guess_type_of_exp_arith a0 tlist =
 
 and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_type_list) : (spec_var_type_list*typ) =
   match e0 with
-  | IP.Null _ -> (tlist,null_type)
+  | IP.Null _ ->
+      let (new_et,n_tl) = fresh_tvar tlist in
+      (n_tl, new_et)
   | IP.Var ((sv, sp), pos) -> gather_type_info_var sv tlist k pos
   | _ -> Err.report_error { Err.error_loc = IP.pos_of_exp e0;
                             Err.error_text = "arithmetic is not allowed in pointer term"; }
@@ -994,17 +1148,40 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
 
 (* TODO WN : this is not doing anything *)
 and fill_view_param_types (vdef : I.view_decl) =
-  if (String.length vdef.I.view_data_name) = 0 then
-    report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty")
+  if (String.length vdef.I.view_data_name) = 0 then ()
+    (* report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty") *)
   else ()
 
-(* ident, args, table *)
 and try_unify_view_type_args prog c vdef v deref ies tlist pos =
+  let pr1 = add_str "is_prim_pred" string_of_bool in
+  let pr2 = add_str "name,var" (pr_pair pr_id pr_id) in
+  let pr3 = string_of_tlist in
+  let pr4 = pr_list Iprinter.string_of_formula_exp in
+  Debug.no_4 "try_unify_view_type_args" pr1 pr2 pr3 pr4 pr3
+      (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies tlist pos)
+      vdef.I.view_is_prim (c,v) tlist ies
+(*
+type: I.prog_decl ->
+  c: view_name : Globals.ident ->
+  I.view_decl ->
+  v : var ptr : Globals.ident ->
+  int ->
+  tlist : arg list : Iprinter.P.exp list ->
+  spec_var_type_list -> Globals.loc -> spec_var_type_list
+*)
+(* ident, args, table *)
+and try_unify_view_type_args_x prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if not (dname = "") then (*asankhs: Changed this as I think when danme = "" you need to check for dereference names with __star else revert back ...*)
-     let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
-      n_tl
+    if (String.compare dname "" = 0) then tlist
+    else if vdef.I.view_is_prim then
+      begin
+        match vdef.I.view_type_of_self with
+          | None -> tlist
+          | Some self_typ ->
+                let (n_tl,_) = gather_type_info_var v tlist self_typ pos in
+                n_tl
+      end
     else 
       let expect_dname = (
           let s = ref "" in
@@ -1013,9 +1190,6 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
           done;
           dname ^ !s
       ) in
-     (*      Named expect_dname *)
-  (* ) in *)
-      (* let (n_tl,_) = gather_type_info_var v tlist expect_type pos in *)
       let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
   ) in
@@ -1096,7 +1270,7 @@ and get_spec_var_type_list (v : ident) tlist pos =
                                       Err.error_text = v ^ " is undefined"; }
 
 and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
-  let pr_sv = Cprinter.string_of_spec_var in
+  (* let pr_sv = Cprinter.string_of_spec_var in *)
   Debug.no_2 "get_spec_var_type_list_infer" 
     pr_none (* (pr_list pr_sv) *) pr_none pr_none
     (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
@@ -1163,7 +1337,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_arguments = ies; (* arguments *)
                   IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
-                  IF.h_formula_heap_name = c; (* data/pred name *)
+                  IF.h_formula_heap_name = v_name; (* data/pred name *)
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
@@ -1192,7 +1366,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let n_tl = gather_type_info_ann ann n_tl in
       let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
       (*Deal with the generic pointer! *)
-      if (c = Parser.generic_pointer_type_name) then 
+      if (v_name = Parser.generic_pointer_type_name) then 
         (* Assumptions:
          * (i)  ies to contain a single argument, namely the value of the pointer
          * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
@@ -1252,16 +1426,17 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       else (* End dealing with generic ptr, continue what the original system did *)
         let n_tl = 
         (try
-          let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls c in
+          let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+          (* let _ = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
           (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
             let _ = if not (IF.is_param_ann_list_empty ann_param) then
           (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog c vdef v deref ies n_tl pos 
+            try_unify_view_type_args prog v_name vdef v deref ies n_tl pos 
         with
         | Not_found ->
           (try
-            let n_tl = try_unify_data_type_args prog c v deref ies n_tl pos in 
+            let n_tl = try_unify_data_type_args prog v_name v deref ies n_tl pos in 
             n_tl
           with
           | Not_found ->
@@ -1269,7 +1444,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             Err.report_error
             {
               Err.error_loc = pos;
-              Err.error_text = c ^ " is neither 2 a data nor view name";
+              Err.error_text = v_name ^ " is neither 2 a data nor view name";
             }))
         in n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
@@ -1280,7 +1455,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_thread_label = pi;
                   IF.h_formula_thread_pos = pos } ->
       (* Follow IF.DataNode. May need TOCHECK *)
-      let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+      let dataNode = IF.mkHeapNode (v,p) c [] (* TODO:HO *) 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
       let n_tl = gather_type_info_heap prog dataNode tlist in
       let n_tl2 = gather_type_info_formula prog rsr n_tl false in
       let n_tl3 = gather_type_info_pure prog dl n_tl2 in
@@ -1304,3 +1479,4 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
+    | IF.HVar v -> (v,{sv_info_kind = FORM;id=0})::tlist

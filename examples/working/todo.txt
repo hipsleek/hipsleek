@@ -528,6 +528,334 @@ Total verification time: 206.84 second
 	Time spent in main process: 143.84 second
 	Time spent in child processes: 63.00 second
 	Number of false contexts: 424
+
+sleek
+  lemmas/rlseg.slk({L3#Valid}).
+
+--eps
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
+====================================================================
+# baga-test-eps.slk --eps
+
+Unexpected: 13 14 15 
+
+# baga-test-eps.slk --en-acc-fold/--dis-acc-fold
+
+Unexpected: 3 15 
+
+--dis-acc-fold cause the following issues..
+
+Total number of errors: 3 in files:
+  baga-test-eps.slk(no result (!!!check script options, provers, etc)) 
+  baga-test.slk({E3#Valid}) 
+  imm/imm-hard.slk(no result (!!!check script options, provers, etc)).
+
+# baga-test-eps.slk --inv-baga
+
+Unexpected: 3 10 13 15 
+====================================================================
+# baga-test-eps.slk
+
+in new smt2014 branch, unsat is not being detected
+in two examples below. I think this is due to new unsat
+we currently have? Please make the new unsat into an option
+that is disabled by default, if this is the case.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+Why is UNSAT on lhs not being detected?
+
+//(1) (3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+//(5) --eps
+// (15) Valid
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+expect Valid.
+
+====================================================================
+
+sleek --eps 
+
+#loop 
+
+Checking lemmas/odd-lseg.slk (runs with extra options:  
+   --elp --dis-lem-gen )
+Unexpected result with : baga-test.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
+
+====================================================================
+
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+
+--dis-baga-xpure
+Total number of errors: 7 in files:
+  baga-test.slk({E15#Valid}) 
+  inflem.slk({E2#Valid}) // lemma not proven
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+--imm
+Total number of errors: 7 in files:
+  baga-test.slk({E15#Valid}) 
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E1#Valid},{E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+-- default branch
+Total number of errors: 1 in files:
+  lemmas/rlseg.slk({L3#Valid}).
+
+
+Total number of errors: 14 in files:
+  cll-d.slk({E1#Valid}) sleek3.slk({E1#Valid}) sleek9.slk({E3#Valid},{E4#Valid}) baga-test.slk({E15#Valid},{E3#Valid}) baga-test-2.slk({E3#Valid}) infer/app-inv.slk({E1#Valid}) infer/app-inv2.slk({E1#Valid}) infer/infer5a.slk({E2#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}).
+
+====================================================================
+# hip --eps --baga-xpure
+
+rb.ss (very long)
+Total number of errors: 22 in files:
+.
+Total verification time: 1573.67 second
+	Time spent in main process: 1324.09 second
+	Time spent in child processes: 249.58 second
+	Number of false contexts: 383
+
+Checking ../../modular_examples/dll-modular.ss (runs with extra options: --overeps)
+Checking ../../modular_examples/selection-modular.ss (runs with extra options: --overeps --lda)
+Checking ../../modular_examples/qsort-modular.ss (runs with extra options: --overeps --lda)
+All test results were as expected.
+Total verification time: 1596.18 second
+	Time spent in main process: 1344.02 second
+	Time spent in child processes: 252.16 second
+	Number of false contexts: 413
+
+(FIXED)
+
+error at: cll.ss delete
+error at: heaps.ss deleteoneel
+error at: heaps.ss deletemax
+error at: rb.ss remove_min
+error at: rb.ss del
+
+# hip --eps --dis-baga-xpure
+Total number of errors: 22 in files:
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss f1
+error at: ../../modular_examples/dll-modular.ss f2
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/dll-modular.ss test_fold
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+.
+Total verification time: 237.68 second
+	Time spent in main process: 196.22 second
+	Time spent in child processes: 41.45 second
+	Number of false contexts: 383
+
+(* without Omega simplify *)
+Total verification time: 254.68 second
+	Time spent in main process: 206.29 second
+	Time spent in child processes: 48.39 second
+	Number of false contexts: 413
+
+All test results were as expected.
+Total verification time: 254.77 second
+	Time spent in main process: 206.51 second
+	Time spent in child processes: 48.26 second
+	Number of false contexts: 413
+
+(* with Omega simplify *)
+#hip --eps (default)
+
+All test results were as expected.
+Total verification time: 231.97 second
+	Time spent in main process: 160.11 second
+	Time spent in child processes: 71.86 second
+	Number of false contexts: 424
+====================================================================
+# cvutil.ml
+
+Fix below caused extra failures. Why?
+
+  if !Globals.baga_xpure 
+      &&  not(!Globals.en_slc_ps) 
+  then
+      let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+      let ans = conv_from_ef_disj disj in
+      ans
+
+Total number of errors: 26 in files:
+error at: dll.ss test_del2
+error at: selection.ss delete_min
+error at: selection.ss selection_sort
+error at: avl-orig-2.ss get_max
+error at: avl-orig-2.ss insert
+error at: avl-orig-2.ss rotate_left_child
+error at: avl-orig-2.ss rotate_right_child
+error at: avl-orig3.ss get_max
+error at: avl-orig3.ss insert
+error at: avl-orig3.ss rotate_left_child
+error at: avl-orig3.ss rotate_right_child
+error at: bubble.ss bubble
+error at: bubble.ss bsort
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_5
+error at: rb.ss del_5r
+error at: rb.ss del_2
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: rb.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+====================================================================
+# (default) sleek -flags "print-dis-tidy"
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+Total verification time: 40.41 second
+	Time spent in main process: 30.39 second
+	Time spent in child processes: 10.02 second
+	Number of false contexts: 0
+
+# (default) sleek "--baga-xpure --eps"
+
+Unexpected result with : baga-test-2.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : 
+infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : 
+infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+LOOP at odd-lseg.slk
+
+===================================================================
+sleek (smt2104) --eps
+
+Unexpected result with : infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc))
+
+--inv not working with --eps
+
+ll:={[self,n_33] -> [] -> []: (0=0 && ) ||  
+  exists (flted_7_16,Anon_12,NODq: (self>0 && ll(NODq,flted_7_16)) && )
+};
+bottomupgen([ll], [1], SimHeur);
+ 
+
+--en-inf not working with --eps
+
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+< Entail 14: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_55_110>@ rem br[{1,2}]
+---
+> Entail 14: Fail.(cex)(must) cause: true |-  exists(flted_55_97:flted_55_97=2 & (((x=null & flted_55_97=\inf) | x=1))). LOCS:[55;0] (must-bug)
+55c55
+< Entail 71: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_231_404>@ rem br[{1,2}]
+---
+> Entail 71: Fail.(cex)(must) cause: true |-  exists(flted_231_384:flted_231_384=2 & (((x=null & flted_231_384=\inf) | 
+> x=1))). LOCS:[231;0] (must-bug)
+259c260
+<  <1>emp&(([null=flted][null=p][x!=null][a=m & a<=m1 & m1=\inf & m1=\inf]))&{FLOW,(21,22)=__norm}[]
+---
+>  <1>emp&a=m & m<=m1 & a<=m1 & m1=\inf & m1=\inf & p=flted & flted=null&{FLOW,(21,22)=__norm}[]
+< Entail 77: Fail.(cex)(may) cause: ((x=null & r=v & x=null & m=\inf) | (x=null & r=v & x!=null)) |-  r=min(v,m). LOCS:[252] (may-bug)
+---
+> Entail 77: Valid. 
+263c264
+< Entail 78: Fail.(cex)(may) cause: ((null=null & m=\inf) | null!=null) |-  r=min(v,m). LOCS:[0;255] (may-bug)
+---
+> Entail 78: Valid. 
+
+Unexpected result with : inflem.slk (failed check(s): {E2#Valid}) 
+
+====================================================================
+# sleek3.slk
+
+Entailing lemma lem_12: Valid.
+
+Valid Lemmas : [lem_12:==>] added to lemma store.
+
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Fail.", "Valid.Fail.Valid."],
+
+===================================================================
+Total number of errors: 2 in files:
+  sleek3.slk({L1#Fail}) baga-test-2.slk({E15#Fail}).
+====================================================================
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  sleek9.slk(no result  for {E}) lemmas/app-tail.slk(no result  for {E}) lemmas/ll_tail.slk(no result  for {E}) lemmas/sll_tailL.slk(no result for {L}) lemmas/dseg-new.slk(no result for {L}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+!!! formula1: emp&((tx=self & n=1 & self!=null) | (2<=n & self!=null))&
+{FLOW,(1,24)=__flow}[]
+!!! formula1_under: emp&n=1 & tx>0&{FLOW,(1,24)=__flow}[]
+!!! WARNING logtime exception:10.
+Stop Omega... 30 invocations 
+SAT Count   : 31
+SAT % Hit   : 64.51%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.00274 (seconds)
+
+!!! log(small):(0.013134,54)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(pairwise:53<1:TIMEOUT:OM*EXC*,10.)])
+
+====================================================================
+run-fast-test
+
+sleek
+hip --eps
+sleek --eps
+Total number of errors: 3 in files:
+  threads/thrd1.slk({E10#Valid},{E11#Fail},{E12#Fail},{E13#Fail},{E14#Valid},{E15#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E6#Valid},{E7#Fail},{E8#Valid},{E9#Fail}) conchip/threads.slk({E3#Valid}) conchip/latch.slk({E5#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
 ====================================================================
 ====================================================================
 ====================================================================

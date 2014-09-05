@@ -1,0 +1,27 @@
+/* testcases on Unfold_Reason */
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//1. must failure. cause:or[base case unfold failed,22  n=m & 2<=m |-  3<m (may-bug).]
+/*
+for unfold: use LAND operator instead of LOR
+*/
+checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
+print residue.
+
+expect Fail_Must.
+
+/*
+//2. must failure. cause:22  Anon_33=0 & x=null | x!=null & 1<=Anon_33 |-  x=null (may-bug).
+/*
+for unfold: use LAND operator instead of LOR
+*/
+checkentail x::ll<_> |- x=null.
+print residue.
+
+expect Fail_Must.
+*/

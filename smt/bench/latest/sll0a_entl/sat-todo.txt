@@ -1,0 +1,35 @@
+10x10 files
+
+1. parser:
+2. adding expect (from spen):
+3. sleek run
+  - date:
+  - date:
+
+
+=========================================
+=========================================
+adding expect from slp (Loc)
+
+=========================================
+sleek run, list all inconsistent results (Loc)
+
+./run-all.plx
+
+=========================================
+#13-03
+
+test-date: Jun10
+
+spaguetti-13-e03.tptp.smt2.slk
+Validate 1: Not Expected.
+
+
+Unexpected: 1 
+
+Original
+//3
+checkentail x6::lseg<x8> * x11::lseg<x8> * x3::lseg<x11> * x3::lseg<x5> * x12::lseg<x6> * x1::lseg<x10> * x4::lseg<x6> * x4::lseg<x1> * x4::lseg<x10> * x13::lseg<x12> * x13::lseg<x5> * x10::lseg<x5> & x5 != x6 & x7 != x9 & x3 != x10 & x11 != x12 & x4 != x9 & x1 != x2 |- false.
+
+Valid
+=========================================

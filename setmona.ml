@@ -113,6 +113,8 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | BagMax _ -> failwith ("compute_fo_b_formula: BagMin/BagMax not supported.")
 				  | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.")
 					(* Booleans *)
+                                  | Frm (sv, _) ->
+					ignore (compute_fo_var sv SO var_map) (* make boolean var second order for now *)
 				  | BConst _ -> compute_fo_b_formula rest var_map
 				  | BVar (sv, _) ->
 					  ignore (compute_fo_var sv SO var_map) (* make boolean var second order for now *)
@@ -242,6 +244,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")
+  | Tup2 _ -> failwith ("[setmona.ml]: ERROR in constraints (Tup2 should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Level _ -> failwith "[setmona.ml]: level should not appear here"
   | Add (e1, e2, _)
@@ -350,6 +353,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
   in
   let (pf,il) = bf0 in
 	match pf with
+          | Frm _
 	  | BConst _
 	  | BVar _
 	  | EqMin _

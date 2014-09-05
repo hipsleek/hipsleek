@@ -1,0 +1,24 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred points_to<b:DLL_t,c:DLL_t> ==
+self::DLL_t<next = b,prev = c>.
+
+pred DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+//           self::DLL<p,tl,tl> * tl::DLL_t<next = n,prev = self>.
+//lemma_unsafe self::points_to<b:DLL_t,c:DLL_t> <-> self::DLL_t<c,b>.
+
+checkentail_exact x::DLL_plus<null,c,null>
+         |- (exists y,a: x::points_to<y,null> * y::points_to<a,x> * a::DLL_plus<y,c,null>).
+
+/*
+checkentail_exact x::DLL_plus<null,c,null>
+         |- (exists y,a: x::DLL_t<null,y> * y::DLL_t<x,a> * a::DLL_plus<y,c,null>).
+*/
+expect Valid.

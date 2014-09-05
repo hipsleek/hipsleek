@@ -1,10 +1,12 @@
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
-    
+
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
+
+let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
@@ -37,7 +39,20 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
+
+type lemma_origin =
+  | LEM_USER          (* user-given lemma *)
+  | LEM_GEN           (* automatically generated/inferred lemma *)
+
+type ho_split_kind =
+  | HO_SPLIT
+  | HO_NONE
+
+type ho_flow_kind =
+  | INFLOW
+  | OUTFLOW
+  | NEUTRAL
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -56,7 +71,12 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
 
+let gen_lemma_action_invalid = -1
+
+
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
+
+let eq_str s1 s2 = String.compare s1 s2 = 0
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
@@ -80,6 +100,12 @@ and loc =  {
 and primed =
   | Primed
   | Unprimed
+
+(* indicate whether lemma_split is applicable or not*)
+and split_ann =
+    SPLIT0 (* do not split, exact match - DEFAULT *)
+  | SPLIT1 (* always split *)
+  | SPLIT2 (* both split and match *)
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
@@ -108,6 +134,7 @@ let print_arg_kind i= match i with
 
 (* TODO : move typ here in future *)
 type typ =
+  | FORM
   | UNK 
   | TVar of int
   | AnnT
@@ -115,6 +142,7 @@ type typ =
   | Float
   | Int
   | INFInt
+  | Tup2 of typ * typ
   | NUM
   | Void
   | List of typ
@@ -148,6 +176,7 @@ let rec param_typ_of_FuncT typ =
 
 let rec cmp_typ t1 t2=
   match t1,t2 with
+    | FORM, FORM
     | UNK, UNK
     | AnnT, AnnT
     | Bool, Bool
@@ -171,6 +200,12 @@ let rec cmp_typ t1 t2=
     | Bptyp, Bptyp -> true
     | Pointer t11, Pointer t22 -> cmp_typ t11 t22
     | _ -> false
+
+let is_type_var t =
+  match t with
+  | TVar _ -> true
+  | _ -> false
+
 
 let ann_var_sufix = "_ann"
 
@@ -288,6 +323,15 @@ let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false
 
+(*Remove all blanks in a string*)
+let remove_blanks = Str.global_replace (Str.regexp " ") ""
+
+let string_of_split_ann a =
+  match a with
+    | SPLIT0 -> ""
+    | SPLIT1 -> "@S1"
+    | SPLIT2 -> "@S2"
+
 let string_of_heap_ann a =
   match a with
     | Accs -> "@A"
@@ -309,6 +353,18 @@ let string_of_vp_ann a =
     | VP_Value -> "@value"
     (* | VP_Ref-> "@p_ref" *)
   )
+
+
+let string_of_ho_flow_kind (k:ho_flow_kind) =
+  match k with
+    | INFLOW -> "(-)"
+    | OUTFLOW -> "(+)"
+    | NEUTRAL -> "(.)" (* or "" *)
+
+let string_of_ho_split_kind (k:ho_split_kind) =
+  match k with
+    | HO_SPLIT -> "@Split"
+    | HO_NONE -> ""
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
@@ -376,6 +432,8 @@ let proof_logging_time = ref 0.000
 let sleek_logging_txt = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
+let sleek_gen_vc = ref false
+let sleek_gen_vc_exact = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
@@ -446,6 +504,7 @@ let set_entail_pos p = entail_pos := p
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
+  | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -454,6 +513,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
@@ -464,7 +524,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -489,6 +549,7 @@ let is_HpT x =
 (* aphanumeric name *)
 let rec string_of_typ_alpha = function 
    (* may be based on types used !! *)
+  | FORM          -> "Formula"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -499,6 +560,7 @@ let rec string_of_typ_alpha = function
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
   | Bptyp		  -> "Bptyp"
+  | Tup2 (t1,t2)  -> "tup2_"^(string_of_typ t1)^"_"^(string_of_typ t2)
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -507,7 +569,7 @@ let rec string_of_typ_alpha = function
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | UtT -> "UtT"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -523,14 +585,14 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
-let null_type = Named ""
-;;
+ 
+(* let null_type = Named "" *)
+(* ;;                       *)
 
-let is_null_type t=
-  match t with
-    | Named "" -> true
-    | _ -> false
-
+(* let is_null_type t=      *)
+(*   match t with           *)
+(*     | Named "" -> true   *)
+(*     | _ -> false         *)
 
 let rec s_i_list l c = match l with 
   | [] -> ""
@@ -604,13 +666,22 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
-let null_name = "null"
+(* let null_name = "null" *)
+let null_name = "_null"
+let null_type = Named ""
+
+let is_null name =
+  name == null_name
+
+let is_null_type t  =
+  t == null_type
+
 let inline_field_expand = "_"
 
-let sl_error = "separation entailment"
-let logical_error = "logical bug"
+let sl_error = "separation entailment" (* sl_error is a may error *)
+let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
-let lemma_error = "lemma"
+let lemma_error = "lemma" (* may error *)
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -628,6 +699,12 @@ let preprocess_disjunctive_consequence = ref false
 let this = "this"
 
 let is_self_ident id = self=id
+
+let concrete_name = "concrete"
+let waitS_name = "waitS"
+let set_comp_name = "set_comp"
+let acyclic_name = "acyclic"
+let cyclic_name = "cyclic"
 
 let thread_name = "thread"  (*special thread id*)
 let thread_typ = Int  (*special thread id*)
@@ -695,6 +772,8 @@ let omega_simpl = ref true
 
 let no_simpl = ref false
 
+let no_float_simpl = ref true (*do not simplify fractional constraints to avoid losing precision, such as 1/3 *)
+
 let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
@@ -720,6 +799,9 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 
+(* Enable exhaustive normalization using lemmas *)
+let allow_exhaustive_norm = ref true
+
 let dis_show_diff = ref false
 
 let sap = ref false
@@ -736,6 +818,10 @@ let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
+
+
+let print_original_solver_output = ref false
+let print_original_solver_input = ref false
 
 let cond_path_trace = ref true
 
@@ -761,6 +847,31 @@ let sa_syn = ref true
 let print_relassume  = ref true
 
 let lemma_syn = ref false
+
+let lemma_syn_count = ref 0
+let lemma_tail_rec_count = ref 0
+
+let lemma_syn_bound = 5
+
+let is_lem_syn_in_bound () = true (* !lemma_syn_count < lemma_syn_bound *)
+
+let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
+
+let lemma_gen_safe = ref false       (* generating (and proving) both fold and unfold lemmas for special predicates *)
+
+let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for special predicates *)
+
+let lemma_gen_unsafe = ref false     (* generating (without proving) both fold and unfold lemmas for special predicates *)
+
+let lemma_rev_unsafe = ref false     (* generating (without proving) both rev lemmas for special predicates *)
+
+
+let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
+
+let acc_fold = ref false
+let seg_fold = ref false
+
+let smart_lem_search = ref false
 
 let sa_en_split = ref false
 
@@ -827,8 +938,13 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
+let en_norm_ctx = ref true
+
+let en_trec_lin = ref false
+
 (*context: (1, M_cyclic c) *)
-let lemma_infer = ref false
+let cyc_proof_syn = ref true
+(* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
 
@@ -864,7 +980,19 @@ let enable_constraint_based_filtering = ref false
 
 let elim_exists_ff = ref true
 
-let allow_imm = ref true (*imm will delay checking guard conditions*)
+let allow_frame = ref false
+
+let graph_norm = ref false
+
+let oc_simplify = ref true
+
+let graph_norm_instance_threshold = 1
+
+let graph_norm_decl_threshold = ref 1
+
+let slice_one = ref (0:int)
+
+let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
@@ -977,6 +1105,7 @@ let move_exist_to_LHS = ref false
 
 let max_renaming = ref false
 
+
 let anon_exist = ref true
 
 let simplify_pure = ref false
@@ -1006,6 +1135,8 @@ let check_coercions = ref false
 let dump_lemmas = ref false
 let dump_lemmas_med = ref false
 
+let dump_lem_proc = ref false
+
 let num_self_fold_search = ref 0
 
 let self_fold_search_flag = ref false
@@ -1023,6 +1154,7 @@ let print_mvars = ref false
 let print_type = ref false
 
 let print_en_tidy = ref true
+let print_en_inline = ref true
 
 let print_html = ref false
 
@@ -1045,7 +1177,7 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
-let enable_time_stats = ref false
+let enable_time_stats = ref true
 
 let enable_count_stats = ref true
 
@@ -1070,6 +1202,7 @@ let simplify_error = ref false
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false
+let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1089,7 +1222,7 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5 
+let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1169,10 +1302,34 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+let dis_impl_var = ref false (* Disable implicit vars *)
+let smt_compete_mode = ref false
+let return_must_on_pure_failure = ref false
+let smt_is_must_failure = ref (None: bool option)
+let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
+
+let show_unexpected_ents = ref true
+
+  let print_endline_q s =
+    if !smt_compete_mode then ()
+    else print_endline s
+
+(* generate baga inv from view *)
+let double_check = ref false
+let gen_baga_inv = ref false
+let prove_invalid = ref false
+let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
+let do_under_baga_approx = ref false (* flag to choose under_baga *)
+let baga_xpure = ref true (* change to true later *)
+let baga_imm = ref false                 (* wen on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
+
+(* get counter example *)
+let get_model = ref false
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
@@ -1210,7 +1367,61 @@ let imply_timeout_limit = ref 3.
 
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
-  
+
+let dis_inv_baga () = 
+  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
+  let _ = gen_baga_inv := false in
+  ()
+
+let dis_bk ()=
+  let _ = oc_simplify := true in
+  let _ = sat_timeout_limit:= 2. in
+  let _ = user_sat_timeout := false in
+  let _ = imply_timeout_limit := 3. in
+  (* let _ = en_slc_ps := false in *)
+  ()
+
+let dis_pred_sat () = 
+  if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
+  (* let _ = gen_baga_inv := false in *)
+  let _ = prove_invalid := false in
+  (*baga bk*)
+  let _ = dis_bk () in
+  ()
+
+let en_bk () =
+  let _ = oc_simplify := false in
+  let _ = sat_timeout_limit:= 1. in
+  let _ = user_sat_timeout := true in
+  let _ = imply_timeout_limit := 1. in
+  (* let _ = en_slc_ps := true in *)
+  ()
+
+let en_pred_sat () =
+  (* print_endline_q "Enabling baga inv gen .."; *)
+  (* let _ = gen_baga_inv := true in *)
+  let _ = prove_invalid := true in
+  (*baga bk*)
+  let _ = en_bk ()  in
+  ()
+
+(* let _ = if !smt_compete_mode then *)
+(*   begin *)
+(*     (\* Debug.trace_on := false; *\) *)
+(*     (\* Debug.devel_debug_on:= false; *\) *)
+(*     silence_output:=true; *)
+(*     enable_count_stats:=false; *)
+(*     enable_time_stats:=false; *)
+(*     print_core:=false; *)
+(*     print_core_all:=false; *)
+(*     (\* gen_baga_inv := true; *\) *)
+(*     en_pred_sat (); *)
+(*     (\* do_infer_inv := true; *\) *)
+(*     lemma_gen_unsafe := true; *)
+(*     graph_norm := true; *)
+(*     smt_compete_mode:=true *)
+(*   end *)
+
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
 (* let report_error2 (pos : loc) (msg : string) = *)
@@ -1232,6 +1443,10 @@ let sleek_timeout_limit = ref 0.
 (*   failwith "Error detected" *)
 
 let branch_point_id = ref 0
+
+(* generate smt from slk *)
+let gen_smt = ref false
+
 
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 
@@ -1292,9 +1507,11 @@ let fresh_int2 () =
 let reset_int2 () =
   seq_number2 := 0
 
-let fresh_int () =
-  seq_number := !seq_number + 1;
-  !seq_number
+(* let fresh_int () = *)
+(*   seq_number := !seq_number + 1; *)
+(*   !seq_number *)
+
+let string_compare s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
@@ -1320,7 +1537,10 @@ let fresh_name () =
 
 let fresh_label pos = 
  (* let str = string_of_int (fresh_int ()) in*)
-    "f_l_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
+    let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+                 string_of_int pos.start_pos.Lexing.pos_lnum
+               else "0" in
+    "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
 	
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
@@ -1401,12 +1621,12 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
- 
+
 let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option) 
+  (fn : 'a -> (string * ('a list)) option)
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with
@@ -1578,6 +1798,10 @@ let gen_field_ann t=
     | Named _ -> fresh_any_name field_rec_ann
     | _ -> fresh_any_name field_val_ann
 
+let un_option opt default_val = match opt with
+  | Some v -> v
+  | None -> default_val
+
 let rec gcd (a: int) (b: int): int = 
   if b == 0 then a
   else gcd b (a mod b)
@@ -1599,3 +1823,20 @@ let lcm_l (l: int list): int =
   | [] -> 1
   | x::[] -> x
   | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
+let smt_return_must_on_error ()=
+  let _ = if !return_must_on_pure_failure then
+    (* let _ = smt_is_must_failure := (Some true) in *) ()
+  else ()
+  in ()
+
+let string_of_lemma_kind (l: lemma_kind) =
+    match l with
+      | LEM           -> "LEM"
+      | LEM_PROP      -> "LEM_PROP"
+      | LEM_SPLIT      -> "LEM_SPLIT"
+      | LEM_TEST      -> "LEM_TEST"
+      | LEM_TEST_NEW  -> "LEM_TEST_NEW"
+      | LEM_UNSAFE    -> "LEM_UNSAFE"
+      | LEM_SAFE      -> "LEM_SAFE"
+      | LEM_INFER     -> "LEM_INFER"
+      | LEM_INFER_PRED   -> "LEM_INFER_PRED"

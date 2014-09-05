@@ -1,0 +1,13 @@
+
+data pto{
+     pto next;
+     pto prev;
+}.
+
+//can not name ex???
+pred dll<e, pr, hd> == self=pr & hd =e
+  or (exists u: self::pto<u,pr> * u::dll<e,self,hd>).
+
+//exp sat
+checkentail x_emp::pto<w_emp,null> * w_emp::dll<u_emp,x_emp,z_emp> * y_emp::pto<z_emp,u_emp> |-
+            x_emp::dll<y_emp,null,z_emp>.

@@ -1278,7 +1278,35 @@ Total number of errors: 1 in files:
 Leads to unsoundness of sh-rev3a.slk
 
 ===================================================================
+checkentail
+ self=nx & bk=pr |- self::dll<bk,b,a>.
+print residue.
+/*
+# fold-dll-1.slk
+
+why fail?
+                          es_must_error: Some(Cannot infer heap and pure 2)
+                          es_trace:  COND ==>  UnmatchedRHSData ==> 
+                          es_infer_vars_rel: []] <1>emp&self=nx & bk=pr&{FLOW,(21,22)=__norm}[]
 ===================================================================
+# bug1.slk implict-var need to be disabled..
+
+To add below,and to make disable the default (for smt-compete esp)
+--dis-implicit-var
+--en-implicit-var
+
+checkentail_exact x1::ls<x2> * x2::node<next = x1> 
+ |- x3::ls<x2> * x2::node<next = x3> .
+print residue.
+
+/*
+
+
+run_infer:
+ x1::ls<x2> * x2::node<x1>&{FLOW,(21,22)=__norm}[] [] |-  EBase exists (Expl)[](Impl)[x3](ex)[](exists x2_28: x3::ls<x2_28> * 
+       x2::node<x3>&x2_28=x2&{FLOW,(21,22)=__norm})[]
+
+*/
 ===================================================================
 ===================================================================
 ===================================================================

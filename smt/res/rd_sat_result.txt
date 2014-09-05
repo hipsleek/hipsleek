@@ -1,0 +1,87 @@
+abduced00.defs.smt2.slk
+abduced01.defs.smt2.slk
+abduced02.defs.smt2.slk
+SAT
+abduced03.defs.smt2.slk
+abduced04.defs.smt2.slk
+SAT
+abduced05.defs.smt2.slk
+abduced06.defs.smt2.slk
+abduced07.defs.smt2.slk
+abduced08.defs.smt2.slk
+abduced09.defs.smt2.slk
+abduced10.defs.smt2.slk
+abduced11.defs.smt2.slk
+abduced12.defs.smt2.slk
+abduced13.defs.smt2.slk
+abduced14.defs.smt2.slk
+abduced15.defs.smt2.slk
+abduced16.defs.smt2.slk
+abduced17.defs.smt2.slk
+abduced18.defs.smt2.slk
+abduced19.defs.smt2.slk
+inconsistent-ls-of-ls.defs.smt2.slk
+WARNING : the view body for P contains unsat branch(es) :
+    (* lbl: *){2}->(exists self_18: self::Q<self_18>&null!=self & self_18=self&
+{FLOW,(1,24)=__flow})[]
+SAT
+succ-circuit01.defs.smt2.slk
+SAT
+succ-circuit02.defs.smt2.slk
+SAT
+succ-circuit03.defs.smt2.slk
+SAT
+succ-circuit04.defs.smt2.slk
+WARNING : the view body for Q contains unsat branch(es) :
+    (* lbl: *){14}->(exists self_28,y2_29,y3_30,y4_31,x2_32,x3_33,x4_34,x1_24,
+x2_25,x3_26,
+x4_27: x1_24::succ4circuit<x2_25,x3_26,x4_27,self_28,y2_29,y3_30,y4_31> * 
+x1_24::Q<x2_32,x3_33,x4_34>&self_28=self & y2_29=y2 & y3_30=y3 & y4_31=y4 & 
+x2_32=x2_25 & x3_33=x3_26 & x4_34=x4_27&{FLOW,(1,24)=__flow})[]
+WARNING : the view body for P contains unsat branch(es) :
+    (* lbl: *){15}->(exists x2_35,x3_36,x4_37: self::one<> * x2::one<> * 
+x3::one<> * x4::one<> * self::Q<x2_35,x3_36,x4_37>&x2_35=x2 & x3_36=x3 & 
+x4_37=x4&{FLOW,(1,24)=__flow})[]
+UNSAT
+succ-circuit05.defs.smt2.slk
+succ-circuit06.defs.smt2.slk
+succ-circuit07.defs.smt2.slk
+succ-circuit08.defs.smt2.slk
+succ-circuit09.defs.smt2.slk
+succ-circuit10.defs.smt2.slk
+succ-circuit11.defs.smt2.slk
+succ-circuit12.defs.smt2.slk
+succ-circuit13.defs.smt2.slk
+succ-circuit14.defs.smt2.slk
+succ-circuit15.defs.smt2.slk
+succ-circuit16.defs.smt2.slk
+succ-circuit17.defs.smt2.slk
+succ-circuit18.defs.smt2.slk
+succ-circuit19.defs.smt2.slk
+succ-circuit20.defs.smt2.slk
+succ-rec01.defs.smt2.slk
+SAT
+succ-rec02.defs.smt2.slk
+SAT
+succ-rec03.defs.smt2.slk
+SAT
+succ-rec04.defs.smt2.slk
+SAT
+succ-rec05.defs.smt2.slk
+SAT
+succ-rec06.defs.smt2.slk
+SAT
+succ-rec07.defs.smt2.slk
+succ-rec08.defs.smt2.slk
+succ-rec09.defs.smt2.slk
+succ-rec10.defs.smt2.slk
+succ-rec11.defs.smt2.slk
+succ-rec12.defs.smt2.slk
+succ-rec13.defs.smt2.slk
+succ-rec14.defs.smt2.slk
+succ-rec15.defs.smt2.slk
+succ-rec16.defs.smt2.slk
+succ-rec17.defs.smt2.slk
+succ-rec18.defs.smt2.slk
+succ-rec19.defs.smt2.slk
+succ-rec20.defs.smt2.slk

@@ -1,0 +1,30 @@
+/*
+ Examples of Threads as Resource and Fractional Heaps
+ Compile with "--en-para --en-thrd-resource -tp redlog"
+*/
+
+data cell{ int val;}.
+
+//permission split
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0.
+
+//permission combine
+//lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v>.
+
+
+//(1)
+checkentail x::cell<2> * y::cell<1> |- x::cell(0.5)<2> * y::cell(0.5)<1>.
+//print residue.
+//VALID
+
+
+//(2)
+checkentail t::thrd<# x::cell<2> * y::cell<1> & true #> |- t::thrd<# x::cell<2> & true #> * t::thrd<# y::cell<1> & true #>.
+//print residue
+
+
+//(3)
+checkentail t::thrd<# x::cell<2> * y::cell<1> & true #> |- t::thrd<# x::cell(0.5)<2> * y::cell(0.5)<1> & true #> * t::thrd<# x::cell(0.5)<2> * y::cell(0.5)<1> & true #>.
+//print residue.
+//VALID
+

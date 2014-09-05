@@ -1,0 +1,98 @@
+bolo: 10x10 (added expect)
+clone: 10x10
+ls-vc: 5 files
+smallfoot: 75 files
+spaga: 10 x10 (duplicates with sat)
+
+
+1. parser:
+2. adding expect (from spen):
+3. sleek run
+  - date:
+  - date:
+
+
+=========================================
+adding expect from slp (Loc)
+
+=========================================
+sleek run, list all inconsistent results (Loc)
+
+./run-all.plx
+
+==================================================================================
+bolognesa-15-e02.tptp.smt2.slk.
+
+
+checkentail_exact x11::ls<x14> * x4::Sll_t<next = x9> * x2::Sll_t<next = x5> * x3::Sll_t<next = x12> * x14::ls<x11> * x10::ls<x13> * x6::Sll_t<next = x2> * x15::Sll_t<next = x6> * x7::Sll_t<next = x5> * x1::Sll_t<next = x13> * x5::Sll_t<next = x1> * x13::Sll_t<next = x12> * x8::Sll_t<next = x12> * x12::ls<x5> * x9::ls<x8> * emp & null = null
+         |- x15::ls<x6> * x10::ls<x13> * x6::ls<x2> * x3::ls<x12> * x4::ls<x9> * x2::ls<x5> * x9::ls<x8> * x13::ls<x12> * x7::ls<x5> * x8::ls<x13> * x14::ls<x11> * x11::ls<x14> * emp.
+
+expected Valid.
+
+       
+==================================================================================
+#bolognesa-16-e02.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+//16-02 smtcomp
+
+checkentail_exact x3::Sll_t<next = x4> * x8::Sll_t<next = x14> * x2::Sll_t<next = x11> * x5::ls<x15> * x14::Sll_t<next = x1> * x12::Sll_t<next = x11> * x13::Sll_t<next = x1> * x9::Sll_t<next = x11> * x16::Sll_t<next = x14> * x1::Sll_t<next = x2> * x4::ls<x15> * x7::Sll_t<next = x11> * x10::Sll_t<next = x6> * x6::ls<x5> * x11::Sll_t<next = x1> * x15::Sll_t<next = x6> * emp & null = null
+         |- x13::ls<x1> * x12::ls<x11> * x8::ls<x14> * x16::ls<x14> * x3::ls<x15> * x2::ls<x11> * x9::ls<x11> * x14::ls<x1> * x15::ls<x6> * x10::ls<x15> * x7::ls<x2> * emp.
+
+
+expect Fail.
+==================================================================================
+#bolognesa-16-e04.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+==================================================================================
+# bolognesa-17-e02.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+==================================================================================
+#bolognesa-18-e02.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+
+==================================================================================
+#bolognesa-18-e03.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+==================================================================================
+#bolognesa-18-e08.tptp.smt2.slk:
+
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+
+==================================================================================
+#bolognesa-20-e03.tptp.smt2.slk:
+
+test-date: Jun10: open, fixed
+
+Expected FAIL
+
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
+==================================================================================
