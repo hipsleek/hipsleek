@@ -110,7 +110,7 @@ let add_call_trel_stk prog ctx lhs rhs =
   let params = params_of_term_ann prog rhs in
   let trel = {
     trel_id = tnt_fresh_int ();
-    trel_type = Non;
+    trel_type = Sgl;
     call_ctx = MCP.pure_of_mix ctx;
     termu_fname = CP.fn_of_term_ann lhs;
     termu_lhs = lhs;
@@ -170,8 +170,18 @@ let inst_call_trel_base rel fn_cond_w_ids =
   let inst_rels = List.concat (List.map (fun ilhs -> 
     inst_rhs_trel_base ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
-
+  
+(* List of (nondet) call assumptions *)
+(* which have the same context       *)
 let add_type_of_turels_cond turels =
+  let _ = List.iter (fun turel ->
+    let path_trace = path_of_formula turel.call_ctx in 
+    print_endline ("path_trace: " ^ (pr_list (pr_pair !CP.print_sv string_of_bool) path_trace));
+    print_endline ((print_call_trel turel) ^ "\n")) turels in
+    
+  let path_traces = List.map (fun turel -> (turel.trel_id, path_of_formula turel.call_ctx)) turels in
+  let and_or_tree = and_or_tree_of_path_traces (List.map snd path_traces) in
+  let _ = print_endline ("and_or_tree: " ^ (print_and_or_tree and_or_tree)) in
   []
 
 let add_type_of_turels_proc turels rec_conds =
@@ -289,7 +299,8 @@ let rec solve_turel_graph iter_num prog tg =
     | _ -> finalize_turel_graph prog tg
   else finalize_turel_graph prog tg
 
-let solve_turel_init prog turels fn_cond_w_ids = 
+let solve_trel_init prog trrels turels =
+  let fn_cond_w_ids = case_split_init trrels in 
   (* Update TNT case spec with base condition *)
   let _ = List.iter (add_case_spec_of_trrel_sol_proc prog)
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
@@ -297,8 +308,6 @@ let solve_turel_init prog turels fn_cond_w_ids =
   (*   print_endline ("Initial Case Spec:");  *)
   (*   pr_proc_case_specs ()                  *)
   (* in                                       *)
-  
-  let _ = add_type_of_turels turels fn_cond_w_ids in
   
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in
@@ -336,8 +345,7 @@ let solve should_infer prog =
     let _ = List.iter (fun trrel -> print_endline ((print_ret_trel trrel) ^ "\n")) trrels in
     let _ = List.iter (fun turel -> print_endline ((print_call_trel turel) ^ "\n")) turels in
   
-    let fn_cond_w_ids = case_split_init trrels in
-    let _ = solve_turel_init prog turels fn_cond_w_ids in
+    let _ = solve_trel_init prog trrels turels in
   
     let _ = print_relassume := pr_templassume in
     ()

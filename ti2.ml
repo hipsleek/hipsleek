@@ -41,21 +41,6 @@ let mkNot f = CP.mkNot f None no_pos
 let mkGt e1 e2 = CP.mkPure (CP.mkGt e1 e2 no_pos)
 let mkGte e1 e2 = CP.mkPure (CP.mkGte e1 e2 no_pos)
 
-let rec partition_by_key key_of key_eq ls = 
-  match ls with
-  | [] -> []
-  | e::es ->
-    let ke = key_of e in 
-    let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
-    (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
-    
-let rec partition_eq eq ls = 
-  match ls with
-  | [] -> []
-  | e::es -> 
-    let eq_es, neq_es = List.partition (eq e) es in
-    (e::eq_es)::(partition_eq eq neq_es)
-    
 (* Partition a list of conditions into disjoint conditions *)
 let rec partition_cond_list cond_list = 
   match cond_list with
