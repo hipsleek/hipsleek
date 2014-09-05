@@ -33,16 +33,9 @@ type ret_trel = {
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
   
-(* Type for multiple recursive calls in the same context *)
-type call_trel_type =
-  | Sgl
-  | Seq
-  | Par  
-  
 (* Temporal Relation at Call *)
 type call_trel = {
   trel_id: int;
-  trel_type: call_trel_type;
   call_ctx: CP.formula;
   termu_fname: ident; (* Collect from LHS *)
   termu_lhs: CP.term_ann;
@@ -62,7 +55,6 @@ let eq_trel r1 r2 = r1.trel_id == r2.trel_id
 
 let dummy_trel = {
   trel_id = -1;
-  trel_type = Sgl;
   call_ctx = CP.mkTrue no_pos;
   termu_fname = "";
   termu_lhs = MayLoop;
@@ -81,6 +73,14 @@ type tntrel =
 let string_of_tntrel = function
   | Ret rrel -> "@Return: " ^ (print_ret_trel rrel)
   | Call crel -> "@Call: " ^ (print_call_trel crel)
+
+let subst_cond_with_ann params ann cond =
+  match ann with
+  | CP.TermU uid
+  | CP.TermR uid ->
+    let args = uid.CP.tu_args in
+    CP.subst_term_avoid_capture (List.combine params args) cond
+  | _ -> cond
 
 (* TNT Case Spec *)
 type tnt_case_spec = 

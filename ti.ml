@@ -110,7 +110,6 @@ let add_call_trel_stk prog ctx lhs rhs =
   let params = params_of_term_ann prog rhs in
   let trel = {
     trel_id = tnt_fresh_int ();
-    trel_type = Sgl;
     call_ctx = MCP.pure_of_mix ctx;
     termu_fname = CP.fn_of_term_ann lhs;
     termu_lhs = lhs;
@@ -171,68 +170,13 @@ let inst_call_trel_base rel fn_cond_w_ids =
     inst_rhs_trel_base ilhs rel fn_cond_w_ids) inst_lhs) in
   inst_rels
   
-(* List of (nondet) call assumptions *)
-(* which have the same context       *)
-let add_type_of_turels_cond turels =
-  let _ = List.iter (fun turel ->
-    let path_trace = path_of_formula turel.call_ctx in 
-    print_endline ("path_trace: " ^ (pr_list (pr_pair !CP.print_sv string_of_bool) path_trace));
-    print_endline ((print_call_trel turel) ^ "\n")) turels in
-    
-  let path_traces = List.map (fun turel -> (turel.trel_id, path_of_formula turel.call_ctx)) turels in
-  let and_or_tree = and_or_tree_of_path_traces (List.map snd path_traces) in
-  let _ = print_endline ("and_or_tree: " ^ (print_and_or_tree and_or_tree)) in
-  []
-
-let add_type_of_turels_proc turels rec_conds =
-  List.fold_left (fun ar cond ->
-    let same_cond_turels = List.filter (fun tr -> 
-      imply tr.call_ctx cond) turels in
-    let same_cond_turels_w_typ = add_type_of_turels_cond same_cond_turels in
-    ar @ same_cond_turels_w_typ) [] rec_conds
-      
-let add_type_of_turels turels fn_cond_w_ids =
-  List.fold_left (fun ar ((fn, _), conds) ->
-    let same_fn_turels = List.filter (fun tr -> 
-      String.compare tr.termu_fname fn == 0) turels in
-    let rec_conds = get_rec_conds (List.map (fun (_, c) -> c) conds) in
-    let same_fn_turels_w_typ = add_type_of_turels_proc same_fn_turels rec_conds in
-    ar @ same_fn_turels_w_typ) [] fn_cond_w_ids
-
 (* End of Temporal Relation at Call *)
 
 (******************)
 (* Main algorithm *)
 (******************)
-(* Exceptions to guide the main algorithm *)
-exception Restart_with_Cond of TG.t
-exception Should_Finalize
 
-let solve_turel_one_scc prog tg scc =
-  let update_ann scc f ann = (* Only update nodes in scc *)
-    let ann_id = CP.id_of_term_ann ann in
-    if Gen.BList.mem_eq (==) ann_id scc 
-    then f ann
-    else ann
-  in
-  
-  let subst sol ann =
-    let fn = CP.fn_of_term_ann ann in
-    let cond = CP.cond_of_term_ann ann in
-    (* Add call number into the result *)
-    let call_num = CP.call_num_of_term_ann ann in
-    let sol = match (fst sol) with
-      | CP.Term -> (fst sol, (CP.mkIConst call_num no_pos)::(snd sol))
-      | _ -> sol 
-    in
-    (* Update TNT case spec with solution *)
-    let _ = add_sol_case_spec_proc fn cond sol in
-    (* let _ = print_endline ("Case spec @ scc " ^ (print_scc_num scc)) in *)
-    (* let _ = pr_proc_case_specs () in                                    *)
-    
-    subst_sol_term_ann sol ann
-  in 
-  
+let solve_turel_one_scc prog trrels tg scc =
   let outside_scc_succ = outside_succ_scc tg scc in
   
   let update = 
@@ -250,25 +194,7 @@ let solve_turel_one_scc prog tg scc =
     else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term *)
-      else (* Term with a ranking function for each scc's node *)
-        let res = infer_ranking_function_scc prog tg scc in
-        match res with
-        | Some rank_of_ann -> 
-          let scc_num = CP.mkIConst (scc_fresh_int ()) no_pos in
-          update_ann scc (fun ann -> 
-            let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
-            subst res ann)
-        | None ->
-          let abd_conds = infer_abductive_icond prog tg scc in 
-          if abd_conds = [] then raise Should_Finalize
-          else if List.exists (fun (_, conds) -> 
-            List.exists CP.isConstTrue conds) abd_conds then
-            (* Loop || _ *)
-            update_ann scc (subst (CP.MayLoop, []))
-          else
-            let tg = update_graph_with_icond tg scc abd_conds in
-            (* let _ = print_endline (print_graph_by_rel tg) in *)
-            raise (Restart_with_Cond tg)
+      else aux_solve_turel_one_scc prog trrels tg scc
   
     else (* Error: One of scc's succ is Unknown *)
       report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown."
@@ -281,7 +207,7 @@ let finalize_turel_graph prog tg =
   (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   
-let rec solve_turel_graph iter_num prog tg = 
+let rec solve_turel_graph iter_num prog trrels tg = 
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
@@ -290,12 +216,12 @@ let rec solve_turel_graph iter_num prog tg =
       (*   print_endline (print_graph_by_rel tg)                       *)
       (* in                                                            *)
       (* let _ = print_endline (print_scc_list_num scc_list) in *)
-      let tg = List.fold_left (fun tg -> solve_turel_one_scc prog tg) tg scc_list in
+      let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       finalize_turel_graph prog tg
     with 
     | Restart_with_Cond tg -> 
       (* TODO: Duplicate on nodes that have been analyzed *)
-      solve_turel_graph (iter_num + 1) prog tg
+      solve_turel_graph (iter_num + 1) prog trrels tg
     | _ -> finalize_turel_graph prog tg
   else finalize_turel_graph prog tg
 
@@ -315,7 +241,7 @@ let solve_trel_init prog trrels turels =
   (*   (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in *)
     
   let tg = graph_of_trels irels in
-  solve_turel_graph 0 prog tg
+  solve_turel_graph 0 prog trrels tg
 
 let finalize () =
   reset_seq_num ();
