@@ -1,0 +1,5 @@
+template int _abd(int x, int y).
+
+infer[abd] x >= 0 & x >= 0 & x' = x + y & _abd(x, y) >= 0 |- x' >= 0.
+
+template_solve.

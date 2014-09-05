@@ -274,6 +274,9 @@ and afv (af : exp) : (ident * primed) list = match af with
       let ifv = List.flatten (List.map afv i) in
       Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
   | BExpr f1 -> fv f1
+  | Template t -> 
+      (List.concat (List.map afv t.templ_args)) 
+      (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -347,6 +350,26 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkTypeCast t a pos = TypeCast (t, a, pos)
+
+and mkTemplate id args pos = Template {
+  templ_id = id;
+  templ_args = args;
+  templ_unks = [];
+  templ_body = None; (* Need to fill in trans_exp *)
+  templ_pos = pos;
+}
+
+and mkUtAnn nid sid is_pre fname cond args pos = 
+  let uid = {
+    tu_id = nid;
+    tu_sid = sid;
+    tu_fname = fname;
+    tu_args = args;
+    tu_cond = cond;
+    tu_pos = pos;
+  } in
+  if is_pre then TermU uid
+  else TermR uid 
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
@@ -602,6 +625,7 @@ and pos_of_exp (e : exp) = match e with
   | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   | BExpr f1 -> pos_of_formula f1
+  | Template t -> t.templ_pos
 
 
 and fresh_old_name (s: string):string =
@@ -824,6 +848,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
   | BExpr f1 -> BExpr (apply_one p f1)
+  | Template t -> Template { t with templ_args = e_apply_one_list p t.templ_args; }
 
 and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
@@ -1029,6 +1054,8 @@ and find_lexp_exp (e: exp) ls =
   | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | BExpr f1 -> find_lexp_formula (f1: formula) ls
+  | Template { templ_args = t_args; } -> 
+      List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] t_args
 
 and list_of_conjs (f: formula) : formula list =
   match f with
@@ -1094,7 +1121,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
-  | ArrayAt _ -> true 
+  | ArrayAt _ -> true
+  | Template _ -> false
   | InfConst _ -> Error.report_no_pattern ()
   | BExpr f1 ->  f_contain_vars_exp f1
 
@@ -1330,6 +1358,15 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
       (ArrayAt (a, ne1, l), r)
+  | Template t ->
+      let ne1, np1 = List.split (List.map float_out_exp_min_max t.templ_args) in
+      let l = t.templ_pos in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (Template { t with templ_args = ne1; }, r)
   | BExpr f1 -> (e, None) (* BExpr (float_out_p_formula_min_max (pf: p_formula) []) *)
 
 (* and float_out_b_formula_min_max (b: b_formula): b_formula = *)
@@ -1798,6 +1835,9 @@ let rec typ_of_exp (e: exp) : typ =
       let ty = List.fold_left merge_types UNK ty_list in
       let len = List.length ex_list in
       Globals.Array (ty, len)
+  | Template t -> 
+      let ty_list = List.map typ_of_exp t.templ_args in 
+      List.fold_left merge_types UNK ty_list
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
   | BExpr _ -> Bool
@@ -1917,6 +1957,12 @@ let mkAndList_opt f =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   let pr2 = !print_formula in
   Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 
+  
+let args_of_term_ann ann =
+  match ann with
+  | TermU uid -> uid.tu_args
+  | TermR uid -> uid.tu_args
+  | _ -> []
 
 
 (* (* Expression *)                                                                                                                                         *)
@@ -2017,6 +2063,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
       | InfConst _ -> Error.report_no_pattern ()
       | BExpr _ -> e
+      | Template _ -> e
     )
 
 and transform_exp f (e : exp) : exp =

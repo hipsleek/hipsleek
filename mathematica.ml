@@ -329,6 +329,7 @@ let rec math_of_exp e0 : string=
   | CP.Func _ -> failwith ("mathematica.math_of_exp: cannot handle func operator")
   | CP.Level _  -> failwith ("mathematica.math_of_exp: cannot handle Level operator")
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
+  | CP.Template t -> math_of_exp (CP.exp_of_template t)
 
 let rec math_of_b_formula b : string =
   let (pf,_) = b in

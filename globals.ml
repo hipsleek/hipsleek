@@ -111,16 +111,6 @@ and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
-and term_ann = 
-  | Term    (* definitely terminates *)
-  | Loop    (* definitely loops *)
-  | MayLoop (* don't know *)
-  | Fail of term_fail    (* failed because of invalid trans *)
-
-and term_fail =
-  | TermErr_May
-  | TermErr_Must
-
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -164,9 +154,25 @@ type typ =
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
+  | FuncT of typ * typ
+  | UtT (* unknown temporal type *)
   | Bptyp
-  (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
+
+let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
+  match param_typ with
+  | [] -> FuncT (Void, ret_typ)
+  | _ -> List.fold_right (fun p_typ r_typ -> FuncT (p_typ, r_typ)) param_typ ret_typ
+
+let rec ret_typ_of_FuncT typ = 
+  match typ with
+  | FuncT (_, r_typ) -> ret_typ_of_FuncT r_typ
+  | _ -> typ
+
+let rec param_typ_of_FuncT typ = 
+  match typ with
+  | FuncT (p_typ, r_typ) -> p_typ::(param_typ_of_FuncT r_typ) 
+  | _ -> []
 
 let rec cmp_typ t1 t2=
   match t1,t2 with
@@ -348,15 +354,6 @@ let string_of_vp_ann a =
     (* | VP_Ref-> "@p_ref" *)
   )
 
-let string_of_term_ann a =
-  match a with
-    | Term -> "Term"
-    | Loop -> "Loop"
-    | MayLoop -> "MayLoop"
-    | Fail f -> match f with
-        | TermErr_May -> "TermErr_May"
-        | TermErr_Must -> "TermErr_Must"
-
 
 let string_of_ho_flow_kind (k:ho_flow_kind) =
   match k with
@@ -524,6 +521,8 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
+  | UtT        -> "UtT"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -536,6 +535,11 @@ let is_RelT x =
     | RelT _ -> true
     | _ -> false
 ;;
+
+let is_FuncT = function
+  | FuncT _ -> true
+  | _ -> false
+
 let is_HpT x =
   match x with
     | HpT -> true
@@ -562,6 +566,8 @@ let rec string_of_typ_alpha = function
   | List t        -> "list_"^(string_of_typ t)
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
+  | UtT -> "UtT"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -635,7 +641,7 @@ let is_dont_care_var id =
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
-let nonef2 v1 v2 = None
+let nonef2 e f = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v
@@ -1042,6 +1048,10 @@ let allow_lsmu_infer = ref false
 
 let allow_norm = ref true
 
+let dis_norm = ref false
+
+let dis_ln_z3 = ref false
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1249,11 +1259,24 @@ let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
 let term_reverify = ref false
+let term_bnd_pre_flag = ref true
 let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let phase_infer_ind = ref false
+
+(* TNT Inference *)
+type infer_type = 
+  | INF_TERM (* For infer@term *)
+
+let tnt_thres = ref 5
+
+(* Template: Option for Template Inference *)
+let templ_term_inf = ref false
+let gen_templ_slk = ref false
+let templ_piecewise = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false
@@ -1779,6 +1802,27 @@ let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
 
+let rec gcd (a: int) (b: int): int = 
+  if b == 0 then a
+  else gcd b (a mod b)
+
+let gcd_l (l: int list): int =
+  let l = List.filter (fun x -> x != 0) l in
+  match l with
+  | [] -> 1
+  | x::[] -> 1
+  | x::xs -> List.fold_left (fun a x -> gcd a x) x xs
+
+let abs (x: int) = if x < 0 then -x else x
+
+let lcm (a: int) (b: int): int = (a * b) / (gcd a b)
+
+let lcm_l (l: int list): int =
+  if List.exists (fun x -> x == 0) l then 0
+  else match l with
+  | [] -> 1
+  | x::[] -> x
+  | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
 let smt_return_must_on_error ()=
   let _ = if !return_must_on_pure_failure then
     (* let _ = smt_is_must_failure := (Some true) in *) ()

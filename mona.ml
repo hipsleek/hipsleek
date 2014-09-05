@@ -52,6 +52,8 @@ let rec mona_of_typ t = match t with
   | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT _        -> "RelT"
+  | FuncT _       -> "FuncT"
+  | UtT           -> "UtT"
   | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"

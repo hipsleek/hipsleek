@@ -15,14 +15,14 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 module TP = Tpdispatcher
-module I = Iast
-module C = Cast
+(* module I = Iast *)
+(* module C = Cast *)
 (* module AS = Astsimp *)
 (* module Inf = Infer *)
 (* module SO = Solver *)
 
 let get_inv_x prog sel_vars vnode=
-  let inv = C.look_up_view_inv prog.C.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
+  let inv = look_up_view_inv prog.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
     vnode.CF.h_formula_view_name Fixcalc.compute_inv in
   CP.filter_var inv sel_vars
 
@@ -254,7 +254,9 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
 	(CF.EAssume{b with
 	    CF.formula_assume_simpl = new_f;
 	    CF.formula_assume_struc = new_f_struc;}, pres)
-  | CF.EInfer b -> report_error no_pos "Do not expect EInfer at this level"
+  | CF.EInfer b -> (* report_error no_pos "Do not expect EInfer at this level" *)
+      let cont, pres = simplify_relation b.CF.formula_inf_continuation subst_fml pre_vars post_vars prog inf_post evars lst_assume in 
+      CF.EInfer { b with CF.formula_inf_continuation = cont; }, pres
   | CF.EList b ->
 	let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
 	(CF.EList new_sp, List.concat pres)

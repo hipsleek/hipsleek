@@ -1876,7 +1876,10 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
     | HTrue
     | HFalse 
     | HEmp | HVar _ -> (hp, old_mem, false)
-    | ThreadNode _ -> (hp, old_mem, false)  (*TOCHECK*)
+    | ThreadNode d ->
+          let new_rsr = prune_preds prog true d.h_formula_thread_resource in
+          let d = {d with h_formula_thread_resource = new_rsr; } in
+          (ThreadNode d , old_mem, false)
     | DataNode d -> 
 	  (try 
 	    let bd = List.find (fun c-> (String.compare c.barrier_name d.h_formula_data_name) = 0) prog.prog_barrier_decls in
@@ -1898,6 +1901,8 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
           let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
           let zip = List.combine fr_vars to_vars in
+          let new_ho_agrs = List.map (fun arg -> prune_preds prog true arg) v.h_formula_view_ho_arguments in
+          let v = {v with h_formula_view_ho_arguments = new_ho_agrs;} in
           let (rem_br, prun_cond, first_prune, chg) =  
             match v.h_formula_view_remaining_branches with
               | Some l -> 
@@ -1962,20 +1967,20 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
             (r_hp,r_memo,r_b)
 
 
-let heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)= 
+and heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)= 
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_memo_pure_formula in
   let pr2 (h,o,r) = pr_triple Cprinter.string_of_h_formula pr1 string_of_bool (h,o,r) in
   Debug.no_2 "heap_prune_preds" pr pr1 pr2 (fun _ _ -> heap_prune_preds_x prog hp old_mem ba_crt) hp old_mem
 
 
-let heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
+and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
         let r1,r2,r3 = heap_prune_preds prog hp f [] in
         (r1, MCP.MemoF r2, r3)
   | MCP.OnePF _ -> (hp,old_mem,false)
 
-let prune_preds_x prog (simp_b:bool) (f:formula):formula =
+and prune_preds_x prog (simp_b:bool) (f:formula):formula =
   let simp_b = simp_b && !Globals.enable_redundant_elim in 
   let imply_w f1 f2 = let r,_,_ = TP.imply_one 26 f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
@@ -2025,7 +2030,7 @@ let prune_preds_x prog (simp_b:bool) (f:formula):formula =
         nf
     )
 
-let prune_preds prog (simp_b:bool) (f:formula):formula =   
+and prune_preds prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
   Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f

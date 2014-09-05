@@ -249,10 +249,14 @@ module Make (Token : SleekTokenS)
    ("set",SET);
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
+   ("template", TEMPL);
+   ("UTPre", UTPRE);
+   ("UTPost", UTPOST);
    ("Term", TERM);
-    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
+   (* ("TermU", TERMU); *)
+   (* ("TermR", TERMR); *)
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -275,6 +279,9 @@ module Make (Token : SleekTokenS)
 	 ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
+   (* Template *)
+   ("template", TEMPLATE);
+   ("template_solve", TEMPL_SOLVE);
 	 (flow, FLOW flow);]
 }
   
@@ -362,6 +369,9 @@ rule tokenizer file_name = parse
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
+  | "@term" { TREL_INFER }
+  | "termAssume" { TREL_ASSUME }
+  | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
 (*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}

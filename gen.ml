@@ -334,6 +334,14 @@ struct
         [] -> []
       | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
 
+  let rec remove_dups_eq_reserved_order eq n = 
+    match n with
+        [] -> []
+      | q::qs -> 
+          if (mem_eq eq q qs) then 
+            q::(remove_dups_eq eq (List.filter (fun p -> not (eq p q)) qs))
+          else q::(remove_dups_eq eq qs)
+
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
@@ -528,6 +536,7 @@ class ['a] stack  =
      method reverse_of = List.rev stk
      method mem (i:'a) = List.mem i stk 
      method mem_eq eq (i:'a) = List.exists (fun b -> eq i b) stk 
+     method find f = List.find f stk
      (* method exists (i:'a) = List.mem i stk  *)
      (* method exists_eq eq (i:'a) = List.exists (fun b -> eq i b) stk  *)
      method exists f = List.exists f stk 

@@ -1295,27 +1295,27 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = if (!Globals.perm = Globals.Dperm)
-      then I.add_bar_inits prog4 
-      else prog4
+    then I.add_bar_inits prog4 
+    else prog4
   in
   (*let _ = print_string (Iprinter.string_of_program prog4) in*)
   let prog4 = if not (!do_infer_inc) then prog4 else
-        try
-            let id_spec_from_file = Infer.get_spec_from_file prog4 in
-            let ids, specs = List.split id_spec_from_file in
-            {prog4 with I.prog_proc_decls =
-                    let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
-                    let new_proc = 
-                      List.map (fun proc ->
-                          try 
-                              let spec = List.assoc proc.I.proc_name id_spec_from_file in
-                              {proc with I.proc_static_specs = spec}
-                          with Not_found -> proc
-                      ) new_proc
-                    in
-                    others @ new_proc
-            }
-        with _ -> prog4
+    try
+      let id_spec_from_file = Infer.get_spec_from_file prog4 in
+      let ids, specs = List.split id_spec_from_file in
+      {prog4 with I.prog_proc_decls =
+              let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
+              let new_proc = 
+                List.map (fun proc ->
+                    try 
+                      let spec = List.assoc proc.I.proc_name id_spec_from_file in
+                      {proc with I.proc_static_specs = spec}
+                    with Not_found -> proc
+                ) new_proc
+              in
+              others @ new_proc
+      }
+    with _ -> prog4
   in
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
@@ -1328,9 +1328,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                      :: prog3.I.prog_data_decls;} in
+          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
   let prog2 = I.add_normalize_lemmas prog2 in
@@ -1356,54 +1356,56 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-        (* let _ = print_flush (Exc.string_of_exc_list (10)) in *)
-        (* exlist # compute_hierarchy; *)
-        (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
-        let prims,prim_rels = gen_primitives prog0 in
-        (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
-        let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
-        (* let prims,prim_rels = ([],[]) in *)
-        let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
-	        (* AN HOA : adjoint the program with primitive relations *)
-	        I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
-	               (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
-                   } in
-        (set_mingled_name prog;
-         let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
-           (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
-           (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
-			                                                                  (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
-         let dups = Gen.BList.find_dups_eq (=) all_names in
-         (* let _ = I.find_empty_static_specs prog in *)
-         if not (Gen.is_empty dups) then
-	       (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
-         else (
+      (* let _ = print_flush (Exc.string_of_exc_list (10)) in *)
+      (* exlist # compute_hierarchy; *)
+      (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
+      let prims,prim_rels = gen_primitives prog0 in
+      (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
+      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
+      (* let prims,prim_rels = ([],[]) in *)
+      let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
+	  (* AN HOA : adjoint the program with primitive relations *)
+	  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
+	  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
+      } in
+      (set_mingled_name prog;
+      let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
+        (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
+        (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
+			                                                   (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
+      let dups = Gen.BList.find_dups_eq (=) all_names in
+      (* let _ = I.find_empty_static_specs prog in *)
+      if not (Gen.is_empty dups) then
+	(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
+      else (
 	  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: before case_normalize" ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 	  let prog = case_normalize_program prog in
 
 	  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
 	  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
-      (***************************************************)
-      let prog =
-        if (!Globals.allow_ptr) then 
-          let _ = print_string ("Eliminating variable aliasing...\n"); flush stdout in
-          let new_prog = Pointers.trans_pointers prog in
-          let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
-          let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
-          new_prog
-        else prog
-      in 
-      let prog = 
-        if (!Globals.infer_mem) then 
-          let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
-          {prog with I.prog_view_decls = infer_views}
-        else prog 
-      in 
-      (***************************************************)
+          (***************************************************)
+          let prog =
+            if (!Globals.allow_ptr) then 
+              let _ = print_string ("Eliminating variable aliasing...\n"); flush stdout in
+              let new_prog = Pointers.trans_pointers prog in
+              let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
+              let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
+              new_prog
+            else prog
+          in 
+          let prog = 
+            if (!Globals.infer_mem) then 
+              let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
+              {prog with I.prog_view_decls = infer_views}
+            else prog 
+          in 
+          (***************************************************)
 	  (* let _ =  print_endline " after case normalize" in *)
-      (* let _ = I.find_empty_static_specs prog in *)
-	  let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
+          (* let _ = I.find_empty_static_specs prog in *)
+      let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
+      let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
+      let cuts = List.map (trans_ut prog) prog.I.prog_ut_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
       Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
@@ -1486,8 +1488,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
-              C.prog_hp_decls = chps;
-              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
+	      C.prog_templ_decls = ctempls;
+        C.prog_ut_decls = cuts @ (C.ut_decls # get_stk);
+	      C.prog_hp_decls = chps;
+	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1495,7 +1499,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      (*C.prog_right_coercions = r2l_coers;*)} in
 	  let cprog1 = { cprog with
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
-              C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
+          C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
       (ignore (List.map (fun vdef ->  (compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
        ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
@@ -1815,8 +1819,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       (* let formula1 = CF.formula_of_mix_formula xform1 pos in *)
       let formula1 = form_body_inv vdef in
+      let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (CF.fv formula1) in
       let formula1_under = wrap_under_baga form_body_inv vdef in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+      let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
@@ -2072,7 +2078,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
-	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+	    let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+        let ffv = List.filter (fun v -> not (is_FuncT (CP.type_of_spec_var v))) ffv in
         let ffv = CP.diff_svl ffv view_prop_extns in
         (* filter out intermediate dereference vars and update them to view vars *)
         
@@ -2183,7 +2190,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbi no_pos;
-      let cvdef ={
+      let cvdef = {
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
@@ -2410,6 +2417,48 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+
+and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
+  let pos = tdef.I.templ_pos in
+  let c_ret_typ = trans_type prog tdef.I.templ_ret_typ pos in
+  let c_params = List.map (fun (t, n) -> 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) tdef.I.templ_typed_params in 
+  let n_tl = List.map (fun (t, n) -> 
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
+  let c_body = match tdef.I.templ_body with
+  | None -> 
+    let unk_coes = List.map 
+      (fun (t, n) -> CP.SpecVar (trans_type prog t pos, tdef.I.templ_name ^ "_" ^ n, Unprimed)) 
+      tdef.I.templ_typed_params in 
+    let unk_const = CP.SpecVar (Int, tdef.I.templ_name ^ "_" ^ (string_of_int 0), Unprimed) in
+    let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
+    let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
+      (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
+    Some body
+  | Some bd -> 
+    let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+    Some (trans_pure_exp bd (fst n_tl))
+  in
+  let c_templ = {
+    C.templ_name = tdef.I.templ_name;
+    C.templ_ret_typ = c_ret_typ;
+    C.templ_params = c_params;
+    C.templ_body = c_body;
+    C.templ_pos = pos; } in
+  C.templ_decls # push c_templ; c_templ
+  
+and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
+  let pos = utdef.I.ut_pos in
+  let c_params = List.map (fun (t, n) -> 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) utdef.I.ut_typed_params in 
+  let n_tl = List.map (fun (t, n) -> 
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) utdef.I.ut_typed_params in
+  let c_ut = {
+    C.ut_name = utdef.I.ut_name;
+    C.ut_params = c_params;
+    C.ut_is_pre = utdef.I.ut_is_pre;
+    C.ut_pos = pos; } in
+  c_ut
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -3043,16 +3092,48 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* Termination: Normalize the specification 
        * with the default termination information
        * Primitive functions: Term[] 
-       * User-defined functions: MayLoop *)
+       * User-defined functions: MayLoop 
+       * or TermR and TermU if @term *)
       let is_primitive = not (proc.I.proc_is_main) in
+      let fname = proc.I.proc_name in
+      let args = List.map (fun p -> 
+        ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in 
+      let pos = proc.I.proc_loc in
+      
+      let utpre_name = fname ^ "pre" in
+      let utpost_name = fname ^ "post" in
+              
+      let utpre_decl = {
+        C.ut_name = utpre_name;
+        C.ut_params = params;
+        C.ut_is_pre = true;
+        C.ut_pos = pos } in
+      let utpost_decl = { utpre_decl with
+        C.ut_name = utpost_name;
+        C.ut_is_pre = false; } in
+        
+      let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
+      
+      let uid = {
+        CP.tu_id = 0;
+        CP.tu_sid = fname;
+        CP.tu_fname = fname;
+        CP.tu_call_num = 0;
+        CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+        CP.tu_cond = CP.mkTrue pos; 
+        CP.tu_icond = CP.mkTrue pos;
+        CP.tu_sol = None; 
+        CP.tu_pos = pos; } in
+      
       let static_specs_list = 
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive static_specs_list
+          CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
         else static_specs_list
       in
       let dynamic_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive dynamic_specs_list
+          CF.norm_struc_with_lexvar is_primitive false uid dynamic_specs_list
         else dynamic_specs_list
       in
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
@@ -3075,7 +3156,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	| None -> None
 	| Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
-      let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
       (** An Hoa : compute the important variables **)
       let ftypes, fnames = List.split args in
       (* fsvars are the spec vars corresponding to the parameters *)
@@ -3221,23 +3302,32 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
 (** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
-  let v= get_spec_var_ident n_tl id p (* Unprimed  *)in
+  let v = get_spec_var_ident n_tl id p (* Unprimed  *)in
   match v with
-    | CP.SpecVar(t,id,pr) ->
-          if t==UNK then
+  | CP.SpecVar(t,id,pr) ->
+    if t == UNK then
+      try
+        let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        CP.SpecVar(RelT[],id,pr)
+      with _ ->
+        try
+          let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+          CP.SpecVar(RelT[],id,pr)
+        with _ ->
+          try
+            let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+            CP.SpecVar(HpT,id,pr)
+          with _ -> 
             try
-              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-              CP.SpecVar(RelT[],id,pr)
-            with _ ->
-                try
-                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> v
-          else v
+              let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
+              let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
+              CP.SpecVar (ftyp, id, pr)
+            with _ -> 
+              try
+                let _ = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
+                CP.SpecVar(UtT, id, pr)
+              with _ -> v
+    else v
 
 and ident_list_to_spec_var_list ivs n_tl prog =
   let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
@@ -3440,7 +3530,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
-  let head_pure = if  coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
+  let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
   let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure  c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
@@ -5239,6 +5329,10 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: INFInt can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
+    | FuncT _ ->
+          failwith "default_value: FuncT can only be used for constraints"
+    | UtT ->
+          failwith "default_value: UtT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -5881,6 +5975,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
           Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
         else
           (n_tl, CF.EInfer {
+              CF.formula_inf_tnt = b.IF.formula_inf_tnt;
               CF.formula_inf_post = b.IF.formula_inf_post;
               CF.formula_inf_xpost = b.IF.formula_inf_xpost;
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;
@@ -6788,8 +6883,8 @@ and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula
   Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out trans_pure_formula_x f0 tlist
 
 and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
-  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0           
-      
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0                 
+                  
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  match pf with
@@ -6803,7 +6898,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
           let cle = List.map (fun e -> trans_pure_exp e tlist) ls1 in
           let clt = List.map (fun e -> trans_pure_exp e tlist) ls2 in
           CP.LexVar {
-              CP.lex_ann = t_ann;
+              CP.lex_ann = trans_term_ann t_ann tlist;
               CP.lex_exp = cle;
               CP.lex_tmp = clt;
               CP.lex_loc = pos; }
@@ -6889,6 +6984,28 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
   match sl with
     | None -> (npf, None)
     | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist in (npf, Some (il,lbl,nel))
+
+and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
+  let trans_term_fail f = match f with
+    | IP.TermErr_May -> CP.TermErr_May
+    | IP.TermErr_Must -> CP.TermErr_Must in
+  let trans_term_id uid tlist = {
+    CP.tu_id = uid.IP.tu_id;
+    CP.tu_sid = uid.IP.tu_sid;
+    CP.tu_fname = uid.IP.tu_fname;
+    CP.tu_call_num = 0;
+    CP.tu_args = List.map (fun e -> trans_pure_exp e tlist) uid.IP.tu_args;
+    CP.tu_cond = trans_pure_formula uid.IP.tu_cond tlist; 
+    CP.tu_icond = CP.mkTrue no_pos;
+    CP.tu_sol = None; 
+    CP.tu_pos = uid.IP.tu_pos; } in 
+  match ann with
+    | IP.Term -> CP.Term
+    | IP.Loop -> CP.Loop
+    | IP.MayLoop -> CP.MayLoop
+    | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
+    | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
+    | IP.Fail f -> CP.Fail (trans_term_fail f)
                                                                        
 and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp" 
@@ -6939,6 +7056,29 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Func (id, es, pos) ->
           let es = List.map (fun e -> trans_pure_exp e tlist) es in
           CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
+    | IP.Template t ->
+        let pos = t.IP.templ_pos in
+        let tid = t.IP.templ_id in
+        let tdef = C.look_up_templ_def_raw (C.templ_decls # get_stk) tid in
+        let tparams = tdef.C.templ_params in
+        let tbody = tdef.C.templ_body in
+
+        let templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args in
+        let sst = List.combine tparams templ_args in
+        let templ_unks, templ_body = match tbody with
+          | Some cb -> 
+            let inst_cb = CP.a_apply_par_term sst cb in
+            let unk_svs = Gen.BList.difference_eq CP.eq_spec_var 
+              (CP.afv inst_cb) (List.concat (List.map CP.afv templ_args)) in
+            let unk_exps = List.map (fun v -> CP.mkVar v no_pos) unk_svs in
+            (unk_exps, Some inst_cb)
+          | None -> ([], None)
+        in CP.Template {
+          CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
+          CP.templ_args = templ_args;
+          CP.templ_unks = templ_unks;
+          CP.templ_body = templ_body;
+          CP.templ_pos = pos; }
     | IP.ArrayAt ((a, p), ind, pos) ->
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
@@ -8398,7 +8538,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               fun  (c1,(b1,c2)) -> 
                   let h = (List.hd c1) in
                   let rem = List.filter (fun (d1,_)-> 
-                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&&
+                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1)) &&
                           ((fst h)>(fst d1))) pure_list in
                   List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
           ) last_lst 
@@ -9594,30 +9734,31 @@ and trans_expected_ass prog ass =
 let check_data_pred_name iprog name : bool =
   try
     let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
-  with
-    | Not_found -> begin
- 	try
-	  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
-	with
-	  | Not_found -> (*true*) begin
-	      try
-		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
-		false
-	      with
-		| Not_found -> begin
-		    try
-		      let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
-		      false
-		    with
-		      | Not_found -> begin
-			  try
-			    let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in	false
-			  with
-			    | Not_found -> true
+  with | Not_found -> begin
+ 	  try
+	    let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
+	  with | Not_found -> begin
+      try
+        let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false
+      with | Not_found -> begin
+        try
+		      let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in false
+		    with | Not_found -> begin
+          try
+			      let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in false
+          with | Not_found -> begin
+            try
+              let _ = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false 
+            with | Not_found -> begin
+              try
+                let _ = I.look_up_ut_def_raw iprog.I.prog_ut_decls name in false 
+              with | Not_found -> true
+              end
 		        end
-		  end
-	    end
+          end
+        end
       end
+    end
 
 (* let check_data_pred_name iprog name : bool = *)
 (*   let pr1 x = x in *)

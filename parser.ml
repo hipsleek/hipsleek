@@ -53,6 +53,8 @@ type decl =
   (* | Coercion of coercion_decl *)
   | Coercion_list of coercion_decl_list
   | Include of string
+  | Template of templ_decl
+  | Ut of ut_decl
 		
 
 type member = 
@@ -111,6 +113,8 @@ let hash_count = ref 0
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
+let templ_names = new Gen.stack (* List of declared templates' names *)
+let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -462,7 +466,7 @@ let peek_try =
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;EQV,_] -> raise Stream.Failure
-	 | [GT,_;CONSTR,_] -> raise Stream.Failure
+	     | [GT,_;CONSTR,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;RIGHTARROW,_] -> raise Stream.Failure
          | [GT,_;EQUIV,_] -> raise Stream.Failure
@@ -475,7 +479,7 @@ let peek_try =
          | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
-	 | [GT,_;MAT,_] -> raise Stream.Failure 
+		 | [GT,_;MAT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;SPLIT1Ann,_] -> raise Stream.Failure 
          | [GT,_;SPLIT2Ann,_] -> raise Stream.Failure 
@@ -916,7 +920,13 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
-	  | t=macro				  -> EmptyCmd]];
+      (* TermInf: Command for Termination Inference *)
+      | t = templ_decl -> TemplDef t
+      | t = templ_solve_cmd -> TemplSolv t
+      | t = ut_decl -> UtDef t
+      | t = term_infer_cmd -> TermInfer
+      | t = term_assume_cmd -> TermAssume t
+      | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -1366,7 +1376,7 @@ view_header_ext:
           view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
-	  view_materialized_vars = get_mater_vars l;
+		  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1771,6 +1781,9 @@ opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 
+pure_constr_w_brace:
+  [[ `OBRACE; c = pure_constr; `CBRACE -> c ]];
+
 (* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
 (*                   | t= pure_constr ->t *)
 (* ]]; *)
@@ -1785,12 +1798,36 @@ pure_constr:
        | Pure_c (P.Ann_Exp (P.Var (v,_), Bool, _)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
+  
+(* termu_id:                                                                       *)
+(*   [[ `AT; `IDENTIFIER fn -> (fn, 0, P.mkTrue no_pos)                            *)
+(*    | `AT; elem = termu_elem -> let (i, c) = elem in ("", i, c)                  *)
+(*    | `AT; `IDENTIFIER fn; elem = termu_elem -> let (i, c) = elem in (fn, i, c)  *)
+(*   ]];                                                                           *)
+
+(* termu_elem:                                                                     *)
+(*   [[ `OBRACE; `INT_LITER (i,_); `CBRACE -> (i, P.mkTrue no_pos)                 *)
+(*    | `OBRACE; c = pure_constr; `CBRACE -> (0, c)                                *)
+(*    | `OBRACE; `INT_LITER (i,_); `COMMA; c = pure_constr; `CBRACE -> (i, c)      *)
+(*   ]];                                                                           *)
+  
+(* termu_args:                                                                     *)
+(*   [[ `OPAREN; t=LIST0 cexp SEP `COMMA; `CPAREN -> t ]];                         *)
 
 ann_term: 
-    [[
-     `TERM -> Term
-      | `LOOP -> Loop
-      | `MAYLOOP -> MayLoop
+    [[  `TERM -> P.Term
+      | `LOOP -> P.Loop
+      | `MAYLOOP -> P.MayLoop
+      (* | `TERMU; tid = OPT termu_id; targs = termu_args ->                 *)
+      (*     let pos = get_pos_camlp4 _loc 1 in                              *)
+      (*     let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in     *)
+      (*     P.TermU ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn;        *)
+      (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
+      (* | `TERMR; tid = OPT termu_id; targs = termu_args ->                 *)
+      (*     let pos = get_pos_camlp4 _loc 1 in                              *)
+      (*     let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in     *)
+      (*     P.TermR ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn;        *)
+      (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
     ]];
 
 cexp:
@@ -1960,13 +1997,24 @@ cexp_w:
        * in our formula.
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
-          else
-            begin
-              if not(rel_names # mem id) then if not !Globals.web_compile_flag then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-            end
+        else if templ_names # mem id then
+          Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
+        else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+          report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else begin
+          try
+            if not(rel_names # mem id) then if not !Globals.web_compile_flag then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+            let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
+            let pos = get_pos_camlp4 _loc 1 in
+            (* let cond = un_option c (P.mkTrue pos) in *)
+            (* let nid = un_option nid 0 in *)
+            let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
+            Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
+          with Not_found -> 
+            if not (rel_names # mem id) then 
+              print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+            Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+        end
     | peek_cexp_list; ocl = opt_comma_list -> 
         Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
     | t = cid ->
@@ -2046,17 +2094,17 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
-opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
+opt_measures_seq: [[ il = OPT measures_seq -> un_option il [] ]];
 
-measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+measures_seq: [[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
 
-opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
+opt_measures_seq_sqr: [[ il = OPT measures_seq_sqr -> un_option il [] ]];
 
-measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
+measures_seq_sqr: [[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
+opt_cexp_list: [[t=LIST0 cexp SEP `COMMA -> t]];
 
-(*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
+(* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
 
 (********** Procedures and Coercion **********)
 
@@ -2076,6 +2124,15 @@ checkentail_cmd:
 checksat_cmd:
   [[ `CHECKSAT; t=meta_constr -> t
   ]];
+
+templ_solve_cmd: 
+  [[ `TEMPL_SOLVE; il = OPT id_list_w_brace -> un_option il [] ]];
+  
+term_infer_cmd:
+  [[ `TERM_INFER ]];
+  
+term_assume_cmd:
+  [[ `TREL_ASSUME; t=meta_constr; `CONSTR; b=meta_constr -> (t, b) ]];
 
 ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
 
@@ -2244,15 +2301,26 @@ shapeExtract_cmd:
    let il1 = un_option il1 [] in
    (il1)
    ]];
+  
+infer_type:
+   [[ `TREL_INFER -> INF_TERM ]];
+  
+id_list_w_sqr:
+    [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
+    
+id_list_w_itype:
+  [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il) 
+   | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il [])
+   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
+  ]];
 
 infer_cmd:
-  [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,None)
+  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+    let k, il = un_option il_w_itype (None, []) in (k,il,t,b,None)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some true)
+    let il = un_option il [] in (None,il,t,b,Some true)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (il,t,b,Some false)
-
+    let il = un_option il [] in (None,il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2411,6 +2479,8 @@ list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
+id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
+
 id:[[`IDENTIFIER id-> id]];
 
 (********** Higher Order Preds *******)
@@ -2557,6 +2627,45 @@ rel_body:[[ (* formulas {
 	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
 ]];
 
+(* Template Definition *)
+templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN; b = OPT templ_body -> 
+  let _ = templ_names # push id in 
+  let tdef = { 
+    templ_name = id;
+    templ_ret_typ = t;
+    templ_typed_params = tl;
+    templ_body = b; 
+    templ_pos = get_pos_camlp4 _loc 1; } in 
+  tdef ]];
+
+templ_body: [[ `EQEQ; pc = cexp -> pc ]];
+
+(* Unknown Temporal Definition *)
+ut_fname: [[ `AT; `IDENTIFIER fn -> fn ]];
+
+ut_decl: 
+  [[ `UTPRE; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
+      let fname = un_option fn "" in
+      let _ = ut_names # push (id, fname, true) in
+      let utdef = { 
+        ut_name = id;
+        ut_fname = fname;
+        ut_typed_params = tl;
+        ut_is_pre = true;
+        ut_pos = get_pos_camlp4 _loc 1; } 
+      in utdef 
+  | `UTPOST; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
+      let fname = un_option fn "" in
+      let _ = ut_names # push (id, fname, false) in
+      let utdef = { 
+        ut_name = id;
+        ut_fname = fname;
+        ut_typed_params = tl;
+        ut_is_pre = false;
+        ut_pos = get_pos_camlp4 _loc 1; } 
+      in utdef 
+  ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2607,6 +2716,8 @@ hprogn:
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
+      let templ_defs = new Gen.stack in (* List of template definitions *)
+      let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2623,7 +2734,9 @@ hprogn:
           end
 				| Include incl -> include_defs := incl :: !include_defs  	
         | Func fdef -> func_defs # push fdef 
-        | Rel rdef -> rel_defs # push rdef 
+        | Rel rdef -> rel_defs # push rdef
+        | Template tdef -> templ_defs # push tdef
+        | Ut utdef -> ut_defs # push utdef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -2649,6 +2762,8 @@ hprogn:
                        data_methods = [] } in
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
+    let templ_lst = templ_defs # get_stk in
+    let ut_lst = ut_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -2665,6 +2780,8 @@ hprogn:
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
         (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_templ_decls = templ_lst;
+    prog_ut_decls = ut_lst;
     prog_hp_decls = hp_lst ;
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -2684,6 +2801,8 @@ decl:
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+  |  r=templ_decl; `DOT -> Template r
+  |  r=ut_decl; `DOT -> Ut r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
@@ -2810,8 +2929,10 @@ spec_list_grp:
 
 spec: 
   [[
-    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
+     let (itype, ivl) = ivl_w_itype in
      F.EInfer {
+       F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
        F.formula_inf_transpec = transpec;
@@ -2856,6 +2977,12 @@ spec:
 			F.mkEAssume f sf (fresh_formula_label ol) (Some false)
 	  
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  ]];
+
+cid_list_w_itype:
+  [[ `OSQUARE; t = infer_type; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
+   | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il [])
+   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

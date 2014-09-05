@@ -207,12 +207,16 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_cond_path = es.es_cond_path ;
 	es_prior_steps = es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
+  es_infer_tnt = es.es_infer_tnt;
 	(* es_var_label = es.es_var_label; *)
 	(* es_var_ctx_lhs = es.es_var_ctx_lhs; *)
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
+    es_infer_templ = es.es_infer_templ;
+    es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_pure = es.es_infer_pure;
     es_infer_vars_rel = es.es_infer_vars_rel;
+    es_infer_vars_templ = es.es_infer_vars_templ;
     es_infer_rel = es.es_infer_rel;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
@@ -2397,6 +2401,7 @@ and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context)
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
   Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro 
       (fun _ _ _ _-> 
+      
         process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context)
             p2 vs2 base2 pos 
       ) estate fold_rs0 (p2::vs2) base2
@@ -2443,12 +2448,15 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
               es_orig_ante = fold_es.es_orig_ante;
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
+              es_infer_vars_templ = fold_es.es_infer_vars_templ;
               es_infer_vars_hp_rel = fold_es.es_infer_vars_hp_rel;
               es_infer_vars_sel_hp_rel = fold_es.es_infer_vars_sel_hp_rel;
               es_infer_vars_sel_post_hp_rel = fold_es.es_infer_vars_sel_post_hp_rel;
               es_infer_hp_unk_map = fold_es.es_infer_hp_unk_map;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
+              es_infer_templ = fold_es.es_infer_templ;
+              es_infer_templ_assume = fold_es.es_infer_templ_assume;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
               es_infer_rel = fold_es.es_infer_rel;
@@ -4442,7 +4450,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                         (tmp_lctx ,TrueConseq)
                                                       else (SuccCtx [rs4] ,TrueConseq)
                                             end)
-                            | EInfer e -> helper_inner 22 ctx11 e.Cformula.formula_inf_continuation
+                            | EInfer e -> 
+                                let inf_vars = e.CF.formula_inf_vars in
+                                let templ_inf_vars = List.filter (fun (CP.SpecVar (t, _, _)) -> is_FuncT t) inf_vars in
+                                let ctx11 = CF.add_infer_vars_templ_ctx ctx11 templ_inf_vars in
+                                helper_inner 22 ctx11 e.Cformula.formula_inf_continuation
                                   
                             (* ignores any EInfer on the RHS *) 
                             (* assumes each EInfer contains exactly one continuation *)
@@ -5091,6 +5103,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
   let (r_inf_contr,real_c),relass = solver_detect_lhs_rhs_contra 2 prog estate conseq pos msg  in
   let h_inf_args, hinf_args_map = get_heap_inf_args estate in
   let esv = estate.es_infer_vars in
+  let it = CF.infer_type_of_entail_state estate in
 
   let new_slk_log slk_no result es = 
     let avoid = CF.is_emp_term conseq in
@@ -5100,8 +5113,8 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_sleek_logging false 0. esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no estate.es_formula
-      conseq es.es_heap es.es_evars (Some result) pos in
+    let _ = Log.add_sleek_logging false 0. it esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no 
+      estate.es_formula conseq es.es_heap es.es_evars (Some result) pos in
     () in
 
 
@@ -5273,9 +5286,9 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           (* (fun (_,b) -> string_of_bool b)  *)
           (fun _ _ -> process_entail_state es) es.es_formula conseq
     in (* End of process_entail_state *)
-    (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
-    (* Now moving to typechecker for an earlier lexvar strip *)
-    let ctx = Term.strip_lexvar_lhs ctx in
+    (* Termination: Strip the LexVar in the pure part of conjunct LHS *)
+    (* Move it to es_var_measures - Important for SLEEK *)
+    let ctx = TermUtils.strip_lexvar_lhs ctx in
 
     (* Call the internal function to do the unfolding and do the checking *)
     (* Check duplication only when there are no permissions*)
@@ -5485,7 +5498,8 @@ and log_contra_detect hec_num conseq result pos =
     let orig_ante = match es.es_orig_ante with
       | Some f -> f
       | None   -> es.es_formula in
-    let _ = Log.add_sleek_logging false 0. es.es_infer_vars !Globals.do_classic_frame_rule caller
+    let it = CF.infer_type_of_entail_state es in
+    let _ = Log.add_sleek_logging false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
   let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
@@ -5939,6 +5953,7 @@ and eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate =
   let new_ctx = Ctx {estate with
       es_formula = new_baref;
       es_ante_evars = ws @ estate.es_ante_evars;
+      es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
       es_unsat_flag = estate.es_unsat_flag;} 
   in new_ctx
 
@@ -6707,18 +6722,30 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   (*             (es.es_rhs_eqset@eqns) *)
   (*     ;}) ctx0 in *)
   let hec a b c =
-    let (ante,consumed_heap,evars,infer_vars) =
+    let (ante,consumed_heap,evars,infer_type,infer_vars) =
       match ctx0 with
         | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
-          CF.HEmp, [],[])
-        | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars,
-          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel))
+          CF.HEmp, [], None, [])
+        | Ctx estate ->
+          let proving_kind = find_impt_proving_kind () in
+          let lex_lhs = match proving_kind with
+          | PK_POST -> List.map (fun ann -> CP.mkLexVar_pure ann [] []) estate.es_term_res_lhs
+          | _ -> match estate.es_var_measures with
+            | None -> []
+            | Some (ann, rnk, _) -> 
+              if CP.is_MayLoop ann then []
+              else [CP.mkLexVar_pure ann rnk []]
+          in
+          let es = List.fold_left (fun es lv -> fst
+            (CF.combine_and es (MCP.mix_of_pure lv))) estate.es_formula lex_lhs in
+          (es,estate.es_heap,estate.es_evars,CF.infer_type_of_entail_state estate,
+          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ))
     in
     (* WN : what if evars not used in the conseq? *)
-    (* let _ = DD.info_zprint  (lazy  ("  ctx0: " ^ (Cprinter.string_of_context ctx0))) pos in *)
     let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
-    let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
+    let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.isTrivTerm conseq) in
+    (* let avoid = avoid || ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in*)
     let avoid = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
@@ -6726,7 +6753,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let _ = hec_stack # push slk_no in
     let logger fr tt timeout =
       let _ =
-        Log.add_sleek_logging timeout tt infer_vars !Globals.do_classic_frame_rule
+        Log.add_sleek_logging timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
             caller avoid hec_num slk_no ante conseq consumed_heap evars
             (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
@@ -6826,6 +6853,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
                   es_formula = new_baref (* estate.es_formula *);
                   es_ante_evars = ws @ estate.es_ante_evars;
+                  es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
                   es_unsat_flag = estate.es_unsat_flag;} in
               Debug.ninfo_hprint (add_str "new_ctx (exists)" (Cprinter.string_of_context)) new_ctx no_pos;
               (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
@@ -7684,8 +7712,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
   let (estate,_,rhs_p,rhs_wf) =
     if not !Globals.dis_term_chk then
-      Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+      Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     else
+      let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in
       (estate, lhs_p, rhs_p, None)
   in
   (* Termination: Try to prove rhs_wf with inference *)
@@ -7701,7 +7730,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     let t_ann, ml, il = Term.find_lexvar_es estate in
                     let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
                     let term_measures, term_res, term_err_msg =
-                      Some (Fail TermErr_May, ml, il),
+                      Some (CP.Fail CP.TermErr_May, ml, il),
                       (term_pos, t_ann_trans, orig_ante, 
                       Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
                       Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
@@ -7784,11 +7813,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
       (* what exactly is split_a_opt??? *)
-      let (i_res1,i_res2,i_res3),_ = 
-        if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
-	else 
-	  let _ = Debug.devel_pprint ("astaq?") no_pos in
-	  let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
+      let (i_res1, i_res2, i_res3), _ = 
+        if (MCP.isConstMTrue rhs_p) then ((true, [], None), None)
+        else 
+          let _ = Debug.devel_pprint ("astaq?") no_pos in
+          let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
           (* TODO-EXPURE - need to use syntactic imply & move upwards? *)
           match lhs_baga with
             | Some lhs ->
@@ -7810,29 +7839,28 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       (* let _ = print_endline ("i_res1 = " ^ (string_of_bool i_res1)) in *)
-      let i_res1,i_res2,i_res3 =
+      let i_res1, i_res2, i_res3 =
         if not(stk_estate # is_empty) 
-        then 
-          (true,[],None)
+        then (true, [], None)
         else
-          if i_res1==true 
-          then (i_res1,i_res2,i_res3)
+          if i_res1 == true 
+          then (i_res1, i_res2, i_res3)
           else
-            let finish_flag = 
+            let finish_flag =
               if (!Globals.delay_proving_sat && !smart_unsat_estate==None) then
                 if (!Globals.filtering_flag || (not !Globals.dis_ps))
                   (* !Globals.allow_pred_spec || !Globals.do_slicing *)
                 then 
-		  let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
+                  let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
                   let n_es = elim_unsat_es 11 prog (ref 1) estate in
                   if CF.isAnyFalseCtx n_es then  
-                    (smart_unsat_estate := Some (estate_of_context n_es no_pos);true)
+                    (smart_unsat_estate := Some (estate_of_context n_es no_pos); true)
                   else false
                 else false
               else false  in
             let _ = Debug.tinfo_hprint (add_str "finish_flag:" string_of_bool) finish_flag no_pos in
             if finish_flag 
-            then (true,[],None)
+            then (true, [], None)
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let res = 
@@ -8564,16 +8592,20 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_path_label = estate.es_path_label;
         es_cond_path = estate.es_cond_path ;
         es_var_measures = estate.es_var_measures;
+        es_infer_tnt = estate.es_infer_tnt;
         es_var_stack = estate.es_var_stack;
         es_orig_ante = estate.es_orig_ante;
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
         es_infer_vars_rel = estate.es_infer_vars_rel;
+        es_infer_vars_templ = estate.es_infer_vars_templ;
         es_infer_vars_hp_rel = estate.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = estate.es_infer_vars_sel_hp_rel;
         es_infer_vars_sel_post_hp_rel = estate.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = estate.es_infer_hp_unk_map;
         es_infer_heap = estate.es_infer_heap;
+        es_infer_templ = estate.es_infer_templ;
+        es_infer_templ_assume = estate.es_infer_templ_assume;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
@@ -8754,6 +8786,9 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
+                 es_infer_templ = estate.es_infer_templ;
+                 es_infer_templ_assume = estate.es_infer_templ_assume;
+                 es_infer_tnt = estate.es_infer_tnt;
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;
@@ -9950,10 +9985,11 @@ and inst_before_fold_x estate rhs_p case_vars =
               | CP.Bptriple _ (*TOCHECK*)
               | CP.Level _ (*TOCHECK*) -> true
 	          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) | CP.Tup2 ((e1,e2),_) -> prop_e e1 && prop_e e2
-            | CP.TypeCast (_, e1, _) -> prop_e e1
+              | CP.TypeCast (_, e1, _) -> prop_e e1
 	          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 	          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
-	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
+	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ 
+              | CP.Template _ -> false in
 	        ((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
 		        ((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
 		            (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in

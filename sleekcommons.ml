@@ -38,6 +38,8 @@ type command =
   | PredDef of I.view_decl
   | FuncDef of I.func_decl
   | RelDef of I.rel_decl (* An Hoa *)
+  | TemplDef of I.templ_decl
+  | UtDef of I.ut_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
@@ -70,11 +72,14 @@ type command =
   | CheckNorm of meta_formula
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
+  | InferCmd of (infer_type option * ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
+  | TemplSolv of ident list
+  | TermInfer
+  | TermAssume of (meta_formula * meta_formula)
   | EmptyCmd
 
 and print_cmd =
@@ -111,7 +116,9 @@ let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
-  | RelDef  _ -> "RelDef"  
+  | RelDef  _ -> "RelDef" 
+  | TemplDef _ -> "TemplDef"
+  | UtDef _ -> "UtDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
@@ -149,6 +156,9 @@ let string_of_command c = match c with
   | PrintCmd _ -> "PrintCmd"  
   | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
+  | TemplSolv _ -> "TemplSolv"
+  | TermInfer -> "TermInfer"
+  | TermAssume _ -> "TermAssume"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

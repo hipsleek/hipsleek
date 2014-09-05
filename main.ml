@@ -4,7 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
-module I = Iast
+(* module I = Iast *)
 
 module M = Lexer.Make(Token.Token)
 
@@ -354,7 +354,7 @@ let process_source_full source =
     in
     (**************************************)
     (*to improve: annotate field*)
-    let _ = I.annotate_field_pure_ext intermediate_prog in
+    let _ = Iast.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     (*used in lemma*)
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
@@ -599,7 +599,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   in
   (**************************************)
   (*annotate field*)
-  let _ = I.annotate_field_pure_ext intermediate_prog in
+  let _ = Iast.annotate_field_pure_ext intermediate_prog in
   (*used in lemma*)
   (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
   (* let _ = I.set_iprog intermediate_prog in *)
@@ -612,6 +612,7 @@ let process_source_full_after_parser source (prog, prims_list) =
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
   )
     (List.rev cprog.Cast.prog_rel_decls) in
+
   let _ = List.map (fun cadef ->
       let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion

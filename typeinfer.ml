@@ -483,9 +483,10 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
 
 and gather_type_info_exp prog a0 tlist et =  
-  Debug.no_eff_4 "gather_type_info_exp" [false;true] 
-      pr_none Iprinter.string_of_formula_exp string_of_tlist string_of_typ
-      string_of_tlist_type gather_type_info_exp_x prog a0 tlist et
+  Debug.no_eff_3 "gather_type_info_exp" [false;true] 
+      Iprinter.string_of_formula_exp string_of_tlist string_of_typ
+     string_of_tlist_type 
+    (fun _ _ _ -> gather_type_info_exp_x prog a0 tlist et) a0 tlist et
 
 and gather_type_info_exp_x prog a0 tlist et =
   match a0 with
@@ -546,8 +547,8 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (new_et, n_tl) = fresh_tvar tlist in          
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in           
-      let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-      let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et in
+      let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
+      let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
       let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
       let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
@@ -558,8 +559,8 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in                   
-      let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-      let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et in
+      let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
+      let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
       let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
       let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
@@ -569,7 +570,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in
-      let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in
+      let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in
       let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
       (n_tl,t1)
@@ -595,12 +596,33 @@ and gather_type_info_exp_x prog a0 tlist et =
       List.fold_left (fun (tl,e) a -> must_unify a e tl pos) (new_tl,new_et) es_type_list
   | IP.Bag (es,pos) ->
       let (el_t,n_tl) = fresh_tvar tlist in
-      let (n_tlist,t) = List.fold_left (fun (type_list,et) a -> gather_type_info_exp_x prog a type_list et) (n_tl,el_t) es in
+      let (n_tlist,t) = List.fold_left (fun (type_list,et) a -> 
+        gather_type_info_exp_x prog a type_list et) (n_tl,el_t) es in
       (n_tlist,BagT t)  
   | IP.Func (id, es, pos) ->
       let t = I.int_type in
       let (n_tlist,n_typ)= must_unify_expect t et tlist pos in
       (n_tlist,n_typ)
+  | IP.Template tp -> begin try
+      let pos = tp.IP.templ_pos in
+      let tid = tp.IP.templ_id in
+      let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls tid in
+      let ret_typ = tdef.I.templ_ret_typ in
+      let param_types = List.map (fun (t, n) -> trans_type prog t pos) tdef.I.templ_typed_params in
+      let func_typ = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) ret_typ in 
+      let (n_tl, n_typ) = must_unify_expect ret_typ et tlist pos in
+      let (n_tl, n_typ) = gather_type_info_var tid n_tl (* ret_typ *) func_typ pos in
+      let exp_et_list = List.combine tp.IP.templ_args param_types in
+      let n_tlist = List.fold_left (fun tl (arg, et) -> 
+        fst (gather_type_info_exp prog arg tl et)) n_tl exp_et_list in
+      let n_tlist = match tdef.I.templ_body with
+      | None -> n_tlist
+      | Some b -> fst (gather_type_info_exp prog b n_tlist ret_typ) in
+      (n_tlist, ret_typ)
+    with
+    | Not_found -> failwith ("gather_type_info_exp: template " ^ tp.IP.templ_id ^ " cannot be found")
+    | _ -> failwith ("type error: template " ^ tp.IP.templ_id)
+    end
   | IP.ArrayAt ((a,p),idx,pos) ->
       let dim = List.length idx in
       let new_et = Array (et, dim) in
@@ -626,7 +648,8 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (fv,n_tl) = fresh_tvar tlist in
       let lt = List fv in
       let (n_tl,new_et) = must_unify lt et n_tl pos in
-      let (n_tlist,n_type) = List.fold_left (fun (type_list,et) l -> gather_type_info_exp_x prog l type_list et) (n_tl,new_et) es  in
+      let (n_tlist,n_type) = List.fold_left (fun (type_list,et) l -> 
+        gather_type_info_exp_x prog l type_list et) (n_tl,new_et) es  in
       (n_tlist,n_type)
   | IP.ListHead (a, pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
@@ -645,7 +668,8 @@ and gather_type_info_exp_x prog a0 tlist et =
       (n_tlist,lt)
   | IP.List (es,pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
-      let (n_tl,r) = List.fold_left (fun (type_list,et) l -> gather_type_info_exp_x prog l type_list et) (n_tl,fv) es  in
+      let (n_tl,r) = List.fold_left (fun (type_list,et) l -> 
+        gather_type_info_exp_x prog l type_list et) (n_tl,fv) es  in
       let lt = List r in
       let (n_tlist,r) = must_unify lt et n_tl pos in
       (n_tlist,r)
@@ -705,6 +729,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
   | IP.LexVar(t_ann, ls1, ls2, pos) ->
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) tlist ls1  in
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
+      let n_tl = List.fold_left (fun tl e -> fst(gather_type_info_exp prog e tl (Int))) n_tl ls2 in
       n_tl
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
@@ -777,7 +802,8 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
         let args_exp_types = List.map (fun t -> (t)) args_ctypes in
         let (n_tl,n_typ) = gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
         let tmp_list = List.combine args args_exp_types in
-        let n_tlist = List.fold_left (fun tl (arg,et) -> fst(gather_type_info_exp prog arg tl et )) n_tl tmp_list in
+        let n_tlist = List.fold_left (fun tl (arg,et) ->
+          fst(gather_type_info_exp prog arg tl et )) n_tl tmp_list in
         n_tlist             
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
@@ -802,6 +828,25 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
     )
+
+and gather_type_info_term_ann prog tann tlist =
+  match tann with
+  | IP.TermU tid
+  | IP.TermR tid -> begin try
+      let pos = tid.IP.tu_pos in
+      let sid = tid.IP.tu_sid in
+      let utdef = I.look_up_ut_def_raw prog.I.prog_ut_decls sid in
+      let param_types = List.map (fun (t, _) -> trans_type prog t pos) utdef.I.ut_typed_params in
+      let exp_et_list = List.combine tid.IP.tu_args param_types in
+      let n_tlist = List.fold_left (fun tl (arg, et) -> 
+        fst (gather_type_info_exp prog arg tl et)) tlist exp_et_list in
+      n_tlist
+    with
+    | Not_found -> failwith ("gather_type_info_term_ann: " ^ tid.IP.tu_sid ^ " cannot be found")
+    | Invalid_argument _ -> failwith ("number of arguments for unknown temporal " ^ tid.IP.tu_sid ^ " does not match")
+    | _ -> failwith ("type error: unknown temporal " ^ tid.IP.tu_sid)
+    end
+  | _ -> tlist
 
 and gather_type_info_b_formula prog b0 tlist =
   Debug.no_eff_2 "gather_type_info_b_formula" [false;true] 
@@ -1423,7 +1468,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           let args_exp_types = List.map (fun t -> (t)) args_ctypes in
           let (n_tl,_) = gather_type_info_var r tlist HpT pos in (*Need to consider about  pos*)
           let args_expt = List.combine args args_exp_types in
-          let n_tl = List.fold_left ( fun tl (arg,et) -> fst(gather_type_info_exp_x prog arg tl et)) n_tl args_expt in
+          let n_tl = List.fold_left ( fun tl (arg,et) ->
+            fst(gather_type_info_exp_x prog arg tl et)) n_tl args_expt in
           n_tl
         else
           Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }

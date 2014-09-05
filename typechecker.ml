@@ -352,10 +352,12 @@ and check_bounded_term_x prog ctx post_pos =
         (pr_list !CP.print_exp) (fun _ -> "")
         (fun _ -> check_bounded_one_measures m es) m
   in 
-  
-  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx, [])
+
+  (* need to perform boundedness check at recursive call *)
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk 
+      || not (!Globals.term_bnd_pre_flag)) then (ctx, [])
   else 
-    let ctx = Term.strip_lexvar_lhs ctx in
+    (* let ctx = Term.strip_lexvar_lhs ctx in *)
     match ctx with
       | CF.Ctx es ->  
             let m = match es.CF.es_var_measures with
@@ -419,7 +421,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************)
-	    let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
+            let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
             let ctx,ext_base = if (!Globals.ann_vp) && (not has_lexvar) then
               check_varperm prog proc spec ctx b.CF.formula_struc_base pos_spec 
             else (ctx,b.CF.formula_struc_base)
@@ -432,7 +434,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
 	    (* Termination: Move lexvar to es_var_measures *)
-	    let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
+	    (* let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in *)
             let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[],[], [], [],true) | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) in            stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
@@ -446,6 +448,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 
       | CF.EInfer b ->
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
+            let itnt = b.CF.formula_inf_tnt in
             let postf = b.CF.formula_inf_post in
             let postxf = b.CF.formula_inf_xpost in
             let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -519,7 +522,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             in
             let _ = proc.proc_stk_of_static_specs # push einfer in
             let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
-            let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
+            (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
+            (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
+            let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
+              let typ = CP.type_of_spec_var v in
+              if is_RelT typ then (vr@[v], vt, vi)
+              else if is_FuncT typ then (vr, vt@[v], vi)
+              else (vr, vt, vi@[v])) ([], [], []) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
 (*              if old_vars=[] then *)
@@ -573,6 +582,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
+                    CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
+                    CF.es_infer_tnt = es.CF.es_infer_tnt || itnt;
                     CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
@@ -619,6 +630,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       CF.formula_struc_continuation = Some c;
                       CF.formula_struc_pos = pos_spec;}
                 | _ -> c in
+            (* Template: Restore template vars in specs *)
+            let new_c =
+              if vars_templ = [] then new_c 
+              else CF.EInfer { b with 
+                CF.formula_inf_vars = vars_templ;
+                CF.formula_inf_continuation = new_c; } 
+            in
             (new_c,[],rel,hprel,vars_hp_rel,post_hps,unk_map,f)
       | CF.EList b -> 
 	        let (sl,pl,rl,hprl,selhps,sel_posthps,unk_map,bl) = List.fold_left (fun (a1,a2,a3,a4,a5,a6,a7,a8) (l,c) ->
@@ -2735,9 +2753,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     begin
                     if (not !Globals.web_compile_flag) then
                     print_endline "";
-                    print_endline "\n\n*************************************";
+                    print_endline "\n\n******************************";
                     print_endline "******* SPECIFICATION ********";
-                    print_endline "*************************************";
+                    print_endline "******************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
                     end
                   in
@@ -3324,7 +3342,7 @@ let ext_pure_check_procs iprog prog proc_names error_traces=
   let _ = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
   []
 
-let check_prog iprog (prog : prog_decl) =
+let rec check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
     Some (open_out (!Globals.cpfile))
   )
@@ -3377,7 +3395,7 @@ let check_prog iprog (prog : prog_decl) =
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
-            b,Term.phase_num_infer_whole_scc prog scc 
+            b, Term.phase_num_infer_whole_scc prog scc 
           end
         else true,prog
       in
@@ -3415,6 +3433,16 @@ let check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
+      let _ = 
+        let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
+        if inf_templs = [] then () 
+        else if !Globals.templ_term_inf then  
+          Terminf.infer_rank_template_init prog inf_templs
+        else Template.collect_and_solve_templ_assumes prog inf_templs 
+      in
+      let _ = Ti.solve is_all_verified2 prog in
+      let prog = Ti2.update_specs_prog prog in
+      let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
       let updated_scc = List.fold_left (fun r proc_id ->
           try
@@ -3427,13 +3455,19 @@ let check_prog iprog (prog : prog_decl) =
   ) (prog,[]) proc_scc 
   in 
 
+  let _ = 
+    if !Globals.gen_templ_slk then Template.gen_slk_file prog
+    else ()
+  in
+  
+  let _ = Term.term_check_output () in
+
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let _ =  match cout_option with
     | Some cout -> close_out cout
     | _ -> ()
-  in 
-  Term.term_check_output ()
+  in ()
 	    
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 

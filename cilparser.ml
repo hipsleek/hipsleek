@@ -1275,6 +1275,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Func (id, el, pos) -> 
               e (* TODO *)
+        | Ipure.Template _ -> e
         | Ipure.BExpr _ -> e
   ) in
   match exp with
@@ -1523,6 +1524,8 @@ and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl)
       Iast.prog_coercion_decls = main_prog.Iast.prog_coercion_decls @ aux_prog.Iast.prog_coercion_decls;
       Iast.prog_hp_decls = main_prog.Iast.prog_hp_decls @ aux_prog.Iast.prog_hp_decls;
       Iast.prog_hp_ids = main_prog.Iast.prog_hp_ids @ aux_prog.Iast.prog_hp_ids;
+      Iast.prog_templ_decls = main_prog.Iast.prog_templ_decls @ aux_prog.Iast.prog_templ_decls;
+      Iast.prog_ut_decls = main_prog.Iast.prog_ut_decls @ aux_prog.Iast.prog_ut_decls;
   } in
   newprog
 
@@ -1536,6 +1539,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let func_decls : Iast.func_decl list ref = ref [] in
   let rel_decls : Iast.rel_decl list ref = ref [] in
   let rel_ids : (typ * ident) list ref = ref [] in
+  let templ_decls: Iast.templ_decl list ref = ref [] in
+  let ut_decls: Iast.ut_decl list ref = ref [] in
   let axiom_decls : Iast.axiom_decl list ref = ref [] in
   let hopred_decls : Iast.hopred_decl list ref = ref [] in
   let proc_decls : Iast.proc_decl list ref = ref [] in
@@ -1623,6 +1628,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       Iast.prog_func_decls = !func_decls;
       Iast.prog_rel_decls = !rel_decls;
       Iast.prog_rel_ids = !rel_ids;
+      Iast.prog_templ_decls = !templ_decls;
+      Iast.prog_ut_decls = !ut_decls;
       Iast.prog_axiom_decls = !axiom_decls;
       Iast.prog_hopred_decls = !hopred_decls;
       Iast.prog_proc_decls = !proc_decls;

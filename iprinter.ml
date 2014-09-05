@@ -236,6 +236,7 @@ let rec string_of_formula_exp = function
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.Func (a, i, _)     ->  
         a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
+  | P.Template t -> t.P.templ_id ^ "(" ^ (string_of_formula_exp_list t.P.templ_args) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
         (* An Hoa : print the array access *)
         a ^ (match p with 
@@ -253,6 +254,22 @@ let rec string_of_formula_exp = function
 (* | BagIntersect of (exp list * loc) *)
 (* | BagDiff of (exp * exp * loc) *)
   | P.BExpr f1 -> "BExpr(" ^ string_of_pure_formula f1 ^ ")"
+
+and string_of_term_ann a =
+  match a with
+    | P.Term -> "Term"
+    | P.Loop -> "Loop"
+    | P.MayLoop -> "MayLoop"
+    | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
+    | P.Fail f -> match f with
+        | P.TermErr_May -> "TermErr_May"
+        | P.TermErr_Must -> "TermErr_Must"
+
+and string_of_term_id uid = 
+  "@" ^ uid.P.tu_fname ^ 
+  "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
+  (!P.print_formula uid.P.tu_cond) ^ "]"
 
 and string_of_p_formula pf =
 match pf with 
@@ -396,7 +413,6 @@ and string_of_b_formula (pf,il) =
   (* | P.XPure _ -> Error.report_no_pattern() *)
    (* | _ -> "bag constraint" *)
 
-
 (*  | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -405,11 +421,8 @@ and string_of_b_formula (pf,il) =
 	  (* lists and list formulae *)
 *)
 
-and concat_string_list_string strings =
-    ""
-		
 (* pretty printing for a pure formula *)
-and string_of_pure_formula = function
+and string_of_pure_formula f = match f with 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"
   | P.AndList b -> List.fold_left  (fun a (l,c)->
@@ -626,10 +639,12 @@ and  string_of_struc_formula c = match c with
 	  let l2 = if !print_assume_struc then "\n struc: "^(string_of_struc_formula s) else "" in
 	  l1^l2
 	| F.EInfer{F.formula_inf_vars = lvars;
+         F.formula_inf_tnt = itnt;
 			   F.formula_inf_post = postf;
 			   F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
+        let ps = ps ^ (if itnt then "@term " else "") in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
