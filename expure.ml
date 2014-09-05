@@ -142,11 +142,17 @@ let add_index_to_view view =
 let add_index_to_views view_list =
   List.map (fun v -> add_index_to_view v) view_list
 
-let widen_disj disj1 disj2 =
+let widen_disj_x disj1 disj2 =
   let pair_list = List.combine disj1 disj2 in
   List.map (fun ((b1,f1), (b2,f2)) ->
       (b1,Fixcalc.widen f1 f2)
   ) pair_list
+
+let widen_disj disj1 disj2 =
+  let pr = EPureI.string_of_disj in
+  Debug.no_2 "widen_disj" pr pr
+  pr (fun _ _ ->
+      widen_disj_x disj1 disj2) disj1 disj2
 
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
@@ -338,8 +344,7 @@ let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
 let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
-  (* let view_list = add_index_to_views view_list in *)
-  (* let all_views = add_index_to_views all_views in *)
+  let _ = List.iter (fun view -> Debug.ninfo_hprint (add_str "view" Cprinter.string_of_view_decl) view no_pos) view_list in
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
   let rec helper num view_list inv_list =
@@ -359,7 +364,7 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       ) [] view_list in
       helper (num - 1) view_list inv_list
   in
-  let inv_list = helper 10 view_list inv_list in
+  let inv_list = helper 5 view_list inv_list in
   let inv_list = wrap_up_exists_index_var inv_list in
   let _ = List.iter (fun (vc,inv) ->
       (* this version is being printed *)

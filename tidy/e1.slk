@@ -75,3 +75,7 @@ Expect:
 //(9)
 checkentail x::node<1,x_123> & x_123=y  |- true.
 print residue.
+
+//(10)
+checkentail x::node<1,y> & y=x'  |- true.
+print residue.

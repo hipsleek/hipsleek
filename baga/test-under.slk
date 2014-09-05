@@ -1,0 +1,8 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv_sat BG([self],true)
+     .

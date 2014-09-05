@@ -2294,7 +2294,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
-      let cviews0_with_index = (* Expure.add_index_to_views *) cviews0 in
+      let cviews0_with_index = Expure.add_index_to_views cviews0 in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
