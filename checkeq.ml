@@ -1338,7 +1338,15 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
   in
   let checkeq_mix_formulas_one mp1 mp2 mtl = (
     match mp1,mp2 with
-      | MCP.MemoF mp1,MCP.MemoF mp2  -> report_error no_pos "Have not support comparing 2 MemoF yet"
+      | MCP.MemoF _,MCP.MemoF _  -> 
+            if (not !allow_threads_as_resource) then
+              report_error no_pos "Have not support comparing 2 MemoF yet"
+            else
+              (* temporarily convert to pure formula*)
+              let _ = print_endline ("Have not support comparing 2 MemoF yet") in
+              let p1 = MCP.fold_mem_lst (mkTrue no_pos) false true mp1 in
+              let p2 = MCP.fold_mem_lst (mkTrue no_pos) false true mp2 in
+              checkeq_p_formula_with_diff hvars p1 p2 mtl
       | MCP.OnePF f1, MCP.OnePF f2 ->  checkeq_p_formula_with_diff hvars f1 f2 mtl
       | _,_ ->  (false, List.map (fun mt -> (mt,CP.mkTrue no_pos)) mtl)
   ) in
