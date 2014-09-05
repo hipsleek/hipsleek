@@ -297,7 +297,7 @@ foo:  case {
  ensures false & false; 
   }
 ========================================================
-# mult1.ss 
+# mult1.ss (DONE)
 
 Multiple return LOOP not detected properly.
 
