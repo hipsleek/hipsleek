@@ -293,7 +293,7 @@ and map_ann_uid f_f f_e uid =
     tu_sol = map_opt (fun (ann, el) ->
       (map_term_ann f_f f_e ann),
       List.map f_e el) uid.tu_sol; }
-
+      
 let is_False cp = match cp with
   | BForm (p,_) -> 
         begin
@@ -3189,6 +3189,9 @@ and subst_var_par (sst:(spec_var * spec_var) list) (o : spec_var) : spec_var =
 and subst_one_var_list s l = List.map (subst_var s) l
 
 and par_subst sst f = apply_subs sst f
+
+and subst_term_ann sst ann =
+  map_term_ann (apply_subs sst) (e_apply_subs sst) ann
 
 and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
   | BForm (bf,lbl) -> BForm ((b_apply_subs sst bf),lbl)

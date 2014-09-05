@@ -5786,6 +5786,7 @@ and eliminate_exist_from_LHS_x qvars qh qp qt qfl pos estate =
   let new_ctx = Ctx {estate with
       es_formula = new_baref;
       es_ante_evars = ws @ estate.es_ante_evars;
+      es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
       es_unsat_flag = estate.es_unsat_flag;} 
   in new_ctx
 
@@ -6684,6 +6685,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
                   es_formula = new_baref (* estate.es_formula *);
                   es_ante_evars = ws @ estate.es_ante_evars;
+                  es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
                   es_unsat_flag = estate.es_unsat_flag;} in
               (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
               (* WN : need to drop outer Exist to avoid looping *)
