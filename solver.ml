@@ -7033,7 +7033,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
                               (*use global var is dangerous, should pass as parameter*)
                               (*Do "h2 = HEmp" and "is_rhs_emp" 
-                                already imply "!rhs_rest_emp" *)
+                                already imply "!rhs_rest_emp" ??? Loc: not correct. examples of SMT compete will fail. *)
                               if (!Globals.do_classic_frame_rule && is_rhs_emp
                                   (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
                                   && not (is_resourceless_h_formula prog prep_h1)
