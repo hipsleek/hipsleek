@@ -79,3 +79,7 @@ print residue.
 //(10)
 checkentail x::node<1,y> & y=x'  |- true.
 print residue.
+
+//(11)
+checkentail x::node<1,y_0> & y_0=null & y_123=null |- y_0=null.
+print residue.

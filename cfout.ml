@@ -381,4 +381,4 @@ let tidy_print e =
     if (!Globals.print_en_tidy) then shorten_formula (inline_print e)
     else e
   in
-  Hashtbl.reset n_tbl; Hashtbl.reset id_tbl; new_e
+  (* Hashtbl.reset n_tbl; Hashtbl.reset id_tbl; *) new_e
