@@ -56,6 +56,14 @@ let rec partition_cond_list cond_list =
         else (mkAnd c d)::(mkAnd (mkNot c) d)::(helper (mkAnd c (mkNot d)) ds)
     in helper c dcs
     
+let get_full_disjoint_cond_list cond_list = 
+  let disj_cond_lst = partition_cond_list cond_list in
+  let full_disj_cond_lst =
+    let rem_cond = mkNot (CP.join_disjunctions disj_cond_lst) in
+    if is_sat rem_cond then disj_cond_lst @ [rem_cond]
+    else disj_cond_lst
+  in List.map om_simplify full_disj_cond_lst
+    
 let seq_num = ref 0    
     
 let tnt_fresh_int () = 
@@ -215,7 +223,8 @@ let update_case_spec_with_icond_proc fn cond icond =
     Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
 let update_case_spec_with_icond_list_proc fn cond icond_lst =
-  update_case_spec_proc fn cond (fun _ -> 
+  if is_empty icond_lst then ()
+  else update_case_spec_proc fn cond (fun _ -> 
     Cases (List.map (fun c -> (c, Unknown)) icond_lst))
     
 (* From TNT spec to struc formula *)
@@ -545,6 +554,7 @@ let find_scc_edges g scc =
 (* Template Utilies *)
 let templ_of_term_ann ann =
   match ann with
+  | CP.TermR uid 
   | CP.TermU uid ->
     let args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
     let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
@@ -605,12 +615,17 @@ let infer_abductive_cond prog ann ante conseq =
       (CP.split_conjunctions conseq) in
     if not (imply ante (CP.join_conjunctions bool_conseq)) then None
     else
-      let conseq = CP.join_conjunctions conseq in
+      let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
+         not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
+      let abd_conseq = CP.join_conjunctions conseq in
       let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann ann in
       let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
-      let abd_ctx = mkAnd ante abd_cond in    
-  
-      let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) conseq abd_templ_id in
+      let abd_ctx = mkAnd abd_ante abd_cond in
+      
+      (* let _ = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)
+      (* let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
+      
+      let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
       let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
       let _ = Tlutils.oc_solver := true in 
       let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
@@ -625,6 +640,11 @@ let infer_abductive_cond prog ann ante conseq =
         then Some icond
         else None
       | _ -> None
+
+let infer_abductive_cond prog ann ante conseq =
+  let pr = !CP.print_formula in
+  Debug.no_2 "infer_abductive_cond" pr pr (pr_option pr) 
+  (fun _ _ -> infer_abductive_cond prog ann ante conseq) ante conseq
 
 let infer_abductive_icond_edge prog g e =
   let _, rel, _ = e in
@@ -692,13 +712,7 @@ let infer_abductive_icond_vertex prog g v =
   | [] -> []
   | (uid, _)::_ -> 
     let icond_lst = List.map snd abd_conds in
-    let disj_icond_lst = partition_cond_list icond_lst in
-    let full_disj_icond_lst =
-      let rem_icond = mkNot (CP.join_disjunctions disj_icond_lst) in
-      if is_sat rem_icond then disj_icond_lst @ [rem_icond]
-      else disj_icond_lst
-    in
-    let full_disj_icond_lst = List.map om_simplify full_disj_icond_lst in
+    let full_disj_icond_lst = get_full_disjoint_cond_list icond_lst in
     (* let _ = print_endline ("full_disj_icond_lst: " ^      *)
     (*   (pr_list !CP.print_formula full_disj_icond_lst)) in *)
     let _ = update_case_spec_with_icond_list_proc 
@@ -800,7 +814,7 @@ let subst sol ann =
   (* let _ = print_endline ("Case spec @ scc " ^ (print_scc_num scc)) in *)
   (* let _ = pr_proc_case_specs () in                                    *)  
   subst_sol_term_ann sol ann
-
+  
 (* Proving non-termination or infering abductive condition           *)
 (* for case analysis from an interesting condition                   *)
 (* For each return assumption, we will obtain three kinds of result: *)
@@ -810,6 +824,10 @@ let subst sol ann =
 type nt_res = 
   | NT_Yes
   | NT_No of (CP.formula option)
+
+let print_nt_res = function
+  | NT_Yes -> "NT_Yes"
+  | NT_No ic -> "NT_No[" ^ (pr_option !CP.print_formula ic) ^ "]" 
 
 let is_nt_yes = function
   | NT_Yes -> true
@@ -831,7 +849,7 @@ let rec infer_abductive_cond_list prog ann ante conds =
       | None -> infer_abductive_cond_list prog ann ante cs
       | Some _ -> ic
 
-let proving_non_termination_one_trrel prog cond trrel = 
+let proving_non_termination_one_trrel prog cond icond trrel = 
   let ctx = trrel.ret_ctx in
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then None (* No result for infeasible context *)
@@ -842,21 +860,68 @@ let proving_non_termination_one_trrel prog cond trrel =
     let ntres =
       if List.exists (fun c -> imply eh_ctx c) rhs_conds then Some NT_Yes
       else 
-        let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rhs_conds in
+        let rhs_iconds = List.map (fun ann -> 
+          subst_cond_with_ann trrel.termr_rhs_params ann icond) trrel.termr_lhs in
+        let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rhs_iconds in
         Some (NT_No ir)
     in ntres
+    
+let proving_non_termination_one_trrel prog cond icond trrel = 
+  let pr1 = !CP.print_formula in
+  let pr2 = print_ret_trel in
+  Debug.no_3 "proving_non_termination_one_trrel" pr1 pr1 pr2 (pr_option print_nt_res)
+    (fun _ _ _ -> proving_non_termination_one_trrel prog cond icond trrel)
+    cond icond trrel
 
-let proving_non_termination_trrels prog cond trrels =  
-  let ntres = List.map (proving_non_termination_one_trrel prog cond) trrels in
+let proving_non_termination_trrels prog cond icond trrels =  
+  let ntres = List.map (proving_non_termination_one_trrel prog cond icond) trrels in
   let ntres = List.concat (List.map opt_to_list ntres) in
   if ntres = [] then None, []
   else if List.for_all is_nt_yes ntres then Some CP.Loop, []
   else 
-    let ic_list = List.map cond_of_nt_res ntres in
-    None, ic_list
+    let ic_list = List.concat (List.map (fun r -> 
+      opt_to_list (cond_of_nt_res r)) ntres) in
+    let full_disj_ic_list = get_full_disjoint_cond_list ic_list in
+    None, full_disj_ic_list
+
+(* Note that each vertex is a unique condition *)        
+let proving_non_termination_vertex prog trrels tg v =
+  try 
+    let _, rel, _ = TG.find_edge tg v v in
+    match rel.termu_lhs with
+    | TermU uid -> 
+      let ntres, abd_conds = proving_non_termination_trrels prog 
+        uid.CP.tu_cond uid.CP.tu_icond trrels in
+      let _ = match ntres with
+      | Some _ -> () (* Non-termination *)
+      | None -> 
+        update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond abd_conds
+        (* ; pr_proc_case_specs prog *)
+      in ntres, abd_conds
+    | _ -> None, []
+  with _ -> None, [] 
+
+let rec proving_non_termination_scc acc_abd_conds prog trrels tg scc =
+  match scc with
+  | [] -> 
+    let orig_scc = List.map fst acc_abd_conds in
+    let tg = update_graph_with_icond tg orig_scc acc_abd_conds in
+    raise (Restart_with_Cond tg)
+  | v::vs -> 
+    let ntres, abd_conds = proving_non_termination_vertex prog trrels tg v in
+    
+    (* let _ = print_endline ("Vertex " ^ (string_of_int v)) in       *)
+    (* let _ = print_endline (pr_list !CP.print_formula abd_conds) in *)
+    
+    match ntres with
+    | Some ann -> update_ann scc (subst (ann, []))
+    | _ -> 
+      let acc_abd_conds = acc_abd_conds @ [(v, abd_conds)] in
+      proving_non_termination_scc acc_abd_conds prog trrels tg vs
   
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =
+  (* let _ = print_endline ("Analyzing scc: " ^ (pr_list string_of_int scc)) in *)
   (* Term with a ranking function for each scc's node *)
   let res = infer_ranking_function_scc prog tg scc in
   match res with
@@ -865,14 +930,5 @@ let aux_solve_turel_one_scc prog trrels tg scc =
     update_ann scc (fun ann ->
       let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
       subst res ann)
-  | None ->
-    let abd_conds = infer_abductive_icond prog tg scc in 
-    if abd_conds = [] then raise Should_Finalize
-    else if List.exists (fun (_, conds) ->
-      List.exists CP.isConstTrue conds) abd_conds then
-      (* Loop || _ *)
-      update_ann scc (subst (CP.MayLoop, []))
-    else
-      let tg = update_graph_with_icond tg scc abd_conds in
-      (* let _ = print_endline (print_graph_by_rel tg) in *)
-      raise (Restart_with_Cond tg)
+  | None -> proving_non_termination_scc [] prog trrels tg scc
+  
