@@ -2,16 +2,33 @@ UTPre@f fpre(int x).
 UTPost@f fpost(int x).
 
 int fact(int x)
-  
+
+  infer [@term]
+  requires true
+  ensures true; 
+ 
+  /*
+  case {
+    x = 0 -> requires Term ensures res=1;
+    x > 0 -> requires Term[x] ensures res=n+1;
+    x < 0 -> requires Loop ensures false;
+  }
+
+
+  case {
+    x = 0 -> requires Term ensures res=1;
+    x > 0 -> requires Term[x] ensures res=n+1;
+    x < 0 -> requires Loop ensures false;
+  }
+
   infer [@term]
   requires true & fpre(x)
   ensures res>=1 & fpost(x); //maybe just use TPost@f
-  
-  /*
+
   case {
-    x = 0 -> requires Term ensures res>=1;
-    x > 0 -> requires Term[x] ensures res>=1;
-    x < 0 -> requires Loop ensures res>=1;
+    x = 0 -> requires Term ensures res1;
+    x > 0 -> requires Term[x] ensures res=n+1;
+    x < 0 -> requires Loop ensures false;
   }
   */
   //requires true
