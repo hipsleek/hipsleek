@@ -1,0 +1,62 @@
+9009 - unsound
+6555 - unsound
+4703 - unsound Mar12
+2701 - Oct11
+Entail (1): Valid.
+ true & v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & v2<=sm2 & 
+ v3<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & (n1+1+1)!=k & n!=k1 & 
+ v3<=s1 & k1<n & n1+1+1=n & v2<=s1 & sm2=s1 & k=k1 & k1<(n1+1) & (n1+1)!=k1 &
+ {FLOW,(27,27)=__norm} LOC: _0_0
+3713:7984339e86f5 
+ - good
+Testing changeset 4208:be832ff7500f (730 changesets remaining, ~9 tests)
+<1>true & v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & v2<=sm2 & v3<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & (n1+1+1)!=k & n!=k1 & v3<=s1 & k1<n & n1+1+1=n & v2<=s1 & v2<=s1 & sm2=s1 & k=k1 & k1<(n1+1) & (n1+1)!=k1 & k1<(n1+1) & (n1+1)!=k1 & {FLOW,(17,18)=__norm}
+
+Testing changeset 4543:6c213fde657e (365 changesets remaining, ~8 tests)
+681 files updated, 0 files merged, 5 files removed, 0 files unresolved
+
+<1>true&flted_17_104!=k_102 & n!=k1 & n!=k1 & v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & v3<=sm2 & v2<=sm2 & n!=k1 & v3<=s1 & k1<n & k=k1 & v2<=s1 & v2<=s1 & sm2=s1 & n1+1+1=n & k1<(n1+1) & (n1+1)!=k1 & k1<(n1+1) & (n1+1)!=k1&{FLOW,(17,18)=__norm}
+<2>true&flted_16_191!=flted_16_190 & n=k1 & n=k1 & v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1) & (n1+1)!=k & v2<=sm2 & v3<=sm2 & n=k1 & v3=s1 & k+1=k1 & n1+1+1=n & s1<=sm2&{FLOW,(17,18)=__norm}
+
+
+Testing changeset 4500:6221d0a47dde (214 changesets remaining, ~7 tests)
+207 files updated, 0 files merged, 1532 files removed, 0 files unresolved
+
+Entail (1): Valid. 
+ <1>true & @zero[] & v2<=sm2 & v3<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & (n1+1+1)!=k & n!=k1 & v3<=s1 & k1<n & n1+1+1=n & v2<=s1 & sm2=s1 & k=k1 & k1<(n1+1) & (n1+1)!=k1 & {FLOW,(17,18)=__norm}[][[ SEARCH ==>  Fold ==>  SEARCH ==>  Match ==>  SEARCH ==>  Fold ==>  SEARCH ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+
+Testing changeset 4377:050ed48ce1ed (112 changesets remaining, ~6 tests)
+1236 files updated, 0 files merged, 80 files removed, 0 files unresolved
+loris@loris-desktop:/home2/loris/hg/sl_default$ TypeError: QStatusBar.showMessag
+good (1)
+
+Testing changeset 4580:48e2821a13d7 (56 changesets remaining, ~5 tests)
+152 files updated, 0 files merged, 0 files removed, 0 files unresolved
+
+ <1>true&@zero[] & v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & v2<=sm2 & v3<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & (n1+1+1)!=k & n!=k1 & v3<=s1 & k1<n & n1+1+1=n & v2<=s1 & sm2=s1 & k=k1 & k1<(n1+1) & (n1+1)!=k1&{FLOW,(17,18)=_
+
+Testing changeset 4679:6f72ce884caa (28 changesets remaining, ~4 tests)
+
+ <1>true&v3<=sm2 & v2<=sm2 & v2<=sm2 & k<(n1+1) & (n1+1)!=k & v2<=sm2 & v3<=sm2 & k<(n1+1) & (n1+1)!=k & k<(n1+1+1) & (n1+1+1)!=k & n!=k1 & v3<=s1 & k1<n & n1+1+1=n & v2<=s1 & sm2=s1 & k=k1 & k1<(n1+1) & (n1+1)!=k1&{FLOW,(17,18)=__norm}[]
+
+Testing changeset 4695:266afac7615e (14 changesets remaining, ~3 tests)
+644 files updated, 0 files merged, 39 files removed, 0 files unresolved
+
+==false
+
+Testing changeset 4671:fbbf5e09adb1 (7 changesets remaining, ~2 tests)
+9 files updated, 0 files merged, 27 files removed, 0 files unresolved
+
+bad
+
+Testing changeset 4663:c6c2df6d56e9 (3 changesets remaining, ~1 tests)
+20 files updated, 0 files merged, 2 files removed, 0 files unresolved
+
+The first bad revision is:
+changeset:   4663:c6c2df6d56e9
+branch:      infer2r-lbl
+parent:      4543:6c213fde657e
+parent:      4564:295e8f013e6d
+user:        Cristian Gherghina <cris.gherghina@gmail.com>
+date:        Sun Mar 04 10:22:57 2012 +0800
+summary:     merged default, testing seems ok

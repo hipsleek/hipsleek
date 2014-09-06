@@ -2145,6 +2145,10 @@ let mix_of_pure f =
 let pure_of_mix f = match f with
   | OnePF f -> f
   | MemoF f -> fold_mem_lst_with_complex (mkTrue no_pos) false true f 
+
+let memo_of_mix f = match f with
+  | OnePF pf -> memoise_add_pure_N (mkMTrue no_pos) pf
+  | MemoF mf -> mf
   
 let mkMFalse_no_mix = mkMFalse
 
@@ -2916,3 +2920,14 @@ let check_pointer_dis_sat mf = match mf with
 	| OnePF f -> 
 		let r,b = check_pointer_dis_sat f in
 		b, OnePF r
+
+let get_rel_ctr (mf: mix_formula) (vl: spec_var list) : mix_formula =
+  match mf with
+  | MemoF f -> 
+      MemoF (List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) f)
+  | OnePF f -> 
+      let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
+      let simp_mf = List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) mf in
+      OnePF (pure_of_mix (MemoF simp_mf))

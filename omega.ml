@@ -82,6 +82,7 @@ let rec omega_of_exp e0 = match e0 with
                 (* } *)
             in rr
       in r
+  | Template t -> omega_of_exp (exp_of_template t)
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)
@@ -201,17 +202,16 @@ let omega_of_formula i pr_w pr_s f  =
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =
-  let (pr_w,pr_s) = no_drop_ops in
+  if has_template_formula f then None else
+  let (pr_w, pr_s) = no_drop_ops in
   try 
-    Some(omega_of_formula i pr_w pr_s f)
+    Some (omega_of_formula i pr_w pr_s f)
   with | _ -> None
 
-
-	  
-(* let omega_of_formula_old i f  = *)
-(*   let pr = !print_formula in *)
-(*   Debug.no_1_num i "omega_of_formula_old"  *)
-(*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
+let omega_of_formula_old i f  =
+   let pr = !print_formula in
+   Debug.no_1_num i "omega_of_formula_old"
+       pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
 let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
@@ -739,7 +739,50 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
   Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
-
+  
+let trans_bool (f: formula): formula =
+  let get_bool_val is_lt e1 e2 pos = (* e1 < e2 *)
+    let bv = get_boolean_var e1 in
+    match bv with
+    | Some v -> 
+      let i = get_num_int_opt e2 in
+      begin match i with
+      | Some i -> 
+        let c = if is_lt then 1 else 0 in
+        if i <= c then Some (mkNot (mkPure (BVar (v, pos))) None pos) (* !v *)
+        else None
+      | None -> None end
+    | None ->  
+      let bv = get_boolean_var e2 in
+      match bv with
+      | Some v ->
+        let i = get_num_int_opt e1 in
+        begin
+          match i with
+          | Some i ->
+            let c = if is_lt then 0 else 1 in
+            if i >= c then Some (mkPure (BVar (v, pos))) (* v *)
+            else None
+          | None -> None end
+      | None -> None
+  in 
+  let f_f f =
+    match f with
+    | BForm (bf, _) ->
+      let (pf, _) = bf in
+      begin match pf with
+      | Lt (e1, e2, pos) -> get_bool_val true e1 e2 pos
+      | Lte (e1, e2, pos) -> get_bool_val false e1 e2 pos
+      | Gt (e1, e2, pos) -> get_bool_val true e2 e1 pos
+      | Gte (e1, e2, pos) -> get_bool_val false e2 e1 pos
+      | _ -> Some f end
+    | _ -> None
+  in transform_formula (nonef, nonef, f_f, somef, somef) f
+  
+let trans_bool (f: formula): formula =
+  let pr = !print_formula in
+  Debug.no_1 "Omega.trans_bool" pr pr trans_bool f
+  
 let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
   (* let _ = print_string ("\nomega_simplify: f
@@ -792,7 +835,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    Cpure.subst ss2  (match_vars (fv pe1) rel)
+	                    let r = Cpure.subst ss2 (match_vars (fv pe1) rel) in
+                      trans_bool r
 	                  end
 	                with
                       | Procutils.PrvComms.Timeout as exc ->
@@ -828,11 +872,19 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   end
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
-  Debug.no_1 "Omega.simplify_ops" !print_formula !print_formula (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
+  let pf = !print_pure in
+  Debug.no_1 "Omega.simplify_ops" pf pf 
+  (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 
 let simplify (pe : formula) : formula =
-  let pr x = None in 
-  simplify_ops pr pr pe
+  let pr_w, pr_s = no_drop_ops in
+  (* simplify_ops pr_w pr_s pe *)
+  let f_memo, subs, bvars = memoise_rel_formula [] pe in
+  if has_template_formula f_memo then pe
+  else
+    (* let res_memo = simplify_ops pr_w pr_s f_memo in *)
+    (* restore_memo_formula subs bvars res_memo *)
+    simplify_ops pr_w pr_s pe
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
@@ -1049,5 +1101,9 @@ let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
     flush log_all;
-  end;
+  end
+
+let get_model bnd_vars assertions =
+  let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
+  simplify inp_f
 

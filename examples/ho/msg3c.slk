@@ -1,0 +1,42 @@
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+
+//(1)
+checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * xxx::cell<3> 
+    |- c::MSG{%P}<xxx> * %P.
+print residue.
+
+
+
+//(2)
+checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * v::cell<3> 
+    |- c::MSG{%P}<v> * %P.
+print residue.
+
+
+/*
+
+  (exists n,v1. v1::cell<n> & n>0 & v1=v)
+
+   Note: the two entailments are similar
+
+Entail 1: Valid. 
+
+ <1>emp&flted_10_16=3&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists n: v::cell<n>&xxx=v & 0<n&{FLOW,(21,22)=__norm})[]]
+[[ COND ==>  Match ==>  SEARCH ==>  Match ==> ]]
+
+
+Entail 2: Valid. 
+
+ <1>emp&flted_17_26=3&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists n: v::cell<n>&0<n&{FLOW,(21,22)=__norm})[]]
+[[ COND ==>  Match ==>  SEARCH ==>  Match ==> ]]
+
+
+*/

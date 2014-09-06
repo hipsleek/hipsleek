@@ -1351,15 +1351,19 @@ and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->
-	  SuccCtx(List.map subs_crt_holes_ctx cl)
+	  SuccCtx(List.map (subs_crt_holes_ctx 12 ) cl)
 
-and subs_crt_holes_ctx (ctx : context) : context = 
+and subs_crt_holes_ctx_x (ctx : context) : context = 
   match ctx with
     | Ctx(es) -> Ctx(subs_holes_es es)
     | OCtx(c1, c2) ->
-	  let nc1 = subs_crt_holes_ctx c1 in
-	  let nc2 = subs_crt_holes_ctx c2 in
+	  let nc1 = subs_crt_holes_ctx_x c1 in
+	  let nc2 = subs_crt_holes_ctx_x c2 in
 	  OCtx(nc1, nc2)
+
+and subs_crt_holes_ctx i (ctx : context) : context = 
+  let pr = Cprinter.string_of_context in
+  Debug.no_1_num i "subs_crt_holes_ctx" pr pr subs_crt_holes_ctx_x ctx
 
 and subs_holes_es (es : Cformula.entail_state) : Cformula.entail_state = 
   (* subs away current hole list *)

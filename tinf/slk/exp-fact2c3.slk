@@ -1,0 +1,78 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
+ termAssume //x'!=0
+    x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ //termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & !b & fpost(x') --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & !b & fpost(x') --> fpost(x).
+
+ termAssume x=0 & b --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+term_infer.
+
+ termAssume 1<=v_int_13_954 & v_int_13_948!=0 & x'=v_int_13_948+1 & 
+!(v_bool_12_886') & x'!=0 & !(v_bool_12_886') & x=x' & x!=0 & x'!=0 & 
+v_int_13_885'=v_int_13_954+1 & 
+res=v_int_13_885' & fpost(v_int_13_882') --> fpost(x).
+
+ termAssume 1<=v_int_13_952 & x'=0+1 & !(v_bool_12_886') & x'!=0 & 
+!(v_bool_12_886') & x=x' & x!=0 & x'!=0 & v_int_13_885'=v_int_13_952+1 & 
+res=v_int_13_885' & fpost(0) --> fpost(x).
+
+ termAssume x'=0 & x=0 & x=x' & v_bool_12_886' & x'=x' & v_bool_12_886' & 
+v_int_12_880'=1 & res=v_int_12_880' --> fpost(x).
+
+ termAssume x'!=0 & x!=0 & x=x' & !(v_bool_12_886') & x'!=0 & 
+!(v_bool_12_886') & v_int_13_884'=1 & x'=v_int_13_882'+1 & 
+v_int_13_882'!=0 & fpre(x) --> fpre(v_int_13_882').
+
+ termAssume x'!=0 & x!=0 & x=x' & !(v_bool_12_886') & x'!=0 & 
+!(v_bool_12_886') & v_int_13_884'=1 & x'=v_int_13_882'+1 & 
+v_int_13_882'=0 & fpre(x) --> Term.
+
+term_infer.
+
+/*
+# exp-fact2c3.slk
+
+If we merge the first 2 term assume of
+rec post, we will end up with the desired result.
+
+f:  case {
+  1<=x -> requires emp & Term[7,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[5]
+ ensures emp & true; 
+  }
+
+*/

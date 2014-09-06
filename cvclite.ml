@@ -118,8 +118,11 @@ and cvcl_of_exp a = match a with
 	| CP.Tsconst _ ->
       failwith ("Tsconst not supported in cvclite")
 	| CP.InfConst _ -> Error.report_no_pattern ()
+	| CP.Template t -> cvcl_of_exp (CP.exp_of_template t)
 	| CP.Bptriple _ ->
       failwith ("cvcl_of_exp: Bptriple not supported in cvclite")
+	| CP.Tup2 _ ->
+      failwith ("cvcl_of_exp: Tup2 not supported in cvclite")
 
   
 and cvcl_of_b_formula b =

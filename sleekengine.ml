@@ -113,6 +113,8 @@ I.prog_view_decls = [];
 I.prog_func_decls = [];
 I.prog_rel_decls = [];
 I.prog_rel_ids = [];
+I.prog_templ_decls = [];
+I.prog_ut_decls = [];
 I.prog_hp_decls = [];
 I.prog_hp_ids = [];
 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -135,6 +137,8 @@ let cprog = ref {
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
     Cast.prog_rel_decls = []; (* An Hoa *)
+    Cast.prog_templ_decls = [];
+    Cast.prog_ut_decls = [];
     Cast.prog_hp_decls = [];
     Cast.prog_view_equiv = [];
     Cast.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -157,11 +161,15 @@ let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
 let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
+let should_infer_tnt = ref true
+
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];
+  iprog.I.prog_templ_decls <- [];
+  iprog.I.prog_ut_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
@@ -169,6 +177,8 @@ let clear_cprog () =
   !cprog.Cast.prog_view_decls <- [];
   !cprog.Cast.prog_rel_decls <- [];
   !cprog.Cast.prog_hp_decls <- [];
+  !cprog.Cast.prog_templ_decls <- [];
+  !cprog.Cast.prog_ut_decls <- [];
   (*!cprog.Cast.prog_left_coercions <- [];*)
   (*!cprog.Cast.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
@@ -391,6 +401,24 @@ let process_rel_def rdef =
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
+
+let process_templ_def tdef =
+  if Astsimp.check_data_pred_name iprog tdef.I.templ_name then
+	  let tmp = iprog.I.prog_templ_decls in
+	  try
+      iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
+      !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
+    with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
+  else print_endline (tdef.I.templ_name ^ " is already defined.")
+
+let process_ut_def utdef =
+  if Astsimp.check_data_pred_name iprog utdef.I.ut_name then
+	  let tmp = iprog.I.prog_ut_decls in
+	  try
+      iprog.I.prog_ut_decls <- (utdef::iprog.I.prog_ut_decls);
+      !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
+    with _ -> dummy_exception (); iprog.I.prog_ut_decls <- tmp 
+  else print_endline (utdef.I.ut_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
@@ -986,7 +1014,7 @@ let run_pairwise (iante0 : meta_formula) =
   let r = Tpdispatcher.tp_pairwisecheck pf in
   r
 
-let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
@@ -1054,20 +1082,29 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
         CP.SpecVar (HpT, v, Unprimed)
       with _ ->
-          Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
+        Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
-  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
+  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   ((res, rs,v_hp_rel), (ante,conseq))
 
-let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
+let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let nn = (sleek_proof_counter#get) in
-  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
+  let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass itype ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
+  
+let process_term_assume (iante: meta_formula) (iconseq: meta_formula) = 
+  let stab = [] in
+  let (stab, ante) = meta_to_formula iante false [] stab in
+  let fvs = CF.fv ante in
+  let fv_idents = List.map CP.name_of_spec_var fvs in
+  let (stab, conseq) = meta_to_formula iconseq false fv_idents stab in
+  let _ = Term.check_term_assume !cprog ante conseq in
+  ()
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1799,7 +1836,7 @@ let process_shape_extract sel_vnames=
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
-      let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
+      let (r, (cante, cconseq)) = run_infer_one_pass None [] iante0 conseq in
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then
          let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
@@ -2023,6 +2060,33 @@ let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype:
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
+let process_templ_solve (idl: ident list) = 
+  Template.collect_and_solve_templ_assumes !cprog idl
+
+(* Solving termination relation assumptions in Sleek *)  
+let process_term_infer () = 
+  begin 
+    Ti.solve !should_infer_tnt !cprog; 
+    Ti.finalize ();
+    should_infer_tnt := true
+  end
+
+let process_check_norm_x (f : meta_formula) =
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nCheckNorm "^nn in  
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### f = " ^ (string_of_meta_formula f)) else () in
+  let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
+  let (n_tl,cf) = meta_to_formula f false [] []  in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
+  let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
+  let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
+  let _ = print_string (num_id^": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
+  () (* TO IMPLEMENT*)
+
+let process_check_norm (f : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_1 "process_check_norm" pr (fun _ -> "?") process_check_norm_x f
+
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
@@ -2088,17 +2152,23 @@ let process_pairwise (f : meta_formula) =
     print_result rs num_id
   with _ -> print_exc num_id
 
-
-let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
+let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
-    try 
-      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
-      print_entail_result sel_hps valid rs num_id
+    try
+      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass itype ivars iante0) iconseq0 in
+      let res = print_entail_result sel_hps valid rs num_id in
+      let _ = match itype with
+      | Some INF_TERM -> should_infer_tnt := !should_infer_tnt && res
+      | _ -> () 
+      in res
     with ex -> 
         (* print_exc num_id *)
-        print_string "caught\n"; Printexc.print_backtrace stdout;
-        let _ = print_string ("\nEntailment Problem "^nn^(Printexc.to_string ex)^"\n") 
+        (if !Globals.trace_failure then (print_string "caught\n"; Printexc.print_backtrace stdout));
+        let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
+        let _ = match itype with
+        | Some INF_TERM -> should_infer_tnt := false
+        | _ -> () 
         in false
 
 let process_capture_residue (lvar : ident) = 
@@ -2106,7 +2176,6 @@ let process_capture_residue (lvar : ident) =
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
-
 
 let process_print_command pcmd0 = 
   match pcmd0 with
@@ -2141,20 +2210,20 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   if var = "residue" then
     match !CF.residues with
       | None -> print_string ": no residue \n"
-      | Some (ls_ctx, print) ->(
-        if (print) then (
-	  if(List.length fl = 1) then (
-	    let f = List.hd fl in
-	    let cfs = CF.list_formula_of_list_context ls_ctx in
-	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
-	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
-	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
-	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
-	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
-	  )
-	  else  print_string ("ERROR: Input is 1 formula only\n")
-	)
-      )
+      | Some (ls_ctx, print) -> begin
+        if (print) then begin
+      	  if(List.length fl = 1) then (
+      	    let f = List.hd fl in
+      	    let cfs = CF.list_formula_of_list_context ls_ctx in
+      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
+      	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
+      	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
+      	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+      	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+      	  )
+	        else print_string ("ERROR: Input is 1 formula only\n")
+	      end
+      end
   else if (var = "assumption") then(
     match !CF.residues with
       | None -> print_string ": no residue \n"

@@ -125,6 +125,7 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
    ("checksat", CHECKSAT);
@@ -200,6 +201,8 @@ module Make (Token : SleekTokenS)
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA TLEM);
+	 ("lemma_prop", LEMMA TLEM_PROP);
+	 ("lemma_split", LEMMA TLEM_SPLIT);
 	 ("lemma_test", LEMMA TLEM_TEST);
 	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
@@ -246,10 +249,14 @@ module Make (Token : SleekTokenS)
    ("set",SET);
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
+   ("template", TEMPL);
+   ("UTPre", UTPRE);
+   ("UTPost", UTPOST);
    ("Term", TERM);
-    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
+   (* ("TermU", TERMU); *)
+   (* ("TermR", TERMR); *)
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -272,6 +279,9 @@ module Make (Token : SleekTokenS)
 	 ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
+   (* Template *)
+   ("template", TEMPLATE);
+   ("template_solve", TEMPL_SOLVE);
 	 (flow, FLOW flow);]
 }
   
@@ -345,6 +355,8 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@A" {ACCS}
   | "@D" { DERV }
+  | "@S1" { SPLIT1Ann }
+  | "@S2" { SPLIT2Ann }
   | "@M" { MUT }
   | "@S" { SAT }
   (* | "@VAL" {VAL} *)
@@ -357,11 +369,16 @@ rule tokenizer file_name = parse
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
+  | "@term" { TREL_INFER }
+  | "termAssume" { TREL_ASSUME }
+  | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
 (*  | "XPURE" {XPURE}*)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
+  | "@Split" { SPLITANN } (*Split annotation*)
+  | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }
   | '}' { CBRACE }

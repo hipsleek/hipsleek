@@ -94,6 +94,8 @@ let proc_gen_cmd cmd =
                              ; process_barrier_def bdef)
     | FuncDef fdef -> process_func_def fdef
     | RelDef rdef -> process_rel_def rdef
+    | TemplDef tdef -> process_templ_def tdef
+    | UtDef utdef -> process_ut_def utdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
@@ -118,8 +120,9 @@ let proc_gen_cmd cmd =
     | PredSplit (pred_ids) -> process_pred_split pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
+    | CheckNorm f -> process_check_norm f
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
+    | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype; ())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef -> process_list_lemma ldef 
     | PrintCmd pcmd -> process_print_command pcmd
@@ -129,6 +132,9 @@ let proc_gen_cmd cmd =
     | CmpCmd pcmd -> process_cmp_command pcmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+    | TemplSolv idl -> process_templ_solve idl
+    | TermInfer -> process_term_infer ()
+    | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
     | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =
@@ -150,13 +156,16 @@ let parse_file (parse) (source_file : string) =
       | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
       | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
+      | TemplDef tdef -> process_templ_def tdef
+      | UtDef utdef -> process_ut_def utdef
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-      | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+      | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
+      | TemplSolv _ | TermInfer
       | Time _ | EmptyCmd | _ -> () 
   in
   let proc_one_def c =
@@ -207,10 +216,11 @@ let parse_file (parse) (source_file : string) =
       | PredSplit ids -> process_pred_split ids
       | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
+      | CheckNorm f -> process_check_norm f
       | EqCheck (lv, if1, if2) -> 
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())	
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())	
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> 
             let _ = Debug.ninfo_pprint "at print" no_pos in
@@ -222,7 +232,11 @@ let parse_file (parse) (source_file : string) =
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
       (* | LemmaDef ldef -> process_list_lemma ldef *)
+      | TemplSolv idl -> process_templ_solve idl
+      | TermInfer -> process_term_infer ()
+      | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
+      | TemplDef _ | UtDef _ 
       | EmptyCmd -> () in
   let cmds = parse_first [] in
   let _ = Slk2smt.smt_cmds := cmds in
@@ -254,7 +268,6 @@ let parse_file (parse) (source_file : string) =
   Sleekengine.unexpected_cmd := [];
   List.iter proc_one_cmd cmds
 
-
 let main () =
   let _ = Globals.is_sleek_running := true in
   let _ = Printexc.record_backtrace !Globals.trace_failure in
@@ -267,6 +280,8 @@ let main () =
                 I.prog_func_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
+                I.prog_templ_decls = [];
+                I.prog_ut_decls = [];
                 I.prog_hp_decls = [];
 			    I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)

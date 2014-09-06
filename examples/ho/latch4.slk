@@ -1,0 +1,35 @@
+/*
+  Ordering of lemma applications DOES matter
+
+ */
+
+//in prelude.ss
+pred_prim WAIT<b:bag((Object,Object))>.
+
+pred_prim LatchIn{(-)P}<>.
+
+pred_prim LatchOut{(+)P}<>.
+
+pred_prim CNT<n:int>.
+
+relation cyclic(bag((Object,Object)) g).
+relation acyclic(bag((Object,Object)) g).
+
+lemma "combine1" self::CNT<a> * self::CNT<b> & a>=0 & b>=0 -> self::CNT<a+b>.
+
+lemma "wait-combine" self::WAIT<S1> * self::WAIT<S2> -> self::WAIT<S> & S=union(S1,S2).
+
+lemma "deadlock" self::WAIT<S> & cyclic(S) ->  emp & flow __Fail.
+
+checkentail x::WAIT<S1> * x::WAIT<S2> * c1::CNT<1> * c1::CNT<1> & S1={tup2(c1,c2)} & S2={tup2(c2,c1)} & c1!=c2 |- true & flow __Fail.
+print residue.
+expect Valid. 
+//wait-combine -> deadlock -> combine1
+
+
+checkentail c1::CNT<1> * c1::CNT<1> * x::WAIT<S1> * x::WAIT<S2>  & S1={tup2(c1,c2)} & S2={tup2(c2,c1)} & c1!=c2 |- true & flow __Fail.
+print residue.
+ expect Valid. // valid, since it apply 
+//combine1 -> wait-combine -> deadlock
+
+

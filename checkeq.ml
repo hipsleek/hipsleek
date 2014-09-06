@@ -299,7 +299,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	  ) else (res,new_mtl)*)
 	  match_equiv_rel hvars r hf2 mtl
 	| CF.HTrue  ->  (true, mtl)
-	| CF.HFalse ->  report_error no_pos "not a case"
+	| CF.HFalse | CF.HVar _ ->  report_error no_pos "not a case hfalse/hvar"
 	| CF.HEmp   ->  (true, mtl) (*TODO: plz check*)
 	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
     )
@@ -328,7 +328,7 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.Hole _ | CF.FrmHole _ 
     | CF.HRel _ 
     | CF.HTrue  
-    | CF.HEmp   ->  false
+    | CF.HEmp   | CF.HVar _ ->  false
 	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
       
 and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
@@ -356,8 +356,8 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
-    | CF.HEmp   -> (false,[mt])
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HEmp | CF.HVar _  -> (false,[mt])
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -453,8 +453,8 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
-    | CF.HEmp   -> (false,[mt])
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HEmp | CF.HVar _  -> (false,[mt])
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_view_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -518,7 +518,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * lo
     )
     | CF.HTrue  -> (false,[mt]) 
     | CF.HFalse ->  report_error no_pos "not a case"
-    | CF.HEmp   ->  (false,[mt]) 
+    | CF.HEmp  | CF.HVar _  ->  (false,[mt]) 
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
@@ -601,9 +601,9 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue 
-    | CF.HFalse -> false
+    | CF.HFalse | CF.HVar _ -> false
     | CF.HEmp   -> true
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
 
 and add_map_rel_x (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
   let vn1 = CP.full_name_of_spec_var v1 in
@@ -1296,7 +1296,7 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	| CF.HTrue  -> (match hf2 with
 	    | CF.HTrue -> (true, modify_mtl mtl CF.HEmp)
 	    | _ ->   (false, modify_mtl mtl CF.HTrue))
-	| CF.HFalse ->  report_error no_pos "not a case"
+	| CF.HFalse | CF.HVar _ ->  report_error no_pos "not a case hfalse/hvar "
 	| CF.HEmp   ->  (true, modify_mtl mtl CF.HEmp) (*TODO: plz check*)
 	| CF.ThreadNode _ (*TOCHECK*)
 	| CF.ConjConj _ | CF.StarMinus _ | CF.ConjStar _ -> Error.report_no_pattern()
@@ -1338,7 +1338,15 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
   in
   let checkeq_mix_formulas_one mp1 mp2 mtl = (
     match mp1,mp2 with
-      | MCP.MemoF mp1,MCP.MemoF mp2  -> report_error no_pos "Have not support comparing 2 MemoF yet"
+      | MCP.MemoF _,MCP.MemoF _  -> 
+            if (not !allow_threads_as_resource) then
+              report_error no_pos "Have not support comparing 2 MemoF yet"
+            else
+              (* temporarily convert to pure formula*)
+              let _ = print_endline ("Have not support comparing 2 MemoF yet") in
+              let p1 = MCP.fold_mem_lst (mkTrue no_pos) false true mp1 in
+              let p2 = MCP.fold_mem_lst (mkTrue no_pos) false true mp2 in
+              checkeq_p_formula_with_diff hvars p1 p2 mtl
       | MCP.OnePF f1, MCP.OnePF f2 ->  checkeq_p_formula_with_diff hvars f1 f2 mtl
       | _,_ ->  (false, List.map (fun mt -> (mt,CP.mkTrue no_pos)) mtl)
   ) in

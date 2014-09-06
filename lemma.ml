@@ -43,8 +43,8 @@ let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbo
   (*check entailment*)
   let (res,_,_) = (
     if coer_type = I.Left then
-      Sleekcore.sleek_entail_check 4 [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
-    else Sleekcore.sleek_entail_check 5 [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
+      Sleekcore.sleek_entail_check 4 None [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+    else Sleekcore.sleek_entail_check 5 None [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   ) in
   if res then
     let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
@@ -130,13 +130,13 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
   let v_f11 = (* CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) *) v_f1 in
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
-  let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name)
-    0  false  (IP.ConstAnn Mutable) false false false None
+  let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name) [] (* TODO:HO *)
+    0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view1.C.view_vars) []  None pos1 in
   let chf1 = CF.mkViewNode (CP.SpecVar (Named view1.C.view_name,self, Unprimed)) view1.C.view_name
     view1.C.view_vars no_pos in
-  let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name)
-    0  false (IP.ConstAnn Mutable) false false false None
+  let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name) [] (* TODO:HO *)
+    0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
     (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
   let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
     view2.C.view_vars no_pos in
@@ -286,18 +286,28 @@ let manage_safe_lemmas repo iprog cprog =
           None
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) =
+let manage_unsafe_lemmas_x repo iprog cprog: (CF.list_context list option) =
   let (left,right, lnames) = List.fold_left (fun (left,right,names) ldef ->
     try
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right,((ldef.I.coercion_name)::names))
-    with _ -> (left,right,names)
+    with e ->
+        (*This will mask all errors*)
+        let _ = print_endline ("manage_unsafe_lemmas: error(s) occurred") in
+        raise e
+        (* (left,right,names) *)
   ) ([],[], []) repo in
   let _ = Lem_store.all_lemma # add_coercion left right in
   let _ = (* if  (!Globals.dump_lem_proc) then   *)
     Debug.ninfo_hprint (add_str "\nUpdated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
   let _ = Debug.info_ihprint (add_str "\nUpdated store with unsafe repo." pr_id) "" no_pos in
   None
+
+let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) =
+  Debug.no_1 "manage_unsafe_lemmas"
+      (pr_list !I.print_coerc_decl)
+      pr_none
+      (fun _ -> manage_unsafe_lemmas_x repo iprog cprog) repo
 
 let manage_lemmas repo iprog cprog =
   if !Globals.check_coercions then manage_safe_lemmas repo iprog cprog 
@@ -641,6 +651,8 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
       | LEM            -> manage_lemmas lst iprog cprog 
+      | LEM_PROP       -> (manage_unsafe_lemmas lst iprog cprog )
+      | LEM_SPLIT       -> (manage_unsafe_lemmas lst iprog cprog )
       | LEM_TEST       -> (manage_test_lemmas lst iprog cprog )
       | LEM_TEST_NEW   -> (manage_test_new_lemmas lst iprog cprog )
       | LEM_UNSAFE     -> manage_unsafe_lemmas lst iprog cprog 
@@ -656,7 +668,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
     | Some(c::_) -> CF.set_residue true c
 
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct  =
-  Debug.no_1 "process_list_lemma" pr_none pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
+  Debug.no_1 "process_list_lemma" !I.print_coerc_decl_list pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
 
 (* ============================ END --- lemma translation and store update================================= *)
 
@@ -756,7 +768,7 @@ let do_unfold_view_hf cprog hf0 =
       end
       | CF.ThreadNode _
       | CF.DataNode _  | CF.HRel _ | CF.Hole _ | CF.FrmHole _
-      | CF.HTrue  | CF.HFalse | CF.HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+      | CF.HTrue  | CF.HFalse | CF.HEmp  | CF.HVar _-> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in
   helper hf0
 
@@ -1334,8 +1346,8 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           IP.Var ((id,p), vpos)
         ) vd.C.view_vars in
         let head = (
-          IF.mkHeapNode head_node (vd.C.view_name)
-              0 false  (IP.ConstAnn Mutable) false false false None
+          IF.mkHeapNode head_node (vd.C.view_name) [] (* TODO:HO *)
+              0 false SPLIT0 (IP.ConstAnn Mutable) false false false None
               head_params [] None vpos
         ) in
         Iformula.mkBase head (Ipure.mkTrue vpos) Iformula.top_flow [] vpos
@@ -1361,8 +1373,8 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         ) induct_vnode.CF.h_formula_view_arguments in
         let pred2 = (
           (* this is the original hformula view *)
-          IF.mkHeapNode pred2_node (vd.C.view_name)
-              0 false (IP.ConstAnn Mutable) false false false None
+          IF.mkHeapNode pred2_node (vd.C.view_name) [] (* TODO:HO *)
+              0 false SPLIT0 (IP.ConstAnn Mutable) false false false None
               pred2_params [] None vpos 
         ) in
 
@@ -1422,8 +1434,8 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           ) vd.C.view_vars in
           let pred1 = (
             (* this is a derived hformula view *)
-            IF.mkHeapNode pred1_node (vd.C.view_name)
-                0 false (IP.ConstAnn Mutable) true false false None
+            IF.mkHeapNode pred1_node (vd.C.view_name) [] (* TODO:HO *)
+                0 false SPLIT0 (IP.ConstAnn Mutable) true false false None
                 pred1_params [] None vpos 
           ) in
           Debug.ninfo_hprint (add_str "pred1" !IF.print_h_formula) pred1 vpos;
@@ -1466,8 +1478,8 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
                 let params = List.map (fun _ ->
                   Ipure_D.Var((fresh_name (), Unprimed), vpos)
                 ) ddecl.I.data_fields in
-                IF.mkHeapNode (fwp_name, Unprimed) dname
-                    0 false  (IP.ConstAnn Lend) false false false None
+                IF.mkHeapNode (fwp_name, Unprimed) dname [] (* TODO:HO *)
+                    0 false SPLIT0 (IP.ConstAnn Lend) false false false None
                     params [] None vpos
               in
               let rlemma_name1 = "rlem1_" ^ vd.C.view_name in
