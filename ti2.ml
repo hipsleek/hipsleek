@@ -849,7 +849,7 @@ let rec infer_abductive_cond_list prog ann ante conds =
       | None -> infer_abductive_cond_list prog ann ante cs
       | Some _ -> ic
 
-let proving_non_termination_one_trrel prog cond icond trrel = 
+let proving_non_termination_looping_one_trrel prog cond icond trrel = 
   let ctx = trrel.ret_ctx in
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then None (* No result for infeasible context *)
@@ -866,15 +866,15 @@ let proving_non_termination_one_trrel prog cond icond trrel =
         Some (NT_No ir)
     in ntres
     
-let proving_non_termination_one_trrel prog cond icond trrel = 
+let proving_non_termination_looping_one_trrel prog cond icond trrel = 
   let pr1 = !CP.print_formula in
   let pr2 = print_ret_trel in
-  Debug.no_3 "proving_non_termination_one_trrel" pr1 pr1 pr2 (pr_option print_nt_res)
-    (fun _ _ _ -> proving_non_termination_one_trrel prog cond icond trrel)
+  Debug.no_3 "proving_non_termination_looping_one_trrel" pr1 pr1 pr2 (pr_option print_nt_res)
+    (fun _ _ _ -> proving_non_termination_looping_one_trrel prog cond icond trrel)
     cond icond trrel
 
-let proving_non_termination_trrels prog cond icond trrels =  
-  let ntres = List.map (proving_non_termination_one_trrel prog cond icond) trrels in
+let proving_non_termination_looping_trrels prog cond icond trrels =  
+  let ntres = List.map (proving_non_termination_looping_one_trrel prog cond icond) trrels in
   let ntres = List.concat (List.map opt_to_list ntres) in
   if ntres = [] then None, []
   else if List.for_all is_nt_yes ntres then Some CP.Loop, []
@@ -885,12 +885,13 @@ let proving_non_termination_trrels prog cond icond trrels =
     None, full_disj_ic_list
 
 (* Note that each vertex is a unique condition *)        
-let proving_non_termination_vertex prog trrels tg v =
+let proving_non_termination_looping_vertex prog trrels tg v =
   try 
+    (* Handle self-looping vertex first *)
     let _, rel, _ = TG.find_edge tg v v in
     match rel.termu_lhs with
     | TermU uid -> 
-      let ntres, abd_conds = proving_non_termination_trrels prog 
+      let ntres, abd_conds = proving_non_termination_looping_trrels prog 
         uid.CP.tu_cond uid.CP.tu_icond trrels in
       let _ = match ntres with
       | Some _ -> () (* Non-termination *)
@@ -900,15 +901,22 @@ let proving_non_termination_vertex prog trrels tg v =
       in ntres, abd_conds
     | _ -> None, []
   with _ -> None, [] 
-
-let rec proving_non_termination_scc acc_abd_conds prog trrels tg scc =
+  
+let proving_non_termination_non_looping_scc acc_abd_conds prog trrels tg scc =
   match scc with
+  | [] -> raise Should_Finalize
+  | _ -> raise Should_Finalize
+
+let rec proving_non_termination_looping_scc acc_abd_conds prog trrels tg iscc scc =
+  match iscc with
   | [] -> 
-    let orig_scc = List.map fst acc_abd_conds in
-    let tg = update_graph_with_icond tg orig_scc acc_abd_conds in
-    raise (Restart_with_Cond tg)
+    if not (is_empty acc_abd_conds) then 
+      let rel_scc_nodes = List.map fst acc_abd_conds in
+      let tg = update_graph_with_icond tg rel_scc_nodes acc_abd_conds in
+      raise (Restart_with_Cond tg)
+    else proving_non_termination_non_looping_scc acc_abd_conds prog trrels tg scc
   | v::vs -> 
-    let ntres, abd_conds = proving_non_termination_vertex prog trrels tg v in
+    let ntres, abd_conds = proving_non_termination_looping_vertex prog trrels tg v in
     
     (* let _ = print_endline ("Vertex " ^ (string_of_int v)) in       *)
     (* let _ = print_endline (pr_list !CP.print_formula abd_conds) in *)
@@ -917,7 +925,7 @@ let rec proving_non_termination_scc acc_abd_conds prog trrels tg scc =
     | Some ann -> update_ann scc (subst (ann, []))
     | _ -> 
       let acc_abd_conds = acc_abd_conds @ [(v, abd_conds)] in
-      proving_non_termination_scc acc_abd_conds prog trrels tg vs
+      proving_non_termination_looping_scc acc_abd_conds prog trrels tg vs scc
   
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =
@@ -930,5 +938,5 @@ let aux_solve_turel_one_scc prog trrels tg scc =
     update_ann scc (fun ann ->
       let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
       subst res ann)
-  | None -> proving_non_termination_scc [] prog trrels tg scc
+  | None -> proving_non_termination_looping_scc [] prog trrels tg scc scc
   
