@@ -51,6 +51,14 @@ Priority to relations, and then variables.
  error: Stream.Error("[infer_type] or [id_list] or CSQUARE expected after OSQUARE (in [id_list_w_itype])")
  at:(Program not linked with -g, cannot print stack backtrace)
 =======================================================
+# lend-3a.slk --pcp
+
+//relation R(int v,int w).
+relation R(int v,
+   ann w).
+
+Why is the R relation not being printed
+by --pcp
 =======================================================
 =======================================================
 =======================================================

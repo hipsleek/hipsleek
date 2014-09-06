@@ -2441,6 +2441,7 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
+   | `ANN_TYPE           -> AnnT
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
