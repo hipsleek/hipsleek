@@ -1,0 +1,37 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-2>.
+
+/*
+
+--inv-baga:
+
+- begin with false.
+
+- 1st step:
+  BG([],self=null & n=0)
+
+- 2nd step:
+  BG([],self=null & n=0) | BG([self], n=2)
+
+- 3rd step:
+  BG([],self=null & n=0) | BG([self], n=2 | n=4)
+
+- 4th step:
+  BG([],self=null & n=0) | BG([self], n=2 | n=4 | n=6)
+
+- 5th step:
+  BG([],self=null & n=0) | BG([self], n=2 | n=4 | n=6 | n=8)
+
+- widening: BG([],self=null & n=0) | BG([self], n=2 | n>=4)
+
+- checking:
+  Over --> valid
+  Under --> fail (BG([],self=null & n=0) | BG([self], n=2 | n>=4) |- ((self=null & n=0) | (self>0 & ((n=4 | 6<=n))) | (self>0 & n=2)))
+
+- refine: drop n>=4 --> (BG([],self=null & n=0) | BG([self], n=2) --> valid
+
+*/
