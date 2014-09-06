@@ -37,6 +37,19 @@ Entail (1) : Valid.
 [[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
 
 =======================================================
+# lend-3.slk --print-type 
+
+infer [@imm] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+@imm should pick up all relations with @ann parameters
+for inference; where needed. 
+
+Priority to relations, and then variables.
+
+ error: Stream.Error("[infer_type] or [id_list] or CSQUARE expected after OSQUARE (in [id_list_w_itype])")
+ at:(Program not linked with -g, cannot print stack backtrace)
 =======================================================
 =======================================================
 =======================================================
