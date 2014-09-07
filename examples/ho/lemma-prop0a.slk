@@ -1,0 +1,42 @@
+//CountDownLatch
+
+pred_prim WAIT<b:bag(int)>.
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a>@L * x::WAIT<S> & a notin S ->  
+x::WAIT<S1> & S1=union(S,{a}).
+
+
+check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<22> & S={}.
+// 1 state
+
+/*
+CheckNorm (1) :  (exists c1_52,x_53,S1_63: x_53::WAIT{}<S1_63> * c1::CNT{}<flted_11_41> * 
+c2::CNT{}<flted_11_40>&S1_63=union(S_55,{a_54}) & c1=c1_52 & 
+flted_11_41=a_54 & x=x_53 & S=S_55 & flted_11_41=22 & flted_11_40=22 & S={}&
+{FLOW,(21,22)=__norm})[]
+*/
+
+
+
+check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<23> & S={}.
+// 1 state
+
+/*
+# lemma-prop0a.slk
+
+Why aren't the states numbered?
+Why are there two states? Should be just one.
+
+CheckNorm (2) :  
+(exists c1_82,x_83,S1_93,c1_94,x_95,S1_105: x_95::WAIT{}<S1_105> * 
+c1::CNT{}<flted_14_71> * c2::CNT{}<flted_14_70>&S1_105=union(S_97,{a_96}) & 
+c2=c1_94 & flted_14_70=a_96 & x_83=x_95 & S1_93=S_97 & S1_93=union(S_85,
+{a_84}) & c1=c1_82 & flted_14_71=a_84 & x=x_83 & S=S_85 & flted_14_71=22 & 
+flted_14_70=23 & S={}&{FLOW,(21,22)=__norm})[]
+
+*/
+
+check_normalize x::WAIT<S> * c1::CNT<22> * c2::CNT<23> & S={22,23}.
+// 1 state

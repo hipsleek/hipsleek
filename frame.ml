@@ -165,7 +165,7 @@ let generate_framing_holes_x hf0 framing_svl =
       | CF.Hole _ | CF.FrmHole _ | CF.ThreadNode _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf,[])
+      | CF.HEmp | CF.HVar _ -> (hf,[])
   in
   if framing_svl = [] then (hf0,[]) else
     helper hf0
@@ -250,7 +250,7 @@ let prune_framing_heaps_x hf0 framing_svl =
       | CF.Hole _ | CF.FrmHole _ | CF.ThreadNode _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf,[])
+      | CF.HEmp | CF.HVar _ -> (hf,[])
   in
   helper hf0
 
@@ -334,7 +334,7 @@ let subst_framing_heaps hf0 framing_map =
       | CF.Hole _ | CF.FrmHole _ | CF.ThreadNode _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> hf
+      | CF.HEmp | CF.HVar _  -> hf
   in
   helper hf0
 
@@ -404,7 +404,7 @@ let recover_framing_heaps hf0 framing_map =
       | CF.Hole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> hf
+      | CF.HEmp | CF.HVar _ -> hf
       | CF.FrmHole n -> look_up framing_map n
   in
   helper hf0
@@ -640,7 +640,7 @@ let get_p_view_data_h_formula hf0=
       | CF.Hole _ | CF.FrmHole _| CF.ThreadNode _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> ([],[])
+      | CF.HEmp | CF.HVar _ -> ([],[])
   in
   helper hf0
 

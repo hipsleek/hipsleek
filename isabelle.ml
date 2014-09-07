@@ -39,11 +39,13 @@ let rec isabelle_of_typ = function
   | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-  | List _          -> 	(* lists are not supported *)
+  | List _    | FORM | Tup2 _     -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "list not supported for Isabelle"}
+        Error.error_text = "list/FORM/Tup2 not supported for Isabelle"}
   | NUM
   | RelT _
+  | FuncT _
+  | UtT
   | HpT
   | AnnT->
         Error.report_error {Error.error_loc = no_pos; 
@@ -115,6 +117,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
+  | CP.Tup2 _ -> failwith ("[isabelle.ml]: ERROR in constraints (Tup2 should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
@@ -146,6 +149,8 @@ let rec isabelle_of_exp e0 = match e0 with
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
 	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
     | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> isabelle_of_exp (CP.exp_of_template t)
+
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with

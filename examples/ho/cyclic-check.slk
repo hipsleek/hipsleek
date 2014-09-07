@@ -1,0 +1,22 @@
+/*
+ -tp parahip -perm fperm
+
+ Ensure concretization over equalities.
+
+*/
+
+
+pred_prim WAIT<b:bag((int,int))>.
+
+pred_prim CNT<n:int>.
+
+// these could be added to prelude ..
+
+relation cyclic(bag((int,int)) g).
+relation acyclic(bag((int,int)) g).
+
+checkentail B_1824={} & B_1824=S & S={} & S_1841=S & S_1841=S_1954 & S1_1968=union(S_1954,{tup2(c2_47',c1_46')}) |- true & cyclic(S1_1968).
+expect Fail.
+
+checkentail S={tup2(c1,c2)} & S_1841=S & S_1841=S_1954 & S1_1968=union(S_1954,{tup2(c2,c1)}) |- true & cyclic(S1_1968).
+expect Valid.

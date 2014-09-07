@@ -440,3 +440,21 @@ RS_mem malloc1(int n)
  requires n>0
  ensures  res=null or res::RS_mem<n>;
 */
+
+pred_prim WAIT<b:bag((Object,Object))>;
+pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
+
+relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
+relation concrete(bag(Object) g).
+relation cyclic(bag((Object,Object)) g).
+relation acyclic(bag((Object,Object)) g).
+relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+/*
+int rand_int ()
+requires true
+ensures true;
+
+bool rand_bool ()
+requires true
+ensures true;
+*/

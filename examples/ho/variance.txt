@@ -1,0 +1,55 @@
+
+
+       P |- Q
+ -------------------
+   K{.P} |- K{+Q}.
+
+       Q |- P
+  -------------------
+    K{.P} |- K{-Q}
+
+
+       Q |- P
+ -------------------
+   K{-P} |- K{-Q}.
+
+
+       Q <-> P
+  ------------------
+    K{.P} |- K{.Q}.
+
+
+checkentail 
+    t2::THRD3{(-)t::THRD2{(+) x::cell<10> & true}<x,y>& true,
+              (+) x::cell<10>}<t,x>
+     * t1::THRD2{(+) x2::cell<10> & x2=x1}<x1,y1>
+  |- t2::THRD3{(-)%P,%Q}<ttt,xxx> .
+print residue.
+//expect: empty residue
+
+/*
+checkentail t2::THRD3{t::THRD2{x::cell<10> & true}<x,y> & true,
+                       x::cell<10>}<t,x>
+     * t1::THRD2{x2::cell<10> * y1::cell<20> & x2=x1}<x1,y1>
+  |- t2::THRD3{%P,%Q}<t1,x1> * %P.
+print residue.
+//expect: residue with t1::THRD2{y1::cell<...>}<...>
+
+
+FIXED:
+
+P --> (exists t,
+x: t::THRD2{ (exists flted_11_26: x::cell<flted_11_26>&flted_11_26=10&
+{FLOW,(21,22)=__norm})[]}<x,y>&
+t1=t & x1=x %%%%%%PROBLEM: x1=x outside THRD2
+&{FLOW,(21,22)=__norm})[]
+
+checkentail t2::THRD3{ t::THRD2{x::cell<10> & true}<x,y> & true,
+                       x::cell<10>}<t,x>
+            * t1::THRD2{x2::cell<10> & x2=x1}<x1,y1>
+  |- t::THRD2{ (exists flted_11_26: x::cell<flted_11_26>&flted_11_26=10&
+{FLOW,(21,22)=__norm})[]}<x,y>&
+t1=t & x1=x
+
+
+*/

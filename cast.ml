@@ -28,6 +28,8 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+    mutable prog_templ_decls: templ_decl list;
+    mutable prog_ut_decls: ut_decl list;
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -85,6 +87,7 @@ and view_kind =
 
 and view_decl = {
     view_name : ident;
+    view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind)list;
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
     view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
@@ -151,6 +154,23 @@ and rel_decl = {
     rel_name : ident;
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
+
+and templ_decl = {
+  templ_name: ident;
+  templ_ret_typ: typ;
+  templ_params: P.spec_var list;
+  templ_body: P.exp option;
+  templ_pos: loc;
+}
+
+(* Unknown Temporal Declaration *)
+and ut_decl = {
+  ut_name: ident;
+  ut_params: P.spec_var list;
+  ut_is_pre: bool;
+  ut_pos: loc;
+}
+
 
 and hp_decl = {
     hp_name : ident;
@@ -487,6 +507,11 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+(* Stack of Template Declarations *)
+let templ_decls: templ_decl Gen.stack = new Gen.stack
+
+(* Stack of Unknown Temporal Declarations *)
+let ut_decls: ut_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
@@ -509,12 +534,19 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
+
+let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
+let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
 
 (* imply function has not been initialized yet *)
 let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
@@ -1018,6 +1050,12 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
+let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
+
+let look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
+  List.find (fun d -> d.ut_name = name) defs
+
 let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
   | [] -> raise Not_found
@@ -1062,6 +1100,7 @@ let generate_pure_rel hprel=
   (*add map*)
   let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
   let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  let _= Z3.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
   n_p_hprel
 
 let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
@@ -1081,7 +1120,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
     (* PURE_RELATION_OF_HEAP_PRED *)
     let p_hp_decl = generate_pure_rel hp_decl in
     let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
-    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let _ = Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
+    let _ = Z3.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula in
     let hf =
       F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
                List.map (fun sv -> P.mkVar sv pos) unk_args,
@@ -1281,6 +1321,7 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
     Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
+    
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
       let proc = Hashtbl.find procs name in
@@ -1335,9 +1376,11 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
     | Some _ -> acc
   ) procs None in
   match proc with
-  | None -> Error.report_error {
-      Error.error_loc = pos;
-      Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." }
+  | None -> 
+    (* Error.report_error {                                                                        *)
+    (*   Error.error_loc = pos;                                                                    *)
+    (*   Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." } *)
+    failwith ("look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found.")
   | Some p -> p
   
 (* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
@@ -1432,6 +1475,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
+                | F.HVar _ -> false
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
@@ -1443,14 +1487,15 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
                             | _ -> false)
                       | _ -> false
                 )
-                | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
+                | _ -> failwith ("Only nodes, HVar, and HRel allowed after split_star_conjunctions 1") 
               in
               only_self) hs  in
           let get_name h = match h with
+            | F.HVar v -> P.name_of_sv v
             | F.DataNode _
             | F.ViewNode _-> F.get_node_name h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
-            | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
+            | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
           (List.length hs),self_n, List.map get_name hs
       | _ -> 1,false,[]
     in
@@ -1466,7 +1511,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           it is also considered a split lemma?
         *)
         (*special case, detecting inconsistency using lemmas*)
-        if rhs_length=0  then Normalize true else 
+        if rhs_length=0 then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
@@ -1657,6 +1702,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+							   F.h_formula_data_split = subnode.F.h_formula_data_split;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1678,6 +1724,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
@@ -1700,6 +1748,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
+										 F.h_formula_data_split = subnode.F.h_formula_data_split;
+
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
                                          F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
@@ -1967,21 +2017,21 @@ let vdef_lemma_fold prog coer  =
     cfd # get
   else
     let vd2 = match lhs with
-      | CF.Base bf ->
+      | F.Base bf ->
             begin
-              match bf.CF.formula_base_heap with
-                | CF.ViewNode vn -> 
+              match bf.F.formula_base_heap with
+                | F.ViewNode vn -> 
                       (try 
                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
                         let to_vars = vd.view_vars in
-                        let from_vars = vn.CF.h_formula_view_arguments in
+                        let from_vars = vn.F.h_formula_view_arguments in
                         let subs = List.combine from_vars to_vars in
                         (* let pr = Cprinter.string_of_spec_var_list in *)
                         (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
-                        let rhs = CF.subst_struc subs rhs in
+                        let rhs = F.subst_struc subs rhs in
                         (* let un_struc =  CF.struc_to_view_un_s (CF.label_view rhs) in *)
-                        let un_struc =  CF.get_view_branches (CF.label_view rhs) in
+                        let un_struc =  F.get_view_branches (F.label_view rhs) in
                         Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
                       with  
                         | Not_found -> None
@@ -2258,8 +2308,11 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
       end;
     let pvs = List.map (fun (n, procs) ->
         let mn = List.hd procs in
+        (* TNT Inference: Enable call_num but Disable phase_num *)
+        let inf_tnt = List.exists (fun proc -> 
+          F.is_inf_tnt_struc_formula proc.proc_static_specs) procs in 
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
-          ((not !dis_call_num) (* && n>0 *)) ((not !dis_phase_num) && n>1 & mn.proc_is_recursive) 
+          ((not !dis_call_num) || inf_tnt) ((not !dis_phase_num) && (not inf_tnt) && n>1 && mn.proc_is_recursive) 
         in (match pv with 
           | [] -> ()
           | x::_ -> stk_scc_with_phases # push mn.proc_call_order); pv
@@ -2482,6 +2535,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
   in
   new_scc_procs
 
+let eq_templ_decl t1 t2 = String.compare t1.templ_name t2.templ_name == 0
 let get_emp_map_x cprog=
   let helper vdef=
     let o_base = if !Globals.norm_cont_analysis then
@@ -2537,11 +2591,11 @@ let is_complex_entailment_4graph_x prog ante conseq=
      begin try
        (*explicit quantifiers in rhs*)
        let is_rhs_ex_quans = match conseq with
-         | CF.EBase eb ->
-           let quans,bare = CF.split_quantifiers eb.CF.formula_struc_base in
+         | F.EBase eb ->
+           let quans,bare = F.split_quantifiers eb.F.formula_struc_base in
            let _ = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
            if quans = [] then false else
-             let _, mf, _, _, _ = CF.split_components bare in
+             let _, mf, _, _, _ = F.split_components bare in
              let eqnull_svl =  Mcpure.get_null_ptrs mf in
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
@@ -2620,7 +2674,7 @@ let is_segmented_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_segmented_branch branch = (
-    let (_,mf,_,_,_) = CF.split_components branch in
+    let (_,mf,_,_,_) = F.split_components branch in
     let pf = MP.pure_of_mix mf in
     List.exists (fun sv ->
       let null_cond = P.mkNull sv pos in
@@ -2766,22 +2820,22 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
   let vname = vd.view_name in
   let collect_view_pointed_by_self f = (
     let views = ref [] in
-    let (hf,_,_,_,_) = CF.split_components f in
+    let (hf,_,_,_,_) = F.split_components f in
     let f_hf hf = (match hf with
-      | CF.ViewNode vn ->
-          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
+      | F.ViewNode vn ->
+          let nname = P.name_of_spec_var vn.F.h_formula_view_node in
           let _ = (
             if (String.compare nname self = 0) then
-              views := vn.CF.h_formula_view_name :: !views
+              views := vn.F.h_formula_view_name :: !views
             else ()
           ) in
           Some hf
       | _ -> None
     ) in
-    let _ = CF.transform_h_formula f_hf hf in
+    let _ = F.transform_h_formula f_hf hf in
     !views
   ) in
-  let is_tail_recursive_branch (f: CF.formula) = (
+  let is_tail_recursive_branch (f: F.formula) = (
     let views = collect_view_pointed_by_self f in
     List.exists (fun vn -> String.compare vn vname = 0) views
   ) in
@@ -2796,14 +2850,14 @@ let is_tail_recursive_view (vd: view_decl) : bool =
       (fun _ -> is_tail_recursive_view_x vd) vd
 
 
-let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
+let collect_subs_from_view_node_x (vn: F.h_formula_view) (vd: view_decl)
     : (CP.spec_var * CP.spec_var) list =
   let view_type = Named vd.view_data_name in
   let self_var = CP.SpecVar (view_type, self, Unprimed) in
-  let subs = [(self_var, vn.CF.h_formula_view_node)] in
+  let subs = [(self_var, vn.F.h_formula_view_node)] in
   let subs = List.fold_left2 (fun subs sv1 sv2 ->
     subs @ [(sv1, sv2)]
-  ) subs vd.view_vars vn.CF.h_formula_view_arguments in
+  ) subs vd.view_vars vn.F.h_formula_view_arguments in
   subs
 
 let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: view_decl)
@@ -3254,7 +3308,6 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
                 ^ "bwf: " ^ (pr_list idf t)
               ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
-
             (* unfold the inductive formulathen collect residents *)
             let base_f = List.hd base_fs in
             Debug.ninfo_hprint (add_str "f" (!CF.print_formula)) f no_pos;
@@ -3329,3 +3382,39 @@ let categorize_view (prog: prog_decl) : prog_decl =
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
  
+
+(*
+   A h_formula is resourceless if
+   - prim_pred
+   - ho_args = [] 
+*)
+let is_resourceless_h_formula_x prog (h: CF.h_formula) =
+  let rec helper h =
+    match h with
+      | CF.HEmp -> true
+      | CF.HFalse -> true
+      | CF.ViewNode v ->
+            let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
+            (vdef.view_is_prim && v.h_formula_view_ho_arguments=[])
+      | CF.DataNode _
+      | CF.ThreadNode _ -> false
+      | CF.Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | CF.StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | CF.Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | CF.ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | CF.ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | CF.Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) && (helper h2))
+      | _ -> false
+  in helper h
+
+let is_resourceless_h_formula prog (h: CF.h_formula) =
+  Debug.no_1 "is_resourceless_h_formula"
+      !print_h_formula string_of_bool
+      (fun _ -> is_resourceless_h_formula_x prog h) h

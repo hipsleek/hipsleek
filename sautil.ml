@@ -301,6 +301,7 @@ let add_raw_rel prog args pos=
   in
   let _ = prog.Cast.prog_rel_decls <- (rel_decl :: prog.Cast.prog_rel_decls) in
   let _= Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
+  let _= Z3.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
   CP.mkRel_sv rel_decl.Cast.rel_name
 
 let fresh_raw_hp_rel prog is_pre is_unk hp pos =
@@ -482,7 +483,7 @@ and get_data_view_hrel_vars_h_formula hf=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> []
+      | CF.HEmp | CF.HVar _ -> []
       | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
@@ -550,8 +551,8 @@ and drop_get_hrel_h_formula hf=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf0,[])
-	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+      | CF.HEmp | CF.HVar _ -> (hf0,[])
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 
@@ -615,7 +616,7 @@ and drop_data_hrel_except_hf dn_names hpargs hf=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> hf0
+      | CF.HEmp  | CF.HVar _ -> hf0
       | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "CF.drop_data_hrel_except_hf: not handle yet"
   in
   helper hf
@@ -772,7 +773,7 @@ and drop_hrel_match_args_hf hf0 args=
       | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> (hf)
+      | CF.HEmp | CF.HVar _ -> (hf)
       | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "SAU.drop_hrel_match_args_hf: not handle yet"
   in
   helper hf0

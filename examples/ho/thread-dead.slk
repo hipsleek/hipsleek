@@ -1,0 +1,23 @@
+/*
+  Thrd normalization lemmas (recover resource in a dead thrd).
+  - Identify bindings
+  - Apply the bindings to the rhs of the lemma
+
+*/
+
+data cell{
+  int v;
+}.
+
+pred_prim dead<>.
+
+pred_prim Thrd2{(+)Q}<x:cell,y:cell>
+inv x!=null.
+
+lemma "sync" self::Thrd2{%Q}<y1,y2> * self::dead<> -> %Q.
+
+checkentail t::Thrd2{z1::cell<10> * z2::cell<20>}<z1,z2> * t::dead<> |- z1::cell<10>.
+print residue.
+
+
+

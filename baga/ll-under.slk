@@ -6,7 +6,6 @@ data node {
   node next;
 }.
 
-
 pred ll<n,m> == self=null & n=0 & m=0
    or self::node<_,q>*q::ll<n-1,m-1>
    or self::node<_,q>*q::ll<n-1,m-2>

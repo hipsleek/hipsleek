@@ -1,0 +1,25 @@
+UTPre@f fpre(int x, int y).
+UTPost@f fpost(int x, int y).
+
+infer [@term] x < 0 & fpre(x, y) |- fpost(x, y).
+//print residue.
+
+infer [@term] x >= 0 & x' = x + y & y' = y + 1 & fpre(x, y) & fpost(x', y') |- fpost(x, y).
+//print residue.
+
+infer [@term] x >= 0 & x' = x + y & y' = y + 1 & fpre(x, y) |- fpre(x', y').
+//print residue.
+
+term_infer.
+
+ termAssume !(v_bool_11_878') & 0<=x' & !(v_bool_11_878') & x=x' & y=y' & 
+0<=x' & fpost(y'+x',1+y') --> fpost(x,y).
+
+ termAssume x'<0 & y=y' & x=x' & v_bool_11_878' & x'<0 & 
+v_bool_11_878' --> fpost(x,y).
+
+ termAssume 0<=x' & y=y' & x=x' & !(v_bool_11_878') & 0<=x' & 
+!(v_bool_11_878') & v_int_12_877'=y'+x' & v_int_12_876'=1+
+y' & fpre(x,y) --> fpre(v_int_12_877',v_int_12_876').
+
+term_infer.

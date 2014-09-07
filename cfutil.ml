@@ -179,7 +179,7 @@ let simplify_htrue_x hf0=
               end
         end
       | HRel _ | DataNode _ |  ViewNode _ | ThreadNode _
-      | HFalse | Hole _ | FrmHole _ | HTrue | HEmp
+      | HFalse | Hole _ | FrmHole _ | HTrue | HEmp | HVar _
       | Conj _ | ConjStar _|ConjConj _|StarMinus _ -> hf
   in
   (*********INTERNAL***************)
@@ -280,7 +280,7 @@ let rec collect_baga_models_heap prog hf0=
                 let m12 = List.map (fun ls -> CP.intersect_svl ls to_svs) m1 in
                 r@m12
             ) [] fs
-      | ThreadNode _ | Hole _ | FrmHole _ | HRel _ | HTrue | HFalse| HEmp -> []
+      | ThreadNode _ | Hole _ | FrmHole _ | HRel _ | HTrue | HFalse| HEmp | HVar _ -> []
       | StarMinus _ | Conj _ | ConjStar _ | ConjConj _ | Phase _ -> raise NOT_HANDLE_YET
   in
   let r = helper hf0 in
@@ -812,7 +812,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
     match f with
       | HRel _
       | DataNode _ | ViewNode _ 
-      | HTrue | HFalse | HEmp | Hole _ | FrmHole _ |  ThreadNode _ -> f
+      | HTrue | HFalse | HEmp | HVar _ | Hole _ | FrmHole _ |  ThreadNode _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
             h_formula_phase_rw = helper b.h_formula_phase_rw}
       | Conj b -> begin
@@ -1948,7 +1948,7 @@ let slice_framing_heaps_x hf0 framing_svl =
       | Hole _ | FrmHole _ | ThreadNode _
       | HTrue
       | HFalse
-      | HEmp -> hf
+      | HEmp | HVar _ -> hf
   in
   helper hf0
 
@@ -2055,7 +2055,7 @@ let elim_emp hf0 svl =
       | Hole _ | FrmHole _ | ThreadNode _
       | HTrue
       | HFalse
-      | HEmp -> hf
+      | HEmp | HVar _ -> hf
   in
   if svl = [] then hf0 else helper hf0
 
@@ -2107,8 +2107,10 @@ let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
         h_formula_view_node = dn.h_formula_data_node;
         h_formula_view_name = vname;
         h_formula_view_derv = dn.h_formula_data_derv;
+        h_formula_view_split = dn.h_formula_data_split;
         h_formula_view_imm = dn.h_formula_data_imm;
         h_formula_view_perm = dn.h_formula_data_perm;
+        h_formula_view_ho_arguments = []; (* TODO:HO *)
         h_formula_view_arguments = args;
         h_formula_view_annot_arg = args_annot;
         h_formula_view_args_orig = args_orig;
@@ -2284,3 +2286,20 @@ let norm_rename_clash_args_node_x init_args0 f0=
              let lhs_rest = heap_trans_heap_node (elim_vn vl) hf in
              (vl, vn, lhs_rest)
      | _ -> raise Not_found
+
+
+ let transform_bexpr_x f0=
+   let rec recf f=match f with
+     | Base fb ->
+           Base {fb with formula_base_pure =  MCP.mix_of_pure (CP.transform_bexpr (MCP.pure_of_mix fb.formula_base_pure))}
+     | Exists fe ->
+           Exists {fe with formula_exists_pure = MCP.mix_of_pure (CP.transform_bexpr (MCP.pure_of_mix fe.formula_exists_pure))}
+     | Or orf -> Or {orf with formula_or_f1 = recf orf.formula_or_f1;
+           formula_or_f2 = recf orf.formula_or_f2}
+   in
+   recf f0
+
+let transform_bexpr f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "CF.transform_bexpr" pr1 pr1
+      (fun _ -> transform_bexpr_x f0) f0

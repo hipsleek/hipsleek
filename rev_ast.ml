@@ -33,6 +33,7 @@ let rec rev_trans_exp e = match e with
       let nt = IP.Var (rev_trans_spec_var t, p) in
       let na = IP.Var (rev_trans_spec_var a, p) in
       IP.Bptriple ((nc,nt,na),p)
+  | CP.Tup2 ((e1,e2),p)      -> IP.Tup2 ((rev_trans_exp e1, rev_trans_exp e2), p)
   | CP.IConst b -> IP.IConst b
   | CP.FConst b -> IP.FConst b
   | CP.AConst b -> IP.AConst b
@@ -57,6 +58,13 @@ let rec rev_trans_exp e = match e with
   | CP.ListReverse (e,p)  -> IP.ListReverse (rev_trans_exp e, p)
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
+  | CP.Template t         -> 
+      IP.Template {
+        IP.templ_id = sv_n t.CP.templ_id;
+        IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
+        IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
+        IP.templ_body = map_opt rev_trans_exp t.CP.templ_body;
+        IP.templ_pos = t.CP.templ_pos; }
   | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
 
 let rec rev_trans_pf f = match f with
@@ -106,6 +114,7 @@ let rec rev_trans_heap f = match f with
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
   | CF.HEmp   -> IF.HEmp
+  | CF.HVar (CP.SpecVar(_,v,_))   -> IF.HVar v
   | CF.ThreadNode b ->
         IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
             b.CF.h_formula_thread_name
@@ -116,9 +125,10 @@ let rec rev_trans_heap f = match f with
             b.CF.h_formula_thread_pos
   | CF.DataNode b ->
         IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
-            b.CF.h_formula_data_name
+            b.CF.h_formula_data_name [] (* TODO:HO *)
             0
-            b.CF.h_formula_data_derv 
+            b.CF.h_formula_data_derv
+            b.CF.h_formula_data_split
             (IP.ConstAnn(Mutable))
             true false false
             (Perm.rev_trans_perm b.CF.h_formula_data_perm)
@@ -126,9 +136,10 @@ let rec rev_trans_heap f = match f with
             None b.CF.h_formula_data_pos
   | CF.ViewNode b ->
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
-          b.CF.h_formula_view_name
+          b.CF.h_formula_view_name  [] (* IMP_TODO:HO *) 
           0
-          b.CF.h_formula_view_derv 
+          b.CF.h_formula_view_derv
+          b.CF.h_formula_view_split
           (IP.ConstAnn(Mutable))
           true false false
           (Perm.rev_trans_perm b.CF.h_formula_view_perm)
@@ -204,6 +215,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		I.view_data_name = "";
                 I.view_type_of_self = None;
 		I.view_vars = vars;
+		I.view_ho_vars = []; (* TODO:HO *)
                 I.view_imm_map = [];
                 I.view_parent_name = None;
                 I.view_derv = false;

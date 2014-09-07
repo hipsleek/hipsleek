@@ -404,7 +404,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 	        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)
 			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact [] [] gforms), []
 			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[] )
-  	| CF.Hole _ | CF.FrmHole _ | CF.HEmp | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[]
+  	| CF.Hole _ | CF.FrmHole _ | CF.HEmp | CF.HVar _ | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[]
 
 let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MCP.mix_formula =
 	match f with

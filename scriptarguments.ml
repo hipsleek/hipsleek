@@ -111,9 +111,9 @@ let common_arguments = [
    "Try induction in case of failure implication."); (* An Hoa *)
   ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
-  ("--smtout", Arg.Set Smtsolver.outconfig.Smtsolver.print_original_solver_output,
+  ("--smtout", Arg.Set Globals.print_original_solver_output,
    "Print the original output given by the SMT solver."); (* An Hoa *)
-  ("--smtinp", Arg.Set Smtsolver.outconfig.Smtsolver.print_input,
+  ("--smtinp", Arg.Set Globals.print_original_solver_input,
    "Print the program generated SMT input."); (* An Hoa *)
   ("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
    "Do not use Omega to simplify the arithmetic constraints when using other solver");
@@ -213,6 +213,8 @@ let common_arguments = [
    "Log all formulae sent to Omega Calculator in file allinput.oc");
   ("--log-z3", Arg.Set Smtsolver.log_all_flag,
    "Log all formulae sent to z3 in file allinput.z3");
+  ("--log-z3n", Arg.Set Z3.log_all_flag,
+  "Log all formulae sent to z3 in file allinput.z3n");
   ("--log-isabelle", Arg.Set Isabelle.log_all_flag,
    "Log all formulae sent to Isabelle in file allinput.thy");
   ("--log-coq", Arg.Set Coq.log_all_flag,
@@ -230,6 +232,7 @@ let common_arguments = [
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
   ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
+  ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");
   ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
   ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
@@ -344,7 +347,7 @@ let common_arguments = [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3-4.2"; "z3-4.3.1"; "zm"; "om";
+  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
@@ -474,6 +477,13 @@ let common_arguments = [
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Template *)
+  ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
+  ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
+    Tlutils.set_solver), "Choose LP solver");
+  ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
+  ("--dis-ln-z3", Arg.Set Globals.dis_ln_z3, "Disable linearization on Z3 (using non-linear engine)");
+
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
@@ -482,11 +492,19 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify,
    "enable re-verification for inferred termination specifications");
+  ("--term-en-bnd-pre", Arg.Set Globals.term_bnd_pre_flag,
+   "enable boundedness check at pre-condition");
+  ("--term-dis-bnd-pre", Arg.Clear Globals.term_bnd_pre_flag,
+   "disable boundedness check at pre-condition (boundedness check at recursive call)");
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+
+  (* TermInf: Options for Termination Inference *)
+  ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
+  ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -563,6 +581,8 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
+  ("--inv-under", Arg.Set Globals.do_infer_inv_under, "Enable under invariant inference");
+  ("--dis-inv-under", Arg.Clear Globals.do_infer_inv_under, "Disable under invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");

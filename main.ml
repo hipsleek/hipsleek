@@ -4,7 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
-module I = Iast
+(* module I = Iast *)
 
 module M = Lexer.Make(Token.Token)
 
@@ -354,7 +354,7 @@ let process_source_full source =
     in
     (**************************************)
     (*to improve: annotate field*)
-    let _ = I.annotate_field_pure_ext intermediate_prog in
+    let _ = Iast.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     (*used in lemma*)
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
@@ -380,14 +380,19 @@ let process_source_full source =
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
     (* Forward axioms and relations declarations to SMT solver module *)
     let _ = List.map (fun crdef -> 
-        Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
-    let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
+        let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+        Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
+    ) (List.rev cprog.Cast.prog_rel_decls) in
+    let _ = List.map (fun cadef ->
+        let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+        Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
+    ) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
     let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
-		        else if(!Globals.print_core) then
-							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
-						else ()
-		in
+    else if(!Globals.print_core) then
+      print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+    else ()
+    in
     let _ = 
       if !Globals.verify_callees then begin
 	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -490,9 +495,11 @@ let process_source_full source =
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     hip_epilogue ();
-    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+    if (not !Globals.web_compile_flag) then 
+      print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+    else ();
     Timelog.logtime # dump;
     print_string ("\nTotal verification time: " 
 	^ (string_of_float t4) ^ " second(s)\n"
@@ -592,7 +599,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   in
   (**************************************)
   (*annotate field*)
-  let _ = I.annotate_field_pure_ext intermediate_prog in
+  let _ = Iast.annotate_field_pure_ext intermediate_prog in
   (*used in lemma*)
   (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
   (* let _ = I.set_iprog intermediate_prog in *)
@@ -601,9 +608,15 @@ let process_source_full_after_parser source (prog, prims_list) =
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
-      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula)
+      let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+      Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
+  )
     (List.rev cprog.Cast.prog_rel_decls) in
-  let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
+
+  let _ = List.map (fun cadef ->
+      let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+      Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
+  ) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
   let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
   else if(!Globals.print_core) then
@@ -676,9 +689,11 @@ let process_source_full_after_parser source (prog, prims_list) =
   (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-  print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+  if (not !Globals.web_compile_flag) then 
+    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
       (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+  else ();
   print_string ("\nTotal verification time: " 
   ^ (string_of_float t4) ^ " second(s)\n"
   ^ "\tTime spent in main process: " 

@@ -1,0 +1,12 @@
+BG{[],self=null & s=0 & h=0) | BG([self],h>0 & h<=s<=(2^h-1))
+
+ BG([self],h>0 & h<=s<=(2^h-1))
+
+ BG([self],h>0 & h=1 & h=1)
+
+ BG([self],h>0 & h=2 & 2<=s<=2^2-1)
+ BG([self],h>0 & h=2 & 2<=s<=3)
+
+ BG([self],h>0 & h=3 & 3<=s<=7)
+
+ BG([self],h>0 & h<=s<=h)
