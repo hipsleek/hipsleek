@@ -3251,12 +3251,16 @@ module type ZERO_INF =
   val zero_times : ZInfinity.coq_A -> ZInfinity.coq_A
  end
 
-module InfZeroAll = 
+module InfZeroFinOnly = 
  struct 
   (** val zero_times : ZInfinity.coq_A -> ZInfinity.coq_ZE option **)
   
-  let zero_times x =
-    Some (ZInfinity.ZE_Fin Z0)
+  let zero_times = function
+  | Some z0 ->
+    (match z0 with
+     | ZInfinity.ZE_Fin z1 -> Some (ZInfinity.ZE_Fin Z0)
+     | _ -> None)
+  | None -> None
  end
 
 module ArithSemantics = 
@@ -4175,7 +4179,7 @@ module type STRVAR =
 module InfSolverExtract = 
  functor (Coq_sv:STRVAR) ->
  struct 
-  module IS = InfSolver(Coq_sv)(Three_Val)(None3ValRel)(FinZero)(InfZeroAll)
+  module IS = InfSolver(Coq_sv)(Three_Val)(None3ValRel)(FinZero)(InfZeroFinOnly)
   
   (** val coq_Z_of_bool : bool -> z **)
   
