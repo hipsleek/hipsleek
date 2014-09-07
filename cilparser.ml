@@ -1424,8 +1424,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 (match ty with
                   | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
                   | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-                        (translate_typ ty1 no_pos)
-                  | _ -> (translate_typ ty no_pos)
+                        (translate_typ ty1 pos)
+                  | _ -> (translate_typ ty pos)
                 )
           | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
     ) in
@@ -1441,8 +1441,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                           let (param_ty, param_mod) = (match ty with
                             | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname, Iast.CopyMod)
                             | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-                                  (translate_typ ty1 no_pos, Iast.NoMod)
-                            | _ -> (translate_typ ty no_pos, Iast.NoMod)
+                                  (translate_typ ty1 pos, Iast.NoMod)
+                            | _ -> (translate_typ ty pos, Iast.NoMod)
                           ) in
                           let newparam = {Iast.param_type = param_ty;
                           Iast.param_name = name;
@@ -1671,7 +1671,7 @@ let process_one_file (cil: Cil.file) : unit =
 let parse_hip (filename: string) : Iast.prog_decl =
   (* do the preprocess by GCC first *)
   let prep_filename = filename ^ ".prep" in
-  let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
+  let cmd = "gcc " ^ "-I ../ " ^ " -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/  "^ " -C -E " ^ filename ^ " -o " ^ prep_filename in
   let _ = print_endline ("GCC Preprocessing...") in
   let _ = print_endline cmd in
   let exit_code = Sys.command cmd in

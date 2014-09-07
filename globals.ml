@@ -760,7 +760,8 @@ let print_heap_pred_decl = ref true
 
 let cond_path_trace = ref true
 
-let pred_syn_modular = ref true
+(* ANNTEMP: change below to true *)
+let pred_syn_modular = ref true (* false *)
 
 let syntatic_mode = ref false (* syntatic mode - default is semantic*)
 
@@ -775,9 +776,11 @@ let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
-let pred_syn_flag = ref true
+(* ANNTEMP: change below to true *)
+let pred_syn_flag = ref true (* false *) (* true *)
 
-let sa_syn = ref true
+(* ANNTEMP: change below to true *)
+let sa_syn = ref false (* true *)
 
 let print_relassume  = ref true
 
@@ -931,7 +934,7 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
-let allow_field_ann = ref false
+let allow_field_ann = ref true
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
