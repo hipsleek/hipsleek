@@ -6,6 +6,8 @@ open Globals
 open Cprinter
 open Gen
 
+let eq_str s1 s2 = (String.compare s1 s2) = 0
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []

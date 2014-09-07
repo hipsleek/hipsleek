@@ -13605,6 +13605,12 @@ let args_of_term_ann ann =
   | TermR uid -> uid.tu_args
   | _ -> []
 
+let uid_of_term_ann ann =
+  match ann with
+  | TermU uid
+  | TermR uid -> Some uid
+  | _ -> None
+
 let mkUTPre uid = 
   TermU { uid with tu_sid = uid.tu_sid ^ "pre" }
   
