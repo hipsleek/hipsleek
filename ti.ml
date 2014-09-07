@@ -154,13 +154,16 @@ let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids =
       let subst_cond_w_ids = List.map (fun (i, c) -> 
         (i, trans_trrel_sol (CP.subst_term_avoid_capture sst) c)) cond_w_ids in 
       let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx (get_cond c))) subst_cond_w_ids in
-      List.map (fun (i, c) -> CP.TermU { uid with 
-        CP.tu_id = cantor_pair uid.CP.tu_id i; 
-        CP.tu_cond = mkAnd tuc (get_cond c); 
-        CP.tu_sol = match c with 
-          | Base _ -> Some (Term, [])
-          | MayTerm _ -> Some (MayLoop, [])
-          | _ -> uid.CP.tu_sol }) fs_rconds
+      List.map (fun (i, c) -> 
+        let cond = get_cond c in
+        CP.TermU { uid with 
+          CP.tu_id = cantor_pair uid.CP.tu_id i; 
+          CP.tu_cond = mkAnd tuc cond; 
+          CP.tu_icond = cond;
+          CP.tu_sol = match c with 
+            | Base _ -> Some (Term, [])
+            | MayTerm _ -> Some (MayLoop, [])
+            | _ -> uid.CP.tu_sol }) fs_rconds
     | _ -> [rhs_ann] 
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
   
@@ -211,11 +214,11 @@ let rec solve_turel_graph iter_num prog trrels tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
-      let _ =
+      let _ =                                                      
         print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
-        print_endline (print_graph_by_rel tg)
-      in
-      let _ = print_endline (print_scc_list_num scc_list) in
+        print_endline (print_graph_by_rel tg)                      
+      in                                                           
+      (* let _ = print_endline (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       finalize_turel_graph prog tg
     with 

@@ -14,7 +14,7 @@ let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify = Omega.simplify
 
-let eq_str s1 s2 = String.compare s1 s2 == 0
+let eq_str s1 s2 = String.compare s1 s2 = 0
 
 let simplify f args = 
   let bnd_vars = diff (CP.fv f) args in
@@ -514,7 +514,7 @@ let update_trel f_ann rel =
 let edges_of_scc_vertex g scc s =
   let succ = TG.succ g s in
   (* Filter destinations which are outside scc *)
-  let succ_scc = List.filter (fun d -> not (List.mem d scc)) succ in
+  let succ_scc = List.filter (fun d -> List.mem d scc) succ in
   List.concat (List.map (fun d -> TG.find_all_edges g s d) succ_scc)
 
 let edges_of_scc g scc =   
@@ -562,11 +562,12 @@ let templ_of_term_ann ann =
   match ann with
   | CP.TermR uid 
   | CP.TermU uid ->
-    let args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
+    let templ_args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
     let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
-    let templ_exp = CP.mkTemplate templ_id args no_pos in
-    CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
-  | _ -> CP.mkIConst (-1) no_pos, [], []
+    let templ_exp = CP.mkTemplate templ_id templ_args no_pos in
+    CP.Template templ_exp, [templ_exp.CP.templ_id], 
+    templ_args, [Tlutils.templ_decl_of_templ_exp templ_exp]
+  | _ -> CP.mkIConst (-1) no_pos, [], [], []
 
 let add_templ_assume ctx constr inf_templs =
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -583,8 +584,8 @@ let solve_templ_assume prog templ_decls inf_templs =
 
 (* Ranking function synthesis *)
 let templ_rank_constr_of_rel rel =
-  let src_rank, src_templ_id, src_templ_decl = templ_of_term_ann rel.termu_lhs in
-  let dst_rank, dst_templ_id, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
+  let src_rank, src_templ_id, _, src_templ_decl = templ_of_term_ann rel.termu_lhs in
+  let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
   let inf_templs = src_templ_id @ dst_templ_id in
   let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let dec = mkGt src_rank dst_rank in
@@ -605,7 +606,7 @@ let infer_ranking_function_scc prog g scc =
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
     let rank_of_ann = fun ann ->
-      let rank_templ, _, _ = templ_of_term_ann ann in
+      let rank_templ, _, _, _ = templ_of_term_ann ann in
       let rank_exp = Tlutils.subst_model_to_exp sst 
         (CP.exp_of_template_exp rank_templ) in
       [rank_exp]
@@ -624,7 +625,7 @@ let infer_abductive_cond prog ann ante conseq =
       let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
          not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
       let abd_conseq = CP.join_conjunctions conseq in
-      let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann ann in
+      let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann ann in
       let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
       let abd_ctx = mkAnd abd_ante abd_cond in
       
@@ -644,7 +645,10 @@ let infer_abductive_cond prog ann ante conseq =
         let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
         if is_sat (mkAnd ante icond) 
         then Some icond
-        else None
+        else 
+          (* Return trivial abductive condition *)
+          let args = List.concat (List.map CP.afv abd_templ_args) in
+          Some (simplify (mkAnd abd_ante abd_conseq) args)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -676,7 +680,7 @@ let infer_abductive_icond_edge prog g e =
     (* if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
     (* else                                                                                     *)
     (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
-    (*   let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann rel.termu_lhs in       *)
+    (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
     (*   let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in                               *)
     (*   let abd_ctx = mkAnd eh_ctx abd_cond in                                                 *)
       
@@ -895,6 +899,13 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
         NT_No (opt_to_list ir)
     in ntres
+    
+let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_one_trrel" 
+    (pr_list pr) pr print_ret_trel print_nt_res
+    (fun _ _ _ -> proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel)
+    lhs_uids rhs_uid trrel
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let trrels = List.filter (fun trrel -> 

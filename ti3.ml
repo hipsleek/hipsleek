@@ -59,8 +59,8 @@ let dummy_trel = {
   trel_id = -1;
   call_ctx = CP.mkTrue no_pos;
   termu_fname = "";
-  termu_lhs = MayLoop;
-  termu_rhs = MayLoop; 
+  termu_lhs = CP.MayLoop;
+  termu_rhs = CP.MayLoop; 
   termu_rhs_params = []; }
   
 let update_call_trel rel ilhs irhs = 
