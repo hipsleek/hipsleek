@@ -214,10 +214,10 @@ let rec solve_turel_graph iter_num prog trrels tg =
   if iter_num < !Globals.tnt_thres then
     try
       let scc_list = Array.to_list (TGC.scc_array tg) in
-      let _ =                                                      
+      (* let _ =                                                      
         print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
         print_endline (print_graph_by_rel tg)                      
-      in                                                           
+      in *)                                                         
       (* let _ = print_endline (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       finalize_turel_graph prog tg
