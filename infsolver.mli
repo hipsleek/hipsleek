@@ -1073,7 +1073,7 @@ module type ZERO_INF =
   val zero_times : ZInfinity.coq_A -> ZInfinity.coq_A
  end
 
-module InfZeroFinOnly : 
+module InfZeroInf : 
  sig 
   val zero_times : ZInfinity.coq_A -> ZInfinity.coq_ZE option
  end
