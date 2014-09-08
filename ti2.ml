@@ -924,6 +924,11 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
   let scc_edges_from_v = edges_of_scc_vertex tg scc v in
   let looping_edges, non_looping_edges = 
     List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in
+  (* let _ = print_endline ("LOOPING: " ^                                           *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in       *)
+  (* let _ = print_endline ("NON-LOOPING: " ^                                       *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in   *)
+    
   (* If the number of looping edges is > 1, it means there is          *)
   (* multiple recursive calls of the same function in the same context *)
   match looping_edges with
@@ -932,7 +937,7 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
     | TermU uid -> (* the uid here is same as the one in RHS of trrel *)
       let rhs_uid = uid in
       let other_non_looping_edges = List.filter (fun (_, rel, _) -> 
-        not (eq_str (CP.fn_of_term_ann rel.termu_lhs) uid.CP.tu_fname)) non_looping_edges in
+        not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in
       let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
         (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in
       let ntres = proving_non_termination_trrels prog (uid::lhs_uids) rhs_uid trrels in
@@ -957,18 +962,35 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
 let rec proving_non_termination_scc prog trrels tg scc =
   let ntres_scc = List.map (fun v -> 
     proving_non_termination_one_vertex prog trrels tg scc v) scc in
+  (* Removing all dummy nt_res (None, NT_No []) *)
+  let ntres_scc = List.fold_left (fun acc (uid_opt, r) ->
+    match uid_opt with 
+    | None -> acc
+    | Some uid -> acc @ [(uid, r)]) [] ntres_scc in
   if List.for_all (fun (_, r) -> (is_nt_yes r) || (is_nt_partial_yes r)) ntres_scc then
     update_ann scc (subst (CP.Loop, []))
   else
+    let nonterm_uids = List.map fst (List.filter (fun (uid, r) -> is_nt_yes r) ntres_scc) in
+    (* Update ann with nonterm_uid to Loop *)
+    let subst_loop ann =
+      match ann with
+      | CP.TermU uid ->
+        if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
+        then subst (CP.Loop, []) ann
+        else ann
+      | _ -> ann
+    in
+    let tg = match nonterm_uids with
+    | [] -> tg
+    | _ -> map_ann_scc tg scc (update_ann scc subst_loop)
+    in
+    (* let _ = print_endline (print_graph_by_rel tg) in *)
     let abd_conds = List.fold_left (fun acc (uid, r) ->
-      match uid with 
-      | None -> acc
-      | Some uid ->
-        match r with
-        | NT_No ic -> 
-          update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond ic;
-          acc @ [(uid.CP.tu_id, ic)]
-        | _ -> acc) [] ntres_scc in
+      match r with
+      | NT_No ic ->
+        update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond ic;
+        acc @ [(uid.CP.tu_id, ic)]
+      | _ -> acc) [] ntres_scc in
     if not (is_empty abd_conds) then 
       let tg = update_graph_with_icond tg scc abd_conds in
       raise (Restart_with_Cond tg)
