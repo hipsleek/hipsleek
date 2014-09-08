@@ -124,8 +124,72 @@ f91:  case {
   91<=n -> requires emp & Term[29,1]
  ensures emp & true; 
 ===================================================
+# rec-fgen0.ss
+
+infer[@term]
+case {
+  n>=k -> requires Term[] ensures res=n;
+  n<k -> requires Term[k-n] ensures res=k;
+}
+
+Why is this example inferring fpost even though we already
+specified Term in all the cases?
+Are we trying to overwrite the wisdom of programmer?
+
+Temporal Assumptions:
+ termAssume res=v_int_15_1139' & v_int_15_1139'=k' & n'<k' & n<k & k'=k & 
+n'=n & !(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & (1+n')<k' & 
+k'<=k' & fpost_1135(1+n',k') & fpost_1134(k',k') --> fpost_1135(n,k).
+
+ termAssume res=v_int_15_1139' & n'<k' & n<k & k'=k & n'=n & 
+!(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & v_int_15_1139'=1+n' & 
+k'<=v_int_15_1139' & fpost_1134(v_int_15_1138',k') & fpost_1134(v_int_15_1139',k') --> fpost_1135(n,k).
+
+ termAssume k'<=n' & k<=n & k'=k & n'=n & v_bool_14_1140' & k'<=n' & 
+v_bool_14_1140' & res=n' --> fpost_1134(n,k).
 ===================================================
+# rec-fgen2.ss
+
+Two base cases can be combined if post are the same
+
+Termination Inference Result:
+f:  case {
+  k<n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=k & n<k -> requires emp & Term[29,4,0+(-1*n)+(1*
+  k)]
+ ensures emp & res=k; 
+  n<=k & n=k -> requires emp & Term[29,2]
+ ensures emp & res=k; 
+  }
+
 ===================================================
+# rec-fgen3.ss
+
+MayLoop cases can be combined if their post are identical.
+Can this example be solved by other tools without post-cond?
+
+Termination Inference Result:
+f:  case {
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & n<=(k-
+  6) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & k<=(n+
+  5) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & k<=(n+
+  4) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & k<=(n+
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & k<=(n+2) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & k<=(n+1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  k<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+  }
 ===================================================
 ===================================================
 ===================================================
