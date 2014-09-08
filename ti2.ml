@@ -607,8 +607,8 @@ let infer_ranking_function_scc prog g scc =
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
     let rank_of_ann = fun ann ->
       let rank_templ, _, _, _ = templ_of_term_ann ann in
-      let rank_exp = Tlutils.subst_model_to_exp sst 
-        (CP.exp_of_template_exp rank_templ) in
+      let rank_exp = Tlutils.subst_model_to_exp (List.length scc_edges <= 1) (* should_simplify *)
+        sst (CP.exp_of_template_exp rank_templ) in
       [rank_exp]
     in Some rank_of_ann
   | _ -> None
@@ -641,7 +641,7 @@ let infer_abductive_cond prog ann ante conseq =
       match res with
       | Sat model ->
         let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-        let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
+        let abd_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp abd_templ) in
         let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
         if is_sat (mkAnd ante icond) 
         then Some icond
