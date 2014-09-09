@@ -4,11 +4,8 @@ relation postA(int n, int r).
 relation postB(int n, int r).
 
 int f91(int n)
-infer [postA,postB] 
-//@post
-//  requires true ensures true;
+infer [postA,postB]
  case {
-  //  n>91 -> requires Term[] ensures res=n;
   n>=91 ->  ensures postA(n,res);
   n<91 -> ensures postB(n,res);
  }
@@ -18,36 +15,13 @@ infer [postA,postB]
 }
 
 /*
-# rec-f91.ss
-
- case {
-  //  n>91 -> requires Term[] ensures res=n;
-  n>=91 -> requires Term[] ensures res=n;
-  n<91 -> requires Term[91-n] ensures res=91;
- }
-
-Poor result without post. Should the MayLoop conditions be
-combined if they have the same post?
-
-Termination Inference Result:
-f91:  case {
-  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & n<=(0-
-  3) -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & 0<=(2+
-  n) -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=90 & n<=89 & n<=0 & n<=(0-1) & 0<=(1+
-  n) -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=90 & n<=89 & n<=0 & 
-  0<=n -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=90 & n<=89 & 1<=n -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=90 & 90<=n -> requires emp & MayLoop[]
- ensures emp & true; 
-  91<=n -> requires emp & Term[29,1]
- ensures emp & true; 
-
- */
+[RELDEFN postA: ( n=res & 91<=res) -->  postA(n,res),
+RELDEFN postB: ( postA(v_int_17_1188,res) & 91<=v_int_17_1188 & n=90 & n'=90 & postA(1+
+n',v_int_17_1188)) -->  postB(n,res),
+RELDEFN postB: ( postB(v_int_17_1191,res) & v_int_17_1191<=90 & n=90 & n'=90 & postA(1+
+n',v_int_17_1191)) -->  postB(n,res),
+RELDEFN postB: ( postA(v_int_17_1194,res) & 91<=v_int_17_1194 & n<=89 & postB(1+
+n,v_int_17_1194)) -->  postB(n,res),
+RELDEFN postB: ( postB(v_int_17_1197,res) & v_int_17_1197<=90 & n<=89 & postB(1+
+n,v_int_17_1197)) -->  postB(n,res)]
+*/
