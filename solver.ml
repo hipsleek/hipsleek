@@ -10598,8 +10598,8 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
                       | OCtx _ -> report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected Octx. Not yet handled"
                     ) cl
                     in
-                    let helper (f:formula) : bool = (not (isWeakConstHEmp f)) || (full_vars!=[]) in
-                    let formulas = List.filter helper formulas in
+                    (* let helper (f:formula) : bool = (not (isWeakConstHEmp f)) || (full_vars!=[]) in *)
+                    (* let formulas = List.filter helper formulas in *)
                     let res = if formulas!=[] then Some formulas else None in
                     let is_matched = true in
                     label_list, l_args, r_args, (is_thread,is_matched, None, res)
@@ -10829,18 +10829,24 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 | None -> report_error no_pos "[solver.ml] do_match: expecting some result"
                 | Some rs -> rs
             else
-            let remained_thread_node = 
+            let remained_thread_node, t_to_lhs = 
               if(is_thread && is_matched) then
                 (match remained_rsr with
-                  | None -> CF.HEmp
+                  | None -> CF.HEmp, CP.mkTrue no_pos
                   | Some f ->
                       (*LDKTODO: currently try the first only*)
                       let f = List.hd f in
-                      (match l_node with
-                        | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}
-                        | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
-                      ))
-              else CF.HEmp
+                      let full_vars = CF.get_varperm_formula f VP_Full in
+                      if (not (isWeakConstHEmp f)) || (full_vars!=[]) then
+                        (match l_node with
+                          | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}, CP.mkTrue no_pos
+                          | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
+                        )
+                      else
+                        let _, p, _, _, _ = split_components f in
+                        CF.HEmp, (MCP.pure_of_mix p)
+                )
+              else CF.HEmp, CP.mkTrue no_pos
             in
             (*** END threads as resource *****)
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
@@ -10933,6 +10939,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let _ =  Debug.ninfo_zprint  (lazy  ("to_lhs: " ^ (!CP.print_formula to_lhs))) no_pos in
               (* let _ =  Debug.tinfo_hprint  (add_str  ("ext_subst: "  (pr_pair  ext_subst))) no_pos in *)
               (*adding pure formula for relational args of view*)
+              let to_lhs = CP.mkAnd to_lhs t_to_lhs no_pos in
               let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
               let to_rhs = CP.mkAnd to_rhs rp_rels no_pos in
               let _ = Debug.tinfo_hprint (add_str "ext_subst(bef filter out ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
