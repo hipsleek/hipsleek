@@ -4,7 +4,7 @@ relation postA(int n, int r).
 relation postB(int n, int r).
 
 int f91(int n)
-infer [postA,postB]
+infer [postA]
  case {
   n>=91 ->  ensures postA(n,res);
   n<91 -> ensures postA(n,res);
