@@ -13518,7 +13518,7 @@ and compare_uid u1 u2 =
   let cid = compare u1.tu_id u2.tu_id in
   if cid != 0 then cid
   else String.compare u1.tu_sid u2.tu_sid
-
+  
 and compare_term_fail f1 f2 = 
   match f1, f2 with
   | TermErr_May, TermErr_May -> 0
@@ -13604,6 +13604,12 @@ let args_of_term_ann ann =
   | TermU uid -> uid.tu_args
   | TermR uid -> uid.tu_args
   | _ -> []
+
+let uid_of_term_ann ann =
+  match ann with
+  | TermU uid
+  | TermR uid -> Some uid
+  | _ -> None
 
 let mkUTPre uid = 
   TermU { uid with tu_sid = uid.tu_sid ^ "pre" }

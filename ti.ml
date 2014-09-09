@@ -154,13 +154,16 @@ let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids =
       let subst_cond_w_ids = List.map (fun (i, c) -> 
         (i, trans_trrel_sol (CP.subst_term_avoid_capture sst) c)) cond_w_ids in 
       let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx (get_cond c))) subst_cond_w_ids in
-      List.map (fun (i, c) -> CP.TermU { uid with 
-        CP.tu_id = cantor_pair uid.CP.tu_id i; 
-        CP.tu_cond = mkAnd tuc (get_cond c); 
-        CP.tu_sol = match c with 
-          | Base _ -> Some (Term, [])
-          | MayTerm _ -> Some (MayLoop, [])
-          | _ -> uid.CP.tu_sol }) fs_rconds
+      List.map (fun (i, c) -> 
+        let cond = get_cond c in
+        CP.TermU { uid with 
+          CP.tu_id = cantor_pair uid.CP.tu_id i; 
+          CP.tu_cond = mkAnd tuc cond; 
+          CP.tu_icond = cond;
+          CP.tu_sol = match c with 
+            | Base _ -> Some (Term, [])
+            | MayTerm _ -> Some (MayLoop, [])
+            | _ -> uid.CP.tu_sol }) fs_rconds
     | _ -> [rhs_ann] 
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
   

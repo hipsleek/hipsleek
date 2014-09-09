@@ -14,7 +14,7 @@ let subset = Gen.BList.subset_eq CP.eq_spec_var
 
 let om_simplify = Omega.simplify
 
-let eq_str s1 s2 = String.compare s1 s2 == 0
+let eq_str s1 s2 = String.compare s1 s2 = 0
 
 let simplify f args = 
   let bnd_vars = diff (CP.fv f) args in
@@ -510,6 +510,12 @@ let no_outgoing_edge_scc g scc =
 (* Methods to update rels in graph *)
 let update_trel f_ann rel =
   update_call_trel rel (f_ann rel.termu_lhs) (f_ann rel.termu_rhs)
+  
+let edges_of_scc_vertex g scc s =
+  let succ = TG.succ g s in
+  (* Filter destinations which are outside scc *)
+  let succ_scc = List.filter (fun d -> List.mem d scc) succ in
+  List.concat (List.map (fun d -> TG.find_all_edges g s d) succ_scc)
 
 let edges_of_scc g scc =   
   let outgoing_scc_edges =
@@ -556,11 +562,12 @@ let templ_of_term_ann ann =
   match ann with
   | CP.TermR uid 
   | CP.TermU uid ->
-    let args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
+    let templ_args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
     let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
-    let templ_exp = CP.mkTemplate templ_id args no_pos in
-    CP.Template templ_exp, [templ_exp.CP.templ_id], [Tlutils.templ_decl_of_templ_exp templ_exp]
-  | _ -> CP.mkIConst (-1) no_pos, [], []
+    let templ_exp = CP.mkTemplate templ_id templ_args no_pos in
+    CP.Template templ_exp, [templ_exp.CP.templ_id], 
+    templ_args, [Tlutils.templ_decl_of_templ_exp templ_exp]
+  | _ -> CP.mkIConst (-1) no_pos, [], [], []
 
 let add_templ_assume ctx constr inf_templs =
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -577,8 +584,8 @@ let solve_templ_assume prog templ_decls inf_templs =
 
 (* Ranking function synthesis *)
 let templ_rank_constr_of_rel rel =
-  let src_rank, src_templ_id, src_templ_decl = templ_of_term_ann rel.termu_lhs in
-  let dst_rank, dst_templ_id, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
+  let src_rank, src_templ_id, _, src_templ_decl = templ_of_term_ann rel.termu_lhs in
+  let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
   let inf_templs = src_templ_id @ dst_templ_id in
   let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let dec = mkGt src_rank dst_rank in
@@ -599,9 +606,9 @@ let infer_ranking_function_scc prog g scc =
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
     let rank_of_ann = fun ann ->
-      let rank_templ, _, _ = templ_of_term_ann ann in
-      let rank_exp = Tlutils.subst_model_to_exp sst 
-        (CP.exp_of_template_exp rank_templ) in
+      let rank_templ, _, _, _ = templ_of_term_ann ann in
+      let rank_exp = Tlutils.subst_model_to_exp (List.length scc_edges <= 1) (* should_simplify *)
+        sst (CP.exp_of_template_exp rank_templ) in
       [rank_exp]
     in Some rank_of_ann
   | _ -> None
@@ -618,7 +625,7 @@ let infer_abductive_cond prog ann ante conseq =
       let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
          not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
       let abd_conseq = CP.join_conjunctions conseq in
-      let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann ann in
+      let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann ann in
       let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
       let abd_ctx = mkAnd abd_ante abd_cond in
       
@@ -634,11 +641,14 @@ let infer_abductive_cond prog ann ante conseq =
       match res with
       | Sat model ->
         let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-        let abd_exp = Tlutils.subst_model_to_exp sst (CP.exp_of_template_exp abd_templ) in
+        let abd_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp abd_templ) in
         let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
         if is_sat (mkAnd ante icond) 
         then Some icond
-        else None
+        else 
+          (* Return trivial abductive condition *)
+          let args = List.concat (List.map CP.afv abd_templ_args) in
+          Some (simplify (mkAnd abd_ante abd_conseq) args)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -670,7 +680,7 @@ let infer_abductive_icond_edge prog g e =
     (* if not (imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
     (* else                                                                                     *)
     (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
-    (*   let abd_templ, abd_templ_id, abd_templ_decl = templ_of_term_ann rel.termu_lhs in       *)
+    (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
     (*   let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in                               *)
     (*   let abd_ctx = mkAnd eh_ctx abd_cond in                                                 *)
       
@@ -823,19 +833,29 @@ let subst sol ann =
 (* - Possible NO with Abductive Condition (Otherwise: A /\ C |- B)   *)
 type nt_res = 
   | NT_Yes
-  | NT_No of (CP.formula option)
+  | NT_Partial_Yes (* For mutual recursion *)
+  | NT_No of (CP.formula list)
 
 let print_nt_res = function
   | NT_Yes -> "NT_Yes"
-  | NT_No ic -> "NT_No[" ^ (pr_option !CP.print_formula ic) ^ "]" 
+  | NT_Partial_Yes -> "NT_Partial_Yes"
+  | NT_No ic -> "NT_No[" ^ (pr_list !CP.print_formula ic) ^ "]" 
 
 let is_nt_yes = function
   | NT_Yes -> true
   | _ -> false
 
+let is_nt_no = function
+  | NT_No _ -> true
+  | _ -> false
+
+let is_nt_partial_yes = function
+  | NT_Partial_Yes -> true
+  | _ -> false
+
 let cond_of_nt_res = function
-  | NT_Yes -> None
   | NT_No ic -> ic
+  | _ -> []
 
 let rec infer_abductive_cond_list prog ann ante conds =
   match conds with
@@ -849,76 +869,133 @@ let rec infer_abductive_cond_list prog ann ante conds =
       | None -> infer_abductive_cond_list prog ann ante cs
       | Some _ -> ic
 
-let proving_non_termination_one_trrel prog cond icond trrel = 
+let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
+  let fn = rhs_uid.CP.tu_fname in
+  let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
   let eh_ctx = mkAnd ctx cond in
-  if not (is_sat eh_ctx) then None (* No result for infeasible context *)
+  if not (is_sat eh_ctx) then NT_No [] (* No result for infeasible context *)
   else
-    let rhs_conds = List.map (fun ann -> 
-      subst_cond_with_ann trrel.termr_rhs_params ann cond) trrel.termr_lhs in
+    let rec_conds = List.map (fun ann ->
+      let fn = CP.fn_of_term_ann ann in
+      let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+      let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
+      let cond = uid.CP.tu_cond in
+      (fn, subst_cond_with_ann params ann cond)) trrel.termr_lhs 
+    in
     (* nt_res with candidates for abductive inference *)
     let ntres =
-      if List.exists (fun c -> imply eh_ctx c) rhs_conds then Some NT_Yes
+      let self_conds, other_conds = List.partition (fun (fnc, _) -> eq_str fn fnc) rec_conds in
+      if List.exists (fun (_, c) -> (imply eh_ctx c)) self_conds then NT_Yes
+      else if List.exists (fun (_, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
-        let rhs_iconds = List.map (fun ann -> 
-          subst_cond_with_ann trrel.termr_rhs_params ann icond) trrel.termr_lhs in
-        let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rhs_iconds in
-        Some (NT_No ir)
+        let rec_iconds = List.map (fun ann ->
+          let fn = CP.fn_of_term_ann ann in
+          let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+          let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
+          let icond = uid.CP.tu_icond in
+          subst_cond_with_ann params ann icond) trrel.termr_lhs 
+        in
+        let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
+        NT_No (opt_to_list ir)
     in ntres
     
-let proving_non_termination_one_trrel prog cond icond trrel = 
-  let pr1 = !CP.print_formula in
-  let pr2 = print_ret_trel in
-  Debug.no_3 "proving_non_termination_one_trrel" pr1 pr1 pr2 (pr_option print_nt_res)
-    (fun _ _ _ -> proving_non_termination_one_trrel prog cond icond trrel)
-    cond icond trrel
+let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_one_trrel" 
+    (pr_list pr) pr print_ret_trel print_nt_res
+    (fun _ _ _ -> proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel)
+    lhs_uids rhs_uid trrel
 
-let proving_non_termination_trrels prog cond icond trrels =  
-  let ntres = List.map (proving_non_termination_one_trrel prog cond icond) trrels in
-  let ntres = List.concat (List.map opt_to_list ntres) in
-  if ntres = [] then None, []
-  else if List.for_all is_nt_yes ntres then Some CP.Loop, []
-  else 
-    let ic_list = List.concat (List.map (fun r -> 
-      opt_to_list (cond_of_nt_res r)) ntres) in
+let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
+  let trrels = List.filter (fun trrel -> 
+    eq_str (CP.fn_of_term_ann trrel.termr_rhs) rhs_uid.CP.tu_fname) trrels in
+  let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
+  if ntres = [] then NT_No []
+  else if List.for_all is_nt_yes ntres then NT_Yes
+  else if not (List.exists is_nt_no ntres) then NT_Partial_Yes
+  else
+    let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
     let full_disj_ic_list = get_full_disjoint_cond_list ic_list in
-    None, full_disj_ic_list
+    NT_No full_disj_ic_list
 
-(* Note that each vertex is a unique condition *)        
-let proving_non_termination_vertex prog trrels tg v =
-  try 
-    let _, rel, _ = TG.find_edge tg v v in
-    match rel.termu_lhs with
-    | TermU uid -> 
-      let ntres, abd_conds = proving_non_termination_trrels prog 
-        uid.CP.tu_cond uid.CP.tu_icond trrels in
-      let _ = match ntres with
-      | Some _ -> () (* Non-termination *)
-      | None -> 
-        update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond abd_conds
-        (* ; pr_proc_case_specs prog *)
-      in ntres, abd_conds
-    | _ -> None, []
-  with _ -> None, [] 
-
-let rec proving_non_termination_scc acc_abd_conds prog trrels tg scc =
-  match scc with
+(* Note that each vertex is a unique condition of a method *)        
+let proving_non_termination_one_vertex prog trrels tg scc v =
+  let scc_edges_from_v = edges_of_scc_vertex tg scc v in
+  let looping_edges, non_looping_edges = 
+    List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in
+  (* let _ = print_endline ("LOOPING: " ^                                           *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in       *)
+  (* let _ = print_endline ("NON-LOOPING: " ^                                       *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in   *)
+    
+  (* If the number of looping edges is > 1, it means there is          *)
+  (* multiple recursive calls of the same function in the same context *)
+  match looping_edges with
+  | (_, looping_rel, _)::_ ->
+    begin match looping_rel.termu_lhs with
+    | TermU uid -> (* the uid here is same as the one in RHS of trrel *)
+      let rhs_uid = uid in
+      let other_non_looping_edges = List.filter (fun (_, rel, _) -> 
+        not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in
+      let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
+        (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in
+      let ntres = proving_non_termination_trrels prog (uid::lhs_uids) rhs_uid trrels in
+      (Some uid, ntres)
+    | _ -> (None, NT_No [])
+    end
   | [] -> 
-    let orig_scc = List.map fst acc_abd_conds in
-    let tg = update_graph_with_icond tg orig_scc acc_abd_conds in
-    raise (Restart_with_Cond tg)
-  | v::vs -> 
-    let ntres, abd_conds = proving_non_termination_vertex prog trrels tg v in
+    begin match non_looping_edges with
+    | (_, rel, _)::_ ->
+      begin match rel.termu_lhs with
+      | TermU uid ->
+        let rhs_uid = uid in
+        let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
+          (CP.uid_of_term_ann rel.termu_rhs)) non_looping_edges) in
+        let ntres = proving_non_termination_trrels prog (uid::lhs_uids) rhs_uid trrels in
+        (Some uid, ntres)
+      | _ -> (None, NT_No [])
+      end
+    | [] -> (None, NT_No [])
+    end
     
-    (* let _ = print_endline ("Vertex " ^ (string_of_int v)) in       *)
-    (* let _ = print_endline (pr_list !CP.print_formula abd_conds) in *)
-    
-    match ntres with
-    | Some ann -> update_ann scc (subst (ann, []))
-    | _ -> 
-      let acc_abd_conds = acc_abd_conds @ [(v, abd_conds)] in
-      proving_non_termination_scc acc_abd_conds prog trrels tg vs
-  
+let rec proving_non_termination_scc prog trrels tg scc =
+  let ntres_scc = List.map (fun v -> 
+    proving_non_termination_one_vertex prog trrels tg scc v) scc in
+  (* Removing all dummy nt_res (None, NT_No []) *)
+  let ntres_scc = List.fold_left (fun acc (uid_opt, r) ->
+    match uid_opt with 
+    | None -> acc
+    | Some uid -> acc @ [(uid, r)]) [] ntres_scc in
+  if List.for_all (fun (_, r) -> (is_nt_yes r) || (is_nt_partial_yes r)) ntres_scc then
+    update_ann scc (subst (CP.Loop, []))
+  else
+    let nonterm_uids = List.map fst (List.filter (fun (uid, r) -> is_nt_yes r) ntres_scc) in
+    (* Update ann with nonterm_uid to Loop *)
+    let subst_loop ann =
+      match ann with
+      | CP.TermU uid ->
+        if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
+        then subst (CP.Loop, []) ann
+        else ann
+      | _ -> ann
+    in
+    let tg = match nonterm_uids with
+    | [] -> tg
+    | _ -> map_ann_scc tg scc (update_ann scc subst_loop)
+    in
+    (* let _ = print_endline (print_graph_by_rel tg) in *)
+    let abd_conds = List.fold_left (fun acc (uid, r) ->
+      match r with
+      | NT_No ic ->
+        update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond ic;
+        acc @ [(uid.CP.tu_id, ic)]
+      | _ -> acc) [] ntres_scc in
+    if not (is_empty abd_conds) then 
+      let tg = update_graph_with_icond tg scc abd_conds in
+      raise (Restart_with_Cond tg)
+    else raise Should_Finalize 
+
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =
   (* let _ = print_endline ("Analyzing scc: " ^ (pr_list string_of_int scc)) in *)
@@ -930,5 +1007,5 @@ let aux_solve_turel_one_scc prog trrels tg scc =
     update_ann scc (fun ann ->
       let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
       subst res ann)
-  | None -> proving_non_termination_scc [] prog trrels tg scc
+  | None -> proving_non_termination_scc prog trrels tg scc
   

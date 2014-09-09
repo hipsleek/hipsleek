@@ -10,7 +10,7 @@ void f (int x)
     } else {
       f(x + 1);
     }
-    //f(x + 1);
+    f(x + 1);
   }
 }
 

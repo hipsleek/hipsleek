@@ -1,0 +1,243 @@
+# mutual-5b.ss
+
+How come more spec is producing a worse result
+than requires true ensures true?
+
+# case {
+    x <= 0 -> requires Term ensures true;
+    x > 0 -> requires Loop ensures true;
+  }
+
+Termination Inference Result:
+g:  case {
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=0 -> requires emp & Term[30,2]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[30]
+ ensures emp & true; 
+  0<x -> requires emp & Loop[]
+ ensures emp & true; 
+  }
+===================================================
+# rec-f91a.ss
+
+Poor result without post. Should the MayLoop conditions be
+combined if they have the same post?
+
+Termination Inference Result:
+f91:  case {
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & n<=(0-
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & 0<=(2+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & 0<=(1+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & 
+  0<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & 1<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & 90<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+===================================================
+# rec-f91b1.ss
+
+# rec-f91b?.ss 
+ (1) requires tidying up cases ..
+ (2) check why others can handle f91? Are they hard-wired?
+
+case {
+  n>=91 -> requires true ensures res=n;
+  n<91 -> requires true ensures res=91;
+}
+
+Post-cond seems to critical to support @term
+How come others can also handle it.
+Is it because they have  infer_post?
+Can we change the example to f92 instead?
+
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<91 -> requires emp & Term[29,3,90+(-1*n)]
+ ensures emp & res=91; 
+  }
+
+# rec-f91b2.ss
+
+ case {
+  n>91 -> requires true ensures res=n;
+  n<=91 -> requires true ensures res=91;
+ }
+
+Seems correct but maybe can combine
+the base-case conditions if the post is the same.
+This would then give us the same result as that
+from rec-f91b1.ss:
+
+case {
+  n>=91 -> requires true ensures res=n;
+  n<91 -> requires true ensures res=91;
+}
+
+Termination Inference Result:
+f91:  case {
+  91<n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=91 & n<=90 -> requires emp & Term[29,4,90+(-1*n)]
+ ensures emp & res=91; 
+  n<=91 & n=91 -> requires emp & Term[29,2]
+ ensures emp & res=91; 
+  }
+
+# rec-f91b3.ss
+
+Poor result without post. Should the MayLoop conditions be
+combined if they have the same post?
+
+Termination Inference Result:
+f91:  case {
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & n<=(0-
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & 0<=(2+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & 0<=(1+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & 
+  0<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & 1<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & 90<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+===================================================
+# rec-fgen0.ss
+
+infer[@term]
+case {
+  n>=k -> requires Term[] ensures res=n;
+  n<k -> requires Term[k-n] ensures res=k;
+}
+
+Why is this example inferring fpost even though we already
+specified Term in all the cases?
+Are we trying to overwrite the wisdom of programmer?
+
+Temporal Assumptions:
+ termAssume res=v_int_15_1139' & v_int_15_1139'=k' & n'<k' & n<k & k'=k & 
+n'=n & !(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & (1+n')<k' & 
+k'<=k' & fpost_1135(1+n',k') & fpost_1134(k',k') --> fpost_1135(n,k).
+
+ termAssume res=v_int_15_1139' & n'<k' & n<k & k'=k & n'=n & 
+!(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & v_int_15_1139'=1+n' & 
+k'<=v_int_15_1139' & fpost_1134(v_int_15_1138',k') & fpost_1134(v_int_15_1139',k') --> fpost_1135(n,k).
+
+ termAssume k'<=n' & k<=n & k'=k & n'=n & v_bool_14_1140' & k'<=n' & 
+v_bool_14_1140' & res=n' --> fpost_1134(n,k).
+===================================================
+# rec-fgen2.ss
+
+Two base cases can be combined if post are the same
+
+Termination Inference Result:
+f:  case {
+  k<n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=k & n<k -> requires emp & Term[29,4,0+(-1*n)+(1*
+  k)]
+ ensures emp & res=k; 
+  n<=k & n=k -> requires emp & Term[29,2]
+ ensures emp & res=k; 
+  }
+
+===================================================
+# rec-fgen3.ss
+
+MayLoop cases can be combined if their post are identical.
+Can this example be solved by other tools without post-cond?
+
+Termination Inference Result:
+f:  case {
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & n<=(k-
+  6) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & k<=(n+
+  5) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & k<=(n+
+  4) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & k<=(n+
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & k<=(n+2) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & k<=(n+1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  k<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+  }
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
