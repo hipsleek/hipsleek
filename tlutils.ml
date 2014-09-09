@@ -780,14 +780,19 @@ let rec combine_ls xs =
   | x::xs -> 
     let rs = combine_ls xs in
     List.concat (List.map (fun e -> List.map (fun r -> e @ r) rs) x)
-    
-let subst_model_to_exp sst e =
+
+(* We should not simplify when inferring ranking *)
+(* functions for mutual recursive methods        *)
+let subst_model_to_exp should_simplify sst e =
   let efv = afv e in
   let rel_sst = List.filter (fun (v, _) -> mem v efv) sst in
-  let mi = List.map (fun (_, i) -> i) rel_sst in
-  let gcd_mi = abs (gcd_l mi) in
-  let e_sst = List.map (fun (v, i) -> (v, mkIConst (i / gcd_mi) no_pos)) rel_sst in
-  a_apply_par_term e_sst e
+  let e_sst =
+    if should_simplify then
+      let mi = List.map (fun (_, i) -> i) rel_sst in
+      let gcd_mi = abs (gcd_l mi) in
+      List.map (fun (v, i) -> (v, mkIConst (i / gcd_mi) no_pos)) rel_sst
+    else List.map (fun (v, i) -> (v, mkIConst i no_pos)) rel_sst
+  in a_apply_par_term e_sst e
 
 let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
   let unk_subst = List.map (fun v -> 
@@ -799,7 +804,7 @@ let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
       id = tdef.Cast.templ_name) inf_templs) templ_decls
   in
   let res_templ_decls = List.map (fun tdef -> { tdef with
-    Cast.templ_body = map_opt (fun e -> subst_model_to_exp unk_subst e) tdef.Cast.templ_body; 
+    Cast.templ_body = map_opt (fun e -> subst_model_to_exp true unk_subst e) tdef.Cast.templ_body; 
   }) inf_templ_decls in
   res_templ_decls
 
@@ -808,7 +813,7 @@ let subst_model_to_formula sst f =
     match e with
     | Template t ->
       let t_exp = exp_of_template t in
-      Some (subst_model_to_exp sst t_exp)
+      Some (subst_model_to_exp true sst t_exp)
     | _ -> None
   in
   transform_formula (nonef, nonef, nonef, nonef, f_e) f

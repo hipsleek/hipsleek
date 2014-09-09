@@ -1054,11 +1054,13 @@ and pr_term_id pr_short uid =
   let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
   fmt_string ("@" ^ uid.P.tu_fname ^ "{" ^ (string_of_int uid.P.tu_id) ^ ", ");
   pr_pure_formula uid.P.tu_cond; 
+  fmt_string ","; pr_pure_formula uid.P.tu_icond; 
   fmt_string "}";
   pr_args "" pr_formula_exp uid.P.tu_args;
   if pr_short then () 
-  else pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
-    pr_var_measures (s, ls, []))) uid.P.tu_sol
+  else 
+    pr_wrap_test "#" Gen.is_None (pr_opt_silent (fun (s, ls) ->
+      pr_var_measures (s, ls, []))) uid.P.tu_sol
     
 and pr_term_ann_assume ann = 
   match ann with
@@ -1086,6 +1088,8 @@ and pr_var_measures (t_ann, ls1, ls2) =
   pr_wrap_test "" Gen.is_empty (pr_args "" pr_formula_exp) ls2
   
 let string_of_var_measures = poly_string_of_pr pr_var_measures
+
+let string_of_term_id = poly_string_of_pr (pr_term_id true)
   
 let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
 
