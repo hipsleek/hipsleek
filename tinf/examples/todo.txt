@@ -22,7 +22,7 @@ f:  case {
  ensures emp & true; 
   }
 ===================================================
-# rec-f91a.ss
+# rec-f91a.ss (DONE)
 
 Poor result without post. Should the MayLoop conditions be
 combined if they have the same post?

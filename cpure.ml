@@ -1451,6 +1451,11 @@ and is_float (e : exp) : bool =
 
 and is_specific_val (e: exp): bool =
   is_int e || is_float e || is_null e
+  
+and eq_num_exp e1 e2 =
+  match e1, e2 with
+  | IConst (i1, _), IConst (i2, _) -> i1 == i2
+  | _ -> false
 
 and include_specific_val (f: formula): bool = match f with
   | BForm (bf,_) -> include_specific_val_bf bf

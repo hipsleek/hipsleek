@@ -45,7 +45,7 @@ let solve_rec_trrel rtr conds =
   let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
-    then Tpdispatcher.tp_pairwisecheck rec_cond
+    then pairwisecheck rec_cond
     else rec_cond
   in
   let rec_cond, conds = List.fold_left (fun (rc, ca) cond ->

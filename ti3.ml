@@ -116,6 +116,36 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
 
 let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
 
+let is_base_rank rnk =
+  match rnk with
+  | [] -> true
+  | c::[] -> CP.is_nat c
+  | c::p::[] -> (CP.is_nat c) && (CP.is_nat p)
+  | _ -> false
+
+let eq_base_rank rnk1 rnk2 =
+  match rnk1, rnk2 with
+  | [], [] -> true
+  | c1::[], c2::[] -> CP.eq_num_exp c1 c2
+  | c1::_::[], c2::_::[] -> CP.eq_num_exp c1 c2
+  | _ -> false
+
+let eq_tnt_case_spec sp1 sp2 =
+  match sp1, sp2 with
+  | Unknown, Unknown -> true
+  | Unknown, Sol (CP.MayLoop, _) -> true
+  | Sol (CP.MayLoop, _), Unknown -> true
+  | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
+    begin match ann1, ann2 with
+    | CP.Loop, CP.Loop -> true
+    | CP.MayLoop, CP.MayLoop -> true
+    (* | CP.Term, CP.Term ->                          *)
+    (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
+    (*   eq_base_rank rnk1 rnk2                       *)
+    | _ -> false
+    end
+  | _ -> false
+
 (* Utilities for Path Traces *)
 type path_trace = (CP.spec_var * bool) list
 

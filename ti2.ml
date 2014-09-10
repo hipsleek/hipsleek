@@ -32,6 +32,8 @@ let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
 let imply a c = Tpdispatcher.imply_raw a c
 
+let pairwisecheck = Tpdispatcher.tp_pairwisecheck
+
 (* To be improved *)
 let fp_imply f p =
   let _, pf, _, _, _ = CF.split_components f in
@@ -232,6 +234,51 @@ let update_case_spec_with_icond_list_proc fn cond icond_lst =
   if is_empty icond_lst then ()
   else update_case_spec_proc fn cond (fun _ -> 
     Cases (List.map (fun c -> (c, Unknown)) icond_lst))
+
+let rec merge_cases_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    let merged_cases = List.map (fun (c, sp) -> 
+      (c, merge_cases_tnt_case_spec sp)) cases in
+    let grouped_cases = partition_eq (fun (_, sp1) (_, sp2) ->
+      eq_tnt_case_spec sp1 sp2) merged_cases in
+    let grouped_cases = List.fold_left (fun acc cs ->
+      match cs with
+      | [] -> acc
+      | (c, sp)::cs ->
+        let nc = CP.join_disjunctions (c::(List.map fst cs)) in
+        acc @ [(pairwisecheck nc, sp)]) [] grouped_cases in
+    Cases grouped_cases
+  | _ -> spec
+
+let merge_cases_tnt_case_spec spec = 
+  let pr = print_tnt_case_spec in
+  Debug.no_1 "merge_cases_tnt_case_spec" pr pr
+    merge_cases_tnt_case_spec spec
+    
+let rec flatten_one_case_tnt_spec c f = 
+  match f with
+  | Cases cases ->
+    let cfv = CP.fv c in
+    let should_flatten = List.for_all (fun (fc, _) ->
+      subset (CP.fv fc) cfv) cases in
+    if not should_flatten then [(c, f)]
+    else
+      List.fold_left (fun fac (fc, ff) ->
+        let mc = mkAnd c fc in
+        if is_sat mc then fac @ [(mc, ff)]
+        else fac) [] cases
+  | _ -> [(c, f)]
+          
+let rec flatten_case_tnt_spec f =
+  match f with
+  | Cases cases -> 
+    let ncases = List.fold_left (fun ac (c, f) -> 
+      let nf = flatten_case_tnt_spec f in
+      let mf = flatten_one_case_tnt_spec c nf in 
+      ac @ mf) [] cases in
+    Cases ncases
+  | _ -> f
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
@@ -344,6 +391,12 @@ and merge_tnt_case_spec_into_assume ctx spec af =
           else (c, struc_formula_of_dead_path ())) cases;
         CF.formula_case_pos = no_pos; }
         
+let merge_tnt_case_spec_into_struc_formula ctx spec sf =
+  let pr1 = print_tnt_case_spec in
+  let pr2 = string_of_struc_formula_for_spec in
+  Debug.no_2 "merge_tnt_case_spec_into_struc_formula" pr1 pr2 pr2
+    (fun _ _ -> merge_tnt_case_spec_into_struc_formula ctx spec sf) spec sf
+        
 let rec flatten_one_case_struc c f = 
   match f with
   | CF.ECase fec ->
@@ -396,6 +449,8 @@ let rec norm_struc struc_f =
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
   
 let tnt_spec_of_proc proc ispec =
+  let ispec = merge_cases_tnt_case_spec 
+    (flatten_case_tnt_spec ispec) in
   let spec = proc.Cast.proc_static_specs in
   let spec = merge_tnt_case_spec_into_struc_formula 
     (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
