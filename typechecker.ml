@@ -1406,14 +1406,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (* in                                                                                           *)
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                        let compose_es = CF.subst [(vsv, tmp_vsv); ((CP.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                         (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
                         (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
                         compose_ctx
                             
-                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
+                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (CP.mkRes t) pos)) pos in *)
                       (* let ctx1 = (CF.Ctx c1) in                                                                      *)
                       (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
                       (* (* TODO : eps bug below *)                                                                     *)
@@ -1777,7 +1777,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
               let fct c1 =
                 if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                  let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
+                  let compose_es = CF.subst [((CP.mkRes org_typ), tempvar)] c1.CF.es_formula in
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   compose_ctx
                 else (CF.Ctx c1) in
@@ -2359,7 +2359,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      let fct es = 
 		        let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		        if b_rez then
-                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) pos in
+                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (CP.mkRes rest) pos)) pos in
 			  if !Globals.max_renaming then CF.normalize_es vsv_f pos true es
 			  else CF.normalize_clash_es vsv_f pos true es
 		        else CF.Ctx es
@@ -3440,7 +3440,20 @@ let rec check_prog iprog (prog : prog_decl) =
           Terminf.infer_rank_template_init prog inf_templs
         else Template.collect_and_solve_templ_assumes prog inf_templs 
       in
-      let _ = Ti.solve is_all_verified2 prog in
+      
+      (* TNT Inference *)
+      let is_term_verified =
+        let stk = Term.term_res_stk # get_stk in
+        let err = List.filter (fun (_, _, _, status) ->
+          match status with
+          | Term.Term_S _
+          | Term.Unreachable -> false
+          | _ -> true
+        ) stk in
+        is_empty err
+      in 
+      
+      let _ = Ti.solve (is_all_verified2 && is_term_verified) prog in
       let prog = Ti2.update_specs_prog prog in
       let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in

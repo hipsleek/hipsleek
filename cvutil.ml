@@ -1680,12 +1680,12 @@ let rec xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula
         let ph1 = xpure_consumed_pre_heap prog h1 in
         let ph2 = xpure_consumed_pre_heap prog h2 in
         CP.mkAnd ph1 ph2 pos
-  | HRel _ -> P.mkTrue no_pos
-  | HTrue  -> P.mkTrue no_pos
-  | HFalse -> P.mkFalse no_pos
-  | HEmp  | HVar _ -> P.mkTrue no_pos
-  | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
-  | FrmHole _ -> P.mkTrue no_pos
+  | HRel _ -> CP.mkTrue no_pos
+  | HTrue  -> CP.mkTrue no_pos
+  | HFalse -> CP.mkFalse no_pos
+  | HEmp  | HVar _ -> CP.mkTrue no_pos
+  | Hole _ -> CP.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
+  | FrmHole _ -> CP.mkTrue no_pos
 
 (* xpure of consumed precondition *)
 let rec xpure_consumed_pre (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with

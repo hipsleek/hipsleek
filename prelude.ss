@@ -449,12 +449,12 @@ relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
-/*
+
 int rand_int ()
 requires true
 ensures true;
 
 bool rand_bool ()
 requires true
-ensures true;
-*/
+ensures res or !res;
+

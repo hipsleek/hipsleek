@@ -1,4 +1,4 @@
-# mutual-5b.ss
+# mutual-5b.ss (DONE)
 
 How come more spec is producing a worse result
 than requires true ensures true?
@@ -22,7 +22,7 @@ f:  case {
  ensures emp & true; 
   }
 ===================================================
-# rec-f91a.ss
+# rec-f91a.ss (DONE)
 
 Poor result without post. Should the MayLoop conditions be
 combined if they have the same post?
@@ -98,7 +98,7 @@ f91:  case {
  ensures emp & res=91; 
   }
 
-# rec-f91b3.ss
+# rec-f91b3.ss (DONE)
 
 Poor result without post. Should the MayLoop conditions be
 combined if they have the same post?
@@ -124,7 +124,7 @@ f91:  case {
   91<=n -> requires emp & Term[29,1]
  ensures emp & true; 
 ===================================================
-# rec-fgen0.ss
+# rec-fgen0.ss (DONE)
 
 infer[@term]
 case {
@@ -163,8 +163,48 @@ f:  case {
  ensures emp & res=k; 
   }
 
+Using below, we can combine to obtain:
+
+f:  case {
+  k<n | n=k -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=k & n<k -> requires emp & Term[29,4,0+(-1*n)+(1*
+  k)]
+ ensures emp & res=k; 
+  }
+
+# rec-fgen2.ss
+# fgen2.oc
+
+# Given k<n -> res=n
+# Given k=n -> res=k
+
+C1 :={[k,n,res]:k<n};
+B1 :={[k,n,res]:res=n};
+C2 :={[k,n,res]:n<=k & n=k};
+B2 :={[k,n,res]:res=k};
+C2; # k=n
+C1orC2:=PairWiseCheck (C1 union C2); # k<=n
+C1orC2; # k<n|k=n
+# Ans: k<n|k=n -> B1orB2
+#R1 := B1 intersection C1;
+#R2 := B2 intersection C2;
+#R1orR2 := gist PairWiseCheck (R1 union R2) given C1orC2;
+#R1orR2;
+
+# Choose
+B1orB2:=B1;
+# Provided:
+(C2 intersection B2) subset B1; 
+# true : use B1 in combined rhs
+# since B2 is stronger than B1, we can replace it by B1
+# this is a potential weakening
+# to ensure no info loss
+(C2 intersection B1) subset B2; 
+B1orB2; # res=n
+
 ===================================================
-# rec-fgen3.ss
+# rec-fgen3.ss (DONE)
 
 MayLoop cases can be combined if their post are identical.
 Can this example be solved by other tools without post-cond?
@@ -191,8 +231,95 @@ f:  case {
  ensures emp & true; 
   }
 ===================================================
+# mutual-5b1.ss
+# case {
+    x <= 0 -> requires Term ensures true;
+    x > 0 -> requires MayLoop ensures false;
+  }
+
+If @term is turned on, can we change MayLoop to
+become Loop if user declared false post that can be proven.
+This is a spec strengthening that we expect from infer @term.
+
+However, if user declare:
+  requires MayLoop ensures true;
+I wonder if we should still insert fpost(..),
+to help us determine if false can be detected.
+This may be a little challenging; since any failure
+would require us to revert to the original post.
+This also strengthens the spec at two points.
+
+Perhaps MayLoop should always be regarded as an
+unknown when @term is specified; so that we could
+re-analyse the spec for non-termination and also 
+termination?
+
+Currently, when we detect:
+  requires Loop ensures true;
+We insert fpost(..) to try determine false
+or failure.
 ===================================================
+# mutual-5b2.ss
+
+Problems:
+ (i) why is there an @post?
+
+Observation: 
+  Verification automatically
+  inserted requires false ensures false;
+
+Problem : Please print a warning on incomplete
+ case-spec and the automatic insertion of unreachable 
+ requires false ensure false.
+
+Future Problem:
+  However, if [@term,@pre] are added; we must
+  use instead requires pre(..) & preT(..) ensures true & postT(..).
+
+static  EList :EInfer @post []
+          ECase case {
+                 x<=0 -> EList :EBase emp&Term[32]&{FLOW,(24,25)=__norm}[]
+                                        EAssume 
+                                          emp&{FLOW,(24,25)=__norm}[]
+                                          
+                 ;
+                 0<x & 
+                 x<=8 -> EList :EBase emp&{FLOW,(24,25)=__norm}[]
+                                        EBase emp&MayLoop[]&
+                                              {FLOW,(1,27)=__flow}[]
+                                                EAssume 
+                                                  emp&{FLOW,(24,25)=__norm}[]
+                                                  
+                 ;
+                 10<x -> EList :EBase emp&{FLOW,(24,25)=__norm}[]
+                                        EBase emp&MayLoop[]&
+                                              {FLOW,(1,27)=__flow}[]
+                                                EAssume 
+                                                  emp&{FLOW,(24,25)=__norm}[]
+                                                  
+                 ;
+                 9<=x & x<=10 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
+                 }
 ===================================================
+# mutual-5b3.ss
+
+Problems:
+ (i) Can termination ranking cases be combined?
+
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[32]
+ ensures false & false; 
+  1<=x & x<=3 -> requires emp & Term[32,3,-1+(1*x)]
+ ensures emp & true; 
+  4<=x & x<=8 -> requires emp & Term[32,4,-5+(1*x)]
+ ensures emp & true; 
+  21<=x -> requires emp & Loop[]
+ ensures false & false; 
+  11<=x & x<=20 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  9<=x & x<=10 -> requires false & false 
+  }
 ===================================================
 ===================================================
 ===================================================

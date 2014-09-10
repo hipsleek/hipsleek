@@ -11,13 +11,13 @@ open Cformula
 exception LexVar_Not_found;;
 exception Invalid_Phase_Num;;
 
-let find_lexvar_b_formula (bf: b_formula) : (term_ann * exp list * exp list * loc) =
+let find_lexvar_b_formula (bf: b_formula): lex_info =
   let (pf, _) = bf in
   match pf with
-  | LexVar t_info -> (t_info.lex_ann, t_info.lex_exp, t_info.lex_tmp, t_info.lex_loc)
+  | LexVar t_info -> t_info
   | _ -> raise LexVar_Not_found
 
-let rec find_lexvar_formula (f: CP.formula) : (term_ann * exp list * exp list * loc) =
+let rec find_lexvar_formula (f: CP.formula): lex_info =
   match f with
   | BForm (bf, _) -> find_lexvar_b_formula bf
   | And (f1, f2, _) ->
@@ -107,11 +107,14 @@ let strip_lexvar_formula_for_termAssume (f: formula) =
   let (lexvar, other_p) = strip_lexvar_mix_formula fp in
   let termr, lexvar = List.partition is_TermR_formula lexvar in
   let termr_lex = List.map (fun f ->
-    let tr, _, _, _ = find_lexvar_formula f in tr) termr in
+    let tinfo = find_lexvar_formula f in tinfo.lex_ann) termr in
   match lexvar with
   | [] -> other_p, None, termr_lex
   | lv::[] ->
-    let t_ann, ml, il, _ = find_lexvar_formula lv in 
+    let tinfo = find_lexvar_formula lv in
+    let t_ann, ml, il = tinfo.lex_ann, tinfo.lex_exp, tinfo.lex_tmp in 
+    let ml = tinfo.lex_exp in
+    let il = tinfo.lex_tmp in 
     other_p, Some (t_ann, ml, il), termr_lex
   | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
@@ -137,7 +140,7 @@ let strip_lexvar_lhs (ctx: context) : context =
       let lexvar, es_f = strip_lexvar_formula es.es_formula in
       let termr, lexvar = List.partition is_TermR_formula lexvar in
       let termr_lex = List.map (fun f ->
-        let tr, _, _, _ = find_lexvar_formula f in tr) termr in
+        let tinfo = find_lexvar_formula f in tinfo.lex_ann) termr in
       match lexvar with
       | [] ->
         if termr_lex = [] then Ctx es
@@ -146,7 +149,10 @@ let strip_lexvar_lhs (ctx: context) : context =
           es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
       | lv::[] ->
         if (es.es_var_measures = None) then
-          let t_ann, ml, il, _ = find_lexvar_formula lv in 
+          let tinfo = find_lexvar_formula lv in
+          let t_ann, ml, il = tinfo.lex_ann, tinfo.lex_exp, tinfo.lex_tmp in 
+          let ml = tinfo.lex_exp in
+          let il = tinfo.lex_tmp in 
           Ctx { es with
             es_formula = es_f;
             es_var_measures = Some (t_ann, ml, il);
@@ -160,19 +166,26 @@ let strip_lexvar_lhs (ctx: context) : context =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
   
-let rec strip_lexvar_post sf = 
+let rec strip_lexvar_post for_loop sf = 
   match sf with
   | ECase ec -> ECase { ec with 
       formula_case_branches = map_l_snd 
-        strip_lexvar_post ec.formula_case_branches }
+        (strip_lexvar_post for_loop) ec.formula_case_branches }
   | EBase eb -> EBase { eb with
       formula_struc_continuation = map_opt 
-        strip_lexvar_post eb.formula_struc_continuation }
-  | EAssume af -> EAssume { af with
-      formula_assume_simpl = snd (strip_lexvar_formula af.formula_assume_simpl);
-      formula_assume_struc = strip_lexvar_post af.formula_assume_struc }
+        (strip_lexvar_post for_loop) eb.formula_struc_continuation }
+  | EAssume af -> 
+    if for_loop then
+      let f_post = mkBase_simp HEmp (MCP.mkMFalse no_pos) in
+      EAssume { af with
+        formula_assume_simpl = f_post;
+        formula_assume_struc = mkEBase f_post None no_pos; }
+    else 
+      EAssume { af with
+        formula_assume_simpl = snd (strip_lexvar_formula af.formula_assume_simpl);
+        formula_assume_struc = strip_lexvar_post for_loop af.formula_assume_struc }
   | EInfer ei -> EInfer { ei with 
-      formula_inf_continuation = strip_lexvar_post ei.formula_inf_continuation }
-  | EList el -> mkEList_no_flatten (map_l_snd strip_lexvar_post el)
+      formula_inf_continuation = strip_lexvar_post for_loop ei.formula_inf_continuation }
+  | EList el -> mkEList_no_flatten (map_l_snd (strip_lexvar_post for_loop) el)
 
 (* End of LexVar handling *) 
