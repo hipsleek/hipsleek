@@ -98,7 +98,7 @@ f91:  case {
  ensures emp & res=91; 
   }
 
-# rec-f91b3.ss
+# rec-f91b3.ss (DONE)
 
 Poor result without post. Should the MayLoop conditions be
 combined if they have the same post?
@@ -164,7 +164,7 @@ f:  case {
   }
 
 ===================================================
-# rec-fgen3.ss
+# rec-fgen3.ss (DONE)
 
 MayLoop cases can be combined if their post are identical.
 Can this example be solved by other tools without post-cond?
