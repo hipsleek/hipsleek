@@ -265,7 +265,9 @@ let solve should_infer prog =
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
   
-  if trrels = [] && turels = [] then ()
+  (* If turels is empty then there is no *)
+  (* unknown termination behaviors       *)
+  if turels = [] then ()
   else if not should_infer then
     print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
   else

@@ -124,7 +124,7 @@ f91:  case {
   91<=n -> requires emp & Term[29,1]
  ensures emp & true; 
 ===================================================
-# rec-fgen0.ss
+# rec-fgen0.ss (DONE)
 
 infer[@term]
 case {
