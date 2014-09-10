@@ -1,3 +1,6 @@
+# rec-fgen2.ss
+# fgen2.oc
+
 # Given k<n -> res=n
 # Given k=n -> res=k
 
@@ -23,6 +26,6 @@ B1orB2:=B1;
 # this is a potential weakening
 # to ensure no info loss
 (C2 intersection B1) subset B2; 
-B1orB2;
+B1orB2; # res=n
 
 
