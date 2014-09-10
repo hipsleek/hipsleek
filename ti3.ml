@@ -42,7 +42,11 @@ type call_trel = {
   termu_fname: ident; (* Collect from LHS *)
   termu_lhs: CP.term_ann;
   termu_rhs: CP.term_ann;
+  (* For TermU/TermR *)
   termu_rhs_params: CP.spec_var list; (* For substitution on condition *)
+  (* For other term_ann *)
+  termu_cle: ident; (* callee *)
+  termu_rhs_args: CP.exp list;
 }
 
 let print_call_trel_debug rel = 
@@ -61,7 +65,9 @@ let dummy_trel = {
   termu_fname = "";
   termu_lhs = CP.MayLoop;
   termu_rhs = CP.MayLoop; 
-  termu_rhs_params = []; }
+  termu_rhs_params = []; 
+  termu_cle = "";
+  termu_rhs_args = []; }
   
 let update_call_trel rel ilhs irhs = 
   { rel with

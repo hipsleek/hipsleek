@@ -6900,6 +6900,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
           CP.LexVar {
               CP.lex_ann = trans_term_ann t_ann tlist;
               CP.lex_exp = cle;
+              CP.lex_fid = "";
               CP.lex_tmp = clt;
               CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->

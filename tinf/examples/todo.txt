@@ -1,4 +1,4 @@
-# mutual-5b.ss
+# mutual-5b.ss (DONE)
 
 How come more spec is producing a worse result
 than requires true ensures true?

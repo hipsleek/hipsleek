@@ -106,7 +106,7 @@ let case_split_init trrels =
 (*****************************)
 let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
-let add_call_trel_stk prog ctx lhs rhs =
+let add_call_trel_stk prog ctx lhs rhs callee args =
   let params = params_of_term_ann prog rhs in
   let trel = {
     trel_id = tnt_fresh_int ();
@@ -114,7 +114,9 @@ let add_call_trel_stk prog ctx lhs rhs =
     termu_fname = CP.fn_of_term_ann lhs;
     termu_lhs = lhs;
     termu_rhs = rhs; 
-    termu_rhs_params = params; } in 
+    termu_rhs_params = params; 
+    termu_cle = callee;
+    termu_rhs_args = args; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel
@@ -184,17 +186,21 @@ let solve_turel_one_scc prog trrels tg scc =
   
   let update = 
     (* We assume that all nodes in scc are unknown *)
-    if List.for_all (fun v -> CP.is_Loop v) outside_scc_succ then
+    if List.for_all (fun (_, v) -> CP.is_Loop v) outside_scc_succ then
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else update_ann scc (subst (CP.Loop, [])) (* Loop *)
     
-    else if (List.exists (fun v -> CP.is_Loop v) outside_scc_succ) ||
-            (List.exists (fun v -> CP.is_MayLoop v) outside_scc_succ) 
+    else if (List.exists (fun (_, v) -> CP.is_MayLoop v) outside_scc_succ) 
     then update_ann scc (subst (CP.MayLoop, [])) (* MayLoop *)
+    
+    else if (List.exists (fun (_, v) -> CP.is_Loop v) outside_scc_succ)
+    then 
+      let loop_scc_succ = List.filter (fun (_, v) -> CP.is_Loop v) outside_scc_succ in
+      proving_non_termination_scc prog trrels tg scc
   
-    else if List.for_all (fun v -> CP.is_Term v) outside_scc_succ then
+    else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) (* Term *)
       else aux_solve_turel_one_scc prog trrels tg scc
@@ -258,7 +264,7 @@ let finalize () =
 let solve should_infer prog = 
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
-
+  
   if trrels = [] && turels = [] then ()
   else if not should_infer then
     print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")

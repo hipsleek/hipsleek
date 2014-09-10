@@ -175,10 +175,11 @@ and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
 
 (* should migrate to form below *)
 and lex_info = {
-    lex_ann : term_ann;
-    lex_exp : exp list; (* current lexicographic measures *)
-    lex_tmp : exp list; (* for temporary storage of measures *)
-    lex_loc : loc; (* location of LexVar *)
+  lex_ann : term_ann;
+  lex_exp : exp list; (* current lexicographic measures *)
+  lex_fid : ident; (* name of the function LexVar belongs to *)
+  lex_tmp : exp list; (* for temporary storage of measures *)
+  lex_loc : loc; (* location of LexVar *)
 }
 
 and term_ann = 
@@ -2110,11 +2111,11 @@ and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
 and mkLexVar t_ann m i pos = 
   LexVar {
-      lex_ann = t_ann;
-      lex_exp = m;
-      lex_tmp = i;
-      lex_loc = pos;
-  }
+    lex_ann = t_ann;
+    lex_exp = m;
+    lex_fid = "";
+    lex_tmp = i;
+    lex_loc = pos; }
 
 and mkPure bf = BForm ((bf,None), None)
 
