@@ -915,9 +915,10 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then NT_Yes (* NT_No [] *) (* No result for infeasible context *)
   else
-    let nt_conds = List.map (fun ann ->
-      search_nt_cond_ann lhs_uids ann) trrel.termr_lhs 
-    in
+    let nt_conds = List.fold_left (fun acc ann ->
+      try acc @ [search_nt_cond_ann lhs_uids ann]
+      with Not_found -> acc) [] trrel.termr_lhs in
+    
     (* nt_res with candidates for abductive inference *)
     let ntres =
       let loop_conds, rec_conds = List.partition (fun (_, is_loop_cond, _) -> is_loop_cond) nt_conds in
