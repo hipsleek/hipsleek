@@ -34,7 +34,7 @@ type sleek_token =
   | HP | HPPOST
   | HTRUE
   | IF 
-  | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
+  | IN_T | ANN_TYPE | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
   | INV_EXACT | INV_SAT | BG
   | LET
   | MAX | MIN 
@@ -98,6 +98,7 @@ module Token = struct
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
     | ANDLIST -> "AndList" | ATPOS -> "at"
+    | ANN_TYPE -> "ann"
     | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)

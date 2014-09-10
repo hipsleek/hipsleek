@@ -1153,8 +1153,11 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref true
-let print_en_inline = ref true
+let print_en_tidy = ref false
+(* not stable - this flag is not working!*)
+
+let print_en_inline = ref false
+(* not stable - this flag is not working!*)
 
 let print_html = ref false
 
@@ -1302,6 +1305,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
+let do_infer_inv_under = ref false
 let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
@@ -1513,6 +1517,7 @@ let reset_int2 () =
 
 let string_compare s1 s2 =  String.compare s1 s2=0
 
+
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
@@ -1526,6 +1531,11 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
+
+let fresh_loc_field_name l : string = 
+  (* let ln = if ln<0 then 0 else ln in *)
+  (*       ("flted_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ()))) *)
+        ("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ()))
 
 let fresh_any_name (any:string) = 
   let str = string_of_int (fresh_int ()) in
