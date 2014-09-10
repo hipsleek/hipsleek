@@ -262,7 +262,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref NoPerm
+let perm = ref Frac
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -873,7 +873,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref false (*enable compilation flag "true" for website*)
+let web_compile_flag = ref true (*enable compilation flag "true" for website*)
 
 
 (* Decide whether normalization/simplification
@@ -889,13 +889,13 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 
-let allow_lsmu_infer = ref false
+let allow_lsmu_infer = ref true
 
-let allow_norm = ref true
+let allow_norm = ref false
 
-let allow_ls = ref false (*enable lockset during verification*)
+let allow_ls = ref true (*enable lockset during verification*)
 
-let allow_locklevel = ref false (*enable locklevel during verification*)
+let allow_locklevel = ref true (*enable locklevel during verification*)
 
 (*
   true -> threads as resource
@@ -1004,7 +1004,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref false
+let enable_case_inference = ref true
 
 let print_core = ref false
 let print_core_all = ref false
@@ -1034,7 +1034,7 @@ let print_cil_input = ref false
 (* let allow_pred_spec = ref false *)
 
 (* need to set to "true" when publishing on website*)
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -1129,7 +1129,7 @@ let disable_pre_sat = ref true
 let do_infer_inv = ref false
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false               (* option --classic is turned on or not? *)
+let opt_classic = ref true                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 
 (** for type of frame inference rule that will be used in specs commands *)
