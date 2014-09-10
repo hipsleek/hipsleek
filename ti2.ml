@@ -21,10 +21,18 @@ let simplify f args =
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
       (diff (CP.fv f) args) f None (CP.pos_of_formula f)
+      
+let simplify num f args =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list !CP.print_sv in
+  Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
+    (fun _ _ -> simplify f args) f args
   
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
 let imply a c = Tpdispatcher.imply_raw a c
+
+let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 
 (* To be improved *)
 let fp_imply f p =
@@ -226,6 +234,51 @@ let update_case_spec_with_icond_list_proc fn cond icond_lst =
   if is_empty icond_lst then ()
   else update_case_spec_proc fn cond (fun _ -> 
     Cases (List.map (fun c -> (c, Unknown)) icond_lst))
+
+let rec merge_cases_tnt_case_spec spec = 
+  match spec with
+  | Cases cases ->
+    let merged_cases = List.map (fun (c, sp) -> 
+      (c, merge_cases_tnt_case_spec sp)) cases in
+    let grouped_cases = partition_eq (fun (_, sp1) (_, sp2) ->
+      eq_tnt_case_spec sp1 sp2) merged_cases in
+    let grouped_cases = List.fold_left (fun acc cs ->
+      match cs with
+      | [] -> acc
+      | (c, sp)::cs ->
+        let nc = CP.join_disjunctions (c::(List.map fst cs)) in
+        acc @ [(pairwisecheck nc, sp)]) [] grouped_cases in
+    Cases grouped_cases
+  | _ -> spec
+
+let merge_cases_tnt_case_spec spec = 
+  let pr = print_tnt_case_spec in
+  Debug.no_1 "merge_cases_tnt_case_spec" pr pr
+    merge_cases_tnt_case_spec spec
+    
+let rec flatten_one_case_tnt_spec c f = 
+  match f with
+  | Cases cases ->
+    let cfv = CP.fv c in
+    let should_flatten = List.for_all (fun (fc, _) ->
+      subset (CP.fv fc) cfv) cases in
+    if not should_flatten then [(c, f)]
+    else
+      List.fold_left (fun fac (fc, ff) ->
+        let mc = mkAnd c fc in
+        if is_sat mc then fac @ [(mc, ff)]
+        else fac) [] cases
+  | _ -> [(c, f)]
+          
+let rec flatten_case_tnt_spec f =
+  match f with
+  | Cases cases -> 
+    let ncases = List.fold_left (fun ac (c, f) -> 
+      let nf = flatten_case_tnt_spec f in
+      let mf = flatten_one_case_tnt_spec c nf in 
+      ac @ mf) [] cases in
+    Cases ncases
+  | _ -> f
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
@@ -255,7 +308,7 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
       CF.EAssume { assume with
         CF.formula_assume_simpl = f_post;
         CF.formula_assume_struc = CF.mkEBase f_post None pos; }
-    | _ -> TermUtils.strip_lexvar_post (CF.EAssume assume)
+    | _ -> TermUtils.strip_lexvar_post false (CF.EAssume assume)
   in
   let spec = CF.mkEBase f_pre (Some post) pos in
   spec
@@ -312,7 +365,7 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
     else if has_lexvar then
       CF.EBase { eb with
         CF.formula_struc_continuation = map_opt 
-          TermUtils.strip_lexvar_post cont }
+          (TermUtils.strip_lexvar_post true) cont }
     else update_ebase base
   | CF.EAssume af -> merge_tnt_case_spec_into_assume ctx spec af
   | CF.EInfer ei -> 
@@ -337,6 +390,12 @@ and merge_tnt_case_spec_into_assume ctx spec af =
           if f_is_sat nctx then (c, merge_tnt_case_spec_into_assume ctx s af)
           else (c, struc_formula_of_dead_path ())) cases;
         CF.formula_case_pos = no_pos; }
+        
+let merge_tnt_case_spec_into_struc_formula ctx spec sf =
+  let pr1 = print_tnt_case_spec in
+  let pr2 = string_of_struc_formula_for_spec in
+  Debug.no_2 "merge_tnt_case_spec_into_struc_formula" pr1 pr2 pr2
+    (fun _ _ -> merge_tnt_case_spec_into_struc_formula ctx spec sf) spec sf
         
 let rec flatten_one_case_struc c f = 
   match f with
@@ -377,12 +436,26 @@ let rec flatten_case_struc struc_f =
 let flatten_case_struc struc_f = 
   let pr = string_of_struc_formula_for_spec in
   Debug.no_1 "flatten_case_struc" pr pr flatten_case_struc struc_f
-
+  
+let rec norm_struc struc_f = 
+  match struc_f with
+  | CF.ECase ec -> CF.ECase { ec with CF.formula_case_branches = 
+      List.map (fun (c, f) -> (om_simplify c, f)) ec.CF.formula_case_branches }
+  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation = 
+      map_opt norm_struc eb.CF.formula_struc_continuation }
+  | CF.EAssume _ -> struc_f
+  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation = 
+      norm_struc ei.CF.formula_inf_continuation }
+  | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
+  
 let tnt_spec_of_proc proc ispec =
+  let ispec = merge_cases_tnt_case_spec 
+    (flatten_case_tnt_spec ispec) in
   let spec = proc.Cast.proc_static_specs in
   let spec = merge_tnt_case_spec_into_struc_formula 
     (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
   let spec = flatten_case_struc spec in
+  let spec = norm_struc spec in
   spec
     
 let pr_proc_case_specs prog = 
@@ -451,9 +524,13 @@ let print_edge e =
   let _, rel, _ = e in
   print_call_trel_debug rel
     
+(* let print_graph_by_rel g =                              *)
+(*   TG.fold_edges (fun s d a ->                           *)
+(*     (print_edge (TG.find_edge g s d)) ^ "\n" ^ a)  g "" *)
+
 let print_graph_by_rel g = 
-  TG.fold_edges (fun s d a -> 
-    (print_edge (TG.find_edge g s d)) ^ "\n" ^ a)  g ""
+  TG.fold_edges_e (fun e a -> 
+    (print_edge e) ^ "\n" ^ a)  g ""
   
 let print_scc_num = pr_list string_of_int
 
@@ -492,7 +569,7 @@ let outside_scc_succ_vertex g scc v =
   let outside_scc_succ = Gen.BList.difference_eq (==) succ scc in
   List.map (fun sc ->
     let _, rel, _ = TG.find_edge g v sc in
-    rel.termu_rhs) outside_scc_succ
+    (sc, rel.termu_rhs)) outside_scc_succ
   (* List.concat (List.map (fun sc ->                                       *)
   (*   let edges = TG.find_all_edges g v sc in                              *)
   (*   List.map (fun (_, rel, _) -> rel.termu_rhs) edges) outside_scc_succ) *)
@@ -648,7 +725,7 @@ let infer_abductive_cond prog ann ante conseq =
         else 
           (* Return trivial abductive condition *)
           let args = List.concat (List.map CP.afv abd_templ_args) in
-          Some (simplify (mkAnd abd_ante abd_conseq) args)
+          Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -857,6 +934,20 @@ let cond_of_nt_res = function
   | NT_No ic -> ic
   | _ -> []
 
+let uid_of_loop trel = 
+  let args = trel.termu_rhs_args in
+  let params = List.concat (List.map CP.afv args) in
+  let cond = simplify 2 trel.call_ctx params in
+  { CP.tu_id = CP.loop_id;
+    CP.tu_sid = "";
+    CP.tu_fname = trel.termu_cle;
+    CP.tu_call_num = 0;
+    CP.tu_args = trel.termu_rhs_args;
+    CP.tu_cond = cond; 
+    CP.tu_icond = cond;
+    CP.tu_sol = Some (CP.Loop, []);
+    CP.tu_pos = no_pos; }
+
 let rec infer_abductive_cond_list prog ann ante conds =
   match conds with
   | [] -> None
@@ -869,35 +960,58 @@ let rec infer_abductive_cond_list prog ann ante conds =
       | None -> infer_abductive_cond_list prog ann ante cs
       | Some _ -> ic
 
+let infer_loop_cond_list params ante conds =
+  (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
+  match conds with
+  | [] -> None
+  | _ -> Some (mkNot (simplify 3 ante params))
+
+let search_nt_cond_ann lhs_uids ann =
+  let fn = CP.fn_of_term_ann ann in
+  let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+  let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
+  let cond = uid.CP.tu_cond in
+  let is_loop_cond = uid.CP.tu_id == CP.loop_id in
+  (fn, is_loop_cond, subst_cond_with_ann params ann cond) 
+  
+let search_rec_icond_ann lhs_uids ann =
+  let fn = CP.fn_of_term_ann ann in
+  let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+  let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
+  let icond = uid.CP.tu_icond in
+  subst_cond_with_ann params ann icond 
+
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let fn = rhs_uid.CP.tu_fname in
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
   let eh_ctx = mkAnd ctx cond in
-  if not (is_sat eh_ctx) then NT_No [] (* No result for infeasible context *)
+  if not (is_sat eh_ctx) then NT_Yes (* NT_No [] *) (* No result for infeasible context *)
   else
-    let rec_conds = List.map (fun ann ->
-      let fn = CP.fn_of_term_ann ann in
-      let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
-      let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
-      let cond = uid.CP.tu_cond in
-      (fn, subst_cond_with_ann params ann cond)) trrel.termr_lhs 
-    in
+    (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
+    (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
+    let nt_conds = List.fold_left (fun acc ann ->
+      try acc @ [search_nt_cond_ann lhs_uids ann]
+      with Not_found -> acc) [] trrel.termr_lhs in
+    
     (* nt_res with candidates for abductive inference *)
     let ntres =
-      let self_conds, other_conds = List.partition (fun (fnc, _) -> eq_str fn fnc) rec_conds in
-      if List.exists (fun (_, c) -> (imply eh_ctx c)) self_conds then NT_Yes
-      else if List.exists (fun (_, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
+      let loop_conds, rec_conds = List.partition (fun (_, is_loop_cond, _) -> is_loop_cond) nt_conds in
+      let self_conds, other_conds = List.partition (fun (fnc, _, _) -> eq_str fn fnc) rec_conds in
+      if List.exists (fun (_, _, c) -> (imply eh_ctx c)) loop_conds then NT_Yes
+      else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) self_conds then NT_Yes
+      else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
+        (* Infer the conditions for to-loop nodes *)
+        let params = params_of_term_ann prog trrel.termr_rhs in
+        let loop_conds = List.map (fun (_, _, c) -> c) loop_conds in
+        let il = infer_loop_cond_list params eh_ctx loop_conds in
+        (* Infer the conditions for self-looping nodes or mutual nodes *)
         let rec_iconds = List.map (fun ann ->
-          let fn = CP.fn_of_term_ann ann in
-          let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
-          let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
-          let icond = uid.CP.tu_icond in
-          subst_cond_with_ann params ann icond) trrel.termr_lhs 
+          search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
         in
         let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
-        NT_No (opt_to_list ir)
+        NT_No ((opt_to_list ir) @ (opt_to_list il))
     in ntres
     
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
@@ -917,10 +1031,27 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   else
     let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
     let full_disj_ic_list = get_full_disjoint_cond_list ic_list in
-    NT_No full_disj_ic_list
+    (* We should terminate the analysis when there is no new inferred condition *)
+    let cond = rhs_uid.CP.tu_cond in 
+    let feasible_disj_ic_list = List.filter (fun c -> 
+      (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
+    if is_empty feasible_disj_ic_list then NT_No []
+    else NT_No feasible_disj_ic_list (* full_disj_ic_list *)
+    
+let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_trrels" 
+    (pr_list pr) pr (pr_list print_ret_trel) print_nt_res
+    (fun _ _ _ -> proving_non_termination_trrels prog lhs_uids rhs_uid trrels)
+    lhs_uids rhs_uid trrels
 
 (* Note that each vertex is a unique condition of a method *)        
 let proving_non_termination_one_vertex prog trrels tg scc v =
+  let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in
+  let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in
+  (* let _ = print_endline ("LOOP: " ^                                            *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) loop_edges_from_v)) in *)
+  
   let scc_edges_from_v = edges_of_scc_vertex tg scc v in
   let looping_edges, non_looping_edges = 
     List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in
@@ -940,19 +1071,21 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
         not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in
       let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
         (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in
-      let ntres = proving_non_termination_trrels prog (uid::lhs_uids) rhs_uid trrels in
+      let ntres = proving_non_termination_trrels prog 
+        ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in
       (Some uid, ntres)
     | _ -> (None, NT_No [])
     end
   | [] -> 
-    begin match non_looping_edges with
+    begin match (loop_edges_from_v @ non_looping_edges) with
     | (_, rel, _)::_ ->
       begin match rel.termu_lhs with
       | TermU uid ->
         let rhs_uid = uid in
         let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
           (CP.uid_of_term_ann rel.termu_rhs)) non_looping_edges) in
-        let ntres = proving_non_termination_trrels prog (uid::lhs_uids) rhs_uid trrels in
+        let ntres = proving_non_termination_trrels prog 
+          ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in
         (Some uid, ntres)
       | _ -> (None, NT_No [])
       end
@@ -1008,4 +1141,4 @@ let aux_solve_turel_one_scc prog trrels tg scc =
       let res = (CP.Term, scc_num::(rank_of_ann ann)) in 
       subst res ann)
   | None -> proving_non_termination_scc prog trrels tg scc
-  
+

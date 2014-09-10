@@ -14159,6 +14159,17 @@ let rec norm_assume_with_lexvar tpost struc_f =
         formula_assume_struc = mkEBase post None no_pos }
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
+
+let add_args_lexvar_formula fname args (f: formula): formula =
+  let f_b bf =
+    let (pf, il) = bf in
+    match pf with
+    | LexVar t_info ->
+      let npf = LexVar { t_info with 
+        lex_fid = fname; lex_tmp = args } in
+      Some (npf, il)
+    | _ -> Some bf
+  in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f 
      
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
@@ -14170,7 +14181,10 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
       if not is_tnt_inf then struc_f
       else
         let tpost = CP.mkUTPost uid in
-        EBase { eb with formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
+        EBase { eb with
+          formula_struc_base = add_args_lexvar_formula 
+            uid.CP.tu_fname uid.CP.tu_args eb.formula_struc_base; 
+          formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
     let lexvar =

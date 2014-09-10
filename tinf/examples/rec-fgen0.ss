@@ -8,7 +8,9 @@ infer[@term]
 case {
   //  n>91 -> requires Term[] ensures res=n;
   n>=k -> requires Term[] ensures res=n;
-  n<k -> requires Term[k-n] ensures res=k;
+  n<k -> 
+   requires Term[k-n] 
+   ensures res=k;
 }
 {
   if (k<=n) return n;

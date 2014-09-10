@@ -3440,7 +3440,20 @@ let rec check_prog iprog (prog : prog_decl) =
           Terminf.infer_rank_template_init prog inf_templs
         else Template.collect_and_solve_templ_assumes prog inf_templs 
       in
-      let _ = Ti.solve is_all_verified2 prog in
+      
+      (* TNT Inference *)
+      let is_term_verified =
+        let stk = Term.term_res_stk # get_stk in
+        let err = List.filter (fun (_, _, _, status) ->
+          match status with
+          | Term.Term_S _
+          | Term.Unreachable -> false
+          | _ -> true
+        ) stk in
+        is_empty err
+      in 
+      
+      let _ = Ti.solve (is_all_verified2 && is_term_verified) prog in
       let prog = Ti2.update_specs_prog prog in
       let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in

@@ -519,7 +519,8 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     begin
       let _ = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
+      let dst_tinfo = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_d, dst_lv, dst_il, l_pos = (dst_tinfo.lex_ann, dst_tinfo.lex_exp, dst_tinfo.lex_tmp, dst_tinfo.lex_loc) in
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in 
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
@@ -541,7 +542,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
               let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d in
               { es with es_term_res_rhs = Some t_ann_d }
             else
-              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d in
+              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il in
               { es with es_term_call_rhs =  Some t_ann_d; }
           else es 
         in es
@@ -644,7 +645,9 @@ let check_term_assume prog lhs rhs =
   match rhs_lex with
   | [] -> ()
   | rlex::[] ->
-    let t_ann_d, _, _, _ = find_lexvar_formula rlex in
+    let dst_tinfo = find_lexvar_formula rlex in
+    let t_ann_d, dst_il = (dst_tinfo.lex_ann, dst_tinfo.lex_tmp) in
+      
     begin match t_ann_d with
     | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
     | _ -> 
@@ -652,10 +655,10 @@ let check_term_assume prog lhs rhs =
         | Some (t_ann, el, il) -> (t_ann, el, il)
         | None -> raise LexVar_Not_found in
       begin match t_ann_s with
-      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
+      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il
       | Term -> 
         begin match t_ann_d with
-        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
+        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il
         | _ -> () 
         end
       | _ -> () 
