@@ -321,7 +321,30 @@ f:  case {
   9<=x & x<=10 -> requires false & false 
   }
 ===================================================
+# foo-fact2.ss
+
+# critical bug must fix asap
+
+why isn't there an termination inference result here?
+I am expecting:
+
+ case {
+  n>0 -> requires Term[] ensures res=n+1;
+  n<=0 -> requires Term[] ensures res=n-1;
+ }
+
+why isn't there an termination inference result here?
+I am expecting:
+
+ case {
+  n>0 -> requires Term[] ensures res=n+1;
+  n<=0 -> requires Term[] ensures res=n-1;
+ }
 ===================================================
+# foo-fact1.ss
+
+This should work after you fix foo-fact2.ss
+It should print two term inference results.
 ===================================================
 ===================================================
 ===================================================
