@@ -807,7 +807,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.binfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
