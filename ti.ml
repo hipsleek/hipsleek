@@ -42,7 +42,7 @@ let merge_trrels rec_trrels =
   merge_trrels
   
 let solve_rec_trrel rtr conds = 
-  let rec_cond = simplify rtr.ret_ctx rtr.termr_rhs_params in
+  let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
     if CP.is_disjunct rec_cond
     then Tpdispatcher.tp_pairwisecheck rec_cond
@@ -73,7 +73,7 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr = 
-  Base (simplify btr.ret_ctx btr.termr_rhs_params)
+  Base (simplify 5 btr.ret_ctx btr.termr_rhs_params)
 
 let solve_trrel_list trrels = 
   (* print_endline (pr_list print_ret_trel trrel) *)

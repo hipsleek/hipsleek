@@ -21,6 +21,12 @@ let simplify f args =
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
       (diff (CP.fv f) args) f None (CP.pos_of_formula f)
+      
+let simplify num f args =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list !CP.print_sv in
+  Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
+    (fun _ _ -> simplify f args) f args
   
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
@@ -377,12 +383,24 @@ let rec flatten_case_struc struc_f =
 let flatten_case_struc struc_f = 
   let pr = string_of_struc_formula_for_spec in
   Debug.no_1 "flatten_case_struc" pr pr flatten_case_struc struc_f
-
+  
+let rec norm_struc struc_f = 
+  match struc_f with
+  | CF.ECase ec -> CF.ECase { ec with CF.formula_case_branches = 
+      List.map (fun (c, f) -> (om_simplify c, f)) ec.CF.formula_case_branches }
+  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation = 
+      map_opt norm_struc eb.CF.formula_struc_continuation }
+  | CF.EAssume _ -> struc_f
+  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation = 
+      norm_struc ei.CF.formula_inf_continuation }
+  | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
+  
 let tnt_spec_of_proc proc ispec =
   let spec = proc.Cast.proc_static_specs in
   let spec = merge_tnt_case_spec_into_struc_formula 
     (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
   let spec = flatten_case_struc spec in
+  let spec = norm_struc spec in
   spec
     
 let pr_proc_case_specs prog = 
@@ -652,7 +670,7 @@ let infer_abductive_cond prog ann ante conseq =
         else 
           (* Return trivial abductive condition *)
           let args = List.concat (List.map CP.afv abd_templ_args) in
-          Some (simplify (mkAnd abd_ante abd_conseq) args)
+          Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -864,7 +882,7 @@ let cond_of_nt_res = function
 let uid_of_loop trel = 
   let args = trel.termu_rhs_args in
   let params = List.concat (List.map CP.afv args) in
-  let cond = simplify trel.call_ctx params in
+  let cond = simplify 2 trel.call_ctx params in
   { CP.tu_id = CP.loop_id;
     CP.tu_sid = "";
     CP.tu_fname = trel.termu_cle;
@@ -891,7 +909,7 @@ let infer_loop_cond_list params ante conds =
   (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
   match conds with
   | [] -> None
-  | _ -> Some (mkNot (simplify ante params))
+  | _ -> Some (mkNot (simplify 3 ante params))
 
 let search_nt_cond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
@@ -915,6 +933,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then NT_Yes (* NT_No [] *) (* No result for infeasible context *)
   else
+    (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
+    (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
     let nt_conds = List.fold_left (fun acc ann ->
       try acc @ [search_nt_cond_ann lhs_uids ann]
       with Not_found -> acc) [] trrel.termr_lhs in
@@ -956,7 +976,19 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   else
     let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
     let full_disj_ic_list = get_full_disjoint_cond_list ic_list in
-    NT_No full_disj_ic_list
+    (* We should terminate the analysis when there is no new inferred condition*)
+    let cond = rhs_uid.CP.tu_cond in 
+    let feasible_disj_ic_list = List.filter (fun c -> 
+      (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
+    if is_empty feasible_disj_ic_list then NT_No []
+    else NT_No feasible_disj_ic_list (* full_disj_ic_list *)
+    
+let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
+  let pr = Cprinter.string_of_term_id in
+  Debug.no_3 "proving_non_termination_trrels" 
+    (pr_list pr) pr (pr_list print_ret_trel) print_nt_res
+    (fun _ _ _ -> proving_non_termination_trrels prog lhs_uids rhs_uid trrels)
+    lhs_uids rhs_uid trrels
 
 (* Note that each vertex is a unique condition of a method *)        
 let proving_non_termination_one_vertex prog trrels tg scc v =
@@ -1055,24 +1087,3 @@ let aux_solve_turel_one_scc prog trrels tg scc =
       subst res ann)
   | None -> proving_non_termination_scc prog trrels tg scc
 
-(* let aux_seprate_loop_cond prog tg scc outside_scc_succ =                                                *)
-(*   let loop_scc_succ = List.filter (fun (_, v) -> CP.is_Loop v) outside_scc_succ in                      *)
-(*   let to_loop_edges = List.fold_left (fun acc (d, _) -> acc @                                           *)
-(*     List.concat (List.map (fun s -> TG.find_all_edges tg s d) scc)) [] loop_scc_succ in                 *)
-(*   match to_loop_edges with                                                                              *)
-(*   | [] -> report_error no_pos ("[TNT Inference]: Malfunction: Expected at least one to-Loop relation.") *)
-(*   | (_, rel, _)::_ ->                                                                                   *)
-(*     match rel.termu_lhs with                                                                            *)
-(*     | CP.TermU uid ->                                                                                   *)
-(*       let ctx = rel.call_ctx in                                                                         *)
-(*       let cond = uid.CP.tu_cond in                                                                      *)
-(*       if imply cond ctx then (* The context is satisfied the loop condition *)                          *)
-(*         update_ann scc (subst (CP.MayLoop, []))                                                         *)
-(*       else                                                                                              *)
-(*         let params = params_of_term_ann prog rel.termu_lhs in                                           *)
-(*         let icond = simplify ctx params in                                                              *)
-(*         let neg_icond = mkNot icond in                                                                  *)
-(*         let _ = update_case_spec_with_icond_list_proc uid.CP.tu_fname cond [icond; neg_icond] in        *)
-(*         let tg = update_graph_with_icond tg scc [(uid.CP.tu_id, [icond; neg_icond])] in                 *)
-(*         raise (Restart_with_Cond tg)                                                                    *)
-(*     | _ -> raise Should_Finalize                                                                        *)
