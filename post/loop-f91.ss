@@ -11,7 +11,7 @@ int loop(int x, int s)
 requires s>=1
 //variance [0,1,10*s-x+90,x]
 case {
-	//Lexicographical ranking function <10s-x+90,x>
+  //Lexicographical ranking function <10s-x+90,x>
   x>100 -> case {
 	   s=1 -> ensures "l1":true;
 	   s!=1 -> //variance x
@@ -43,4 +43,4 @@ case {
 		assert "l3": (10*s'-x'+90)>=0;
 		return loop(x1, s1);
 	}
-}	
+}

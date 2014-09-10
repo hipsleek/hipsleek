@@ -4,7 +4,7 @@ relation postA(int n, int r).
 relation postB(int n, int r).
 
 int f91(int n)
-infer [postA]
+infer [postA,postB]
  case {
   n>=91 ->  ensures postA(n,res);
   n<91 -> ensures postA(n,res);
@@ -24,5 +24,4 @@ RELDEFN postA: ( postA(v_int_15_1193,res) & 91<=v_int_15_1193 & n<=89 & postA(1+
 n,v_int_15_1193)) -->  postA(n,res),
 RELDEFN postA: ( postA(v_int_15_1196,res) & v_int_15_1196<=90 & n<=89 & postA(1+
 n,v_int_15_1196)) -->  postA(n,res)]
-
  */
