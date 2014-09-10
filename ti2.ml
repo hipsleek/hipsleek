@@ -976,7 +976,7 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   else
     let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
     let full_disj_ic_list = get_full_disjoint_cond_list ic_list in
-    (* We should terminate the analysis when there is no new inferred condition*)
+    (* We should terminate the analysis when there is no new inferred condition *)
     let cond = rhs_uid.CP.tu_cond in 
     let feasible_disj_ic_list = List.filter (fun c -> 
       (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
