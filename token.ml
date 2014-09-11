@@ -45,7 +45,10 @@ type sleek_token =
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *) 
-  | TERM_INFER | TREL_INFER | TREL_ASSUME
+  | TERM_INFER 
+  (* | TREL_INFER  change to  INFER_AT_TERM *)
+  | TREL_ASSUME
+  | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE
   | UTPRE | UTPOST
   | UNFOLD | UNION
   | VOID 
@@ -165,7 +168,12 @@ module Token = struct
     (* | TERMR -> "TermR" *)
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
-    | TREL_INFER -> "@term"
+    (* | TREL_INFER -> "@term" *)
+    | INFER_AT_TERM -> "@term"
+    | INFER_AT_PRE -> "@pre"
+    | INFER_AT_POST -> "@post"
+    | INFER_AT_IMM -> "@imm"
+    | INFER_AT_SHAPE -> "@shape"
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"

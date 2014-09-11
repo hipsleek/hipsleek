@@ -8526,12 +8526,12 @@ think it is used to instantiate when folding.
   es_cond_path : cond_path_type;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
-
   (* For Termination checking *)
   (* Term ann with Lexical ordering *)
   es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
   (* For TNT inference: List of unknown returned context *)
   es_infer_tnt: bool;
+  (* es_infer_consts: array of 1..n of bool; *)
   es_term_res_lhs: CP.term_ann list;
   es_term_res_rhs: CP.term_ann option;
   es_term_call_rhs: CP.term_ann option;
