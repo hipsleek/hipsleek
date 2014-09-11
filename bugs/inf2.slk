@@ -12,4 +12,6 @@ checkentail 0 * -\inf = -\inf |- false.
 
 checkentail forall(x: x + \inf = \inf) |- false.
 
+checkentail exists x: x + \inf = \inf |- false.
+
 
