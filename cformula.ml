@@ -14156,6 +14156,15 @@ let has_unknown_pre_lexvar_struc sf =
   in 
   snd (trans_struc_formula sf arg (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, id2, id2l, id2, id2)) 
     (f_arg, f_arg, f_arg, (f_arg, f_arg, f_arg), f_arg) f_comb)
+    
+let rec collect_term_ann f =
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, _ = split_components f in 
+      CP.collect_term_ann (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      (collect_term_ann f1) @ (collect_term_ann f2)
       
 let rec norm_assume_with_lexvar tpost struc_f =
   let norm_f = norm_assume_with_lexvar tpost in
