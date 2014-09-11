@@ -1329,8 +1329,21 @@ object (self)
       let x = Array.fold_right (fun x r -> x || r) arr false in
       if not(x) then failwith  ("empty -infer option :"^s) 
     end
+  method is_empty  = not(Array.fold_right (fun x r -> x || r) arr false)
+  (* method string_at i =  *)
+  (*   try *)
+  (*     string_of_inf_const (Array.get arr i) *)
+  (*   with _ -> "" *)
+  method string_of = 
+    let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in
+    "["^(Array.fold_right (fun x r -> x^r) str_a "")^"]"
   method get c  = Array.get arr (inf_const_to_int c)
   method get_int i  = Array.get arr i
+  method is_term  = self # get INF_TERM
+  method is_pre  = self # get INF_PRE
+  method is_post  = self # get INF_POST
+  method is_imm  = self # get INF_IMM
+  method is_shape  = self # get INF_SHAPE
   method get_arr  = arr
   method set c  = Array.set arr (inf_const_to_int c) true
   method reset c  = Array.set arr (inf_const_to_int c) false
