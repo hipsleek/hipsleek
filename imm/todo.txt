@@ -191,6 +191,16 @@ simpl does not consider all the cases. Need to check more on what's
 missing from the new, simplified h_formula_2_mem
 
 =============================================================
+ inf-imm/inf1_0.slk --- weird behavior below:
+simplify-syn@19@18
+simplify-syn inp1 : (v=@M | !(@L<:v))
+simplify-syn@19 EXIT: (v0=@M | !(@L<:v))
+
+norm_var_name@18
+norm_var_name inp1 : (v=@M | !(@L<:v))
+norm_var_name@18 EXIT: (v0=@M | !(@L<:v))
+
+
 =============================================================
 =============================================================
 =============================================================

@@ -1504,7 +1504,9 @@ let norm_var_name (e: CP.formula) : CP.formula =
   (* renaming free vars to unique vars for better caching *)
   let simplify f0 vnames = 
     let pr = Cprinter.string_of_pure_formula in
-    Debug.no_1 "simplify-syn" pr pr (fun _ -> simplify f0 vnames) f0
+    (* let pr_hashtbl h = Hashtbl.fold (fun d1 d2 a -> *)
+    (*     ("(" ^ (pr_id  d1) ^ "; " ^ (pr_id d2) ^ ")\n")) h "" in *)
+    Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
   in
   simplify e (Hashtbl.create 100)
 
