@@ -1282,6 +1282,24 @@ let infer_const_num = 0
 let infer_const = ref ""
 let infer_const_arr = Array.make 10 false
 
+let set_infer_const s =
+  let helper r num =
+    let reg = Str.regexp r in
+    try
+      begin
+        Str.search_forward reg s 0;
+        Array.set infer_const_arr num true;
+      end
+    with Not_found -> ()
+  in
+  begin
+    helper "@term"  0;
+    helper "@pre"   1;
+    helper "@post"  2;
+    helper "@imm"   3;
+    helper "@shape" 4;
+  end
+
 let tnt_thres = ref 5
 
 (* Template: Option for Template Inference *)
