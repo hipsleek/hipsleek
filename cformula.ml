@@ -8520,18 +8520,19 @@ think it is used to instantiate when folding.
   es_residue_pts : formula_label  list  ;(* residue pts from antecedent *)
   es_id      : int              ; (* unique +ve id *)
   (* below is to store an antecedent prior to it becoming false *)
-  es_orig_ante   : formula option       ;  (* original antecedent formula *) 
+  es_orig_ante   : formula option       ;  (* original antecedent formula *)
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
   es_cond_path : cond_path_type;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
-
   (* For Termination checking *)
   (* Term ann with Lexical ordering *)
   es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
   (* For TNT inference: List of unknown returned context *)
   es_infer_tnt: bool;
+  es_infer_obj: Globals.inf_obj;
+  (* es_infer_consts: array of 1..n of bool; *)
   es_term_res_lhs: CP.term_ann list;
   es_term_res_rhs: CP.term_ann option;
   es_term_call_rhs: CP.term_ann option;
@@ -8852,6 +8853,8 @@ let empty_es flowt grp_lbl pos =
   es_prior_steps  = [];
   es_var_measures = None;
   es_infer_tnt = false;
+  es_infer_obj = Globals.infer_const_arr # clone;
+  (* new Globals.inf_obj; *)
   es_term_res_lhs = [];
   es_term_res_rhs = None;
   es_term_call_rhs = None;
@@ -10045,6 +10048,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_var_measures = es.es_var_measures;
         es_infer_tnt = es.es_infer_tnt;
+        es_infer_obj = es.es_infer_obj;
         es_term_res_lhs = es.es_term_res_lhs;
         es_term_res_rhs = es.es_term_res_rhs;
         es_term_call_rhs = es.es_term_call_rhs;
@@ -12617,6 +12621,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
           es_infer_tnt = es.es_infer_tnt;
+          es_infer_obj = es.es_infer_obj;
           es_term_res_lhs = es.es_term_res_lhs;
           es_crt_holes = es.es_crt_holes;
           es_ho_vars_map  = es.es_ho_vars_map  ;
@@ -12667,6 +12672,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
           es_infer_tnt = es.es_infer_tnt;
+          es_infer_obj = es.es_infer_obj;
           es_term_res_lhs = es.es_term_res_lhs;
           es_crt_holes = es.es_crt_holes;
            es_ho_vars_map = es.es_ho_vars_map;

@@ -1268,8 +1268,92 @@ let log_filter = ref true
 let phase_infer_ind = ref false
 
 (* TNT Inference *)
-type infer_type = 
-  | INF_TERM (* For infer@term *)
+type infer_type =
+  | INF_TERM (* For infer[@term] *)
+  | INF_POST (* For infer[@post] *)
+  | INF_PRE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@pre] *)
+  | INF_IMM (* For infer[@imm] *)
+
+let infer_const_num = 0
+let infer_const = ref ""
+
+let int_to_inf_const x =
+  if x==0 then INF_TERM
+  else if x==1 then INF_POST
+  else if x==2 then INF_PRE
+  else if x==3 then INF_SHAPE
+  else if x==4 then INF_IMM
+  else failwith "Invalid int code for iFINF_CONST"
+
+let string_of_inf_const x =
+  match x with
+  | INF_TERM -> "@term"
+  | INF_POST -> "@post"
+  | INF_PRE -> "@pre"
+  | INF_SHAPE -> "@shape"
+  | INF_IMM -> "@imm"
+
+let inf_const_to_int x =
+  match x with
+  | INF_TERM -> 0
+  | INF_POST -> 1
+  | INF_PRE -> 2
+  | INF_SHAPE -> 3
+  | INF_IMM -> 4
+
+class inf_obj  =
+object (self)
+  val len = 10
+  val arr = Array.make 10 false
+  method set_init_arr s = 
+    let helper r c =
+      let reg = Str.regexp r in
+      try
+        begin
+          Str.search_forward reg s 0;
+          Array.set arr (inf_const_to_int c) true;
+          print_endline ("infer option added :"^(string_of_inf_const c));
+        end
+      with Not_found -> ()
+    in
+    begin
+      helper "@term"  INF_TERM;
+      helper "@pre"   INF_PRE;
+      helper "@post"  INF_POST;
+      helper "@imm"   INF_IMM;
+      helper "@shape" INF_SHAPE;
+      let x = Array.fold_right (fun x r -> x || r) arr false in
+      if not(x) then failwith  ("empty -infer option :"^s) 
+    end
+  method is_empty  = not(Array.fold_right (fun x r -> x || r) arr false)
+  (* method string_at i =  *)
+  (*   try *)
+  (*     string_of_inf_const (Array.get arr i) *)
+  (*   with _ -> "" *)
+  method string_of = 
+    let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in
+    "["^(Array.fold_right (fun x r -> x^r) str_a "")^"]"
+  method get c  = Array.get arr (inf_const_to_int c)
+  method get_int i  = Array.get arr i
+  method is_term  = self # get INF_TERM
+  method is_pre  = self # get INF_PRE
+  method is_post  = self # get INF_POST
+  method is_imm  = self # get INF_IMM
+  method is_shape  = self # get INF_SHAPE
+  method get_arr  = arr
+  method set c  = Array.set arr (inf_const_to_int c) true
+  method reset c  = Array.set arr (inf_const_to_int c) false
+  method clone = 
+    let no = new inf_obj in
+    let ar = no # get_arr in
+    let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in
+    no
+end;;
+
+let infer_const_arr = new inf_obj;;
+
+(* let set_infer_const s = *)
 
 let tnt_thres = ref 5
 
@@ -1277,7 +1361,7 @@ let tnt_thres = ref 5
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
 let templ_piecewise = ref false
-  
+
 (* Options for slicing *)
 let en_slc_ps = ref false
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)

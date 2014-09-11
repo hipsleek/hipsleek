@@ -366,10 +366,14 @@ rule tokenizer file_name = parse
   (* | "@REC" {REC} *)
   | "@NI" {NI}
   | "@RO" {RO}
-  | "@pre" { PRE }
-  | "@xpre" { XPRE }
-  | "@post" { POST }
-  | "@term" { TREL_INFER }
+  | "@pre" { PRE }  (* to be changed *)
+  | "@xpre" { XPRE } (* WN : what is this? *)
+  | "@post" { POST } (* to be changed *)
+  | "@term" { INFER_AT_TERM }
+  | "@pre_n" { INFER_AT_PRE }
+  | "@post_n" { INFER_AT_POST }
+  | "@imm" { INFER_AT_IMM }
+  | "@shape" { INFER_AT_SHAPE }          
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
