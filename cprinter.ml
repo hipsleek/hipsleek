@@ -2926,13 +2926,15 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 				  wrap_box ("B",0) pr_struc_formula s)
 				  else ()) b
     | EInfer {
-      formula_inf_tnt = itnt;
+      (* formula_inf_tnt = itnt; *)
+      formula_inf_obj = inf_o;
       formula_inf_post = postf;
       formula_inf_xpost = postxf;
       formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
           let ps = if (lvars==[] && postf) then "@post " else "" in
-          let ps = ps ^ (if itnt then "@term " else "") in
+          (* let ps = ps ^ (if itnt then "@term " else "") in *)
+          let ps = ps ^ (inf_o # string_of_raw) in
       fmt_open_vbox 2;
       fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();
@@ -3147,6 +3149,7 @@ let pr_estate (es : entail_state) =
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   (* pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars; *)
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
+  pr_wrap_test "es_infer_obj: "  (fun o -> o # is_empty) (fun o -> fmt_string (o # string_of)) es.es_infer_obj;
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
   pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;

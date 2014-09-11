@@ -2303,11 +2303,11 @@ shapeExtract_cmd:
    ]];
 
 infer_type:
-   [[ `INFER_AT_TERM -> Array.set Globals.infer_const_arr 0 true; INF_TERM
-   | `INFER_AT_PRE -> Array.set Globals.infer_const_arr 1 true; INF_PRE
-   | `INFER_AT_POST -> Array.set Globals.infer_const_arr 2 true; INF_POST
-   | `INFER_AT_IMM -> Array.set Globals.infer_const_arr 3 true; INF_IMM
-   | `INFER_AT_SHAPE -> Array.set Globals.infer_const_arr 4 true; INF_SHAPE
+   [[ `INFER_AT_TERM -> INF_TERM
+   | `INFER_AT_PRE -> INF_PRE
+   | `INFER_AT_POST -> INF_POST
+   | `INFER_AT_IMM -> INF_IMM
+   | `INFER_AT_SHAPE -> INF_SHAPE
    ]];
 
 id_list_w_sqr:
@@ -2446,7 +2446,6 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `ANN_TYPE           -> AnnT
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
@@ -2936,9 +2935,13 @@ spec_list_grp:
 spec: 
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
+    (* WN : need to use a list of @sym *)
      let (itype, ivl) = ivl_w_itype in
+     let inf_o = Globals.infer_const_obj # clone in
+     let _ = match itype with Some INF_TERM -> inf_o # set INF_TERM | _ -> () in
      F.EInfer {
        F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
+       F.formula_inf_obj = inf_o;
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
        F.formula_inf_transpec = transpec;

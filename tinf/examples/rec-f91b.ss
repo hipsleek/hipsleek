@@ -19,11 +19,13 @@ int f(int n, int k)
 // 90 -> 91
 int f91(int n)
   infer [@term] 
-//requires true ensures true;
+ requires true ensures res>=91;
+/*
  case {
   n>=91 -> requires true ensures res=n;
   n<91 -> requires true ensures res=91;
  }
+*/
 /*
  case {
   //  n>91 -> requires Term[] ensures res=n;
