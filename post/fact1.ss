@@ -2,7 +2,7 @@
 //relation f_post(int n, int r).
 
 int fact(int x)
-  infer [@pre,@post]
+  infer [@pre_n,@post_n]
   requires true  
   ensures true;
 {

@@ -287,8 +287,7 @@ let apply_cexp_form1 fct form = match form with
   | Pure_c f 
   | Pure_t (f, _) -> Pure_c (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected cexp, found pure_form"
-  
-  
+
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 
@@ -2310,6 +2309,9 @@ infer_type:
    | `INFER_AT_SHAPE -> INF_SHAPE
    ]];
 
+infer_type_list:
+    [[ itl = LIST1 infer_type SEP `COMMA -> itl ]];
+
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
 
@@ -2320,7 +2322,7 @@ id_list_w_itype:
   ]];
 
 infer_cmd:
-  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
     let k, il = un_option il_w_itype (None, []) in (k,il,t,b,None)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
     let il = un_option il [] in (None,il,t,b,Some true)
@@ -2936,11 +2938,15 @@ spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
-     let (itype, ivl) = ivl_w_itype in
+     let (itypes, ivl) = ivl_w_itype in
      let inf_o = Globals.infer_const_obj # clone in
-     let _ = match itype with Some INF_TERM -> inf_o # set INF_TERM | _ -> () in
+     let _ = match itypes with
+       (* | Some INF_TERM -> inf_o # set INF_TERM *)
+       | Some itype_list -> List.iter (fun itype -> inf_o # set itype) itype_list
+       | _ -> ()
+     in
      F.EInfer {
-       F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
+       F.formula_inf_tnt = inf_o # get INF_TERM (* (match itype with | Some INF_TERM -> true | _ -> false) *);
        F.formula_inf_obj = inf_o;
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
@@ -2989,9 +2995,9 @@ spec:
   ]];
 
 cid_list_w_itype:
-  [[ `OSQUARE; t = infer_type; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
+  [[ `OSQUARE; t = infer_type_list; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
    | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il [])
-   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
+   | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, [])
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
