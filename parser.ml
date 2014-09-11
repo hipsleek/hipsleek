@@ -2309,8 +2309,12 @@ infer_type:
    | `INFER_AT_SHAPE -> INF_SHAPE
    ]];
 
+infer_id:
+    [[ t = infer_type -> FstAns t
+      | `IDENTIFIER id -> SndAns (id,Unprimed)  ]];
+
 infer_type_list:
-    [[ itl = LIST1 infer_type SEP `COMMA -> itl ]];
+    [[ itl = LIST1 infer_id SEP `COMMA -> itl ]];
 
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
@@ -2934,17 +2938,30 @@ spec_list_grp:
       ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
   ]];
 
-spec: 
+spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
-     let (itypes, ivl) = ivl_w_itype in
      let inf_o = Globals.infer_const_obj # clone in
-     let _ = match itypes with
-       (* | Some INF_TERM -> inf_o # set INF_TERM *)
-       | Some itype_list -> List.iter (fun itype -> inf_o # set itype) itype_list
-       | _ -> ()
+     let (itypes_and_vars, ivl) = ivl_w_itype in
+     let ivl1 = match itypes_and_vars with
+       | Some itypes_and_vars ->
+             let itypes,vars = List.partition (fun inf -> match inf with
+               | FstAns _ -> true
+               | _ -> false
+             ) itypes_and_vars in
+             let _ = List.iter (fun itype -> match itype with
+               | FstAns itype -> inf_o # set itype
+               | _ -> failwith "not itype"
+             ) itypes in
+             let ivl1 = List.map (fun var -> match var with
+               | SndAns var -> var
+               | _ -> failwith "not var"
+             ) vars in
+             ivl1
+       | None -> []
      in
+     let ivl = ivl@ivl1 in
      F.EInfer {
        F.formula_inf_tnt = inf_o # get INF_TERM (* (match itype with | Some INF_TERM -> true | _ -> false) *);
        F.formula_inf_obj = inf_o;
