@@ -1280,25 +1280,70 @@ type infer_type =
 
 let infer_const_num = 0
 let infer_const = ref ""
-let infer_const_arr = Array.make 10 false
 
-let set_infer_const s =
-  let helper r num =
-    let reg = Str.regexp r in
-    try
-      begin
-        Str.search_forward reg s 0;
-        Array.set infer_const_arr num true;
-      end
-    with Not_found -> ()
-  in
-  begin
-    helper "@term"  0;
-    helper "@pre"   1;
-    helper "@post"  2;
-    helper "@imm"   3;
-    helper "@shape" 4;
-  end
+let int_to_inf_const x =
+  if x==0 then INF_TERM
+  else if x==1 then INF_POST
+  else if x==2 then INF_PRE
+  else if x==3 then INF_SHAPE
+  else if x==4 then INF_IMM
+  else failwith "Invalid int code for iFINF_CONST"
+
+let string_of_inf_const x =
+  match x with
+  | INF_TERM -> "@term"
+  | INF_POST -> "@post"
+  | INF_PRE -> "@pre"
+  | INF_SHAPE -> "@shape"
+  | INF_IMM -> "@imm"
+
+let inf_const_to_int x =
+  match x with
+  | INF_TERM -> 0
+  | INF_POST -> 1
+  | INF_PRE -> 2
+  | INF_SHAPE -> 3
+  | INF_IMM -> 4
+
+class inf_obj  =
+object (self)
+  val len = 10
+  val arr = Array.make 10 false
+  method set_init_arr s = 
+    let helper r c =
+      let reg = Str.regexp r in
+      try
+        begin
+          Str.search_forward reg s 0;
+          Array.set arr (inf_const_to_int c) true;
+          print_endline ("infer option added :"^(string_of_inf_const c));
+        end
+      with Not_found -> ()
+    in
+    begin
+      helper "@term"  INF_TERM;
+      helper "@pre"   INF_PRE;
+      helper "@post"  INF_POST;
+      helper "@imm"   INF_IMM;
+      helper "@shape" INF_SHAPE;
+      let x = Array.fold_right (fun x r -> x || r) arr false in
+      if not(x) then failwith  ("empty -infer option :"^s) 
+    end
+  method get c  = Array.get arr (inf_const_to_int c)
+  method get_int i  = Array.get arr i
+  method get_arr  = arr
+  method set c  = Array.set arr (inf_const_to_int c) true
+  method reset c  = Array.set arr (inf_const_to_int c) false
+  method clone = 
+    let no = new inf_obj in
+    let ar = no # get_arr in
+    let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in
+    no
+end;;
+
+let infer_const_arr = new inf_obj;;
+
+(* let set_infer_const s = *)
 
 let tnt_thres = ref 5
 

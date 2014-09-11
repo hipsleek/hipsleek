@@ -2303,11 +2303,11 @@ shapeExtract_cmd:
    ]];
 
 infer_type:
-   [[ `INFER_AT_TERM -> Array.set Globals.infer_const_arr 0 true; INF_TERM
-   | `INFER_AT_PRE -> Array.set Globals.infer_const_arr 1 true; INF_PRE
-   | `INFER_AT_POST -> Array.set Globals.infer_const_arr 2 true; INF_POST
-   | `INFER_AT_IMM -> Array.set Globals.infer_const_arr 3 true; INF_IMM
-   | `INFER_AT_SHAPE -> Array.set Globals.infer_const_arr 4 true; INF_SHAPE
+   [[ `INFER_AT_TERM -> INF_TERM
+   | `INFER_AT_PRE -> INF_PRE
+   | `INFER_AT_POST -> INF_POST
+   | `INFER_AT_IMM -> INF_IMM
+   | `INFER_AT_SHAPE -> INF_SHAPE
    ]];
 
 id_list_w_sqr:
