@@ -1,17 +1,9 @@
 
-relation Uf(int n, int r).
-  relation Uf1(int n, int r).
-
   int foo(int n)
  case {
-  n>0 -> ensures res=n+1;
-  n<=0 -> ensures res=n-1;
+  n>0 -> requires Term[] ensures res=n+1;
+  n<=0 -> requires Term[] ensures res=n-1;
  }
-/*
-  infer [Uf1]
-  requires true
-  ensures Uf1(n,res);
-*/
 {
   if(n>0)
   return n+1;
@@ -19,10 +11,10 @@ relation Uf(int n, int r).
 }
 
 int fact(int x)
-  infer [@term,@post]
+  infer [@term
+         ,@post
+  ]
   requires true  ensures true;
-//  requires true  ensures Uf(x,res);
-//  requires true ensures res=x;
 {
   if (x==0) return 1;
   else return foo(1) + fact(x - 1);
@@ -42,12 +34,15 @@ We expect:
 
 Then:
  Termination Inference Result:
- fact:  case {
-   1<=x -> requires emp & MayLoop[]
-    ensures emp & ; 
-   x<=(0-1) -> res=1+2*x & x>=0
-    ensures emp & res=1+2*x & x>=0; 
-   x=0 -> requires emp & Term[31,1]
-     ensures emp & res=1+2*x & x>=0; 
+ fact:  
+
+fact:  case {
+  1<=x -> requires emp & Term[31,3,-1+(1*x)]
+ ensures emp & res=1+2*x & x>=0; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & res=1+2*x & x>=0; 
+  }
 
 */

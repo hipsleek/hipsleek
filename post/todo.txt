@@ -46,9 +46,9 @@ to a re-verification process.
 
 Since both @term and @post are specified; we should
 stage it by inferring @post first.
-After that, we would infer @term:
+After that, we would infer @term.
 
-We expect:
+We thus expect:
  Post Inference result:
  fact:
   requires true 
@@ -56,13 +56,17 @@ We expect:
 
 Then:
  Termination Inference Result:
- fact:  case {
-   1<=x -> requires emp & MayLoop[]
-    ensures emp & ; 
-   x<=(0-1) -> res=1+2*x & x>=0
-    ensures emp & res=1+2*x & x>=0; 
-   x=0 -> requires emp & Term[31,1]
-     ensures emp & res=1+2*x & x>=0; 
+ fact:  
+
+fact:  case {
+  1<=x -> requires emp & Term[31,3,-1+(1*x)]
+ ensures emp & res=1+2*x & x>=0; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & res=1+2*x & x>=0; 
+  }
+
 =======================================================
 =======================================================
 =======================================================
