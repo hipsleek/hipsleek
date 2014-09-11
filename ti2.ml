@@ -321,6 +321,11 @@ let struc_formula_of_dead_path _ =
   let spec = CF.mkEBase pp (Some post) pos  in
   spec
   
+let struc_formula_of_dead_path _ =
+  let pr = string_of_struc_formula in
+  Debug.no_1 "struc_formula_of_dead_path" (fun _ -> "") pr
+   struc_formula_of_dead_path ()
+  
 let rec struc_formula_of_tnt_case_spec spec =
   match spec with
   | Sol s -> struc_formula_of_ann s
