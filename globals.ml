@@ -1267,6 +1267,9 @@ let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
 
+let infer_const_num = 0
+let infer_const = ref ""
+
 (* TNT Inference *)
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1274,9 +1277,6 @@ type infer_type =
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@pre] *)
   | INF_IMM (* For infer[@imm] *)
-
-let infer_const_num = 0
-let infer_const = ref ""
 
 let int_to_inf_const x =
   if x==0 then INF_TERM
