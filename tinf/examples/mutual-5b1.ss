@@ -3,7 +3,7 @@ int f(int x)
 //requires true ensures true;
   case {
     x <= 0 -> requires Term ensures true;
-    x > 0 -> requires MayLoop ensures false;
+    x > 0 -> requires MayLoop ensures true;
   }
 {
   if (x <= 0) return 0;

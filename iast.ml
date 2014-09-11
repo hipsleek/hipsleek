@@ -1139,6 +1139,7 @@ let genESpec_x pname body_opt args0 ret pos=
     (* generate Iformula.struc_infer_formula*)
     (F.EInfer {
         F.formula_inf_tnt = false;
+        F.formula_inf_obj = Globals.infer_const_obj # clone;
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;

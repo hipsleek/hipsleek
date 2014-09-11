@@ -1153,11 +1153,8 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref false
-(* not stable - this flag is not working!*)
-
-let print_en_inline = ref false
-(* not stable - this flag is not working!*)
+let print_en_tidy = ref true
+let print_en_inline = ref true
 
 let print_html = ref false
 
@@ -1334,9 +1331,11 @@ object (self)
   (*   try *)
   (*     string_of_inf_const (Array.get arr i) *)
   (*   with _ -> "" *)
-  method string_of = 
+  method string_of_raw = 
     let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in
-    "["^(Array.fold_right (fun x r -> x^r) str_a "")^"]"
+    let lst_a = Array.to_list str_a in 
+    String.concat "," (List.filter (fun s -> not(s="")) lst_a) 
+  method string_of = "["^(self #string_of_raw)^"]"
   method get c  = Array.get arr (inf_const_to_int c)
   method get_int i  = Array.get arr i
   method is_term  = self # get INF_TERM
@@ -1346,15 +1345,22 @@ object (self)
   method is_shape  = self # get INF_SHAPE
   method get_arr  = arr
   method set c  = Array.set arr (inf_const_to_int c) true
+  method set_ind i  = Array.set arr i true
+  method set_list l  = List.iter (fun c -> Array.set arr (inf_const_to_int c) true) l
   method reset c  = Array.set arr (inf_const_to_int c) false
+  method mk_or (o2:inf_obj) = 
+    let o1 = o2 # clone in
+    let _ = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in
+    o1
   method clone = 
     let no = new inf_obj in
     let ar = no # get_arr in
     let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in
+    (* let _ = print_endline ("Cloning :"^(no #string_of)) in *)
     no
 end;;
 
-let infer_const_arr = new inf_obj;;
+let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
@@ -1389,7 +1395,6 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
-let do_infer_inv_under = ref false
 let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
@@ -1601,7 +1606,6 @@ let reset_int2 () =
 
 let string_compare s1 s2 =  String.compare s1 s2=0
 
-
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
@@ -1615,11 +1619,6 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-
-let fresh_loc_field_name l : string = 
-  (* let ln = if ln<0 then 0 else ln in *)
-  (*       ("flted_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ()))) *)
-        ("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ()))
 
 let fresh_any_name (any:string) = 
   let str = string_of_int (fresh_int ()) in

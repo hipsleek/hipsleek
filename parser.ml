@@ -2446,7 +2446,6 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `ANN_TYPE           -> AnnT
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
@@ -2936,9 +2935,13 @@ spec_list_grp:
 spec: 
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
+    (* WN : need to use a list of @sym *)
      let (itype, ivl) = ivl_w_itype in
+     let inf_o = Globals.infer_const_obj # clone in
+     let _ = match itype with Some INF_TERM -> inf_o # set INF_TERM | _ -> () in
      F.EInfer {
        F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
+       F.formula_inf_obj = inf_o;
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
        F.formula_inf_transpec = transpec;

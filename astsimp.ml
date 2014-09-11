@@ -1760,7 +1760,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.dinfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1824,8 +1824,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.dinfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.dinfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1897,7 +1897,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else
+        else 
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
@@ -2307,7 +2307,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
-      let cviews0_with_index = Expure.add_index_to_views cviews0 in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
@@ -2317,15 +2316,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ls@[mut_rec_views]
           else
             ls@[[cv.C.view_name]]
-      ) [] cviews0_with_index in
+      ) [] cviews0 in
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           (* if !Globals.gen_baga_inv then *)
             let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
-            ) cviews0_with_index in
-            let _ = Expure.fix_ef view_list cviews0_with_index in ()
+            ) cviews0 in
+            let _ = Expure.fix_ef view_list cviews0 in ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
             (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
@@ -5977,6 +5976,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
         else
           (n_tl, CF.EInfer {
               CF.formula_inf_tnt = b.IF.formula_inf_tnt;
+              CF.formula_inf_obj = b.IF.formula_inf_obj;
               CF.formula_inf_post = b.IF.formula_inf_post;
               CF.formula_inf_xpost = b.IF.formula_inf_xpost;
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;

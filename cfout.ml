@@ -64,10 +64,10 @@ let shorten_svl_avoid_field prog fv =
       match sv with
           CP.SpecVar(t,id,pr) ->
               let cut_id0 = Str.global_replace reg "" (id ) in
-              (* let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then *)
-              (*   cut_id0 ^ pad *)
-              (* else cut_id0 *)
-              (* in *)
+              let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then
+                cut_id0 ^ pad
+              else cut_id0
+              in
               let new_id =
                 if Hashtbl.mem id_tbl (id,pr)
                 then
@@ -191,7 +191,7 @@ let rearrange_def def=
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
   let n_tbl = Hashtbl.create 1 in
-  let new_svl = shorten_svl svl_rp in
+  let new_svl = shorten_svl svl_rp in 
   let new_body2 =
     List.map (fun ((p, f_opt) as o) ->
         match f_opt with
@@ -271,31 +271,13 @@ let elim_imm_vars_pf f =
     | _ -> f
 
 let rec elim_imm_vars_f f =
-  let is_immediate_var sv = match sv with
-    | CP.SpecVar (_, id, _) ->
-          let reg1 = Str.regexp "flted_" in
-          let reg2 = Str.regexp "_[0-9]*" in
-          try
-            let i = Str.search_forward reg1 id 0 in
-            i >=0
-          with Not_found -> try
-            let i = Str.search_forward reg2 id 0 in
-            i >=0
-          with Not_found -> false
-  in
   let get_subs_list pf =
     let fl = CP.split_conjunctions pf in
     let subs_list = List.fold_left (fun acc f ->
         match f with
           | CP.BForm ((p_f, _), _) -> (
                 match p_f with
-                  | CP.Eq (CP.Var (sv1, _), CP.Var (sv2, _), _) ->
-                        if (is_immediate_var sv1) && not(is_immediate_var sv2) then
-                          acc@[(sv1,sv2)]
-                        else if not(is_immediate_var sv1) && (is_immediate_var sv2) then
-                          acc@[(sv2,sv1)]
-                        else
-                          acc
+                  | CP.Eq (CP.Var (sv1, _), CP.Var (sv2, _), _) -> acc@[(sv1,sv2)]
                   | _ -> acc
             )
           | _ -> acc
@@ -377,8 +359,5 @@ let inline_print e =
     else e
 
 let tidy_print e =
-  let new_e =
-    if (!Globals.print_en_tidy) then shorten_formula (inline_print e)
+    if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
     else e
-  in
-  (* Hashtbl.reset n_tbl; Hashtbl.reset id_tbl; *) new_e

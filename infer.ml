@@ -297,7 +297,8 @@ let init_infer_type ctx itype =
     match ctx with
     | Ctx es -> begin 
       match it with
-      | INF_TERM -> (es.es_infer_obj # set INF_TERM; Ctx { es with es_infer_tnt = true})
+      | INF_TERM -> (es.es_infer_obj # set INF_TERM; ctx)
+            (* Ctx { es with es_infer_tnt = true}) *)
       | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx)
       | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
       | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
