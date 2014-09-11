@@ -1091,8 +1091,8 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref true
-let print_en_inline = ref true
+let print_en_tidy = ref false
+let print_en_inline = ref false
 
 let print_html = ref false
 

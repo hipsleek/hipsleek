@@ -2,7 +2,7 @@ data node {node next; }.
 
 //checkentail x=null & flow __Error |- x!=null.
 
-/*
+
 //1
 checkentail x=null |- x=null.
 print residue.
@@ -53,7 +53,7 @@ print residue.
 // should be may
 //Entail 4: Fail.(no cex)(must) cause:do_unmatched_rhs : x::node<p>
 // x!=null & flow __MayError
-*/
+
 
 //5
 checkentail x::node<_>  & y=x
@@ -62,14 +62,14 @@ print residue.
 // how about y=x & x!=null ?
 // <1>emp&{FLOW,(3,4)=__norm}[]
 
-/*
+
 //6
 checkentail y::node<_> & y=z |- x::node<p>.
 print residue.
 // should be (may)
 //Entail 6: Fail.(no cex)(must) cause:do_unmatched_rhs : x::node<p>
 //<1>z::node<_>&{FLOW,(3,7)=__MayError}[]
-*/
+
 
 /*
 # ex2.slk --efa
