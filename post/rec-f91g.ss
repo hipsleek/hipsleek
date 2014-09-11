@@ -7,7 +7,7 @@ int f91(int n)
 infer [postA,postB]
  case {
   n>=91 ->  ensures postA(n,res);
-  n<91 -> ensures postA(n,res);
+  n<91 -> ensures postB(n,res);
  }
 {
   if (91<=n) return n;
