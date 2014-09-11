@@ -12,7 +12,7 @@ open Ti3
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
-let om_simplify = Omega.simplify
+let om_simplify = Omega.simplify 13
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
 

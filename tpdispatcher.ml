@@ -1837,7 +1837,7 @@ let norm_pure_input f =
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input norm_pure_result
-      Omega.simplify f 
+      (Omega.simplify 12) f 
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
   (* cnv_int_to_ptr r *)
@@ -1872,8 +1872,8 @@ let simplify (f : CP.formula) : CP.formula =
       (* if !Globals.allow_inf && Infinity.contains_inf f then f
       else
       let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
-      let omega_simplify f = simplify_omega f
-        (* Omega.simplify f  *)in
+      let omega_simplify f =  simplify_omega f in
+        (* Omega.simplify f  in *)
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
       let z3_simplify f =
@@ -1886,6 +1886,8 @@ let simplify (f : CP.formula) : CP.formula =
         let f = wrap_pre_post norm_pure_input norm_pure_result Z3.simplify f in
         CP.arith_simplify 13 f
       in
+      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
+      let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in
       if !external_prover then 
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
@@ -1906,43 +1908,43 @@ let simplify (f : CP.formula) : CP.formula =
                         else ((*Omega*)Smtsolver.simplify f)
                   | Mona | MonaH ->
                         if (is_bag_constraint f) then
-                          (Mona.simplify f)
+                          (mona_simplify f)
                         else
                           (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                           let f1 = CP.add_gte0_for_mona f in
                           let f=(omega_simplify f1) in
                           CP.arith_simplify 12 f
                   | OM ->
-                        if (is_bag_constraint f) then (Mona.simplify f)
+                        if (is_bag_constraint f) then (mona_simplify f)
                         else
                           let f=(omega_simplify f) in
                           CP.arith_simplify 12 f
                   | OI ->
                         if (is_bag_constraint f) then (Isabelle.simplify f)
                         else (omega_simplify f)
-                  | SetMONA -> Mona.simplify f
+                  | SetMONA -> mona_simplify f
                   | CM ->
-                        if is_bag_constraint f then Mona.simplify f
+                        if is_bag_constraint f then mona_simplify f
                         else omega_simplify f
                   | Z3 -> z3_simplify f
                         (* Smtsolver.simplify f *)
                   | Z3N -> z3n_simplify f
                         (* Smtsolver.simplify f *)
-                  | Redlog -> Redlog.simplify f
-                  | OCRed -> Redlog.simplify f
+                  | Redlog -> redlog_simplify f
+                  | OCRed -> redlog_simplify f
                   | RM ->
-                        if is_bag_constraint f then Mona.simplify f
-                        else Redlog.simplify f
+                        if is_bag_constraint f then mona_simplify f
+                        else redlog_simplify f
                   | PARAHIP ->
                         if is_bag_constraint f then
-                          Mona.simplify f
+                          mona_simplify f
                         else
-                          Redlog.simplify f
+                          redlog_simplify f
                   | ZM -> 
-                        if is_bag_constraint f then Mona.simplify f
+                        if is_bag_constraint f then mona_simplify f
                         else Smtsolver.simplify f
                   | AUTO ->
-                        if (is_bag_constraint f) then (Mona.simplify f)
+                        if (is_bag_constraint f) then (mona_simplify f)
                         else if (is_list_constraint f) then (Coq.simplify f)
                         else if (is_array_constraint f) then (Smtsolver.simplify f)
                         else (omega_simplify f)
@@ -2022,7 +2024,7 @@ let rec simplify_raw (f: CP.formula) =
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
       if CP.has_template_formula f_memo then f
       else
-        let res_memo = simplify f_memo in
+        let res_memo = simplify_tp f_memo in
         CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 

@@ -22,7 +22,7 @@ let simplify_with_label simp (f:formula) =
   join_disjunctions ls
   
 let simplify_with_label_omega (f:formula) = 
-  let simp = Omega.simplify in
+  let simp = Omega.simplify 2 in
   simplify_with_label simp f
 
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
@@ -282,13 +282,13 @@ let ef_elim_exists_1 (svl : spec_var list) epf =
       ef_elim_exists_1 svl epf
 
 let calc_fix_pure (svl : spec_var list) pf =
-  let pf_base = Omega.simplify pf in
+  let pf_base = Omega.simplify 3 pf in
   let conjs = split_conjunctions pf in
   let conjs = List.filter (fun conj ->
       not(List.exists (fun sv -> List.mem sv svl) (fv conj))
   ) conjs in
   let pf_indu = List.fold_left (fun pf1 pf -> mkAnd pf1 pf no_pos) (mkTrue no_pos) conjs in
-  let pf_fix = Omega.simplify (mkOr pf_base pf_indu None no_pos) in
+  let pf_fix = Omega.simplify 4 (mkOr pf_base pf_indu None no_pos) in
   pf_fix
 
 let ef_elim_exists_2 (svl : spec_var list) epf =

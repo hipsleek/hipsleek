@@ -1305,7 +1305,7 @@ such as f=f1+f2&f1>0&f2>0 => f>=2
 *)
 let simplify (f: CP.formula) : CP.formula =
   if (is_linear_formula f && not (CP.is_float_formula f)) then
-    Omega.simplify f
+    Omega.simplify 8 f
   else
     if (!no_simplify) then
       f
@@ -1314,7 +1314,7 @@ let simplify (f: CP.formula) : CP.formula =
           let simpler_f = simplify_with_redlog f in
           let simpler_f =
             if ( (is_linear_formula simpler_f) && not (CP.is_float_formula f)) then
-              Omega.simplify simpler_f
+              Omega.simplify 9 simpler_f
             else
               simpler_f
           in

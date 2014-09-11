@@ -886,9 +886,9 @@ let simplify (pe : formula) : formula =
     (* restore_memo_formula subs bvars res_memo *)
     simplify_ops pr_w pr_s pe
 
-let simplify (pe : formula) : formula =
+let simplify i (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.simplify" pf pf simplify pe
+  Debug.no_1_num i "Omega.simplify" pf pf simplify pe
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)
@@ -967,11 +967,11 @@ let simplify (pe : formula) : formula =
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
-let simplify (pe : formula) : formula = if not !Globals.oc_simplify then
+let simplify i (pe : formula) : formula = if not !Globals.oc_simplify then
   (* let _ = print_endline ("OC.Simplify: " ^ (!print_pure pe) ) in *)
   pe
 else
-  match (do_with_check "" simplify pe)
+  match (do_with_check "" (simplify i) pe)
   with 
     | None -> pe
     | Some f -> f
@@ -1105,5 +1105,5 @@ let log_mark (mark : string) =
 
 let get_model bnd_vars assertions =
   let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
-  simplify inp_f
+  simplify 1 inp_f
 
