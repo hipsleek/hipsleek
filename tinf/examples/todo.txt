@@ -321,7 +321,9 @@ f:  case {
   9<=x & x<=10 -> requires false & false 
   }
 ===================================================
-# foo-fact2.ss
+# foo-fact2.ss (DONE)
+
+>> Note rec-fgen0.ss
 
 # critical bug must fix asap
 
@@ -340,7 +342,7 @@ I am expecting:
   n<=0 -> requires Term[] ensures res=n-1;
  }
 ===================================================
-# foo-fact1.ss
+# foo-fact1.ss (DONE)
 
 This should work after you fix foo-fact2.ss
 It should print two term inference results.

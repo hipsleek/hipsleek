@@ -267,7 +267,7 @@ let solve should_infer prog =
   
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
-  if turels = [] then ()
+  if turels = [] && trrels = [] then ()
   else if not should_infer then
     print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
   else
