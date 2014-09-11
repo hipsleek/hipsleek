@@ -2885,26 +2885,26 @@ module type SEM_VAL =
   val coq_Btm : coq_Val
  end
 
-module Three_Val = 
+module Three_Val_NoneError = 
  struct 
   type coq_Val_Impl =
   | VTrue
   | VFalse
-  | VUnknown
+  | VError
   
   (** val coq_Val_Impl_rect : 'a1 -> 'a1 -> 'a1 -> coq_Val_Impl -> 'a1 **)
   
   let coq_Val_Impl_rect f f0 f1 = function
   | VTrue -> f
   | VFalse -> f0
-  | VUnknown -> f1
+  | VError -> f1
   
   (** val coq_Val_Impl_rec : 'a1 -> 'a1 -> 'a1 -> coq_Val_Impl -> 'a1 **)
   
   let coq_Val_Impl_rec f f0 f1 = function
   | VTrue -> f
   | VFalse -> f0
-  | VUnknown -> f1
+  | VError -> f1
   
   type coq_Val = coq_Val_Impl
   
@@ -2920,9 +2920,9 @@ module Three_Val =
       (match v2 with
        | VFalse -> true
        | _ -> false)
-    | VUnknown ->
+    | VError ->
       (match v2 with
-       | VUnknown -> true
+       | VError -> true
        | _ -> false)
   
   (** val coq_Top : coq_Val_Impl **)
@@ -2935,34 +2935,34 @@ module Three_Val =
   let coq_Btm =
     VFalse
   
-  (** val truth_and : coq_Val -> coq_Val -> coq_Val_Impl **)
-  
-  let truth_and v1 v2 =
-    match v1 with
-    | VTrue -> v2
-    | VFalse -> VFalse
-    | VUnknown ->
-      (match v2 with
-       | VFalse -> VFalse
-       | _ -> VUnknown)
-  
-  (** val truth_or : coq_Val -> coq_Val -> coq_Val_Impl **)
-  
-  let truth_or v1 v2 =
-    match v1 with
-    | VTrue -> VTrue
-    | VFalse -> v2
-    | VUnknown ->
-      (match v2 with
-       | VTrue -> VTrue
-       | _ -> VUnknown)
-  
   (** val truth_not : coq_Val_Impl -> coq_Val_Impl **)
   
   let truth_not = function
   | VTrue -> VFalse
   | VFalse -> VTrue
-  | VUnknown -> VUnknown
+  | VError -> VError
+  
+  (** val truth_and : coq_Val -> coq_Val -> coq_Val_Impl **)
+  
+  let truth_and v1 v2 =
+    match v1 with
+    | VTrue -> v2
+    | VFalse ->
+      (match v2 with
+       | VError -> VError
+       | _ -> VFalse)
+    | VError -> VError
+  
+  (** val truth_or : coq_Val -> coq_Val -> coq_Val_Impl **)
+  
+  let truth_or v1 v2 =
+    match v1 with
+    | VTrue ->
+      (match v2 with
+       | VError -> VError
+       | _ -> VTrue)
+    | VFalse -> v2
+    | VError -> VError
  end
 
 module type NUMBER = 
@@ -3112,12 +3112,12 @@ module FinLeqRelation =
     if z_le_dec x y then VAL.coq_Top else VAL.coq_Btm
  end
 
-module None3ValRel = 
+module NoneError3ValRel = 
  struct 
-  (** val noneVal : Three_Val.coq_Val_Impl **)
+  (** val noneVal : Three_Val_NoneError.coq_Val_Impl **)
   
   let noneVal =
-    Three_Val.VUnknown
+    Three_Val_NoneError.VError
  end
 
 module InfLeqRelation = 
@@ -3263,9 +3263,6 @@ module ArithSemantics =
  functor (I:SEMANTICS_INPUT) ->
  functor (V:VARIABLE) ->
  functor (VAL:SEM_VAL) ->
- functor (S:sig 
-  val noneVal : VAL.coq_Val
- end) ->
  functor (L:sig 
   val num_leq : I.N.coq_A -> I.N.coq_A -> VAL.coq_Val
  end) ->
@@ -3675,11 +3672,11 @@ module InfSolver =
   
   module FinRel = FinLeqRelation(VAL)
   
-  module IA = ArithSemantics(PureInfinity)(Coq_sv)(VAL)(S)(InfRel)(IZT)
+  module IA = ArithSemantics(PureInfinity)(Coq_sv)(VAL)(InfRel)(IZT)
   
-  module FA = ArithSemantics(PureInt)(Coq_sv)(VAL)(S)(FinRel)(FZT)
+  module FA = ArithSemantics(PureInt)(Coq_sv)(VAL)(FinRel)(FZT)
   
-  module I2F = ArithSemantics(IntToInfinity)(Coq_sv)(VAL)(S)(InfRel)(IZT)
+  module I2F = ArithSemantics(IntToInfinity)(Coq_sv)(VAL)(InfRel)(IZT)
   
   (** val inf_trans_exp : IA.coq_ZExp -> I2F.coq_ZExp **)
   
@@ -4175,7 +4172,9 @@ module type STRVAR =
 module InfSolverExtract = 
  functor (Coq_sv:STRVAR) ->
  struct 
-  module IS = InfSolver(Coq_sv)(Three_Val)(None3ValRel)(FinZero)(InfZeroAll)
+  module Three_Val = Three_Val_NoneError
+  
+  module IS = InfSolver(Coq_sv)(Three_Val)(NoneError3ValRel)(FinZero)(InfZeroAll)
   
   (** val coq_Z_of_bool : bool -> z **)
   

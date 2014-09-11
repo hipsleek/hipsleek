@@ -10,4 +10,6 @@ checkentail 0 * \inf = \inf |- false.
 
 checkentail 0 * -\inf = -\inf |- false.
 
+checkentail forall(x: x + \inf = \inf) |- false.
+
 

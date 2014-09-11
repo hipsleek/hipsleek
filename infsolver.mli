@@ -848,12 +848,12 @@ module type SEM_VAL =
   val coq_Btm : coq_Val
  end
 
-module Three_Val : 
+module Three_Val_NoneError : 
  sig 
   type coq_Val_Impl =
   | VTrue
   | VFalse
-  | VUnknown
+  | VError
   
   val coq_Val_Impl_rect : 'a1 -> 'a1 -> 'a1 -> coq_Val_Impl -> 'a1
   
@@ -867,11 +867,11 @@ module Three_Val :
   
   val coq_Btm : coq_Val_Impl
   
+  val truth_not : coq_Val_Impl -> coq_Val_Impl
+  
   val truth_and : coq_Val -> coq_Val -> coq_Val_Impl
   
   val truth_or : coq_Val -> coq_Val -> coq_Val_Impl
-  
-  val truth_not : coq_Val_Impl -> coq_Val_Impl
  end
 
 module type NUMBER = 
@@ -932,9 +932,9 @@ module FinLeqRelation :
   val num_leq : ZNumLattice.coq_A -> ZNumLattice.coq_A -> VAL.coq_Val
  end
 
-module None3ValRel : 
+module NoneError3ValRel : 
  sig 
-  val noneVal : Three_Val.coq_Val_Impl
+  val noneVal : Three_Val_NoneError.coq_Val_Impl
  end
 
 module InfLeqRelation : 
@@ -1082,9 +1082,6 @@ module ArithSemantics :
  functor (I:SEMANTICS_INPUT) ->
  functor (V:VARIABLE) ->
  functor (VAL:SEM_VAL) ->
- functor (S:sig 
-  val noneVal : VAL.coq_Val
- end) ->
  functor (L:sig 
   val num_leq : I.N.coq_A -> I.N.coq_A -> VAL.coq_Val
  end) ->
@@ -1633,6 +1630,32 @@ module type STRVAR =
 module InfSolverExtract : 
  functor (Coq_sv:STRVAR) ->
  sig 
+  module Three_Val : 
+   sig 
+    type coq_Val_Impl = Three_Val_NoneError.coq_Val_Impl =
+    | VTrue
+    | VFalse
+    | VError
+    
+    val coq_Val_Impl_rect : 'a1 -> 'a1 -> 'a1 -> coq_Val_Impl -> 'a1
+    
+    val coq_Val_Impl_rec : 'a1 -> 'a1 -> 'a1 -> coq_Val_Impl -> 'a1
+    
+    type coq_Val = coq_Val_Impl
+    
+    val val_eq_dec : coq_Val -> coq_Val -> bool
+    
+    val coq_Top : coq_Val_Impl
+    
+    val coq_Btm : coq_Val_Impl
+    
+    val truth_not : coq_Val_Impl -> coq_Val_Impl
+    
+    val truth_and : coq_Val -> coq_Val -> coq_Val_Impl
+    
+    val truth_or : coq_Val -> coq_Val -> coq_Val_Impl
+   end
+  
   module IS : 
    sig 
     module InfRel : 
