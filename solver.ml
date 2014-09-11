@@ -1610,11 +1610,12 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 	h_formula_data_pos = pos}) ->
             let i = fresh_int2 () in
             if not (Perm.allow_perm ()) then
-              let non_null = CP.mkEqVarInt p i pos in
-	          MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null
+              let non_null = CP.mkNeqNull p pos in
+              (* let non_null = CP.mkEqVarInt p i pos in *)
+	      MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null
             else
               (*WITH PERMISSION*)
-	          let non_null = CP.mkNeqNull p pos in
+	      let non_null = CP.mkNeqNull p pos in
               (* let eq_i = CP.mkEqVarInt p i pos in *)
               (*TO CHECK: temporarily change from eq_i to non_null *)
               let eq_i = non_null in
@@ -1634,8 +1635,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
             let i = fresh_int2 () in
             let p_mf =
               if not (Perm.allow_perm ()) then
-                let eq_i = CP.mkEqVarInt p i no_pos in
-	            MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) eq_i
+                let eq_i = CP.mkNeqNull p no_pos in
+                (* let eq_i = CP.mkEqVarInt p i no_pos in *)
+	        MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) eq_i
               else
                 (*WITH PERMISSION*)
                 let non_null = CP.mkNeqNull p no_pos in
@@ -8523,7 +8525,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               let _ = DD.ninfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
                               let _ = DD.ninfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
                               (*use global var is dangerous, should pass as parameter*)
-                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && (* not(is_folding) && *) (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                              if ( (* !rhs_rest_emp && *) !Globals.do_classic_frame_rule && not(is_folding) && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
                                   if  not (Infer.no_infer_hp_rel estate) then
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(1)" "" )) in

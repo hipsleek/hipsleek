@@ -374,6 +374,53 @@ let process_source_full source =
             end
     in
     (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Search entire program, if there is no perm used -> set perm = NoPerm *)
+    let search_for_perm_x proc =
+      (* if (BatString.exists proc.Cast.proc_name "__") then *)
+      (*   (\*assume primitive proc -> ignore*\) *)
+      (*   false *)
+      (* else *)
+        (* Check whether there is a perm in struc_formula *)
+        let f_h_formula arg h =
+          let heaps = Cformula.split_star_conjunctions h in
+          let perms = List.map (fun h ->
+              match h with
+                | Cformula.DataNode _
+                | Cformula.ViewNode _
+                | Cformula.ThreadNode _ -> [Cformula.get_node_perm h]
+                | _ -> []) heaps
+          in
+          let perms = List.concat perms in
+          let res = List.fold_left (fun b perm -> b || perm!=None) false perms in
+          Some (h, res)
+        in
+        let f_unit2 f () = f,false in
+        let f_unit3 () f  = f,[] in
+        let f = nonef2, nonef2, f_h_formula, (nonef2,nonef2,nonef2), (nonef2, f_unit2, f_unit3, f_unit2,f_unit2)  in
+        let f_arg = voidf2, voidf2, voidf2, (voidf2,voidf2,voidf2), voidf2 in
+        let arg = () in
+        let f_comb = or_list in
+        let f_struc_f_arg, f_f_arg, f_h_f_arg, f_pure_arg, f_memo_arg = f_arg in
+        let _, b = Cformula.trans_struc_formula proc.Cast.proc_static_specs arg f f_arg f_comb in
+        b
+    in
+    let search_for_perm proc =
+      let pr proc = proc.Cast.proc_name in
+      Debug.no_1 "search_for_perm"
+          pr
+          string_of_bool
+          search_for_perm_x proc
+    in
+    let _ = if !Globals.web_compile_flag &&  (Perm.allow_perm ()) && (not !Globals.allow_ls) then
+          let b = List.fold_left (fun b proc -> b || ((not (BatString.exists proc.Cast.proc_name "__")) && search_for_perm proc)) false (Cast.list_of_procs cprog) in
+          (*if there is any perm -> b=true*)
+          if (not b) then
+            begin
+              Globals.perm := NoPerm;
+            end
+    in
+    (**************************************)
 
     (* ========= lemma process (normalize, translate, verify) ========= *)
     let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
