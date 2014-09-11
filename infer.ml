@@ -297,11 +297,11 @@ let init_infer_type ctx itype =
     match ctx with
     | Ctx es -> begin 
       match it with
-      | INF_TERM -> Ctx { es with es_infer_tnt = true; }
-      | INF_PRE -> Ctx { es with es_infer_tnt = true; }
-      | INF_POST -> Ctx { es with es_infer_tnt = true; }
-      | INF_IMM -> Ctx { es with es_infer_tnt = true; }
-      | INF_SHAPE -> Ctx { es with es_infer_tnt = true; }
+      | INF_TERM -> (es.es_infer_obj # set INF_TERM; Ctx { es with es_infer_tnt = true})
+      | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx)
+      | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
+      | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
+      | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
       end
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
   in 
