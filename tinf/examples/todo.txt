@@ -325,15 +325,14 @@ f:  case {
 
 # critical bug must fix asap
 
-why isn't there an termination inference result here?
-I am expecting:
+why isn't there an termination inference result 
+for below:
 
+ infer [@term]
  case {
-  n>0 -> requires Term[] ensures res=n+1;
-  n<=0 -> requires Term[] ensures res=n-1;
+  n>0 -> ensures res=n+1;
+  n<=0 -> ensures res=n-1;
  }
-
-why isn't there an termination inference result here?
 I am expecting:
 
  case {
