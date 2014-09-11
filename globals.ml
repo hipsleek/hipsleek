@@ -1331,9 +1331,11 @@ object (self)
   (*   try *)
   (*     string_of_inf_const (Array.get arr i) *)
   (*   with _ -> "" *)
-  method string_of = 
+  method string_of_raw = 
     let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in
-    "["^(Array.fold_right (fun x r -> x^r) str_a "")^"]"
+    let lst_a = Array.to_list str_a in 
+    String.concat "," (List.filter (fun s -> not(s="")) lst_a) 
+  method string_of = "["^(self #string_of_raw)^"]"
   method get c  = Array.get arr (inf_const_to_int c)
   method get_int i  = Array.get arr i
   method is_term  = self # get INF_TERM
@@ -1343,15 +1345,22 @@ object (self)
   method is_shape  = self # get INF_SHAPE
   method get_arr  = arr
   method set c  = Array.set arr (inf_const_to_int c) true
+  method set_ind i  = Array.set arr i true
+  method set_list l  = List.iter (fun c -> Array.set arr (inf_const_to_int c) true) l
   method reset c  = Array.set arr (inf_const_to_int c) false
+  method mk_or (o2:inf_obj) = 
+    let o1 = o2 # clone in
+    let _ = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in
+    o1
   method clone = 
     let no = new inf_obj in
     let ar = no # get_arr in
     let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in
+    (* let _ = print_endline ("Cloning :"^(no #string_of)) in *)
     no
 end;;
 
-let infer_const_arr = new inf_obj;;
+let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 

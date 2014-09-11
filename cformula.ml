@@ -102,6 +102,7 @@ and assume_formula =
 and struc_infer_formula =
   {
     formula_inf_tnt: bool; (* true if termination to be inferred *)
+    formula_inf_obj: Globals.inf_obj; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -8530,7 +8531,7 @@ think it is used to instantiate when folding.
   (* Term ann with Lexical ordering *)
   es_var_measures : (CP.term_ann * CP.exp list * CP.exp list) option;
   (* For TNT inference: List of unknown returned context *)
-  es_infer_tnt: bool;
+  (* es_infer_tnt: bool; *)
   es_infer_obj: Globals.inf_obj;
   (* es_infer_consts: array of 1..n of bool; *)
   es_term_res_lhs: CP.term_ann list;
@@ -8802,7 +8803,9 @@ if List.length ls == 0  then [] else
   get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
   
 let infer_type_of_entail_state es = 
-  if es.es_infer_tnt then Some INF_TERM else None
+  if (* es.es_infer_tnt *) es.es_infer_obj # is_term
+  then Some INF_TERM 
+  else None
 
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with
@@ -8852,8 +8855,8 @@ let empty_es flowt grp_lbl pos =
   es_cond_path  = [] ;
   es_prior_steps  = [];
   es_var_measures = None;
-  es_infer_tnt = false;
-  es_infer_obj = Globals.infer_const_arr # clone;
+  (* es_infer_tnt = false; *)
+  es_infer_obj = Globals.infer_const_obj # clone;
   (* new Globals.inf_obj; *)
   es_term_res_lhs = [];
   es_term_res_rhs = None;
@@ -10047,7 +10050,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_hp_rel = es.es_infer_hp_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_var_measures = es.es_var_measures;
-        es_infer_tnt = es.es_infer_tnt;
+        (* es_infer_tnt = es.es_infer_tnt; *)
         es_infer_obj = es.es_infer_obj;
         es_term_res_lhs = es.es_term_res_lhs;
         es_term_res_rhs = es.es_term_res_rhs;
@@ -12620,7 +12623,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_path_label = es.es_path_label;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-          es_infer_tnt = es.es_infer_tnt;
+          (* es_infer_tnt = es.es_infer_tnt; *)
           es_infer_obj = es.es_infer_obj;
           es_term_res_lhs = es.es_term_res_lhs;
           es_crt_holes = es.es_crt_holes;
@@ -12671,7 +12674,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_cond_path = es.es_cond_path ;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-          es_infer_tnt = es.es_infer_tnt;
+          (* es_infer_tnt = es.es_infer_tnt; *)
           es_infer_obj = es.es_infer_obj;
           es_term_res_lhs = es.es_term_res_lhs;
           es_crt_holes = es.es_crt_holes;
@@ -14225,7 +14228,7 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
         norm_assume_with_lexvar tpost struc_f
     in mkEBase_with_cont (CP.mkPure lexvar) (Some assume) no_pos
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_struc_with_lexvar is_primitive 
-      (is_tnt_inf || ei.formula_inf_tnt) uid ei.formula_inf_continuation }
+      (is_tnt_inf || ei.formula_inf_obj # is_term) uid ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
 (* Termination: Add the call numbers and the implicit phase 
@@ -16423,7 +16426,7 @@ let rec is_inf_tnt_struc_formula f =
     | Some c -> is_inf_tnt_struc_formula c
     end
   | EAssume _ -> false
-  | EInfer ei -> (ei.formula_inf_tnt) || (is_inf_tnt_struc_formula ei.formula_inf_continuation)
+  | EInfer ei -> (ei.formula_inf_obj # is_term) || (is_inf_tnt_struc_formula ei.formula_inf_continuation)
 
 let ann_of_h_formula h =
   match h with

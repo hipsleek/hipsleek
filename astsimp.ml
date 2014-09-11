@@ -5976,6 +5976,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
         else
           (n_tl, CF.EInfer {
               CF.formula_inf_tnt = b.IF.formula_inf_tnt;
+              CF.formula_inf_obj = b.IF.formula_inf_obj;
               CF.formula_inf_post = b.IF.formula_inf_post;
               CF.formula_inf_xpost = b.IF.formula_inf_xpost;
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;

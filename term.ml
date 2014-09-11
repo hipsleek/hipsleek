@@ -537,7 +537,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       
       let process_turel is_ret es =
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let es = if es.es_infer_tnt then
+        let es = if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
             if is_ret then 
               let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d in
               { es with es_term_res_rhs = Some t_ann_d }

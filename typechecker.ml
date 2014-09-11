@@ -448,7 +448,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 
       | CF.EInfer b ->
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
-            let itnt = b.CF.formula_inf_tnt in
+            (* let itnt = b.CF.formula_inf_tnt in *)
+            let inf_o = b.CF.formula_inf_obj in
             let postf = b.CF.formula_inf_post in
             let postxf = b.CF.formula_inf_xpost in
             let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -583,7 +584,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                     CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
-                    CF.es_infer_tnt = es.CF.es_infer_tnt || itnt;
+                    (* CF.es_infer_tnt = es.CF.es_infer_tnt || itnt; *)
+                    CF.es_infer_obj = es.CF.es_infer_obj # mk_or inf_o;
                     CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
