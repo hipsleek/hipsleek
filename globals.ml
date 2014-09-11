@@ -1272,7 +1272,16 @@ let phase_infer_ind = ref false
 
 (* TNT Inference *)
 type infer_type = 
-  | INF_TERM (* For infer@term *)
+  | INF_TERM (* For infer[@term] *)
+  | INF_POST (* For infer[@post] *)
+  | INF_PRE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@pre] *)
+  | INF_IMM (* For infer[@imm] *)
+
+let infer_const_num = 0
+let infer_const = ref ""
+let infer_const_arr = Array.make 10 false
+
 
 let tnt_thres = ref 5
 

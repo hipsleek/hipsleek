@@ -2303,7 +2303,12 @@ shapeExtract_cmd:
    ]];
   
 infer_type:
-   [[ `TREL_INFER -> INF_TERM ]];
+   [[ `INFER_AT_TERM -> INF_TERM 
+   | `INFER_AT_SHAPE -> INF_SHAPE
+   | `INFER_AT_PRE -> INF_PRE
+   | `INFER_AT_POST -> INF_POST
+   | `INFER_AT_IMM -> INF_IMM
+   ]];
   
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
