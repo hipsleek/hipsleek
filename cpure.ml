@@ -9799,12 +9799,12 @@ let rec has_lexvar (f: formula) : bool =
   | Forall (_, f, _, _)
   | Exists (_, f, _, _) -> has_lexvar f
 
-let has_unknown_lexvar (f: formula) =
+let has_unknown_pre_lexvar (f: formula) =
   let f_b bf =
     let (pf, _) = bf in 
     match pf with
     | LexVar tinfo -> begin match tinfo.lex_ann with
-        | TermU _ | TermR _ -> Some (true, true)
+        | TermU _ -> Some (true, true)
         | _ -> Some (true, false) end
     | _ -> None
   in

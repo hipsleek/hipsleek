@@ -1134,7 +1134,7 @@ let no_check_outer_vars = ref false
 (*   helper h0 *)
 
 
-let rec pairwise_diff (svars10:CP.spec_var list ) (svars20:CP.spec_var list) pos =
+let rec pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
   let rec diff_one sv svars = match svars with
     | sv2 :: rest ->
           let tmp1 = diff_one sv rest in
@@ -5213,7 +5213,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 
     and generate_action nodes eset = 
       let pr = pr_list Cprinter.string_of_h_formula in
-      let pr_1 = CP.EMapSV.string_of in
+      let pr_1 = P.EMapSV.string_of in
       let pr_2 = Context.string_of_action_res_simpl in
       Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
@@ -5227,7 +5227,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 
     (** [Internal] Compare spec var with equality taken into account **)
     and compare_sv_x xn yn eset = 
-      let c = CP.EMapSV.is_equiv eset xn yn in
+      let c = P.EMapSV.is_equiv eset xn yn in
       if c then 0
       else compare_sv_syntax xn yn
     (*   try *)
@@ -8833,7 +8833,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars_x (l_perm:CP.exp option) (r_perm:CP.exp option) (l_args:CP.spec_var list) (r_args:CP.spec_var list) label_list (evars:CP.spec_var list) ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
   begin
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
@@ -8922,7 +8922,7 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
-and do_match_perm_vars (l_perm:CP.exp option) (r_perm:CP.exp option) evars ivars impl_vars expl_vars =
+and do_match_perm_vars (l_perm:P.exp option) (r_perm:P.exp option) evars ivars impl_vars expl_vars =
   begin
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with

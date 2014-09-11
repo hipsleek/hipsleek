@@ -14121,9 +14121,7 @@ let fv_wo_rel (f:formula) =
   let vs = fv f in
   List.filter (fun v -> let t = CP.type_of_spec_var v in not(is_RelT t) && t!=HpT) vs
 
-(* Termination: Check whether a formula contains LexVar *) 
-(* TODO: Termination: Need to add default term info
- * into a branch of OR context *) 
+(* Termination: Check whether a formula contains LexVar *)  
 let rec has_lexvar_formula f =
   match f with
   | Base _
@@ -14132,17 +14130,32 @@ let rec has_lexvar_formula f =
       CP.has_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
-      
-let rec has_unknown_lexvar_formula f = 
+
+(* Same as the above method except that it also tells     *)
+(* whether we have unknown LexVar in precondition (TermU) *)
+let rec has_unknown_pre_lexvar_formula f = 
   match f with
   | Base _
   | Exists _ ->
       let _, pure_f, _, _, _ = split_components f in 
-      CP.has_unknown_lexvar (MCP.pure_of_mix pure_f) 
+      CP.has_unknown_pre_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
-      let has_lexvar_f1, has_unknown_f1 = has_unknown_lexvar_formula f1 in
-      let has_lexvar_f2, has_unknown_f2 = has_unknown_lexvar_formula f2 in
+      let has_lexvar_f1, has_unknown_f1 = has_unknown_pre_lexvar_formula f1 in
+      let has_lexvar_f2, has_unknown_f2 = has_unknown_pre_lexvar_formula f2 in
       (has_lexvar_f1 || has_lexvar_f2, has_unknown_f1 || has_unknown_f2)
+      
+let has_unknown_pre_lexvar_struc sf =
+  let arg = () in
+  let f_arg a _ = a in
+  let f_comb bl = List.exists idf bl in
+  let id2 = fun a _-> (a, false) in
+  let id2l = fun _ a -> (a, []) in
+  let f_f _ f =
+    let _, has_unknown_pre_lexvar = has_unknown_pre_lexvar_formula f in
+    Some (f, has_unknown_pre_lexvar)
+  in 
+  snd (trans_struc_formula sf arg (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, id2, id2l, id2, id2)) 
+    (f_arg, f_arg, f_arg, (f_arg, f_arg, f_arg), f_arg) f_comb)
       
 let rec norm_assume_with_lexvar tpost struc_f =
   let norm_f = norm_assume_with_lexvar tpost in
@@ -14160,16 +14173,21 @@ let rec norm_assume_with_lexvar tpost struc_f =
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
-let add_args_lexvar_formula fname args (f: formula): formula =
+let norm_lexvar_for_infer uid (f: formula): formula =
   let f_b bf =
     let (pf, il) = bf in
     match pf with
     | LexVar t_info ->
+      let nann = match t_info.lex_ann with
+      | MayLoop -> CP.mkUTPre uid
+      | _ -> t_info.lex_ann in
       let npf = LexVar { t_info with 
-        lex_fid = fname; lex_tmp = args } in
+        lex_ann = nann; 
+        lex_fid = uid.CP.tu_fname; 
+        lex_tmp = uid.CP.tu_args } in
       Some (npf, il)
     | _ -> Some bf
-  in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f 
+  in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f
      
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
@@ -14182,8 +14200,8 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
       else
         let tpost = CP.mkUTPost uid in
         EBase { eb with
-          formula_struc_base = add_args_lexvar_formula 
-            uid.CP.tu_fname uid.CP.tu_args eb.formula_struc_base; 
+          (* MayLoop will be changed to UTPre *)
+          formula_struc_base = norm_lexvar_for_infer uid eb.formula_struc_base; 
           formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->

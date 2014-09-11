@@ -2066,7 +2066,7 @@ let process_templ_solve (idl: ident list) =
 (* Solving termination relation assumptions in Sleek *)  
 let process_term_infer () = 
   begin 
-    Ti.solve !should_infer_tnt !cprog; 
+    Ti.solve !should_infer_tnt true !cprog; 
     Ti.finalize ();
     should_infer_tnt := true
   end

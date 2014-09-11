@@ -1,5 +1,5 @@
 int f(int x)
-  infer [ //@term
+  infer [ @term
   ]
 //requires true ensures true;
 /*

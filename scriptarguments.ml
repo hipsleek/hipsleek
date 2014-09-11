@@ -581,8 +581,6 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-  ("--inv-under", Arg.Set Globals.do_infer_inv_under, "Enable under invariant inference");
-  ("--dis-inv-under", Arg.Clear Globals.do_infer_inv_under, "Disable under invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
