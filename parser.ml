@@ -2311,27 +2311,33 @@ infer_type:
 
 infer_id:
     [[ t = infer_type -> FstAns t
-      | `IDENTIFIER id -> SndAns (id,Unprimed)  ]];
+      | `IDENTIFIER id -> SndAns id  ]];
 
 infer_type_list:
-    [[ itl = LIST1 infer_id SEP `COMMA -> itl ]];
+    [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
 
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
 
-id_list_w_itype:
-  [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il) 
-   | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il [])
-   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
-  ]];
+(* id_list_w_itype: *)
+(*   [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il)  *)
+(*    | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il []) *)
+(*    | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, []) *)
+(*   ]]; *)
 
 infer_cmd:
-  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-    let k, il = un_option il_w_itype (None, []) in (k,il,t,b,None)
+  [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
+      let inf_o = Globals.infer_const_obj # clone in
+      let (i_consts,ivl) = List.fold_left 
+        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
+          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
+      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+    (* let k, il = un_option il_w_itype (None, [])  *)
+      (i_consts,ivl,t,b,None)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (None,il,t,b,Some true)
+    let il = un_option il [] in ([],il,t,b,Some true)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (None,il,t,b,Some false)
+    let il = un_option il [] in ([],il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2943,32 +2949,37 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      let inf_o = Globals.infer_const_obj # clone in
-     let (itypes_and_vars, ivl) = ivl_w_itype in
-     let ivl1 = match itypes_and_vars with
-       | Some itypes_and_vars ->
-             let itypes,vars = List.partition (fun inf -> match inf with
-               | FstAns _ -> true
-               | _ -> false
-             ) itypes_and_vars in
-             let _ = List.iter (fun itype -> match itype with
-               | FstAns itype -> inf_o # set itype
-               | _ -> failwith "not itype"
-             ) itypes in
-             let ivl1 = List.map (fun var -> match var with
-               | SndAns var -> var
-               | _ -> failwith "not var"
-             ) vars in
-             ivl1
-       | None -> []
-     in
-     let ivl = ivl@ivl1 in
+     let (i_consts,ivl) = List.fold_left 
+       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
+         | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
+     let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
+     (* let (itypes_and_vars, ivl) = ivl_w_itype in *)
+     (* let ivl1 = match itypes_and_vars with *)
+     (*   | Some itypes_and_vars -> *)
+     (*         let itypes,vars = List.partition (fun inf -> match inf with *)
+     (*           | FstAns _ -> true *)
+     (*           | _ -> false *)
+     (*         ) itypes_and_vars in *)
+     (*         let _ = List.iter (fun itype -> match itype with *)
+     (*           | FstAns itype -> inf_o # set itype *)
+     (*           | _ -> failwith "not itype" *)
+     (*         ) itypes in *)
+     (*         let ivl1 = List.map (fun var -> match var with *)
+     (*           | SndAns var -> var *)
+     (*           | _ -> failwith "not var" *)
+     (*         ) vars in *)
+     (*         ivl1 *)
+     (*   | None -> [] *)
+     (* in *)
+     (* let ivl = ivl@ivl1 in *)
      F.EInfer {
-       F.formula_inf_tnt = inf_o # get INF_TERM (* (match itype with | Some INF_TERM -> true | _ -> false) *);
+       (* F.formula_inf_tnt = inf_o # get INF_TERM (\* (match itype with | Some INF_TERM -> true | _ -> false) *\); *)
        F.formula_inf_obj = inf_o;
        F.formula_inf_post = postf; 
        F.formula_inf_xpost = postxf; 
        F.formula_inf_transpec = transpec;
-       F.formula_inf_vars = ivl;
+       F.formula_inf_vars = ivl_t;
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
@@ -3012,9 +3023,9 @@ spec:
   ]];
 
 cid_list_w_itype:
-  [[ `OSQUARE; t = infer_type_list; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
-   | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il [])
-   | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, [])
+  [[ `OSQUARE; t = infer_type_list; `CSQUARE -> t
+   (* | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il []) *)
+   (* | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, []) *)
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

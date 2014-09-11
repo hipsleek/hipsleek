@@ -350,6 +350,17 @@ I am expecting:
 This should work after you fix foo-fact2.ss
 It should print two term inference results.
 ===================================================
+# tinf/examples/fact-2.ss --pcp
+
+  infer [@term,x,@post_n]
+  requires true
+  ensures //true
+  res >= 1
+  ;
+
+ static  EList :EInfer [x]
+
+How come @term,@post_n not captured? 
 ===================================================
 ===================================================
 ===================================================

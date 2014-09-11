@@ -1344,6 +1344,9 @@ object (self)
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
   method get_arr  = arr
+  method get_lst = 
+    let lst = Array.to_list (Array.mapi (fun i v -> if v then Some (int_to_inf_const i) else None) arr) in
+    List.fold_left (fun l e -> match e with Some e -> e::l | _-> l) [] lst 
   method set c  = Array.set arr (inf_const_to_int c) true
   method set_ind i  = Array.set arr i true
   method set_list l  = List.iter (fun c -> Array.set arr (inf_const_to_int c) true) l

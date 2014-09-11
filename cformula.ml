@@ -101,7 +101,7 @@ and assume_formula =
 
 and struc_infer_formula =
   {
-    formula_inf_tnt: bool; (* true if termination to be inferred *)
+    (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
     formula_inf_obj: Globals.inf_obj; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
