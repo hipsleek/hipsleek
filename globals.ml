@@ -825,8 +825,7 @@ let print_original_solver_input = ref false
 
 let cond_path_trace = ref true
 
-(* ANNTEMP: change below to true *)
-let pred_syn_modular = ref true (* false *)
+let pred_syn_modular = ref true
 
 let syntatic_mode = ref false (* syntatic mode - default is semantic*)
 
@@ -841,11 +840,9 @@ let pred_en_oblg = ref true
 
 (* let sa_en_norm = ref false *)
 
-(* ANNTEMP: change below to true *)
-let pred_syn_flag = ref true (* false *) (* true *)
+let pred_syn_flag = ref true
 
-(* ANNTEMP: change below to true *)
-let sa_syn = ref false (* true *)
+let sa_syn = ref true
 
 let print_relassume  = ref true
 
@@ -1275,7 +1272,16 @@ let phase_infer_ind = ref false
 
 (* TNT Inference *)
 type infer_type = 
-  | INF_TERM (* For infer@term *)
+  | INF_TERM (* For infer[@term] *)
+  | INF_POST (* For infer[@post] *)
+  | INF_PRE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@pre] *)
+  | INF_IMM (* For infer[@imm] *)
+
+let infer_const_num = 0
+let infer_const = ref ""
+let infer_const_arr = Array.make 10 false
+
 
 let tnt_thres = ref 5
 

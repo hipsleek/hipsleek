@@ -2856,6 +2856,10 @@ let string_of_spec_var_list l = P.string_of_spec_var_list l;;
 let string_of_inf_cmd i = 
   match i with 
   | INF_TERM -> "@term"
+  | INF_POST -> "@post"
+  | INF_PRE   -> "@pre"
+  | INF_SHAPE -> "@shape"
+  | INF_IMM -> "@imm"
 
 let rec string_of_inf_cmd_list il =
   match il with
