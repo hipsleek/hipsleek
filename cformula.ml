@@ -8520,7 +8520,7 @@ think it is used to instantiate when folding.
   es_residue_pts : formula_label  list  ;(* residue pts from antecedent *)
   es_id      : int              ; (* unique +ve id *)
   (* below is to store an antecedent prior to it becoming false *)
-  es_orig_ante   : formula option       ;  (* original antecedent formula *) 
+  es_orig_ante   : formula option       ;  (* original antecedent formula *)
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
   es_cond_path : cond_path_type;

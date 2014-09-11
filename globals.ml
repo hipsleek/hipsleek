@@ -1271,7 +1271,7 @@ let log_filter = ref true
 let phase_infer_ind = ref false
 
 (* TNT Inference *)
-type infer_type = 
+type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
@@ -1282,6 +1282,23 @@ let infer_const_num = 0
 let infer_const = ref ""
 let infer_const_arr = Array.make 10 false
 
+let set_infer_const s =
+  let helper r num =
+    let reg = Str.regexp r in
+    try
+      begin
+        Str.search_forward reg s 0;
+        Array.set infer_const_arr num true;
+      end
+    with Not_found -> ()
+  in
+  begin
+    helper "@term"  0;
+    helper "@pre"   1;
+    helper "@post"  2;
+    helper "@imm"   3;
+    helper "@shape" 4;
+  end
 
 let tnt_thres = ref 5
 
@@ -1289,7 +1306,7 @@ let tnt_thres = ref 5
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
 let templ_piecewise = ref false
-  
+
 (* Options for slicing *)
 let en_slc_ps = ref false
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
