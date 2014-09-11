@@ -308,7 +308,7 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
       CF.EAssume { assume with
         CF.formula_assume_simpl = f_post;
         CF.formula_assume_struc = CF.mkEBase f_post None pos; }
-    | _ -> TermUtils.strip_lexvar_post (CF.EAssume assume)
+    | _ -> TermUtils.strip_lexvar_post false (CF.EAssume assume)
   in
   let spec = CF.mkEBase f_pre (Some post) pos in
   spec
@@ -363,15 +363,25 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
             (merge_tnt_case_spec_into_struc_formula nctx spec) cont }
     in
    
-    let has_lexvar, has_unknown_pre_lexvar = CF.has_unknown_pre_lexvar_formula base in
-    if has_unknown_pre_lexvar then
+    (* let has_lexvar, has_unknown_pre_lexvar = CF.has_unknown_pre_lexvar_formula base in *)
+    (* if has_unknown_pre_lexvar then                                                     *)
+    (*   let nbase = snd (TermUtils.strip_lexvar_formula base) in                         *)
+    (*   update_ebase nbase                                                               *)
+    (* else if has_lexvar then                                                            *)
+    (*   CF.EBase { eb with                                                               *)
+    (*     CF.formula_struc_continuation = map_opt                                        *)
+    (*       TermUtils.strip_lexvar_post cont }                                           *)
+    (* else update_ebase base                                                             *)
+    let term_ann_base = CF.collect_term_ann base in 
+    if is_empty term_ann_base then update_ebase base
+    else if List.exists CP.is_TermU term_ann_base then (* has_unknown_pre_lexvar *)
       let nbase = snd (TermUtils.strip_lexvar_formula base) in
       update_ebase nbase
-    else if has_lexvar then
+    else (* has_lexvar *)
+      let has_loop = List.exists CP.is_Loop term_ann_base in
       CF.EBase { eb with
-        CF.formula_struc_continuation = map_opt 
-          TermUtils.strip_lexvar_post cont }
-    else update_ebase base
+        CF.formula_struc_continuation = map_opt
+          (TermUtils.strip_lexvar_post has_loop) cont } 
   | CF.EAssume af -> merge_tnt_case_spec_into_assume ctx spec af
   | CF.EInfer ei -> 
     let cont = merge_tnt_case_spec_into_struc_formula ctx spec ei.CF.formula_inf_continuation in
