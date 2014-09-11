@@ -1,6 +1,6 @@
 open Camlp4.PreCast
 
-type lemma_kind_t = TLEM_TEST | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE
+type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE
 
 type sleek_token =
   | IDENTIFIER    of string
@@ -18,7 +18,7 @@ type sleek_token =
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
-  | CASE | CHECKEQ | SIMPLIFY | CHECKENTAIL | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CHECKSAT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
+  | CASE | CHECKNORM | CHECKEQ | SIMPLIFY | CHECKENTAIL | CHECKSAT | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
   | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
@@ -34,7 +34,7 @@ type sleek_token =
   | HP | HPPOST
   | HTRUE
   | IF 
-  | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
+  | IN_T | ANN_TYPE | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
   | INV_EXACT | INV_SAT | BG
   | LET
   | MAX | MIN 
@@ -44,14 +44,21 @@ type sleek_token =
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
-  | TEMPL | TERM | LOOP | MAYLOOP
+  | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *) 
+  | TERM_INFER 
+  (* | TREL_INFER  change to  INFER_AT_TERM *)
+  | TREL_ASSUME
+  | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE
+  | UTPRE | UTPOST
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
         (*operators*)  
   | CARET 
   | DOTDOT | ATPOS
-  | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
+  | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
+  (* TermInf: Token for Termination Inference *)
+  | TEMPLATE | TEMPL_SOLVE
   | NI | RO
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
@@ -59,6 +66,8 @@ type sleek_token =
   | TOPAREN | TCPAREN
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE (* | PREF *)
+  | SPLITANN
+  | TUP2
   | PLUS | PRIME 
   | SEMICOLON | SAT | SPEC
   | STAR | DIV
@@ -92,9 +101,10 @@ module Token = struct
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
     | ANDLIST -> "AndList" | ATPOS -> "at"
+    | ANN_TYPE -> "ann"
     | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
-    | CASE ->"case" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
+    | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
@@ -113,7 +123,9 @@ module Token = struct
     | HP->"HeapPred" | HPPOST->"PostPred"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | INV_EXACT -> "inv_exact" | INV_SAT -> "inv_sat" | BG -> "BG"
-    | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test"| LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *) 
+    | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test" | LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *)
+    | LEMMA TLEM_SPLIT ->"lemma_split"
+    | LEMMA TLEM_PROP ->"lemma_prop"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
@@ -125,7 +137,8 @@ module Token = struct
           (*operators*)
     | NI ->"@NI" | RO ->"@RO" | ATATSQ -> "@@[" | CARET -> "^"
     | DOTDOT ->".."
-    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" (* | VAL ->"@VAL" | REC ->"@REC"*)
+    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" (* | VAL ->"@VAL" | REC ->"@REC"*)
+    | TEMPLATE -> "template" | TEMPL_SOLVE -> "template_solve"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
     | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||" 
@@ -137,6 +150,8 @@ module Token = struct
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
           (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
+    | SPLITANN -> "@Split"
+    | TUP2 -> "tup2"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
     | INFINITY -> "\\inf"
@@ -149,6 +164,18 @@ module Token = struct
     | FAIL -> "Fail"
     | FAIL_MUST -> "Fail_Must"
     | FAIL_MAY -> "Fail_May"
+    (* | TERMU -> "TermU" *)
+    (* | TERMR -> "TermR" *)
+    | UTPRE -> "UTPre"
+    | UTPOST -> "UTPost"
+    (* | TREL_INFER -> "@term" *)
+    | INFER_AT_TERM -> "@term"
+    | INFER_AT_PRE -> "@pre"
+    | INFER_AT_POST -> "@post"
+    | INFER_AT_IMM -> "@imm"
+    | INFER_AT_SHAPE -> "@shape"
+    | TREL_ASSUME -> "termAssume"
+    | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)

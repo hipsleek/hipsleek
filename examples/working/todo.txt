@@ -513,12 +513,29 @@ Entailing lemma three: Fail. Details below:
 	 "==>" implication: : Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
 	 "==>" implication: : Valid.
 ====================================================================
+Before  merging with default:
+
+sleek
+  Total number of errors: 1 in files:
+  lemmas/rlseg.slk({L3#Valid}).
+sleek --eps
+  Total number of errors: 4 in files:
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
+hip --eps
+All test results were as expected.
+Total verification time: 206.84 second
+	Time spent in main process: 143.84 second
+	Time spent in child processes: 63.00 second
+	Number of false contexts: 424
+
 sleek
   lemmas/rlseg.slk({L3#Valid}).
 
 --eps
   baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
 
+====================================================================
 # baga-test-eps.slk --eps
 
 Unexpected: 13 14 15 
@@ -802,7 +819,43 @@ Valid Lemmas : [lem_12:==>] added to lemma store.
 Total number of errors: 2 in files:
   sleek3.slk({L1#Fail}) baga-test-2.slk({E15#Fail}).
 ====================================================================
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  sleek9.slk(no result  for {E}) lemmas/app-tail.slk(no result  for {E}) lemmas/ll_tail.slk(no result  for {E}) lemmas/sll_tailL.slk(no result for {L}) lemmas/dseg-new.slk(no result for {L}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+!!! formula1: emp&((tx=self & n=1 & self!=null) | (2<=n & self!=null))&
+{FLOW,(1,24)=__flow}[]
+!!! formula1_under: emp&n=1 & tx>0&{FLOW,(1,24)=__flow}[]
+!!! WARNING logtime exception:10.
+Stop Omega... 30 invocations 
+SAT Count   : 31
+SAT % Hit   : 64.51%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.00274 (seconds)
+
+!!! log(small):(0.013134,54)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(pairwise:53<1:TIMEOUT:OM*EXC*,10.)])
+
 ====================================================================
+run-fast-test
+
+sleek
+hip --eps
+sleek --eps (FIXED)
+Total number of errors: 3 in files:
+  threads/thrd1.slk({E10#Valid},{E11#Fail},{E12#Fail},{E13#Fail},{E14#Valid},{E15#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E6#Valid},{E7#Fail},{E8#Valid},{E9#Fail}) conchip/threads.slk({E3#Valid}) conchip/latch.slk({E5#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+All test results were as expected.
+Total verification time: 450.15 second
+	Time spent in main process: 408.57 second
+	Time spent in child processes: 41.58 second
+	Number of false contexts: 427
 ====================================================================
 ====================================================================
 ====================================================================

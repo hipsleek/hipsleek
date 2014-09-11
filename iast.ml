@@ -28,7 +28,9 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
-    mutable prog_hp_decls : hp_decl list;
+    mutable prog_templ_decls: templ_decl list;
+    mutable prog_ut_decls: ut_decl list;
+    mutable prog_hp_decls : hp_decl list; 
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
     mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -74,6 +76,7 @@ and view_decl =
     { view_name : ident; 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
     mutable view_vars : ident list;
     mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;
@@ -118,6 +121,24 @@ and axiom_decl = {
     axiom_hypothesis : P.formula ;
     axiom_conclusion : P.formula ;
 }
+
+and templ_decl = {
+  templ_name: ident;
+  templ_ret_typ: typ;
+  templ_typed_params: (typ * ident) list;
+  templ_body: P.exp option;
+  templ_pos: loc;
+}
+
+(* Unknown Temporal Declaration *)
+and ut_decl = {
+  ut_name: ident;
+  ut_fname: ident;
+  ut_typed_params: (typ * ident) list;
+  ut_is_pre: bool;
+  ut_pos: loc;
+}
+
 
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
@@ -552,6 +573,8 @@ let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
+let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
+let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 
 let find_empty_static_specs iprog = 
@@ -1127,6 +1150,7 @@ let genESpec_x pname body_opt args0 ret pos=
     let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
     (F.EInfer {
+        F.formula_inf_tnt = false;
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
@@ -1321,6 +1345,16 @@ and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
       (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
       if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | [] -> raise Not_found
+
+and look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
+
+and look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
+  List.find (fun d -> d.ut_name = name) defs
+
+and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
 and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
@@ -2551,6 +2585,8 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
             prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
             prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
             prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
+                prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
+                prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
             prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
             prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
             prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2575,6 +2611,8 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
             prog_func_decls = [];
             prog_rel_decls = [];
             prog_rel_ids = [];
+                prog_templ_decls = [];
+                prog_ut_decls = [];
             prog_hp_decls = [];
             prog_hp_ids = [];
             prog_axiom_decls = [];
@@ -2749,16 +2787,16 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
-                        let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
+            let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
 			{ proc_name = "init_"^b.barrier_name;
@@ -2767,16 +2805,16 @@ let add_bar_inits prog =
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_hp_decls = [];
-                          proc_constructor = false;
+              proc_constructor = false;
 			  proc_args = ags;
-                          proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
+              proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
 			  proc_return = Void;
 			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
 			  proc_dynamic_specs = F.mkEFalseF ();
 			  proc_exceptions = [];
 			  proc_body = None;
 			  proc_is_main = false;
-                          proc_is_invoked = false;
+              proc_is_invoked = false;
 			  proc_file = "";
 			  proc_loc = no_pos;
 			proc_test_comps = None}) prog.prog_barrier_decls in
@@ -2802,7 +2840,7 @@ let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2822,7 +2860,7 @@ let gen_normalize_lemma_comb ddef =
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in

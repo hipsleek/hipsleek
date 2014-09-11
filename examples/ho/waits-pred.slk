@@ -1,0 +1,36 @@
+/*
+
+// Interpreted set-comprehension relation G = {tup2(c,d) | c in S}
+relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
+
+So that we can use:
+
+  g::WAITS(G,S,d) & concrete(S) ---> set_comp(G,S,d)
+
+Compare with waitS(G,S,d) as a relation which
+need to be translated for every entailment.
+WAITS as a prim_pred can be triggered once.
+
+*/
+
+pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>.
+relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
+relation concrete(bag(Object) g).
+
+//normalization lemma
+lemma "set_comp" self::WAITS<G,S,d> & concrete(S) -> emp & set_comp(G,S,d).
+
+checkentail g::WAITS<G,S,d> & S={c1,c2} |- G={tup2(c1,d),tup2(c2,d)}.
+print residue.
+expect Valid.
+
+checkentail g::WAITS<G,S,d> & S1=S |- g::WAITS<G,S1,d>.
+print residue.
+expect Valid.
+
+checkentail g::WAITS<G,S,d> & S={c1} & c1=d |- G={tup2(d,d)}.
+print residue.
+expect Valid.
+
+
+

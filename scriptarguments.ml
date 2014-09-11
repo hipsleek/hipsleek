@@ -232,6 +232,7 @@ let common_arguments = [
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
   ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
+  ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");
   ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
   ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
@@ -359,6 +360,8 @@ let common_arguments = [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
+  ("-infer", Arg.String (fun s ->
+      Globals.infer_const_arr # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
@@ -476,6 +479,13 @@ let common_arguments = [
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Template *)
+  ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
+  ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
+    Tlutils.set_solver), "Choose LP solver");
+  ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
+  ("--dis-ln-z3", Arg.Set Globals.dis_ln_z3, "Disable linearization on Z3 (using non-linear engine)");
+
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
@@ -484,11 +494,19 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify,
    "enable re-verification for inferred termination specifications");
+  ("--term-en-bnd-pre", Arg.Set Globals.term_bnd_pre_flag,
+   "enable boundedness check at pre-condition");
+  ("--term-dis-bnd-pre", Arg.Clear Globals.term_bnd_pre_flag,
+   "disable boundedness check at pre-condition (boundedness check at recursive call)");
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+
+  (* TermInf: Options for Termination Inference *)
+  ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
+  ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -565,6 +583,8 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
+  ("--inv-under", Arg.Set Globals.do_infer_inv_under, "Enable under invariant inference");
+  ("--dis-inv-under", Arg.Clear Globals.do_infer_inv_under, "Disable under invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");

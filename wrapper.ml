@@ -24,8 +24,8 @@ let wrap_classic et f a =
     do_classic_frame_rule := flag;
     res
   with _ as e ->
-      (do_classic_frame_rule := flag;
-      raise e)
+    (do_classic_frame_rule := flag;
+    raise e)
 
 let wrap_gen save_fn set_fn restore_fn flags f a =
   (* save old_value *)

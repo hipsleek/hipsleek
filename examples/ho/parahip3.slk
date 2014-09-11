@@ -1,0 +1,11 @@
+/*
+ -tp parahip
+
+ For is_sat, break into two unrelated constraints
+ [x+1=0] and [S={}]
+
+*/
+
+
+checkentail x+1=0 & S={} |- false.
+expect Fail.

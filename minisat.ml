@@ -407,7 +407,9 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
           (* array expressions *)
     | Cpure.ArrayAt _      -> false
     | Cpure.Func _ ->  false 
+  | Cpure.Template _ -> false
     | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
+  | Cpure.Tup2 _ -> Error.report_no_pattern()
     | Cpure.Bptriple _ -> Error.report_no_pattern()
 
 

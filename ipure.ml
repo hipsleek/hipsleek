@@ -245,6 +245,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | InfConst _
   | FConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
+  | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
   | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
@@ -273,6 +274,9 @@ and afv (af : exp) : (ident * primed) list = match af with
       let ifv = List.flatten (List.map afv i) in
       Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
   | BExpr f1 -> fv f1
+  | Template t -> 
+      (List.concat (List.map afv t.templ_args)) 
+      (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -346,6 +350,26 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkTypeCast t a pos = TypeCast (t, a, pos)
+
+and mkTemplate id args pos = Template {
+  templ_id = id;
+  templ_args = args;
+  templ_unks = [];
+  templ_body = None; (* Need to fill in trans_exp *)
+  templ_pos = pos;
+}
+
+and mkUtAnn nid sid is_pre fname cond args pos = 
+  let uid = {
+    tu_id = nid;
+    tu_sid = sid;
+    tu_fname = fname;
+    tu_args = args;
+    tu_cond = cond;
+    tu_pos = pos;
+  } in
+  if is_pre then TermU uid
+  else TermR uid 
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
@@ -576,6 +600,7 @@ and pos_of_exp (e : exp) = match e with
   | FConst (_, p) 
   | Tsconst (_, p)
   | Bptriple (_, p)
+  | Tup2 (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
@@ -600,6 +625,7 @@ and pos_of_exp (e : exp) = match e with
   | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   | BExpr f1 -> pos_of_formula f1
+  | Template t -> t.templ_pos
 
 
 and fresh_old_name (s: string):string =
@@ -795,6 +821,9 @@ and e_apply_one ((fr, t) as p) e = match e with
       Bptriple ((e_apply_one p ec,
                  e_apply_one p et,
                  e_apply_one p ea),pos)
+  | Tup2 ((e1,e2),pos) ->
+      Tup2 ((e_apply_one p e1,
+                 e_apply_one p e2),pos)
   | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
@@ -819,6 +848,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
   | BExpr f1 -> BExpr (apply_one p f1)
+  | Template t -> Template { t with templ_args = e_apply_one_list p t.templ_args; }
 
 and v_apply_one ((fr, t)) v = (if eq_var v fr then t else v)
 
@@ -1001,7 +1031,8 @@ and find_lexp_exp (e: exp) ls =
   | InfConst _
   | FConst _ -> []
   | Ann_Exp(e,_,_) -> find_lexp_exp e ls
-	| Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
+  | Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
+  | Tup2 ((e1, e2), _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1023,6 +1054,8 @@ and find_lexp_exp (e: exp) ls =
   | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | BExpr f1 -> find_lexp_formula (f1: formula) ls
+  | Template { templ_args = t_args; } -> 
+      List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] t_args
 
 and list_of_conjs (f: formula) : formula list =
   match f with
@@ -1066,6 +1099,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | AConst _ 
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
+  | Tup2 _ (* TOCHECK *)
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1087,7 +1121,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
-  | ArrayAt _ -> true 
+  | ArrayAt _ -> true
+  | Template _ -> false
   | InfConst _ -> Error.report_no_pattern ()
   | BExpr f1 ->  f_contain_vars_exp f1
 
@@ -1155,6 +1190,18 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
           in res) ec_r [et_r;ea_r]
       in
       (Bptriple ((ec1,et1,ea1),l),r)
+  | Tup2 ((e1,e2),l) -> 
+      let e1,e1_r = float_out_exp_min_max e1 in
+      let e2,e2_r = float_out_exp_min_max e2 in
+      let r = List.fold_left ( fun np1 np2 ->
+          let res = match (np1, np2) with
+		    | None, None -> None
+		    | Some p, None -> Some p
+		    | None, Some p -> Some p
+		    | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+          in res) e1_r [e2_r]
+      in
+      (Tup2 ((e1,e2),l),r)
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1311,6 +1358,15 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
       (ArrayAt (a, ne1, l), r)
+  | Template t ->
+      let ne1, np1 = List.split (List.map float_out_exp_min_max t.templ_args) in
+      let l = t.templ_pos in
+      let r = List.fold_left (fun a c -> match (a, c) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+      (Template { t with templ_args = ne1; }, r)
   | BExpr f1 -> (e, None) (* BExpr (float_out_p_formula_min_max (pf: p_formula) []) *)
 
 (* and float_out_b_formula_min_max (b: b_formula): b_formula = *)
@@ -1735,6 +1791,7 @@ let rec typ_of_exp (e: exp) : typ =
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
   | Bptriple _ 				  -> Globals.Bptyp
+  | Tup2 ((e1,e2), _)				  -> Globals.Tup2 (typ_of_exp e1,typ_of_exp e2)
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)
@@ -1778,6 +1835,9 @@ let rec typ_of_exp (e: exp) : typ =
       let ty = List.fold_left merge_types UNK ty_list in
       let len = List.length ex_list in
       Globals.Array (ty, len)
+  | Template t -> 
+      let ty_list = List.map typ_of_exp t.templ_args in 
+      List.fold_left merge_types UNK ty_list
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
   | BExpr _ -> Bool
@@ -1897,6 +1957,12 @@ let mkAndList_opt f =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   let pr2 = !print_formula in
   Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 
+  
+let args_of_term_ann ann =
+  match ann with
+  | TermU uid -> uid.tu_args
+  | TermR uid -> uid.tu_args
+  | _ -> []
 
 
 (* (* Expression *)                                                                                                                                         *)
@@ -1942,7 +2008,7 @@ let rec transform_exp_x f (e : exp) : exp =
   | Some ne -> ne
   | None -> (match e with
       | Null _  | Var _ | Level _ | IConst _ | AConst _ 
-      | Tsconst _ | Bptriple _ | FConst _ -> e
+      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ -> e
       | Ann_Exp (e,t,l) ->
           let ne = transform_exp f e in
           Ann_Exp (ne,t,l)
@@ -1997,6 +2063,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
       | InfConst _ -> Error.report_no_pattern ()
       | BExpr _ -> e
+      | Template _ -> e
     )
 
 and transform_exp f (e : exp) : exp =
@@ -2128,7 +2195,13 @@ let is_esv e= match e with
   | _ -> false
 
 let is_bexp_p pf= match pf with
-  | BVar _ -> true
+  | BVar _
+  | Lt _
+  | Gt _ 
+  | Lte _ 
+  | Gte _ 
+  | Eq _
+  | Neq _ -> true
   | _ -> false
 
 let is_bexp_b bf=
@@ -2195,17 +2268,6 @@ let transform_bexp_p f0 lb sl pf =
   Debug.no_1 "transform_bexp_p" pr1 pr1
       (fun _ -> transform_bexp_p_x f0 lb sl pf) f0
 
-(* let rec transform_bexp_x f= *)
-(*   let recf = transform_bexp_x in *)
-(*   match f with *)
-(*     | BForm ((pf,a),b) -> transform_bexp_p a b pf *)
-(*     | And (f1,f2,l) -> And (recf f1,recf f2,l) *)
-(*     | AndList fs ->AndList ( List.map (fun (a,f1) -> (a, recf f1)) fs) *)
-(*     | Or (f1,f2,c,l) -> Or(recf f1,recf f2,c,l) *)
-(*     | Not (f1, a, b) -> Not (recf f1, a,b) *)
-(*     | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c) *)
-(*     | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c) *)
-
 (*
  v=e --> v & e | !v & !e
  e1 = e2 --> e1 & e2 | !(e1) & !e2
@@ -2225,3 +2287,23 @@ let transform_bexp f0 lb sl e f=
   let pr = !print_formula in
   Debug.no_1 "transform_bexp" pr pr
       (fun _ -> transform_bexp_x f0 lb sl e f) f
+
+let rec transform_bexp_form f: formula=
+  let recf = transform_bexp_form in
+  match f with
+    | BForm ((pf,a),b) -> begin
+        match pf with
+          | Eq (e1, e2, p)
+          | Neq (e1, e2, p) -> begin
+              match e1,e2 with
+                | Var _, BExpr f2 -> transform_bexp f a b e1 f2
+                | _ -> f
+            end
+          | _ -> f
+        end
+    | And (f1,f2,l) -> And (recf f1,recf f2,l)
+    | AndList fs ->AndList ( List.map (fun (a,f1) -> (a, recf f1)) fs)
+    | Or (f1,f2,c,l) -> Or(recf f1,recf f2,c,l)
+    | Not (f1, a, b) -> Not (recf f1, a,b)
+    | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c)
+    | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c)

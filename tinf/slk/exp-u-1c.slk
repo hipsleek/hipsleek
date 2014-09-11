@@ -1,0 +1,24 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 & fpost(x') |- fpost(x).
+
+term_infer.
+
+/*
+exp-u-1.slk
+
+what I expect from term-u-1c, but it generates:
+
+Base/Rec Case Splitting:
+[	f: [[2] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  0<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+*/

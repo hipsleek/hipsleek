@@ -10,6 +10,7 @@ open Gen.Basic
 open Label
 module LO = Label_only.LOne
 
+type spec_var = ident * primed
 
 type xpure_view = {
     xpure_view_node : ident option;
@@ -55,7 +56,6 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-
 and p_formula = 
   | Frm of ((ident * primed) * loc)
   | XPure of xpure_view
@@ -87,6 +87,27 @@ and p_formula =
   (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
+and term_ann = 
+  | Term    (* definite termination *)
+  | Loop    (* definite non-termination *)
+  | MayLoop (* possible non-termination *)
+  | Fail of term_fail (* Failure because of invalid trans *)
+  | TermU of uid  (* unknown precondition, need to be inferred *)
+  | TermR of uid  (* unknown postcondition, need to be inferred *)
+
+and uid = {
+  tu_id: int;
+  tu_sid: ident;
+  tu_fname: ident;
+  tu_args: exp list;
+  tu_cond: formula; 
+  tu_pos: loc;
+}
+
+and term_fail =
+  | TermErr_May
+  | TermErr_Must
+
 (* Expression *)
 and exp = 
   | Ann_Exp of (exp * typ * loc)
@@ -100,6 +121,7 @@ and exp =
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
+  | Tup2 of ((exp * exp) * loc) (* a pair *)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -124,6 +146,16 @@ and exp =
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
   | Func of (ident * (exp list) * loc)
   | BExpr of formula
+  | Template of template
+
+and template = {
+  (* ax + by + cz + d *)
+  templ_id: ident;
+  templ_args: exp list; (* [x, y, z] *)
+  templ_unks: exp list; (* [a, b, c, d] *)
+  templ_body: exp option;
+  templ_pos: loc;
+}
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -143,7 +175,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
 
 (* module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);;  *)
 
-let string_of_ann ann=
+let string_of_ann ann =
   match ann with
     | ConstAnn ha -> "ConstAnn " ^ (string_of_heap_ann ha)
     | PolyAnn _ -> "PolyAnn"

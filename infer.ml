@@ -9,7 +9,7 @@ open Context
 open Cpure
 open Global_var
 
-module Err = Error
+(* module Err = Error *)
 module CP = Cpure
 module MCP = Mcpure
 module CF = Cformula
@@ -17,7 +17,7 @@ module CF = Cformula
 module TP = Tpdispatcher
 module IF = Iformula
 module I = Iast
-module IMM = Immutable
+(* module IMM = Immutable *)
 (* module SAU = Sautility *)
 
 
@@ -83,13 +83,15 @@ let no_infer_vars estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
+let no_infer_templ estate = (estate.es_infer_vars_templ == [])
 let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula
+
 
 (* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
 
 let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
 
-let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate)
+let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
 
 
 let remove_infer_vars_all estate =
@@ -279,13 +281,33 @@ let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
   List.concat r
 
-let init_vars ctx infer_vars iv_rel v_hp_rel orig_vars = 
+let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
-      | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel;
+      | Ctx estate -> Ctx { estate with 
+          es_infer_vars = infer_vars; 
+          es_infer_vars_rel = iv_rel;
+          es_infer_vars_templ = iv_templ;
           es_infer_vars_hp_rel = v_hp_rel;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
+  
+let init_infer_type ctx itype =
+  let rec helper ctx it =
+    match ctx with
+    | Ctx es -> begin 
+      match it with
+      | INF_TERM -> (es.es_infer_obj # set INF_TERM; Ctx { es with es_infer_tnt = true})
+      | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx)
+      | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
+      | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
+      | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
+      end
+    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
+  in 
+  match itype with
+  | None -> ctx
+  | Some it -> helper ctx it
 
 (* let conv_infer_heap hs = *)
 (*   let rec helper hs h = match hs with *)
@@ -1469,8 +1491,15 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
       estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
 let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
-  if no_infer_pure estate && unk_heaps==[] then 
+  if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then 
     (None,None,[])
+  else if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+    (* Disable template inference when phase numbers are being inferred *)
+    (* let _ = print_endline "COLLECT PURE" in *)
+    let es_opt = Template.collect_templ_assume_init estate lhs_mix_0 (MCP.pure_of_mix rhs_mix) pos in 
+    match es_opt with
+    | None -> (None, None, [])
+    | Some es -> (Some (es, mkTrue pos), None, [])
   else
     let _ = Debug.ninfo_hprint (add_str " lhs_mix 2a" !print_mix_formula)  lhs_mix no_pos in
     (* let lhs_mix = if !Globals.en_slc_ps then lhs_mix else lhs_mix in *)
@@ -1521,7 +1550,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
     (add_str "rhs xpure " pr1)
     (add_str "(new es,inf pure,rel_ass) " pr_res)
   (fun _ _ _ _ -> infer_pure_m unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
-    estate lhs_xpure lhs_xpure0 rhs_xpure   
+    estate lhs_xpure lhs_xpure0 rhs_xpure
 
 let infer_pure_top_level_aux estate unk_heaps
   ante1 ante0 m_lhs split_conseq pos =
@@ -1973,7 +2002,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
            (*=****************INFER REL HP ASS****************=*)
 (*=*****************************************************************=*)
 
-let generate_linking_svl_x drop_hpargs total_unk_map=
+let generate_linking_svl_x drop_hpargs total_unk_map =
   let generate_linking_svl_one_hp pos (hp,args)=
     let hp_name = CP.name_of_spec_var hp in
     let ps,fr_svl,unk_map =
@@ -2542,8 +2571,8 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
     unk_svl (CP.remove_dups_svl prog_vars) in
   (***************************)
   (*subst holes*)
-  let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
-  let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
+  let lhs_b1 = {lhs_b1 with CF.formula_base_heap = Immutable.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
+  let rhs_b1 = {rhs_b1 with CF.formula_base_heap = Immutable.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
   let lhs_b2 = (* CF.subst_b (leqs) *) lhs_b1 in (*m_apply_par*)
   let rhs_b2 = (* CF.subst_b (leqs@reqs) *) rhs_b1 in
   let _ = Debug.ninfo_hprint (add_str  "lhs_b1" Cprinter.string_of_formula_base) lhs_b1 no_pos in

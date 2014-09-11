@@ -174,6 +174,7 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
     | Iformula.HTrue -> "(htrue )",pred_abs_num
     | Iformula.HFalse -> "(hfalse )",pred_abs_num
     | Iformula.HEmp -> "emp",pred_abs_num
+    | Iformula.HVar _ -> "HVar!!",pred_abs_num
 
 let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
   match f with

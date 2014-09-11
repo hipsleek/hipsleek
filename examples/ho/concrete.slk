@@ -1,0 +1,51 @@
+/*
+  Check whether a bag is concrete or not.
+  Expect concrete(B) in the RHS only.
+*/
+
+relation concrete(bag(int) g).
+
+checkentail B={1,2,3} |- concrete(B).
+expect Valid.
+
+checkentail B=C & C={1,2,3} |- concrete(B).
+expect Valid.
+
+checkentail B=union(C,D) & C={1,2,3} |- concrete(B).
+expect Fail.
+
+
+/*
+void acquire_lock(lck l, LockSet ls, WAITg)
+  requires l::Lock{%P}(f)<> * ls::LockSet<S> * g::WAIT<G>
+  ensures l::Lock{%P}(f)<> * %P * l::Held{%P}<> * ls::LockSet<S1>
+        * g::WAIT<G1> * g::WAITS(G2,S,l) &
+              G1=union(G,G2) & S1=union(S,{l});
+
+
+
+void acquire_lock(lck l, LockSet ls, WAITg)
+  requires l::Lock{%P}(f)<> * ls::LockSet<S> * g::WAIT<G>
+  ensures l::Lock{%P}(f)<> * %P * l::Held{%P}<> * ls::LockSet<S1>
+        * g::WAIT<G1> &  G2= {(c,l) | c in S}
+               & ( G1=union(G,G2) & S1=union(S,{l});
+
+
+                        Note that the new wait-for graph is:
+                        g::WAIT<G1> & G1=union(G,G2) &
+                        G2=waitS(S,l)
+
+
+  g::WAITS(G2,S,l) & concrete(S)
+          <--> setgen(G2,Tup(c,l),c in S)
+
+  g::WAITS(G2,S,l) & concrete(S)
+          <--> G2 = {(c,l)| c in S}
+
+
+
+  g::WAITS(G2,S,l) & S={1,2,3}
+  ==> emp &  S={1,2,3} & G2={(1,l),(2,l),(3,l)}
+
+   S={1,2,3}  |- concrete(S)
+*/

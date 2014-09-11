@@ -757,7 +757,8 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.AConst _ 
     | CP.InfConst _
     | CP.Tsconst _
-	| CP.Bptriple _
+    | CP.Tup2 _
+    | CP.Bptriple _
     | CP.FConst _ -> exp
     | CP.Var (sv,pos) -> 
         if BList.mem_eq eq_spec_var sv vars 
@@ -803,6 +804,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.ListLength _
     | CP.ListReverse _
     | CP.Func _
+    | CP.Template _
     | CP.ArrayAt _ -> exp
     | Level _ -> Error.report_no_pattern()
     

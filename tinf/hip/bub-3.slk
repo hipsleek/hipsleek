@@ -1,0 +1,50 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lls<n,k,sm> == case {
+    n=k -> [] self=null & n=0  & sm=\inf 
+         or self::node<sm,r>*r::lls<n-1,k-1,sm1> & sm<=sm1;
+    n!=k -> [] self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm;
+     }	inv n>=k & k>=0.
+
+checkentail xs::node<v,r> * r::lls<f,k,sm2> & v<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+/*
+ <1>emp&k1=n & v<=sm2 & r=r_95 & sm1_96=sm2 & v<=sm1_96 & n=f+1 & k1=k+1 & s1<=sm1_96 & s1=v & k1=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+<2>emp&k1!=n & v<=sm2 & 0<((\inf)+(\inf)) & v=v_100 & r=r_101 & v_100<=sm2 & k<(f+1) & n=f+1 & k1<n & v_100<=s1 & k=k1 & s1=sm2 & k1!=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+*/
+
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=sm2 & v2<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+/*
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+
+unsound!
+
+*/
+--en-inf
+
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=v2 & v2<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+/*
+Entail 3: Valid. 
+
+ <1>emp&flted_8_277=flted_8_278 & k1=n & k1=n & v<=v2 & v2<=sm2 & r1=r_262 & r=r_280 & sm1_281=sm2 & v2<=sm1_281 & exists(flted_8_277:exists(flted_8_278:flted_8_278=n1+1 & flted_8_277=flted_8_278) & flted_8_277=k+1) & sm1_263<=sm1_281 & sm1_263=v2 & sm1_263=v2 & sm1_263<=sm1_281 & v<=sm1_263 & n1+1=k+1 & k1=n & s1=v & s1<=sm1_263 & k1=k+1+1 & n=k+1+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+<2>emp&flted_9_324=k_322 & k1!=n & k1!=n & v<=v2 & v2<=sm2 & 0<((\inf)+(\inf)) & v=v_267 & r1=r_268 & r=r_325 & sm1_326=sm2 & exists(k_322:exists(flted_9_324:flted_9_324=n1+1 & flted_9_324=k_322) & k_322=k+1) & exists(sm_323:sm_323<=sm1_326 & sm_323=v2) & v2<=sm1_326 & v_267<=v2 & n1+1=k+1 & (k+1)<(k+1+1) & k1!=n & v_267<=s1 & k1<n & k1=k+1 & n=k1+1 & k1=n1+1 & s1<=sm1_326 & s1=v2&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+<3>emp&flted_9_324!=k_322 & k1!=n & k1!=n & v<=v2 & v2<=sm2 & 0<((\inf)+(\inf)) & v=v_267 & r1=r_268 & v2=v_330 & r=r_331 & exists(k_322:exists(flted_9_324:flted_9_324=n1+1 & k_322<flted_9_324 & flted_9_324!=k_322) & k=k_322) & exists(sm_323:v_330<=sm_323 & sm2=sm_323) & v_330<=sm2 & v_267<=sm2 & k<(n1+1) & k!=(n1+1) & k<(n1+1+1) & k1!=n & v_267<=s1 & k1<n & k=k1 & k1<(n1+1) & k1!=(n1+1) & n=n1+1+1 & v_330<=s1 & s1=sm2&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+*/

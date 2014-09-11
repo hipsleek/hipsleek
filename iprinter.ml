@@ -200,6 +200,7 @@ let rec string_of_formula_exp = function
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
+  | P.Tup2 (t,l) -> pr_pair string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with
 	  | P.Null _
@@ -235,6 +236,7 @@ let rec string_of_formula_exp = function
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.Func (a, i, _)     ->  
         a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
+  | P.Template t -> t.P.templ_id ^ "(" ^ (string_of_formula_exp_list t.P.templ_args) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
         (* An Hoa : print the array access *)
         a ^ (match p with 
@@ -252,6 +254,22 @@ let rec string_of_formula_exp = function
 (* | BagIntersect of (exp list * loc) *)
 (* | BagDiff of (exp * exp * loc) *)
   | P.BExpr f1 -> "BExpr(" ^ string_of_pure_formula f1 ^ ")"
+
+and string_of_term_ann a =
+  match a with
+    | P.Term -> "Term"
+    | P.Loop -> "Loop"
+    | P.MayLoop -> "MayLoop"
+    | P.TermU uid -> "TermU" ^ (string_of_term_id uid)
+    | P.TermR uid -> "TermR" ^ (string_of_term_id uid)
+    | P.Fail f -> match f with
+        | P.TermErr_May -> "TermErr_May"
+        | P.TermErr_Must -> "TermErr_Must"
+
+and string_of_term_id uid = 
+  "@" ^ uid.P.tu_fname ^ 
+  "[" ^ (string_of_int uid.P.tu_id) ^ ", " ^ 
+  (!P.print_formula uid.P.tu_cond) ^ "]"
 
 and string_of_p_formula pf =
 match pf with 
@@ -395,7 +413,6 @@ and string_of_b_formula (pf,il) =
   (* | P.XPure _ -> Error.report_no_pattern() *)
    (* | _ -> "bag constraint" *)
 
-
 (*  | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -404,11 +421,8 @@ and string_of_b_formula (pf,il) =
 	  (* lists and list formulae *)
 *)
 
-and concat_string_list_string strings =
-    ""
-		
 (* pretty printing for a pure formula *)
-and string_of_pure_formula = function
+and string_of_pure_formula f = match f with 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"
   | P.AndList b -> List.fold_left  (fun a (l,c)->
@@ -494,16 +508,18 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
+                 F.h_formula_heap_ho_arguments = ho_pl;
                  F.h_formula_heap_imm = imm;
                  F.h_formula_heap_imm_param = ann_param;
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
+      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_pl))^"}" in
       let deref_str = ref "" in
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
       done;
-      ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str 
+      ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str 
       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
@@ -512,7 +528,10 @@ let rec string_of_h_formula = function
                   F.h_formula_heap2_imm = imm;
                   F.h_formula_heap2_imm_param = ann_param;
                   F.h_formula_heap2_perm = perm; (*LDK*)
-                  F.h_formula_heap2_arguments = args}) ->
+                  F.h_formula_heap2_arguments = args;
+                  F.h_formula_heap2_ho_arguments = ho_args
+    }) ->
+      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_args))^"}" in
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
@@ -521,7 +540,7 @@ let rec string_of_h_formula = function
         deref_str := !deref_str ^ "^";
       done;
       string_of_formula_label_opt pi
-        ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
+        ((string_of_id xid) ^ "::" ^ id ^ho_str^ !deref_str ^ perm_str
         ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
   | F.ThreadNode ({F.h_formula_thread_node = x;
                  F.h_formula_thread_name = id;
@@ -538,6 +557,7 @@ let rec string_of_h_formula = function
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
+  | F.HVar v -> "HVar "^v
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
@@ -619,10 +639,12 @@ and  string_of_struc_formula c = match c with
 	  let l2 = if !print_assume_struc then "\n struc: "^(string_of_struc_formula s) else "" in
 	  l1^l2
 	| F.EInfer{F.formula_inf_vars = lvars;
+         F.formula_inf_tnt = itnt;
 			   F.formula_inf_post = postf;
 			   F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
+        let ps = ps ^ (if itnt then "@term " else "") in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
@@ -894,7 +916,9 @@ let string_of_barrier_decl b =
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = 
+  let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
+  v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
 ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
 ;;
@@ -912,6 +936,7 @@ let string_of_coerc_origin orig = match orig with
 
 let string_of_coerc_decl c = 
   (string_of_coerc_type c.coercion_type) ^ "coerc " ^c.coercion_name ^ "\n"
+  ^ "\t kind: " ^ (string_of_lemma_kind c.coercion_kind) ^ "\n"
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
@@ -986,6 +1011,8 @@ let rec string_of_barrier_decl_list l = match l with
 let string_of_lem_kind l =
   match l with
     | LEM          -> "lemmas(to be proved and saved)"
+    | LEM_PROP     -> "propagation lemmas"
+    | LEM_SPLIT     -> "split lemmas"
     | LEM_TEST     -> "testing lemmas"
     | LEM_TEST_NEW -> "testing lemmas(empty context)"
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
@@ -1048,8 +1075,9 @@ let rec string_of_global_var_decl_list l =
 ;;
 
 (* An Hoa : print relations *)
-let string_of_rel_decl_list rdecls = 
-	String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls)
+let string_of_rel_decl_list rdecls =
+  String.concat "\n" (List.map string_of_rel_decl rdecls)
+	(* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
@@ -1116,6 +1144,8 @@ Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
+Iast.print_coerc_decl := string_of_coerc_decl;;
+Iast.print_coerc_decl_list := string_of_coerc_decl_list;;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;

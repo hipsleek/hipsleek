@@ -1369,7 +1369,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
               let new_heap_formula2 = List.fold_left
                 (fun hf (((id1, pr1), (id2, pr2)), t) ->
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
               let npf = helper_pure_formula fb.IF.formula_base_pure in
@@ -1380,7 +1380,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None 
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Base { fb with
@@ -1398,7 +1398,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
               let new_heap_formula2 = List.fold_left
                 (fun hf (((id1, pr1), (id2, pr2)), t) ->
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) [] 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
               let npf = helper_pure_formula fe.IF.formula_exists_pure in
@@ -1409,7 +1409,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                    IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 
+                        [] (*TODO:HO*) 0 false SPLIT0 (Ipure.ConstAnn Mutable) false false false None
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
                 ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Exists { fe with
@@ -1489,7 +1490,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                 with _ -> h
               end
         | IF.ThreadNode _
-        | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
+        | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp | IF.HVar _ -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
       match p with
@@ -1592,6 +1593,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Tsconst (t, pos) ->
               Ipure.Tsconst (t, pos)
+        | Ipure.Tup2 ((e1, e2), pos) ->
+              Ipure.Tup2 ((helper_exp e1, helper_exp e2), pos)
         | Ipure.Bptriple ((e1, e2, e3), pos) ->
               Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
         | Ipure.Add (e1, e2, pos) ->
@@ -1634,6 +1637,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Func (id, el, pos) -> 
               e (* TODO *)
+        | Ipure.Template _ -> e
         | Ipure.BExpr _ -> e
   ) in
   match exp with
@@ -1846,7 +1850,9 @@ and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl)
       Iast.prog_coercion_decls = main_prog.Iast.prog_coercion_decls @ aux_prog.Iast.prog_coercion_decls;
       Iast.prog_hp_decls = main_prog.Iast.prog_hp_decls @ aux_prog.Iast.prog_hp_decls;
       Iast.prog_hp_ids = main_prog.Iast.prog_hp_ids @ aux_prog.Iast.prog_hp_ids;
+      Iast.prog_templ_decls = main_prog.Iast.prog_templ_decls @ aux_prog.Iast.prog_templ_decls;
       Iast.prog_test_comps = [];
+      Iast.prog_ut_decls = main_prog.Iast.prog_ut_decls @ aux_prog.Iast.prog_ut_decls;
   } in
   newprog
 
@@ -1860,6 +1866,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let func_decls : Iast.func_decl list ref = ref [] in
   let rel_decls : Iast.rel_decl list ref = ref [] in
   let rel_ids : (typ * ident) list ref = ref [] in
+  let templ_decls: Iast.templ_decl list ref = ref [] in
+  let ut_decls: Iast.ut_decl list ref = ref [] in
   let axiom_decls : Iast.axiom_decl list ref = ref [] in
   let hopred_decls : Iast.hopred_decl list ref = ref [] in
   let proc_decls : Iast.proc_decl list ref = ref [] in
@@ -1948,6 +1956,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       Iast.prog_func_decls = !func_decls;
       Iast.prog_rel_decls = !rel_decls;
       Iast.prog_rel_ids = !rel_ids;
+      Iast.prog_templ_decls = !templ_decls;
+      Iast.prog_ut_decls = !ut_decls;
       Iast.prog_axiom_decls = !axiom_decls;
       Iast.prog_hopred_decls = !hopred_decls;
       Iast.prog_proc_decls = !proc_decls;
