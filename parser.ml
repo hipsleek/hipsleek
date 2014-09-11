@@ -55,7 +55,7 @@ type decl =
   | Include of string
   | Template of templ_decl
   | Ut of ut_decl
-		
+
 
 type member = 
   | Field of (typed_ident * loc)
@@ -2301,18 +2301,18 @@ shapeExtract_cmd:
    let il1 = un_option il1 [] in
    (il1)
    ]];
-  
+
 infer_type:
-   [[ `INFER_AT_TERM -> INF_TERM 
-   | `INFER_AT_SHAPE -> INF_SHAPE
-   | `INFER_AT_PRE -> INF_PRE
-   | `INFER_AT_POST -> INF_POST
-   | `INFER_AT_IMM -> INF_IMM
+   [[ `INFER_AT_TERM -> Array.set Globals.infer_const_arr 0 true; INF_TERM
+   | `INFER_AT_PRE -> Array.set Globals.infer_const_arr 1 true; INF_PRE
+   | `INFER_AT_POST -> Array.set Globals.infer_const_arr 2 true; INF_POST
+   | `INFER_AT_IMM -> Array.set Globals.infer_const_arr 3 true; INF_IMM
+   | `INFER_AT_SHAPE -> Array.set Globals.infer_const_arr 4 true; INF_SHAPE
    ]];
-  
+
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
-    
+
 id_list_w_itype:
   [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il) 
    | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il [])
