@@ -3452,8 +3452,11 @@ let rec check_prog iprog (prog : prog_decl) =
         ) stk in
         is_empty err
       in 
-      
-      let _ = Ti.solve (is_all_verified2 && is_term_verified) prog in
+      (* Only do inference when there are some unknowns in the specifications *)
+      let should_infer_tnt = List.fold_left (fun acc proc ->
+        if not acc then CF.has_unknown_pre_lexvar_struc proc.Cast.proc_static_specs
+        else acc) false scc in
+      let _ = Ti.solve (is_all_verified2 && is_term_verified) should_infer_tnt prog in
       let prog = Ti2.update_specs_prog prog in
       let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in

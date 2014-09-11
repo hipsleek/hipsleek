@@ -14131,28 +14131,28 @@ let rec has_lexvar_formula f =
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (has_lexvar_formula f1) || (has_lexvar_formula f2)
 
-(* Same as the above method except that it   *)
-(* also tells whether we have unknown LexVar *)
-let rec has_unknown_lexvar_formula f = 
+(* Same as the above method except that it also tells     *)
+(* whether we have unknown LexVar in precondition (TermU) *)
+let rec has_unknown_pre_lexvar_formula f = 
   match f with
   | Base _
   | Exists _ ->
       let _, pure_f, _, _, _ = split_components f in 
-      CP.has_unknown_lexvar (MCP.pure_of_mix pure_f) 
+      CP.has_unknown_pre_lexvar (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
-      let has_lexvar_f1, has_unknown_f1 = has_unknown_lexvar_formula f1 in
-      let has_lexvar_f2, has_unknown_f2 = has_unknown_lexvar_formula f2 in
+      let has_lexvar_f1, has_unknown_f1 = has_unknown_pre_lexvar_formula f1 in
+      let has_lexvar_f2, has_unknown_f2 = has_unknown_pre_lexvar_formula f2 in
       (has_lexvar_f1 || has_lexvar_f2, has_unknown_f1 || has_unknown_f2)
       
-let has_unknown_lexvar_struc sf =
+let has_unknown_pre_lexvar_struc sf =
   let arg = () in
   let f_arg a _ = a in
   let f_comb bl = List.exists idf bl in
   let id2 = fun a _-> (a, false) in
   let id2l = fun _ a -> (a, []) in
   let f_f _ f =
-    let _, has_unknown_lexvar = has_unknown_lexvar_formula f in
-    Some (f, has_unknown_lexvar)
+    let _, has_unknown_pre_lexvar = has_unknown_pre_lexvar_formula f in
+    Some (f, has_unknown_pre_lexvar)
   in 
   snd (trans_struc_formula sf arg (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, id2, id2l, id2, id2)) 
     (f_arg, f_arg, f_arg, (f_arg, f_arg, f_arg), f_arg) f_comb)
