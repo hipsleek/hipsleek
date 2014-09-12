@@ -2984,7 +2984,8 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()
   | EInfer b -> 
-    let il = if b.formula_inf_tnt then [INF_TERM] else [] in
+    (* let il = if b.formula_inf_tnt then [INF_TERM] else [] in *)
+    let il = b.formula_inf_obj # get_lst in
     fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
     pr_struc_formula_for_spec b.formula_inf_continuation
     (* report_error no_pos "Do not expect EInfer at this level" *)
@@ -3059,7 +3060,8 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
 	   wrap_box ("B",0) pr_helper s)
 	 else ()
   | EInfer b-> 
-    let il = if b.formula_inf_tnt then [INF_TERM] else [] in
+    (* let il = if b.formula_inf_tnt then [INF_TERM] else [] in *)
+    let il = b.formula_inf_obj # get_lst in
     fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
     pr_helper b.formula_inf_continuation
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_helper c) b

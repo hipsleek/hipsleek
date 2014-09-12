@@ -1138,7 +1138,7 @@ let genESpec_x pname body_opt args0 ret pos=
     let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
     (F.EInfer {
-        F.formula_inf_tnt = false;
+        (* F.formula_inf_tnt = false; *)
         F.formula_inf_obj = Globals.infer_const_obj # clone;
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;

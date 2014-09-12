@@ -68,6 +68,16 @@ fact:  case {
   }
 
 =======================================================
+# fact1.ss
+
+int fact(int x)
+  infer [@pre_n,x,@term,@post_n]
+  requires true  
+  ensures true;
+
+Need to support a mix of
+infer_consts @sym and varid.
+Thus, the need for twoAns type
 =======================================================
 =======================================================
 =======================================================
