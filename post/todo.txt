@@ -160,6 +160,32 @@ fact:
   ensures res=1+2*x & x>=0;
 
 =======================================================
+# post-2b.ss
+
+  infer [@post_n]
+  requires true  ensures true;
+
+This currently does not do post inference.
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+The idea is to form a post relation,
+say post_fact(x,res) to try infer a
+good pure post-condition for the function.
+
+It would need to introduce, a fresh:
+ relation post_fact(int n, int r).
+
+and then form:
+
+  infer [post_fact]
+  requires true  
+  ensures post_fact(n,res);
+
+Before passing to hip for inference similar
+to post-2.ss.
+
 =======================================================
 =======================================================
 =======================================================
