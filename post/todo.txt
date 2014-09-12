@@ -120,12 +120,12 @@ This currently prints:
 !!!REL PRE :  true
 
 Can we merge this post into our spec,
-and then print it; as follows:
+and then print it; as follows: (DONE)
 
 Post Inference result:
-fact:
-  requires true 
-  ensures res=1+2*x & x>=0;
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
 
 The print out from @term is as follows:
 
@@ -140,24 +140,25 @@ fact:  case {
   }
 
 =======================================================
-# post-2.ss
+# post-2a.ss
 
   infer [Uf]
   requires x>=0 ensures Uf(x,res);
 1
-This currently prints:
 
-!!!REL POST :  Uf(x,res)
-!!!POST:  x=res-1 & 1<=res
-!!!REL PRE :  true
-
-Can we merge this post into our spec,
-and then print it; as follows:
+GOT:
 
 Post Inference result:
-fact:
-  requires x>=0
-  ensures res=1+2*x & x>=0;
+fact$int
+ requires emp & 0<=xrequires emp & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
+Can we flatter/unnest spec to obtain:
+
+Post Inference result:
+fact$int
+ requires emp & 0<=x & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
 
 =======================================================
 # post-2b.ss
