@@ -2949,35 +2949,17 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      let inf_o = Globals.infer_const_obj # clone in
-     let (i_consts,ivl) = List.fold_left 
-       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
+     let (i_consts,ivl) = List.fold_left
+       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     let _ = List.iter (fun itype -> inf_o # set itype) i_consts in
      let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
-     (* let (itypes_and_vars, ivl) = ivl_w_itype in *)
-     (* let ivl1 = match itypes_and_vars with *)
-     (*   | Some itypes_and_vars -> *)
-     (*         let itypes,vars = List.partition (fun inf -> match inf with *)
-     (*           | FstAns _ -> true *)
-     (*           | _ -> false *)
-     (*         ) itypes_and_vars in *)
-     (*         let _ = List.iter (fun itype -> match itype with *)
-     (*           | FstAns itype -> inf_o # set itype *)
-     (*           | _ -> failwith "not itype" *)
-     (*         ) itypes in *)
-     (*         let ivl1 = List.map (fun var -> match var with *)
-     (*           | SndAns var -> var *)
-     (*           | _ -> failwith "not var" *)
-     (*         ) vars in *)
-     (*         ivl1 *)
-     (*   | None -> [] *)
-     (* in *)
-     (* let ivl = ivl@ivl1 in *)
      F.EInfer {
        (* F.formula_inf_tnt = inf_o # get INF_TERM (\* (match itype with | Some INF_TERM -> true | _ -> false) *\); *)
        F.formula_inf_obj = inf_o;
-       F.formula_inf_post = postf; 
-       F.formula_inf_xpost = postxf; 
+       F.formula_inf_post = postf;
+       F.formula_inf_xpost = postxf;
        F.formula_inf_transpec = transpec;
        F.formula_inf_vars = ivl_t;
        F.formula_inf_continuation = s;
@@ -3002,13 +2984,12 @@ spec:
             (* F.formula_ext_complete = false;*)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
 			let f = F.subst_stub_flow n_flow dc in
-			let sf = F.mkEBase [] [] [] f None no_pos in		
+			let sf = F.mkEBase [] [] [] f None no_pos in
 			F.mkEAssume f sf (fresh_formula_label ol) None
-	 
 	 | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
 			let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
 			F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
-	  
+
      | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
 			let f = F.subst_stub_flow n_flow dc in	
 			let sf = F.mkEBase [] [] [] f None no_pos in		
