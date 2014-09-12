@@ -36,6 +36,7 @@ type sleek_token =
   | IF 
   | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
   | INV_EXACT | INV_SAT | BG
+  | ANN_KEY
   | LET
   | MAX | MIN 
   | NEW | NOTIN | NULL
@@ -120,7 +121,8 @@ module Token = struct
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | HP->"HeapPred" | HPPOST->"PostPred"
-    | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
+    | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE ->"inline" (* An Hoa : inline added *)
+    | ANN_KEY -> "ann"
     | INV_EXACT -> "inv_exact" | INV_SAT -> "inv_sat" | BG -> "BG"
     | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test" | LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *)
     | LEMMA TLEM_SPLIT ->"lemma_split"

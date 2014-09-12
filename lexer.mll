@@ -115,6 +115,7 @@ module Make (Token : SleekTokenS)
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("ann", ANN_KEY);
    ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
