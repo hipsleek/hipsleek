@@ -629,6 +629,7 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
+  (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "infer case spec");

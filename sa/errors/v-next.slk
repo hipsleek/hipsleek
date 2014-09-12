@@ -5,6 +5,7 @@ data node {
 checkentail x=null or x::node<q> |- x::node<r>.
 print residue.
 
+
 /*
 # v-next.slk --sa-error
 

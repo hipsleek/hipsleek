@@ -138,7 +138,32 @@ Expects:
   D1 \/ D2 |- P --> (R1\/R2)
 
 
+ Incorrect still!
+    emp&x=null&{FLOW,(5,6)=__Error}[]
+    or emp&{FLOW,(-1,0)=__false}[]
+
 =====================================================================
+# v-next3.slk --efa
+
+checkentail x=null |- x::node<r>.
+print residue.
+
+Why is this Valid? should it be a must failure like v.next.slk.
+Residue is correct though. 
+
+Entail 1: Valid. 
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+# v-next3.slk --efa
+
+checkentail x::node<q> |- x::node<r>.
+
+Missing x!=null
+
+Entail 2: Valid. 
+ <1>emp&r=q&{FLOW,(3,4)=__norm}[]
 =====================================================================
 =====================================================================
 =====================================================================
