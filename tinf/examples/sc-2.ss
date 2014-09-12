@@ -1,10 +1,11 @@
 /* Example suggested by Shengchao */
 
 void f(int x, int y)
-
-  infer [@term]
-  requires true
-  ensures true;
+ case {
+   x>=1 -> ensures true;
+   x=0 -> ensures true;
+   x<0 -> ensures true;
+ }
 /*
  case {
    x>=1 -> case {
