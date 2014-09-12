@@ -3026,10 +3026,11 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                 let evars = stk_evars # get_stk in
                                 (* let evars = [] in*)
                                 let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
-                                    Debug.info_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-                                    Debug.info_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-                                    Debug.info_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-                                    Debug.info_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos) tuples in
+                                    Debug.ninfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+                                    Debug.ninfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+                                    Debug.ninfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+                                    Debug.ninfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+                                ) tuples in
                                 (* TODO *)
                                 let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
                                 if triples = [] then 
@@ -3054,8 +3055,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let _ = Debug.ninfo_zprint (lazy (("   old_spec: " ^(Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))))) no_pos in
                           let _ = Debug.ninfo_zprint (lazy (("   new_spec: " ^(Cprinter.string_of_struc_formula new_spec)))) no_pos in
                           let _ = proc.proc_stk_of_static_specs # push new_spec in
-                          (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
-                          (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
+                          let _ = print_endline "\nPost Inference result:" in
+                          let _ = print_endline proc.proc_name in
+                          let _ = print_endline (Cprinter.string_of_struc_formula_for_spec new_spec) in
                           (* let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in *)
                           if !dis_post_chk then
                             (f,None)
@@ -3432,14 +3434,14 @@ let rec check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
-      let _ = 
+      let _ =
         let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
-        if inf_templs = [] then () 
-        else if !Globals.templ_term_inf then  
+        if inf_templs = [] then ()
+        else if !Globals.templ_term_inf then
           Terminf.infer_rank_template_init prog inf_templs
-        else Template.collect_and_solve_templ_assumes prog inf_templs 
+        else Template.collect_and_solve_templ_assumes prog inf_templs
       in
-      
+
       (* TNT Inference *)
       let is_term_verified =
         let stk = Term.term_res_stk # get_stk in
@@ -3450,7 +3452,7 @@ let rec check_prog iprog (prog : prog_decl) =
           | _ -> true
         ) stk in
         is_empty err
-      in 
+      in
       (* Only do inference when there are some unknowns in the specifications *)
       let should_infer_tnt = List.fold_left (fun acc proc ->
         if not acc then CF.has_unknown_pre_lexvar_struc proc.Cast.proc_static_specs
