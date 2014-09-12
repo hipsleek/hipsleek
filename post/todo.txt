@@ -68,7 +68,7 @@ fact:  case {
   }
 
 =======================================================
-# fact1.ss
+# fact1.ss (DONE)
 
 int fact(int x)
   infer [@pre_n,x,@term,@post_n]
@@ -79,9 +79,86 @@ Need to support a mix of
 infer_consts @sym and varid.
 Thus, the need for twoAns type
 =======================================================
+# pre-1a.slk
+
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+
+ <1>emp&0<=y & R(x,y) & y<x&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  0<=y]
+
+
+Why is there a useless true pre?
+ inferred pure: [true]
 =======================================================
+# pre-1a.slk
+
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+
+ <1>emp&0<=y & R(x,y) & y<x&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  0<=y]
+
+
+Why is there a useless true pre?
+ inferred pure: [true]
 =======================================================
+# post-2.ss
+
+int fact(int x)
+  infer [Uf]
+  requires true  ensures Uf(x,res);
+
+This currently prints:
+
+!!!REL POST :  Uf(x,res)
+!!!POST:  x=res-1 & 1<=res
+!!!REL PRE :  true
+
+Can we merge this post into our spec,
+and then print it; as follows:
+
+Post Inference result:
+fact:
+  requires true 
+  ensures res=1+2*x & x>=0;
+
+The print out from @term is as follows:
+
+Termination Inference Result:
+fact:  case {
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  }
+
 =======================================================
+# post-2.ss
+
+  infer [Uf]
+  requires x>=0 ensures Uf(x,res);
+1
+This currently prints:
+
+!!!REL POST :  Uf(x,res)
+!!!POST:  x=res-1 & 1<=res
+!!!REL PRE :  true
+
+Can we merge this post into our spec,
+and then print it; as follows:
+
+Post Inference result:
+fact:
+  requires x>=0
+  ensures res=1+2*x & x>=0;
+
 =======================================================
 =======================================================
 =======================================================
