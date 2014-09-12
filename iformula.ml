@@ -42,7 +42,8 @@ and struc_formula =
 
 and struc_infer_formula =
   {
-    formula_inf_tnt: bool; (* true if termination to be inferred *)
+    (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
+    formula_inf_obj: Globals.inf_obj; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -1685,8 +1686,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       | Ipure.Var _ -> (c,[])
       | Ipure.Ann_Exp (e ,_,_) -> float_ann_var l e
       | _ ->
-	    (* let nn = (("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)
-	    let nn = (fresh_loc_field_name l,Unprimed) in
+	    let nn = (("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 	    let nv = Ipure.Var (nn,l) in
 	    let npf = 
 	      (* if !Globals.do_slicing then *)
@@ -1739,8 +1739,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         let perm = b.h_formula_heap_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
         let prep_one_arg_helper (id,c) =
-	  let nn = (fresh_loc_field_name  b.h_formula_heap_pos,Unprimed) in
-          (* let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)
+          let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 	  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
 	  let npf = 
 	    (* if !Globals.do_slicing then *)
@@ -1777,8 +1776,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         let perm = b.h_formula_heap2_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap2_pos in
         let prep_one_arg_helper (id,c) =
-	  (* let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)
-	  let nn = (fresh_loc_field_name  b.h_formula_heap2_pos,Unprimed) in
+	  let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 	  let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
 	  let npf =
 	    (* if !Globals.do_slicing then *)
@@ -2539,7 +2537,8 @@ let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
       add_formula_to_post_x (f,ex_vars) f0
 
 let mkEInfer xpost transpec pos = EInfer { 
-    formula_inf_tnt = false;
+    (* formula_inf_tnt = false; *)
+    formula_inf_obj = Globals.infer_const_obj # clone;
     formula_inf_post = true;
     formula_inf_xpost = xpost;
     formula_inf_transpec = transpec;

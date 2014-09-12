@@ -1,5 +1,5 @@
 int fact(int x)
-  infer [@term,x]
+  infer [@term,x,@post_n]
   requires true
   ensures //true
   res >= 1
@@ -9,9 +9,9 @@ int fact(int x)
   else return 1 + fact(x - 1);
 }
 /*
-# fact.ss
+# tinf/examples/fact-2.ss
 
  static  EList :EInfer [x]
 
-How come @term not captured? 
+How come @term,@post_n not captured? 
 */
