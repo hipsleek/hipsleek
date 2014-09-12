@@ -1,6 +1,6 @@
-module CP = Cpure
-module CF = Cformula
-module MCP = Mcpure
+(* module CP = Cpure    *)
+(* module CF = Cformula *)
+(* module MCP = Mcpure  *)
 
 open Cprinter
 open Globals
@@ -66,11 +66,11 @@ let rec partition_cond_list cond_list =
     
 let get_full_disjoint_cond_list cond_list = 
   let disj_cond_lst = partition_cond_list cond_list in
-  let full_disj_cond_lst =
-    let rem_cond = mkNot (CP.join_disjunctions disj_cond_lst) in
-    if is_sat rem_cond then disj_cond_lst @ [rem_cond]
-    else disj_cond_lst
-  in List.map om_simplify full_disj_cond_lst
+  let rem_cond = mkNot (CP.join_disjunctions disj_cond_lst) in
+  let rem_cond_lst =
+    if is_sat rem_cond then CP.split_disjunctions (om_simplify rem_cond)
+    else [] 
+  in (List.map om_simplify disj_cond_lst) @ rem_cond_lst
     
 let seq_num = ref 0    
     
@@ -286,7 +286,7 @@ let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
   let p_pre = MCP.mix_of_pure (CP.mkLexVar_pure ann rnk []) in
   let p_post = match ann with
-    | Loop -> MCP.mkMFalse pos 
+    | CP.Loop -> MCP.mkMFalse pos 
     | _ -> MCP.mkMTrue pos
   in
   let f_pre = CF.mkBase_simp CF.HEmp p_pre in
@@ -303,7 +303,7 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
   let f_pre = CF.mkBase_simp CF.HEmp p_pre in
   
   let post = match ann with
-    | Loop ->
+    | CP.Loop ->
       let f_post = CF.mkBase_simp CF.HEmp (MCP.mkMFalse pos) in
       CF.EAssume { assume with
         CF.formula_assume_simpl = f_post;
@@ -329,7 +329,7 @@ let struc_formula_of_dead_path _ =
 let rec struc_formula_of_tnt_case_spec spec =
   match spec with
   | Sol s -> struc_formula_of_ann s
-  | Unknown -> struc_formula_of_ann (MayLoop, [])
+  | Unknown -> struc_formula_of_ann (CP.MayLoop, [])
   | Cases cases -> CF.ECase {
       CF.formula_case_branches = List.map (fun (c, s) -> 
         (c, struc_formula_of_tnt_case_spec s)) cases;
@@ -393,7 +393,7 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
 and merge_tnt_case_spec_into_assume ctx spec af =
   match spec with
   | Sol s -> struc_formula_of_ann_w_assume af s
-  | Unknown -> struc_formula_of_ann_w_assume af (MayLoop, [])
+  | Unknown -> struc_formula_of_ann_w_assume af (CP.MayLoop, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
       let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
@@ -578,6 +578,11 @@ let succ_scc g scc =
 
 let succ_scc_num g scc =
   List.concat (List.map (TG.succ g) scc)
+  
+let outside_edges_scc_vertex g scc v =
+  let succ = TG.succ g v in
+  let outside_scc_succ = Gen.BList.difference_eq (==) succ scc in
+  List.concat (List.map (fun sc -> TG.find_all_edges g v sc) outside_scc_succ)
 
 let outside_scc_succ_vertex g scc v =
   let succ = TG.succ g v in
@@ -847,6 +852,13 @@ let inst_lhs_trel_abd rel abd_conds =
     | _ -> [lhs_ann]
   in inst_lhs
   
+let inst_lhs_trel_abd rel abd_conds =
+  let pr1 = print_call_trel_debug in
+  let pr2 = pr_list (pr_pair string_of_int (pr_list !CP.print_formula)) in
+  let pr3 = pr_list string_of_term_ann in
+  Debug.no_2 "inst_lhs_trel_abd" pr1 pr2 pr3
+    inst_lhs_trel_abd rel abd_conds
+  
 let inst_rhs_trel_abd inst_lhs rel abd_conds = 
   let rhs_ann = rel.termu_rhs in
   let cond_lhs = CP.cond_of_term_ann inst_lhs in
@@ -950,18 +962,22 @@ let cond_of_nt_res = function
   | _ -> []
 
 let uid_of_loop trel = 
-  let args = trel.termu_rhs_args in
-  let params = List.concat (List.map CP.afv args) in
-  let cond = simplify 2 trel.call_ctx params in
-  { CP.tu_id = CP.loop_id;
-    CP.tu_sid = "";
-    CP.tu_fname = trel.termu_cle;
-    CP.tu_call_num = 0;
-    CP.tu_args = trel.termu_rhs_args;
-    CP.tu_cond = cond; 
-    CP.tu_icond = cond;
-    CP.tu_sol = Some (CP.Loop, []);
-    CP.tu_pos = no_pos; }
+  match trel.termu_rhs with
+  | TermU uid -> uid
+  | Loop ->
+    let args = trel.termu_rhs_args in
+    let params = List.concat (List.map CP.afv args) in
+    let cond = simplify 2 trel.call_ctx params in
+    { CP.tu_id = CP.loop_id;
+      CP.tu_sid = "";
+      CP.tu_fname = trel.termu_cle;
+      CP.tu_call_num = 0;
+      CP.tu_args = trel.termu_rhs_args;
+      CP.tu_cond = cond; 
+      CP.tu_icond = cond;
+      CP.tu_sol = Some (CP.Loop, []);
+      CP.tu_pos = no_pos; }
+  | _ -> report_error no_pos ("[TNT Inference]: Unexpected non-Loop constraint @ uid_of_loop.")
 
 let rec infer_abductive_cond_list prog ann ante conds =
   match conds with
@@ -1062,8 +1078,13 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
 
 (* Note that each vertex is a unique condition of a method *)        
 let proving_non_termination_one_vertex prog trrels tg scc v =
-  let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in
+  (* let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in                   *)
+  (* let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in *)
+  let out_edges_from_v = outside_edges_scc_vertex tg scc v in
+  let loop_edges_from_v = List.filter (fun (_, r, _) -> 
+    CP.is_Loop r.termu_rhs) out_edges_from_v in
   let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in
+  
   (* let _ = print_endline ("LOOP: " ^                                            *)
   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) loop_edges_from_v)) in *)
   
@@ -1136,13 +1157,20 @@ let rec proving_non_termination_scc prog trrels tg scc =
     let abd_conds = List.fold_left (fun acc (uid, r) ->
       match r with
       | NT_No ic ->
-        update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond ic;
-        acc @ [(uid.CP.tu_id, ic)]
+        if is_empty ic then acc
+        else
+          let _ = update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond ic in
+          acc @ [(uid.CP.tu_id, ic)]
       | _ -> acc) [] ntres_scc in
     if not (is_empty abd_conds) then 
       let tg = update_graph_with_icond tg scc abd_conds in
       raise (Restart_with_Cond tg)
     else raise Should_Finalize 
+    
+let proving_non_termination_scc prog trrels tg scc =
+  let pr = print_graph_by_rel in
+  Debug.no_1 "proving_non_termination_scc" pr (fun _ -> "")
+    (fun _ -> proving_non_termination_scc prog trrels tg scc) tg
 
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =
