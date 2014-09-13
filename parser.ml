@@ -227,7 +227,12 @@ let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lb
   List.concat lgrp
 
 let label_struc_groups (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list lgrp)
+  let lst = (label_struc_list lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
+
+  (* F.EList (label_struc_list lgrp) *)
 
 let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
@@ -243,7 +248,10 @@ let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) 
 
 (* auto insertion of numeric if unlabelled *)
 let label_struc_groups_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list_auto lgrp)
+  let lst = (label_struc_list_auto lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
 
 
 let un_option s d = match s with

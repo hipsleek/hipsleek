@@ -70,6 +70,15 @@ let get_full_disjoint_cond_list cond_list =
   let rem_cond_lst =
     if is_sat rem_cond then CP.split_disjunctions (om_simplify rem_cond)
     else [] 
+  in
+  (* let rem_cond_lst = List.filter is_sat (CP.split_disjunctions (om_simplify rem_cond)) in *)
+  (List.map om_simplify disj_cond_lst) @ rem_cond_lst
+  
+let get_full_disjoint_cond_list_with_ctx ctx cond_list = 
+  let disj_cond_lst = partition_cond_list cond_list in
+  let rem_cond = mkNot (CP.join_disjunctions disj_cond_lst) in
+  let rem_cond_lst = List.filter (fun c -> is_sat (mkAnd ctx c)) 
+    (CP.split_disjunctions (om_simplify rem_cond))
   in (List.map om_simplify disj_cond_lst) @ rem_cond_lst
     
 let seq_num = ref 0    
@@ -1128,6 +1137,30 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
     | [] -> (None, NT_No [])
     end
     
+let proving_trivial_termination_one_vertex prog tg scc v =
+  let out_edges_from_v = outside_edges_scc_vertex tg scc v in
+  let term_edges_from_v = List.filter (fun (_, r, _) -> 
+    CP.is_Term r.termu_rhs) out_edges_from_v in
+  match term_edges_from_v with
+  | [] -> (None, [])
+  | (_, rel, _)::_ ->
+    match rel.termu_lhs with
+    | TermU uid ->
+      let params = params_of_term_ann prog rel.termu_lhs in
+      let eh_ctx = mkAnd rel.call_ctx uid.CP.tu_cond in
+      let term_conds = List.map (fun (_, r, _) -> 
+        mkAnd eh_ctx (CP.cond_of_term_ann r.termu_rhs)) term_edges_from_v in
+      let term_conds = List.map (fun f -> simplify 6 f params) term_conds in
+      let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
+      (* let term_conds = List.filter (fun c -> is_sat (mkAnd eh_ctx c)) term_conds in *)
+      (Some uid, term_conds)
+    | _ -> (None, [])
+
+let proving_trivial_termination_one_vertex prog tg scc v =
+  let pr = pr_pair (pr_opt string_of_term_id) (pr_list !CP.print_formula) in
+  Debug.no_1 "proving_trivial_termination_one_vertex" string_of_int pr
+    (fun _ -> proving_trivial_termination_one_vertex prog tg scc v) v
+    
 let rec proving_non_termination_scc prog trrels tg scc =
   let ntres_scc = List.map (fun v -> 
     proving_non_termination_one_vertex prog trrels tg scc v) scc in
@@ -1165,7 +1198,20 @@ let rec proving_non_termination_scc prog trrels tg scc =
     if not (is_empty abd_conds) then 
       let tg = update_graph_with_icond tg scc abd_conds in
       raise (Restart_with_Cond tg)
-    else raise Should_Finalize 
+    else 
+      let term_conds_scc = List.fold_left (fun acc v ->
+        let tres = proving_trivial_termination_one_vertex prog tg scc v in
+        match tres with
+        | (None, _) -> acc
+        | (Some uid, tc) ->
+          if is_empty tc then acc
+          else
+            let _ = update_case_spec_with_icond_list_proc uid.CP.tu_fname uid.CP.tu_cond tc in
+            acc @ [(uid.CP.tu_id, tc)]) [] scc in
+      if not (is_empty term_conds_scc) then
+        let tg = update_graph_with_icond tg scc term_conds_scc in
+        raise (Restart_with_Cond tg)
+      else raise Should_Finalize
     
 let proving_non_termination_scc prog trrels tg scc =
   let pr = print_graph_by_rel in

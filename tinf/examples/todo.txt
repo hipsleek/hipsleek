@@ -1,4 +1,4 @@
-# mutual-5b.ss (DONE)
+/hip# mutual-5b.ss (DONE)
 
 How come more spec is producing a worse result
 than requires true ensures true?
@@ -376,7 +376,7 @@ case-pattern warning as opposed to having a pre-cond failure.
 Can we check if missing case-pattern is unreachable?
 
 ===================================================
-# fact-case3.ss --pcp
+# fact-case3.ss --pcp (DONE)
 
  case {
   x=0 -> ensures res=1;
@@ -401,7 +401,7 @@ static  EList :ECase case {
                x<=(0-1) -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
                }
 ===================================================
-# fact-case2.ss --pcp
+# fact-case2.ss --pcp (DONE)
 
 why EList? Why missing ensures false?
 
