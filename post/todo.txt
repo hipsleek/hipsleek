@@ -36,8 +36,42 @@ The print out from @term is as follows:
 =======================================================
 # foo-fact.ss --reverify
 
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & res=1+(2*x) & 0<=x;
+
+Obtained above but why did --reverify option fail?
+
 -reverify option should subject the inferred code
 to a re-verification process.
+
+# it seems the --reverify option is using old spec
+  of form Uf(x,res)
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure fact$int... 
+
+Post condition cannot be derived:
+  (must) cause:  res=1 & x=0 |-  Uf(x,res). LOCS:[21;26;23] (must-bug)
+OrR
+  (must) cause:  0<=v_int_27_1317 & res=1+(2*v_int_27_1317)+1+1 & (v_int_27_1317+1)!=0 & 
+v_int_27_1317+1=x |-  Uf(x,res). LOCS:[27;26;21;23] (must-bug)
+
+Context of Verification Failure: 1 File "foo-fact.ss",Line:23,Col:25
+Last Proving Location: 1 File "foo-fact.ss",Line:27,Col:14
+
+ERROR: at foo-fact.ss_23:25_23:34 
+Message: Post condition cannot be derived.
+
+--reverify-all gave:
+Procedure fact$int SUCCESS.
+
+without --reverify-all, still have:
+Procedure fact$int SUCCESS.
+
 =======================================================
 # foo-fact2.ss
 
@@ -79,7 +113,7 @@ Need to support a mix of
 infer_consts @sym and varid.
 Thus, the need for twoAns type
 =======================================================
-# pre-1a.slk
+# pre-1a.slk (DONE)
 
 relation R(int x,int y).
 infer [R] x>y & R(x,y) |- x>0.
@@ -93,8 +127,10 @@ print residue.
 Why is there a useless true pre?
  inferred pure: [true]
 =======================================================
-# pre-1a.slk
-
+# pre-1a.slk 
+ (DONE - added 
+  let cp = List.filter (fun f -> not(CP.isConstTrue f)) cp in
+ )
 relation R(int x,int y).
 infer [R] x>y & R(x,y) |- x>0.
 print residue.
@@ -107,7 +143,7 @@ print residue.
 Why is there a useless true pre?
  inferred pure: [true]
 =======================================================
-# post-2.ss
+# post-2.ss (DONE)
 
 int fact(int x)
   infer [Uf]
@@ -215,17 +251,27 @@ static  EList :ECase case {
 
 Expects (maybe can be handled at parser):
 ========================================
-static  ECase case {
-               x=0 -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
-                                     EAssume 
-                                       emp&res=1&{FLOW,(24,25)=__norm}[]
-               0<x -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
-                                     EAssume 
-                                       emp&1<=res&{FLOW,(24,25)=__norm}[]
-               ;
-               x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
-               }
+# fact-case2-ss.
 
+Can flatten nested spec:
+
+static  ECase case {
+        x=0 -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                       EAssume 
+                         emp&res=1&{FLOW,(24,25)=__norm}[]
+                          ;
+        0<x -> EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                       EAssume 
+                         emp&1<=res&{FLOW,(24,25)=__norm}[]
+                          ;
+        x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[]
+                       EBase emp&MayLoop[]&{FLOW,(1,27)=__norm}[]
+                               EAssume 
+                                 hfalse&false&{FLOW,(24,25)=__norm}[]
+--> (simpler to use)
+        x<0 -> EBase hfalse&false & MayLoop[] & __norm
+               EAssume hfalse&false&{FLOW,(24,25)=__norm}[]
+        }
 =======================================================
 =======================================================
 =======================================================

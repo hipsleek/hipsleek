@@ -8687,7 +8687,7 @@ think it is used to instantiate when folding.
      to be used by infer_lhs_contra to determine if
      a FALSE is being inferred
   *)
-     es_infer_pure_thus : CP.formula; 
+     es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
      es_group_lbl: spec_label_def;
 }
 
@@ -9902,13 +9902,16 @@ let add_infer_rel_to_estate cp es =
   (fun _ -> add_infer_rel_to_estate cp es) cp
 
 let add_infer_pure_to_estate cp es =
+  let cp = List.filter (fun f -> not(CP.isConstTrue f)) cp in
   let old_cp = es.es_infer_pure in
   let new_cp = List.concat (List.map CP.split_conjunctions cp) in
   let new_cp = List.fold_left (fun a n -> 
       (* let n = CP.norm_form n in *)
       let n = CP.arith_simplify_new n in
-      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp 
-  in  {es with es_infer_pure = new_cp;
+      if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
+  let _ = Debug.ninfo_hprint (add_str "cp" (pr_list !print_pure_f)) cp no_pos in
+  let _ = Debug.ninfo_hprint (add_str "es_infer_pure" (pr_list !print_pure_f)) new_cp no_pos in
+  {es with es_infer_pure = new_cp;
       (* add inferred pre to pure_this too *)
                es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
   }
