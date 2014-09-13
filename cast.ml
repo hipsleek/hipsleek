@@ -523,6 +523,7 @@ let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been i
 let print_h_formula = ref (fun (c:CF.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:CP.exp) -> "cpure printer has not been initialized")
 let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_dflow = ref (fun (c:Exc.GTable.nflow) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:CF.formula) -> "cform printer has not been initialized")
 let print_pure_formula = ref (fun (c:CP.formula) -> "cform printer has not been initialized")
 let print_spec_var_list = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
@@ -1936,7 +1937,10 @@ let check_proper_return cret_type exc_list f =
 		  else ()
 	      else if not (List.exists (fun c-> 
                   (* let _ =print_endline "XX" in *) CF.subsume_flow c fl_int) exc_list) then
-		Err.report_error{Err.error_loc = b.CF.formula_base_pos;Err.error_text ="the result type is not covered by the throw list";}
+                let _ = Debug.ninfo_pprint "Here:" no_pos in
+                let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
+                let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
+		Err.report_warning{Err.error_loc = b.CF.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
 	      else if not(overlap_flow_type fl_int res_t) then
 		Err.report_error{Err.error_loc = b.CF.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 	      else 			

@@ -5187,6 +5187,7 @@ Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_prog_exp := string_of_exp;;
+Cast.print_dflow := string_of_dflow;;
 Cast.print_formula := string_of_formula;;
 Cast.print_pure_formula := string_of_pure_formula;;
 (* Cast.print_pure_formula := string_of_pure_formula;; *)

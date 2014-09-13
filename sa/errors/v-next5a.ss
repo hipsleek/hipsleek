@@ -16,20 +16,19 @@ node get_next(node x)
 requires x=null or x::node<q>
 ensures x=null & flow __Error or x::node<q> & q=res;
 */
-/*
   requires x=null
   ensures x=null & flow __Error;
-*/
+/*
   requires x::node<q>
   ensures x::node<q> & q=res;
-
+*/
 //  requires x=null ensures true  & flow __Error;
 // requires x::node<q>@L ensures res=p;
 {
   return x.next;
 }
 /*
-# v-next.ss --efa
+# v-next5a.ss --efa
 
 Why is about complete spec not working??
 
