@@ -541,7 +541,7 @@ let chg_assume_forms b f1 f2 = { b with
 
 let mkEList_no_flatten_x l =
   if isConstETrue (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos 
+    mkETrue (mkTrueFlow ()) no_pos
   else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
@@ -550,7 +550,7 @@ let mkEList_no_flatten_x l =
 
 let mkEList_no_flatten2 l =
   if isConstETrue2 (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos 
+    mkETrue (mkTrueFlow ()) no_pos
   else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
@@ -1777,6 +1777,17 @@ and is_unknown_heap (h : h_formula) = match h with
   | HTrue -> true
   | _ -> false
 
+and is_empty_heap_f f0 =
+  let rec helper f=
+    match f with
+      | Base fb ->
+            (is_empty_heap fb.formula_base_heap)
+      | Exists _ -> let _, base_f = split_quantifiers f in
+        is_empty_f base_f
+      | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
+
 and is_empty_f f0=
   let rec helper f=
     match f with
@@ -1788,7 +1799,6 @@ and is_empty_f f0=
       | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
   in
   helper f0
-
 
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p t fl a pos None
@@ -4365,6 +4375,41 @@ and disj_count (f0 : formula) = match f0 with
 
   | _ -> 1
 
+let rec flatten_struc_formula sf =
+  match sf with
+    | EList el -> EList (List.map (fun (lbl,sf) ->
+          (lbl,flatten_struc_formula sf)
+      ) el)
+    | EBase eb1 -> (
+          let f1 = eb1.formula_struc_base in
+          match eb1.formula_struc_continuation with
+            | None -> sf
+            | Some cont_f ->
+                  let cont_f = flatten_struc_formula cont_f in
+                  match cont_f with
+                    | EBase eb2 ->
+                          let f2 = eb2.formula_struc_base in
+                          if ((is_empty_heap_f f1) && (is_empty_heap_f f2)) then
+                            let h1, p1, fl1, t1, a1 = split_components f1 in
+                            let h2, p2, fl2, t2, a2 = split_components f2 in
+                            let h = h1 in
+                            let p,_ = combine_and_pure f1 p1 p2 in
+                            let t = mkAndType t1 t2 in
+                            let fl = mkAndFlow fl1 fl2 Flow_combine in
+                            let a = a1@a2 in
+                            let new_base = mkBase h p t fl a no_pos in
+                            EBase {eb1 with
+                                formula_struc_base = new_base;
+                                formula_struc_continuation = eb2.formula_struc_continuation}
+                          else sf
+                    | _ -> sf
+      )
+    | _ -> sf
+
+let flatten_struc_formula sf =
+  Debug.no_1 "flatten_struc_formula"
+      !print_struc_formula !print_struc_formula
+      flatten_struc_formula sf
 
 (***************INFER******************)
 (*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)

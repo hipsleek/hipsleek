@@ -2811,6 +2811,23 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
                       (*TODO: old_hpdecls is for CP TEST*)
 		      (* let old_hpdecls = prog.prog_hp_decls in *)
+                      (* Long: TODO here *)
+                      (* let new_static_specs = match proc.proc_static_specs with *)
+                      (*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
+                      (*         match sf with *)
+                      (*           | CF.EInfer ei -> *)
+                      (*                 let inf_obj = ei.CF.formula_inf_obj in *)
+                      (*                 let new_sf = if (inf_obj # is_post) then *)
+                      (*                   sf *)
+                      (*                 else sf *)
+                      (*                 in *)
+                      (*                 (lbl,new_sf) *)
+                      (*           | _ -> (lbl,sf) *)
+                      (*     ) el ) *)
+                      (*   | _ -> proc.proc_static_specs *)
+                      (* in *)
+                      (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx new_static_specs body true in *)
+                      (* Long: end TODO here *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                       Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
@@ -2914,30 +2931,31 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       let new_spec = Astsimp.add_pre prog new_spec in
                       Debug.tinfo_hprint (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
 
-                      if (pre_ctr # get> 0) 
+                      if (pre_ctr # get> 0)
                       then
                         begin
                           let new_spec = if rels=[] then proc.proc_stk_of_static_specs # top else
                             let inf_post_flag = post_ctr # get > 0 in
+
                             Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                            let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
+                            let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
                               CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
                             let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                             let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
                             let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                             let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
-                            let pre_vars = CP.remove_dups_svl (pres @ (List.map 
+                            let pre_vars = CP.remove_dups_svl (pres @ (List.map
                                 (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                             let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
                             let post_vars = CP.remove_dups_svl all_posts in
                             let proc_spec = proc.proc_stk_of_static_specs # top in
-                            try 
+                            try
                               begin
                                 let _ = DD.devel_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
                                 let pr = Cprinter.string_of_pure_formula in
                                 Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
                                 Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;
-                                let tuples (* rel_post, post, rel_pre, pre *) = 
+                                let tuples (* rel_post, post, rel_pre, pre *) =
                                   if rels = [] then (Infer.infer_rel_stk # reset;[])
                                   else if mutual_grp != [] then []
                                   else
@@ -2975,16 +2993,16 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                     let _ = Debug.devel_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
                                     let _ = Debug.devel_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
                                     (*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
-                                    let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
+                                    let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                         && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
                                     let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
                                     let _ = Debug.devel_hprint (add_str "pre_rel_ids" !print_svl) pre_rel_ids no_pos in
-                                    let post_rel_df_new = 
-                                      if pre_rel_ids=[] then post_rel_df 
-                                      else List.concat (List.map (fun (f1,f2) -> 
+                                    let post_rel_df_new =
+                                      if pre_rel_ids=[] then post_rel_df
+                                      else List.concat (List.map (fun (f1,f2) ->
                                           if TP.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)]
                                           else
-                                            let tmp = List.filter (fun x -> CP.intersect 
+                                            let tmp = List.filter (fun x -> CP.intersect
                                                 (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
                                             if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
                                       ) post_rel_df)
@@ -3002,7 +3020,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                     ) bottom_up_fp0 in
                                     let _ = Debug.ninfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                     Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
-                                        Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess 
+                                        Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess
                                         reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
                                 in
                                 (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
@@ -3020,7 +3038,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                     let pre_new = if CP.isConstTrue rel_pre then
                                       (* let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in *)
                                       let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
-                                      TP.simplify_exists_raw exist_vars post 
+                                      TP.simplify_exists_raw exist_vars post
                                     else pre in
                                     (rel_post,post,rel_pre,pre_new)) tuples in
                                 let evars = stk_evars # get_stk in
@@ -3033,15 +3051,15 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                 ) tuples in
                                 (* TODO *)
                                 let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
-                                if triples = [] then 
-                                  fst (Fixpoint.simplify_relation new_spec None 
+                                if triples = [] then
+                                  fst (Fixpoint.simplify_relation new_spec None
                                       pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume)
                                 else
                                   let new_spec1 = (CF.transform_spec new_spec (CF.list_of_posts proc_spec)) in
                                   fst (Fixpoint.simplify_relation new_spec1
                                       (Some triples) pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume)
                               end
-                            with ex -> 
+                            with ex ->
                                 begin
                                   Debug.info_pprint "PROBLEM with fix-point calculation" no_pos;
                                   (* Debug.info_zprint (lazy (("Exception:"^(Printexc.to_string ex)))) no_pos; *)
@@ -3054,6 +3072,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                           let _ = Debug.ninfo_zprint (lazy (("   old_spec: " ^(Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))))) no_pos in
                           let _ = Debug.ninfo_zprint (lazy (("   new_spec: " ^(Cprinter.string_of_struc_formula new_spec)))) no_pos in
+                          let new_spec = CF.flatten_struc_formula new_spec in
                           let _ = proc.proc_stk_of_static_specs # push new_spec in
                           let _ = print_endline "\nPost Inference result:" in
                           let _ = print_endline proc.proc_name in
@@ -3061,7 +3080,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           (* let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in *)
                           if !dis_post_chk then
                             (f,None)
-                          else 
+                          else
                             begin
                               (*let vars = stk_vars # get_stk in*)
                               (* let order_var v1 v2 vs = *)
@@ -3091,7 +3110,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                               (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                               (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
                               Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                              let _ = if prepost_ctr # get > 0 then 
+                              let _ = if prepost_ctr # get > 0 then
                                 Debug.info_ihprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                               let _ = prepost_ctr # reset in
                               Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
@@ -3102,13 +3121,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                               Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                               Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                               stk_evars # reset;
-                              let _ = if not (!do_infer_inc) then () 
-                              else Infer.print_spec (" " ^ (Infer.get_proc_name proc.proc_name) ^ "\n" ^ 
-                                  (pr_spec2 (CF.struc_to_prepost new_spec))) 
+                              let _ = if not (!do_infer_inc) then ()
+                              else Infer.print_spec (" " ^ (Infer.get_proc_name proc.proc_name) ^ "\n" ^
+                                  (pr_spec2 (CF.struc_to_prepost new_spec)))
                                 (Infer.get_file_name Sys.argv.(1)) in
-                              let f = if f && !reverify_flag then 
+                              let f = if f && !reverify_flag then
                                 let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
-                              else f 
+                              else f
                               in
                               (f, None)
                             end
