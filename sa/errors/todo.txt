@@ -188,6 +188,24 @@ Message: the result type is not covered by the throw list
 Exception occurred: Failure("the result type is not covered by the throw list")
 Error3(s) detected at main 
 =====================================================================
+# v-next5b1.ss --esl
+
+This is wrong. How can x=null |- x!=null
+in the post-condition?
+
+--esl only contain a BIND and no post-condition proving!
+What is happening here?
+
+id: 0; caller: []; line: 28; classic: false; kind: BIND; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x=null & x'=x&{FLOW,(3,4)=__norm}[]
+ |-  x'::node<next_28_1203'>&{FLOW,(1,28)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: do_unmatched_rhs : x'::node<next_28_1203'>
+                   fc_current_lhs_flow: {FLOW,(5,9)=__Error}}
+[[ COND ==>  UnmatchedRHSData ==> ]]true
 =====================================================================
 =====================================================================
 =====================================================================
