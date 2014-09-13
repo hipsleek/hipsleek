@@ -959,17 +959,18 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
 
-let rec add_case_coverage in_pre ctx all =
+let rec add_case_coverage in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
       let pr = Cprinter.string_of_pure_formula in
       let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
       Debug.no_2 "add_case_coverage" pr pr 
-              pr2 (add_case_coverage_x in_pre) ctx all
+              pr2 (fun _ _ -> add_case_coverage_x in_pre ctx all pos) ctx all
 
 (* ctx - pure context of case expression *)
 (* all - disj of pure formula encountered *)
-and add_case_coverage_x in_pre ctx all =
+and add_case_coverage_x in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+  (* let pos = CP.pos_of_formula ctx in *)
   let sat_subno  = ref 0 in
   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
   let coverage_error = 
@@ -978,10 +979,20 @@ and add_case_coverage_x in_pre ctx all =
   if coverage_error then
     let simp_all = TP.pairwisecheck f_sat in
     (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
-    let _ = Debug.tinfo_pprint "WARNING : case construct has missing scenario" no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
-	let cont = if in_pre then CF.mkEFalse (CF.mkFalseFlow) no_pos else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
+    let warn_str = "case construct has missing scenario" in
+    let found_str = (add_str "Found : " Cprinter.string_of_pure_formula) all in
+    let add_str = (add_str "Added : " Cprinter.string_of_pure_formula) simp_all in
+    let _ = Debug.tinfo_pprint ("WARNING : "^warn_str) no_pos in
+    let _ = Debug.tinfo_pprint found_str no_pos in
+
+    let _ = Debug.tinfo_pprint add_str no_pos in
+
+    report_warning pos
+        ("WARNING : case construct has missing scenario\n"^found_str^"\n"^add_str^"\n");
+    let cont = 
+      if in_pre then 
+        CF.mkETrue_ensures_False (CF.mkNormalFlow ()) no_pos (* CF.mkEFalse (CF.mkFalseFlow) no_pos *) 
+      else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
     [(simp_all,cont)]
         (* let s = (Cprinter.string_of_struc_formula f) in *)
         (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
@@ -1138,7 +1149,7 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
                 let nf1 = splitter_x l1 rest_vars in
                 let nf2 = splitter_x l2 rest_vars in
                 List.concat (List.map (fun c1-> List.map (fun c2-> 
-				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) in
+				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) no_pos in
 	            CF.ECase{					
 	                CF.formula_case_branches =[(constr,c1);(neg_constr,c2)]@nf;
 	                CF.formula_case_pos = no_pos;} ) nf2) nf1)					
@@ -5740,7 +5751,7 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
           let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-          let nf = add_case_coverage in_pre ctx all in
+          let nf = add_case_coverage in_pre ctx all b.CF.formula_case_pos in
           (*   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in *)
           (*   let coverage_error =  *)
           (*       Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno *)

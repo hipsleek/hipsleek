@@ -364,7 +364,8 @@ let dummy_lbl n = None
 
 (* added a dummy_label for --eps *)
 let mkFalse (flowt: flow_formula) pos = mkFalseLbl flowt (dummy_lbl 1) pos 
-  
+
+
 let mkEFalse flowt pos = EBase({
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [];
@@ -372,6 +373,7 @@ let mkEFalse flowt pos = EBase({
 	formula_struc_base = mkFalse flowt pos;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
+
 
 let mkTrueFlow () = 
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
@@ -398,6 +400,21 @@ let mkETrue flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
+let mkE_ensures_False flowt pos = EAssume {
+	formula_assume_simpl = mkFalse flowt pos;
+	formula_assume_struc = mkEFalse flowt pos;
+	formula_assume_lbl = (0,"no label");
+	formula_assume_ensures_type = None;
+	formula_assume_vars = [];
+}
+
+let mkETrue_ensures_False flowt pos = EBase({
+	formula_struc_explicit_inst = [];
+	formula_struc_implicit_inst = [];
+	formula_struc_exists = [];
+	formula_struc_base = mkTrue flowt pos;
+	formula_struc_continuation = Some (mkE_ensures_False flowt pos);
+	formula_struc_pos = pos})
 
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;

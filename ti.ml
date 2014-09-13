@@ -1,6 +1,6 @@
-module CP = Cpure
-module CF = Cformula
-module MCP = Mcpure
+(* module CP = Cpure    *)
+(* module CF = Cformula *)
+(* module MCP = Mcpure  *)
 
 open Cprinter
 open Globals
@@ -163,8 +163,8 @@ let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids =
           CP.tu_cond = mkAnd tuc cond; 
           CP.tu_icond = cond;
           CP.tu_sol = match c with 
-            | Base _ -> Some (Term, [])
-            | MayTerm _ -> Some (MayLoop, [])
+            | Base _ -> Some (CP.Term, [])
+            | MayTerm _ -> Some (CP.MayLoop, [])
             | _ -> uid.CP.tu_sol }) fs_rconds
     | _ -> [rhs_ann] 
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
@@ -196,9 +196,7 @@ let solve_turel_one_scc prog trrels tg scc =
     then update_ann scc (subst (CP.MayLoop, [])) (* MayLoop *)
     
     else if (List.exists (fun (_, v) -> CP.is_Loop v) outside_scc_succ)
-    then 
-      let loop_scc_succ = List.filter (fun (_, v) -> CP.is_Loop v) outside_scc_succ in
-      proving_non_termination_scc prog trrels tg scc
+    then proving_non_termination_scc prog trrels tg scc
   
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
@@ -210,6 +208,11 @@ let solve_turel_one_scc prog trrels tg scc =
   in
   let ntg = map_ann_scc tg scc update in
   ntg
+  
+let solve_turel_one_scc prog trrels tg scc =
+  let pr = print_graph_by_rel in
+  Debug.no_1 "solve_turel_one_scc" pr pr
+    (fun _ -> solve_turel_one_scc prog trrels tg scc) tg
   
 let finalize_turel_graph prog tg = 
   let _ = print_endline "Termination Inference Result:" in
