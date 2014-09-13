@@ -1777,17 +1777,6 @@ and is_unknown_heap (h : h_formula) = match h with
   | HTrue -> true
   | _ -> false
 
-and is_empty_heap_f f0 =
-  let rec helper f=
-    match f with
-      | Base fb ->
-            (is_empty_heap fb.formula_base_heap)
-      | Exists _ -> let _, base_f = split_quantifiers f in
-        is_empty_heap_f base_f
-      | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
-  in
-  helper f0
-
 and is_empty_f f0=
   let rec helper f=
     match f with
@@ -4381,18 +4370,18 @@ let rec flatten_struc_formula sf =
           (lbl,flatten_struc_formula sf)
       ) el)
     | EBase eb1 -> (
-          let f1 = eb1.formula_struc_base in
           match eb1.formula_struc_continuation with
             | None -> sf
             | Some cont_f ->
                   let cont_f = flatten_struc_formula cont_f in
                   match cont_f with
                     | EBase eb2 ->
+                          let f1 = eb1.formula_struc_base in
                           let f2 = eb2.formula_struc_base in
-                          if ((is_empty_heap_f f1) && (is_empty_heap_f f2)) then
-                            let h1, p1, fl1, t1, a1 = split_components f1 in
-                            let h2, p2, fl2, t2, a2 = split_components f2 in
-                            let h = h1 in
+                          let h1, p1, fl1, t1, a1 = split_components f1 in
+                          let h2, p2, fl2, t2, a2 = split_components f2 in
+                          if ((is_empty_heap h1) || (is_empty_heap h2)) then
+                            let h = if (is_empty_heap h1) then h2 else h1 in
                             let p,_ = combine_and_pure f1 p1 p2 in
                             let t = mkAndType t1 t2 in
                             let fl = mkAndFlow fl1 fl2 Flow_combine in
