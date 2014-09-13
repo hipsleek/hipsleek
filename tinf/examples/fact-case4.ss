@@ -16,4 +16,6 @@ case-pattern warning as opposed to having a pre-cond failure.
 
 Can we check if missing case-pattern is unreachable?
 
+# DONE with warning
+
 */

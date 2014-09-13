@@ -362,7 +362,7 @@ It should print two term inference results.
 
 How come @term,@post_n not captured? 
 ===================================================
-# fact-case4.ss --pcp
+# fact-case4.ss --pcp DONE
 
  case {
   //x=0 -> ensures res=1;
@@ -384,7 +384,7 @@ Can we check if missing case-pattern is unreachable?
   //x<0 -> requires false ensures false;
 }
 
-Can we print a warning that missing case pattern has been inserted
+DONE Can we print a warning that missing case pattern has been inserted
 Can we elim redundant EList?
 
 static  EList :ECase case {
