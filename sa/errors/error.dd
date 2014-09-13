@@ -3,12 +3,12 @@
 #heap_entail_after_sat
 #is_error_flow
 #heap_entail_struc_init_bug_inv
-convert_maymust_failure_to_value_orig
+#convert_maymust_failure_to_value_orig
 #gen_lor
 #run_entail_check
 #is_mayerror_flow
 #get_must_failure
-heap_entail_struc_init_bug_inv
+#heap_entail_struc_init_bug_inv
 #heap_entail_struc_init
 #heap_entail_conjunct_lhs
 #obtain_subsume_es
@@ -29,4 +29,5 @@ heap_entail_struc_init_bug_inv
 #process_action
 #normalize_formula_w_coers
 #remove_imm_from_formula
-sleek_entail_check
+#sleek_entail_check
+#or_list_context

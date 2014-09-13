@@ -9551,10 +9551,42 @@ let get_may_error_from_ctx cs =
 (*   Debug.no_1 "get_may_error_from_ctx" pr1 (pr_option pr2) *)
 (*       (fun _ -> get_may_error_from_ctx cs) cs *)
 
-let isFailCtx_gen cl = match cl with
+let isFailCtx_gen cl =
+  let rec get_final_error ctx=
+    match ctx with
+      | Ctx es -> not (es.es_final_error = None)
+      | OCtx (c1, c2) -> get_final_error c1 || get_final_error c2
+  in
+  match cl with
   | FailCtx _ -> true
   | SuccCtx cs -> if cs = [] then true else
-      ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None)
+      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
+      List.exists (fun ctx -> get_final_error ctx) cs
+
+let get_final_error cl=
+  let rec get_final_error ctx=
+    match ctx with
+      | Ctx es -> es.es_final_error
+      | OCtx (c1, c2) -> begin
+          let e1 = get_final_error c1 in
+          if e1 = None then
+            get_final_error c2
+          else e1
+        end
+  in
+  let rec get_failure_ctx_list cs=
+  match cs with
+    | ctx::rest -> begin
+        let r = get_final_error ctx in
+        if r = None then get_failure_ctx_list rest else r
+      end
+    | [] -> None
+  in
+  match cl with
+  | FailCtx _ -> Some ("??", Failure_Must "??")
+  | SuccCtx cs -> if cs = [] then Some ("empty states", Failure_Must "empty states") else
+      (* ((get_must_error_from_ctx cs) !=None) || ((get_may_error_from_ctx cs) !=None) *)
+       get_failure_ctx_list cs
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
@@ -10367,11 +10399,11 @@ let mk_empty_frame () : (h_formula * int ) =
   let hole_id = fresh_int () in
     (Hole(hole_id), hole_id)
 
-let mk_not_a_failure =
+let mk_not_a_failure es =
   Basic_Reason ({
       fc_prior_steps = [];
       fc_message = "Success";
-      fc_current_lhs =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos;
+      fc_current_lhs =  es;(* empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos; *)
       fc_orig_conseq =  mkETrue  (mkTrueFlow ()) no_pos;
       fc_failure_pts = [];
       fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
@@ -10785,6 +10817,18 @@ and fold_context_left i c_l =
   (*list_context or*)
 
 (*LOR*)
+and get_first_es cs=
+  let c = match cs with
+    | c::_ -> c
+    | [] -> Ctx (empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos)
+  in
+  let rec helper c0=
+    match c0 with
+      | Ctx es -> es
+      | OCtx (c1,c2) -> helper c1
+  in
+  helper c
+
 and or_list_context_x_new c1 c2 =
   match c1,c2 with
      | FailCtx (t1, cex1) ,FailCtx (t2, cex2) -> FailCtx (Or_Reason (t1,t2) ,
@@ -10793,24 +10837,24 @@ and or_list_context_x_new c1 c2 =
          if is_bot_failure_ft t1 then
            (c2 )
          else
-           let t = mk_not_a_failure in
+           let t = mk_not_a_failure (get_first_es  t2) in
            FailCtx (Or_Reason (t1,t) ,cex1)
      | SuccCtx t1 ,FailCtx (t2,cex2) ->
          if is_bot_failure_ft t2 then
            c1
          else
-           let t = mk_not_a_failure in
+           let t = mk_not_a_failure (get_first_es t1) in
            FailCtx (Or_Reason (t,t2), cex2)
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx (t1,cex1) ,FailCtx (t2,cex2) -> FailCtx (Or_Reason (t1,t2),cex_lor cex1 cex2)
      | FailCtx (t1,cex1) ,SuccCtx t2 ->
-        let t = mk_not_a_failure 
+        let t = mk_not_a_failure (get_first_es t2)
         in
         FailCtx (Or_Reason (t1,t), cex1)
      | SuccCtx t1 ,FailCtx (t2,cex2) ->
-        let t = mk_not_a_failure 
+        let t = mk_not_a_failure (get_first_es t1)
         in
         FailCtx (Or_Reason (t,t2), cex2)
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)

@@ -2,7 +2,7 @@ data node {
   node next;
 }.
 
-checkentail x=null or x::node<q> |- x::node<r>.
+checkentail x=null or x::node<q> & q=null |- x::node<r>.
 print residue.
 
 
@@ -21,5 +21,5 @@ Expects:
  --------------------
   D1 \/ D2 |- P --> (R1\/R2)
 
-
 */
+

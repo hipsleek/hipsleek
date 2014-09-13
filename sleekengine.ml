@@ -1919,40 +1919,49 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
     begin
       let s =
         if not !Globals.disable_failure_explaining then
-          match CF.get_must_failure residue with
-            | Some (s, cex) ->
-                  (* let reg1 = Str.regexp "base case unfold failed" in *)
-                  (* let _ = try *)
-                  (*   if Str.search_forward reg1 s 0 >=0 then *)
-                  (*     let _ = smt_is_must_failure := (Some false) in () *)
-                  (*   else let _ = smt_is_must_failure := (Some true) in *)
-                  (*   () *)
-                  (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
-                  (* in *)
-                  let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in
-                  let _ = smt_is_must_failure := (Some is_sat) in
-                  ns
-            | _ -> (match CF.get_may_failure residue with
-                | Some (s, cex) -> begin
-                      (* try *)
-                      (*   let reg1 = Str.regexp "Nothing_to_do" in *)
-                      (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
-                      (*     let _ = smt_is_must_failure := (Some false) in () *)
-                      (*   else *)
-                      (*     if is_lem_syn_reach_bound () then *)
-                      (*       let _ = smt_is_must_failure := (Some false) in () *)
-                      (*     else *)
-                      (*       () *)
-                      (*   in *)
-                    let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in
-                    let _ = smt_is_must_failure := (Some is_sat) in
-                    ns
-                        (* with _ -> *)
-                      (*     let _ = smt_is_must_failure := (Some false) in *)
-                      (*     "(may) cause:"^s *)
-                  end
-                | None -> "INCONSISTENCY : expected failure but success instead"
-              )
+          let final_error_opt = CF.get_final_error residue in
+          match final_error_opt with
+            | Some (s, fk) -> begin
+                match fk with
+                  | Failure_May _ -> "(may) cause:"^s
+                  | Failure_Must _ -> "(must) cause:"^s
+                  | _ -> "INCONSISTENCY : expected failure but success instead"
+              end
+            | None -> "INCONSISTENCY : expected failure but success instead"
+          (* match CF.get_must_failure residue with *)
+          (*   | Some (s, cex) -> *)
+          (*         (\* let reg1 = Str.regexp "base case unfold failed" in *\) *)
+          (*         (\* let _ = try *\) *)
+          (*         (\*   if Str.search_forward reg1 s 0 >=0 then *\) *)
+          (*         (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
+          (*         (\*   else let _ = smt_is_must_failure := (Some true) in *\) *)
+          (*         (\*   () *\) *)
+          (*         (\* with _ -> let _ = smt_is_must_failure := (Some true) in () *\) *)
+          (*         (\* in *\) *)
+          (*         let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in *)
+          (*         let _ = smt_is_must_failure := (Some is_sat) in *)
+          (*         ns *)
+          (*   | _ -> (match CF.get_may_failure residue with *)
+          (*       | Some (s, cex) -> begin *)
+          (*             (\* try *\) *)
+          (*             (\*   let reg1 = Str.regexp "Nothing_to_do" in *\) *)
+          (*             (\*   let _ = if Str.search_forward reg1 s 0 >=0 then *\) *)
+          (*             (\*     let _ = smt_is_must_failure := (Some false) in () *\) *)
+          (*             (\*   else *\) *)
+          (*             (\*     if is_lem_syn_reach_bound () then *\) *)
+          (*             (\*       let _ = smt_is_must_failure := (Some false) in () *\) *)
+          (*             (\*     else *\) *)
+          (*             (\*       () *\) *)
+          (*             (\*   in *\) *)
+          (*           let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in *)
+          (*           let _ = smt_is_must_failure := (Some is_sat) in *)
+          (*           ns *)
+          (*               (\* with _ -> *\) *)
+          (*             (\*     let _ = smt_is_must_failure := (Some false) in *\) *)
+          (*             (\*     "(may) cause:"^s *\) *)
+          (*         end *)
+          (*       | None -> "INCONSISTENCY : expected failure but success instead" *)
+          (*     ) *)
                   (*should check bot with is_bot_status*)
         else ""
       in
