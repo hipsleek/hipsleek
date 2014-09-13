@@ -991,7 +991,7 @@ and add_case_coverage_x in_pre ctx all pos =
         ("WARNING : case construct has missing scenario\n"^found_str^"\n"^add_str^"\n");
     let cont = 
       if in_pre then 
-        CF.mkETrue_ensures_False (CF.mkNormalFlow ()) no_pos (* CF.mkEFalse (CF.mkFalseFlow) no_pos *) 
+        CF.mkETrue_ensures_True (CF.mkNormalFlow ()) no_pos (* CF.mkEFalse (CF.mkFalseFlow) no_pos *) 
       else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
     [(simp_all,cont)]
         (* let s = (Cprinter.string_of_struc_formula f) in *)

@@ -188,7 +188,7 @@ Before passing to hip for inference similar
 to post-2.ss.
 
 =======================================================
-# fact-case2.ss --pcp
+# fact-case2.ss --pcp (DONE)
 
  case {
   x=0 -> ensures res=1;

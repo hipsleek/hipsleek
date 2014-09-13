@@ -11,6 +11,13 @@ int fact(int x)
 /*
 # fact-case2.ss --pcp
 
+EList removed
+
+        x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[]
+                       EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                               EAssume 
+                                 hfalse&false&{FLOW,(24,25)=__norm}[]
+
 why EList? Why missing ensures false?
 
 static  EList :ECase case {
