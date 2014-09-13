@@ -426,12 +426,12 @@ let mkE_ensures_False flowt pos = EAssume {
 }
 
 let mkETrue_ensures_False flowt pos = EBase({
-	formula_struc_explicit_inst = [];
-	formula_struc_implicit_inst = [];
-	formula_struc_exists = [];
-	formula_struc_base = mkTrue flowt pos;
-	formula_struc_continuation = Some (mkE_ensures_False flowt pos);
-	formula_struc_pos = pos})
+   formula_struc_explicit_inst = [];
+   formula_struc_implicit_inst = [];
+   formula_struc_exists = [];
+   formula_struc_base = mkTrue flowt pos;
+   formula_struc_continuation = Some (mkE_ensures_False flowt pos);
+   formula_struc_pos = pos})
 
 let isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
