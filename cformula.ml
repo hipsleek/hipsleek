@@ -1783,7 +1783,7 @@ and is_empty_heap_f f0 =
       | Base fb ->
             (is_empty_heap fb.formula_base_heap)
       | Exists _ -> let _, base_f = split_quantifiers f in
-        is_empty_f base_f
+        is_empty_heap_f base_f
       | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
   in
   helper f0
