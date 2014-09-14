@@ -15148,23 +15148,24 @@ and list_of_posts (sp:struc_formula) = match sp with
   | EAssume b -> [([],b.formula_assume_simpl)]
   | EInfer b -> list_of_posts b.formula_inf_continuation
   | EList b -> List.concat (List.map (fun (_,e) -> list_of_posts e) b)
-  
+
 and transform_spec (sp:struc_formula) pairs = match sp with
-  | ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) -> 
+  | ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) ->
     let new_pairs = List.concat (List.map (fun (x,y) -> if List.hd x == p then [(List.tl x,y)] else []) pairs) in
     (p,transform_spec c new_pairs)) b.formula_case_branches)}
   | EBase b -> EBase {b with formula_struc_continuation =
     (match b.formula_struc_continuation with
       | None -> None
       | Some f -> Some (transform_spec f pairs))}
-  | EAssume b -> (match pairs with 
-      | [([],p2)] -> EAssume{b with 
-			formula_assume_simpl = p2; 
-			formula_assume_struc =  mkEBase p2 None no_pos;}
+  | EAssume b -> (match pairs with
+      | [([],p2)] ->
+            EAssume{b with
+                formula_assume_simpl = p2;
+                formula_assume_struc = mkEBase p2 None no_pos;}
       | _ -> report_error no_pos "Error in transforming spec")
   | EInfer b -> EInfer {b with formula_inf_continuation = transform_spec b.formula_inf_continuation pairs}
   | EList b -> EList (List.map (fun (l,e) ->(l,transform_spec e pairs)) b)
-  
+
 and sum_of_int_lst lst = List.fold_left (+) 0 lst
 
 and no_of_cnts_heap heap = match heap with

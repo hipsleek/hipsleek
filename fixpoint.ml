@@ -240,7 +240,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
     let base =
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
-      let pre = CP.conj_of_list pres no_pos in 
+      let pre = CP.conj_of_list pres no_pos in
           let xpure_base,_,_ = Cvutil.xpure prog b.CF.formula_struc_base in
       let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
       if TP.is_sat_raw check_fml then
@@ -250,12 +250,13 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
   | CF.EAssume b ->
 	let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv b.CF.formula_assume_simpl) post_vars) in
         let (new_f,pres) = simplify_post b.CF.formula_assume_simpl pvars prog subst_fml pre_vars inf_post evars b.CF.formula_assume_vars in
-        let (new_f_struc,_) = simplify_relation b.CF.formula_assume_struc subst_fml post_vars post_vars prog inf_post evars lst_assume in
-	(CF.EAssume{b with
+        (* let (new_f_struc,_) = simplify_relation b.CF.formula_assume_struc subst_fml post_vars post_vars prog inf_post evars lst_assume in *)
+        let new_f_struc = CF.mkEBase new_f None no_pos in
+	(CF.EAssume {b with
 	    CF.formula_assume_simpl = new_f;
 	    CF.formula_assume_struc = new_f_struc;}, pres)
   | CF.EInfer b -> (* report_error no_pos "Do not expect EInfer at this level" *)
-      let cont, pres = simplify_relation b.CF.formula_inf_continuation subst_fml pre_vars post_vars prog inf_post evars lst_assume in 
+      let cont, pres = simplify_relation b.CF.formula_inf_continuation subst_fml pre_vars post_vars prog inf_post evars lst_assume in
       CF.EInfer { b with CF.formula_inf_continuation = cont; }, pres
   | CF.EList b ->
 	let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
