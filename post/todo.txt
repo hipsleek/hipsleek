@@ -8,7 +8,24 @@ Please strengthen spec with an unknown post, e.g.
   requires true  ensures Upost1(x,res);
 Before inference.
 =======================================================
-# foo-fact.ss (DONE)
+# foo-fact.ss -infer "@term"
+
+Need to consider how post and @term are inferred
+in sequence.
+
+Post Inference result:
+fact$int
+ requires emp & factpre_0(x)[31]
+ ensures emp & factpost_1127(x)[] & res=1+
+(2*x) & 0<=x;
+
+Termination Inference Result:
+fact:  case {
+  (x<=(0-1) | 1<=x) -> requires emp & MayLoop[]
+ ensures emp & Uf(x,res); 
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & Uf(x,res); 
+  }
 
   infer [Uf]
   requires true  ensures Uf(x,res);
@@ -34,7 +51,35 @@ The print out from @term is as follows:
 
 
 =======================================================
-# foo-fact.ss --reverify (DONE)
+# foo-fact.ss --reverify
+
+Please write some output to indicate that re-verification
+is being done. (DONE)
+
+With --reverify:
+
+Procedure fact$int SUCCESS.
+Stop Omega... 17 invocations 
+6 false contexts at: ( (17,2)  (17,11)  (17,9)  (18,7)  (18,16)  (18,14) )
+
+!!! log(small):(0.070814,275)
+Total verification time: 0.42959 second(s)
+
+Without reverify:
+
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & res=1+(2*x) & 0<=x;
+
+Procedure fact$int SUCCESS.
+Stop Omega... 17 invocations 
+6 false contexts at: ( (17,2)  (17,11)  (17,9)  (18,7)  (18,16)  (18,14) )
+
+!!! log(small):(0.051432,238)
+Total verification time: 0.368069 second(s)
+
+----
 
 Post Inference result:
 fact$int
@@ -65,6 +110,9 @@ Last Proving Location: 1 File "foo-fact.ss",Line:27,Col:14
 
 ERROR: at foo-fact.ss_23:25_23:34 
 Message: Post condition cannot be derived.
+
+What does --reverify-all do?
+Is it redundant?
 
 --reverify-all gave:
 Procedure fact$int SUCCESS.

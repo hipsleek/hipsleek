@@ -3125,6 +3125,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                                 (Infer.get_file_name Sys.argv.(1)) in
                               let f = if f && !reverify_flag then
                                 let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
+                                Debug.binfo_hprint (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos;
                                 is_valid
                               else f
                               in
