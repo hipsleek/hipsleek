@@ -215,8 +215,10 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
     CF.mkBase h (MCP.mix_of_pure p) t fl a no_pos
 
 let simplify_pre pre_fml lst_assume =
-	let pr = !CF.print_formula in
-	Debug.no_1 "simplify_pre" pr pr (fun _ -> simplify_pre pre_fml lst_assume)  pre_fml
+  let pr = !CF.print_formula in
+  let pr_f = !CP.print_formula in
+  let pr1 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
+  Debug.no_2 "simplify_pre" pr pr1 pr (fun _ _ -> simplify_pre pre_fml lst_assume) pre_fml lst_assume
 
 let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars prog inf_post evars lst_assume
   : CF.struc_formula * CP.formula list =
@@ -263,9 +265,12 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
 	(CF.EList new_sp, List.concat pres)
 
 and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
-	let pr = !print_struc_formula in
-	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula))
-      (fun _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp
+  let pr = !print_struc_formula in
+  let pr_f = !CP.print_formula in
+  let pr1 = pr_option (pr_list (pr_triple pr_f pr_f pr_f)) in
+  let pr2 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
+  Debug.no_3 "simplify_relation" pr pr1 pr2 (pr_pair pr (pr_list pr_f))
+      (fun _ _ _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume
 
 (*let deep_split f1 f2 =*)
 (*  let f1 = TP.simplify_raw f1 in*)
@@ -277,7 +282,7 @@ and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_as
 let subst_rel pre_rel pre rel = match rel,pre_rel with
   | CP.BForm ((CP.RelForm (name1,args1,_),_),_), CP.BForm ((CP.RelForm (name2,args2,_),_),_) ->
     if name1 = name2 then
-      let subst_args = List.combine (List.map CP.exp_to_spec_var args2) 
+      let subst_args = List.combine (List.map CP.exp_to_spec_var args2)
                                     (List.map CP.exp_to_spec_var args1) in
       CP.subst subst_args pre
     else rel
