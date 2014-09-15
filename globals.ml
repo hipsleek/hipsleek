@@ -1155,11 +1155,8 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref false
-(* not stable - this flag is not working!*)
-
-let print_en_inline = ref false
-(* not stable - this flag is not working!*)
+let print_en_tidy = ref true
+let print_en_inline = ref true
 
 let print_html = ref false
 
@@ -1272,6 +1269,9 @@ let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
 
+let infer_const_num = 0
+let infer_const = ref ""
+
 (* TNT Inference *)
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1280,16 +1280,13 @@ type infer_type =
   | INF_SHAPE (* For infer[@pre] *)
   | INF_IMM (* For infer[@imm] *)
 
-let infer_const_num = 0
-let infer_const = ref ""
-
-let int_to_inf_const x =
-  if x==0 then INF_TERM
-  else if x==1 then INF_POST
-  else if x==2 then INF_PRE
-  else if x==3 then INF_SHAPE
-  else if x==4 then INF_IMM
-  else failwith "Invalid int code for iFINF_CONST"
+(* let int_to_inf_const x = *)
+(*   if x==0 then INF_TERM *)
+(*   else if x==1 then INF_POST *)
+(*   else if x==2 then INF_PRE *)
+(*   else if x==3 then INF_SHAPE *)
+(*   else if x==4 then INF_IMM *)
+(*   else failwith "Invalid int code for iFINF_CONST" *)
 
 let string_of_inf_const x =
   match x with
@@ -1299,25 +1296,85 @@ let string_of_inf_const x =
   | INF_SHAPE -> "@shape"
   | INF_IMM -> "@imm"
 
-let inf_const_to_int x =
-  match x with
-  | INF_TERM -> 0
-  | INF_POST -> 1
-  | INF_PRE -> 2
-  | INF_SHAPE -> 3
-  | INF_IMM -> 4
+(* let inf_const_to_int x = *)
+(*   match x with *)
+(*   | INF_TERM -> 0 *)
+(*   | INF_POST -> 1 *)
+(*   | INF_PRE -> 2 *)
+(*   | INF_SHAPE -> 3 *)
+(*   | INF_IMM -> 4 *)
+
+(* class inf_obj  = *)
+(* object (self) *)
+(*   val len = 10 *)
+(*   val arr = Array.make 10 false *)
+(*   method set_init_arr s =  *)
+(*     let helper r c = *)
+(*       let reg = Str.regexp r in *)
+(*       try *)
+(*         begin *)
+(*           Str.search_forward reg s 0; *)
+(*           Array.set arr (inf_const_to_int c) true; *)
+(*           print_endline ("infer option added :"^(string_of_inf_const c)); *)
+(*         end *)
+(*       with Not_found -> () *)
+(*     in *)
+(*     begin *)
+(*       helper "@term"  INF_TERM; *)
+(*       helper "@pre"   INF_PRE; *)
+(*       helper "@post"  INF_POST; *)
+(*       helper "@imm"   INF_IMM; *)
+(*       helper "@shape" INF_SHAPE; *)
+(*       let x = Array.fold_right (fun x r -> x || r) arr false in *)
+(*       if not(x) then failwith  ("empty -infer option :"^s)  *)
+(*     end *)
+(*   method is_empty  = not(Array.fold_right (fun x r -> x || r) arr false) *)
+(*   (\* method string_at i =  *\) *)
+(*   (\*   try *\) *)
+(*   (\*     string_of_inf_const (Array.get arr i) *\) *)
+(*   (\*   with _ -> "" *\) *)
+(*   method string_of_raw =  *)
+(*     let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in *)
+(*     let lst_a = Array.to_list str_a in  *)
+(*     String.concat "," (List.filter (fun s -> not(s="")) lst_a)  *)
+(*   method string_of = "["^(self #string_of_raw)^"]" *)
+(*   method get c  = Array.get arr (inf_const_to_int c) *)
+(*   method get_int i  = Array.get arr i *)
+(*   method is_term  = self # get INF_TERM *)
+(*   method is_pre  = self # get INF_PRE *)
+(*   method is_post  = self # get INF_POST *)
+(*   method is_imm  = self # get INF_IMM *)
+(*   method is_shape  = self # get INF_SHAPE *)
+(*   method get_arr  = arr *)
+(*   method get_lst =  *)
+(*     let lst = Array.to_list (Array.mapi (fun i v -> if v then Some (int_to_inf_const i) else None) arr) in *)
+(*     List.fold_left (fun l e -> match e with Some e -> e::l | _-> l) [] lst  *)
+(*   method set c  = Array.set arr (inf_const_to_int c) true *)
+(*   method set_ind i  = Array.set arr i true *)
+(*   method set_list l  = List.iter (fun c -> Array.set arr (inf_const_to_int c) true) l *)
+(*   method reset c  = Array.set arr (inf_const_to_int c) false *)
+(*   method mk_or (o2:inf_obj) =  *)
+(*     let o1 = o2 # clone in *)
+(*     let _ = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in *)
+(*     o1 *)
+(*   method clone =  *)
+(*     let no = new inf_obj in *)
+(*     let ar = no # get_arr in *)
+(*     let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in *)
+(*     (\* let _ = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+(*     no *)
+(* end;; *)
 
 class inf_obj  =
 object (self)
-  val len = 10
-  val arr = Array.make 10 false
+  val mutable arr = []
   method set_init_arr s = 
     let helper r c =
       let reg = Str.regexp r in
       try
         begin
           Str.search_forward reg s 0;
-          Array.set arr (inf_const_to_int c) true;
+          arr <- c::arr;
           print_endline ("infer option added :"^(string_of_inf_const c));
         end
       with Not_found -> ()
@@ -1328,35 +1385,44 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
-      let x = Array.fold_right (fun x r -> x || r) arr false in
-      if not(x) then failwith  ("empty -infer option :"^s) 
+      (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
+      if arr==[] then failwith  ("empty -infer option :"^s) 
     end
-  method is_empty  = not(Array.fold_right (fun x r -> x || r) arr false)
+  method is_empty  = arr==[]
   (* method string_at i =  *)
   (*   try *)
   (*     string_of_inf_const (Array.get arr i) *)
   (*   with _ -> "" *)
-  method string_of = 
-    let str_a = Array.mapi (fun i v -> if v then string_of_inf_const (int_to_inf_const i) else "") arr in
-    "["^(Array.fold_right (fun x r -> x^r) str_a "")^"]"
-  method get c  = Array.get arr (inf_const_to_int c)
-  method get_int i  = Array.get arr i
+  method string_of_raw = 
+    let lst_a = List.map string_of_inf_const arr in
+    String.concat "," lst_a
+  method string_of = "["^(self #string_of_raw)^"]"
+  method get c  = List.mem c arr
+  (* method get_int i  = Array.get arr i *)
   method is_term  = self # get INF_TERM
   method is_pre  = self # get INF_PRE
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
-  method get_arr  = arr
-  method set c  = Array.set arr (inf_const_to_int c) true
-  method reset c  = Array.set arr (inf_const_to_int c) false
+  (* method get_arr  = arr *)
+  method get_lst = arr
+  method set c  = if self#get c then () else arr <- c::arr
+  (* method set_ind i  = Array.set arr i true *)
+  method set_list l  = List.iter (fun c -> self # set c) l
+  method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+  method mk_or (o2:inf_obj) = 
+    let o1 = o2 # clone in
+    let l = self # get_lst in
+    let _ = o1 # set_list l in
+    o1
   method clone = 
     let no = new inf_obj in
-    let ar = no # get_arr in
-    let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in
+    let _ = no # set_list arr in
+    (* let _ = print_endline ("Cloning :"^(no #string_of)) in *)
     no
 end;;
 
-let infer_const_arr = new inf_obj;;
+let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
@@ -1391,7 +1457,6 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
-let do_infer_inv_under = ref false
 let do_test_inv = ref false
 
 (** for classic frame rule of separation logic *)
@@ -1603,7 +1668,6 @@ let reset_int2 () =
 
 let string_compare s1 s2 =  String.compare s1 s2=0
 
-
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
@@ -1617,11 +1681,6 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-
-let fresh_loc_field_name l : string = 
-  (* let ln = if ln<0 then 0 else ln in *)
-  (*       ("flted_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ()))) *)
-        ("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ()))
 
 let fresh_any_name (any:string) = 
   let str = string_of_int (fresh_int ()) in

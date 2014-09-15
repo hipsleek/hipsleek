@@ -361,7 +361,7 @@ let common_arguments = [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
-      Globals.infer_const_arr # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+      Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
@@ -583,8 +583,6 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-  ("--inv-under", Arg.Set Globals.do_infer_inv_under, "Enable under invariant inference");
-  ("--dis-inv-under", Arg.Clear Globals.do_infer_inv_under, "Disable under invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");

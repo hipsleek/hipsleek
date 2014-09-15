@@ -173,7 +173,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
       (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
-  let ctx = Infer.init_infer_type ctx itype in
+  let itype_opt = if List.mem INF_TERM itype then Some INF_TERM else None in
+  let ctx = Infer.init_infer_type ctx itype_opt in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -279,7 +280,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     let _ = Globals.disable_failure_explaining := false in
     let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] ante_f in
     let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args conseq_f in
-    let r, lc, isvl = sleek_entail_check 1 None [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
+    let r, lc, isvl = sleek_entail_check 1 [] [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
     let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
     let _ = if not r then
       let _ = Globals.smt_is_must_failure := Some true in ()
@@ -449,9 +450,9 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
     else ([],[])
     in
     let r =
-      let b1, _, _ = (sleek_entail_check 2 None [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
+      let b1, _, _ = (sleek_entail_check 2 [] [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
       if b1 then
-        let b2,_,_ = (sleek_entail_check 3 None [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
+        let b2,_,_ = (sleek_entail_check 3 [] [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
             f2 (CF.struc_formula_of_formula f1 no_pos)) in
         b2
       else

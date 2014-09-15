@@ -73,7 +73,7 @@ type command =
   | CheckNorm of meta_formula
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | InferCmd of (infer_type option * ident list * meta_formula * meta_formula * entail_type)
+  | InferCmd of (infer_type list * ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)

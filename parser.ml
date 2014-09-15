@@ -227,7 +227,12 @@ let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lb
   List.concat lgrp
 
 let label_struc_groups (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list lgrp)
+  let lst = (label_struc_list lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
+
+  (* F.EList (label_struc_list lgrp) *)
 
 let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
@@ -243,7 +248,10 @@ let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) 
 
 (* auto insertion of numeric if unlabelled *)
 let label_struc_groups_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list_auto lgrp)
+  let lst = (label_struc_list_auto lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
 
 
 let un_option s d = match s with
@@ -287,8 +295,7 @@ let apply_cexp_form1 fct form = match form with
   | Pure_c f 
   | Pure_t (f, _) -> Pure_c (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected cexp, found pure_form"
-  
-  
+
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 
@@ -2321,22 +2328,35 @@ infer_type:
    | `INFER_AT_SHAPE -> INF_SHAPE
    ]];
 
+infer_id:
+    [[ t = infer_type -> FstAns t
+      | `IDENTIFIER id -> SndAns id  ]];
+
+infer_type_list:
+    [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
+
 id_list_w_sqr:
     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
 
-id_list_w_itype:
-  [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il) 
-   | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il [])
-   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
-  ]];
+(* id_list_w_itype: *)
+(*   [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il)  *)
+(*    | `OSQUARE; il = OPT id_list; `CSQUARE -> (None, un_option il []) *)
+(*    | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, []) *)
+(*   ]]; *)
 
 infer_cmd:
-  [[ `INFER; il_w_itype = OPT id_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let k, il = un_option il_w_itype (None, []) in (k,il,t,b,None)
+  [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
+      let inf_o = Globals.infer_const_obj # clone in
+      let (i_consts,ivl) = List.fold_left 
+        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
+          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
+      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+    (* let k, il = un_option il_w_itype (None, [])  *)
+      (i_consts,ivl,t,b,None)
     | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (None,il,t,b,Some true)
+    let il = un_option il [] in ([],il,t,b,Some true)
     | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in (None,il,t,b,Some false)
+    let il = un_option il [] in ([],il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2457,7 +2477,6 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `ANN_TYPE           -> AnnT
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
@@ -2946,16 +2965,24 @@ spec_list_grp:
       ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
   ]];
 
-spec: 
+spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
-     let (itype, ivl) = ivl_w_itype in
+    (* WN : need to use a list of @sym *)
+     let inf_o = Globals.infer_const_obj # clone in
+     let (i_consts,ivl) = List.fold_left
+       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
+         | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
+     let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     let _ = List.iter (fun itype -> inf_o # set itype) i_consts in
+     let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
      F.EInfer {
-       F.formula_inf_tnt = (match itype with | Some INF_TERM -> true | _ -> false);
-       F.formula_inf_post = postf; 
-       F.formula_inf_xpost = postxf; 
+       (* F.formula_inf_tnt = inf_o # get INF_TERM (\* (match itype with | Some INF_TERM -> true | _ -> false) *\); *)
+       F.formula_inf_obj = inf_o;
+       F.formula_inf_post = postf;
+       F.formula_inf_xpost = postxf;
        F.formula_inf_transpec = transpec;
-       F.formula_inf_vars = ivl;
+       F.formula_inf_vars = ivl_t;
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
@@ -2978,13 +3005,12 @@ spec:
             (* F.formula_ext_complete = false;*)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
 			let f = F.subst_stub_flow n_flow dc in
-			let sf = F.mkEBase [] [] [] f None no_pos in		
+			let sf = F.mkEBase [] [] [] f None no_pos in
 			F.mkEAssume f sf (fresh_formula_label ol) None
-	 
 	 | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
 			let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
 			F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
-	  
+
      | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
 			let f = F.subst_stub_flow n_flow dc in	
 			let sf = F.mkEBase [] [] [] f None no_pos in		
@@ -2999,9 +3025,9 @@ spec:
   ]];
 
 cid_list_w_itype:
-  [[ `OSQUARE; t = infer_type; `COMMA; il = cid_list; `CSQUARE -> (Some t, il) 
-   | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il [])
-   | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, [])
+  [[ `OSQUARE; t = infer_type_list; `CSQUARE -> t
+   (* | `OSQUARE; il = OPT cid_list; `CSQUARE -> (None, un_option il []) *)
+   (* | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, []) *)
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

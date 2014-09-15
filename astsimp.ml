@@ -959,17 +959,18 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
 
-let rec add_case_coverage in_pre ctx all =
+let rec add_case_coverage in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
       let pr = Cprinter.string_of_pure_formula in
       let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
       Debug.no_2 "add_case_coverage" pr pr 
-              pr2 (add_case_coverage_x in_pre) ctx all
+              pr2 (fun _ _ -> add_case_coverage_x in_pre ctx all pos) ctx all
 
 (* ctx - pure context of case expression *)
 (* all - disj of pure formula encountered *)
-and add_case_coverage_x in_pre ctx all =
+and add_case_coverage_x in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+  (* let pos = CP.pos_of_formula ctx in *)
   let sat_subno  = ref 0 in
   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
   let coverage_error = 
@@ -978,10 +979,20 @@ and add_case_coverage_x in_pre ctx all =
   if coverage_error then
     let simp_all = TP.pairwisecheck f_sat in
     (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
-    let _ = Debug.tinfo_pprint "WARNING : case construct has missing scenario" no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
-	let cont = if in_pre then CF.mkEFalse (CF.mkFalseFlow) no_pos else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
+    let warn_str = "case construct has missing scenario" in
+    let found_str = (add_str "Found : " Cprinter.string_of_pure_formula) all in
+    let add_str = (add_str "Added : " Cprinter.string_of_pure_formula) simp_all in
+    let _ = Debug.tinfo_pprint ("WARNING : "^warn_str) no_pos in
+    let _ = Debug.tinfo_pprint found_str no_pos in
+
+    let _ = Debug.tinfo_pprint add_str no_pos in
+
+    report_warning pos
+        ("WARNING : case construct has missing scenario\n"^found_str^"\n"^add_str^"\n");
+    let cont = 
+      if in_pre then 
+        CF.mkETrue_ensures_True (CF.mkNormalFlow ()) no_pos (* CF.mkEFalse (CF.mkFalseFlow) no_pos *) 
+      else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
     [(simp_all,cont)]
         (* let s = (Cprinter.string_of_struc_formula f) in *)
         (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
@@ -1138,7 +1149,7 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
                 let nf1 = splitter_x l1 rest_vars in
                 let nf2 = splitter_x l2 rest_vars in
                 List.concat (List.map (fun c1-> List.map (fun c2-> 
-				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) in
+				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) no_pos in
 	            CF.ECase{					
 	                CF.formula_case_branches =[(constr,c1);(neg_constr,c2)]@nf;
 	                CF.formula_case_pos = no_pos;} ) nf2) nf1)					
@@ -1761,7 +1772,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.dinfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1825,8 +1836,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.dinfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.dinfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1898,7 +1909,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else
+        else 
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
@@ -2308,7 +2319,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
-      let cviews0_with_index = Expure.add_index_to_views cviews0 in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
@@ -2318,15 +2328,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ls@[mut_rec_views]
           else
             ls@[[cv.C.view_name]]
-      ) [] cviews0_with_index in
+      ) [] cviews0 in
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           (* if !Globals.gen_baga_inv then *)
             let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
-            ) cviews0_with_index in
-            let _ = Expure.fix_ef view_list cviews0_with_index in ()
+            ) cviews0 in
+            let _ = Expure.fix_ef view_list cviews0 in ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
             (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
@@ -4543,10 +4553,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             else
               (* ... = o.f => read_only = true *)
               let r = 
-	        if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+	        (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
                   flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos (* ok to have it lend instead of Imm? *)
-                else
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos
+                (* else *)
+                (*   flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos *)
               in
               (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
               r
@@ -5761,7 +5771,7 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
           let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-          let nf = add_case_coverage in_pre ctx all in
+          let nf = add_case_coverage in_pre ctx all b.CF.formula_case_pos in
           (*   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in *)
           (*   let coverage_error =  *)
           (*       Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno *)
@@ -5996,7 +6006,8 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
           Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
         else
           (n_tl, CF.EInfer {
-              CF.formula_inf_tnt = b.IF.formula_inf_tnt;
+              (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
+              CF.formula_inf_obj = b.IF.formula_inf_obj;
               CF.formula_inf_post = b.IF.formula_inf_post;
               CF.formula_inf_xpost = b.IF.formula_inf_xpost;
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;

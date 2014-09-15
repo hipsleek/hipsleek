@@ -7,6 +7,8 @@ open Gen.Basic
 
 open Cast
 
+module CF= Cformula
+
 module CP=Cpure
 
 
@@ -434,7 +436,7 @@ let find_rel_args_groups_scc prog scc0 =
     let f = CF.formula_of_heap n_hf no_pos in
     (*form the def for hp*)
     let hf = CF.HRel (hp, List.map (fun v -> CP.mkVar v no_pos) args, no_pos) in
-    let def =  {CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
+    let def = {CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
       CF.hprel_def_hrel = hf;
       CF.hprel_def_guard = None;
       CF.hprel_def_body = [([], Some f, None)];
@@ -449,7 +451,7 @@ let find_rel_args_groups_scc prog scc0 =
      match sf with
        | CF.EInfer b ->
              (* let _ =  Debug.info_hprint (add_str "EInfer" pr_id) "EInfer" no_pos in *)
-             CF.EInfer {b with formula_inf_vars =
+             CF.EInfer {b with CF.formula_inf_vars =
                      add_hps@(CP.diff_svl b.CF.formula_inf_vars drop_hps);
                  CF.formula_inf_continuation = CF.struc_formula_drop_infer drop_hps b.CF.formula_inf_continuation;
              }

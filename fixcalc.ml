@@ -318,49 +318,6 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 
 (******************************************************************************)
 
-let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
-  let _ = DD.ninfo_hprint (add_str "f1" Cprinter.string_of_pure_formula) f1 no_pos in
-  let _ = DD.ninfo_hprint (add_str "f2" Cprinter.string_of_pure_formula) f2 no_pos in
-  let svl1 = CP.fv f1 in
-  let svl2 = CP.fv f2 in
-  let _ = DD.ninfo_hprint (add_str "svl1" Cprinter.string_of_spec_var_list) svl1 no_pos in
-  let _ = DD.ninfo_hprint (add_str "svl2" Cprinter.string_of_spec_var_list) svl2 no_pos in
-
-  (* Prepare the input for the fixpoint calculation *)
-  let input_fixcalc =
-    try
-      "F1:={[" ^ (string_of_elems svl1 fixcalc_of_spec_var ",") ^ "]: " ^
-      (string_of_elems [f1] fixcalc_of_pure_formula op_or) ^ "};\n" ^
-      "F2:={[" ^ (string_of_elems svl2 fixcalc_of_spec_var ",") ^ "]: " ^
-      (string_of_elems [f2] fixcalc_of_pure_formula op_or) ^ "};\n" ^
-      "F2W:=widen(F1,F2,SimHeur);\nF2W;"
-    with _ -> report_error no_pos "Error in widening with fixcalc"
-  in
-  DD.ninfo_pprint ("input = " ^ input_fixcalc) no_pos;
-
-  let _ =
-    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
-  in
-
-  (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inp" in
-  let oc = open_out output_of_sleek in
-  Printf.fprintf oc "%s" input_fixcalc;
-  flush oc;
-  close_out oc;
-  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
-
-  (* Remove parentheses *)
-  let res = remove_paren res (String.length res) in
-  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
-
-  (* Parse result *)
-  let inv = List.hd (Parse_fix.parse_fix res) in
-  let _ = DD.ninfo_hprint (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
-  inv
-
-(******************************************************************************)
-
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
   let vars = para_names in
   let fmls = List.map (fun p -> 

@@ -383,14 +383,14 @@ and check_bounded_term prog ctx post_pos =
 
 (*and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (sp:CF.struc_formula) e0 do_infer: 
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
-      
+
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
   let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) *
         ((CP.spec_var * int list)  *CP.xpure_view) list * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
-    log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
+    log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);
     match spec with
       | CF.ECase b ->
             let r =
@@ -448,7 +448,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 
       | CF.EInfer b ->
             Debug.devel_zprint (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
-            let itnt = b.CF.formula_inf_tnt in
+            (* let itnt = b.CF.formula_inf_tnt in *)
+            let inf_o = b.CF.formula_inf_obj in
             let postf = b.CF.formula_inf_post in
             let postxf = b.CF.formula_inf_xpost in
             let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -583,7 +584,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                     CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
-                    CF.es_infer_tnt = es.CF.es_infer_tnt || itnt;
+                    (* CF.es_infer_tnt = es.CF.es_infer_tnt || itnt; *)
+                    CF.es_infer_obj = es.CF.es_infer_obj # mk_or inf_o;
                     CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
@@ -1408,14 +1410,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (* in                                                                                           *)
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        let compose_es = CF.subst [(vsv, tmp_vsv); ((CP.mkRes t), vsv)] c1.CF.es_formula in
+                        let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                         (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
                         (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
                         compose_ctx
                             
-                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (CP.mkRes t) pos)) pos in *)
+                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
                       (* let ctx1 = (CF.Ctx c1) in                                                                      *)
                       (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
                       (* (* TODO : eps bug below *)                                                                     *)
@@ -1779,7 +1781,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let tempvar = CP.SpecVar (org_typ, Globals.fresh_name (), Primed) in
               let fct c1 =
                 if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                  let compose_es = CF.subst [((CP.mkRes org_typ), tempvar)] c1.CF.es_formula in
+                  let compose_es = CF.subst [((P.mkRes org_typ), tempvar)] c1.CF.es_formula in
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   compose_ctx
                 else (CF.Ctx c1) in
@@ -2361,7 +2363,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      let fct es = 
 		        let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		        if b_rez then
-                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (CP.mkRes rest) pos)) pos in
+                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) pos in
 			  if !Globals.max_renaming then CF.normalize_es vsv_f pos true es
 			  else CF.normalize_clash_es vsv_f pos true es
 		        else CF.Ctx es
@@ -2878,7 +2880,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		    Prooftracer.start_compound_object ();
 		  end
 		  in
-		  let pp, exc = 
+		  let pp, exc =
                     try (* catch exception to close the section appropriately *)
                       (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
                       (*TODO: old_hpdecls is for CP TEST*)
@@ -2887,12 +2889,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                       Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                       let new_spec =  CF.simplify_ann new_spec in
-		      
                       let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
-                      
                       let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
                       let (hprels,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelDefn _ -> true | _ -> false) hprels) in
-                      
                       let (hp_lst_assume,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelAssume _ -> true | _ -> false) hp_rest) in
                       (*let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in*)
                       let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
@@ -3545,8 +3544,11 @@ let rec check_prog iprog (prog : prog_decl) =
         ) stk in
         is_empty err
       in 
-      
-      let _ = Ti.solve (is_all_verified2 && is_term_verified) prog in
+      (* Only do inference when there are some unknowns in the specifications *)
+      let should_infer_tnt = List.fold_left (fun acc proc ->
+        if not acc then CF.has_unknown_pre_lexvar_struc proc.Cast.proc_static_specs
+        else acc) false scc in
+      let _ = Ti.solve (is_all_verified2 && is_term_verified) should_infer_tnt prog in
       let prog = Ti2.update_specs_prog prog in
       let _ = Ti.finalize () in
       let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
