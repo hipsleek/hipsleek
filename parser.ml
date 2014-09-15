@@ -2625,6 +2625,7 @@ rel_header:[[
     let cids, br_labels = List.split cids in
 	  if List.exists
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids
+          then
 		report_error (get_pos_camlp4 _loc 1)
 		  ("variables in view header are not allowed to be primed")
 	  else
@@ -3021,8 +3022,8 @@ opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
 spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
-	 
- 
+
+
  (***********Proc decls ***********)
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
@@ -3030,26 +3031,26 @@ throws: [[ `THROWS; l=cid_list -> List.map fst l]];
 flag_arg : [[
 	`IDENTIFIER t -> Flag_str t
 	| `INT_LITER (i,_)-> Flag_int i
-	| `FLOAT_LIT (f,_)-> Flag_float f]]; 
+	| `FLOAT_LIT (f,_)-> Flag_float f]];
 
 flag: [[`MINUS; `IDENTIFIER t ; args = OPT flag_arg-> ("-",t, args)
 		| `OP_DEC; `IDENTIFIER t ; args = OPT flag_arg-> ("--",t, args)]];
-		
+
 flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
-proc_decl: 
+proc_decl:
   [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
       let n_h = genESpec_wNI h (Some b) h.proc_args h.proc_return h.proc_loc in
       { n_h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header; _=opt_flag_list-> h]];
-  
+
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
      mkProc "source_file" id [] "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
-     
+
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
     mkProc "source_file" id [] "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];

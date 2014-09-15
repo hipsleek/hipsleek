@@ -453,11 +453,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let postf = b.CF.formula_inf_post in
             let postxf = b.CF.formula_inf_xpost in
             let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
-            let new_formula_inf_continuation,new_args = 
+            let new_formula_inf_continuation,new_args =
               begin
                 match b.CF.formula_inf_transpec with
                   | None -> b.CF.formula_inf_continuation,[]
-                  | Some (old_view_name, new_view_name) -> 
+                  | Some (old_view_name, new_view_name) ->
                         let old_view = look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls old_view_name in
                         let new_view = look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls new_view_name in
                         let sub_pair = ((old_view_name,old_view.view_vars),(new_view_name,new_view.view_vars)) in
@@ -467,36 +467,36 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               end
             in
             let pre_vars,post_vars = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in
-            let pargs = List.concat (List.map (fun (t,n) -> 
+            let pargs = List.concat (List.map (fun (t,n) ->
               if t==Int then [CP.SpecVar (t,n,Unprimed)] else []) proc.proc_args) in
-            let vars, new_formula_inf_continuation = 
+            let vars, new_formula_inf_continuation =
               if old_vars = [] then
                 begin
                   match postxf with
-                    | None -> 
-                          if new_args = [] then [],new_formula_inf_continuation 
+                    | None ->
+                          if new_args = [] then [],new_formula_inf_continuation
                           else
 (*                            let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
 (*                            let pre_inf_vars = List.filter CP.is_node_typ pre_vars in*)
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                             let new_rel_pre = CP.fresh_spec_var_rel () in
                             let new_rel_post = CP.fresh_spec_var_rel () in
-                            let new_rel_fml_pre = 
+                            let new_rel_fml_pre =
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (pre_args@pargs) in
                               CP.BForm ((CP.RelForm (new_rel_pre, tmp, no_pos),None),None) in
-                            let new_rel_fml_post =  
+                            let new_rel_fml_post =
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (new_args@pargs) in
                               CP.BForm ((CP.RelForm (new_rel_post, tmp, no_pos),None),None) in
                             let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml_pre) (Some new_rel_fml_post) in
                             Debug.tinfo_hprint (add_str "TEMP SPECS1" pr_spec) new_spec no_pos;
 (*                            pre_args@[new_rel_post],new_spec*)
                             (*pre_inf_vars@*)[new_rel_pre;new_rel_post],new_spec
-                    | Some pflag -> 
-                          if not(pflag) then 
-                            if new_args = [] then 
+                    | Some pflag ->
+                          if not(pflag) then
+                            if new_args = [] then
 (*                              let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
                               pre_vars@pargs,new_formula_inf_continuation
-                            else 
+                            else
                               let new_rel = CP.fresh_spec_var_rel () in
                               let tmp = List.map (fun v -> CP.mkVar v no_pos) (new_args@pargs) in
                               let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, tmp, no_pos),None),None) in
@@ -512,10 +512,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml) in
                               Debug.tinfo_hprint (add_str "TEMP SPECS3" pr_spec) new_spec no_pos;
                               [new_rel],new_spec
-                            else 
+                            else
                               [],new_formula_inf_continuation
                 end
-              else old_vars,new_formula_inf_continuation 
+              else old_vars,new_formula_inf_continuation
             in
             let einfer = CF.EInfer {b with
               CF.formula_inf_vars = vars;
@@ -531,7 +531,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               else if is_FuncT typ then (vr, vt@[v], vi)
               else (vr, vt, vi@[v])) ([], [], []) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
-            let _ = 
+            let _ =
 (*              if old_vars=[] then *)
 (*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
 (*              else*)
@@ -2810,30 +2810,49 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (*TODO: old_hpdecls is for CP TEST*)
 		      (* let old_hpdecls = prog.prog_hp_decls in *)
                       (* Long: TODO here *)
-                      (* let new_static_specs = match proc.proc_static_specs with *)
-                      (*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
-                      (*         match sf with *)
-                      (*           | CF.EInfer ei -> *)
-                      (*                 let inf_obj = ei.CF.formula_inf_obj in *)
-                      (*                 let new_sf = if (inf_obj # is_post) then *)
-                      (*                   sf *)
-                      (*                 else sf *)
-                      (*                 in *)
-                      (*                 (lbl,new_sf) *)
-                      (*           | _ -> (lbl,sf) *)
-                      (*     ) el ) *)
-                      (*   | CF.EInfer ei -> let _ = print_endline (Cprinter.string_of_struc_formula ei.formula_inf_continuation) in proc.proc_static_specs *)
-                      (*   | _ -> proc.proc_static_specs *)
-                      (* in *)
-                      (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx new_static_specs body true in *)
-                      (* let _ = rel_names # push id in *)
-		  (* { rel_name = id; *)
-		  (*       rel_typed_vars = tl; *)
-		  (*       rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); *)
-                      (* let new_relation = CP.mkRel (CP.mk_spec_var (proc.proc_name ^ "_post")) ((List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos]) no_pos in *)
-                      (* let _ = print_endline (Cprinter.string_of_struc_formula proc.proc_static_specs) in *)
+                      let rec add_relation sf rel_name rel_type = match sf with
+                        | CF.EBase eb ->
+                              let cont = eb.CF.formula_struc_continuation in (
+                              match cont with
+                                | None -> sf
+                                | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (add_relation cont rel_name rel_type)} )
+                        | CF.EAssume ea ->
+                              let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in
+                              let rel_formula = CP.mkTrue no_pos in
+                              let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
+                              let _ = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
+                              let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
+                              let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in
+                              let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
+                              let old_f = ea.CF.formula_assume_simpl in
+                              let h,p,fl,t,a = CF.split_components old_f in
+                              let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) new_rel no_pos) in
+                              let new_f = CF.mkBase h new_p t fl a no_pos in
+                              let new_struc_f = CF.mkEBase new_f None no_pos in
+                              CF.EAssume {ea with
+                                  CF.formula_assume_simpl = new_f;
+                                  CF.formula_assume_struc = new_struc_f}
+                        | _ -> sf
+                      in
+                      let rec is_infer_post sf = match sf with
+                        | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+                              (lbl,is_infer_post sf)) el)
+                        | CF.EInfer ei ->
+                              let inf_obj = ei.CF.formula_inf_obj in
+                              if (inf_obj # is_post) then
+                                let rel_name = fresh_any_name "post" in
+                                let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in
+                                CF.EInfer {ei with
+                                    CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name];
+                                    CF.formula_inf_continuation = add_relation ei.CF.formula_inf_continuation rel_name rel_type}
+                              else sf
+                        | _ -> sf
+                      in
                       (* Long: end TODO here *)
-                      let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                      let new_spec = is_infer_post proc.proc_static_specs in
+                      let _ = print_endline ("new_spec = " ^ (Cprinter.string_of_struc_formula new_spec)) in
+                      let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx new_spec body true in
+                      (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                       Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                       let new_spec =  CF.simplify_ann new_spec in

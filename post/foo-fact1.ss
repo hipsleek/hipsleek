@@ -23,7 +23,7 @@ int fact(int x)
          //@term
          @post_n
  ]
-  requires true  ensures true;
+  requires true ensures true;
 //  requires true  ensures Uf(x,res);
 //  requires true ensures res=x;
 {

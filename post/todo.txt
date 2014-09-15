@@ -1,4 +1,4 @@
-# foo-fact1.ss
+# foo-fact1.ss (DONE)
 
 int fact(int x)
   infer [@post]
