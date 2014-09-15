@@ -3109,8 +3109,16 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let fname = proc.I.proc_name in
       let args = List.map (fun p -> 
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in 
-      let pos = proc.I.proc_loc in
+      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in  
+      let rec find_vars sp = match sp with
+        | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []
+        | IF.EBase b -> b.IF.formula_struc_implicit_inst
+        | _ -> [] in
+      let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs ) in
+      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
+      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
+      (* let _ = Debug.binfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in *)
+       let pos = proc.I.proc_loc in
       
       let utpre_name = fname ^ "pre" in
       let utpost_name = fname ^ "post" in
