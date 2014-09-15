@@ -2822,9 +2822,16 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (*                 (lbl,new_sf) *)
                       (*           | _ -> (lbl,sf) *)
                       (*     ) el ) *)
+                      (*   | CF.EInfer ei -> let _ = print_endline (Cprinter.string_of_struc_formula ei.formula_inf_continuation) in proc.proc_static_specs *)
                       (*   | _ -> proc.proc_static_specs *)
                       (* in *)
                       (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx new_static_specs body true in *)
+                      (* let _ = rel_names # push id in *)
+		  (* { rel_name = id; *)
+		  (*       rel_typed_vars = tl; *)
+		  (*       rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); *)
+                      (* let new_relation = CP.mkRel (CP.mk_spec_var (proc.proc_name ^ "_post")) ((List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos]) no_pos in *)
+                      (* let _ = print_endline (Cprinter.string_of_struc_formula proc.proc_static_specs) in *)
                       (* Long: end TODO here *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;

@@ -2623,17 +2623,16 @@ rel_header:[[
 `REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
-	  if List.exists 
-		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
-	  then
-		report_error (get_pos_camlp4 _loc 1) 
+	  if List.exists
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids
+		report_error (get_pos_camlp4 _loc 1)
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in *)
     let _ = rel_names # push id in
 		  { rel_name = id;
 			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
+			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
 			}
 ]];
 
@@ -2757,7 +2756,7 @@ hprogn:
             | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
             | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
-				| Include incl -> include_defs := incl :: !include_defs  	
+	| Include incl -> include_defs := incl :: !include_defs
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
@@ -2811,16 +2810,16 @@ hprogn:
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
     prog_proc_decls = !proc_defs;
-    prog_coercion_decls = !coercion_defs; 
+    prog_coercion_decls = !coercion_defs;
     prog_hopred_decls = !hopred_defs;
     prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
-  
-mdecl: 
+
+mdecl:
 	[[ t=macro -> []
 	  |t=decl -> [t]]];
-  
+
 decl:
   [[ `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> Include ic
 	|  t=type_decl                  -> Type t
