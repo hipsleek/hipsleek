@@ -664,7 +664,6 @@ let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pr
 
 (*GEN SLEEK FILE --gsl*)
 let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
-  (* let _ = print_endline "gen_slk_file_4fix" in *)
   (************INTERNAL************)
   let to_str_one_constr (_,lhs,rhs)=
     "\nrelAssume \n" ^ (!CP.print_formula lhs) ^ " --> " ^ (!CP.print_formula rhs)
@@ -722,5 +721,4 @@ let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
     "\n"  ^ str_constrs ^ "\n\n" ^ str_infer_cmd in
   let _ = output_string out_chn str_slk in
   let _ = close_out out_chn in
-  (* let _ = print_endline "end gen_slk_file_4fix" in *)
   ()

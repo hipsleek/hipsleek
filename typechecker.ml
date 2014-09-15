@@ -2964,6 +2964,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
                               CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
                             let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
+                            let all_posts = CP.remove_dups_svl (inf_vars@all_posts) in (* add Uf1 into all_posts *)
+                            let _ = Debug.binfo_hprint (add_str "all_posts" !print_svl) all_posts no_pos in
                             let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
                             let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                             let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
@@ -3097,6 +3099,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let _ = Debug.ninfo_zprint (lazy (("   new_spec: " ^(Cprinter.string_of_struc_formula new_spec)))) no_pos in
                           let new_spec = CF.flatten_struc_formula new_spec in
                           let _ = proc.proc_stk_of_static_specs # push new_spec in
+                          let _ = proc.proc_static_specs <- new_spec in (* set proc_static_specs = new_spec *)
                           let _ = print_endline "\nPost Inference result:" in
                           let _ = print_endline proc.proc_name in
                           let _ = print_endline (Cprinter.string_of_struc_formula_for_spec new_spec) in
