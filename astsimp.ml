@@ -3117,8 +3117,18 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs ) in
       (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
       (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
-      (* let _ = Debug.binfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in *)
-       let pos = proc.I.proc_loc in
+      let imp_spec_vars = collect_important_vars_in_spec true static_specs_list in
+      let _ = Debug.binfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
+      let _ = Debug.binfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
+      let _ = Debug.binfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in
+      let params = imp_spec_vars @params  in
+      let params = List.filter 
+        (fun sv -> match sv with
+          | CP.SpecVar(t,_,_) -> 
+                (match t with
+                  | Int | Bool -> true
+                  | _ -> false)) params in
+      let pos = proc.I.proc_loc in
       
       let utpre_name = fname ^ "pre" in
       let utpost_name = fname ^ "post" in
@@ -3238,7 +3248,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (** An Hoa : print out final_static_specs_list for inspection **)
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
-      let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
+      let imp_spec_vars = collect_important_vars_in_spec false final_static_specs_list in
       let imp_vars = List.append imp_vars imp_spec_vars in
       let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
       (* let _ = print_string "Important variables found: " in *)
@@ -3307,13 +3317,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     Important variables are the ones that appears in the
     post-condition. Those variables are necessary in order
     to prove the final correctness. **)
-and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list) =
+and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spec_var list) =
   (** An Hoa : Internal function to collect important variables in the an ext_formula **)   
   let rec helper f = match f with
-    | CF.ECase b -> List.fold_left (fun x y -> List.append x (collect_important_vars_in_spec (snd y))) [] b.CF.formula_case_branches 
+    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches 
     | CF.EBase b -> b.CF.formula_struc_implicit_inst
     | CF.EAssume _ -> []
-    | CF.EInfer _ -> []
+    | CF.EInfer b -> 
+          if deep_flag then helper b.CF.formula_inf_continuation
+          else []
     | CF.EList b -> fold_l_snd helper b 
   in
   helper spec
