@@ -959,17 +959,18 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
 
-let rec add_case_coverage in_pre ctx all =
+let rec add_case_coverage in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
       let pr = Cprinter.string_of_pure_formula in
       let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
       Debug.no_2 "add_case_coverage" pr pr 
-              pr2 (add_case_coverage_x in_pre) ctx all
+              pr2 (fun _ _ -> add_case_coverage_x in_pre ctx all pos) ctx all
 
 (* ctx - pure context of case expression *)
 (* all - disj of pure formula encountered *)
-and add_case_coverage_x in_pre ctx all =
+and add_case_coverage_x in_pre ctx all pos =
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+  (* let pos = CP.pos_of_formula ctx in *)
   let sat_subno  = ref 0 in
   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
   let coverage_error = 
@@ -978,10 +979,20 @@ and add_case_coverage_x in_pre ctx all =
   if coverage_error then
     let simp_all = TP.pairwisecheck f_sat in
     (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
-    let _ = Debug.tinfo_pprint "WARNING : case construct has missing scenario" no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
-    let _ = Debug.tinfo_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
-	let cont = if in_pre then CF.mkEFalse (CF.mkFalseFlow) no_pos else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
+    let warn_str = "case construct has missing scenario" in
+    let found_str = (add_str "Found : " Cprinter.string_of_pure_formula) all in
+    let add_str = (add_str "Added : " Cprinter.string_of_pure_formula) simp_all in
+    let _ = Debug.tinfo_pprint ("WARNING : "^warn_str) no_pos in
+    let _ = Debug.tinfo_pprint found_str no_pos in
+
+    let _ = Debug.tinfo_pprint add_str no_pos in
+
+    report_warning pos
+        ("WARNING : case construct has missing scenario\n"^found_str^"\n"^add_str^"\n");
+    let cont = 
+      if in_pre then 
+        CF.mkETrue_ensures_True (CF.mkNormalFlow ()) no_pos (* CF.mkEFalse (CF.mkFalseFlow) no_pos *) 
+      else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
     [(simp_all,cont)]
         (* let s = (Cprinter.string_of_struc_formula f) in *)
         (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
@@ -1138,7 +1149,7 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
                 let nf1 = splitter_x l1 rest_vars in
                 let nf2 = splitter_x l2 rest_vars in
                 List.concat (List.map (fun c1-> List.map (fun c2-> 
-				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) in
+				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) no_pos in
 	            CF.ECase{					
 	                CF.formula_case_branches =[(constr,c1);(neg_constr,c2)]@nf;
 	                CF.formula_case_pos = no_pos;} ) nf2) nf1)					
@@ -3098,7 +3109,25 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let fname = proc.I.proc_name in
       let args = List.map (fun p -> 
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in 
+      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in  
+      let rec find_vars sp = match sp with
+        | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []
+        | IF.EBase b -> b.IF.formula_struc_implicit_inst
+        | _ -> [] in
+      let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs ) in
+      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
+      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
+      let imp_spec_vars = collect_important_vars_in_spec true static_specs_list in
+      let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
+      let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
+      let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in
+      let params = imp_spec_vars @params  in
+      let params = List.filter 
+        (fun sv -> match sv with
+          | CP.SpecVar(t,_,_) -> 
+                (match t with
+                  | Int | Bool -> true
+                  | _ -> false)) params in
       let pos = proc.I.proc_loc in
       
       let utpre_name = fname ^ "pre" in
@@ -3219,7 +3248,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (** An Hoa : print out final_static_specs_list for inspection **)
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
-      let imp_spec_vars = collect_important_vars_in_spec final_static_specs_list in
+      let imp_spec_vars = collect_important_vars_in_spec false final_static_specs_list in
       let imp_vars = List.append imp_vars imp_spec_vars in
       let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
       (* let _ = print_string "Important variables found: " in *)
@@ -3288,13 +3317,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     Important variables are the ones that appears in the
     post-condition. Those variables are necessary in order
     to prove the final correctness. **)
-and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list) =
+and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spec_var list) =
   (** An Hoa : Internal function to collect important variables in the an ext_formula **)   
   let rec helper f = match f with
-    | CF.ECase b -> List.fold_left (fun x y -> List.append x (collect_important_vars_in_spec (snd y))) [] b.CF.formula_case_branches 
+    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches 
     | CF.EBase b -> b.CF.formula_struc_implicit_inst
     | CF.EAssume _ -> []
-    | CF.EInfer _ -> []
+    | CF.EInfer b -> 
+          if deep_flag then helper b.CF.formula_inf_continuation
+          else []
     | CF.EList b -> fold_l_snd helper b 
   in
   helper spec
@@ -4541,10 +4572,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             else
               (* ... = o.f => read_only = true *)
               let r = 
-	        if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+	        (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
                   flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos (* ok to have it lend instead of Imm? *)
-                else
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos
+                (* else *)
+                (*   flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos *)
               in
               (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
               r
@@ -5740,7 +5771,7 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
           let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-          let nf = add_case_coverage in_pre ctx all in
+          let nf = add_case_coverage in_pre ctx all b.CF.formula_case_pos in
           (*   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in *)
           (*   let coverage_error =  *)
           (*       Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno *)

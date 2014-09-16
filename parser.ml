@@ -227,7 +227,12 @@ let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lb
   List.concat lgrp
 
 let label_struc_groups (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list lgrp)
+  let lst = (label_struc_list lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
+
+  (* F.EList (label_struc_list lgrp) *)
 
 let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list)  = 
   let n = List.length lgrp in
@@ -243,7 +248,10 @@ let label_struc_list_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) 
 
 (* auto insertion of numeric if unlabelled *)
 let label_struc_groups_auto (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : F.struc_formula =
-  F.EList (label_struc_list_auto lgrp)
+  let lst = (label_struc_list_auto lgrp) in
+  match lst with
+    | [(_,e)] -> e
+    | _ ->  F.EList lst
 
 
 let un_option s d = match s with
@@ -2002,7 +2010,6 @@ cexp_w:
           report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
         else begin
           try
-            if not(rel_names # mem id) then if not !Globals.web_compile_flag then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             let _, fname, is_pre = ut_names # find (fun (name, _, _) -> name = id) in
             let pos = get_pos_camlp4 _loc 1 in
             (* let cond = un_option c (P.mkTrue pos) in *)
@@ -2011,7 +2018,8 @@ cexp_w:
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
           with Not_found -> 
             if not (rel_names # mem id) then 
-              print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+              if not !Globals.web_compile_flag then 
+                print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list -> 
