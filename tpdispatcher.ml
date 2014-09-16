@@ -1451,6 +1451,17 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
   Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
+let norm_pure_input f =
+  let f = cnv_ptr_to_int f in
+  let f = if !Globals.allow_inf 
+    then let f = Infinity.convert_inf_to_var f
+           in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
+      let f = mkAnd add_inf_constr f no_pos in f
+    else f in f
+
+let norm_pure_input f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
@@ -1508,7 +1519,9 @@ let norm_var_name (e: CP.formula) : CP.formula =
     (*     ("(" ^ (pr_id  d1) ^ "; " ^ (pr_id d2) ^ ")\n")) h "" in *)
     Debug.no_1 "simplify-syn" pr (* pr_hashtbl *) pr (fun _ -> simplify f0 vnames) f0 (* vnames *)
   in
-  simplify e (Hashtbl.create 100)
+  let simplify f0 =  simplify f0  (Hashtbl.create 100) in
+  let simplify f0 = wrap_pre_post norm_pure_input norm_pure_result simplify f0 in
+  simplify e (* (Hashtbl.create 100) *)
 
 let norm_var_name (e: CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
@@ -1822,19 +1835,6 @@ let tp_is_sat f sat_no =
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
 (*   Debug.no_1 "tp_is_sat" pr string_of_bool (fun _ -> tp_is_sat f sat_no do_cache) f *)
-
-
-let norm_pure_input f =
-  let f = cnv_ptr_to_int f in
-  let f = if !Globals.allow_inf 
-    then let f = Infinity.convert_inf_to_var f
-           in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
-      let f = mkAnd add_inf_constr f no_pos in f
-    else f in f
-
-let norm_pure_input f =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
@@ -2221,6 +2221,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         if is_bag_constraint f then Mona.pairwisecheck f
         else Redlog.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
+  let fn f = wrap_pre_post norm_pure_input norm_pure_result fn f in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
