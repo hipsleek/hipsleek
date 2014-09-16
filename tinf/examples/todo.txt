@@ -261,7 +261,9 @@ or failure.
 
 >> Should be for false
 ===================================================
-# mutual-5b2.ss
+# mutual-5b2.ss (DONE)
+
+inserting requires true ensures true..
 
 Problems:
  (i) why is there an @post?
