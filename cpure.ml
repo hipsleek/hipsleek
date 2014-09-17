@@ -4828,7 +4828,10 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  begin
 		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
-		  filtered_f
+                let _ = Debug.binfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+                let _ = Debug.binfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+                if (is_False f0) then f0
+                else filtered_f
 	  end
   in
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
@@ -8443,13 +8446,18 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
   new_ante
 
 let filter_ante (ante: formula) (conseq: formula) : (formula) = 
-let pr = !print_formula in
-Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
+  let pr = !print_formula in
+  Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
+
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
   let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
   let new_ante = filter_var ante fvar in
   new_ante
+
+let filter_ante_wo_rel (ante: formula) (conseq: formula) : (formula) = 
+  let pr = !print_formula in
+  Debug.no_2 "filter_ante_wo_rel" pr pr pr filter_ante_wo_rel ante conseq
 
 (* automatic slicing of variables *)
 

@@ -1818,8 +1818,9 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let check_sat,rhs_p_new = detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos in
       let _ = DD.binfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos in
       let _ = DD.binfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs_mix no_pos in
+      let _ = DD.binfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
-      if false (* not(check_sat) *) then
+      if not(check_sat) && not(CP.is_False lhs_c) then
         begin
           let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
           DD.binfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
