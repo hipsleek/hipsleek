@@ -8786,6 +8786,12 @@ let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 (****************************************************)
   (********************CEX**********************)
 (****************************************************)
+
+let rec get_false_entail_state ctx =
+  match ctx with
+    | Ctx es -> es
+    | OCtx (left,_) -> get_false_entail_state left
+
 let mk_cex is_sat=
   {cex_sat = is_sat;
   }

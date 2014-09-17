@@ -3601,11 +3601,14 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars)
     in
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
-    if (isAnyFalseCtx ctx) && is_not_infer_false_unknown then
+    if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+      let false_es = CF.get_false_entail_state ctx in
+      let rhs = Mcpure.mkMFalse no_pos (* to contain PP(x) *)in 
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs  no_pos in
       (*set context as bot*)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
       (* why change to false_flow_int? *)
-      let _ = Debug.binfo_hprint (add_str "false |- conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      let _ = Debug.binfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
       let _ = Debug.binfo_hprint (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos in
        let bot_ctx = ctx in
       (* check this first so that false => false is true (with false residual) *)
@@ -3617,10 +3620,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         (*In case join_id = Some id, we need to "delay and check" *)
         ((SuccCtx [ctx]), TrueConseq)
       else
-        (*let ctx = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
-          if isAnyFalseCtx ctx then
-          ([false_ctx pos], UnsatAnte)
-          else*)
+        (* let ctx = (\*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *\) (\*elim_unsat_ctx prog *\)ctx in *)
+        (*   if isAnyFalseCtx ctx then *)
+        (*   ([false_ctx pos], UnsatAnte) *)
+        (*   else *)
         let result, prf = heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
         let result = subs_crt_holes_list_ctx result in
         let result = if !Globals.en_norm_ctx then Norm.merge_contexts result else result in
