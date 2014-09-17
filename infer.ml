@@ -1752,16 +1752,16 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
      let pr2 = Cprinter.string_of_pure_formula in
      let pr3 = Cprinter.string_of_mix_formula in
      let pr = pr_pair string_of_bool pr2 in
-     Debug.no_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1) 
-     (add_str "lhs" pr2) 
-     (add_str "rhs" pr3) 
+     Debug.no_3 "detect_lhs_rhs_contra2" (add_str "ivs" pr1)
+     (add_str "lhs" pr2)
+     (add_str "rhs" pr3)
      (add_str "(res,new_rhs)" pr)
-     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix 
+     (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
-  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[]) 
-  else 
+  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
+  else
     let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
     Debug.tinfo_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
     (*add instance of relational s0-pred*)
