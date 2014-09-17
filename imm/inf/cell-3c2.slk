@@ -6,7 +6,7 @@ relation P1(ann v1).
 relation P2(ann v1).
 
 infer [P1,P2] 
-c::cell<v>@a & P1(a)  & a<:@L 
+c::cell<v>@a & P1(a)  & a<:@L //& @M<:b
         |- c::cell<w>@b & P2(b).
 print residue.
 
@@ -24,14 +24,3 @@ Entail (2) : Valid.
 [[empty]]
 */
 
-infer [P2] 
-c::cell<v>@a & a<:@L 
-        |- c::cell<w>@b & P2(b).
-print residue.
-
-/*
-Entail (2) : Valid. 
-
- <1>c::cell<v@[@b, @b]>&b<:b & b<:@L&{FLOW,(21,22)=__norm}[]
-[[ SEARCH ==>  Match(c,c) ==> ]]
-*/
