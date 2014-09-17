@@ -72,27 +72,31 @@ let solve_rec_trrel rtr conds =
   if is_sat rec_cond then (Rec rec_cond)::conds
   else conds 
 
-let solve_base_trrel btr = 
-  Base (simplify 5 btr.ret_ctx btr.termr_rhs_params)
+let solve_base_trrel btr turels =
+  let bc = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  (* There is at least one method call in the base case is not terminating or unknown *)
+  if List.exists (fun r -> is_sat (mkAnd bc r.call_ctx)) turels then MayTerm bc
+  else Base bc
 
-let solve_trrel_list trrels = 
+let solve_trrel_list trrels turels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
-  let base_conds = List.map solve_base_trrel base_trrels in
+  let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in
   let rec_trrels = merge_trrels rec_trrels in
   let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in 
   let conds = List.map simplify_trrel_sol conds in
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
   conds
   
-let case_split_init trrels = 
+let case_split_init trrels turels = 
   let fn_trrels = 
     let key_of r = (r.termr_fname, r.termr_rhs_params) in
     let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
     partition_by_key key_of key_eq trrels 
   in
-  let fn_cond_w_ids = List.map (fun (fn, trrels) -> 
-    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list trrels))) fn_trrels in
+  let fn_cond_w_ids = List.map (fun (fn, trrels) ->
+    let fn_turels = List.find_all (fun r -> String.compare (fst fn) r.termu_fname == 0) turels in 
+    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list trrels fn_turels))) fn_trrels in
   let _ = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline ("\nBase/Rec Case Splitting:\n" ^ 
@@ -240,7 +244,7 @@ let rec solve_turel_graph iter_num prog trrels tg =
   else finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
-  let fn_cond_w_ids = case_split_init trrels in 
+  let fn_cond_w_ids = case_split_init trrels turels in 
   (* Update TNT case spec with base condition *)
   let _ = List.iter (add_case_spec_of_trrel_sol_proc prog)
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
