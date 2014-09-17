@@ -15,6 +15,16 @@ Residue is correct though.
 Entail 2: Valid. 
  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
+
+--efa 
+(i) SuccCtx [x=null&{FLOW,(5,6)=__Error]
+// change many Fail --> Succ
+//
+
+--dfa
+(ii) FailCtx [x=null&{FLOW,(5,6)=__Error]
+
+
 */
 
 

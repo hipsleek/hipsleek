@@ -1,0 +1,28 @@
+data node {
+  node next;
+}.
+
+checkentail x=null & flow __norm |- x=null & flow __norm.
+print residue.
+// <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+// succeed with __norm
+
+checkentail x=null & flow __norm |- x!=null & flow __norm.
+print residue.
+//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+// Fail with __Error
+
+checkentail x=null & flow __norm |- x=null & flow __Error.
+print residue.
+// Why? Entail 2: Fail.(must) cause:empty states
+// mis-match
+
+checkentail x=null & flow __Error |- x=null & flow __Error.
+print residue.
+// <1>emp&x=null&{FLOW,(5,6)=__Error}[] (with residue but not used)
+
+
+checkentail x=null & flow __Error |- x!=null & flow __Error.
+print residue.
+// Fail
+// <1>emp&x=null&{FLOW,(5,6)=__Fail}[] (no residue)
