@@ -1,6 +1,6 @@
 void loop ()
   requires Loop
-  ensures false;
+  ensures true;
 
 void f(int x) 
   infer [@term]
@@ -10,5 +10,5 @@ void f(int x)
   if (x <= 0) 
     loop();
   else
-    f(x - 1);
+    f(x + 1);
 }

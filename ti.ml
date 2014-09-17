@@ -83,7 +83,27 @@ let solve_trrel_list trrels turels =
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
   let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in
   let rec_trrels = merge_trrels rec_trrels in
-  let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in 
+  (* let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in  *)
+  let not_rec_conds = List.map (fun s ->
+    match s with
+    | Base bc -> bc
+    | MayTerm mc -> mc
+    | _ -> CP.mkFalse no_pos) base_conds in
+  let not_rec_cond = 
+    if is_empty not_rec_conds 
+    then CP.mkFalse no_pos 
+    else CP.join_disjunctions not_rec_conds 
+  in
+  let rec_conds = List.fold_left (fun acc rtr ->
+    let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
+    let rec_cond =
+      if CP.is_disjunct rec_cond
+      then pairwisecheck rec_cond
+      else rec_cond
+    in
+    let rec_cond = mkAnd rec_cond (mkNot not_rec_cond) in
+    if is_sat rec_cond then acc @ [Rec rec_cond] else acc) [] rec_trrels in
+  let conds = base_conds @ rec_conds in
   let conds = List.map simplify_trrel_sol conds in
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
   conds

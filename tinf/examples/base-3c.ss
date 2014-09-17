@@ -1,6 +1,6 @@
 void loop ()
   requires Loop
-  ensures false;
+  ensures true;
 
 void f(int x) 
   infer [@term]
