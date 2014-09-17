@@ -1865,6 +1865,12 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let under_f = vdef.C.view_baga_under_inv in
+      (* WN : this is an update on under-approx to false if absent*)
+      let new_under = match under_f with
+        | None -> Excore.EPureI.mk_false_disj
+        | Some f -> f in
+      let _ = vdef.C.view_baga_under_inv <- Some new_under in
+      let under_f = vdef.C.view_baga_under_inv in
       Debug.tinfo_hprint (add_str "under(baga)" pr_d) under_f no_pos;
       let baga_under_formula = match under_f with
         | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
@@ -1912,8 +1918,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
+          (* WN : this test is unsound *)
           if !Globals.do_test_inv then report_warning pos msg
-          else report_error pos msg
+          else report_warning pos msg
       in ()
     else ()
   in

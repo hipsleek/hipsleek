@@ -4830,7 +4830,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 		let filtered_f = conj_of_list rele_conjs no_pos in
                 let _ = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
                 let _ = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
-                if (is_False f0) then f0
+                (* WN : why this affected under_approx? *)
+                if (is_False f0) && !Globals.filtering_false_flag then f0
                 else filtered_f
 	  end
   in

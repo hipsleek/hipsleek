@@ -1117,6 +1117,7 @@ let print_version_flag = ref false
 let elim_exists_flag = ref true
 
 let filtering_flag = ref true
+let filtering_false_flag = ref true
 
 let split_rhs_flag = ref true
 
