@@ -2464,8 +2464,6 @@ and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
 	  formula_assume_struc = subst_pos_struc_formula p b.formula_assume_struc;}
     | EInfer ei -> EInfer {ei with formula_inf_continuation = subst_pos_struc_formula p ei.formula_inf_continuation; formula_inf_pos=p}
     | EList b -> EList (map_l_snd (subst_pos_struc_formula p) b)
-	
-  
 
 and subst_pos_formula (p:loc) (f: formula): formula=
   match f with
@@ -9808,17 +9806,22 @@ let rec update_hp_unk_map ctx0 unk_map =
   in
   helper ctx0
 
-let rec collect_infer_vars ctx = 
+let rec collect_infer_vars_rel ctx =
   match ctx with
-  | Ctx estate -> estate.es_infer_vars 
-  | OCtx (ctx1, ctx2) -> (collect_infer_vars ctx1) @ (collect_infer_vars ctx2) 
+  | Ctx estate -> estate.es_infer_vars_rel
+  | OCtx (ctx1, ctx2) -> (collect_infer_vars_rel ctx1) @ (collect_infer_vars_rel ctx2)
 
-let rec collect_infer_post ctx = 
+let rec collect_infer_vars ctx =
   match ctx with
-  | Ctx estate -> estate.es_infer_post 
-  | OCtx (ctx1, ctx2) -> (collect_infer_post ctx1) || (collect_infer_post ctx2) 
+  | Ctx estate -> estate.es_infer_vars
+  | OCtx (ctx1, ctx2) -> (collect_infer_vars ctx1) @ (collect_infer_vars ctx2)
 
-let rec collect_formula ctx = 
+let rec collect_infer_post ctx =
+  match ctx with
+  | Ctx estate -> estate.es_infer_post
+  | OCtx (ctx1, ctx2) -> (collect_infer_post ctx1) || (collect_infer_post ctx2)
+
+let rec collect_formula ctx =
   match ctx with
   | Ctx estate -> [estate.es_formula]
   | OCtx (ctx1, ctx2) -> (collect_formula ctx1) @ (collect_formula ctx2) 

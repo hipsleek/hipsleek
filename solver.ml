@@ -3582,7 +3582,7 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc p i1 hp cl) cs tid delayed_f join_id pos pid
 
 and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
-  Debug.no_4 "heap_entail_one_context_struc" 
+  Debug.no_4 "heap_entail_one_context_struc"
       Cprinter.string_of_struc_formula
       Cprinter.string_of_context
       (add_str "is_folding" string_of_bool)
@@ -3592,8 +3592,16 @@ and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delay
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-    let is_not_infer_false_unknown = false (* WN : to compute from conseq & ctx *) in
-    if (isAnyFalseCtx ctx) && (is_not_infer_false_unknown) then
+    let is_not_infer_false_unknown =
+      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in
+      let _ = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in
+      let conseq_vars = CF.struc_fv conseq in
+      let _ = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in
+      not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars)
+    in
+    let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
+    if (isAnyFalseCtx ctx) && is_not_infer_false_unknown then
       (*set context as bot*)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
       (* why change to false_flow_int? *)
