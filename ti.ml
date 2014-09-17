@@ -83,6 +83,7 @@ let solve_trrel_list trrels turels =
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
   let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in
   let rec_trrels = merge_trrels rec_trrels in
+  
   (* let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in  *)
   let not_rec_conds = List.map (fun s ->
     match s with
@@ -104,6 +105,7 @@ let solve_trrel_list trrels turels =
     let rec_cond = mkAnd rec_cond (mkNot not_rec_cond) in
     if is_sat rec_cond then acc @ [Rec rec_cond] else acc) [] rec_trrels in
   let conds = base_conds @ rec_conds in
+  
   let conds = List.map simplify_trrel_sol conds in
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
   conds
@@ -150,18 +152,20 @@ let inst_lhs_trel_base rel fn_cond_w_ids =
   let lhs_ann = rel.termu_lhs in
   let inst_lhs = match lhs_ann with
     | CP.TermU uid -> 
-      let fn = uid.CP.tu_fname in
-      let _, cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
-      let rcond_w_ids = List.filter (fun (_, c) -> is_rec c) cond_w_ids in
-      let rcond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) rcond_w_ids in
-      let tuc = uid.CP.tu_cond in
-      let eh_ctx = mkAnd rel.call_ctx tuc in
-      let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) rcond_w_ids in
-      List.map (fun (i, c) -> CP.TermU { uid with 
-        CP.tu_id = cantor_pair uid.CP.tu_id i; 
-        CP.tu_cond = mkAnd tuc c; 
-        (* Update condition of interest for abduction *)
-        CP.tu_icond = c; }) fs_rconds
+      begin try
+        let fn = uid.CP.tu_fname in
+        let _, cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
+        let rcond_w_ids = List.filter (fun (_, c) -> is_rec c) cond_w_ids in
+        let rcond_w_ids = List.map (fun (i, c) -> (i, get_cond c)) rcond_w_ids in
+        let tuc = uid.CP.tu_cond in
+        let eh_ctx = mkAnd rel.call_ctx tuc in
+        let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx c)) rcond_w_ids in
+        List.map (fun (i, c) -> CP.TermU { uid with 
+          CP.tu_id = cantor_pair uid.CP.tu_id i; 
+          CP.tu_cond = mkAnd tuc c; 
+          (* Update condition of interest for abduction *)
+          CP.tu_icond = c; }) fs_rconds
+      with Not_found -> [lhs_ann] end
     | _ -> [lhs_ann] 
   in inst_lhs
 
@@ -171,25 +175,27 @@ let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids =
   let ctx = mkAnd rel.call_ctx cond_lhs in
   let inst_rhs = match rhs_ann with
     | CP.TermU uid -> 
-      let fn = uid.CP.tu_fname in
-      let rhs_args = uid.CP.tu_args in
-      let (_, fparams), cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
-      let tuc = uid.CP.tu_cond in
-      let eh_ctx = mkAnd ctx tuc in
-      let sst = List.combine fparams rhs_args in
-      let subst_cond_w_ids = List.map (fun (i, c) -> 
-        (i, trans_trrel_sol (CP.subst_term_avoid_capture sst) c)) cond_w_ids in 
-      let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx (get_cond c))) subst_cond_w_ids in
-      List.map (fun (i, c) -> 
-        let cond = get_cond c in
-        CP.TermU { uid with 
-          CP.tu_id = cantor_pair uid.CP.tu_id i; 
-          CP.tu_cond = mkAnd tuc cond; 
-          CP.tu_icond = cond;
-          CP.tu_sol = match c with 
-            | Base _ -> Some (CP.Term, [])
-            | MayTerm _ -> Some (CP.MayLoop, [])
-            | _ -> uid.CP.tu_sol }) fs_rconds
+      begin try
+        let fn = uid.CP.tu_fname in
+        let rhs_args = uid.CP.tu_args in
+        let (_, fparams), cond_w_ids = List.find (fun ((fnc, _), _) -> eq_str fn fnc) fn_cond_w_ids in
+        let tuc = uid.CP.tu_cond in
+        let eh_ctx = mkAnd ctx tuc in
+        let sst = List.combine fparams rhs_args in
+        let subst_cond_w_ids = List.map (fun (i, c) -> 
+          (i, trans_trrel_sol (CP.subst_term_avoid_capture sst) c)) cond_w_ids in 
+        let fs_rconds = List.filter (fun (_, c) -> is_sat (mkAnd eh_ctx (get_cond c))) subst_cond_w_ids in
+        List.map (fun (i, c) -> 
+          let cond = get_cond c in
+          CP.TermU { uid with 
+            CP.tu_id = cantor_pair uid.CP.tu_id i; 
+            CP.tu_cond = mkAnd tuc cond; 
+            CP.tu_icond = cond;
+            CP.tu_sol = match c with 
+              | Base _ -> Some (CP.Term, [])
+              | MayTerm _ -> Some (CP.MayLoop, [])
+              | _ -> uid.CP.tu_sol }) fs_rconds
+      with Not_found -> [rhs_ann] end
     | _ -> [rhs_ann] 
   in List.map (fun irhs -> update_call_trel rel inst_lhs irhs) inst_rhs
   
@@ -204,8 +210,8 @@ let inst_call_trel_base rel fn_cond_w_ids =
 (******************)
 (* Main algorithm *)
 (******************)
-
-let solve_turel_one_scc prog trrels tg scc =
+(* Only analyze unknown scc *)
+let solve_turel_one_unknown_scc prog trrels tg scc =
   let outside_scc_succ = outside_succ_scc tg scc in
   
   let update = 
@@ -236,6 +242,11 @@ let solve_turel_one_scc prog trrels tg scc =
   ntg
   
 let solve_turel_one_scc prog trrels tg scc =
+  if is_unknown_scc tg scc then 
+    solve_turel_one_unknown_scc prog trrels tg scc
+  else tg
+  
+let solve_turel_one_scc prog trrels tg scc =
   let pr = print_graph_by_rel in
   Debug.no_1 "solve_turel_one_scc" pr pr
     (fun _ -> solve_turel_one_scc prog trrels tg scc) tg
@@ -258,7 +269,6 @@ let rec solve_turel_graph iter_num prog trrels tg =
       finalize_turel_graph prog tg
     with 
     | Restart_with_Cond tg -> 
-      (* TODO: Duplicate on nodes that have been analyzed *)
       solve_turel_graph (iter_num + 1) prog trrels tg
     | _ -> finalize_turel_graph prog tg
   else finalize_turel_graph prog tg
