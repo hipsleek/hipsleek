@@ -1738,7 +1738,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
   (* let lhs_c = CP.mkAnd lhs_p lhs_h_p pos in *)
   let fml = CP.mkAnd lhs_c rhs_p_new pos in
   let fml = CP.drop_rel_formula fml in
-  let _ = DD.binfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
+  let _ = DD.ninfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
   let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
   check_sat,rhs_p_new
 
@@ -1816,9 +1816,9 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       (* let fml = CP.drop_rel_formula fml in *)
       (* let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in *)
       let check_sat,rhs_p_new = detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos in
-      let _ = DD.binfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos in
-      let _ = DD.binfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs_mix no_pos in
-      let _ = DD.binfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
+      let _ = DD.ninfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos in
+      let _ = DD.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs_mix no_pos in
+      let _ = DD.ninfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
       if not(check_sat) && not(CP.is_False lhs_c) then
         begin

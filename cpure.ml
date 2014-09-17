@@ -4828,8 +4828,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  begin
 		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
-                let _ = Debug.binfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
-                let _ = Debug.binfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+                let _ = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+                let _ = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
                 if (is_False f0) then f0
                 else filtered_f
 	  end

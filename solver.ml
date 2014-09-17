@@ -33,7 +33,7 @@ module TP = Tpdispatcher
 module LO = Label_only.LOne
 (* module ME = Musterr *)
 
-let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed) 
+let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed)
 
 (*used for classic*)
 let rhs_rest_emp = ref true
@@ -3592,6 +3592,15 @@ and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delay
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
+    let get_pure_conseq_from_formula f =
+      let _,p,_,_,_ = CF.split_components f in
+      p
+    in
+    let get_pure_conseq_from_struc sf =
+      match sf with
+        | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
+        | _ -> failwith "not support"
+    in
     let is_not_infer_false_unknown =
       let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
       let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in
@@ -3603,14 +3612,18 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
     if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
       let false_es = CF.get_false_entail_state ctx in
-      let rhs = Mcpure.mkMFalse no_pos (* to contain PP(x) *)in 
-      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs  no_pos in
-      (*set context as bot*)
+      let rhs = get_pure_conseq_from_struc conseq in
+      let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
+      let es,_,_,_,_ = ans in
+      (* set context as bot *)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
       (* why change to false_flow_int? *)
-      let _ = Debug.binfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-      let _ = Debug.binfo_hprint (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos in
-       let bot_ctx = ctx in
+      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos in
+      (* let bot_ctx = ctx in *)
+      let bot_ctx = CF.Ctx es in
+      let _ = Debug.ninfo_hprint (add_str "bot_ctx" Cprinter.string_of_context_short) bot_ctx no_pos in
       (* check this first so that false => false is true (with false residual) *)
       ((SuccCtx [bot_ctx]), UnsatAnte)
     else(* if isConstFalse conseq then

@@ -1531,8 +1531,8 @@ and mkConjConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) =
   else if (f1 = HEmp) then f2
   else if (f2 = HEmp) then f1
   else ConjConj ({h_formula_conjconj_h1 = f1; 
-              h_formula_conjconj_h2 = f2; 
-              h_formula_conjconj_pos = pos})                            
+              h_formula_conjconj_h2 = f2;
+              h_formula_conjconj_pos = pos})
 
 and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
   match f1 with
@@ -11465,18 +11465,18 @@ and formula_to_struc_formula (f:formula):struc_formula =
 		 			formula_struc_base = f;
 					formula_struc_continuation = None;
 		 			formula_struc_pos = b.formula_exists_pos}
-		| Or b-> mkEList_flatten [helper b.formula_or_f1; helper b.formula_or_f2] in			
+		| Or b-> mkEList_flatten [helper b.formula_or_f1; helper b.formula_or_f2] in
 	(helper f)
 
-and plug_ref_vars (w:Cpure.spec_var list) (f:struc_formula) :struc_formula = 
+and plug_ref_vars (w:Cpure.spec_var list) (f:struc_formula) :struc_formula =
 	let rec filter_quantifiers w f = match f with
 		| Base _ -> f
 		| Exists b -> Exists {b with formula_exists_qvars = Gen.BList.difference_eq (=) b.formula_exists_qvars w;}
-		| Or b -> Or {b with 
+		| Or b -> Or {b with
 							formula_or_f1 = filter_quantifiers w b.formula_or_f1;
 							formula_or_f2 = filter_quantifiers w b.formula_or_f2;}in
 	let rec filter_quantifiers_struc w f = match f with
-		| EBase b -> EBase {b with 
+		| EBase b -> EBase {b with
 			formula_struc_base = filter_quantifiers w b.formula_struc_base;
 			formula_struc_exists = Gen.BList.difference_eq (=) b.formula_struc_exists w;
 			formula_struc_continuation = map_opt (filter_quantifiers_struc w) b.formula_struc_continuation;}
@@ -11495,8 +11495,8 @@ and plug_ref_vars (w:Cpure.spec_var list) (f:struc_formula) :struc_formula =
 
 and count_or c = match c with
 			| Ctx _ -> 1
-			| OCtx (c1,c2) -> (count_or c1)+(count_or c2)		
-			
+			| OCtx (c1,c2) -> (count_or c1)+(count_or c2)
+
 and find_false_ctx ctx pos =
   match ctx with
    | FailCtx _ -> ()
@@ -11518,7 +11518,7 @@ and guard_vars (f:struc_formula) =
 	| EAssume _-> []
 	| EInfer b -> guard_vars b.formula_inf_continuation
 	| EList b-> rdv (fold_l_snd guard_vars b)
-	
+
 and set_unsat_flag (ctx:context) (nf:bool):context = match ctx with
 | OCtx(c1,c2)-> OCtx ((set_unsat_flag c1 nf),(set_unsat_flag c2 nf))
 | Ctx c-> Ctx {c with es_unsat_flag = nf}
@@ -12994,7 +12994,7 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
 (*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}*)
 (*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}*)
 (*   | EList b -> EList (map_l_snd (add_post post) b)*)
-  
+
 (* TODO *)
 let rec string_of_list_of_pair_formula ls =
   match ls with
@@ -13004,20 +13004,20 @@ let rec string_of_list_of_pair_formula ls =
 
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 (* and print_struc_formula = ref(fun (c:struc_formula) -> "Cprinter not initialized") *)
-		
+
 (* and split_struc_formula f0 = split_struc_formula_a f0 *)
 
 and split_struc_formula f0 = Debug.no_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
 
-(* split the struc_formula into the list of pre/post pairs *)  
+(* split the struc_formula into the list of pre/post pairs *)
 and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f with
-		| ECase b-> 
+		| ECase b->
 			let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula_a c2 in
 				List.map (fun (d1,d2)-> ((normalize 4 d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
                         r
 			(* List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r  *)
-		| EBase b-> 
+		| EBase b->
 				let ll = fold_opt split_struc_formula_a b.formula_struc_continuation in
 				let e = List.map (fun (c1,c2)-> ((normalize 5 c1 b.formula_struc_base b.formula_struc_pos),c2)) ll in
 				let nf = ((*b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@*)b.formula_struc_exists) in
@@ -13025,8 +13025,7 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 				e
 		| EAssume b-> [((mkTrue (mkNormalFlow ()) no_pos),b.formula_assume_simpl)]
 		| EInfer b -> split_struc_formula_a b.formula_inf_continuation
-		| EList b -> fold_l_snd split_struc_formula_a b 
-		
+		| EList b -> fold_l_snd split_struc_formula_a b
 
 let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
@@ -13040,10 +13039,10 @@ let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :s
 	  let rec filter_helper (f:struc_formula):struc_formula = match f with
 	    | EBase b -> (match b.formula_struc_continuation with
 		| None -> report_error no_pos "barrier is unlabeled \n"
-		| Some f -> 
+		| Some f ->
 		      let l = filter_helper f in
 		      if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
-	    | ECase b -> 
+	    | ECase b ->
 		  let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
 		  let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
 		  if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
@@ -13115,8 +13114,7 @@ let rec label_view (f0:struc_formula):struc_formula =
     | EInfer b -> EInfer {b with formula_inf_continuation = label_struc b.formula_inf_continuation}
 	| EList b -> EList (map_l_snd label_struc b) in
 	label_struc f0
-  
-  
+
 let get_view_branches_x (f0:struc_formula):(formula * formula_label) list= 
   let rec formula_br (f:formula):(formula * formula_label) list = (
     match f with
