@@ -13588,6 +13588,16 @@ let is_TermU ann =
   | TermU _ -> true
   | _ -> false
 
+let is_unknown_term_ann ann =
+  match ann with
+  | TermU uid 
+  | TermR uid -> begin
+    match uid.tu_sol with
+    | None -> true
+    | _ -> false
+    end
+  | _ -> false
+
 let term_id = 1
 let loop_id = 2
 let mayLoop_id = 3 
