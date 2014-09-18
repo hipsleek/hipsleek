@@ -135,6 +135,10 @@ let common_arguments = [
    "No eliminate existential quantifiers before calling TP.");
   ("--no-filter", Arg.Clear Globals.filtering_flag,
   "No assumption filtering.");
+  ("--filter-false", Arg.Set Globals.filtering_false_flag,
+   "Enable false in assumption filtering.");
+  ("--dis-filter-false", Arg.Clear Globals.filtering_false_flag,
+   "Disable false in assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");

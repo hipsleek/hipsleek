@@ -135,7 +135,7 @@ let print_arg_kind i= match i with
 (* TODO : move typ here in future *)
 type typ =
   | FORM
-  | UNK 
+  | UNK
   | TVar of int
   | AnnT
   | Bool
@@ -1117,6 +1117,7 @@ let print_version_flag = ref false
 let elim_exists_flag = ref true
 
 let filtering_flag = ref true
+let filtering_false_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -1636,7 +1637,7 @@ let locs_of_partial_context ctx =
 let fresh_formula_label (s:string) :formula_label = 
 	branch_point_id := !branch_point_id + 1;
 	(!branch_point_id,s)
-  
+
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 

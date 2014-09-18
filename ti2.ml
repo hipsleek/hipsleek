@@ -442,7 +442,7 @@ let rec flatten_one_case_struc c f =
     | _ -> [(c, f)]
     end
   | _ -> [(c, f)]
-          
+
 let rec flatten_case_struc struc_f =
   match struc_f with
   | CF.ECase ec -> 
