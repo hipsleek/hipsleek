@@ -9513,7 +9513,7 @@ let rec get_Rank pf = match pf with
   | Forall (_,f,_,_) -> get_Rank f
   | Exists (_,f,_,_) -> get_Rank f
 
-let get_rel_id (f:formula) 
+let get_rel_id (f:formula)
       = match f with
         | BForm (bf,_) ->
               (match bf with
@@ -9521,7 +9521,7 @@ let get_rel_id (f:formula)
                 | _ -> None)
         | _ -> None
 
-let get_relargs_opt (f:formula) 
+let get_relargs_opt (f:formula)
       = match f with
         | BForm (bf,_) ->
               (match bf with
@@ -9671,10 +9671,14 @@ let get_rel_args (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
-let is_rel_in_vars (vl:spec_var list) (f:formula) 
-      = match (get_rel_id f) with
-        | Some n -> if mem n vl then true else false
-        | _ -> false
+let is_rel_in_vars (vl:spec_var list) (f:formula) =
+  let _ = Debug.binfo_hprint (add_str "formula" !print_formula) f no_pos in
+  match (get_rel_id f) with
+    | Some n ->
+          if mem n vl then true else false
+    | _ ->
+          let _ = Debug.binfo_pprint "None" no_pos in
+          false
 
 let is_RelForm (f:formula) = match f with
   | BForm((RelForm _,_),_) -> true

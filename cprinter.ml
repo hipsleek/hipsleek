@@ -4269,11 +4269,11 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 ;;
 
 (* pretty printing for a program written in core language *)
-let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
-  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
-  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
-  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
-  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
+let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^
+  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
   (* WN_all_lemma - override usage? *)
   (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^
   (string_of_coerc_decl_list (*p.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion))^"\n\n"^
@@ -4282,8 +4282,8 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-(* pretty printing for program written in core language separating prelude.ss program *)                                                            
-let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
+(* pretty printing for program written in core language separating prelude.ss program *)
+let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
    let remove_prim_procs procs=
 		List.fold_left (fun a b->
 			try 

@@ -3613,7 +3613,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
     if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
       let false_es = CF.get_false_entail_state ctx in
-      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula)  conseq no_pos in
+      let false_es = { false_es with
+          CF.es_infer_vars_rel = CP.remove_dups_svl (false_es.CF.es_infer_vars_rel@(List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int])  (ut.ut_name)) prog.prog_ut_decls)) }
+      in
+      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let _ = Debug.ninfo_hprint (add_str "es" Cprinter.string_of_entail_state) false_es no_pos in
+      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
       let rhs = get_pure_conseq_from_struc conseq in
       let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
       let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
