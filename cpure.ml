@@ -13636,6 +13636,9 @@ let args_of_term_ann ann =
   | TermR uid -> uid.tu_args
   | _ -> []
 
+let fv_of_term_ann ann =
+  List.concat (List.map afv (args_of_term_ann ann))
+
 let uid_of_term_ann ann =
   match ann with
   | TermU uid
@@ -13649,3 +13652,10 @@ let mkUTPost uid =
   TermR { uid with
     tu_id = fresh_int (); 
     tu_sid = uid.tu_sid ^ "post" }
+    
+let collect_term_ann_fv_pure f =
+  let f_b b = 
+    let (p, _) = b in match p with
+    | LexVar tinfo -> Some (fv_of_term_ann tinfo.lex_ann)
+    | _ -> Some []
+  in fold_formula f (nonef, f_b, nonef) List.concat

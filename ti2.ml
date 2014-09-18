@@ -1042,10 +1042,28 @@ let search_rec_icond_ann lhs_uids ann =
   let icond = uid.CP.tu_icond in
   subst_cond_with_ann params ann icond 
 
+(* Remove all constraints added from case specs *)    
+let elim_irrel_formula irrel_vars_lst f =
+  let is_irrel_f irrel_vars_lst f =
+    let fv = CP.fv f in
+    List.exists (fun irrel_vars -> subset fv irrel_vars) irrel_vars_lst
+  in
+  let fs = CP.split_conjunctions f in
+  let rel_fs = List.filter (fun f -> not (is_irrel_f irrel_vars_lst f)) fs in
+  CP.join_conjunctions rel_fs
+  
+let elim_irrel_formula irrel_vars_lst f =
+  let pr1 = pr_list !CP.print_svl in
+  let pr2 = !CP.print_formula in
+  Debug.no_2 "elim_irrel_formula" pr1 pr2 pr2 
+    elim_irrel_formula irrel_vars_lst f
+
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let fn = rhs_uid.CP.tu_fname in
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
+  let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in
+  let ctx = elim_irrel_formula irrel_vars_lst ctx in
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 

@@ -8840,6 +8840,11 @@ let infer_type_of_entail_state es =
   if (* es.es_infer_tnt *) es.es_infer_obj # is_term
   then Some INF_TERM 
   else None
+  
+let rec is_inf_term_ctx ctx =
+  match ctx with
+  | Ctx es -> es.es_infer_obj # is_term
+  | OCtx (ctx1, ctx2) -> (is_inf_term_ctx ctx1) || (is_inf_term_ctx ctx2)
 
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with
@@ -14208,6 +14213,10 @@ let rec collect_term_ann f =
       CP.collect_term_ann (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (collect_term_ann f1) @ (collect_term_ann f2)
+      
+let collect_term_ann_fv f =
+  let ann_lst = collect_term_ann f in
+  List.concat (List.map CP.fv_of_term_ann ann_lst)
       
 let rec norm_assume_with_lexvar tpost struc_f =
   let norm_f = norm_assume_with_lexvar tpost in
