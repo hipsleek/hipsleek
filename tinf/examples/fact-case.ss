@@ -1,6 +1,8 @@
 int fact(int x)
+ infer [@term]
  case {
   x>=0 -> ensures res>=1;
+  //x<0 -> ensures res>=1;
 }
 {
   if (x==0) return 1;

@@ -3596,11 +3596,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let _,p,_,_,_ = CF.split_components f in
       p
     in
+    let flatten_struc sf = CF.flatten_struc_formula sf in
     let rec get_pure_conseq_from_struc sf =
       match sf with
         | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
         | EInfer si -> get_pure_conseq_from_struc si.CF.formula_inf_continuation
-        | _ -> failwith "no support?" (* this need to be avoided! *)
+        | _ -> Mcpure.mkMTrue no_pos (* failwith "no support?" *) (* this need to be avoided! *)
     in
     let is_not_infer_false_unknown =
       let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
@@ -3620,7 +3621,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let _ = Debug.ninfo_hprint (add_str "es" Cprinter.string_of_entail_state) false_es no_pos in
       let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
       let rhs = get_pure_conseq_from_struc conseq in
-      let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
+      let rhs1 = flatten_struc conseq in
+      let _ = Debug.binfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
+      let _ = Debug.binfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      let _ = Debug.binfo_hprint (add_str "rhs1" Cprinter.string_of_struc_formula) rhs1 no_pos in
       let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
       let es,_,_,_,_ = ans in
       (* set context as bot *)
