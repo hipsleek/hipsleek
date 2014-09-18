@@ -9672,13 +9672,19 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  let _ = Debug.binfo_hprint (add_str "formula" !print_formula) f no_pos in
+  (* let _ = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
   match (get_rel_id f) with
     | Some n ->
           if mem n vl then true else false
     | _ ->
-          let _ = Debug.binfo_pprint "None" no_pos in
+          (* let _ = Debug.binfo_pprint "2None" no_pos in *)
           false
+
+let is_rel_in_vars (vl:spec_var list) (f:formula) =
+  let pr_svl = !print_svl in
+  Debug.no_2 "is_rel_in_vars" pr_svl !print_formula string_of_bool
+      is_rel_in_vars vl f
+
 
 let is_RelForm (f:formula) = match f with
   | BForm((RelForm _,_),_) -> true

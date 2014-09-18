@@ -10,7 +10,35 @@ print residue.
 
 infer [@term] false |- fpostXXX(x).
 print residue.
+/*
+# loop2.slk
 
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! formula: fpostXXX_0(x)[]
+!!! None
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+[Warning] False ctx
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! formula: fpostXXX_0(x)[]
+!!! None
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+
+*/
 /*
 # loop2.slk
 
