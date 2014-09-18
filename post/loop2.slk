@@ -1,6 +1,14 @@
 relation PP(int x).
+UTPre@f fpreXXX(int x).
+UTPost@f fpostXXX(int x).
 
 infer [PP] false |- PP(x).
+print residue.
+
+infer [fpostXXX] false |- fpostXXX(x).
+print residue.
+
+infer [@term] false |- fpostXXX(x).
 print residue.
 
 /*

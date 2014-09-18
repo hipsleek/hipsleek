@@ -8644,8 +8644,8 @@ think it is used to instantiate when folding.
   es_infer_post : bool; 
   (*input vars where inference expected*)
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
-  es_infer_vars : CP.spec_var list; 
-  es_infer_vars_rel : CP.spec_var list;
+  es_infer_vars : CP.spec_var list;  (* for first-order object *)
+  es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;

@@ -3613,7 +3613,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
     if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
       let false_es = CF.get_false_entail_state ctx in
-      let _ = Debug.binfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula)  conseq no_pos in
+      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula)  conseq no_pos in
       let rhs = get_pure_conseq_from_struc conseq in
       let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
       let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in

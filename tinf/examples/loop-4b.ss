@@ -5,10 +5,10 @@ void loop ()
 void f (int x)
   infer [@term]
   requires true
-  ensures true;
+  ensures x>1234;
 {
     loop();
-    f(x + 1);
+    f(x+222);
 }
 
 /*
