@@ -1,0 +1,37 @@
+
+//(1)
+checkentail x=5 & flow __norm |- x>0 & flow __norm.
+print residue.
+
+checkentail x=0 & flow __norm |- x>0 & flow __norm.
+print residue.
+
+checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]
+// should be MayError
+
+//(4)
+checkentail x=5 & flow __norm |- 
+   case {
+    x>0 -> [] emp & flow __norm;
+    x<=0 -> [] emp & flow __Error;
+   }.
+print residue.
+
+
+checkentail x=0 & flow __norm |- 
+   case {
+    x>0 -> [] emp & flow __norm;
+    x<=0 -> [] emp & flow __Error;
+   }.
+print residue.
+//Entail 5: Fail.(must) cause:empty states
+
+checkentail -1<=x & x<=6 & flow __norm |- 
+   case {
+    x>0 -> [] emp & flow __norm;
+    x<=0 -> [] emp & flow __Error;
+   }.
+print residue.
+//Entail 6: Fail.(must) cause:empty states
