@@ -14,19 +14,12 @@ void f (int x)
 /*
 # loop-4b.ss
 
+What happen to the other two cases?
+Where is the false pre-state..
+
 Missing cases for pre of f & post of f.
 
  termAssume x'=x & fpre_0(x) --> Loop.
-
-
-Exception Failure("not support") Occurred!
-(Program not linked with -g, cannot print stack backtrace)
-
-Error(s) detected when checking procedure f$int
-
-!!! proc.proc_name:f$int
-
-!!! Termination Inference is not performed due to errors in verification process.
 
 
 */
