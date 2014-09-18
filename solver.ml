@@ -4932,9 +4932,9 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
     else ctx
     in
     (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
-    (* if (isAnyFalseCtx ctx)  then (\* check this first so that false => false is true (with false residual) *\) *)
-    (*   (SuccCtx [ctx], UnsatAnte) *)
-    (* else  *)
+    if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
+      (SuccCtx [ctx], UnsatAnte)
+    else
     if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
     else 
       (* UNSAT check *)
@@ -4946,9 +4946,9 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
           else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
       in
       (* WN : this has been checked earlier! *)
-      (* if isAnyFalseCtx ctx then *)
-      (*   (SuccCtx [ctx], UnsatAnte) *)
-      (* else *)
+      if isAnyFalseCtx ctx then
+        (SuccCtx [ctx], UnsatAnte)
+      else
         heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
