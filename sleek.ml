@@ -217,12 +217,12 @@ let parse_file (parse) (source_file : string) =
       | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
       | CheckNorm f -> process_check_norm f
-      | EqCheck (lv, if1, if2) -> 
+      | EqCheck (lv, if1, if2) ->
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())	
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())
       | CaptureResidue lvar -> process_capture_residue lvar
-      | PrintCmd pcmd -> 
+      | PrintCmd pcmd ->
             let _ = Debug.ninfo_pprint "at print" no_pos in
             process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd

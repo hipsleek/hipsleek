@@ -263,11 +263,11 @@ let finalize () =
   call_trel_stk # reset;
   Hashtbl.reset proc_case_specs
 
-(* Main Inference Function *)  
-let solve no_verification_errors should_infer_tnt prog = 
+(* Main Inference Function *)
+let solve no_verification_errors should_infer_tnt prog =
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
-  
+
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then ()

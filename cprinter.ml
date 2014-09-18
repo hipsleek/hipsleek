@@ -2932,9 +2932,10 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       formula_inf_xpost = postxf;
       formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
-          let ps = if (lvars==[] && postf) then "@post " else "" in
+          (* let ps = if (lvars==[] && postf) then "@post " else "" in *)
           (* let ps = ps ^ (if itnt then "@term " else "") in *)
-          let ps = ps ^ (inf_o # string_of_raw) in
+          (* let ps = ps ^ (inf_o # string_of_raw) in *)
+          let ps = (inf_o # string_of_raw) in
       fmt_open_vbox 2;
       fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();

@@ -33,7 +33,7 @@ module TP = Tpdispatcher
 module LO = Label_only.LOne
 (* module ME = Musterr *)
 
-let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed) 
+let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed)
 
 (*used for classic*)
 let rhs_rest_emp = ref true
@@ -3582,7 +3582,7 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc p i1 hp cl) cs tid delayed_f join_id pos pid
 
 and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
-  Debug.no_4 "heap_entail_one_context_struc" 
+  Debug.no_4 "heap_entail_one_context_struc"
       Cprinter.string_of_struc_formula
       Cprinter.string_of_context
       (add_str "is_folding" string_of_bool)
@@ -3592,11 +3592,38 @@ and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delay
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-    if isAnyFalseCtx ctx then
-      (*set context as bot*)
+    let get_pure_conseq_from_formula f =
+      let _,p,_,_,_ = CF.split_components f in
+      p
+    in
+    let get_pure_conseq_from_struc sf =
+      match sf with
+        | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
+        | _ -> failwith "not support"
+    in
+    let is_not_infer_false_unknown =
+      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let ctx_infer_vars_rel = CF.collect_infer_vars_rel ctx in
+      let _ = Debug.ninfo_hprint (add_str "ctx_infer_vars_rel" !CP.print_svl) ctx_infer_vars_rel no_pos in
+      let conseq_vars = CF.struc_fv conseq in
+      let _ = Debug.ninfo_hprint (add_str "conseq_vars" !CP.print_svl) conseq_vars no_pos in
+      not (List.exists (fun v -> List.mem v ctx_infer_vars_rel) conseq_vars)
+    in
+    let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
+    if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+      let false_es = CF.get_false_entail_state ctx in
+      let rhs = get_pure_conseq_from_struc conseq in
+      let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
+      let es,_,_,_,_ = ans in
+      (* set context as bot *)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
       (* why change to false_flow_int? *)
-      let bot_ctx = ctx in
+      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context_short) ctx no_pos in
+      (* let bot_ctx = ctx in *)
+      let bot_ctx = CF.Ctx es in
+      let _ = Debug.ninfo_hprint (add_str "bot_ctx" Cprinter.string_of_context_short) bot_ctx no_pos in
       (* check this first so that false => false is true (with false residual) *)
       ((SuccCtx [bot_ctx]), UnsatAnte)
     else(* if isConstFalse conseq then
@@ -3606,10 +3633,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         (*In case join_id = Some id, we need to "delay and check" *)
         ((SuccCtx [ctx]), TrueConseq)
       else
-        (*let ctx = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
-          if isAnyFalseCtx ctx then
-          ([false_ctx pos], UnsatAnte)
-          else*)
+        (* let ctx = (\*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *\) (\*elim_unsat_ctx prog *\)ctx in *)
+        (*   if isAnyFalseCtx ctx then *)
+        (*   ([false_ctx pos], UnsatAnte) *)
+        (*   else *)
         let result, prf = heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
         let result = subs_crt_holes_list_ctx result in
         let result = if !Globals.en_norm_ctx then Norm.merge_contexts result else result in
@@ -4904,9 +4931,11 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
 	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx
     else ctx
     in
-    if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
+    (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
+    if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
-    else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
+    else
+    if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
     else 
       (* UNSAT check *)
       let ctx =
@@ -4916,6 +4945,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : c
           then ctx
           else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
       in
+      (* WN : this has been checked earlier! *)
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
@@ -6934,9 +6964,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       else p1
                     in
                     (*******************)
-                    if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then
-                      (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
-                    else
+                    (* WN : another false to remove *)
+                    (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
+                    (*   (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte) *)
+                    (* else *)
                       if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then (
                       Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                       ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;

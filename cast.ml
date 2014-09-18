@@ -196,7 +196,7 @@ and proc_decl = {
     proc_flags : (ident*ident*(flags option)) list;
     mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     (* WN : warning below is being supecedd by proc_stk_of_static_specs *)
-    proc_static_specs : Cformula.struc_formula;
+    mutable proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
     (* this puts invariant of pre into the post-condition *)
     proc_dynamic_specs : Cformula.struc_formula;
