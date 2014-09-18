@@ -1047,7 +1047,9 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
   let eh_ctx = mkAnd ctx cond in
-  if not (is_sat eh_ctx) then NT_Yes (* NT_No [] *) (* No result for infeasible context *)
+  if not (is_sat eh_ctx) then 
+    NT_Yes (* Everything is satisfied by false *) 
+    (* NT_No [] (* No result for infeasible context *) *)
   else
     (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
     (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
