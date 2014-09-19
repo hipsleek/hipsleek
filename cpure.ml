@@ -9527,22 +9527,18 @@ let sid_of_term_ann ann =
   | TermU uid -> uid.tu_sid
   | TermR uid -> uid.tu_sid
 
-let get_rel_id (f:formula)
-      = match f with
-        | BForm (bf,_) ->
-              (match bf with
-                | (RelForm(id,_,_),_) -> Some id
-                | (XPure(_),_) -> failwith "XPure"
-                | (LexVar li,_) ->
-                      let la = li.lex_ann in
-                      let id = sid_of_term_ann la in
-                       Some (mk_spec_var id)
-                | (VarPerm (_),_) -> failwith "VarPerm"
-                | _ -> None)
-        | _ -> None
-
-let get_rel_id (f:formula) =
-      Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f
+      (* = match f with *)
+      (*   | BForm (bf,_) -> *)
+      (*         (match bf with *)
+      (*           | (RelForm(id,_,_),_) -> Some id *)
+      (*           | (XPure(_),_) -> failwith "XPure" *)
+      (*           | (LexVar li,_) -> *)
+      (*                 let la = li.lex_ann in *)
+      (*                 let id = sid_of_term_ann la in *)
+      (*                  Some (mk_spec_var id) *)
+      (*           | (VarPerm (_),_) -> failwith "VarPerm" *)
+      (*           | _ -> None) *)
+      (*   | _ -> None *)
 
 let get_relargs_opt (f:formula)
       = match f with
@@ -9583,6 +9579,15 @@ let get_rel_id_list (f:formula) = match f with
     | (VarPerm (_),_) -> failwith "VarPerm"
     | _ -> [])
   | _ -> []
+
+let get_rel_id (f:formula)
+      = let lst = get_rel_id_list f in
+      match lst with
+        | [] -> None
+        | id::_ -> Some id
+
+let get_rel_id (f:formula) =
+      Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f 
 
 let mk_varperm_p typ ls pos =
   if (ls==[]) then (mkTrue_p pos)

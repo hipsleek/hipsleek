@@ -18,7 +18,14 @@ void f(int x, int y)
 
 /*
 
-  infer [@term]
+# ex-2.ss
+ (i) can we have a better pretty-printer?
+ (ii) can we do [@term,@post] now?
+ (iii) how come post(..) is being inferred
+       for one case but not another.
+
+
+infer [@term]
   case {
     x < 0 -> requires Term ensures true;
     x >= 0 -> requires true ensures true;
