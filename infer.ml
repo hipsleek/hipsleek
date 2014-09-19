@@ -1794,7 +1794,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       (rels, others))
       (CP.list_of_disjs rhs_p)
     in
-    let _ = Debug.binfo_hprint (add_str "pairs" (pr_list (pr_pair (pr_list Cprinter.string_of_pure_formula) (pr_list Cprinter.string_of_pure_formula)))) pairs no_pos in
+    let _ = Debug.ninfo_hprint (add_str "pairs" (pr_list (pr_pair (pr_list Cprinter.string_of_pure_formula) (pr_list Cprinter.string_of_pure_formula)))) pairs no_pos in
     let rel_rhs_ls, other_rhs_ls = List.split pairs in
     let rel_rhs = List.concat rel_rhs_ls in
     let other_rhs = List.concat other_rhs_ls in

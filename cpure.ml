@@ -8887,7 +8887,7 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Forall (sv, f, lbl, l) -> Forall (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Exists (sv, f, lbl, l) -> Exists (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
-		
+
 (* Slicing: Substitute vars bound by EX by fresh vars in LHS *)
 let rec elim_exists_with_fresh_vars f =
   match f with
@@ -9533,10 +9533,10 @@ let get_rel_id (f:formula)
               (match bf with
                 | (RelForm(id,_,_),_) -> Some id
                 | (XPure(_),_) -> failwith "XPure"
-                | (LexVar li,_) -> 
+                | (LexVar li,_) ->
                       let la = li.lex_ann in
                       let id = sid_of_term_ann la in
-                       Some (mk_spec_var ("X"^id^li.lex_fid))
+                       Some (mk_spec_var id)
                 | (VarPerm (_),_) -> failwith "VarPerm"
                 | _ -> None)
         | _ -> None

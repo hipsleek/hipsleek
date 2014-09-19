@@ -986,7 +986,7 @@ let rec pr_b_formula (e:P.b_formula) =
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
           (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
-    | P.EqMin (e1, e2, e3, l) ->   
+    | P.EqMin (e1, e2, e3, l) ->
           let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
@@ -996,7 +996,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
     | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
     | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
-    | P.VarPerm (t,ls,l) -> 
+    | P.VarPerm (t,ls,l) ->
         fmt_string (string_of_vp_ann t); fmt_string ("[");
         fmt_string (string_of_spec_var_list ls); fmt_string ("]")
     | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
@@ -2870,8 +2870,8 @@ let rec string_of_inf_cmd_list il =
 
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
-let string_of_infer_list il vl = 
-  "[" ^ (string_of_inf_cmd_list il) ^ " " ^  
+let string_of_infer_list il vl =
+  "[" ^ (string_of_inf_cmd_list il) ^ " " ^
   (string_of_spec_var_list_noparen vl) ^ "]"
 
 let rec pr_struc_formula  (e:struc_formula) = match e with
