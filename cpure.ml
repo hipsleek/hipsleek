@@ -9513,13 +9513,36 @@ let rec get_Rank pf = match pf with
   | Forall (_,f,_,_) -> get_Rank f
   | Exists (_,f,_,_) -> get_Rank f
 
+let term_id = 1
+let loop_id = 2
+let mayLoop_id = 3 
+let termErr_id = 4
+
+let sid_of_term_ann ann = 
+  match ann with
+  | Term -> string_of_int term_id
+  | Loop -> string_of_int loop_id
+  | MayLoop -> string_of_int mayLoop_id
+  | Fail _ -> string_of_int termErr_id
+  | TermU uid -> uid.tu_sid
+  | TermR uid -> uid.tu_sid
+
 let get_rel_id (f:formula)
       = match f with
         | BForm (bf,_) ->
               (match bf with
                 | (RelForm(id,_,_),_) -> Some id
+                | (XPure(_),_) -> failwith "XPure"
+                | (LexVar li,_) -> 
+                      let la = li.lex_ann in
+                      let id = sid_of_term_ann la in
+                       Some (mk_spec_var ("X"^id^li.lex_fid))
+                | (VarPerm (_),_) -> failwith "VarPerm"
                 | _ -> None)
         | _ -> None
+
+let get_rel_id (f:formula) =
+      Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f
 
 let get_relargs_opt (f:formula)
       = match f with
@@ -13608,10 +13631,6 @@ let is_unknown_term_ann ann =
     end
   | _ -> false
 
-let term_id = 1
-let loop_id = 2
-let mayLoop_id = 3 
-let termErr_id = 4
 
 let id_of_term_ann ann = 
   match ann with
