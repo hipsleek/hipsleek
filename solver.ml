@@ -2600,7 +2600,16 @@ and entail_state_elim_exists_x es =
   *)
   Debug.tinfo_hprint (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos;
   Debug.tinfo_hprint (add_str "f(after elim_exists_es_his)" pr_f) f_prim no_pos;
-  let f = elim_exists_exp f_prim in
+  let f =
+    (* TNT: Do not eliminate exists when doing TNT inference *)
+    if es.es_infer_obj # is_term then
+      let tuid_fv = collect_term_ann_fv f_prim in
+      let ex_tuid_fv = Gen.BList.difference_eq CP.eq_spec_var tuid_fv (fv f_prim) in
+      let nf = pop_exists ex_tuid_fv f_prim in
+      let elim_ex_nf = elim_exists_exp nf in
+      push_exists ex_tuid_fv elim_ex_nf
+    else elim_exists_exp f_prim 
+  in
   (*let _ = print_string("f :" ^ (Cprinter.string_of_formula f) ^ "\n") in*)
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
@@ -2614,13 +2623,13 @@ and entail_state_elim_exists_x es =
       es_history = new_his;
       (* es_subst_ref = n_ss_ref; *)
   }   (*assuming no change in cache formula*)
-
+  
 and entail_state_elim_exists es =
   let pr1 = Cprinter.string_of_formula in
   let pr2 es = pr1 es.CF.es_formula in
   let pr3 = Cprinter.string_of_context in
   Debug.no_1 "entail_state_elim_exists" pr2 pr3
-      (fun _ -> entail_state_elim_exists_x es) es
+    (fun _ -> entail_state_elim_exists_x es) es
 
 and elim_exists_ctx_list (ctx0 : list_context) = 
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0
