@@ -9575,6 +9575,12 @@ let get_rel_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (RelForm(id,_,_),_) -> [id]
+    | (XPure(_),_) -> failwith "XPure"
+    | (LexVar li,_) ->
+          let la = li.lex_ann in
+          let id = sid_of_term_ann la in
+          [mk_spec_var id]
+    | (VarPerm (_),_) -> failwith "VarPerm"
     | _ -> [])
   | _ -> []
 
