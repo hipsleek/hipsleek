@@ -1,4 +1,5 @@
 int fact(int x)
+ infer [@post_n]
  case {
   x=0 -> ensures res=1;
   x>0 -> ensures res>=1;
@@ -9,30 +10,22 @@ int fact(int x)
   else return 1 + fact(x - 1);
 }
 /*
-# fact-case2.ss --pcp
+# fact-case2.ss 
 
-EList removed
+ infer [@post_n]
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
 
-        x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[]
-                       EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
-                               EAssume 
-                                 hfalse&false&{FLOW,(24,25)=__norm}[]
+Why isn't post-inference working?
+I did  a --dd, it showed @post present but I cannot
+see the post-inference outcome.
 
-why EList? Why missing ensures false?
+Procedure fact$int SUCCESS.
 
-static  EList :ECase case {
-               x=0 -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
-                                     EAssume 
-                                       emp&res=1&{FLOW,(24,25)=__norm}[]
-                                       
-               ;
-               0<x -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
-                                     EAssume 
-                                       emp&1<=res&{FLOW,(24,25)=__norm}[]
-                                       
-               ;
-               x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
-               }
+Termination checking result: SUCCESS
 
 
 */
