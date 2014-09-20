@@ -192,3 +192,4 @@ let solve (prog : prog_decl) (scc : proc_decl list) =
       print_endline (Cprinter.string_of_struc_formula_for_spec new_spec);
   ) (List.combine scc new_specs) in
   ()
+
