@@ -377,6 +377,49 @@ chinwn@loris-7:~/hg/sl_post/post$ fixcalc fc-mut.inf
 ((n >= 1 && n = res) || (0 >= n && 0 = res))
 # Total CPU time: 0.047587 seconds
 =======================================================
+# loop2.slk  (FIXED)
+
+# -dre "is_rel_in_vars"
+
+is_rel_in_vars@2
+is_rel_in_vars inp1 :[PP,fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : PP(x)
+is_rel_in_vars@2 EXIT:true
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : fpostXXX_0(x)[]
+is_rel_in_vars@3 EXIT:false
+
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+[Warning] False ctx
+
+is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX,fpreXXX]
+is_rel_in_vars inp2 : fpostXXX_0(x)[]
+is_rel_in_vars@3 EXIT:false
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
 =======================================================
 =======================================================
 =======================================================

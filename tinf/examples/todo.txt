@@ -422,7 +422,32 @@ static  EList :ECase case {
                }
 
 ===================================================
+# loop2.slk
+
+infer [PP] false |- PP(x).
+print residue.
+
+Since we desire the strongest post,
+I think we need to pick
+
+  false --> PP(x)
+
+
+Could we change our entailment to accommodate this?
 ===================================================
+#loop-4b.ss should also generate:
+  false --> fpost_1122(x
+  false --> fpre_0(v_int_11_1124')
+
+Below is correct for loop-4a.ss
+
+termAssume x'=x & fpost_1122(1+x') --> fpost_1122(x).
+
+ termAssume x'=x & v_int_11_1124'=1+
+x' & fpre_0(x) --> fpre_0(v_int_11_1124').
+
+ termAssume x'=x & fpre_0(x) --> Loop.
+
 ===================================================
 ===================================================
 ===================================================

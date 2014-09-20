@@ -212,37 +212,38 @@ let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
   let cases = List.map (case_spec_of_trrel_sol call_num) sols in
   Hashtbl.add proc_case_specs fn (Cases cases)
   
-let rec update_case_spec spec cond f = 
+let rec update_case_spec spec cond sol = 
   match spec with
   | Sol _ -> spec
-  | Unknown -> f spec
+  | Unknown -> sol
   | Cases cases -> 
     let rec helper cases =
       match cases with
       | [] -> cases
       | (c, case)::rem ->
-        if imply cond c then (c, (update_case_spec case cond f))::rem
+        if imply cond c then (c, (update_case_spec case cond sol))::rem
         else (c, case)::(helper rem)
     in Cases (helper cases)
     
-let update_case_spec_proc fn cond f = 
+let update_case_spec_proc fn cond sol = 
   try
     let spec = Hashtbl.find proc_case_specs fn in
-    let nspec = update_case_spec spec cond f in
+    let nspec = update_case_spec spec cond sol in
     Hashtbl.replace proc_case_specs fn nspec
-  with _ -> () 
+  with Not_found ->
+    Hashtbl.add proc_case_specs fn sol
   
 let add_sol_case_spec_proc fn cond sol = 
-  update_case_spec_proc fn cond (fun _ -> Sol sol)
+  update_case_spec_proc fn cond (Sol sol)
   
 let update_case_spec_with_icond_proc fn cond icond = 
-  update_case_spec_proc fn cond (fun _ -> 
-    Cases [(icond, Unknown); (mkNot icond, Unknown)])
+  update_case_spec_proc fn cond 
+    (Cases [(icond, Unknown); (mkNot icond, Unknown)])
     
 let update_case_spec_with_icond_list_proc fn cond icond_lst =
   if is_empty icond_lst then ()
-  else update_case_spec_proc fn cond (fun _ -> 
-    Cases (List.map (fun c -> (c, Unknown)) icond_lst))
+  else update_case_spec_proc fn cond 
+    (Cases (List.map (fun c -> (c, Unknown)) icond_lst))
 
 let rec merge_cases_tnt_case_spec spec = 
   match spec with
@@ -619,7 +620,7 @@ let update_trel f_ann rel =
   
 let edges_of_scc_vertex g scc s =
   let succ = TG.succ g s in
-  (* Filter destinations which are outside scc *)
+  (* Remove destinations which are outside scc *)
   let succ_scc = List.filter (fun d -> List.mem d scc) succ in
   List.concat (List.map (fun d -> TG.find_all_edges g s d) succ_scc)
 
@@ -660,6 +661,26 @@ let find_scc_edges g scc =
     List.concat (List.map (fun d -> TG.find_all_edges g s d) scc_succ)
   in
   List.concat (List.map (fun v -> find_edges_vertex v) scc)
+  
+let get_term_ann_vertex g v =
+  let edges_from_v = TG.succ_e g v in
+  match edges_from_v with
+  | [] ->
+    let edges_to_v = TG.pred_e g v in
+    begin match edges_to_v with
+    | [] -> None
+    | (_, rel, _)::_ -> Some (rel.termu_rhs)
+    end
+  | (_, rel, _)::_ -> Some (rel.termu_lhs) 
+
+let is_unknown_vertex g v =
+  let ann_of_v = get_term_ann_vertex g v in
+  match ann_of_v with
+  | None -> false
+  | Some ann -> CP.is_unknown_term_ann ann
+
+let is_unknown_scc g scc =
+  List.exists (fun v -> is_unknown_vertex g v) scc
   
 (* End of TNT Graph *)
 
@@ -1021,12 +1042,32 @@ let search_rec_icond_ann lhs_uids ann =
   let icond = uid.CP.tu_icond in
   subst_cond_with_ann params ann icond 
 
+(* Remove all constraints added from case specs *)    
+let elim_irrel_formula irrel_vars_lst f =
+  let is_irrel_f irrel_vars_lst f =
+    let fv = CP.fv f in
+    List.exists (fun irrel_vars -> subset fv irrel_vars) irrel_vars_lst
+  in
+  let fs = CP.split_conjunctions f in
+  let rel_fs = List.filter (fun f -> not (is_irrel_f irrel_vars_lst f)) fs in
+  CP.join_conjunctions rel_fs
+  
+let elim_irrel_formula irrel_vars_lst f =
+  let pr1 = pr_list !CP.print_svl in
+  let pr2 = !CP.print_formula in
+  Debug.no_2 "elim_irrel_formula" pr1 pr2 pr2 
+    elim_irrel_formula irrel_vars_lst f
+
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let fn = rhs_uid.CP.tu_fname in
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
+  let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in
+  let ctx = elim_irrel_formula irrel_vars_lst ctx in
   let eh_ctx = mkAnd ctx cond in
-  if not (is_sat eh_ctx) then NT_Yes (* NT_No [] *) (* No result for infeasible context *)
+  if not (is_sat eh_ctx) then 
+    NT_Yes (* Everything is satisfied by false *) 
+    (* NT_No [] (* No result for infeasible context *) *)
   else
     (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
     (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
