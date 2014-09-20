@@ -1,5 +1,5 @@
 int fact(int x)
-//infer [@post_n]
+ infer [@post_n]
  case {
   x=0 -> ensures res=1;
   x>0 -> ensures res>=1;
@@ -10,8 +10,7 @@ int fact(int x)
   else return 1 + fact(x - 1);
 }
 /*
-# fact-case2.ss 
-
+# fact-case2a.ss 
  infer [@post_n]
  case {
   x=0 -> ensures res=1;
@@ -20,7 +19,7 @@ int fact(int x)
 }
 
 Problems
-(1) why is there a failure for @post_n?
+(1) why is there a failure for @post_n? (see fact-case2a.ss)
 (2) Why is there post-inference when we omit post_n
     (see fact-case2.ss)
 
