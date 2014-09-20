@@ -1,0 +1,1 @@
+cp result/out.$1 ref/out.$1

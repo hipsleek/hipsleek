@@ -1,0 +1,1 @@
+../hip $1.ss > result/out.$1
