@@ -2849,7 +2849,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (*   | _ -> sf *)
                       (* in *)
                       (* Long: end TODO here *)
-                      let new_spec = Pi.is_infer_post prog proc (proc.proc_stk_of_static_specs # top) in
+                      let spec = proc.proc_stk_of_static_specs # top in
+                      let new_spec = Pi.is_infer_post prog proc spec in
                       let _ = proc.proc_stk_of_static_specs # push new_spec in
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_stk_of_static_specs # top) body true in
                       (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
@@ -3410,7 +3411,7 @@ let check_proc_wrapper_map iprog prog (proc,num) cout_option =
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
-      raise e 
+      raise e
 
 let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
   try
@@ -3562,7 +3563,7 @@ let rec check_prog iprog (prog : prog_decl) =
       in
 
       (* Pure inference *)
-      let _ = Pi.solve prog scc in
+      let _ = Pi.infer_post prog scc in
 
       (* Reverify *)
       let _ = reverify_scc prog scc in
@@ -3588,7 +3589,7 @@ let rec check_prog iprog (prog : prog_decl) =
       in
       (* Only do inference when there are some unknowns in the specifications *)
       let should_infer_tnt = List.fold_left (fun acc proc ->
-        if not acc then CF.has_unknown_pre_lexvar_struc proc.Cast.proc_static_specs
+        if not acc then CF.has_unknown_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *)
         else acc) false scc in
       let _ = Ti.solve (is_all_verified2 && is_term_verified) should_infer_tnt prog in
       let prog = Ti2.update_specs_prog prog in

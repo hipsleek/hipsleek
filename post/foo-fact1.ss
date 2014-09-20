@@ -20,7 +20,7 @@ relation Uf(int n, int r).
 
 int fact(int x)
   infer [
-         //@term
+         @term,
          @post_n
  ]
   requires true ensures true;

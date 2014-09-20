@@ -21,6 +21,8 @@ module H = Hashtbl
 module LO2 = Label_only.Lab2_List
 
 let rec add_relation prog proc sf rel_name rel_type = match sf with
+  (* | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
+  (*       (lbl,add_relation prog proc sf rel_name rel_type)) el) *)
   | CF.EBase eb ->
         let cont = eb.CF.formula_struc_continuation in (
             match cont with
@@ -55,10 +57,11 @@ let rec is_infer_post prog proc sf = match sf with
           CF.EInfer {ei with
               CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name];
               CF.formula_inf_continuation = add_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type}
-        else sf
+        else
+          sf
   | _ -> sf
 
-let solve (prog : prog_decl) (scc : proc_decl list) =
+let infer_post (prog : prog_decl) (scc : proc_decl list) =
   let pr = !CP.print_formula in
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let rels = Infer.infer_rel_stk # get_stk in

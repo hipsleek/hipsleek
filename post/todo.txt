@@ -8,7 +8,7 @@ Please strengthen spec with an unknown post, e.g.
   requires true  ensures Upost1(x,res);
 Before inference.
 =======================================================
-# foo-fact.ss -infer "@term"
+# foo-fact.ss -infer "@term" (DONE)
 
 Need to consider how post and @term are inferred
 in sequence.
@@ -245,7 +245,7 @@ fact$int
  ensures emp & x=res-1 & 1<=res;
 
 =======================================================
-# post-2b.ss
+# post-2b.ss (DONE)
 
   infer [@post_n]
   requires true  ensures true;
@@ -321,7 +321,7 @@ static  ECase case {
                EAssume hfalse&false&{FLOW,(24,25)=__norm}[]
         }
 =======================================================
-# mut-rec1.ss
+# mut-rec1.ss (DONE)
 
 Please look at examples of mutual-recursive fixpoint
 in fixcalc. Please see how to invoke those commands.
@@ -346,7 +346,7 @@ n=v_int_39_1229+1) -->  Uf2(n,res)]
 !!! PROBLEM with fix-point calculation
 Procedure foo2$int FAIL.(2)
 =======================================================
-# mut-rec1.ss
+# mut-rec1.ss (DONE)
 
 Current system generated "fixcalc.inf":
 
