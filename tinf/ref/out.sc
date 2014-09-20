@@ -58,11 +58,5 @@ f:  case {
            }
   
   }
-Stop Omega... 49 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.060745,333)
-Total verification time: 0.446857 second(s)
-	Time spent in main process: 0.417493 second(s)
-	Time spent in child processes: 0.029364 second(s)
-

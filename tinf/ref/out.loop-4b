@@ -42,11 +42,5 @@ f:  requires emp & Loop[]
 
 Termination checking result: SUCCESS
 
-Stop Omega... 6 invocations 
+
 3 false contexts at: ( (11,4)  (11,8)  (11,6) )
-
-!!! log(small):(0.018086,158)
-Total verification time: 0.27218 second(s)
-	Time spent in main process: 0.25735 second(s)
-	Time spent in child processes: 0.01483 second(s)
-

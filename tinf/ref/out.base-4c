@@ -42,11 +42,5 @@ f:  requires emp & 0<(x+
    1<=x -> requires emp & Loop[]
  ensures false & false; 
    }
-Stop Omega... 14 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.031354,202)
-Total verification time: 0.29784 second(s)
-	Time spent in main process: 0.281569 second(s)
-	Time spent in child processes: 0.016271 second(s)
-

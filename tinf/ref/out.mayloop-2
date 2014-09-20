@@ -49,11 +49,5 @@ f:  case {
   1<=x -> requires emp & MayLoop[]
  ensures emp & true; 
   }
-Stop Omega... 55 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.07021,423)
-Total verification time: 0.483953 second(s)
-	Time spent in main process: 0.449196 second(s)
-	Time spent in child processes: 0.034757 second(s)
-

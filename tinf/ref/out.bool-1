@@ -52,11 +52,5 @@ f:  case {
   0<=x & b -> requires emp & Term[30,2,0+(1*x)]
  ensures emp & true; 
   }
-Stop Omega... 22 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.035488,246)
-Total verification time: 0.328637 second(s)
-	Time spent in main process: 0.309951 second(s)
-	Time spent in child processes: 0.018686 second(s)
-

@@ -23,11 +23,5 @@ f$int~int
 Checking procedure f$int~int... 
 Termination checking result: SUCCESS
 
-Stop Omega... 3 invocations 
+
 6 false contexts at: ( (16,12)  (17,7)  (17,20)  (17,18)  (17,16)  (17,14) )
-
-!!! log(small):(0.036288,212)
-Total verification time: 0.338397 second(s)
-	Time spent in main process: 0.324667 second(s)
-	Time spent in child processes: 0.01373 second(s)
-

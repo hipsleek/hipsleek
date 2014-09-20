@@ -19,12 +19,6 @@ RELDEFN post_1150: ( 0<=v_int_9_1186 & 1<=v_int_9_1192 & post_1150(v_int_9_1186,
 x=v_int_9_1186+1 & res=v_int_9_1192+1) -->  post_1150(x,res)]
 *************************************
 
-*************************************
-*******fixcalc of pure relation *******
-*************************************
-[( post_1150(x,res), x=res-1, true, true)]
-*************************************
-
 Post Inference result:
 fact$int
  requires emp & factpre_0(x)[29]
@@ -62,11 +56,5 @@ fact:  case {
   x<=(0-1) -> requires emp & Loop[]
  ensures false & false; 
   }
-Stop Omega... 34 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.047441,251)
-Total verification time: 0.358564 second(s)
-	Time spent in main process: 0.309951 second(s)
-	Time spent in child processes: 0.048613 second(s)
-

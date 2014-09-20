@@ -54,11 +54,5 @@ f:  case {
   1<=x -> requires emp & Loop[]
  ensures false & false; 
   }
-Stop Omega... 9 invocations 
+
 1 false contexts at: ( (9,4) )
-
-!!! log(small):(0.026089,184)
-Total verification time: 0.287811 second(s)
-	Time spent in main process: 0.272687 second(s)
-	Time spent in child processes: 0.015124 second(s)
-

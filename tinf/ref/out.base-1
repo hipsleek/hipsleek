@@ -45,11 +45,5 @@ Base/Rec Case Splitting:
 Termination Inference Result:
 f:  requires emp & MayLoop[]
  ensures emp & true;
-Stop Omega... 49 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.072278,382)
-Total verification time: 0.468589 second(s)
-	Time spent in main process: 0.435857 second(s)
-	Time spent in child processes: 0.032732 second(s)
-

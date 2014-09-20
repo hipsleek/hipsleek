@@ -38,11 +38,5 @@ fact$int
  ensures emp & x<=0; 
   }
 
-Checking procedure fact$int... Stop Omega... 1 invocations 
+Checking procedure fact$int... 
 2 false contexts at: ( (8,12)  (8,19) )
-
-!!! log(small):(0.034724,205)
-Total verification time: 0.304142 second(s)
-	Time spent in main process: 0.29034 second(s)
-	Time spent in child processes: 0.013802 second(s)
-

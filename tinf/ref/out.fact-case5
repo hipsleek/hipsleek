@@ -20,7 +20,7 @@ Message: the guards are not disjoint :  ECase case {
                    
         }
 
- Stop Omega... 0 invocations caught
+ caught
 (Program not linked with -g, cannot print stack backtrace)
 
 Exception occurred: Failure("the guards are not disjoint :  ECase case {\n        x=0 -> EAssume \n                 emp&res=1&{FLOW,(24,25)=__norm}[]\n                  ;\n        0<=x -> EAssume \n                  emp&1<=res&{FLOW,(24,25)=__norm}[]\n                   \n        }\n")

@@ -162,7 +162,7 @@ let infer_post (prog : prog_decl) (scc : proc_decl list) =
               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag;
         in
         Infer.fixcalc_rel_stk # push_list tuples;
-        if not(Infer.fixcalc_rel_stk # is_empty) then
+        if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then
           begin
             print_endline "\n*************************************";
             print_endline "*******fixcalc of pure relation *******";

@@ -34,11 +34,5 @@ Base/Rec Case Splitting:
 Termination Inference Result:
 f:  requires emp & 0<xrequires emp & Loop[]
  ensures false & false;
-Stop Omega... 5 invocations 
+
 1 false contexts at: ( (6,14) )
-
-!!! log(small):(0.021766,180)
-Total verification time: 0.279226 second(s)
-	Time spent in main process: 0.265051 second(s)
-	Time spent in child processes: 0.014175 second(s)
-

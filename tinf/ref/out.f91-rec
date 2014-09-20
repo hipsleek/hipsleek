@@ -6,8 +6,6 @@ Parsing file "examples/f91-rec.ss" by default parser...
 Starting Omega...oc
 Starting z3... 
 
-!!! >>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<
-!!! SCC:[f$int~int]
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!!Inferred Heap: []
 !!!Inferred Pure: [ (1+pv_1167)<=pv_1168]
@@ -26,8 +24,6 @@ f$int~int
   }
 
 Checking procedure f$int~int... 
-!!! >>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<
-!!! SCC:[f91$int]
 !!! >>>>>> HIP gather infer pre <<<<<<
 !!!Inferred Heap: []
 !!!Inferred Pure: [ (1+pv_1170)<=pv_1171]
@@ -48,11 +44,5 @@ f91$int
 Checking procedure f91$int... 
 Termination checking result: SUCCESS
 
-Stop Omega... 26 invocations 
+
 12 false contexts at: ( (25,13)  (26,7)  (26,24)  (26,22)  (26,18)  (26,14)  (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
-
-!!! log(small):(0.085678,379)
-Total verification time: 0.46769 second(s)
-	Time spent in main process: 0.44949 second(s)
-	Time spent in child processes: 0.0182 second(s)
-

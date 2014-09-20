@@ -50,11 +50,5 @@ Post Inference result:
 nondet$
  requires emp & Term[86]
  ensures emp & true;
-Stop Omega... 15 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.029732,230)
-Total verification time: 0.31462 second(s)
-	Time spent in main process: 0.298768 second(s)
-	Time spent in child processes: 0.015852 second(s)
-

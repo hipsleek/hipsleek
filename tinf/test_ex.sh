@@ -1,1 +1,1 @@
-$1 examples/$2.ss > result/out.$2
+$1 examples/$2.ss --print-min > result/out.$2

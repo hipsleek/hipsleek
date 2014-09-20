@@ -63,11 +63,5 @@ f91:  case {
 
 Termination checking result: SUCCESS
 
-Stop Omega... 21 invocations 
+
 5 false contexts at: ( (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
-
-!!! log(small):(0.045531,271)
-Total verification time: 0.361189 second(s)
-	Time spent in main process: 0.344396 second(s)
-	Time spent in child processes: 0.016793 second(s)
-

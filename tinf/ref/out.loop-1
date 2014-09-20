@@ -23,11 +23,5 @@ Checking procedure f$int...
 Termination checking result: 
 (0) (ERR: unexpected unsound Loop at return)
 
-Stop Omega... 2 invocations 
+
 0 false contexts at: ()
-
-!!! log(small):(0.018113,173)
-Total verification time: 0.272187 second(s)
-	Time spent in main process: 0.258839 second(s)
-	Time spent in child processes: 0.013348 second(s)
-
