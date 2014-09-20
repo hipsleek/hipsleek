@@ -4,8 +4,8 @@ int Ack(int m, int n)
   m<0 -> requires Loop ensures false;
   m>=0 -> 
    case {
-    n<0 -> requires MayLoop ensures false;
-    n>=0 -> requires Term[m,n] ensures true;
+    n<0 -> requires MayLoop ensures true;
+    n>=0 -> requires Term[m,n] ensures res>=0;
    }
   }
 { 

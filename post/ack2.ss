@@ -1,7 +1,7 @@
 int Ack(int m, int n)
 //infer [@term]
   requires Term[m,n]
- ensures true;
+  ensures true;
 { 
 	if (m==0) return n+1;
 	else if (n==0) {
