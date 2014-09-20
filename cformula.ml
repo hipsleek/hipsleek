@@ -4391,6 +4391,7 @@ let rec flatten_struc_formula sf =
                           else sf
                     | _ -> EBase {eb1 with formula_struc_continuation = Some new_cont_f}
       )
+    | EInfer ei -> flatten_struc_formula ei.formula_inf_continuation
     | _ -> sf
 
 let flatten_struc_formula sf =
@@ -14286,21 +14287,21 @@ let norm_lexvar_for_infer uid (f: formula): formula =
       let nann = match t_info.lex_ann with
       | MayLoop -> CP.mkUTPre uid
       | _ -> t_info.lex_ann in
-      let npf = LexVar { t_info with 
-        lex_ann = nann; 
-        lex_fid = uid.CP.tu_fname; 
+      let npf = LexVar { t_info with
+        lex_ann = nann;
+        lex_fid = uid.CP.tu_fname;
         lex_tmp = uid.CP.tu_args } in
       Some (npf, il)
     | _ -> Some bf
   in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f
-     
+
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
   match struc_f with
   | ECase ec -> ECase { ec with formula_case_branches = map_l_snd norm_f ec.formula_case_branches }
   | EBase eb ->
     let cont = eb.formula_struc_continuation in
-    if (has_lexvar_formula eb.formula_struc_base) then 
+    if (has_lexvar_formula eb.formula_struc_base) then
       if not is_tnt_inf then struc_f
       else
         let tpost = CP.mkUTPost uid in
