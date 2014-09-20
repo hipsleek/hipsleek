@@ -21,8 +21,8 @@ module H = Hashtbl
 module LO2 = Label_only.Lab2_List
 
 let rec add_relation prog proc sf rel_name rel_type = match sf with
-  (* | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
-  (*       (lbl,add_relation prog proc sf rel_name rel_type)) el) *)
+  | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+        (lbl,add_relation prog proc sf rel_name rel_type)) el)
   | CF.EBase eb ->
         let cont = eb.CF.formula_struc_continuation in (
             match cont with
@@ -44,22 +44,36 @@ let rec add_relation prog proc sf rel_name rel_type = match sf with
         CF.EAssume {ea with
             CF.formula_assume_simpl = new_f;
             CF.formula_assume_struc = new_struc_f}
+  | CF.EInfer ei ->
+        let rel_name = fresh_any_name "post" in
+        let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in
+        CF.EInfer {ei with
+            CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name];
+            CF.formula_inf_continuation = add_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type}
   | _ -> sf
 
-let rec is_infer_post prog proc sf = match sf with
-  | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
-        (lbl,is_infer_post prog proc sf)) el)
+let rec is_infer_post sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_infer_post sf) el
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
-        if (inf_obj # is_post) then
-          let rel_name = fresh_any_name "post" in
-          let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in
-          CF.EInfer {ei with
-              CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name];
-              CF.formula_inf_continuation = add_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type}
-        else
-          sf
-  | _ -> sf
+        (inf_obj # is_post)
+  | _ -> false
+
+(* let rec is_infer_post prog proc sf = match sf with *)
+(*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
+(*         (lbl,is_infer_post prog proc sf)) el) *)
+(*   | CF.EInfer ei -> *)
+(*         let inf_obj = ei.CF.formula_inf_obj in *)
+(*         if (inf_obj # is_post) then *)
+(*           let rel_name = fresh_any_name "post" in *)
+(*           let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in *)
+(*           CF.EInfer {ei with *)
+(*               CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]; *)
+(*               CF.formula_inf_continuation = add_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type} *)
+(*         else *)
+(*           sf *)
+(*   | _ -> sf *)
 
 let infer_post (prog : prog_decl) (scc : proc_decl list) =
   let pr = !CP.print_formula in

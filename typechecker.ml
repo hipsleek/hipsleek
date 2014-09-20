@@ -2850,7 +2850,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* in *)
                       (* Long: end TODO here *)
                       let spec = proc.proc_stk_of_static_specs # top in
-                      let new_spec = Pi.is_infer_post prog proc spec in
+                      let new_spec = if Pi.is_infer_post spec then Pi.add_relation prog proc spec "" UNK else spec in
                       let _ = proc.proc_stk_of_static_specs # push new_spec in
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_stk_of_static_specs # top) body true in
                       (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
