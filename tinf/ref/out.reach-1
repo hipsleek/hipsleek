@@ -1,0 +1,44 @@
+
+!!!Full processing file "examples/reach-1.ss"
+Parsing file "examples/reach-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Post Inference result:
+term$
+ requires emp & Term[28]
+ ensures emp & true;
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Post Inference result:
+f$int
+ requires emp & fpre_0(x)[29]
+ ensures emp & fpost_1122(x)[];
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'=x --> fpost_1122(x).
+
+
+Base/Rec Case Splitting:
+[	f: [[1] true@B]
+]
+Termination Inference Result:
+f:  requires emp & Term[29,1]
+ ensures emp & true;
+Stop Omega... 4 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.017445,158)
+Total verification time: 0.261845 second(s)
+	Time spent in main process: 0.247663 second(s)
+	Time spent in child processes: 0.014182 second(s)
+

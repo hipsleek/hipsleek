@@ -1,0 +1,33 @@
+
+!!!Full processing file "examples/loop-1.ss"
+Parsing file "examples/loop-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Post Inference result:
+f$int
+ requires emp & Loop[]
+ ensures emp & fpost_1122(x)[];
+
+Checking procedure f$int... 
+
+!!! Termination Inference is not performed due to errors in verification process.
+
+
+
+Termination checking result: 
+(0) (ERR: unexpected unsound Loop at return)
+
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.018113,173)
+Total verification time: 0.272187 second(s)
+	Time spent in main process: 0.258839 second(s)
+	Time spent in child processes: 0.013348 second(s)
+

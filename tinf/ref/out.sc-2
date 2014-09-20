@@ -1,0 +1,33 @@
+
+!!!Full processing file "examples/sc-2.ss"
+Parsing file "examples/sc-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Post Inference result:
+f$int~int
+ case {
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & 1<=x; 
+  x=0 -> requires emp & MayLoop[]
+ ensures emp & x=0; 
+  x<0 -> requires emp & MayLoop[]
+ ensures emp & x<0; 
+  }
+
+Checking procedure f$int~int... 
+Termination checking result: SUCCESS
+
+Stop Omega... 0 invocations 
+4 false contexts at: ( (24,16)  (24,9)  (24,7)  (23,14) )
+
+!!! log(small):(0.034092,211)
+Total verification time: 0.331372 second(s)
+	Time spent in main process: 0.318179 second(s)
+	Time spent in child processes: 0.013193 second(s)
+
