@@ -1271,6 +1271,8 @@ let infer_const_num = 0
 let infer_const = ref ""
 
 (* TNT Inference *)
+let tnt_verbosity = ref 1
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
@@ -1425,6 +1427,7 @@ let infer_const_obj = new inf_obj;;
 (* let set_infer_const s = *)
 
 let tnt_thres = ref 5
+let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false

@@ -283,6 +283,7 @@ let rec solve_turel_graph iter_num prog trrels tg =
 and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
   if iter_num < !Globals.tnt_thres then
     try
+      let _ = pr_im_case_specs iter_num in
       let tg = sub_graph_of_scc_list tg scc_list in
       (* let _ =                                                       *)
       (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)

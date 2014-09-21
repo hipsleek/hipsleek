@@ -507,6 +507,8 @@ let common_arguments = [
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
   ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
+  ("--tnt-verbose", Arg.Set_int Globals.tnt_verbosity,
+      "level of detail in termination inference printing 0-verbose 1-standard (default)");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
