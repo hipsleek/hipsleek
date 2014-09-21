@@ -9,11 +9,6 @@ Starting z3...
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
 
-Post Inference result:
-f$int
- requires emp & 0<x & fpre_0(x)[29]
- ensures emp & fpost_1123(x)[];
-
 Checking procedure f$int... 
 
 *****************************

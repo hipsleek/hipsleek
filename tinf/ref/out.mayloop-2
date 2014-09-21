@@ -6,18 +6,8 @@ Parsing file "examples/mayloop-2.ss" by default parser...
 Starting Omega...oc
 Starting z3... 
 
-Post Inference result:
-mayloop$
- requires emp & MayLoop[]
- ensures emp & true;
-
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
-
-Post Inference result:
-f$int
- requires emp & fpre_0(x)[31]
- ensures emp & fpost_1122(x)[];
 
 Checking procedure f$int... 
 

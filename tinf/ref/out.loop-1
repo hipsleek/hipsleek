@@ -9,11 +9,6 @@ Starting z3...
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
 
-Post Inference result:
-f$int
- requires emp & Loop[]
- ensures emp & fpost_1122(x)[];
-
 Checking procedure f$int... 
 
 !!! Termination Inference is not performed due to errors in verification process.

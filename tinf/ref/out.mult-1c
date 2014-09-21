@@ -9,11 +9,6 @@ Starting z3...
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
 
-Post Inference result:
-f$int
- requires emp & fpre_0(x)[30]
- ensures emp & fpost_1122(x)[];
-
 Checking procedure f$int... 
 
 *****************************
@@ -45,10 +40,5 @@ f:  case {
   0<=x -> requires emp & Loop[]
  ensures false & false; 
   }
-
-Post Inference result:
-nondet$
- requires emp & Term[86]
- ensures emp & true;
 
 0 false contexts at: ()

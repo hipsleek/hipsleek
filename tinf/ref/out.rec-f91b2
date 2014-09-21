@@ -9,17 +9,6 @@ Starting z3...
 Checking procedure f91$int... 
 Procedure f91$int SUCCESS.
 
-Post Inference result:
-f91$int
- case {
-  91<n -> requires emp & truerequires emp & f91pre_0(n)[29]
- ensures emp & res=n & 
-  f91post_1136(n)[] & 91<n; 
-  n<=91 -> requires emp & truerequires emp & f91pre_0(n)[29]
- ensures emp & n<=91 & 
-  res=91 & f91post_1137(n)[]; 
-  }
-
 Checking procedure f91$int... 
 
 *****************************
@@ -56,9 +45,9 @@ f91:  case {
   92<=n -> requires emp & Term[29,2]
  ensures emp & 91<n & res=n; 
   n=91 -> requires emp & Term[29,1]
- ensures emp & res=91 & n<=91; 
+ ensures emp & n<=91 & res=91; 
   n<=90 -> requires emp & Term[29,3,90+(-1*n)]
- ensures emp & res=91 & n<=91; 
+ ensures emp & n<=91 & res=91; 
   }
 
 Termination checking result: SUCCESS

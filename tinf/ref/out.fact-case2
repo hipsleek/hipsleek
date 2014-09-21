@@ -18,20 +18,8 @@ Warning: False precondition detected in procedure fact$int
 
 Procedure fact$int SUCCESS.
 
-Post Inference result:
-fact$int
- case {
-  x=0 -> requires emp & MayLoop[]
- ensures emp & res=1 & x=0; 
-  0<x -> requires emp & MayLoop[]
- ensures emp & 1<=res & 0<x; 
-  x<0 -> requires false & falserequires emp & MayLoop[]
- ensures false & false;
-  
-  }
-
 Checking procedure fact$int... 
 Termination checking result: SUCCESS
 
 
-8 false contexts at: ( (8,12)  (8,19)  (9,7)  (9,27)  (9,23)  (9,18)  (9,14)  (9,14) )
+8 false contexts at: ( (9,12)  (9,19)  (10,7)  (10,27)  (10,23)  (10,18)  (10,14)  (10,14) )

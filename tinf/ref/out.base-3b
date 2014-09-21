@@ -18,17 +18,6 @@ Warning: False precondition detected in procedure f$int
 
 Procedure f$int SUCCESS.
 
-Post Inference result:
-f$int
- case {
-  x<=0 -> requires false & falserequires emp & fpre_0(x)[29]
- ensures false & false;
-  
-  0<x -> requires emp & truerequires emp & fpre_0(x)[29]
- ensures emp & fpost_1125(x)[] & 
-  0<x; 
-  }
-
 Checking procedure f$int... 
 
 *****************************

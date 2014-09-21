@@ -29,14 +29,5 @@ Exception Failure("Post condition cannot be derived.") Occurred!
 Error(s) detected when checking procedure fact$int
 
 !!! proc.proc_name:fact$int
-Post Inference result:
-fact$int
- case {
-  0<x -> requires emp & MayLoop[]
- ensures emp & 1<=res & 0<x; 
-  x<=0 -> requires emp & truerequires emp & MayLoop[]
- ensures emp & x<=0; 
-  }
-
 Checking procedure fact$int... 
 2 false contexts at: ( (8,12)  (8,19) )

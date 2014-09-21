@@ -9,11 +9,6 @@ Starting z3...
 Checking procedure f$int~boolean... 
 Procedure f$int~boolean SUCCESS.
 
-Post Inference result:
-f$int~boolean
- requires emp & fpre_0(x,b)[30]
- ensures emp & fpost_1123(x,b)[];
-
 Checking procedure f$int~boolean... 
 
 *****************************

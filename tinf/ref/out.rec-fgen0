@@ -9,17 +9,6 @@ Starting z3...
 Checking procedure f$int~int... 
 Procedure f$int~int SUCCESS.
 
-Post Inference result:
-f$int~int
- case {
-  k<=n -> requires emp & Term[29]
- ensures emp & res=n & fpost_1138(n,k)[] & 
-  k<=n; 
-  n<k -> requires emp & Term[29,k-n]
- ensures emp & res=k & 
-  fpost_1139(n,k)[] & n<k; 
-  }
-
 Checking procedure f$int~int... 
 Termination checking result: SUCCESS
 

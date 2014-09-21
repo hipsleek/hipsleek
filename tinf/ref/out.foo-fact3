@@ -9,23 +9,9 @@ Starting z3...
 Checking procedure foo$int... 
 Procedure foo$int SUCCESS.
 
-Post Inference result:
-foo$int
- case {
-  0<n -> requires emp & Term[30]
- ensures emp & res=1+n & 0<n; 
-  n<=0 -> requires emp & Term[30]
- ensures emp & n<=0 & res+1=n; 
-  }
-
 Checking procedure foo$int... 
 Checking procedure fact$int... 
 Procedure fact$int SUCCESS.
-
-Post Inference result:
-fact$int
- requires emp & factpre_0(x)[31]
- ensures emp & factpost_1122(x)[];
 
 Checking procedure fact$int... 
 

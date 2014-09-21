@@ -14,24 +14,6 @@ Added : : 9<=x & x<=10
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
 
-Post Inference result:
-f$int
- case {
-  x<=0 -> requires emp & Term[32]
- ensures emp & x<=0 & fpost_1126(x)[]; 
-  0<x & 
-  x<=8 -> requires emp & truerequires emp & fpre_0(x)[32]
- ensures emp & x<=8 & 
-  fpost_1127(x)[] & 0<x; 
-  10<x -> requires emp & truerequires emp & fpre_0(x)[32]
- ensures emp & fpost_1128(x)[] & 
-  10<x; 
-  9<=x & 
-  x<=10 -> requires emp & truerequires emp & fpre_0(x)[32]
- ensures emp & x<=10 & 
-  fpost_1129(x)[] & 9<=x; 
-  }
-
 Checking procedure f$int... 
 
 *****************************
@@ -122,15 +104,15 @@ f:  case {
   x<=0 -> requires emp & Term[32]
  ensures emp & x<=0; 
   1<=x & x<=8 -> requires emp & Term[32,2,-1+(1*x)]
- ensures emp & 0<x & 
-  x<=8; 
+ ensures emp & x<=8 & 
+  0<x; 
   11<=x & x<=20 -> requires emp & MayLoop[]
  ensures emp & 10<x; 
   21<=x -> requires emp & Loop[]
  ensures false & false; 
   9<=x & x<=10 -> requires emp & Term[32,3,-9+(1*x)]
- ensures emp & 9<=x & 
-  x<=10; 
+ ensures emp & x<=10 & 
+  9<=x; 
   }
 
 Termination checking result: SUCCESS

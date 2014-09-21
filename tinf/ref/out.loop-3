@@ -6,18 +6,8 @@ Parsing file "examples/loop-3.ss" by default parser...
 Starting Omega...oc
 Starting z3... 
 
-Post Inference result:
-loop$
- requires emp & Loop[]
- ensures false & false;
-
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
-
-Post Inference result:
-f$int
- requires emp & fpre_0(x)[31]
- ensures emp & fpost_1122(x)[];
 
 Checking procedure f$int... 
 

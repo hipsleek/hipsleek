@@ -14,18 +14,6 @@ Added : : x<=(0-1)
 Checking procedure fact$int... 
 Procedure fact$int SUCCESS.
 
-Post Inference result:
-fact$int
- case {
-  0<=x -> requires emp & factpre_0(x)[29]
- ensures emp & 1<=res & 
-  factpost_1126(x)[] & 0<=x; 
-  x<=(0-
-  1) -> requires emp & truerequires emp & factpre_0(x)[29]
- ensures emp & factpost_1127(x)[] & 
-  x<=(0-1); 
-  }
-
 Checking procedure fact$int... 
 
 *****************************

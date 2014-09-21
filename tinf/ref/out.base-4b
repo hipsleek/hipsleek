@@ -6,18 +6,8 @@ Parsing file "examples/base-4b.ss" by default parser...
 Starting Omega...oc
 Starting z3... 
 
-Post Inference result:
-rand$
- requires emp & Term[28]
- ensures emp & true;
-
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
-
-Post Inference result:
-f$int
- requires emp & 0<x & fpre_0(x)[29]
- ensures emp & fpost_1123(x)[];
 
 Checking procedure f$int... 
 

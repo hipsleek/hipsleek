@@ -9,11 +9,6 @@ Starting z3...
 Checking procedure f91$int... 
 Procedure f91$int SUCCESS.
 
-Post Inference result:
-f91$int
- requires emp & f91pre_0(n)[29]
- ensures emp & f91post_1122(n)[];
-
 Checking procedure f91$int... 
 
 *****************************

@@ -12,16 +12,6 @@ Procedure g$int~int SUCCESS.
 Checking procedure f$int~int... 
 Procedure f$int~int SUCCESS.
 
-Post Inference result:
-g$int~int
- requires emp & gpre_0(x,y)[30]
- ensures emp & gpost_1123(x,y)[];
-
-Post Inference result:
-f$int~int
- requires emp & fpre_0(x,y)[30]
- ensures emp & fpost_1132(x,y)[];
-
 Checking procedure g$int~int... 
 Checking procedure f$int~int... 
 
