@@ -25,15 +25,14 @@ infer [@term]
 Base/Rec Case Splitting:
 [	Ack: [[4] m=0@B,[5] 1<=n & 1<=m@R,[6] n<=(0-1) & 1<=m@R,[7] m<=(0-1) & 1<=n@R,[8] n<=(0-1) & m<=(0-1)@R,[9] n=0 & 1<=m@R,[10] n=0 & m<=(0-1)@R]
 ]
-Termination Inference Result:
-Ack:  case {
-  m=0 -> requires emp & Term[3,1]
- ensures emp & true; 
-  ((m<=(0-1) & n<=(0-1)) | (0<=n & 1<=m) | (m<=(0-1) & 
-  0<=n)) -> requires emp & MayLoop[]
- ensures emp & true; 
-  n<=(0-1) & 1<=m -> requires emp & Loop[]
- ensures false & false; 
-  }
+
+// seems to take a very long time. Is it going into a Loop?
+// can we print some intermediate results?
+// can we have some upper bound cut-off?
+
+Base/Rec Case Splitting:
+[	Ack: [[4] m=0@B,[5] 1<=n & 1<=m@R,[6] n<=(0-1) & 1<=m@R,[7] m<=(0-1) & 1<=n@R,[8] n<=(0-1) & m<=(0-1)@R,[9] n=0 & 1<=m@R,[10] n=0 & m<=(0-1)@R]
+]
+
 */
 
