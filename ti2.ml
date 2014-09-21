@@ -682,6 +682,29 @@ let is_unknown_vertex g v =
 let is_unknown_scc g scc =
   List.exists (fun v -> is_unknown_vertex g v) scc
   
+let partition_scc_list tg scc_list = 
+  List.fold_left (fun scc_groups scc ->
+    let scc_succ = succ_scc_num tg scc in
+    if is_empty scc_succ then [scc]::scc_groups
+    else
+      let scc_groups, other_groups = List.partition (fun scc_group ->
+        List.exists (fun scc -> 
+          List.exists (fun v -> 
+            List.mem v scc_succ) scc) scc_group) scc_groups in
+      (scc::(List.concat scc_groups))::other_groups) [] scc_list 
+      
+let partition_scc_list tg scc_list = 
+  let pr = print_scc_list_num in
+  Debug.no_1 "partition_scc_list" pr (pr_list pr)
+    (fun _ -> partition_scc_list tg scc_list) scc_list
+
+(* Only keep vertices in scc_list *)        
+let sub_graph_of_scc_list tg scc_list =
+  let scc_vertex = List.concat scc_list in
+  TG.fold_vertex (fun v ntg -> 
+    if (List.mem v scc_vertex) then ntg
+    else TG.remove_vertex ntg v) tg tg
+  
 (* End of TNT Graph *)
 
 (* Template Utilies *)
