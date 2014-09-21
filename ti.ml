@@ -307,8 +307,8 @@ let solve_trel_init prog trrels turels =
   
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in
-  (* let _ = print_endline ("Initial Inst Assumption:\n" ^               *)
-  (*   (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in *)
+  let _ = print_endline ("Initial Inst Assumption:\n" ^
+    (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in
     
   let tg = graph_of_trels irels in
   let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in

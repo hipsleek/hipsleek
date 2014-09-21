@@ -685,13 +685,13 @@ let is_unknown_scc g scc =
 let partition_scc_list tg scc_list = 
   List.fold_left (fun scc_groups scc ->
     let scc_succ = succ_scc_num tg scc in
-    if is_empty scc_succ then [scc]::scc_groups
+    if is_empty scc_succ then scc_groups @ [[scc]]
     else
       let scc_groups, other_groups = List.partition (fun scc_group ->
         List.exists (fun scc -> 
           List.exists (fun v -> 
             List.mem v scc_succ) scc) scc_group) scc_groups in
-      (scc::(List.concat scc_groups))::other_groups) [] scc_list 
+      ((List.concat scc_groups) @ [scc])::other_groups) [] scc_list 
       
 let partition_scc_list tg scc_list = 
   let pr = print_scc_list_num in
@@ -723,14 +723,33 @@ let add_templ_assume ctx constr inf_templs =
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let es = { es with CF.es_infer_vars_templ = inf_templs } in
   Template.collect_templ_assume_init es ctx constr no_pos
-
+  
 let solve_templ_assume prog templ_decls inf_templs =
   let prog = { prog with Cast.prog_templ_decls = 
-    Gen.BList.remove_dups_eq Cast.eq_templ_decl 
-      (prog.Cast.prog_templ_decls @ templ_decls) } in
+    Gen.BList.remove_dups_eq Cast.eq_templ_decl (prog.Cast.prog_templ_decls @ templ_decls) } in
   let res, _, _ = Template.collect_and_solve_templ_assumes_common true prog 
     (List.map CP.name_of_spec_var inf_templs) in
   res
+
+let synthesize_rank_init prog should_simplify templ_decls inf_templs =
+  let prog = { prog with Cast.prog_templ_decls = 
+    Gen.BList.remove_dups_eq Cast.eq_templ_decl 
+      (prog.Cast.prog_templ_decls @ templ_decls) } in
+  let res, templ_assumes, templ_unks = 
+    Template.collect_and_solve_templ_assumes_common true prog inf_templs in
+  match res with
+  | Sat model ->
+    let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+    let rank_of_ann = fun ann ->
+      let rank_templ, _, _, _ = templ_of_term_ann ann in
+      let rank_exp = Tlutils.subst_model_to_exp should_simplify
+        sst (CP.exp_of_template_exp rank_templ) in
+      [rank_exp]
+    in Some rank_of_ann
+  | Unsat -> 
+    let _ = Terminf.infer_lex_template_init prog inf_templs templ_unks templ_assumes in
+    None
+  | _ -> None
 
 (* Ranking function synthesis *)
 let templ_rank_constr_of_rel rel =
@@ -746,22 +765,13 @@ let templ_rank_constr_of_rel rel =
   
 let infer_ranking_function_scc prog g scc =
   let scc_edges = find_scc_edges g scc in
-  (* let _ = print_endline (pr_list print_edge scc_edges) in *)
+  let _ = print_endline (pr_list (fun e -> (print_edge e) ^ "\n") scc_edges) in
   let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
     let id, decl = templ_rank_constr_of_rel rel in
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
-  let res = solve_templ_assume prog templ_decls inf_templs in
-  match res with
-  | Sat model ->
-    let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
-    let rank_of_ann = fun ann ->
-      let rank_templ, _, _, _ = templ_of_term_ann ann in
-      let rank_exp = Tlutils.subst_model_to_exp (List.length scc_edges <= 1) (* should_simplify *)
-        sst (CP.exp_of_template_exp rank_templ) in
-      [rank_exp]
-    in Some rank_of_ann
-  | _ -> None
+  let inf_templs = List.map CP.name_of_spec_var inf_templs in
+  synthesize_rank_init prog (List.length scc_edges <= 1) templ_decls inf_templs
 
 (* Abductive Inference *)
 let infer_abductive_cond prog ann ante conseq =
