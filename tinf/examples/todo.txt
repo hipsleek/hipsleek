@@ -493,7 +493,7 @@ Termination checking result: SUCCESS
 Problems
 (1) why is there a failure for @post_n? (see fact-case2a.ss)
 (2) Why is there post-inference when we omit post_n
-    (see fact-case2.ss)
+    (see fact-case2.ss) (FIXED)
 
 Checking procedure fact$int... 
 Procedure fact$int FAIL.(2)

@@ -1,4 +1,5 @@
 int fact(int x)
+  infer[@post_n]
  case {
   x=0 -> ensures res=1;
   x>0 -> ensures res>=1;
