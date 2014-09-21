@@ -3621,5 +3621,5 @@ let rec check_prog iprog (prog : prog_decl) =
   in ()
 
 let check_prog iprog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

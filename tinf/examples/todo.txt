@@ -450,7 +450,7 @@ x' & fpre_0(x) --> fpre_0(v_int_11_1124').
  termAssume x'=x & fpre_0(x) --> Loop.
 
 ===================================================
-# fact-case2.ss 
+# fact-case2.ss (DONE)
 
  infer [@post_n]
  case {
@@ -482,7 +482,7 @@ Procedure fact$int SUCCESS.
 Termination checking result: SUCCESS
 
 ===================================================
-# fact-case2a.ss 
+# fact-case2a.ss (DONE)
  infer [@post_n]
  case {
   x=0 -> ensures res=1;
@@ -491,7 +491,7 @@ Termination checking result: SUCCESS
 }
 
 Problems
-(1) why is there a failure for @post_n? (see fact-case2a.ss)
+(1) why is there a failure for @post_n? (see fact-case2a.ss) (FIXED)
 (2) Why is there post-inference when we omit post_n
     (see fact-case2.ss) (FIXED)
 

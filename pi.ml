@@ -50,7 +50,15 @@ let rec add_relation prog proc sf rel_name rel_type = match sf with
         CF.EInfer {ei with
             CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name];
             CF.formula_inf_continuation = add_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type}
-  | _ -> sf
+  | CF.ECase ec -> CF.ECase { ec with
+        CF.formula_case_branches = List.map (fun (pf,sf) ->
+          (pf,add_relation prog proc sf rel_name rel_type)
+        ) ec.CF.formula_case_branches
+    }
+
+let add_relation prog proc sf rel_name rel_type =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_relation" pr pr (fun _ -> add_relation prog proc sf rel_name rel_type) sf
 
 let rec is_infer_post sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
@@ -59,6 +67,10 @@ let rec is_infer_post sf = match sf with
         let inf_obj = ei.CF.formula_inf_obj in
         (inf_obj # is_post)
   | _ -> false
+
+let is_infer_post sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "is_infer_post" pr string_of_bool is_infer_post sf
 
 (* let rec is_infer_post prog proc sf = match sf with *)
 (*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
