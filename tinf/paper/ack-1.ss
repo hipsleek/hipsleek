@@ -46,3 +46,25 @@ int Ack(int m, int n)
     return Ack(m - 1, r);
   }
 }
+
+/*
+# ack-1.ss
+
+Ack:  requires emp & 0<=m & 0<=n
+case {
+     m=0 -> 
+       requires emp & Term[3]
+       ensures emp & 0<=res; 
+     (1<=m | m<=(0-1)) -> case {
+             m=0 & 0<=n -> 
+               requires false & false
+               ensures false & false; 
+             1<=n & 1<=m -> 
+               requires emp & Term[3,2,0+(1*m)+(0*n),0+(1*m)+(1n)]
+               ensures emp & 0<=res; 
+             n=0 & 1<=m -> 
+               requires emp & Term[3,2,0+(1*m)+(0*n),0+(1*m)+(1*n)]
+               ensures emp & 0<=res; 
+             }
+
+ */
