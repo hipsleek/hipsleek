@@ -1,0 +1,48 @@
+
+!!!Full processing file "examples/rec-f91b3.ss"
+Parsing file "examples/rec-f91b3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_32_1127' & n'<91 & n'=n & !(v_bool_31_1128') & n'<91 & 
+!(v_bool_31_1128') & v_int_32_1171=1+
+n' & f91post_1122(v_int_32_1171) & f91post_1122(v_int_32_1126') --> f91post_1122(n).
+
+ termAssume 91<=n' & n'=n & v_bool_31_1128' & 91<=n' & v_bool_31_1128' & 
+res=n' --> f91post_1122(n).
+
+ termAssume v_int_32_1171=1+n' & !(v_bool_31_1128') & n'<91 & 
+!(v_bool_31_1128') & n'=n & n'<91 & f91pre_0(n) --> f91pre_0(v_int_32_1126').
+
+ termAssume n'<91 & n'=n & !(v_bool_31_1128') & n'<91 & !(v_bool_31_1128') & 
+v_int_32_1125'=1+n' & f91pre_0(n) --> f91pre_0(v_int_32_1125').
+
+
+Base/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=90@R]
+]
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+  n<=90 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+Stop Omega... 63 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.164416,756)
+Total verification time: 1.304784 second(s)
+	Time spent in main process: 1.26802 second(s)
+	Time spent in child processes: 0.036764 second(s)
+

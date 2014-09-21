@@ -1,0 +1,149 @@
+
+!!!Full processing file "examples/mutual-5b3.ss"
+Parsing file "examples/mutual-5b3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/mutual-5b3.ss_11:0_16:3:WARNING : case construct has missing scenario
+Found : : (x<=0 | (0<x & x<=3) | (3<x & x<=8) | 10<x)
+Added : : 9<=x & x<=10
+
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_19_1138' & v_int_19_1486<=10 & 9<=v_int_19_1486 & 
+v_int_19_1486+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+0<x' & fpost_1132(v_int_19_1486) --> fpost_1132(x).
+
+ termAssume res=v_int_19_1138' & v_int_19_1485<=8 & 3<v_int_19_1485 & 
+v_int_19_1485+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+0<x' & fpost_1130(v_int_19_1485) --> fpost_1132(x).
+
+ termAssume res=v_int_22_1144' & !(v_bool_21_1145') & !(v_bool_21_1145') & 
+!(v_bool_20_1146') & x'<=20 & !(v_bool_20_1146') & x'<=20 & 
+!(v_bool_19_1147') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 10<x & 
+0<x' & fpost_1131(x') --> fpost_1131(x).
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+!(v_bool_19_1147') & x'<=20 & !(v_bool_20_1146') & x'<=20 & 
+!(v_bool_20_1146') & v_bool_21_1145' & v_bool_21_1145' & v_int_21_1143'=0 & 
+res=v_int_21_1143' --> fpost_1131(x).
+
+ termAssume res=v_int_20_1142' & 10<v_int_20_1417 & v_int_20_1417=1+x' & 
+v_bool_20_1146' & 20<x' & v_bool_20_1146' & 20<x' & !(v_bool_19_1147') & 
+10<x' & !(v_bool_19_1147') & 10<x' & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'=x & 10<x & 
+0<x' & fpost_1131(v_int_20_1417) --> fpost_1131(x).
+
+ termAssume res=v_int_19_1138' & v_int_19_1340<=8 & 3<v_int_19_1340 & 
+v_int_19_1340+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+0<x' & fpost_1130(v_int_19_1340) --> fpost_1130(x).
+
+ termAssume res=v_int_19_1138' & v_int_19_1339<=3 & 0<v_int_19_1339 & 
+v_int_19_1339+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+0<x' & fpost_1129(v_int_19_1339) --> fpost_1130(x).
+
+ termAssume res=v_int_19_1138' & v_int_19_1273<=3 & 0<v_int_19_1273 & 
+v_int_19_1273+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+!(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+0<x' & fpost_1129(v_int_19_1273) --> fpost_1129(x).
+
+ termAssume res=v_int_19_1138' & v_int_19_1272<=0 & v_int_19_1272+1=x' & 
+v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 
+0<x' & !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+0<x' & fpost_1128(v_int_19_1272) --> fpost_1129(x).
+
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_18_1148' & x'<=0 & 
+v_bool_18_1148' & v_int_18_1134'=0 & res=v_int_18_1134' --> fpost_1128(x).
+
+ termAssume 0<x' & x<=10 & 9<=x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & 9<=v_int_19_1137' & 
+v_int_19_1137'<=10 & fpre_0(x) --> fpre_0(v_int_19_1137').
+
+ termAssume 0<x' & x<=10 & 9<=x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & 3<v_int_19_1137' & 
+v_int_19_1137'<=8 & fpre_0(x) --> fpre_0(v_int_19_1137').
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+!(v_bool_19_1147') & x'<=20 & !(v_bool_20_1146') & x'<=20 & 
+!(v_bool_20_1146') & !(v_bool_21_1145') & 
+!(v_bool_21_1145') & fpre_0(x) --> fpre_0(x').
+
+ termAssume 0<x' & 10<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+!(v_bool_19_1147') & 20<x' & v_bool_20_1146' & 20<x' & v_bool_20_1146' & 
+v_int_20_1141'=1+x' & 
+10<v_int_20_1141' & fpre_0(x) --> fpre_0(v_int_20_1141').
+
+ termAssume 0<x' & x<=8 & 3<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & 3<v_int_19_1137' & 
+v_int_19_1137'<=8 & fpre_0(x) --> fpre_0(v_int_19_1137').
+
+ termAssume 0<x' & x<=8 & 3<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & 0<v_int_19_1137' & 
+v_int_19_1137'<=3 & fpre_0(x) --> fpre_0(v_int_19_1137').
+
+ termAssume 0<x' & x<=3 & 0<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & 0<v_int_19_1137' & 
+v_int_19_1137'<=3 & fpre_0(x) --> fpre_0(v_int_19_1137').
+
+ termAssume 0<x' & x<=3 & 0<x & x'=x & !(v_bool_18_1148') & 0<x' & 
+!(v_bool_18_1148') & x'<=10 & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & 
+v_int_19_1137'+1=x' & v_int_19_1137'<=0 & fpre_0(x) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f: [[9] 11<=x & x<=20@ML,[10] x<=0@B,[11] 9<=x & x<=10@R,[12] 21<=x@R,[13] 4<=x & x<=8@R,[14] 1<=x & x<=3@R]
+]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/mutual-5b3.ss",Line:22,Col:14
+
+ERROR: at _0:0_0:0 
+Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+ Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[32]
+ ensures emp & true; 
+  1<=x & x<=3 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  4<=x & x<=8 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  11<=x & x<=20 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  21<=x -> requires emp & Loop[]
+ ensures false & false; 
+  9<=x & x<=10 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 65 invocations 
+22 false contexts at: ( (18,14)  (18,21)  (22,7)  (22,14)  (21,24)  (21,31)  (21,11)  (21,7)  (20,17)  (20,30)  (20,26)  (20,24)  (20,13)  (20,11)  (20,7)  (19,18)  (19,29)  (19,27)  (19,25)  (19,14)  (19,11)  (19,7) )
+
+!!! log(small):(0.164903,508)
+Total verification time: 0.782637 second(s)
+	Time spent in main process: 0.718484 second(s)
+	Time spent in child processes: 0.064153 second(s)
+

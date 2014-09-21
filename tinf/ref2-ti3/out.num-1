@@ -1,0 +1,70 @@
+
+!!!Full processing file "examples/num-1.ss"
+Parsing file "examples/num-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_void_7_1127' & v_int_7_1188+y'=x' & v_int_7_1187=y'+x' & 
+!(v_bool_6_1128') & x'<=10 & !(v_bool_6_1128') & x'=x & y'=y & 
+x'<=10 & fpost_1123(v_int_7_1187,v_int_7_1188) --> fpost_1123(x,y).
+
+ termAssume 10<x' & y'=y & x'=x & v_bool_6_1128' & 10<x' & 
+v_bool_6_1128' --> fpost_1123(x,y).
+
+ termAssume x'<=10 & y'=y & x'=x & !(v_bool_6_1128') & x'<=10 & 
+!(v_bool_6_1128') & v_int_7_1126'=y'+x' & v_int_7_1125'+
+y'=x' & fpre_0(x,y) --> fpre_0(v_int_7_1126',v_int_7_1125').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] 11<=x@B,[3] x<=10@R]
+]
+
+Context of Verification Failure: 1 File "examples/num-1.ss",Line:4,Col:10
+Last Proving Location: 1 File "examples/num-1.ss",Line:7,Col:14
+
+ERROR: at _0:0_0:0 
+Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+ Termination Inference Result:
+f:  case {
+  11<=x -> requires emp & Term[30,1]
+ ensures emp & true; 
+  x<=10 -> case {
+            y<=0 -> case {
+                     x<=y & 
+                     y<=0 -> requires emp & Loop[]
+ ensures false & false; 
+                     y<x -> requires emp & MayLoop[]
+ ensures emp & true; 
+                     }
+            
+            1<=y -> case {
+                     y<x -> requires emp & Term[30,2,10+(-1*x)+(0*
+                     y)]
+ ensures emp & true; 
+                     x<=y & 
+                     x<=10 -> requires emp & MayLoop[]
+ ensures emp & true; 
+                     }
+            
+            }
+  
+  }
+Stop Omega... 52 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.070425,365)
+Total verification time: 0.509857 second(s)
+	Time spent in main process: 0.452742 second(s)
+	Time spent in child processes: 0.057115 second(s)
+

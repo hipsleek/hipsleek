@@ -1,0 +1,51 @@
+
+!!!Full processing file "examples/foo-fact3.ss"
+Parsing file "examples/foo-fact3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_25_1261+1=x' & 0<1 & 0<1 & !(v_bool_24_1131') & x'!=0 & 
+!(v_bool_24_1131') & x'=x & x'!=0 & v_int_25_1130'=v_int_25_1265+1+1 & 
+res=v_int_25_1130' & factpost_1122(v_int_25_1261) --> factpost_1122(x).
+
+ termAssume x'=0 & x'=x & v_bool_24_1131' & x'=x' & v_bool_24_1131' & 
+v_int_24_1124'=1 & res=v_int_24_1124' --> factpost_1122(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_24_1131') & x'!=0 & !(v_bool_24_1131') & 
+0<1 & v_int_25_1129'=1+1 & 0<1 & v_int_25_1127'+
+1=x' & factpre_0(x) --> factpre_0(v_int_25_1127').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Term[31,2,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+Stop Omega... 21 invocations 
+6 false contexts at: ( (8,2)  (8,11)  (8,9)  (9,7)  (9,16)  (9,14) )
+
+!!! log(small):(0.04908,264)
+Total verification time: 0.352095 second(s)
+	Time spent in main process: 0.3331 second(s)
+	Time spent in child processes: 0.018995 second(s)
+
