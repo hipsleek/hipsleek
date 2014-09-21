@@ -549,13 +549,12 @@ let print_edge e =
   let _, rel, _ = e in
   print_call_trel_debug rel
     
-(* let print_graph_by_rel g =                              *)
-(*   TG.fold_edges (fun s d a ->                           *)
-(*     (print_edge (TG.find_edge g s d)) ^ "\n" ^ a)  g "" *)
+(* let print_graph_by_rel g =                             *)
+(*   TG.fold_edges (fun s d a ->                          *)
+(*     (print_edge (TG.find_edge g s d)) ^ "\n" ^ a) g "" *)
 
 let print_graph_by_rel g = 
-  TG.fold_edges_e (fun e a -> 
-    (print_edge e) ^ "\n" ^ a)  g ""
+  TG.fold_edges_e (fun e a -> (print_edge e) ^ "\n" ^ a) g ""
   
 let print_scc_num = pr_list string_of_int
 
@@ -658,9 +657,16 @@ let find_scc_edges g scc =
   let find_edges_vertex s =
     let succ = TG.succ g s in
     let scc_succ = Gen.BList.intersect_eq (==) succ scc in
+    let scc_succ = Gen.BList.remove_dups_eq (==) scc_succ in
     List.concat (List.map (fun d -> TG.find_all_edges g s d) scc_succ)
-  in
-  List.concat (List.map (fun v -> find_edges_vertex v) scc)
+  in List.concat (List.map (fun v -> find_edges_vertex v) scc)
+  
+let find_scc_edges g scc = 
+  let pr1 = print_graph_by_rel in
+  let pr2 = pr_list string_of_int in
+  let pr3 = pr_list (fun e -> (print_edge e) ^ "\n") in
+  Debug.no_2 "find_scc_edges" pr1 pr2 pr3
+    find_scc_edges g scc
   
 let get_term_ann_vertex g v =
   let edges_from_v = TG.succ_e g v in
@@ -708,16 +714,17 @@ let sub_graph_of_scc_list tg scc_list =
 (* End of TNT Graph *)
 
 (* Template Utilies *)
-let templ_of_term_ann ann =
+let templ_of_term_ann by_ann ann =
   match ann with
   | CP.TermR uid 
   | CP.TermU uid ->
     let templ_args = List.filter (fun e -> not (CP.exp_is_boolean_var e)) uid.CP.tu_args in
-    let templ_id = "t_" ^ uid.CP.tu_fname ^ "_" ^ (string_of_int uid.CP.tu_id) in 
+    let templ_id = "t_" ^ uid.CP.tu_fname ^ 
+      (if by_ann then ("_" ^ (string_of_int uid.CP.tu_id)) else "") in 
     let templ_exp = CP.mkTemplate templ_id templ_args no_pos in
     CP.Template templ_exp, [templ_exp.CP.templ_id], 
-    templ_args, [Tlutils.templ_decl_of_templ_exp templ_exp]
-  | _ -> CP.mkIConst (-1) no_pos, [], [], []
+    templ_args, Some (Tlutils.templ_decl_of_templ_exp templ_exp)
+  | _ -> CP.mkIConst (-1) no_pos, [], [], None
 
 let add_templ_assume ctx constr inf_templs =
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -731,7 +738,27 @@ let solve_templ_assume prog templ_decls inf_templs =
     (List.map CP.name_of_spec_var inf_templs) in
   res
 
-let synthesize_rank_init prog should_simplify templ_decls inf_templs =
+(* Ranking function synthesis *)
+let templ_rank_constr_of_rel by_ann rel =
+  let src_rank, src_templ_id, _, src_templ_decl = templ_of_term_ann by_ann rel.termu_lhs in
+  let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann by_ann rel.termu_rhs in
+  let inf_templs = src_templ_id @ dst_templ_id in
+  let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
+  let dec = mkGt src_rank dst_rank in
+  let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
+  let constr = mkAnd dec bnd in
+  let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in
+  inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
+
+(* Use a unique ranking function template for all node in scc *)    
+let infer_lex_ranking_function_scc prog g scc_edges =
+  let by_ann = false in (* by_fname *)
+  let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
+    let id, decl = templ_rank_constr_of_rel by_ann rel in
+    (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
+  let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in 
+  let inf_templs = List.map CP.name_of_spec_var inf_templs in
+  
   let prog = { prog with Cast.prog_templ_decls = 
     Gen.BList.remove_dups_eq Cast.eq_templ_decl 
       (prog.Cast.prog_templ_decls @ templ_decls) } in
@@ -741,37 +768,55 @@ let synthesize_rank_init prog should_simplify templ_decls inf_templs =
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
     let rank_of_ann = fun ann ->
-      let rank_templ, _, _, _ = templ_of_term_ann ann in
+      let rank_templ, _, _, _ = templ_of_term_ann by_ann ann in
+      let rank_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp rank_templ) in
+      [rank_exp]
+    in Some rank_of_ann
+  | Unsat -> 
+    let res = Terminf.infer_lex_template_res prog inf_templs templ_unks templ_assumes in
+    if is_empty res then None
+    else 
+      let res = Gen.BList.remove_dups_eq CP.eqExp res in
+      (* let _ = print_endline (pr_list !CP.print_exp res) in *)
+      let rank_of_ann = fun ann ->
+        let _, _, _, templ_decl = templ_of_term_ann by_ann ann in
+        match templ_decl with
+        | None -> []
+        | Some tdecl -> 
+          let params = tdecl.Cast.templ_params in
+          let sst = List.combine params (CP.args_of_term_ann ann) in
+          List.map (fun e -> CP.a_apply_par_term sst e) res
+      in Some rank_of_ann
+  | _ -> None
+  
+let infer_ranking_function_scc prog g scc =
+  let scc_edges = find_scc_edges g scc in
+  (* let _ = print_endline (print_graph_by_rel g) in                               *)
+  (* let _ = print_endline (pr_list (fun e -> (print_edge e) ^ "\n") scc_edges) in *)
+  let by_ann = true in
+  let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
+    let id, decl = templ_rank_constr_of_rel by_ann rel in
+    (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
+  let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
+  let res = solve_templ_assume prog templ_decls inf_templs in
+  match res with
+  | Sat model ->
+    let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
+    let should_simplify = (List.length scc_edges <= 1) in
+    let rank_of_ann = fun ann ->
+      let rank_templ, _, _, _ = templ_of_term_ann by_ann ann in
       let rank_exp = Tlutils.subst_model_to_exp should_simplify
         sst (CP.exp_of_template_exp rank_templ) in
       [rank_exp]
     in Some rank_of_ann
-  | Unsat -> 
-    let _ = Terminf.infer_lex_template_init prog inf_templs templ_unks templ_assumes in
-    None
-  | _ -> None
-
-(* Ranking function synthesis *)
-let templ_rank_constr_of_rel rel =
-  let src_rank, src_templ_id, _, src_templ_decl = templ_of_term_ann rel.termu_lhs in
-  let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann rel.termu_rhs in
-  let inf_templs = src_templ_id @ dst_templ_id in
-  let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
-  let dec = mkGt src_rank dst_rank in
-  let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
-  let constr = mkAnd dec bnd in
-  let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in
-  inf_templs, src_templ_decl @ dst_templ_decl
-  
-let infer_ranking_function_scc prog g scc =
-  let scc_edges = find_scc_edges g scc in
-  let _ = print_endline (pr_list (fun e -> (print_edge e) ^ "\n") scc_edges) in
-  let inf_templs, templ_decls = List.fold_left (fun (id_a, decl_a) (_, rel, _) -> 
-    let id, decl = templ_rank_constr_of_rel rel in
-    (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
-  let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
-  let inf_templs = List.map CP.name_of_spec_var inf_templs in
-  synthesize_rank_init prog (List.length scc_edges <= 1) templ_decls inf_templs
+  | _ ->
+    (* Lexico inference is only for scc with the same function *) 
+    let fname_scc = List.concat (List.map (fun (_, rel, _) -> 
+      [CP.fn_of_term_ann rel.termu_lhs; CP.fn_of_term_ann rel.termu_rhs]) scc_edges) in
+    let fname_scc = Gen.BList.remove_dups_eq (fun fn1 fn2 -> String.compare fn1 fn2 == 0) fname_scc in
+    if (List.length fname_scc == 1) && (List.length scc_edges > 1) then
+      infer_lex_ranking_function_scc prog g scc_edges
+    else None
 
 (* Abductive Inference *)
 let infer_abductive_cond prog ann ante conseq =
@@ -785,7 +830,7 @@ let infer_abductive_cond prog ann ante conseq =
       let abd_ante = CP.join_conjunctions (List.filter (fun f -> 
          not (CP.is_bool_formula f)) (CP.split_conjunctions ante)) in
       let abd_conseq = CP.join_conjunctions conseq in
-      let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann ann in
+      let abd_templ, abd_templ_id, abd_templ_args, abd_templ_decl = templ_of_term_ann true ann in
       let abd_cond = mkGte abd_templ (CP.mkIConst 0 no_pos) in
       let abd_ctx = mkAnd abd_ante abd_cond in
       
@@ -795,7 +840,7 @@ let infer_abductive_cond prog ann ante conseq =
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
       let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
       let _ = Tlutils.oc_solver := true in 
-      let res = solve_templ_assume prog abd_templ_decl abd_templ_id in
+      let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in
       let _ = Tlutils.oc_solver := oc in
         
       match res with
