@@ -1678,7 +1678,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let _ = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
 	              let _ = PTracer.log_proof prf in
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
-                      let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in
+                      (* let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
                       if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
                         begin
