@@ -1,0 +1,10 @@
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "hip/bub.slk",Line:21,Col:20
+
+ERROR: at _0:0_0:0 
+Message: HIP/SLEEK error, unhandled pattern
+ 
+!!! WARNING logtime exception:0.00044SLEEK FAILURE (END)
+

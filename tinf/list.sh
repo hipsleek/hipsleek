@@ -1,3 +1,3 @@
-for entry in `ls */*.ss`; do
+for entry in `ls */*.slk`; do
   echo EX ${entry}
 done

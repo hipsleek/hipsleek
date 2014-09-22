@@ -5,6 +5,7 @@ bottomupgen([post_1155], [2], SimHeur);
 # got:
 #   (n >= 0 || (0 = 0 && 0 = m && n + 1 = res))
 # why did we get true when [1] is used?
-# why can't we get a more precise:
+# why can't we get res>=n+1
+# Also, why can't we get a more precise with [2]
 #   (n >= 0 & res>=n+1 || (0 = 0 && 0 = m && n + 1 = res))
 
