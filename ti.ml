@@ -73,10 +73,15 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr turels =
-  let bc = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond =
+    if CP.is_disjunct base_cond
+    then pairwisecheck base_cond
+    else base_cond
+  in
   (* There is at least one method call in the base case is not terminating or unknown *)
-  if List.exists (fun r -> is_sat (mkAnd bc r.call_ctx)) turels then MayTerm bc
-  else Base bc
+  if List.exists (fun r -> is_sat (mkAnd base_cond r.call_ctx)) turels then MayTerm base_cond
+  else Base base_cond
 
 let solve_trrel_list trrels turels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
