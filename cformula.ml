@@ -2473,7 +2473,7 @@ and subst_pos_formula (p:loc) (f: formula): formula=
 	                                     formula_or_pos = p}
     | Exists ef -> Exists {ef with formula_exists_pos =  p}
 
-and struc_fv (f: struc_formula) : CP.spec_var list = 
+and struc_fv (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
@@ -2484,7 +2484,7 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 	| EInfer b -> Gen.BList.remove_dups_eq CP.eq_spec_var (struc_fv b.formula_inf_continuation)
     | EList b -> rdv (fold_l_snd struc_fv b)
 
-and struc_fv_infer (f: struc_formula) : CP.spec_var list = 
+and struc_fv_infer (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
@@ -2495,8 +2495,17 @@ and struc_fv_infer (f: struc_formula) : CP.spec_var list =
     | EInfer b -> dsvl (struc_fv_infer b.formula_inf_continuation) b.formula_inf_vars
     | EList b -> rdv (fold_l_snd struc_fv_infer b)
 
-and struc_post_fv (f:struc_formula):Cpure.spec_var list = 
-  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in  
+and struc_infer_relation (f: struc_formula) : CP.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
+  match f with
+    | ECase b -> List.concat (List.map (fun (_,c) -> struc_infer_relation c) b.formula_case_branches)
+    | EBase b -> fold_opt struc_infer_relation b.formula_struc_continuation
+    | EAssume b -> []
+    | EInfer b -> b.formula_inf_vars
+    | EList b -> rdv (fold_l_snd struc_infer_relation b)
+
+and struc_post_fv (f:struc_formula):Cpure.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   match f with
     | ECase b-> rdv (fold_l_snd struc_post_fv b.formula_case_branches)
     | EBase b->	fold_opt struc_post_fv b.formula_struc_continuation

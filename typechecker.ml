@@ -2850,8 +2850,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* in *)
                       (* Long: end TODO here *)
                       let spec = proc.proc_stk_of_static_specs # top in
-                      let new_spec = if Pi.is_infer_post spec then Pi.add_relation prog proc spec "" UNK else spec in
-                      let _ = proc.proc_stk_of_static_specs # push new_spec in
+                      (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
+                      (* let _ = proc.proc_stk_of_static_specs # push new_spec in *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_stk_of_static_specs # top) body true in
                       (* let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body true in *)
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
@@ -3498,7 +3498,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (* this computes a list of scc mutual-recursive methods for processing *)
   let proc_scc = List.fold_left (fun a x -> match a with
     | [] -> [[x]]
-    | xs::xss -> 
+    | xs::xss ->
           let i=(List.hd xs).proc_call_order in
           if i==x.proc_call_order then (x::xs)::xss
           else [x]::a
@@ -3509,6 +3509,8 @@ let rec check_prog iprog (prog : prog_decl) =
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog, _ = List.fold_left (fun (prog, verified_sccs) scc ->
+      let _ = Pi.add_post_relation_scc prog scc in
+
       let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
