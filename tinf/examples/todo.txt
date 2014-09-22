@@ -514,8 +514,34 @@ fact$int
  ensures false & false;
   
   }
-
 ===================================================
+# f91-rec3.ss
+
+(1) use only @post_n
+
+Why this combination not working?
+ Has the verify of @term been done concurrently 
+ with @post, as it will be complex if so.
+
+Below seems wrong. How to fix it?
+
+Post Inference result:
+f91$int
+ requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | (n=res & 
+91<=res));
+
+(1) use only @term
+
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  n<=90 -> requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  }
 ===================================================
 ===================================================
 ===================================================
