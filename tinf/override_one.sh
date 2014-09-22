@@ -1,1 +1,1 @@
-cp -f result/$1.out ref/$1.ref
+cp -f result/$1.ss.out ref/$1.ss.ref

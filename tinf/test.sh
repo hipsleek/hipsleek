@@ -1,7 +1,9 @@
 EX="./test_ex.sh ../hip"
-$EX data/ll1 "-dd"
+$EX data/ll1 
+#"-dd"
 $EX data/ll2a
-$EX data/ll2 "--pcp --esl"
+$EX data/ll2 
+#"--pcp --esl"
 $EX data/ll3
 $EX data/ll4
 $EX data/ll
