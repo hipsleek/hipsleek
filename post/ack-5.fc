@@ -1,0 +1,10 @@
+post_1155:={[] -> [m,n,res] -> []: (((((((m=0 && n=res-(1)) || ( (exists (r_1280:( (exists (v_int_15_1254:(( (exists (PRIm:(PRIm=m && post_1155(PRIm,v_int_15_1254,r_1280))))  && n=v_int_15_1254+1) && 0<=v_int_15_1254)))  &&  (exists (v_int_16_1279:(v_int_16_1279=m-(1) && post_1155(v_int_16_1279,r_1280,res)))) )))  && 1<=m)) || ( (exists (r_1280:( (exists (v_int_15_1254:(( (exists (PRIm:(PRIm=m && post_1155(PRIm,v_int_15_1254,r_1280))))  && n=v_int_15_1254+1) && v_int_15_1254<=0-(2))))  &&  (exists (v_int_16_1279:(v_int_16_1279=m-(1) && post_1155(v_int_16_1279,r_1280,res)))) )))  && m<=0-(1))) || ( (exists (r_1280:( (exists (v_int_15_1254:(( (exists (PRIm:(PRIm=m && post_1155(PRIm,v_int_15_1254,r_1280))))  && n=v_int_15_1254+1) && v_int_15_1254<=0-(2))))  &&  (exists (v_int_16_1279:(v_int_16_1279=m-(1) && post_1155(v_int_16_1279,r_1280,res)))) )))  && 1<=m)) || ( (exists (r_1280:( (exists (v_int_15_1254:(( (exists (PRIm:(PRIm=m && post_1155(PRIm,v_int_15_1254,r_1280))))  && n=v_int_15_1254+1) && 0<=v_int_15_1254)))  &&  (exists (v_int_16_1279:(v_int_16_1279=m-(1) && post_1155(v_int_16_1279,r_1280,res)))) )))  && m<=0-(1))) || ( (exists (v_int_13_1277:((m=v_int_13_1277+1 && 0<=v_int_13_1277) && 0=0)))  && n=0)) || ( (exists (v_int_13_1277:((m=v_int_13_1277+1 && v_int_13_1277<=0-(2)) && 0=0)))  && n=0))
+};
+# ack-5.fc
+bottomupgen([post_1155], [2], SimHeur);
+# got:
+#   (n >= 0 || (0 = 0 && 0 = m && n + 1 = res))
+# why did we get true when [1] is used?
+# why can't we get a more precise:
+#   (n >= 0 & res>=n+1 || (0 = 0 && 0 = m && n + 1 = res))
+

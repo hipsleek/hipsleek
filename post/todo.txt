@@ -455,7 +455,29 @@ Ack    n>=0 -> requires true ensures res>=0;
 Case analysis did not help..
 We need lexi ranking..
 =======================================================
+# ack-5.fc
+
+bottomupgen([post_1155], [2], SimHeur);
+
+# got:
+#   (n >= 0 || (0 = 0 && 0 = m && n + 1 = res))
+# why did we get true when [1] is used?
+# why can't we get a more precise:
+#   (n >= 0 & res>=n+1 || (0 = 0 && 0 = m && n + 1 = res))
 =======================================================
+# ack-5.ss
+
+Post Inference result:
+Ack$int~int
+ requires emp & MayLoop[]
+ ensures emp & (0<=n | (m=0 & n=res-1));
+
+Can post be made more precise.
+
+Is it possible to infer the more precise:
+ (0<=n & res>=n+1 | (m=0 & n=res-1));
+or even:
+ res>=n+1 ;
 =======================================================
 =======================================================
 =======================================================
