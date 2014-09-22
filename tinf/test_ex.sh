@@ -1,5 +1,5 @@
 #echo $2
-timeout 10s $1 $2.ss --print-min > result/$2.out
+timeout 10s $1 $2.ss --print-min $3 > result/$2.out
 #echo $?
 OUT=$?
 fn=$2.ss

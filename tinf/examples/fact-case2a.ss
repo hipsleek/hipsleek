@@ -1,9 +1,11 @@
 int fact(int x)
-  infer [@post_n
-         ,@term
+  infer [
+        @post_n
+        //,
+        //@term
         ]
  requires true
-  ensures true;
+ ensures true;
 /*case {
   x=0 -> ensures res=1;
   x>0 -> ensures res>=1;
@@ -12,7 +14,7 @@ int fact(int x)
 */
 {
   if (x==0) return 1;
-  else return 1 + fact(x - 1);
+  else return x + fact(x - 1);
 }
 /*
 # fact-case2a.ss 
