@@ -1,0 +1,26 @@
+Done
+---
+ (i) post-inference
+ (ii) mutual-recursion
+ (iii) simple testing
+
+
+ToDO
+==== 
+(i) improve printing
+ (ii) more examples (e.g. mutual-recursion)
+ (iii) pre-cond inference
+ (iv) 2/3 scc example
+ (v) shape + post (ll.ss)
+ (vi) infer post of ack?
+ (vii) multiple cases
+        case {
+         even ->  P1(...)
+         odd ->  P2(..)
+        }
+ (viii) more complex post?
+    integer domains
+    set domains (need fixcalc for set?)
+    list domain  (need fixcalc for list?)
+    map domain
+

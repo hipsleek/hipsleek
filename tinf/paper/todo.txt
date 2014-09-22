@@ -16,19 +16,21 @@ Base/Rec Case Splitting:
 ]
 
 Termination Inference Result:
-f:  case {
+f:  
+case {
   x<=(0-1) -> 
-   requires emp & Term[29]
-   ensures emp & x<0; 
-  0<=x -> case {
-    0<=y -> requires emp & Loop[]
-            ensures false & false; 
-   y<=(0-1) -> 
-         requires emp & Term[29,2,0+(1*x)+(0* y)]
-          ensures emp & 0<=x; 
-           }
-  
-  }
+    requires emp & Term[29]
+    ensures emp & x<0; 
+  0<=x -> 
+    case {
+      0<=y -> 
+        requires emp & Loop[]
+        ensures false & false; 
+      y<=(0-1) -> 
+        requires emp & Term[29,2,0+(1*x)+(0*y)]
+        ensures emp & 0<=x; 
+ }
+}
 
 
  infer [@term]
