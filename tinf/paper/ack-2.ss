@@ -15,6 +15,12 @@ int Ack(int m, int n)
 /*
 # ack-2.ss
 
+  infer [@term]
+  requires true
+  ensures (!(m >= 0 & n >= 0) | res >= 0);
+
+This seems to be going into a Loop..
+
 Ack:  case {
   m=0 -> 
    requires emp & Term[3,1]

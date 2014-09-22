@@ -208,7 +208,68 @@ Ack:  case {
  ensures false & false; 
   }
 ====================================================================
+# ack-3.ss
+
+  infer [@term]
+  case {
+    m >= 0 & n >= 0 -> requires true ensures res >= 0;
+    !(m >= 0 & n >= 0) -> requires true ensures true;
+
+This seems less precise now ..
+
+Termination Inference Result:
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 0<=n -> requires emp & MayLoop[]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  n<=(0-1) & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 1<=n -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  n=0 & 1<=m -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  ((n<=(0-1) & 1<=m) | m<=(0-
+  1)) -> requires emp & Loop[]
+ ensures false & false; 
+  }
 ====================================================================
+# ack-2.ss
+
+  infer [@term]
+  requires true
+  ensures (!(m >= 0 & n >= 0) | res >= 0);
+
+This seems to be going into a Loop..
+
+Ack:  case {
+  m=0 -> 
+   requires emp & Term[3,1]
+   ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  1<=m & 1<=n -> 
+   requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*n)]
+   ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> 
+    requires emp & Loop[]
+    ensures false & false; 
+  n=0 & 1<=m -> 
+    requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*n)]
+    ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  }
 ====================================================================
 ====================================================================
 ====================================================================

@@ -38,6 +38,40 @@ int Ack(int m, int n)
    }
   }
 
+Q : Outcome below is less precise that previous result!
+It seems lexi ranking is not working now.
+
+Termination Inference Result:
+Ack:  case {
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  0<=m -> case {
+           n<0 -> case {
+                   m=0 & 
+                   0<=n -> requires false & false
+ ensures false & false; 
+                   m=0 & n<=(0-
+                   1) -> requires emp & Term[3,2]
+ ensures emp & true; 
+                   1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+                   }
+           
+           0<=n -> case {
+                    m=0 & 
+                    0<=n -> requires emp & Term[3,1]
+ ensures emp & 0<=res; 
+                    m=0 & n<=(0-
+                    1) -> requires false & false
+ ensures false & false; 
+                    1<=m -> requires emp & MayLoop[]
+ ensures emp & 0<=res; 
+                    }
+           
+           }
+  
+  }
+
 Q : Can we not combine requires false ensures false?
 
 
