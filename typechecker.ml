@@ -2723,13 +2723,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
       (i.e: all inferred info updated into proc is lost.)
       which infor do you want to get from the last proc?
       get it and update explicitly into proc0*)
-    let proc = 
+    let proc =
       find_proc prog proc0.proc_name
     in
     let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
       && not (List.mem unmin_name !Inliner.inlined_procs)
     in
-    if check_flag then 
+    if check_flag then
       begin
         match proc.proc_body with
 	  | None -> true (* sanity checks have been done by the translation *)
@@ -3293,11 +3293,10 @@ let check_phase_only iprog prog proc =
 let check_proc_wrapper iprog prog proc cout_option mutual_grp =
 (* check_proc prog proc *)
   try
-    (* let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc iprog prog proc cout_option mutual_grp in 
+    let res = check_proc iprog prog proc cout_option mutual_grp in
     (* let _ = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
-    (* Termination: Infer the phase numbers of functions in a scc group *) 
-    (* TODO: The list of scc group does not 
+    (* Termination: Infer the phase numbers of functions in a scc group *)
+    (* TODO: The list of scc group does not
      * need to be computed many times *)
     (* let n_res =  *)
     (*   if (proc.Cast.proc_is_main &&  *)
@@ -3511,6 +3510,9 @@ let rec check_prog iprog (prog : prog_decl) =
   let prog, _ = List.fold_left (fun (prog, verified_sccs) scc ->
       let _ = Pi.add_post_relation_scc prog scc in
 
+      (* Only infer post *)
+      let (scc,old_specs) = List.split (Pi.filter_infer_post_scc scc) in
+
       let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
@@ -3531,6 +3533,7 @@ let rec check_prog iprog (prog : prog_decl) =
       in
       (* let _ = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
       let mutual_grp = ref scc in
+
       Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
       let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc ->
         begin
@@ -3542,6 +3545,7 @@ let rec check_prog iprog (prog : prog_decl) =
           r
         end
       ) in
+
       let scc = if is_all_verified2 || not !Globals.sa_ex then scc
       else
         let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
@@ -3566,6 +3570,17 @@ let rec check_prog iprog (prog : prog_decl) =
 
       (* Pure inference *)
       let _ = Pi.infer_post prog scc in
+
+      let rem_post_inf_prog_rel_decls = List.filter (fun rel_decl ->
+          let r = Str.regexp "post_" in
+          not(Str.string_match r rel_decl.rel_name 0)
+      ) prog.prog_rel_decls in
+      let _ = prog.prog_rel_decls <- rem_post_inf_prog_rel_decls in
+
+      (* Resume other infer *)
+      let scc = Pi.resume_infer_obj_scc scc old_specs in
+      let _ = List.iter (fun proc ->
+          DD.binfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
       (* Reverify *)
       let _ = reverify_scc prog scc in
