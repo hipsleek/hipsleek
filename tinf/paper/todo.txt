@@ -113,6 +113,34 @@ infer [@term]
 
 # why isn't lexi ranking not inferred above?
 
+--infer-lex
+
+Ack:  case {
+  m=0 -> requires emp & Term[3]
+ ensures emp & (1+n)<=res; 
+  1<=m -> case {
+           0<=n -> case {
+                    m=0 -> requires false & false
+ ensures false & false; 
+                    n<=(0-1) & 
+                    1<=m -> requires false & false
+ ensures false & false; 
+                    1<=n & 1<=m -> requires emp & Term[3,2,-2+(1*m)+(0*n),-1+
+                    (1*m)+(0*n),-1+(1*m)+(1*n)]
+ ensures emp & (1+n)<=res; 
+                    n=0 & 1<=m -> requires emp & Term[3,2,-2+(1*m)+(0*n),-1+
+                    (1*m)+(0*n),-1+(1*m)+(1*n)]
+ ensures emp & (1+n)<=res; 
+                    }
+           
+           n<0 -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
 
 Base/Rec Case Splitting:
 [	Ack: [[10] m=0@B,[11] n<=(0-1) & 1<=m@R,[12] 1<=n & 1<=m@R,[13] n=0 & 1<=m@R]
@@ -140,6 +168,25 @@ infer [@term]
   ensures res>=1 | res>=n+1;
 
 Why a non-terminating loop here?
+
+--infer-lex
+
+Termination Inference Result:
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & (1<=res | (1+n)<=res); 
+  1<=n & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (1<=res | (1+n)<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (1<=res | (1+n)<=res); 
+  }
+Stop Omega... 33 invocations 
+0 false contexts at: ()
 
 TNT @ ITER 0
 Ack:  case {
@@ -215,6 +262,24 @@ Ack:  case {
     m >= 0 & n >= 0 -> requires true ensures res >= 0;
     !(m >= 0 & n >= 0) -> requires true ensures true;
 
+--infer-lex
+
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 1<=n -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  n=0 & 1<=m -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  ((n<=(0-1) & 1<=m) | m<=(0-
+  1)) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
 This seems less precise now ..
 
 Termination Inference Result:
@@ -252,6 +317,22 @@ Ack:  case {
   infer [@term]
   requires true
   ensures (!(m >= 0 & n >= 0) | res >= 0);
+
+--infer-lex
+
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  1<=m & 1<=n -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  }
 
 This seems to be going into a Loop..
 
