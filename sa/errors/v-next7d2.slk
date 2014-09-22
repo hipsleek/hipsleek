@@ -1,0 +1,14 @@
+
+checkentail x=0 & flow __norm |- 
+     case {
+       x>=0 -> ensures true & flow __norm;
+       x<0 -> ensures true & flow __Error;
+    }.
+print residue.
+
+/*
+# v-next7c.slk
+
+to support case-spec
+
+*/

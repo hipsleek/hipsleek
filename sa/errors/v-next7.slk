@@ -5,57 +5,55 @@ data node {
 //(1)
 checkentail x=null & flow __norm |- x::node<q> & flow __norm.
 print residue.
-//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]  YES
 //[[ COND ==>  UnmatchedRHSData ==> ]]
 
 checkentail x!=null & flow __norm |- x::node<q> & flow __norm.
 print residue.
-// <1>emp&x!=null&{FLOW,(3,7)=__MayError}[]
+// <1>emp&x!=null&{FLOW,(3,7)=__MayError}[]  YES
 // [[ COND ==>  UnmatchedRHSData ==> ]]
 
 checkentail x::node<a> & flow __norm |- x::node<q> & flow __norm.
 print residue.
-//  <1>emp&{FLOW,(3,4)=__norm}[] // x!=null?
+//  <1>emp&{FLOW,(3,4)=__norm}[] // x!=null?  YES
 // [[ SEARCH ==>  Match(x,x) ==> ]]
-
 
 //(4)
 checkentail x=null & flow __norm |- x=null & flow __norm.
 print residue.
-//  <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+//  <1>emp&x=null&{FLOW,(3,4)=__norm}[] YES
 //[[empty]]
 
 
 checkentail x!=null & flow __norm |- x=null & flow __norm.
 print residue.
-//  <1>emp&x!=null&{FLOW,(5,6)=__Error}[]
+//  <1>emp&x!=null&{FLOW,(5,6)=__Error}[] YES
 // [[empty]]
 
 checkentail x::node<a> & flow __norm |- x=null & flow __norm.
 print residue.
-//  <1>x::node<a>&{FLOW,(5,6)=__Error}[]
+//  <1>x::node<a>&{FLOW,(5,6)=__Error}[] YES
 // [[empty]]
 
 
 //(7)
 checkentail x=null & flow __norm |- x!=null & flow __norm.
 print residue.
-//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+//  <1>emp&x=null&{FLOW,(5,6)=__Error}[] YES
 //[[empty]]
 
 checkentail x!=null & flow __norm |- x!=null & flow __norm.
 print residue.
-//  <1>emp&x!=null&{FLOW,(3,4)=__norm}[]
+//  <1>emp&x!=null&{FLOW,(3,4)=__norm}[] YES
 // [[empty]]
-
 
 checkentail x::node<a> & flow __norm |- x!=null & flow __norm.
 print residue.
-//  <1>x::node<a>&{FLOW,(3,4)=__norm}[]
+//  <1>x::node<a>&{FLOW,(3,4)=__norm}[]  YES
 // [[empty]]
 
 
-
+/*
 
 Entail 2: Fail.(may) cause:do_unmatched_rhs : x::node<q>
 
@@ -86,3 +84,4 @@ Entail 8: Valid.
 
 Entail 9: Valid. 
 
+*/
