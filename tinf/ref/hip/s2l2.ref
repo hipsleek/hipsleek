@@ -1,0 +1,16 @@
+
+!!!Full processing file "hip/s2l2.ss"
+Parsing file "hip/s2l2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

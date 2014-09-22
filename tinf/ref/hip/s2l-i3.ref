@@ -1,0 +1,42 @@
+
+!!!Full processing file "hip/s2l-i3.ss"
+Parsing file "hip/s2l-i3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[f,g] pre_post_vars:[r,x]
+
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
+[ r=f() --> 0<=r
+, 0<=v_1209 & r=g( v_1209, r1_1208) & 0<=r1_1208 --> 0<=r
+, r=f() --> 0<=r
+, 0<=v_1213 & r=g( v_1213, r1_1212) & 0<=r1_1212 --> 0<=r
+, 0<=v_1256 & r=g( v_1256, r1_1258) & v_1256<=0 & v_1256<=0 & 
+  r_1290=r1_1258 --> r>r_1290
+, 0<=v_1256 & r=g( v_1256, r1_1258) & 0<v_1256 & 0<v_1256 & temp_41'+
+  1=v_1256 & val_25_1339=v_1256 & v_1366=temp_41' & v_1393=temp_41' & 
+  r1_1395=r1_1258 & 0<=v_1393 & r1_1368=g( v_1393, r1_1395) & 
+  r1_1368=g( v_1393, r1_1395) & 0<=v_1366 & 
+  r_1352=g( v_1366, r1_1368) --> r>r_1352
+, 0<=v_1256 & r=g( v_1256, r1_1258) & v_1256<=0 & v_1256<=0 & 
+  r_1290=r1_1258 & 0<=r1_1258 & 0<=r_1290 --> 0<=r
+, 0<=v_1256 & r=g( v_1256, r1_1258) & 0<v_1256 & 0<v_1256 & v_1366+1=v_1256 & 
+  val_25_1339=v_1256 & v_1393=v_1366 & r1_1395=r1_1258 & 0<=v_1393 & 
+  r1_1368=g( v_1393, r1_1395) & r1_1368=g( v_1393, r1_1395) & 0<=v_1366 & 
+  r_1352=g( v_1366, r1_1368) & 0<=r1_1258 & 0<=r_1352 --> 0<=r
+]
+TEMPLATE INFERENCE: Unsat.
+Trying to infer lexicographic termination arguments ...
+**** LEXICOGRAPHIC RANK INFERENCE RESULT ****
+Cannot find a potential ranking function
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

@@ -1,0 +1,83 @@
+
+!!!Full processing file "slk/mult.ss"
+Parsing file "slk/mult.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_12_1202=1+x' & 0<=x' & x'=x & !(v_bool_11_1142') & 0<=x' & 
+!(v_bool_11_1142') & v_int_12_1189+1=x' & v_int_12_1141'=v_int_12_1207+
+v_int_12_1206 & 
+res=v_int_12_1141' & fpost_1132(v_int_12_1189) & fpost_1132(v_int_12_1202) --> fpost_1132(x).
+
+ termAssume x'<0 & x'=x & v_bool_11_1142' & x'<0 & v_bool_11_1142' & 
+v_int_11_1134'=0 & res=v_int_11_1134' --> fpost_1132(x).
+
+ termAssume v_int_12_1189+1=x' & !(v_bool_11_1142') & 0<=x' & 
+!(v_bool_11_1142') & x'=x & 0<=x' & v_int_12_1138'=1+
+x' & fpre_0(x) --> fpre_0(v_int_12_1138').
+
+ termAssume 0<=x' & x'=x & !(v_bool_11_1142') & 0<=x' & !(v_bool_11_1142') & 
+v_int_12_1136'+1=x' & fpre_0(x) --> fpre_0(v_int_12_1136').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  0<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Checking procedure f2$int~int... 
+Procedure f2$int~int SUCCESS.
+
+Checking procedure f2$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_60_1127' & v_int_60_1278=y'+x' & !(v_bool_59_1128') & 
+0<=x' & !(v_bool_59_1128') & x'=x & y'=y & 
+0<=x' & f2post_1123(v_int_60_1278,y') --> f2post_1123(x,y).
+
+ termAssume x'<0 & y'=y & x'=x & v_bool_59_1128' & x'<0 & v_bool_59_1128' & 
+v_int_59_1125'=0 & res=v_int_59_1125' --> f2post_1123(x,y).
+
+ termAssume 0<=x' & y'=y & x'=x & !(v_bool_59_1128') & 0<=x' & 
+!(v_bool_59_1128') & v_int_60_1126'=y'+
+x' & f2pre_0(x,y) --> f2pre_0(v_int_60_1126',y').
+
+
+Base/Rec Case Splitting:
+[	f2: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f2:  case {
+  x<=(0-1) -> requires emp & Term[31,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           y<=(0-1) -> requires emp & Term[31,2,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  }
+
+0 false contexts at: ()

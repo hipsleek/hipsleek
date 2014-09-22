@@ -1,5 +1,6 @@
 int fact(int x)
- infer [@post_n]
+  infer [@post_n//,@term
+        ]
  case {
   x=0 -> ensures res=1;
   x>0 -> ensures res>=1;

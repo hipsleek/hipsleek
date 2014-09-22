@@ -1,0 +1,38 @@
+
+!!!Full processing file "examples/reach-2.ss"
+Parsing file "examples/reach-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN fpost: ( false) -->  fpost_1122(x)[]]
+*************************************
+
+Post Inference result:
+f$int
+ requires emp & fpre_0(x)[29]
+ ensures emp & fpost_1122(x)[];
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'=x & fpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[]
+Termination Inference Result:
+f:  requires emp & Loop[]
+ ensures false & false;
+
+0 false contexts at: ()

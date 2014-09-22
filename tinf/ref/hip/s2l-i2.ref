@@ -1,0 +1,43 @@
+
+!!!Full processing file "hip/s2l-i2.ss"
+Parsing file "hip/s2l-i2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[f,g] pre_post_vars:[r,x]
+
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
+[ r=f() --> 0<=r
+, 0<=v_1210 & r=g( v_1210, r1_1209) & 0<=r1_1209 --> 0<=r
+, r=f() --> 0<=r
+, 0<=v_1214 & r=g( v_1214, r1_1213) & 0<=r1_1213 --> 0<=r
+, 0<=v_1257 & r=g( v_1257, r1_1259) & v_1257<=0 & v_1257<=0 & 
+  r_1291=r1_1259 --> r>r_1291
+, 0<=v_1257 & r=g( v_1257, r1_1259) & 0<v_1257 & 0<v_1257 & v_int_24_1347+
+  1=v_1257 & val_24_1340=v_1257 & v_int_25_1356=0 & v_1372=v_int_24_1347 & 
+  v_1399=v_int_25_1356 & r1_1401=r1_1259 & 0<=v_1399 & 
+  r1_1374=g( v_1399, r1_1401) & r1_1374=g( v_1399, r1_1401) & 0<=v_1372 & 
+  r_1358=g( v_1372, r1_1374) --> r>r_1358
+, 0<=v_1257 & r=g( v_1257, r1_1259) & v_1257<=0 & v_1257<=0 & 
+  r_1291=r1_1259 & 0<=r1_1259 & 0<=r_1291 --> 0<=r
+, 0<=v_1257 & r=g( v_1257, r1_1259) & 0<v_1257 & 0<v_1257 & v_int_24_1347+
+  1=v_1257 & val_24_1340=v_1257 & v_int_25_1356=0 & v_1372=v_int_24_1347 & 
+  v_1399=v_int_25_1356 & r1_1401=r1_1259 & 0<=v_1399 & 
+  r1_1374=g( v_1399, r1_1401) & r1_1374=g( v_1399, r1_1401) & 0<=v_1372 & 
+  r_1358=g( v_1372, r1_1374) & 0<=r1_1259 & 0<=r_1358 --> 0<=r
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int g(int x,int y) == 1+(2*x)+(1*y)
+, template int f() == 0
+]
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()
