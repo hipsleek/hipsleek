@@ -509,6 +509,8 @@ let common_arguments = [
   ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
   ("--tnt-verbose", Arg.Set_int Globals.tnt_verbosity,
       "level of detail in termination inference printing 0-verbose 1-standard (default)");
+  ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
+      "enable lexicographic ranking function inference");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

@@ -818,13 +818,13 @@ let infer_ranking_function_scc prog g scc =
     in Some rank_of_ann
   | _ ->
     (* Lexico inference is only for scc with the same function *) 
-    (* let fname_scc = List.concat (List.map (fun (_, rel, _) ->                                          *)
-    (*   [CP.fn_of_term_ann rel.termu_lhs; CP.fn_of_term_ann rel.termu_rhs]) scc_edges) in                *)
-    (* let fname_scc = Gen.BList.remove_dups_eq (fun fn1 fn2 -> String.compare fn1 fn2 == 0) fname_scc in *)
-    (* if (List.length fname_scc == 1) && (List.length scc_edges > 1) then                                *)
-    (*   infer_lex_ranking_function_scc prog g scc_edges                                                  *)
-    (* else None                                                                                          *)
-    None
+    let fname_scc = List.concat (List.map (fun (_, rel, _) ->
+      [CP.fn_of_term_ann rel.termu_lhs; CP.fn_of_term_ann rel.termu_rhs]) scc_edges) in
+    let fname_scc = Gen.BList.remove_dups_eq (fun fn1 fn2 -> String.compare fn1 fn2 == 0) fname_scc in
+    (* TODO: Removing duplicate contexts might return a better result *)
+    if !Globals.tnt_infer_lex && (List.length fname_scc == 1) && (List.length scc_edges > 1) then
+      infer_lex_ranking_function_scc prog g scc_edges
+    else None
 
 (* Abductive Inference *)
 let infer_abductive_cond prog ann ante conseq =
