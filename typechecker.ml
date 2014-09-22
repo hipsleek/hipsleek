@@ -1655,7 +1655,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let vheap = Cvutil.prune_preds prog false vheap in
                     let _ = DD.tinfo_hprint (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
-	                CF.formula_struc_explicit_inst = [];	 
+	                CF.formula_struc_explicit_inst = [];
                         CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then perm_vars else [];  (*need to instantiate f*)
                         CF.formula_struc_exists = [];
 	                CF.formula_struc_base = vheap;
@@ -1678,7 +1678,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let _ = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
 	              let _ = PTracer.log_proof prf in
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
-                      (* let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
+                      let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
                       if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
                         begin
@@ -1713,7 +1713,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		            if not(CP.isLend imm_node) && not(CP.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
 		              CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
     			          (* for Lend, Accs it should not be added back and 
-								field level annotations should be added back and compacted *)
+				     field level annotations should be added back and compacted *)
 		            else tmp_res1 
 		          in 
                           Debug.tinfo_pprint "WN : adding vheap to exception too" no_pos;
@@ -1733,7 +1733,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		          let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
                           let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                           let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
-		                  let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+		          let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                           let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
                           Debug.tinfo_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           (* normalize_list_failesc_context_w_lemma prog res *)

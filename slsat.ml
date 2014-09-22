@@ -23,6 +23,7 @@ let check_sat_empty_rhs_with_uo_x es ante (conseq_p:CP.formula) matched_svl=
     | HEmp -> true
     | _ -> false (* to implement*)
   in
+  let is_sat = false in
   mk_cex is_sat
 
 let check_sat_empty_rhs_with_uo es ante (conseq_p:CP.formula) matched_set=

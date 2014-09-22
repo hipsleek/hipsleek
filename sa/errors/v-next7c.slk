@@ -1,4 +1,5 @@
 
+/*
 //(1)
 checkentail x=5 & flow __norm |- x>0 & flow __norm.
 print residue.
@@ -21,7 +22,6 @@ checkentail x=5 & flow __norm |-
    }.
 print residue.
 //<1>emp&0<x & x=5&{FLOW,(3,4)=__norm}[]    YES
-
 
 //(5)
 checkentail x=0 & flow __norm |- 

@@ -131,7 +131,7 @@ let start () =
       let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
       (* let rl_bin = "redcsl" in *)
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
-      (* print_endline "Starting Reduce... "; *)
+      print_endline "Starting Reduce... ";
       flush stdout
   end
 
@@ -152,6 +152,7 @@ let stop () =
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
       let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      print_endline "Stopping Reduce... ";
       is_reduce_running := false
   end
 

@@ -3,3 +3,9 @@
 #heap_entail_conjunct_lhs
 #obtain_subsume_es
 #heap_entail_after_sat_struc
+heap_entail_conjunct_lhs
+heap_entail_conjunct
+obtain_subsume_es
+heap_entail_after_sat
+heap_entail_conjunct_lhs_struc
+helper_inner

@@ -6867,7 +6867,12 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
     (* let _ = Log.add_sleek_logging ante conseq pos in *)
     (* let _ = DD.info_zprint  (lazy  ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
     (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
-    heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos
+    let ls, prf = heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
+     (* to convert failure -> normal with corr. error flows *)
+    let ls1 = (* if not !disable_failure_explaining then Musterr.convert_list_context prog ls *)
+    (* else *) ls
+    in
+    ls1,prf
         (*in print_string "stop\n";flush(stdout);r*)
         (* check the entailment of two conjuncts  *)
         (* return value: if fst res = true, then  *)
