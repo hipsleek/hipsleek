@@ -1540,11 +1540,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let bind_op () =
                 begin
                   DD.tinfo_pprint ">>>>>> bind type-checker <<<<<<" pos;
-                  DD.tinfo_hprint (add_str "node" (fun x -> x)) v pos;               
-                  DD.tinfo_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
-                  DD.tinfo_hprint (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;               
-                  DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
-                  DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;               
+                  DD.tinfo_hprint (add_str "node" (fun x -> x)) v pos;
+                  DD.tinfo_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;
+                  DD.tinfo_hprint (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
+                  DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
+                  DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;
                   let b,res = (if !Globals.ann_vp then
                     (*check for access permissions*)
                     let var = (CP.SpecVar (v_t, v, Primed)) in

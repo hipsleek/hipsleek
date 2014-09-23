@@ -359,15 +359,15 @@ It is replaced by convert_data_and_pred_to_cast
 (* TODO: *)
 let process_func_def fdef =
   if Astsimp.check_data_pred_name iprog fdef.I.func_name then
-	let tmp = iprog.I.prog_func_decls in
-	  try
-			iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
-			(*let cfdef = Astsimp.trans_func iprog fdef in !cprog.Cast.prog_func_decls <- (cfdef :: !cprog.Cast.prog_func_decls);*)
-			(*Smtsolver.add_function cfdef.Cast.func_name cfdef.Cast.func_vars cfdef.Cast.func_formula;*)
-	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
-  else
-		print_string (fdef.I.func_name ^ " is already defined.\n")
+    let tmp = iprog.I.prog_func_decls in
+    try
+      iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
+	(*let cfdef = Astsimp.trans_func iprog fdef in !cprog.Cast.prog_func_decls <- (cfdef :: !cprog.Cast.prog_func_decls);*)
+	(*Smtsolver.add_function cfdef.Cast.func_name cfdef.Cast.func_vars cfdef.Cast.func_formula;*)
+    with
+      | _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
+    else
+      print_string (fdef.I.func_name ^ " is already defined.\n")
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =

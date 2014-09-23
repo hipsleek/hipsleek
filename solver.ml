@@ -4203,7 +4203,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     (* DD.info_zprint  (lazy  ("  after pre: " ^ (Cprinter.string_of_list_context n_ctx_list))) pos; *)
                                     (*END debugging ctx11 *)
 			            (match n_ctx_list with
-	                              | FailCtx _ -> (* let _ = print_endline ("###: 1") in *) (n_ctx_list, prf)
+	                              | FailCtx _ -> (* let _ = print_endline ("###: 1") in *)
+                                            (n_ctx_list, prf)
+                                            (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
 	                              | SuccCtx _ ->
 				            let res_ctx, res_prf = match formula_cont with
 					      | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
@@ -13937,13 +13939,13 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   if cl==[] then ([],UnsatAnte)
   else begin
   (*let cl = 
-                  if(!Globals.allow_field_ann) then
-                  let idf = (fun c -> c) in
-		  CF.transform_list_partial_context (
-		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}),idf) 
-		  cl
-		  else cl
-		  in*)
+    if(!Globals.allow_field_ann) then
+    let idf = (fun c -> c) in
+    CF.transform_list_partial_context (
+    (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}),idf) 
+    cl
+    else cl
+    in*)
   let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in

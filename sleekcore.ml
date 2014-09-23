@@ -238,10 +238,10 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
       let rs1, _ =
         if not !Globals.disable_failure_explaining then
-          Solver.heap_entail_struc_init_bug_inv cprog false false
+          Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
         else
-          Solver.heap_entail_struc_init cprog false false
+          Solver.heap_entail_struc_init cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
       in
       (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
