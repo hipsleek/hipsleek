@@ -14,6 +14,19 @@ int length (node x)
 	else return 1 + length(x.next);
 }
 /*
+# tinf/data/ll1.ss
+
+Why is there a "check 1 fail" message in the post branch? 
+What does it signify?
+
+Checking procedure length$node... check 1 fail
+Procedure length$node SUCCESS.
+
+Note that in the ti3 branch, we got the following instead:
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
 # ll1.ss --imm
 
 int length (node x)
