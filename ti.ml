@@ -15,7 +15,6 @@ let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let add_ret_trel_stk prog ctx lhs rhs =
   let params = params_of_term_ann prog rhs in
-  let _ = Debug.binfo_hprint (add_str "ctx" Cprinter.string_of_mix_formula) ctx no_pos in
   let trel = {
     ret_ctx = MCP.pure_of_mix ctx;
     termr_fname = CP.fn_of_term_ann rhs;
@@ -135,7 +134,6 @@ let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let add_call_trel_stk prog ctx lhs rhs callee args =
   let params = params_of_term_ann prog rhs in
-  let _ = Debug.binfo_hprint (add_str "ctx" Cprinter.string_of_mix_formula) ctx no_pos in
   let trel = {
     trel_id = tnt_fresh_int ();
     call_ctx = MCP.pure_of_mix ctx;

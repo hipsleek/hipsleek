@@ -60,17 +60,30 @@ let add_post_relation prog proc sf rel_name rel_type =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "add_post_relation" pr pr (fun _ -> add_post_relation prog proc sf rel_name rel_type) sf
 
+let rec is_need_to_add_rel sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_need_to_add_rel sf) el
+  | CF.EInfer ei ->
+        let inf_obj = ei.CF.formula_inf_obj in
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_post)
+  | _ -> false
+
 let rec is_infer_post sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
         is_infer_post sf) el
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
-        (inf_obj # is_post)
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_post) || (List.length inf_vars > 0)
   | _ -> false
 
 let is_infer_post sf =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "is_infer_post" pr string_of_bool is_infer_post sf
+
+let is_infer_post_scc scc =
+  List.exists (fun proc -> is_infer_post (proc.proc_stk_of_static_specs # top)) scc
 
 let rec modify_post_relation sf infer_vars = match sf with
   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
@@ -94,12 +107,12 @@ let rec modify_post_relation sf infer_vars = match sf with
 let add_post_relation_scc prog scc =
   let _ = List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
-      if is_infer_post spec then
+      let _ = if is_need_to_add_rel spec then
         let new_spec = add_post_relation prog proc spec "" UNK in
         proc.proc_stk_of_static_specs # push new_spec
-      else ()
+      in ()
   ) scc in
-  if List.length scc > 1 then
+  let _ = if List.length scc > 1 then
     let infer_vars = List.fold_left (fun acc proc ->
         let spec = proc.proc_stk_of_static_specs # top in
         acc@(CF.struc_infer_relation spec)
@@ -109,7 +122,7 @@ let add_post_relation_scc prog scc =
         let new_spec = modify_post_relation spec infer_vars in
         proc.proc_stk_of_static_specs # push new_spec
     ) scc
-  else ()
+  in ()
 
 (* let rec is_infer_post prog proc sf = match sf with *)
 (*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
@@ -126,30 +139,38 @@ let add_post_relation_scc prog scc =
 (*           sf *)
 (*   | _ -> sf *)
 
-let rec turn_off_infer_post sf =
-    match sf with
-    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
-          (lbl,turn_off_infer_post sf)) el)
-    | CF.EBase eb ->
-          let cont = eb.CF.formula_struc_continuation in (
-              match cont with
-                | None -> sf
-                | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (turn_off_infer_post cont)} )
-    | CF.EAssume ea -> sf
-    | CF.EInfer ei ->
-          let inf_obj = ei.CF.formula_inf_obj in
-          let _ = inf_obj # reset INF_POST in
-          CF.EInfer {ei with
-              CF.formula_inf_obj = inf_obj;
+let rec turn_off_infer_post spec old_spec =
+    match (spec,old_spec) with
+    | (CF.EList el1,CF.EList el2) -> CF.EList (List.map (fun ((lbl,sf1),(_,sf2)) ->
+          (lbl,turn_off_infer_post sf1 sf2)) (List.combine el1 el2))
+    | (CF.EBase eb1,CF.EBase eb2) ->
+          let cont1 = eb1.CF.formula_struc_continuation in
+          let cont2 = eb2.CF.formula_struc_continuation in (
+              match (cont1,cont2) with
+                | (None,_) -> spec
+                | (Some cont1,Some cont2) -> CF.EBase {eb1 with CF.formula_struc_continuation = Some (turn_off_infer_post cont1 cont2)}
+                | _ -> failwith "turn off infer post ebase" )
+    | (CF.EAssume ea,_) -> spec
+    | (CF.EInfer ei1,CF.EInfer ei2) ->
+          let old_inf_obj = ei2.CF.formula_inf_obj # clone in
+          let _ = old_inf_obj # reset INF_POST in
+          CF.EInfer {ei1 with
+              CF.formula_inf_obj = old_inf_obj;
               CF.formula_inf_vars = []}
-    | CF.ECase ec -> CF.ECase { ec with
-        CF.formula_case_branches = List.map (fun (pf,sf) ->
-            (pf,turn_off_infer_post sf)
-        ) ec.CF.formula_case_branches
+    | (CF.ECase ec1,CF.ECase ec2) -> CF.ECase { ec1 with
+        CF.formula_case_branches = List.map (fun ((pf,sf1),(_,sf2)) ->
+            (pf,turn_off_infer_post sf1 sf2)
+        ) (List.combine ec1.CF.formula_case_branches ec2.CF.formula_case_branches)
       }
+    | (CF.EBase eb,CF.EInfer ei) ->
+          CF.EInfer {ei with
+              CF.formula_inf_obj = ei.CF.formula_inf_obj;
+              CF.formula_inf_vars = [];
+              CF.formula_inf_continuation = spec}
+    | _ -> failwith "turn off infer post other"
 
 let resume_infer_obj_proc proc old_spec =
-  let spec = turn_off_infer_post old_spec in
+  let spec = turn_off_infer_post (proc.proc_stk_of_static_specs # top) old_spec in
   let _ = DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
   let _ = proc.proc_stk_of_static_specs # push spec in
   proc
@@ -196,7 +217,6 @@ let filter_infer_post_scc scc =
   List.map (fun proc -> filter_infer_post_proc proc) scc
 
 let infer_post (prog : prog_decl) (scc : proc_decl list) =
-  let pr = !CP.print_formula in
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let _ = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
   let rels = Infer.infer_rel_stk # get_stk in
@@ -262,7 +282,6 @@ let infer_post (prog : prog_decl) (scc : proc_decl list) =
                   if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
             ) post_rel_df)
             in
-            let proc = List.hd scc in
             let pre_invs,post_invs =
               List.fold_left (fun (pre_invs,post_invs) proc ->
                   let new_pre_invs,new_post_invs =
@@ -328,7 +347,7 @@ let infer_post (prog : prog_decl) (scc : proc_decl list) =
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline "\nPost Inference result:";
         print_endline proc.proc_name;
-      print_endline (Cprinter.string_of_struc_formula_for_spec new_spec);
+        print_endline (Cprinter.string_of_struc_formula_for_spec new_spec);
     ) (List.combine scc new_specs) in
     ()
 
