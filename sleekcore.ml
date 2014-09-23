@@ -119,6 +119,12 @@ let sleek_unsat_check isvl cprog ante=
 (*       ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])), *)
 (*   []) *)
 
+let sleek_entail prog ante_ctx conseq pos=
+  let pid = None in
+  let ante_failesc_ctx = [([],[],[([], ante_ctx)])] in
+  let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
+  rs, prf
+
 let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
@@ -238,6 +244,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
       let rs1, _ =
         if not !Globals.disable_failure_explaining then
+          (* let _ = sleek_entail cprog ctx conseq no_pos in *)
           Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
         else

@@ -10,3 +10,4 @@ heap_entail_after_sat_struc
 heap_entail_conjunct_lhs_struc
 helper_inner
 convert_list_context
+heap_entail_struc_list_failesc_context_init

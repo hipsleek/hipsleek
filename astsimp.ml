@@ -5984,6 +5984,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
                             CF.formula_struc_implicit_inst = ext_impl;
                             CF.formula_struc_exists = ext_exis;
                             CF.formula_struc_base = nb;
+                            CF.formula_struc_is_requires = b.IF.formula_struc_is_requires;
                             CF.formula_struc_continuation = nc;
                             CF.formula_struc_pos = b.IF.formula_struc_pos} in
         (n_tl,cf)    
@@ -7728,6 +7729,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     IF.formula_struc_implicit_inst =implvar;                    
                     IF.formula_struc_explicit_inst = all_expl;
                     IF.formula_struc_exists = [];
+                    IF.formula_struc_is_requires = b.IF.formula_struc_is_requires;
                     IF.formula_struc_continuation = nc;
                     IF.formula_struc_pos = pos},rdups (h2@h3))
           | IF.EInfer b -> (* Tricky thing *)
@@ -7773,6 +7775,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 				map_l_snd (helper hv) b.IF.formula_case_branches}
 		  | IF.EBase {
 			IF.formula_struc_explicit_inst = init_expl;
+                        IF.formula_struc_is_requires = ir;
 			IF.formula_struc_continuation = cont;
 			IF.formula_struc_base = base; }->		
 			if (List.length (inters hv init_expl))>0 then 
@@ -7801,6 +7804,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 			      IF.formula_struc_implicit_inst =hack_filter_global_rel prog impl_var;		
 			      IF.formula_struc_explicit_inst = all_expl;
 			      IF.formula_struc_exists = [];
+                              IF.formula_struc_is_requires = ir;
 			      IF.formula_struc_continuation = map_opt (helper new_v_no_inst) cont;
 			      IF.formula_struc_pos = pos}
 		  | IF.EList b -> IF.EList (map_l_snd (helper hv) b)

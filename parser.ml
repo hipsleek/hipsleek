@@ -2385,7 +2385,8 @@ let_decl:
 
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
-    | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
+    (* | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f)) *)
+    | f=  disjunctive_constr     -> MetaEForm (F.formula_to_struc_formula (F.subst_stub_flow n_flow f))
     | f=  spec         -> MetaEForm f
     | c = compose_cmd           -> MetaCompose c]];
 
@@ -2988,19 +2989,21 @@ spec:
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
     | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
-		 F.EBase {
-			 F.formula_struc_explicit_inst =cl;
-			 F.formula_struc_implicit_inst = [];
-			 F.formula_struc_exists = [];
-			 F.formula_struc_base = (F.subst_stub_flow n_flow dc);
-			 F.formula_struc_continuation = Some s;
-			 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
+	  F.EBase {
+	      F.formula_struc_explicit_inst =cl;
+	      F.formula_struc_implicit_inst = [];
+	      F.formula_struc_exists = [];
+	      F.formula_struc_base = (F.subst_stub_flow n_flow dc);
+              F.formula_struc_is_requires = true;
+	      F.formula_struc_continuation = Some s;
+	      F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
     | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
 	  F.EBase {
 	      F.formula_struc_explicit_inst =cl;
 	      F.formula_struc_implicit_inst = [];
 	      F.formula_struc_exists = [];
 	      F.formula_struc_base =  (F.subst_stub_flow n_flow dc);
+              F.formula_struc_is_requires = true;
 	      F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
 	      F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
               (* F.formula_ext_complete = false;*)

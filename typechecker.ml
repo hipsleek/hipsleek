@@ -629,6 +629,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       CF.formula_struc_base = (match pre with 
                         | [a] -> a 
                         | _ -> report_error pos_spec ("Spec has more than 2 pres but only 1 post"));
+                      CF.formula_struc_is_requires = true;
                       CF.formula_struc_continuation = Some c;
                       CF.formula_struc_pos = pos_spec;}
                 | _ -> c in
@@ -1659,6 +1660,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then perm_vars else [];  (*need to instantiate f*)
                         CF.formula_struc_exists = [];
 	                CF.formula_struc_base = vheap;
+                        CF.formula_struc_is_requires = false;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in

@@ -4102,7 +4102,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_implicit_inst = impl_inst;
 		                  formula_struc_exists = base_exists;
 		                  formula_struc_base = formula_base;
-		                  formula_struc_continuation = formula_cont;} as b) ->begin
+		                  formula_struc_continuation = formula_cont;
+                                  formula_struc_is_requires = is_requires;
+                              } as b) ->begin
                                   (* let _ = print_endline ("l2: ### EBASE xxx") in *)
                                 (* back up *)
                                 (* let _ = Debug.info_hprint (add_str "conseq:EBASE rel_ass_stk start" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in *)
@@ -4204,7 +4206,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     (*END debugging ctx11 *)
 			            (match n_ctx_list with
 	                              | FailCtx _ -> (* let _ = print_endline ("###: 1") in *)
-                                            (n_ctx_list, prf)
+                                            if not is_requires then (n_ctx_list, prf) else (SuccCtx [], prf)
                                             (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
 	                              | SuccCtx _ ->
 				            let res_ctx, res_prf = match formula_cont with
@@ -13742,16 +13744,18 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
 (* 	  let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*\) *)
 (* 	simpl_f *)
 
-and combine_struc_base b1 b2 = 
-	   {formula_struc_explicit_inst = b1.formula_struc_explicit_inst@b2.formula_struc_explicit_inst;
-		formula_struc_implicit_inst = b1.formula_struc_implicit_inst@b2.formula_struc_implicit_inst;
-        formula_struc_exists = b1.formula_struc_exists @ b2.formula_struc_exists;
-		formula_struc_base = normalize_combine b1.formula_struc_base b2.formula_struc_base no_pos;
-		formula_struc_pos = b1.formula_struc_pos;
-		formula_struc_continuation = match b2.formula_struc_continuation with 
-			| None-> b1.formula_struc_continuation
-			| _ -> report_error no_pos "combine_struc_base unexpected continuations";
-		}
+and combine_struc_base b1 b2 =
+  let cont_f = (match b2.formula_struc_continuation with 
+    | None-> b1.formula_struc_continuation
+    | _ -> report_error no_pos "combine_struc_base unexpected continuations") in
+  {formula_struc_explicit_inst = b1.formula_struc_explicit_inst@b2.formula_struc_explicit_inst;
+  formula_struc_implicit_inst = b1.formula_struc_implicit_inst@b2.formula_struc_implicit_inst;
+  formula_struc_exists = b1.formula_struc_exists @ b2.formula_struc_exists;
+  formula_struc_base = normalize_combine b1.formula_struc_base b2.formula_struc_base no_pos;
+  formula_struc_pos = b1.formula_struc_pos;
+  formula_struc_continuation = cont_f;
+  formula_struc_is_requires = cont_f!=None;
+  }
 	
 and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with

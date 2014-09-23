@@ -2373,6 +2373,7 @@ IF.struc_formula *(IP.formula list) *((ident * (IP.ann list)) list) * ((ident * 
                IF.formula_struc_implicit_inst = ii;
                IF.formula_struc_exists = e;
                IF.formula_struc_base = f;
+               IF.formula_struc_is_requires = ir;
                IF.formula_struc_continuation = c;
                IF.formula_struc_pos = pos}) -> 
         let new_f,p,fl,fv = infer_mem_from_formula f prog mexp in 
@@ -2380,6 +2381,7 @@ IF.struc_formula *(IP.formula list) *((ident * (IP.ann list)) list) * ((ident * 
                IF.formula_struc_implicit_inst = ii;
                IF.formula_struc_exists = e;
                IF.formula_struc_base = new_f;
+               IF.formula_struc_is_requires = ir;
                IF.formula_struc_continuation = c;
                IF.formula_struc_pos = pos},p,fl,fv
     | IF.ECase({IF.formula_case_branches = cb;

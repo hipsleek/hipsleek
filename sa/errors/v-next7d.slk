@@ -13,11 +13,11 @@ print residue.
 // to return empty...
 // [] or false or FailCtx
 
-/*
+
 checkentail x=0 & flow __norm |- x=1.
 print residue.
 // to return error state
-*/
+
 
 /*
 # v-next7d.slk

@@ -129,6 +129,7 @@ and struc_base_formula =
         *)
 		formula_struc_exists : Cpure.spec_var list;
 		formula_struc_base : formula;
+                formula_struc_is_requires: bool;
 		formula_struc_continuation : struc_formula option;
 		formula_struc_pos : loc
 	}
@@ -371,6 +372,7 @@ let mkEFalse flowt pos = EBase({
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	formula_struc_base = mkFalse flowt pos;
+        formula_struc_is_requires = false;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
@@ -397,6 +399,7 @@ let mkETrue flowt pos = EBase({
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	formula_struc_base = mkTrue flowt pos;
+        formula_struc_is_requires = false;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
@@ -414,6 +417,7 @@ let mkETrue_ensures_True flowt pos = EBase({
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	formula_struc_base = mkTrue flowt pos;
+        formula_struc_is_requires = true;
 	formula_struc_continuation = Some (mkE_ensures_True flowt pos);
 	formula_struc_pos = pos})
 
@@ -430,6 +434,7 @@ let mkETrue_ensures_False flowt pos = EBase({
    formula_struc_implicit_inst = [];
    formula_struc_exists = [];
    formula_struc_base = mkTrue flowt pos;
+   formula_struc_is_requires = true;
    formula_struc_continuation = Some (mkE_ensures_False flowt pos);
    formula_struc_pos = pos})
 
@@ -771,6 +776,7 @@ and struc_formula_of_heap h pos = EBase {
 	formula_struc_implicit_inst = []; 
 	formula_struc_exists = [];
 	formula_struc_base = formula_of_heap h pos;
+        formula_struc_is_requires = false;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos}
 	
@@ -779,17 +785,19 @@ and struc_formula_of_heap_fl h fl pos = EBase {
 	formula_struc_implicit_inst = []; 
 	formula_struc_exists = [];
 	formula_struc_base = formula_of_heap_fl h fl pos;
+        formula_struc_is_requires = false;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos}
-	
-and struc_formula_of_formula f pos = EBase { 
-	formula_struc_explicit_inst = [];	 
-    formula_struc_implicit_inst = []; 
+
+and struc_formula_of_formula f pos = EBase {
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
     formula_struc_exists = [];
-	formula_struc_base = f;
-	formula_struc_continuation = None;
-	formula_struc_pos = pos}
-  
+    formula_struc_base = f;
+    formula_struc_is_requires = false;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos}
+
 and mkNormalFlow () = { formula_flow_interval = !norm_flow_int; formula_flow_link = None;}
 
 and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_link = None;}
@@ -808,6 +816,7 @@ and mkEBase_w_vars ee ei ii f ct pos = EBase{
       formula_struc_implicit_inst = ii;
       formula_struc_exists =ee;
       formula_struc_base = f;
+      formula_struc_is_requires = ct!=None;
       formula_struc_continuation = ct;
       formula_struc_pos = pos;
   }
@@ -816,6 +825,7 @@ and mkBase_rec f ct pos = {
       formula_struc_implicit_inst =[];
       formula_struc_exists =[];
       formula_struc_base = f;
+      formula_struc_is_requires = ct!=None;
       formula_struc_continuation = ct;
       formula_struc_pos = pos;
   }
@@ -2896,6 +2906,7 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 	formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
 	formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
 	formula_struc_base = apply_one s  b.formula_struc_base;
+        formula_struc_is_requires = b.formula_struc_is_requires;
 	formula_struc_continuation = map_opt (apply_one_struc_pre s) b.formula_struc_continuation;
 	formula_struc_pos = b.formula_struc_pos	
     }
@@ -2909,7 +2920,7 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 
 and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula =  match f with
   | ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc s c2)) ) b.formula_case_branches;}
-  | EBase b -> EBase {
+  | EBase b -> EBase {b with
 	formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
 	formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
 	formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
@@ -11878,19 +11889,21 @@ let rec struc_to_precond_formula (f : struc_formula) : formula = match f with
 and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with
 		| Base b-> EBase {
-			 		formula_struc_explicit_inst =[];
-		 			formula_struc_implicit_inst = [];
-					formula_struc_exists = [];
-		 			formula_struc_base = f;
-					formula_struc_continuation = None;
-		 			formula_struc_pos = b.formula_base_pos}
+		      formula_struc_explicit_inst =[];
+		      formula_struc_implicit_inst = [];
+		      formula_struc_exists = [];
+		      formula_struc_base = f;
+                      formula_struc_is_requires = false;
+		      formula_struc_continuation = None;
+		      formula_struc_pos = b.formula_base_pos}
 		| Exists b-> EBase {
-			 		formula_struc_explicit_inst =[];
-		 			formula_struc_implicit_inst = [];
-					formula_struc_exists = [];
-		 			formula_struc_base = f;
-					formula_struc_continuation = None;
-		 			formula_struc_pos = b.formula_exists_pos}
+		      formula_struc_explicit_inst =[];
+		      formula_struc_implicit_inst = [];
+		      formula_struc_exists = [];
+		      formula_struc_base = f;
+                      formula_struc_is_requires = false;
+		      formula_struc_continuation = None;
+		      formula_struc_pos = b.formula_exists_pos}
 		| Or b-> mkEList_flatten [helper b.formula_or_f1; helper b.formula_or_f2] in			
 	(helper f)
 
@@ -12018,19 +12031,20 @@ and case_to_disjunct_x (f:struc_formula):struc_formula  =
        formula_struc_implicit_inst = [];
        formula_struc_exists = [];
        formula_struc_base = formula_of_pure_N c no_pos;
+       formula_struc_is_requires = true;
        formula_struc_continuation = Some f;
        formula_struc_pos = no_pos;}
     	 in
   let push_pure c f = Debug.no_2 "push_pure" !print_pure_f !print_struc_formula !print_struc_formula push_pure_x c f in
   match f with
     | ECase b-> 
-		let l = List.map (fun (c1,c2)-> push_pure c1 (case_to_disjunct_x c2)) b.formula_case_branches in
-		(match l with 
-		  | [] -> failwith "unexpected empty case struc"
-		  | _ -> mkEList_flatten l)
+	  let l = List.map (fun (c1,c2)-> push_pure c1 (case_to_disjunct_x c2)) b.formula_case_branches in
+	  (match l with 
+	    | [] -> failwith "unexpected empty case struc"
+	    | _ -> mkEList_flatten l)
     | EBase b-> EBase {b with formula_struc_continuation = map_opt case_to_disjunct_x b.formula_struc_continuation}
-	| EList b -> EList (map_l_snd case_to_disjunct_x b)
-	| _ -> f	
+    | EList b -> EList (map_l_snd case_to_disjunct_x b)
+    | _ -> f
 
 (* start label - can be simplified *)	
 let get_start_label ctx = match ctx with
@@ -13629,6 +13643,7 @@ let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
 	  formula_struc_exists = [];
 	  (*formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
 	  formula_struc_base = mkBase HEmp (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
+          formula_struc_is_requires = true;
 	  formula_struc_continuation = cont;
 	  formula_struc_pos = loc;
     (*formula_ext_complete = true;*)
@@ -14955,6 +14970,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	formula_struc_base = pre;
+        formula_struc_is_requires = true;
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
   
@@ -15047,6 +15063,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
 	formula_struc_base = pre;
+        formula_struc_is_requires = true;
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
 
@@ -15136,6 +15153,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_implicit_inst = [fresh_perm]; (*instantiate f*)
 	formula_struc_exists = []; (*TO CHECK: [] or args*)
 	formula_struc_base = pre;
+        formula_struc_is_requires = true;
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
 
@@ -15218,6 +15236,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_implicit_inst = [(* fresh_perm *)](* ::pre_evars *); (*instantiate*)
 	formula_struc_exists = [];
 	formula_struc_base = pre (* pre_base *);
+        formula_struc_is_requires = true;
 	formula_struc_continuation = Some post;
 	formula_struc_pos = pos}
 
