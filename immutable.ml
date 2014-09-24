@@ -749,15 +749,17 @@ and insert_rd_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
 (*   transform_struc_formula f e *)
 
 and propagate_imm_struc_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
-  match sf with
-    | EBase f   -> EBase {f with 
-          formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
-    | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
-    | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
-    | EAssume f -> EAssume {f with
-	  formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
-	  formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
-    | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
+  let res = 
+    match sf with
+      | EBase f   -> EBase {f with 
+            formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
+      | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
+      | EAssume f -> EAssume {f with
+	    formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
+	    formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
+  in res
 
 and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1600,6 +1602,25 @@ let normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
 
+let normalize_field_ann_struc_formula_x (sf:CF.struc_formula): CF.struc_formula =
+  if (!Globals.allow_field_ann) then
+  (* if (false) then *)
+    let rec helper sf = 
+    match sf with
+      | EBase f   -> EBase {f with 
+            formula_struc_base = normalize_field_ann_formula f.formula_struc_base  }
+      | EList l   -> EList  (map_l_snd (fun c->  helper c ) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  helper c) f.formula_case_branches;}
+      | EAssume f -> EAssume {f with
+	    formula_assume_simpl = normalize_field_ann_formula f.formula_assume_simpl;
+	    formula_assume_struc = helper f.formula_assume_struc;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = helper f.formula_inf_continuation } 
+    in helper sf
+  else sf
+
+let normalize_field_ann_struc_formula (h:CF.struc_formula): CF.struc_formula =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "normalize_field_ann_struc_formula" pr pr normalize_field_ann_struc_formula_x h
 
 let update_read_write_ann (ann_from: CP.ann) (ann_to: CP.ann): CP.ann  =
   match ann_from with
@@ -1962,3 +1983,10 @@ let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * 
 let initialize_imm_args args =
   List.map (fun _ -> Some (Ipure.ConstAnn(Mutable))) args
 
+let propagate_imm_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
+  let res = propagate_imm_formula sf view_name imm imm_p in
+  normalize_field_ann_formula res
+
+let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
+  let res = propagate_imm_struc_formula sf view_name imm imm_p in
+  normalize_field_ann_struc_formula res

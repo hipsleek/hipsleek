@@ -11,3 +11,7 @@ infer [P3,P4]
         |- P4(b).
 print residue.
                
+infer [P3,P4] 
+      (exists b:a<=b & b=a & a<=2)
+        |- P4(b).
+print residue.

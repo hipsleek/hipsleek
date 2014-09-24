@@ -1676,7 +1676,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
              let anns = List.map fst anns in
              let to_ann = anns in
              let mpa = List.combine fr_ann to_ann in
-             Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa
+             Immutable.propagate_imm renamed_view_formula lhs_name imm mpa
                  (* let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in *)
            with _ -> renamed_view_formula
            in
@@ -2283,7 +2283,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let view_form =
           try
             let mpa = List.combine fr_ann to_ann in
-            Immutable.propagate_imm_struc_formula view_form c imm mpa
+            let sf = Immutable.propagate_imm view_form c imm mpa in
+            sf
           with _ -> view_form
         in
         Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
@@ -9634,6 +9635,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     else mkStarH consumed_h estate.es_heap pos 
                   end 
                 else  
+                   (* estate.es_heap *)
                   (* if (!Globals.allow_field_ann) then estate.es_heap *)
                   (* else *) mkStarH consumed_h estate.es_heap pos 
               in
