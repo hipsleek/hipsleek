@@ -14197,6 +14197,10 @@ let lax_impl_of_post f =
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
   
+let lax_impl_of_post f =
+	let pr = pr_pair !print_svl !print_formula  in
+	Debug.no_1 "lax_impl_of_post" !print_formula pr lax_impl_of_post f 
+
 let rec lax_impl_of_struc_post f = match f with 
 	| EBase b -> 
 		let l1, f = lax_impl_of_post b.formula_struc_base in

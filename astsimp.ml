@@ -401,7 +401,7 @@ and convert_heap2 prog (f0:IF.formula):IF.formula =
   Debug.no_1 "convert_heap2" pr pr (convert_heap2_x prog) f0
 
 and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
-  let pr = pr_none in
+  let pr = Iprinter.string_of_struc_formula in
   Debug.no_1 "convert_struc2" pr pr (convert_struc2_x prog) f0
 
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with

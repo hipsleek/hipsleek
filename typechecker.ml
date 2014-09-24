@@ -723,6 +723,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                          Infer.remove_infer_vars_all_list_partial_context res_ctx in*)
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
+                      let _ = Debug.binfo_hprint (add_str "post_cond" Cprinter.string_of_formula) post_cond no_pos in
+                      let _ = Debug.binfo_hprint (add_str "post_struc" Cprinter.string_of_struc_formula) post_struc no_pos in
                       let (impl_vs,post_cond,post_struc) =
                         (* below seems to cause problem for verification *)
                         (* see bug-sort-ll.ss *)
@@ -744,8 +746,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 			  else (*temp fixing*)
                             if not (!Globals.pred_syn_flag) then report_error pos "Assume struc impl error"
                             else
-                            (print_string "check 1 fail\n";
-                            (impl_vs,new_post,new_post_struc))
+                              let pr = Cprinter.string_of_spec_var_list in 
+                              let _ = Debug.binfo_hprint (add_str "impl_struc" pr)  impl_struc no_pos in
+                              let _ = Debug.binfo_hprint  (add_str "impl_vs" pr)  impl_vs no_pos in
+                              (print_string "check 1 fail\n";
+                              (impl_vs,new_post,new_post_struc))
                         else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
