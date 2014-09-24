@@ -981,7 +981,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Neq (e1, e2, l) -> 
           let (e1,e2) = sort_exp e1 e2 in
           f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
-    | P.EqMax (e1, e2, e3, l) ->   
+    | P.EqMax (e1, e2, e3, l) ->
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
@@ -2954,7 +2954,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    pr_args (Some("V",1)) (Some "A") "case " "{" "}" ""
     (
       fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
         (fun () -> pr_struc_formula_for_spec c2)
@@ -2963,7 +2963,7 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
     fmt_string "requires ";
     pr_formula_for_spec fb;
-    (match cont with 
+    (match cont with
       | None -> ()
       | Some l -> pr_struc_formula_for_spec l;
     );
@@ -2980,7 +2980,7 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     fmt_string ensures_str;
     pr_formula_for_spec b;
     fmt_string ";";
-	if !print_assume_struc then 
+	if !print_assume_struc then
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()

@@ -723,8 +723,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                          Infer.remove_infer_vars_all_list_partial_context res_ctx in*)
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
-                      let _ = Debug.binfo_hprint (add_str "post_cond" Cprinter.string_of_formula) post_cond no_pos in
-                      let _ = Debug.binfo_hprint (add_str "post_struc" Cprinter.string_of_struc_formula) post_struc no_pos in
                       let (impl_vs,post_cond,post_struc) =
                         (* below seems to cause problem for verification *)
                         (* see bug-sort-ll.ss *)
@@ -740,17 +738,22 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             end;
                           (* let _ = Debug.info_zprint (lazy (("  impl_struc: " ^ (!CP.print_svl impl_struc)))) pos in *)
                           (* let _ = Debug.info_zprint (lazy (("  impl_vs: " ^ (!CP.print_svl impl_vs)))) pos in *)
-			  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
-                            (* print_string "check 1 ok\n";*)
+			  if (Gen.BList.list_setequal_eq CP.eq_spec_var_ident impl_struc impl_vs) then
+                            (* print_string "check 1 ok\n"; *)
                             (impl_vs,new_post,new_post_struc)
 			  else (*temp fixing*)
                             if not (!Globals.pred_syn_flag) then report_error pos "Assume struc impl error"
                             else
-                              let pr = Cprinter.string_of_spec_var_list in 
-                              let _ = Debug.binfo_hprint (add_str "impl_struc" pr)  impl_struc no_pos in
-                              let _ = Debug.binfo_hprint  (add_str "impl_vs" pr)  impl_vs no_pos in
-                              (print_string "check 1 fail\n";
-                              (impl_vs,new_post,new_post_struc))
+                              let pr = Cprinter.string_of_spec_var_list in
+                              let _ = Debug.ninfo_hprint (add_str "impl_struc" pr) impl_struc no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "impl_vs" pr) impl_vs no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "new_post" Cprinter.string_of_formula) new_post no_pos in
+                              let sst = List.combine impl_struc impl_vs in
+                              let new_post_struc = CF.subst_struc sst new_post_struc in
+                              let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
+                              (* print_string "check 1 fail\n"; *)
+                              (impl_vs,new_post,new_post_struc)
                         else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
@@ -3598,6 +3601,8 @@ let rec check_prog iprog (prog : prog_decl) =
 
       (* Reverify *)
       let _ = if has_infer_post_proc then wrap_reverify_scc reverify_scc prog scc in
+
+      let _ = reverify_scc prog scc in
 
       let _ =
         let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
