@@ -1,14 +1,16 @@
 
-/*
+
 //(1)
 checkentail x=5 & flow __norm |- x>0 & flow __norm.
 print residue.
 // <1>emp&x=5&{FLOW,(3,4)=__norm}[] YES
 
+//2
 checkentail x=0 & flow __norm |- x>0 & flow __norm.
 print residue.
 // <1>emp&x=0&{FLOW,(5,6)=__Error}[] YES
 
+//3
 checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
 print residue.
 // <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]  WRONG
@@ -17,8 +19,8 @@ print residue.
 //(4)
 checkentail x=5 & flow __norm |- 
    case {
-    x>0 -> [] emp & flow __norm;
-    x<=0 -> [] emp & flow __Error;
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
    }.
 print residue.
 //<1>emp&0<x & x=5&{FLOW,(3,4)=__norm}[]    YES
@@ -26,8 +28,8 @@ print residue.
 //(5)
 checkentail x=0 & flow __norm |- 
    case {
-    x>0 -> [] emp & flow __norm;
-    x<=0 -> [] emp & flow __Error;
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
    }.
 print residue.
 //Entail 5: Fail.(must) cause:empty states
@@ -40,22 +42,22 @@ checkentail x=0 & flow __norm |- x<=0 & flow __Error.
 //(7)
 checkentail -1<=x & x<=6 & flow __norm |- 
    case {
-    x>0 -> [] emp & flow __norm;
-    x<=0 -> [] emp & flow __Error;
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
    }.
 print residue.
 //Entail 6: Fail.(must) cause:empty states
 
-
+//8
 checkentail x=0 & flow __norm |- 
      requires x>=0
-     ensures x>=0 & flow __Error.
+     ensures x>=0 & flow __Error;.
 print residue.
 
-
+//9
 checkentail x=0 & flow __norm |- 
      requires x>=0
-     ensures x>=0 & flow __norm. 
+     ensures x>=0 & flow __norm;. 
 print residue.
 
 /*

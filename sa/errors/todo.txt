@@ -233,7 +233,7 @@ infer/infer15.slk(no result  for {E}) ann2.slk(no result  for {E}) lemmas/lemma-
 
 
 =====================================================================
-# v-next7c.slk
+# v-next7c.slk: DONE
 
 to support requires and ensures
 
