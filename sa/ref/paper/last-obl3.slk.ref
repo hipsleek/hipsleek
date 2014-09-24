@@ -11,10 +11,10 @@ SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 SAT Count   : 8
 SAT % Hit   : 75.%
-Time(cache overhead) : 0.000286 (seconds)
+Time(cache overhead) : 0.000292 (seconds)
 
-!!! log(small):(0.006591,10)
-Total verification time: 0.056632 second(s)
-	Time spent in main process: 0.043501 second(s)
-	Time spent in child processes: 0.013131 second(s)
+!!! log(small):(0.006605,10)
+Total verification time: 0.056577 second(s)
+	Time spent in main process: 0.04361 second(s)
+	Time spent in child processes: 0.012967 second(s)
 

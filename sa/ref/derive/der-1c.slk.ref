@@ -6,6 +6,6 @@ SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
 Total verification time: 0.049924 second(s)
-	Time spent in main process: 0.036634 second(s)
-	Time spent in child processes: 0.01329 second(s)
+	Time spent in main process: 0.037116 second(s)
+	Time spent in child processes: 0.012808 second(s)
 

@@ -5,7 +5,7 @@ File "sleek/test1.slk", line 15, characters 13-14
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.051842 second(s)
-	Time spent in main process: 0.038533 second(s)
-	Time spent in child processes: 0.013309 second(s)
+Total verification time: 0.0527 second(s)
+	Time spent in main process: 0.039237 second(s)
+	Time spent in child processes: 0.013463 second(s)
 

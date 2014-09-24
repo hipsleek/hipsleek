@@ -5,7 +5,7 @@ File "hip2/cll-d3a2.slk", line 15, characters 10-11
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.051459 second(s)
-	Time spent in main process: 0.037955 second(s)
-	Time spent in child processes: 0.013504 second(s)
+Total verification time: 0.051006 second(s)
+	Time spent in main process: 0.037555 second(s)
+	Time spent in child processes: 0.013451 second(s)
 

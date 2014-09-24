@@ -14,10 +14,10 @@ Entail (1) : Valid.
 Stop Omega... 0 invocations 
 SAT Count   : 9
 SAT % Hit   : 66.66%
-Time(cache overhead) : 0.00044 (seconds)
+Time(cache overhead) : 0.000435 (seconds)
 
-!!! log(small):(0.01176,11)
-Total verification time: 0.062956 second(s)
-	Time spent in main process: 0.049676 second(s)
-	Time spent in child processes: 0.01328 second(s)
+!!! log(small):(0.011795,11)
+Total verification time: 0.061787 second(s)
+	Time spent in main process: 0.04835 second(s)
+	Time spent in child processes: 0.013437 second(s)
 

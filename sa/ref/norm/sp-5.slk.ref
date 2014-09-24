@@ -14,7 +14,7 @@ Starting z3...
 Entail (1) : Fail.(may) cause: self=null |-  self=p. LOCS:[38;40] (may-bug)
 
  <1>
-    emp&self=null&{FLOW,(1,25)=__flow}[]
+    emp&self=null&{FLOW,(3,7)=__MayError}[]
     or emp&{FLOW,(3,4)=__norm}[]
     
  inferred hprel: [P1(p)&true --> P1(p)&true(3,4)]
@@ -24,7 +24,7 @@ Entail (1) : Fail.(may) cause: self=null |-  self=p. LOCS:[38;40] (may-bug)
 Entail (2) : Fail.(may) cause: self=null |-  self=p. LOCS:[46;48] (may-bug)
 
  <1>
-    emp&self=null&{FLOW,(1,25)=__flow}[]
+    emp&self=null&{FLOW,(3,7)=__MayError}[]
     or emp&{FLOW,(3,4)=__norm}[]
     
  inferred hprel: [P1(p)&true --> P1(p)&true(3,4)]
@@ -33,7 +33,7 @@ Entail (2) : Fail.(may) cause: self=null |-  self=p. LOCS:[46;48] (may-bug)
 
 Entail (3) : Fail.(may) cause: self=null |-  self=p. LOCS:[55;56] (may-bug)
 
- <1>emp&self=null&{FLOW,(1,25)=__flow}[]
+ <1>emp&self=null&{FLOW,(3,7)=__MayError}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 
 Stop Omega... 35 invocations 
@@ -43,8 +43,8 @@ IMPLY Count : 54
 IMPLY % Hit : 74.07%
 Time(cache overhead) : 0.015283 (seconds)
 
-!!! log(small):(0.106859,382)
-Total verification time: 0.133034 second(s)
-	Time spent in main process: 0.1081 second(s)
-	Time spent in child processes: 0.024934 second(s)
+!!! log(small):(0.106402,382)
+Total verification time: 0.134227 second(s)
+	Time spent in main process: 0.107789 second(s)
+	Time spent in child processes: 0.026438 second(s)
 

@@ -17,8 +17,8 @@ SAT Count   : 5
 SAT % Hit   : 40.%
 Time(cache overhead) : 0.000247 (seconds)
 
-!!! log(small):(0.007402,7)
-Total verification time: 0.058178 second(s)
-	Time spent in main process: 0.044831 second(s)
-	Time spent in child processes: 0.013347 second(s)
+!!! log(small):(0.007419,7)
+Total verification time: 0.058229 second(s)
+	Time spent in main process: 0.044918 second(s)
+	Time spent in child processes: 0.013311 second(s)
 

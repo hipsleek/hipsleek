@@ -5,7 +5,7 @@ File "derive/derive-pred-simp.slk", line 5, characters 5-8
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.050065 second(s)
-	Time spent in main process: 0.036591 second(s)
-	Time spent in child processes: 0.013474 second(s)
+Total verification time: 0.05041 second(s)
+	Time spent in main process: 0.037097 second(s)
+	Time spent in child processes: 0.013313 second(s)
 

@@ -23,10 +23,10 @@ Starting z3...
 Stop Omega... 0 invocations 
 SAT Count   : 5
 SAT % Hit   : 20.%
-Time(cache overhead) : 0.000249 (seconds)
+Time(cache overhead) : 0.00025 (seconds)
 
-!!! log(small):(0.005182,5)
-Total verification time: 0.073662 second(s)
-	Time spent in main process: 0.06042 second(s)
-	Time spent in child processes: 0.013242 second(s)
+!!! log(small):(0.005188,5)
+Total verification time: 0.072846 second(s)
+	Time spent in main process: 0.059815 second(s)
+	Time spent in child processes: 0.013031 second(s)
 

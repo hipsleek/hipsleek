@@ -5,7 +5,7 @@ File "norm/udisj-1.slk", line 20, characters 25-26
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.052124 second(s)
-	Time spent in main process: 0.038961 second(s)
-	Time spent in child processes: 0.013163 second(s)
+Total verification time: 0.055549 second(s)
+	Time spent in main process: 0.042046 second(s)
+	Time spent in child processes: 0.013503 second(s)
 

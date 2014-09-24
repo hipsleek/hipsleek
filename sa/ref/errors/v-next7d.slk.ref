@@ -21,10 +21,10 @@ SAT Count   : 10
 SAT % Hit   : 70.%
 IMPLY Count : 5
 IMPLY % Hit : 60.%
-Time(cache overhead) : 0.000567 (seconds)
+Time(cache overhead) : 0.000564 (seconds)
 
-!!! log(small):(0.007326,18)
-Total verification time: 0.055927 second(s)
-	Time spent in main process: 0.043439 second(s)
-	Time spent in child processes: 0.012488 second(s)
+!!! log(small):(0.007941,18)
+Total verification time: 0.057534 second(s)
+	Time spent in main process: 0.043889 second(s)
+	Time spent in child processes: 0.013645 second(s)
 

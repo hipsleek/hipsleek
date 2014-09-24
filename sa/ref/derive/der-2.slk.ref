@@ -5,7 +5,7 @@ File "derive/der-2.slk", line 2, characters 5-8
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.049793 second(s)
-	Time spent in main process: 0.036878 second(s)
-	Time spent in child processes: 0.012915 second(s)
+Total verification time: 0.049169 second(s)
+	Time spent in main process: 0.036531 second(s)
+	Time spent in child processes: 0.012638 second(s)
 

@@ -4,7 +4,7 @@ H1 is defined.
 G is defined.
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.052775 second(s)
-	Time spent in main process: 0.039362 second(s)
-	Time spent in child processes: 0.013413 second(s)
+Total verification time: 0.053847 second(s)
+	Time spent in main process: 0.040395 second(s)
+	Time spent in child processes: 0.013452 second(s)
 

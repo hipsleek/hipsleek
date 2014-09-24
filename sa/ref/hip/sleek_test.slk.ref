@@ -37,7 +37,7 @@ Checkeq (4) : Valid.
 Checkeq (5) : Fail.
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.068956 second(s)
-	Time spent in main process: 0.05575 second(s)
-	Time spent in child processes: 0.013206 second(s)
+Total verification time: 0.068414 second(s)
+	Time spent in main process: 0.055082 second(s)
+	Time spent in child processes: 0.013332 second(s)
 

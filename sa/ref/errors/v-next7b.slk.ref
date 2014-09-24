@@ -5,7 +5,7 @@ File "errors/v-next7b.slk", line 13, characters 19-20
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.067646 second(s)
-	Time spent in main process: 0.054472 second(s)
-	Time spent in child processes: 0.013174 second(s)
+Total verification time: 0.051394 second(s)
+	Time spent in main process: 0.037784 second(s)
+	Time spent in child processes: 0.01361 second(s)
 

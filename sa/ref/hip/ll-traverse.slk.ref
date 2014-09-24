@@ -7,7 +7,7 @@ G is defined.
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.051216 second(s)
-	Time spent in main process: 0.037861 second(s)
-	Time spent in child processes: 0.013355 second(s)
+Total verification time: 0.051852 second(s)
+	Time spent in main process: 0.03788 second(s)
+	Time spent in child processes: 0.013972 second(s)
 

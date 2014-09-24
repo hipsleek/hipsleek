@@ -5,7 +5,7 @@ File "hip2/loc-2.slk", line 13, characters 11-12
 SLEEK FAILURE (END)
 Stop Omega... 0 invocations 
 !!! log(small):(0.,0)
-Total verification time: 0.053346 second(s)
-	Time spent in main process: 0.039245 second(s)
-	Time spent in child processes: 0.014101 second(s)
+Total verification time: 0.054981 second(s)
+	Time spent in main process: 0.040856 second(s)
+	Time spent in child processes: 0.014125 second(s)
 
