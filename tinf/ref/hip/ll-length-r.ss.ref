@@ -12,6 +12,7 @@ vars:[f,g] pre_post_vars:[r,x]
 
 Procedure length$node SUCCESS.
 
+Checking procedure length$node... 
 Checking procedure length$node... **** TEMPLATE ASSUMPTION(S) ****
 [ r=f( v_1230, r1_1232) & r_1235=r1_1232 --> r>r_1235
 ]
@@ -20,7 +21,8 @@ Checking procedure length$node... **** TEMPLATE ASSUMPTION(S) ****
 , template int f(int x,int y) == 1+(0*x)+(1*y)
 ]
 
-Termination checking result: SUCCESS
+Termination checking result: 
+(16)->(16) (MayTerm ERR: not decreasing)  Term[62; r] ->  Term[62; r_1307]
 
 
 0 false contexts at: ()

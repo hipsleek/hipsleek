@@ -6,8 +6,7 @@ Parsing file "data/ll1.ss" by default parser...
 Starting Omega...oc
 Starting z3... 
 
-Checking procedure length$node... check 1 fail
-
+Checking procedure length$node... 
 Procedure length$node SUCCESS.
 
 Checking procedure length$node... 
@@ -19,13 +18,12 @@ Temporal Assumptions:
  termAssume 0<=n_1256 & 0<=n1_1253 & n_1256=n1_1253 & !(v_bool_13_1200') & 
 x'!=null & !(v_bool_13_1200') & x'=x & x'!=null & n=1+n1_1253 & 
 v_int_14_1199'=n_1256+1 & res=v_int_14_1199' & v_1311=v_1251 & 
-p_1312=p_1252 & n1_1313=n_1256 & n_1217=1+n1_1313 & (((p_1252=1 & x'=2 & 
-1<=n_1256) | (x'=1 & p_1252=null & 
-n_1256=0))) & lengthpost_1192(n_1256) --> lengthpost_1192(n).
+p_1312=p_1252 & n1_1313=n_1256 & (((p_1252=1 & x'=2 & 1<=n_1256) | (x'=1 & 
+p_1252=null & n_1256=0))) & lengthpost_1192(n_1256) --> lengthpost_1192(n).
 
  termAssume x=null & n=0 & x'=null & x'=x & v_bool_13_1200' & x'=null & 
-v_bool_13_1200' & v_int_13_1193'=0 & res=v_int_13_1193' & ((n=0 | x=null)) & 
-n_1217=0 --> lengthpost_1192(n).
+v_bool_13_1200' & v_int_13_1193'=0 & res=v_int_13_1193' & ((n=0 | 
+x=null)) --> lengthpost_1192(n).
 
  termAssume n=1+n1_1253 & x'!=null & x'=x & !(v_bool_13_1200') & x'!=null & 
 !(v_bool_13_1200') & v_int_14_1198'=1 & v_node_14_1196'=p_1252 & 

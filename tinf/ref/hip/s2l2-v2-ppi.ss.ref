@@ -12,36 +12,27 @@ vars:[g] pre_post_vars:[r,x]
 
 Procedure s2l$node SUCCESS.
 
-Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
-[ 0<=v_1224 & r=g( v_1224, r1_1223) & 0<=r1_1223 --> 0<=r
-, 0<=v_1230 & r=g( v_1230, r1_1229) & 0<=r1_1229 --> 0<=r
-, 0<=v_1272 & r=g( v_1272, r1_1274) & v_1272<=0 & v_1272<=0 & 
-  r_1306=r1_1274 --> r>r_1306
-, 0<=v_1272 & r=g( v_1272, r1_1274) & 0<v_1272 & 0<v_1272 & v_1272=1 & 
-  v_1272=v_1272 & r_1374=r1_1274 --> r>r_1374
-, 0<=v_1272 & r=g( v_1272, r1_1274) & 0<v_1272 & 0<v_1272 & v_1272!=1 & 
-  v_1272!=1 & v_int_29_1432+1=v_1272 & val_29_1425=v_1272 & 
-  v_int_30_1441=1 & v_1459=v_int_29_1432 & v_1488=v_int_30_1441 & 
-  r1_1490=r1_1274 & 0<=v_1488 & r1_1461=g( v_1488, r1_1490) & 
-  r1_1461=g( v_1488, r1_1490) & 0<=v_1459 & 
-  r_1443=g( v_1459, r1_1461) --> r>r_1443
-, 0<=v_1272 & r=g( v_1272, r1_1274) & v_1272<=0 & v_1272<=0 & 
-  r_1306=r1_1274 & 0<=r1_1274 & 0<=r_1306 --> 0<=r
-, 0<=v_1272 & r=g( v_1272, r1_1274) & 0<v_1272 & 0<v_1272 & v_1272=1 & 
-  v_1272=v_1272 & r_1374=r1_1274 & 0<=r1_1274 & 0<=r_1374 --> 0<=r
-, 0<=v_1272 & r=g( v_1272, r1_1274) & 0<v_1272 & 0<v_1272 & v_1272!=1 & 
-  v_1272!=1 & v_int_29_1432+1=v_1272 & val_29_1425=v_1272 & 
-  v_int_30_1441=1 & v_1459=v_int_29_1432 & v_1488=v_int_30_1441 & 
-  r1_1490=r1_1274 & 0<=v_1488 & r1_1461=g( v_1488, r1_1490) & 
-  r1_1461=g( v_1488, r1_1490) & 0<=v_1459 & r_1443=g( v_1459, r1_1461) & 
-  0<=r1_1274 & 0<=r_1443 --> 0<=r
-]
-TEMPLATE INFERENCE: Unsat.
-Trying to infer lexicographic termination arguments ...
-**** LEXICOGRAPHIC RANK INFERENCE RESULT ****
-Cannot find a potential ranking function
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_1675 & 0<=r1_1675 & v_1673<=0 & 0<=v_1673 & r=g( v_1673, r1_1675) |-  0<=r. LOCS:[22;20;11;12] (may-bug)
+OrR
+  (may) cause:  0<=r1_1675 & 0<=r1_1675 & 0<1 & 0<=1 & r=g( 1, r1_1675) |-  0<=r. LOCS:[25;23;20;11;12] (may-bug)
+OrR
+  (must) cause:  0<=1 & 0<=(g( v_int_29_1837, g( 1, r1_1675))) & 0<=r1_1675 & 
+0<=v_int_29_1837 & g( 1, r1_1675)=g( 1, r1_1675) & (v_int_29_1837+1)!=1 & 
+0<(v_int_29_1837+1) & 0<=(v_int_29_1837+1) & r=g( v_int_29_1837+1, r1_1675) |-  0<=r. LOCS:[33;30;29;23;20;11;12] (must-bug)
 
-Termination checking result: SUCCESS
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l2-v2-ppi.ss",Line:33,Col:9
 
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
 
-0 false contexts at: ()
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

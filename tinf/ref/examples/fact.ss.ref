@@ -10,14 +10,15 @@ Checking procedure fact$int...
 Procedure fact$int SUCCESS.
 
 Checking procedure fact$int... 
+Checking procedure fact$int... 
 
 *****************************
 *** TERMINATION INFERENCE ***
 *****************************
 Temporal Assumptions:
- termAssume 1<=v_int_9_1189 & v_int_9_1185+1=x' & !(v_bool_8_1133') & 
-x'!=0 & !(v_bool_8_1133') & x'=x & x'!=0 & v_int_9_1132'=v_int_9_1189+1 & 
-res=v_int_9_1132' & factpost_1125(v_int_9_1185) --> factpost_1125(x).
+ termAssume 1<=v_int_9_1233 & v_int_9_1229+1=x' & !(v_bool_8_1133') & 
+x'!=0 & !(v_bool_8_1133') & x'=x & x'!=0 & v_int_9_1132'=v_int_9_1233+1 & 
+res=v_int_9_1132' & factpost_1125(v_int_9_1229) --> factpost_1125(x).
 
  termAssume x'=0 & x'=x & v_bool_8_1133' & x'=x' & v_bool_8_1133' & 
 v_int_8_1127'=1 & res=v_int_8_1127' --> factpost_1125(x).

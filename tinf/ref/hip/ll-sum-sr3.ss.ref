@@ -12,6 +12,7 @@ vars:[f,g] pre_post_vars:[r,x]
 
 Procedure sum_dec$node SUCCESS.
 
+Checking procedure sum_dec$node... 
 Checking procedure sum_dec$node... **** TEMPLATE ASSUMPTION(S) ****
 [ 0<v_1237 & r=g( v_1237, r1_1239) & v_1237<=1 & v_1237<=1 & 
   r_1271=r1_1239 --> r>r_1271
@@ -24,7 +25,9 @@ Checking procedure sum_dec$node... **** TEMPLATE ASSUMPTION(S) ****
 , template int f() == f_0
 ]
 
-Termination checking result: SUCCESS
+Termination checking result: 
+(21)->(21) (MayTerm ERR: not decreasing)  Term[94; r] ->  Term[94; r_1497]
+(18)->(18) (MayTerm ERR: not decreasing)  Term[94; r] ->  Term[94; r_1451]
 
 
 0 false contexts at: ()

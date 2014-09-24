@@ -12,31 +12,25 @@ vars:[f,g] pre_post_vars:[r,x]
 
 Procedure s2l$node SUCCESS.
 
-Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
-[ r=f() --> 0<=r
-, 0<=v_1209 & r=g( v_1209, r1_1208) & 0<=r1_1208 --> 0<=r
-, r=f() --> 0<=r
-, 0<=v_1213 & r=g( v_1213, r1_1212) & 0<=r1_1212 --> 0<=r
-, 0<=v_1256 & r=g( v_1256, r1_1258) & v_1256<=0 & v_1256<=0 & 
-  r_1290=r1_1258 --> r>r_1290
-, 0<=v_1256 & r=g( v_1256, r1_1258) & 0<v_1256 & 0<v_1256 & temp_41'+
-  1=v_1256 & val_25_1339=v_1256 & v_1366=temp_41' & v_1393=temp_41' & 
-  r1_1395=r1_1258 & 0<=v_1393 & r1_1368=g( v_1393, r1_1395) & 
-  r1_1368=g( v_1393, r1_1395) & 0<=v_1366 & 
-  r_1352=g( v_1366, r1_1368) --> r>r_1352
-, 0<=v_1256 & r=g( v_1256, r1_1258) & v_1256<=0 & v_1256<=0 & 
-  r_1290=r1_1258 & 0<=r1_1258 & 0<=r_1290 --> 0<=r
-, 0<=v_1256 & r=g( v_1256, r1_1258) & 0<v_1256 & 0<v_1256 & v_1366+1=v_1256 & 
-  val_25_1339=v_1256 & v_1393=v_1366 & r1_1395=r1_1258 & 0<=v_1393 & 
-  r1_1368=g( v_1393, r1_1395) & r1_1368=g( v_1393, r1_1395) & 0<=v_1366 & 
-  r_1352=g( v_1366, r1_1368) & 0<=r1_1258 & 0<=r_1352 --> 0<=r
-]
-TEMPLATE INFERENCE: Unsat.
-Trying to infer lexicographic termination arguments ...
-**** LEXICOGRAPHIC RANK INFERENCE RESULT ****
-Cannot find a potential ranking function
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_1537 & 0<=r1_1537 & v_1535<=0 & 0<=v_1535 & r=g( v_1535, r1_1537) |-  0<=r. LOCS:[21;20;8;9] (may-bug)
+OrR
+  (must) cause:  0<=(g( v_1647, g( v_1647, r1_1537))) & 0<=r1_1537 & 0<=v_1647 & 
+g( v_1647, r1_1537)=g( v_1647, r1_1537) & 0<=v_1647 & 0<(v_1647+1) & 
+0<=(v_1647+1) & r=g( v_1647+1, r1_1537) |-  0<=r. LOCS:[27;26;25;24;20;8;9] (must-bug)
 
-Termination checking result: SUCCESS
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l-i3.ss",Line:27,Col:11
 
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
 
-0 false contexts at: ()
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

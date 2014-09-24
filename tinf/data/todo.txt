@@ -92,7 +92,7 @@ length:  requires x::ll<n> & truecase {
   on infinite list?
 
 ====================================================================
-# tinf/data/ll1.ss
+# tinf/data/ll1.ss (FIXED)
 
 Why is there a "check 1 fail" message in the post branch? 
 What does it signify?

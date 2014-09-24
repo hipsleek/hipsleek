@@ -12,26 +12,26 @@ vars:[f,g] pre_post_vars:[r,x]
 
 Procedure sum_dec$node SUCCESS.
 
-Checking procedure sum_dec$node... **** TEMPLATE ASSUMPTION(S) ****
-[ r=f() --> 0<=r
-, 0<=v_1196 & r=g( v_1196, r1_1195) & 0<=r1_1195 --> 0<=r
-, r=f() --> 0<=r
-, 0<=v_1200 & r=g( v_1200, r1_1199) & 0<=r1_1199 --> 0<=r
-, 0<=v_1243 & r=g( v_1243, r1_1245) & v_1243!=0 & v_1243!=0 & v_int_28_1312+
-  1=v_1243 & val_28_1304=v_1243 & v_1317=v_int_28_1312 & r1_1319=r1_1245 & 
-  0<=v_1317 & r_1305=g( v_1317, r1_1319) --> r>r_1305
-, 0<=v_1243 & r=g( v_1243, r1_1245) & v_1243=0 & v_1243=v_1243 & 
-  0<=r1_1245 --> 0<=r
-, 0<=v_1243 & r=g( v_1243, r1_1245) & v_1243!=0 & v_1243!=0 & v_int_28_1312+
-  1=v_1243 & val_28_1304=v_1243 & v_1317=v_int_28_1312 & r1_1319=r1_1245 & 
-  0<=v_1317 & r_1305=g( v_1317, r1_1319) & 0<=r1_1245 & 0<=r_1305 --> 0<=r
-]
-**** TEMPLATE INFERENCE RESULT ****
-[ template int g(int x,int y) == 0+(1*x)+(0*y)
-, template int f() == 0
-]
+Checking procedure sum_dec$node... 
+Post condition cannot be derived:
+  (may) cause:  x!=null & (((p_1415=1 & x=2 & exists(r1:exists(v:0<=v & 
+r1_1416=g( v, r1)) & 0<=r1)) | (x=1 & p_1415=null & r1_1416=f()))) & 0<=0 & 
+r=g( 0, r1_1416) |-  0<=r. LOCS:[18;23;0;7;24;8;9] (may-bug)
+OrR
+  (must) cause:  0<=(g( v_int_28_1483, r1_1416)) & 0<=r1_1416 & 0<=v_int_28_1483 & 
+(v_int_28_1483+1)!=0 & 0<=(v_int_28_1483+1) & r=g( v_int_28_1483+1, r1_1416) |-  0<=r. LOCS:[29;28;24;8;9] (must-bug)
 
-Termination checking result: SUCCESS
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/ll-sum-sr2.ss",Line:29,Col:2
 
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
 
-0 false contexts at: ()
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

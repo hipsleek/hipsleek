@@ -9,17 +9,6 @@ Starting z3...
 Checking procedure f$int... 
 Procedure f$int SUCCESS.
 
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELDEFN fpost: ( false) -->  fpost_1125(x)[]]
-*************************************
-
-Post Inference result:
-f$int
- requires emp & fpre_0(x)[29]
- ensures emp & 1234<x & fpost_1125(x)[];
-
 Checking procedure f$int... 
 
 *****************************

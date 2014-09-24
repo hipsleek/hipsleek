@@ -12,28 +12,24 @@ vars:[f,g] pre_post_vars:[r,x]
 
 Procedure s2l$node SUCCESS.
 
-Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
-[ r=f() --> 0<=r
-, 0<=v_1205 & r=g( v_1205, r1_1204) & 0<=r1_1204 --> 0<=r
-, r=f() --> 0<=r
-, 0<=v_1209 & r=g( v_1209, r1_1208) & 0<=r1_1208 --> 0<=r
-, 0<=v_1252 & r=g( v_1252, r1_1254) & v_1252<=0 & v_1252<=0 & 
-  r_1286=r1_1254 --> r>r_1286
-, 0<=v_1252 & r=g( v_1252, r1_1254) & 0<v_1252 & 0<v_1252 & v_int_32_1344+
-  1=v_1252 & val_32_1335=v_1252 & v_1349=v_int_32_1344 & r1_1351=r1_1254 & 
-  0<=v_1349 & r_1337=g( v_1349, r1_1351) --> r>r_1337
-, 0<=v_1252 & r=g( v_1252, r1_1254) & v_1252<=0 & v_1252<=0 & 
-  r_1286=r1_1254 & 0<=r1_1254 & 0<=r_1286 --> 0<=r
-, 0<=v_1252 & r=g( v_1252, r1_1254) & 0<v_1252 & 0<v_1252 & v_int_32_1344+
-  1=v_1252 & val_32_1335=v_1252 & v_1349=v_int_32_1344 & r1_1351=r1_1254 & 
-  0<=v_1349 & r_1337=g( v_1349, r1_1351) & 0<=r1_1254 & 0<=r_1337 --> 0<=r
-]
-**** TEMPLATE INFERENCE RESULT ****
-[ template int g(int x,int y) == 1+(1*x)+(1*y)
-, template int f() == 0
-]
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_1467 & 0<=r1_1467 & v_1465<=0 & 0<=v_1465 & r=g( v_1465, r1_1467) |-  0<=r. LOCS:[29;28;11;12] (may-bug)
+OrR
+  (may) cause:  0<=(g( v_int_32_1559, r1_1467)) & 0<=r1_1467 & 0<=v_int_32_1559 & 
+0<(v_int_32_1559+1) & 0<=(v_int_32_1559+1) & r=g( v_int_32_1559+1, r1_1467) |-  0<=r. LOCS:[35;32;28;11;12] (may-bug)
 
-Termination checking result: SUCCESS
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l2-i.ss",Line:35,Col:21
 
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
 
-0 false contexts at: ()
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

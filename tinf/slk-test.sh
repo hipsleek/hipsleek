@@ -4,7 +4,7 @@ $EX hip/bub-2.slk
 $EX hip/bub-3b.slk --en-inf
 $EX hip/bub-3c-unsound.slk
 $EX hip/bub-3.slk --en-inf
-$EX hip/bubble-sorted.slk
+$EX hip/bubble-sorted.slk --en-inf
 $EX hip/bub.slk --en-inf
 $EX hip/double_length-i2.slk
 $EX hip/s2l2-v2-pi2.slk
