@@ -12,11 +12,12 @@ clist<n> ==
   self::node<v, q> * q::lseg<n-1, self>
   inv n>0;
 
+/*
 lemma self::clist<n> <- self::lseg<n-1, q> * q::node<v, self>;
-
 lemma self::lseg<n, q> <- self::lseg<n-1, p> * p::node<v, q>;
-
 lemma self::node<v, q> * q::lseg<n, self> -> q::node<v1, s> * s::lseg<n, q>;
+*/
+
 
 int length (node x)
 /*
