@@ -1,0 +1,123 @@
+
+!!!Full processing file "demo/heapify.ss"
+Parsing file "demo/heapify.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure heapify$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<key4,left4,right4> * HP_1276(left4) * 
+HP_1277(right4)&
+true(3,4),
+ // BIND
+(2;2;0)HP_1276(left4)&left4!=null --> left4::node<key1,left1,right1> * 
+HP_1345(left1) * HP_1346(right1)&
+true(3,4),
+ // BIND
+(2;2;0)HP_1277(right4)&right4!=null --> right4::node<key2,left2,right2> * 
+HP_1354(left2) * HP_1355(right2)&
+true(3,4),
+ // BIND
+(1;1;2;0)HP_1276(left4)&left4!=null --> left4::node<key3,left3,right3> * 
+HP_1440(left3) * HP_1441(right3)&
+true(3,4),
+ // PRE_REC
+(1;1;1;2;0)left4::node<t1',left3,right3> * HP_1440(left3) * HP_1441(right3)&
+true --> H(left4)&
+true(3,4),
+ // PRE_REC
+(1;1;1;2;2;0)right4::node<t1',left2,right2> * HP_1354(left2) * 
+HP_1355(right2)&true --> H(right4)&
+true(3,4),
+ // PRE_REC
+(1;1;2;2;2;0)left4::node<t1',left1,right1> * HP_1345(left1) * 
+HP_1346(right1)&true --> H(left4)&
+true(3,4),
+ // POST
+(1;0)x::node<key4,left4,right4> * HP_1276(left4) * HP_1277(right4)&
+left4=null --> G(x)&
+true(3,4),
+ // POST
+(1;1;1;2;0)x::node<key4,left4,right4> * G(left4) * HP_1277(right4)&
+left4!=null & right4=null --> G(x)&
+true(3,4),
+ // POST
+(2;1;1;2;0)x::node<key4,left4,right4> * left4::node<key3,left3,right3> * 
+HP_1277(right4) * HP_1440(left3) * HP_1441(right3)&right4=null --> G(x)&
+true(3,4),
+ // POST
+(1;1;1;2;2;0)x::node<key4,left4,right4> * left4::node<key1,left1,right1> * 
+G(right4) * HP_1345(left1) * HP_1346(right1)&right4!=null --> G(x)&
+true(3,4),
+ // POST
+(2;1;1;2;2;0)x::node<key4,left4,right4> * left4::node<key1,left1,right1> * 
+right4::node<key2,left2,right2> * HP_1345(left1) * HP_1346(right1) * 
+HP_1354(left2) * HP_1355(right2)&true --> G(x)&
+true(3,4),
+ // POST
+(1;1;2;2;2;0)x::node<key4,left4,right4> * G(left4) * 
+right4::node<key2,left2,right2> * HP_1354(left2) * HP_1355(right2)&
+left4!=null --> G(x)&
+true(3,4)]
+
+Procedure heapify$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<key5,left5,DP4>&left5=null; x1::node<key5,left5,right5> * 
+left5::node<key3,DP1,DP>&right5=null|#|emp&left_39_1852!=null; 
+x1::node<key5,left5,right5> * left5::node<key3,DP1,DP> * 
+right5::node<key2,DP3,DP2>|#|emp&left_39_1852!=null; 
+x1::node<key5,left5,right5> * left5::node<key3,DP1,DP>|#|emp&
+left_39_1852!=null],
+ G(x2) ::=  [x2::node<key,left,right> * G(left)&right=null & left!=null; 
+x2::node<key,left,right> * G(left) * right::node<key2,DP3,DP2>&left!=null; 
+x2::node<key,left,right>&right=null & left=null; x2::node<key,left,right> * 
+right::node<key2,DP3,DP2>&left=null; x2::node<key,left,DP4>&left=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) |#| 
+           emp&left_39_1852!=null
+           or emp&left_39_1852!=null
+           or emp&left_39_1852!=null
+            ::= 
+ x1::node<key5,left5,right5> * left5::node<key3,DP1,DP>&right5=null
+ or x1::node<key5,left5,right5> * left5::node<key3,DP1,DP> * 
+    right5::node<key2,DP3,DP2>
+ or x1::node<key5,left5,right5> * left5::node<key3,DP1,DP>
+ or x1::node<key5,left5,DP4>&left5=null
+ (3,4),
+ G(x2) ::= 
+ x2::node<key,left,right> * G(left) * right::node<key2,DP3,DP2>&left!=null
+ or x2::node<key,left,right>&right=null & left=null
+ or x2::node<key,left,right> * right::node<key2,DP3,DP2>&left=null
+ or x2::node<key,left,DP4>&left=null
+ or x2::node<key,left,right> * G(left)&right=null & left!=null
+ (3,4)]
+*************************************
+Stop Omega... 45 invocations 
+1 false contexts at: ( (49,3) )
+
+!!! log(small):(0.389945,1517)
+Total verification time: 0.852379 second(s)
+	Time spent in main process: 0.832089 second(s)
+	Time spent in child processes: 0.02029 second(s)
+

@@ -1,0 +1,56 @@
+
+!!!Full processing file "hip/ll_all2a.ss"
+Parsing file "hip/ll_all2a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=y | (self!=y & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (y<self | self<y)),
+([], self=y)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! neqs:[]
+Checking procedure append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2,G3]requires H2(x,y)&true
+ ensures G3(x,x',y)&true{,(3,4)=__norm};
+|| requires EXISTS(flted,flted1: x::ls<flted1> * y::ls<flted>&flted=null & 
+flted1=null&[]
+ ensures EXISTS(flted_32_57: x'::ls<flted_32_57>&
+flted_32_57=null&{,(3,4)=__norm}[];
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(x,y)&x!=null --> HP_1312(s1,y@NI) * HP_1313(y,x@NI) * x::node<_,s1>&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1312(s',y@NI) * HP_1313(y,x@NI)&x!=null --> H2(s',y)&
+true(3,4),
+ // POST
+(1;0)H2(x,x')&x=null --> G3(x,x',y)&
+true(3,4),
+ // POST
+(2;0)G3(s1,s2,y) * x::node<_,s2>&true --> G3(x,x',y)&
+true(3,4)]
+
+Procedure append$node~node result FAIL.(1)
+
+!!! proc.proc_name:append$node~nodeStop Omega... 18 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.105169,501)
+Total verification time: 0.399403 second(s)
+	Time spent in main process: 0.370119 second(s)
+	Time spent in child processes: 0.029284 second(s)
+

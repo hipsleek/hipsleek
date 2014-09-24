@@ -1,0 +1,27 @@
+Starting Omega...oc
+P1 is defined.
+
+Entail (1) : Valid. 
+
+ <1>P1(ppp)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> P1(y)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Starting z3... 
+
+Entail (2) : Valid. 
+
+ <1>P1(ppp)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> P1(y)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 2
+SAT % Hit   : 50.%
+Time(cache overhead) : 6e-05 (seconds)
+
+!!! log(small):(0.006039,6)
+Total verification time: 0.054712 second(s)
+	Time spent in main process: 0.041439 second(s)
+	Time spent in child processes: 0.013273 second(s)
+

@@ -1,0 +1,9 @@
+Starting Omega...oc
+
+!!! fixpoint:[( Q(m,n,k), ((k=m & 0<=m & m<=n) | (n=k & 0<=k & k<=m)), true, true)]
+Stop Omega... 7 invocations 
+!!! log(small):(0.006779,7)
+Total verification time: 0.116406 second(s)
+	Time spent in main process: 0.048988 second(s)
+	Time spent in child processes: 0.067418 second(s)
+

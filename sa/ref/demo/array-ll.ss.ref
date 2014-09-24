@@ -1,0 +1,63 @@
+
+!!!Full processing file "demo/array-ll.ss"
+Parsing file "demo/array-ll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_12:15_12:16 
+Message: UNIFICATION ERROR : at location {(12,15),(12,16)} types node[] and int[] are inconsistent
+ 
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_12:15_12:16 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(12,15),(12,16)} types node[] and int[] are inconsistent")
+ gather_type_info_b_formula: relation dom
+
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent
+ 
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent")
+ gather_type_info_b_formula: relation dom
+
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent
+ 
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent")
+ gather_type_info_b_formula: relation dom
+
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent
+ 
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_13:17_13:18 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(13,17),(13,18)} types node[] and int[] are inconsistent")
+ gather_type_info_b_formula: relation dom
+
+WARNING: demo/array-ll.ss_13:13_13:36:the result type __norm is not covered by the throw list[]
+
+Last Proving Location: 1 File "demo/array-ll.ss",Line:11,Col:0
+
+ERROR: at demo/array-ll.ss_15:7_15:8 
+Message: trans_exp :: case CallNRecv :: procedure call update___1d$node~node[]~int has invalid argument types
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("trans_exp :: case CallNRecv :: procedure call update___1d$node~node[]~int has invalid argument types")
+Error3(s) detected at main 

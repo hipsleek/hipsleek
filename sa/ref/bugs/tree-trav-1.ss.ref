@@ -1,0 +1,151 @@
+
+!!!Full processing file "bugs/tree-trav-1.ss"
+Parsing file "bugs/tree-trav-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(x,tl),(x,v_null_type_27_1263)]
+Checking procedure bug_list_neq$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,H2]requires H(x) * H2(tl)&true
+ ensures H2(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node2<val2,p4,p1> * HP_1288(p4) * HP_1289(p1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1289(p1)&p1!=null --> H(p1)&
+true(3,4),
+ // PRE_REC
+(1;0)H2(tl)&true --> H2(tl)&
+true(3,4),
+ // BIND
+(1;2;0)H2(tl)&tl!=null --> tl::node2<val1,p3,p2> * HP_1370(p3) * HP_1371(p2)&
+true(3,4),
+ // POST
+(1;0)x::node2<val2,p4,v3> * HP_1288(p4)&v3=null --> H2(x)&
+true(3,4),
+ // POST
+(1;2;0)HP_1289(p1) * HP_1370(p3) * tl'::node2<val1,p3,x> * 
+x::node2<val2,tl',v1>&v1=null & p1=null --> H2(x)&
+true(3,4),
+ // POST
+(2;2;0)x::node2<val2,tl,v2> * HP_1289(p1)&tl=null & v2=null & 
+p1=null --> H2(x)&
+true(3,4),
+ // POST
+(2;2;0)H2(tl)&tl=null --> emp&
+true(3,4)]
+
+Procedure bug_list_neq$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | (exists(p1_20_1286: XPURE(HP_1288(p1_20_1286))) & 
+self!=null) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node2<val,DP,p1> * HP_1289(p1)&x1!=null],
+ H2(tl1) ::=  [hfalse; tl1::node2<val,tl',v1> * tl'::node2<val1,p3,tl1> * HP_1370(p3)&
+v1=null; tl1::node2<val,DP,v>&v=null; tl1::node2<val,tl,v2>&v2=null & 
+tl=null],
+ HP_1289(p5) ::=  [emp&p5=null; p5::node2<val,DP,p1> * HP_1289(p1)],
+ HP_1370(p7) ::=  [p7::node2<val3,p6,tl> * HP_1370(p6)&tl!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node2<val,DP,p1> * HP_1289(p1)&x1!=null(3,4),
+ H2(tl1) ::= 
+ tl1::node2<val,tl',v1> * tl'::node2<val1,p3,tl1> * HP_1370(p3)&v1=null
+ or tl1::node2<val,DP,v>&v=null
+ or tl1::node2<val,tl,v2>&v2=null & tl=null
+ (3,4),
+ HP_1289(p5) ::= 
+ p5::node2<val,DP,p1> * HP_1289(p1)
+ or emp&p5=null
+ (3,4),
+ HP_1370(p7) ::= p7::node2<val3,p6,tl> * HP_1370(p6)&tl!=null(3,4)]
+*************************************
+
+Checking procedure bug_obtain_xpure$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,H2]requires H(x) * H2(tl)&true
+ ensures H2(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H2(tl)&true --> tl::node2<val4,p8,p9> * HP_1677(p8) * HP_1678(p9)&
+true(3,4),
+ // BIND
+(0)H(x)&true --> x::node2<val5,p11,p10> * HP_1686(p11) * HP_1687(p10)&
+true(3,4),
+ // POST
+(0)x::node2<val5,p11,p9> * HP_1686(p11) * HP_1678(p9)&true --> H2(x)&
+true(3,4)]
+
+Procedure bug_obtain_xpure$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&self!=null & exists(p1_35_1684: XPURE(HP_1686(p1_35_1684)))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&(self!=null | (exists(p1_20_1286: XPURE(HP_1288(p1_20_1286))) & 
+self!=null) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x2) ::=  [x2::node2<val5,DP2,DP1>],
+ H2(x3) ::=  [x3::node2<val5,DP2,p9> * DP_1716(p9)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x2) ::= x2::node2<val5,DP2,DP1>(3,4),
+ H2(x3) ::= x3::node2<val5,DP2,p9> * DP_1716(p9)(3,4)]
+*************************************
+Stop Omega... 45 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.182657,737)
+Total verification time: 0.485653 second(s)
+	Time spent in main process: 0.457313 second(s)
+	Time spent in child processes: 0.02834 second(s)
+

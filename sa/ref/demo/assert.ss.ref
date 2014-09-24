@@ -1,0 +1,79 @@
+
+!!!Full processing file "demo/assert.ss"
+Parsing file "demo/assert.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure mark$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+dprint: demo/assert.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:HP_1230(left1) * HP_1231(right1) * x::node<val1,left1,right1>&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []HP_1230(left) * HP_1231(right) * x::node<val,left,right>
+
+ ]
+
+assert:demo/assert.ss:21: 2:  : ok
+
+
+dprint: demo/assert.ss:22: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:HP_1230(left1) * HP_1231(right1) * x::node<val1,left1,right1>&right1=0 & right1=null&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []HP_1230(left) * HP_1231(right) * x::node<val,left,right>&right=null & right=0 & right=0
+
+ ]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val1,left1,right1> * HP_1230(left1) * 
+HP_1231(right1)&
+true(3,4),
+ // Assert/Assume
+(0)HP_1231(right1)&true --> emp&
+right1=0(3,4),
+ // POST
+(0)x::node<val1,left1,right1> * HP_1230(left1) * HP_1231(right1)&
+right1=null & right1=0 --> G(x)&
+true(3,4)]
+
+Procedure mark$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<val,DP,right>&right=null & right=0],
+ G(x2) ::=  [x2::node<val,DP,right>&right=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node<val,DP,right>&right=null & right=0(3,4),
+ G(x2) ::= x2::node<val,DP,right>&right=null(3,4)]
+*************************************
+Stop Omega... 15 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.034632,221)
+Total verification time: 0.305714 second(s)
+	Time spent in main process: 0.288897 second(s)
+	Time spent in child processes: 0.016817 second(s)
+

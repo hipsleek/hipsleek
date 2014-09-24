@@ -1,0 +1,76 @@
+
+!!!Full processing file "hip/ll_all_13b.ss"
+Parsing file "hip/ll_all_13b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure trav$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;2;0)H1(x)&x!=null --> x::node<val1,next1> * HP_1278(next1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1278(next1)&true --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)H1(x)&x=null --> G1(x)&
+true(3,4),
+ // POST
+(1;2;0)H1(x)&x!=null --> G1(x)&
+true(3,4),
+ // POST
+(2;2;0)x::node<val1,next1> * G1(next1)&true --> G1(x)&
+true(3,4)]
+
+Procedure trav$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H1(next2); emp&x1=DP & x1!=null],
+ G1(x2) ::=  [emp&x2=null; x2::node<val,next> * G1(next); emp&x2=DP & x2!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= 
+ x1::node<val2,next2> * H1(next2)
+ or emp&x1=DP & x1!=null
+ or emp&x1=null
+ (3,4),
+ G1(x2) ::= 
+ x2::node<val,next> * G1(next)
+ or emp&x2=DP & x2!=null
+ or emp&x2=null
+ (3,4)]
+*************************************
+Stop Omega... 16 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.056205,316)
+Total verification time: 0.344492 second(s)
+	Time spent in main process: 0.32303 second(s)
+	Time spent in child processes: 0.021462 second(s)
+

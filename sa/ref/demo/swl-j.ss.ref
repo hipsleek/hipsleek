@@ -1,0 +1,117 @@
+
+!!!Full processing file "demo/swl-j.ss"
+Parsing file "demo/swl-j.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=sent | (self!=sent & self=null) | (self!=sent & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self=sent | (self!=sent & self=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (sent_1086<self | self<sent_1086)),
+([], ((self=0 & sent_1086<=(0-1)) | (self=0 & 1<=sent_1086) | self=sent_1086))])
+!!! formula1: emp&(self=s | (self!=s & self=null) | (self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self=s | (self!=s & self=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], ((self=0 & s<=(0-1)) | (self=0 & 1<=s) | self=s))])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], ((self=0 & sent_1062<=(0-1)) | (self=0 & 1<=sent_1062) | self=sent_1062)),
+([self], (sent_1062<self | self<sent_1062))])
+!!! SCall neqs:[(cur,prev)]
+!!! neqs:[(cur,prev)]
+Checking procedure lscan$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1284,HP_1285,G]requires HP_1284(cur,sent1@NI) * 
+HP_1285(prev,sent1@NI)&true
+ ensures G(cur,cur'@NI,prev,prev'@NI,sent@NI)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1284(cur,sent1@NI)&true --> cur::node<val1,next1> * 
+HP_1290(next1,sent1@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1285(prev,sent1@NI) * cur'::node<val1,prev>&
+true --> HP_1284(cur',sent1@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)emp&prev'=null --> HP_1285(prev',sent1@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1290(cur',sent1@NI)&cur'!=null & 
+cur'!=sent1 --> HP_1284(cur',sent1@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1285(prev,sent1@NI) * cur1::node<val1,prev>&
+true --> HP_1285(cur1,sent1@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1285(prev,cur'@NI) * HP_1290(cur',cur'@NI) * cur::node<val1,prev>&
+true --> G(cur,cur'@NI,prev,prev'@NI,sent1@NI)&
+true(3,4),
+ // POST
+(1;2;0)G(cur,cur'@NI,prev1,prev'@NI,sent1@NI) * HP_1290(next1,sent1@NI)&
+prev1=null & next1=null & 
+next1!=sent1 --> G(cur,cur'@NI,prev,prev'@NI,sent1@NI)&
+true(3,4),
+ // POST
+(2;2;0)G(next1,cur'@NI,cur,prev'@NI,sent1@NI)&cur!=null & next1!=null & 
+next1!=sent1 --> G(cur,cur'@NI,prev,prev'@NI,sent1@NI)&
+true(3,4)]
+
+Procedure lscan$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1284(cur2,sent2) ::=  [cur2::node<val,next> * HP_1290(next,sent2)&cur2!=sent2 & cur2!=null],
+ HP_1285(prev',sent1) ::=  [
+  emp&prev'!=sent1 & prev'=null
+  or prev'::node<val,next2> * HP_1290(next2,sent1)&prev'!=sent1
+  ],
+ G(cur,cur',prev,prev',sent1) ::=  [prev'::node<val,prev>&prev=null & prev!=cur' & sent1=cur' & prev'=cur; 
+prev'::node<val,prev> * prev::node<val,next2> * HP_1290(next2,cur')&
+prev!=cur' & sent1=cur' & prev'=cur],
+ HP_1290(cur3,sent3) ::=  [emp&sent3=cur3; emp&cur3=null & cur3!=sent3; cur3::node<val,next> * 
+HP_1290(next,sent3)&cur3!=sent3]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1284(cur2,sent2) ::= cur2::node<val,next> * HP_1290(next,sent2)&cur2!=sent2 & cur2!=null(3,4),
+ HP_1285(prev',sent1) ::= 
+ emp&prev'!=sent1 & prev'=null
+ or prev'::node<val,next2> * HP_1290(next2,sent1)&prev'!=sent1
+ (3,4),
+ G(cur,cur',prev,prev',sent1) ::= 
+ prev'::node<val,prev> * prev::node<val,next2> * HP_1290(next2,cur')&
+ prev!=cur' & sent1=cur' & prev'=cur
+ or prev'::node<val,prev>&prev=null & prev!=cur' & sent1=cur' & prev'=cur
+ (3,4),
+ H(cur,prev,sent1) ::= HP_1284(cur,sent1) * HP_1285(prev,sent1),
+ HP_1290(cur3,sent3) ::= 
+ emp&cur3=null & cur3!=sent3
+ or cur3::node<val,next> * HP_1290(next,sent3)&cur3!=sent3
+ or emp&sent3=cur3
+ (3,4)]
+*************************************
+Stop Omega... 22 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.103109,395)
+Total verification time: 0.484487 second(s)
+	Time spent in main process: 0.414845 second(s)
+	Time spent in child processes: 0.069642 second(s)
+

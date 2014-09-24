@@ -1,0 +1,55 @@
+
+!!!Full processing file "demo/loop1.ss"
+Parsing file "demo/loop1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure loop$cell... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ P,G]requires P(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE_REC
+(0)P(x)&true --> P(x)&
+true(3,4),
+ // BIND
+(0)G(x')&true --> x'::cell<val1>&
+true(3,4),
+ // POST
+(0)x::cell<val1>&true --> G(x)&
+true(3,4)]
+
+Procedure loop$cell SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ G(x1) ::=  [x1::cell<val>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x1) ::= x1::cell<val>(3,4)]
+*************************************
+Stop Omega... 5 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.025148,203)
+Total verification time: 0.28921 second(s)
+	Time spent in main process: 0.273888 second(s)
+	Time spent in child processes: 0.015322 second(s)
+

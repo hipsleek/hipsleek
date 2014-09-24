@@ -1,0 +1,74 @@
+
+!!!Full processing file "paper/qsort-2.ss"
+Parsing file "paper/qsort-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! neqs:[(x,xn_42)]
+Checking procedure append_bll$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H4,H5,H6]requires H4(x) * H5(y)&true
+ ensures H6(y,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H4(x)&x!=null --> x::node<val1,next1> * HP_1249(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1249(next1)&true --> H4(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)H5(y)&true --> H5(y)&
+true(3,4),
+ // POST
+(1;0)H4(x) * H5(res)&x=null --> H6(y,res)&
+true(3,4),
+ // POST
+(2;0)H6(y,xn1) * res::node<val1,xn1>&true --> H6(y,res)&
+true(3,4)]
+
+Procedure append_bll$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H4(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H4(next2)],
+ H5(res1) ::=  [htrue&res1=DP & y=res1],
+ H6(y1,res2) ::=  [emp&y1=res2 & y1=DP; H6(y1,xn) * res2::node<val,xn>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H4(x1) ::= 
+ x1::node<val2,next2> * H4(next2)
+ or emp&x1=null
+ (3,4),
+ H5(res1) ::= htrue&res1=DP & y=res1(3,4),
+ H6(y1,res2) ::= 
+ H6(y1,xn) * res2::node<val,xn>
+ or emp&y1=res2 & y1=DP
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.039426,251)
+Total verification time: 0.317263 second(s)
+	Time spent in main process: 0.301332 second(s)
+	Time spent in child processes: 0.015931 second(s)
+

@@ -1,0 +1,19 @@
+Starting Omega...oc
+H4 is defined.
+H2 is defined.
+H3 is defined.
+HP is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+Stop Omega... 0 invocations 
+SAT Count   : 5
+SAT % Hit   : 40.%
+Time(cache overhead) : 0.000248 (seconds)
+
+!!! log(small):(0.008974,8)
+Total verification time: 0.057118 second(s)
+	Time spent in main process: 0.043892 second(s)
+	Time spent in child processes: 0.013226 second(s)
+

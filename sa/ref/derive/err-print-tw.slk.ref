@@ -1,0 +1,7 @@
+Starting Omega...oc
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.050233 second(s)
+	Time spent in main process: 0.036953 second(s)
+	Time spent in child processes: 0.01328 second(s)
+
