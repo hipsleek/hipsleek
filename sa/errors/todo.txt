@@ -227,7 +227,8 @@ to support requires and ensures
 to support case spec
 
 =====================================================================
-to fix
+to fix: FIXED
+
 infer/infer15.slk(no result  for {E}) ann2.slk(no result  for {E}) lemmas/lemma-fold.slk(no result  for {E}).
 
 

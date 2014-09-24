@@ -1485,10 +1485,18 @@ extended_l:
   [[ peek_extended; `OSQUARE; h=extended_constr_grp ; `ORWORD; t=LIST1 extended_constr_grp SEP `ORWORD; `CSQUARE -> 
      label_struc_groups (h::t)
    | h=extended_constr_grp -> label_struc_groups [h]]];
+extended_l2:
+  [[ peek_extended; `OSQUARE; h=extended_constr_grp2 ; `ORWORD; t=LIST1 extended_constr_grp2 SEP `ORWORD; `CSQUARE -> 
+     label_struc_groups (h::t)
+   | h=extended_constr_grp2 -> label_struc_groups [h]]];
    
 extended_constr_grp:
    [[ c=extended_constr -> [(Lbl.empty_spec_label_def,c)]
     | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
+
+extended_constr_grp2:
+   [[ c=extended_constr2 -> [(Lbl.empty_spec_label_def,c)]
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr2 SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
 (* then_extended : [[ `THEN; il = extended_l -> il ]]; *)
 
@@ -1499,7 +1507,10 @@ extended_constr:
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT then_extended -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT then_extended -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];
+
+extended_constr2:
+	[[ sl=sq_clist; oc=disjunctive_constr; rc= OPT then_extended -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -2386,6 +2397,7 @@ let_decl:
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
     (* | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f)) *)
+    | f = extended_l2   ->  MetaEForm (F.subst_stub_flow_struc n_flow f)
     | f=  disjunctive_constr     -> MetaEForm (F.formula_to_struc_formula (F.subst_stub_flow n_flow f))
     | f=  spec         -> MetaEForm f
     | c = compose_cmd           -> MetaCompose c]];

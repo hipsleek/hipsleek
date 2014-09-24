@@ -1,10 +1,10 @@
 
-/*
+
 checkentail x=0 & flow __norm |- 
      requires x>=0
      ensures x>=0 & flow __Error;.
 print residue.
-*/
+
 
 checkentail x=0 & flow __norm |- 
      requires x=1
