@@ -486,25 +486,30 @@ let process_lemma ldef =
 let print_residue residue =
   (* let _ = Debug.info_pprint "inside p res" no_pos in *)
   if (not !Globals.smt_compete_mode) then
-          match residue with
-            | None -> begin
-                  (* let _ = Debug.ninfo_pprint "inside p res" no_pos in *)
-                  print_string ": no residue \n"
-                  (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
-                  (*       (CF.list_formula_of_list_context s))^"\n") *)
-                  (*print all posible outcomes and their traces with numbering*)
-              end
-            | Some (ls_ctx, print) -> begin
-                  if (print) || not !Globals.disable_failure_explaining then
-                    (* let _ = Debug.info_pprint "a" no_pos in *)
-                    (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
-                    print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
-                        (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-                  else
-                    (* let _ = Debug.info_pprint "b" no_pos in *)
-                    print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
-                        (Cprinter.string_of_list_context ls_ctx)^"\n")
-              end
+    match residue with
+      | None -> begin
+          (* let _ = Debug.ninfo_pprint "inside p res" no_pos in *)
+          print_string ": no residue \n"
+              (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
+              (*       (CF.list_formula_of_list_context s))^"\n") *)
+              (*print all posible outcomes and their traces with numbering*)
+        end
+      | Some (ls_ctx, print) -> begin
+          let _ = print_string "Residue:\n" in
+          (* let is_empty_states = match ls_ctx with *)
+          (*   | CF.SuccCtx ls -> List.length ls = 0 *)
+          (*   | _ -> false *)
+          (* in *)
+          if not !Globals.disable_failure_explaining then
+              (* let _ = Debug.info_pprint "a" no_pos in *)
+              (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
+              print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
+                  (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+            else
+              (* let _ = Debug.info_pprint "b" no_pos in *)
+              print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
+                  (Cprinter.string_of_list_context ls_ctx)^"\n")
+        end
 
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 =
@@ -1923,8 +1928,8 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
           match final_error_opt with
             | Some (s, fk) -> begin
                 match fk with
-                  | Failure_May _ -> "(may) cause:"^s
-                  | Failure_Must _ -> "(must) cause:"^s
+                  | CF.Failure_May _ -> "(may) cause:"^s
+                  | CF.Failure_Must _ -> "(must) cause:"^s
                   | _ -> "INCONSISTENCY : expected failure but success instead"
               end
             | None -> "INCONSISTENCY : expected failure but success instead"

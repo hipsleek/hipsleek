@@ -1362,7 +1362,7 @@ and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
   let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
   let r = if (is_top_flow int1) then fl2
-  else if (is_top_flow int2) then fl1
+  else if (is_top_flow int2) then fl1 (*Loc: why?, at least with Flow_replace, we should use int2 anyway?*)
   else 
     match flow_tr with
 	| Flow_replace ->
@@ -9525,11 +9525,10 @@ let is_error_flow f=
       (fun _ -> is_error_flow_x f) f
 
 let rec is_mayerror_flow_x f =  match f with
-  | Base b-> subsume_flow_f !error_flow_int b.formula_base_flow &&
-        subsume_flow_f !norm_flow_int b.formula_base_flow
-  | Exists b-> subsume_flow_f !error_flow_int b.formula_exists_flow &&
-        subsume_flow_f !norm_flow_int b.formula_exists_flow
-  | Or b ->  is_mayerror_flow_x b.formula_or_f1 && is_mayerror_flow_x b.formula_or_f2 
+  | Base b-> equal_flow_interval !mayerror_flow_int  b.formula_base_flow.formula_flow_interval
+  | Exists b-> equal_flow_interval !mayerror_flow_int b.formula_exists_flow.formula_flow_interval
+        (* subsume_flow_f !norm_flow_int b.formula_exists_flow *)
+  | Or b ->  is_mayerror_flow_x b.formula_or_f1 || is_mayerror_flow_x b.formula_or_f2 
 
 let is_mayerror_flow f=
   let pr1 = !print_formula in

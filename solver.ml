@@ -4434,7 +4434,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                             let err_msg = "may_err (" ^ err_name ^ ") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                                                             let fe = mk_failure_may err_msg Globals.fnc_error in
                                                             FailCtx ((Basic_Reason ({fc_message =err_msg;
-                                                            fc_current_lhs  = es;
+                                                            fc_current_lhs  = {es with es_formula = CF.substitute_flow_into_f !top_flow_int es.es_formula};
 		                                            fc_prior_steps = es.es_prior_steps;
 		                                            fc_orig_conseq = f ;
 		                                            fc_current_conseq = post;
@@ -4446,12 +4446,25 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                             let err_msg = "must_err (" ^ err_name ^") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
                                                             let fe = mk_failure_must err_msg Globals.fnc_error in
                                                             FailCtx ((Basic_Reason ({fc_message =err_msg;
-                                                            fc_current_lhs  = es;
+                                                            fc_current_lhs  = {es with es_formula = CF.substitute_flow_into_f !error_flow_int es.es_formula};
 		                                            fc_prior_steps = es.es_prior_steps;
                                                             fc_orig_conseq  = f;
 		                                            fc_current_conseq = post;
-		                                            fc_failure_pts =  [];}, fe, es.es_trace)),(mk_cex true) )
-                                                          else (SuccCtx [ctx])
+		                                            fc_failure_pts =  [];}, fe, es.es_trace)),(mk_cex false) )
+                                                          else if CF.is_mayerror_flow postcond then
+                                                            let es, ll = helper ctx postcond in
+					                    let fl = CF.get_error_flow postcond in
+                                                            let err_name = (exlist # get_closest fl.CF.formula_flow_interval) in
+                                                            let err_msg = "may_err (" ^ err_name ^") LOCS: [" ^ (Cprinter.string_of_list_int ll) ^ "]"in
+                                                            let fe = mk_failure_may err_msg Globals.fnc_error in
+                                                            FailCtx ((Basic_Reason ({fc_message =err_msg;
+                                                            fc_current_lhs  = {es with es_formula = CF.substitute_flow_into_f !mayerror_flow_int es.es_formula};
+		                                            fc_prior_steps = es.es_prior_steps;
+                                                            fc_orig_conseq  = f;
+		                                            fc_current_conseq = post;
+		                                            fc_failure_pts =  [];}, fe, es.es_trace)),(mk_cex false) )
+                                                          else
+                                                            (SuccCtx [ctx])
                                                       in
                                                       (******************************************************)
                                                       (* let _ = print_endline ("### rs4 (2) = "^(Cprinter.string_of_context rs4)) in *)

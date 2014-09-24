@@ -3030,13 +3030,16 @@ let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) 
   pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_trace)) list) (count:int) =
-  let f b = begin
-            fmt_string "\n";
-            fmt_string "[[";
-            pr_es_trace b;
-            fmt_string "]]"
-  end in
+  let f b = if b= [] then () else
+    begin
+      fmt_string "\n";
+      fmt_string "[[";
+      pr_es_trace b;
+      fmt_string "]]"
+    end
+  in
   (* let f b = () in *)
+  if e=[] then fmt_string "{ }\n" else
   (pr_numbered_list_formula_trace_ho_inst cprog) (e) (count:int) f
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
@@ -3681,7 +3684,7 @@ let pr_context_short (ctx : context) =
 (*     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;  *)
 (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
 (*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
-    pr_wrap_test "es_ho_vars_map: " (fun _ -> false)(* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map;  
+    pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map;  
 (*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
   
         (* pr_vwrap "es_trace: " pr_es_trace trace; *)
