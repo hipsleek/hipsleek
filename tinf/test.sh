@@ -86,17 +86,17 @@ $EX examples/sc-2
 $EX examples/sc
 $EX hip/bigint-a
 $EX hip/bigint-s
-$EX hip/bubble-1
-$EX hip/bubble-1-up
+$EX hip/bubble-1 --en-inf
+$EX hip/bubble-1-up --en-inf
 $EX hip/bubble-c
-$EX hip/bubble-c-up-2
+$EX hip/bubble-c-up-2 --en-inf
 $EX hip/bubble-c-up-2-unsound
 $EX hip/bubble-c-up-3
 $EX hip/bubble-c-up-4
 $EX hip/bubble-c-up
 $EX hip/bubble-down
-$EX hip/bubble-sorted
-$EX hip/bubble
+$EX hip/bubble-sorted --en-inf
+$EX hip/bubble --en-inf
 $EX hip/double_length-i
 $EX hip/double_length
 $EX hip/dummy-1
