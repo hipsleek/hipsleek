@@ -1,0 +1,47 @@
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+HP_2 is defined.
+G is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self!=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], true)])
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ x_59::H<>&x_59!=null --> l_57::H<> * x_59::node<l_57,r_58> * 
+  r_58::HP_2<>(3,4)
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ H(x1)&x1=null
+ or x1::node<l1,r2> * H(l1) * H(r2)
+ or emp&x1!=null
+ (3,4),
+ HP_1(l2) ::= H(l2)(3,4),
+ HP_2(r3) ::= H(r3)(3,4)]
+*************************************
+Stop Omega... 10 invocations 
+SAT Count   : 151
+SAT % Hit   : 90.06%
+IMPLY Count : 6
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.005893 (seconds)
+
+!!! log(small):(0.059647,175)
+Total verification time: 0.09103 second(s)
+	Time spent in main process: 0.072865 second(s)
+	Time spent in child processes: 0.018165 second(s)
+

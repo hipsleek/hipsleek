@@ -1,0 +1,14 @@
+Starting Omega...oc
+G is defined.
+H is defined.
+HP_9 is defined.
+HP_0 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.059072 second(s)
+	Time spent in main process: 0.044579 second(s)
+	Time spent in child processes: 0.014493 second(s)
+

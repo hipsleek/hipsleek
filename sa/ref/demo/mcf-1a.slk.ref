@@ -1,0 +1,25 @@
+Starting Omega...oc
+H1 is defined.
+G1 is defined.
+H2 is defined.
+H_1 is defined.
+H_2 is defined.
+H_3 is defined.
+H_4 is defined.
+H_5 is defined.
+G2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+SAT Count   : 7
+SAT % Hit   : 71.42%
+Time(cache overhead) : 0.000296 (seconds)
+
+!!! log(small):(0.007355,9)
+Total verification time: 0.061929 second(s)
+	Time spent in main process: 0.047309 second(s)
+	Time spent in child processes: 0.01462 second(s)
+

@@ -1,0 +1,31 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(y, x), (x, y)], [(y, y), (x, x)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(t, x), (y, t), (x, y)], [(t, t), (y, x), (x, y)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(y, t), (x, y)], [(y, y), (x, t)], [(y, l), (x, x)], [(y, x), (x, l)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(y, x), (x, y)], [(y, x), (x, y)], [(y, y), (x, x)], [(y, y), (x, x)], [(y, y), (x, x)], [(y, y), (x, x)], [(y, x), (x, y)], [(y, x), (x, y)]]
+Checkeq (4) : Valid.
+!!!Final MTL: [[(x, y)]]
+Checkeq (5) : Valid.
+!!!Final MTL: [[(x, y)]]
+Checkeq (6) : Valid.
+!!!Final MTL: [[(x, y)]]
+Checkeq (7) : Valid.
+Checkeq (8) : Fail.
+
+!!!Final MTL: [[(x, y)]]
+Checkeq (9) : Valid.
+!!!Final MTL: [[(x, y)]]
+Checkeq (10) : Valid.
+Checkeq (11) : Fail.
+
+!!!Final MTL: [[(x, y)]]
+Checkeq (12) : Valid.Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.065929 second(s)
+	Time spent in main process: 0.051851 second(s)
+	Time spent in child processes: 0.014078 second(s)
+

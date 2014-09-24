@@ -1,0 +1,29 @@
+Starting Omega...oc
+H is defined.
+H1 is defined.
+H2 is defined.
+G is defined.
+H_2 is defined.
+H_3 is defined.
+H_2a is defined.
+H_3a is defined.
+H_3b is defined.
+Group: (2,0)
+[ (2;0)H(x) --> H2(x)(3,4),
+ (2;0)H_3(x) --> H_3a(x)(3,4),
+ (2;0)H_2(x) --> H_2a(x)(3,4),
+ (2;0)H_3a(right_25_801)&right_25_801!=null --> H2(right_25_801)(3,4),
+ (2;0)H_2a(left_25_800) --> H2(left_25_800)(3,4),
+ (0)H(x) --> x::node<left_25_800,right_25_801> * H_2(left_25_800) * 
+  H_3(right_25_801)(3,4)]
+Group: (1,0)
+[ (1;0)H_3(x) --> H_3b(x)(3,4),
+ (1;0)H_3b(right_25_801)&right_25_801=null --> emp(3,4),
+ (0)H(x) --> x::node<left_25_800,right_25_801> * H_2(left_25_800) * 
+  H_3(right_25_801)(3,4)]
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.066486 second(s)
+	Time spent in main process: 0.050775 second(s)
+	Time spent in child processes: 0.015711 second(s)
+

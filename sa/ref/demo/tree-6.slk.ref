@@ -1,0 +1,51 @@
+Starting Omega...oc
+G is defined.
+H is defined.
+HP_0 is defined.
+HP_1 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) |#| 
+          emp&left_31_204!=null
+          or emp&right_31_65=null & left_31_204!=null
+           ::= 
+ x::node<key,left,DP>
+ or x::node<key,DP1,right>&right=null
+ or x::node<key,left,DP>&left=null
+ (3,4),
+ HP_1(right1) |#| x::node<key_31_98,left_31_99,right_31_178>&
+  left_31_99=null ::= emp(3,4),
+ G(x1) |#| emp&
+  left_31_99=null ::= 
+ x1::node<key1,DP1,right2> * DP1::node<key,left,DP>&right2=null & DP1!=null
+ or x1::node<key1,left1,right2> * left1::node<key,DP1,right>&right=null & 
+    right2=null & left1!=null
+ or x1::node<key1,DP1,right2>&DP1!=null & right2=null
+ or x1::node<key1,left1,right2>&left1=null & right2=null
+ or x1::node<key1,left1,right2> * right2::node<key,left,DP>&left=null & 
+    left1=null & right2!=null
+ or x1::node<key1,left1,right2> * right2::node<key,DP1,right>&right=null & 
+    left1=null & right2!=null
+ or x1::node<key1,left1,right2>&left1=null
+ or x1::node<key1,left1,right2> * G(left1) * G(right2)&left1!=null & 
+    right2!=null
+ or x1::node<key1,left1,right2> * left1::node<key,left,DP>&left=null & 
+    right2=null & left1!=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 60
+SAT % Hit   : 71.66%
+IMPLY Count : 5
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.002712 (seconds)
+
+!!! log(small):(0.010207,65)
+Total verification time: 0.101944 second(s)
+	Time spent in main process: 0.087606 second(s)
+	Time spent in child processes: 0.014338 second(s)
+

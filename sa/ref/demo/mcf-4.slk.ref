@@ -1,0 +1,46 @@
+Starting Omega...oc
+H_3 is defined.
+H_1 is defined.
+H_4 is defined.
+H_2 is defined.
+H1 is defined.
+H2 is defined.
+H_5 is defined.
+G2 is defined.
+G1 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(t) |#| emp&
+  children_84=children_84 ::= t::tree<children> * HP_398(children,n')(3,4),
+ H2(l,prv,par) ::= HP_398(l,prv)(3,4),
+ H_1(child,prv1,par1) |#| emp&
+  children_84=children_84 ::= child::tree<children> * HP_398(children,n')(3,4),
+ H_2(prev,prv2,par2) ::= hfalse&false(3,4),
+ H_3(next,prv3,par3) |#| l::node<child_07,prev_08,next_140,par'>&
+  prev_08=prev_08 & next_140=next_140 ::= HP_398(next,l1)(3,4),
+ H_4(parent,prv4,par4) ::= NONE,
+ H_5(children1) |#| t::tree<children_143>&
+  children_143=children_143 ::= HP_398(children1,n')(3,4),
+ HP_398(l,prv) |#| emp&
+  children_192=children_192 ::= 
+ l::node<child1,prev1,next1,DP> * child1::tree<children2> * 
+ HP_398(next1,l) * HP_398(children2,n')&prev1=prv
+ or emp&l=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 26
+SAT % Hit   : 53.84%
+IMPLY Count : 11
+IMPLY % Hit : 72.72%
+Time(cache overhead) : 0.00143 (seconds)
+
+!!! log(small):(0.008102,37)
+Total verification time: 0.093082 second(s)
+	Time spent in main process: 0.078974 second(s)
+	Time spent in child processes: 0.014108 second(s)
+

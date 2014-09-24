@@ -1,0 +1,25 @@
+Starting Omega...oc
+G is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x) ::= 
+ x::node<flted,right>&0<=flted
+ or x::node<flted,right>&flted=0
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 6
+IMPLY % Hit : 66.66%
+Time(cache overhead) : 0.00035 (seconds)
+
+!!! log(small):(0.005291,7)
+Total verification time: 0.057512 second(s)
+	Time spent in main process: 0.04264 second(s)
+	Time spent in child processes: 0.014872 second(s)
+

@@ -1,0 +1,39 @@
+Starting Omega...oc
+H2 is defined.
+H3 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::lseg<q> * HP_61(q)&true(3,4); 
+                  HP_61(q1)&true --> q1::ln<>&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_76(flted)&flted=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::lseg<flted> * HP_76(flted)&true(3,4); 
+                  H3(q1)&true --> q1::ln<>&true(3,4); 
+                  HP_76(flted)&true --> emp&flted=0(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 30 invocations 
+SAT Count   : 81
+SAT % Hit   : 74.07%
+IMPLY Count : 26
+IMPLY % Hit : 73.07%
+Time(cache overhead) : 0.003574 (seconds)
+
+!!! log(small):(0.045355,139)
+Total verification time: 0.093644 second(s)
+	Time spent in main process: 0.070361 second(s)
+	Time spent in child processes: 0.023283 second(s)
+
