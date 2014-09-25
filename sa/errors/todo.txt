@@ -272,7 +272,7 @@ print residue.
 [[empty]]
 */
 =====================================================================
-# v-next7d1.slk
+# v-next7d1.slk  (FIXED)
 
 checkentail x=0 & flow __norm |- 
      requires x>=0
@@ -286,8 +286,60 @@ Entail 1: Fail.(may) cause:may_err (__flow) LOCS: [1;0;3]
  <1>emp&x=5 & x=0 & 0<=x&{FLOW,(3,4)=__norm}[]
 [[empty]]
 =====================================================================
+# v-next7d2c.slk
+
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow XXX.
+print residue.
+
+Why XXX not flagged as an error?
+
+INPUT: 
+ ### ante =  emp&1<x&{FLOW,(5,6)=__Error}[]
+ ### conseq =  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
+run_infer:
+ emp&1<x&{FLOW,(5,6)=__Error}[] [] |-  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
 =====================================================================
+# v-next7d2d.slk
+
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires x>1 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+
+Can resolve exception below?
+
+ERROR: at _0:0_0:0 
+Message: union_context_left: folding empty context list 
+
+ 
+Entail 1: EXCast. Failure("union_context_left: folding empty context list \n")
+: no residue 
+
 =====================================================================
+# v-next7d2f.slk --esl
+
+//2
+checkentail 
+   x=11 & flow __norm |-  
+    case { x>0 -> requires true & flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+Why did we log (3) but not (2) above?
+
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(3); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x=22 & 0<x&{FLOW,(3,4)=__norm}[]
+ |-  emp&{FLOW,(3,4)=__norm}[]. 
+res:  1[
+   emp&0<x & x=22&{FLOW,(3,4)=__norm}[]
+   ]
 =====================================================================
 =====================================================================
 =====================================================================
