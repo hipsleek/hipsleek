@@ -59,7 +59,7 @@ Why is there a [[empty]] false?
 */
 
 
-//(2)
+//(3)
 checkentail  x>1 & flow __norm |-  x>0 & flow __Error.
 print residue.
 
@@ -77,6 +77,7 @@ Residue:
 
 */
 
+//(4)
 checkentail  x>1 & flow __norm |-  x=0 & flow __norm.
 print residue.
 
@@ -101,6 +102,7 @@ MaybeErr Context:
 
 */
 
+//(5)
 checkentail  x>1 & flow __norm |-  x=0 & flow __Error.
 print residue.
 /*
@@ -114,6 +116,7 @@ Residue:
 */
 
 
+//(6)
 checkentail  x>1 & flow __norm |-  x>=0 & flow __Error.
 print residue.
 /*
