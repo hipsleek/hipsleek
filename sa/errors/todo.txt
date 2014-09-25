@@ -341,7 +341,7 @@ res:  1[
    emp&0<x & x=22&{FLOW,(3,4)=__norm}[]
    ]
 =====================================================================
-# v-next7d2h.slk --dfa
+# v-next7d2h.slk --dfa FIXED
 
 checkentail  x>1 & flow __norm |-  x>2 & flow __MayError.
 
@@ -364,7 +364,7 @@ Is this the same as::
  Residue { }
 Why is there a [[empty]] false?
 =====================================================================
-# v-next7d2k.slk
+# v-next7d2k.slk: FIXED
 
 To provide local control of @efa, @dfa
 

@@ -16676,17 +16676,18 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   let pr = !print_struc_formula in
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e
 
-let residues =  ref (None : (list_context * bool) option)    (* parameter 'bool' is used for printing *)
+let residues =  ref (None : (list_context * bool * bool ) option)   
+ (* parameter 'bool' is used for printing *)
 
-let set_residue b lc =
-  residues := Some (lc,b)
+let set_residue b lc ldfa =
+  residues := Some (lc,b,ldfa)
 
 let clear_residue () =
   residues := None
 
 let get_res_residue () =
   match !residues with
-    | Some (_, res) -> res
+    | Some (_, res,_) -> res
     | None -> false
 
   (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not

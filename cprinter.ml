@@ -3024,9 +3024,10 @@ let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) 
             fmt_string "\n";
             fmt_string "[[";
             pr_es_trace b;
-            fmt_string "]]"
+            fmt_string "]]\n"
   end in
   (* let f b = () in *)
+  if e=[] then fmt_string "{ }\n" else
   pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_trace)) list) (count:int) =
@@ -3035,7 +3036,7 @@ let pr_numbered_list_formula_trace_inst cprog (e:(context * (formula*formula_tra
       fmt_string "\n";
       fmt_string "[[";
       pr_es_trace b;
-      fmt_string "]]"
+      fmt_string "]]\n"
     end
   in
   (* let f b = () in *)

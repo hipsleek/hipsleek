@@ -494,21 +494,23 @@ let print_residue residue =
               (*       (CF.list_formula_of_list_context s))^"\n") *)
               (*print all posible outcomes and their traces with numbering*)
         end
-      | Some (ls_ctx, print) -> begin
+      | Some (ls_ctx, print, local_dfa) -> begin
           let _ = print_string "Residue:\n" in
           (* let is_empty_states = match ls_ctx with *)
           (*   | CF.SuccCtx ls -> List.length ls = 0 *)
           (*   | _ -> false *)
           (* in *)
-          if not !Globals.disable_failure_explaining then
+          if not local_dfa (*!Globals.disable_failure_explaining *) then
               (* let _ = Debug.info_pprint "a" no_pos in *)
               (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
               print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                   (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
             else
               (* let _ = Debug.info_pprint "b" no_pos in *)
-              print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
-                  (Cprinter.string_of_list_context ls_ctx)^"\n")
+              if print then
+                let _ = print_string ((pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
+                  (Cprinter.string_of_list_context ls_ctx)^"\n") in ()
+              else let _ =  print_string "{ }\n" in ()
         end
 
 let process_list_lemma ldef_lst  =
@@ -1132,7 +1134,7 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
           in
           let comb_rs = CF.union_context_left list_rs in
           (* let _ = print_endline ("comb_rs: "^(Cprinter.string_of_list_context comb_rs)) in *)
-          let _ = CF.residues := Some (comb_rs, r) in
+          let _ = CF.residues := Some (comb_rs, r, !Globals.disable_failure_explaining) in
           ((r, comb_rs, v0), pr0)
 
 
@@ -1514,7 +1516,7 @@ let process_validate exp_res ils_es =
           (* in *)
           (**res = Fail*)
           false, [], []
-    | Some (lc, res) -> 
+    | Some (lc, res, ldfa) -> 
           begin (*res*)
             let res = proc_sleek_result_validate lc in
             let unexp =
@@ -2214,8 +2216,14 @@ let process_pairwise (f : meta_formula) =
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let is_tnt_flag = List.mem INF_TERM itype in
+  (* combine local vs. global of failure explaining *)
+  let dfailure_anlysis = if List.mem INF_EFA itype then false else
+    if List.mem INF_DFA itype then true else !Globals.disable_failure_explaining
+  in
+  let old_dfa = !Globals.disable_failure_explaining in
+  let _ = Globals.disable_failure_explaining := dfailure_anlysis in
   let num_id = "\nEntail "^nn in
-    try
+  let r=  try
       let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id in
       let _ = if is_tnt_flag then should_infer_tnt := !should_infer_tnt && res in
@@ -2233,11 +2241,14 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
         (* | Some INF_TERM -> should_infer_tnt := false *)
         (* | _ -> ()  *)
         false
+  in
+  let _ = Globals.disable_failure_explaining := old_dfa in
+  r
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !CF.residues with 
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
-      | Some (ls_ctx, print) -> CF.list_formula_of_list_context ls_ctx in
+      | Some (ls_ctx, print, _) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 let process_print_command pcmd0 = 
@@ -2273,7 +2284,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   if var = "residue" then
     match !CF.residues with
       | None -> print_string ": no residue \n"
-      | Some (ls_ctx, print) -> begin
+      | Some (ls_ctx, print, _) -> begin
         if (print) then begin
       	  if(List.length fl = 1) then (
       	    let f = List.hd fl in
@@ -2290,7 +2301,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else if (var = "assumption") then(
     match !CF.residues with
       | None -> print_string ": no residue \n"
-      | Some (ls_ctx, print) ->(
+      | Some (ls_ctx, print, _) ->(
         if (print) then (
 	  if(List.length fl = 2) then (
 	    let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    
