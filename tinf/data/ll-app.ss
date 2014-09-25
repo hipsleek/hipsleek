@@ -21,15 +21,15 @@ clist<n> ==
 
 lemma self::clist<n> <- self::lseg<n-1, q> * q::node<v, self>;
 
-lemma self::lseg<n, q> <- self::lseg<n-1, p> * p::node<v, q>;
+//lemma self::lseg<n, q> <- self::lseg<n-1, p> * p::node<v, q>;
 
-lemma self::node<v, q> * q::lseg<n, self> -> q::node<v1, s> * s::lseg<n, q>;
+//lemma self::node<v, q> * q::lseg<n, self> -> q::node<v1, s> * s::lseg<n, q>;
 
 
 /* append two singly linked lists */
 
 void append2(node x, node y)
-  //infer [@term]
+  infer [@term]
   //requires x::ll<n1> * y::ll<n2> & n1>0 
   //ensures x::ll<n1+n2>;
   
