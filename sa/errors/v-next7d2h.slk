@@ -6,6 +6,10 @@ print residue.
 
 checkentail  x>1 & flow __norm |-  x>2 & flow __MayError.
 
+What is --dfa? I guess when a proof fails,
+we just return { } and do not attempt to
+classify the error.
+
 Entail 1: Fail.
 Residue:
 [] 
@@ -118,9 +122,6 @@ Residue:
  { }
 
 
-What is --dfa? I guess when a proof fails,
-we just return { } and do not attempt to
-classify the error.
 
 
 */
