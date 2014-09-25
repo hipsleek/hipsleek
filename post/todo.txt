@@ -479,7 +479,40 @@ Is it possible to infer the more precise:
 or even:
  res>=n+1 ;
 =======================================================
-=======================================================
+# rb.ss -p del -dd
+
+Extra inferrable rels that is not present in ti3 branch.
+Need to fix before merge into default.
+
+!!! >>>>>> infer_collect_rel <<<<<<
+!!! no relation in rhs
+!!! WN : adding vheap to exception too
+!!! bind:vheap: x'::node<val8',color8',left8',right8'>@L&{FLOW,(1,27)=__flow}[]
+!!! bind:tmp_res1:[ 
+ Successful States:
+ [
+  Label: [(,1 ); (,2 ); (,0 ); (,1 ); (,0 ); (,1 )]
+  State:hfalse&false&{FLOW,(24,25)=__norm}[]
+        es_heap: emp
+        es_pure: true
+        es_infer_vars/rel: [rotate_case_3pre; rotate_case_3post; case_2pre; 
+                            case_2post; rotate_case_3rpre; 
+                            rotate_case_3rpost; case_2rpre; case_2rpost; 
+                            is_redpre; is_redpost; is_blackpre; 
+                            is_blackpost; del_6pre; del_6post; del_6rpre; 
+                            del_6rpost; del_5pre; del_5post; del_5rpre; 
+                            del_5rpost; del_4pre; del_4post; del_4rpre; 
+                            del_4rpost; del_3pre; del_3post; del_3rpre; 
+                            del_3rpost; del_2pre; del_2post; del_2rpre; 
+                            del_2rpost; bhpre; bhpost; remove_minpre; 
+                            remove_minpost; delpre; delpost; node_errorpre; 
+                            node_errorpost; insertpre; insertpost; 
+                            div___pre; div___post; div2pre; div2post; 
+                            div3pre; div3post; div4pre; div4post; mod___pre; 
+                            mod___post; add___pre; add___post; minus___pre; 
+                            minus___post; mult___pre; mult___post; lt___pre; 
+                            lt___post; lte___pre; lte___post; gt___pre; 
+  =======================================================
 =======================================================
 =======================================================
 =======================================================

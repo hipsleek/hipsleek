@@ -1760,8 +1760,8 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
 
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
-  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
-  else
+  (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
+  (* else *)
     let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
     Debug.ninfo_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
     (*add instance of relational s0-pred*)
@@ -1990,17 +1990,19 @@ RHS pure R(rs,n) & x=null
 
 
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
-  let pr0 = !print_svl in
-  let pr1 = !print_mix_formula in
-  let pr2 = !print_entail_state in 
-  let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
-  let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
-  let pr3 (es,l,r,p,a) = 
-    pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
-  Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
-    (fun _ _ _ _ _ -> 
-      infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
-    estate estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
+  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
+  else
+    let pr0 = !print_svl in
+    let pr1 = !print_mix_formula in
+    let pr2 = !print_entail_state in 
+    let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
+    let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
+    let pr3 (es,l,r,p,a) = 
+      pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
+    Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
+        (fun _ _ _ _ _ -> 
+            infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
+        estate estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
 
 (******************************************************************************)
            (*=****************INFER REL HP ASS****************=*)
