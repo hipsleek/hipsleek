@@ -3601,14 +3601,21 @@ and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delay
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-    let get_pure_conseq_from_formula f =
-      let _,p,_,_,_ = CF.split_components f in
-      p
+    let rec get_pure_conseq_from_formula f =
+      match f with
+        | Or fo ->
+              let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
+              let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
+              let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
+              CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
+        | _  ->
+              let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
+              let _,p,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
     in
     let flatten_struc sf = CF.flatten_struc_formula sf in
     let rec get_pure_conseq_from_struc sf =
       match sf with
-        | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
+        | EBase eb -> Mcpure.mix_of_pure (get_pure_conseq_from_formula eb.CF.formula_struc_base)
         | EInfer si -> get_pure_conseq_from_struc si.CF.formula_inf_continuation
         | _ -> Mcpure.mkMTrue no_pos (* failwith "no support?" *) (* this need to be avoided! *)
     in
@@ -3630,7 +3637,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let _ = Debug.ninfo_hprint (add_str "es" Cprinter.string_of_entail_state) false_es no_pos in
       let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
       let rhs = get_pure_conseq_from_struc conseq in
-      let rhs1 = flatten_struc conseq in
+      let rhs1 = (* flatten_struc *) conseq in
       let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
       let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
       let _ = Debug.ninfo_hprint (add_str "rhs1" Cprinter.string_of_struc_formula) rhs1 no_pos in

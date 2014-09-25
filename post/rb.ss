@@ -392,8 +392,8 @@ void del(node@R x, int a)
 {
 	int v;
 
-    assert false;if (x!=null)
-      {  assert false;
+    if (x!=null)
+      {
 		if (x.val == a) // delete x
          { 
 			if (x.right == null)
