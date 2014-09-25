@@ -25,6 +25,9 @@ Is this the same as::
  Residue { }
 Why is there a [[empty]] false?
 
+infer [@efa]  x>1 & flow __norm |-  x>2 & flow __MayError.
+
+infer [@dfa]  x>1 & flow __norm |-  x>2 & flow __MayError.
 
 */
 

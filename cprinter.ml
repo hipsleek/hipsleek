@@ -3112,6 +3112,8 @@ let string_of_inf_cmd i =
   | INF_PRE   -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_IMM -> "@imm"
+  | INF_EFA -> "@efa"
+  | INF_DFA -> "@dfa"
 
 let rec string_of_inf_cmd_list il =
   match il with

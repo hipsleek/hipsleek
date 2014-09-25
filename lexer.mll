@@ -374,7 +374,9 @@ rule tokenizer file_name = parse
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
   | "@imm" { INFER_AT_IMM }
-  | "@shape" { INFER_AT_SHAPE }          
+  | "@shape" { INFER_AT_SHAPE }
+  | "@efa" { INFER_AT_EFA }
+  | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }

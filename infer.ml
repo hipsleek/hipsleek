@@ -303,6 +303,8 @@ let init_infer_type ctx itype =
       | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
       | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
       | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
+      | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx) 
+      | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx) 
       end
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
   in 

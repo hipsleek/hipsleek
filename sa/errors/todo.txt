@@ -364,6 +364,18 @@ Is this the same as::
  Residue { }
 Why is there a [[empty]] false?
 =====================================================================
+# v-next7d2k.slk
+
+To provide local control of @efa, @dfa
+
+
+infer [@dfa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+infer [@efa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+
 =====================================================================
 =====================================================================
 =====================================================================

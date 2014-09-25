@@ -48,6 +48,7 @@ type sleek_token =
   | TERM_INFER 
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
+  | INFER_AT_EFA | INFER_AT_DFA 
   | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE
   | UTPRE | UTPOST
   | UNFOLD | UNION
@@ -168,6 +169,8 @@ module Token = struct
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
     (* | TREL_INFER -> "@term" *)
+    | INFER_AT_EFA -> "@efa"
+    | INFER_AT_DFA -> "@dfa"
     | INFER_AT_TERM -> "@term"
     | INFER_AT_PRE -> "@pre"
     | INFER_AT_POST -> "@post"
