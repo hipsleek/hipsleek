@@ -33,8 +33,17 @@ void append2(node x, node y)
   //requires x::ll<n1> * y::ll<n2> & n1>0 
   //ensures x::ll<n1+n2>;
   
-  requires x::clist<n1> * y::ll<n2>
+  //requires x::ll<n1> * y::ll<n2> & n1>0 
+  //ensures true;
+  
+  requires x::clist<n1> * y::ll<n2> 
   ensures true;
+  
+  //requires x::ll<n1> * y::clist<n2> & n1>0 
+  //ensures true;
+  
+  //requires x::ll<n1> * y::clist<n2> // hip does not terminate
+  //ensures x::ll<_>;
 {    
   if (x.next == null) 
     x.next = y;
