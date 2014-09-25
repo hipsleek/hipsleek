@@ -10818,9 +10818,10 @@ let list_context_union c1 c2 =
       pr pr pr
       list_context_union_x c1 c2
 
-let rec union_context_left c_l = (* match (List.length c_l) with *) match c_l with
-  | [] ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "union_context_left: folding empty context list \n"}
+let rec union_context_left c_l: list_context = (* match (List.length c_l) with *) match c_l with
+  | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
+           (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
+        (SuccCtx []: list_context)
   | [a] -> a (* (List.hd c_l) *)
   | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
         List.fold_left list_context_union a rest
