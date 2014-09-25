@@ -276,7 +276,7 @@ print residue.
 
 checkentail x=0 & flow __norm |- 
      requires x>=0
-     ensures x=5 & flow __flow;.
+     ensures x=5 & flow __Error;.
 print residue.
 
  Why do we get __norm and not __flow?
