@@ -1494,7 +1494,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
           let ut_vs = cuts @ C.ut_decls # get_stk in
-          let _ = Debug.binfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
+          let _ = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
 	      C.prog_view_decls = cviews2;
@@ -3151,8 +3151,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         C.ut_name = utpost_name;
         C.ut_is_pre = false; } in
 
-      let _ = print_endline "here\n" in
-      let _ = Debug.binfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
+      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
       let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
 
       let uid = {
@@ -3161,12 +3160,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         CP.tu_fname = fname;
         CP.tu_call_num = 0;
         CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-        CP.tu_cond = CP.mkTrue pos; 
+        CP.tu_cond = CP.mkTrue pos;
         CP.tu_icond = CP.mkTrue pos;
-        CP.tu_sol = None; 
+        CP.tu_sol = None;
         CP.tu_pos = pos; } in
-      
-      let static_specs_list = 
+
+      let static_specs_list =
         if not !Globals.dis_term_chk then
           CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
         else static_specs_list
