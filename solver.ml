@@ -3615,9 +3615,9 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let flatten_struc sf = CF.flatten_struc_formula sf in
     let rec get_pure_conseq_from_struc sf =
       match sf with
-        | EBase eb -> Mcpure.mix_of_pure (get_pure_conseq_from_formula eb.CF.formula_struc_base)
+        | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
         | EInfer si -> get_pure_conseq_from_struc si.CF.formula_inf_continuation
-        | _ -> Mcpure.mkMTrue no_pos (* failwith "no support?" *) (* this need to be avoided! *)
+        | _ -> CP.mkTrue no_pos (* failwith "no support?" *) (* this need to be avoided! *)
     in
     let is_not_infer_false_unknown =
       let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
@@ -3633,33 +3633,19 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let pr_svl = Cprinter.string_of_typed_spec_var_list in
       (* let _ = Debug.binfo_hprint (add_str "UT added to false?" pr_svl) to_add no_pos in *)
       let false_es = CF.get_false_entail_state ctx in
-      let _ = Debug.ninfo_hprint (add_str "false_es" Cprinter.string_of_entail_state) false_es no_pos in
       let false_iv_rel = false_es.CF.es_infer_vars_rel in
       let false_iv = false_es.CF.es_infer_vars in
-      let false_iv_sel_hp_rel = false_es.CF.es_infer_vars_sel_hp_rel in
-      let false_iv_sel_post_hp_rel = false_es.CF.es_infer_vars_sel_post_hp_rel in
-      let false_iv_hp_rel = false_es.CF.es_infer_vars_hp_rel in
-      let false_iv_dead = false_es.CF.es_infer_vars_dead in
-      let false_iv_templ = false_es.CF.es_infer_vars_templ in
+      let rhs = get_pure_conseq_from_struc conseq in
+      let rel_id_conseq = CP.get_rel_id_list rhs in
       let _ = Debug.ninfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
       let _ = Debug.ninfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
-      let _ = Debug.ninfo_hprint (add_str "false_iv_sel_hp_rel" pr_svl) false_iv_sel_hp_rel no_pos in
-      let _ = Debug.ninfo_hprint (add_str "false_iv_sel_post_hp_rel" pr_svl) false_iv_sel_post_hp_rel no_pos in
-      let _ = Debug.ninfo_hprint (add_str "false_iv_hp_rel" pr_svl) false_iv_hp_rel no_pos in
-      let _ = Debug.ninfo_hprint (add_str "false_iv_dead" pr_svl) false_iv_dead no_pos in
-      let _ = Debug.ninfo_hprint (add_str "false_iv_templ" pr_svl) false_iv_templ no_pos in
+      let _ = Debug.ninfo_hprint (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
       let false_es = { false_es with
-          CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv) }
+          CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) }
       in
-      let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
-      let _ = Debug.ninfo_hprint (add_str "es" Cprinter.string_of_entail_state) false_es no_pos in
-      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-      let rhs = get_pure_conseq_from_struc conseq in
-      let rhs1 = (* flatten_struc *) conseq in
       let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
       let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-      let _ = Debug.ninfo_hprint (add_str "rhs1" Cprinter.string_of_struc_formula) rhs1 no_pos in
-      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) (Mcpure.mix_of_pure rhs) no_pos in
       let es,_,_,_,_ = ans in
       (* set context as bot *)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
