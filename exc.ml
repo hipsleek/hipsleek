@@ -734,7 +734,7 @@ struct
         abnormal_flow_int := self # get_hash abnormal_flow;
         bfail_flow_int := self # get_hash bfail_flow;
         error_flow_int := self # get_hash error_flow;
-        mayerror_flow_int := self # get_hash mayerror_flow
+        mayerror_flow_int := self # get_hash mayerror_flow;
       end
     method compute_hierarchy =
       begin
