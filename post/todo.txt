@@ -512,10 +512,90 @@ Need to fix before merge into default.
                             mod___post; add___pre; add___post; minus___pre; 
                             minus___post; mult___pre; mult___post; lt___pre; 
                             lt___post; lte___pre; lte___post; gt___pre; 
-  =======================================================
 =======================================================
+# loop2.slk -dre "is_rel_in_vars" --print-type
+
+
+Why Unknown types?
+
+====is_rel_in_vars@3
+is_rel_in_vars inp1 :[fpostXXX:Unknown]
+is_rel_in_vars inp2 : fpostXXX_0(x:Unknown)[]
+is_rel_in_vars@3 EXIT:true
+
+===================================================
+# loop2.slk --pcp
+
+//(4)
+infer [@term] x>0 & false |- fpostXXX(x).
+print residue.
+
+Can we keep the input scenario somewhere, and perhaps
+obtain the following:
+   ( x>0 & false ) -->  fpostXXX_0(x:Unknown)[]]
+This would let us know that false was triggered under 
+a satisfiable scenario x>0
+
+INPUT: 
+ ### ante =  hfalse&false&{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+
+run_infer:
+ hfalse&false&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+[Warning] False ctx
 =======================================================
+# deadpool.ss -tp parahip --eps -perm fperm --classic
+
+What is Nested Timer(stop)? timeout?
+Why errors below? Is it due to lack or normalizing lemma apply?
+
+Procedure destroyDeadPool$item FAIL.(2)
+Procedure forkHelper$cell~int~int FAIL.(2)
+Procedure forkThreads$cell~int SUCCESS.
+Procedure joinHelper$item~cell~int~int FAIL.(2)
+
+Checking procedure destroyDeadPool$item... Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+
+!!! WARNING logtime exception:9.4e-05
+!!! WARNING logtime exception:0.002291
+Procedure destroyDeadPool$item FAIL.(2)
+
+Exception Failure("get_node_var: invalid argument") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure destroyDeadPool$item
+
+Proving precondition in method fork_thrd$thrd~cell~int Failed.
+  (must) cause: do_unmatched_rhs : x_2379::cell( perm_28_2378)<_>@S1@ rem br[{1}]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "deadpool.ss",Line:86,Col:4
+
+Procedure forkHelper$cell~int~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure forkHelper$cell~int~int
+
 =======================================================
+# post/multi-join2.ss -tp parahip --eps -perm fperm --classic
+
+Where did we get this exception?
+
+Exception Failure("get_node_var: invalid argument") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure main$
+
+!!! proc.proc_name:main$
+
+Procedure main$ FAIL.(2)
+Procedure thread1$cell~cell FAIL.(2)
+Procedure thread2$thrd~cell~cell FAIL.(2)
+
 =======================================================
 =======================================================
 =======================================================
