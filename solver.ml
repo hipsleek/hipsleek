@@ -3633,7 +3633,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let pr_svl = Cprinter.string_of_typed_spec_var_list in
       (* let _ = Debug.binfo_hprint (add_str "UT added to false?" pr_svl) to_add no_pos in *)
       let false_es = CF.get_false_entail_state ctx in
-      let _ = Debug.binfo_hprint (add_str "false_es" Cprinter.string_of_entail_state) false_es no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_es" Cprinter.string_of_entail_state) false_es no_pos in
       let false_iv_rel = false_es.CF.es_infer_vars_rel in
       let false_iv = false_es.CF.es_infer_vars in
       let false_iv_sel_hp_rel = false_es.CF.es_infer_vars_sel_hp_rel in
@@ -3641,13 +3641,13 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       let false_iv_hp_rel = false_es.CF.es_infer_vars_hp_rel in
       let false_iv_dead = false_es.CF.es_infer_vars_dead in
       let false_iv_templ = false_es.CF.es_infer_vars_templ in
-      let _ = Debug.binfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv_sel_hp_rel" pr_svl) false_iv_sel_hp_rel no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv_sel_post_hp_rel" pr_svl) false_iv_sel_post_hp_rel no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv_hp_rel" pr_svl) false_iv_hp_rel no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv_dead" pr_svl) false_iv_dead no_pos in
-      let _ = Debug.binfo_hprint (add_str "false_iv_templ" pr_svl) false_iv_templ no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_sel_hp_rel" pr_svl) false_iv_sel_hp_rel no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_sel_post_hp_rel" pr_svl) false_iv_sel_post_hp_rel no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_hp_rel" pr_svl) false_iv_hp_rel no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_dead" pr_svl) false_iv_dead no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_templ" pr_svl) false_iv_templ no_pos in
       let false_es = { false_es with
           CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv) }
       in
