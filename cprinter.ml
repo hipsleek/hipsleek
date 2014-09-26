@@ -566,6 +566,9 @@ let string_of_spec_var x =
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
+let string_of_spec_var_list xs =
+  "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"
+
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
 
 (* let is_absent imm = *)
@@ -2851,7 +2854,8 @@ let rec string_of_spec_var_list_noparen l = match l with
   | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
 ;;
 
-let string_of_spec_var_list l = P.string_of_spec_var_list l;;
+(* let string_of_spec_var_list l = string_of_spec_var_list l;; *)
+
 (* "["^(string_of_spec_var_list_noparen l)^"]" ;; *)
 let string_of_inf_cmd i = 
   match i with 

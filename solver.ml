@@ -3629,9 +3629,16 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     in
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
     if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+      let to_add = (List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int]) (ut.ut_name)) prog.prog_ut_decls) in
+      let pr_svl = Cprinter.string_of_spec_var_list in
+      let _ = Debug.binfo_hprint (add_str "UT added to false?" pr_svl) to_add no_pos in
       let false_es = CF.get_false_entail_state ctx in
+      let false_iv_rel = false_es.CF.es_infer_vars_rel in
+      let false_iv = false_es.CF.es_infer_vars in
+      let _ = Debug.binfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+      let _ = Debug.binfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
       (* let false_es = { false_es with *)
-      (*     CF.es_infer_vars_rel = CP.remove_dups_svl (false_es.CF.es_infer_vars_rel@(List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int]) (ut.ut_name)) prog.prog_ut_decls)) } *)
+      (*     CF.es_infer_vars_rel = CP.remove_dups_svl (false_es.CF.es_infer_vars_rel@to_add) } *)
       (* in *)
       let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "es" Cprinter.string_of_entail_state) false_es no_pos in

@@ -874,8 +874,9 @@ Exception Failure("split_components: don't expect OR") Occurred!
 
 Error(s) detected when checking procedure del$node~int
 
- error at: rb.ss remove_min
-error at: rb.ss del
+error at: rb.ss remove_min (FIXED)
+error at: rb.ss del (FIXED)
+
 error at: conchip/multi-join2.ss main
 error at: conchip/multi-join2.ss thread1
 error at: conchip/multi-join2.ss thread2

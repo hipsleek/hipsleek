@@ -1493,6 +1493,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+          let ut_vs = cuts @ C.ut_decls # get_stk in
+          let _ = Debug.binfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
 	      C.prog_view_decls = cviews2;
@@ -1500,7 +1502,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
-        C.prog_ut_decls = cuts @ (C.ut_decls # get_stk);
+              C.prog_ut_decls = (ut_vs);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -3149,6 +3151,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         C.ut_name = utpost_name;
         C.ut_is_pre = false; } in
 
+      let _ = print_endline "here\n" in
+      let _ = Debug.binfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
       let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
 
       let uid = {
