@@ -41,6 +41,21 @@ int f91(int n)
 /*
 # rec-f91b.ss
 
+A simpler post seems sufficient for f91.
+
+infer [@term] 
+requires true ensures res>=91;
+
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & 91<=res; 
+  n<=90 -> requires emp & Term[29,2,90+(-1*n)]
+ ensures emp & 91<=res; 
+  }
+
+
+
 case {
   n>=91 -> requires true ensures res=n;
   n<91 -> requires true ensures res=91;
