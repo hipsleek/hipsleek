@@ -1930,16 +1930,16 @@ and get_node_args_orig_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> c
   | DataNode _ -> []
   | _ -> failwith ("get_node_args: invalid argument")
-  
+
 and get_node_label (h : h_formula) = match h with
-  | ThreadNode ({h_formula_thread_label = c}) 
-  | ViewNode ({h_formula_view_label = c}) 
+  | ThreadNode ({h_formula_thread_label = c})
+  | ViewNode ({h_formula_view_label = c})
   | DataNode ({h_formula_data_label = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument")
-  
+
 and get_node_var_x (h : h_formula) = match h with
-  | ThreadNode ({h_formula_thread_node = c}) 
-  | ViewNode ({h_formula_view_node = c}) 
+  | ThreadNode ({h_formula_thread_node = c})
+  | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
 
@@ -1954,7 +1954,7 @@ and set_node_var newc (h : h_formula) = match h with
   | _ -> failwith ("set_node_var: invalid argument")
 
 and get_node_imm (h : h_formula) = match h with
-  | ViewNode ({h_formula_view_imm = imm}) 
+  | ViewNode ({h_formula_view_imm = imm})
   | DataNode ({h_formula_data_imm = imm}) -> imm
   | _ -> failwith ("get_node_imm: invalid argument")
   
