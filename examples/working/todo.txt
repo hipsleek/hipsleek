@@ -885,6 +885,27 @@ error at: conchip/deadpool.ss forkHelper
 error at: conchip/deadpool.ss joinHelper
 .
 ====================================================================
+# post branch (before merge with default)
+
+sleek --eps
+
+All test results were as expected.
+Total verification time: 68.50 second
+	Time spent in main process: 60.25 second
+	Time spent in child processes: 8.25 second
+	Number of false contexts: 0
+
+hip --eps
+
+error at: conchip/deadpool.ss forkHelper
+Total number of errors: 1 in files:
+ error at: conchip/deadpool.ss forkHelper
+.
+Total verification time: 452.68 second
+	Time spent in main process: 409.64 second
+	Time spent in child processes: 43.04 second
+	Number of false contexts: 427
+
 ====================================================================
 ====================================================================
 ====================================================================
