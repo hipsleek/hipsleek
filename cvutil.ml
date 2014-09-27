@@ -1189,10 +1189,12 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
     let f = MCP.pure_of_mix p in
     let heaps = split_star_conjunctions h in
     (*remove HTrue nodes*)
+    (* WN : how about holes, Conj, HVar, HRel? *)
     let heaps = List.filter (fun h ->
         match h with
           | HEmp
-          | HTrue -> false
+          | HTrue 
+          | Hole _-> false
           | _ -> true) heaps
     in
     (*group nodes with equal names into a partition*)
@@ -1201,7 +1203,8 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
         | [] -> []
         | hx::hxs ->
               let res = fct hxs p in
-              let _ = Debug.binfo_hprint (add_str "hx" Cprinter.string_of_h_formula) hx no_pos in
+              let _ = Debug.binfo_hprint (add_str "hx_here" Cprinter.string_of_h_formula) hx no_pos in
+              (* WN : why pre of get_node_var not met? *)
               let hx_var = CF.get_node_var hx in
               (*partition res into those with equal names and others*)
               let res_eq,res_others = List.partition (fun part ->

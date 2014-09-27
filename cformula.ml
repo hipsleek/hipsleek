@@ -1863,6 +1863,8 @@ and get_node_pos (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_pos = c}) 
   | ViewNode ({h_formula_view_pos = c}) 
   | DataNode ({h_formula_data_pos = c}) -> c
+  | Hole i -> no_pos
+  | HRel (_, _, pos) -> pos
   | _ -> failwith ("get_node_pos: invalid argument")
 
 and get_node_name (h : h_formula) = match h with
@@ -1870,6 +1872,7 @@ and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
+  | Hole i -> "Hole_"^(string_of_int i)
   | _ -> failwith ("get_node_name: invalid argument")
 
 and get_node_perm (h : h_formula) = match h with
@@ -1882,13 +1885,15 @@ and get_node_original (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_original = c}) 
   | ViewNode ({h_formula_view_original = c}) 
   | DataNode ({h_formula_data_original = c}) -> c
-  | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode/ThreadNode")
+  | _ -> false (* default? *)
+        (* failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode/ThreadNode") *)
 
 and get_node_origins (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_origins = c}) 
   | ViewNode ({h_formula_view_origins = c}) 
   | DataNode ({h_formula_data_origins = c}) -> c
-  | _ -> failwith ("get_node_origins: invalid argument. Expected ViewNode/DataNode/ThreadNode")
+  | _ -> [] (* default *)
+  (* | _ -> failwith ("get_node_origins: invalid argument. Expected ViewNode/DataNode/ThreadNode") *)
 
 and set_node_perm (h : h_formula) p= match h with
   | ThreadNode b -> ThreadNode {b with h_formula_thread_perm = p} 
@@ -1906,12 +1911,12 @@ and get_node_ho_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_ho_arguments = c}) -> c
   | DataNode _ -> []
   | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
-  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
+  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode, got:"^(!print_h_formula h))
 
 and get_node_annot_args_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> List.map fst c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_annot_args (h : h_formula) = 
   Debug.no_1 "get_node_annot_args" !print_h_formula CP.string_of_annot_arg_list get_node_annot_args_x h 
@@ -1919,29 +1924,29 @@ and get_node_annot_args (h : h_formula) =
 and get_node_annot_args_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_args_orig (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> List.map fst c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_args_orig_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_label (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_label = c})
   | ViewNode ({h_formula_view_label = c})
   | DataNode ({h_formula_data_label = c}) -> c
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_var_x (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_node = c})
   | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
-  | _ -> failwith ("get_node_var: invalid argument")
+  | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
   Debug.no_1 "get_node_var" !print_h_formula !print_sv
@@ -1951,16 +1956,16 @@ and set_node_var newc (h : h_formula) = match h with
   | ThreadNode w -> ThreadNode {w with h_formula_thread_node = newc;}
   | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
   | DataNode w -> DataNode {w with h_formula_data_node = newc;}
-  | _ -> failwith ("set_node_var: invalid argument")
+  | _ -> failwith ("set_node_var: invalid argument "^(!print_h_formula h))
 
 and get_node_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm})
   | DataNode ({h_formula_data_imm = imm}) -> imm
-  | _ -> failwith ("get_node_imm: invalid argument")
+  | _ -> failwith ("get_node_imm: invalid argument "^(!print_h_formula h))
   
 and get_node_param_imm (h : h_formula) = match h with
   | DataNode ({h_formula_data_param_imm = param_imm}) -> param_imm
-  | _ -> failwith ("get_node_param_imm: invalid argument")
+  | _ -> failwith ("get_node_param_imm: invalid argument "^(!print_h_formula h))
   
 and get_view_origins (h : h_formula) = match h with
   | ViewNode ({h_formula_view_origins = origs}) -> origs
@@ -1976,7 +1981,7 @@ and get_view_unfold_num (h : h_formula) = match h with
 
 and get_view_modes_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes
-  | _ -> failwith ("get_view_modes: not a view")
+  | _ -> failwith ("get_view_modes: not a view "^(!print_h_formula h))
 
 and get_view_modes (h : h_formula) =
   let pr l = string_of_int (List.length l) in 
@@ -1984,23 +1989,23 @@ and get_view_modes (h : h_formula) =
   
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
-  | _ -> failwith ("get_view_imm: not a view")
+  | _ -> failwith ("get_view_imm: not a view " ^(!print_h_formula h))
 
 and get_view_derv (h : h_formula) = match h with
   | ViewNode ({h_formula_view_derv = dr}) -> dr
-  | _ -> failwith ("get_view_derv: not a view")
+  | _ -> failwith ("get_view_derv: not a view "^(!print_h_formula h))
 
 and get_view_split (h : h_formula) = match h with
   | ViewNode ({h_formula_view_split = dr}) -> dr
-  | _ -> failwith ("get_view_split: not a view")
+  | _ -> failwith ("get_view_split: not a view "^(!print_h_formula h))
 
 and get_data_derv (h : h_formula) = match h with
   | DataNode ({h_formula_data_derv = dr}) -> dr
-  | _ -> failwith ("get_data_derv not a data")
+  | _ -> failwith ("get_data_derv not a data "^(!print_h_formula h))
 
 and get_data_split (h : h_formula) = match h with
   | DataNode ({h_formula_data_split = dr}) -> dr
-  | _ -> failwith ("get_data_split not a data")
+  | _ -> failwith ("get_data_split not a data "^(!print_h_formula h))
 
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in

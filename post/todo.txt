@@ -585,6 +585,14 @@ Error(s) detected when checking procedure forkHelper$cell~int~int
 
 Where did we get this exception?
 
+chinwn@loris-7:~/hg/sl_post/post$ ../hip multi-join2.ss -tp parahip --eps  --classic | grep Exception
+Exception Failure("Proving precond failed") Occurred!
+chinwn@loris-7:~/hg/sl_post/post$ ../hip multi-join2.ss -tp parahip --eps -perm fperm --classic | grep Exception
+Exception Failure("get_node_var: invalid argument") Occurred!
+Exception Failure("get_node_var: invalid argument") Occurred!
+Exception Failure("get_node_var: invalid argument") Occurred!
+
+
 Exception Failure("get_node_var: invalid argument") Occurred!
 (Program not linked with -g, cannot print stack backtrace)
 
