@@ -605,6 +605,22 @@ Procedure thread1$cell~cell FAIL.(2)
 Procedure thread2$thrd~cell~cell FAIL.(2)
 
 =======================================================
+# post/multi-join2.ss -tp parahip --eps -perm fperm --classic -dre "xpure_perm"
+
+Where did we get hole in xpure_perm?
+Does this happen for normal xpure?
+Is there a relationship with "Nested Timer(stop)"?
+
+xpure_perm@66
+xpure_perm inp1 : (Hole[2689]) * y::cell()<flted_74_2687>@ rem br[{1}]
+xpure_perm inp2 : (
+([x=x' & y=y' & y!=null & x!=null & y!=x]
+ [Anon_full_perm=FLOAT 1. & f_2686=Anon_full_perm]
+ [0=flted_74_2688 & 0=val_77_1409'][0=flted_74_2687]))
+xpure_perm@66 EXIT: (())
+Nested Timer(stop)
+
+=======================================================
 =======================================================
 =======================================================
 =======================================================

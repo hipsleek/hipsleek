@@ -6998,7 +6998,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       For example: x::node(0.6)<> * y::node(0.6)<>
                       then we have a constraint x!=y
                     *)
-                    let _ = Debug.binfo_hprint (add_str "p1" Cprinter.string_of_mix_formula) p1 no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "p1" Cprinter.string_of_mix_formula) p1 no_pos in
                     let p1 =
                       (*This could introduce UNSAT*)
                       if (Perm.allow_perm ()) then

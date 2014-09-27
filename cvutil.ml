@@ -1203,7 +1203,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
         | [] -> []
         | hx::hxs ->
               let res = fct hxs p in
-              let _ = Debug.binfo_hprint (add_str "hx_here" Cprinter.string_of_h_formula) hx no_pos in
+              let _ = Debug.tinfo_hprint (add_str "hx_here" Cprinter.string_of_h_formula) hx no_pos in
               (* WN : why pre of get_node_var not met? *)
               let hx_var = CF.get_node_var hx in
               (*partition res into those with equal names and others*)
