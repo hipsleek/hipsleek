@@ -2260,6 +2260,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge n_flow mayerror_flow) in
   let _ = (exlist # add_edge bfail_flow top_flow) in
   let _ = (exlist # add_edge false_flow top_flow) in
+  let _ = (exlist # add_edge false_flow bfail_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
