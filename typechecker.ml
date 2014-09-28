@@ -2125,7 +2125,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         else ()
                       else ()
                     in
-                    
+
                     (* TODO: call the entailment checking function in solver.ml *)
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                     let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
@@ -2163,7 +2163,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let pk = if ir then PK_PRE_REC else PK_PRE in
                     let f = wrap_proving_kind pk (check_pre_post_orig org_spec sctx) in
                     Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
-		  
+
 		  let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
 		    Gen.Profiling.do_1 "check_pre_post" (check_pre_post ir org_spec sctx) should_output_html
 		  in
@@ -2181,13 +2181,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*  let _ = print_endline "locle7" in*)
                     ctx
                   else
-                    (*  let _ = print_endline "locle8" in *)
+                    (* let _ = print_endline "locle8" in *)
                     (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
-                    let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in                      
+                    let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
                     check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
                   in
 		  let _ = if !print_proof then Prooftracer.add_pre e0 in
-                  let _ = if !print_proof && scall_pre_cond_pushed then 
+                  let _ = if !print_proof && scall_pre_cond_pushed then
                     begin
                       Prooftracer.pop_div ();
                       Tpdispatcher.restore_suppress_imply_output_state ();
@@ -3209,35 +3209,36 @@ let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 
 
 let reverify_proc prog proc =
-  match proc.proc_body with
-    | None -> ()
-    | Some body ->
-          stk_vars # reset;
-          (* push proc.proc_args *)
-          let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
-          stk_vars # push_list args;
-          let pr_flag = not(!phase_infer_ind) in
-          let new_spec = proc.proc_stk_of_static_specs # top in
-	  if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
-	    print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
-	  if pr_flag then
-            begin
+  if !reverify_flag then
+    match proc.proc_body with
+      | None -> ()
+      | Some body ->
+            stk_vars # reset;
+            (* push proc.proc_args *)
+            let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
+            stk_vars # push_list args;
+            let pr_flag = not(!phase_infer_ind) in
+            let new_spec = proc.proc_stk_of_static_specs # top in
+	    if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
+	      print_string ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
+	    if pr_flag then
+              begin
               print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-	      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
-	      Debug.devel_zprint (lazy ("Specs :\n" ^ (Cprinter.string_of_struc_formula new_spec))) proc.proc_loc;
+	        Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
+	        Debug.devel_zprint (lazy ("Specs :\n" ^ (Cprinter.string_of_struc_formula new_spec))) proc.proc_loc;
             end;
-          let _ = if proc.proc_sel_hps = [] then () else
-            begin
-              if (not !Globals.web_compile_flag) then
-                print_endline "";
-              print_endline "\n\n******************************";
-              print_endline "******* SPECIFICATION ********";
-              print_endline "******************************";
-              print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec)
-            end
-          in
-          (*****LOCKSET variable: ls'=ls *********)
-          let args =
+            let _ = if proc.proc_sel_hps = [] then () else
+              begin
+                if (not !Globals.web_compile_flag) then
+                  print_endline "";
+                print_endline "\n\n******************************";
+                print_endline "******* SPECIFICATION ********";
+                print_endline "******************************";
+                print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec)
+              end
+            in
+            (*****LOCKSET variable: ls'=ls *********)
+            let args =
             if (!allow_ls) then
               let lsmu_var = (lsmu_typ,lsmu_name) in
               let ls_var = (ls_typ,ls_name) in
@@ -3248,39 +3249,38 @@ let reverify_proc prog proc =
                 ls_var::proc.proc_args
             else
               proc.proc_args
-          in
-          (******************************)
-	  let ftypes, fnames = List.split args in
-	  (* fsvars are the spec vars corresponding to the parameters *)
-	  let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-          let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
-          (* let pf = if (!Globals.allow_locklevel) then  *)
-          (*       CP.translate_level_eqn_pure pf (\*l'=l ==> level(l')=level(l)*\) *)
-          (*     else pf *)
-          (* in *)
-	  let nox = CF.formula_of_pure_N  pf proc.proc_loc in
-	  let init_form = nox in
-	  let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled  proc.proc_loc in
-          (*add default full permission = 1.0 to ante;
-            need to add type of full perm to stab
-          *)
-          let init_form =
+            in
+            (******************************)
+	    let ftypes, fnames = List.split args in
+	    (* fsvars are the spec vars corresponding to the parameters *)
+	    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+            let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
+            (* let pf = if (!Globals.allow_locklevel) then  *)
+            (*       CP.translate_level_eqn_pure pf (\*l'=l ==> level(l')=level(l)*\) *)
+            (*     else pf *)
+            (* in *)
+	    let nox = CF.formula_of_pure_N  pf proc.proc_loc in
+	    let init_form = nox in
+	    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled  proc.proc_loc in
+            (*add default full permission = 1.0 to ante;
+              need to add type of full perm to stab
+            *)
+            let init_form =
             if (Perm.allow_perm ()) then
               CF.add_mix_formula_to_formula (full_perm_constraint ()) init_form
             else
               init_form
-          in
-	  let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-          (* Termination: Add the set of logical variables into the initial context *)
-          let init_ctx =
-            if !Globals.dis_term_chk then init_ctx
+            in
+	    let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+            (* Termination: Add the set of logical variables into the initial context *)
+            let init_ctx =
+              if !Globals.dis_term_chk then init_ctx
             else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
-          let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
-          if !reverify_flag then
+            let _ = Debug.trace_hprint (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
             let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in
             Debug.binfo_hprint (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos;
             ()
-          else ()
+  else ()
 
 let reverify_scc prog scc =
   List.iter (fun proc -> reverify_proc prog proc) scc
