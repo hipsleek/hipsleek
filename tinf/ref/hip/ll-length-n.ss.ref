@@ -1,0 +1,23 @@
+
+!!!Full processing file "hip/ll-length-n.ss"
+Parsing file "hip/ll-length-n.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+Checking procedure length$node... **** TEMPLATE ASSUMPTION(S) ****
+[ n=1+n1_1224 & n_1228=n1_1224 --> (r( n))>(r( n_1228))
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int r(int x) == 0+(1*x)
+]
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

@@ -3601,14 +3601,36 @@ and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delay
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
-    let get_pure_conseq_from_formula f =
-      let _,p,_,_,_ = CF.split_components f in
-      p
+    let rec get_pure_conseq_from_formula f =
+      match f with
+        | Or fo ->
+              let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
+              let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
+              let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
+              CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
+        | _  ->
+              let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
+              let _,p,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
     in
-    let get_pure_conseq_from_struc sf =
+    let flatten_struc sf = CF.flatten_struc_formula sf in
+    let rec get_pure_conseq_from_struc sf =
       match sf with
-        | EBase eb -> get_pure_conseq_from_formula eb.CF.formula_struc_base
-        | _ -> failwith "not support"
+        | EBase eb ->
+              let f1 = get_pure_conseq_from_formula eb.CF.formula_struc_base in
+              let f2 = match eb.CF.formula_struc_continuation with
+                | None -> CP.mkTrue no_pos
+                | Some cont -> get_pure_conseq_from_struc cont
+              in
+              CP.mkAnd f1 f2 no_pos
+        | EInfer ei -> get_pure_conseq_from_struc ei.CF.formula_inf_continuation
+        | EAssume ea -> get_pure_conseq_from_formula ea.CF.formula_assume_simpl
+        | EList el -> List.fold_left (fun acc (_,sf) ->
+            CP.mkOr acc (get_pure_conseq_from_struc sf) None no_pos
+          ) (CP.mkFalse no_pos) el
+        | ECase ec -> List.fold_left (fun acc (pf,sf) ->
+              let new_f = CP.mkAnd pf (get_pure_conseq_from_struc sf) no_pos in
+              CP.mkOr acc new_f None no_pos
+          ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
     in
     let is_not_infer_false_unknown =
       let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
@@ -3620,10 +3642,23 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     in
     let _ = Debug.ninfo_hprint (add_str "is_not_infer_false_unknown" (string_of_bool)) is_not_infer_false_unknown no_pos in
     if (isAnyFalseCtx ctx) (* && is_not_infer_false_unknown *) then
+      (* let to_add = (List.map (fun ut -> CP.mk_typed_spec_var (RelT [Int]) (ut.ut_name)) prog.prog_ut_decls) in *)
+      let pr_svl = Cprinter.string_of_typed_spec_var_list in
+      (* let _ = Debug.binfo_hprint (add_str "UT added to false?" pr_svl) to_add no_pos in *)
       let false_es = CF.get_false_entail_state ctx in
+      let false_iv_rel = false_es.CF.es_infer_vars_rel in
+      let false_iv = false_es.CF.es_infer_vars in
       let rhs = get_pure_conseq_from_struc conseq in
-      let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs no_pos in
-      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) rhs no_pos in
+      let rel_id_conseq = CP.get_rel_id_list rhs in
+      let _ = Debug.ninfo_hprint (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+      let _ = Debug.ninfo_hprint (add_str "false_iv" pr_svl) false_iv no_pos in
+      let _ = Debug.ninfo_hprint (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
+      let false_es = { false_es with
+          CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) }
+      in
+      let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
+      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) (Mcpure.mix_of_pure rhs) no_pos in
       let es,_,_,_,_ = ans in
       (* set context as bot *)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
@@ -6863,7 +6898,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
       | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
       | Ctx estate -> (
           let ante = estate.es_formula in
-                    Debug.tinfo_hprint (add_str "ctx0.es_heap after" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
+          Debug.tinfo_hprint (add_str "ctx0.es_heap after" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
           (*let _ = print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante)) in*)
           match ante with
           | Exists {formula_exists_qvars = qvars;
@@ -6926,7 +6961,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   let baref = mkBase qh qp qt qfl qa pos in
                   let new_baref = subst st baref in
                   let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
-                                    Debug.tinfo_hprint (add_str "new_ctx match" (Cprinter.string_of_context)) new_ctx no_pos;
+                  Debug.tinfo_hprint (add_str "new_ctx match" (Cprinter.string_of_context)) new_ctx no_pos;
                   let tmp_rs, tmp_prf = heap_entail_conjunct_helper_x (* 5 *) prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
                   match tmp_rs with
                   | FailCtx _ -> (tmp_rs, tmp_prf)
@@ -6963,6 +6998,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       For example: x::node(0.6)<> * y::node(0.6)<>
                       then we have a constraint x!=y
                     *)
+                    let _ = Debug.ninfo_hprint (add_str "p1" Cprinter.string_of_mix_formula) p1 no_pos in
                     let p1 =
                       (*This could introduce UNSAT*)
                       if (Perm.allow_perm ()) then

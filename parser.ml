@@ -2790,6 +2790,7 @@ hprogn:
     let templ_lst = templ_defs # get_stk in
     let ut_lst = ut_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
+    (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
     (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)

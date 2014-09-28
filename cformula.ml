@@ -1863,6 +1863,8 @@ and get_node_pos (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_pos = c}) 
   | ViewNode ({h_formula_view_pos = c}) 
   | DataNode ({h_formula_data_pos = c}) -> c
+  | Hole i -> no_pos
+  | HRel (_, _, pos) -> pos
   | _ -> failwith ("get_node_pos: invalid argument")
 
 and get_node_name (h : h_formula) = match h with
@@ -1870,6 +1872,7 @@ and get_node_name (h : h_formula) = match h with
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
+  | Hole i -> "Hole_"^(string_of_int i)
   | _ -> failwith ("get_node_name: invalid argument")
 
 and get_node_perm (h : h_formula) = match h with
@@ -1882,13 +1885,15 @@ and get_node_original (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_original = c}) 
   | ViewNode ({h_formula_view_original = c}) 
   | DataNode ({h_formula_data_original = c}) -> c
-  | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode/ThreadNode")
+  | _ -> false (* default? *)
+        (* failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode/ThreadNode") *)
 
 and get_node_origins (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_origins = c}) 
   | ViewNode ({h_formula_view_origins = c}) 
   | DataNode ({h_formula_data_origins = c}) -> c
-  | _ -> failwith ("get_node_origins: invalid argument. Expected ViewNode/DataNode/ThreadNode")
+  | _ -> [] (* default *)
+  (* | _ -> failwith ("get_node_origins: invalid argument. Expected ViewNode/DataNode/ThreadNode") *)
 
 and set_node_perm (h : h_formula) p= match h with
   | ThreadNode b -> ThreadNode {b with h_formula_thread_perm = p} 
@@ -1906,12 +1911,12 @@ and get_node_ho_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_ho_arguments = c}) -> c
   | DataNode _ -> []
   | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
-  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
+  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode, got:"^(!print_h_formula h))
 
 and get_node_annot_args_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> List.map fst c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_annot_args (h : h_formula) = 
   Debug.no_1 "get_node_annot_args" !print_h_formula CP.string_of_annot_arg_list get_node_annot_args_x h 
@@ -1919,29 +1924,29 @@ and get_node_annot_args (h : h_formula) =
 and get_node_annot_args_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_args_orig (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> List.map fst c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
 and get_node_args_orig_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_args_orig = c}) -> c
   | DataNode _ -> []
-  | _ -> failwith ("get_node_args: invalid argument")
-  
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
+
 and get_node_label (h : h_formula) = match h with
-  | ThreadNode ({h_formula_thread_label = c}) 
-  | ViewNode ({h_formula_view_label = c}) 
+  | ThreadNode ({h_formula_thread_label = c})
+  | ViewNode ({h_formula_view_label = c})
   | DataNode ({h_formula_data_label = c}) -> c
-  | _ -> failwith ("get_node_args: invalid argument")
-  
+  | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
+
 and get_node_var_x (h : h_formula) = match h with
-  | ThreadNode ({h_formula_thread_node = c}) 
-  | ViewNode ({h_formula_view_node = c}) 
+  | ThreadNode ({h_formula_thread_node = c})
+  | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
-  | _ -> failwith ("get_node_var: invalid argument")
+  | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
   Debug.no_1 "get_node_var" !print_h_formula !print_sv
@@ -1951,16 +1956,16 @@ and set_node_var newc (h : h_formula) = match h with
   | ThreadNode w -> ThreadNode {w with h_formula_thread_node = newc;}
   | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
   | DataNode w -> DataNode {w with h_formula_data_node = newc;}
-  | _ -> failwith ("set_node_var: invalid argument")
+  | _ -> failwith ("set_node_var: invalid argument "^(!print_h_formula h))
 
 and get_node_imm (h : h_formula) = match h with
-  | ViewNode ({h_formula_view_imm = imm}) 
+  | ViewNode ({h_formula_view_imm = imm})
   | DataNode ({h_formula_data_imm = imm}) -> imm
-  | _ -> failwith ("get_node_imm: invalid argument")
+  | _ -> failwith ("get_node_imm: invalid argument "^(!print_h_formula h))
   
 and get_node_param_imm (h : h_formula) = match h with
   | DataNode ({h_formula_data_param_imm = param_imm}) -> param_imm
-  | _ -> failwith ("get_node_param_imm: invalid argument")
+  | _ -> failwith ("get_node_param_imm: invalid argument "^(!print_h_formula h))
   
 and get_view_origins (h : h_formula) = match h with
   | ViewNode ({h_formula_view_origins = origs}) -> origs
@@ -1976,7 +1981,7 @@ and get_view_unfold_num (h : h_formula) = match h with
 
 and get_view_modes_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes
-  | _ -> failwith ("get_view_modes: not a view")
+  | _ -> failwith ("get_view_modes: not a view "^(!print_h_formula h))
 
 and get_view_modes (h : h_formula) =
   let pr l = string_of_int (List.length l) in 
@@ -1984,23 +1989,23 @@ and get_view_modes (h : h_formula) =
   
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
-  | _ -> failwith ("get_view_imm: not a view")
+  | _ -> failwith ("get_view_imm: not a view " ^(!print_h_formula h))
 
 and get_view_derv (h : h_formula) = match h with
   | ViewNode ({h_formula_view_derv = dr}) -> dr
-  | _ -> failwith ("get_view_derv: not a view")
+  | _ -> failwith ("get_view_derv: not a view "^(!print_h_formula h))
 
 and get_view_split (h : h_formula) = match h with
   | ViewNode ({h_formula_view_split = dr}) -> dr
-  | _ -> failwith ("get_view_split: not a view")
+  | _ -> failwith ("get_view_split: not a view "^(!print_h_formula h))
 
 and get_data_derv (h : h_formula) = match h with
   | DataNode ({h_formula_data_derv = dr}) -> dr
-  | _ -> failwith ("get_data_derv not a data")
+  | _ -> failwith ("get_data_derv not a data "^(!print_h_formula h))
 
 and get_data_split (h : h_formula) = match h with
   | DataNode ({h_formula_data_split = dr}) -> dr
-  | _ -> failwith ("get_data_split not a data")
+  | _ -> failwith ("get_data_split not a data "^(!print_h_formula h))
 
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
@@ -2473,18 +2478,18 @@ and subst_pos_formula (p:loc) (f: formula): formula=
 	                                     formula_or_pos = p}
     | Exists ef -> Exists {ef with formula_exists_pos =  p}
 
-and struc_fv (f: struc_formula) : CP.spec_var list = 
+and struc_fv (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
-	| ECase b -> (* dsvl *) (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
-	| EBase b -> dsvl ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base))
-                      (b.formula_struc_explicit_inst @ b.formula_struc_implicit_inst@ b.formula_struc_exists)
-	| EAssume b -> fv b.formula_assume_simpl
-	| EInfer b -> Gen.BList.remove_dups_eq CP.eq_spec_var (struc_fv b.formula_inf_continuation)
+    | ECase b -> (* dsvl *) (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
+    | EBase b -> dsvl ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base))
+          (b.formula_struc_explicit_inst @ b.formula_struc_implicit_inst@ b.formula_struc_exists)
+    | EAssume b -> fv b.formula_assume_simpl
+    | EInfer b -> Gen.BList.remove_dups_eq CP.eq_spec_var (struc_fv b.formula_inf_continuation)
     | EList b -> rdv (fold_l_snd struc_fv b)
 
-and struc_fv_infer (f: struc_formula) : CP.spec_var list = 
+and struc_fv_infer (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in
   match f with
@@ -2495,8 +2500,17 @@ and struc_fv_infer (f: struc_formula) : CP.spec_var list =
     | EInfer b -> dsvl (struc_fv_infer b.formula_inf_continuation) b.formula_inf_vars
     | EList b -> rdv (fold_l_snd struc_fv_infer b)
 
-and struc_post_fv (f:struc_formula):Cpure.spec_var list = 
-  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in  
+and struc_infer_relation (f: struc_formula) : CP.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
+  match f with
+    | ECase b -> List.concat (List.map (fun (_,c) -> struc_infer_relation c) b.formula_case_branches)
+    | EBase b -> fold_opt struc_infer_relation b.formula_struc_continuation
+    | EAssume b -> []
+    | EInfer b -> b.formula_inf_vars
+    | EList b -> rdv (fold_l_snd struc_infer_relation b)
+
+and struc_post_fv (f:struc_formula):Cpure.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   match f with
     | ECase b-> rdv (fold_l_snd struc_post_fv b.formula_case_branches)
     | EBase b->	fold_opt struc_post_fv b.formula_struc_continuation
@@ -3682,6 +3696,7 @@ and split_components_x (f : formula) =
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
     | Or ({formula_or_pos = pos}) ->
+          let _ = DD.binfo_hprint (add_str "f" !print_formula) f no_pos in
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 
 and get_rel_args f0=
@@ -4391,6 +4406,7 @@ let rec flatten_struc_formula sf =
                           else sf
                     | _ -> EBase {eb1 with formula_struc_continuation = Some new_cont_f}
       )
+    | EInfer ei -> flatten_struc_formula ei.formula_inf_continuation
     | _ -> sf
 
 let flatten_struc_formula sf =
@@ -8644,8 +8660,8 @@ think it is used to instantiate when folding.
   es_infer_post : bool; 
   (*input vars where inference expected*)
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
-  es_infer_vars : CP.spec_var list; 
-  es_infer_vars_rel : CP.spec_var list;
+  es_infer_vars : CP.spec_var list;  (* for first-order object *)
+  es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
@@ -14187,6 +14203,10 @@ let lax_impl_of_post f =
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
   
+let lax_impl_of_post f =
+	let pr = pr_pair !print_svl !print_formula  in
+	Debug.no_1 "lax_impl_of_post" !print_formula pr lax_impl_of_post f 
+
 let rec lax_impl_of_struc_post f = match f with 
 	| EBase b -> 
 		let l1, f = lax_impl_of_post b.formula_struc_base in
@@ -14286,21 +14306,21 @@ let norm_lexvar_for_infer uid (f: formula): formula =
       let nann = match t_info.lex_ann with
       | MayLoop -> CP.mkUTPre uid
       | _ -> t_info.lex_ann in
-      let npf = LexVar { t_info with 
-        lex_ann = nann; 
-        lex_fid = uid.CP.tu_fname; 
+      let npf = LexVar { t_info with
+        lex_ann = nann;
+        lex_fid = uid.CP.tu_fname;
         lex_tmp = uid.CP.tu_args } in
       Some (npf, il)
     | _ -> Some bf
   in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f
-     
+
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
   match struc_f with
   | ECase ec -> ECase { ec with formula_case_branches = map_l_snd norm_f ec.formula_case_branches }
   | EBase eb ->
     let cont = eb.formula_struc_continuation in
-    if (has_lexvar_formula eb.formula_struc_base) then 
+    if (has_lexvar_formula eb.formula_struc_base) then
       if not is_tnt_inf then struc_f
       else
         let tpost = CP.mkUTPost uid in

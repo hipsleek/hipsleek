@@ -464,26 +464,27 @@ let flatten_case_struc struc_f =
   
 let rec norm_struc struc_f = 
   match struc_f with
-  | CF.ECase ec -> CF.ECase { ec with CF.formula_case_branches = 
+  | CF.ECase ec -> CF.ECase { ec with CF.formula_case_branches =
       List.map (fun (c, f) -> (om_simplify c, f)) ec.CF.formula_case_branches }
-  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation = 
+  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation =
       map_opt norm_struc eb.CF.formula_struc_continuation }
   | CF.EAssume _ -> struc_f
-  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation = 
+  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation =
       norm_struc ei.CF.formula_inf_continuation }
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
-  
+
 let tnt_spec_of_proc proc ispec =
-  let ispec = merge_cases_tnt_case_spec 
+  let ispec = merge_cases_tnt_case_spec
     (flatten_case_tnt_spec ispec) in
-  let spec = proc.Cast.proc_static_specs in
-  let spec = merge_tnt_case_spec_into_struc_formula 
+  (* let spec = proc.Cast.proc_static_specs in *)
+  let spec = proc.Cast.proc_stk_of_static_specs # top in
+  let spec = merge_tnt_case_spec_into_struc_formula
     (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
   let spec = flatten_case_struc spec in
   let spec = norm_struc spec in
   spec
-    
-let pr_proc_case_specs prog = 
+
+let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in

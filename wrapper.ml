@@ -13,6 +13,18 @@ let wrap_under_baga f a =
       (do_under_baga_approx := flag;
       raise e)
 
+let wrap_reverify_scc f a b =
+  let flag = !reverify_flag in
+  reverify_flag := true;
+  try
+    let res = f a b in
+    (* restore flag do_classic_frame_rule  *)
+    reverify_flag := flag;
+    res
+  with _ as e ->
+      (reverify_flag := flag;
+      raise e)
+
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with

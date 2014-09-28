@@ -1,0 +1,83 @@
+
+!!!Full processing file "examples/mutual-7.ss"
+Parsing file "examples/mutual-7.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int~int... 
+Procedure g$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_7_1235=1+y' & v_int_7_1234=y'+x' & !(v_bool_6_1137') & 
+0<=x' & !(v_bool_6_1137') & x'=x & y'=y & 
+0<=x' & gpost_1123(v_int_7_1234,v_int_7_1235) --> fpost_1132(x,y).
+
+ termAssume x'<0 & y'=y & x'=x & v_bool_6_1137' & x'<0 & 
+v_bool_6_1137' --> fpost_1132(x,y).
+
+ termAssume v_int_16_1187+2=y' & !(v_bool_15_1127') & 0<=x' & 
+!(v_bool_15_1127') & x'=x & y'=y & 
+0<=x' & fpost_1132(x',v_int_16_1187) --> gpost_1123(x,y).
+
+ termAssume x'<0 & y'=y & x'=x & v_bool_15_1127' & x'<0 & 
+v_bool_15_1127' --> gpost_1123(x,y).
+
+ termAssume 0<=x' & y'=y & x'=x & !(v_bool_6_1137') & 0<=x' & 
+!(v_bool_6_1137') & v_int_7_1136'=y'+x' & v_int_7_1135'=1+
+y' & fpre_0(x,y) --> gpre_0(v_int_7_1136',v_int_7_1135').
+
+ termAssume 0<=x' & y'=y & x'=x & !(v_bool_15_1127') & 0<=x' & 
+!(v_bool_15_1127') & v_int_16_1126'+
+2=y' & gpre_0(x,y) --> fpre_0(x',v_int_16_1126').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] 0<=x@R]
+,	g: [[5] x<=(0-1)@B,[6] 0<=x@R]
+]
+
+Context of Verification Failure: 1 File "examples/mutual-7.ss",Line:4,Col:10
+Last Proving Location: 1 File "examples/mutual-7.ss",Line:7,Col:7
+
+ERROR: at _0:0_0:0 
+Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+ Termination Inference Result:
+g:  case {
+  x<=(0-1) -> requires emp & Term[30,2]
+ ensures emp & true; 
+  0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & MayLoop[]
+ ensures emp & true; 
+           y<=(0-
+           1) -> case {
+                  (x<=((0-y)-1) | ((0-x)<=y & y<=(0-
+                  1))) -> requires emp & MayLoop[]
+ ensures emp & true; 
+                  }
+           
+           }
+  
+  }
+Stop Omega... 59 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.063805,347)
+Total verification time: 0.445568 second(s)
+	Time spent in main process: 0.414846 second(s)
+	Time spent in child processes: 0.030722 second(s)
+

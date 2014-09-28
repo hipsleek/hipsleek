@@ -1,0 +1,33 @@
+
+!!!Full processing file "hip/ll-sum-sr3.ss"
+Parsing file "hip/ll-sum-sr3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure sum_dec$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[f,g] pre_post_vars:[r,x]
+
+Procedure sum_dec$node SUCCESS.
+
+Checking procedure sum_dec$node... 
+Checking procedure sum_dec$node... **** TEMPLATE ASSUMPTION(S) ****
+[ 0<v_1237 & r=g( v_1237, r1_1239) & v_1237<=1 & v_1237<=1 & 
+  r_1271=r1_1239 --> r>r_1271
+, 0<v_1237 & r=g( v_1237, r1_1239) & 1<v_1237 & 1<v_1237 & v_int_20_1320+
+  1=v_1237 & val_20_1314=v_1237 & v_1325=v_int_20_1320 & r1_1327=r1_1239 & 
+  0<v_1325 & r_1315=g( v_1325, r1_1327) --> r>r_1315
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int g(int x,int y) == 0+(1*x)+(1*y)
+, template int f() == f_0
+]
+
+Termination checking result: 
+(21)->(21) (MayTerm ERR: not decreasing)  Term[94; r] ->  Term[94; r_1497]
+(18)->(18) (MayTerm ERR: not decreasing)  Term[94; r] ->  Term[94; r_1451]
+
+
+0 false contexts at: ()

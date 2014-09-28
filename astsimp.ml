@@ -401,7 +401,7 @@ and convert_heap2 prog (f0:IF.formula):IF.formula =
   Debug.no_1 "convert_heap2" pr pr (convert_heap2_x prog) f0
 
 and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
-  let pr = pr_none in
+  let pr = Iprinter.string_of_struc_formula in
   Debug.no_1 "convert_struc2" pr pr (convert_struc2_x prog) f0
 
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
@@ -1493,6 +1493,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+          let ut_vs = cuts @ C.ut_decls # get_stk in
+          let _ = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
 	      C.prog_view_decls = cviews2;
@@ -1500,7 +1502,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
-        C.prog_ut_decls = cuts @ (C.ut_decls # get_stk);
+              C.prog_ut_decls = (ut_vs);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -1771,7 +1773,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1835,8 +1837,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1914,7 +1916,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else 
+        else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
@@ -3149,6 +3151,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         C.ut_name = utpost_name;
         C.ut_is_pre = false; } in
 
+      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
       let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
 
       let uid = {
@@ -3157,12 +3160,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         CP.tu_fname = fname;
         CP.tu_call_num = 0;
         CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-        CP.tu_cond = CP.mkTrue pos; 
+        CP.tu_cond = CP.mkTrue pos;
         CP.tu_icond = CP.mkTrue pos;
-        CP.tu_sol = None; 
+        CP.tu_sol = None;
         CP.tu_pos = pos; } in
-      
-      let static_specs_list = 
+
+      let static_specs_list =
         if not !Globals.dis_term_chk then
           CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
         else static_specs_list
