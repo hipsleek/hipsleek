@@ -543,6 +543,46 @@ f91:  case {
   (n=res & 91<=res)); 
   }
 ===================================================
+# num-app.ss
+
+  infer [@term]
+  requires x>0 & y>=0 
+  ensures true ;
+
+case analysis here seems better than ll-app.ss. Why?
+
+append2:  requires emp & 0<x & 0<=y
+  case {
+     x=1 & 0<=y -> 
+       requires emp & Term[8,1]
+       ensures emp & true; 
+     2<=x & 0<=y -> 
+       requires emp & Term[8,2,-1+(1*x)+(0*y)]
+       ensures emp & true; 
+     }
+
+# ll-app.ss
+
+  infer [@term]
+  requires x::ll<n1> * y::ll<n2> & n1>0 
+       // & x!=null // & n1>0 //x!=null // & n1>0 & x != null
+  ensures x::ll<n1+n2> ;
+
+append2:  requires x::ll<n1> * y::ll<n2> & 0<n1
+  case {
+     // missing case n2<0 is false
+     // why did we have redundant base case analysis?
+     // isn't it already terminating with Term[x]
+     n1=1 & 1<=n2 -> 
+         requires emp & Term[7,1]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+     n2=0 & n1=1 -> 
+         requires emp & Term[7,2]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+     0<=n2 & 2<=n1 -> 
+         requires emp & Term[7,3,0+(1*n1)+(0*n2)]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+  }
 ===================================================
 ===================================================
 ===================================================

@@ -364,7 +364,20 @@ let infer_lex_template_init prog (inf_templs: ident list)
     print_endline reason; ()
     (* print_endline ("Trying to infer conditional termination and/or non-termination ..."); *)
     (* infer_loop_template_init prog dec_templ_assumes *)
-
+    
+let infer_lex_template_res prog (inf_templs: ident list) 
+    templ_unks (templ_assumes: templ_assume list) =
+  let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
+  let num_call_ctx = List.length dec_templ_assumes in
+  try
+    let num_dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> 
+      a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
+    let dec_templ_assumes_l = rotate_head_list num_dec_templ_assumes in
+    let rank_l = List.map (find_lex_rank prog inf_templs templ_unks) dec_templ_assumes_l in
+    let res = sort_rank_list (num_call_ctx-1) rank_l in
+    List.concat res
+  with Lex_Infer_Failure _ -> []
+  
 let infer_rank_template_init prog (inf_templs: ident list) =
   let res, templ_assumes, templ_unks = collect_and_solve_templ_assumes_common false prog inf_templs in
   match res with

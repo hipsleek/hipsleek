@@ -73,10 +73,15 @@ let solve_rec_trrel rtr conds =
   else conds 
 
 let solve_base_trrel btr turels =
-  let bc = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond = simplify 5 btr.ret_ctx btr.termr_rhs_params in
+  let base_cond =
+    if CP.is_disjunct base_cond
+    then pairwisecheck base_cond
+    else base_cond
+  in
   (* There is at least one method call in the base case is not terminating or unknown *)
-  if List.exists (fun r -> is_sat (mkAnd bc r.call_ctx)) turels then MayTerm bc
-  else Base bc
+  if List.exists (fun r -> is_sat (mkAnd base_cond r.call_ctx)) turels then MayTerm base_cond
+  else Base base_cond
 
 let solve_trrel_list trrels turels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
@@ -256,22 +261,50 @@ let finalize_turel_graph prog tg =
   (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   
-let rec solve_turel_graph iter_num prog trrels tg = 
+(* let rec solve_turel_graph iter_num prog trrels tg =                                         *)
+(*   if iter_num < !Globals.tnt_thres then                                                     *)
+(*     try                                                                                     *)
+(*       let scc_list = Array.to_list (TGC.scc_array tg) in                                    *)
+(*       let scc_groups = partition_scc_list tg scc_list in                                    *)
+(*       (* let _ =                                                       *)                   *)
+(*       (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)                   *)
+(*       (*   print_endline (print_graph_by_rel tg)                       *)                   *)
+(*       (* in                                                            *)                   *)
+(*       (* let _ = print_endline (print_scc_list_num scc_list) in        *)                   *)
+(*       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in *)
+(*       finalize_turel_graph prog tg                                                          *)
+(*     with                                                                                    *)
+(*     | Restart_with_Cond tg ->                                                               *)
+(*       solve_turel_graph (iter_num + 1) prog trrels tg                                       *)
+(*     | _ -> finalize_turel_graph prog tg                                                     *)
+(*   else finalize_turel_graph prog tg                                                         *)
+  
+let rec solve_turel_graph iter_num prog trrels tg =
+  let scc_list = Array.to_list (TGC.scc_array tg) in
+  let scc_groups = partition_scc_list tg scc_list in
+  List.iter (fun scc_group ->
+    solve_turel_graph_one_group iter_num prog trrels tg scc_group) scc_groups
+  
+and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
   if iter_num < !Globals.tnt_thres then
     try
-      let scc_list = Array.to_list (TGC.scc_array tg) in
+      let _ = pr_im_case_specs iter_num in
+      let tg = sub_graph_of_scc_list tg scc_list in
       (* let _ =                                                       *)
       (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
       (*   print_endline (print_graph_by_rel tg)                       *)
       (* in                                                            *)
       (* let _ = print_endline (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
-      finalize_turel_graph prog tg
-    with 
-    | Restart_with_Cond tg -> 
-      solve_turel_graph (iter_num + 1) prog trrels tg
-    | _ -> finalize_turel_graph prog tg
-  else finalize_turel_graph prog tg
+      ()
+    with
+    | Restart_with_Cond tg -> solve_turel_graph (iter_num + 1) prog trrels tg
+    | _ -> ()
+  else ()
+  
+let solve_turel_graph_init prog trrels tg =
+  let _ = solve_turel_graph 0 prog trrels tg in
+  finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
   let fn_cond_w_ids = case_split_init trrels turels in 
@@ -290,7 +323,7 @@ let solve_trel_init prog trrels turels =
     
   let tg = graph_of_trels irels in
   let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in
-  solve_turel_graph 0 prog rec_trrels tg
+  solve_turel_graph_init prog rec_trrels tg
 
 let finalize () =
   reset_seq_num ();
