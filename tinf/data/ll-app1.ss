@@ -30,7 +30,7 @@ lemma self::clist<n> <- self::lseg<n-1, q> * q::node<v, self>;
 
 void append2(node x, node y)
  
- infer [@term]
+ infer []
   requires x::lseg<n,null> & n > 0
   ensures x::lseg<n, y>;
 
