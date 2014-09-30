@@ -2,7 +2,7 @@
 // 90 -> 91
 relation P(int n, int r).
 int f91(int n)
-  infer [@post_n,@term]
+  infer [@term,@post_n]
  requires true
  ensures true;
   //  n>91 -> requires Term[] ensures res=n;
