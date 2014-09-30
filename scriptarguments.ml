@@ -135,6 +135,10 @@ let common_arguments = [
    "No eliminate existential quantifiers before calling TP.");
   ("--no-filter", Arg.Clear Globals.filtering_flag,
   "No assumption filtering.");
+  ("--filter-false", Arg.Set Globals.filtering_false_flag,
+   "Enable false in assumption filtering.");
+  ("--dis-filter-false", Arg.Clear Globals.filtering_false_flag,
+   "Disable false in assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
@@ -738,6 +742,32 @@ let common_arguments = [
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--print-min",
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_syn := true; *)
+          (* Globals.acc_fold := true; *)
+          Globals.smart_lem_search := true;
+          Globals.print_min := true;
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          (* Globals.is_solver_local := true; *)
+          Globals.disable_failure_explaining := false;
+          (* Globals.smt_compete_mode:=true; *)
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+   "Minimal printing only");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->

@@ -1,0 +1,7 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+infer_collect_rel,Trace
+heap_entail_empty_rhs_heap,Trace
+heap_entail_conjunct_lhs,Trace
+#filter_ante_wo_rel
+#filter_var,Trace

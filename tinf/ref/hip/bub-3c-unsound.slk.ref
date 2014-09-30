@@ -1,0 +1,54 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[] 
+MaybeErr Context: 
+                   
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v3<=sm2 & v2<=sm2 & n=k1 & r2=1 & 1<=k & k<=n1 |-  r2=null & k1=1 & n=1 & v3=s1_131 & n_129=n & k1_130=k1 & s1_131=s1. LOCS:[21;0;1;15;22] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v3<=sm2 & v2<=sm2 & n=k1 & r3=2 & 1<=k & k<=n1 |-  r3=null & flted_16_153=1 & flted_16_154=1 & v2=sm1_156 & 
+flted_16_154=flted_16_153 & flted_16_154+1=n & flted_16_153+1=k1 & 
+s1_131<=sm1_156 & v3=s1_131 & n_129=n & k1_130=k1 & s1_131=s1. LOCS:[21;0;1;15;16;22] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r2,r2) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message:  k<=n1 & 1<=k |-  1+n1=1+k. LOCS:[1;16] (must-bug)
+                               fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r2,r2) ==>  COND ==>  Match(r3,r3) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v3<=sm2 & v2<=sm2 & n=k1 & 1<=k & k<=n1 |-  n1+1=flted_16_154 & flted_16_153<flted_16_154 & v2<=sm1_156 & 
+k=flted_16_153 & sm2=sm1_156 & flted_16_154!=flted_16_153 & flted_16_154+
+1=n & flted_16_153+1=k1 & s1_131<=sm1_156 & v3=s1_131 & n_129=n & 
+k1_130=k1 & s1_131=s1. LOCS:[21;15;0;1;17;16;22] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r2,r2) ==>  COND ==>  Match(r3,r3) ==> ]]
+                   
+                  FAIL_OR 
+                   
+                    fe_kind: Valid
+                    fe_name: 
+                    fe_locs: Failure_Valid
+[[empty]]
+                  true
+
+

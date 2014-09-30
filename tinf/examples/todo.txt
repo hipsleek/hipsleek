@@ -1,3 +1,4 @@
+
 /hip# mutual-5b.ss (DONE)
 
 How come more spec is producing a worse result
@@ -435,6 +436,113 @@ I think we need to pick
 
 Could we change our entailment to accommodate this?
 ===================================================
+#loop-4b.ss should also generate:
+  false --> fpost_1122(x
+  false --> fpre_0(v_int_11_1124')
+
+Below is correct for loop-4a.ss
+
+termAssume x'=x & fpost_1122(1+x') --> fpost_1122(x).
+
+ termAssume x'=x & v_int_11_1124'=1+
+x' & fpre_0(x) --> fpre_0(v_int_11_1124').
+
+ termAssume x'=x & fpre_0(x) --> Loop.
+
+===================================================
+# fact-case2.ss (DONE)
+
+ infer [@post_n]
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
+
+Why isn't post-inference working?
+I did  a --dd, it showed @post present but I cannot
+see the post-inference outcome.
+However, ref/out.fact-case2.ss mysteriously has post-inference
+outcome below but then non @post_n was issued.
+
+Post Inference result:
+fact$int
+ case {
+  x=0 -> requires emp & MayLoop[]
+ ensures emp & res=1 & x=0; 
+  0<x -> requires emp & MayLoop[]
+ ensures emp & 1<=res & 0<x; 
+  x<0 -> requires false & falserequires emp & MayLoop[]
+ ensures false & false;
+  
+  }
+
+Procedure fact$int SUCCESS.
+
+Termination checking result: SUCCESS
+
+===================================================
+# fact-case2a.ss (DONE)
+ infer [@post_n]
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
+
+Problems
+(1) why is there a failure for @post_n? (see fact-case2a.ss) (FIXED)
+(2) Why is there post-inference when we omit post_n
+    (see fact-case2.ss) (FIXED)
+
+Checking procedure fact$int... 
+Procedure fact$int FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure fact$int
+
+Post Inference result:
+fact$int
+ case {
+  x=0 -> requires emp & MayLoop[]
+ ensures emp & res=1 & x=0; 
+  0<x -> requires emp & MayLoop[]
+ ensures emp & 1<=res & 0<x; 
+  x<0 -> requires false & falserequires emp & MayLoop[]
+ ensures false & false;
+  
+  }
+===================================================
+# f91-rec3.ss
+
+(1) use only @post_n
+
+Why this combination not working?
+ Has the verify of @term been done concurrently 
+ with @post, as it will be complex if so.
+
+Below seems wrong. How to fix it?
+
+Post Inference result:
+f91$int
+ requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | (n=res & 
+91<=res));
+
+(1) use only @term
+
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  n<=90 -> requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  }
+===================================================
 # num-app.ss
 
   infer [@term]
@@ -475,11 +583,6 @@ append2:  requires x::ll<n1> * y::ll<n2> & 0<n1
          requires emp & Term[7,3,0+(1*n1)+(0*n2)]
          ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
   }
-
-===================================================
-===================================================
-===================================================
-===================================================
 ===================================================
 ===================================================
 ===================================================

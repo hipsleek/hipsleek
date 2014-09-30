@@ -1,0 +1,39 @@
+
+!!!Full processing file "slk/termu-1c3.ss"
+Parsing file "slk/termu-1c3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_16_1168+1=x' & !(v_bool_15_1128') & 0<=x' & 
+!(v_bool_15_1128') & x'=x & 0<=x' & fpost_0(v_int_16_1168) --> fpost_0(x).
+
+ termAssume x'<0 & x'=x & v_bool_15_1128' & x'<0 & 
+v_bool_15_1128' --> fpost_0(x).
+
+ termAssume 0<=x' & x'=x & !(v_bool_15_1128') & 0<=x' & !(v_bool_15_1128') & 
+v_int_16_1127'+1=x' & fpre_0(x) --> fpre_0(v_int_16_1127').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  0<=x -> requires emp & Term[30,2,0+(1*x)]
+ ensures emp & true; 
+  }
+
+0 false contexts at: ()

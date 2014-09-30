@@ -25,7 +25,7 @@ let add_ret_trel_stk prog ctx lhs rhs =
   Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel
 
-(* Only merge relations split by post *)    
+(* Only merge relations split by post *)
 let merge_trrels rec_trrels = 
   let same_flow_path r1 r2 =
     eq_path_formula r1.ret_ctx r2.ret_ctx
@@ -40,7 +40,7 @@ let merge_trrels rec_trrels =
     | [] -> report_error no_pos "[TNT Inference]: Group of returned temporal assumptions is empty."
     | r::_ -> { r with ret_ctx = CP.join_disjunctions conds }) grp_trrels in
   merge_trrels
-  
+
 let solve_rec_trrel rtr conds = 
   let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
   let rec_cond =
@@ -332,11 +332,11 @@ let finalize () =
   call_trel_stk # reset;
   Hashtbl.reset proc_case_specs
 
-(* Main Inference Function *)  
-let solve no_verification_errors should_infer_tnt prog = 
+(* Main Inference Function *)
+let solve no_verification_errors should_infer_tnt prog =
   let trrels = ret_trel_stk # get_stk in
   let turels = call_trel_stk # get_stk in
-  
+
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then ()

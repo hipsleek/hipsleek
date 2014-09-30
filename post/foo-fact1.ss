@@ -20,10 +20,10 @@ relation Uf(int n, int r).
 
 int fact(int x)
   infer [
-         //@term
-         @post
+         @term,
+         @post_n
  ]
-  requires true  ensures true;
+  requires true ensures true;
 //  requires true  ensures Uf(x,res);
 //  requires true ensures res=x;
 {

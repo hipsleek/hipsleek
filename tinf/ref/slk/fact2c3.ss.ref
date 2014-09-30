@@ -1,0 +1,57 @@
+
+!!!Full processing file "slk/fact2c3.ss"
+Parsing file "slk/fact2c3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_14_1279<0 & 1<=v_int_14_1285 & v_int_14_1279<0 & 
+v_int_14_1279+1=x' & !(v_bool_13_1148') & x'!=0 & !(v_bool_13_1148') & 
+x'=x & x<0 & x'!=0 & v_int_14_1147'=v_int_14_1285+1 & 
+res=v_int_14_1147' & fpost_0(v_int_14_1279) --> fpost_0(x).
+
+ termAssume 1<=v_int_14_1236 & 1<=v_int_14_1244 & 1<=v_int_14_1236 & 
+v_int_14_1236+1=x' & !(v_bool_13_1148') & x'!=0 & !(v_bool_13_1148') & 
+x'=x & 1<=x & x'!=0 & v_int_14_1147'=v_int_14_1244+1 & 
+res=v_int_14_1147' & fpost_0(v_int_14_1236) --> fpost_0(x).
+
+ termAssume v_int_14_1231=0 & 1<=v_int_14_1243 & v_int_14_1231=0 & 
+v_int_14_1231+1=x' & !(v_bool_13_1148') & x'!=0 & !(v_bool_13_1148') & 
+x'=x & 1<=x & x'!=0 & v_int_14_1147'=v_int_14_1243+1 & 
+res=v_int_14_1147' & fpost_0(v_int_14_1231) --> fpost_0(x).
+
+ termAssume x'=0 & x=0 & x'=x & v_bool_13_1148' & x'=x' & v_bool_13_1148' & 
+v_int_13_1142'=1 & res=v_int_13_1142' --> fpost_0(x).
+
+ termAssume x'!=0 & x<0 & x'=x & !(v_bool_13_1148') & x'!=0 & 
+!(v_bool_13_1148') & v_int_14_1146'=1 & v_int_14_1144'+1=x' & 
+v_int_14_1144'<0 & fpre_0(x) --> fpre_0(v_int_14_1144').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29]
+ ensures emp & x=0 & 1<=res; 
+  1<=x -> requires emp & Term[29,x-1]
+ ensures emp & 1<=x & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+
+8 false contexts at: ( (13,12)  (13,19)  (14,7)  (14,25)  (14,21)  (14,16)  (14,14)  (14,14) )

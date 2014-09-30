@@ -566,6 +566,9 @@ let string_of_spec_var x =
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
+let string_of_spec_var_list xs =
+  "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"
+
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
 
 (* let is_absent imm = *)
@@ -837,25 +840,25 @@ let rec pr_formula_exp (e:P.exp) =
 		| P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
 		(match i with
 			| [] -> ()
-			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  (")"))
-    | P.Template t -> 
-      fmt_string ((string_of_spec_var t.P.templ_id) ^ 
+    | P.Template t ->
+      fmt_string ((string_of_spec_var t.P.templ_id) ^
       (pr_list_round_sep "," !P.print_exp t.P.templ_args))
       (* pr_opt pr_formula_exp t.P.templ_body *)
-      
+
       (* if !Globals.gen_templ_slk then                            *)
       (*   fmt_string ((string_of_spec_var t.P.templ_id) ^         *)
       (*     (pr_list_round_sep "," !P.print_exp t.P.templ_args))  *)
       (* else                                                      *)
       (*   (fmt_string ((string_of_spec_var t.P.templ_id) ^ ": "); *)
       (*   pr_formula_exp (P.exp_of_template t))                   *)
-      
+
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()
-			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  ("]") (* An Hoa *)
 ;;
@@ -981,12 +984,12 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Neq (e1, e2, l) -> 
           let (e1,e2) = sort_exp e1 e2 in
           f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
-    | P.EqMax (e1, e2, e3, l) ->   
+    | P.EqMax (e1, e2, e3, l) ->
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
           (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
-    | P.EqMin (e1, e2, e3, l) ->   
+    | P.EqMin (e1, e2, e3, l) ->
           let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
@@ -996,7 +999,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
     | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
     | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
-    | P.VarPerm (t,ls,l) -> 
+    | P.VarPerm (t,ls,l) ->
         fmt_string (string_of_vp_ann t); fmt_string ("[");
         fmt_string (string_of_spec_var_list ls); fmt_string ("]")
     | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
@@ -2851,7 +2854,8 @@ let rec string_of_spec_var_list_noparen l = match l with
   | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
 ;;
 
-let string_of_spec_var_list l = P.string_of_spec_var_list l;;
+(* let string_of_spec_var_list l = string_of_spec_var_list l;; *)
+
 (* "["^(string_of_spec_var_list_noparen l)^"]" ;; *)
 let string_of_inf_cmd i = 
   match i with 
@@ -2870,8 +2874,8 @@ let rec string_of_inf_cmd_list il =
 
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
-let string_of_infer_list il vl = 
-  "[" ^ (string_of_inf_cmd_list il) ^ " " ^  
+let string_of_infer_list il vl =
+  "[" ^ (string_of_inf_cmd_list il) ^ " " ^
   (string_of_spec_var_list_noparen vl) ^ "]"
 
 let rec pr_struc_formula  (e:struc_formula) = match e with
@@ -2932,9 +2936,10 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       formula_inf_xpost = postxf;
       formula_inf_vars = lvars;
       formula_inf_continuation = cont;} ->
-          let ps = if (lvars==[] && postf) then "@post " else "" in
+          (* let ps = if (lvars==[] && postf) then "@post " else "" in *)
           (* let ps = ps ^ (if itnt then "@term " else "") in *)
-          let ps = ps ^ (inf_o # string_of_raw) in
+          (* let ps = ps ^ (inf_o # string_of_raw) in *)
+          let ps = (inf_o # string_of_raw) in
       fmt_open_vbox 2;
       fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
       fmt_cut();
@@ -2953,7 +2958,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    pr_args (Some("V",1)) (Some "A") "case " "{" "}" ""
     (
       fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
         (fun () -> pr_struc_formula_for_spec c2)
@@ -2962,7 +2967,7 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
     fmt_string "requires ";
     pr_formula_for_spec fb;
-    (match cont with 
+    (match cont with
       | None -> ()
       | Some l -> pr_struc_formula_for_spec l;
     );
@@ -2979,7 +2984,7 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     fmt_string ensures_str;
     pr_formula_for_spec b;
     fmt_string ";";
-	if !print_assume_struc then 
+	if !print_assume_struc then
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()
@@ -4268,11 +4273,11 @@ let string_of_prog_or_branches ((prg,br):prog_or_branches) =
 ;;
 
 (* pretty printing for a program written in core language *)
-let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
-  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
-  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
-  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
-  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
+let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^
+  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
   (* WN_all_lemma - override usage? *)
   (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^
   (string_of_coerc_decl_list (*p.prog_right_coercions*) (Lem_store.all_lemma # get_right_coercion))^"\n\n"^
@@ -4281,8 +4286,8 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-(* pretty printing for program written in core language separating prelude.ss program *)                                                            
-let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
+(* pretty printing for program written in core language separating prelude.ss program *)
+let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
    let remove_prim_procs procs=
 		List.fold_left (fun a b->
 			try 

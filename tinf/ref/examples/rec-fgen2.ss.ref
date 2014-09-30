@@ -1,0 +1,56 @@
+
+!!!Full processing file "examples/rec-fgen2.ss"
+Parsing file "examples/rec-fgen2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_14_1142' & k'<=k' & v_int_14_1142'=k' & n'<k' & n<=k & 
+k'=k & n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+v_int_14_1242=1+n' & v_int_14_1242<=k' & v_int_14_1242<=k' & 
+k'<=k' & fpost_1138(v_int_14_1242,k') & fpost_1138(k',k') --> fpost_1138(n,k).
+
+ termAssume k'<=n' & n<=k & k'=k & n'=n & v_bool_13_1143' & k'<=n' & 
+v_bool_13_1143' & res=n' --> fpost_1138(n,k).
+
+ termAssume k'<=n' & k<n & k'=k & n'=n & v_bool_13_1143' & k'<=n' & 
+v_bool_13_1143' & res=n' --> fpost_1137(n,k).
+
+ termAssume v_int_14_1141'<=k' & v_int_14_1242<=k' & v_int_14_1141'=k' & 
+v_int_14_1242<=k' & v_int_14_1242=1+n' & !(v_bool_13_1143') & n'<k' & 
+!(v_bool_13_1143') & n'=n & k'=k & n<=k & 
+n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+
+ termAssume n'<k' & n<=k & k'=k & n'=n & !(v_bool_13_1143') & n'<k' & 
+!(v_bool_13_1143') & v_int_14_1140'=1+n' & 
+v_int_14_1140'<=k' & fpre_0(n,k) --> fpre_0(v_int_14_1140',k').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] n=k@B,[4] k<n@B,[5] n<k@R]
+]
+Termination Inference Result:
+f:  case {
+  k<n -> requires emp & Term[29,2]
+ ensures emp & k<n & res=n; 
+  n=k -> requires emp & Term[29,1]
+ ensures emp & n<=k & res=k; 
+  n<k -> requires emp & Term[29,3,0+(-1*n)+(1*k)]
+ ensures emp & n<=k & 
+  res=k; 
+  }
+
+Termination checking result: SUCCESS
+
+
+5 false contexts at: ( (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )

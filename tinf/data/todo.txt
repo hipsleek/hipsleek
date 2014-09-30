@@ -68,8 +68,75 @@ length:  requires x::lseg<n,flted_32_61> & flted_32_61=nullcase {
 
 Termination checking result: SUCCESS
 
+
 ====================================================================
+# ll3.ss --pcp
+
+	infer[@term]
+	requires x::ll<n>@L 
+	ensures true;
+
+   EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>@L&{FLOW,(24,25)=__norm}[]
+           EBase emp&lengthpre_0(n)[62]&{FLOW,(24,25)=__norm}[]
+                   EAssume 
+                     emp&lengthpost_1176(n)[]&{FLOW,(24,25)=__norm}[]
+
+Why @L not printed for inferred spec?
+
+Why did we get x=1 and x=0 for node type?
+
+Termination Inference Result:
+length:  requires x::ll<n> & truecase {
+                          1<=n -> requires emp & Term[62,3,-1+(1*
+                          n)]
+ ensures emp & true; 
+                          n=0 -> requires emp & Term[62,1]
+ ensures emp & true;
+
+                          
+                          x=0 -> requires emp & Term[62,1]
+ ensures emp & true;
+
+
 ====================================================================
+# ll4.ss --pcp (OK)
+
+Post present in inferred specs..
+
+	infer[@term]
+	requires x::ll<n>@L 
+	ensures res=n;
+
+length:  requires x::ll<n> & truecase {
+                          1<=n -> requires emp & Term[62,3,-1+(1*
+                          n)]
+ ensures emp & res=n; 
+                          n=0 -> requires emp & Term[62,1]
+ ensures emp & res=n;
+                          
+
+====================================================================
+# zip.ss
+
+====================================================================
+# length 
+
+  on infinite list?
+
+====================================================================
+# tinf/data/ll1.ss (FIXED)
+
+Why is there a "check 1 fail" message in the post branch? 
+What does it signify?
+
+Checking procedure length$node... check 1 fail
+Procedure length$node SUCCESS.
+
+Note that in the ti3 branch, we got the following instead:
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
 ====================================================================
 ====================================================================
 ====================================================================

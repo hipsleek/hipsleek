@@ -1,0 +1,11 @@
+Starting Omega...oc
+Starting z3... 
+**** TEMPLATE ASSUMPTION(S) ****
+[ r=g( v, r1) & r2=g( 0, r1) & r'=g( v-1, r2) --> r'<r
+, r=g( 0, r1) --> r1<r
+, 0<=v & 0<=r1 & r=g( v, r1) --> 0<=r
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int g(int x,int y) == 1+(2*x)+(1*y)
+]
+

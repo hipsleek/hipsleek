@@ -401,7 +401,7 @@ and convert_heap2 prog (f0:IF.formula):IF.formula =
   Debug.no_1 "convert_heap2" pr pr (convert_heap2_x prog) f0
 
 and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
-  let pr = pr_none in
+  let pr = Iprinter.string_of_struc_formula in
   Debug.no_1 "convert_struc2" pr pr (convert_struc2_x prog) f0
 
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
@@ -1493,6 +1493,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+          let ut_vs = cuts @ C.ut_decls # get_stk in
+          let _ = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
 	      C.prog_view_decls = cviews2;
@@ -1500,7 +1502,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
-        C.prog_ut_decls = cuts @ (C.ut_decls # get_stk);
+              C.prog_ut_decls = (ut_vs);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -1771,7 +1773,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
               Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
               Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -1835,8 +1837,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let _ = Debug.ninfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let _ = Debug.ninfo_hprint (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let _ = Debug.ninfo_hprint (add_str "formula" Cprinter.string_of_formula) formula no_pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1864,6 +1866,12 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
+      let under_f = vdef.C.view_baga_under_inv in
+      (* WN : this is an update on under-approx to false if absent*)
+      let new_under = match under_f with
+        | None -> Excore.EPureI.mk_false_disj
+        | Some f -> f in
+      let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
       Debug.tinfo_hprint (add_str "under(baga)" pr_d) under_f no_pos;
       let baga_under_formula = match under_f with
@@ -1908,12 +1916,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
           end
-        else 
+        else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
+          (* WN : this test is unsound *)
           if !Globals.do_test_inv then report_warning pos msg
-          else report_error pos msg
+          else report_warning pos msg
       in ()
     else ()
   in
@@ -3008,10 +3017,10 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   *)let pr  = Iprinter.string_of_proc_decl in
   let pr2 = Cprinter.string_of_proc_decl 5 in
   Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
-      
+
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
-    let _= proving_loc #set (proc.I.proc_loc) in    
+    let _= proving_loc #set (proc.I.proc_loc) in
     let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
     if not (Gen.is_empty dup_names) then
       (let p = List.hd dup_names in
@@ -3024,29 +3033,29 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }
     else
       (E.push_scope ();
-      (let all_args = 
+      (let all_args =
         if Gen.is_some proc.I.proc_data_decl then
           (let cdef = Gen.unsome proc.I.proc_data_decl in
           let this_arg ={
               I.param_type = Named cdef.I.data_name;
               I.param_name = this;
               I.param_mod = I.NoMod;
-              I.param_loc = proc.I.proc_loc;} in 
+              I.param_loc = proc.I.proc_loc;} in
           let ls_arg ={
               I.param_type = ls_typ;
               I.param_name = ls_name;
               I.param_mod = I.NoMod;
-              I.param_loc = proc.I.proc_loc;} in 
+              I.param_loc = proc.I.proc_loc;} in
           let lsmu_arg ={
               I.param_type = lsmu_typ;
               I.param_name = lsmu_name;
               I.param_mod = I.NoMod;
-              I.param_loc = proc.I.proc_loc;} in 
+              I.param_loc = proc.I.proc_loc;} in
           let waitlevel_arg ={
               I.param_type = waitlevel_typ;
               I.param_name = waitlevel_name;
               I.param_mod = I.NoMod;
-              I.param_loc = proc.I.proc_loc;} in 
+              I.param_loc = proc.I.proc_loc;} in
           waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args)
         else proc.I.proc_args in
       let p2v (p : I.param) = {
@@ -3057,17 +3066,17 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
       let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
       let free_vars = List.map (fun p -> p.I.param_name) all_args in
-      let add_param p = (p.I.param_name, 
+      let add_param p = (p.I.param_name,
       {sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
       id = fresh_int () }) in
-      let n_tl = List.map add_param all_args in  
+      let n_tl = List.map add_param all_args in
       let n_tl = type_list_add res_name { sv_info_kind = cret_type;id = fresh_int () } n_tl in
       let n_tl = type_list_add eres_name { sv_info_kind = UNK ;id = fresh_int () } n_tl in
       (* Termination: Add info of logical vars *)
-      let add_logical tl (CP.SpecVar (t, i, _)) = type_list_add i { 
-          sv_info_kind = t; 
+      let add_logical tl (CP.SpecVar (t, i, _)) = type_list_add i {
+          sv_info_kind = t;
           id = fresh_int () } tl in
-      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in
       let n_tl =  List.fold_left add_logical n_tl log_vars in
       let _ = check_valid_flows proc.I.proc_static_specs in
       let _ = check_valid_flows proc.I.proc_dynamic_specs in
@@ -3129,10 +3138,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
             | Int | Bool -> true
             | _ -> false)) params in
       let pos = proc.I.proc_loc in
-      
+
       let utpre_name = fname ^ "pre" in
       let utpost_name = fname ^ "post" in
-              
+
       let utpre_decl = {
         C.ut_name = utpre_name;
         C.ut_params = params;
@@ -3141,21 +3150,22 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let utpost_decl = { utpre_decl with
         C.ut_name = utpost_name;
         C.ut_is_pre = false; } in
-        
+
+      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
       let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
-      
+
       let uid = {
         CP.tu_id = 0;
         CP.tu_sid = fname;
         CP.tu_fname = fname;
         CP.tu_call_num = 0;
         CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-        CP.tu_cond = CP.mkTrue pos; 
+        CP.tu_cond = CP.mkTrue pos;
         CP.tu_icond = CP.mkTrue pos;
-        CP.tu_sol = None; 
+        CP.tu_sol = None;
         CP.tu_pos = pos; } in
-      
-      let static_specs_list = 
+
+      let static_specs_list =
         if not !Globals.dis_term_chk then
           CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
         else static_specs_list
@@ -3259,7 +3269,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let args2 = args@(prog.I.prog_rel_ids) in
       let _ = 
         let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
-        
+
         let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
         let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
         (*LOCKSET variable*********)
@@ -3308,11 +3318,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
-	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in 
+	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in
       (E.pop_scope (); cproc)))
   in
   wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
-      
+
 (** An Hoa : collect important variables in the specification
     Important variables are the ones that appears in the
     post-condition. Those variables are necessary in order

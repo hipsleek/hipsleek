@@ -1,0 +1,70 @@
+
+!!!Full processing file "examples/mutual-5a.ss"
+Parsing file "examples/mutual-5a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_10_1147' & x'<=0 & 
+v_bool_10_1147' & v_int_10_1141'=0 & res=v_int_10_1141' --> fpost_1138(x).
+
+ termAssume v_int_20_1211<=0 & v_int_20_1211<=0 & v_int_20_1211+2=x' & 
+0<x' & x'=x & !(v_bool_19_1132') & 0<x' & !(v_bool_19_1132') & v_int_20_1196+
+1=x' & v_int_20_1196<=0 & v_int_20_1196<=0 & v_int_20_1131'=v_int_20_1218+
+v_int_20_1217 & 
+res=v_int_20_1131' & fpost_1138(v_int_20_1196) & fpost_1138(v_int_20_1211) --> gpost_1122(x).
+
+ termAssume x'<=0 & x'=x & v_bool_19_1132' & x'<=0 & v_bool_19_1132' & 
+v_int_19_1124'=0 & res=v_int_19_1124' --> gpost_1122(x).
+
+ termAssume v_int_20_1196<=0 & v_int_20_1196<=0 & v_int_20_1196+1=x' & 
+!(v_bool_19_1132') & 0<x' & !(v_bool_19_1132') & x'=x & 0<x' & 
+v_int_20_1128'+2=x' & v_int_20_1128'<=0 & gpre_0(x) --> Term.
+
+ termAssume 0<x' & x'=x & !(v_bool_19_1132') & 0<x' & !(v_bool_19_1132') & 
+v_int_20_1126'+1=x' & 0<v_int_20_1126' & gpre_0(x) --> Loop.
+
+ termAssume 0<x' & x'=x & !(v_bool_19_1132') & 0<x' & !(v_bool_19_1132') & 
+v_int_20_1126'+1=x' & v_int_20_1126'<=0 & gpre_0(x) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f: [[4] x<=0@B]
+,	g: [[5] x<=0@B,[6] x=1@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[30,2]
+ ensures emp & true; 
+  x=1 -> requires emp & Term[30,3]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[30]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 26 invocations 
+8 false contexts at: ( (10,14)  (10,21)  (11,7)  (11,27)  (11,23)  (11,21)  (11,14)  (11,14) )
+
+!!! log(small):(0.037945,248)
+Total verification time: 0.351349 second(s)
+	Time spent in main process: 0.332297 second(s)
+	Time spent in child processes: 0.019052 second(s)
+
