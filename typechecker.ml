@@ -2603,7 +2603,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
               try
                 let cur_r = (fn prog p) in
                 let _ = if not cur_r then
-                  let _ = if not !Globals.web_compile_flag then Debug.info_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name)  no_pos in
+                  let _ = if not !Globals.web_compile_flag then Debug.ninfo_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name) no_pos in
                   ()
                 else () in
                 tot_r && cur_r
@@ -3599,7 +3599,8 @@ let rec check_prog iprog (prog : prog_decl) =
           DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
       (* Reverify *)
-      let _ = if has_infer_post_proc then wrap_reverify_scc reverify_scc prog scc in
+      let has_infer_others_proc = has_infer_post_proc && Pi.is_infer_others_scc scc in
+      let _ = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc in
 
       let _ = reverify_scc prog scc in
 

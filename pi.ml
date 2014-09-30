@@ -70,7 +70,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let fvs = CF.struc_all_vars sf in
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
-          | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name]) in
+          | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]))) in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
@@ -111,6 +111,22 @@ let is_infer_post sf =
 
 let is_infer_post_scc scc =
   List.exists (fun proc -> is_infer_post (proc.proc_stk_of_static_specs # top)) scc
+
+let rec is_infer_others sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_infer_post sf) el
+  | CF.EInfer ei ->
+        let inf_obj = ei.CF.formula_inf_obj in
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_term) || (inf_obj # is_shape) || (inf_obj # is_imm)
+  | _ -> false
+
+let is_infer_others sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "is_infer_others" pr string_of_bool is_infer_others sf
+
+let is_infer_others_scc scc =
+  List.exists (fun proc -> is_infer_others (proc.proc_stk_of_static_specs # top)) scc
 
 let rec modify_post_relation sf infer_vars = match sf with
   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
