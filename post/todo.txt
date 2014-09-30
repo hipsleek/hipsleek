@@ -697,6 +697,33 @@ Stop Omega... 21 invocations caught
 
 Exception occurred: Failure("Post condition cannot be derived.")
 =======================================================
+# ll-app-post1.ss
+
+  infer [@post_n]
+  requires x::ll<n1> * y::ll<n2> //& n1>0 
+  ensures x::ll<r> ;
+
+Good to detect pre-condition failure.
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+QUESTION : However, why did we have Exception below?
+Is it due to reverification?
+
+!!! proc.proc_name:append2$node~node
+Checking procedure append2$node~node... 
+ExceptionNot_foundOccurred!
+
+Error1(s) detected at main 
+Stop Omega... 7 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Not_found
+Error3(s) detected at main 
+
 =======================================================
 =======================================================
 =======================================================
