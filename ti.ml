@@ -291,11 +291,11 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
     try
       let _ = pr_im_case_specs iter_num in
       let tg = sub_graph_of_scc_list tg scc_list in
-      let _ =
-        print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num));
-        print_endline (print_graph_by_rel tg)
-      in
-      let _ = print_endline (print_scc_list_num scc_list) in
+      (* let _ =                                                       *)
+      (*   print_endline ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
+      (*   print_endline (print_graph_by_rel tg)                       *)
+      (* in                                                            *)
+      (* let _ = print_endline (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()
     with
