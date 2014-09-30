@@ -648,6 +648,54 @@ f91:  case {
   n<=90) | (n=res & 91<=res)); 
   }
 =======================================================
+# len.ss
+
+Below works:
+  requires x::ll<n> ensures x::ll<m>  ;
+
+Also, len1.ss works:
+
+  infer [R] requires x::ll<n> 
+  ensures x::ll<m> & R(n,m,res)  ;
+
+However below fails!
+  infer [@post_n]
+  requires x::ll<n> ensures x::ll<m>  ;
+
+Questions:
+ (1) why only base-case inferred
+ (2) Why perform re-verification when all
+     the flags false
+ (3) encountered a reverification problem:
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1206(x,res), x=0 & res=0, true, true)]
+*************************************
+
+Post Inference result:
+length$node
+ requires x::ll<n> & MayLoop[]
+ ensures x::ll<m_1205> & 0<=n & x=0 & res=0;
+
+Checking procedure length$node... 
+Post condition cannot be derived:
+  (must) cause: AndR[ (((0=1 & x=2 & 1<=m_1328) | (x=1 & 0=null & m_1328=0))) & x!=null |-  x=0. LOCS:[1;13;29;25;0];  res=0+1 |-  res=0. LOCS:[30;0] (must-bug).]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "len.ss",Line:30,Col:14
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 21 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
 =======================================================
 =======================================================
 =======================================================
