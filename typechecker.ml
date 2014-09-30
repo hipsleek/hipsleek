@@ -3518,6 +3518,9 @@ let rec check_prog iprog (prog : prog_decl) =
       let _ = List.iter (fun proc ->
           DD.ninfo_hprint (add_str "spec before add post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
+      let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
+      let _ = if has_infer_pre_proc then Pi.add_pre_relation_scc prog scc in
+
       let has_infer_post_proc = Pi.is_infer_post_scc scc in
       let _ = Pi.add_post_relation_scc prog scc in
 
@@ -3525,7 +3528,7 @@ let rec check_prog iprog (prog : prog_decl) =
           DD.ninfo_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
       (* Only infer post *)
-      let (scc,old_specs) = if has_infer_post_proc then List.split (Pi.filter_infer_post_scc scc) else (scc,[]) in
+      let (scc,old_specs) = if (has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
 
       let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
@@ -3583,23 +3586,24 @@ let rec check_prog iprog (prog : prog_decl) =
       in
 
       (* Pure inference *)
-      let _ = if has_infer_post_proc then Pi.infer_post prog scc in
+      let _ = if (has_infer_post_proc || has_infer_pre_proc) then Pi.infer_pure prog scc in
       let _ = List.iter (fun proc ->
           DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
-      let rem_post_inf_prog_rel_decls = List.filter (fun rel_decl ->
-          let r = Str.regexp "post_" in
-          not(Str.string_match r rel_decl.rel_name 0)
+      let rem_pure_inf_prog_rel_decls = List.filter (fun rel_decl ->
+          let r1 = Str.regexp "post_" in
+          let r2 = Str.regexp "pre_" in
+          not(Str.string_match r1 rel_decl.rel_name 0) && not(Str.string_match r2 rel_decl.rel_name 0)
       ) prog.prog_rel_decls in
-      let _ = prog.prog_rel_decls <- rem_post_inf_prog_rel_decls in
+      let _ = prog.prog_rel_decls <- rem_pure_inf_prog_rel_decls in
 
       (* Resume other infer *)
-      let scc = if has_infer_post_proc then Pi.resume_infer_obj_scc scc old_specs else scc in
+      let scc = if (has_infer_post_proc || has_infer_pre_proc) then Pi.resume_infer_obj_scc scc old_specs else scc in
       let _ = List.iter (fun proc ->
           DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
 
       (* Reverify *)
-      let has_infer_others_proc = has_infer_post_proc && Pi.is_infer_others_scc scc in
+      let has_infer_others_proc = (has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in
       let _ = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc in
 
       let _ = reverify_scc prog scc in

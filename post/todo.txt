@@ -725,6 +725,19 @@ Exception occurred: Not_found
 Error3(s) detected at main 
 
 =======================================================
+# post/fact1.ss
+
+Why f_pre not substitute with 0<=x?
+
+!!! REL POST :  f_post(x,res)
+!!! POST:  x=res-1 & 1<=res
+!!! REL PRE :  f_pre(x)
+!!! PRE :  0<=x
+Post Inference result:
+fact$int
+ requires emp & f_pre(x) & 0<=x & MayLoop[]
+ ensures emp & x=res-1 & 1<=res;
+
 =======================================================
 =======================================================
 =======================================================
