@@ -16,7 +16,10 @@ lemma self::clist<n> <- self::lseg<n-1, q> * q::node<v, self>;
 
 lemma self::lseg<n, q> <- self::lseg<n-1, p> * p::node<v, q>;
 
-lemma self::node<v, q> * q::lseg<n, self> -> q::node<v1, s> * s::lseg<n, q>;
+//lemma self::lseg<n, q> -> self::lseg<n-1, p> * p::node<v, q>;
+
+lemma self::node<v, q> * q::lseg<n, self> -> (exists q1: q1::node<v1, self> * self::lseg<n, q1>);
+
 
 int length (node x)
 

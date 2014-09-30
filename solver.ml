@@ -12807,10 +12807,13 @@ and normalize_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list)
   (normalize_w_coers_x prog estate coers) h p fl
 
 and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list) (h:h_formula) (p:MCP.mix_formula) (fl:flow_formula) : (h_formula * MCP.mix_formula * flow_formula) =
+  Debug.tinfo_pprint  ("loop in normalize_w_coers ? 0") no_pos;
   let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) (fl:flow_formula): (h_formula*MCP.mix_formula*flow_formula) =
     (* try to check whether the current estate with h=anode*rest and pure=p *)
     (* can entail the lhs of an coercion *)
+    Debug.tinfo_pprint  ("loop in normalize_w_coers ? 1") no_pos;
     let process_one_x estate anode rest coer h p fl =
+      Debug.tinfo_pprint  ("loop in normalize_w_coers ? 2") no_pos;
       let f = mkBase rest p CF.TypeTrue fl [] no_pos in
       let coer_lhs = coer.coercion_head in
       let coer_rhs = coer.coercion_body in
@@ -12939,6 +12942,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       (*=====================================================*)
       let coer_rhs_new = CF.translate_set_comp_rel coer_rhs_new in
 
+      Debug.tinfo_pprint  ("loop in normalize_w_coers ? 3") no_pos;
       Debug.tinfo_pprint  ("normalize_w_coers: process_one: check extra heap") no_pos;
       Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
       Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
