@@ -1,7 +1,7 @@
 HIP=../../../hip
-echo "ll-trav.ss"
+echo "ll-trav.c"
 $HIP ll-trav.c -validate ../o/ll-trav.cp | grep Validate
-echo "ll-trav-1.ss: ll with at least one node"
+echo "ll-trav-1.c: ll with at least one node"
 $HIP ll-trav-1.c -validate ../o/ll-trav-1.cp | grep Validate
 echo "ll-delete"
 $HIP ../ll-delete.ss -tp z3 -validate ../o/ll-delete.cp | grep Validate

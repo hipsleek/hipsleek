@@ -702,7 +702,7 @@ struct
 	        Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
           else
 	        let rec get (lst:(string*string*nflow)list):nflow = match lst with
-	          | [] -> report_error no_pos ("Can not find flow of " ^ f) (* false_flow_int *)
+	          | [] -> (* report_error no_pos ("Can not find flow of " ^ f) *) false_flow_int
 	          | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
 		        else get rst in
             (get elist)

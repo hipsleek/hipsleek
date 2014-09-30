@@ -880,7 +880,7 @@ let sa_en_split = ref false
 
 let pred_split = ref false
 
-let pred_seg_split = ref true
+let pred_seg_split = ref false
 
 (* let sa_dangling = ref false *)
 

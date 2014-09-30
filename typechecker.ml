@@ -3686,7 +3686,7 @@ let rec check_prog iprog (prog : prog_decl) =
           not(Str.string_match r rel_decl.rel_name 0)
       ) prog.prog_rel_decls in
       let _ = prog.prog_rel_decls <- rem_post_inf_prog_rel_decls in
-      let _ = DD.info_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
+      let _ = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
       (* Resume other infer *)
       let scc = if has_infer_post_proc then Pi.resume_infer_obj_scc scc old_specs else scc in
       (* let _ = List.iter (fun proc -> *)
