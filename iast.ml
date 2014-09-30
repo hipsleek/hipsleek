@@ -123,20 +123,20 @@ and axiom_decl = {
 }
 
 and templ_decl = {
-  templ_name: ident;
-  templ_ret_typ: typ;
-  templ_typed_params: (typ * ident) list;
-  templ_body: P.exp option;
-  templ_pos: loc;
+    templ_name: ident;
+    templ_ret_typ: typ;
+    templ_typed_params: (typ * ident) list;
+    templ_body: P.exp option;
+    templ_pos: loc;
 }
 
 (* Unknown Temporal Declaration *)
 and ut_decl = {
-  ut_name: ident;
-  ut_fname: ident;
-  ut_typed_params: (typ * ident) list;
-  ut_is_pre: bool;
-  ut_pos: loc;
+    ut_name: ident;
+    ut_fname: ident;
+    ut_typed_params: (typ * ident) list;
+    ut_is_pre: bool;
+    ut_pos: loc;
 }
 
 
@@ -175,7 +175,7 @@ and param_modifier =
   | NoMod
   | RefMod
   | CopyMod (* WN : this signify pass-by-copy semantics *)
-    (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
+          (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
 
 and jump_label_type =
   | NoJumpLabel

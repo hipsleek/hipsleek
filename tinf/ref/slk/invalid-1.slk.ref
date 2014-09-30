@@ -1,0 +1,33 @@
+Starting Omega...oc
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=x & x=x' & x'=1+v_int_12_903 & 0<=v_int_12_903 & 
+res=v_int_12_875' & fpost_0(v_int_12_874') --> fpost_0(x).
+
+ termAssume 0<=x & x=x' & x'=1+v_int_12_905 & v_int_12_905<0 & 
+res=v_int_12_875' & fpost_0(v_int_12_874') --> fpost_0(x).
+
+ termAssume x<0 & x=x' & x'=1+v_int_12_916 & v_int_12_916<0 & 
+res=v_int_12_875' & fpost_0(v_int_12_874') --> fpost_0(x).
+
+ termAssume v_int_12_874'<0 & x'=1+v_int_12_874' & x=x' & 
+0<=x & Term --> fpre_0(v_int_12_874').
+
+ termAssume v_int_12_874'<0 & x'=1+v_int_12_874' & x=x' & 
+x<0 & fpre_0(x) --> fpre_0(v_int_12_874').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] true@R]
+]
+Starting z3... 
+Termination Inference Result:
+f:  case {
+  true -> requires emp & Loop[]
+ ensures false & false; 
+  }
+

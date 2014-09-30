@@ -1,0 +1,11 @@
+Starting Omega...oc
+Starting z3... 
+ <1>emp&n<0&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+ <1>emp&0<=n & n'+1=n & (((b & b') | (!(b) & !(b')))) & b & pre1_0(n,b)[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPre rel: [emp&0<=n & n'+1=n & (((b & b') | (!(b) & !(b')))) & b&
+                       {FLOW,(21,22)=__norm}[]: pre1_0(n,b) --> pre1_0(n',b')]
+[[empty]]
+
+

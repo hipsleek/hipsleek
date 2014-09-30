@@ -1,0 +1,113 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&v<=sm2 & v<=sm2&{FLOW,(3,4)=__Error}[]
+                          es_heap: r::lls{}<f,k,sm2> * xs::node<v,r>
+                          es_evars: [n_123; k1_124; s1_125]
+                          es_rhs_eqset: [n_123:n; k1_124:k1; s1_125:s1; 
+                                         n_123:n; k1_124:k1; s1_125:s1; 
+                                         v:s1_125]
+                          es_must_error: Some(lor[AndR[ v<=sm2 & v<=sm2 |-  v=s1. LOCS:[20;16];  v<=sm1_127 & v<=sm1_127 |-  s1<=sm1_127. LOCS:[20;16] (must-bug).],AndR[ v<=sm2 & v<=sm2 |-  sm2=s1. LOCS:[20;17];  v_133<=sm2 & v_133<=sm2 |-  v_133<=s1. LOCS:[20;17] (must-bug).]]; true)
+                          es_trace: 
+                            Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(r,q_126) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,r> * r::lls<f,k,sm2>&
+                                            v<=sm2:xs::lls{}<n,k1,s>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&v<=sm2 & v<=sm2&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(r,q_126) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: 
+                           r1::node<v2,r> * r::lls{}<n1,k,sm2>&v2<=sm2 & 
+                           v<=sm2&{FLOW,(21,22)=__norm}[]
+                          es_heap: xs::node<v,r1>
+                          es_evars: [sm_216; flted_15_217; n_189; s1_190; 
+                                     flted_32_191]
+                          es_gen_impl_vars: [q_200; sm1_201]
+                          es_rhs_eqset: [n_189:n; s1_190:s1; v:s1_190; 
+                                         n_189:flted_32_191; v:s1_190; 
+                                         n_189:flted_32_191]
+                          es_must_error: Some(UnionR[UnionR[ v<=sm2 & v2<=sm2 & r1=2 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  r1=null & flted_32_191=1 & n_189=1 & v=s1_190 & n_189=flted_32_191 & 
+flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;15;32] (RHS: contradiction),UnionR[UnionR[ v<=sm2 & v2<=sm2 & r=1 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  r=null & flted_16_221=1 & flted_16_222=1 & v2=sm1_201 & 
+flted_16_222=flted_16_221 & flted_16_222+1=n_189 & flted_16_221+
+1=flted_32_191 & s1_190<=sm1_201 & v=s1_190 & n_189=flted_32_191 & 
+flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;16;15;32] (RHS: contradiction), v<=sm1_235 & v2<=sm1_235 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  n1+1=flted_16_222 & k+1=flted_16_221 & sm1_201<=sm1_235 & v2=sm1_201 & 
+flted_16_222=flted_16_221 & flted_16_222+1=n_189 & flted_16_221+
+1=flted_32_191 & s1_190<=sm1_201 & v=s1_190 & n_189=flted_32_191 & 
+flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;16;15;32] (RHS: contradiction)], v<=sm2 & v_241<=sm2 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  n1+1=flted_16_222 & flted_16_221<flted_16_222 & v_241<=sm1_201 & 
+k=flted_16_221 & sm2=sm1_201 & flted_16_222!=flted_16_221 & flted_16_222+
+1=n_189 & flted_16_221+1=flted_32_191 & s1_190<=sm1_201 & v=s1_190 & 
+n_189=flted_32_191 & flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;17;16;15;32] (RHS: contradiction)]],UnionR[UnionR[ v_207<=sm2 & v2<=sm2 & r=1 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  r=null & k_266=1 & flted_17_268=1 & v2=sm_267 & flted_17_268=k_266 & 
+flted_17_268+1=n_189 & flted_32_191<n_189 & v_207<=s1_190 & 
+k_266=flted_32_191 & sm_267=s1_190 & n_189!=flted_32_191 & flted_32_191=3+
+k & n_189=n & s1_190=s1. LOCS:[31;0;1;15;17;32] (RHS: contradiction), v_207<=sm1_282 & v2<=sm1_282 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  n1+1=flted_17_268 & k+1=k_266 & sm_267<=sm1_282 & v2=sm_267 & 
+flted_17_268=k_266 & flted_17_268+1=n_189 & flted_32_191<n_189 & 
+v_207<=s1_190 & k_266=flted_32_191 & sm_267=s1_190 & n_189!=flted_32_191 & 
+flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;16;15;17;32] (RHS: contradiction)], v_207<=sm2 & v_288<=sm2 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  n1+1=flted_17_268 & k_266<flted_17_268 & v_288<=sm_267 & k=k_266 & 
+sm2=sm_267 & flted_17_268!=k_266 & flted_17_268+1=n_189 & 
+flted_32_191<n_189 & v_207<=s1_190 & k_266=flted_32_191 & sm_267=s1_190 & 
+n_189!=flted_32_191 & flted_32_191=3+k & n_189=n & s1_190=s1. LOCS:[31;0;1;17;32] (RHS: contradiction)]]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,r1> * 
+                                            r1::node<v2,r> * 
+                                            r::lls<n1,k,sm2>&v2<=sm2 & 
+                                            v<=sm2:xs::lls{}<n1,flted,s1>&
+                                            flted=3+k&
+                                            {FLOW,(21,22)=__norm}[]]] <1>r1::node<v2,r> * r::lls{}<n1,k,sm2>&v2<=sm2 & v<=sm2&{FLOW,(21,22)=__norm}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+Fail Trace?:[] 
+MaybeErr Context: 
+                   
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v<=v2 & v2<=sm2 & n=k1 & r1=2 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  r1=null & k1=1 & n=1 & v=s1_338 & n_336=n & k1_337=k1 & s1_338=s1. LOCS:[40;0;1;15;41] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v<=v2 & v2<=sm2 & n=k1 & r=1 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  r=null & flted_16_360=1 & flted_16_361=1 & v2=sm1_340 & 
+flted_16_361=flted_16_360 & flted_16_361+1=n & flted_16_360+1=k1 & 
+s1_338<=sm1_340 & v=s1_338 & n_336=n & k1_337=k1 & s1_338=s1. LOCS:[40;0;1;15;16;41] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r1,q_339) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message:  k<=n1 & ((0-n1)+2)<=k & 0<=k |-  1+n1=1+k. LOCS:[1;16] (must-bug)
+                               fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r1,q_339) ==>  COND ==>  Match(r,q_375) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 v<=v_382 & v_382<=sm2 & n=k1 & 0<=k & ((0-n1)+2)<=k & k<=n1 |-  n1+1=flted_16_361 & flted_16_360<flted_16_361 & v_382<=sm1_340 & 
+k=flted_16_360 & sm2=sm1_340 & flted_16_361!=flted_16_360 & flted_16_361+
+1=n & flted_16_360+1=k1 & s1_338<=sm1_340 & v=s1_338 & n_336=n & k1_337=k1 & 
+s1_338=s1. LOCS:[40;15;0;1;17;16;41] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(r1,q_339) ==>  COND ==>  Match(r,r_383) ==> ]]
+                   
+                  FAIL_OR 
+                   
+                    fe_kind: Valid
+                    fe_name: 
+                    fe_locs: Failure_Valid
+[[empty]]
+                  true
+
+

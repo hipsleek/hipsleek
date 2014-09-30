@@ -4835,7 +4835,11 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  begin
 		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
-		  filtered_f
+                let _ = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+                let _ = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+                (* WN : why this affected under_approx? *)
+                if (is_False f0) && !Globals.filtering_false_flag then f0
+                else filtered_f
 	  end
   in
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
@@ -8450,13 +8454,18 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
   new_ante
 
 let filter_ante (ante: formula) (conseq: formula) : (formula) = 
-let pr = !print_formula in
-Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
+  let pr = !print_formula in
+  Debug.no_2 "filter_ante" pr pr pr filter_ante ante conseq
+
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
   let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
   let new_ante = filter_var ante fvar in
   new_ante
+
+let filter_ante_wo_rel (ante: formula) (conseq: formula) : (formula) = 
+  let pr = !print_formula in
+  Debug.no_2 "filter_ante_wo_rel" pr pr pr filter_ante_wo_rel ante conseq
 
 (* automatic slicing of variables *)
 
@@ -8902,7 +8911,7 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
 	| Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Forall (sv, f, lbl, l) -> Forall (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
 	| Exists (sv, f, lbl, l) -> Exists (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
-		
+
 (* Slicing: Substitute vars bound by EX by fresh vars in LHS *)
 let rec elim_exists_with_fresh_vars f =
   match f with
@@ -9533,15 +9542,34 @@ let rec get_Rank pf = match pf with
   | Forall (_,f,_,_) -> get_Rank f
   | Exists (_,f,_,_) -> get_Rank f
 
-let get_rel_id (f:formula) 
-      = match f with
-        | BForm (bf,_) ->
-              (match bf with
-                | (RelForm(id,_,_),_) -> Some id
-                | _ -> None)
-        | _ -> None
+let term_id = 1
+let loop_id = 2
+let mayLoop_id = 3 
+let termErr_id = 4
 
-let get_relargs_opt (f:formula) 
+let sid_of_term_ann ann = 
+  match ann with
+  | Term -> string_of_int term_id
+  | Loop -> string_of_int loop_id
+  | MayLoop -> string_of_int mayLoop_id
+  | Fail _ -> string_of_int termErr_id
+  | TermU uid -> uid.tu_sid
+  | TermR uid -> uid.tu_sid
+
+      (* = match f with *)
+      (*   | BForm (bf,_) -> *)
+      (*         (match bf with *)
+      (*           | (RelForm(id,_,_),_) -> Some id *)
+      (*           | (XPure(_),_) -> failwith "XPure" *)
+      (*           | (LexVar li,_) -> *)
+      (*                 let la = li.lex_ann in *)
+      (*                 let id = sid_of_term_ann la in *)
+      (*                  Some (mk_spec_var id) *)
+      (*           | (VarPerm (_),_) -> failwith "VarPerm" *)
+      (*           | _ -> None) *)
+      (*   | _ -> None *)
+
+let get_relargs_opt (f:formula)
       = match f with
         | BForm (bf,_) ->
               (match bf with
@@ -9572,8 +9600,23 @@ let get_rel_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (RelForm(id,_,_),_) -> [id]
+    | (XPure(_),_) -> failwith "XPure"
+    | (LexVar li,_) ->
+          let la = li.lex_ann in
+          let id = sid_of_term_ann la in
+          [mk_spec_var id]
+    | (VarPerm (_),_) -> failwith "VarPerm"
     | _ -> [])
   | _ -> []
+
+let get_rel_id (f:formula)
+      = let lst = get_rel_id_list f in
+      match lst with
+        | [] -> None
+        | id::_ -> Some id
+
+let get_rel_id (f:formula) =
+      Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f 
 
 let mk_varperm_p typ ls pos =
   if (ls==[]) then (mkTrue_p pos)
@@ -9691,10 +9734,20 @@ let get_rel_args (f:formula) = match f with
     | _ -> [])
   | _ -> []
 
-let is_rel_in_vars (vl:spec_var list) (f:formula) 
-      = match (get_rel_id f) with
-        | Some n -> if mem n vl then true else false
-        | _ -> false
+let is_rel_in_vars (vl:spec_var list) (f:formula) =
+  (* let _ = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
+  match (get_rel_id f) with
+    | Some n ->
+          if mem n vl then true else false
+    | _ ->
+          (* let _ = Debug.binfo_pprint "2None" no_pos in *)
+          false
+
+let is_rel_in_vars (vl:spec_var list) (f:formula) =
+  let pr_svl = !print_svl in
+  Debug.no_2 "is_rel_in_vars" pr_svl !print_formula string_of_bool
+      is_rel_in_vars vl f
+
 
 let is_RelForm (f:formula) = match f with
   | BForm((RelForm _,_),_) -> true
@@ -13608,10 +13661,16 @@ let is_TermU ann =
   | TermU _ -> true
   | _ -> false
 
-let term_id = 1
-let loop_id = 2
-let mayLoop_id = 3 
-let termErr_id = 4
+let is_unknown_term_ann ann =
+  match ann with
+  | TermU uid 
+  | TermR uid -> begin
+    match uid.tu_sol with
+    | None -> true
+    | _ -> false
+    end
+  | _ -> false
+
 
 let id_of_term_ann ann = 
   match ann with
@@ -13655,6 +13714,9 @@ let args_of_term_ann ann =
   | TermR uid -> uid.tu_args
   | _ -> []
 
+let fv_of_term_ann ann =
+  List.concat (List.map afv (args_of_term_ann ann))
+
 let uid_of_term_ann ann =
   match ann with
   | TermU uid
@@ -13668,3 +13730,10 @@ let mkUTPost uid =
   TermR { uid with
     tu_id = fresh_int (); 
     tu_sid = uid.tu_sid ^ "post" }
+    
+let collect_term_ann_fv_pure f =
+  let f_b b = 
+    let (p, _) = b in match p with
+    | LexVar tinfo -> Some (fv_of_term_ann tinfo.lex_ann)
+    | _ -> Some []
+  in fold_formula f (nonef, f_b, nonef) List.concat

@@ -1,0 +1,146 @@
+Starting Omega...oc
+Starting z3... 
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume y'=1+y & x'=y+x & y<0 & 0<=x & fpost_0(x',y') --> fpost_0(x,y).
+
+ termAssume y'=1+y & x'=y+x & 0<=y & 0<=x & fpost_0(x',y') --> fpost_0(x,y).
+
+ termAssume x<0 --> fpost_0(x,y).
+
+ termAssume y'=1+y & x'=y+x & y<0 & 0<=x & fpre_0(x,y) --> fpre_0(x',y').
+
+ termAssume y'=1+y & x'=y+x & 0<=y & 0<=x & fpre_0(x,y) --> fpre_0(x',y').
+
+
+Base/Rec Case Splitting:
+[	[[3] x<=(0-1)@B,[4] 0<=x@R]
+]
+Termination Inference Result:
+:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> case {
+           (0-x)<=y & y<=(0-
+           1) -> case {
+                  y<=(0-2) & 0<=(1+x+(2*
+                  y)) -> case {
+                          y<=(0-3) & 0<=(3+x+(3*
+                          y)) -> case {
+                                  y<=(0-4) & 0<=(6+x+(4*
+                                  y)) -> case {
+                                          y<=(0-5) & 0<=(10+x+(5*
+                                          y)) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                          
+                                          0<=(4+
+                                          y) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                          
+                                          x<=((0-(5*y))-11) & y<=(0-
+                                          5) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                          
+                                          }
+                                  
+                                  0<=(3+
+                                  y) -> requires emp & Loop[]
+ ensures false & false;
+                                  
+                                  x<=((0-(4*y))-7) & y<=(0-
+                                  4) -> requires emp & Term[0,5]
+ ensures emp & true;
+                                  
+                                  }
+                          
+                          0<=(2+
+                          y) -> requires emp & Loop[]
+ ensures false & false; 
+                          x<=((0-(3*y))-4) & y<=(0-
+                          3) -> requires emp & Term[0,4]
+ ensures emp & true; 
+                          }
+                  
+                  0<=(1+y) -> requires emp & Loop[]
+ ensures false & false; 
+                  x<=((0-(2*y))-2) & y<=(0-
+                  2) -> requires emp & Term[0,3]
+ ensures emp & true; 
+                  }
+           
+           x<=((0-y)-1) -> requires emp & Term[0,2]
+ ensures emp & true; 
+           0<=(x+y) & 0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  }
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume y'=1+y & x'=y+x & 0<=x & fpost_0(x',y') --> fpost_0(x,y).
+
+ termAssume x<0 --> fpost_0(x,y).
+
+ termAssume y'=1+y & x'=y+x & 0<=x & fpre_0(x,y) --> fpre_0(x',y').
+
+
+Base/Rec Case Splitting:
+[	[[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           y<=(0-
+           1) -> case {
+                  y<=(0-2) & 
+                  0<=x -> case {
+                           (0-x)<=y & y<=(0-
+                           3) -> requires emp & MayLoop[]
+ ensures emp & true;
+                           
+                           x<=((0-y)-
+                           1) -> requires emp & Term[0,3]
+ ensures emp & true;
+                           
+                           0<=(x+y) & 0<=(2+
+                           y) -> case {
+                                  y=0-2 & 
+                                  3<=x -> requires emp & MayLoop[]
+ ensures emp & true;
+                                  
+                                  x<=2 -> requires emp & MayLoop[]
+ ensures emp & true;
+                                  
+                                  }
+                           
+                           }
+                  
+                  0<=(1+
+                  y) -> case {
+                         x=0 & y=0-
+                         1 -> requires emp & Term[0,2]
+ ensures emp & true; 
+                         y=0-1 & 
+                         1<=x -> requires emp & Loop[]
+ ensures false & false;
+                         
+                         }
+                  
+                  }
+           
+           }
+  
+  }
+

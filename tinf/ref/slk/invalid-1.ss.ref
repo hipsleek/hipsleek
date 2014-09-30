@@ -1,0 +1,48 @@
+
+!!!Full processing file "slk/invalid-1.ss"
+Parsing file "slk/invalid-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_12_1130' & v_int_12_1182<0 & v_int_12_1182<0 & 
+v_int_12_1182+1=x' & x'=x & x<0 & fpost_0(v_int_12_1182) --> fpost_0(x).
+
+ termAssume res=v_int_12_1130' & v_int_12_1164<0 & v_int_12_1164<0 & 
+v_int_12_1164+1=x' & x'=x & 0<=x & fpost_0(v_int_12_1164) --> fpost_0(x).
+
+ termAssume res=v_int_12_1130' & 0<=v_int_12_1163 & 0<=v_int_12_1163 & 
+v_int_12_1163+1=x' & x'=x & 0<=x & fpost_0(v_int_12_1163) --> fpost_0(x).
+
+ termAssume x<0 & x'=x & v_int_12_1129'+1=x' & 
+v_int_12_1129'<0 & fpre_0(x) --> fpre_0(v_int_12_1129').
+
+ termAssume 0<=x & x'=x & v_int_12_1129'+1=x' & 
+v_int_12_1129'<0 & Term --> fpre_0(v_int_12_1129').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] true@R]
+]
+Termination Inference Result:
+f:  case {
+  0<=x -> requires emp & Term[29,x]
+ ensures emp & 0<=x; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

@@ -1,0 +1,52 @@
+Starting Omega...oc
+Starting z3... 
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x<0 --> fpost_0(x).
+
+ termAssume x'+1=x & 0<=x & fpost_0(x') --> fpost_0(x).
+
+ termAssume x'+1=x & 0<=x & fpre_0(x) --> fpre_0(x').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> requires emp & Term[0,2,0+(1*x)]
+ ensures emp & true; 
+  }
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_bool_15_874' & x'<0 & v_bool_15_874' & x=x' & 
+x'<0 --> fpost_0(x).
+
+ termAssume 0<=x' & x=x' & !(v_bool_15_874') & 0<=x' & !(v_bool_15_874') & 
+x'=1+v_int_16_907 & fpost_0(v_int_16_873') --> fpost_0(x).
+
+ termAssume x'=1+v_int_16_873' & !(v_bool_15_874') & 0<=x' & 
+!(v_bool_15_874') & x=x' & 0<=x' & fpre_0(x) --> fpre_0(v_int_16_873').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> requires emp & Term[0,2,0+(1*x)]
+ ensures emp & true; 
+  }
+

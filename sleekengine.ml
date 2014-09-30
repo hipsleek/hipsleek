@@ -2127,8 +2127,8 @@ let process_templ_solve (idl: ident list) =
   Template.collect_and_solve_templ_assumes !cprog idl
 
 (* Solving termination relation assumptions in Sleek *)  
-let process_term_infer () = 
-  begin 
+let process_term_infer () =
+  begin
     Ti.solve !should_infer_tnt true !cprog; 
     Ti.finalize ();
     should_infer_tnt := true

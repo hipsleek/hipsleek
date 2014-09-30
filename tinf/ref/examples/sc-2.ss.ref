@@ -1,0 +1,16 @@
+
+!!!Full processing file "examples/sc-2.ss"
+Parsing file "examples/sc-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+Termination checking result: SUCCESS
+
+
+4 false contexts at: ( (24,16)  (24,9)  (24,7)  (23,14) )

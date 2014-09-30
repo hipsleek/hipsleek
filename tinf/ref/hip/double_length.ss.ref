@@ -1,0 +1,25 @@
+
+!!!Full processing file "hip/double_length.ss"
+Parsing file "hip/double_length.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (1+pv_1238)<=pv_1239]
+!!! Mutual Rec Group:[double$node~int]
+!!! Phase Numbering:[(pv_1239,1);(pv_1238,0)]
+Checking procedure double$node~int... 
+Procedure double$node~int SUCCESS.
+
+Checking procedure double$node~int... 
+Termination checking result: SUCCESS
+
+
+7 false contexts at: ( (28,4)  (30,4)  (30,43)  (30,39)  (30,27)  (30,18)  (30,11) )

@@ -1,0 +1,48 @@
+
+!!!Full processing file "examples/fact.ss"
+Parsing file "examples/fact.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 1<=v_int_9_1189 & v_int_9_1185+1=x' & !(v_bool_8_1133') & 
+x'!=0 & !(v_bool_8_1133') & x'=x & x'!=0 & v_int_9_1132'=v_int_9_1189+1 & 
+res=v_int_9_1132' & factpost_1125(v_int_9_1185) --> factpost_1125(x).
+
+ termAssume x'=0 & x'=x & v_bool_8_1133' & x'=x' & v_bool_8_1133' & 
+v_int_8_1127'=1 & res=v_int_8_1127' --> factpost_1125(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_8_1133') & x'!=0 & !(v_bool_8_1133') & 
+v_int_9_1131'=1 & v_int_9_1129'+
+1=x' & factpre_0(x) --> factpre_0(v_int_9_1129').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29,1]
+ ensures emp & 1<=res; 
+  1<=x -> requires emp & Term[29,2,-1+(1*x)]
+ ensures emp & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+Stop Omega... 21 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.036223,231)
+Total verification time: 0.340066 second(s)
+	Time spent in main process: 0.29589 second(s)
+	Time spent in child processes: 0.044176 second(s)
+
