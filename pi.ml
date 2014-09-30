@@ -20,45 +20,72 @@ module M = Lexer.Make(Token.Token)
 module H = Hashtbl
 module LO2 = Label_only.Lab2_List
 
-let rec add_post_relation prog proc sf rel_name rel_type = match sf with
+let rec add_post_relation_formula f rel =
+  match f with
+    | CF.Base b ->
+          let h,p,fl,t,a = CF.split_components f in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
+          CF.mkBase h new_p t fl a no_pos
+    | CF.Or o ->
+          let f1 = add_post_relation_formula o.CF.formula_or_f1 rel in
+          let f2 = add_post_relation_formula o.CF.formula_or_f2 rel in
+          CF.Or { o with
+              formula_or_f1 = f1;
+              formula_or_f2 = f2 }
+    | CF.Exists e ->
+          let h,p,fl,t,a = CF.split_components f in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
+          CF.mkExists e.CF.formula_exists_qvars h new_p t fl a no_pos
+
+let add_post_relation f rel =
+  let pr = Cprinter.string_of_formula in
+  Debug.no_1 "add_post_relation_formula" pr pr (fun _ -> add_post_relation_formula f rel) f
+
+let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf with
   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
-        (lbl,add_post_relation prog proc sf rel_name rel_type)) el)
+        (lbl,add_post_relation prog proc sf rel_name rel_type rel_vars)) el)
   | CF.EBase eb ->
         let cont = eb.CF.formula_struc_continuation in (
             match cont with
               | None -> sf
-              | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (add_post_relation prog proc cont rel_name rel_type)} )
+              | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (add_post_relation prog proc cont rel_name rel_type rel_vars)} )
   | CF.EAssume ea ->
-        let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in
+        (* let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in *)
         let rel_formula = CP.mkTrue no_pos in
         let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
         let _ = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
         let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
-        let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in
+        (* let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
+        let rel_args = List.map (fun sv -> match sv with
+          | CP.SpecVar (_,id,_) -> CP.mkVar (CP.mk_spec_var id) no_pos) rel_vars in
         let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
         let old_f = ea.CF.formula_assume_simpl in
-        let h,p,fl,t,a = CF.split_components old_f in
-        let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) new_rel no_pos) in
-        let new_f = CF.mkBase h new_p t fl a no_pos in
+        let new_f = add_post_relation_formula old_f new_rel in
         let new_struc_f = CF.mkEBase new_f None no_pos in
         CF.EAssume {ea with
             CF.formula_assume_simpl = new_f;
             CF.formula_assume_struc = new_struc_f}
   | CF.EInfer ei ->
         let rel_name = fresh_any_name "post" in
-        let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in
+        let fvs = CF.struc_all_vars sf in
+        let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
+        let rel_vars = List.filter (fun sv -> match sv with
+          | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name]) in
+        let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
+        let rel_type = RelT (List.map (fun sv -> match sv with
+          | CP.SpecVar (t,_,_) -> t) rel_vars) in
         CF.EInfer {ei with
             CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]);
-            CF.formula_inf_continuation = add_post_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type}
+            CF.formula_inf_continuation = add_post_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars}
   | CF.ECase ec -> CF.ECase { ec with
         CF.formula_case_branches = List.map (fun (pf,sf) ->
-            (pf,add_post_relation prog proc sf rel_name rel_type)
+            (pf,add_post_relation prog proc sf rel_name rel_type rel_vars)
         ) ec.CF.formula_case_branches
     }
 
-let add_post_relation prog proc sf rel_name rel_type =
+let add_post_relation prog proc sf =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_post_relation" pr pr (fun _ -> add_post_relation prog proc sf rel_name rel_type) sf
+  Debug.no_1 "add_post_relation" pr pr (fun _ -> add_post_relation prog proc sf "" UNK []) sf
 
 let rec is_need_to_add_rel sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
@@ -108,7 +135,7 @@ let add_post_relation_scc prog scc =
   let _ = List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
       let _ = if is_need_to_add_rel spec then
-        let new_spec = add_post_relation prog proc spec "" UNK in
+        let new_spec = add_post_relation prog proc spec in
         proc.proc_stk_of_static_specs # push new_spec
       in ()
   ) scc in

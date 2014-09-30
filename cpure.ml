@@ -2507,7 +2507,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       (* Pushing each ex v to the innermost location *)
       let fvs = fv f in
       let vs = List.filter (fun v -> mem v fvs) vs in
-      let fl = split_conjunctions f in 
+      let fl = split_conjunctions f in
       let f_with_fv = List.map (fun f -> (fv f, f)) fl in
       let push_v v f_with_fv =
         let rel_f, nonrel_f = List.partition (fun (fvs, f) -> mem v fvs) f_with_fv in
