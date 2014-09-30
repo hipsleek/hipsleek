@@ -1,0 +1,45 @@
+Starting Omega...oc
+K is defined.
+G2 is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [p::node<_,p2> * G2(p2,y)&true --> G2(p,y)&true(3,4)]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G2(p,y)&true(3,4)]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G2(p,y)&true(3,4)]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> G2(p,y)&true(3,4)]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 22
+SAT % Hit   : 77.27%
+IMPLY Count : 7
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.001067 (seconds)
+
+!!! log(small):(0.023159,43)
+Total verification time: 0.071608 second(s)
+	Time spent in main process: 0.058001 second(s)
+	Time spent in child processes: 0.013607 second(s)
+

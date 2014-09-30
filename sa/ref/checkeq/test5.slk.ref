@@ -1,0 +1,22 @@
+Starting Omega...oc
+ll is defined.
+
+!!!Final MTL: [[(flted_7_18, flted_7_26), (a, u_27), (x, x)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(flted_10_34, flted_10_42), (a, u_43)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(flted_14_50, flted_14_58), (t, t), (x, y)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(flted_18_65, flted_18_73), (t, t)]]
+Checkeq (4) : Valid.
+!!!Final MTL: [[(flted_22_80, flted_22_96), (z, y), (flted_22_81, flted_22_95), (t, t)]]
+Checkeq (5) : Valid.
+Checkeq (6) : Fail.
+
+Checkeq (7) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.061941 second(s)
+	Time spent in main process: 0.047785 second(s)
+	Time spent in child processes: 0.014156 second(s)
+

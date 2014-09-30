@@ -64,6 +64,7 @@ and struc_base_formula =
 		 formula_struc_implicit_inst : (ident * primed) list;
 		 formula_struc_exists :  (ident * primed) list;
 		 formula_struc_base : formula;
+                 formula_struc_is_requires: bool;
 		 formula_struc_continuation : struc_formula option ;
 		 formula_struc_pos : loc
 	}
@@ -339,6 +340,7 @@ and mkETrueTrue flow flow2 pos = EBase {
 		 formula_struc_implicit_inst = [];
 		 formula_struc_exists = [];
 		 formula_struc_base = mkTrue flow pos;
+                 formula_struc_is_requires = true;
 		 formula_struc_continuation = Some (mkTrivAssume flow2 pos) ;
 		 formula_struc_pos = pos	}
 
@@ -348,25 +350,27 @@ and mkEAssume simp struc lbl ens = EAssume{
 		formula_assume_lbl = lbl;
 		formula_assume_ensures_type = ens;
 	}
-		 
+
 and mkETrue flow pos = EBase {
-		 formula_struc_explicit_inst = [];
-		 formula_struc_implicit_inst = [];
-		 formula_struc_exists = [];
-		 formula_struc_base = mkTrue flow pos;
-		 formula_struc_continuation = None;
-		 formula_struc_pos = pos	}
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkTrue flow pos;
+    formula_struc_is_requires = false;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos	}
 
 and mkEFalse flow pos = EBase {
-		 formula_struc_explicit_inst = [];
-		 formula_struc_implicit_inst = [];
-		 formula_struc_exists = [];
-		 formula_struc_base = mkFalse flow pos;
-		 formula_struc_continuation = None;
-		 formula_struc_pos = pos	}
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkFalse flow pos;
+    formula_struc_is_requires = false;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos	}
 
-and mkEFalseF () = mkEFalse false_flow no_pos			
-and mkETrueF () = mkETrue n_flow no_pos			
+and mkEFalseF () = mkEFalse false_flow no_pos
+and mkETrueF () = mkETrue n_flow no_pos
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
 
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
@@ -376,12 +380,13 @@ and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
   else EOr { formula_struc_or_f1 = f1; formula_struc_or_f2 = f2; formula_struc_or_pos = pos}*)
 
 and mkEBase ei ii e b (c:struc_formula option) l= EBase {
-						 	formula_struc_explicit_inst = ei;
-						 	formula_struc_implicit_inst = ii;
-							formula_struc_exists = e;
-						 	formula_struc_base = b;				
-						 	formula_struc_continuation = c;
-						 	formula_struc_pos = l;}
+    formula_struc_explicit_inst = ei;
+    formula_struc_implicit_inst = ii;
+    formula_struc_exists = e;
+    formula_struc_base = b;
+    formula_struc_is_requires = c!=None;
+    formula_struc_continuation = c;
+    formula_struc_pos = l;}
   
 and mkOr f1 f2 pos =
   let raw =  Or { formula_or_f1 = f1;
@@ -879,6 +884,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 	  formula_struc_implicit_inst = [];
 	  formula_struc_exists = [];
 	  formula_struc_base = f;
+          formula_struc_is_requires = false;
 	  formula_struc_continuation = None;
 	  formula_struc_pos = b.formula_base_pos}
     | Exists b-> EBase {
@@ -886,6 +892,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 	  formula_struc_implicit_inst = [];
 	  formula_struc_exists = [];
 	  formula_struc_base = f;
+          formula_struc_is_requires = false;
 	  formula_struc_continuation = None;
 	  formula_struc_pos = b.formula_exists_pos}
     | Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
@@ -1330,7 +1337,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			formula_assume_simpl = subst sst b.formula_assume_simpl; 
 			formula_assume_struc = subst_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase { b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1352,7 +1359,7 @@ and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_form
 			formula_assume_simpl = subst_all sst b.formula_assume_simpl; 
 			formula_assume_struc = subst_all_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase { b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1381,17 +1388,17 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
 	| EBase b->
         (*Preconditions do not contain primed notations*)
         let uvars = List.map (fun (v,_) -> (v,Unprimed)) vars in
-        EBase {
-			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
-			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
-			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
-			  formula_struc_base = subst_pointer sst b.formula_struc_base (uvars);
-			  formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
-			  formula_struc_pos = b.formula_struc_pos}
-  | EInfer b -> EInfer {b with
-      formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
-      formula_inf_continuation = helper b.formula_inf_continuation;}
-  | EList b -> EList (Gen.map_l_snd (helper) b)
+        EBase { b with
+	    formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
+	    formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
+	    formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
+	    formula_struc_base = subst_pointer sst b.formula_struc_base (uvars);
+	    formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
+	    formula_struc_pos = b.formula_struc_pos}
+        | EInfer b -> EInfer {b with
+              formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
+              formula_inf_continuation = helper b.formula_inf_continuation;}
+        | EList b -> EList (Gen.map_l_snd (helper) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
 
@@ -1643,7 +1650,7 @@ and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:st
 		formula_case_branches = 
 			List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_w_data_name_struc sst c2)))
 				b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase {b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1905,7 +1912,7 @@ and float_out_exps_from_heap_struc lbl_getter annot_getter (f:struc_formula):str
 			formula_assume_simpl = float_out_exps_from_heap 8 lbl_getter annot_getter b.formula_assume_simpl; 
 			formula_assume_struc = float_out_exps_from_heap_struc lbl_getter annot_getter b.formula_assume_struc;}
     | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter annot_getter x) b.formula_case_branches}
-    | EBase b -> EBase {
+    | EBase b -> EBase { b with
 				 formula_struc_explicit_inst = b.formula_struc_explicit_inst;
 				 formula_struc_implicit_inst = b.formula_struc_implicit_inst;
 				 formula_struc_exists = b.formula_struc_exists ;

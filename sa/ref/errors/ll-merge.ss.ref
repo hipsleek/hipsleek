@@ -1,0 +1,101 @@
+
+!!!Full processing file "errors/ll-merge.ss"
+Parsing file "errors/ll-merge.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_12
+!!! generate unknown predicate for Post synthesis of : :GP_13
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! generate unknown predicate for Pre synthesis of f_r_1206_while_11_2$node~node~node: :HP_1207
+!!! generate unknown predicate for Post synthesis of f_r_1206_while_11_2$node~node~node: :GP_1210
+!!! SCall neqs:[(tmp_41,x),(tmp_41,y)]
+!!! neqs:[(tmp_41,x),(tmp_41,y)]
+Checking procedure f_r_1206_while_11_2$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1207,GP_1210]requires HP_1207(x,y)&
+true
+ ensures GP_1210(x,x',y,y')&true{,(3,4)=__norm};
+Proving binding in method f_r_1206_while_11_2$node~node~node for spec  EAssume ref [tmp_41;x;y]
+   GP(x,x',y,y')&{FLOW,(3,4)=__norm}[]
+   , Line 11
+
+( [(,0 ); (,1 ); (,1 )]) bind: node  tmp_41'::node<val_15_1226',next_15_1227'> cannot be derived from context
+errors/ll-merge.ss_15:10_15:18
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-merge.ss_15:10_15:18
+
+Context of Verification Failure: 1 File "errors/ll-merge.ss",Line:11,Col:2
+Last Proving Location: 1 File "errors/ll-merge.ss",Line:15,Col:10
+
+Procedure f_r_1206_while_11_2$node~node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure f_r_1206_while_11_2$node~node~node
+
+!!! proc.proc_name:f_r_1206_while_11_2$node~node~node
+Checking procedure merge$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_12,GP_13]requires HP_12(x,y)&true
+ ensures GP_13(x,y,res)&
+true{,(3,4)=__norm};
+Proving binding in method merge$node~node for spec  EAssume 
+   GP1(x,y,res)&{FLOW,(3,4)=__norm}[]
+   , Line 6
+
+( [(,0 ); (,1 )]) bind: node  tmp_41'::node<val_28_1240',next_28_1241'> cannot be derived from context
+errors/ll-merge.ss_28:4_28:12
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-merge.ss_28:4_28:12
+
+Context of Verification Failure: 1 File "errors/ll-merge.ss",Line:6,Col:0
+Last Proving Location: 1 File "errors/ll-merge.ss",Line:28,Col:4
+
+Procedure merge$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure merge$node~node
+
+!!! proc.proc_name:merge$node~nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.067348,347)
+Total verification time: 0.392237 second(s)
+	Time spent in main process: 0.378716 second(s)
+	Time spent in child processes: 0.013521 second(s)
+

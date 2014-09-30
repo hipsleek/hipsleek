@@ -1,0 +1,11 @@
+
+!!!Full processing file "norm/pure-extn.ss"
+Parsing file "norm/pure-extn.ss" by default parser...
+File "norm/pure-extn.ss", line 3, characters 6-10
+ --error: Stream.Error("SEMICOLON then CBRACE expected after [field_list2] (in [data_body])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("SEMICOLON then CBRACE expected after [field_list2] (in [data_body])")
+Error3(s) detected at main 

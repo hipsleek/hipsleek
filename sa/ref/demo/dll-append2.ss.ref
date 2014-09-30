@@ -1,0 +1,87 @@
+
+!!!Full processing file "demo/dll-append2.ss"
+Parsing file "demo/dll-append2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=tl | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=tl)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(l2,l1)]
+Checking procedure append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G]requires H1(l1) * H2(l2)&true
+ ensures G(l1)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;1;0)H2(l2)&l2!=null --> l2::node<next1,prev1> * HP_1300(next1) * 
+HP_1301(prev1)&
+true(3,4),
+ // BIND
+(2;0)H1(l1)&l1!=null --> l1::node<next2,prev2> * HP_1307(next2) * 
+HP_1308(prev2)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1307(next2)&true --> H1(next2)&
+true(3,4),
+ // PRE_REC
+(2;0)H2(l2)&true --> H2(l2)&
+true(3,4),
+ // POST
+(1;1;0)H1(l1)&l1=null --> G(l1)&
+true(3,4),
+ // POST
+(2;1;0)H1(l1) * H2(l2)&l2=null & l1=null --> G(l1)&
+true(3,4),
+ // POST
+(2;0)l1::node<next2,prev2> * G(next2) * HP_1308(prev2)&true --> G(l1)&
+true(3,4)]
+
+Procedure append$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(l) ::=  [emp&l=null; l::node<next3,DP> * H1(next3)],
+ H2(l1) ::=  [emp&l1=null; (htrue)/&\l1::node<DP2,DP1>; htrue; htrue&l1!=null],
+ G(l2) ::=  [emp&l2=null; l2::node<next,DP> * G(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l) ::= 
+ l::node<next3,DP> * H1(next3)
+ or emp&l=null
+ (3,4),
+ H2(l1) ::= emp(3,4),
+ G(l2) ::= 
+ l2::node<next,DP> * G(next)
+ or emp&l2=null
+ (3,4)]
+*************************************
+Stop Omega... 16 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.069295,344)
+Total verification time: 0.383083 second(s)
+	Time spent in main process: 0.344533 second(s)
+	Time spent in child processes: 0.03855 second(s)
+

@@ -1,0 +1,41 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])WARNING : the view body for zip contains unsat branch(es) :
+    (* lbl: *){2}->(exists y1,_,_,q,p: self::node<_,p> * y::node<_,q> * 
+p::zip{}<y1>&y1=y&{FLOW,(1,25)=__flow})[]
+
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [x::zip<y>&true --> P1(x)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_61(y2)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [P1(x)&true --> x::zip<y2> * HP_61(y2)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 13 invocations 
+SAT Count   : 74
+SAT % Hit   : 77.02%
+IMPLY Count : 6
+IMPLY % Hit : 66.66%
+Time(cache overhead) : 0.004105 (seconds)
+
+!!! log(small):(0.033015,95)
+Total verification time: 0.092557 second(s)
+	Time spent in main process: 0.065527 second(s)
+	Time spent in child processes: 0.02703 second(s)
+

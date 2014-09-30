@@ -1,4 +1,5 @@
 open Gen
+
 let no_pos = Globals.no_pos
 let report_error = Gen.report_error
 

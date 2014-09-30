@@ -1,0 +1,32 @@
+
+!!!Full processing file "demo/swl-i.ss"
+Parsing file "demo/swl-i.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=g & self!=s) | (self!=g & self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&g!=s&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((g<self & s<self) | ((s+1)<=self & self<g) | (g<self & self<s) | (self<=(g-
+1) & self<=(s-1)))),
+([], self=g & self!=s)])
+!!! formula1: emp&((self=null & self!=s) | (self!=s & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self!=s & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], self=null & self!=s)])
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS.
+Stop Omega... 48 invocations 
+0 false contexts at: ()
+
+!!! log(small):(3.103244,1636)
+Total verification time: 1.858846 second(s)
+	Time spent in main process: 1.78973 second(s)
+	Time spent in child processes: 0.069116 second(s)
+

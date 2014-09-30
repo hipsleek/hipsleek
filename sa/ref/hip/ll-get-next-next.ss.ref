@@ -1,0 +1,55 @@
+
+!!!Full processing file "hip/ll-get-next-next.ss"
+Parsing file "hip/ll-get-next-next.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_next_next$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x',res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x)&true --> x::node<val2,next2> * HP_1229(next2)&
+true(3,4),
+ // BIND
+(0)HP_1229(next2)&true --> next2::node<val1,next1> * HP_1236(next1)&
+true(3,4),
+ // POST
+(0)HP_1236(res) * x'::node<val2,next2> * next2::node<val1,v1>&
+v1=null --> G1(x',res)&
+true(3,4)]
+
+Procedure get_next_next$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [x1::node<val,next> * next::node<val1,DP>],
+ G1(x2,res1) ::=  [x2::node<val,next> * next::node<val1,v>&v=null & res1=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= x1::node<val,next> * next::node<val1,DP>(3,4),
+ G1(x2,res1) ::= x2::node<val,next> * next::node<val1,v>&v=null & res1=DP(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.03572,221)
+Total verification time: 0.307111 second(s)
+	Time spent in main process: 0.293906 second(s)
+	Time spent in child processes: 0.013205 second(s)
+

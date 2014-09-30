@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "checkeq/test2c.slk", line 1, characters 0-8
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.051624 second(s)
+	Time spent in main process: 0.037391 second(s)
+	Time spent in child processes: 0.014233 second(s)
+

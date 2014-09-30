@@ -1,0 +1,26 @@
+//1
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires true & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> //requires true & flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires x>2 & flow __MayError
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+

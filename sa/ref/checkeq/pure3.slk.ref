@@ -1,0 +1,27 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(x, y)]]
+Checkeq (1) : Valid.
+Checkeq (2) : Fail.
+
+Checkeq (3) : Fail.
+
+Checkeq (4) : Fail.
+
+Checkeq (5) : Fail.
+
+!!!Final MTL: [[(y, z), (x, y)], [(y, y), (x, z)]]
+Checkeq (6) : Valid.
+!!!Final MTL: [[]]
+Checkeq (7) : Valid.
+Checkeq (8) : Fail.
+
+Checkeq (9) : Fail.
+
+Checkeq (10) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.057918 second(s)
+	Time spent in main process: 0.043569 second(s)
+	Time spent in child processes: 0.014349 second(s)
+

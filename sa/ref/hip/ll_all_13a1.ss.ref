@@ -1,0 +1,72 @@
+
+!!!Full processing file "hip/ll_all_13a1.ss"
+Parsing file "hip/ll_all_13a1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure delete_mid$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G2]requires H1(x)&true
+ ensures G2(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(x)&x!=null --> x::node<v3,q2> * HP_1279(q2)&
+true(3,4),
+ // BIND
+(2;0)H1(x)&x!=null --> x::node<v1,q1> * HP_1282(q1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1282(q1)&true --> H1(q1)&
+true(3,4),
+ // POST
+(1;0)H1(res)&res=null & res=null --> G2(x,res)&
+true(3,4),
+ // POST
+(1;2;0)x::node<v3,res> * HP_1279(res)&true --> G2(x,res)&
+true(3,4),
+ // POST
+(2;2;0)res::node<v1,v2> * G2(q1,v2) * x::node<v1,q1>&true --> G2(x,res)&
+true(3,4)]
+
+Procedure delete_mid$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+Context of Verification Failure: 1 File "hip/ll_all_13a1.ss",Line:35,Col:9
+Last Proving Location: 1 File "hip/ll_all_13a1.ss",Line:92,Col:28
+
+ERROR: at _0:0_0:0 
+Message: SA.infer_shapes_init_pre: HEAP CONJS do not SAT
+ 
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[]
+*************************************
+Stop Omega... 16 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.062068,314)
+Total verification time: 0.354841 second(s)
+	Time spent in main process: 0.332709 second(s)
+	Time spent in child processes: 0.022132 second(s)
+

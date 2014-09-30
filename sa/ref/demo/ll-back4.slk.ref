@@ -1,0 +1,29 @@
+Starting Omega...oc
+HP4 is defined.
+G2 is defined.
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]Starting z3... 
+
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+
+*************************************
+*******relational definition ********
+*************************************
+[ G2(x) ::= 
+ x::node<n> * n::G1<>
+ or emp&x=null
+ (3,4),
+ HP4(x1) ::= emp&x1=null(3,4)]
+*************************************
+Stop Omega... 3 invocations 
+SAT Count   : 16
+SAT % Hit   : 75.%
+Time(cache overhead) : 0.000439 (seconds)
+
+!!! log(small):(0.006482,18)
+Total verification time: 0.062017 second(s)
+	Time spent in main process: 0.047558 second(s)
+	Time spent in child processes: 0.014459 second(s)
+

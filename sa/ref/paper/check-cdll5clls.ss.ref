@@ -1,0 +1,165 @@
+
+!!!Full processing file "paper/check-cdll5clls.ss"
+Parsing file "paper/check-cdll5clls.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])
+!!! neqs:[]
+Checking procedure check_csll$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(l,p)&true
+ ensures G1(l,p)&res{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(l,p)&l!=p --> l::node<val1,next1> * HP_1496(next1,p@NI) * 
+HP_1497(p,l@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1496(next1,p@NI) * HP_1497(p,l@NI)&l!=p --> H1(next1,p)&
+true(3,4),
+ // POST
+(1;0)H1(l,l)&true --> G1(l,p)&
+true(3,4),
+ // POST
+(2;0)l::node<val1,next1> * G1(next1,p)&l!=p --> G1(l,p)&
+true(3,4)]
+
+Procedure check_csll$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(l1,p1) ::=  [emp&p1=l1; l1::node<val2,next2> * H1(next2,p1)&l1!=p1],
+ G1(l2,p2) ::=  [emp&p2=l2; l2::node<val,next> * G1(next,p2)&l2!=p2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l1,p1) ::= 
+ l1::node<val2,next2> * H1(next2,p1)&l1!=p1
+ or emp&p1=l1
+ (3,4),
+ G1(l2,p2) ::= 
+ l2::node<val,next> * G1(next,p2)&l2!=p2
+ or emp&p2=l2
+ (3,4)]
+*************************************
+
+!!! formula1: emp&((self!=p1 & self!=null) | p1=self)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], p_1551=self),
+([self], (p_1551<self | self<p_1551))])
+!!! formula1: emp&((self!=p2 & self!=null) | p2=self)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], p_1553=self),
+([self], (p_1553<self | self<p_1553))])
+Checking procedure check_cdll_out1$node1~node1~node1... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2,G2]requires H2(l,prv@NI,p@NI)&true
+ ensures G2(l,prv@NI,p@NI)&
+res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ forall(prev_51_1671:forall(prv:((l!=1 | 1<=p | prev_51_1671<=prv)) & 
+((l!=1 | 1<=p | prv<=prev_51_1671)) & ((l!=1 | prev_51_1671<=prv | p<=1)) & 
+((l!=1 | prv<=prev_51_1671 | p<=1))))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(l,prv@NI,p@NI)&l!=p --> l::node1<dd5,dd1,dd2,dd3,dd4,prev1,next3> * 
+HP_1673(dd5,prv@NI,p@NI) * HP_1674(dd1,prv@NI,p@NI) * 
+HP_1675(dd2,prv@NI,p@NI) * HP_1676(dd3,prv@NI,p@NI) * 
+HP_1677(dd4,prv@NI,p@NI) * HP_1678(prev1,prv@NI,p@NI) * 
+HP_1679(next3,prv@NI,p@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1679(next3,prv@NI,p@NI)&
+l!=p |#| l::node1<dd5,dd1,dd2,dd3,dd4,prev1,next3>&
+true --> H2(next3,l@NI,p@NI)&
+true(3,4),
+ // PRE
+(2;0)HP_1673(dd5,prev1@NI,p@NI)&true --> dd5::H1<dd5>&
+true(3,4),
+ // PRE
+(2;0)HP_1674(dd1,prev1@NI,p@NI)&true --> dd1::H1<dd1>&
+true(3,4),
+ // PRE
+(2;0)HP_1675(dd2,prev1@NI,p@NI)&true --> dd2::H1<dd2>&
+true(3,4),
+ // PRE
+(2;0)HP_1676(dd3,prev1@NI,p@NI)&true --> dd3::H1<dd3>&
+true(3,4),
+ // PRE
+(2;0)HP_1677(dd4,prev1@NI,p@NI)&true --> dd4::H1<dd4>&
+true(3,4),
+ // POST
+(1;0)H2(l,prv@NI,l@NI)&true --> G2(l,prv@NI,p@NI)&
+true(3,4),
+ // POST
+(2;0)G2(next3,l@NI,p@NI) * l::node1<dd5,dd1,dd2,dd3,dd4,prev1,next3> * 
+HP_1678(prev1,prev1@NI,p@NI) * dd5::G1<dd5> * dd1::G1<dd1> * dd2::G1<dd2> * 
+dd3::G1<dd3> * dd4::G1<dd4>&l!=p --> G2(l,prev1@NI,p@NI)&
+true(3,4)]
+
+Procedure check_cdll_out1$node1~node1~node1 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H2(l3,prv1,p3) ::=  [emp&p3=l3; l3::node1<dd10,dd9,dd8,dd7,dd6,prev2,next4> * dd10::H1<dd10> * 
+dd9::H1<dd9> * dd8::H1<dd8> * dd7::H1<dd7> * dd6::H1<dd6> * H2(next4,l3,p3)&
+l3!=p3 & prv1=prev2],
+ G2(l4,prv2,p4) ::=  [emp&p4=l4; l4::node1<dd,dd1,dd2,dd3,dd4,prv2,next3> * dd::G1<dd> * 
+dd1::G1<dd1> * dd2::G1<dd2> * dd3::G1<dd3> * dd4::G1<dd4> * G2(next3,l4,p4)&
+l4!=p4]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H2(l3,prv1,p3) ::= 
+ l3::node1<dd10,dd9,dd8,dd7,dd6,prev2,next4> * dd10::H1<dd10> * 
+ dd9::H1<dd9> * dd8::H1<dd8> * dd7::H1<dd7> * dd6::H1<dd6> * H2(next4,l3,p3)&
+ l3!=p3 & prv1=prev2
+ or emp&p3=l3
+ (3,4),
+ G2(l4,prv2,p4) ::= 
+ l4::node1<dd,dd1,dd2,dd3,dd4,prv2,next3> * dd::G1<dd> * dd1::G1<dd1> * 
+ dd2::G1<dd2> * dd3::G1<dd3> * dd4::G1<dd4> * G2(next3,l4,p4)&l4!=p4
+ or emp&p4=l4
+ (3,4)]
+*************************************
+Stop Omega... 161 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.961264,3276)
+Total verification time: 2.26534 second(s)
+	Time spent in main process: 2.180415 second(s)
+	Time spent in child processes: 0.084925 second(s)
+

@@ -1,0 +1,29 @@
+
+!!!Full processing file "demo/swl.ss"
+Parsing file "demo/swl.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=p & M={}) | (exists(M2:M=union(M2,{self})) & self=p & 
+self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&M={}&{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(M2,{self})")
+ Formula: exists(M2:M=union(M2,{self})) & exists(p_24:p_24=p) & self=p
+
+!!! baga_over(unfolded):Some([([self], self=p & exists(p_24:p_24=p) & exists(M2:M=union(M2,{self}))),
+([], self=p & M={})])
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS.
+
+Termination checking result: SUCCESS
+
+Stop Omega... 2 invocations 
+17 false contexts at: ( (31,2)  (26,2)  (29,13)  (29,6)  (28,12)  (28,6)  (26,19)  (26,6)  (25,2)  (25,23)  (25,6)  (24,8)  (24,2)  (23,9)  (23,2)  (21,2)  (19,6) )
+
+!!! log(small):(0.045229,242)
+Total verification time: 0.366798 second(s)
+	Time spent in main process: 0.351323 second(s)
+	Time spent in child processes: 0.015475 second(s)
+

@@ -1,0 +1,43 @@
+Starting Omega...oc
+H is defined.
+HP is defined.
+G is defined.
+H is defined.
+H is already defined.
+H1 is defined.
+H1b is defined.
+G is defined.
+G is already defined.
+G2 is defined.
+HP_537 is defined.
+HP_615 is defined.
+HP_619 is defined.
+HP_619 is defined.
+HP_619 is already defined.
+HP_612 is defined.
+HP_580 is defined.
+HP1 is defined.
+H2 is defined.
+H1a is defined.
+H1 is defined.
+H1 is already defined.
+G3 is defined.
+G1 is defined.
+G2 is defined.
+G2 is already defined.
+
+!!!Final MTL: [[(y, y), (HP_615, HP_619), (y_618, y_622), (val_57_613, val_57_617), (y_614, y_618)]]
+Checkeq (1) : Valid.
+Checkeq (2) : Fail.
+
+!!!Final MTL: [[(e, f), (s_77, s_82), (a, c)], [(e, c), (s_77, s_82), (a, f)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(d, d), (flted_44_88, flted_44_95), (a, a)]]
+Checkeq (4) : Valid.
+Checkeq (5) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.068414 second(s)
+	Time spent in main process: 0.055082 second(s)
+	Time spent in child processes: 0.013332 second(s)
+

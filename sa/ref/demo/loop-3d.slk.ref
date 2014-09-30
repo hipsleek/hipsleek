@@ -1,0 +1,25 @@
+Starting Omega...oc
+P is defined.
+G is defined.
+H_2 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(next) ::= emp&1<=next(3,4),
+ P(x) ::= x::node<next1>&1<=next1(3,4)]
+*************************************
+Stop Omega... 13 invocations 
+SAT Count   : 11
+SAT % Hit   : 54.54%
+IMPLY Count : 7
+IMPLY % Hit : 71.42%
+Time(cache overhead) : 0.000499 (seconds)
+
+!!! log(small):(0.021223,33)
+Total verification time: 0.066939 second(s)
+	Time spent in main process: 0.050218 second(s)
+	Time spent in child processes: 0.016721 second(s)
+

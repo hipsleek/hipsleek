@@ -8,7 +8,8 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 HeapPred H1(node x).
-  
+
+
 // (1)
 infer [H1] H1(p)*x::node<1, p> or H1(p)*x::node<1,q> * q::node<2,p> |- x::ll<m> .
 print residue.
@@ -33,10 +34,18 @@ print residue.
 infer [n] x::ll<n> |- x=null or x::node<_,null>.
 print residue.
 
+/*
 // (7)
 infer [n] x::ll<n> |- case {
            x=null -> [] true;
            x!=null -> [] x::node<_,q>*q::node<_,null>; }.
+print residue.
+*/
+
+// (7)
+infer [n] x::ll<n> |- case {
+           x=null -> ensures true;
+           x!=null -> ensures x::node<_,q>*q::node<_,null>; }.
 print residue.
 
 

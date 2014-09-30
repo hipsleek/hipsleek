@@ -1,0 +1,23 @@
+Starting Omega...oc
+H is defined.
+HP_6 is defined.
+HP_7 is defined.
+Starting z3... 
+
+*************************************
+*******relational assumptions (1) ********
+*************************************
+[ H(next_36_825,h) --> HP_6(next_36_825,h) * HP_7(h,rest)&h!=rest(3,4),
+ H(rest,h)&h=rest --> emp(3,4),
+ H(rest_55,h_54)&h_54!=rest_55 --> H(next_36_53,h_54) * 
+  rest_55::node<val_36_52,next_36_53>&h_54!=rest_55(3,4)]
+*************************************
+Stop Omega... 0 invocations IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 6.3e-05 (seconds)
+
+!!! log(small):(0.004577,1)
+Total verification time: 0.057043 second(s)
+	Time spent in main process: 0.04273 second(s)
+	Time spent in child processes: 0.014313 second(s)
+

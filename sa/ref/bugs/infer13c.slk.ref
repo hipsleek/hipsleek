@@ -1,0 +1,29 @@
+Starting Omega...oc
+H1 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>H1(z)&z=0 & z=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(y)&true --> emp&y=0(3,4)]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>H1(z)&z=0 & z=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(z)&true --> emp&z=0(3,4)]
+[[empty]]
+
+Stop Omega... 28 invocations 
+SAT Count   : 18
+SAT % Hit   : 55.55%
+IMPLY Count : 10
+IMPLY % Hit : 70.%
+Time(cache overhead) : 0.001157 (seconds)
+
+!!! log(small):(0.023934,58)
+Total verification time: 0.073118 second(s)
+	Time spent in main process: 0.05179 second(s)
+	Time spent in child processes: 0.021328 second(s)
+

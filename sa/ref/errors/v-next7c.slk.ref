@@ -1,0 +1,68 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>emp&x=5&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 2: Fail.(must) cause: x=0 |-  0<x. LOCS:[9] (must-bug)
+
+ <1>emp&x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 3: Fail.(may) cause: x<=6 & 0<=(x+1) |-  0<x. LOCS:[14] (may-bug)
+
+ <1>emp&x<=6 & 0<=(x+1)&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+
+Entail 4: Valid. 
+
+ <1>emp&0<x & x=5&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 5: Fail.(must) cause:must_err (__Error) LOCS: [29;0;32]
+
+ <1>emp&x<=0 & x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 6: Fail.(must) cause:empty states
+
+
+Entail 7: Fail.(may) cause:OrL[must_err (__Error) LOCS: [43;0;46],valid]
+
+ <1>
+    emp&0<x & x<=6 & 0<=(x+1)&{FLOW,(3,4)=__norm}[]
+    or emp&x<=0 & x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]
+    
+[[||OR|| ==> ]]
+
+
+Entail 8: Fail.(must) cause:must_err (__Error) LOCS: [52;0;54]
+
+ <1>emp&0<=x & x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 9: Valid. 
+
+ <1>emp&0<=x & x=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 33
+SAT % Hit   : 57.57%
+IMPLY Count : 7
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.001776 (seconds)
+
+!!! log(small):(0.012738,45)
+Total verification time: 0.076193 second(s)
+	Time spent in main process: 0.062329 second(s)
+	Time spent in child processes: 0.013864 second(s)
+
