@@ -3430,7 +3430,7 @@ let rec check_prog iprog (prog : prog_decl) =
   in
   let _ = I.set_iprog iprog in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
-   (* let _ = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
+  (* let _ = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
   (* if true (\* !Globals.check_coercions *\) then  *)
   (*   begin *)
   (*     print_string "Checking lemmas... "; *)
@@ -3438,7 +3438,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (*     check_coercion prog; *)
   (*     print_string "DONE.\n" *)
   (*   end; *)
-  
+
   ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
