@@ -1,3 +1,5 @@
+template int r(int x, int y).
+
 data node {
   int val;
   node next;
@@ -49,13 +51,17 @@ node karatsuba_mult(node x, node y)
   // y = y1*10+y2
   // A = x1*y1
   node A = karatsuba_mult(x.next, y.next);
+  
   // B = x2*y2
   node B = bigint_of(x.val * y.val);
-  // C= (x1+x2)*(y1+y2)
+  
+  // C = (x1+x2)*(y1+y2)
   node C = karatsuba_mult(add_one_digit(x.next, x.val), add_one_digit(y.next, y.val));
+  
   // K = C - A - B = x1*y2 + x2*y1
   node K = sub(C, add(A, B));
   // node K = add(mult_c(x.next, y.val, 0), mult_c(y.next, x.val, 0));
+  dprint;
   // x * y = A*100 + K*10 + B
   return add(shift_left(shift_left(A)), add(shift_left(K), B));
 }

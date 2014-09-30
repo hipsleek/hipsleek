@@ -1285,14 +1285,17 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
     elim_exist_quantifier f
   else 
     let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
-    let _ = send_cmd "rlset pasf" in
-    let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
-    let _ = send_cmd "rlset ofsf" in
+    (* pasf only works with Presburger arithmetic, which is already handled by Omega *)
+    (* let _ = send_cmd "rlset pasf" in *) 
+    (* let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in *)
+    let redlog_result = send_and_receive ("rlqe " ^ rlf) in 
+    (* let _ = print_endline ("RL: " ^ redlog_result) in *)
+    (* let _ = send_cmd "rlset ofsf" in *)
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
-    (* simpler_f *)
+    simpler_f
     (*LDK: currently temporarily do not use simpler_f*)
-    f
+    (* f *)
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)
