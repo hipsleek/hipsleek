@@ -202,15 +202,15 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
     let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
     in
-    let p = if lst_assume = [] then p
-      else
-        let rels = CP.get_RelForm p in
-        let p = CP.drop_rel_formula p in
-        let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
-        let pres = List.concat (List.map (fun (a1,a2,a3) ->
+    let p = if lst_assume = [] then CP.drop_rel_formula p (* need to recheck *)
+    else
+      let rels = CP.get_RelForm p in
+      let p = CP.drop_rel_formula p in
+      let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
+      let pres = List.concat (List.map (fun (a1,a2,a3) ->
           if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
-        let pre = CP.conj_of_list (ps@pres) no_pos in
-        pre
+      let pre = CP.conj_of_list (ps@pres) no_pos in
+      pre
     in
     CF.mkBase h (MCP.mix_of_pure p) t fl a no_pos
 
@@ -242,12 +242,12 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
     let base =
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
-      let pre = CP.conj_of_list pres no_pos in
-          let xpure_base,_,_ = Cvutil.xpure prog b.CF.formula_struc_base in
-      let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
-      if TP.is_sat_raw check_fml then
-        simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
-      else b.CF.formula_struc_base in
+        let pre = CP.conj_of_list pres no_pos in
+        let xpure_base,_,_ = Cvutil.xpure prog b.CF.formula_struc_base in
+        let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
+        if TP.is_sat_raw check_fml then
+          simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
+        else b.CF.formula_struc_base in
     (CF.EBase {b with CF.formula_struc_base = base; CF.formula_struc_continuation = r}, [])
   | CF.EAssume b ->
 	let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv b.CF.formula_assume_simpl) post_vars) in

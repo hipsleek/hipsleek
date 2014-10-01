@@ -354,7 +354,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
       let pre_vars = CP.remove_dups_svl (List.fold_left (fun pres proc ->
           pres @ (List.map (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) pres scc) in
-      let _ = DD.binfo_hprint (add_str "pre_vars" Cprinter.string_of_spec_var_list) pre_vars no_pos in
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
       try
@@ -438,10 +437,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               (rel_post,post,rel_pre,pre_new)) tuples in
           let evars = stk_evars # get_stk in
           let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              Debug.binfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              Debug.binfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              Debug.binfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              Debug.binfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              Debug.ninfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              Debug.ninfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              Debug.ninfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              Debug.ninfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
           ) tuples in
           let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
           if triples = [] then
@@ -450,8 +449,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           else
             let new_specs1 = List.map (fun proc_spec -> CF.transform_spec proc_spec (CF.list_of_posts proc_spec)) proc_specs in
             List.map (fun new_spec1 -> fst (Fixpoint.simplify_relation new_spec1
-                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)
-            ) new_specs1
+                (Some triples) pre_vars post_vars_wo_rel prog true (* inf_post_flag *) evars lst_assume)) new_specs1
         end
       with ex ->
           begin
