@@ -35,8 +35,8 @@ let rec add_relation_to_formula f rel =
     | CF.Exists e ->
           let h,p,fl,t,a = CF.split_components f in
           let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
-          CF.mkBase h new_p t fl a no_pos
-          (* CF.mkExists e.CF.formula_exists_qvars h new_p t fl a no_pos *)
+          (* CF.mkBase h new_p t fl a no_pos *)
+          CF.mkExists e.CF.formula_exists_qvars h new_p t fl a no_pos
 
 let add_relation_to_formula f rel =
   let pr = Cprinter.string_of_formula in
