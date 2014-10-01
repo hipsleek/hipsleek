@@ -26,7 +26,7 @@ relation R(int x, int y, int z).
 
 int length(node x)
   infer [R] requires x::ll<n> 
-  ensures x::ll<m> & R(n,m,res)  ;
+  ensures x::ll<m> & R(n,m,res) & n>=0  ;
 {    
   if (x==null) return 0;
   else return 1+length(x.next);

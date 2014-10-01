@@ -1,0 +1,41 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+relation post1(int x, int y, int z).
+
+infer [post1] (exists v_int_30_1184': x'::node<Anon_1224,q_1225> * q_1225::ll<m_1205>&
+flted_14_1223+1=n & x'!=null & x'=x & !(v_bool_29_1187') & x'!=null & 
+!(v_bool_29_1187') & n_1228=flted_14_1223 & 0<=flted_14_1223 & 0<=n_1228 & 
+post1(m_1205,n_1228,v_int_30_1184') & v_int_30_1186'=v_int_30_1184'+1 & 
+res=v_int_30_1186')
+ |-  x::ll<mm>&0<=n & post1(mm,n,res). 
+print residue.
+
+/*
+
+id: 17; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1206]; c_heap: emp
+ checkentail (exists v_int_30_1184': x'::node<Anon_1224,q_1225> * q_1225::ll{}<m_1205>&
+flted_14_1223+1=n & x'!=null & x'=x & !(v_bool_29_1187') & x'!=null & 
+!(v_bool_29_1187') & n_1228=flted_14_1223 & 0<=flted_14_1223 & 0<=n_1228 & 
+post_1206(m_1205,n_1228,v_int_30_1184') & v_int_30_1186'=v_int_30_1184'+1 & 
+res=v_int_30_1186'&{FLOW,(24,25)=__norm})[]
+ |-  x::ll{}<m_1205>&0<=n & post_1206(m_1205,n,res)&{FLOW,(24,25)=__norm}[]. 
+pure rel_ass: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+res:  1[
+   hfalse&false&{FLOW,(24,25)=__norm}[]
+   es_infer_vars/rel/templ: [post_1206]
+   es_infer_rel: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+   ]
+
+
+ <1>emp&1+flted_14_1223=n & x'!=null & x'=x & !(v_bool_29_1187') & x'!=null & !(v_bool_29_1187') & n_1228=flted_14_1223 & 0<=flted_14_1223 & 0<=n_1228 & post1(m_1205,n_1228,v_int_30_36) & v_int_30_1186'=1+v_int_30_36 & res=v_int_30_1186' & Anon_67=Anon_1224 & q_68=q_1225 & m_1205+1=mm&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELDEFN post1: ( post1(m_1205,n_1228,v_int_30_36) & 0<=m_1205 & res=v_int_30_36+1 & n_1228=n-
+1 & mm=m_1205+1 & 1<=n) -->  post1(mm,n,res)]
+*/

@@ -663,10 +663,39 @@ However below fails!
   requires x::ll<n> ensures x::ll<m>  ;
 
 Questions:
- (1) why only base-case inferred
+ (1) why only base-case inferred and below inferred
+
+[RELDEFN post_1206: ( res=0 & n=0 & m_1205=0) -->  post_1206(m_1205,n,res),
+RELASS [post_1206]: ( post_1206(m_1205,n_1232,v_int_30_1269)) -->  (0>n_1232 | 0>m_1205)]
+
+From --esl, the post-cond uses m_1205 which also appeared
+on the LHS. This came from the spec of the recursive call.
+We need to generate fresh names for each implicitly bound
+parameter. Why is this not done?
+
+
+id: 17; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1206]; c_heap: emp
+ checkentail (exists v_int_30_1184': x'::node<Anon_1224,q_1225> * q_1225::ll{}<m_1205>&
+flted_14_1223+1=n & x'!=null & x'=x & !(v_bool_29_1187') & x'!=null & 
+!(v_bool_29_1187') & n_1228=flted_14_1223 & 0<=flted_14_1223 & 0<=n_1228 & 
+post_1206(m_1205,n_1228,v_int_30_1184') & v_int_30_1186'=v_int_30_1184'+1 & 
+res=v_int_30_1186'&{FLOW,(24,25)=__norm})[]
+ |-  x::ll{}<m_1205>&0<=n & post_1206(m_1205,n,res)&{FLOW,(24,25)=__norm}[]. 
+pure rel_ass: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+res:  1[
+   hfalse&false&{FLOW,(24,25)=__norm}[]
+   es_infer_vars/rel/templ: [post_1206]
+   es_infer_rel: [RELASS [post_1206]: ( post_1206(m_1205,n_1228,v_int_30_1239)) -->  (0>n_1228 | 0>m_1205)]
+   ]
+
  (2) Why perform re-verification when all
-     the flags false
+     the scriptargument reverify_flag and reverify_all_flag false (FIXED)
  (3) encountered a reverification problem:
+
+The 2nd relational assumption is wrong!
+
+[RELDEFN post_1206: ( res=0 & n=0 & m_1205=0) -->  post_1206(m_1205,n,res),
+RELASS [post_1206]: ( post_1206(m_1205,n_1232,v_int_30_1269)) -->  (0>n_1232 | 0>m_1205)]
 
 *************************************
 *******fixcalc of pure relation *******
