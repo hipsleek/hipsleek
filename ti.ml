@@ -109,9 +109,12 @@ let solve_trrel_list trrels turels =
       else rec_cond
     in
     let rec_cond = mkAnd rec_cond (mkNot not_rec_cond) in
-    if is_sat rec_cond then acc @ [Rec rec_cond] else acc) [] rec_trrels in
-  let conds = base_conds @ rec_conds in
+    if is_sat rec_cond then acc @ [rec_cond] else acc) [] rec_trrels 
+  in
+  let rec_conds = om_simplify (CP.join_disjunctions rec_conds) in
+  let rec_conds = List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds) in
   
+  let conds = base_conds @ rec_conds in
   let conds = List.map simplify_trrel_sol conds in
   let conds = List.concat (List.map split_disj_trrel_sol conds) in
   conds
