@@ -1,12 +1,12 @@
 EX="./test_ex.sh ../hip"
-$EX t/ack2.ss
-$EX t/ack3a.ss
-$EX t/ack3b.ss
-$EX t/ack3c.ss
-$EX t/ack3.ss
-$EX t/ack-5.ss
-$EX t/ack.ss
-$EX t/ack-z.ss
+$EX t/ack2.ss --infer-lex
+$EX t/ack3a.ss --infer-lex
+$EX t/ack3b.ss --infer-lex
+$EX t/ack3c.ss --infer-lex
+$EX t/ack3.ss --infer-lex
+$EX t/ack-5.ss --infer-lex
+$EX t/ack.ss --infer-lex
+$EX t/ack-z.ss --infer-lex
 $EX t/deadpool.ss
 $EX t/f91-a.ss
 $EX t/f91-b.ss
