@@ -437,10 +437,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               (rel_post,post,rel_pre,pre_new)) tuples in
           let evars = stk_evars # get_stk in
           let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
-              Debug.ninfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
-              Debug.ninfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
-              Debug.ninfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
-              Debug.ninfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
+              Debug.binfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos;
+              Debug.binfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos;
+              Debug.binfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos;
+              Debug.binfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos
           ) tuples in
           let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
           if triples = [] then

@@ -2329,9 +2329,10 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
         Debug.tinfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
-        
+
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
+        let _ = DD.ninfo_hprint (add_str "Rel Inferred (simplified)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
         let _ = Log.current_infer_rel_stk # push_list rels in
 
         (* let rs0 = remove_impl_evars rs0 impl_vars in *)
