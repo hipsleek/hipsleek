@@ -1,0 +1,11 @@
+
+!!!Full processing file "demo/tll2.ss"
+Parsing file "demo/tll2.ss" by default parser...
+File "demo/tll2.ss", line 9, characters 12-13
+ --error: Stream.Error("EQEQ expected after [view_header] (in [view_decl])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("EQEQ expected after [view_header] (in [view_decl])")
+Error3(s) detected at main 

@@ -1,0 +1,30 @@
+Starting Omega...oc
+H2 is defined.
+H3 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Valid. 
+
+ <1>emp&4<=q & p=5 & R(q)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(q)) -->  4<=q]
+[[empty]]
+
+Stop Omega... 30 invocations 
+SAT Count   : 62
+SAT % Hit   : 72.58%
+IMPLY Count : 18
+IMPLY % Hit : 72.22%
+Time(cache overhead) : 0.002808 (seconds)
+
+!!! log(small):(0.025453,107)
+Total verification time: 0.085486 second(s)
+	Time spent in main process: 0.062994 second(s)
+	Time spent in child processes: 0.022492 second(s)
+

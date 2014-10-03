@@ -1,0 +1,25 @@
+Starting Omega...oc
+P is defined.
+P2 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ P(x) ::= x::node<q> * P2(q)&x!=null(3,4),
+ P2(x1) ::= 
+ x1::node<q> * P2(q)
+ or emp&x1=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 6
+SAT % Hit   : 16.66%
+Time(cache overhead) : 0.000266 (seconds)
+
+!!! log(small):(0.006285,6)
+Total verification time: 0.058712 second(s)
+	Time spent in main process: 0.044015 second(s)
+	Time spent in child processes: 0.014697 second(s)
+

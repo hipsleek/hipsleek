@@ -166,22 +166,26 @@ let process_validate prog =
     "sa/hip/test/ll-append3.cp"
   )
   in
-  let (hpdefs, proc_tcomps) = parse_file_cp file_to_cp in 
+  let (hpdecls, proc_tcomps) = parse_file_cp file_to_cp in 
   let helper procs tcomps =
     let rec update_tcomp proc tcomps =
       let proc_name = proc.Iast.proc_name in
       match tcomps with
-	|[] -> proc
-	|(id, tcs)::y -> if(String.compare id proc_name == 0) then (
-	  {proc with Iast.proc_test_comps = Some tcs}
-	)
-	  else update_tcomp proc y
+        |[] -> proc
+        |(id, tcs)::y ->
+             let _ = Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
+             let _ = Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos in
+             if(String.compare id proc_name == 0) then (
+                 {proc with Iast.proc_test_comps = Some tcs}
+             )
+             else update_tcomp proc y
     in
-    List.map (fun proc -> update_tcomp proc tcomps) procs 
-    (*procs proc_decl list*)
+    List.map (fun proc -> update_tcomp proc tcomps) procs
   in
-  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
-  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
+  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdecls;
+  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps;
+  (*store this test for while loops*)
+  Iast.prog_test_comps = proc_tcomps}
 
 let process_lib_file prog =
   let parse_one_lib (ddecls,vdecls) lib=
@@ -194,6 +198,94 @@ let process_lib_file prog =
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
   {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
+
+(* let rec replace_h_formula hformula fl cprog = (\* Long *\) *)
+(*   Solver.unfold_heap_x (cprog, None) hformula [] (Cpure.SpecVar (Globals.Named "node", "H", Globals.Unprimed)) fl 1 no_pos *)
+  (* match hformula with *)
+    (* | Cformula.Star sh -> Cformula.Star { sh with *)
+    (*       Cformula.h_formula_star_h1 = replace_h_formula sh.Cformula.h_formula_star_h1 iprog; *)
+    (*       Cformula.h_formula_star_h2 = replace_h_formula sh.Cformula.h_formula_star_h2 iprog } *)
+    (* | Cformula.StarMinus smh -> Cformula.StarMinus { smh with *)
+    (*       Cformula.h_formula_starminus_h1 = replace_h_formula smh.Cformula.h_formula_starminus_h1 iprog; *)
+    (*       Cformula.h_formula_starminus_h2 = replace_h_formula smh.Cformula.h_formula_starminus_h2 iprog } *)
+    (* | Cformula.Conj ch -> Cformula.Conj { ch with *)
+    (*       Cformula.h_formula_conj_h1 = replace_h_formula ch.Cformula.h_formula_conj_h1 iprog; *)
+    (*       Cformula.h_formula_conj_h2 = replace_h_formula ch.Cformula.h_formula_conj_h2 iprog } *)
+    (* | Cformula.ConjStar csh -> Cformula.ConjStar { csh with *)
+    (*       Cformula.h_formula_conjstar_h1 = replace_h_formula csh.Cformula.h_formula_conjstar_h1 iprog; *)
+    (*       Cformula.h_formula_conjstar_h2 = replace_h_formula csh.Cformula.h_formula_conjstar_h2 iprog } *)
+    (* | Cformula.ConjConj cch -> Cformula.ConjConj { cch with *)
+    (*       Cformula.h_formula_conjconj_h1 = replace_h_formula cch.Cformula.h_formula_conjconj_h1 iprog; *)
+    (*       Cformula.h_formula_conjconj_h2 = replace_h_formula cch.Cformula.h_formula_conjconj_h2 iprog } *)
+    (* | Cformula.Phase ph -> Cformula.Phase { ph with *)
+    (*       Cformula.h_formula_phase_rd = replace_h_formula ph.Cformula.h_formula_phase_rd iprog; *)
+    (*       Cformula.h_formula_phase_rw = replace_h_formula ph.Cformula.h_formula_phase_rw iprog } *)
+    (* | Cformula.ViewNode vnh -> *)
+    (*       (\* let rec helper vls = match vls with *\) *)
+    (*       (\*   | v :: vl -> if v.Cast.view_name == vnh.Cformula.h_formula_view_name then v.Cast.view_formula else helper vl *\) *)
+    (*       (\*   | [] -> raise (Failure "No view name") *\) *)
+    (*       (\* in helper cprog.Cast.prog_view_decls *\) *)
+    (* | _ -> raise (Failure "Impossible") *)
+
+let rec replace_formula cformula cprog =
+  match cformula with
+    | Cformula.Base fb ->
+          let hformula = fb.Cformula.formula_base_heap in
+          let fl = fb.Cformula.formula_base_flow in
+          let fv = Cformula.fv cformula in
+          ( match fv with
+            | [] -> cformula
+            | hd::tl -> Solver.unfold_heap (cprog, None) hformula fv hd fl 1 no_pos )
+          (* Cformula.Base { fb with *)
+          (*  Cformula.formula_base_heap = replace_h_formula fb.Cformula.formula_base_heap fb.Cformula.formula_base_flow cprog } *)
+    | Cformula.Or fo -> Cformula.Or { fo with
+          Cformula.formula_or_f1 = replace_formula fo.Cformula.formula_or_f1 cprog;
+          Cformula.formula_or_f2 = replace_formula fo.Cformula.formula_or_f2 cprog }
+    | Cformula.Exists fe ->
+          let hformula = fe.Cformula.formula_exists_heap in
+          let fl = fe.Cformula.formula_exists_flow in
+          let fv = Cformula.fv cformula in
+          ( match fv with
+            | [] -> cformula
+            | hd::tl -> Solver.unfold_heap (cprog, None) hformula fv hd fl 1 no_pos )
+          (* Cformula.Exists { fe with *)
+          (* Cformula.formula_exists_heap = replace_h_formula fe.Cformula.formula_exists_heap fe.Cformula.formula_exists_flow cprog } *)
+
+let rec replace_struc_formula cspec cprog =
+  match cspec with
+    | Cformula.EAssume ea -> Cformula.EAssume { ea with
+          Cformula.formula_assume_simpl = replace_formula ea.Cformula.formula_assume_simpl cprog;
+          Cformula.formula_assume_struc = replace_struc_formula ea.Cformula.formula_assume_struc cprog }
+    | Cformula.EList el -> Cformula.EList (List.map (fun (spec, struc_for) -> (spec, replace_struc_formula struc_for cprog)) el)
+    | Cformula.EInfer ei -> Cformula.EInfer { ei with
+          Cformula.formula_inf_continuation = replace_struc_formula ei.Cformula.formula_inf_continuation cprog }
+    | Cformula.EBase eb -> Cformula.EBase { eb with
+          Cformula.formula_struc_base = replace_formula eb.Cformula.formula_struc_base cprog;
+          Cformula.formula_struc_continuation = match eb.Cformula.formula_struc_continuation with
+            | None -> None
+            | Some sf -> Some (replace_struc_formula sf cprog) }
+    | Cformula.ECase ec -> Cformula.ECase { ec with
+           Cformula.formula_case_branches = List.map (fun (pure, struc_for) -> (pure, replace_struc_formula struc_for cprog)) ec.Cformula.formula_case_branches }
+
+let print_spec cprog =
+  let rec helper cproc_decls =
+    match cproc_decls with
+      | p :: pl -> (match p.Cast.proc_body with
+          | None -> ""
+          | Some _ ->
+                let _ = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+                (* let sf = p.Cast.proc_static_specs in *)
+                (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Globals.Unprimed)) p.Cast.proc_args in *)
+                (* let new_sf = List.fold_left (fun sf fv ->  *)
+                (*     Solver.unfold_struc_nth 10 (cprog, None) sf fv false 0 no_pos *)
+                (*     ) sf fvs in *)
+                ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
+                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Globals.Unprimed)) *\) false 1 no_pos) *)
+                Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
+        ) ^ (helper pl)
+      | [] -> ""
+  in
+  print_endline (helper (Cast.list_of_procs cprog))
 
 let reverify_with_hp_rel old_cprog iprog =
   (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
@@ -235,9 +327,7 @@ let reverify_with_hp_rel old_cprog iprog =
   in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
-  (* let _ =  Debug.info_zprint (lazy  ("XXXX 4: ")) no_pos in *)
-  (* let _ = I.set_iprog iprog in *)
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
@@ -247,6 +337,7 @@ let hip_epilogue () =
   else ()
 
 (***************end process compare file*****************)
+
 (*Working*)
 let process_source_full source =
   if (not !Globals.web_compile_flag) then
@@ -305,7 +396,7 @@ let process_source_full source =
     let prim_names = 
       (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
-      ["__Exc"; "__Fail"; "__Error"]
+      ["__Exc"; "__Fail"; "__Error"; "__MayError"]
     in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
@@ -428,10 +519,10 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    
+
     (* An Hoa : initialize html *)
     let _ = Prooftracer.initialize_html source in
-    
+
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
@@ -446,7 +537,7 @@ let process_source_full source =
     end);
 	if (!Globals.reverify_all_flag)
 	then
-          let _ =  Debug.ninfo_pprint "re-verify\n" no_pos; in
+          let _ =  Debug.info_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	
@@ -455,7 +546,7 @@ let process_source_full source =
     (* Get the total verification time *)
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-    
+
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 

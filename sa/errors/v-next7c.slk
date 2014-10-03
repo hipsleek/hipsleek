@@ -1,0 +1,96 @@
+
+
+//(1)
+checkentail x=5 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x=5&{FLOW,(3,4)=__norm}[] YES
+
+//2
+checkentail x=0 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x=0&{FLOW,(5,6)=__Error}[] YES
+
+//3
+checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]  WRONG
+// should be MayError
+
+//(4)
+checkentail x=5 & flow __norm |- 
+   case {
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
+   }.
+print residue.
+//<1>emp&0<x & x=5&{FLOW,(3,4)=__norm}[]    YES
+
+//(5)
+checkentail x=0 & flow __norm |- 
+   case {
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
+   }.
+print residue.
+//Entail 5: Fail.(must) cause:empty states
+
+// (6)
+checkentail x=0 & flow __norm |- x<=0 & flow __Error.
+//Entail 6: Fail.(must) cause:empty states
+
+
+//(7)
+checkentail -1<=x & x<=6 & flow __norm |- 
+   case {
+    x>0 -> ensures emp & flow __norm;
+    x<=0 -> ensures emp & flow __Error;
+   }.
+print residue.
+//Entail 6: Fail.(must) cause:empty states
+
+//8
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+     ensures x>=0 & flow __Error;.
+print residue.
+
+//9
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+     ensures x>=0 & flow __norm;. 
+print residue.
+
+/*
+# v-next7c.slk
+
+Entail 1: Valid. 
+
+ <1>emp&x=5&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 2: Fail.(must) cause: x=0 |-  0<x. LOCS:[6] (must-bug)
+
+ <1>emp&x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 3: Fail.(must) cause: x<=6 & 0<=(x+1) |-  0<x. LOCS:[9] (must-bug)
+
+ <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 4: Valid. 
+
+ <1>emp&0<x & x=5&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 5: Fail.(must) cause:empty states
+
+ 
+
+Entail 6: Fail.(must) cause:empty states
+
+*/

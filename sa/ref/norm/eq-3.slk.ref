@@ -1,0 +1,64 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+G2 is defined.
+G3 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,p) * x::node<_,p>&true --> G2(x,p)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,p)&true --> G3(x,y,t)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&y!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,q)&p!=null --> H1(p)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,p) * x::node<_,p>&true --> G2(x,p)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,p)&true --> G2(p,t)&true(3,4); 
+                  emp&true --> H1(z)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&t=y&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(p,p)&true --> G3(x,z,t)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 8 invocations 
+SAT Count   : 45
+SAT % Hit   : 66.66%
+IMPLY Count : 4
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001871 (seconds)
+
+!!! log(small):(0.025077,67)
+Total verification time: 0.091256 second(s)
+	Time spent in main process: 0.07442 second(s)
+	Time spent in child processes: 0.016836 second(s)
+

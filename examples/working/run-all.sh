@@ -63,6 +63,9 @@ time ./run-fast-tests.pl imm $@ -tp redlog
 echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##################"
 time ./run-fast-tests.pl bags -flags "--eps" $@ -tp mona
 
+echo -e "\n##################### hip sa (runs with -tp z3) #####################"
+time ./run-fast-tests.pl sa -flags "-tp z3" $@
+
 echo -e "\n##################### dfracperm tests+barriers ###################"
 time ./run-fast-tests.pl hip_barr $@
 time ./run-fast-tests.pl sleek_barr $@

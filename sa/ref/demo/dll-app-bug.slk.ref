@@ -1,0 +1,25 @@
+Starting Omega...oc
+HP_817 is defined.
+HP_818 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>l1'::node<l2,prev> * HP_48(next) * HP_49(prev1)&v' & l2!=null & !(v1') & next1=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_817(next2,l2) * HP_818(prev,l2)&l2!=null & 
+                   next2=null --> l2::node<next,prev1> * HP_48(next) * 
+                   HP_49(prev1)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 13
+SAT % Hit   : 69.23%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000819 (seconds)
+
+!!! log(small):(0.01237,17)
+Total verification time: 0.06665 second(s)
+	Time spent in main process: 0.051985 second(s)
+	Time spent in child processes: 0.014665 second(s)
+

@@ -1,0 +1,54 @@
+
+!!!Full processing file "paper-v/sll-dll-v.ss"
+Parsing file "paper-v/sll-dll-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure paper_fix$node~node... Proving binding in method paper_fix$node~node for spec  EAssume 
+   (exists p1: c::dll{}<p1>&p1=p&{FLOW,(3,4)=__norm})[]
+   , Line 17
+
+( [(,0 ); (,1 )]) bind: node  x'::node<prev_21_1238',next_21_1239'> cannot be derived from context
+paper-v/sll-dll-v.ss_21:12_21:18
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: do_unmatched_rhs : x'::node<prev_21_1238',next_21_1239'>
+                  fc_current_lhs_flow: {FLOW,(3,10)=__MayError}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]paper-v/sll-dll-v.ss_21:12_21:18
+
+Context of Verification Failure: 1 File "paper-v/sll-dll-v.ss",Line:17,Col:27
+Last Proving Location: 1 File "paper-v/sll-dll-v.ss",Line:21,Col:12
+
+Procedure paper_fix$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure paper_fix$node~node
+
+!!! proc.proc_name:paper_fix$node~nodeStop Omega... 8 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.031945,266)
+Total verification time: 0.305691 second(s)
+	Time spent in main process: 0.287994 second(s)
+	Time spent in child processes: 0.017697 second(s)
+

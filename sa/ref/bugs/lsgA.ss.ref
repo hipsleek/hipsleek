@@ -1,0 +1,69 @@
+
+!!!Full processing file "bugs/lsgA.ss"
+Parsing file "bugs/lsgA.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! neqs:[]
+Checking procedure lsg$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SLSEG,G]requires SLSEG(l,e)&true
+ ensures G(l,e)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;2;0)SLSEG(l,e)&l!=null & l!=e --> HP_1260(n1,e@NI) * HP_1262(e,l@NI) * 
+l::node2<n1,s1> * HP_1261(s1,e@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1260(n1,e@NI) * HP_1262(e,l@NI)&l!=e --> SLSEG(n1,e)&
+true(3,4),
+ // POST
+(1;0)SLSEG(e,e)&true --> G(l,e)&
+true(3,4),
+ // POST
+(1;2;0)SLSEG(l,e)&l=null & l!=e --> G(l,e)&
+true(3,4),
+ // POST
+(2;2;0)HP_1261(s1,e@NI) * l::node2<n1,s1> * G(n1,e)&l!=e --> G(l,e)&
+true(3,4)]
+
+Procedure lsg$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ SLSEG(l1,e1) ::=  [emp&l1=e1; emp&l1=null & l1!=e1; l1::node2<n2,DP> * SLSEG(n2,e1)&l1!=e1],
+ G(l2,e2) ::=  [emp&l2!=e2 & l2=null; l2::node2<n,DP> * G(n,e2)&l2!=e2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ SLSEG(l1,e1) ::= 
+ emp&l1=null & l1!=e1
+ or l1::node2<n2,DP> * SLSEG(n2,e1)&l1!=e1
+ or emp&l1=e1
+ (3,4),
+ G(l2,e2) ::= 
+ l2::node2<n,DP> * G(n,e2)&l2!=e2
+ or emp&l2!=e2 & l2=null
+ (3,4)]
+*************************************
+Stop Omega... 8 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.049914,275)
+Total verification time: 0.343711 second(s)
+	Time spent in main process: 0.329355 second(s)
+	Time spent in child processes: 0.014356 second(s)
+

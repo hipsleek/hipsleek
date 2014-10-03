@@ -44,7 +44,7 @@ type command =
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | EntailCheck of (meta_formula list * meta_formula * entail_type)
   | SatCheck of (meta_formula)
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
@@ -66,6 +66,7 @@ type command =
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | PredSplit of (ident list)
+  | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
   | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
@@ -146,6 +147,7 @@ let string_of_command c = match c with
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
   | PredSplit _ -> "PredSplit"
+  | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"
   | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"

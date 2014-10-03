@@ -12,7 +12,7 @@ inv true;
 HeapPred SLL(node2 a).
 HeapPred SLSEG(node2 a,node2@NI b).
 HeapPred SLSEGP(node2 a,node2@NI b).
-PostPred G(node2 a,node2@NI b).
+PostPred G(node2 a,node2 b).
 
 bool skip0(node2 l, node2 e) 
   infer[SLSEG,G] requires SLSEG(l,e) ensures G(l,e) & res;// res

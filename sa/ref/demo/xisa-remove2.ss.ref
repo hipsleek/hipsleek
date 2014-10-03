@@ -1,0 +1,59 @@
+
+!!!Full processing file "demo/xisa-remove2.ss"
+Parsing file "demo/xisa-remove2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure remove$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<prev2,next1> * HP_1239(prev2) * HP_1240(next1)&
+true(3,4),
+ // BIND
+(0)HP_1239(prev2)&true --> prev2::node<prev3,next3> * HP_1250(prev3) * 
+HP_1251(next3)&
+true(3,4),
+ // BIND
+(0)HP_1240(next1)&true --> next1::node<prev1,next2> * HP_1264(prev1) * 
+HP_1265(next2)&
+true(3,4),
+ // POST
+(0)emp&x!=null --> G(x)&
+true(3,4)]
+
+Procedure remove$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<prev4,next4> * prev4::node<DP3,DP2> * next4::node<DP1,DP>],
+ G(x2) ::=  [emp&x2!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node<prev4,next4> * prev4::node<DP3,DP2> * next4::node<DP1,DP>(3,4),
+ G(x2) ::= emp&x2!=null(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.060569,315)
+Total verification time: 0.330676 second(s)
+	Time spent in main process: 0.317306 second(s)
+	Time spent in child processes: 0.01337 second(s)
+

@@ -1,0 +1,53 @@
+data node {node next; }.
+
+
+pred ll<> == self = null
+	or self::node<r> * r::ll<>
+        inv_exact BG([],self=null) | BG([self],true)
+        .
+
+pred ll_one<> == self::node<null>
+	or self::node<r> * r::ll_one<>
+        inv_exact BG([self],true)
+        .
+
+
+HeapPred H(node a).
+
+
+//1
+infer [H] H(x) |- x::node<p>.
+
+print residue.
+
+
+/*
+expected: 
+
+  R1=  U(p)
+  H(x) ==> x::node<p> * U(p).
+
+  R2=  x=null \mustF
+  H(x) ===> x=null.
+*/
+
+
+//2
+infer [H] H(x) * y::node<p> & x!=y |- x::node<p>.
+print residue.
+
+
+//3
+infer [H] H(x) |- x=null.
+print residue.
+
+
+//4.
+infer [H] H(x) |- x::ll<>.
+print residue.
+
+
+//5.
+infer [H] H(x) |- x::ll_one<>.
+print residue.
+

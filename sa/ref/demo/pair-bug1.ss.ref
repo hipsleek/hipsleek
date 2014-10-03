@@ -1,0 +1,54 @@
+
+!!!Full processing file "demo/pair-bug1.ss"
+Parsing file "demo/pair-bug1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure sum$cell~cell... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x,y)&true
+ ensures G1(x,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x,y)&true --> x::cell<val2> * HP_1222(y,x@NI)&
+true(3,4),
+ // BIND
+(0)HP_1222(y,x@NI)&true --> y::cell<val1>&
+true(3,4),
+ // POST
+(0)x::cell<val2> * y::cell<val1>&true --> G1(x,y)&
+true(3,4)]
+
+Procedure sum$cell~cell SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1,y1) ::=  [x1::cell<val3> * y1::cell<val1>],
+ G1(x2,y2) ::=  [x2::cell<val> * y2::cell<val1>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1,y1) ::= x1::cell<val3> * y1::cell<val1>(3,4),
+ G1(x2,y2) ::= x2::cell<val> * y2::cell<val1>(3,4)]
+*************************************
+Stop Omega... 1 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.025576,204)
+Total verification time: 0.291625 second(s)
+	Time spent in main process: 0.27798 second(s)
+	Time spent in child processes: 0.013645 second(s)
+

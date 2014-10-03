@@ -1,0 +1,56 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>H(a,b)&a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (2) : Fail.(must) cause:residue is forbidden.(1)
+
+ <1>H(a,b) * b::node<_,_>&a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (3) : Fail.(must) cause:residue is forbidden.(1)
+
+ <1>H(a,b) * G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (4) : Fail.(must) cause:residue is forbidden.(1)
+
+ <1>H(a,b) * G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (5) : Valid. 
+
+ <1>G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (6) : Valid. 
+
+ <1>G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (7) : Valid. 
+
+ <1>G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 12
+SAT % Hit   : 66.66%
+Time(cache overhead) : 0.000453 (seconds)
+
+!!! log(small):(0.006554,19)
+Total verification time: 0.068311 second(s)
+	Time spent in main process: 0.054124 second(s)
+	Time spent in child processes: 0.014187 second(s)
+

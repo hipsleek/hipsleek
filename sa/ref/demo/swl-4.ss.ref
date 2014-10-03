@@ -1,0 +1,24 @@
+
+!!!Full processing file "demo/swl-4.ss"
+Parsing file "demo/swl-4.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=g & self!=s) | (self!=g & self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&g!=s&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((g<self & s<self) | ((s+1)<=self & self<g) | (g<self & self<s) | (self<=(g-
+1) & self<=(s-1)))),
+([], self=g & self!=s)])
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS.
+Stop Omega... 32 invocations 
+0 false contexts at: ()
+
+!!! log(small):(3.163051,1562)
+Total verification time: 1.850101 second(s)
+	Time spent in main process: 1.791833 second(s)
+	Time spent in child processes: 0.058268 second(s)
+

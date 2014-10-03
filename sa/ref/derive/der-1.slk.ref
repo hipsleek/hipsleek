@@ -1,0 +1,47 @@
+Starting Omega...oc
+Starting z3... 
+
+!!!    pure extension:llN: extend ll to size
+
+!!!    pure extension:llN has been extended to size already 
+
+!!!    pure extension:lsegN: extend lseg to size
+
+!!! formula1: emp&self=null & ((n=0 | 1<=n))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & n=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=n)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & s=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&((self=null & 0<n) | (self!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&0<n & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=null & 0<n)])
+!!! formula1: emp&(self=null | (self!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=null)])
+!!! formula1: emp&(self=p | (self!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=p)])
+!!! formula1: emp&((self=p & n=0) | (1<=n & self!=null & self!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((1<=n & 1<=self) | (self<=(0-1) & 1<=n))),
+([], self=p & n=0)])Stop Omega... 45 invocations 
+SAT Count   : 162
+SAT % Hit   : 70.98%
+IMPLY Count : 16
+IMPLY % Hit : 43.75%
+Time(cache overhead) : 0.010392 (seconds)
+
+!!! log(small):(0.049094,218)
+Total verification time: 0.137106 second(s)
+	Time spent in main process: 0.100937 second(s)
+	Time spent in child processes: 0.036169 second(s)
+
