@@ -800,6 +800,51 @@ pre_1210(r_1193,n,a) & post_1211(r_1268,n_1243,a)) -->  post_1211(r_1193,n,a)]
 *************************************
 
 =======================================================
+# len2.ss
+
+int length3(node x)
+  infer [R1,R2]
+  requires x::ll<n> & R1(n,m)
+  ensures x::ll<m> & R2(n,m,res);
+{
+  if (x==null) return 0;
+  else return 1+length3(x.next);
+}
+
+Checking procedure length3$node... 
+Procedure length3$node SUCCESS.
+
+!!! proc_specs:[ EInfer [R1,R2]
+   EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&R1(n,m)&
+         {FLOW,(4,5)=__norm}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                   EAssume 
+                     x::ll{}<m>&R2(n,m,res) & 0<=n&{FLOW,(4,5)=__norm}[]
+                     ]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R1: ( 1<=n & n_1287=n-1 & R1(n,m)) -->  R1(n_1287,m),
+RELDEFN R2: ( res=0 & n=0 & m=0 & R1(n,m)) -->  R2(n,m,res),
+RELASS [R1,R2]: ( R1(n,m) & R2(n_1287,m,v_int_48_1300)) -->  (n_1287!=(n-1) | 1>n | 0>m)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R2(n,m,res), res=0 & n<=0 & m<=0, R1(n,m), n<=0 & m<=0)]
+*************************************
+
+!!! REL POST :  R2(n,m,res)
+!!! POST:  res=0 & n<=0 & m<=0
+!!! REL PRE :  R1(n,m)
+!!! PRE :  n<=0 & m<=0
+Post Inference result:
+length3$node
+ requires x::ll<n> & n<=0 & m<=0 & MayLoop[]
+     ensures x::ll<m> & 0<=n & 
+res=0 & n<=0 & m<=0;
+
 =======================================================
 =======================================================
 =======================================================
