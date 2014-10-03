@@ -27,6 +27,6 @@ void insert2(node x, int a)
   if (x.next == null) {
     x.next = new node(a,null);
   } else {
-    insert(x.next,a);
+    insert2(x.next,a);
   }
 }
