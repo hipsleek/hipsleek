@@ -730,6 +730,10 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
          We need only to compare names and primedness *)
       (String.compare v1 v2 = 0) && (p1 = p2)
 
+let eq_typed_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+      (t1 = t2) && (String.compare v1 v2 = 0) && (p1 = p2)
+
 let eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
     | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2

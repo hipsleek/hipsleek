@@ -303,6 +303,11 @@ let check_defn pre_rel pre rel_dfn =
     TP.imply_raw lhs rhs
   ) rel_dfn
 
+let check_defn pre_rel pre rel_dfn =
+  let pr = !CP.print_formula in
+  Debug.no_3 "check_defn" pr pr (pr_list (pr_pair pr pr)) string_of_bool
+      (fun _ _ _ -> check_defn pre_rel pre rel_dfn) pre_rel pre rel_dfn
+
 let check_oblg pre_rel pre reloblgs pre_rel_df =
   let check1 = TP.imply_raw pre reloblgs in
   let check2 = check_defn pre_rel pre pre_rel_df in
@@ -311,7 +316,7 @@ let check_oblg pre_rel pre reloblgs pre_rel_df =
 let filter_disj (p:CP.formula) (t:CP.formula list) =
   let ps = CP.list_of_disjs p in
   let t = CP.conj_of_list t no_pos in
-  let ps = List.concat (List.map (fun x -> 
+  let ps = List.concat (List.map (fun x ->
     if TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd x t no_pos))
     then
       let xs = CP.list_of_conjs x in
@@ -364,7 +369,7 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
     if checkpoint2 then
       List.map (fun (rel,post) -> (rel,post,pre_rel,final_pre)) rel_posts
-    else List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
+    else List.map (fun (rel,post) -> (rel,post,pre_rel (* constTrue *),constTrue)) rel_posts (* need to recheck, why constTrue *)
   | [] -> List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
   | _ -> report_error no_pos "Error in top-down fixpoint calculation"
 
@@ -472,10 +477,9 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
     let _ = Debug.ninfo_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
 
     let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
-    let pure_oblg_to_check = 
+    let pure_oblg_to_check =
       List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
     let _ = Debug.tinfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
-
     let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
     if checkpoint1 then
       let pre = TP.simplify pre in

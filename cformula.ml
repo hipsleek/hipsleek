@@ -2558,21 +2558,30 @@ and all_vars (f:formula): Cpure.spec_var list = match f with
 	fvars
 
 and struc_all_vars (f:struc_formula): Cpure.spec_var list =
-  let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
+  let rdv = Gen.BList.remove_dups_eq CP.eq_typed_spec_var in
   match f with
-    | ECase b-> rdv (fold_l_snd struc_all_vars b.formula_case_branches)
-    | EBase b->	fold_opt struc_all_vars b.formula_struc_continuation
-    | EAssume b-> CP.remove_dups_svl (all_vars b.formula_assume_simpl)
-    | EInfer b -> struc_all_vars b.formula_inf_continuation
+    | ECase b -> (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_all_vars c2)) b.formula_case_branches)) (* rdv (fold_l_snd struc_all_vars b.formula_case_branches) *)
+    | EBase b -> (fold_opt struc_all_vars b.formula_struc_continuation)@(all_vars b.formula_struc_base) (* rdv (fold_opt struc_all_vars b.formula_struc_continuation) *)
+    | EAssume b -> all_vars b.formula_assume_simpl
+    | EInfer b -> rdv (struc_all_vars b.formula_inf_continuation)
     | EList b -> rdv (fold_l_snd struc_all_vars b)
 
+and struc_all_vars_except_post (f:struc_formula): Cpure.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_typed_spec_var in
+  match f with
+    | ECase b -> (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_all_vars_except_post c2)) b.formula_case_branches)) (* rdv (fold_l_snd struc_all_vars_except_post b.formula_case_branches) *)
+    | EBase b -> (fold_opt struc_all_vars_except_post b.formula_struc_continuation)@(all_vars b.formula_struc_base) (* rdv ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base)) *)
+    | EAssume b -> []
+    | EInfer b -> rdv (struc_all_vars_except_post b.formula_inf_continuation)
+    | EList b -> rdv (fold_l_snd struc_all_vars_except_post b)
+
 and heap_of (f:formula) : h_formula list = match f with
-  | Or ({formula_or_f1 = f1; 
+  | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2}) -> (heap_of f1)@(heap_of f2)
   | Base b-> [b.formula_base_heap]
   | Exists b-> [b.formula_exists_heap]
 
-and fv_heap_of (f:formula) = 
+and fv_heap_of (f:formula) =
   let hl= heap_of f in
   List.concat (List.map h_fv hl)
 

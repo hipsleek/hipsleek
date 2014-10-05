@@ -104,7 +104,7 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
   | CF.EAssume ea -> sf
   | CF.EInfer ei ->
         let rel_name = fresh_any_name "pre" in
-        let fvs = CF.struc_all_vars sf in
+        let fvs = CF.struc_all_vars_except_post sf in
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)) in
