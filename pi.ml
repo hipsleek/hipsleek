@@ -339,6 +339,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
+  let lst_assume = Gen.Basic.remove_dups lst_assume in
   if rels = [] then ()
   else
     let new_specs =
