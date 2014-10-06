@@ -69,7 +69,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
   | CF.EInfer ei ->
         let rel_name = fresh_any_name "post" in
         let fvs = CF.struc_all_vars sf in
-        let _ = DD.binfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
+        let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]))) in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
