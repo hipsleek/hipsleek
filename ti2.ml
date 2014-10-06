@@ -29,12 +29,21 @@ let simplify num f args =
   let pr2 = pr_list !CP.print_sv in
   Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
     (fun _ _ -> simplify f args) f args
-  
+    
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
 let imply a c = Tpdispatcher.imply_raw a c
 
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
+
+let simplify_and_slit_disj f = 
+  let f = om_simplify f in
+  let f =
+    if CP.is_disjunct f then pairwisecheck f
+    else f 
+  in 
+  let fs = CP.split_disjunctions f in
+  List.filter is_sat fs
 
 (* To be improved *)
 let fp_imply f p =
@@ -47,6 +56,7 @@ let f_is_sat f =
   Tpdispatcher.is_sat_raw pf
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
+let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos
 let mkNot f = CP.mkNot f None no_pos
 let mkGt e1 e2 = CP.mkPure (CP.mkGt e1 e2 no_pos)
 let mkGte e1 e2 = CP.mkPure (CP.mkGte e1 e2 no_pos)
