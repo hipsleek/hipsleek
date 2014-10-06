@@ -72,6 +72,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]))) in
+        let rel_vars = CP.remove_dups_svl rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
@@ -108,6 +109,7 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)) in
+        let rel_vars = CP.remove_dups_svl rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
@@ -277,7 +279,7 @@ let rec turn_off_infer_pure spec old_spec =
             (pf,turn_off_infer_pure sf1 sf2)
         ) (List.combine ec1.CF.formula_case_branches ec2.CF.formula_case_branches)
       }
-    | (CF.EBase eb,CF.EInfer ei) ->
+    | (_,CF.EInfer ei) ->
           let old_inf_obj = ei.CF.formula_inf_obj # clone in
           let _ = old_inf_obj # reset INF_POST in
           let _ = old_inf_obj # reset INF_PRE in
