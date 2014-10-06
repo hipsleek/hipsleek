@@ -140,8 +140,8 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let conds = List.map simplify_trrel_sol conds in
-  let conds = List.concat (List.map split_disj_trrel_sol conds) in
+  (* let conds = List.map simplify_trrel_sol conds in                 *)
+  (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   conds
   
 let case_split_init trrels turels = 
