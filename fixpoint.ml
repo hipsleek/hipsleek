@@ -540,7 +540,11 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         (*      let checkpoint = check_defn r final_pre pre_rel_df in*)
         (*      if checkpoint then [(rel,post,pre_rel,final_pre)]*)
         (*      else [(rel,post,constTrue,constTrue)])*)
-  | _,_ -> List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
+  | _,_ ->
+        try
+          let _ = Debug.ninfo_hprint (add_str "pr_rel_fmls" (pr_list Cprinter.string_of_pure_formula)) pre_rel_fmls no_pos in
+          List.map (fun ((p1,p2),pr) -> (p1,p2,pr,constTrue)) (List.combine (List.rev bottom_up_fp) pre_rel_fmls)
+        with _ -> List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
 
 let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
   preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
