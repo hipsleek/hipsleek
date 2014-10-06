@@ -36,12 +36,15 @@ let imply a c = Tpdispatcher.imply_raw a c
 
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 
-let simplify_and_slit_disj f = 
+let simplify_disj f = 
   let f = om_simplify f in
   let f =
     if CP.is_disjunct f then pairwisecheck f
     else f 
-  in 
+  in f
+
+let simplify_and_slit_disj f = 
+  let f = simplify_disj f in
   let fs = CP.split_disjunctions f in
   List.filter is_sat fs
 
