@@ -259,26 +259,26 @@ let rec turn_off_infer_pure spec old_spec =
     match (spec,old_spec) with
     | (CF.EList el1,CF.EList el2) -> CF.EList (List.map (fun ((lbl,sf1),(_,sf2)) ->
           (lbl,turn_off_infer_pure sf1 sf2)) (List.combine el1 el2))
-    | (CF.EBase eb1,CF.EBase eb2) ->
-          let cont1 = eb1.CF.formula_struc_continuation in
-          let cont2 = eb2.CF.formula_struc_continuation in (
-              match (cont1,cont2) with
-                | (None,_) -> spec
-                | (Some cont1,Some cont2) -> CF.EBase {eb1 with CF.formula_struc_continuation = Some (turn_off_infer_pure cont1 cont2)}
-                | _ -> failwith "turn off infer pure ebase" )
-    | (CF.EAssume ea,_) -> spec
-    | (CF.EInfer ei1,CF.EInfer ei2) ->
-          let old_inf_obj = ei2.CF.formula_inf_obj # clone in
-          let _ = old_inf_obj # reset INF_POST in
-          let _ = old_inf_obj # reset INF_PRE in
-          CF.EInfer {ei1 with
-              CF.formula_inf_obj = old_inf_obj;
-              CF.formula_inf_vars = []}
-    | (CF.ECase ec1,CF.ECase ec2) -> CF.ECase { ec1 with
-        CF.formula_case_branches = List.map (fun ((pf,sf1),(_,sf2)) ->
-            (pf,turn_off_infer_pure sf1 sf2)
-        ) (List.combine ec1.CF.formula_case_branches ec2.CF.formula_case_branches)
-      }
+    (* | (CF.EBase eb1,CF.EBase eb2) -> *)
+    (*       let cont1 = eb1.CF.formula_struc_continuation in *)
+    (*       let cont2 = eb2.CF.formula_struc_continuation in ( *)
+    (*           match (cont1,cont2) with *)
+    (*             | (None,_) -> spec *)
+    (*             | (Some cont1,Some cont2) -> CF.EBase {eb1 with CF.formula_struc_continuation = Some (turn_off_infer_pure cont1 cont2)} *)
+    (*             | _ -> failwith "turn off infer pure ebase" ) *)
+    (* | (CF.EAssume ea,_) -> spec *)
+    (* | (CF.EInfer ei1,CF.EInfer ei2) -> *)
+    (*       let old_inf_obj = ei2.CF.formula_inf_obj # clone in *)
+    (*       let _ = old_inf_obj # reset INF_POST in *)
+    (*       let _ = old_inf_obj # reset INF_PRE in *)
+    (*       CF.EInfer {ei1 with *)
+    (*           CF.formula_inf_obj = old_inf_obj; *)
+    (*           CF.formula_inf_vars = []} *)
+    (* | (CF.ECase ec1,CF.ECase ec2) -> CF.ECase { ec1 with *)
+    (*     CF.formula_case_branches = List.map (fun ((pf,sf1),(_,sf2)) -> *)
+    (*         (pf,turn_off_infer_pure sf1 sf2) *)
+    (*     ) (List.combine ec1.CF.formula_case_branches ec2.CF.formula_case_branches) *)
+    (*   } *)
     | (_,CF.EInfer ei) ->
           let old_inf_obj = ei.CF.formula_inf_obj # clone in
           let _ = old_inf_obj # reset INF_POST in
@@ -287,7 +287,7 @@ let rec turn_off_infer_pure spec old_spec =
               CF.formula_inf_obj = old_inf_obj;
               CF.formula_inf_vars = [];
               CF.formula_inf_continuation = spec}
-    | _ -> failwith "turn off infer pure other"
+    | _ -> spec (* failwith "turn off infer pure other" *)
 
 let resume_infer_obj_proc proc old_spec =
   let spec = turn_off_infer_pure (proc.proc_stk_of_static_specs # top) old_spec in
