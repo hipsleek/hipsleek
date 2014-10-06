@@ -69,7 +69,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
   | CF.EInfer ei ->
         let rel_name = fresh_any_name "post" in
         let fvs = CF.struc_all_vars sf in
-        let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
+        let _ = DD.binfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]))) in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
@@ -97,7 +97,7 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
         let _ = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
         let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
         let rel_args = List.map (fun sv -> match sv with
-          | CP.SpecVar (_,id,_) -> CP.mkVar (CP.mk_spec_var id) no_pos) rel_vars in
+          | CP.SpecVar (t,id,_) -> CP.mkVar (CP.mk_typed_spec_var t id) no_pos) rel_vars in
         let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
         CF.EBase {eb with
             CF.formula_struc_base = add_relation_to_formula eb.CF.formula_struc_base new_rel}
