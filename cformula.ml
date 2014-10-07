@@ -1755,7 +1755,7 @@ and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
 and mkAnd_pure (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula = 
   Debug.no_2 "mkAnd_pure" !print_formula !print_mix_f !print_formula 
   (fun _ _ -> mkAnd_pure_x f1 p2 pos) f1 p2
-          
+
 and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) lbl=
   let tmp_b = {formula_base_heap = h;
   formula_base_pure = p;
@@ -2527,13 +2527,61 @@ and struc_post_fv (f:struc_formula):Cpure.spec_var list =
     | EInfer b -> struc_post_fv b.formula_inf_continuation
     | EList b -> rdv (fold_l_snd struc_post_fv b)
 
+and all_vars (f:formula): Cpure.spec_var list = match f with
+  | Or ({formula_or_f1 = f1;
+	formula_or_f2 = f2}) ->
+        CP.remove_dups_svl (fv f1 @ fv f2)
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_and = a;
+    formula_base_type = t}) ->
+        let vars = CP.remove_dups_svl (List.concat (List.map one_formula_fv a)) in
+        CP.remove_dups_svl (h_fv h @ MCP.mfv p @ vars)
+  | Exists ({formula_exists_qvars = qvars;
+    formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_type = t;
+    formula_exists_and = a;
+    formula_exists_flow = fl;
+    formula_exists_label = lbl;
+    formula_exists_pos = pos}) ->
+	let fvars = fv (Base ({formula_base_heap = h;
+	formula_base_pure = p;
+	formula_base_type = t;
+        formula_base_and = a;
+	formula_base_flow = fl;
+        formula_base_label = lbl;
+	formula_base_pos = pos})) in
+        let vars = List.concat (List.map one_formula_fv a) in
+        let fvars = CP.remove_dups_svl (vars@fvars) in
+	(* let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in *)
+	fvars
+
+and struc_all_vars (f:struc_formula): Cpure.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_typed_spec_var in
+  match f with
+    | ECase b -> (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_all_vars c2)) b.formula_case_branches)) (* rdv (fold_l_snd struc_all_vars b.formula_case_branches) *)
+    | EBase b -> (fold_opt struc_all_vars b.formula_struc_continuation)@(all_vars b.formula_struc_base) (* rdv (fold_opt struc_all_vars b.formula_struc_continuation) *)
+    | EAssume b -> all_vars b.formula_assume_simpl
+    | EInfer b -> rdv (struc_all_vars b.formula_inf_continuation)
+    | EList b -> rdv (fold_l_snd struc_all_vars b)
+
+and struc_all_vars_except_post (f:struc_formula): Cpure.spec_var list =
+  let rdv = Gen.BList.remove_dups_eq CP.eq_typed_spec_var in
+  match f with
+    | ECase b -> (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_all_vars_except_post c2)) b.formula_case_branches)) (* rdv (fold_l_snd struc_all_vars_except_post b.formula_case_branches) *)
+    | EBase b -> (fold_opt struc_all_vars_except_post b.formula_struc_continuation)@(all_vars b.formula_struc_base) (* rdv ((fold_opt struc_fv b.formula_struc_continuation)@(fv b.formula_struc_base)) *)
+    | EAssume b -> []
+    | EInfer b -> rdv (struc_all_vars_except_post b.formula_inf_continuation)
+    | EList b -> rdv (fold_l_snd struc_all_vars_except_post b)
+
 and heap_of (f:formula) : h_formula list = match f with
-  | Or ({formula_or_f1 = f1; 
+  | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2}) -> (heap_of f1)@(heap_of f2)
   | Base b-> [b.formula_base_heap]
   | Exists b-> [b.formula_exists_heap]
 
-and fv_heap_of (f:formula) = 
+and fv_heap_of (f:formula) =
   let hl= heap_of f in
   List.concat (List.map h_fv hl)
 

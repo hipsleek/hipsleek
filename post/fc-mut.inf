@@ -1,5 +1,0 @@
-Uf2:={[n] -> [res] -> []: ((res=0 && n<=0) || ( (exists (v_int_39_1236:( (exists (v_int_39_1229:(v_int_39_1229=n-(1) && Uf1(v_int_39_1229,v_int_39_1236))))  && res=v_int_39_1236+1)))  && 1<=n))
-};
-Uf1:={[n] -> [res] -> []: ((res=0 && n<=0) || ( (exists (v_int_39_1236:( (exists (v_int_39_1229:(v_int_39_1229=n-(1) && Uf2(v_int_39_1229,v_int_39_1236))))  && res=v_int_39_1236+1)))  && 1<=n))
-};
-bottomupgen([Uf1,Uf2], [2,2], SimHeur);

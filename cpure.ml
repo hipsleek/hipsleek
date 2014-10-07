@@ -730,6 +730,10 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
          We need only to compare names and primedness *)
       (String.compare v1 v2 = 0) && (p1 = p2)
 
+let eq_typed_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+      (t1 = t2) && (String.compare v1 v2 = 0) && (p1 = p2)
+
 let eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
     | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
@@ -2514,7 +2518,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       (* Pushing each ex v to the innermost location *)
       let fvs = fv f in
       let vs = List.filter (fun v -> mem v fvs) vs in
-      let fl = split_conjunctions f in 
+      let fl = split_conjunctions f in
       let f_with_fv = List.map (fun f -> (fv f, f)) fl in
       let push_v v f_with_fv =
         let rel_f, nonrel_f = List.partition (fun (fvs, f) -> mem v fvs) f_with_fv in

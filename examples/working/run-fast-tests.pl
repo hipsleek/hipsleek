@@ -1833,6 +1833,7 @@ my $inv = '--inv-test';
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Fail.Valid.Valid.Valid."],
                       ["sleek1.slk", "", (), "Fail."],
+                      #["sleek10.slk", "", (), "Valid.Valid."],
                       ["sleek10.slk", "", (), "Valid.Fail."],
                       ["sleek2.slk", "", (), "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
                       # why did not detect missing Valid
@@ -1860,7 +1861,8 @@ my $inv = '--inv-test';
               ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
                       ["baga-test-eps.slk", "--eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
+                      ["baga-test-2.slk", "--baga-xpure", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["symb-diff.slk", "", (), "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","",(),"Valid.Valid."],
                       ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
@@ -1925,7 +1927,7 @@ my $inv = '--inv-test';
         ["lemmas/nlseg3.slk", "", (), "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # below loops with --imm
-        ["lemmas/nlseg4e1.slk", "--dis-imm", ([]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        ["lemmas/nlseg4e1.slk", "--dis-imm", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/nlseg4e1.slk", "--dis-imm", ([$lem,"Valid.Valid"]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
@@ -2330,7 +2332,8 @@ sub sleek_process_file  {
               if (!$entail_results) { @failures = ('no result  for {E}'), @failures;
                                       $no_result_err = 1;
               }
-              else  { @failures = grep_failures($entail_results, $test->[3],"E"), @failures;}
+              else  { 
+                  @failures = grep_failures($entail_results, $test->[$ent_res_idx],"E"), @failures;}
           }
           if ($#failures >= 0 ){
               local $" = ',';
