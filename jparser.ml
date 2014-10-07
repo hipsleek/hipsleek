@@ -1513,21 +1513,21 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'Name) in
     Obj.repr(
 # 125 "jparser.mly"
-       ( rev _1 )
+       ( (rev _1,None) )
 # 1518 "jparser.ml"
                : 'ClassOrInterfaceType))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'Name) in
     Obj.repr(
 # 129 "jparser.mly"
-       ( rev _1 )
+       ( (rev _1,None) )
 # 1525 "jparser.ml"
                : 'ClassType))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'Name) in
     Obj.repr(
 # 133 "jparser.mly"
-       ( rev _1 )
+       ( (rev _1,None) )
 # 1532 "jparser.ml"
                : 'InterfaceType))
 ; (fun __caml_parser_env ->
@@ -1541,7 +1541,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'Name) in
     Obj.repr(
 # 138 "jparser.mly"
-              ( ArrayType (TypeName (rev _1)) )
+              ( ArrayType (TypeName (rev _1,None)) )
 # 1546 "jparser.ml"
                : 'ArrayType))
 ; (fun __caml_parser_env ->
@@ -1669,14 +1669,14 @@ let yyact = [|
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'Name) in
     Obj.repr(
 # 197 "jparser.mly"
-                 ( rev _2 )
+                 ( (rev _2,None) )
 # 1674 "jparser.ml"
                : 'SingleTypeImportDeclaration))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 3 : 'Name) in
     Obj.repr(
 # 203 "jparser.mly"
-                           ( rev (star_ident :: _2) )
+                           ( (rev (star_ident :: _2),None) )
 # 1681 "jparser.ml"
                : 'TypeImportOnDemandDeclaration))
 ; (fun __caml_parser_env ->
@@ -2213,14 +2213,14 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 2 : 'ArgumentListOpt) in
     Obj.repr(
 # 440 "jparser.mly"
-  ( constructor_invocation [this_ident] _3 )
+  ( constructor_invocation ([this_ident],None) _3 )
 # 2218 "jparser.ml"
                : 'ExplicitConstructorInvocation))
 ; (fun __caml_parser_env ->
     let _3 = (Parsing.peek_val __caml_parser_env 2 : 'ArgumentListOpt) in
     Obj.repr(
 # 442 "jparser.mly"
-  ( constructor_invocation [super_ident] _3 )
+  ( constructor_invocation ([super_ident],None) _3 )
 # 2225 "jparser.ml"
                : 'ExplicitConstructorInvocation))
 ; (fun __caml_parser_env ->
@@ -2236,7 +2236,7 @@ let yyact = [|
     let _5 = (Parsing.peek_val __caml_parser_env 2 : 'ArgumentListOpt) in
     Obj.repr(
 # 449 "jparser.mly"
-  ( constructor_invocation (rev (super_ident :: _1)) _5 )
+  ( constructor_invocation ((rev (super_ident :: _1),None)) _5 )
 # 2241 "jparser.ml"
                : 'ExplicitConstructorInvocation))
 ; (fun __caml_parser_env ->
@@ -3107,14 +3107,14 @@ let yyact = [|
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 818 "jparser.mly"
-        ( Name [this_ident] )
+        ( Name ([this_ident],None) )
 # 3112 "jparser.ml"
                : 'PrimaryNoNewArray))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'Name) in
     Obj.repr(
 # 819 "jparser.mly"
-                 ( Name (rev (this_ident :: _1)) )
+                 ( Name ((rev (this_ident :: _1)),Some VarName) )
 # 3119 "jparser.ml"
                : 'PrimaryNoNewArray))
 ; (fun __caml_parser_env ->
@@ -3163,7 +3163,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'Name) in
     Obj.repr(
 # 831 "jparser.mly"
-                  ( ClassLiteral (TypeName (rev _1)) )
+                  ( ClassLiteral (TypeName ((rev _1),None)) )
 # 3168 "jparser.ml"
                : 'ClassLiteral))
 ; (fun __caml_parser_env ->
@@ -3205,7 +3205,7 @@ let yyact = [|
     let _8 = (Parsing.peek_val __caml_parser_env 0 : 'ClassBodyOpt) in
     Obj.repr(
 # 847 "jparser.mly"
-  ( NewQualifiedClass (Name (rev _1), _4, _6, _8) )
+  ( NewQualifiedClass (Name ((rev _1),Some VarName), _4, _6, _8) )
 # 3210 "jparser.ml"
                : 'ClassInstanceCreationExpression))
 ; (fun __caml_parser_env ->
@@ -3264,7 +3264,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'DimsOpt) in
     Obj.repr(
 # 871 "jparser.mly"
-  ( NewArray (TypeName (rev _2), rev _3, _4, None) )
+  ( NewArray (TypeName ((rev _2),None), rev _3, _4, None) )
 # 3269 "jparser.ml"
                : 'ArrayCreationExpression))
 ; (fun __caml_parser_env ->
@@ -3282,7 +3282,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'ArrayInitializer) in
     Obj.repr(
 # 875 "jparser.mly"
-  ( NewArray (TypeName (rev _2), [], _3, Some _4) )
+  ( NewArray (TypeName ((rev _2),None), [], _3, Some _4) )
 # 3287 "jparser.ml"
                : 'ArrayCreationExpression))
 ; (fun __caml_parser_env ->
@@ -3338,14 +3338,14 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'Identifier) in
     Obj.repr(
 # 901 "jparser.mly"
-  ( Dot (_1, _3) )
+  ( Dot (_1, _3,false) )
 # 3343 "jparser.ml"
                : 'FieldAccess))
 ; (fun __caml_parser_env ->
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'Identifier) in
     Obj.repr(
 # 903 "jparser.mly"
-  ( Name [super_ident; _3] )
+  ( Name ([super_ident; _3],None) )
 # 3350 "jparser.ml"
                : 'FieldAccess))
 ; (fun __caml_parser_env ->
@@ -3353,7 +3353,7 @@ let yyact = [|
     let _5 = (Parsing.peek_val __caml_parser_env 0 : 'Identifier) in
     Obj.repr(
 # 905 "jparser.mly"
-  ( Name (rev (_5 :: super_ident :: _1)) )
+  ( Name ((rev (_5 :: super_ident :: _1)),Some VarName) )
 # 3358 "jparser.ml"
                : 'FieldAccess))
 ; (fun __caml_parser_env ->
@@ -3361,7 +3361,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 1 : 'ArgumentListOpt) in
     Obj.repr(
 # 911 "jparser.mly"
-                             ( Call (Name (rev _1), _3) )
+                             ( Call (Name ((rev _1),Some MethodName), _3) )
 # 3366 "jparser.ml"
                : 'MethodInvocation))
 ; (fun __caml_parser_env ->
@@ -3370,7 +3370,7 @@ let yyact = [|
     let _5 = (Parsing.peek_val __caml_parser_env 1 : 'ArgumentListOpt) in
     Obj.repr(
 # 913 "jparser.mly"
-  ( Call (Dot (_1, _3), _5) )
+  ( Call (Dot (_1, _3,false), _5) )
 # 3375 "jparser.ml"
                : 'MethodInvocation))
 ; (fun __caml_parser_env ->
@@ -3378,7 +3378,7 @@ let yyact = [|
     let _5 = (Parsing.peek_val __caml_parser_env 1 : 'ArgumentListOpt) in
     Obj.repr(
 # 915 "jparser.mly"
-  ( Call (Name [super_ident; _3], _5) )
+  ( Call (Name ([super_ident; _3],Some MethodName), _5) )
 # 3383 "jparser.ml"
                : 'MethodInvocation))
 ; (fun __caml_parser_env ->
@@ -3387,7 +3387,7 @@ let yyact = [|
     let _7 = (Parsing.peek_val __caml_parser_env 1 : 'ArgumentListOpt) in
     Obj.repr(
 # 917 "jparser.mly"
-  ( Call (Name (rev (_5 :: super_ident :: _1)), _7) )
+  ( Call (Name ((rev (_5 :: super_ident :: _1)),None), _7) )
 # 3392 "jparser.ml"
                : 'MethodInvocation))
 ; (fun __caml_parser_env ->
@@ -3395,7 +3395,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 1 : 'Expression) in
     Obj.repr(
 # 923 "jparser.mly"
-                        ( ArrayAccess (Name (rev _1), _3) )
+                        ( ArrayAccess (Name ((rev _1),Some VarName), _3) )
 # 3400 "jparser.ml"
                : 'ArrayAccess))
 ; (fun __caml_parser_env ->
@@ -3417,7 +3417,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'Name) in
     Obj.repr(
 # 931 "jparser.mly"
-        ( Name (rev _1) )
+        ( Name ((rev _1),Some VarName) )
 # 3422 "jparser.ml"
                : 'PostfixExpression))
 ; (fun __caml_parser_env ->
@@ -3822,7 +3822,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'Name) in
     Obj.repr(
 # 1102 "jparser.mly"
-       ( Name (rev _1) )
+       ( Name ((rev _1),Some VarName) )
 # 3827 "jparser.ml"
                : 'LeftHandSide))
 ; (fun __caml_parser_env ->
