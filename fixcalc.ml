@@ -751,8 +751,8 @@ let compute_cmd rel_defs bottom_up =
   let nos = string_of_elems nos (fun _ -> 
       string_of_int !Globals.fixcalc_disj) "," in
   let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
-  let rels = List.map (fun (a,_,_) -> 
-                CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
+  let rels = List.map (fun (a,_,_) ->
+      CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
@@ -1151,16 +1151,16 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
-  let non_rec_defs, rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
+  let non_rec_defs, rec_rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
 
   DD.ninfo_hprint (add_str "rec_rel_defs "  (pr_list
-      (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
+      (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rec_rel_defs no_pos;
 
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
-  if rel_defs=[] then true_const @ non_rec_defs
+  if rec_rel_defs=[] then true_const @ non_rec_defs
   else
-    true_const @ non_rec_defs @ (compute_fixpoint_aux rel_defs ante_vars bottom_up)
+    true_const @ (* non_rec_defs @ *) (compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in

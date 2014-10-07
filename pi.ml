@@ -364,6 +364,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let _ = DD.ninfo_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
+            let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
             if rels !=[] then
               begin
                 print_endline "\n*************************************";

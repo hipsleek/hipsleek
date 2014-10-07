@@ -1926,7 +1926,7 @@ my $inv = '--inv-test';
         ["lemmas/nlseg3.slk", "", (), "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # below loops with --imm
-        ["lemmas/nlseg4e1.slk", "--dis-imm", ([]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        ["lemmas/nlseg4e1.slk", "--dis-imm", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/nlseg4e1.slk", "--dis-imm", ([$lem,"Valid.Valid"]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
@@ -2331,7 +2331,8 @@ sub sleek_process_file  {
               if (!$entail_results) { @failures = ('no result  for {E}'), @failures;
                                       $no_result_err = 1;
               }
-              else  { @failures = grep_failures($entail_results, $test->[3],"E"), @failures;}
+              else  { 
+                  @failures = grep_failures($entail_results, $test->[$ent_res_idx],"E"), @failures;}
           }
           if ($#failures >= 0 ){
               local $" = ',';
