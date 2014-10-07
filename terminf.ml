@@ -58,7 +58,7 @@ let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs una
 
 let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs =
   let pr_ctr = fun ta -> pr_pair string_of_loc (pr_pair !print_formula !print_formula)
-    (ta.ass_pos, (ta.ass_ante, ta.ass_cons)) in
+    (ta.ass_pos, (ta.ass_ante, ta.ass_cons_no_templ)) in
   let pr1 = pr_list pr_ctr in
   let pr2 = pr_list (fun (i, ta) -> (string_of_int i) ^ "@" ^ (string_of_loc ta.ass_pos)) in
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in

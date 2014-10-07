@@ -737,6 +737,13 @@ let sub_graph_of_scc_list tg scc_list =
 (* End of TNT Graph *)
 
 (* Template Utilies *)
+let wrap_oc_tl f arg =
+  let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
+  let _ = Tlutils.oc_solver := true in
+  let res = f arg in
+  let _ = Tlutils.oc_solver := oc in
+  res
+
 let templ_of_term_ann by_ann ann =
   match ann with
   | CP.TermR uid 
@@ -796,7 +803,7 @@ let infer_lex_ranking_function_scc prog g scc_edges =
       [rank_exp]
     in Some rank_of_ann
   | Unsat -> 
-    let res = Terminf.infer_lex_template_res prog inf_templs templ_unks templ_assumes in
+    let res = wrap_oc_tl (Terminf.infer_lex_template_res prog inf_templs templ_unks) templ_assumes in
     if is_empty res then None
     else 
       let res = Gen.BList.remove_dups_eq CP.eqExp res in
@@ -862,10 +869,11 @@ let infer_abductive_cond prog ann ante conseq =
       (* let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
       
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
-      let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
-      let _ = Tlutils.oc_solver := true in 
-      let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in
-      let _ = Tlutils.oc_solver := oc in
+      (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
+      (* let _ = Tlutils.oc_solver := true in                                           *)
+      (* let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in *)
+      (* let _ = Tlutils.oc_solver := oc in                                             *)
+      let res = wrap_oc_tl (solve_templ_assume prog (opt_to_list abd_templ_decl)) abd_templ_id in
         
       match res with
       | Sat model ->
