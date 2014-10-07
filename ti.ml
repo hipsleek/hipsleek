@@ -135,6 +135,17 @@ let solve_trrel_list params trrels turels =
     let rec_cond = mkAnd rec_cond (mkNot not_rec_cond) in
     if is_sat rec_cond then acc @ [rec_cond] else acc) [] rec_trrels 
   in
+  
+  let loop_conds = List.fold_left (fun acc tu ->
+    match tu.termu_rhs with
+    | Loop ->
+      let loop_cond = simplify 10 tu.call_ctx params in
+      let loop_cond = mkAnd loop_cond (mkNot not_rec_cond) in
+      if is_sat loop_cond then acc @ [loop_cond] else acc
+    | _ -> acc) [] turels 
+  in
+  let rec_conds = rec_conds @ loop_conds in
+  
   let rec_conds = 
     if is_empty rec_conds then [] 
     else
