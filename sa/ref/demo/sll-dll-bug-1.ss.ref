@@ -1,0 +1,78 @@
+
+!!!Full processing file "demo/sll-dll-bug-1.ss"
+Parsing file "demo/sll-dll-bug-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure paper_fix$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(c,p)&true
+ ensures G1(c,p)&true{,(3,4)=__norm};
+
+dprint: demo/sll-dll-bug-1.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:or[H1(c,p)&!(b1') & c=null&{FLOW,(3,4)=__norm}[]
+          es_ho_vars_map: []H1(c,p)&c=null & !(b')
+; 
+         H1(c,p)&b1' & c!=null&{FLOW,(3,4)=__norm}[]
+         es_ho_vars_map: []H1(c,p)&c!=null & b'
+]
+ ]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(0)H1(c,p)&c=null --> G1(c,p)&
+true(3,4),
+ // POST
+(0)H1(c,p)&c!=null --> G1(c,p)&
+true(3,4)]
+
+Procedure paper_fix$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(c1,p1) ::=  [emp&c1=null; emp&c1!=null],
+ G1(c2,p2) ::=  [emp&c2=null; emp&c2!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c1,p1) ::= 
+ emp&c1!=null
+ or emp&c1=null
+ (3,4),
+ G1(c2,p2) ::= 
+ emp&c2!=null
+ or emp&c2=null
+ (3,4)]
+*************************************
+Stop Omega... 10 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.030775,241)
+Total verification time: 0.311312 second(s)
+	Time spent in main process: 0.292764 second(s)
+	Time spent in child processes: 0.018548 second(s)
+

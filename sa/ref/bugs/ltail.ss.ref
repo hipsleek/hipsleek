@@ -1,0 +1,28 @@
+
+!!!Full processing file "bugs/ltail.ss"
+Parsing file "bugs/ltail.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node... 
+dprint: bugs/ltail.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:c::node<a,b,n>&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []c::node<a,b,n>
+
+ ]
+
+Procedure foo$node SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.01895,174)
+Total verification time: 0.277453 second(s)
+	Time spent in main process: 0.264252 second(s)
+	Time spent in child processes: 0.013201 second(s)
+

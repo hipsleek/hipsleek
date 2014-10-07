@@ -15,7 +15,7 @@ lseg<p> == self=p
 HeapPred H5(node a).
 HeapPred G1(node a, node b).
 
-node foo3(ref node x)
+node foo3(node@R x)
  infer [H5,G1]
  requires H5(x)
  ensures  G1(x',res); //'
@@ -28,7 +28,7 @@ node foo3(ref node x)
 HeapPred H6(node a).
 HeapPred G2(node a, node b).
 
-node get_next(ref node x)
+node get_next(node@R x)
   infer[H6,G2]
   requires H6(x)
   ensures G2(x',res);//'
@@ -38,7 +38,7 @@ node get_next(ref node x)
   return t;
 }
 
-node get_next1(ref node x)
+node get_next1(node@R x)
   requires x::node<_,p>
   ensures x'::node<_,null> & res=p;//'
 {

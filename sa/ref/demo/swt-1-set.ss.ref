@@ -1,0 +1,178 @@
+
+!!!Full processing file "demo/swt-1-set.ss"
+Parsing file "demo/swt-1-set.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & s!=self & B={}) | 
+(exists(B2:exists(B1:exists(v:B=union({v},B1,B2)))) & s!=self & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&B={} & s!=self & self=null&{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1,B2)")
+ Formula: exists(B2:exists(B1:exists(v:B=union({v},B1,B2)))) & 
+exists(r:exists(s_25:s_25=s & r!=s_25)) & exists(l:exists(s_24:s_24=s & 
+l!=s_24)) & s!=self
+
+!!! baga_over(unfolded):Some([([self], s!=self & exists(l:exists(s_24:s_24=s & l!=s_24)) & 
+exists(r:exists(s_25:s_25=s & r!=s_25)) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))))),
+([], self=null & s!=self & B={})])
+!!! formula1: emp&((self=p & B={}) | (exists(B2_1403:(((((exists(r:1<=r & r<p) | 
+exists(r:p<r & 1<=r) | exists(r:r<=(p-1) & r<=(0-1)) | exists(r:p<r & r<=(0-
+1)))) & B2_1403=union({v},B1,B2)) | ((((exists(r:r=0) & 1<=p) | 
+(exists(r:r=0) & p<=(0-1)))) & B2_1403={}))) & 
+exists(B1_1404:exists(v_1405:B=union({v_1405},B1_1404,B2_1403)))) & 
+self!=p & self!=null) | (exists(B2_1400:exists(B1_1401:(((((exists(l:1<=l & 
+l<p) | exists(l:p<l & 1<=l) | exists(l:l<=(p-1) & l<=(0-1)) | exists(l:p<l & 
+l<=(0-1)))) & B1_1401=union({v},B1,B2)) | ((((exists(l:l=0) & 1<=p) | 
+(exists(l:l=0) & p<=(0-1)))) & B1_1401={}))) & 
+exists(v_1402:B=union({v_1402},B1_1401,B2_1400)))) & self!=p & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&B={}&{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1,B2_1417)")
+ Formula: exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & 
+exists(B2_1417:exists(B1:exists(v:B2=union({v},B1,B2_1417))))) & 
+exists(r:exists(p_21:p_21=p & p_21!=r & exists(l:exists(s_24:s_24=p_21 & 
+l!=s_24)) & exists(r_1418:exists(s_25:s_25=p_21 & r_1418!=s_25)))) & 
+exists(p_20:p_20=p) & self!=p
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & B2={}) & 
+exists(r:exists(p_21:p_21=p & p_21!=r) & r=null) & exists(p_20:p_20=p) & 
+self!=p
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1_1419,B2)")
+ Formula: exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & 
+exists(B2:exists(B1_1419:exists(v:B1=union({v},B1_1419,B2)))))) & 
+exists(l:exists(p_22:p_22=p & p_22!=l & 
+exists(l_1420:exists(s_24:s_24=p_22 & l_1420!=s_24)) & 
+exists(r:exists(s_25:s_25=p_22 & r!=s_25)))) & exists(p_23:p_23=p) & self!=p
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & B1={})) & 
+exists(l:exists(p_22:p_22=p & p_22!=l) & l=null) & exists(p_23:p_23=p) & 
+self!=p
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1,B2_1417)")
+ Formula: self!=p & exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r & 
+exists(l:exists(s_24:s_24=p_21 & l!=s_24)) & 
+exists(r_1418:exists(s_25:s_25=p_21 & r_1418!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & 
+exists(B2_1417:exists(B1:exists(v:B2=union({v},B1,B2_1417)))))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: self!=p & exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r) & 
+r=null) & exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & B2={})
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: ((self!=p & exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r & 
+exists(l:exists(s_24:s_24=p_21 & l!=s_24)) & 
+exists(r_1418:exists(s_25:s_25=p_21 & r_1418!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & 
+exists(B2_1417:exists(B1:exists(v:B2=union({v},B1,B2_1417)))))) | (self!=p & 
+exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r) & r=null) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & B2={})))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1_1419,B2)")
+ Formula: self!=p & exists(p_23:p_23=p) & exists(l:exists(p_22:p_22=p & p_22!=l & 
+exists(l_1420:exists(s_24:s_24=p_22 & l_1420!=s_24)) & 
+exists(r:exists(s_25:s_25=p_22 & r!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & 
+exists(B2:exists(B1_1419:exists(v:B1=union({v},B1_1419,B2))))))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},B1_1419,B2)")
+ Formula: ((self!=p & exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r & 
+exists(l:exists(s_24:s_24=p_21 & l!=s_24)) & 
+exists(r_1418:exists(s_25:s_25=p_21 & r_1418!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & 
+exists(B2_1417:exists(B1:exists(v:B2=union({v},B1,B2_1417)))))) | (self!=p & 
+exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r) & r=null) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & B2={})) | (self!=p & 
+exists(p_23:p_23=p) & exists(l:exists(p_22:p_22=p & p_22!=l & 
+exists(l_1420:exists(s_24:s_24=p_22 & l_1420!=s_24)) & 
+exists(r:exists(s_25:s_25=p_22 & r!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & 
+exists(B2:exists(B1_1419:exists(v:B1=union({v},B1_1419,B2))))))))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: self!=p & exists(p_23:p_23=p) & exists(l:exists(p_22:p_22=p & p_22!=l) & 
+l=null) & exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & B1={}))
+
+!!! baga_over(unfolded):Some([([self], ((self!=p & exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r & 
+exists(l:exists(s_24:s_24=p_21 & l!=s_24)) & 
+exists(r_1418:exists(s_25:s_25=p_21 & r_1418!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & 
+exists(B2_1417:exists(B1:exists(v:B2=union({v},B1,B2_1417)))))) | (self!=p & 
+exists(p_20:p_20=p) & exists(r:exists(p_21:p_21=p & p_21!=r) & r=null) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2))) & B2={})) | (self!=p & 
+exists(p_23:p_23=p) & exists(l:exists(p_22:p_22=p & p_22!=l & 
+exists(l_1420:exists(s_24:s_24=p_22 & l_1420!=s_24)) & 
+exists(r:exists(s_25:s_25=p_22 & r!=s_25)))) & 
+exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & 
+exists(B2:exists(B1_1419:exists(v:B1=union({v},B1_1419,B2))))))) | 
+(self!=p & exists(p_23:p_23=p) & exists(l:exists(p_22:p_22=p & p_22!=l) & 
+l=null) & exists(B2:exists(B1:exists(v:B=union({v},B1,B2)) & B1={}))))),
+([], self=p & B={})])
+Checking procedure lscan$node~node~node... 
+Mona is restarting ... cycle limit reached
+
+ store dump :Imply: ante: prev_1929=prev & B1=union({v_1850},B1_1852,B2_1854) & n_79'=l_1851 & 
+tmp_80'=r_1853 & right_30_1910=r_1853 & left_31_1928=l_1851 & 
+cur_2338=n_79' & prev'=null & ((((((1<=r_1408 & r_1408<sentinel_1856 & 
+sentinel_1856<prev) | (1<=r_1408 & r_1408<sentinel_1856 & 1<=prev & 
+prev<sentinel_1856) | (1<=r_1408 & r_1408<sentinel_1856 & prev<=(0-1)))) & 
+B2_1407=union({v_1395},B1_1394,B2_1393) & B2=union({v_1411},B1_1410,
+B2_1407)) | ((((sentinel_1856<=(r_1408-1) & sentinel_1856<=(prev-1) & 
+1<=r_1408 & 1<=prev) | (1<=prev & prev<sentinel_1856 & 
+sentinel_1856<r_1408) | (sentinel_1856<prev & prev<=(0-1) & 1<=r_1408) | 
+((prev+1)<=sentinel_1856 & sentinel_1856<r_1408 & prev<=(0-1) & 
+1<=r_1408))) & B2_1407=union({v_1395},B1_1394,B2_1393) & B2=union({v_1411},
+B1_1410,B2_1407)) | ((((r_1408<sentinel_1856 & sentinel_1856<prev & 
+r_1408<=(0-1) & 1<=prev) | (1<=prev & prev<sentinel_1856 & r_1408<=(0-1)) | 
+(r_1408<sentinel_1856 & sentinel_1856<prev & prev<=(0-1)) | 
+(r_1408<=(sentinel_1856-1) & r_1408<=(0-1) & prev<=(sentinel_1856-1) & 
+prev<=(0-1)))) & B2_1407=union({v_1395},B1_1394,B2_1393) & B2=union({v_1411},
+B1_1410,B2_1407)) | (((((sentinel_1856+1)<=r_1408 & r_1408<=(0-1) & 
+1<=prev) | ((sentinel_1856+1)<=r_1408 & r_1408<=(0-1) & sentinel_1856<prev & 
+prev<=(0-1)) | ((prev+1)<=sentinel_1856 & sentinel_1856<r_1408 & r_1408<=(0-
+1)))) & B2_1407=union({v_1395},B1_1394,B2_1393) & B2=union({v_1411},B1_1410,
+B2_1407)) | ((((r_1409=0 & 1<=sentinel_1856 & sentinel_1856<prev) | 
+(r_1409=0 & 1<=prev & prev<sentinel_1856) | (r_1409=0 & prev<=(0-1) & 
+1<=sentinel_1856))) & B2_1407={} & B2=union({v_1411},B1_1410,B2_1407)) | 
+((((r_1409=0 & sentinel_1856<=(0-1) & 1<=prev) | (r_1409=0 & (sentinel_1856+
+1)<=prev & prev<=(0-1)) | (r_1409=0 & prev<sentinel_1856 & sentinel_1856<=(0-
+1)))) & B2_1407={} & B2=union({v_1411},B1_1410,B2_1407)) | ((((1<=l_1414 & 
+l_1414<sentinel_1856 & sentinel_1856<prev) | (1<=l_1414 & 
+l_1414<sentinel_1856 & 1<=prev & prev<sentinel_1856) | (1<=l_1414 & 
+l_1414<sentinel_1856 & prev<=(0-1)))) & B1_1413=union({v_1395},B1_1394,
+B2_1393) & B2=union({v_1416},B1_1413,B2_1412)) | ((((sentinel_1856<=(l_1414-
+1) & sentinel_1856<=(prev-1) & 1<=l_1414 & 1<=prev) | (1<=prev & 
+prev<sentinel_1856 & sentinel_1856<l_1414) | (sentinel_1856<prev & prev<=(0-
+1) & 1<=l_1414) | ((prev+1)<=sentinel_1856 & sentinel_1856<l_1414 & prev<=(0-
+1) & 1<=l_1414))) & B1_1413=union({v_1395},B1_1394,B2_1393) & 
+B2=union({v_1416},B1_1413,B2_1412)) | ((((l_1414<sentinel_1856 & 
+sentinel_1856<prev & l_1414<=(0-1) & 1<=prev) | (1<=prev & 
+prev<sentinel_1856 & l_1414<=(0-1)) | (l_1414<sentinel_1856 & 
+sentinel_1856<prev & prev<=(0-1)) | (l_1414<=(sentinel_1856-1) & l_1414<=(0-
+1) & prev<=(sentinel_1856-1) & prev<=(0-1)))) & B1_1413=union({v_1395},
+B1_1394,B2_1393) & B2=union({v_1416},B1_1413,B2_1412)) | (((((sentinel_1856+
+1)<=l_1414 & l_1414<=(0-1) & 1<=prev) | ((sentinel_1856+1)<=l_1414 & 
+l_1414<=(0-1) & sentinel_1856<prev & prev<=(0-1)) | ((prev+
+1)<=sentinel_1856 & sentinel_1856<l_1414 & l_1414<=(0-1)))) & 
+B1_1413=union({v_1395},B1_1394,B2_1393) & B2=union({v_1416},B1_1413,
+B2_1412)) | ((((l_1415=0 & 1<=sentinel_1856 & sentinel_1856<prev) | 
+(l_1415=0 & 1<=prev & prev<sentinel_1856) | (l_1415=0 & prev<=(0-1) & 
+1<=sentinel_1856))) & B1_1413={} & B2=union({v_1416},B1_1413,B2_1412)) | 
+((((l_1415=0 & sentinel_1856<=(0-1) & 1<=prev) | (l_1415=0 & (sentinel_1856+
+1)<=prev & prev<=(0-1)) | (l_1415=0 & prev<sentinel_1856 & sentinel_1856<=(0-
+1)))) & B1_1413={} & B2=union({v_1416},B1_1413,B2_1412)) | 
+(sentinel_1856=prev & B2={}))) & ((((((1<=r_1853 & r_1853<s_1849) | 
+(s_1849<r_1853 & 1<=r_1853) | (r_1853<=(s_1849-1) & r_1853<=(0-1)) | 
+(s_1849<r_1853 & r_1853<=(0-1)))) & B2_1854=union({v_1395},B1_1394,
+B2_1393)) | ((((r_1853=0 & 1<=s_1849) | (r_1853=0 & s_1849<=(0-1)))) & 
+B2_1854={}))) & ((((((1<=l_1851 & l_1851<s_1848) | (s_1848<l_1851 & 
+1<=l_1851) | (l_1851<=(s_1848-1) & l_1851<=(0-1)) | (s_1848<l_1851 & 
+l_1851<=(0-1)))) & B1_1852=union({v_1395},B1_1394,B2_1393)) | ((((l_1851=0 & 
+1<=s_1848) | (l_1851=0 & s_1848<=(0-1)))) & B1_1852={}))) & cur_2338=null & 
+cur_2338!=sentinel' & sentinel'=sentinel & sentinel_1856=sentinel & 
+sentinel_1855=sentinel & s_1849=sentinel_1855 & s_1848=sentinel_1855 & 
+cur_1930!=null & prev_2339=cur_1930 & sentinel_1855!=cur_1930 & cur!=null & 
+cur_1930=cur & cur'=prev_2339
+	     conseq:  cur'=null
+
+Mona is restarting ... mona aborted execution
+[mona] Warning: imply --> false(from mona failure - formula too complex --> Mona aborted)
+

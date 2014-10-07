@@ -1,0 +1,20 @@
+Starting Omega...oc
+H2 is defined.
+G2 is defined.
+HP_5 is defined.
+HP_6 is defined.
+HP_9 is defined.
+
+*************************************
+*******relational assumptions (1) ********
+*************************************
+[ HP_6(y,x) --> y::node<val_27_794,next_27_795> * HP_9(next_27_795,x)(3,4),
+ y_56::node<val_27_794,next_27_795> * HP_9(next_27_795,x_55) * 
+  HP_5(n_54,y_56) * x_55::node<_,n_53> --> G2(x_55,y_56)(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055549 second(s)
+	Time spent in main process: 0.041753 second(s)
+	Time spent in child processes: 0.013796 second(s)
+

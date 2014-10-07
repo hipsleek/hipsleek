@@ -19,6 +19,7 @@ void paper_fix (struct node* x, struct node* p)
         if (x!=NULL) 
         {
             x->prev=p;
+            //@ dprint;
             paper_fix(x->next,x); 
         }
 }

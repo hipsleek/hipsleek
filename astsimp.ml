@@ -1340,6 +1340,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+          ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
@@ -1454,7 +1455,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps1, pure_chps = List.split pr_chps in
+      let chps1, pure_chps = List.split pr_chps in
       let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
           let crels1 = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
@@ -1873,7 +1874,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | Some f -> f in
       let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
-      Debug.tinfo_hprint (add_str "under(baga)" pr_d) under_f no_pos;
       let baga_under_formula = match under_f with
         | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
         | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos
@@ -3347,18 +3347,18 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     post-condition. Those variables are necessary in order
     to prove the final correctness. **)
 and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spec_var list) =
-  (** An Hoa : Internal function to collect important variables in the an ext_formula **)   
+  (** An Hoa : Internal function to collect important variables in the an ext_formula **)
   let rec helper f = match f with
-    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches 
+    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches
     | CF.EBase b -> b.CF.formula_struc_implicit_inst
-    | CF.EAssume _ -> []
-    | CF.EInfer b -> 
+    | CF.EAssume b -> []
+    | CF.EInfer b ->
           if deep_flag then helper b.CF.formula_inf_continuation
           else []
-    | CF.EList b -> fold_l_snd helper b 
+    | CF.EList b -> fold_l_snd helper b
   in
   helper spec
-      
+
 (** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
@@ -5018,12 +5018,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_body = body;
             exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
+            I.exp_while_f_name = a_wn;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
             (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
+            let _ =  Debug.ninfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
+            let _ =  Debug.ninfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
             (*ONLY NEED THOSE that are modified in the body and condition*)
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
@@ -5040,7 +5043,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fn3 = fresh_name () in
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
-            let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
+            let w_name = if String.compare a_wn "" == 0 then fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos)
+            else a_wn
+            in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
@@ -5106,16 +5111,30 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_is_invoked = true;
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
-                  I.proc_test_comps = proc.I.proc_test_comps} in
-            (* let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in *)
+                  I.proc_test_comps = if not !Globals.validate then None else
+                    I.look_up_test_comps prog.I.prog_test_comps w_name} in
+            let _ = Debug.ninfo_hprint (add_str " w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
             let w_proc = match w_proc.I.proc_static_specs with
-              |  IF.EList [] -> let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body w_formal_args I.void_type pos in
+              |  IF.EList [] ->
+                     let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
+                         String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
+                     ) w_formal_args in
+                     let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                     let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
+                 let full_args_wi = if ninfer_args = [] then args_wi
+                 else List.fold_left (fun r p ->
+                     try
+                       let iarg = List.find (fun (id,_) -> String.compare id p.Iast.param_name = 0) args_wi in
+                       r@[iarg]
+                     with _ -> r@[(p.Iast.param_name, NI)]
+                 ) [] w_formal_args in
                  {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
                      I.proc_static_specs = new_prepost;
-                     I.proc_args_wi = args_wi;
+                     I.proc_args_wi = full_args_wi;
                  }
-              | _ ->  w_proc
+              | _ -> w_proc
             in
               let temp_call =  I.CallNRecv {
                   I.exp_call_nrecv_method = w_name;
@@ -6013,6 +6032,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
                             CF.formula_struc_implicit_inst = ext_impl;
                             CF.formula_struc_exists = ext_exis;
                             CF.formula_struc_base = nb;
+                            CF.formula_struc_is_requires = b.IF.formula_struc_is_requires;
                             CF.formula_struc_continuation = nc;
                             CF.formula_struc_pos = b.IF.formula_struc_pos} in
         (n_tl,cf)    
@@ -7762,6 +7782,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     IF.formula_struc_implicit_inst =implvar;                    
                     IF.formula_struc_explicit_inst = all_expl;
                     IF.formula_struc_exists = [];
+                    IF.formula_struc_is_requires = b.IF.formula_struc_is_requires;
                     IF.formula_struc_continuation = nc;
                     IF.formula_struc_pos = pos},rdups (h2@h3))
           | IF.EInfer b -> (* Tricky thing *)
@@ -7807,6 +7828,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 				map_l_snd (helper hv) b.IF.formula_case_branches}
 		  | IF.EBase {
 			IF.formula_struc_explicit_inst = init_expl;
+                        IF.formula_struc_is_requires = ir;
 			IF.formula_struc_continuation = cont;
 			IF.formula_struc_base = base; }->		
 			if (List.length (inters hv init_expl))>0 then 
@@ -7835,6 +7857,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
 			      IF.formula_struc_implicit_inst =hack_filter_global_rel prog impl_var;		
 			      IF.formula_struc_explicit_inst = all_expl;
 			      IF.formula_struc_exists = [];
+                              IF.formula_struc_is_requires = ir;
 			      IF.formula_struc_continuation = map_opt (helper new_v_no_inst) cont;
 			      IF.formula_struc_pos = pos}
 		  | IF.EList b -> IF.EList (map_l_snd (helper hv) b)

@@ -1,0 +1,50 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 2: Fail.(must) cause:do_unmatched_rhs : x::node<p>
+
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail 3: Fail.(may) cause:do_unmatched_rhs : x::node<p>
+
+ <1>emp&x!=null&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail 4: Fail.(may) cause:do_unmatched_rhs : x::node<p>
+
+ <1>emp&y!=null&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail 5: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+Entail 6: Fail.(may) cause:do_unmatched_rhs : x::node<p>
+
+ <1>z::node<_>&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 12
+SAT % Hit   : 33.33%
+IMPLY Count : 5
+IMPLY % Hit : 20.%
+Time(cache overhead) : 0.000602 (seconds)
+
+!!! log(small):(0.012469,24)
+Total verification time: 0.065813 second(s)
+	Time spent in main process: 0.052393 second(s)
+	Time spent in child processes: 0.01342 second(s)
+

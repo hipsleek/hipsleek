@@ -1,0 +1,32 @@
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+HP_2 is defined.
+G is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::= x::node<key,left,DP> * HP_1(left)&x!=null(3,4),
+ HP_1(left1) ::= 
+ left1::node<key,left,DP> * HP_1(left)
+ or emp&left1=null
+ (3,4),
+ HP_2(a) ::= NONE,
+ G(x1) ::= 
+ x1::node<key1,left2,DP> * G(left2)&left2!=null
+ or x1::node<key1,left2,DP>&left2=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 6
+SAT % Hit   : 16.66%
+Time(cache overhead) : 0.000265 (seconds)
+
+!!! log(small):(0.00706,6)
+Total verification time: 0.069301 second(s)
+	Time spent in main process: 0.054323 second(s)
+	Time spent in child processes: 0.014978 second(s)
+

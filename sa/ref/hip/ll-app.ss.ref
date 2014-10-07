@@ -1,0 +1,79 @@
+
+!!!Full processing file "hip/ll-app.ss"
+Parsing file "hip/ll-app.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[]
+!!! neqs:[(x,y),(x,r_38)]
+Checking procedure append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,H3,H4]requires H1(x) * H2(y)&true
+ ensures H3(x') * H4(y)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x)&true --> x::node<val1,next1> * HP_1236(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1236(next1)&next1!=null --> H1(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)H2(y)&true --> H2(y)&
+true(3,4),
+ // POST
+(1;0)x'::node<val1,y> * HP_1236(next1)&next1=null --> H3(x')&
+true(3,4),
+ // POST
+(1;0)H2(y)&true --> H4(y)&
+true(3,4),
+ // POST
+(2;0)x'::node<val1,r1> * H3(r1)&true --> H3(x')&
+true(3,4),
+ // POST
+(2;0)H4(y)&true --> H4(y)&
+true(3,4)]
+
+Procedure append$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [x1::node<val,next> * HP_1236(next)&x1!=null],
+ H3(x2) ::=  [x2::node<val,y>; x2::node<val,y> * H3(y)],
+ H4(y1) ::=  [hfalse; htrue],
+ HP_1236(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1236(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= x1::node<val,next> * HP_1236(next)&x1!=null(3,4),
+ H3(x2) ::= 
+ x2::node<val,y> * H3(y)
+ or x2::node<val,y>
+ (3,4),
+ H4(y1) ::= htrue(3,4),
+ HP_1236(next2) ::= 
+ next2::node<val,next> * HP_1236(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.046715,261)
+Total verification time: 0.321755 second(s)
+	Time spent in main process: 0.307157 second(s)
+	Time spent in child processes: 0.014598 second(s)
+

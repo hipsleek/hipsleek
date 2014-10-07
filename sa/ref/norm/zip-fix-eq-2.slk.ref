@@ -1,0 +1,16 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! fixpoint:[( true, true, P3(n,m), m=n)]
+Stop Omega... 5 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 5
+IMPLY % Hit : 20.%
+Time(cache overhead) : 0.000931 (seconds)
+
+!!! log(small):(0.011805,9)
+Total verification time: 0.093244 second(s)
+	Time spent in main process: 0.052137 second(s)
+	Time spent in child processes: 0.041107 second(s)
+

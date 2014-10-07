@@ -1,0 +1,136 @@
+
+!!!Full processing file "demo/tll3.ss"
+Parsing file "demo/tll3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & ll=lr) | (self=ll & self!=null) | self!=null)&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((self=null & ll=lr) | (self>0 & ll=self))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & ll=lr)])
+!!! neqs:[(x,r)]
+Checking procedure set_right$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1326,HP_1327,G]requires HP_1326(x) * HP_1327(r)&
+true
+ ensures G(x,r,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1326(x)&true --> x::node<left1,right1,next1> * HP_1333(left1) * 
+HP_1334(right1) * HP_1335(next1)&
+true(3,4),
+ // PRE_REC
+(2;1;0)HP_1333(left1)&left1!=null --> HP_1326(left1)&
+true(3,4),
+ // PRE_REC
+(2;1;0)HP_1327(r)&true --> HP_1327(r)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1334(right1)&right1!=null --> HP_1326(right1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)G(right1,r',l1')&right1!=null --> HP_1327(l1') * HP_1483(right1,r')&
+true(3,4),
+ // POST
+(1;1;0)HP_1327(r) * HP_1333(left1) * HP_1334(right1) * 
+res::node<left1,right1,r>&left1=null & right1=null --> G(x,r,res)&
+true(3,4),
+ // POST
+(2;1;0)x::node<left1,right1,next1> * G(left1,r,res) * HP_1334(right1) * 
+HP_1335(next1)&left1!=null & right1=null --> G(x,r,res)&
+true(3,4),
+ // POST
+(1;2;0)x::node<left1,right1,next1> * HP_1333(left1) * G(right1,r,res) * 
+HP_1335(next1)&left1=null & right1!=null --> G(x,r,res)&
+true(3,4),
+ // POST
+(2;2;0)x::node<left1,right1,next1> * G(left1,l1,res) * HP_1483(right1,r) * 
+HP_1335(next1)&left1!=null & right1!=null --> G(x,r,res)&
+true(3,4)]
+
+Procedure set_right$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&((exists(next_30_1332: XPURE(HP_1335(next_30_1332))) & self!=null) | 
+(exists(next_30_1332: XPURE(HP_1335(next_30_1332))) & self!=null) | 
+(self=res1 & res1!=null) | 
+(exists(next_30_1332: XPURE(HP_1335(next_30_1332))) & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([res_1623], res_1623=self),
+([self], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1326(x1) ::=  [x1::node<left,right,DP> * HP_1333(left) * HP_1334(right)&x1!=null & 
+x1!=null],
+ HP_1327(r1) ::=  [DP_1580(r)|#|res::node<left_30_1330,right_30_1331,r_1620>&
+left_30_1330=null & right_30_1331=null],
+ G(x2,r2,res1) ::=  [x2::node<left,right,DP> * G(left,r2,res1)&right=null & left!=null; 
+x2::node<left,right,DP> * G(right,r2,res1)&left=null & right!=null; 
+x2::node<left,right,DP> * G(left,l,res1) * DP_1581(right,r)&left!=null & 
+right!=null; res1::node<left,right,r2> * (htrue)&left=null & right=null & 
+x2=res1],
+ HP_1333(left2) ::=  [emp&left2=null; left2::node<left,right,DP> * HP_1333(left) * 
+HP_1334(right)],
+ HP_1334(right2) ::=  [emp&right2=null; right2::node<left,right,DP> * HP_1333(left) * 
+HP_1334(right)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1326(x1) ::= x1::node<left,right,DP> * HP_1333(left) * HP_1334(right)&x1!=null & x1!=null(3,4),
+ HP_1327(r1) |#| res::node<left_30_1330,right_30_1331,r_1620>&
+  left_30_1330=null & right_30_1331=null ::= emp(3,4),
+ G(x2,r2,res1) ::= 
+ x2::node<left,right,DP> * G(right,r2,res1)&left=null & right!=null
+ or x2::node<left,right,DP> * G(left,l,res1) * DP_1581(right,r)&left!=null & 
+    right!=null
+ or res1::node<left,right,r2> * (htrue)&left=null & right=null & x2=res1
+ or x2::node<left,right,DP> * G(left,r2,res1)&right=null & left!=null
+ (3,4),
+ H(x,r) ::= HP_1326(x) * HP_1327(r),
+ HP_1333(left2) ::= 
+ left2::node<left,right,DP> * HP_1333(left) * HP_1334(right)
+ or emp&left2=null
+ (3,4),
+ HP_1334(right2) ::= 
+ right2::node<left,right,DP> * HP_1333(left) * HP_1334(right)
+ or emp&right2=null
+ (3,4)]
+*************************************
+Stop Omega... 53 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.21054,795)
+Total verification time: 0.562216 second(s)
+	Time spent in main process: 0.50385 second(s)
+	Time spent in child processes: 0.058366 second(s)
+

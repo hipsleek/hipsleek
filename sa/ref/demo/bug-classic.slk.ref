@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "demo/bug-classic.slk", line 6, characters 8-9
+ error: Stream.Error("EQEQ expected after [view_header] (in [view_decl])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.051772 second(s)
+	Time spent in main process: 0.037145 second(s)
+	Time spent in child processes: 0.014627 second(s)
+

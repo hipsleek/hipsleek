@@ -1028,7 +1028,7 @@ let generate_hp_def_from_unk_hps hpdefs unk_hpargs defined_hps post_hps unk_map 
       (fun _ _ _ _ -> generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps unk_map equivs)
       unk_hpargs hpdefs defined_hps unk_map
 
-let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
+let generate_hp_def_from_link_hps prog iflow cond_path equivs link_hpargs=
   let trans_link_hpdef def=
     let fs, ogs = List.split def.CF.def_rhs in
     let f = CF.disj_of_list fs no_pos in
@@ -1037,8 +1037,9 @@ let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
       CF.hprel_def_kind = def.CF.def_cat;
       CF.hprel_def_hrel = def.CF.def_lhs;
       CF.hprel_def_guard = og;
-      CF.hprel_def_body = [(cond_path, Some f)];
-      CF.hprel_def_body_lib = Some f;
+      CF.hprel_def_body = [(cond_path, Some f, Some iflow)];
+      CF.hprel_def_body_lib = [(f, Some iflow)];
+      CF.hprel_def_flow = Some iflow;
     }
   in
   let link_hps = List.map fst link_hpargs in
@@ -1046,7 +1047,7 @@ let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
   CP.mem_svl hp1 link_hps) equivs in
   let equiv_link_hpdefs, define_link_hps = List.fold_left (generate_equiv_unkdef link_hpargs) ([],[]) link_equivs in
   let link_hpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp define_link_hps)) link_hpargs in
-  let link_hpdefs =List.map (Sautil.mk_link_hprel_def prog cond_path) link_hpargs1 in
+  let link_hpdefs =List.map (Sautil.mk_link_hprel_def prog iflow cond_path) link_hpargs1 in
   ((List.map trans_link_hpdef equiv_link_hpdefs)@link_hpdefs)
 
 let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
@@ -1989,11 +1990,11 @@ let unify_shape_equiv prog unk_hps link_hps hpdefs equivs0=
 
 let unify_pred = unify_shape_equiv
 
-let check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
+let check_equiv_wo_libs_x iprog prog iflow sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
   (*partition: matched with lib already*)
   let lib_hps, lib_hpdefs, rem_hpdefs = List.fold_left (fun (r1,r2,r3) hpdef->
       match hpdef.CF.hprel_def_body_lib with
-        | None -> begin
+        | [] -> begin
             match hpdef.CF.hprel_def_kind with
               | CP.HPRelDefn (hp,_,_) ->
                     if CP.mem_svl hp sel_hps then
@@ -2001,7 +2002,7 @@ let check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqm
                     else (r1@[hp], r2@[hpdef], r3)
               | _ -> (r1, r2@[hpdef], r3)
           end
-        | Some _ ->begin
+        | _ ->begin
             match hpdef.CF.hprel_def_kind with
               | CP.HPRelDefn (hp,_,_) ->
                     (r1@[hp], r2@[hpdef], r3)
@@ -2020,14 +2021,14 @@ let check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqm
   ) ([],[],[]) hp_defs in
   let hp_defs1a = post_hp_defs@hp_defs1 in
   let hp_defs2, eqmap2=unify_pred prog [] unk_hps hp_defs1a eqmap1 in
-  let rem_hpdefs1 = Sautil.pred_split_update_hpdefs (List.map fst eqmap2) rem_hpdefs hp_defs2 in
+  let rem_hpdefs1 = Sautil.pred_split_update_hpdefs iflow (List.map fst eqmap2) rem_hpdefs hp_defs2 in
   (rem_hpdefs1@lib_hpdefs, hp_defs2@lib_hp_defs)
 
-let check_equiv_wo_libs iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
+let check_equiv_wo_libs iprog prog iflow sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln Cprinter.string_of_hprel_def in
   Debug.no_3 "check_equiv_wo_libs" !CP.print_svl pr2 pr1 (pr_pair pr2 pr1)
-      (fun _ _ _ -> check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1)
+      (fun _ _ _ -> check_equiv_wo_libs_x iprog prog iflow sel_hps post_hps unk_hps hpdefs hp_defs eqmap1)
       sel_hps hpdefs hp_defs
 
 
@@ -3037,8 +3038,8 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
             try
               let hp1 = CF.get_hpdef_name hpdef.CF.hprel_def_kind in
               if CP.eq_spec_var hp hp1 then
-                let n_hpdef = {hpdef with CF.hprel_def_body = List.map (fun f -> ([], Some f)) new_fs;
-                    CF.hprel_def_body_lib = None;
+                let n_hpdef = {hpdef with CF.hprel_def_body = List.map (fun f -> ([], Some f, None)) new_fs;
+                    CF.hprel_def_body_lib = [];
                 }
                 in
                 done_hpdefs@[n_hpdef]@rest

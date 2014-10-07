@@ -1,0 +1,13 @@
+Starting Omega...oc
+WARNING : parsing problem T is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem T is neither a ranking function nor a relation nor a heap predicate
+H is defined.
+HP is defined.
+G is defined.
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.051852 second(s)
+	Time spent in main process: 0.03788 second(s)
+	Time spent in child processes: 0.013972 second(s)
+

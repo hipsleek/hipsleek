@@ -1,0 +1,102 @@
+
+!!!Full processing file "errors/ll-concat.ss"
+Parsing file "errors/ll-concat.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_12
+!!! generate unknown predicate for Post synthesis of : :GP_13
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! generate unknown predicate for Pre synthesis of f_r_1215_while_13_6$node: :HP_1216
+!!! generate unknown predicate for Post synthesis of f_r_1215_while_13_6$node: :GP_1218
+Checking procedure f_r_1215_while_13_6$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1216,GP_1218]requires HP_1216(x)&true
+ ensures GP_1218(x,x')&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure f_r_1215_while_13_6$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure f_r_1215_while_13_6$node
+
+!!! proc.proc_name:f_r_1215_while_13_6$node
+Checking procedure get_last$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_12,GP_13]requires HP_12(x)&true
+ ensures GP_13(x,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure get_last$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure get_last$node
+
+!!! proc.proc_name:get_last$node
+Checking procedure concat$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,y)&true
+ ensures G(x,y,res)&true{,(3,4)=__norm};
+Proving binding in method concat$node~node for spec  EAssume 
+   G(x,y,res)&{FLOW,(3,4)=__norm}[]
+   , Line 24
+
+( [(,0 ); (,1 ); (,0 ); (,1 )]) bind: node  last_40'::node<val_31_1206',next_31_1207'> cannot be derived from context
+errors/ll-concat.ss_31:10_31:19
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 ); (,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-concat.ss_31:10_31:19
+
+Context of Verification Failure: 1 File "errors/ll-concat.ss",Line:24,Col:15
+Last Proving Location: 1 File "errors/ll-concat.ss",Line:31,Col:10
+
+Procedure concat$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure concat$node~node
+
+!!! proc.proc_name:concat$node~nodeStop Omega... 5 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.057589,311)
+Total verification time: 0.356962 second(s)
+	Time spent in main process: 0.342294 second(s)
+	Time spent in child processes: 0.014668 second(s)
+

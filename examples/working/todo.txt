@@ -907,6 +907,16 @@ Total verification time: 452.68 second
 	Number of false contexts: 427
 
 ====================================================================
+./run-fast-tests.pl imm -flags "--eps"
+
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+.
+Total verification time: 756.47 second
+	Time spent in main process: 320.22 second
+	Time spent in child processes: 436.25 second
+	Number of false contexts: 63
 ====================================================================
 ====================================================================
 ====================================================================

@@ -1,0 +1,51 @@
+
+!!!Full processing file "bugs/tail.ss"
+Parsing file "bugs/tail.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(c)&true
+ ensures G1(res,c)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(c)&true --> c::node<val1,next1> * HP_1220(next1)&
+true(3,4),
+ // POST
+(0)c::node<val1,res> * HP_1220(res)&true --> G1(res,c)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(c1) ::=  [c1::node<val,DP>],
+ G1(res1,c2) ::=  [c2::node<val,res1>&res1=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c1) ::= c1::node<val,DP>(3,4),
+ G1(res1,c2) ::= c2::node<val,res1>&res1=DP(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.020562,179)
+Total verification time: 0.281371 second(s)
+	Time spent in main process: 0.267441 second(s)
+	Time spent in child processes: 0.01393 second(s)
+

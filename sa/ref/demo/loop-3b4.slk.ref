@@ -1,0 +1,22 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::= hfalse&false(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.000103 (seconds)
+
+!!! log(small):(0.004726,2)
+Total verification time: 0.054672 second(s)
+	Time spent in main process: 0.040574 second(s)
+	Time spent in child processes: 0.014098 second(s)
+

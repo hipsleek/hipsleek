@@ -105,15 +105,15 @@ type lineDirectiveStyle =
   | LinePreprocessorOutput     (** Use # nnn directives (in gcc mode) *)
 
 let lineDirectiveStyle = ref (Some LinePreprocessorInput)
- 
+
 let print_CIL_Input = ref false
-           
+
 let printCilAsIs = ref false
 
 let lineLength = ref 80
 
 let warnTruncate = ref true
-                      
+
 (* sm: return the string 's' if we're printing output for gcc, suppres
  * it if we're printing for CIL to parse back in.  the purpose is to
  * hide things from gcc that it complains about, but still be able
@@ -456,9 +456,9 @@ and varinfo = {
 and storage = 
     NoStorage |                         (** The default storage. Nothing is 
                                          * printed  *)
-    Static |                           
-    Register |                          
-    Extern                              
+    Static |
+    Register |
+    Extern
 
 
 (** Expressions (Side-effect free)*)
@@ -478,7 +478,7 @@ and exp =
       * having type pointer to character. *)
   | AlignOf    of typ * location        (** Has [unsigned int] type *)
   | AlignOfE   of exp * location
-                                        
+
   | UnOp       of unop * exp * typ * location
                                         (** Unary operation. Includes 
                                             the type of the result *)
@@ -3205,6 +3205,9 @@ class type cilPrinter = object
   method pBlock: unit -> block -> Pretty.doc
     (** Print a block. *)
 
+  method pFunDecl: unit -> fundec -> Pretty.doc
+    (** Print a fundec. *)
+
   method pGlobal: unit -> global -> doc
     (** Global (vars, types, etc.). This can be slow and is used only by 
      * {!Cil.printGlobal} but by {!Cil.dumpGlobal} for everything else except 
@@ -4079,7 +4082,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
            (proto ++ (self#pLineDirective ~forcefile:true l));
          (* Temporarily remove the function attributes *)
          fdec.svar.vattr <- [];
-         fprint out !lineLength (self#pFunDecl () fdec);               
+         fprint out !lineLength (self#pFunDecl () fdec);
          fdec.svar.vattr <- oldattr;
          output_string out "\n"
 
@@ -4113,7 +4116,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        ++ self#pAttrs () fi.fattr
        ++ text ";"
        
-  method private pFunDecl () f =
+  method pFunDecl () f =
       self#pVDecl () f.svar
       ++  line
       ++ text "{ "
@@ -4464,6 +4467,10 @@ let printBlock (pp: cilPrinter) () (b: block) : doc =
   (* We must add the alignment ourselves, beucase pBlock will pop it *)
   align ++ pp#pBlock () b
 
+let printFundec (pp: cilPrinter) () (fd: fundec) : doc = 
+  (* We must add the alignment ourselves, beucase pBlock will pop it *)
+  align ++ pp#pFunDecl () fd
+
 let dumpStmt (pp: cilPrinter) (out: out_channel) (ind: int) (s: stmt) : unit = 
   pp#dStmt out ind s
 
@@ -4492,6 +4499,7 @@ let d_attrparam () e = defaultCilPrinter#pAttrParam () e
 let d_label () l = defaultCilPrinter#pLabel () l
 let d_stmt () s = printStmt defaultCilPrinter () s
 let d_block () b = printBlock defaultCilPrinter () b
+let d_fundec () fd = printFundec defaultCilPrinter () fd
 let d_instr () i = printInstr defaultCilPrinter () i
 
 let d_shortglobal () = function

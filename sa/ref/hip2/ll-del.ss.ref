@@ -1,0 +1,46 @@
+
+!!!Full processing file "hip2/ll-del.ss"
+Parsing file "hip2/ll-del.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure delete$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,x,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+ERROR : non-pure heap inferred for false
+
+Context of Verification Failure: 1 File "hip2/ll-del.ss",Line:38,Col:8
+Last Proving Location: 1 File "hip2/ll-del.ss",Line:59,Col:1
+
+ERROR: at _0:0_0:0 
+Message: add_infer_pre: non-pure inferred heap : es_formula: hfalse&false&{FLOW,(3,4)=__norm}[]
+ es_orig_ante: Some(H(x) * x::node<inf,inf1>&v1' & inf1!=null & !(v1')&
+                {FLOW,(3,4)=__norm}[])
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars: [inf_val_59_1226; inf_next_59_1227; x]
+ es_infer_vars_rel: []
+ es_infer_vars_hp_rel: [H; G]
+ es_infer_heap: [x::node<inf_val_59_1226,inf_next_59_1227>]
+ 
+Procedure delete$node FAIL.(2)
+
+Exception Failure("add_infer_pre: non-pure inferred heap : es_formula: hfalse&false&{FLOW,(3,4)=__norm}[]\n es_orig_ante: Some(H(x) * x::node<inf,inf1>&v1' & inf1!=null & !(v1')&\n                {FLOW,(3,4)=__norm}[])\n es_var_measures 1: Some(MayLoop[]{})\n es_infer_vars: [inf_val_59_1226; inf_next_59_1227; x]\n es_infer_vars_rel: []\n es_infer_vars_hp_rel: [H; G]\n es_infer_heap: [x::node<inf_val_59_1226,inf_next_59_1227>]") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure delete$node
+
+!!! proc.proc_name:delete$nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.024503,204)
+Total verification time: 0.290183 second(s)
+	Time spent in main process: 0.276777 second(s)
+	Time spent in child processes: 0.013406 second(s)
+

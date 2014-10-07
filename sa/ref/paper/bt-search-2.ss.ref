@@ -1,0 +1,31 @@
+
+!!!Full processing file "paper/bt-search-2.ss"
+Parsing file "paper/bt-search-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | (mi<ma & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], mi<ma),
+([], self=null)])
+Checking procedure search$node2~int... 
+Procedure search$node2~int result FAIL.(1)
+
+!!! proc.proc_name:search$node2~intStop Omega... 21 invocations 
+2 false contexts at: ( (48,9)  (48,16) )
+
+!!! log(small):(0.367676,856)
+Total verification time: 0.596695 second(s)
+	Time spent in main process: 0.574304 second(s)
+	Time spent in child processes: 0.022391 second(s)
+

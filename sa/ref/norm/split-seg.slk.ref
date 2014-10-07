@@ -1,0 +1,24 @@
+Starting Omega...oc
+HP1 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=r | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=r)])
+!!! formula1: emp&((r=self & self!=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&r>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! process_pred_split:
+Stop Omega... 17 invocations 
+SAT Count   : 47
+SAT % Hit   : 65.95%
+IMPLY Count : 5
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.002341 (seconds)
+
+!!! log(small):(0.018831,65)
+Total verification time: 0.082084 second(s)
+	Time spent in main process: 0.060723 second(s)
+	Time spent in child processes: 0.021361 second(s)
+

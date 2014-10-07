@@ -1,0 +1,18 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>x::node<_,_>&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 2
+SAT % Hit   : 0.%
+Time(cache overhead) : 9.9e-05 (seconds)
+
+!!! log(small):(0.00622,4)
+Total verification time: 0.053859 second(s)
+	Time spent in main process: 0.040933 second(s)
+	Time spent in child processes: 0.012926 second(s)
+

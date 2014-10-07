@@ -1,0 +1,23 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(Anon_13, Anon_15), (y, x), (Anon_12, Anon_14), (a, a), (x, y)], [(Anon_13, Anon_14), (y, y), (Anon_12, Anon_15), (a, a), (x, x)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(y, x), (a, a), (x, y)], [(y, y), (a, a), (x, x)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(y, y), (a, a)]]
+Checkeq (3) : Valid.
+Checkeq (4) : Fail.
+
+Checkeq (5) : Fail.
+
+Checkeq (6) : Fail.
+
+Checkeq (7) : Fail.
+
+Checkeq (8) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.067112 second(s)
+	Time spent in main process: 0.052968 second(s)
+	Time spent in child processes: 0.014144 second(s)
+

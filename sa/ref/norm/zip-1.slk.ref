@@ -1,0 +1,52 @@
+Starting Omega...oc
+zip is defined.
+zipN is defined.
+
+!!! process_pred_split:
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! 
+ilemma_infs:
+ :=>coerc tmp_infer_55
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zip{}<y>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((HRel HP_33((self:node))) * (HRel HP_34((y:node))))*(true)( FLOW __flow))
+
+Entailing lemma tmp_infer_55: Valid.
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! 
+Right. ilemma_infs:
+ :<=coerc tmp_safe_112
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zip{}<y>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((self::HP_33{}<>@M[HeapNode1]) * (y::HP_34{}<>@M[HeapNode1]))*(true)( FLOW __flow))
+
+Entailing lemma tmp_safe_112: Fail. (no cex)(must) cause: OrL[ y::HP_34{}<>&self1=null&{FLOW,(5,6)=__Error}[],valid]
+ can not pred_split (sem). add lemma: zip([x,y]) -->  HP_33(x) * HP_34(y)
+: no residue 
+Stop Omega... 59 invocations 
+SAT Count   : 360
+SAT % Hit   : 90.83%
+IMPLY Count : 23
+IMPLY % Hit : 52.17%
+Time(cache overhead) : 0.019606 (seconds)
+
+!!! log(small):(0.180398,466)
+Total verification time: 0.162413 second(s)
+	Time spent in main process: 0.126178 second(s)
+	Time spent in child processes: 0.036235 second(s)
+

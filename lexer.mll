@@ -232,6 +232,7 @@ module Make (Token : SleekTokenS)
      ("pred_split", PRED_SPLIT);
      ("pred_norm_disj", PRED_NORM_DISJ);
      ("pred_spec", PRED_SPEC);
+     ("pred_norm_seg", PRED_NORM_SEG);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);
@@ -373,7 +374,9 @@ rule tokenizer file_name = parse
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
   | "@imm" { INFER_AT_IMM }
-  | "@shape" { INFER_AT_SHAPE }          
+  | "@shape" { INFER_AT_SHAPE }
+  | "@efa" { INFER_AT_EFA }
+  | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }

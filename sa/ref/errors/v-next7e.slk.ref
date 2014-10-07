@@ -1,0 +1,26 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Fail.(may) cause: x<=6 & 0<=(x+1) |-  0<x. LOCS:[3] (may-bug)
+
+ <1>emp&x<=6 & 0<=(x+1)&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+
+Entail 2: Fail.(may) cause: 0<=x |-  0<x. LOCS:[20] (may-bug)
+
+ <1>emp&0<=x&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 14
+SAT % Hit   : 50.%
+IMPLY Count : 4
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.001042 (seconds)
+
+!!! log(small):(0.010206,20)
+Total verification time: 0.060134 second(s)
+	Time spent in main process: 0.046152 second(s)
+	Time spent in child processes: 0.013982 second(s)
+

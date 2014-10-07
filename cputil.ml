@@ -61,14 +61,14 @@ let hloc_enum_to_symb f0: formula=
  (****************END PRED UTIL******************)
 (*************************************************)
 
-let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
-  let tmp = List.filter (fun a -> CP.mem v a) aset in
+let get_aset (aset : spec_var list list) (v : spec_var) : spec_var list =
+  let tmp = List.filter (fun a -> mem v a) aset in
   match tmp with
 	| [] -> []
 	| [s] -> s
 	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
 
-let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
+let get_aset (aset : spec_var list list) (v : spec_var) : spec_var list =
 let psv = Cprinter.string_of_spec_var in
  let pr1 = (pr_list psv) in
  let pr2 = pr_list pr1 in

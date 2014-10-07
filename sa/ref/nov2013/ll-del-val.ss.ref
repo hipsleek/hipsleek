@@ -1,0 +1,81 @@
+
+!!!Full processing file "nov2013/ll-del-val.ss"
+Parsing file "nov2013/ll-del-val.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & S={}) | (exists(S1:exists(v:S=union(S1,{v}))) & 
+self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&S={} & self=null&{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{v})")
+ Formula: exists(S1:exists(v:S=union(S1,{v})))
+
+!!! baga_over(unfolded):Some([([self], exists(S1:exists(v:S=union(S1,{v})))),
+([], self=null & S={})])
+!!! neqs:[]
+Checking procedure delete1$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,a@NI)&true
+ ensures G(x,res,a@NI)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,a@NI)&x!=null --> x::node<val1,next1> * HP_1273(next1,a@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1273(next1,a@NI)&true --> H(next1,a@NI)&
+true(3,4),
+ // POST
+(1;0)H(res,a@NI)&res=null & res=null --> G(x,res,a@NI)&
+true(3,4),
+ // POST
+(1;2;0)x::node<a,res> * HP_1273(res,a@NI)&true --> G(x,res,a@NI)&
+true(3,4),
+ // POST
+(2;2;0)x::node<val1,next1> * G(next1,v1,a@NI) * res::node<val1,v1>&
+true --> G(x,res,a@NI)&
+true(3,4)]
+
+Procedure delete1$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,a1) ::=  [HP_1409(x1)],
+ G(x2,res1,a2) ::=  [emp&res1=null & x2=null; x2::node<a2,res1> * HP_1409(res1); 
+x2::node<val,next> * G(next,v,a2) * res1::node<val,v>],
+ HP_1409(x1) ::=  [emp&x1=null; x1::node<val2,next2> * HP_1409(next2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,a1) ::= HP_1409(x1)(3,4),
+ G(x2,res1,a2) ::= 
+ x2::node<a2,res1> * HP_1409(res1)
+ or x2::node<val,next> * G(next,v,a2) * res1::node<val,v>
+ or emp&res1=null & x2=null
+ (3,4),
+ HP_1409(x1) ::= 
+ x1::node<val2,next2> * HP_1409(next2)
+ or emp&x1=null
+ (3,4)]
+*************************************
+Stop Omega... 8 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.070856,301)
+Total verification time: 0.368786 second(s)
+	Time spent in main process: 0.351738 second(s)
+	Time spent in child processes: 0.017048 second(s)
+

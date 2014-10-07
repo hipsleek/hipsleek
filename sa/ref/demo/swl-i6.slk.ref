@@ -1,0 +1,36 @@
+Starting Omega...oc
+HP_903 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self=sent | (self=null & self!=sent) | (self!=sent & 
+self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self=sent | (self=null & self!=sent))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], ((self=0 & sent_996<=(0-1)) | (self=0 & 1<=sent_996) | sent_996=self)),
+([self], true)])
+Entail (1) : Valid. 
+
+ <1>HP_79(p,cur,sent1)&((p=0 & p=0 & sent1=0 & 1<=prev1) | (p=0 & p=0 & sent1=0 & prev1<=(0-1)))&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_903(prev1,cur@NI,sent1@NI)&
+                   true --> prev1::node<val,p> * HP_79(p,cur@NI,sent1@NI)&
+                   true(3,4); 
+                  HP_79(p,cur@NI,sent1@NI)&true --> emp&sent1=0 & p=0(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  BaseCaseFold ==> ]]
+<2>HP_79(p,cur,sent1)&p=0 & p=0 & (((sent1=0 & 1<=prev1) | (sent1=0 & prev1<=(0-1))))&{FLOW,(3,4)=__norm}[]
+inferred hprel: [HP_903(prev1,cur@NI,sent1@NI)&true --> prev1::node<val,p> * 
+                  HP_79(p,cur@NI,sent1@NI)&true(3,4); 
+                 HP_79(p,cur@NI,sent1@NI)&true --> emp&p=0(3,4); 
+                 HP_79(p,cur@NI,sent1@NI)&true --> emp&sent1=0(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  BaseCaseFold ==> ]]
+
+Stop Omega... 53 invocations 
+SAT Count   : 108
+SAT % Hit   : 58.33%
+IMPLY Count : 41
+IMPLY % Hit : 70.73%
+Time(cache overhead) : 0.00849 (seconds)
+
+!!! log(small):(0.175008,207)
+Total verification time: 0.173221 second(s)
+	Time spent in main process: 0.107615 second(s)
+	Time spent in child processes: 0.065606 second(s)
+

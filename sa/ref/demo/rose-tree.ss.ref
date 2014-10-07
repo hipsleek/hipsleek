@@ -1,0 +1,43 @@
+
+!!!Full processing file "demo/rose-tree.ss"
+Parsing file "demo/rose-tree.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_child$node~tree~node... 
+Post condition cannot be derived:
+  (must) cause:  !(res) |-  res. LOCS:[42;38] (must-bug)
+
+Context of Verification Failure: 1 File "demo/rose-tree.ss",Line:38,Col:11
+Last Proving Location: 1 File "demo/rose-tree.ss",Line:42,Col:13
+
+ERROR: at demo/rose-tree.ss_38:11_38:14 
+Message: Post condition cannot be derived.
+ 
+Procedure check_child$node~tree~node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure check_child$node~tree~node
+
+!!! proc.proc_name:check_child$node~tree~node
+Checking procedure check_tree$tree... 
+Procedure check_tree$tree SUCCESS.
+Stop Omega... 13 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.205564,835)
+Total verification time: 0.595526 second(s)
+	Time spent in main process: 0.577835 second(s)
+	Time spent in child processes: 0.017691 second(s)
+
