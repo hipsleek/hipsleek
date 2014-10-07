@@ -80,13 +80,38 @@ let solve_base_trrel btr turels =
     else base_cond
   in
   (* There is at least one method call in the base case is not terminating or unknown *)
-  if List.exists (fun r -> is_sat (mkAnd base_cond r.call_ctx)) turels then MayTerm base_cond
+  if List.exists (fun r -> is_sat (mkAnd base_cond r.call_ctx)) turels 
+  then MayTerm base_cond
   else Base base_cond
+  
+let solve_base_trrels params base_trrels turels =
+  let base_ctx = List.map (fun btr ->
+    simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
+  let not_term_cond = List.fold_left (fun ac tu ->
+    let ctx = simplify 9 tu.call_ctx params in
+    mkOr ac ctx) (CP.mkFalse no_pos) turels in
+  let not_term_cond = om_simplify not_term_cond in
+  let term_cond = mkNot not_term_cond in
+    
+  let base_cond = List.fold_left (fun ac bctx ->
+    mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
+  (* let base_conds = simplify_and_slit_disj base_cond in *)
+  let base_cond = simplify_disj base_cond in
+  
+  let may_cond = List.fold_left (fun ac bctx ->
+    mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in
+  (* let may_conds = simplify_and_slit_disj may_cond in *)
+  let may_cond = simplify_disj may_cond in
+  
+  let base_cond = if is_sat base_cond then [Base base_cond] else [] in
+  let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in
+  base_cond @ may_cond
 
-let solve_trrel_list trrels turels = 
+let solve_trrel_list params trrels turels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
   let base_trrels, rec_trrels = List.partition (fun trrel -> trrel.termr_lhs == []) trrels in
-  let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in
+  (* let base_conds = List.map (fun btr -> solve_base_trrel btr turels) base_trrels in *)
+  let base_conds = solve_base_trrels params base_trrels turels in
   let rec_trrels = merge_trrels rec_trrels in
   
   (* let conds = List.fold_left (fun conds rtr -> solve_rec_trrel rtr conds) base_conds rec_trrels in  *)
@@ -108,11 +133,29 @@ let solve_trrel_list trrels turels =
       else rec_cond
     in
     let rec_cond = mkAnd rec_cond (mkNot not_rec_cond) in
-    if is_sat rec_cond then acc @ [Rec rec_cond] else acc) [] rec_trrels in
-  let conds = base_conds @ rec_conds in
+    if is_sat rec_cond then acc @ [rec_cond] else acc) [] rec_trrels 
+  in
   
-  let conds = List.map simplify_trrel_sol conds in
-  let conds = List.concat (List.map split_disj_trrel_sol conds) in
+  let loop_conds = List.fold_left (fun acc tu ->
+    match tu.termu_rhs with
+    | Loop ->
+      let loop_cond = simplify 10 tu.call_ctx params in
+      let loop_cond = mkAnd loop_cond (mkNot not_rec_cond) in
+      if is_sat loop_cond then acc @ [loop_cond] else acc
+    | _ -> acc) [] turels 
+  in
+  let rec_conds = rec_conds @ loop_conds in
+  
+  let rec_conds = 
+    if is_empty rec_conds then [] 
+    else
+      let rec_conds = om_simplify (CP.join_disjunctions rec_conds) in
+      List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds) 
+  in
+  
+  let conds = base_conds @ rec_conds in
+  (* let conds = List.map simplify_trrel_sol conds in                 *)
+  (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   conds
   
 let case_split_init trrels turels = 
@@ -122,8 +165,9 @@ let case_split_init trrels turels =
     partition_by_key key_of key_eq trrels 
   in
   let fn_cond_w_ids = List.map (fun (fn, trrels) ->
-    let fn_turels = List.find_all (fun r -> String.compare (fst fn) r.termu_fname == 0) turels in 
-    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list trrels fn_turels))) fn_trrels in
+    let fn_turels = List.find_all (fun r -> String.compare (fst fn) r.termu_fname == 0) turels in
+    let params = snd fn in  
+    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels fn_turels))) fn_trrels in
   let _ = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline ("\nBase/Rec Case Splitting:\n" ^ 
