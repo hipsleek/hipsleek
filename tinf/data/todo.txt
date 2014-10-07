@@ -138,7 +138,47 @@ Checking procedure length$node...
 Procedure length$node SUCCESS.
 
 ====================================================================
+# ll-app2.ss
+
+How can be handle multiple pre/post?
+
+Procedure append2$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+!!! proc.proc_name:append2$node~node
+
+!!! Termination Inference is not performed due to errors in verification process
+Procedure append2$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+!!! proc.proc_name:append2$node~node
+
+!!! Termination Inference is not performed due to errors in verification process
+
 ====================================================================
+# ll-app1.ss
+
+What happen to the circular list spec?
+
+Termination Inference Result:
+append2:  requires x::lseg<n,flted_34_62> & flted_34_62=null & 
+0<ncase {
+    n=1 -> requires emp & Term[7,1]
+ ensures x::lseg<n_1283,y_1284> & 0<=n & 
+    y_1284=y & n_1283=n; 
+    2<=n -> requires emp & Term[7,2,0+(1*n)+(0*
+    n)]
+ ensures x::lseg<n_1283,y_1284> & 0<=n & y_1284=y & n_1283=n; 
+    }
+
 ====================================================================
 ====================================================================
 ====================================================================
