@@ -57,6 +57,9 @@ let parse_file_full file_name (primitive: bool) =
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
         else
+          if(ext = ".java") then
+            "jparser"
+          else
           "default"
       )
     ) in
@@ -71,7 +74,15 @@ let parse_file_full file_name (primitive: bool) =
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
       else
-        Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+        if parser_to_use = "jparser" then
+          let result_str = Pretty_ss.print_out_str_to_file file_name "tmp_java.ss" in
+          let _ = print_endline "using jparser" in
+          let input_channel = open_in "tmp_java.ss" in
+          let parseresult = Parser.parse_hip "tmp_java.ss" (Stream.of_channel input_channel) in
+          close_in input_channel;
+          parseresult
+        else
+          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
     close_in org_in_chnl;
     let _ = Gen.Profiling.pop_time "Parsing" in

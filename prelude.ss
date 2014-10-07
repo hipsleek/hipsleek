@@ -1,6 +1,23 @@
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
 
+
+/* modified by Zhuohong*/
+
+int random__()
+  requires true
+  ensures true;
+
+
+
+
+
+
+
+
+
+/* modified by Zhuohong*/
+
 int add___(int a, int b) 
   requires true 
   ensures res = a + b;

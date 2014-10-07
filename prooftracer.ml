@@ -420,7 +420,7 @@ let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
 		html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "\n<ul>"; (* ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>" *)
 	end
 
-let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___";"random___"]
 
 let start_with s p = if (String.length s >= String.length p) then
 		String.sub s 0 (String.length p) = p
@@ -574,7 +574,7 @@ let add_proc proc vres =
 	let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
 		jsonproof := !jsonproof ^ "], type : \"proc\", name : " ^ (strquote unmin_name) ^ ", success : " ^ (strquote (string_of_bool vres)) ^ "},\n"
 
-let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___";"random___"]
 
 let start_with s p = if (String.length s >= String.length p) then
 		String.sub s 0 (String.length p) = p

@@ -46,7 +46,8 @@ let primitives =
    "lor___";
    "not___";
    "is_not_null___";
-   "is_null___"]
+   "is_null___";
+  "random___"]
 
 let no_pp = ref ([] : string list)
   
