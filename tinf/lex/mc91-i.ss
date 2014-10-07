@@ -1,7 +1,7 @@
 int mc91_i (int n)
-  infer [@term]
-  requires true
-  ensures true;
+  //infer [@term]
+  //requires true
+  //ensures true;
   
   //requires Term
   //ensures true;
@@ -9,9 +9,9 @@ int mc91_i (int n)
 {
   int c = 1;
   while (c > 0) 
-    infer [@term]
-    requires true
-    ensures true;
+    //infer [@term]
+    //requires true
+    //ensures true;
     /*
     case {
       c <= 0 -> requires Term ensures true;

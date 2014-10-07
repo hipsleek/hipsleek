@@ -390,6 +390,7 @@ let mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_flow = flowt (*(mkTrueFlow ())*);
 		formula_base_label = dummy_lbl 2;
 		formula_base_pos = pos}
+
 let mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 let mkETrue flowt pos = EBase({

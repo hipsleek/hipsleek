@@ -1183,28 +1183,30 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls,args_wi =
-    match body_header.proc_static_specs with
-      | F.EList [] ->
-          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
-          (* let _ = print_gen_spec ss hps in *)
-          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps,args_wi)
-      | _ ->
-            (* let _ = if !Globals.sags then *)
-            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
-            (*   let _ = print_gen_spec ss hps in *)
-            (*   () *)
-            (* else () *)
-            (* in *)
-            (body_header.proc_static_specs,[],body_header.proc_args_wi)
-  in
-  {body_header with
-      proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
-      proc_static_specs = ss;
-      proc_args_wi = args_wi;
-  }
-
+  if not !Globals.sags then body_header
+  else
+    let ss, n_hp_dcls,args_wi =
+      match body_header.proc_static_specs with
+        | F.EList [] ->
+            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
+            (* let _ = print_gen_spec ss hps in *)
+            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
+        | _ ->
+              (* let _ = if !Globals.sags then *)
+              (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+              (*   let _ = print_gen_spec ss hps in *)
+              (*   () *)
+              (* else () *)
+              (* in *)
+              (body_header.proc_static_specs,[],body_header.proc_args_wi)
+    in
+    {body_header with
+        proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
+        proc_static_specs = ss;
+        proc_args_wi = args_wi;
+    }
+  
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)

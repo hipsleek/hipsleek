@@ -3010,6 +3010,23 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
       (trans_proc prog new_proc)
   else
     (trans_proc prog proc)
+    
+(* TNT: Add inf_obj from cmd line *)
+and add_inf_cmd_struc is_primitive f =
+  if is_primitive || Globals.infer_const_obj # is_empty then f
+  else
+    match f with
+    | CF.EInfer ei -> CF.EInfer { ei with 
+        CF.formula_inf_obj = ei.CF.formula_inf_obj # mk_or Globals.infer_const_obj; }
+    | CF.EList el -> CF.EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
+    | _ -> CF.EInfer {
+        CF.formula_inf_obj = Globals.infer_const_obj # clone;
+        CF.formula_inf_post = Globals.infer_const_obj # is_post;
+        CF.formula_inf_xpost = None;
+        CF.formula_inf_transpec = None;
+        CF.formula_inf_vars = [];
+        CF.formula_inf_continuation = f;
+        CF.formula_inf_pos = CF.pos_of_struc_formula f }
 
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
@@ -3072,6 +3089,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let n_tl = List.map add_param all_args in
       let n_tl = type_list_add res_name { sv_info_kind = cret_type;id = fresh_int () } n_tl in
       let n_tl = type_list_add eres_name { sv_info_kind = UNK ;id = fresh_int () } n_tl in
+      let is_primitive = not (proc.I.proc_is_main) in
       (* Termination: Add info of logical vars *)
       let add_logical tl (CP.SpecVar (t, i, _)) = type_list_add i {
           sv_info_kind = t;
@@ -3084,10 +3102,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
       let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
+      let cf = add_inf_cmd_struc is_primitive cf in
       let static_specs_list = set_pre_flow cf in
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
       (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
       let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+      let cf = add_inf_cmd_struc is_primitive cf in
       let dynamic_specs_list = set_pre_flow cf in
       (****** Infering LSMU from LS if there is LS in spec >>*********)
       let static_specs_list =
@@ -3114,7 +3134,6 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * Primitive functions: Term[] 
        * User-defined functions: MayLoop 
        * or TermR and TermU if @term *)
-      let is_primitive = not (proc.I.proc_is_main) in
       let fname = proc.I.proc_name in
       let args = List.map (fun p -> 
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
@@ -5939,7 +5958,7 @@ and trans_copy_spec_4caller_x copy_params sf=
 and trans_copy_spec_4caller copy_params sf=
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "trans_copy_spec_4caller" !Cpure.print_svl pr pr trans_copy_spec_4caller_x copy_params sf
-
+  
 and trans_I2C_struc_formula i (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in
@@ -6027,14 +6046,19 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
     | IF.EList b ->
         let rec aux tlist clist = (
           match clist with
-          | []->(tlist,[])
+          | []-> (tlist,[])
           | (c,str)::tl -> 
               let (n_tl,cf) = trans_struc_formula fvars tlist str in
               let (n_tl,n_cl) = aux n_tl tl in
               (n_tl,(c,cf)::n_cl)
         ) in
-        let (n_tl,n_cl) = aux tl b in
-        (n_tl,CF.mkEList_no_flatten2 n_cl)
+        if is_empty b then 
+          (* TNT: Add default spec "requires true ensures true;" *)
+          (* if there is no given spec                           *)
+          (tl, CF.mkETrue_ensures_True (CF.mkNormalFlow ()) no_pos)
+        else
+          let (n_tl,n_cl) = aux tl b in
+          (n_tl,CF.mkEList_no_flatten2 n_cl)
   ) in
   let n_tl =gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
