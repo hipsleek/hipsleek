@@ -1833,8 +1833,8 @@ my $inv = '--inv-test';
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Fail.Valid.Valid.Valid."],
                       ["sleek1.slk", "", (), "Fail."],
-                      ["sleek10.slk", "", (), "Valid.Valid."],
-                      #["sleek10.slk", "", (), "Valid.Fail."],
+                      #["sleek10.slk", "", (), "Valid.Valid."],
+                      ["sleek10.slk", "", (), "Valid.Fail."],
                       ["sleek2.slk", "", (), "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
                       # why did not detect missing Valid
                       # ["sleek3.slk", "", ([$lem,"Valid."]), "Valid.Fail.Valid."],
