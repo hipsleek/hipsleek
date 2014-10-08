@@ -122,20 +122,20 @@ ReferenceType:
 ;
 
 ClassOrInterfaceType:
-	Name  { rev $1 }
+	Name  { (rev $1,None) }
 ;
 
 ClassType:
-	Name  { rev $1 }
+	Name  { (rev $1,None) }
 ;
 
 InterfaceType:
-	Name  { rev $1 }
+	Name  { (rev $1,None) }
 ;
 
 ArrayType:
 	PrimitiveType LB RB  { ArrayType $1 }
-|	Name LB RB  { ArrayType (TypeName (rev $1)) }
+|	Name LB RB  { ArrayType (TypeName (rev $1,None)) }
 |	ArrayType LB RB  { ArrayType $1 }
 ;
 
@@ -194,13 +194,13 @@ ImportDeclaration:
 /* 7.5.1 */
 
 SingleTypeImportDeclaration:
-	IMPORT Name SM  { rev $2 }
+	IMPORT Name SM  { (rev $2,None) }
 ;
 
 /* 7.5.2 */
 
 TypeImportOnDemandDeclaration:
-	IMPORT Name DOT TIMES SM  { rev (star_ident :: $2) }
+	IMPORT Name DOT TIMES SM  { (rev (star_ident :: $2),None) }
 ;
 
 /* 7.6 */
@@ -437,16 +437,16 @@ ConstructorBody:
 
 ExplicitConstructorInvocation:
 	THIS LP ArgumentListOpt RP SM
-		{ constructor_invocation [this_ident] $3 }
+		{ constructor_invocation ([this_ident],None) $3 }
 |	SUPER LP ArgumentListOpt RP SM
-		{ constructor_invocation [super_ident] $3 }
+		{ constructor_invocation ([super_ident],None) $3 }
 |	Primary DOT SUPER LP ArgumentListOpt RP SM
 		{ expr_super_invocation $1 $5 }
 	/*
 	 * Not in 2nd edition Java Language Specification.
 	 */
 |	Name DOT SUPER LP ArgumentListOpt RP SM
-		{ constructor_invocation (rev (super_ident :: $1)) $5 }
+		{ constructor_invocation ((rev (super_ident :: $1),None)) $5 }
 ;
 
 /* 9.1 */
@@ -815,8 +815,8 @@ Primary:
 PrimaryNoNewArray:
 	Literal  { Literal $1 }
 |	ClassLiteral  { $1 }
-|	THIS  { Name [this_ident] }
-|	Name DOT THIS  { Name (rev (this_ident :: $1)) }
+|	THIS  { Name ([this_ident],None) }
+|	Name DOT THIS  { Name ((rev (this_ident :: $1)),Some VarName) }
 |	LP Expression RP  { $2 }
 |	ClassInstanceCreationExpression  { $1 }
 |	FieldAccess  { $1 }
@@ -828,7 +828,7 @@ PrimaryNoNewArray:
 
 ClassLiteral:
 	PrimitiveType DOT CLASS  { ClassLiteral $1 }
-|	Name DOT CLASS  { ClassLiteral (TypeName (rev $1)) }
+|	Name DOT CLASS  { ClassLiteral (TypeName ((rev $1),None)) }
 |	ArrayType DOT CLASS  { ClassLiteral $1 }
 |	VOID DOT CLASS  { ClassLiteral void_type }
 ;
@@ -844,7 +844,7 @@ ClassInstanceCreationExpression:
 	 * Not in 2nd edition Java Language Specification.
 	 */
 |	Name DOT NEW Identifier LP ArgumentListOpt RP ClassBodyOpt
-		{ NewQualifiedClass (Name (rev $1), $4, $6, $8) }
+		{ NewQualifiedClass (Name ((rev $1),Some VarName), $4, $6, $8) }
 ;
 
 ArgumentList:
@@ -868,11 +868,11 @@ ArrayCreationExpression:
 	NEW PrimitiveType DimExprs DimsOpt
 		{ NewArray ($2, rev $3, $4, None) }
 |	NEW Name DimExprs DimsOpt
-		{ NewArray (TypeName (rev $2), rev $3, $4, None) }
+		{ NewArray (TypeName ((rev $2),None), rev $3, $4, None) }
 |	NEW PrimitiveType Dims ArrayInitializer
 		{ NewArray ($2, [], $3, Some $4) }
 |	NEW Name Dims ArrayInitializer
-		{ NewArray (TypeName (rev $2), [], $3, Some $4) }
+		{ NewArray (TypeName ((rev $2),None), [], $3, Some $4) }
 ;
 
 DimExprs:
@@ -898,29 +898,29 @@ DimsOpt:
 
 FieldAccess:
 	Primary DOT Identifier
-		{ Dot ($1, $3) }
+		{ Dot ($1, $3,false) }
 |	SUPER DOT Identifier
-		{ Name [super_ident; $3] }
+		{ Name ([super_ident; $3],None) }
 |	Name DOT SUPER DOT Identifier
-		{ Name (rev ($5 :: super_ident :: $1)) }
+		{ Name ((rev ($5 :: super_ident :: $1)),Some VarName) }
 ;
 
 /* 15.12 */
 
 MethodInvocation:
-	Name LP ArgumentListOpt RP  { Call (Name (rev $1), $3) }
+	Name LP ArgumentListOpt RP  { Call (Name ((rev $1),Some MethodName), $3) }
 |	Primary DOT Identifier LP ArgumentListOpt RP
-		{ Call (Dot ($1, $3), $5) }
+		{ Call (Dot ($1, $3,false), $5) }
 |	SUPER DOT Identifier LP ArgumentListOpt RP
-		{ Call (Name [super_ident; $3], $5) }
+		{ Call (Name ([super_ident; $3],Some MethodName), $5) }
 |	Name DOT SUPER DOT Identifier LP ArgumentListOpt RP
-		{ Call (Name (rev ($5 :: super_ident :: $1)), $7) }
+		{ Call (Name ((rev ($5 :: super_ident :: $1)),None), $7) }
 ;
 
 /* 15.13 */
 
 ArrayAccess:
-	Name LB Expression RB  { ArrayAccess (Name (rev $1), $3) }
+	Name LB Expression RB  { ArrayAccess (Name ((rev $1),Some VarName), $3) }
 |	PrimaryNoNewArray LB Expression RB  { ArrayAccess ($1, $3) }
 ;
 
@@ -928,7 +928,7 @@ ArrayAccess:
 
 PostfixExpression:
 	Primary  { $1 }
-|	Name  { Name (rev $1) }
+|	Name  { Name ((rev $1),Some VarName) }
 |	PostIncrementExpression  { $1 }
 |	PostDecrementExpression  { $1 }
 ;
@@ -1099,7 +1099,7 @@ Assignment:
 ;
 
 LeftHandSide:
-	Name  { Name (rev $1) }
+	Name  { Name ((rev $1),Some VarName) }
 |	FieldAccess  { $1 }
 |	ArrayAccess  { $1 }
 ;
