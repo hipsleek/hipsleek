@@ -145,8 +145,13 @@ let subst_var (v:ident) (subst:(ident*ident) list) : ident =
   @return list of NEW bound variables bvars * list of free vars
 
   ASSUME: no name clashes among scopes
+
+  WN : Can we improve this method to return a list
+   of vars that have been modified as suggested by method name?
+  --> (bound_var, free_vars, free_modified_vars)
 *)
-and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
+
+let modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
   let rec helper e bvars =
     match e with
       | Var v -> 
@@ -181,6 +186,7 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
       | Assign a ->
           let _,fvars1 = helper a.exp_assign_lhs bvars in
           let _,fvars2 = helper a.exp_assign_rhs bvars in
+          let _ = Debug.binfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
           (bvars,fvars1@fvars2)
       | Binary b ->
           let _,fvars1 = helper b.exp_binary_oper1 bvars in
@@ -200,15 +206,18 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
       | Break _ -> (bvars,[])
       | CallRecv c ->
           (*ignore exp_call_recv_method*)
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in
-          let fvars1 = List.concat fvars_l in
-          let _,fvars2 = helper c.exp_call_recv_receiver bvars in
-          (bvars,fvars1@fvars2)
+            let _ = Debug.binfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
+            let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in
+            let fvars1 = List.concat fvars_l in
+            let _,fvars2 = helper c.exp_call_recv_receiver bvars in
+            (bvars,fvars1@fvars2)
       | CallNRecv c ->
           (*ignore exp_call_nrecv_method*)
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in
-          let fvars = List.concat fvars_l in
-          (bvars,fvars)
+            let _ = Debug.binfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
+            let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in
+            let fvars = List.concat fvars_l in
+            (bvars,fvars)
+
       | Cast c ->
           let _,fvars = helper c.exp_cast_body bvars in
           (bvars,fvars)
@@ -294,6 +303,11 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
       | Barrier _ (*TO CHECK*)
       | Continue _ -> (bvars,[])
   in helper e bvars
+
+let modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
+  let pr_ids = pr_list pr_id in
+  let pr_exp = string_of_exp in
+  Debug.no_2 "modifies" pr_exp pr_ids (pr_pair pr_ids pr_ids) modifies e bvars
 
 (*substitute variables [from,to] *)
 let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =

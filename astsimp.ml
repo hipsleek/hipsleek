@@ -2973,9 +2973,9 @@ and check_valid_flows (f:IF.struc_formula) =
 and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars:ident list): C.proc_decl =
   let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
   let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
-  Debug.no_1 "trans_loop_proc" 
-      pr pr2 
-      (fun _ -> trans_loop_proc_x prog proc addr_vars) proc
+  Debug.no_2 "trans_loop_proc" 
+      pr (pr_list pr_id) pr2 
+      (fun _ _ -> trans_loop_proc_x prog proc addr_vars) proc addr_vars
 
 and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: ident list): C.proc_decl =
   (*variables that have been taken address-of*)
@@ -4997,17 +4997,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | I.While{
             I.exp_while_condition = cond;
             I.exp_while_body = body;
-            exp_while_addr_vars = addr_vars;
+            I.exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
             I.exp_while_f_name = a_wn;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-            (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
+            let _ = Debug.binfo_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
-            let _ =  Debug.ninfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
-            let _ =  Debug.ninfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
+            let _ =  Debug.binfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
+            let _ =  Debug.binfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
             (*ONLY NEED THOSE that are modified in the body and condition*)
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
@@ -5030,7 +5030,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.ninfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
+            let _ = Debug.binfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
@@ -5100,8 +5100,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                          String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                      ) w_formal_args in
-                     let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
-                     let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                     let _ =  Debug.binfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                     let _ =  Debug.binfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                      let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                  let full_args_wi = if ninfer_args = [] then args_wi
