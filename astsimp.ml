@@ -3013,6 +3013,11 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
     
 (* TNT: Add inf_obj from cmd line *)
 and add_inf_cmd_struc is_primitive f =
+  let pr = !CF.print_struc_formula in
+  Debug.no_1 "add_inf_cmd_struc" pr pr 
+    (fun _ -> add_inf_cmd_struc_x is_primitive f) f
+
+and add_inf_cmd_struc_x is_primitive f =
   if is_primitive || Globals.infer_const_obj # is_empty then f
   else
     match f with
