@@ -1,7 +1,9 @@
+
 int PastaA1_main()
-//infer [@post_n]
+  infer [@post_n]
   requires true
-  ensures res=10;
+  ensures true;
+//ensures res=10;
 {
   int x;
   x=10;
