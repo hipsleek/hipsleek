@@ -320,7 +320,7 @@ and map_ann_uid f_f f_e uid =
     tu_sol = map_opt (fun (ann, el) ->
       (map_term_ann f_f f_e ann),
       List.map f_e el) uid.tu_sol; }
-      
+
 let is_False cp = match cp with
   | BForm (p,_) ->
         begin

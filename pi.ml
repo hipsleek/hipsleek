@@ -76,11 +76,16 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
-        CF.EInfer {ei with
-            CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]);
-            CF.formula_inf_continuation = add_post_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars}
+        let new_cont = add_post_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars in
+        let new_infer_vars = List.filter (fun sv -> CP.is_rel_var sv) (CF.struc_fv new_cont) in
+        CF.EInfer { ei with
+            (* CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]); *)
+            (* CF.formula_inf_continuation = add_post_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars} *)
+            CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@new_infer_vars);
+            CF.formula_inf_continuation = new_cont}
   | CF.ECase ec -> CF.ECase { ec with
         CF.formula_case_branches = List.map (fun (pf,sf) ->
+            let rel_name = fresh_any_name rel_name in
             (pf,add_post_relation prog proc sf rel_name rel_type rel_vars)
         ) ec.CF.formula_case_branches
     }
@@ -113,11 +118,16 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
+        let new_cont = add_pre_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars in
+        let new_infer_vars = List.filter (fun sv -> CP.is_rel_var sv) (CF.struc_fv new_cont) in
         CF.EInfer {ei with
-            CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]);
-            CF.formula_inf_continuation = add_pre_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars}
+            (* CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]); *)
+            (* CF.formula_inf_continuation = add_pre_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars} *)
+            CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@new_infer_vars);
+            CF.formula_inf_continuation = new_cont}
   | CF.ECase ec -> CF.ECase { ec with
         CF.formula_case_branches = List.map (fun (pf,sf) ->
+            let rel_name = fresh_any_name rel_name in
             (pf,add_pre_relation prog proc sf rel_name rel_type rel_vars)
         ) ec.CF.formula_case_branches
     }
