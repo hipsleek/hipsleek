@@ -441,9 +441,9 @@ let pre_rel_fixpoint pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_sp
       (fun _ _ _ _ _ -> pre_rel_fixpoint_x pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df)
       pre_rel pre_fmls reloblgs pre_vars pre_rel_df
 
-let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func 
-  preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df 
-  pre_vars proc_spec grp_post_rel_flag = 
+let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
+  preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
+  pre_vars proc_spec grp_post_rel_flag =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
   let _ = Debug.tinfo_pprint ("inside update_with_td") no_pos in

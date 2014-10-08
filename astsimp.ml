@@ -6093,7 +6093,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
   (* let helper n1 n2 =  *)
   (*   match n1 with *)
   (*     | CF.DataNode ->  *)
-          
+
   (*     | CF.Star -> false *)
   (*     | _ -> false *)
 (*
