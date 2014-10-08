@@ -1,6 +1,6 @@
 int Ack(int m, int n)
-  infer [//@post_n,
-  @term]
+  /* infer [//@post_n, */
+  /* @term] */
  requires true
  ensures true;
 { 

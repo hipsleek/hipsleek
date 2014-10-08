@@ -2545,7 +2545,7 @@ let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
 
 let mkEInfer xpost transpec pos = EInfer { 
     (* formula_inf_tnt = false; *)
-    formula_inf_obj = Globals.infer_const_obj # clone;
+    formula_inf_obj = new Globals.inf_obj; (* Globals.infer_const_obj # clone; *)
     formula_inf_post = true;
     formula_inf_xpost = xpost;
     formula_inf_transpec = transpec;
