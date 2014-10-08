@@ -72,10 +72,11 @@ let parse_file_full file_name (primitive: bool) =
         cil_prog
       else
         if parser_to_use = "joust" then
-          let result_str = Pretty_ss.print_out_str_from_files_new [file_name] "tmp_java.ss" in
+          let ss_file_name = file_name ^ ".ss" in
+          let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in
           (* let _ = print_endline "using jparser" in *)
-          let input_channel = open_in "tmp_java.ss" in
-          let parseresult = Parser.parse_hip "tmp_java.ss" (Stream.of_channel input_channel) in
+          let input_channel = open_in ss_file_name in
+          let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in
           close_in input_channel;
           (*Sys.remove "tmp_java.ss";*)
           parseresult
