@@ -836,15 +836,18 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
   let pfs,no = process_base_rec pfs rel specs in
 
   (* Make existence *)
-  let pfs = List.concat (List.map (fun p -> 
+  let pfs = List.concat (List.map (fun p ->
     let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
     let res = CP.mkExists exists_vars p None no_pos in
-    if CP.isConstTrue (TP.simplify_raw res) then []
-    else [res]) pfs)
+    [res]
+    (* if CP.isConstTrue (TP.simplify_raw res) then [] *)
+    (* else [res] *)) pfs)
   in
 
+  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+
   (* Disjunctive defintion for each relation *)
-  let def = List.fold_left 
+  let def = List.fold_left
           (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
   [(rel, def, no)]
 
