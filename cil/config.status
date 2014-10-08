@@ -433,7 +433,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/trungtq/Workspace/sleekex-cparser/cil'
+ac_pwd='/home/chanhle/hg/java_parser/cil'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -612,7 +612,7 @@ fi
 echo 'BEGIN {' >"$ac_tmp/subs1.awk" &&
 cat >>"$ac_tmp/subs1.awk" <<\_ACAWK &&
 S["LTLIBOBJS"]=""
-S["HAS_OCAML_NATIVE_TOOLS"]="1"
+S["HAS_OCAML_NATIVE_TOOLS"]="0"
 S["EXTRASRCDIRS"]=""
 S["EXTRAFEATURES"]=""
 S["UNDERSCORE_NAME"]="false"
@@ -626,7 +626,7 @@ S["CIL_VERSION_MAJOR"]="1"
 S["DEFAULT_CIL_MODE"]="GNUCC"
 S["DEFAULT_COMPILER"]="_GNUCC"
 S["HAS_MSVC"]="no"
-S["CILHOME"]="/home/trungtq/Workspace/sleekex-cparser/cil"
+S["CILHOME"]="/home/chanhle/hg/java_parser/cil"
 S["FLEXLINK"]=""
 S["MINGW"]=""
 S["ARCHOS"]="x86_LINUX"

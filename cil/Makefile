@@ -43,7 +43,7 @@ ifdef RELEASE
 endif
 
 ifndef CAMLNATTL
-  ifeq (1, 1)
+  ifeq (0, 1)
     CAMLNATTL := 1
   endif
 endif
