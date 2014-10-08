@@ -3608,10 +3608,10 @@ let rec check_prog iprog (prog : prog_decl) =
     let _ = Pi.add_post_relation_scc prog scc in
 
     (* let _ = List.iter (fun proc -> *)
-    (*     DD.info_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
+    (*     DD.binfo_hprint (add_str "spec before infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
-      (* Only infer post *)
-      let (scc,old_specs) = if (has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
+    (* Only infer post *)
+    let (scc,old_specs) = if (has_infer_post_proc || has_infer_pre_proc) then List.split (Pi.filter_infer_pure_scc scc) else (scc,[]) in
 
     let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
