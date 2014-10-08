@@ -57,8 +57,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let _ = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
         let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
         (* let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
-        let rel_args = List.map (fun sv -> match sv with
-          | CP.SpecVar (t,id,_) -> CP.mkVar (CP.mk_typed_spec_var t id) no_pos) rel_vars in
+        let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
         let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
         let old_f = ea.CF.formula_assume_simpl in
         let new_f = add_relation_to_formula old_f new_rel in
@@ -70,8 +69,11 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let rel_name = fresh_any_name "post" in
         let fvs = CF.struc_all_vars sf in
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
+        let proc_args = List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]) in
+        let proc_primed_args = List.map (fun sv -> match sv with
+          | CP.SpecVar (t,id,_) -> CP.SpecVar (t,id,Primed)) proc.proc_by_name_params in
         let rel_vars = List.filter (fun sv -> match sv with
-          | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) (proc.proc_args@[(proc.proc_return,res_name)]))) in
+          | CP.SpecVar (t,_,_) -> t = Int) (fvs@proc_args@proc_primed_args) in
         let rel_vars = CP.remove_dups_svl rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
@@ -102,8 +104,7 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
         let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in
         let _ = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in
         let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
-        let rel_args = List.map (fun sv -> match sv with
-          | CP.SpecVar (t,id,_) -> CP.mkVar (CP.mk_typed_spec_var t id) no_pos) rel_vars in
+        let rel_args = List.map (fun sv -> CP.mkVar sv no_pos) rel_vars in
         let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
         CF.EBase {eb with
             CF.formula_struc_base = add_relation_to_formula eb.CF.formula_struc_base new_rel}
@@ -112,8 +113,11 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
         let rel_name = fresh_any_name "pre" in
         let fvs = CF.struc_all_vars_except_post sf in
         let _ = DD.ninfo_hprint (add_str "vars" Cprinter.string_of_typed_spec_var_list) fvs no_pos in
+        let proc_args = List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args in
+        let proc_primed_args = List.map (fun sv -> match sv with
+          | CP.SpecVar (t,id,_) -> CP.SpecVar (t,id,Primed)) proc.proc_by_name_params in
         let rel_vars = List.filter (fun sv -> match sv with
-          | CP.SpecVar (t,_,_) -> t = Int) (fvs@(List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)) in
+          | CP.SpecVar (t,_,_) -> t = Int) (fvs@proc_args@proc_primed_args) in
         let rel_vars = CP.remove_dups_svl rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
