@@ -3021,7 +3021,7 @@ and add_inf_cmd_struc is_primitive f =
     | CF.EList el -> CF.EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
     | _ -> CF.EInfer {
         CF.formula_inf_obj = Globals.infer_const_obj # clone;
-        CF.formula_inf_post = Globals.infer_const_obj # is_post;
+        CF.formula_inf_post = true (* Globals.infer_const_obj # is_post *);
         CF.formula_inf_xpost = None;
         CF.formula_inf_transpec = None;
         CF.formula_inf_vars = [];

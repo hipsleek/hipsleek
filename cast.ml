@@ -2324,8 +2324,8 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
     let pvs = List.map (fun (n, procs) ->
         let mn = List.hd procs in
         (* TNT Inference: Enable call_num but Disable phase_num *)
-        let inf_tnt = List.exists (fun proc -> 
-          F.is_inf_tnt_struc_formula proc.proc_static_specs) procs in 
+        let inf_tnt = (Globals.infer_const_obj # is_term) || (List.exists (fun proc -> 
+          F.is_inf_tnt_struc_formula proc.proc_static_specs) procs) in 
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
           ((not !dis_call_num) || inf_tnt) ((not !dis_phase_num) && (not inf_tnt) && n>1 && mn.proc_is_recursive) 
         in (match pv with 
