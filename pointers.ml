@@ -197,7 +197,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       | Assign a ->
             let _,fvars1,fw1 = helper a.exp_assign_lhs bvars in
             let _,fvars2,fw2 = helper a.exp_assign_rhs bvars in
-            let _ = Debug.binfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
             if (is_var a.exp_assign_lhs) then
               (bvars,fvars1@fvars2,fvars1@fw1@fw2)
             else (bvars,fvars1@fvars2,fw1@fw2)
@@ -221,7 +221,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
             (*ignore exp_call_recv_method*)
             (* let _,fvars1,fw1 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) ([],[],[]) in *)
             let _,fvars1,fw1 = accumulate c.exp_call_recv_arguments bvars in
-            let _ = Debug.binfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
+            let _ = Debug.ninfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
             (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in *)
             (* let fvars1 = List.concat fvars_l in *)
             let _,fvars2,fw2 = helper c.exp_call_recv_receiver bvars in
@@ -238,8 +238,8 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
                   | None -> failwith "Impossible") (List.filter (fun (para,arg) ->
                 (para.param_mod = RefMod) && (is_var arg)
             ) args) in
-            let _ = Debug.binfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
-            let _ = Debug.binfo_hprint (add_str "ref args" (pr_list pr_id)) fw2 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
+            let _ = Debug.ninfo_hprint (add_str "ref args" (pr_list pr_id)) fw2 no_pos in
             (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in *)
             (* let fvars = List.concat fvars_l in *)
             (bvars,fvars,fw1@fw2)

@@ -5003,21 +5003,26 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-            let _ = Debug.binfo_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
+            let _ = Debug.ninfo_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
-            let _ =  Debug.binfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
-            let _ =  Debug.binfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
+            let _ =  Debug.ninfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
+            let _ =  Debug.ninfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
             (*ONLY NEED THOSE that are modified in the body and condition*)
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
               However, this may not be important.*)
             let _,fvars_body,fw_body = Pointers.modifies body [] prog in
             let _,fvars_cond,fw_cond = Pointers.modifies cond [] prog in
-            let _ = Debug.binfo_hprint (add_str "fw_body" (pr_list pr_id)) fw_body no_pos in
-            let _ = Debug.binfo_hprint (add_str "fw_cond" (pr_list pr_id)) fw_cond no_pos in
+            let _ = Debug.ninfo_hprint (add_str "fw_body" (pr_list pr_id)) fw_body no_pos in
+            let _ = Debug.ninfo_hprint (add_str "fw_cond" (pr_list pr_id)) fw_cond no_pos in
             let fvars_while = fvars_body@fvars_cond in
-            let prime_var_to_add = [] (* all_prime /\ fvars_while *) in
+            let _ = Debug.ninfo_hprint (add_str "fvars_while" (pr_list pr_id)) fvars_while no_pos in
+            let _ = Debug.ninfo_hprint (add_str "spec" Iprinter.string_of_struc_formula) prepost no_pos in
+            let all_prime = List.fold_left (fun acc (id,pr) ->
+                if pr=Primed then acc@[id] else acc) [] (IF.struc_free_vars false prepost) in
+            let _ = Debug.ninfo_hprint (add_str "all_prime" (pr_list pr_id)) all_prime no_pos in
+            let prime_var_to_add = Gen.BList.intersect_eq (=) all_prime fvars_while in
             let fvars_while_write = prime_var_to_add@fw_body@fw_cond in
             let fvars_specs, _ = List.split (Iformula.struc_free_vars false prepost) in
             let fvars = Gen.BList.remove_dups_eq (=) (fvars_while@fvars_specs) in
@@ -5034,7 +5039,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.binfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
+            let _ = Debug.ninfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
