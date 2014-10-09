@@ -51,13 +51,14 @@ let parse_file_full file_name (primitive: bool) =
         "cil"
       else (
         (* no parser is indicated, decide to use which ones by file name extension  *)
-        let index = try String.rindex file_name '.' with _ -> 0 in
-        let length = (String.length file_name) - index in
-        let ext = String.lowercase(String.sub file_name index length) in
-        if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
-          "cil"
-        else if(ext = ".java") then "joust"
-        else "default"
+        (* let index = try String.rindex file_name '.' with _ -> 0 in              *)
+        (* let length = (String.length file_name) - index in                       *)
+        (* let ext = String.lowercase(String.sub file_name index length) in        *)
+        (* if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then *)
+        (*   "cil"                                                                 *)
+        (* else if(ext = ".java") then "joust"                                     *)
+        (* else "default"                                                          *)
+        "default"
       )
     ) in
     (* start parsing *)
@@ -71,16 +72,16 @@ let parse_file_full file_name (primitive: bool) =
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
       else
-        if parser_to_use = "joust" then
-          let ss_file_name = file_name ^ ".ss" in
-          let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in
-          (* let _ = print_endline "using jparser" in *)
-          let input_channel = open_in ss_file_name in
-          let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in
-          close_in input_channel;
-          (*Sys.remove "tmp_java.ss";*)
-          parseresult
-        else
+        (* if parser_to_use = "joust" then                                                        *)
+        (*   let ss_file_name = file_name ^ ".ss" in                                              *)
+        (*   let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in  *)
+        (*   (* let _ = print_endline "using jparser" in *)                                       *)
+        (*   let input_channel = open_in ss_file_name in                                          *)
+        (*   let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in *)
+        (*   close_in input_channel;                                                              *)
+        (*   (*Sys.remove "tmp_java.ss";*)                                                        *)
+        (*   parseresult                                                                          *)
+        (* else                                                                                   *)
           Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
     close_in org_in_chnl;
@@ -114,7 +115,7 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
   List.map  (fun x-> 
                  if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x) true
                  else 
-                   let hip_dir= (Gen.get_path Sys.executable_name) ^x in
+                   let hip_dir = (Gen.get_path Sys.executable_name) ^x in
                    parse_file_full hip_dir true (* WN is include file a primitve? *)
             )  file_list
 
@@ -620,6 +621,26 @@ let process_source_full source =
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
 	)
+  
+let process_source_list source_files =
+  match source_files with
+  | [] -> []
+  | file_name::_ ->
+    let index = try String.rindex file_name '.' with _ -> 0 in
+    let length = (String.length file_name) - index in
+    let ext = String.lowercase(String.sub file_name index length) in
+    if (ext = ".java") then
+      let ss_file_name = file_name ^ ".ss" in
+      let _ = Pretty_ss.print_out_str_from_files_new source_files ss_file_name in
+      [process_source_full ss_file_name]
+    else
+      let parser = 
+        if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
+          "cil"
+        else "default"
+      in 
+      let _ = Parser.parser_name := parser in
+      List.map process_source_full source_files
 
 (*None Working: see process_source_full instead *)
 let process_source_full_parse_only source =
@@ -809,11 +830,11 @@ let main1 () =
   (* Cprinter.fmt_string "TEST2...............................................................'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''............"; *)
   (* Cprinter.fmt_cut (); *)
   (* Cprinter.fmt_string "TEST3....."; *)
-  (*  Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_cut (); *)
   (* Cprinter.fmt_string "TEST3....."; *)
-  (*  Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_cut (); *)
   (* Cprinter.fmt_string "TEST3....."; *)
-  (*    Cprinter.fmt_string "TEST3....."; *)
+  (* Cprinter.fmt_string "TEST3....."; *)
   (* Cprinter.fmt_string "TEST4..............................."; *)
   (* Cprinter.fmt_cut (); *)
   (* Cprinter.fmt_string "TEST5.................................."; *)
@@ -821,7 +842,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST6.................................."; *)
   (* Cprinter.fmt_cut (); *)
   (* Cprinter.fmt_string "TEST7.................................."; *)
-  (*  Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_cut (); *)
   process_cmd_line ();
   let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
@@ -839,10 +860,10 @@ let main1 () =
         print_string "Source file(s) not specified\n"
     end;
     let _ = Gen.Profiling.push_time "Overall" in
-    let _ = List.map process_source_full !Globals.source_files in
+    let _ = process_source_list !Globals.source_files in
     let _ = Gen.Profiling.pop_time "Overall" in
-     (*  Tpdispatcher.print_stats (); *)
-      ()
+    (*  Tpdispatcher.print_stats (); *)
+    ()
 
 (* let main1 () = *)
 (*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)

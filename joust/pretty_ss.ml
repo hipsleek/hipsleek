@@ -403,8 +403,8 @@ let rec print f comp =
   begin
     match comp.package with
     | Some pkg ->
-	print_id_comments f (List.hd pkg);
-	fprintf f "package %a;@\n@\n" print_name pkg
+	print_id_comments f (List.hd pkg)
+	(*fprintf f "package %a;@\n@\n" print_name pkg*)
     | None -> ()
   end;
   if comp.imports <> [] then
@@ -792,7 +792,6 @@ let print_out_str_from_files input_list outputfilename =
   let _ = Printf.fprintf outputchannel "%s" finalStr in
   let _ = print_endline(finalStr) in
   finalStr
-
 
 let print_out_str_from_files_new input_list outputfilename = 
   let file_to_string input_filename =
