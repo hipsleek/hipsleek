@@ -804,23 +804,22 @@ let combine_two_java_compile_unit c1 c2 =
 
 let empty_compile_unit = {package=None;imports = [];decls = [];comments = []};;
 
-(*
-let print_out_str_from_files_new input_list outputfilename = 
-  let file_to_string input_filename =
-    let channelf = open_in (input_filename) in
-    let n = in_channel_length channelf in
-    let s = String.create n in
-    really_input channelf s 0 n;
-    close_in channelf;
-    s
-  in
-  let big_s = List.fold_left (fun s i -> s^"\n"^(file_to_string i)) "" input_list in
-  let tmpOutChannel = open_out ("combined_tmp.java") in
-  Printf.fprintf tmpOutChannel "%s" big_s;
-  close_out tmpOutChannel;
-  print_out_str_to_file "combined_tmp.java" outputfilename;
-  Sys.remove "combined_tmp.java"
-*)
+(* let print_out_str_from_files_new input_list outputfilename =                         *)
+(*   let file_to_string input_filename =                                                *)
+(*     let channelf = open_in (input_filename) in                                       *)
+(*     let n = in_channel_length channelf in                                            *)
+(*     let s = String.create n in                                                       *)
+(*     really_input channelf s 0 n;                                                     *)
+(*     close_in channelf;                                                               *)
+(*     s                                                                                *)
+(*   in                                                                                 *)
+(*   let big_s = List.fold_left (fun s i -> s^"\n"^(file_to_string i)) "" input_list in *)
+(*   let tmpOutChannel = open_out ("combined_tmp.java") in                              *)
+(*   Printf.fprintf tmpOutChannel "%s" big_s;                                           *)
+(*   close_out tmpOutChannel;                                                           *)
+(*   print_out_str_to_file "combined_tmp.java" outputfilename;                          *)
+(*   Sys.remove "combined_tmp.java"                                                     *)
+
 let print_out_str_from_files_new input_list outputfilename = 
   let helper filename =
     let channelf = open_in (filename) in
