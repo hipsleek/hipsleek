@@ -451,10 +451,17 @@ relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
 
 int rand_int ()
-requires true
-ensures true;
+  requires true
+  ensures true;
 
 bool rand_bool ()
-requires true
-ensures res or !res;
+  requires true
+  ensures res or !res;
+
+//////////////////////////////////////////////
+// Prelude for Termination Competition TPDB //
+//////////////////////////////////////////////
+int __VERIFIER_nondet_int()
+  requires true
+  ensures true;
 

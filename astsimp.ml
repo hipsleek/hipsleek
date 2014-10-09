@@ -2916,11 +2916,10 @@ and check_return (proc : I.proc_decl) : bool =
   match proc.I.proc_body with
     | None -> true
     | Some e ->
-	  if
-            (not (I.are_same_type I.void_type proc.I.proc_return)) &&
-                (not (all_paths_return e))
-	  then false
-	  else true
+      if (not (I.are_same_type I.void_type proc.I.proc_return)) && (not (all_paths_return e))
+	    then false
+	    else true
+    
 and set_pre_flow f = 
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
@@ -3044,12 +3043,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
     let _= proving_loc #set (proc.I.proc_loc) in
     let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
+    let check_return_res = check_return proc in
     if not (Gen.is_empty dup_names) then
       (let p = List.hd dup_names in
       Err.report_error{
           Err.error_loc = p.I.param_loc;
           Err.error_text = "parameter " ^ (p.I.param_name ^ " is duplicated");})
-    else if not (check_return proc) then
+    else if (not check_return_res) && (String.compare proc.I.proc_name "main" != 0) then
       Err.report_error {
           Err.error_loc = proc.I.proc_loc;
           Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }

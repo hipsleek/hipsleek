@@ -3789,6 +3789,7 @@ let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
 
 (*****************************************************************)
 (******** The function below will be used by CIL parser **********)
+(*****************************************************************)
 
 let parse_c_aux_proc (fname: string) (proc: string) =
   (* save states of current parser *)
@@ -3800,7 +3801,7 @@ let parse_c_aux_proc (fname: string) (proc: string) =
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
   (* return *)
-  res
+  { res with Iast.proc_is_main = false; }
 
 let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
                           (* (env : (string, (Cabs2cil.envdata * Cil.location)) Hashtbl.t) *)

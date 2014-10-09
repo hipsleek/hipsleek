@@ -1796,17 +1796,19 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
-    let static_specs1, hp_decls,args_wi = match static_specs with
-      | Iformula.EList [] -> begin
-          match funbody with
-            | Some _ ->
-	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pos in
-	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-	          (ss, hps, args_wi)
-            | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
-        end
-      | _ ->
-	    static_specs, [],List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+    let static_specs1, hp_decls, args_wi = 
+      if not !Globals.sags then
+        static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+      else match static_specs with
+        | Iformula.EList [] -> begin
+            match funbody with
+              | Some _ ->
+  	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pos in
+  	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+  	          (ss, hps, args_wi)
+              | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+          end
+        | _ -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
     in
     let newproc : Iast.proc_decl = {
         Iast.proc_name = name;

@@ -26,7 +26,6 @@ int main() {
 	int y = __VERIFIER_nondet_int();
 	int z = __VERIFIER_nondet_int();
 	average(random(),random());
-
 }
 
 int random() {

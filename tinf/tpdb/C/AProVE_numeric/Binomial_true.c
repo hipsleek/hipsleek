@@ -42,4 +42,5 @@ int main() {
 	    for (int k = 0; k <= x; k++)
 		if (k <= n) binomialCoefficient(n, k);
 		else binomialCoefficient(k, n);
-    }
+	return 1;
+}
