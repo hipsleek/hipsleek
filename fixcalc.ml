@@ -839,9 +839,8 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
   let pfs = List.concat (List.map (fun p ->
     let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
     let res = CP.mkExists exists_vars p None no_pos in
-    [res]
-    (* if CP.isConstTrue (TP.simplify_raw res) then [] *)
-    (* else [res] *)) pfs)
+    if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
+    else [res]) pfs)
   in
 
   Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
