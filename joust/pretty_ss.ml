@@ -793,18 +793,47 @@ let print_out_str_from_files input_list outputfilename =
   let _ = print_endline(finalStr) in
   finalStr
 
+
+let combine_two_java_compile_unit c1 c2 =
+  match c1,c2 with
+    | {package = _;imports = _;decls=d1;comments=com1},{package = _;imports = _;decls=d2;comments=com2} -> 
+          let new_decls = d1@d2 in
+          let new_comments = com1@com2 in
+          {package = None;imports = [];decls = new_decls;comments = new_comments}
+   
+
+let empty_compile_unit = {package=None;imports = [];decls = [];comments = []};;
+
+(* let print_out_str_from_files_new input_list outputfilename =                         *)
+(*   let file_to_string input_filename =                                                *)
+(*     let channelf = open_in (input_filename) in                                       *)
+(*     let n = in_channel_length channelf in                                            *)
+(*     let s = String.create n in                                                       *)
+(*     really_input channelf s 0 n;                                                     *)
+(*     close_in channelf;                                                               *)
+(*     s                                                                                *)
+(*   in                                                                                 *)
+(*   let big_s = List.fold_left (fun s i -> s^"\n"^(file_to_string i)) "" input_list in *)
+(*   let tmpOutChannel = open_out ("combined_tmp.java") in                              *)
+(*   Printf.fprintf tmpOutChannel "%s" big_s;                                           *)
+(*   close_out tmpOutChannel;                                                           *)
+(*   print_out_str_to_file "combined_tmp.java" outputfilename;                          *)
+(*   Sys.remove "combined_tmp.java"                                                     *)
+
 let print_out_str_from_files_new input_list outputfilename = 
-  let file_to_string input_filename =
-    let channelf = open_in (input_filename) in
-    let n = in_channel_length channelf in
-    let s = String.create n in
-    really_input channelf s 0 n;
-    close_in channelf;
-    s
+  let helper filename =
+    let channelf = open_in (filename) in
+    let lexbuf = Lexing.from_channel channelf in
+    try
+      let result = Jparser.goal(Jlexer.token) lexbuf in
+      let _ = close_in channelf in
+      result
+    with
+      End_of_file ->  exit 0
   in
-  let big_s = List.fold_left (fun s i -> s^"\n"^(file_to_string i)) "" input_list in
-  let tmpOutChannel = open_out ("combined_tmp.java") in
-  Printf.fprintf tmpOutChannel "%s" big_s;
-  close_out tmpOutChannel;
-  print_out_str_to_file "combined_tmp.java" outputfilename;
-  Sys.remove "combined_tmp.java"
+  let bigResult = List.fold_left (fun c1 c2 -> combine_two_java_compile_unit c1 (helper c2))
+    {package=None;imports = [];decls = [];comments = []} input_list
+  in
+  let outputchannel = open_out outputfilename in
+  let _ = print (Format.formatter_of_out_channel outputchannel) bigResult in
+  close_out outputchannel
