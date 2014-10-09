@@ -27,7 +27,8 @@ int main() {
 
 }
 
-int random() {
+int random() 
+{
 	int x = __VERIFIER_nondet_int();
 	if (x < 0)
 		return -x;

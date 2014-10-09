@@ -2,6 +2,14 @@
 
 extern int __VERIFIER_nondet_int(void);
 
+void* alloca(unsigned long size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res != null;
+  }
+*/;
+
 int main() {
     int* x = alloca(sizeof(int));
     int* y = alloca(sizeof(int));

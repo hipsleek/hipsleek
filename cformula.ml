@@ -14833,22 +14833,27 @@ let rec norm_assume_with_lexvar tpost struc_f =
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
-let norm_lexvar_for_infer uid (f: formula): formula =
-  let f_b bf =
+let norm_lexvar_for_infer uid (f: formula): formula * bool =
+  let f_b _ bf =
     let (pf, il) = bf in
     match pf with
     | LexVar t_info ->
-      let nann = match t_info.lex_ann with
-      | MayLoop -> CP.mkUTPre uid
-      | _ -> t_info.lex_ann in
+      let has_mayloop, nann = match t_info.lex_ann with
+      | MayLoop -> true, CP.mkUTPre uid
+      | _ -> false, t_info.lex_ann in
       let npf = LexVar { t_info with
         lex_ann = nann;
         lex_fid = uid.CP.tu_fname;
         lex_tmp = uid.CP.tu_args } in
-      Some (npf, il)
-    | _ -> Some bf
-  in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f
-
+      Some ((npf, il), has_mayloop)
+    | _ -> Some (bf, false)
+  in 
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  let f_aset _ a = (a, []) in
+  let f_m a _ = (a, false) in
+  let f_trans = (nonef2, nonef2, nonef2, (nonef2, f_b, nonef2), (nonef2, f_m, f_aset, f_m, f_m)) in
+  trans_formula f () f_trans f_arg or_list
+  
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
   match struc_f with
@@ -14858,11 +14863,14 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
     if (has_lexvar_formula eb.formula_struc_base) then
       if not is_tnt_inf then struc_f
       else
-        let tpost = CP.mkUTPost uid in
-        EBase { eb with
-          (* MayLoop will be changed to UTPre *)
-          formula_struc_base = norm_lexvar_for_infer uid eb.formula_struc_base; 
-          formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
+        let norm_base, has_mayloop = norm_lexvar_for_infer uid eb.formula_struc_base in
+        if not has_mayloop then struc_f
+        else
+          let tpost = CP.mkUTPost uid in
+          EBase { eb with
+            (* MayLoop will be changed to UTPre *)
+            formula_struc_base = norm_base;
+            formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
     let lexvar =

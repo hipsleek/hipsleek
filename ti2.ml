@@ -1299,8 +1299,11 @@ let proving_trivial_termination_one_vertex prog tg scc v =
     | TermU uid ->
       let params = params_of_term_ann prog rel.termu_lhs in
       let eh_ctx = mkAnd rel.call_ctx uid.CP.tu_cond in
+      (* let term_conds = List.map (fun (_, r, _) ->                            *)
+      (*   mkAnd eh_ctx (CP.cond_of_term_ann r.termu_rhs)) term_edges_from_v in *)
       let term_conds = List.map (fun (_, r, _) -> 
-        mkAnd eh_ctx (CP.cond_of_term_ann r.termu_rhs)) term_edges_from_v in
+        mkAnd eh_ctx (mkNot (CP.cond_of_term_ann r.termu_rhs))) term_edges_from_v in
+      (* let _ = print_endline (pr_list !CP.print_formula term_conds) in *)
       let term_conds = List.map (fun f -> simplify 6 f params) term_conds in
       let term_conds = get_full_disjoint_cond_list_with_ctx eh_ctx term_conds in
       (* let term_conds = List.filter (fun c -> is_sat (mkAnd eh_ctx c)) term_conds in *)

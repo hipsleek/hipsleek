@@ -464,4 +464,8 @@ bool rand_bool ()
 int __VERIFIER_nondet_int()
   requires true
   ensures true;
+  
+int __VERIFIER_error()
+  requires true
+  ensures res = 0;
 

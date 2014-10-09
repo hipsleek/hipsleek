@@ -21,7 +21,12 @@
 
 extern int __VERIFIER_nondet_int(void);
 
-int fact(int n) {
+int fact(int n) 
+/*@
+  requires true
+  ensures res > 0;
+ */
+{
 	if (n <= 0) return 1;
 	else return n * fact(n - 1);
 }
