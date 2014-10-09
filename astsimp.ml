@@ -5012,9 +5012,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
               However, this may not be important.*)
-            let _,fvars_body = Pointers.modifies body [] in
-            let _,fvars_cond = Pointers.modifies cond [] in
+            let _,fvars_body,fw_body = Pointers.modifies body [] prog in
+            let _,fvars_cond,fw_cond = Pointers.modifies cond [] prog in
+            let _ = Debug.binfo_hprint (add_str "fw_body" (pr_list pr_id)) fw_body no_pos in
+            let _ = Debug.binfo_hprint (add_str "fw_cond" (pr_list pr_id)) fw_cond no_pos in
             let fvars_while = fvars_body@fvars_cond in
+            let prime_var_to_add = [] (* all_prime /\ fvars_while *) in
+            let fvars_while_write = prime_var_to_add@fw_body@fw_cond in
             let fvars_specs, _ = List.split (Iformula.struc_free_vars false prepost) in
             let fvars = Gen.BList.remove_dups_eq (=) (fvars_while@fvars_specs) in
             (* let _ = print_endline ("fvars = " ^ (string_of_ident_list fvars)) in *)
@@ -5035,7 +5039,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
                 I.exp_block_body = I.Seq{
-                    I.exp_seq_exp1 = w_body_1;                     
+                    I.exp_seq_exp1 = w_body_1;
                     I.exp_seq_exp2 = I.CallNRecv {
                         I.exp_call_nrecv_method = w_name;
                         I.exp_call_nrecv_lock = None;
@@ -5069,7 +5073,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_formal_args = List.map (fun tv ->{
                   I.param_type = fst tv;
                   I.param_name = snd tv;
-                  I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
+                  I.param_mod = if (List.mem (snd tv) fvars_while_write) then I.RefMod
                   else I.NoMod; (* other vars from specification, declared with NoMod *)
                   I.param_loc = pos; }) tvars in
             let w_proc ={
