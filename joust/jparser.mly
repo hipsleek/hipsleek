@@ -1049,7 +1049,7 @@ EqualityExpression:
 
 AndExpression:
 	EqualityExpression  { $1 }
-|	AndExpression AND EqualityExpression  { Infix ($1, "&", $3) }
+|	AndExpression AND EqualityExpression  { Infix ($1, "&&", $3) }
 ;
 
 ExclusiveOrExpression:
@@ -1059,7 +1059,7 @@ ExclusiveOrExpression:
 
 InclusiveOrExpression:
 	ExclusiveOrExpression  { $1 }
-|	InclusiveOrExpression OR ExclusiveOrExpression  { Infix ($1, "|", $3) }
+|	InclusiveOrExpression OR ExclusiveOrExpression  { Infix ($1, "||", $3) }
 ;
 
 /* 15.23 */

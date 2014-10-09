@@ -403,8 +403,8 @@ let rec print f comp =
   begin
     match comp.package with
     | Some pkg ->
-	print_id_comments f (List.hd pkg);
-	fprintf f "package %a;@\n@\n" print_name pkg
+	print_id_comments f (List.hd pkg)
+	(*fprintf f "package %a;@\n@\n" print_name pkg*)
     | None -> ()
   end;
   if comp.imports <> [] then
