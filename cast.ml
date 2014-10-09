@@ -1922,21 +1922,21 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let check_proper_return cret_type exc_list f = 
-  let overlap_flow_type fl res_t = match res_t with 
+let check_proper_return cret_type exc_list f =
+  let overlap_flow_type fl res_t = match res_t with
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
-	      let res_t,b_rez = F.get_result_type f0 in
+              let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
 	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
                 & not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
-		  if not (sub_type res_t cret_type) then 					
+		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
-	      else if not (List.exists (fun c-> 
+	      else if not (List.exists (fun c->
                   (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
@@ -1944,39 +1944,39 @@ let check_proper_return cret_type exc_list f =
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
 	      else if not(overlap_flow_type fl_int res_t) then
 		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
-	      else 			
+	      else
 (* else *)
 		(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 		  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 		  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normaesl flow"}
 		else ()
 	| F.Exists b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !norm_flow_int fl_int) then 
-			  if not (sub_type res_t cret_type) then 					
+			if (F.equal_flow_interval !norm_flow_int fl_int) then
+			  if not (sub_type res_t cret_type) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
-			else 
+			else
 			  if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
 			  else if not(overlap_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
-			  else ()			
-		  else 
+			  else ()
+		  else
 			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
-			else ()			
+			else ()
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
-  let rec helper f0 = match f0 with 
+  let rec helper f0 = match f0 with
 	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
 	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume b -> 
-			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+	| F.EAssume b ->
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then ()
 			else check_proper_return_f b.F.formula_assume_simpl
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
