@@ -14,9 +14,11 @@ int PastaA1_main()
   x=10;
   int y = 0;
     while (y < x) 
-      infer [@post_n]
+      //infer [@post_n]
       requires true
-        ensures true; //(y<x & y'=x  | y>=x & y'=y) & x'=x;
+      ensures (y<x & y'=x  | y>=x & y'=y)
+                 & x'=x
+     ;
     {
       // y++;
       inc(y,x);

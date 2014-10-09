@@ -185,10 +185,11 @@ and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = { param_type : typ;
-param_name : ident;
-param_mod : param_modifier;
-param_loc : loc }
+and param = { 
+    param_type : typ;
+    param_name : ident;
+    param_mod : param_modifier;
+    param_loc : loc }
 
 (*
   and multi_spec = spec list
@@ -844,7 +845,11 @@ let is_null (e : exp) : bool = match e with
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
-  
+ 
+let get_ident (e : exp)  = match e with
+  | Var v -> Some v.exp_var_name
+  | _ -> None
+
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e

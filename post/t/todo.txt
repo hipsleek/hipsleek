@@ -904,11 +904,13 @@ It seems like post infer & @term were being done simultaneously..
           }]
 
 =======================================================
-# loop1.ss
+# loop1v.ss
 
  where did this warning come from?
 
-WARNING: t/loop1.ss_12:16_12:42:the result type __norm is not covered by the throw list[__Brk_top]
+WARNING: loop1v.ss_19:14_20:23:the result type __norm is not covered by the throw list[__Brk_top]
+
+WARNING: loop1v.ss_3:10_3:16:the result type __norm is not covered by the throw list[]
 
 =======================================================
 # loop.ss
@@ -924,9 +926,9 @@ WARNING: t/loop1.ss_12:16_12:42:the result type __norm is not covered by the thr
 Two problems:
 
 (i) Parameters x,y are passed by ref.
-    Only y need to be pass-by-ref
+    Only y need to be pass-by-ref (FIXED)
 
-(ii) We need to include x',y' in pass-by-ref
+(ii) We need to include x',y' in pass-by-ref (FIXED)
      EAssume ref [x_36;y_37]
      emp&post_1188(x_36,y_37)&{FLOW,(4,5)=__norm}[]
 
@@ -958,6 +960,20 @@ v_int_14_1168))}})};
 else []
 ))}
 =======================================================
+# non-rec2.ss
+
+Two problems:
+  1. why is printing without a closing ")"
+     namely "post_1172("
+
+[RELDEFN post_1172: ( true) -->  post_1172(]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1172(, true, true, true)]
+
 =======================================================
 =======================================================
 =======================================================

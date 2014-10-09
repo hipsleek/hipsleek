@@ -2972,9 +2972,9 @@ and check_valid_flows (f:IF.struc_formula) =
 and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars:ident list): C.proc_decl =
   let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
   let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
-  Debug.no_1 "trans_loop_proc" 
-      pr pr2 
-      (fun _ -> trans_loop_proc_x prog proc addr_vars) proc
+  Debug.no_2 "trans_loop_proc" 
+      pr (pr_list pr_id) pr2 
+      (fun _ _ -> trans_loop_proc_x prog proc addr_vars) proc addr_vars
 
 and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: ident list): C.proc_decl =
   (*variables that have been taken address-of*)
@@ -5021,13 +5021,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | I.While{
             I.exp_while_condition = cond;
             I.exp_while_body = body;
-            exp_while_addr_vars = addr_vars;
+            I.exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
             I.exp_while_f_name = a_wn;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-            (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
+            let _ = Debug.ninfo_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             let _ =  Debug.ninfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
@@ -5036,9 +5036,18 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
               However, this may not be important.*)
-            let _,fvars_body = Pointers.modifies body [] in
-            let _,fvars_cond = Pointers.modifies cond [] in
+            let _,fvars_body,fw_body = Pointers.modifies body [] prog in
+            let _,fvars_cond,fw_cond = Pointers.modifies cond [] prog in
+            let _ = Debug.ninfo_hprint (add_str "fw_body" (pr_list pr_id)) fw_body no_pos in
+            let _ = Debug.ninfo_hprint (add_str "fw_cond" (pr_list pr_id)) fw_cond no_pos in
             let fvars_while = fvars_body@fvars_cond in
+            let _ = Debug.ninfo_hprint (add_str "fvars_while" (pr_list pr_id)) fvars_while no_pos in
+            let _ = Debug.ninfo_hprint (add_str "spec" Iprinter.string_of_struc_formula) prepost no_pos in
+            let all_prime = List.fold_left (fun acc (id,pr) ->
+                if pr=Primed then acc@[id] else acc) [] (IF.struc_free_vars false prepost) in
+            let _ = Debug.ninfo_hprint (add_str "all_prime" (pr_list pr_id)) all_prime no_pos in
+            let prime_var_to_add = Gen.BList.intersect_eq (=) all_prime fvars_while in
+            let fvars_while_write = prime_var_to_add@fw_body@fw_cond in
             let fvars_specs, _ = List.split (Iformula.struc_free_vars false prepost) in
             let fvars = Gen.BList.remove_dups_eq (=) (fvars_while@fvars_specs) in
             (* let _ = print_endline ("fvars = " ^ (string_of_ident_list fvars)) in *)
@@ -5059,7 +5068,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
                 I.exp_block_body = I.Seq{
-                    I.exp_seq_exp1 = w_body_1;                     
+                    I.exp_seq_exp1 = w_body_1;
                     I.exp_seq_exp2 = I.CallNRecv {
                         I.exp_call_nrecv_method = w_name;
                         I.exp_call_nrecv_lock = None;
@@ -5093,7 +5102,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_formal_args = List.map (fun tv ->{
                   I.param_type = fst tv;
                   I.param_name = snd tv;
-                  I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
+                  I.param_mod = if (List.mem (snd tv) fvars_while_write) then I.RefMod
                   else I.NoMod; (* other vars from specification, declared with NoMod *)
                   I.param_loc = pos; }) tvars in
             let w_proc ={
@@ -5124,8 +5133,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                          String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                      ) w_formal_args in
-                     let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
-                     let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                     let _ =  Debug.binfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                     let _ =  Debug.binfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                      let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                  let full_args_wi = if ninfer_args = [] then args_wi
