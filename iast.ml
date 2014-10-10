@@ -1074,7 +1074,10 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x pname body_opt args0 ret cur_pre cur_post pos=
+let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type pos=
+  let is_infer_ret r=
+    (infer_type = INF_SHAPE && is_node_typ r)
+  in
   (*keep pointers only*)
   let args = List.filter (fun p -> match p.param_type with
     | Named _ -> true
@@ -1120,9 +1123,10 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post pos=
             in
             r@ref_args
         ) [] args)@
-	    (match ret with
-	      | Globals.Void | Bool -> []
-	      | _ -> [(ret, res_name, Globals.I)]
+	    (if is_infer_ret ret then [(ret, res_name, Globals.I)] else []
+              (* match ret with *)
+	      (* | Globals.Void | Bool -> [] *)
+	      (* | _ -> [(ret, res_name, Globals.I)] *)
 	    );
         hp_part_vars = [];
         hp_root_pos = 0;
@@ -1140,9 +1144,10 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post pos=
         in
         r@hp_args
     ) [] args in
-    let post_eargs = match ret with
-      | Void | Bool -> post_eargs0
-      | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
+    let post_eargs = if is_infer_ret ret then post_eargs0@[P.Var ((res_name, Unprimed),pos)] else post_eargs0
+      (* match ret with *)
+      (* | Void | Bool -> post_eargs0 *)
+      (* | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)] *)
     in
     let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
     let ipost_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
@@ -1163,12 +1168,12 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post pos=
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
-let genESpec pname body_opt args ret cur_pre cur_post pos=
+let genESpec pname body_opt args ret cur_pre cur_post infer_type pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
   Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
-      (fun _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post pos) args ret
+      (fun _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type pos) args ret
 
 let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
@@ -1202,14 +1207,14 @@ let genESpec_wNI body_header body_opt args ret pos=
     match body_header.proc_static_specs with
       | F.EList [] ->
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
-            (F.mkTrue_nf pos) (F.mkTrue_nf pos) pos in
+            (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE pos in
           (* let _ = print_gen_spec ss hps in *)
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
           (ss,hps,args_wi)
       | F.EInfer i_sf -> if i_sf.F.formula_inf_obj # is_shape then
           let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then
-            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post pos in
+            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE pos in
             (* let _ = print_gen_spec ss hps in *)
             let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
