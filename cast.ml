@@ -982,6 +982,8 @@ and is_transparent e = match e with
 let mingle_name (m : ident) (targs : typ list) = 
   let param_tnames = String.concat "~" (List.map string_of_typ targs) in
 	m ^ "$" ^ param_tnames
+  
+let is_mingle_name m = String.contains m '$'
 
 let unmingle_name (m : ident) = 
   try
