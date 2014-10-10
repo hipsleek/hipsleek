@@ -29,9 +29,9 @@ int size_helper(node x)
   ensures  G(x);// & SIZEH(res,n);//res=m+n & m>=0
 */
 
-infer[@shape]  requires true ensures true;
+//infer[@shape]  requires true ensures true;
 
-//infer[@shape@size]  requires true ensures true;
+  infer[@shape,@size]  requires true ensures true;
 {
   if (x==null)
     return 0;

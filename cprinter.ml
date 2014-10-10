@@ -3116,6 +3116,7 @@ let string_of_inf_cmd i =
   | INF_POST -> "@post"
   | INF_PRE   -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
