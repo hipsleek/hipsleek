@@ -3433,3 +3433,71 @@ let is_resourceless_h_formula prog (h: F.h_formula) =
   Debug.no_1 "is_resourceless_h_formula"
       !print_h_formula string_of_bool
       (fun _ -> is_resourceless_h_formula_x prog h) h
+
+(*************************************************)      
+(* Construct a data dependency graph from an exp *)
+(*************************************************)
+let is_prim_proc prog id = 
+  try
+    let proc = Hashtbl.find prog.new_proc_decls id in
+    not proc.proc_is_main
+  with _ -> false
+
+(* src depends on exp *)
+let data_dependency_graph_of_exp prog src exp =
+  let rec helper ddg src exp = 
+    match exp with
+    | Label e -> helper ddg src e.exp_label_exp
+    | Assign e ->
+      (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
+      helper ddg e.exp_assign_lhs e.exp_assign_rhs
+    | Block e -> helper ddg src e.exp_block_body
+    | Cond e ->
+      let ddg = IG.add_edge ddg src e.exp_cond_condition in
+      let ddg = helper ddg src e.exp_cond_then_arm in
+      helper ddg src e.exp_cond_else_arm
+    | Cast e -> helper ddg src e.exp_cast_body 
+    | Catch e -> helper ddg src e.exp_catch_body 
+    | ICall e -> 
+      let ddg, dst =
+        let mn = e.exp_icall_method_name in
+        if is_prim_proc prog mn then ddg, src
+        else
+          let ddg = IG.add_edge ddg src mn in  
+          ddg, mn
+      in
+      List.fold_left (fun g i -> 
+        IG.add_edge g dst i) ddg e.exp_icall_arguments
+    | SCall e -> 
+      let ddg, dst =
+        let mn = e.exp_scall_method_name in
+        if is_prim_proc prog mn then ddg, src
+        else
+          let ddg = IG.add_edge ddg src mn in  
+          ddg, mn
+      in
+      List.fold_left (fun g i -> 
+        IG.add_edge g dst i) ddg e.exp_scall_arguments
+    | Seq e ->
+      let ddg = helper ddg src e.exp_seq_exp1 in
+      helper ddg src e.exp_seq_exp2
+    | Var e -> IG.add_edge ddg src e.exp_var_name
+    | While e -> 
+      let ddg = IG.add_edge ddg src e.exp_while_condition in
+      helper ddg src e.exp_while_body
+    | Try e ->
+      let ddg = helper ddg src e.exp_try_body in
+      helper ddg src e.exp_catch_clause
+    | _ -> ddg
+  in
+  let ddg = IG.empty in
+  helper ddg src exp
+
+let data_dependency_graph_of_proc prog proc = 
+  match proc.proc_body with
+  | None -> None
+  | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
+
+let print_data_dependency_graph ddg = 
+  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
+      

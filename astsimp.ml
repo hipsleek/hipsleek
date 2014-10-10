@@ -1530,17 +1530,25 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
        (* Termination: Mark recursive calls and call order of function
         * Normalize the term specification with call number and implicit
         * phase variable *)
-	   let c = (mark_rec_and_call_order cprog3) in
-       let c = 
-         if not !Globals.dis_term_chk 
-         then Cast.add_term_nums_prog c 
-         else c 
-       in
-       let c = (add_pre_to_cprog c) in
-       (* let _ = print_endline (exlist # string_of) in *)
-       (* let _ = exlist # sort in *)
-	   (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-	   (c,prog))))
+    let c = (mark_rec_and_call_order cprog3) in
+    let c =
+      if not !Globals.dis_term_chk
+      then Cast.add_term_nums_prog c
+      else c
+    in
+    let c = (add_pre_to_cprog c) in
+    let _ = Hashtbl.iter (fun ident proc ->
+      let ddg = C.data_dependency_graph_of_proc c proc in
+      match ddg with
+      | None -> ()
+      | Some g ->
+        let _ = print_endline ("DDG of " ^ ident) in
+        print_endline (C.print_data_dependency_graph g) 
+    ) c.C.new_proc_decls in
+    (* let _ = print_endline (exlist # string_of) in *)
+    (* let _ = exlist # sort in *)
+	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
+	  (c,prog))))
          end)
   else failwith "Error detected at trans_prog"
 
