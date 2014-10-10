@@ -315,6 +315,28 @@ and isEConstTrue f0 = match f0 with
   | EList b -> List.exists (fun (_,c)-> isEConstTrue c) b
   | _ -> false
 
+and get_pre_post f0=
+  let btrue =  mkTrue_nf no_pos in
+  match f0 with
+    | EBase b -> begin
+        (* if isConstTrue b.formula_struc_base then *)
+        match b.formula_struc_continuation with
+          | Some post -> begin
+              match post with
+                | EAssume pb -> begin
+                      match pb.formula_assume_struc with
+                        | EBase p -> true,b.formula_struc_base,p.formula_struc_base
+                        | _ -> false,  b.formula_struc_base, btrue
+                  end
+                | _ -> false,  b.formula_struc_base, btrue
+            end
+          | None -> false,  b.formula_struc_base, btrue
+      (* else false,b.formula_struc_base, btrue *)
+      end
+    | _ -> false, btrue, btrue
+
+and mkTrue_nf p =  mkTrue n_flow p
+
 (* TRUNG TODO: should change name to mkEmp ? *)
 and mkTrue flow pos = Base { formula_base_heap = HEmp;
 						formula_base_pure = P.mkTrue pos;
