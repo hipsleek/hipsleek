@@ -412,12 +412,10 @@ let process_source_full source =
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
 		let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
-    let prog = 
-      if (Globals.infer_const_obj # is_term) then 
-        let tnt_prim_procs = Parser.create_tnt_prim_proc () in
-        { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_procs; }
-      else prog
-    in  
+    let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->
+      match (Parser.create_tnt_prim_proc id) with
+      | None -> acc | Some pd -> acc @ [pd]) Iast.tnt_prim_proc_tbl [] in
+    let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
     (* let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)

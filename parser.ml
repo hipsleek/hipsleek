@@ -3598,6 +3598,11 @@ invocation_expression:
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+    let _ =
+      if (Iast.is_tnt_prim_proc id) then
+        Hashtbl.add Iast.tnt_prim_proc_tbl id id 
+      else () 
+    in
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
@@ -3865,16 +3870,21 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
 (*   requires true             *)
 (*   ensures res = 0;          *)
       
-let create_tnt_prim_proc _ : Iast.proc_decl list =
-  let int_nondet_proc =
-    "int __VERIFIER_nondet_int()\n" ^
-    "  requires true\n" ^
-    "  ensures true;\n"
-  in  
-  let int_error_proc =
-    "int __VERIFIER_error()\n" ^
-    "  requires true\n" ^
-    "  ensures res = 0;\n"
-  in
-  List.map (parse_c_aux_proc "tnt_prim_proc") [int_nondet_proc; int_error_proc]  
+let create_tnt_prim_proc id : Iast.proc_decl option =
+  let proc_source = 
+    if String.compare id "__VERIFIER_nondet_int" == 0 then Some (
+      "int __VERIFIER_nondet_int()\n" ^
+      "  requires true\n" ^
+      "  ensures true;\n")
+    else if String.compare id "__VERIFIER_error" == 0 then Some (
+      "int __VERIFIER_error()\n" ^
+      "  requires true\n" ^
+      "  ensures res = 0;\n")
+    else None
+  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
+  
+let create_tnt_prim_proc_list ids : Iast.proc_decl list =
+  List.concat (List.map (fun id -> 
+    match (create_tnt_prim_proc id) with
+    | None -> [] | Some pd -> [pd]) ids)
 

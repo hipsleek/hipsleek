@@ -1168,6 +1168,11 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
             | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
             | _ -> report_error pos "translate_intstr: invalid callee's name!" in
           let args = List.map (fun x -> translate_exp x) exps in
+          let _ =
+            if (Iast.is_tnt_prim_proc fname) then
+              Hashtbl.add Iast.tnt_prim_proc_tbl fname fname
+            else ()
+          in
           let func_call = Iast.mkCallNRecv fname None args None pos in (
               match lv_opt with
                 | None -> func_call

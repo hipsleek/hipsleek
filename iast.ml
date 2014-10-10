@@ -3190,3 +3190,11 @@ let detect_invoke prog proc=
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
       
+let tnt_prim_procs = 
+  [ "__VERIFIER_nondet_int"; "__VERIFIER_error" ]
+  
+let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
+  
+let is_tnt_prim_proc id =
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs 
+      
