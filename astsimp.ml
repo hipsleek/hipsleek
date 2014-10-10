@@ -3328,18 +3328,18 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     post-condition. Those variables are necessary in order
     to prove the final correctness. **)
 and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spec_var list) =
-  (** An Hoa : Internal function to collect important variables in the an ext_formula **)   
+  (** An Hoa : Internal function to collect important variables in the an ext_formula **)
   let rec helper f = match f with
-    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches 
+    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches
     | CF.EBase b -> b.CF.formula_struc_implicit_inst
-    | CF.EAssume _ -> []
-    | CF.EInfer b -> 
+    | CF.EAssume b -> []
+    | CF.EInfer b ->
           if deep_flag then helper b.CF.formula_inf_continuation
           else []
-    | CF.EList b -> fold_l_snd helper b 
+    | CF.EList b -> fold_l_snd helper b
   in
   helper spec
-      
+
 (** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
@@ -6093,7 +6093,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
   (* let helper n1 n2 =  *)
   (*   match n1 with *)
   (*     | CF.DataNode ->  *)
-          
+
   (*     | CF.Star -> false *)
   (*     | _ -> false *)
 (*

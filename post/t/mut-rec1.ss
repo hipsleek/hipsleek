@@ -23,18 +23,22 @@ requires true
 
 
 int foo2(int n)
-  infer[Uf1,Uf2]
+  /* infer[Uf1,Uf2] */
+  infer [@post_n]
   requires true
-  ensures Uf2(n,res);
+  /* ensures Uf2(n,res); */
+  ensures true;
 {
   if (n <= 0) return 0;
   else return 1+foo1(n-1);
 }
 
 int foo1(int n)
-  infer[Uf1,Uf2]
+  /* infer[Uf1,Uf2] */
+  infer [@post_n]
   requires true
-  ensures Uf1(n,res);
+  /* ensures Uf1(n,res); */
+  ensures true;
 {
   if (n <= 0) return 0;
   else return 1+foo2(n-1);

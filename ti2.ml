@@ -12,7 +12,9 @@ open Ti3
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let subset = Gen.BList.subset_eq CP.eq_spec_var
 
-let om_simplify = Omega.simplify
+let om_simplify f = (* Omega.simplify *) (* Tpdispatcher.simplify_raw *)
+  if CP.is_linear_formula f then Omega.simplify f
+  else Redlog.simplify f
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
 
@@ -27,12 +29,24 @@ let simplify num f args =
   let pr2 = pr_list !CP.print_sv in
   Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
     (fun _ _ -> simplify f args) f args
-  
+    
 let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
 
 let imply a c = Tpdispatcher.imply_raw a c
 
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
+
+let simplify_disj f = 
+  let f = om_simplify f in
+  let f =
+    if CP.is_disjunct f then pairwisecheck f
+    else f 
+  in f
+
+let simplify_and_slit_disj f = 
+  let f = simplify_disj f in
+  let fs = CP.split_disjunctions f in
+  List.filter is_sat fs
 
 (* To be improved *)
 let fp_imply f p =
@@ -45,6 +59,7 @@ let f_is_sat f =
   Tpdispatcher.is_sat_raw pf
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
+let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos
 let mkNot f = CP.mkNot f None no_pos
 let mkGt e1 e2 = CP.mkPure (CP.mkGt e1 e2 no_pos)
 let mkGte e1 e2 = CP.mkPure (CP.mkGte e1 e2 no_pos)
@@ -722,6 +737,13 @@ let sub_graph_of_scc_list tg scc_list =
 (* End of TNT Graph *)
 
 (* Template Utilies *)
+let wrap_oc_tl f arg =
+  let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
+  let _ = Tlutils.oc_solver := true in
+  let res = f arg in
+  let _ = Tlutils.oc_solver := oc in
+  res
+
 let templ_of_term_ann by_ann ann =
   match ann with
   | CP.TermR uid 
@@ -781,7 +803,7 @@ let infer_lex_ranking_function_scc prog g scc_edges =
       [rank_exp]
     in Some rank_of_ann
   | Unsat -> 
-    let res = Terminf.infer_lex_template_res prog inf_templs templ_unks templ_assumes in
+    let res = wrap_oc_tl (Terminf.infer_lex_template_res prog inf_templs templ_unks) templ_assumes in
     if is_empty res then None
     else 
       let res = Gen.BList.remove_dups_eq CP.eqExp res in
@@ -847,10 +869,11 @@ let infer_abductive_cond prog ann ante conseq =
       (* let _ = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)
       
       let _ = add_templ_assume (MCP.mix_of_pure abd_ctx) abd_conseq abd_templ_id in
-      let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)
-      let _ = Tlutils.oc_solver := true in 
-      let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in
-      let _ = Tlutils.oc_solver := oc in
+      (* let oc = !Tlutils.oc_solver in (* Using oc to get optimal solution *)          *)
+      (* let _ = Tlutils.oc_solver := true in                                           *)
+      (* let res = solve_templ_assume prog (opt_to_list abd_templ_decl) abd_templ_id in *)
+      (* let _ = Tlutils.oc_solver := oc in                                             *)
+      let res = wrap_oc_tl (solve_templ_assume prog (opt_to_list abd_templ_decl)) abd_templ_id in
         
       match res with
       | Sat model ->
