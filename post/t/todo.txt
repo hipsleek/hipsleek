@@ -975,6 +975,23 @@ Two problems:
 [( post_1172(, true, true, true)]
 
 =======================================================
+# strong1.ss & str1.slk
+
+Quick patch to fix imprecision from lost of intermedicate
+post(..) predicate.
+
+
+        (* WN :filtering of rel below causes a problem for str1.slk
+           as intermeidate predicates are lost *)
+        let rel_lhs_n = [] in 
+        let rel_to_del = if rel_lhs_n=[] then []
+        else
+          let lhs_rec_vars = CP.fv lhs_p_memo in
+          DD.binfo_hprint (add_str "lhs_rec_vars:" (pr_list CP.string_of_spec_var)) lhs_rec_vars pos;
+          let rel_lhs_new = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+          DD.binfo_hprint (add_str "rel_lhs_new:" (pr_list !CP.print_formula)) rel_lhs_new pos;
+          List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
+        in
 =======================================================
 =======================================================
 =======================================================

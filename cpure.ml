@@ -2581,31 +2581,29 @@ and conj_of_list (fs : formula list) pos : formula =
             List.fold_left helper (mkTrue pos) fs
           *)
 
-(* 
+(*
    Get a list of disjuncts, namely
-   F1 or F2 or .. or Fn ==> [F1,F2,..,FN] 
+   F1 or F2 or .. or Fn ==> [F1,F2,..,FN]
 *)
-(* 16.04.09 *)	
+(* 16.04.09 *)
 and list_of_disjs (f0 : formula) : formula list =split_disjunctions f0
-  
-and disj_of_list (xs : formula list) pos : formula = 
+
+and disj_of_list (xs : formula list) pos : formula =
   let rec helper xs r = match xs with
     | [] -> r
     | x::xs -> mkOr x (helper xs r) None pos in
   match xs with
     | [] -> mkTrue pos
     | x::xs -> helper xs x
-	  
+
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
   | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
-  | AndList _ -> false 
-	
-	
-and is_member_pure (f:formula) (p:formula):bool = 
+  | AndList _ -> false
+
+and is_member_pure (f:formula) (p:formula):bool =
   let y = split_conjunctions p in
   List.exists (fun c-> equalFormula f c) y
-      
 
 and is_neg_of_consj f : bool =
   match f with
@@ -2621,7 +2619,7 @@ and is_disjunct f : bool =
     | Or(_,_,_,_) -> true
     | _ -> false
 
-(*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
+(*limited, should use equal_formula, equal_b_formula, eq_exp instead*)
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
   let rec helper f1 f2=
   match (f1,f2) with
@@ -2630,9 +2628,9 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
     | (And(f1, f2, _), And(f3, f4, _)) -> ((helper f1 f3) && (helper f2 f4))
         || ((helper f1 f4) && (helper f2 f3))
-    | AndList b1, AndList b2 -> 
-	  if (List.length b1)= List.length b2 
-	  then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2 
+    | AndList b1, AndList b2 ->
+	  if (List.length b1)= List.length b2
+	  then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2
 	  else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
     | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) && (helper f1 f2)
@@ -2683,8 +2681,8 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (Gte(e1, e2, _), Lte(e4, e3, _))
     | (Gt(e1, e2, _), Lte(e4, e3, _))
     | (Gte(e1, e2, _), Lt(e4, e3, _))
-    | (Lt(e1, e2, _), Gte(e4, e3, _))  
-    | (SubAnn(e1, e2, _), SubAnn(e3, e4, _))  
+    | (Lt(e1, e2, _), Gte(e4, e3, _))
+    | (SubAnn(e1, e2, _), SubAnn(e3, e4, _))
     | (Lte(e1, e2, _), Lte(e3, e4, _))
     | (Gt(e1, e2, _), Gt(e3, e4, _))
     | (Gte(e1, e2, _), Gte(e3, e4, _))
@@ -2765,18 +2763,17 @@ and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp lis
     | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) && (eq_exp_list_helper t e2)
   in
   (eq_exp_list_helper e1 e2) && (eq_exp_list_helper e2 e1)
-      
-      
-and dperm_subst_simpl f = 
-  let comb l1 l2 = l1 @ l2 in 
-  let rec coll_eq f = match f with 
-    | And (f1,f2,_) -> comb (coll_eq f1) (coll_eq f2)			
-    | AndList b -> let l = List.map (fun (_,c)-> coll_eq c) b in List.fold_left comb (List.hd l) (List.tl l) 
+
+and dperm_subst_simpl f =
+  let comb l1 l2 = l1 @ l2 in
+  let rec coll_eq f = match f with
+    | And (f1,f2,_) -> comb (coll_eq f1) (coll_eq f2)
+    | AndList b -> let l = List.map (fun (_,c)-> coll_eq c) b in List.fold_left comb (List.hd l) (List.tl l)
     | Or _ ->  []
     | Not _ -> []
     | Forall (v,f,_,_)
     | Exists (v,f,_,_)-> coll_eq f
-    | BForm ((f,_),_)-> (match f with 
+    | BForm ((f,_),_)-> (match f with
 	|Eq (Var (v,_),Tsconst (t,_),_)
 	|Eq (Tsconst (t,_),Var (v,_),_)-> [(v,t)]
 	     (*|Eq (Var (v1,_),Var (v2,_),_) -> if (type_of_spec_var v1=Tree_sh) then [([v1;v2],None)] else []*)
@@ -2795,24 +2792,24 @@ and dperm_subst_simpl f =
     | Exists (v,f1,l,pos) -> if lsubs=[] then f else mkExists [v] (helper true lsubs f1) l pos
     | BForm ((Eq(e1,e2,p1),p2),p3) -> if not flg then  f
       else
-	let fct t = match t with 
-	  | Tsconst (t,_)-> Some t 
+	let fct t = match t with
+	  | Tsconst (t,_)-> Some t
 	  | Var (v,_)->
-		(try 
-		  Some (snd (List.find (fun (c,_)-> eq_spec_var v c) lsubs)) 
+		(try
+		  Some (snd (List.find (fun (c,_)-> eq_spec_var v c) lsubs))
 		with | Not_found -> None)
 	  | _ -> None in
-	let r = match e1,e2 with					
-	  | Var _ ,Add(a1,a2,_) 
+	let r = match e1,e2 with
+	  | Var _ ,Add(a1,a2,_)
 	  | Tsconst _ , Add(a1,a2,_) -> Some (e1,a1,a2)
-	  | Add(a1,a2,_), Tsconst _ 
-	  | Add(a1,a2,_),Var _  -> Some (e2,a1,a2)			
+	  | Add(a1,a2,_), Tsconst _
+	  | Add(a1,a2,_),Var _  -> Some (e2,a1,a2)
 	  | _ -> None  in
-	(match r with 
-	  | None -> f 
+	(match r with
+	  | None -> f
 	  | Some (e0,e1,e2) ->
 		let t0 = fct e0 in
-		let test t r = match t with 
+		let test t r = match t with
 		  | None -> f
 		  | Some s -> if Tree_shares.Ts.contains s r then f else mkFalse  no_pos in
 		(match fct e1,fct e2 with 
@@ -2822,7 +2819,7 @@ and dperm_subst_simpl f =
 		  | Some s1, Some s2 -> if Tree_shares.Ts.can_join s1 s2 then test t0 ( Tree_shares.Ts.join s1 s2) else mkFalse no_pos))
     | _ -> f in
   helper false (coll_eq f) f
-      
+
 (*
   match (e1,e2) with
   | (Null _ ,Null _ ) -> true
@@ -2848,21 +2845,20 @@ and dperm_subst_simpl f =
   | (ListLength (e1,_),ListLength (e2,_))
   | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp_f eq e1 e2)
   | _ -> false
-*)	      
+*)
 and remove_dupl_conj_eq (cnjlist:formula list):formula list = Gen.BList.remove_dups_eq equalFormula cnjlist
 
-and equalFormula (f1:formula)(f2:formula):bool = equalFormula_f eq_spec_var  f1 f2
+and equalFormula (f1:formula) (f2:formula):bool = equalFormula_f eq_spec_var  f1 f2
 
 and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_var  f1 f2
 
-and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
+and eqExp (f1:exp) (f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 
-  
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos =
   let prt = fun al -> List.fold_left (fun r a -> r ^ "; " ^ (!print_exp a)) "" al in
   Debug.no_2 "build_relation" prt prt (!print_formula) (fun al1 al2 -> build_relation_x relop al1 al2 lbl pos) alist10 alist20
-      
+
 and build_relation_x relop alist10 alist20 lbl pos =
   let rec helper1 ae alist =
     (* print_endline "inside helper1"; *)
