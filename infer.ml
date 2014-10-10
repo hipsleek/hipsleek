@@ -1847,6 +1847,11 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         let rel_lhs_n = List.concat (List.map CP.get_rel_id_list rel_lhs) in
         let rel_rhs_n = List.concat (List.map CP.get_rel_id_list rel_rhs) in
         let rel_lhs_n = CP.intersect rel_lhs_n rel_rhs_n in
+        DD.binfo_hprint (add_str "rel_lhs_n:" (pr_list CP.string_of_spec_var)) rel_lhs_n pos;
+        DD.binfo_hprint (add_str "rel_rhs_n:" (pr_list CP.string_of_spec_var)) rel_rhs_n pos;
+        (* WN :filtering of rel below causes a problem for str1.slk
+           as intermeidate predicates are lost *)
+        let rel_lhs_n = [] in 
         let rel_to_del = if rel_lhs_n=[] then []
         else
           let lhs_rec_vars = CP.fv lhs_p_memo in
