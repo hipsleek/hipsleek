@@ -12,6 +12,21 @@ int minus___(int a, int b)
 int mult___(int a, int b) 
   requires true 
   ensures res = a * b;
+  /*
+  case {
+    a = 0 -> ensures res = 0;
+    a > 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res = a * b & res < 0 & res < -a & res < b;
+      b > 0 -> ensures res = a * b & res > 0 & res > a & res > b;
+    }
+    a < 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res = a * b & res > 0 & res > -a & res > -b;
+      b > 0 -> ensures res = a * b & res < 0 & res < a & res < -b;
+    }
+  }
+  */
 
 int div___(int a, int b) 
  case {
@@ -457,15 +472,3 @@ int rand_int ()
 bool rand_bool ()
   requires true
   ensures res or !res;
-
-//////////////////////////////////////////////
-// Prelude for Termination Competition TPDB //
-//////////////////////////////////////////////
-int __VERIFIER_nondet_int()
-  requires true
-  ensures true;
-  
-int __VERIFIER_error()
-  requires true
-  ensures res = 0;
-

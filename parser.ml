@@ -3853,3 +3853,28 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
 
 (***************** End of CIL parser's functions *****************)
 (*****************************************************************)
+
+(* ////////////////////////////////////////////// *)
+(* // Prelude for Termination Competition TPDB // *)
+(* ////////////////////////////////////////////// *)
+(* int __VERIFIER_nondet_int() *)
+(*   requires true             *)
+(*   ensures true;             *)
+  
+(* int __VERIFIER_error()      *)
+(*   requires true             *)
+(*   ensures res = 0;          *)
+      
+let create_tnt_prim_proc _ : Iast.proc_decl list =
+  let int_nondet_proc =
+    "int __VERIFIER_nondet_int()\n" ^
+    "  requires true\n" ^
+    "  ensures true;\n"
+  in  
+  let int_error_proc =
+    "int __VERIFIER_error()\n" ^
+    "  requires true\n" ^
+    "  ensures res = 0;\n"
+  in
+  List.map (parse_c_aux_proc "tnt_prim_proc") [int_nondet_proc; int_error_proc]  
+

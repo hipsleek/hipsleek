@@ -2,7 +2,14 @@ extern int __VERIFIER_nondet_int();
 int rec1(int i);
 int rec2(int j);
 
-int rec1(int i) {
+int rec1(int i) 
+/*@
+  case {
+    i <= 0 -> ensures res = 0;
+    i >= 1 -> ensures res <= i;
+  }
+ */
+{
 	if(i <= 0)
 		return 0;
 	return rec1( rec1( rec1(i-2) - 1 )) + 1  ;	

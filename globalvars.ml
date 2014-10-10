@@ -421,9 +421,9 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
   let local_vars = to_IdentSet (List.map get_local_id proc.I.proc_args) in
   let global_vars = IdentSet.diff global_id_set local_vars in
 	(* let _= print_endline ("BachLe: Find Global vars Debugging..."^proc.I.proc_name)in *)
-	let find_in_body global_vars local_vars= (*Find read/write global vars in procedure body*)
+	let find_in_body global_vars local_vars = (*Find read/write global vars in procedure body*)
     match proc.I.proc_body with
-	  None -> (IdentSet.empty,IdentSet.empty)
+	  | None -> (IdentSet.empty,IdentSet.empty)
     | Some e ->
 	  begin
 	    	let (reads, writes) = find_read_write_global_var global_vars local_vars e in
@@ -462,6 +462,12 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 	 (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv R:" ^x) )readSet in  *)
 	 (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv W:" ^x) )writeSet in *)
 	 Hashtbl.replace h proc.I.proc_name (readSet,writeSet)
+  
+let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_decl) : unit =
+  let pr1 proc = proc.I.proc_name in
+  let pr2 _ = "" in
+  Debug.no_1 "find_read_write_global_var_proc" pr1 pr2 
+    (fun _ -> find_read_write_global_var_proc global_id_set proc) proc
 			
 (** Get the read/write global variables of a procedure from the hash table 
 	@param global_var_decls list of global variable declarations
@@ -1081,7 +1087,7 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let new_prog =
 	match prog.I.prog_global_var_decls with
-	  [] -> prog
+	| [] -> prog
 	| _ ->
 		let _ = find_read_write_global_var_all_procs prog in
 		let temp_decls1 = List.map resolve_name_conflict prog.I.prog_proc_decls in
