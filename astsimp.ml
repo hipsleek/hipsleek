@@ -1537,14 +1537,15 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       else c
     in
     let c = (add_pre_to_cprog c) in
-    let _ = Hashtbl.iter (fun ident proc ->
-      let ddg = C.data_dependency_graph_of_proc c proc in
-      match ddg with
-      | None -> ()
-      | Some g ->
-        let _ = print_endline ("DDG of " ^ ident) in
-        print_endline (C.print_data_dependency_graph g) 
-    ) c.C.new_proc_decls in
+    let inf_post_procs = Hashtbl.fold (fun ident proc acc ->
+      acc @ (C.dependence_procs_of_proc c proc)) c.C.new_proc_decls [] in
+    let inf_post_procs = Gen.BList.remove_dups_eq 
+      (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
+    let c = { c with
+      C.new_proc_decls = C.proc_decls_map (fun proc -> 
+        if List.mem proc.C.proc_name inf_post_procs then
+          C.add_inf_post_proc proc
+        else proc) cprog.C.new_proc_decls; } in 
     (* let _ = print_endline (exlist # string_of) in *)
     (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
@@ -3018,28 +3019,6 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
   else
     (trans_proc prog proc)
     
-(* TNT: Add inf_obj from cmd line *)
-and add_inf_cmd_struc is_primitive f =
-  let pr = !CF.print_struc_formula in
-  Debug.no_1 "add_inf_cmd_struc" pr pr 
-    (fun _ -> add_inf_cmd_struc_x is_primitive f) f
-
-and add_inf_cmd_struc_x is_primitive f =
-  if is_primitive || Globals.infer_const_obj # is_empty then f
-  else
-    match f with
-    | CF.EInfer ei -> CF.EInfer { ei with 
-        CF.formula_inf_obj = ei.CF.formula_inf_obj # mk_or Globals.infer_const_obj; }
-    | CF.EList el -> CF.EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
-    | _ -> CF.EInfer {
-        CF.formula_inf_obj = Globals.infer_const_obj # clone;
-        CF.formula_inf_post = true (* Globals.infer_const_obj # is_post *);
-        CF.formula_inf_xpost = None;
-        CF.formula_inf_transpec = None;
-        CF.formula_inf_vars = [];
-        CF.formula_inf_continuation = f;
-        CF.formula_inf_pos = CF.pos_of_struc_formula f }
-
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
     let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
@@ -3115,12 +3094,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
       let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
-      let cf = add_inf_cmd_struc is_primitive cf in
+      let cf = CF.add_inf_cmd_struc is_primitive cf in
       let static_specs_list = set_pre_flow cf in
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
       (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
       let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
-      let cf = add_inf_cmd_struc is_primitive cf in
+      let cf = CF.add_inf_cmd_struc is_primitive cf in
       let dynamic_specs_list = set_pre_flow cf in
       (****** Infering LSMU from LS if there is LS in spec >>*********)
       let static_specs_list =

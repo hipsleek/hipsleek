@@ -14890,6 +14890,51 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
       (is_tnt_inf || ei.formula_inf_obj # is_term) uid ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
+(* TNT: Add inf_obj from cmd line *)
+let rec add_inf_cmd_struc is_primitive f =
+  if is_primitive || Globals.infer_const_obj # is_empty then f
+  else
+    match f with
+    | EInfer ei -> EInfer { ei with 
+        formula_inf_obj = ei.formula_inf_obj # mk_or Globals.infer_const_obj; }
+    | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
+    | _ -> EInfer {
+        formula_inf_obj = Globals.infer_const_obj # clone;
+        formula_inf_post = true (* Globals.infer_const_obj # is_post *);
+        formula_inf_xpost = None;
+        formula_inf_transpec = None;
+        formula_inf_vars = [];
+        formula_inf_continuation = f;
+        formula_inf_pos = pos_of_struc_formula f }
+        
+let add_inf_cmd_struc is_primitive f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_inf_cmd_struc" pr pr 
+    (fun _ -> add_inf_cmd_struc is_primitive f) f
+    
+let rec add_inf_post_struc f =
+  match f with
+  | EInfer ei -> 
+    let _ = ei.formula_inf_obj # set INF_POST in
+    EInfer ei
+  | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_post_struc s)) el)
+  | _ -> 
+    let new_inf_obj = new Globals.inf_obj in
+    let _ = new_inf_obj # set INF_POST in
+    EInfer {
+      formula_inf_obj = new_inf_obj;
+      formula_inf_post = true (* Globals.infer_const_obj # is_post *);
+      formula_inf_xpost = None;
+      formula_inf_transpec = None;
+      formula_inf_vars = [];
+      formula_inf_continuation = f;
+      formula_inf_pos = pos_of_struc_formula f }
+      
+let add_inf_post_struc f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_inf_post_struc" pr pr 
+    (fun _ -> add_inf_post_struc f) f
+
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
  * --dis-call-num and --dis-phase-num are not enabled (default) *)      

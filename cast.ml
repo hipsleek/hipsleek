@@ -3502,4 +3502,28 @@ let data_dependency_graph_of_proc prog proc =
 
 let print_data_dependency_graph ddg = 
   IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
-      
+  
+let rec collect_dependence_procs ddg pn src =
+  let succ = IG.succ ddg src in
+  match succ with
+  | [] -> []
+  | _ -> 
+    let depend_mns = List.filter is_mingle_name succ in
+    List.fold_left (fun acc d -> 
+      acc @ (collect_dependence_procs ddg pn d)
+    ) depend_mns (List.filter (fun mn -> String.compare mn pn != 0) succ)
+
+let dependence_procs_of_proc prog proc = 
+  let ddg = data_dependency_graph_of_proc prog proc in
+  match ddg with
+  | None -> []
+  | Some g ->
+    let pn = proc.proc_name in
+    (* let _ = print_endline ("DDG of " ^ pn) in                *)
+    (* let _ = print_endline (print_data_dependency_graph g) in *)
+    collect_dependence_procs g pn pn
+    
+let add_inf_post_proc proc = 
+  { proc with 
+      proc_static_specs = Cformula.add_inf_post_struc proc.proc_static_specs; 
+      proc_dynamic_specs = Cformula.add_inf_post_struc proc.proc_dynamic_specs; }
