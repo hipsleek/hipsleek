@@ -237,6 +237,7 @@ proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
 mutable proc_is_invoked : bool;
+proc_verified_domains: infer_type list;
 proc_file : string;
 proc_loc : loc;
 proc_test_comps: test_comps option}
@@ -1232,6 +1233,7 @@ let genESpec_wNI body_header body_opt args ret pos=
   {body_header with
       proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
       proc_static_specs = ss;
+      proc_verified_domains = body_header.proc_verified_domains@[INF_SHAPE];
       proc_args_wi = args_wi;
   }
 
@@ -1267,6 +1269,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_static_specs = ss;
   proc_dynamic_specs = ds;
   proc_loc = pos;
+  proc_verified_domains = [];
   proc_is_main = true;
   proc_is_invoked = false;
   proc_file = !input_file_name;
@@ -2835,7 +2838,8 @@ let add_bar_inits prog =
 			  proc_exceptions = [];
 			  proc_body = None;
 			  proc_is_main = false;
-              proc_is_invoked = false;
+                          proc_is_invoked = false;
+                          proc_verified_domains = [];
 			  proc_file = "";
 			  proc_loc = no_pos;
 			proc_test_comps = None}) prog.prog_barrier_decls in

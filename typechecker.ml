@@ -3772,6 +3772,12 @@ let rec check_prog iprog (prog : prog_decl) =
         end
       | _ -> verify_scc_helper prog verified_sccs scc
   in
+  let verify_scc_incr prog verified_sccs scc=
+    (*extract props: shape - pure - sortedness - term*)
+    (*for each, incrementally infer*)
+    let new_scc = List.map (Iincr.extend_inf prog "size") scc in
+    verify_scc_helper prog verified_sccs new_scc
+  in
   (********************************************************)
   (********************************************************)
   (********************************************************)
@@ -3839,7 +3845,7 @@ let rec check_prog iprog (prog : prog_decl) =
       (* (prog,n_verified_sccs) *)
       let prog, n_verified_sccs = if !Globals.sac then
         case_verify_scc_helper prog verified_sccs scc
-      else verify_scc_helper prog verified_sccs scc
+      else verify_scc_incr prog verified_sccs scc
       in
       prog, n_verified_sccs
   ) (prog,[]) proc_scc

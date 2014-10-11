@@ -1826,6 +1826,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_body = funbody;
         Iast.proc_is_main = true;
         Iast.proc_is_invoked = false;
+        Iast.proc_verified_domains = [INF_SHAPE];
         Iast.proc_file = filename;
         Iast.proc_loc = pos;
         Iast.proc_test_comps = None;

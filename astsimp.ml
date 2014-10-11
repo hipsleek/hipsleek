@@ -3315,6 +3315,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_invoked = proc.I.proc_is_invoked;
+          C.proc_verified_domains = proc.I.proc_verified_domains;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
@@ -5090,6 +5091,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_body = Some w_body;
                   I.proc_is_main = proc.I.proc_is_main;
                   I.proc_is_invoked = true;
+                  I.proc_verified_domains = [];
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
                   I.proc_test_comps = if not !Globals.validate then None else
