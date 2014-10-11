@@ -1537,15 +1537,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       else c
     in
     let c = (add_pre_to_cprog c) in
-    let inf_post_procs = Hashtbl.fold (fun ident proc acc ->
-      acc @ (C.dependence_procs_of_proc c proc)) c.C.new_proc_decls [] in
-    let inf_post_procs = Gen.BList.remove_dups_eq 
-      (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
-    let c = { c with
-      C.new_proc_decls = C.proc_decls_map (fun proc -> 
-        if List.mem proc.C.proc_name inf_post_procs then
-          C.add_inf_post_proc proc
-        else proc) cprog.C.new_proc_decls; } in 
+    (* TNT: Automatically adding @post for dependence methods of @term methods *)
+    let c = C.add_post_for_tnt_prog c in
     (* let _ = print_endline (exlist # string_of) in *)
     (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)

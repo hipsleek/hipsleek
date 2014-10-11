@@ -9117,6 +9117,18 @@ let rec is_inf_term_ctx ctx =
   | Ctx es -> es.es_infer_obj # is_term
   | OCtx (ctx1, ctx2) -> (is_inf_term_ctx ctx1) || (is_inf_term_ctx ctx2)
 
+let rec is_inf_term_struc f =
+  match f with
+  | EInfer ei -> ei.formula_inf_obj # is_term
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_struc c) el
+    
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with
   | Ctx es -> Ctx { es with es_infer_vars_templ = es.es_infer_vars_templ @ inf_vars_templ; }

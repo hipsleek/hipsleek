@@ -3523,9 +3523,31 @@ let dependence_procs_of_proc prog proc =
     let pn = proc.proc_name in
     (* let _ = print_endline ("DDG of " ^ pn) in                *)
     (* let _ = print_endline (print_data_dependency_graph g) in *)
-    collect_dependence_procs true g pn pn
+    let r = collect_dependence_procs true g pn pn in
+    Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 == 0) r
     
 let add_inf_post_proc proc = 
   { proc with 
       proc_static_specs = Cformula.add_inf_post_struc proc.proc_static_specs; 
       proc_dynamic_specs = Cformula.add_inf_post_struc proc.proc_dynamic_specs; }
+      
+let add_post_for_tnt_prog prog =
+  let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
+    let spec = proc.proc_static_specs in
+    if not (Cformula.is_inf_term_struc spec) then acc
+    else acc @ [proc]) prog.new_proc_decls [] in
+  let inf_post_procs = List.fold_left (fun acc proc ->
+    let dprocs = dependence_procs_of_proc prog proc in
+    let _ = 
+      if is_empty dprocs then ()
+      else print_endline ("@post is added into " ^ 
+        (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
+    in
+    acc @ dprocs) [] inf_term_procs in
+  let inf_post_procs = Gen.BList.remove_dups_eq
+    (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
+  { prog with
+      new_proc_decls = proc_decls_map (fun proc ->
+        if List.mem proc.proc_name inf_post_procs then
+          add_inf_post_proc proc
+        else proc) prog.new_proc_decls; }
