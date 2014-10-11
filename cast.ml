@@ -3513,27 +3513,38 @@ let rec_calls_of_exp exp =
     | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
     | _ -> None
   in fold_exp exp f List.concat []
+  
+let has_ref_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    proc.proc_by_name_params != []
+  with _ -> false
 
 let data_dependency_graph_of_proc prog proc = 
   match proc.proc_body with
   | None -> None
   | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
   
-let rec collect_dependence_procs_aux init ws ddg src =
+let rec collect_dependence_procs_aux prog init ws ddg src =
   try
     let succ = IG.succ ddg src in
     match succ with
     | [] -> [], ws
     | _ -> 
-      let depend_mns = if init then [] else List.filter is_mingle_name succ in
+      let depend_mns = List.filter is_mingle_name succ in
+      let depend_mns = 
+        if init then List.filter (fun mn -> 
+          not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
+        else depend_mns
+      in
       let working_succ = Gen.BList.difference_eq eq_str succ ws in 
       List.fold_left (fun (acc, ws) d ->
-        let dd, ws = collect_dependence_procs_aux false (ws @ [d]) ddg d in
+        let dd, ws = collect_dependence_procs_aux prog false (ws @ [d]) ddg d in
         (acc @ dd), ws) (depend_mns, ws) working_succ
   with _ -> [], ws
   
-let collect_dependence_procs g pn = 
-  fst (collect_dependence_procs_aux true [pn] g pn)
+let collect_dependence_procs prog g pn = 
+  fst (collect_dependence_procs_aux prog true [pn] g pn)
 
 let dependence_procs_of_proc prog proc =
   match proc.proc_body with
@@ -3544,7 +3555,7 @@ let dependence_procs_of_proc prog proc =
     let rec_pns = rec_calls_of_exp e in
     let pns = remove_dups_id (pn::rec_pns) in
     let r = List.fold_left (fun acc pn -> 
-      acc @ (collect_dependence_procs ddg pn)) [] pns in
+      acc @ (collect_dependence_procs prog ddg pn)) [] pns in
     remove_dups_id r
     
 let add_inf_post_proc proc = 
