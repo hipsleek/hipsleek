@@ -24,7 +24,7 @@ extern int __VERIFIER_nondet_int(void);
 int fact(int n) 
 /*@
   requires true
-  ensures res > 0;
+  ensures res > 0; // For safety
  */
 {
 	if (n <= 0) return 1;

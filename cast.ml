@@ -3503,17 +3503,22 @@ let data_dependency_graph_of_proc prog proc =
 let print_data_dependency_graph ddg = 
   IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
   
-let rec collect_dependence_procs init ddg pn src =
+let rec collect_dependence_procs_aux init ws ddg src =
   try
     let succ = IG.succ ddg src in
     match succ with
-    | [] -> []
+    | [] -> [], ws
     | _ -> 
       let depend_mns = if init then [] else List.filter is_mingle_name succ in
-      List.fold_left (fun acc d -> 
-        acc @ (collect_dependence_procs false ddg pn d)
-      ) depend_mns (List.filter (fun mn -> String.compare mn pn != 0) succ)
-  with _ -> []
+      let working_succ = Gen.BList.difference_eq (fun m1 m2 ->
+        String.compare m1 m2 == 0) succ ws in 
+      List.fold_left (fun (acc, ws) d ->
+        let dd, ws = collect_dependence_procs_aux false (ws @ [d]) ddg d in
+        (acc @ dd), ws) (depend_mns, ws) working_succ
+  with _ -> [], ws
+  
+let collect_dependence_procs g pn = 
+  fst (collect_dependence_procs_aux true [pn] g pn)
 
 let dependence_procs_of_proc prog proc = 
   let ddg = data_dependency_graph_of_proc prog proc in
@@ -3523,7 +3528,7 @@ let dependence_procs_of_proc prog proc =
     let pn = proc.proc_name in
     (* let _ = print_endline ("DDG of " ^ pn) in                *)
     (* let _ = print_endline (print_data_dependency_graph g) in *)
-    let r = collect_dependence_procs true g pn pn in
+    let r = collect_dependence_procs g pn in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 == 0) r
     
 let add_inf_post_proc proc = 
