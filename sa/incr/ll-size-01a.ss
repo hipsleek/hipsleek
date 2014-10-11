@@ -38,7 +38,8 @@ int size_helper(node x)
 //  requires x::lln<n> & n>0  ensures x::lln<n> & res=n;
 
 //infer[@shape]  requires true ensures true;
-  infer [P,Q]  requires x::lln<n> & P(n)  ensures x::lln<n> & Q(n,res);
+//  infer [P,Q]  requires x::lln<n> & P(n)  ensures x::lln<n> & Q(n,res);
+  infer [@pre_n,@post_n]  requires x::lln<n>  ensures x::lln<n> ;
 //  infer [@size]  requires x::ll<>  ensures x::ll<> ;
 //  infer[@shape,@size]  requires true ensures true;
 
