@@ -3444,6 +3444,13 @@ let is_prim_proc prog id =
     let proc = Hashtbl.find prog.new_proc_decls id in
     not proc.proc_is_main
   with _ -> false
+  
+let print_data_dependency_graph ddg = 
+  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
+
+let eq_str s1 s2 = String.compare s1 s2 == 0
+      
+let remove_dups_id = Gen.BList.remove_dups_eq eq_str
 
 (* src depends on exp *)
 let data_dependency_graph_of_exp prog src exp =
@@ -3494,14 +3501,23 @@ let data_dependency_graph_of_exp prog src exp =
   in
   let ddg = IG.empty in
   helper ddg src exp
+  
+let data_dependency_graph_of_exp prog src exp =
+  Debug.no_1 "data_dependency_graph_of_exp" idf print_data_dependency_graph
+    (fun _ -> data_dependency_graph_of_exp prog src exp) src
+    
+let rec_calls_of_exp exp = 
+  let f exp = 
+    match exp with
+    | ICall e -> if e.exp_icall_is_rec then Some ([e.exp_icall_method_name]) else None
+    | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
+    | _ -> None
+  in fold_exp exp f List.concat []
 
 let data_dependency_graph_of_proc prog proc = 
   match proc.proc_body with
   | None -> None
   | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
-
-let print_data_dependency_graph ddg = 
-  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
   
 let rec collect_dependence_procs_aux init ws ddg src =
   try
@@ -3510,8 +3526,7 @@ let rec collect_dependence_procs_aux init ws ddg src =
     | [] -> [], ws
     | _ -> 
       let depend_mns = if init then [] else List.filter is_mingle_name succ in
-      let working_succ = Gen.BList.difference_eq (fun m1 m2 ->
-        String.compare m1 m2 == 0) succ ws in 
+      let working_succ = Gen.BList.difference_eq eq_str succ ws in 
       List.fold_left (fun (acc, ws) d ->
         let dd, ws = collect_dependence_procs_aux false (ws @ [d]) ddg d in
         (acc @ dd), ws) (depend_mns, ws) working_succ
@@ -3520,16 +3535,17 @@ let rec collect_dependence_procs_aux init ws ddg src =
 let collect_dependence_procs g pn = 
   fst (collect_dependence_procs_aux true [pn] g pn)
 
-let dependence_procs_of_proc prog proc = 
-  let ddg = data_dependency_graph_of_proc prog proc in
-  match ddg with
+let dependence_procs_of_proc prog proc =
+  match proc.proc_body with
   | None -> []
-  | Some g ->
+  | Some e ->
     let pn = proc.proc_name in
-    (* let _ = print_endline ("DDG of " ^ pn) in                *)
-    (* let _ = print_endline (print_data_dependency_graph g) in *)
-    let r = collect_dependence_procs g pn in
-    Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 == 0) r
+    let ddg = data_dependency_graph_of_exp prog pn e in
+    let rec_pns = rec_calls_of_exp e in
+    let pns = remove_dups_id (pn::rec_pns) in
+    let r = List.fold_left (fun acc pn -> 
+      acc @ (collect_dependence_procs ddg pn)) [] pns in
+    remove_dups_id r
     
 let add_inf_post_proc proc = 
   { proc with 
