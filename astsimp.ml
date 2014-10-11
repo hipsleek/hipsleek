@@ -4105,6 +4105,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
+            else if not (I.is_num e1) && not (I.is_num e2) && (I.is_mult_op b_op) then
+              let new_e = I.CallNRecv {
+                  I.exp_call_nrecv_method = "mults___";
+                  I.exp_call_nrecv_lock = None;
+                  I.exp_call_nrecv_arguments = [ e1; e2 ];
+                  I.exp_call_nrecv_path_id = pid;
+                  I.exp_call_nrecv_pos = pos; } in 
+              helper new_e
             else
               (let b_call = if !Globals.check_integer_overflow then (let func exp = match exp with
                 | I.Var v -> Some([v.I.exp_var_name])

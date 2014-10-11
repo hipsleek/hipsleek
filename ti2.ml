@@ -1201,6 +1201,7 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         let rec_iconds = List.map (fun ann ->
           search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
         in
+        let rec_iconds = List.concat (List.map CP.split_conjunctions rec_iconds) in
         let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
         NT_No ((opt_to_list ir) @ (opt_to_list il))
     in ntres

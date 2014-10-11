@@ -3519,6 +3519,12 @@ let has_ref_params prog mn =
     let proc = find_proc prog mn in
     proc.proc_by_name_params != []
   with _ -> false
+  
+let is_rec_proc prog mn = 
+  try
+    let proc = find_proc prog mn in
+    proc.proc_is_recursive
+  with _ -> false
 
 let data_dependency_graph_of_proc prog proc = 
   match proc.proc_body with
@@ -3533,8 +3539,10 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
     | _ -> 
       let depend_mns = List.filter is_mingle_name succ in
       let depend_mns = 
-        if init then List.filter (fun mn -> 
-          not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
+        if init then 
+          if not (is_rec_proc prog src) then []
+          else List.filter (fun mn -> 
+            not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
         else depend_mns
       in
       let working_succ = Gen.BList.difference_eq eq_str succ ws in 
