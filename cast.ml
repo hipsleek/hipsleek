@@ -3503,15 +3503,17 @@ let data_dependency_graph_of_proc prog proc =
 let print_data_dependency_graph ddg = 
   IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
   
-let rec collect_dependence_procs ddg pn src =
-  let succ = IG.succ ddg src in
-  match succ with
-  | [] -> []
-  | _ -> 
-    let depend_mns = List.filter is_mingle_name succ in
-    List.fold_left (fun acc d -> 
-      acc @ (collect_dependence_procs ddg pn d)
-    ) depend_mns (List.filter (fun mn -> String.compare mn pn != 0) succ)
+let rec collect_dependence_procs init ddg pn src =
+  try
+    let succ = IG.succ ddg src in
+    match succ with
+    | [] -> []
+    | _ -> 
+      let depend_mns = if init then [] else List.filter is_mingle_name succ in
+      List.fold_left (fun acc d -> 
+        acc @ (collect_dependence_procs false ddg pn d)
+      ) depend_mns (List.filter (fun mn -> String.compare mn pn != 0) succ)
+  with _ -> []
 
 let dependence_procs_of_proc prog proc = 
   let ddg = data_dependency_graph_of_proc prog proc in
@@ -3521,7 +3523,7 @@ let dependence_procs_of_proc prog proc =
     let pn = proc.proc_name in
     (* let _ = print_endline ("DDG of " ^ pn) in                *)
     (* let _ = print_endline (print_data_dependency_graph g) in *)
-    collect_dependence_procs g pn pn
+    collect_dependence_procs true g pn pn
     
 let add_inf_post_proc proc = 
   { proc with 
