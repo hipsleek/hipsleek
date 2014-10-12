@@ -5,10 +5,10 @@
 #include "stdhip.h"
 
 int main() {
-	int* x0 = alloca(sizeof(int));
-	int* x1 = alloca(sizeof(int));
-	int* x2 = alloca(sizeof(int));
-	int* x3 = alloca(sizeof(int));
+	int* x0 = malloc(sizeof(int));
+	int* x1 = malloc(sizeof(int));
+	int* x2 = malloc(sizeof(int));
+	int* x3 = malloc(sizeof(int));
 	*x0 = 0;
 	*x1 = 0;
 	*x2 = 0;
