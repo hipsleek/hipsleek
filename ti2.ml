@@ -1121,15 +1121,17 @@ let uid_of_loop trel =
 
 let rec infer_abductive_cond_list prog ann ante conds =
   match conds with
-  | [] -> None
+  | [] -> []
   | c::cs -> 
     if imply ante (mkNot c) 
     then infer_abductive_cond_list prog ann ante cs
     else
-      let ic = infer_abductive_cond prog ann ante c in
-      match ic with
-      | None -> infer_abductive_cond_list prog ann ante cs
-      | Some _ -> ic
+      let cc = CP.split_conjunctions c in
+      let icc = List.map (infer_abductive_cond prog ann ante) cc in
+      let icc = List.concat (List.map opt_to_list icc) in
+      match icc with
+      | [] -> infer_abductive_cond_list prog ann ante cs
+      | _ -> icc
 
 let infer_loop_cond_list params ante conds =
   (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
@@ -1201,9 +1203,9 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         let rec_iconds = List.map (fun ann ->
           search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
         in
-        let rec_iconds = List.concat (List.map CP.split_conjunctions rec_iconds) in
+        (* let rec_iconds = List.concat (List.map CP.split_conjunctions rec_iconds) in *)
         let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
-        NT_No ((opt_to_list ir) @ (opt_to_list il))
+        NT_No (ir @ (opt_to_list il))
     in ntres
     
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =

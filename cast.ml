@@ -3580,7 +3580,7 @@ let add_post_for_tnt_prog prog =
     let dprocs = dependence_procs_of_proc prog proc in
     let _ = 
       if is_empty dprocs then ()
-      else print_endline ("@post is added into " ^ 
+      else print_endline ("\n !!! @post is added into " ^ 
         (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
     in
     acc @ dprocs) [] inf_term_procs in
