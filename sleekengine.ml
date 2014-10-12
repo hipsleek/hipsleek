@@ -659,6 +659,13 @@ let convert_data_and_pred_to_cast_x () =
   let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ = if !Globals.trans_pred then Accfold.update_view_size_relations !cprog in
+  (* Trung: temporary code *)
+  let _ = print_endline ("== check views' well-foundedness:") in
+  let _ = List.iter (fun vd ->
+    if (Accfold.is_well_founded_view vd) then
+      print_endline ("  " ^ vd.Cast.view_name ^ ": OK")
+    else print_endline ("  " ^ vd.Cast.view_name ^ ": Not OK")
+  ) !cprog.Cast.prog_view_decls in 
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in

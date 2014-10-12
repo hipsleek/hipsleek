@@ -1,4 +1,5 @@
 open Globals
+open Debug
 open Gen.Basic
 
 
@@ -6,7 +7,6 @@ module C = Cast
 module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
-module Err = Error
 
 module LO = Label_only.LOne
 
@@ -505,7 +505,6 @@ let detect_fold_sequence (hf: CF.h_formula) (root_sv: CP.spec_var)
       (fun _ _ _ -> detect_fold_sequence_x hf root_sv root_view prog)
       hf root_sv root_view
 
-
 let detect_cts_fold_sequence_x (lhf: CF.h_formula) (rhf: CF.h_formula) 
     (root_sv: CP.spec_var) (root_view: C.view_decl) prog
     : fold_type list=
@@ -678,6 +677,125 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
       let rel_size = generate_view_size_relation vdecl prog in
       prog.C.prog_rel_decls <- rdecls @ [rel_size];
     )
-  ) prog.C.prog_view_decls;
+  ) prog.C.prog_view_decls
 
 (* let generate_schematic_predicate (vdecl: C.view_decl) (prog: C.prog_decl) *)
+
+(*
+ * A formula is well-formed iff all of its heap nodes must
+ * be reached from root pointers
+ *)
+let is_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool =
+  let rec get_unreached_nodes_x (nodes: CF.h_formula list)
+      (reached_ptrs: CP.spec_var list) emap
+      : CF.h_formula list = (
+    (* compute reached and unreached nodes *)
+    let (reached_nodes, unreached_nodes) = List.partition (fun hf ->
+      match hf with
+      | CF.ViewNode vn -> 
+          let vn_name = vn.CF.h_formula_view_node in
+          let aliases = CP.EMapSV.find_equiv_all vn_name emap in
+          let aliases = vn_name::aliases in
+          (CP.EMapSV.overlap aliases reached_ptrs)
+      | CF.DataNode dn -> 
+          let dn_name = dn.CF.h_formula_data_node in
+          let aliases = CP.EMapSV.find_equiv_all dn_name emap in
+          let aliases = dn_name::aliases in
+          (CP.EMapSV.overlap aliases reached_ptrs)
+      | _ -> report_error no_pos "is_well_formed_formula_x: unexpected node"
+    ) nodes in
+    (* update reached pointers *)
+    let new_reached_ptrs = List.flatten (List.map (fun node ->
+      match node with
+      | CF.ViewNode vn -> vn.CF.h_formula_view_arguments
+      | CF.DataNode dn -> dn.CF.h_formula_data_arguments
+      | _ -> report_error no_pos "is_well_formed_formula_x: unexpected node"
+    ) reached_nodes) in
+    let new_reached_ptrs = CP.remove_dups_svl (reached_ptrs @ new_reached_ptrs) in
+    if (List.length new_reached_ptrs != List.length reached_ptrs) then
+      get_unreached_nodes unreached_nodes new_reached_ptrs emap
+    else unreached_nodes
+  )
+  and get_unreached_nodes nodes reached_ptrs emap = (
+    let pr_nodes = (add_str "nodes" (pr_list !CF.print_h_formula)) in
+    let pr_ptrs = (add_str "reached_ptrs" !CP.print_svl) in
+    let pr_res = (add_str "res" (pr_list !CF.print_h_formula)) in
+    Debug.no_2 "get_unreached_nodes"
+        pr_nodes pr_ptrs pr_res
+        (fun _ _ -> get_unreached_nodes_x nodes reached_ptrs emap) nodes reached_ptrs
+  ) in
+  let (_,mf,_,_,_) = CF.split_components f in
+  let pf = MCP.pure_of_mix mf in
+  let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
+  let nodes = (CF.get_vnodes f) @ (CF.get_dnodes f) in 
+  let unreached_nodes = get_unreached_nodes nodes roots emap in
+  (* a formula is well-formed if all nodes are reached from the root *)
+  (List.length unreached_nodes == 0)
+
+let is_well_formed_formula (f: CF.formula) (roots: CP.spec_var list) : bool =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_roots = (add_str "roots" !CP.print_svl) in
+  let pr_res = (add_str "res" string_of_bool) in
+  Debug.no_2 "is_well_formed_formula" pr_f pr_roots pr_res
+      (fun _ _ -> is_well_formed_formula_x f roots) f roots
+
+let rec is_well_formed_struc_formula_x (sf: CF.struc_formula)
+    (roots: CP.spec_var list)
+    : bool =
+  match sf with
+  | CF.EList sf_list ->
+      List.for_all (fun (_,sf) -> is_well_formed_struc_formula sf roots) sf_list
+  | CF.ECase scf ->
+      List.for_all (fun (_,sf) ->
+        is_well_formed_struc_formula sf roots
+      ) scf.CF.formula_case_branches
+  | CF.EBase sbf -> (
+      if not (is_well_formed_formula sbf.CF.formula_struc_base roots) then false
+      else match sbf.CF.formula_struc_continuation with
+        | None -> true
+        | Some sf -> (is_well_formed_struc_formula sf roots)
+    )
+  | CF.EAssume af ->
+      is_well_formed_struc_formula af.CF.formula_assume_struc roots
+  | CF.EInfer sif ->
+      is_well_formed_struc_formula sif.CF.formula_inf_continuation roots
+
+and is_well_formed_struc_formula (sf: CF.struc_formula)
+    (roots: CP.spec_var list)
+    : bool =
+  let pr_sf = (add_str "struc_formula" !CF.print_struc_formula) in
+  let pr_roots = (add_str "roots" !CP.print_svl) in
+  let pr_res = (add_str "res" string_of_bool) in
+  Debug.no_2 "is_well_formed_struc_formula" pr_sf pr_roots pr_res
+      (fun _ _ -> is_well_formed_struc_formula_x sf roots) sf roots
+
+
+(*
+ * A view is well-founded iff:
+ *   - All of its heap noes must be accessible from the root.
+ *   - In each branch of its definition, this view recurs at most 1 node
+ *   (including mutually recursive case)
+ *)
+let is_well_founded_view_x (vdecl: C.view_decl) : bool =
+  let self_type = Named (vdecl.C.view_data_name) in
+  let root = CP.mk_typed_spec_var self_type self in
+  if not (is_well_formed_struc_formula vdecl.C.view_formula [root]) then false
+  else (
+    let rec_names = vdecl.C.view_name::vdecl.C.view_mutual_rec_views in
+    let rec_names = remove_dups_str_list rec_names in
+    List.for_all (fun (f, _) ->
+      let view_nodes = CF.get_views f in
+      let rec_nodes = List.filter (fun vn -> 
+        List.exists (fun s ->
+          (String.compare s vn.CF.h_formula_view_name == 0)
+        ) rec_names
+      ) view_nodes in
+      (List.length rec_nodes <= 1)
+    ) vdecl.C.view_un_struc_formula
+  )
+
+let is_well_founded_view (vdecl: C.view_decl) : bool =
+  let pr_view = !C.print_view_decl in
+  let pr_res = string_of_bool in
+  Debug.no_1 "is_well_founded_view" pr_view pr_res
+    (fun _ -> is_well_founded_view_x vdecl) vdecl
