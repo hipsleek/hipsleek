@@ -1875,13 +1875,48 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
       let baga_under_formula = match under_f with
-        | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
-        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos
+        | None -> CP.mkFalse pos
+        | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
       in
-      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in
-      let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
+      (* let baga_under_formula = match under_f with *)
+      (*   | None -> CF.mkFalse (CF.mkTrueFlow ()) pos *)
+      (*   | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos *)
+      (* in *)
+      (* let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in *)
+      (* let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in *)
       let over_fail = (CF.isFailCtx baga_over_rs) in
-      let under_fail = (CF.isFailCtx baga_under_rs) in
+      (* let under_fail = (CF.isFailCtx baga_under_rs) in *)
+      let check_under no uf fl =
+        let (ifs,bfs) = List.partition CF.is_inductive fl in
+        let rs1 = List.exists (fun f ->
+            (* let ctx = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) uf pos in *)
+            (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ctx]) f pos in *)
+            (* not (CF.isFailCtx rs) *)
+            let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+            let _ = Debug.binfo_hprint (add_str "pf base" (pr_pair string_of_int Cprinter.string_of_pure_formula)) (no,pf) no_pos in
+            TP.imply_raw uf pf
+        ) bfs in
+        if rs1 then true
+        else
+          let rs2 = List.exists (fun f ->
+              (* let ctx = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) uf pos in *)
+              (* let f = CF.formula_of_pure_formula (Mcpure.pure_of_mix pf) pos in *)
+              (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ctx]) f pos in *)
+              (* not (CF.isFailCtx rs) *)
+              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+              let _ = Debug.binfo_hprint (add_str "pf indu" (pr_pair string_of_int Cprinter.string_of_pure_formula)) (no,pf) no_pos in
+              TP.imply_raw uf pf
+          ) ifs in
+          if rs2 then false
+          else
+            let pf = List.fold_left (fun acc f ->
+                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+                CP.mkOr acc pf None no_pos
+            ) (CP.mkFalse no_pos) fl in
+            TP.imply_raw uf pf
+      in
+      let _ = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) baga_under_formula no_pos in
+      let under_fail = not (check_under 0 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
