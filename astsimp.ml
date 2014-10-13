@@ -1916,7 +1916,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             TP.imply_raw uf pf
       in
       let _ = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) baga_under_formula no_pos in
-      let under_fail = not (check_under 0 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
+      let under_fail = if (CP.is_False baga_under_formula) then false else not (check_under 0 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
