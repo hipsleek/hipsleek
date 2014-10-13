@@ -1520,6 +1520,7 @@ let process_validate exp_res ils_es =
           false, [], []
     | Some (lc, res, ldfa) -> 
           begin (*res*)
+            let _ = Debug.binfo_hprint (add_str "lc" Cprinter.string_of_list_context) lc no_pos in
             let res = proc_sleek_result_validate lc in
             let unexp =
               match res, exp_res with
@@ -1528,7 +1529,7 @@ let process_validate exp_res ils_es =
                       if n2==0 then None
                       else if n1==n2 then None
                       else Some( "Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
-                | _,_ -> Some ("Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                | _,_ -> Some ("Expecting1 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
               | None -> res_str := "OK"

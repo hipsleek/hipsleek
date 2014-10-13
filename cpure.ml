@@ -12776,16 +12776,16 @@ let count_disj f =
 
 let mkAndList_opt f =
   (* let f = mkAndList f in *)
-  if !Globals.remove_label_flag then 
+  if !Globals.remove_label_flag then
     join_conjunctions (List.map snd f)
   else mkAndList f
 
-let extract_eq_clauses_formula f = 
+let extract_eq_clauses_formula f =
   let lst = split_conjunctions f in
   List.filter is_eq_between_no_bag_vars lst
 
-let extract_eq_clauses_lbl_lst lst = 
-  let rec aux conjs lst = 
+let extract_eq_clauses_lbl_lst lst =
+  let rec aux conjs lst =
     match lst with
       | []   -> (conjs, [])
       | (lbl,f)::t ->
@@ -12795,7 +12795,7 @@ let extract_eq_clauses_lbl_lst lst =
             let conj = join_conjunctions eqs_to_add in
             let new_f = mkAnd f conj no_pos in
             (all_eq, (lbl,new_f)::tail)
-  in 
+  in
   snd (aux [] lst)
 
 let extract_eq_clauses_lbl_lst lst =

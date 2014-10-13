@@ -2979,6 +2979,11 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
   ) new_f !extra_pure in
   new_f
 
+let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) =
+  let pr = !F.print_formula in
+  Debug.no_2 "unfold_base_case_formula" pr pr pr
+      (fun _ _ -> unfold_base_case_formula f vd base_f) f base_f
+
 (*
  * compute the possible pointers that reside in the memory allocated of view
  * they are the pointer from self to the last nodes in predicates
