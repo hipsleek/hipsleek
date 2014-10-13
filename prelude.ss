@@ -494,3 +494,12 @@ bool rand_bool ()
 /**************************/
 /*** Pointer Arithmetic ***/
 /**************************/
+int_star add___(int_star p, int i)
+  requires p::int_star<v, o, s> & 0 <= i
+  ensures p::int_star<v, o, s> * res::int_star<_, o+i, s-i>;
+
+bool lt___(int_star p, int_star q)
+  requires p::int_star<vp, op, sp> * q::int_star<vq, oq, sq>
+  case {
+    op <  oq -> ensures p::int_star<vp, op, sp> * q::int_star<vq, oq, sq> & res;
+    op >= oq -> ensures p::int_star<vp, op, sp> * q::int_star<vq, oq, sq> & !res; }
