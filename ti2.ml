@@ -767,6 +767,10 @@ let solve_templ_assume prog templ_decls inf_templs =
   let res, _, _ = Template.collect_and_solve_templ_assumes_common true prog 
     (List.map CP.name_of_spec_var inf_templs) in
   res
+  
+let solve_templ_assume prog templ_decls inf_templs =
+  Debug.no_1 "solve_templ_assume" (fun _ -> "") Tlutils.print_solver_res
+    (fun _ -> solve_templ_assume prog templ_decls inf_templs) ()
 
 (* Ranking function synthesis *)
 let templ_rank_constr_of_rel by_ann rel =
@@ -774,6 +778,7 @@ let templ_rank_constr_of_rel by_ann rel =
   let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann by_ann rel.termu_rhs in
   let inf_templs = src_templ_id @ dst_templ_id in
   let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
+  let ctx = mkAnd ctx (CP.cond_of_term_ann rel.termu_rhs) in
   let dec = mkGt src_rank dst_rank in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
   let constr = mkAnd dec bnd in
@@ -829,6 +834,7 @@ let infer_ranking_function_scc prog g scc =
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
   let res = solve_templ_assume prog templ_decls inf_templs in
+  (* let _ = print_endline ("Ranking function inference: " ^ ( Tlutils.print_solver_res res)) in *)
   match res with
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in

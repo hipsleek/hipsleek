@@ -14876,13 +14876,18 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
       if not is_tnt_inf then struc_f
       else
         let norm_base, has_mayloop = norm_lexvar_for_infer uid eb.formula_struc_base in
-        if not has_mayloop then struc_f
-        else
-          let tpost = CP.mkUTPost uid in
-          EBase { eb with
-            (* MayLoop will be changed to UTPre *)
-            formula_struc_base = norm_base;
-            formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
+        (* if not has_mayloop then struc_f                                                 *)
+        (* else                                                                            *)
+        (*   let tpost = CP.mkUTPost uid in                                                *)
+        (*   EBase { eb with                                                               *)
+        (*     (* MayLoop will be changed to UTPre *)                                      *)
+        (*     formula_struc_base = norm_base;                                             *)
+        (*     formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } *)
+        let tpost = CP.mkUTPost uid in
+        EBase { eb with
+          (* MayLoop will be changed to UTPre *)
+          formula_struc_base = norm_base; 
+          formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
     let lexvar =

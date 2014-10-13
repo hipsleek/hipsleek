@@ -11,7 +11,6 @@ module IF = Iformula
 let str_addr = "addr_"
 let str_deref = "deref"
 let str_offset = "offset"
-let str_size = "size"
 
 let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
 
@@ -220,10 +219,10 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
       ) in
       let param = (
         match base_data with
-        | "int"   -> "<_,o,s>"
-        | "bool"  -> "<_,o,s>"
-        | "float" -> "<_,o,s>"
-        | "void"  -> "<_,o,s>"
+        | "int"   -> "<_,o>"
+        | "bool"  -> "<_,o>"
+        | "float" -> "<_,o>"
+        | "void"  -> "<_,o>"
         | _ -> (
             try 
               let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -240,7 +239,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         "    p =  null -> ensures res = null; \n" ^
         "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
         (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-        "                 ensures res::" ^ data_name ^ param ^ " & o>=0 & s>0; \n" ^
+        "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
         "  }\n"
       ) in
       let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -257,7 +256,7 @@ let create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_de
     try
       Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
-      let pointer = "p::" ^ pointer_typ_name ^ "<val, addr, size>" in
+      let pointer = "p::" ^ pointer_typ_name ^ "<val, addr>" in
       let cast_proc = (
         "int " ^ proc_name ^ " (" ^ pointer_typ_name ^ " p)\n" ^
         "  case { \n" ^
@@ -762,8 +761,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                               let fname = str_deref in
                               let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
                               let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
-                              let size_field = ((Int, str_size), no_pos, false, [gen_field_ann Int]) in
-                              let dfields = [val_field; offset_field; size_field] in
+                              let dfields = [val_field; offset_field] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in
                               Hashtbl.add tbl_pointer_typ refined_ty dtyp;
@@ -843,8 +841,7 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
                     let fname = str_deref in
                     let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
                     let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
-                    let size_field = ((Int, str_size), no_pos, false, [gen_field_ann Int]) in
-                    let dfields = [val_field; offset_field; size_field] in
+                    let dfields = [val_field; offset_field] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtype = Globals.Named dname in
                     Hashtbl.add tbl_pointer_typ actual_ty dtype;

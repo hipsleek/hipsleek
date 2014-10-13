@@ -9,7 +9,8 @@ int test_fun(int x, int y, int z)
     while (x >= z) {
     	if(y <= 0) {
 		// replace assume
-		return z;
+		//return z;
+		break;
     	}
         z = z + y;
     }

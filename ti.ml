@@ -89,9 +89,8 @@ let solve_base_trrels params base_trrels turels =
     simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
   let not_term_cond = List.fold_left (fun ac tu ->
     let ctx = simplify 9 tu.call_ctx params in
-    let _ = print_endline ("ctx: " ^ (!CP.print_formula ctx)) in  
+    (* let _ = print_endline ("ctx: " ^ (!CP.print_formula ctx)) in *)
     mkOr ac ctx) (CP.mkFalse no_pos) turels in
-  let _ = print_endline ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in  
   let not_term_cond = om_simplify not_term_cond in
   let term_cond = mkNot not_term_cond in
   
@@ -159,7 +158,7 @@ let solve_trrel_list params trrels turels =
     if is_empty rec_conds then [] 
     else
       let rec_conds = om_simplify (CP.join_disjunctions rec_conds) in
-      List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds) 
+      List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds)
   in
   
   let conds = base_conds @ rec_conds in

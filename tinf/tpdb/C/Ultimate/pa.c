@@ -13,22 +13,24 @@ int main() {
 void loop(int* p, int* q)
   /*
     infer [@term]
-    requires p::int*<vp, op, sp> * q::int*<vq, oq, sq> & op>=0 & oq>=0
+    requires p::int*<vp, op> * q::int*<vq, oq> & op>=0 & oq>=0
     ensures true;
    */
   /*@
     infer [@term]
-    requires p::int*<vp, op, sp> & op>=0
+    requires p::int*<vp, op> & op>=0
     case {
-      q = p -> requires true ensures true;
-      q != p -> requires q::int*<vq, oq, sq> & oq>=0 ensures true;
+      q = p -> requires Term[vp] ensures true;
+      q != p -> requires q::int*<vq, oq> & oq>=0 ensures true;
+      //q = p -> requires true ensures true;
+      //q != p -> requires q::int*<vq, oq> & oq>=0 & Term[op+1024-oq, vq] ensures true;
     }
    */
    /*
-    requires p::int*<vp, op, sp>
+    requires p::int*<vp, op>
     case {
       q = p -> requires Term[vp] ensures true;
-      q != p -> requires q::int*<vq, oq, sq> & Term[op+1024-oq, vq] ensures true;
+      q != p -> requires q::int*<vq, oq> & Term[op+1024-oq, vq] ensures true;
     }
    */
 {
@@ -43,9 +45,9 @@ void loop(int* p, int* q)
 }
 
 void loop3(int* p, int* q)
-  /*@
+  /*
     infer [@term]
-    requires p::int*<_, op, sp> * q::int*<vq, oq, sq> & op>=0 & oq>=0
+    requires p::int*<_, op> * q::int*<vq, oq> & op>=0 & oq>=0
     ensures true;
    */
 {

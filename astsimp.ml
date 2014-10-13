@@ -3335,7 +3335,13 @@ and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spe
   (** An Hoa : Internal function to collect important variables in the an ext_formula **)
   let rec helper f = match f with
     | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches
-    | CF.EBase b -> b.CF.formula_struc_implicit_inst
+    | CF.EBase b -> 
+      (b.CF.formula_struc_implicit_inst) @ (
+      if deep_flag then
+        match b.CF.formula_struc_continuation with
+        | None -> []
+        | Some f -> helper f 
+      else [])
     | CF.EAssume b -> []
     | CF.EInfer b ->
           if deep_flag then helper b.CF.formula_inf_continuation
