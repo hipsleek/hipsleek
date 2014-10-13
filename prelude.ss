@@ -490,3 +490,7 @@ int rand_int ()
 bool rand_bool ()
   requires true
   ensures res or !res;
+  
+/**************************/
+/*** Pointer Arithmetic ***/
+/**************************/

@@ -3,13 +3,18 @@
  * Author: heizmann@informatik.uni-freiburg.de
  *
  */
-#include <stdlib.h>
+#include "stdhip2.h"
 
 extern int __VERIFIER_nondet_int(void);
 
 int main() {
 	int *p = malloc(sizeof(int));
-	while (*p >= 0) {
+	while (*p >= 0) 
+  /*@
+    requires p::int*<q>
+    ensures true;
+   */
+	{
 		(*p)--;
 	}
 	return 0;
