@@ -5,16 +5,31 @@ extern int __VERIFIER_nondet_int(void);
 
 int main() {
   int *p = malloc(2 * sizeof(int));
-  int* q = *p;
-  //loop(p, q);
+  int *q = p;
+  loop(p, q);
   return 0;
 }
 
 void loop(int* p, int* q)
+  /*
+    infer [@term]
+    requires p::int*<vp, op, sp> * q::int*<vq, oq, sq> & op>=0 & oq>=0
+    ensures true;
+   */
   /*@
     infer [@term]
-    requires p::int*<_, op, sp> * q::int*<vq, oq, sq> //& Term[op+1024-oq, vq]
-    ensures true;
+    requires p::int*<vp, op, sp> & op>=0
+    case {
+      q = p -> requires true ensures true;
+      q != p -> requires q::int*<vq, oq, sq> & oq>=0 ensures true;
+    }
+   */
+   /*
+    requires p::int*<vp, op, sp>
+    case {
+      q = p -> requires Term[vp] ensures true;
+      q != p -> requires q::int*<vq, oq, sq> & Term[op+1024-oq, vq] ensures true;
+    }
    */
 {
   if (*q >= 0 && q < p + 1024) {
@@ -27,28 +42,11 @@ void loop(int* p, int* q)
   }
 }
 
-void loop2(int* p)
-  /*@
-    infer [@term]
-    requires p::int*<vp, op, sp> & Term[vp]
-    ensures true;
-   */
-{
-  if (*p >= 0) {
-    (*p)--;
-    loop2(p);
-  }
-}
-
 void loop3(int* p, int* q)
   /*@
-    //infer [@term]
-    requires p::int*<_, op, sp> * q::int*<vq, oq, sq> 
+    infer [@term]
+    requires p::int*<_, op, sp> * q::int*<vq, oq, sq> & op>=0 & oq>=0
     ensures true;
-    //case {
-    //  oq < op -> requires Term[op-oq] ensures true;
-    //  oq >= op -> requires Term ensures true;
-    //}
    */
 {
   if (q < p) {

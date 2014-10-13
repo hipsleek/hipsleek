@@ -11,7 +11,7 @@ int main() {
 	int *p = malloc(sizeof(int));
 	while (*p >= 0) 
   /*@
-    requires p::int*<q>
+    requires p::int*<q,_,_>
     ensures true;
    */
 	{

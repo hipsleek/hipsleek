@@ -15,7 +15,7 @@ int main() {
 	*x3 = 0;
 	while ( *x3 == 0 ) 
   /*@
-   requires x0::int*<a0> * x1::int*<a1> * x2::int*<a2> * x3::int*<a3>
+   requires x0::int*<a0,_,_> * x1::int*<a1,_,_> * x2::int*<a2,_,_> * x3::int*<a3,_,_>
    ensures true;
    */
   {

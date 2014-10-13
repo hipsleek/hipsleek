@@ -1538,7 +1538,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
     in
     let c = (add_pre_to_cprog c) in
     (* TNT: Automatically adding @post for dependence methods of @term methods *)
-    let c = C.add_post_for_tnt_prog c in
+    let c = if !Globals.tnt_add_post then C.add_post_for_tnt_prog c else c in
     (* let _ = print_endline (exlist # string_of) in *)
     (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
