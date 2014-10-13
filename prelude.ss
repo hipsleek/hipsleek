@@ -14,6 +14,8 @@ int mult___(int a, int b)
   ensures res = a * b;
   
 int mults___(int a, int b)
+  //requires true 
+  //ensures res = a * b;
   case {
     a = 0 -> ensures res = 0;
     a > 0 -> case {
