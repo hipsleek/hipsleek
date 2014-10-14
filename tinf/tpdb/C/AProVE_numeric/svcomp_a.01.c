@@ -8,7 +8,7 @@ int test_fun(int x, int y)
         while (y < x) {
             y = y + 1;
             c = c + 1;
-            x = x;
+            //x = x;
         }
         x = x - 1;
     }

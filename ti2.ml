@@ -63,6 +63,7 @@ let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos
 let mkNot f = CP.mkNot f None no_pos
 let mkGt e1 e2 = CP.mkPure (CP.mkGt e1 e2 no_pos)
 let mkGte e1 e2 = CP.mkPure (CP.mkGte e1 e2 no_pos)
+let mkEq e1 e2 = CP.mkPure (CP.mkEq e1 e2 no_pos)
 
 (* Partition a list of conditions into disjoint conditions *)
 let rec partition_cond_list cond_list = 
@@ -777,11 +778,21 @@ let templ_rank_constr_of_rel by_ann rel =
   let src_rank, src_templ_id, _, src_templ_decl = templ_of_term_ann by_ann rel.termu_lhs in
   let dst_rank, dst_templ_id, _, dst_templ_decl = templ_of_term_ann by_ann rel.termu_rhs in
   let inf_templs = src_templ_id @ dst_templ_id in
+  let src_sv = CP.SpecVar(Int, "rnk_src_" ^ (string_of_int (Globals.fresh_int ())),Unprimed) in
+  let dst_sv = CP.SpecVar(Int, "rnk_dst_" ^ (string_of_int (Globals.fresh_int ())),Unprimed) in
+  let src_var = CP.mkVar src_sv no_pos in
+  let dst_var = CP.mkVar dst_sv no_pos in
+  
   let ctx = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let ctx = mkAnd ctx (CP.cond_of_term_ann rel.termu_rhs) in
-  let dec = mkGt src_rank dst_rank in
-  let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
+  let ctx = mkAnd ctx (mkAnd (mkEq src_var src_rank) (mkEq dst_var dst_rank)) in
+  let dec = mkGt src_var dst_var in
+  let bnd = mkGte src_var (CP.mkIConst 0 no_pos) in
   let constr = mkAnd dec bnd in
+  
+  let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in
+  let _ = print_endline ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in
+  let _ = print_endline ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in
   let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in
   inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
 
@@ -834,7 +845,7 @@ let infer_ranking_function_scc prog g scc =
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
   let res = solve_templ_assume prog templ_decls inf_templs in
-  (* let _ = print_endline ("Ranking function inference: " ^ ( Tlutils.print_solver_res res)) in *)
+  let _ = print_endline ("Ranking synthesis: result: " ^ ( Tlutils.print_solver_res res) ^ "\n") in
   match res with
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in

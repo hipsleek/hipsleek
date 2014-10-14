@@ -806,12 +806,13 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos;*) 
           omega_subst_lst := [];
-            let vars_list = get_vars_formula pe1 in
+            (* let vars_list = get_vars_formula pe1 in *)
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)
             begin
               try
-                  let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+                let sv_list = Gen.BList.remove_dups_eq Cpure.eq_spec_var (fv pe1) in
+                  let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
@@ -834,7 +835,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    let r = Cpure.subst ss2 (match_vars (fv pe1) rel) in
+	                    let r = Cpure.subst ss2 (match_vars sv_list rel) in
                       trans_bool r
 	                  end
 	                with
