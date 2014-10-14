@@ -2215,6 +2215,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_backward_ptrs = [];
           C.view_backward_fields = [];
           C.view_kind = view_kind;
+          C.view_data_decl = None;
           C.view_type_of_self = vdef.I.view_type_of_self;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
@@ -2898,6 +2899,14 @@ and check_view_tail_rec (vdecl: C.view_decl) : bool =
 and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl list)
     : C.view_decl list =
   let new_view_decls = List.map (fun vd ->
+    (* update associating data decl *)
+    let ddecl_opt = (
+      match vd.C.view_data_decl with
+      | Some _ -> vd.C.view_data_decl
+      | None -> 
+          try Some (C.look_up_data_def_raw data_decls vd.C.view_data_name)
+          with _ -> None
+    ) in
     (* update tail recursive property *)
     let tailrec = check_view_tail_rec vd in
     let vd = { vd with C.view_is_tail_rec = tailrec } in
