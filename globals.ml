@@ -1269,6 +1269,7 @@ let term_bnd_pre_flag = ref true
 let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
+let post_add_eres = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
