@@ -790,9 +790,9 @@ let templ_rank_constr_of_rel by_ann rel =
   let bnd = mkGte src_var (CP.mkIConst 0 no_pos) in
   let constr = mkAnd dec bnd in
   
-  let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in
-  let _ = print_endline ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in
-  let _ = print_endline ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in
+  (* let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in   *)
+  (* let _ = print_endline ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in       *)
+  (* let _ = print_endline ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in *)
   let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in
   inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
 
@@ -845,7 +845,7 @@ let infer_ranking_function_scc prog g scc =
     (id_a @ id, decl_a @ decl)) ([], []) scc_edges in
   let inf_templs = Gen.BList.remove_dups_eq CP.eq_spec_var inf_templs in
   let res = solve_templ_assume prog templ_decls inf_templs in
-  let _ = print_endline ("Ranking synthesis: result: " ^ ( Tlutils.print_solver_res res) ^ "\n") in
+  (* let _ = print_endline ("Ranking synthesis: result: " ^ ( Tlutils.print_solver_res res) ^ "\n") in *)
   match res with
   | Sat model ->
     let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
@@ -868,7 +868,7 @@ let infer_ranking_function_scc prog g scc =
 
 (* Abductive Inference *)
 let infer_abductive_cond prog ann ante conseq =
-  if imply ante conseq then Some (CP.mkTrue no_pos)
+  if imply ante conseq then (* Some (CP.mkTrue no_pos) *) None
   else
     (* Handle boolean formulas in consequent *)
     let bool_conseq, conseq = List.partition CP.is_bool_formula 
@@ -897,12 +897,27 @@ let infer_abductive_cond prog ann ante conseq =
         let sst = List.map (fun (v, i) -> (CP.SpecVar (Int, v, Unprimed), i)) model in
         let abd_exp = Tlutils.subst_model_to_exp true sst (CP.exp_of_template_exp abd_templ) in
         let icond = mkGte abd_exp (CP.mkIConst 0 no_pos) in
+        let icond = om_simplify icond in
+        
+        (* let _ = print_endline ("Abductive synthesis: result: " ^ (Tlutils.print_solver_res res)) in  *)
+        (* let _ = print_endline ("Abductive synthesis: icond: " ^ (!CP.print_formula icond) ^ "\n") in *)
+        
         if is_sat (mkAnd ante icond) 
         then Some icond
         else 
           (* Return trivial abductive condition *)
           let args = List.concat (List.map CP.afv abd_templ_args) in
-          Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
+          (* Some (simplify 1 (mkAnd abd_ante abd_conseq) args) *)
+          let excl_args = CP.fv icond in
+          let incl_args = diff args excl_args in
+          
+          (* let _ = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
+          (* let _ = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
+          (* let _ = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
+          
+          let args = if is_empty incl_args then args else incl_args in
+          let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in
+          Some (mkNot neg_icond)
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =

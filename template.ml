@@ -30,6 +30,9 @@ let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formul
   let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
   let ante_fl = true_f::(split_conjunctions ante_no_templ) in
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
+  
+  (* let _ = print_endline ("collect_templ_assume_rhs: ante: " ^ (!print_formula ante)) in                *)
+  (* let _ = print_endline ("collect_templ_assume_rhs: ante_tl: " ^ (pr_list print_term_list ante_tl)) in *)
 
   let _ = templ_assume_scc_stk # push 
     { ass_vars = vars;
@@ -240,10 +243,10 @@ let solve_templ_assume _ =
       if !print_relassume then
         if templ_assumes = [] then ()
         else begin
-          print_endline "**** TEMPLATE ASSUMPTION(S) ****";
+          (print_endline "**** TEMPLATE ASSUMPTION(S) ****";
           print_endline (pr_list (fun ta -> 
             (Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)) ^ "\n") 
-          templ_assumes)
+          templ_assumes))
         end
       else ()
     in

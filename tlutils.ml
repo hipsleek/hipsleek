@@ -452,14 +452,14 @@ let get_opt_model is_linear templ_unks vars assertions =
         let v_val = List.assoc v_name nl_vars_w_int_val in
         (v, mkIConst v_val no_pos)) subst_nl_vars in
       let assertions = List.map (fun f -> apply_par_term sst f) assertions in
-      (* let res2 = Lp.get_model Lp.LPSolve *)
-      (*   (diff templ_unks subst_nl_vars) assertions in *)
-      (* match res2 with *)
-      (* | Lp.Sat model2 -> Sat (nl_vars_w_int_val @ model2) *)
-      (* | _ -> *)
-      (*   let model = Smtsolver.norm_model (List.filter (fun (v, _) -> *)
+      (* let res2 = Lp.get_model Lp.LPSolve                                          *)
+      (*   (diff templ_unks subst_nl_vars) assertions in                             *)
+      (* match res2 with                                                             *)
+      (* | Lp.Sat model2 -> Sat (nl_vars_w_int_val @ model2)                         *)
+      (* | _ ->                                                                      *)
+      (*   let model = Smtsolver.norm_model (List.filter (fun (v, _) ->              *)
       (*     List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in *)
-      (*   Sat model *)
+      (*   Sat model                                                                 *)
       let res2 = get_model !lp_solver true 
         (diff templ_unks subst_nl_vars) 
         (diff vars subst_nl_vars)
@@ -864,14 +864,20 @@ let norm_subst svl subst =
         a @ ((v, e)::n_xs)) [] grouped_subst) 
   in
   let normalized_subst = helper subst in
+  (* let _ = print_endline ("norm_subst: normalized_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) normalized_subst)) in *)
   (* We assume that trivial and cyclic substs like 
    * (x1, x2) and (x2, x1) have been removed by simplify *)
-  let sorted_subst = List.sort (fun (v1, e1) (v2, e2) -> 
-    if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1
-    else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1
-    else 0) normalized_subst in
-  List.fold_left (fun subst (v, e) -> 
-    (v, a_apply_par_term subst e)::(List.remove_assoc v subst)) sorted_subst sorted_subst
+  (* let sorted_subst = List.sort (fun (v1, e1) (v2, e2) ->                                                          *)
+  (*   if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1                                                           *)
+  (*   else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1                                                       *)
+  (*   else 0) normalized_subst in                                                                                   *)
+  (* let _ = print_endline ("norm_subst: sorted_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) sorted_subst)) in *)
+  (* List.fold_left (fun subst (v, e) ->                                                                             *)
+  (*   (List.remove_assoc v subst) @ [(v, a_apply_par_term subst e)]) sorted_subst sorted_subst                      *)
+  let vl = List.map fst normalized_subst in
+  List.fold_left (fun subst v ->
+    let e = List.assoc v subst in 
+    List.map (fun (vs, es) -> (vs, a_apply_par_term [(v, e)] es)) subst) normalized_subst vl
 
 let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
   let fl = split_conjunctions f in

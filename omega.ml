@@ -812,6 +812,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
             begin
               try
                 let sv_list = Gen.BList.remove_dups_eq Cpure.eq_spec_var (fv pe1) in
+                (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
                   let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	              (*test*)

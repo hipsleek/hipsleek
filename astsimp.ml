@@ -5051,7 +5051,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fn3 = fresh_name () in
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
-            let w_name = if String.compare a_wn "" == 0 then fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos)
+            let w_name = if String.compare a_wn "" == 0 then (* fn3 ^ "_" ^ *) "while_" ^ (string_of_pos_plain pos.start_pos)
             else a_wn
             in
             (*if exists return inside body:w2a.ss*)

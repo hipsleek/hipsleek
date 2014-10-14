@@ -8,6 +8,7 @@ int test_fun(int x, int y)
         while (x > y) {
             y = 2*y;
             c = c + 1;
+            x = x;
         }
         x = x - 1;
     }
