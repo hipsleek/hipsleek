@@ -11,7 +11,7 @@ ll<n> == self=null & n=0
   // inv_sat BG([self],n=1)         // OK
   // inv_sat BG([self],n>=1)        // OK
   // inv_sat BG([self],n>1)         // OK
-  // inv_sat BG([self],n>4)         // Not OK
+   inv_sat BG([self],n>4)         // Not OK
   ;
 
 ell<n> == self=null & n=0
