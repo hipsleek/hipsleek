@@ -3,10 +3,8 @@ class Exp extends __Exc {
 }
 
 int loop(int x)
-//infer [@post_n]
   requires true
   ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
-//ensures res=10;
 {
   if (x>0) {
     raise new Exp(2);
@@ -17,7 +15,12 @@ int loop(int x)
 }
 
 /*
-# exc1.ss
+# exc1.ss --post-eres
 
+  requires true
+  ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
+
+If we add res=eres.val thru --post-eres, the post-condition
+should be provable.
 
 */
