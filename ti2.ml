@@ -868,7 +868,7 @@ let infer_ranking_function_scc prog g scc =
 
 (* Abductive Inference *)
 let infer_abductive_cond prog ann ante conseq =
-  if imply ante conseq then (* Some (CP.mkTrue no_pos) *) None
+  if imply ante conseq then Some (CP.mkTrue no_pos) (* None *)
   else
     (* Handle boolean formulas in consequent *)
     let bool_conseq, conseq = List.partition CP.is_bool_formula 
@@ -1158,12 +1158,22 @@ let rec infer_abductive_cond_list prog ann ante conds =
     if imply ante (mkNot c) 
     then infer_abductive_cond_list prog ann ante cs
     else
-      let cc = CP.split_conjunctions c in
-      let icc = List.map (infer_abductive_cond prog ann ante) cc in
-      let icc = List.concat (List.map opt_to_list icc) in
-      match icc with
-      | [] -> infer_abductive_cond_list prog ann ante cs
-      | _ -> icc
+      let ic = infer_abductive_cond prog ann ante c in
+      match ic with
+      | None -> infer_abductive_cond_list prog ann ante cs
+      | Some c -> [c]
+      (* let cc = CP.split_conjunctions c in                           *)
+      (* let icc = List.map (infer_abductive_cond prog ann ante) cc in *)
+      (* let icc = List.concat (List.map opt_to_list icc) in           *)
+      (* match icc with                                                *)
+      (* | [] -> infer_abductive_cond_list prog ann ante cs            *)
+      (* | _ -> icc                                                    *)
+      
+let infer_abductive_cond_list prog ann ante conds =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list pr1 in
+  Debug.no_2 "infer_abductive_cond_list" pr1 pr2 pr2
+    (fun _ _ -> infer_abductive_cond_list prog ann ante conds) ante conds
 
 let infer_loop_cond_list params ante conds =
   (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
