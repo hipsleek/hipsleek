@@ -770,6 +770,9 @@ and check_well_formed_struc_formula (sf: CF.struc_formula)
  *   - All of its heap noes must be accessible from the root.
  *   - In each branch of its definition, this view recurs at most 1 node
  *   (including mutually recursive case)
+ * 
+ * TODO:
+ *   - check recursive view
  *)
 let check_well_founded_view_x (vdecl: C.view_decl) : bool =
   let self_type = Named (vdecl.C.view_data_name) in
@@ -964,90 +967,103 @@ let extract_sub_formula_by_vars (f: CF.formula) (extracted_vars: CP.spec_var lis
   let newf = simplify_formula newf in
   newf
 
-(* (*                                                                                  *)
-(*  * Collect only the nodes in main heap chains, starting from root node              *)
-(*  *)                                                                                 *)
-(* let collect_main_heap_chain (f: CF.formula) (root: CP.spec_var)                     *)
-(*     (vdecl: C.view_decl) : CF.formula =                                             *)
-(*   (* connect pointers of all nodes in main heap chain *)                            *)
-(*   let rec collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap = (        *)
-(*     let current_pointers = ref pointers in                                          *)
-(*     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in                     *)
-(*     let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in                *)
-(*     let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in               *)
-(*     let trans_bf = (fun bf -> Some bf) in                                           *)
-(*     let trans_hf hf = (match hf with                                                *)
-(*       | CF.ViewNode {CF.h_formula_view_node = vnode;                                *)
-(*                      CF.h_formula_view_arguments = arguments} ->                    *)
-(*           let aliases = (CP.EMapSV.find_equiv_all vnode emap) @ [vnode] in          *)
-(*           if (CP.EMapSV.overlap !current_pointers aliases) then                     *)
-(*             current_pointers := CP.remove_dups_svl (aliases::!current_pointers);    *)
-(*             List.iter2 (fun arg var ->                                              *)
-(*               if (CP.eq_spec_var fwd_ptr var) then                                  *)
-(*                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)     *)
-(*             ) arguments vdecl.C.view_vars;                                          *)
-(*           None                                                                      *)
-(*       | CF.DataNode {CF.h_formula_data_node = dnode;                                *)
-(*                      CF.h_formula_data_arguments = arguments} ->                    *)
-(*           let aliases = (CP.EMapSV.find_equiv_all dnode emap) @ [dnode] in          *)
-(*           if (CP.EMapSV.overlap !current_pointers aliases) then                     *)
-(*             current_pointers := CP.remove_dups_svl (aliases::!current_pointers);    *)
-(*             List.iter2 (fun arg ((_,fname),_) ->                                    *)
-(*               if (CP.eq_spec_var fwd_field fname) then                              *)
-(*                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)     *)
-(*             ) arguments ddecl.C.data_fields;                                        *)
-(*           None                                                                      *)
-(*       | _ -> None                                                                   *)
-(*     ) in                                                                            *)
-(*     let trans_func = (trans_ef, trans_f, trans_hf,                                  *)
-(*         (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in                         *)
-(*     let _ = CF.transform_formula trans_func f in                                    *)
-(*     if (List.length !current_pointers = List.length pointers) then                  *)
-(*       !current_pointers                                                             *)
-(*     else collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap             *)
-(*   ) in                                                                              *)
+(*
+ * Collect only the nodes in main heap chains, starting from root node
+ *)
+let collect_main_heap_chain_x (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
+    : CF.formula =
+  (* connect pointers of all nodes in main heap chain *)
+  let rec collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap = (
+    let current_pointers = ref pointers in
+    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
+    let trans_bf = (fun bf -> Some bf) in
+    let trans_hf hf = (match hf with
+      | CF.ViewNode {CF.h_formula_view_node = vnode;
+                     CF.h_formula_view_arguments = arguments} ->
+          let aliases = (CP.EMapSV.find_equiv_all vnode emap) @ [vnode] in
+          if (CP.EMapSV.overlap !current_pointers aliases) then
+            current_pointers := CP.remove_dups_svl (aliases @ !current_pointers);
+            List.iter2 (fun arg var ->
+              if (CP.eq_spec_var fwd_ptr var) then
+                current_pointers := CP.remove_dups_svl (arg::!current_pointers)
+            ) arguments vdecl.C.view_vars;
+          None
+      | CF.DataNode {CF.h_formula_data_node = dnode;
+                     CF.h_formula_data_arguments = arguments} ->
+          let aliases = (CP.EMapSV.find_equiv_all dnode emap) @ [dnode] in
+          if (CP.EMapSV.overlap !current_pointers aliases) then
+            current_pointers := CP.remove_dups_svl (aliases @ !current_pointers);
+            List.iter2 (fun arg ((_,fname),_) ->
+              if (eq_str fwd_field fname) then
+                current_pointers := CP.remove_dups_svl (arg::!current_pointers)
+            ) arguments ddecl.C.data_fields;
+          None
+      | _ -> None
+    ) in
+    let trans_func = (trans_ef, trans_f, trans_hf,
+        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
+    let _ = CF.transform_formula trans_func f in
+    if (List.length !current_pointers = List.length pointers) then
+      !current_pointers
+    else collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap
+  ) in
   
-(*   (* extract main heap chain in raw format *)                                       *)
-(*   let extract_heap_chain f pointers = (                                             *)
-(*     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in                     *)
-(*     let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in                *)
-(*     let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in               *)
-(*     let trans_hf hf = (match hf with                                                *)
-(*       | CF.ViewNode {CF.h_formula_view_node = vnode} ->                             *)
-(*           if (CP.mem_svl vnode pointers) then Some hf                               *)
-(*           else Some CF.HTrue                                                        *)
-(*       | CF.DataNode {CF.h_formula_data_node = dnode} ->                             *)
-(*           if (CP.mem_svl dnode pointers) then Some hf                               *)
-(*           else Some CF.HTrue                                                        *)
-(*       | _ -> None                                                                   *)
-(*     ) in                                                                            *)
-(*     let trans_bf bf = (                                                             *)
-(*       let svs = CP.bfv bf in                                                        *)
-(*       if (CP.EMapSV.overlap svs pointers) then Some bf                              *)
-(*       else Some (CP.mkTrue_b no_pos)                                                *)
-(*     ) in                                                                            *)
-(*     let trans_func = (trans_ef, trans_f, trans_hf,                                  *)
-(*         (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in                         *)
-(*     CF.transform_formula trans_func f                                               *)
-(*   ) in                                                                              *)
+  (* extract main heap chain in raw format *)
+  let extract_heap_chain f pointers = (
+    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
+    let trans_hf hf = (match hf with
+      | CF.ViewNode {CF.h_formula_view_node = vnode} ->
+          if (CP.mem_svl vnode pointers) then Some hf
+          else Some CF.HTrue
+      | CF.DataNode {CF.h_formula_data_node = dnode} ->
+          if (CP.mem_svl dnode pointers) then Some hf
+          else Some CF.HTrue
+      | _ -> None
+    ) in
+    let trans_bf bf = (
+      let svs = CP.bfv bf in
+      if (CP.EMapSV.overlap svs pointers) then Some bf
+      else Some (CP.mkTrue_b no_pos)
+    ) in
+    let trans_func = (trans_ef, trans_f, trans_hf,
+        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
+    CF.transform_formula trans_func f
+  ) in
   
-(*   let ddecl = C.g vdecl.C.view_data_name in                                         *)
-(*   let fwd_field = (match vdecl.C.view_forward_fields with                           *)
-(*     | [s] -> s                                                                      *)
-(*     | _ ->                                                                          *)
-(*         report_warning "collect_main_heap_chain: expect only 1 forward field";      *)
-(*         "unknown_forward_field"                                                     *)
-(*   ) in                                                                              *)
-(*   let fwd_ptr = (match vdecl.C.view_forward_ptrs with                               *)
-(*     | [sv] -> sv                                                                    *)
-(*     | _ ->                                                                          *)
-(*         report_warning "collect_main_heap_chain: expect only 1 foward pointer";     *)
-(*         "unknown_forward_pointer"                                                   *)
-(*   ) in                                                                              *)
-(*   let hc_pointers = collect_pointers f [root] vdecl fwd_ptr ddecl fwd_field emap in *)
-  
+  let ddecl = (match vdecl.C.view_data_decl with 
+    | Some dd -> dd
+    | None -> report_error no_pos "collect_main_heap_chain: data_decl not found!"
+  ) in
+  let fwd_field = (match vdecl.C.view_forward_fields with
+    | [s] -> s
+    | _ ->
+        report_warning no_pos "collect_main_heap_chain: expect only 1 forward field!";
+        "unknown_forward_field"
+  ) in
+  let fwd_ptr = (match vdecl.C.view_forward_ptrs with
+    | [sv] -> sv
+    | _ ->
+        report_warning no_pos "collect_main_heap_chain: expect only 1 foward pointer!";
+        (CP.mk_spec_var "unknown_forward_pointer")
+  ) in
+  let (_,mf,_,_,_) = CF.split_components f in
+  let pf = MCP.pure_of_mix mf in
+  let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
+  let pointers = collect_pointers f [root] vdecl fwd_ptr ddecl fwd_field emap in
+  extract_heap_chain f pointers
 
-
+let collect_main_heap_chain (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
+    : CF.formula =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_root = (add_str "root" !CP.print_sv) in
+  let pr_view = (add_str "view" (fun vd -> vd.C.view_name)) in
+  let pr_res = (add_str "res" !CF.print_formula) in
+  Debug.no_3 "collect_main_heap_chain" pr_f pr_root pr_view pr_res
+      (fun _ _ _ -> collect_main_heap_chain_x f root vdecl) f root vdecl
 
 
 (*
