@@ -662,7 +662,7 @@ let convert_data_and_pred_to_cast_x () =
   (* Trung: temporary code *)
   let _ = print_endline ("== check views' well-foundedness:") in
   let _ = List.iter (fun vd ->
-    if (Accfold.is_well_founded_view vd) then
+    if (Accfold.check_well_founded_view vd) then
       print_endline ("  " ^ vd.Cast.view_name ^ ": OK")
     else print_endline ("  " ^ vd.Cast.view_name ^ ": Not OK")
   ) !cprog.Cast.prog_view_decls in 

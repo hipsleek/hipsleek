@@ -465,7 +465,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                           with Not_found -> (
                               (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                               let ftyp = deref_ty in
-                let fname = str_deref in
+                              let fname = str_deref in
                               let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in

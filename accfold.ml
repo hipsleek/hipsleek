@@ -663,11 +663,6 @@ let generate_view_size_relation (vdecl: C.view_decl) (prog: C.prog_decl) : C.rel
   Debug.no_1 "generate_view_size_relation" pr_view pr_rel
       (fun _ -> generate_view_size_relation_x vdecl prog) vdecl
 
-(* TRUNG: TODO 
- * - simplify, convert inductive relation to ordinary relation
- * let simplify_size_relation_of_view (rdecl: C.rel_decl) : C.rel_decl =
- *)
-
 let update_view_size_relations (prog: C.prog_decl) : unit =
   List.iter (fun vdecl ->
     let rdecls = prog.C.prog_rel_decls in
@@ -679,13 +674,12 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
     )
   ) prog.C.prog_view_decls
 
-(* let generate_schematic_predicate (vdecl: C.view_decl) (prog: C.prog_decl) *)
 
 (*
  * A formula is well-formed iff all of its heap nodes must
  * be reached from root pointers
  *)
-let is_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool =
+let check_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool =
   let rec get_unreached_nodes_x (nodes: CF.h_formula list)
       (reached_ptrs: CP.spec_var list) emap
       : CF.h_formula list = (
@@ -694,22 +688,20 @@ let is_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool =
       match hf with
       | CF.ViewNode vn -> 
           let vn_name = vn.CF.h_formula_view_node in
-          let aliases = CP.EMapSV.find_equiv_all vn_name emap in
-          let aliases = vn_name::aliases in
+          let aliases = (CP.EMapSV.find_equiv_all vn_name emap) @ [vn_name] in
           (CP.EMapSV.overlap aliases reached_ptrs)
       | CF.DataNode dn -> 
           let dn_name = dn.CF.h_formula_data_node in
-          let aliases = CP.EMapSV.find_equiv_all dn_name emap in
-          let aliases = dn_name::aliases in
+          let aliases = (CP.EMapSV.find_equiv_all dn_name emap) @ [dn_name] in
           (CP.EMapSV.overlap aliases reached_ptrs)
-      | _ -> report_error no_pos "is_well_formed_formula_x: unexpected node"
+      | _ -> report_error no_pos "check_well_formed_formula_x: unexpected node"
     ) nodes in
     (* update reached pointers *)
     let new_reached_ptrs = List.flatten (List.map (fun node ->
       match node with
       | CF.ViewNode vn -> vn.CF.h_formula_view_arguments
       | CF.DataNode dn -> dn.CF.h_formula_data_arguments
-      | _ -> report_error no_pos "is_well_formed_formula_x: unexpected node"
+      | _ -> report_error no_pos "check_well_formed_formula_x: unexpected node"
     ) reached_nodes) in
     let new_reached_ptrs = CP.remove_dups_svl (reached_ptrs @ new_reached_ptrs) in
     if (List.length new_reached_ptrs != List.length reached_ptrs) then
@@ -732,42 +724,45 @@ let is_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool =
   (* a formula is well-formed if all nodes are reached from the root *)
   (List.length unreached_nodes == 0)
 
-let is_well_formed_formula (f: CF.formula) (roots: CP.spec_var list) : bool =
+
+let check_well_formed_formula (f: CF.formula) (roots: CP.spec_var list) : bool =
   let pr_f = (add_str "f" !CF.print_formula) in
   let pr_roots = (add_str "roots" !CP.print_svl) in
   let pr_res = (add_str "res" string_of_bool) in
-  Debug.no_2 "is_well_formed_formula" pr_f pr_roots pr_res
-      (fun _ _ -> is_well_formed_formula_x f roots) f roots
+  Debug.no_2 "check_well_formed_formula" pr_f pr_roots pr_res
+      (fun _ _ -> check_well_formed_formula_x f roots) f roots
 
-let rec is_well_formed_struc_formula_x (sf: CF.struc_formula)
+
+let rec check_well_formed_struc_formula_x (sf: CF.struc_formula)
     (roots: CP.spec_var list)
     : bool =
   match sf with
   | CF.EList sf_list ->
-      List.for_all (fun (_,sf) -> is_well_formed_struc_formula sf roots) sf_list
+      List.for_all (fun (_,sf) -> check_well_formed_struc_formula sf roots) sf_list
   | CF.ECase scf ->
       List.for_all (fun (_,sf) ->
-        is_well_formed_struc_formula sf roots
+        check_well_formed_struc_formula sf roots
       ) scf.CF.formula_case_branches
   | CF.EBase sbf -> (
-      if not (is_well_formed_formula sbf.CF.formula_struc_base roots) then false
+      if not (check_well_formed_formula sbf.CF.formula_struc_base roots) then false
       else match sbf.CF.formula_struc_continuation with
         | None -> true
-        | Some sf -> (is_well_formed_struc_formula sf roots)
+        | Some sf -> (check_well_formed_struc_formula sf roots)
     )
   | CF.EAssume af ->
-      is_well_formed_struc_formula af.CF.formula_assume_struc roots
+      check_well_formed_struc_formula af.CF.formula_assume_struc roots
   | CF.EInfer sif ->
-      is_well_formed_struc_formula sif.CF.formula_inf_continuation roots
+      check_well_formed_struc_formula sif.CF.formula_inf_continuation roots
 
-and is_well_formed_struc_formula (sf: CF.struc_formula)
+
+and check_well_formed_struc_formula (sf: CF.struc_formula)
     (roots: CP.spec_var list)
     : bool =
   let pr_sf = (add_str "struc_formula" !CF.print_struc_formula) in
   let pr_roots = (add_str "roots" !CP.print_svl) in
   let pr_res = (add_str "res" string_of_bool) in
-  Debug.no_2 "is_well_formed_struc_formula" pr_sf pr_roots pr_res
-      (fun _ _ -> is_well_formed_struc_formula_x sf roots) sf roots
+  Debug.no_2 "check_well_formed_struc_formula" pr_sf pr_roots pr_res
+      (fun _ _ -> check_well_formed_struc_formula_x sf roots) sf roots
 
 
 (*
@@ -776,10 +771,10 @@ and is_well_formed_struc_formula (sf: CF.struc_formula)
  *   - In each branch of its definition, this view recurs at most 1 node
  *   (including mutually recursive case)
  *)
-let is_well_founded_view_x (vdecl: C.view_decl) : bool =
+let check_well_founded_view_x (vdecl: C.view_decl) : bool =
   let self_type = Named (vdecl.C.view_data_name) in
   let root = CP.mk_typed_spec_var self_type self in
-  if not (is_well_formed_struc_formula vdecl.C.view_formula [root]) then false
+  if not (check_well_formed_struc_formula vdecl.C.view_formula [root]) then false
   else (
     let rec_names = vdecl.C.view_name::vdecl.C.view_mutual_rec_views in
     let rec_names = remove_dups_str_list rec_names in
@@ -794,8 +789,294 @@ let is_well_founded_view_x (vdecl: C.view_decl) : bool =
     ) vdecl.C.view_un_struc_formula
   )
 
-let is_well_founded_view (vdecl: C.view_decl) : bool =
+
+let check_well_founded_view (vdecl: C.view_decl) : bool =
   let pr_view = !C.print_view_decl in
   let pr_res = string_of_bool in
-  Debug.no_1 "is_well_founded_view" pr_view pr_res
-    (fun _ -> is_well_founded_view_x vdecl) vdecl
+  Debug.no_1 "check_well_founded_view" pr_view pr_res
+    (fun _ -> check_well_founded_view_x vdecl) vdecl
+
+
+(*
+ * Idea:
+ *   - find 
+ *)
+
+
+(*
+ * Extract main heap chain of a formula
+ *)
+(* TODO *)
+(* let extract_main_heap_chain (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl) *)
+(*     : CF.formula =                                                                   *)
+(*   let fwd_fields = vdecl.C.view_forward_fields in                                    *)
+(*   let fwd_ptrs = vdecl.C.view_forward_ptrs in                                        *)
+
+(*
+ * related vars: vars which are under some constraints which involve root vars
+ * consider only pointer vars
+ * note: no need to use emap
+ *)
+let collect_related_vars_in_formula_x (f: CF.formula) (roots: CP.spec_var list)
+    : CP.spec_var list =
+  let rec collect_helper f roots = (
+    let related_vars = ref roots in
+    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
+    let trans_hf hf = ( 
+      let hf_args = (match hf with
+        | CF.ViewNode vn ->
+            if not (CP.mem_svl vn.CF.h_formula_view_node !related_vars) then []
+            else vn.CF.h_formula_view_arguments
+        | CF.DataNode dn ->
+            if not (CP.mem_svl dn.CF.h_formula_data_node !related_vars) then []
+            else dn.CF.h_formula_data_arguments
+        | _ -> []
+      ) in
+      let pointers = List.filter (fun arg ->
+        let typ = CP.type_of_spec_var arg in
+        (Globals.is_pointer typ)
+      ) hf_args in 
+      let _ = (if List.length pointers > 0 then
+        (* update related vars *)
+        related_vars := CP.remove_dups_svl (!related_vars @ pointers)
+      ) in
+      None
+    ) in
+    let trans_bf bf = (
+      let svs = CP.bfv bf in
+      let _ = (if (CP.EMapSV.overlap svs !related_vars) then
+        (* update related vars *)
+        related_vars := CP.remove_dups_svl (!related_vars @ svs)
+      ) in
+      Some bf
+    ) in
+    let trans_func = (trans_ef, trans_f, trans_hf,
+        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
+    let _ = CF.transform_formula trans_func f in
+    if (List.length !related_vars = List.length roots) then
+      roots
+    else collect_helper f !related_vars
+  ) in
+  
+  collect_helper f roots
+
+
+let collect_related_vars_in_formula (f: CF.formula) (roots: CP.spec_var list)
+    : CP.spec_var list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_roots = (add_str "roots" !CP.print_svl) in
+  let pr_res = (add_str "res" !CP.print_svl) in
+  Debug.no_2 "collect_related_vars_in_formula" pr_f pr_roots pr_res
+      (fun _ _ -> collect_related_vars_in_formula_x f roots) f roots
+
+
+(* simplify formulate by removing true, false, HEmp... constants *)
+let simplify_formula (f: CF.formula) : CF.formula =
+  let rec simplify_helper f = (
+    let updated = ref true in
+    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_bf, trans_e = (fun bf -> Some bf), (fun e -> Some e) in
+    let trans_hf hf = (match hf with
+      | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} -> (
+          match (h1, h2) with
+          | CF.HEmp, _ -> Some h2
+          | _, CF.HEmp -> Some h1
+          | _, _ -> (updated := false; None)
+        )
+      | _ -> None
+    ) in
+    let trans_pf pf = (
+      match pf with
+      | CP.And (pf1, pf2, pos) ->
+          if (CP.isConstTrue pf1) then Some pf2
+          else if (CP.isConstFalse pf1) then Some (CP.mkFalse pos) 
+          else if (CP.isConstTrue pf2) then Some pf1
+          else if (CP.isConstFalse pf2) then Some (CP.mkFalse pos)
+          else (updated := false; None)
+      | CP.Or (pf1, pf2, _, pos) ->
+          if (CP.isConstTrue pf1) then Some (CP.mkTrue pos)
+          else if (CP.isConstFalse pf1) then Some pf2 
+          else if (CP.isConstTrue pf2) then Some (CP.mkTrue pos)
+          else if (CP.isConstFalse pf2) then Some pf1
+          else (updated := false; None)
+      | CP.AndList pfs ->
+          let exist_constant_false = List.exists (fun (_,pf) ->
+            CP.isConstFalse pf
+          ) pfs in
+          if (exist_constant_false) then Some (CP.mkFalse no_pos)
+          else (
+            let non_true_pfs = List.filter (fun (_,pf) ->
+              not (CP.isConstTrue pf)
+            ) pfs in
+            if (List.length non_true_pfs != List.length pfs) then
+              Some (CP.AndList non_true_pfs)
+            else (updated := false; None)
+          )
+      | _ -> None
+    ) in
+    let trans_func = (trans_ef, trans_f, trans_hf,
+        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
+    let newf= CF.transform_formula trans_func f in
+    if not (!updated) then newf
+    else simplify_helper newf 
+  ) in
+  (* return *)
+  simplify_helper f
+
+(*
+ * extract sub-formula contains related vars
+ * Trung:
+ *   - works properly without pure property
+ *   - if pure properties exists, how to consider?
+ *)
+let extract_sub_formula_by_vars (f: CF.formula) (extracted_vars: CP.spec_var list)
+    : CF.formula =
+  (* TODO: first extract needed elements and keep the original structure *)
+  let extract_formula_helper f vars = (
+    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
+    let trans_hf hf = (
+      match hf with
+      | CF.ViewNode {CF.h_formula_view_node = node} ->
+          if (CP.mem_svl node vars) then Some CF.HTrue 
+          else Some hf
+      | CF.DataNode {CF.h_formula_data_node = node} ->
+          if (CP.mem_svl node vars) then Some CF.HTrue
+          else Some hf
+      | _ -> None
+    ) in
+    (* NOTE: this extraction is not correct for disjunction of pure formula *)
+    let trans_bf bf = (
+      let svs = CP.bfv bf in
+      if (CP.EMapSV.overlap svs vars) then None
+      else Some (CP.mkTrue_b no_pos)
+    ) in
+    let trans_func = (trans_ef, trans_f, trans_hf,
+        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
+    CF.transform_formula trans_func f
+  ) in
+
+  let newf = extract_formula_helper f extracted_vars in
+  let newf = simplify_formula newf in
+  newf
+
+(* (*                                                                                  *)
+(*  * Collect only the nodes in main heap chains, starting from root node              *)
+(*  *)                                                                                 *)
+(* let collect_main_heap_chain (f: CF.formula) (root: CP.spec_var)                     *)
+(*     (vdecl: C.view_decl) : CF.formula =                                             *)
+(*   (* connect pointers of all nodes in main heap chain *)                            *)
+(*   let rec collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap = (        *)
+(*     let current_pointers = ref pointers in                                          *)
+(*     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in                     *)
+(*     let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in                *)
+(*     let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in               *)
+(*     let trans_bf = (fun bf -> Some bf) in                                           *)
+(*     let trans_hf hf = (match hf with                                                *)
+(*       | CF.ViewNode {CF.h_formula_view_node = vnode;                                *)
+(*                      CF.h_formula_view_arguments = arguments} ->                    *)
+(*           let aliases = (CP.EMapSV.find_equiv_all vnode emap) @ [vnode] in          *)
+(*           if (CP.EMapSV.overlap !current_pointers aliases) then                     *)
+(*             current_pointers := CP.remove_dups_svl (aliases::!current_pointers);    *)
+(*             List.iter2 (fun arg var ->                                              *)
+(*               if (CP.eq_spec_var fwd_ptr var) then                                  *)
+(*                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)     *)
+(*             ) arguments vdecl.C.view_vars;                                          *)
+(*           None                                                                      *)
+(*       | CF.DataNode {CF.h_formula_data_node = dnode;                                *)
+(*                      CF.h_formula_data_arguments = arguments} ->                    *)
+(*           let aliases = (CP.EMapSV.find_equiv_all dnode emap) @ [dnode] in          *)
+(*           if (CP.EMapSV.overlap !current_pointers aliases) then                     *)
+(*             current_pointers := CP.remove_dups_svl (aliases::!current_pointers);    *)
+(*             List.iter2 (fun arg ((_,fname),_) ->                                    *)
+(*               if (CP.eq_spec_var fwd_field fname) then                              *)
+(*                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)     *)
+(*             ) arguments ddecl.C.data_fields;                                        *)
+(*           None                                                                      *)
+(*       | _ -> None                                                                   *)
+(*     ) in                                                                            *)
+(*     let trans_func = (trans_ef, trans_f, trans_hf,                                  *)
+(*         (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in                         *)
+(*     let _ = CF.transform_formula trans_func f in                                    *)
+(*     if (List.length !current_pointers = List.length pointers) then                  *)
+(*       !current_pointers                                                             *)
+(*     else collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap             *)
+(*   ) in                                                                              *)
+  
+(*   (* extract main heap chain in raw format *)                                       *)
+(*   let extract_heap_chain f pointers = (                                             *)
+(*     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in                     *)
+(*     let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in                *)
+(*     let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in               *)
+(*     let trans_hf hf = (match hf with                                                *)
+(*       | CF.ViewNode {CF.h_formula_view_node = vnode} ->                             *)
+(*           if (CP.mem_svl vnode pointers) then Some hf                               *)
+(*           else Some CF.HTrue                                                        *)
+(*       | CF.DataNode {CF.h_formula_data_node = dnode} ->                             *)
+(*           if (CP.mem_svl dnode pointers) then Some hf                               *)
+(*           else Some CF.HTrue                                                        *)
+(*       | _ -> None                                                                   *)
+(*     ) in                                                                            *)
+(*     let trans_bf bf = (                                                             *)
+(*       let svs = CP.bfv bf in                                                        *)
+(*       if (CP.EMapSV.overlap svs pointers) then Some bf                              *)
+(*       else Some (CP.mkTrue_b no_pos)                                                *)
+(*     ) in                                                                            *)
+(*     let trans_func = (trans_ef, trans_f, trans_hf,                                  *)
+(*         (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in                         *)
+(*     CF.transform_formula trans_func f                                               *)
+(*   ) in                                                                              *)
+  
+(*   let ddecl = C.g vdecl.C.view_data_name in                                         *)
+(*   let fwd_field = (match vdecl.C.view_forward_fields with                           *)
+(*     | [s] -> s                                                                      *)
+(*     | _ ->                                                                          *)
+(*         report_warning "collect_main_heap_chain: expect only 1 forward field";      *)
+(*         "unknown_forward_field"                                                     *)
+(*   ) in                                                                              *)
+(*   let fwd_ptr = (match vdecl.C.view_forward_ptrs with                               *)
+(*     | [sv] -> sv                                                                    *)
+(*     | _ ->                                                                          *)
+(*         report_warning "collect_main_heap_chain: expect only 1 foward pointer";     *)
+(*         "unknown_forward_pointer"                                                   *)
+(*   ) in                                                                              *)
+(*   let hc_pointers = collect_pointers f [root] vdecl fwd_ptr ddecl fwd_field emap in *)
+  
+
+
+
+
+(*
+ * Extract a node & its sub-heap nodes
+ *)
+(* TODO *)
+(* let extract_node (f: CF.formula) (root: CP.spec_var) : CF.formula = *)
+
+(* TODO *)
+(* let find_atomic_view *)
+
+(*
+ * A view_decl is atomic iff:
+ * - Having only 2 branches: 1 base branch and 1 inductive branch
+ * - Formula in base branch contains empty heap in the main heap chain
+ * - Main heap chain of extension part of formula in inductive branch is irreducible 
+ *)
+(* let check_atomic_view (vdecl: C.view_decl) : bool =              *)
+(*   if (List.length vdecl.C.view_un_struc_formula != 2) then false *)
+(*     let base_cases, inductive_cases = List.partition (fun f ->   *)
+(*     ) vdecl.C.view_un_struc_formula in                           *)
+(*   )                                                              *)
+
+(* let check_atomic_view (vdecl: C.view_decl) : bool =              *)
+(*   if (List.length vdecl.C.view_un_struc_formula != 2) then false *)
+(*   else (                                                         *)
+(*     let base_cases, inductive_cases = List.partition (fun f ->   *)
+(*        true                                                      *)
+(*     ) vdecl.C.view_un_struc_formula in                           *)
+    
+(*     (* true *)                                                   *)
+(*                                                                  *)
