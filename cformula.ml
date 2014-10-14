@@ -3901,7 +3901,7 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
         (* 19.05.2008 *)
 
 and get_exists (f : formula) : CP.spec_var list =
-  let rec helper f = 
+  let rec helper f =
     match f with
       | Or ({formula_or_f1 = f1; formula_or_f2 = f2;}) ->
 	      let evars1 = helper f1 in

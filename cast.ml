@@ -2951,15 +2951,29 @@ let split_view_branches (vd: view_decl) : (F.formula list * F.formula list) =
 
 (* unfold the occurences of a view in a formula by its base case *)
 let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) =
-  let vname = vd.view_name in 
+  let vname = vd.view_name in
   let extra_pure = ref [] in
   let replace_hf hf = (match hf with
     | F.ViewNode vn ->
         if (String.compare vn.F.h_formula_view_name vname = 0) then
           let subs = collect_subs_from_view_node vn vd in
+          let _ = Debug.ninfo_hprint (add_str "base_f" !F.print_formula) base_f no_pos in
+          let new_subs = match base_f with
+            | F.Exists fe ->
+                  let qvars = fe.F.formula_exists_qvars in
+                  let vl = List.map (fun (_,sv) -> sv) subs in
+                  let qvars = List.filter (fun sv -> not(List.mem sv vl)) qvars in
+                  List.map (fun sv -> match sv with
+                    | CP.SpecVar (t,n,p) -> (CP.SpecVar (t,fresh_any_name n,p),sv)) qvars
+            | _ -> []
+          in
+          let subs = subs@new_subs in
+          let _ = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) subs no_pos in
           let replacing_f = F.subst_one_by_one subs base_f in
+          let _ = Debug.ninfo_hprint (add_str "replacing_f" !F.print_formula) replacing_f no_pos in
           let (replacing_hf,extra_pf,_,_,_) = F.split_components replacing_f in
           let extra_qvars = F.get_exists replacing_f in
+          let _ = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !CP.print_sv)) extra_qvars no_pos in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
           Some replacing_hf                  (* replace the heap part *)
         else (Some hf)
@@ -2971,12 +2985,15 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
   let f_pf pf = Some pf in
   let f_b bf= Some bf in
   let f_e e = Some e in
+  let _ = Debug.ninfo_hprint (add_str "f" !F.print_formula) f no_pos in
   let new_f = F.transform_formula (f_ef, f_f, replace_hf, (f_m, f_a, f_pf, f_b, f_e)) f in
+  let _ = Debug.ninfo_hprint (add_str "new_f" !F.print_formula) new_f no_pos in
   let pos = F.pos_of_formula new_f in
   let new_f = List.fold_left (fun f (mf,qv) ->
     let nf = F.mkAnd_pure f mf pos in       (* add the pure part back *)
     F.push_exists qv nf
   ) new_f !extra_pure in
+  let _ = Debug.ninfo_hprint (add_str "new_f_final" !F.print_formula) new_f no_pos in
   new_f
 
 let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) =
