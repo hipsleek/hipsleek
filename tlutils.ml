@@ -428,6 +428,12 @@ let get_model solver is_linear templ_unks vars assertions =
   | Glpk -> get_model_lp Lp.Glpk is_linear templ_unks vars assertions
   | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
 
+let get_model solver is_linear templ_unks vars assertions =
+  let pr1 = !print_svl in
+  let pr2 = pr_list !print_formula in
+  Debug.no_4 "tl_get_model" string_of_bool pr1 pr1 pr2 print_solver_res
+    (get_model solver) is_linear templ_unks vars assertions
+
 let get_opt_model is_linear templ_unks vars assertions =
   if is_linear || is_z3_solver () && !Globals.dis_ln_z3 then 
     get_model !lp_solver is_linear templ_unks vars assertions
@@ -876,7 +882,7 @@ let norm_subst svl subst =
   (*   (List.remove_assoc v subst) @ [(v, a_apply_par_term subst e)]) sorted_subst sorted_subst                      *)
   let vl = List.map fst normalized_subst in
   List.fold_left (fun subst v ->
-    let e = List.assoc v subst in 
+    let e = List.assoc v subst in
     List.map (fun (vs, es) -> (vs, a_apply_par_term [(v, e)] es)) subst) normalized_subst vl
 
 let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =

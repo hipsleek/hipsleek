@@ -1232,6 +1232,8 @@ let get_model is_linear vars assertions =
     (* "(check-sat)\n" ^ *)
     "(get-model)\n"
   in
+  
+  (* let _ = print_endline ("smt_inp: \n" ^ smt_inp) in *)
 
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
