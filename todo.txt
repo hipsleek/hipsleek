@@ -73,6 +73,15 @@ date:        Sun Sep 21 02:22:14 2014 +0800
 summary:     ack3c has funnay LexVar error
 
 ==================================================================
+# pointer.ml
+
+  WN : Can we improve this method to return a list
+   of vars that have been modified as suggested by method name?
+  --> (bound_var, free_vars, free_modified_vars)
+*)
+
+let modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
+  let rec helper e bvars =
 ==================================================================
 ==================================================================
 ==================================================================

@@ -1922,21 +1922,21 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let check_proper_return cret_type exc_list f = 
-  let overlap_flow_type fl res_t = match res_t with 
+let check_proper_return cret_type exc_list f =
+  let overlap_flow_type fl res_t = match res_t with
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
-	      let res_t,b_rez = F.get_result_type f0 in
+              let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
 	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
                 & not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
-		  if not (sub_type res_t cret_type) then 					
+		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
-	      else if not (List.exists (fun c-> 
+	      else if not (List.exists (fun c->
                   (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
@@ -1944,39 +1944,39 @@ let check_proper_return cret_type exc_list f =
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
 	      else if not(overlap_flow_type fl_int res_t) then
 		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
-	      else 			
+	      else
 (* else *)
 		(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 		  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 		  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normaesl flow"}
 		else ()
 	| F.Exists b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !norm_flow_int fl_int) then 
-			  if not (sub_type res_t cret_type) then 					
+			if (F.equal_flow_interval !norm_flow_int fl_int) then
+			  if not (sub_type res_t cret_type) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
-			else 
+			else
 			  if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
 			  else if not(overlap_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
-			  else ()			
-		  else 
+			  else ()
+		  else
 			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
-			else ()			
+			else ()
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
-  let rec helper f0 = match f0 with 
+  let rec helper f0 = match f0 with
 	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
 	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume b -> 
-			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+	| F.EAssume b ->
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then ()
 			else check_proper_return_f b.F.formula_assume_simpl
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
@@ -2951,15 +2951,29 @@ let split_view_branches (vd: view_decl) : (F.formula list * F.formula list) =
 
 (* unfold the occurences of a view in a formula by its base case *)
 let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) =
-  let vname = vd.view_name in 
+  let vname = vd.view_name in
   let extra_pure = ref [] in
   let replace_hf hf = (match hf with
     | F.ViewNode vn ->
         if (String.compare vn.F.h_formula_view_name vname = 0) then
           let subs = collect_subs_from_view_node vn vd in
+          let _ = Debug.ninfo_hprint (add_str "base_f" !F.print_formula) base_f no_pos in
+          let new_subs = match base_f with
+            | F.Exists fe ->
+                  let qvars = fe.F.formula_exists_qvars in
+                  let vl = List.map (fun (_,sv) -> sv) subs in
+                  let qvars = List.filter (fun sv -> not(List.mem sv vl)) qvars in
+                  List.map (fun sv -> match sv with
+                    | CP.SpecVar (t,n,p) -> (CP.SpecVar (t,fresh_any_name n,p),sv)) qvars
+            | _ -> []
+          in
+          let subs = subs@new_subs in
+          let _ = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) subs no_pos in
           let replacing_f = F.subst_one_by_one subs base_f in
+          let _ = Debug.ninfo_hprint (add_str "replacing_f" !F.print_formula) replacing_f no_pos in
           let (replacing_hf,extra_pf,_,_,_) = F.split_components replacing_f in
           let extra_qvars = F.get_exists replacing_f in
+          let _ = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !CP.print_sv)) extra_qvars no_pos in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
           Some replacing_hf                  (* replace the heap part *)
         else (Some hf)
@@ -2971,13 +2985,21 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
   let f_pf pf = Some pf in
   let f_b bf= Some bf in
   let f_e e = Some e in
+  let _ = Debug.ninfo_hprint (add_str "f" !F.print_formula) f no_pos in
   let new_f = F.transform_formula (f_ef, f_f, replace_hf, (f_m, f_a, f_pf, f_b, f_e)) f in
+  let _ = Debug.ninfo_hprint (add_str "new_f" !F.print_formula) new_f no_pos in
   let pos = F.pos_of_formula new_f in
   let new_f = List.fold_left (fun f (mf,qv) ->
     let nf = F.mkAnd_pure f mf pos in       (* add the pure part back *)
     F.push_exists qv nf
   ) new_f !extra_pure in
+  let _ = Debug.ninfo_hprint (add_str "new_f_final" !F.print_formula) new_f no_pos in
   new_f
+
+let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) =
+  let pr = !F.print_formula in
+  Debug.no_2 "unfold_base_case_formula" pr pr pr
+      (fun _ _ -> unfold_base_case_formula f vd base_f) f base_f
 
 (*
  * compute the possible pointers that reside in the memory allocated of view

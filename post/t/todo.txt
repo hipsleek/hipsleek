@@ -904,11 +904,13 @@ It seems like post infer & @term were being done simultaneously..
           }]
 
 =======================================================
-# loop1.ss
+# loop1v.ss
 
  where did this warning come from?
 
-WARNING: t/loop1.ss_12:16_12:42:the result type __norm is not covered by the throw list[__Brk_top]
+WARNING: loop1v.ss_19:14_20:23:the result type __norm is not covered by the throw list[__Brk_top]
+
+WARNING: loop1v.ss_3:10_3:16:the result type __norm is not covered by the throw list[]
 
 =======================================================
 # loop.ss
@@ -924,7 +926,7 @@ WARNING: t/loop1.ss_12:16_12:42:the result type __norm is not covered by the thr
 Two problems:
 
 (i) Parameters x,y are passed by ref.
-    Only y need to be pass-by-ref
+    Only y need to be pass-by-ref (FIXED)
 
 (ii) We need to include x',y' in pass-by-ref (FIXED)
      EAssume ref [x_36;y_37]
@@ -973,9 +975,63 @@ Two problems:
 [( post_1172(, true, true, true)]
 
 =======================================================
+# strong1.ss & str1.slk
+
+Quick patch to fix imprecision from lost of intermedicate
+post(..) predicate.
+
+
+        (* WN :filtering of rel below causes a problem for str1.slk
+           as intermeidate predicates are lost *)
+        let rel_lhs_n = [] in 
+        let rel_to_del = if rel_lhs_n=[] then []
+        else
+          let lhs_rec_vars = CP.fv lhs_p_memo in
+          DD.binfo_hprint (add_str "lhs_rec_vars:" (pr_list CP.string_of_spec_var)) lhs_rec_vars pos;
+          let rel_lhs_new = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+          DD.binfo_hprint (add_str "rel_lhs_new:" (pr_list !CP.print_formula)) rel_lhs_new pos;
+          List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
+        in
 =======================================================
+# sexc3.slk --post-eres
+
+ Can we add: res=eres.val on the lhs
+ so that first entailment succeeds?
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214')
+ |-  emp&res=2 & 0<x . 
 =======================================================
+# sexc2.slk
+
+class Exp extends __Exc {
+  int val;
+}.
+
+File "sexc2.slk", line 1, characters 0-5
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+
+exception processing is not supported by sleek!
+can we add it ..
 =======================================================
+# exc1.ss --post-eres
+
+int loop(int x)
+  requires true
+  ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
+{
+  if (x>0) {
+    raise new Exp(2);
+    loop(x);
+  } else {
+    return x+1;
+  }
+}
+
+If we add res=eres.val thru --post-eres, the post-condition
+should be provable.
 =======================================================
 =======================================================
 =======================================================

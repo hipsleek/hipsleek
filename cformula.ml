@@ -3901,7 +3901,7 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
         (* 19.05.2008 *)
 
 and get_exists (f : formula) : CP.spec_var list =
-  let rec helper f = 
+  let rec helper f =
     match f with
       | Or ({formula_or_f1 = f1; formula_or_f2 = f2;}) ->
 	      let evars1 = helper f1 in
@@ -6328,6 +6328,10 @@ let get_dptrs (f: formula) =
 let is_rec_br vn f=
   let vns = get_views f in
   List.exists (fun v -> String.compare v.h_formula_view_name vn = 0) vns
+
+let is_inductive f =
+  let vns = get_views f in
+  List.length vns > 0
 
 let get_views_struc sf0=
   let rec helper sf=
