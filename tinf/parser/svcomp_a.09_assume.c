@@ -6,13 +6,13 @@ int test_fun(int x, int y, int z)
     	// replace assume
     	return z;
     }
-    while (x >= z) {
-    	if(y <= 0) {
+        while (x >= z) {
+          if(y <= 0) {
 		// replace assume
-		return z;
-    	}
-        z = z + y;
-    }
+		return 1;
+                }
+          return 1;
+        }
     return z;
 }
 

@@ -1,5 +1,12 @@
+//class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
+class ret_int extends __Exc { int val }
+class ret_bool extends __Exc { bool val } 
+
+int __VERIFIER_nondet_int()
+  requires true
+  ensures true;
 
 int add___(int a, int b) 
   requires true 
