@@ -5,6 +5,7 @@ class Exp extends __Exc {
 int loop(int x)
   requires true
   ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
+  ensures eres.val=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
 {
   if (x>0) {
     raise new Exp(2);

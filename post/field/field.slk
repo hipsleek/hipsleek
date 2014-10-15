@@ -11,6 +11,8 @@ checkentail x::node<2,_> & x=null |- false.
 print residue.
 
 //checkentail x=null & x.val=2 |- false.
+checkentail x::node<v,n>@A & x=null & v=2 |- false.
+print residue.
 
 //checkentail x=null & (x:node).val=2 |- false.
 

@@ -1,6 +1,6 @@
 class Exp extends __Exc {
   int val;
-}.
+}
 
 int loop(int x)
 //infer [@post_n]
@@ -14,6 +14,7 @@ int loop(int x)
   } else {
     return x+1;
   }
+  dprint;
 }
 
 /*
