@@ -1,0 +1,27 @@
+Starting Omega...oc
+H is defined.
+H_3 is defined.
+H_2 is defined.
+G is defined.
+Group: (1,2,0)
+[ (1;2;0)H_3(prev,cur,sent) * cur::node<val_56,prev_57>&cur_920=null & 
+  next_1=null & cur=cur_909 & cur_920=next_1 & cur'=cur_909 & prev'=null & 
+  val_56=val_0 & prev_57=prev --> H(cur',prev',sent)(3,4),
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1> * H_2(next_1,prev,sent) * 
+  H_3(prev,cur,sent)(3,4)]
+Group: (2,2,0)
+[ (2;2;0)H_2(next_1,prev,sent) * H_3(prev,cur,sent) * 
+  cur::node<val_96,prev_97>&cur=cur_909 & cur'=next_1 & cur'!=sent & 
+  cur'!=null & val_96=val_0 & prev_97=prev --> H(cur',cur_909,sent)(3,4),
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1> * H_2(next_1,prev,sent) * 
+  H_3(prev,cur,sent)(3,4)]
+Group: (1,0)
+[ (1;0)H_2(cur',prev,sent)&cur'=sent --> emp(3,4),
+ (0)H(cur,prev,sent) --> cur::node<val_0,next_1> * H_2(next_1,prev,sent) * 
+  H_3(prev,cur,sent)(3,4)]
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.064946 second(s)
+	Time spent in main process: 0.050904 second(s)
+	Time spent in child processes: 0.014042 second(s)
+

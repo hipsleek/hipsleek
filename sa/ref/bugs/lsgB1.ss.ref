@@ -1,0 +1,31 @@
+
+!!!Full processing file "bugs/lsgB1.ss"
+Parsing file "bugs/lsgB1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((e=self & !((e!=self & self!=null))) | (e!=self & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((e=self & !((e!=self & self!=null))) | self<e | e<self)&
+{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+Checking procedure lsg$node2~node2... [context.ml]: There should be no conj/phase in the lhs at this level; lhs =  (l'::node2<n_1312,_> ; ((n_1312::lseg{}<e_1310> ; (emp))))
+
+!!! WARNING logtime exception:0.0003
+Procedure lsg$node2~node2 FAIL.(2)
+
+Exception Failure("[context.ml]: There should be no conj/phase in the lhs at this level\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure lsg$node2~node2
+
+!!! proc.proc_name:lsg$node2~node2Stop Omega... 11 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.036934,219)
+Total verification time: 0.328866 second(s)
+	Time spent in main process: 0.297949 second(s)
+	Time spent in child processes: 0.030917 second(s)
+

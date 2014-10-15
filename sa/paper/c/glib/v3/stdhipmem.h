@@ -100,15 +100,15 @@ case {
 /*   ensures res::GList<key,null,list> * list::dlseg<p>; */
 /* *\/; */
 
-struct GList*
-g_list_nth (struct GList* list,
-	    int n)
-/*@
-case {
-  list=null -> ensures res=null;
-  list!=null -> requires list::dlseg<null> ensures res::dlseg<null> & res!=null;
-}
-*/;
+/* struct GList* */
+/* g_list_nth (struct GList* list, */
+/* 	    int n) */
+/* /\*@ */
+/* case { */
+/*   list=null -> ensures res=null; */
+/*   list!=null -> requires list::dlseg<null> ensures res::dlseg<null> & res!=null; */
+/* } */
+/* *\/; */
 
 
 int random()

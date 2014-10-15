@@ -1,0 +1,28 @@
+Starting Omega...oc
+ll is defined.
+ll2 is defined.
+ll3 is defined.
+
+!!!Final MTL: [[(x, y), (ll, ll2)]]
+Checkeq (1) : Valid.
+Checkeq (2) : Fail.
+
+Checkeq (3) : Fail.
+
+!!!Final MTL: [[(x, x), (ll, ll)]]
+Checkeq (4) : Valid.
+!!!Final MTL: [[(x, y), (ll, ll)]]
+Checkeq (5) : Valid.
+Checkeq (6) : Fail.
+
+Checkeq (7) : Fail.
+
+!!!Final MTL: [[(a, b), (y, x), (x, y), (ll, ll)]]
+Checkeq (8) : Valid.
+Checkeq (9) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.06059 second(s)
+	Time spent in main process: 0.046451 second(s)
+	Time spent in child processes: 0.014139 second(s)
+

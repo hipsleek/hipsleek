@@ -1,0 +1,17 @@
+Starting Omega...oc
+ll is defined.
+rr is defined.
+
+!!!Final MTL: [[(flted_7_20, flted_7_28), (a, c)]]
+Checkeq (1) : Valid.
+Checkeq (2) : Fail.
+
+Checkeq (3) : Fail.
+
+Checkeq (4) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.056949 second(s)
+	Time spent in main process: 0.042811 second(s)
+	Time spent in child processes: 0.014138 second(s)
+

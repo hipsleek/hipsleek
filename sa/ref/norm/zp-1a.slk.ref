@@ -1,0 +1,35 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [(n!=0 | m<=0)]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [(n!=0 | m<=0)]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [(n!=0 | m<=0)]
+[[empty]]
+
+Stop Omega... 6 invocations 
+SAT Count   : 9
+SAT % Hit   : 66.66%
+IMPLY Count : 3
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.002588 (seconds)
+
+!!! log(small):(0.010377,18)
+Total verification time: 0.073032 second(s)
+	Time spent in main process: 0.056249 second(s)
+	Time spent in child processes: 0.016783 second(s)
+

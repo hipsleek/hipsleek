@@ -1,0 +1,33 @@
+Starting Omega...oc
+H_9 is defined.
+Starting z3... 
+
+Entail (1) : Fail.(may) cause: true |-  t=null. LOCS:[8;9] (may-bug)
+
+ <1>H(t) * x::node<t>&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+
+Entail (2) : Fail.(may) cause: true |-  t=null. LOCS:[13;14] (may-bug)
+
+ <1>H(t) * x::node<t>&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+
+Entail (3) : Fail.(may) cause: true |-  t=null. LOCS:[17;18;19] (may-bug)
+
+ <1>H(t) * x::node<t>&{FLOW,(3,7)=__MayError}[]
+[[empty]]
+
+Stop Omega... 18 invocations 
+SAT Count   : 42
+SAT % Hit   : 80.95%
+IMPLY Count : 12
+IMPLY % Hit : 83.33%
+Time(cache overhead) : 0.002138 (seconds)
+
+!!! log(small):(0.021625,75)
+Total verification time: 0.077543 second(s)
+	Time spent in main process: 0.057225 second(s)
+	Time spent in child processes: 0.020318 second(s)
+

@@ -857,8 +857,66 @@ Total verification time: 450.15 second
 	Time spent in child processes: 41.58 second
 	Number of false contexts: 427
 ====================================================================
+# post branch
+
+./hip examples/working/hip/rb.ss -p del 
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/working/hip/rb.ss",Line:427,Col:13
+
+ERROR: at examples/working/hip/rb.ss_427:13_427:89 
+Message: split_components: don't expect OR
+ 
+Procedure del$node~int FAIL.(2)
+
+Exception Failure("split_components: don't expect OR") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure del$node~int
+
+error at: rb.ss remove_min (FIXED)
+error at: rb.ss del (FIXED)
+
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss joinHelper
+.
 ====================================================================
+# post branch (before merge with default)
+
+sleek --eps
+
+All test results were as expected.
+Total verification time: 68.50 second
+	Time spent in main process: 60.25 second
+	Time spent in child processes: 8.25 second
+	Number of false contexts: 0
+
+hip --eps
+
+error at: conchip/deadpool.ss forkHelper
+Total number of errors: 1 in files:
+ error at: conchip/deadpool.ss forkHelper
+.
+Total verification time: 452.68 second
+	Time spent in main process: 409.64 second
+	Time spent in child processes: 43.04 second
+	Number of false contexts: 427
+
 ====================================================================
+./run-fast-tests.pl imm -flags "--eps"
+
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+.
+Total verification time: 756.47 second
+	Time spent in main process: 320.22 second
+	Time spent in child processes: 436.25 second
+	Number of false contexts: 63
 ====================================================================
 ====================================================================
 ====================================================================

@@ -1,0 +1,57 @@
+
+!!!Full processing file "bugs/tail-2.ss"
+Parsing file "bugs/tail-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(c,y)&true
+ ensures G1(res,c,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(c,y)&true --> c::node<val1,next1> * HP_1225(next1,y@NI) * 
+HP_1226(y,c@NI)&
+true(3,4),
+ // POST
+(0)c::node<val1,res> * HP_1226(res,c@NI)&true --> G1(res,c,y)&
+true(3,4),
+ // POST
+(0)HP_1225(next1,y@NI)&true --> emp&
+true(3,4)]
+
+Procedure foo$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(c1,y1) ::=  [c1::node<val,next> * HP_1277(y1) * HP_1226(y1,c1)],
+ G1(res1,c2,y2) ::=  [HP_1226(res1,c2) * c2::node<val,res1>&y2=res1],
+ HP_1277(y3) ::=  [emp&res=y3]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c1,y1) ::= c1::node<val,next> * HP_1277(y1) * HP_1226(y1,c1)(3,4),
+ G1(res1,c2,y2) ::= HP_1226(res1,c2) * c2::node<val,res1>&y2=res1(3,4),
+ HP_1277(y3) ::= emp&res=y3(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.024816,187)
+Total verification time: 0.287418 second(s)
+	Time spent in main process: 0.27402 second(s)
+	Time spent in child processes: 0.013398 second(s)
+

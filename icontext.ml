@@ -44,7 +44,7 @@ let rec string_of_iaction act=
     | I_post_oblg -> "post-oblg"
     | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
 
-let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path
+let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path iflow
       hp_equivs hpdefs=
   {
       is_constrs = constrs; (*current process constraints*)
@@ -56,6 +56,7 @@ let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps c
       is_post_hps = post_hps;
       is_prefix_hps = [];
       is_cond_path = cond_path;
+      is_flow = iflow;
       is_hp_equivs = hp_equivs;
       is_hp_defs = hpdefs;
   }

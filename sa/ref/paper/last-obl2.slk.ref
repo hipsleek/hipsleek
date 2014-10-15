@@ -1,0 +1,26 @@
+Starting Omega...oc
+H is defined.
+H4 is defined.
+G_1 is defined.
+G_2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=x & self!=null) | (x!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&((self>0 & x=self) | (self!=x & self!=x & x>0))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,x], true),
+([self], x=self)])
+Entail (1) : Valid. 
+
+SLEEK FAILURE (END)
+Stop Omega... 8 invocations 
+SAT Count   : 67
+SAT % Hit   : 71.64%
+IMPLY Count : 14
+IMPLY % Hit : 28.57%
+Time(cache overhead) : 0.004167 (seconds)
+
+!!! log(small):(0.509325,96)
+Total verification time: 0.096259 second(s)
+	Time spent in main process: 0.07479 second(s)
+	Time spent in child processes: 0.021469 second(s)
+

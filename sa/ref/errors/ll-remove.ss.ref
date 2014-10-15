@@ -1,0 +1,94 @@
+
+!!!Full processing file "errors/ll-remove.ss"
+Parsing file "errors/ll-remove.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[(prev_39,v_node_29_1217)]
+!!! neqs:[(prev_39,v_node_29_1217)]
+Checking procedure f_r_1203_while_21_2$node~node~node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x,x')&true{,(3,4)=__norm};
+
+!!!>>>>>> mismatch ptr tmp_38'::node<val_26_1265,next_26_1266>@L is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr tmp_38'::node<val_26_1267,next_26_1268>@L is not found (or inst) in the lhs <<<<<<Proving binding in method f_r_1203_while_21_2$node~node~node~int for spec  EAssume ref [tmp_38;prev_39;x;d]
+   G1(x,x')&{FLOW,(3,4)=__norm}[]
+   , Line 24
+
+( [(,1 )]) bind: node  tmp_38'::node<val_26_1212',next_26_1213'>@L cannot be derived from context
+errors/ll-remove.ss_26:10_26:17
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-remove.ss_26:10_26:17
+
+Context of Verification Failure: 1 File "errors/ll-remove.ss",Line:24,Col:14
+Last Proving Location: 1 File "errors/ll-remove.ss",Line:26,Col:10
+
+Procedure f_r_1203_while_21_2$node~node~node~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure f_r_1203_while_21_2$node~node~node~int
+
+!!! proc.proc_name:f_r_1203_while_21_2$node~node~node~int
+Checking procedure remove$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE
+(0)H(x)&true --> H1(x)&
+true(3,4),
+ // POST
+(0)emp&true --> G(x,res)&
+true(3,4)]
+
+Procedure remove$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [H1(x1)],
+ G(x2,res1) ::=  [emp]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= H1(x1)(3,4),
+ G(x2,res1) ::= emp(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.024128,193)
+Total verification time: 0.305115 second(s)
+	Time spent in main process: 0.291567 second(s)
+	Time spent in child processes: 0.013548 second(s)
+

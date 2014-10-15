@@ -1,0 +1,40 @@
+Starting Omega...oc
+G is defined.
+H is defined.
+HP_9 is defined.
+HP_0 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_3 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x,y) ::= x::node<next,DP1> * HP_163(next) * y::node<DP,prev>&x!=null(3,4),
+ HP_0(a,b) ::= NONE,
+ HP_1(y1,x1) ::= y1::node<DP,prev1>(3,4),
+ HP_2(a,b) ::= NONE,
+ HP_3(prev2,x2) ::= emp(3,4),
+ HP_9(next1,y2) ::= HP_163(next1)(3,4),
+ G(x4,y3) ::= GP_169(x4,x3) * x3::node<y3,DP1> * y3::node<DP,x3>(3,4),
+ GP_169(x4,x3) ::= 
+ x4::node<next2,DP1> * GP_169(next2,x3)&next2!=null
+ or emp&x4=x3
+ (3,4),
+ HP_163(next1) ::= 
+ next1::node<next2,DP1> * HP_163(next2)
+ or emp&next1=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 6
+SAT % Hit   : 16.66%
+Time(cache overhead) : 0.000261 (seconds)
+
+!!! log(small):(0.005495,6)
+Total verification time: 0.078129 second(s)
+	Time spent in main process: 0.063786 second(s)
+	Time spent in child processes: 0.014343 second(s)
+

@@ -118,6 +118,7 @@ let proc_gen_cmd cmd =
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
     | PredSplit (pred_ids) -> process_pred_split pred_ids
+    | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | CheckNorm f -> process_check_norm f
@@ -164,7 +165,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
-      | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
+      | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
       | TemplSolv _ | TermInfer
       | Time _ | EmptyCmd | _ -> () 
   in
@@ -214,15 +215,16 @@ let parse_file (parse) (source_file : string) =
       | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
       | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
       | PredSplit ids -> process_pred_split ids
+      | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
       | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
       | CheckNorm f -> process_check_norm f
-      | EqCheck (lv, if1, if2) -> 
+      | EqCheck (lv, if1, if2) ->
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())	
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())
       | CaptureResidue lvar -> process_capture_residue lvar
-      | PrintCmd pcmd -> 
+      | PrintCmd pcmd ->
             let _ = Debug.ninfo_pprint "at print" no_pos in
             process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
@@ -288,7 +290,8 @@ let main () =
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
-				I.prog_barrier_decls = [];
+		I.prog_barrier_decls = [];
+                I.prog_test_comps = [];
               } in
   (*Generate barrier data type*)
   let _ = if (!Globals.perm = Globals.Dperm) then

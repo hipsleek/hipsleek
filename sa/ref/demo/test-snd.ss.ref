@@ -1,0 +1,54 @@
+
+!!!Full processing file "demo/test-snd.ss"
+Parsing file "demo/test-snd.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure append$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+assert:demo/test-snd.ss:16: 2:  : ok
+
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // Assert
+(0)H1(x)&true --> emp&
+1<=x(3,4),
+ // POST
+(0)H1(x)&true --> G1(x)&
+true(3,4)]
+
+Procedure append$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&1<=x1],
+ G1(x2) ::=  [emp&1<=x2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= emp&1<=x1(3,4),
+ G1(x2) ::= emp&1<=x2(3,4)]
+*************************************
+Stop Omega... 13 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.024031,198)
+Total verification time: 0.281242 second(s)
+	Time spent in main process: 0.265544 second(s)
+	Time spent in child processes: 0.015698 second(s)
+

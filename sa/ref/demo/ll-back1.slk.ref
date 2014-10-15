@@ -1,0 +1,30 @@
+Starting Omega...oc
+HP4 is defined.
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]Starting z3... 
+
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+Entail (1) : Valid. 
+
+ <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&x=null --> HP4(x)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 7 invocations 
+SAT Count   : 44
+SAT % Hit   : 84.09%
+IMPLY Count : 2
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001449 (seconds)
+
+!!! log(small):(0.012182,53)
+Total verification time: 0.06871 second(s)
+	Time spent in main process: 0.050716 second(s)
+	Time spent in child processes: 0.017994 second(s)
+

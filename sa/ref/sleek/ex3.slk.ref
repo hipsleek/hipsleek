@@ -1,0 +1,52 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+G1 is defined.
+G2 is defined.
+D is defined.
+E is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+
+Entail (2) : Valid. 
+
+ <1>HP_46(b,y) * x::node<a,b> * HP_51(d,x) * y::node<c,d>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [G1(y,x)&true --> x::node<a,b> * HP_46(b,y@NI) * 
+                   HP_47(y,x@NI)&true(3,4); 
+                  HP_47(y,x@NI) * x::node<a,b>&true --> y::node<c,d> * 
+                   HP_51(d,x@NI)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>y::node<c1,d1> * HP_82(b1,y) * HP_83(y,x) * x::node<a1,b1>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [G1(y,x) * y::node<c1,d1>&true --> x::node<a1,b1> * 
+                   HP_82(b1,y@NI) * HP_83(y,x@NI)&true(3,4)]
+[[ SEARCH ==>  Match(y,y) ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_111(b2,y) * HP_112(y,x) * x::node<a2,b2>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [G1(y,x)&true --> x::node<a2,b2> * HP_111(b2,y@NI) * 
+                   HP_112(y,x@NI)&true(3,4)]
+[[ SEARCH ==>  Match(y,y) ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (5) : Valid. 
+
+Stop Omega... 0 invocations 
+SAT Count   : 24
+SAT % Hit   : 66.66%
+IMPLY Count : 20
+IMPLY % Hit : 80.%
+Time(cache overhead) : 0.001372 (seconds)
+
+!!! log(small):(0.031447,59)
+Total verification time: 0.078989 second(s)
+	Time spent in main process: 0.065389 second(s)
+	Time spent in child processes: 0.0136 second(s)
+

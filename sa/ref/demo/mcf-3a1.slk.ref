@@ -1,0 +1,32 @@
+Starting Omega...oc
+H_9 is defined.
+H_6 is defined.
+H_5 is defined.
+H1 is defined.
+H2 is defined.
+G1 is defined.
+G2 is defined.
+H_7 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(t1) ::= t1::tree<children> * H2(children,t)(3,4),
+ H2(l,par) ::= 
+ l::node<child,next,parent> * child::tree<children> * H2(next,par) * 
+ H2(children,t)&par=parent
+ or emp&l=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 18
+SAT % Hit   : 55.55%
+Time(cache overhead) : 0.00081 (seconds)
+
+!!! log(small):(0.006226,18)
+Total verification time: 0.078691 second(s)
+	Time spent in main process: 0.06452 second(s)
+	Time spent in child processes: 0.014171 second(s)
+

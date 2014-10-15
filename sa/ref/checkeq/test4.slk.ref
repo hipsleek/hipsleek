@@ -1,0 +1,33 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(flted_8_16, flted_8_24), (u, u), (x, x)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(flted_14_30, flted_14_38), (v, c), (x, y)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(flted_19_46, flted_19_54), (b, c)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(flted_23_61, flted_23_69), (a, a)]]
+Checkeq (4) : Valid.
+Checkeq (5) : Fail.
+
+!!!Final MTL: [[(flted_31_99, flted_31_115), (c, v), (z, t), (flted_31_100, flted_31_116), (v, c), (x, y)], [(flted_31_99, flted_31_116), (c, c), (z, y), (flted_31_100, flted_31_115), (v, v), (x, t)]]
+Checkeq (6) : Valid.
+!!!Final MTL: [[(flted_35_129, flted_35_146), (u, t), (z, y), (flted_35_130, flted_35_145), (t, u)]]
+Checkeq (7) : Valid.
+Checkeq (8) : Fail.
+
+!!!Final MTL: [[(flted_47_168, flted_47_184), (c, a), (z, t), (flted_47_169, flted_47_185), (a, c), (x, y)], [(flted_47_168, flted_47_185), (c, c), (z, y), (flted_47_169, flted_47_184), (a, a), (x, t)]]
+Checkeq (9) : Valid.
+!!!Final MTL: [[(flted_51_198, flted_51_214), (b, d), (z, t), (flted_51_199, flted_51_215), (a, c), (x, y)], [(flted_51_198, flted_51_215), (b, c), (z, y), (flted_51_199, flted_51_214), (a, d), (x, t)]]
+Checkeq (10) : Valid.
+Checkeq (11) : Fail.
+
+!!!Final MTL: [[(flted_59_262, flted_59_279), (b, c), (z, y), (flted_59_263, flted_59_278), (x, t)]]
+Checkeq (12) : Valid.
+!!!Final MTL: [[(flted_63_292, flted_63_300), (a, a)]]
+Checkeq (13) : Valid.Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.077438 second(s)
+	Time spent in main process: 0.062721 second(s)
+	Time spent in child processes: 0.014717 second(s)
+

@@ -402,7 +402,7 @@ let rec send_and_receive f timeout=
         flush (!process.outchannel);
         (* try *)
 	    let str = read_from_in_channel (!process.inchannel) in
-	    (* let _ = print_endline ("string from omega: " ^ str) in *)
+            (* let _ = print_endline ("string from omega: " ^ str) in *)
             let _ = set_proof_result str in
             let lex_buf = Lexing.from_string str in
 	    (*print_string (line^"\n"); flush stdout;*)
@@ -413,7 +413,6 @@ let rec send_and_receive f timeout=
       in
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
       answ
-          
   end
 
 let send_and_receive f timeout =
@@ -972,7 +971,7 @@ let simplify i (pe : formula) : formula = if not !Globals.oc_simplify then
   pe
 else
   match (do_with_check "" (simplify i) pe)
-  with 
+  with
     | None -> pe
     | Some f -> f
 
@@ -1055,7 +1054,7 @@ let hull (pe : formula) : formula =
 
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
-	        
+
             if !log_all_flag then begin
               output_string log_all ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str);
               output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -1068,20 +1067,21 @@ let hull (pe : formula) : formula =
 let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
-	omega_subst_lst := [];
+    omega_subst_lst := [];
     let pe1 = drop_varperm_formula pe1 in
-	let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
+    let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
     let fstr1 = omega_of_formula_old 23 pe1 in
     let fstr2 = omega_of_formula_old 24 pe2 in
     match fstr1,fstr2 with
       | Some fstr1, Some fstr2 ->
             begin
               let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in
-			  let l1 = List.map omega_of_spec_var vars_list  in
+	      let l1 = List.map omega_of_spec_var vars_list  in
               let vstr = String.concat "," l1  in
               let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                 ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
-                (* gist not properly logged *)
+              (* gist not properly logged *)
+              let _ = Debug.ninfo_pprint ("fomega = " ^ fomega) no_pos in
               let _ = set_proof_string ("GIST(not properly logged yet):"^fomega) in
               if !log_all_flag then begin
                 output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -1089,10 +1089,10 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
                 flush log_all;
               end;
               let rel = send_and_receive fomega !in_timeout (* 0.  *)in
-	          match_vars vars_list rel
+	      match_vars vars_list rel
             end
       | _, _ -> pe1
-            end
+  end
 
 let gist (pe1 : formula) (pe2 : formula) : formula =
   Debug.no_2 "gist" !print_formula !print_formula !print_formula gist_x pe1 pe2

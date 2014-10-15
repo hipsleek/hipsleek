@@ -1,0 +1,76 @@
+
+!!!Full processing file "slk/termu-6.ss"
+Parsing file "slk/termu-6.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int~int... 
+Procedure f$int~int~int SUCCESS.
+
+Checking procedure f$int~int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_10_1205=z'+y' & v_int_10_1204=y'+x' & !(v_bool_9_1134') & 
+0<=x' & !(v_bool_9_1134') & x'=x & y'=y & z'=z & 
+0<=x' & fpost_0(v_int_10_1204,v_int_10_1205,z') --> fpost_0(x,y,z).
+
+ termAssume x'<0 & z'=z & y'=y & x'=x & v_bool_9_1134' & x'<0 & 
+v_bool_9_1134' --> fpost_0(x,y,z).
+
+ termAssume 0<=x' & z'=z & y'=y & x'=x & !(v_bool_9_1134') & 0<=x' & 
+!(v_bool_9_1134') & v_int_10_1133'=y'+x' & v_int_10_1132'=z'+
+y' & fpre_0(x,y,z) --> fpre_0(v_int_10_1133',v_int_10_1132',z').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[29,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> case {
+                    0<=z -> requires emp & Loop[]
+ ensures false & false; 
+                    z<=(0-1) -> requires emp & Term[29,3,0+(0*x)+(1*y)+(0*
+                    z)]
+ ensures emp & true; 
+                    }
+           
+           y<=(0-
+           1) -> case {
+                  z<=0 -> requires emp & Term[29,2,0+(1*x)+(0*y)+(0*
+                  z)]
+ ensures emp & true; 
+                  1<=z -> case {
+                           0<=x & x<=((0-y)-1) & 
+                           1<=z -> requires emp & Term[29,4]
+ ensures emp & true;
+                           
+                           0<=x & 0<=(x+
+                           y) -> case {
+                                  (0-x)<=y & y<=(0-1) & 1<=z & 0<=(z+x+(2*
+                                  y)) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                  
+                                  0<=(x+y) & (x+(2*y)+z)<0 & 
+                                  1<=z -> requires emp & Term[29,5]
+ ensures emp & true;
+                                  
+                                  }
+                           
+                           }
+                  
+                  }
+           
+           }
+  
+  }
+
+0 false contexts at: ()

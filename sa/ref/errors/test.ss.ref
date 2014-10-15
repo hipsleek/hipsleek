@@ -1,0 +1,119 @@
+
+!!!Full processing file "errors/test.ss"
+Parsing file "errors/test.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(a)&true
+ ensures G1(a,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(a)&a!=null --> a::node<val1,next1> * HP_1245(next1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1245(next1)&next1!=null --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)H1(a)&res=null & a=null --> G1(a,res)&
+true(3,4),
+ // POST
+(1;2;0)HP_1245(next1) * a::node<val1,next1>&next1=null --> G1(a,res)&
+true(3,4),
+ // POST
+(2;2;0)a::node<val1,next1> * G1(next1,res)&next1!=null --> G1(a,res)&
+true(3,4)]
+
+Procedure g$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(a1) ::=  [emp&a1=null; a1::node<val,next> * H1(next)],
+ G1(a3,res1) ::=  [GP_1326(a3,a2)&res1=null & a2=null],
+ GP_1326(a3,a2) ::=  [
+  a3::node<val,next> * GP_1326(next,a2)&next!=null
+  or emp&a3=a2
+  ]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(a1) ::= 
+ a1::node<val,next> * H1(next)
+ or emp&a1=null
+ (3,4),
+ G1(a3,res1) ::= GP_1326(a3,a2)&res1=null & a2=null(3,4),
+ GP_1326(a3,a2) ::= 
+ a3::node<val,next> * GP_1326(next,a2)&next!=null
+ or emp&a3=a2
+ (3,4)]
+*************************************
+
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&res1=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], res_1324=0),
+([], res_1324=0)])
+Checking procedure f$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2,G2]requires H2(a)&true
+ ensures G2(a,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE
+(0)H2(a)&true --> a::H1<>&
+true(3,4),
+ // POST
+(0)a::GP_1326<a2>&a2=null & res=null --> G2(a,res)&
+true(3,4)]
+
+Procedure f$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H2(a4) ::=  [a4::H1<>],
+ G2(a5,res2) ::=  [a5::GP_1326<a2>&res2=null & a2=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H2(a4) ::= a4::H1<>(3,4),
+ G2(a5,res2) ::= a5::GP_1326<a2>&res2=null & a2=null(3,4)]
+*************************************
+Stop Omega... 20 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.06266,354)
+Total verification time: 0.35967 second(s)
+	Time spent in main process: 0.341658 second(s)
+	Time spent in child processes: 0.018012 second(s)
+

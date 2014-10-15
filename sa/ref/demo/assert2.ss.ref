@@ -1,0 +1,43 @@
+
+!!!Full processing file "demo/assert2.ss"
+Parsing file "demo/assert2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!!WARNING : uninterpreted free variables [H,r] in specification.
+Checking procedure mark$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ requires x::node<a,_,r> * H(r)&true
+ ensures EXISTS(a_41,r_42,
+_: x::node<a_41,_,r_42> * H(r)&res=a & a_41=a & r_42=r&{,(3,4)=__norm}[];
+
+Post condition cannot be derived:
+  (may) cause: do_unmatched_rhs : H(r)
+
+Context of Verification Failure: 1 File "demo/assert2.ss",Line:16,Col:9
+Last Proving Location: 1 File "demo/assert2.ss",Line:18,Col:11
+
+ERROR: at demo/assert2.ss_16:9_16:38 
+Message: Post condition cannot be derived.
+ 
+Procedure mark$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure mark$node
+
+!!! proc.proc_name:mark$nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.019445,173)
+Total verification time: 0.278565 second(s)
+	Time spent in main process: 0.265231 second(s)
+	Time spent in child processes: 0.013334 second(s)
+

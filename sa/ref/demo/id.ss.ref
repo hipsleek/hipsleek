@@ -1,0 +1,69 @@
+
+!!!Full processing file "demo/id.ss"
+Parsing file "demo/id.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure id$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H1(x)&x!=null --> x::node<prev1,up1,next1> * HP_1244(prev1) * 
+HP_1245(up1) * HP_1246(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1246(next1)&true --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)x::node<prev1,up1,next1> * HP_1244(prev1) * HP_1245(up1) * G1(next1)&
+true --> G1(x)&
+true(3,4),
+ // POST
+(2;0)H1(x)&x=null --> G1(x)&
+true(3,4)]
+
+Procedure id$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&x1=null; x1::node<DP1,DP,next2> * H1(next2)],
+ G1(x2) ::=  [emp&x2=null; x2::node<DP1,DP,next> * G1(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= 
+ x1::node<DP1,DP,next2> * H1(next2)
+ or emp&x1=null
+ (3,4),
+ G1(x2) ::= 
+ x2::node<DP1,DP,next> * G1(next)
+ or emp&x2=null
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.03753,251)
+Total verification time: 0.309903 second(s)
+	Time spent in main process: 0.294095 second(s)
+	Time spent in child processes: 0.015808 second(s)
+

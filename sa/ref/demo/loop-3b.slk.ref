@@ -1,0 +1,15 @@
+Starting Omega...oc
+H is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::= x::node<n>(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.053888 second(s)
+	Time spent in main process: 0.039821 second(s)
+	Time spent in child processes: 0.014067 second(s)
+

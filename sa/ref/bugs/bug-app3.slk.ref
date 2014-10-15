@@ -1,0 +1,34 @@
+Starting Omega...oc
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Valid. 
+
+ <1>HP_50(p)&p=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::node<_,p> * HP_50(p)&true(3,4); 
+                  HP_50(p)&true --> emp&p=0(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_65(flted)&flted=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::node<_,flted> * HP_65(flted)&true(3,4); 
+                  HP_65(flted)&true --> emp&flted=0(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 34 invocations 
+SAT Count   : 44
+SAT % Hit   : 75.%
+IMPLY Count : 16
+IMPLY % Hit : 68.75%
+Time(cache overhead) : 0.002413 (seconds)
+
+!!! log(small):(0.032979,95)
+Total verification time: 0.080758 second(s)
+	Time spent in main process: 0.059905 second(s)
+	Time spent in child processes: 0.020853 second(s)
+

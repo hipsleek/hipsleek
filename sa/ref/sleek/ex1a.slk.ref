@@ -1,0 +1,20 @@
+Starting Omega...oc
+H is defined.
+H1 is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Fail.(may) cause: true |-  c=b. LOCS:[7] (may-bug)
+
+Stop Omega... 24 invocations 
+SAT Count   : 50
+SAT % Hit   : 78.%
+IMPLY Count : 34
+IMPLY % Hit : 82.35%
+Time(cache overhead) : 0.003019 (seconds)
+
+!!! log(small):(0.067512,112)
+Total verification time: 0.078712 second(s)
+	Time spent in main process: 0.060162 second(s)
+	Time spent in child processes: 0.01855 second(s)
+

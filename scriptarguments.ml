@@ -135,6 +135,10 @@ let common_arguments = [
    "No eliminate existential quantifiers before calling TP.");
   ("--no-filter", Arg.Clear Globals.filtering_flag,
   "No assumption filtering.");
+  ("--filter-false", Arg.Set Globals.filtering_false_flag,
+   "Enable false in assumption filtering.");
+  ("--dis-filter-false", Arg.Clear Globals.filtering_false_flag,
+   "Disable false in assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
@@ -501,12 +505,19 @@ let common_arguments = [
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--post-infer-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
+  ("--dis-post-infer-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
   ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
+  ("--tnt-verbose", Arg.Set_int Globals.tnt_verbosity,
+      "level of detail in termination inference printing 0-verbose 1-standard (default)");
+  ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
+      "enable lexicographic ranking function inference");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -627,7 +638,10 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
+  (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-error", Arg.Set Globals.sae, "infer error spec");
+  ("--sa-case", Arg.Set Globals.sac, "infer case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
@@ -734,6 +748,32 @@ let common_arguments = [
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--print-min",
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_syn := true; *)
+          (* Globals.acc_fold := true; *)
+          Globals.smart_lem_search := true;
+          Globals.print_min := true;
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          (* Globals.is_solver_local := true; *)
+          Globals.disable_failure_explaining := false;
+          (* Globals.smt_compete_mode:=true; *)
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+   "Minimal printing only");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->

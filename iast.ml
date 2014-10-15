@@ -38,7 +38,8 @@ type prog_decl = {
     (* An Hoa: relational declaration *)
     prog_proc_decls : proc_decl list;
     prog_barrier_decls : barrier_decl list;
-    mutable prog_coercion_decls : coercion_decl_list list
+    mutable prog_coercion_decls : coercion_decl_list list;
+    prog_test_comps: (ident*test_comps) list
 }
 
 and data_field_ann =
@@ -184,10 +185,11 @@ and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = { param_type : typ;
-param_name : ident;
-param_mod : param_modifier;
-param_loc : loc }
+and param = 
+    { param_type : typ;
+    param_name : ident;
+    param_mod : param_modifier;
+    param_loc : loc }
 
 (*
   and multi_spec = spec list
@@ -219,26 +221,27 @@ param_loc : loc }
   }
 *)
 
-and proc_decl = { proc_name : ident;
-mutable proc_mingled_name : ident;
-mutable proc_data_decl : data_decl option; (* the class containing the method *)
-mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
-proc_flags: (ident*ident*(flags option)) list;
-proc_source : ident;
-proc_constructor : bool;
-proc_args : param list;
-mutable proc_args_wi : (ident *hp_arg_kind) list;
-proc_return : typ;
-(*   mutable proc_important_vars : CP.spec_var list;*)
-proc_static_specs : Iformula.struc_formula;
-proc_dynamic_specs : Iformula.struc_formula;
-proc_exceptions : ident list;
-proc_body : exp option;
-proc_is_main : bool;
-mutable proc_is_invoked : bool;
-proc_file : string;
-proc_loc : loc;
-proc_test_comps: test_comps option}
+and proc_decl = 
+    { proc_name : ident;
+    mutable proc_mingled_name : ident;
+    mutable proc_data_decl : data_decl option; (* the class containing the method *)
+    mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
+    proc_flags: (ident*ident*(flags option)) list;
+    proc_source : ident;
+    proc_constructor : bool;
+    proc_args : param list;
+    mutable proc_args_wi : (ident *hp_arg_kind) list;
+    proc_return : typ;
+    (*   mutable proc_important_vars : CP.spec_var list;*)
+    proc_static_specs : Iformula.struc_formula;
+    proc_dynamic_specs : Iformula.struc_formula;
+    proc_exceptions : ident list;
+    proc_body : exp option;
+    proc_is_main : bool;
+    mutable proc_is_invoked : bool;
+    proc_file : string;
+    proc_loc : loc;
+    proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -841,7 +844,11 @@ let is_null (e : exp) : bool = match e with
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
-  
+ 
+let get_ident (e : exp)  = match e with
+  | Var v -> Some v.exp_var_name
+  | _ -> None
+
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
@@ -1008,6 +1015,17 @@ let find_close_ids ids equivs=
   let pr2 = pr_list (pr_pair pr_id pr_id) in
   Debug.no_2 "find_close_ids" pr1 pr2 pr1
       (fun _ _ -> Gen.find_close_ids ids equivs) ids equivs
+
+let look_up_test_comps test_comps pname=
+  let rec helper rem_comps=
+    match rem_comps with
+      | [] -> None
+      | (id, tcs)::tl ->
+            if(String.compare id pname == 0) then
+              Some tcs
+            else helper tl
+  in
+  helper test_comps
 
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
@@ -2244,18 +2262,23 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge cont_top "__others") in
   let _ = (exlist # add_edge brk_top "__others") in
   let _ = (exlist # add_edge spec_flow "__others") in
-  let _ = (exlist # add_edge error_flow top_flow) in
+(*  let _ = (exlist # add_edge error_flow top_flow) in *)
+  let _ = (exlist # add_edge mayerror_flow top_flow) in
+  let _ = (exlist # add_edge error_flow mayerror_flow) in
+  let _ = (exlist # add_edge n_flow mayerror_flow) in
   let _ = (exlist # add_edge bfail_flow top_flow) in
+  let _ = (exlist # add_edge false_flow top_flow) in
+  let _ = (exlist # add_edge false_flow bfail_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
   let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
   let _ = if clean then (exlist # remove_dupl ) in
-	if (exlist # has_cycles) then begin
-	  print_string ("Error: Exception hierarchy has cycles\n");
-	  failwith ("Exception hierarchy has cycles\n");
-	end 
+  if (exlist # has_cycles) then begin
+    print_string ("Error: Exception hierarchy has cycles\n");
+    failwith ("Exception hierarchy has cycles\n");
+  end
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = exlist # string_of in
@@ -2564,49 +2587,52 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | [] -> iprims
   | hd::tl ->
         let new_iprims = {
-					      prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
-                prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
-                prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
-                prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
-                prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
-                prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
-                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
-                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
-                prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
+	    prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
+            prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
+            prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
+            prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
+            prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
+            prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+            prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
+            prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+            prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
                 prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
                 prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
-                prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
-                prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
-                prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
-                prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
-                prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
-				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
-				} in
-             append_iprims_list new_iprims tl
+            prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
+            prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
+            prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
+            prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
+            prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
+            prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
+	    prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
+            prog_test_comps = [];
+	} in
+        append_iprims_list new_iprims tl
 
 let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
   match iprims_list with
   | [] ->
         let new_prims = {
-					      prog_include_decls = [];
-                prog_data_decls = [];
-                prog_global_var_decls = [];
-                prog_logical_var_decls = [];
-                prog_enum_decls = [];
-                prog_view_decls = [];
-                prog_func_decls = [];
-                prog_rel_decls = [];
-                prog_rel_ids = [];
+	    prog_include_decls = [];
+            prog_data_decls = [];
+            prog_global_var_decls = [];
+            prog_logical_var_decls = [];
+            prog_enum_decls = [];
+            prog_view_decls = [];
+            prog_func_decls = [];
+            prog_rel_decls = [];
+            prog_rel_ids = [];
                 prog_templ_decls = [];
                 prog_ut_decls = [];
-                prog_hp_decls = [];
-                prog_hp_ids = [];
-                prog_axiom_decls = [];
-                prog_hopred_decls = [];
-                prog_proc_decls = [];
-                prog_coercion_decls = [];
-				prog_barrier_decls = [];}
+            prog_hp_decls = [];
+            prog_hp_ids = [];
+            prog_axiom_decls = [];
+            prog_hopred_decls = [];
+            prog_proc_decls = [];
+            prog_coercion_decls = [];
+	    prog_barrier_decls = [];
+            prog_test_comps = [];
+        }
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 

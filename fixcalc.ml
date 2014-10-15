@@ -14,12 +14,12 @@ module TP = Tpdispatcher
 (******************************************************************************)
 
 (* Operators *)
-let op_lt = "<" 
-let op_lte = "<=" 
-let op_gt = ">" 
-let op_gte = ">=" 
-let op_eq = "=" 
-let op_neq = "!=" 
+let op_lt = "<"
+let op_lte = "<="
+let op_gt = ">"
+let op_gte = ">="
+let op_eq = "="
+let op_neq = "!="
 let op_and = " && "
 let op_or = " || "
 let op_add = "+"
@@ -31,9 +31,9 @@ let is_self = CP.is_self_var
 
 let is_null = CP.is_null
 
-let rec string_of_elems elems string_of sep = match elems with 
+let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
-  | h::[] -> string_of h 
+  | h::[] -> string_of h
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 (******************************************************************************)
@@ -151,42 +151,43 @@ let rec fixcalc_of_pure_formula f = match f with
                             Not supported Not-formula")
     end
   | CP.Forall (sv, p,_ , _) ->
-    " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^ 
+    " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^
                    fixcalc_of_pure_formula p ^ ")) "
   | CP.Exists (sv, p,_ , _) ->
-    " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^ 
+    " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^
                    fixcalc_of_pure_formula p ^ ")) "
 
 let rec fixcalc_of_h_formula f = match f with
-  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} ->
     "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"
-  | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2} -> 
-    "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"    
-  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
-  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 
-  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2} -> 
+  | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2} ->
+    "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2} ->
     "(" ^ fixcalc_of_h_formula h1 ^ op_or ^ fixcalc_of_h_formula h2 ^ ")"
-  | ThreadNode {h_formula_thread_node = sv; h_formula_thread_name = c;} -> 
+  | ThreadNode {h_formula_thread_node = sv; h_formula_thread_name = c;} ->
     (*TOCHECK: currently ignore delayed and resource*)
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
+    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
                    (string_of_elems [] fixcalc_of_spec_var ",") ^ ")"
-  | DataNode {h_formula_data_node = sv; h_formula_data_name = c; 
-              h_formula_data_arguments = svs} -> 
+  | DataNode {h_formula_data_node = sv; h_formula_data_name = c;
+              h_formula_data_arguments = svs} ->
     (* if CP.is_self_spec_var sv then self ^ op_gt ^ "0" *)
     (* else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^  *)
     (*                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")" *)
         (fixcalc_of_spec_var sv)  ^ op_gt ^ "0"
-  | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; 
+  | ViewNode {h_formula_view_node = sv; h_formula_view_name = c;
               h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
+    else if (List.length svs = 0) then c ^ "(" ^ (fixcalc_of_spec_var sv) ^ ")"
+    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
                    (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "0=0"
   | HRel _ -> "HTrue"
-  | Hole _ | FrmHole _ | HVar _ -> 
+  | Hole _ | FrmHole _ | HVar _ ->
     illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
   | Phase _ -> Error.report_no_pattern ()
 
@@ -195,13 +196,13 @@ let fixcalc_of_mix_formula f = match f with
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
-  | Or _ -> 
+  | Or _ ->
     illegal_format ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
   | Base {formula_base_heap = h; formula_base_pure = p} ->
     "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
-  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; 
-            formula_exists_pure = p} ->     
-    " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
+  | Exists {formula_exists_qvars = svs; formula_exists_heap = h;
+            formula_exists_pure = p} ->
+    " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
 
 (******************************************************************************)
@@ -363,28 +364,28 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
   let fs = List.map (fun (f,_) -> Cformula.subst sst (subst_inv_lower_view lower_invs f)) fml0 in
-  let input_fixcalc = 
+  let input_fixcalc =
     try
-      vname ^ ":={[" ^ (self) ^ "," ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^ 
-      "] -> [] -> []: " ^ 
+      vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
+      "] -> [] -> []: " ^
       (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ^
           "\n};\n"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
-  in 
+  in
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc, fr_vars, rev_sst)
 
 let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=
   let vars =  para_names in
   let fs = List.map (fun (f,_) -> (subst_inv_lower_view lower_invs f)) fml0 in
-  let input_fixcalc = 
+  let input_fixcalc =
     try
-      vname ^ ":={[" ^ (self) ^ "," ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
-          "] -> [] -> []: " ^ 
+      vname ^ ":={[" ^ (self) ^ (if (List.length vars > 0) then "," else "") ^ (string_of_elems vars fixcalc_of_spec_var ",") ^
+          "] -> [] -> []: " ^
           (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ^
           "\n};\n"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
-  in 
+  in
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc)
 
@@ -491,12 +492,12 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
 
 let compute_inv_x name vars fml data_name lower_views pf =
 if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
-else 
+else
   if not !Globals.do_infer_inv then pf
   else let new_pf = compute_heap_pure_inv fml name data_name vars lower_views in
     let check_imply = TP.imply_raw new_pf pf in
-    if check_imply then 
-      let _ = DD.info_hprint (add_str ("new 1 inv("^name^")") !CP.print_formula) new_pf no_pos in
+    if check_imply then
+      let _ = DD.ninfo_hprint (add_str ("new 1 inv("^name^")") !CP.print_formula) new_pf no_pos in
       let _ = print_endline_quiet "" in
       new_pf
     else pf
@@ -750,8 +751,8 @@ let compute_cmd rel_defs bottom_up =
   let nos = string_of_elems nos (fun _ -> 
       string_of_int !Globals.fixcalc_disj) "," in
   let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
-  let rels = List.map (fun (a,_,_) -> 
-                CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
+  let rels = List.map (fun (a,_,_) ->
+      CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
@@ -763,8 +764,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
-  DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.binfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
+  DD.binfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
@@ -835,15 +836,17 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
   let pfs,no = process_base_rec pfs rel specs in
 
   (* Make existence *)
-  let pfs = List.concat (List.map (fun p -> 
+  let pfs = List.concat (List.map (fun p ->
     let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
     let res = CP.mkExists exists_vars p None no_pos in
-    if CP.isConstTrue (TP.simplify_raw res) then []
+    if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
     else [res]) pfs)
   in
 
+  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+
   (* Disjunctive defintion for each relation *)
-  let def = List.fold_left 
+  let def = List.fold_left
           (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
   [(rel, def, no)]
 
@@ -1150,16 +1153,16 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
-  let non_rec_defs, rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
+  let non_rec_defs, rec_rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
 
   DD.ninfo_hprint (add_str "rec_rel_defs "  (pr_list
-      (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rel_defs no_pos;
+      (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) rec_rel_defs no_pos;
 
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
-  if rel_defs=[] then true_const @ non_rec_defs
+  if rec_rel_defs=[] then true_const @ non_rec_defs
   else
-    true_const @ non_rec_defs @ (compute_fixpoint_aux rel_defs ante_vars bottom_up)
+    true_const @ (* non_rec_defs @ *) (compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in

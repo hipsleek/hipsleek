@@ -1,0 +1,62 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&1<=t & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(n)) -->  1<=n]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&1<=t & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(t)) -->  1<=t]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&1<=t & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [G]: ( G(n)) -->  1<=n]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&1<=t & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(n)) -->  1<=n]
+[[empty]]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&1<=t & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F,G]: ( F(t) & G(t)) -->  1<=t]
+[[empty]]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&1<=t & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F,G]: ( F(n) & G(n)) -->  1<=n]
+[[empty]]
+
+Stop Omega... 88 invocations 
+SAT Count   : 58
+SAT % Hit   : 68.96%
+IMPLY Count : 54
+IMPLY % Hit : 85.18%
+Time(cache overhead) : 0.00647 (seconds)
+
+!!! log(small):(0.066609,202)
+Total verification time: 0.114527 second(s)
+	Time spent in main process: 0.08405 second(s)
+	Time spent in child processes: 0.030477 second(s)
+

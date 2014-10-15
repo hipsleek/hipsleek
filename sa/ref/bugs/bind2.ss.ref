@@ -1,0 +1,43 @@
+
+!!!Full processing file "bugs/bind2.ss"
+Parsing file "bugs/bind2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure paper_fix$node... 
+dprint: bugs/bind2.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []emp
+
+ ]
+
+Post condition cannot be derived:
+  (may) cause:  res=null |-  res=p. LOCS:[16;14;12] (may-bug)
+
+Context of Verification Failure: 1 File "bugs/bind2.ss",Line:12,Col:10
+Last Proving Location: 1 File "bugs/bind2.ss",Line:16,Col:16
+
+ERROR: at bugs/bind2.ss_12:10_12:15 
+Message: Post condition cannot be derived.
+ 
+Procedure paper_fix$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure paper_fix$node
+
+!!! proc.proc_name:paper_fix$nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.021255,177)
+Total verification time: 0.313946 second(s)
+	Time spent in main process: 0.262804 second(s)
+	Time spent in child processes: 0.051142 second(s)
+

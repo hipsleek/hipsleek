@@ -1,0 +1,38 @@
+
+!!!Full processing file "examples/fact-case4.ss"
+Parsing file "examples/fact-case4.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/fact-case4.ss_2:1_6:1:WARNING : case construct has missing scenario
+Found : : 0<x
+Added : : x<=0
+
+
+Checking procedure fact$int... 
+Post condition cannot be derived:
+  (may) cause: OrR[ res=v_int_9_1198+1 |-  1<=res. LOCS:[9;4] (must-bug),valid]
+
+Context of Verification Failure: 1 File "examples/fact-case4.ss",Line:4,Col:17
+Last Proving Location: 1 File "examples/fact-case4.ss",Line:9,Col:14
+
+ERROR: at examples/fact-case4.ss_4:17_4:23 
+Message: Post condition cannot be derived.
+ 
+Procedure fact$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure fact$int
+
+!!! proc.proc_name:fact$intStop Omega... 1 invocations 
+2 false contexts at: ( (8,12)  (8,19) )
+
+!!! log(small):(0.035407,194)
+Total verification time: 0.301549 second(s)
+	Time spent in main process: 0.287501 second(s)
+	Time spent in child processes: 0.014048 second(s)
+

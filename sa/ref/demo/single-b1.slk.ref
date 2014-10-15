@@ -1,0 +1,54 @@
+Starting Omega...oc
+GP_3 is defined.
+GP_4 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=x & self!=null) | (x!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&((self>0 & x=self) | (self!=x & self!=x & x>0))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,x], true),
+([self], x=self)])
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[]
+*************************************
+
+
+*************************************************
+*******relational assumptions (pre-assumptions)********
+****************************************************
+[ GP_3(next_34_803,next_29_789) --> emp&next_34_803=null(3,4)]
+*************************************
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+!!! post-obligation:
+[ GP_3(next_34_803,next_29_789) --> emp&next_34_803=null(3,4)]
+!!! proving:
+[ GP_3(next_34_803,next_29_789) --> emp&next_34_803=null(3,4)]Stop Omega... 20 invocations 
+SAT Count   : 42
+SAT % Hit   : 69.04%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.002715 (seconds)
+
+!!! log(small):(0.030836,75)
+Total verification time: 0.089013 second(s)
+	Time spent in main process: 0.062411 second(s)
+	Time spent in child processes: 0.026602 second(s)
+

@@ -1,0 +1,30 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [self::node<_,p> * H2(p)&true --> H1(self)&true(3,4); 
+                  y::node<_,q> * H1(q)&true --> H2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [self::node<_,p> * H2(p)&true --> H2(self)&true(3,4); 
+                  y::node<_,q> * H2(q)&true --> H2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 26
+SAT % Hit   : 92.3%
+Time(cache overhead) : 0.00095 (seconds)
+
+!!! log(small):(0.01255,32)
+Total verification time: 0.063917 second(s)
+	Time spent in main process: 0.050418 second(s)
+	Time spent in child processes: 0.013499 second(s)
+

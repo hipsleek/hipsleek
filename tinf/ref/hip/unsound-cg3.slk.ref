@@ -1,0 +1,97 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: 
+                           emp&exists(nn_73:n+1=nn_73) & 
+                           exists(kk_74:k=kk_74)&{FLOW,(3,4)=__Error}[]
+                          es_heap: q::lls{}<n,k> * xs::node<v,q>
+                          es_evars: [nn_73; kk_74]
+                          es_rhs_eqset: [nn_73:nn; kk_74:kk; nn_73:nn; 
+                                         kk_74:kk; k:kk_74]
+                          es_must_error: Some(AndR[ exists(kk_74:k=kk_74) & (((q=1 & xs=2 & 0<=k & k<=n & 1<=n) | (xs=1 & 
+q=null & n=0 & k=0))) & exists(nn_73:n+1=nn_73) |-  1+n=nn. LOCS:[1;0;7;14;8];  exists(nn_73:n+1=nn_73) & (((q=1 & xs=2 & 0<=k & k<=n & 1<=n) | (xs=1 & 
+q=null & n=0 & k=0))) & exists(kk_74:k=kk_74) |-  k=kk. LOCS:[1;0;7;14;8] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_76) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,q> * 
+                                            q::lls<n,k>:xs::lls{}<nn,kk>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&exists(nn_73:n+1=nn_73) & exists(kk_74:k=kk_74)&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_76) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: 
+                           emp&exists(nn_115:n+1=nn_115) & 
+                           exists(kk_116:k=kk_116) & 0<v&
+                           {FLOW,(3,4)=__Error}[]
+                          es_heap: q::lls{}<n,k> * xs::node<v,q>
+                          es_evars: [nn_115; kk_116]
+                          es_rhs_eqset: [nn_115:nn; kk_116:kk; nn_115:nn; 
+                                         kk_116:kk; k:kk_116]
+                          es_must_error: Some(AndR[ exists(kk_116:k=kk_116) & (((q=1 & xs=2 & 0<=k & k<=n & 1<=n) | (xs=1 & 
+q=null & n=0 & k=0))) & exists(nn_115:n+1=nn_115) |-  1+n=nn. LOCS:[1;0;7;17;8];  exists(nn_115:n+1=nn_115) & (((q=1 & xs=2 & 0<=k & k<=n & 1<=n) | (xs=1 & 
+q=null & n=0 & k=0))) & exists(kk_116:k=kk_116) |-  k=kk. LOCS:[1;0;7;17;8] (must-bug).]; true)
+                          es_trace: 
+                            Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_118) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,q> * q::lls<n,k>&
+                                            0<v:xs::lls{}<nn1,kk1>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&exists(nn_115:n+1=nn_115) & exists(kk_116:k=kk_116) & 0<v&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_118) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: 
+                           emp&exists(nn_158:n+1+1=nn_158) & 
+                           exists(kk_159:k=kk_159) & exists(flted_8_172:n+
+                           1=flted_8_172) & exists(k_171:k=k_171)&
+                           {FLOW,(3,4)=__Error}[]
+                          es_heap: q2::lls{}<n,k> * q1::node<v2,q2> * 
+                                    xs::node<v,q1>
+                          es_evars: [nn_158; kk_159]
+                          es_rhs_eqset: [nn_158:nn; kk_159:kk; nn_158:nn; 
+                                         kk_159:kk; k:kk_159]
+                          es_must_error: Some(AndR[ exists(k_171:k=k_171) & exists(kk_159:k=kk_159) & (((q1=1 & q2=2 & xs=3 & 
+0<=k & k<=n & 1<=n) | (q1=1 & xs=2 & q2=null & n=0 & k=0))) & 
+exists(nn_158:n+1+1=nn_158) & exists(flted_8_172:n+1=flted_8_172) |-  1+n+1=nn. LOCS:[1;0;7;26;8];  exists(flted_8_172:n+1=flted_8_172) & exists(nn_158:n+1+1=nn_158) & 
+(((q1=1 & q2=2 & xs=3 & 0<=k & k<=n & 1<=n) | (q1=1 & xs=2 & q2=null & n=0 & 
+k=0))) & exists(kk_159:k=kk_159) & exists(k_171:k=k_171) |-  k=kk. LOCS:[1;0;7;26;8] (must-bug).]; true)
+                          es_trace: 
+                            Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_161) ==>  COND ==>  Match(q2,q_176) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,q1> * 
+                                            q1::node<v2,q2> * 
+                                            q2::lls<n,k>:xs::lls{}<nn2,kk2>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&exists(nn_158:n+1+1=nn_158) & exists(kk_159:k=kk_159) & exists(flted_8_172:n+1=flted_8_172) & exists(k_171:k=k_171)&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_161) ==>  COND ==>  Match(q2,q_176) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: 
+                           emp&exists(nn_253:n+1+1=nn_253) & 
+                           exists(kk_254:k=kk_254) & exists(flted_8_267:n+
+                           1=flted_8_267) & exists(k_266:k=k_266) & 
+                           flted3=2 & flted4=1&{FLOW,(3,4)=__Error}[]
+                          es_heap: q2::lls{}<n,k> * 
+                                    q1::node<flted_29_231,q2> * 
+                                    xs::node<flted_29_232,q1>
+                          es_evars: [nn_253; kk_254]
+                          es_rhs_eqset: [nn_253:nn; kk_254:kk; nn_253:nn; 
+                                         kk_254:kk; k:kk_254]
+                          es_must_error: Some(AndR[ exists(k_266:k=k_266) & exists(kk_254:k=kk_254) & (((q1=1 & q2=2 & xs=3 & 
+0<=k & k<=n & 1<=n) | (q1=1 & xs=2 & q2=null & n=0 & k=0))) & 
+exists(nn_253:n+1+1=nn_253) & exists(flted_8_267:n+1=flted_8_267) |-  1+n+1=nn. LOCS:[1;0;7;30;8];  exists(flted_8_267:n+1=flted_8_267) & exists(nn_253:n+1+1=nn_253) & 
+(((q1=1 & q2=2 & xs=3 & 0<=k & k<=n & 1<=n) | (q1=1 & xs=2 & q2=null & n=0 & 
+k=0))) & exists(kk_254:k=kk_254) & exists(k_266:k=k_266) |-  k=kk. LOCS:[1;0;7;30;8] (must-bug).]; true)
+                          es_trace: 
+                            Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_256) ==>  COND ==>  Match(q2,q_273) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<flted_29_232,q1> * 
+                                            q1::node<flted_29_231,q2> * 
+                                            q2::lls<n,k>&flted_29_231=2 & 
+                                            flted_29_232=1:xs::lls{}<nn4,kk4>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&exists(nn_253:n+1+1=nn_253) & exists(kk_254:k=kk_254) & exists(flted_8_267:n+1=flted_8_267) & exists(k_266:k=k_266) & flted3=2 & flted4=1&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_256) ==>  COND ==>  Match(q2,q_273) ==> ]]
+
+
+

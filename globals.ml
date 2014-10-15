@@ -135,7 +135,7 @@ let print_arg_kind i= match i with
 (* TODO : move typ here in future *)
 type typ =
   | FORM
-  | UNK 
+  | UNK
   | TVar of int
   | AnnT
   | Bool
@@ -805,6 +805,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 let sap = ref false
+let sae = ref false
+let sac = ref false
 
 let sags = ref false
 
@@ -871,13 +873,14 @@ let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold l
 let acc_fold = ref false
 let seg_fold = ref false
 
+let print_min = ref false
 let smart_lem_search = ref false
 
 let sa_en_split = ref false
 
 let pred_split = ref false
 
-let pred_seg_split = ref true
+let pred_seg_split = ref false
 
 (* let sa_dangling = ref false *)
 
@@ -1117,6 +1120,7 @@ let print_version_flag = ref false
 let elim_exists_flag = ref true
 
 let filtering_flag = ref true
+let filtering_false_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -1153,7 +1157,9 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref true
+let print_en_tidy = ref false
+(* print tidy is not working properly *)
+
 let print_en_inline = ref true
 
 let print_html = ref false
@@ -1263,6 +1269,8 @@ let term_bnd_pre_flag = ref true
 let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
+let post_add_eres = ref false
+let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
@@ -1271,12 +1279,17 @@ let infer_const_num = 0
 let infer_const = ref ""
 
 (* TNT Inference *)
+let tnt_verbosity = ref 1
+let tnt_infer_lex = ref false
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@pre] *)
   | INF_IMM (* For infer[@imm] *)
+  | INF_EFA (* For infer[@efa] *)
+  | INF_DFA (* For infer[@dfa] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1293,6 +1306,8 @@ let string_of_inf_const x =
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
   | INF_IMM -> "@imm"
+  | INF_EFA -> "@efa"
+  | INF_DFA -> "@dfa"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1383,6 +1398,8 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
+      helper "@efa" INF_EFA;
+      helper "@dfa" INF_DFA;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1402,6 +1419,8 @@ object (self)
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_efa  = self # get INF_EFA
+  method is_dfa  = self # get INF_DFA
   (* method get_arr  = arr *)
   method get_lst = arr
   method set c  = if self#get c then () else arr <- c::arr
@@ -1425,6 +1444,7 @@ let infer_const_obj = new inf_obj;;
 (* let set_infer_const s = *)
 
 let tnt_thres = ref 5
+let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
@@ -1636,7 +1656,7 @@ let locs_of_partial_context ctx =
 let fresh_formula_label (s:string) :formula_label = 
 	branch_point_id := !branch_point_id + 1;
 	(!branch_point_id,s)
-  
+
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
@@ -1673,28 +1693,28 @@ let fresh_ty_var_name (t:typ)(ln:int):string =
 let fresh_var_name (tn:string)(ln:int):string = 
 	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
-let fresh_trailer () = 
+let fresh_trailer () =
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
 
-let fresh_any_name (any:string) = 
+let fresh_any_name (any:string) =
   let str = string_of_int (fresh_int ()) in
     any ^"_"^ str
 
-let fresh_name () = 
+let fresh_name () =
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str
 
-let fresh_label pos = 
+let fresh_label pos =
  (* let str = string_of_int (fresh_int ()) in*)
     let line = if pos.start_pos.Lexing.pos_lnum > 0 then
                  string_of_int pos.start_pos.Lexing.pos_lnum
                else "0" in
     "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
-	
+
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
     for i = 1 to n do

@@ -1,0 +1,26 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+HP_0 is defined.
+HP_1 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_1(right1) * x'::node<key,left1,right1> * HP_44(left) * HP_45(right)&left1!=null & right1=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_0(left1)&left1!=null --> left1::node<key1,left,right> * 
+                   HP_44(left) * HP_45(right)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 16
+SAT % Hit   : 75.%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000749 (seconds)
+
+!!! log(small):(0.013528,20)
+Total verification time: 0.064824 second(s)
+	Time spent in main process: 0.050817 second(s)
+	Time spent in child processes: 0.014007 second(s)
+

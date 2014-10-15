@@ -1,0 +1,54 @@
+
+!!!Full processing file "demo/assert-1a.ss"
+Parsing file "demo/assert-1a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<next1> * HP_1222(next1)&
+true(3,4),
+ // PRE
+(0)HP_1222(next1)&true --> emp&
+next1=0(3,4),
+ // POST
+(0)x::node<next1> * HP_1222(next1)&next1=0 --> G(x)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<next>&next=0],
+ G(x2) ::=  [x2::node<next>&next=0]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node<next>&next=0(3,4),
+ G(x2) ::= x2::node<next>&next=0(3,4)]
+*************************************
+Stop Omega... 14 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.031988,226)
+Total verification time: 0.294038 second(s)
+	Time spent in main process: 0.278064 second(s)
+	Time spent in child processes: 0.015974 second(s)
+

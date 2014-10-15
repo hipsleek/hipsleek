@@ -66,7 +66,6 @@ ensures prev'::ll<sent>  & cur'=sent ;
   ensures prev'::node<_,p> * p::lx8<sent> & cur'=sent ;//'
 */
 
-
   infer [H,G]
   requires H(cur,prev,sent)
   ensures G(cur,cur',prev,prev',sent);

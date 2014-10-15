@@ -1,0 +1,27 @@
+Starting Omega...oc
+P is defined.
+Q is defined.
+Z is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Entail (1) : Fail.(must) cause: mmm+1=0 |-  mmm!=null. LOCS:[15] (must-bug)
+
+ <1>P(y) * Q(y) * Z(y,k)&mmm+1=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Stop Omega... 8 invocations 
+SAT Count   : 40
+SAT % Hit   : 60.%
+IMPLY Count : 9
+IMPLY % Hit : 22.22%
+Time(cache overhead) : 0.004508 (seconds)
+
+!!! log(small):(0.023063,58)
+Total verification time: 0.082253 second(s)
+	Time spent in main process: 0.060389 second(s)
+	Time spent in child processes: 0.021864 second(s)
+

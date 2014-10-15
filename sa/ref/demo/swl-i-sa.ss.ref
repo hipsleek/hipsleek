@@ -1,0 +1,116 @@
+
+!!!Full processing file "demo/swl-i-sa.ss"
+Parsing file "demo/swl-i-sa.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=g & self!=s) | (self!=g & self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&g!=s&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((g<self & s<self) | ((s+1)<=self & self<g) | (g<self & self<s) | (self<=(g-
+1) & self<=(s-1)))),
+([], self=g & self!=s)])
+!!! formula1: emp&((self=null & self!=s) | (self!=s & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self!=s & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], self=null & self!=s)])
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+!!! SCall neqs:[(cur,prev)]
+!!! neqs:[(cur,prev)]
+Checking procedure lscan$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1301,HP_1302,G]requires HP_1301(cur,sent@NI) * 
+HP_1302(prev,sent@NI)&true
+ ensures G(cur,cur',prev,prev',sent@NI)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1301(cur,sent@NI)&true --> cur::node<val1,next1> * 
+HP_1307(next1,sent@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1302(prev,sent@NI) * cur'::node<val1,prev>&
+true --> HP_1301(cur',sent@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)emp&prev'=null --> HP_1302(prev',sent@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1307(cur',sent@NI)&cur'!=null & 
+cur'!=sent --> HP_1301(cur',sent@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1302(prev,sent@NI) * cur1::node<val1,prev>&
+true --> HP_1302(cur1,sent@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1302(prev,cur'@NI) * HP_1307(cur',cur'@NI) * cur::node<val1,prev>&
+true --> G(cur,cur',prev,prev',sent@NI)&
+true(3,4),
+ // POST
+(1;2;0)G(cur,cur',prev1,prev',sent@NI) * HP_1307(next1,sent@NI)&prev1=null & 
+next1=null & next1!=sent --> G(cur,cur',prev,prev',sent@NI)&
+true(3,4),
+ // POST
+(2;2;0)G(next1,cur',cur,prev',sent@NI)&cur!=null & next1!=null & 
+next1!=sent --> G(cur,cur',prev,prev',sent@NI)&
+true(3,4)]
+
+Procedure lscan$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1301(cur2,sent1) ::=  [cur2::node<val,next> * HP_1307(next,sent1)&cur2!=sent1 & cur2!=null],
+ HP_1302(prev',sent) ::=  [
+  emp&prev'!=sent & prev'=null
+  or prev'::node<val,next2> * HP_1307(next2,sent)&prev'!=sent
+  ],
+ G(cur,cur',prev,prev',sent) ::=  [prev'::node<val,prev>&prev=null & prev!=cur' & sent=cur' & prev'=cur; 
+prev'::node<val,prev> * prev::node<val,next2> * HP_1307(next2,cur')&
+prev!=cur' & sent=cur' & prev'=cur],
+ HP_1307(cur3,sent2) ::=  [emp&sent2=cur3; emp&cur3=null & cur3!=sent2; cur3::node<val,next> * 
+HP_1307(next,sent2)&cur3!=sent2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1301(cur2,sent1) ::= cur2::node<val,next> * HP_1307(next,sent1)&cur2!=sent1 & cur2!=null(3,4),
+ HP_1302(prev',sent) ::= 
+ emp&prev'!=sent & prev'=null
+ or prev'::node<val,next2> * HP_1307(next2,sent)&prev'!=sent
+ (3,4),
+ G(cur,cur',prev,prev',sent) ::= 
+ prev'::node<val,prev> * prev::node<val,next2> * HP_1307(next2,cur')&
+ prev!=cur' & sent=cur' & prev'=cur
+ or prev'::node<val,prev>&prev=null & prev!=cur' & sent=cur' & prev'=cur
+ (3,4),
+ H(cur,prev,sent) ::= HP_1301(cur,sent) * HP_1302(prev,sent),
+ HP_1307(cur3,sent2) ::= 
+ emp&cur3=null & cur3!=sent2
+ or cur3::node<val,next> * HP_1307(next,sent2)&cur3!=sent2
+ or emp&sent2=cur3
+ (3,4)]
+*************************************
+Stop Omega... 38 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.153889,440)
+Total verification time: 0.546553 second(s)
+	Time spent in main process: 0.451817 second(s)
+	Time spent in child processes: 0.094736 second(s)
+

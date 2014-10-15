@@ -1,0 +1,62 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&t=0 & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=0]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&t=0 & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(t)) -->  t=0]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&t=null & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [G]: ( G(n)) -->  n=null]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&t=null & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F]: ( F(n)) -->  n=null]
+[[empty]]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&t=0 & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F,G]: ( F(t) & G(t)) -->  t=0]
+[[empty]]
+
+
+Entail (6) : Valid. 
+
+ <1>emp&t=null & G(t) & F(t)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [F,G]: ( F(n) & G(n)) -->  n=null]
+[[empty]]
+
+Stop Omega... 88 invocations 
+SAT Count   : 58
+SAT % Hit   : 67.24%
+IMPLY Count : 54
+IMPLY % Hit : 85.18%
+Time(cache overhead) : 0.007569 (seconds)
+
+!!! log(small):(0.069926,202)
+Total verification time: 0.118488 second(s)
+	Time spent in main process: 0.086003 second(s)
+	Time spent in child processes: 0.032485 second(s)
+
