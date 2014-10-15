@@ -27,5 +27,6 @@ requires true
     return a;
   }
   return 2;
+  dprint;
 }
 
