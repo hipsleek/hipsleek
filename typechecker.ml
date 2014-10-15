@@ -2725,7 +2725,7 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
         let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
         ()) scc_procs
     in
-    let _ = if !Globals.sae then
+    let _ = if !Globals.sac then
       let defs1 = Sautil.combine_hpdef_flow (CF.rel_def_stk # get_stk) in
       let _ = CF.rel_def_stk # reset in
       let _ = CF.rel_def_stk # push_list defs1 in
@@ -3775,8 +3775,9 @@ let rec check_prog iprog (prog : prog_decl) =
   let verify_scc_incr prog verified_sccs scc=
     (*extract props: shape - pure - sortedness - term*)
     (*for each, incrementally infer*)
-    let new_scc = List.map (Iincr.extend_inf prog "size") scc in
-    verify_scc_helper prog verified_sccs new_scc
+    (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
+    (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
+    verify_scc_helper prog verified_sccs scc
   in
   (********************************************************)
   (********************************************************)

@@ -810,8 +810,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 let sap = ref false
-let sae = ref false
-let sac = ref false
+let sae = ref true
+let sac = ref true
 
 let sags = ref false
 
