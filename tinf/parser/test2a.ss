@@ -1,0 +1,31 @@
+/*class ret_int extends __Exc{
+  int val
+} //exception when return from a loop
+*/
+
+bool test_bool(bool b)
+requires true
+ ensures !b & !res | b & res;
+{
+  while (!b) 
+    requires true
+    ensures  eres::ret_bool<b> & !b & flow __RET or b & flow __norm;
+  {
+    return b;
+  }
+  return true;
+}
+
+int  test_int(int a)
+requires true
+ ensures a>1 & res=a | a<=1 & res=2;
+{
+  while (a>1) 
+    requires true
+    ensures  eres::ret_int<a> & a>1 & flow __RET or a<=1 & flow __norm;
+  {
+    return a;
+  }
+  return 2;
+}
+
