@@ -103,7 +103,6 @@ and view_decl = {
     view_forward_fields: ident list;     (* forward fields, associating with data type of view *)
     view_backward_ptrs: P.spec_var list;
     view_backward_fields: ident list;
-    view_data_decl : data_decl option;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
@@ -117,6 +116,7 @@ and view_decl = {
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
+    view_data_decl : data_decl option;
     view_formula : F.struc_formula; (* case-structured formula *)
     mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)

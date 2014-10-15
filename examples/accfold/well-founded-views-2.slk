@@ -1,0 +1,21 @@
+data node {
+  int val;
+  node next;
+  node prev;
+}.
+
+// well-founded
+pred lseg<p> == self = p
+  or self::node<v,r,t> * r::lseg<p> * t::node<_,_,_>.
+
+// not well-founded
+pred lseg2<p> == self = p
+  or self::node<v,r,t> * r::lseg2<p> * u::node<_,_,_>.
+
+// well-founded
+pred lseg3<p> == self = p
+  or self::node<v,r,t> * r::lseg<p> * t::node<_,_,_>.
+
+// not well-founded
+pred lseg4<p> == self = p
+  or self::node<v,r,t> * r::lseg2<p> * t::node<_,_,_>.

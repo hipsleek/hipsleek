@@ -662,9 +662,15 @@ let convert_data_and_pred_to_cast_x () =
   (* Trung: temporary code *)
   let _ = print_endline ("== check views' well-foundedness:") in
   let _ = List.iter (fun vd ->
-    if (Accfold.check_well_founded_view vd) then
-      print_endline ("  " ^ vd.Cast.view_name ^ ": OK")
-    else print_endline ("  " ^ vd.Cast.view_name ^ ": Not OK")
+    let _ = print_endline ("  view " ^ vd.Cast.view_name) in
+    let well_founded = if (Accfold.check_well_founded_view vd) then "OK"
+                       else "Not OK" in
+    let _ = print_endline ("     well-foundedness: " ^ well_founded) in
+    let _ = print_endline ("     main heap chain: ") in
+    let heap_chains = Accfold.collect_main_heap_chain_in_view vd in
+    List.iter (fun f ->
+      print_endline ("         + " ^ (!CF.print_formula f));
+    ) heap_chains;
   ) !cprog.Cast.prog_view_decls in 
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in

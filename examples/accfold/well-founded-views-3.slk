@@ -1,0 +1,54 @@
+data node {
+  int val;
+  node next;
+  node down;
+}.
+
+// well-founded
+/*
+pred lseg<p> == self = p
+  or self::node<v,r> * r::lseg<p>.
+*/
+
+/*
+pred lseg1b<p> == self = p
+  or self::node<v,r,_> * r::lseg1b<s> * s::node<_,t,_> * t::node<_,p,_>.
+*/
+
+// bug in forward pointers
+pred lseg1c<p> == self = p
+  or self::node<v,r,u> * u::node<_,w,z> * r::lseg1c<s> * s::node<_,t,_> * t::node<_,p,_>.
+
+//
+/*
+pred lseg1d<p> == self = p
+  or self::node<_,r,u> * u::node<_,w,z> * r::node<_,s,v>
+     * v::lseg1c<_> * s::lseg1d<p>.
+*/
+
+/*
+// well-founded
+pred lseg2<p> == self = p
+  or self::node<_,r> * r::node<_,s> * s::lseg<p>.
+
+// well-founded
+pred lseg3<p> == self = p
+  or self::node<_,r> * r::node<_,s> * s::
+  lseg3<p>.
+
+// well-founded
+pred lseg4<p> == self = p
+  or self::node<_,r> * r::node<_,s> * s::lseg4<p> * w::node<_,_>.
+
+// non well-founded
+pred lseg5<p> == self = p
+  or self::node<_,r> * t::node<_,s> * s::lseg5<p>.
+
+// non well-founded
+pred lseg6<p> == self = p
+  or self::node<_,r> * r::node<_,s> * t::lseg6<p>.
+
+// non well-founded
+pred lseg7<p> == self = p
+  or x::node<_,r> * t::node<_,s> * s::lseg7<p>.
+*/

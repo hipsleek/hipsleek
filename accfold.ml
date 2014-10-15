@@ -772,7 +772,7 @@ and check_well_formed_struc_formula (sf: CF.struc_formula)
  *   (including mutually recursive case)
  * 
  * TODO:
- *   - check recursive view
+ *   - recursive view
  *)
 let check_well_founded_view_x (vdecl: C.view_decl) : bool =
   let self_type = Named (vdecl.C.view_data_name) in
@@ -878,45 +878,45 @@ let collect_related_vars_in_formula (f: CF.formula) (roots: CP.spec_var list)
 (* simplify formulate by removing true, false, HEmp... constants *)
 let simplify_formula (f: CF.formula) : CF.formula =
   let rec simplify_helper f = (
-    let updated = ref true in
+    let updated = ref false in
     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
     let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
     let trans_bf, trans_e = (fun bf -> Some bf), (fun e -> Some e) in
     let trans_hf hf = (match hf with
       | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} -> (
           match (h1, h2) with
-          | CF.HEmp, _ -> Some h2
-          | _, CF.HEmp -> Some h1
-          | _, _ -> (updated := false; None)
+          | CF.HEmp, _ -> (updated := true; Some h2)
+          | _, CF.HEmp -> (updated := true; Some h1)
+          | _, _ -> None
         )
       | _ -> None
     ) in
     let trans_pf pf = (
       match pf with
       | CP.And (pf1, pf2, pos) ->
-          if (CP.isConstTrue pf1) then Some pf2
-          else if (CP.isConstFalse pf1) then Some (CP.mkFalse pos) 
-          else if (CP.isConstTrue pf2) then Some pf1
-          else if (CP.isConstFalse pf2) then Some (CP.mkFalse pos)
-          else (updated := false; None)
+          if (CP.isConstTrue pf1) then (updated := true; Some pf2)
+          else if (CP.isConstFalse pf1) then (updated := true; Some (CP.mkFalse pos)) 
+          else if (CP.isConstTrue pf2) then (updated := true; Some pf1)
+          else if (CP.isConstFalse pf2) then (updated := true; Some (CP.mkFalse pos))
+          else None
       | CP.Or (pf1, pf2, _, pos) ->
-          if (CP.isConstTrue pf1) then Some (CP.mkTrue pos)
-          else if (CP.isConstFalse pf1) then Some pf2 
-          else if (CP.isConstTrue pf2) then Some (CP.mkTrue pos)
-          else if (CP.isConstFalse pf2) then Some pf1
-          else (updated := false; None)
+          if (CP.isConstTrue pf1) then (updated := true; Some (CP.mkTrue pos))
+          else if (CP.isConstFalse pf1) then (updated := true; Some pf2) 
+          else if (CP.isConstTrue pf2) then (updated := true; Some (CP.mkTrue pos))
+          else if (CP.isConstFalse pf2) then (updated := true; Some pf1)
+          else None
       | CP.AndList pfs ->
           let exist_constant_false = List.exists (fun (_,pf) ->
             CP.isConstFalse pf
           ) pfs in
-          if (exist_constant_false) then Some (CP.mkFalse no_pos)
+          if (exist_constant_false) then (updated := true; Some (CP.mkFalse no_pos))
           else (
             let non_true_pfs = List.filter (fun (_,pf) ->
               not (CP.isConstTrue pf)
             ) pfs in
             if (List.length non_true_pfs != List.length pfs) then
-              Some (CP.AndList non_true_pfs)
-            else (updated := false; None)
+              (updated := true; Some (CP.AndList non_true_pfs))
+            else None
           )
       | _ -> None
     ) in
@@ -940,19 +940,19 @@ let extract_sub_formula_by_vars (f: CF.formula) (extracted_vars: CP.spec_var lis
   (* TODO: first extract needed elements and keep the original structure *)
   let extract_formula_helper f vars = (
     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
-    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
-    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
     let trans_hf hf = (
       match hf with
       | CF.ViewNode {CF.h_formula_view_node = node} ->
-          if (CP.mem_svl node vars) then Some CF.HTrue 
+          if (CP.mem_svl node vars) then Some CF.HEmp 
           else Some hf
       | CF.DataNode {CF.h_formula_data_node = node} ->
-          if (CP.mem_svl node vars) then Some CF.HTrue
+          if (CP.mem_svl node vars) then Some CF.HEmp
           else Some hf
       | _ -> None
     ) in
     (* NOTE: this extraction is not correct for disjunction of pure formula *)
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> None), (fun e -> Some e) in
     let trans_bf bf = (
       let svs = CP.bfv bf in
       if (CP.EMapSV.overlap svs vars) then None
@@ -967,64 +967,85 @@ let extract_sub_formula_by_vars (f: CF.formula) (extracted_vars: CP.spec_var lis
   let newf = simplify_formula newf in
   newf
 
+
 (*
  * Collect only the nodes in main heap chains, starting from root node
  *)
-let collect_main_heap_chain_x (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
+let collect_main_heap_chain_in_formula_x (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
     : CF.formula =
   (* connect pointers of all nodes in main heap chain *)
-  let rec collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap = (
+  let rec collect_main_pointers_x f pointers vdecl fwd_ptr ddecl fwd_field emap = (
     let current_pointers = ref pointers in
     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
-    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
-    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
-    let trans_bf = (fun bf -> Some bf) in
     let trans_hf hf = (match hf with
       | CF.ViewNode {CF.h_formula_view_node = vnode;
                      CF.h_formula_view_arguments = arguments} ->
           let aliases = (CP.EMapSV.find_equiv_all vnode emap) @ [vnode] in
-          if (CP.EMapSV.overlap !current_pointers aliases) then
+          Debug.ninfo_hprint (add_str "aliases 1" !CP.print_svl) aliases no_pos;
+          if (CP.EMapSV.overlap !current_pointers aliases) then (
             current_pointers := CP.remove_dups_svl (aliases @ !current_pointers);
             List.iter2 (fun arg var ->
-              if (CP.eq_spec_var fwd_ptr var) then
+              if (CP.eq_spec_var fwd_ptr var) then (
+                Debug.ninfo_hprint (add_str "hf 1" !CF.print_h_formula) hf no_pos;
+                Debug.ninfo_hprint (add_str "arg 1" !CP.print_sv) arg no_pos;
                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)
+              )
             ) arguments vdecl.C.view_vars;
+          );
           None
       | CF.DataNode {CF.h_formula_data_node = dnode;
                      CF.h_formula_data_arguments = arguments} ->
           let aliases = (CP.EMapSV.find_equiv_all dnode emap) @ [dnode] in
-          if (CP.EMapSV.overlap !current_pointers aliases) then
+          Debug.ninfo_hprint (add_str "aliases 2" !CP.print_svl) aliases no_pos;
+          if (CP.EMapSV.overlap !current_pointers aliases) then (
             current_pointers := CP.remove_dups_svl (aliases @ !current_pointers);
             List.iter2 (fun arg ((_,fname),_) ->
-              if (eq_str fwd_field fname) then
+              if (eq_str fwd_field fname) then (
+                Debug.ninfo_hprint (add_str "hf 2" !CF.print_h_formula) hf no_pos;
+                Debug.ninfo_hprint (add_str "arg 2" !CP.print_sv) arg no_pos;
                 current_pointers := CP.remove_dups_svl (arg::!current_pointers)
+              )
             ) arguments ddecl.C.data_fields;
+          );
           None
       | _ -> None
     ) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
+    let trans_bf = (fun bf -> Some bf) in
     let trans_func = (trans_ef, trans_f, trans_hf,
         (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
     let _ = CF.transform_formula trans_func f in
     if (List.length !current_pointers = List.length pointers) then
       !current_pointers
-    else collect_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap
+    else collect_main_pointers f !current_pointers vdecl fwd_ptr ddecl fwd_field emap
+  )
+  and collect_main_pointers f pointers vdecl fwd_ptr ddecl fwd_field emap = (
+    let pr_f = (add_str "f" !CF.print_formula) in
+    let pr_pointers = (add_str "pointers" !CP.print_svl) in
+    let pr_view = (add_str "view" !C.print_view_decl_short) in
+    let pr_res = (add_str "res" !CP.print_svl) in
+    Debug.no_3 "collect_main_pointers" pr_f pr_pointers pr_view pr_res
+        (fun _ _ _ -> collect_main_pointers_x f pointers vdecl fwd_ptr ddecl fwd_field emap)
+        f pointers vdecl
   ) in
   
   (* extract main heap chain in raw format *)
-  let extract_heap_chain f pointers = (
+  let extract_main_heap_chain f pointers = (
     let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
-    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
-    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
     let trans_hf hf = (match hf with
       | CF.ViewNode {CF.h_formula_view_node = vnode} ->
           if (CP.mem_svl vnode pointers) then Some hf
-          else Some CF.HTrue
+          else Some CF.HEmp
       | CF.DataNode {CF.h_formula_data_node = dnode} ->
           if (CP.mem_svl dnode pointers) then Some hf
-          else Some CF.HTrue
+          else Some CF.HEmp
       | _ -> None
     ) in
+    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
+    let trans_pf, trans_e = (fun pf -> None), (fun e -> Some e) in
     let trans_bf bf = (
+      Debug.ninfo_hprint (add_str "bf" !CP.print_b_formula) bf no_pos;
       let svs = CP.bfv bf in
       if (CP.EMapSV.overlap svs pointers) then Some bf
       else Some (CP.mkTrue_b no_pos)
@@ -1036,15 +1057,23 @@ let collect_main_heap_chain_x (f: CF.formula) (root: CP.spec_var) (vdecl: C.view
   
   let ddecl = (match vdecl.C.view_data_decl with 
     | Some dd -> dd
-    | None -> report_error no_pos "collect_main_heap_chain: data_decl not found!"
+    | None -> 
+        let msg = "collect_main_heap_chain_in_formula: data_decl not found!" in
+        report_error no_pos msg
   ) in
   let fwd_field = (match vdecl.C.view_forward_fields with
+    | [] ->
+        report_warning no_pos "collect_main_heap_chain: forward field not found!";
+        "unknown_forward_field"
     | [s] -> s
     | _ ->
         report_warning no_pos "collect_main_heap_chain: expect only 1 forward field!";
         "unknown_forward_field"
   ) in
   let fwd_ptr = (match vdecl.C.view_forward_ptrs with
+    | [] ->
+        report_warning no_pos "collect_main_heap_chain: foward pointer not found!";
+        (CP.mk_spec_var "unknown_forward_pointer")
     | [sv] -> sv
     | _ ->
         report_warning no_pos "collect_main_heap_chain: expect only 1 foward pointer!";
@@ -1053,17 +1082,40 @@ let collect_main_heap_chain_x (f: CF.formula) (root: CP.spec_var) (vdecl: C.view
   let (_,mf,_,_,_) = CF.split_components f in
   let pf = MCP.pure_of_mix mf in
   let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
-  let pointers = collect_pointers f [root] vdecl fwd_ptr ddecl fwd_field emap in
-  extract_heap_chain f pointers
+  let main_pointers = collect_main_pointers f [root] vdecl fwd_ptr ddecl fwd_field emap in
+  let main_heap_chain = extract_main_heap_chain f main_pointers in
+  simplify_formula main_heap_chain
 
-let collect_main_heap_chain (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
+
+let collect_main_heap_chain_in_formula (f: CF.formula) (root: CP.spec_var) (vdecl: C.view_decl)
     : CF.formula =
   let pr_f = (add_str "f" !CF.print_formula) in
   let pr_root = (add_str "root" !CP.print_sv) in
   let pr_view = (add_str "view" (fun vd -> vd.C.view_name)) in
   let pr_res = (add_str "res" !CF.print_formula) in
-  Debug.no_3 "collect_main_heap_chain" pr_f pr_root pr_view pr_res
-      (fun _ _ _ -> collect_main_heap_chain_x f root vdecl) f root vdecl
+  Debug.no_3 "collect_main_heap_chain_in_formula" pr_f pr_root pr_view pr_res
+      (fun _ _ _ -> collect_main_heap_chain_in_formula_x f root vdecl) f root vdecl
+
+
+let collect_main_heap_chain_in_view_x (vdecl: C.view_decl) : (CF.formula list) =
+  List.map (fun (f,_) ->
+    let root = C.self_param vdecl in
+    collect_main_heap_chain_in_formula f root vdecl
+  ) vdecl.C.view_un_struc_formula
+
+
+let collect_main_heap_chain_in_view (vdecl: C.view_decl) : (CF.formula list) =
+  let pr_view = (add_str "view" !C.print_view_decl_short) in
+  let pr_res = (add_str "res" (pr_list !CF.print_formula)) in
+  Debug.no_1 "collect_main_heap_chain_in_view_x" pr_view pr_res
+      (fun _ -> collect_main_heap_chain_in_view_x vdecl) vdecl
+
+(* TODO *)
+(* let collect_heap_around_node *)
+
+
+(* TODO *)
+(* let build_non_inductive_predicate_from_a_formula *)
 
 
 (*
