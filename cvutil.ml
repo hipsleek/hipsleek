@@ -155,6 +155,10 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
     | _ -> false
   in helper ann1 ann2
 
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+  let pr = pr_list CP.string_of_ann in
+  Debug.no_2 "compatible_ann" pr pr string_of_bool compatible_ann ann1 ann2
+
 (****************************************************************************)
 (****************************************************************************)
 (****************************************************************************)
@@ -748,7 +752,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
         | ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
 	| DataNode ({h_formula_data_node = p;h_formula_data_imm = imm;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
-	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
+	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN0#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* if List.mem p evars || perm<> None then *)
 	      (*   {mem_formula_mset = CP.DisjSetSV.mkEmpty;} *)
 	      (* else *)

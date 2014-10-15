@@ -8,7 +8,7 @@ relation P2(ann v1).
 void foo(cell c)
   infer [P1,P2]
   requires c::cell<v>@a & P1(a)
-  ensures c::cell<v>@b & P2(b)  ;
+     ensures c::cell<v>@b & P2(a,b)  ;
 {
   int j = c.fst;
 }
