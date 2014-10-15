@@ -581,7 +581,7 @@ and update_field_imm (f : h_formula) (pimm1 : CP.ann list): h_formula =
 and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) : h_formula  = 
   (* let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann pimm1 pimm impl_vars evars in *)
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_fann) then HEmp else
+  if (isAccsList new_fann) && (!Globals.remove_abs) then HEmp else
     let updated_f = match f with 
       | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_fann} )
       | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
@@ -598,7 +598,7 @@ and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es =
   (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
   let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 1 [imm1] [imm2]  es in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList res_ann) then (HEmp, [], (([],[],[]),[]) )else
+  if (isAccsList res_ann) && (!Globals.remove_abs) then (HEmp, [], (([],[],[]),[]) )else
     let updated_f = match f with 
       | DataNode d -> DataNode ( {d with h_formula_data_imm = List.hd res_ann} )
       | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")

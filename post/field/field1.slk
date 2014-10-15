@@ -10,6 +10,7 @@ pred ll<n> == self=null & n=0
 
 checkentail x::ll<n> & n>3  |- x::node<_,q>@L & q!=null.
 print residue.
+expect Valid.
 
 //checkentail x::ll<n> & x!=null  |- x::node<_,q>@L & q!=null.
 print residue.
@@ -18,6 +19,7 @@ print residue.
 
 checkentail x::node<v,_>@A & v=5  |- x!=null.
 print residue.
+expect Valid.
 
 
 /*

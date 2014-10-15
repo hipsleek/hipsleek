@@ -262,8 +262,8 @@ let maybe_replace_w_empty h =
           let node_imm = dn.CF.h_formula_data_imm in
           let param_imm = dn.CF.h_formula_data_param_imm in
           let new_h =  
-            if (isAccs node_imm) then HEmp 
-            else if !Globals.allow_field_ann &&  (isAccsList param_imm) then HEmp else h
+            if (isAccs node_imm) && (!Globals.remove_abs) then HEmp 
+            else if !Globals.allow_field_ann &&  (isAccsList param_imm) && (!Globals.remove_abs) then HEmp else h
             (* match !Globals.allow_field_ann, !Globals.allow_imm with *)
             (*   | true, _     -> if (isAccsList param_imm) then HEmp else h *)
             (*   | false, true -> if (isAccs node_imm) then HEmp else h *)
@@ -271,7 +271,7 @@ let maybe_replace_w_empty h =
           in new_h
     | CF.ViewNode vn ->  
           let node_imm = vn.CF.h_formula_view_imm in
-          if (isAccs node_imm) then HEmp else h 
+          if (isAccs node_imm)  && (!Globals.remove_abs) then HEmp else h 
           (* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *)
           (* let new_h =  *)
           (*   match !Globals.allow_field_ann, !Globals.allow_imm with *)

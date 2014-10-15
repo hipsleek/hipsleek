@@ -250,9 +250,10 @@ let common_arguments = [
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-  ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-  ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--mem", Arg.Unit (fun _ -> 
     Globals.allow_mem := true; 
     Globals.allow_field_ann := true;),
