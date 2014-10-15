@@ -19,11 +19,6 @@ print residue.
 checkentail x::node<v,_>@A & v=5  |- x!=null.
 print residue.
 
-checkentail x::node<v,_>@A * x::node<w,_>@A  |- false.
-print residue. // fail as expected
-
-checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
-print residue. // should succeed
 
 /*
 # field1.slk
