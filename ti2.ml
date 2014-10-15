@@ -1274,7 +1274,10 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       let loop_conds, rec_conds = List.partition (fun (_, is_loop_cond, _) -> is_loop_cond) nt_conds in
       let self_conds, other_conds = List.partition (fun (fnc, _, _) -> eq_str fn fnc) rec_conds in
       if List.exists (fun (_, _, c) -> (imply eh_ctx c)) loop_conds then NT_Yes
-      else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) self_conds then NT_Yes
+      (* else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) self_conds then NT_Yes *)
+      else if (self_conds != []) && 
+              (imply eh_ctx (CP.join_disjunctions (List.map (fun (_, _, c) -> c) self_conds))) 
+           then NT_Yes
       else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
         (* Infer the conditions for to-loop nodes *)
