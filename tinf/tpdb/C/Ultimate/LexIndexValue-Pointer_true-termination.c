@@ -5,17 +5,16 @@
  * 2-lex ranking function: f(p, q, *q) = (q, *q)
  *
  */
-#include "stdhip2.h"
+#include "stdhip.h"
 
 extern int __VERIFIER_nondet_int(void);
 
 int main() {
 	int *p = malloc(1048 * sizeof(int));
-	int *q = p;
-  //@ dprint;
-	while (*q >= 0 && q < p + 1048) 
+	int *q = p; // Error: Do not satisfy the precondition of while
+  while (*q >= 0 && q < p + 1048) 
   /*@
-    requires p::int*<_, op, sp> * q::int*<vq, oq, sq>
+    requires p::int*<_, op> * q::int*<vq, oq>
     ensures true;
    */
 	{
