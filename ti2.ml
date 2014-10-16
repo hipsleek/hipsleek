@@ -1211,7 +1211,7 @@ let search_nt_cond_ann lhs_uids ann =
   let uids = Gen.BList.remove_dups_eq CP.eq_uid uids in
   List.map (fun uid ->
     let params = List.concat (List.map CP.afv uid.CP.tu_args) in
-    let cond = uid.CP.tu_cond in
+    let cond = subst_cond_with_ann params ann uid.CP.tu_cond in
     let is_loop_cond = uid.CP.tu_id == CP.loop_id in
     { ntc_fn = fn;
       ntc_id = uid.CP.tu_id;
@@ -1269,6 +1269,10 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         if c.ntc_is_loop_cond then (la @ [c.ntc_cond]), sa, oa
         else if c.ntc_id == rhs_uid.CP.tu_id then la, (sa @ [c.ntc_cond]), oa
         else la, sa, (oa @ [c.ntc_cond])) ([], [], []) nt_conds in
+        
+      let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in
+      let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in
+      let _ = print_endline ("other_conds: " ^ (pr_list !CP.print_formula other_conds)) in      
       
       if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)
