@@ -11090,18 +11090,19 @@ if (Gen.is_empty fs) then true else false
 let isSuccessFailescCtx_new (fs,_,_) =
   List.for_all isSuccessBranchFail fs
 
+(* [] denotes failure *)
 let isSuccessListPartialCtx cl =
-  cl==[] || List.exists isSuccessPartialCtx cl 
+  (* cl==[] || *) List.exists isSuccessPartialCtx cl 
 
 let isSuccessListPartialCtx cl =
   let pr = !print_list_partial_context in
   Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
 
 let isSuccessListPartialCtx_new cl =
-  cl==[] || List.exists isSuccessPartialCtx_new cl
+  (* cl==[] || *) List.exists isSuccessPartialCtx_new cl
 
 let isSuccessListFailescCtx cl =
-  cl==[] || List.exists isSuccessFailescCtx cl 
+  (* cl==[] || *) List.exists isSuccessFailescCtx cl 
 
 let isSuccessListFailescCtx cl =
   (* let cl = list_failesc_context_simplify cl in *)
@@ -11109,7 +11110,7 @@ let isSuccessListFailescCtx cl =
   Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
 
 let isSuccessListFailescCtx_new cl =
-  cl==[] || List.exists isSuccessFailescCtx_new cl
+  (* cl==[] || *) List.exists isSuccessFailescCtx_new cl
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
