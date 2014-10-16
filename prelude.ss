@@ -492,18 +492,3 @@ int rand_int ()
 bool rand_bool ()
   requires true
   ensures res or !res;
-  
-/**************************/
-/*** Pointer Arithmetic ***/
-/**************************/
-/*
-int_star add___(int_star p, int i)
-  requires p::int_star<v, o> & 0 <= i
-  ensures p::int_star<v, o> * res::int_star<_, o+i>;
-
-bool lt___(int_star p, int_star q)
-  requires p::int_star<vp, op> * q::int_star<vq, oq>
-  case {
-    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res;
-    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & !res; }
-*/

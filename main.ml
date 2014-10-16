@@ -116,7 +116,7 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
                  if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x) true
                  else 
                    let hip_dir = (Gen.get_path Sys.executable_name) ^x in
-                   parse_file_full hip_dir true (* WN is include file a primitve? *)
+                   parse_file_full hip_dir true (* WN is include file a primitive? *)
             )  file_list
 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
@@ -141,7 +141,7 @@ let rec process_header_with_pragma hlist plist =
         let new_hlist = if (hd = "NoImplicitPrelude") then [] else hlist in
             process_header_with_pragma new_hlist tl
 
-let process_include_files incl_files ref_file=
+let process_include_files incl_files ref_file =
    if(List.length incl_files >0) then
 	  let header_files = Gen.BList.remove_dups_eq (=) incl_files in 
       let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
