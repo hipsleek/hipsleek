@@ -3184,3 +3184,4 @@ let detect_invoke prog proc=
   let pr2 = pr_list pr_id in
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
+

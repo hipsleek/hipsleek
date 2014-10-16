@@ -4318,7 +4318,7 @@ let rec string_of_exp = function
   | Catch b->   
         let c = b.exp_catch_flow_type in
 	    "\n catch "^(string_of_flow c)^"="^(exlist # get_closest c)^ 
-	        (match b.exp_catch_flow_var with 
+	        (match b.exp_catch_flow_var with
 	          | Some c -> (" @"^c^" ")
 	          | _ -> " ")^
 	        (match b.exp_catch_var with 

@@ -404,22 +404,27 @@ let process_source_full source =
     let iprims_list = process_intermediate_prims prims_list in
 		(* let _ = print_endline ("process_source_full: after  process_intermediate_prims") in *)
     let iprims = Iast.append_iprims_list_head iprims_list in
+    
     let prim_names = 
       (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
-      ["__Exc"; "__Fail"; "__Error"; "__MayError"]
+      ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
     in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
 		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
+                
                 (*let _ = print_string (Iprinter.string_of_program prog^"haha") in*)
+               
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
     (* let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+   
 	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+    
 	(*let intermediate_prog_reverif = 
 			if (!Globals.reverify_all_flag) then 
 					Marshal.from_string (Marshal.to_string intermediate_prog [Marshal.Closures]) 0 

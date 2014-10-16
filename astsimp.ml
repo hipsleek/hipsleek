@@ -804,7 +804,7 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
   should also check that 
 *)
 let rec while_labelling (e:I.exp):I.exp = 
-  let _ = print_endline("while_labelling"^Iprinter.string_of_exp e) in
+  (*let _ = print_endline("while_labelling"^Iprinter.string_of_exp e) in*)
   let label_breaks lb e :I.exp =      
     I.map_exp e (fun c-> match c with 
       | I.Block _ -> None
@@ -937,7 +937,7 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
               Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
           *)
           let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
-              Some (I.mkRaise (I.Const_flow loop_ret_flow) true (new_raise_val b.I.exp_return_val) false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
+              Some (I.mkRaise (I.Const_flow (new_class_name ret_type)) true (new_raise_val b.I.exp_return_val) false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
           let b = {b with I.exp_while_body = new_body} in
           let pos = b.I.exp_while_pos in
           let nl2 = fresh_branch_point_id "" in
@@ -951,7 +951,8 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
           (* Modified by Zhuohong*)
           (*let _ = exlist # add_edge (string_of_typ ret_type) c_flow in*)
           (***********************)
-          Some (I.mkTry (I.While b) [catch] [] nl2 pos)
+          (*Some (I.mkTry (I.While b) [catch] [] nl2 pos)*)
+          (Some (I.While b))
         else Some c
   |_ -> None)
   
@@ -1325,9 +1326,10 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
       
 (*HIP*)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
+ 
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   (* print_string "trans_prog\n"; *)
-  
+  (* let _ = print_string (Iprinter.string_of_program prog4) in*)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -1338,6 +1340,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog4 = if (!Globals.perm = Globals.Dperm)
   then I.add_bar_inits prog4 
   else prog4
+
   in
   
   let prog4 = if not (!do_infer_inc) then prog4 else
@@ -1367,7 +1370,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (*         } *)
   (* in *)
   (*let _ = exlist # compute_hierarchy in*)
-  let _ = print_endline (exlist # string_of ) in
+  (*let _ = print_endline (exlist # string_of ) in*)
   let prog3 = prog4 in
   
   let prog2 = { prog3 with I.prog_data_decls =
@@ -1384,7 +1387,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog1 = { prog2 with
       I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
       I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
-  let _ = print_string (Iprinter.string_of_program prog1) in
+  (*let _ = print_string ("INSIDE trans_prog:"^Iprinter.string_of_program prog1^"######") in*)
   (*let _ = print_string ("exc: "^(exlist#string_of)^"\n") in*)
   let _ = exlist # compute_hierarchy in   
   (*let _ = print_string ("exc: "^(exlist#string_of)^"\n") in*)
@@ -1508,6 +1511,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           ) (prog.I.prog_proc_decls) in
           let old_i_hp_decls = prog.I.prog_hp_decls in
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+          (*let _ = print_endline("Hit here") in*)
           let iloop_hp_decls = List.filter (fun hpdecl ->
               not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0)
                   old_i_hp_decls)
@@ -1573,7 +1577,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
             else c 
           in
           let c = (add_pre_to_cprog c) in
-          let _ = print_endline (exlist # string_of) in
+          (*let _ = print_endline (exlist # string_of) in*)
           (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
 	  (c,prog))))
@@ -3029,7 +3033,7 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
     let flags = List.map (fun arg -> trans_arg_addr arg) proc.I.proc_args in
     if not (List.exists (fun (b:bool) -> b) flags) then
       (*IF NOT -> DO NOT NEED TO trans_spec*)
-      (trans_proc prog proc)
+      (trans_proc_loop prog proc)
     else
       (*If there is some args to be convert -> DO IT*)
       (*These params have correct types*)
@@ -3044,9 +3048,9 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
           I.proc_dynamic_specs = new_dynamic_specs;
       }
       in
-      (trans_proc prog new_proc)
+      (trans_proc_loop prog new_proc)
   else
-    (trans_proc prog proc)
+    (trans_proc_loop prog proc)
         
 (* TNT: Add inf_obj from cmd line *)
 and add_inf_cmd_struc is_primitive f =
@@ -3069,6 +3073,332 @@ and add_inf_cmd_struc_x is_primitive f =
             CF.formula_inf_vars = [];
             CF.formula_inf_continuation = f;
             CF.formula_inf_pos = CF.pos_of_struc_formula f }
+
+
+
+(* ********************************* Very bad, I'm sorry ************************************ *)
+(* trans_proc_loop is the brother of trans_proc. The only difference between these two is whether the body of the proc will be wrapped with "try and catch" or not. Because while proc does not need to be wrapped while others do, such a function is created for while procedure. *)
+
+and trans_proc_loop (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
+  (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
+    let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
+  *)let pr  = Iprinter.string_of_proc_decl in
+  let pr2 = Cprinter.string_of_proc_decl 5 in
+  Debug.no_1 "trans_proc_loop" pr pr2 (trans_proc_x_loop prog) proc
+
+and trans_proc_x_loop (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
+  let trans_proc_x_op () =
+    let _= proving_loc #set (proc.I.proc_loc) in
+    let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
+    if not (Gen.is_empty dup_names) then
+      (let p = List.hd dup_names in
+      Err.report_error{
+          Err.error_loc = p.I.param_loc;
+          Err.error_text = "parameter " ^ (p.I.param_name ^ " is duplicated");})
+    else if not (check_return proc) then
+      Err.report_error {
+          Err.error_loc = proc.I.proc_loc;
+          Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }
+    else
+      (E.push_scope ();
+      (let all_args =
+        if Gen.is_some proc.I.proc_data_decl then
+          (let cdef = Gen.unsome proc.I.proc_data_decl in
+          let this_arg ={
+              I.param_type = Named cdef.I.data_name;
+              I.param_name = this;
+              I.param_mod = I.NoMod;
+              I.param_loc = proc.I.proc_loc;} in
+          let ls_arg ={
+              I.param_type = ls_typ;
+              I.param_name = ls_name;
+              I.param_mod = I.NoMod;
+              I.param_loc = proc.I.proc_loc;} in
+          let lsmu_arg ={
+              I.param_type = lsmu_typ;
+              I.param_name = lsmu_name;
+              I.param_mod = I.NoMod;
+              I.param_loc = proc.I.proc_loc;} in
+          let waitlevel_arg ={
+              I.param_type = waitlevel_typ;
+              I.param_name = waitlevel_name;
+              I.param_mod = I.NoMod;
+              I.param_loc = proc.I.proc_loc;} in
+          waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args)
+        else proc.I.proc_args in
+      let p2v (p : I.param) = {
+          E.var_name = p.I.param_name;
+          E.var_alpha = p.I.param_name;
+          E.var_type = p.I.param_type; } in
+      let vinfos = List.map p2v all_args in
+      let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
+      let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
+      let free_vars = List.map (fun p -> p.I.param_name) all_args in
+      let add_param p = (p.I.param_name,
+      {sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
+      id = fresh_int () }) in
+      let n_tl = List.map add_param all_args in
+      let n_tl = type_list_add res_name { sv_info_kind = cret_type;id = fresh_int () } n_tl in
+      let n_tl = type_list_add eres_name { sv_info_kind = UNK ;id = fresh_int () } n_tl in
+      let is_primitive = not (proc.I.proc_is_main) in
+      (* Termination: Add info of logical vars *)
+      let add_logical tl (CP.SpecVar (t, i, _)) = type_list_add i {
+          sv_info_kind = t;
+          id = fresh_int () } tl in
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in
+      let n_tl =  List.fold_left add_logical n_tl log_vars in
+      let _ = check_valid_flows proc.I.proc_static_specs in
+      let _ = check_valid_flows proc.I.proc_dynamic_specs in
+      (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
+      (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
+      let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
+      let cf = add_inf_cmd_struc is_primitive cf in
+      let static_specs_list = set_pre_flow cf in
+      (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
+      (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
+      let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+      let cf = add_inf_cmd_struc is_primitive cf in
+      let dynamic_specs_list = set_pre_flow cf in
+      (****** Infering LSMU from LS if there is LS in spec >>*********)
+      let static_specs_list =
+        if (!Globals.allow_locklevel && !Globals.allow_lsmu_infer) then
+          let vars = CF.struc_fv static_specs_list in
+          let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
+          if b then
+            CF.infer_lsmu_struc_formula static_specs_list
+          else static_specs_list
+        else static_specs_list
+      in
+      let dynamic_specs_list =
+        if (!Globals.allow_locklevel && !Globals.allow_lsmu_infer) then
+          let vars = CF.struc_fv dynamic_specs_list in
+          let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
+          if b then
+            CF.infer_lsmu_struc_formula dynamic_specs_list
+          else dynamic_specs_list
+        else dynamic_specs_list
+      in
+      (******<< Infering LSMU from LS if there is LS in spec  *********)
+      (* Termination: Normalize the specification 
+       * with the default termination information
+       * Primitive functions: Term[] 
+       * User-defined functions: MayLoop 
+       * or TermR and TermU if @term *)
+      let fname = proc.I.proc_name in
+      (*let _ = print_endline("method name"^fname) in*)
+      let args = List.map (fun p -> 
+          ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in  
+      let rec find_vars sp = match sp with
+        | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []
+        | IF.EBase b -> b.IF.formula_struc_implicit_inst
+        | _ -> [] in
+      let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in
+      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
+      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
+      let imp_spec_vars = collect_important_vars_in_spec true static_specs_list in
+      let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
+      let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
+      let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in
+      let params = imp_spec_vars @ params  in
+      let params = List.filter 
+        (fun sv -> match sv with
+          | CP.SpecVar(t,_,_) -> 
+                (match t with
+                  | Int | Bool -> true
+                  | _ -> false)) params in
+      let pos = proc.I.proc_loc in
+
+      let utpre_name = fname ^ "pre" in
+      let utpost_name = fname ^ "post" in
+
+      let utpre_decl = {
+          C.ut_name = utpre_name;
+          C.ut_params = params;
+          C.ut_is_pre = true;
+          C.ut_pos = pos } in
+      let utpost_decl = { utpre_decl with
+          C.ut_name = utpost_name;
+          C.ut_is_pre = false; } in
+
+      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
+      let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
+
+      let uid = {
+          CP.tu_id = 0;
+          CP.tu_sid = fname;
+          CP.tu_fname = fname;
+          CP.tu_call_num = 0;
+          CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+          CP.tu_cond = CP.mkTrue pos;
+          CP.tu_icond = CP.mkTrue pos;
+          CP.tu_sol = None;
+          CP.tu_pos = pos; } in
+
+      let static_specs_list =
+        if not !Globals.dis_term_chk then
+          CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
+        else static_specs_list
+      in
+      let dynamic_specs_list =
+        if not !Globals.dis_term_chk then
+          CF.norm_struc_with_lexvar is_primitive false uid dynamic_specs_list
+        else dynamic_specs_list
+      in
+      let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
+      let r_int = exlist # get_hash abnormal_flow in
+      (*annotated may and must error in specs*)
+      (* let t_int = exlist # get_hash top_flow in *)
+      (* let e_int = exlist # get_hash error_flow in *)
+      (* let exc_list = exc_list@[t_int;e_int] in *)
+      (if (List.exists is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then
+	Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
+      else ()) ;
+      (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
+      (* let _ = print_endline (Cprinter.string_of_struc_formula static_specs_list) in *)
+      let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
+      let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
+      (* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
+      (* let _ = print_endline "WN : removing result here" in *)
+      (* let n_tl = List.remove_assoc res_name n_tl in *)
+      
+      let body =match proc.I.proc_body with
+	| None -> None
+	| Some e -> 
+              Some (fst (trans_exp prog proc e)) in
+      (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
+      (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
+      (** An Hoa : compute the important variables **)
+      let ftypes, fnames = List.split args in
+      (* fsvars are the spec vars corresponding to the parameters *)
+      let imp_vars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+      (*    let _ = print_string "Function parameters : " in                    *)
+      (*    let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+      (** An Hoa : end **)
+      let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
+      let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
+      let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
+      let by_copies = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed))
+        (List.filter (fun p -> p.I.param_mod = I.CopyMod) proc.I.proc_args) in
+      (******LOCKSET variable>>*********)
+      (*only add lockset into ref_vars if it is mentioned in the spec
+        This is to avoid adding too many LS in sequential settings*)
+      let by_names = if !Globals.allow_ls then
+        let s_f_vars = CF.struc_fv static_specs_list in
+        (*let d_f_vars = CF.struc_fv dynamic_specs_list in*)
+        if (List.exists (fun v -> CP.name_of_spec_var v = Globals.ls_name) (s_f_vars@s_f_vars)) then
+          let ls_var = CP.mkLsVar Unprimed in
+          let lsmu_var = CP.mkLsmuVar Unprimed in
+          let waitlevel_var = CP.mkWaitlevelVar Unprimed in
+          (waitlevel_var::lsmu_var::ls_var::by_names)
+        else by_names
+      else by_names
+      in
+      (* let _ = print_string "trans_proc :: lockset translated PASSED \n" in *)
+      (******<<LOCKSET variable*********)
+      let static_specs_list  = CF.plug_ref_vars by_names static_specs_list in
+      let dynamic_specs_list = CF.plug_ref_vars by_names dynamic_specs_list in
+      (*=============================*)
+      let by_val_tmp = List.filter (fun p -> p.I.param_mod = I.NoMod) proc.I.proc_args in
+      let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
+      (*pass-by-value parameters*)
+      let by_val = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_val_tmp in
+      (*check and add VPERM when need*)
+      let static_specs_list = 
+        if (!Globals.ann_vp) then
+          (* (\*add primeness to distinguish*\) *)
+	  (* let by_names = List.map (fun sv ->  *)
+          (*     match sv with *)
+          (*       | CP.SpecVar (v,t,_) -> CP.SpecVar (v, t, Primed)) by_names  *)
+          (* in *)
+          CF.norm_struc_vperm static_specs_list by_names by_val
+        else
+          static_specs_list
+      in
+      let dynamic_specs_list = 
+        if (!Globals.ann_vp) then
+          CF.norm_struc_vperm dynamic_specs_list by_names by_val
+        else
+          dynamic_specs_list
+      in
+      (* let _ = print_string "trans_proc :: vperm translated PASSED \n" in *)
+      (*=============================*)
+      let final_static_specs_list = 
+	if CF.isConstDTrue static_specs_list then 
+	  Cast.mkEAssume_norm proc.I.proc_loc 
+	else static_specs_list in
+      (** An Hoa : print out final_static_specs_list for inspection **)
+      (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
+      (* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
+      let imp_spec_vars = collect_important_vars_in_spec false final_static_specs_list in
+      let imp_vars = List.append imp_vars imp_spec_vars in
+      let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
+      (* let _ = print_string "Important variables found: " in *)
+      (*    let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
+      (** An Hoa : end **)
+      let final_dynamic_specs_list = dynamic_specs_list in
+      (* TODO: is below being computed multiple times? *)
+      let args2 = args@(prog.I.prog_rel_ids) in
+      let _ = 
+        let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
+
+        let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+        let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
+        (*LOCKSET variable*********)
+        let ls_var = (ls_typ,ls_name) in
+        let lsmu_var = (lsmu_typ,lsmu_name) in
+        let waitlevel_var = (waitlevel_typ,waitlevel_name) in
+        let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
+        (**************************)
+        let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+        let str = Cprinter.string_of_spec_var_list ffv in
+        if (ffv!=[]) then 
+          Debug.info_zprint (lazy (("WARNING : uninterpreted free variables "^str^" in specification."))) no_pos
+              (* Error.report_error {  *)
+              (*     Err.error_loc = no_pos; *)
+              (*     Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "}  *)
+      in
+      let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
+      else proc.Iast.proc_args_wi
+      in
+      let cproc ={
+          C.proc_name = proc.I.proc_mingled_name;
+          C.proc_source = proc.I.proc_source;
+          C.proc_flags = proc.I.proc_flags;
+          C.proc_args = args;
+          C.proc_args_wi = args_wi;
+          C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;
+          C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
+          C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
+          C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
+          C.proc_dynamic_specs = final_dynamic_specs_list;
+          (* C.proc_static_specs_with_pre =  []; *)
+          C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
+          C.proc_hprel_ass = [];
+          C.proc_hprel_unkmap = [];
+          C.proc_sel_hps = [];
+          C.proc_sel_post_hps = [];
+          C.proc_hpdefs = [];
+          C.proc_callee_hpdefs = [];
+          C.proc_by_name_params = by_names;
+          C.proc_by_copy_params = by_copies;
+          C.proc_body = body;
+          C.proc_logical_vars = [];
+          C.proc_call_order = 0;
+          C.proc_is_main = proc.I.proc_is_main;
+          C.proc_is_invoked = proc.I.proc_is_invoked;
+          C.proc_is_recursive = false;
+          C.proc_file = proc.I.proc_file;
+          C.proc_loc = proc.I.proc_loc;
+	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in
+      (E.pop_scope (); cproc)))
+  in
+  wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
+
+
+
+(******************************************** ********************************************************)
 
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
@@ -3177,6 +3507,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * User-defined functions: MayLoop 
        * or TermR and TermU if @term *)
       let fname = proc.I.proc_name in
+      (*let _ = print_endline("method name"^fname) in*)
       let args = List.map (fun p -> 
           ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
       let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in  
@@ -3252,9 +3583,31 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
       (* let _ = print_endline "WN : removing result here" in *)
       (* let n_tl = List.remove_assoc res_name n_tl in *)
+      
       let body =match proc.I.proc_body with
 	| None -> None
-	| Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
+	| Some e -> 
+              (*let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in*)
+             
+              let vn = fresh_name () in
+              let pos = I.get_exp_pos e in
+              let nl2 = fresh_branch_point_id "" in
+              let return_target = I.mkMember (I.mkVar vn pos) ["val"] None pos in
+              let return_exp  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
+              let return_name ret_type = 
+                match ret_type with
+                  | Int -> "ret_int"
+                  | Bool  -> "ret_bool"
+                  | _ -> failwith "TO BE IMPLEMENTED"
+              in
+              let catch_clause = I.mkCatch (Some vn) (Some (Named (return_name proc.I.proc_return))) loop_ret_flow None return_exp pos in
+              let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
+              let new_body = fst (trans_exp prog proc new_body_e) in
+              (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
+              Some new_body 
+
+in
+              (*Some (fst (trans_exp prog proc new_body_e)) in*)
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
       (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
       (** An Hoa : compute the important variables **)
@@ -3869,6 +4222,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   (*let _ = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in*)
   let rec helper ie =
+    (*let _ = print_endline ("[trans_exp_helper] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in*)
     match ie with
       | I.Label (pid, e)-> 
             let e1,t1 = (helper e) in
@@ -4755,90 +5109,93 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | I.Null pos -> ((C.Null pos), Globals.null_type)
       | I.Return {I.exp_return_val = oe;
         I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
-        I.exp_return_pos = pos} ->  begin
-          let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
-          let _=if(!Globals.proof_logging_txt) then (*proof logging*)   
-            Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
-          match oe with
-            | None -> 
-                  if CP.are_same_types cret_type C.void_type then
-                    (C.Sharp ({ C.exp_sharp_type = C.void_type;
-                    C.exp_sharp_flow_type = C.Sharp_ct 
-                            {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
-                    C.exp_sharp_val = Cast.Sharp_no_val;
-                    C.exp_sharp_unpack = false;
-                    C.exp_sharp_path_id = pi;
-                    C.exp_sharp_pos = pos}), C.void_type)
-                  else
-                    Err.report_error { Err.error_loc = proc.I.proc_loc; 
-                    Err.error_text = "return statement for procedures with non-void return type need a value" }
-            | Some e ->
-                  let e_pos = Iast.get_exp_pos e in
-                  (* let  _ = Debug.info_zprint (lazy (((string_of_loc e_pos) ^ ":e_pos" ))) pos in *)
-                  let ce, ct = helper e in
-                  (*
-                    139::return v_null_21_541
-                    !!! return(iast-e):x
-                    !!! return(cast-ce):x
-                    !!! return(cast-tmp_e2):node v_node_30_542;
-                    v_node_30_542 = x;
-                    138::return v_node_30_542
-                  *)
-                  if sub_type ct cret_type then
-                    let tmp_e2 =
-                      let ce_iv,ce_name = match ce with
-                        | Cast.Var {Cast.exp_var_name=v} -> (true,v)
-                        | _ -> (false,"")
-                      in
-                      (* Debug.info_hprint (add_str "return(cast-ce)" Cprinter.string_of_exp) ce e_pos; *)
-                      (* Debug.info_hprint (add_str "return(is_var ce)" string_of_bool) ce_iv e_pos; *)
-                      if ce_iv then
-                        (* let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in *)
-                        let shar = C.Sharp ({
-                            C.exp_sharp_type = C.void_type;
-                            C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
-                            C.exp_sharp_unpack = false;
-                            C.exp_sharp_val = Cast.Sharp_var (ct,ce_name);
-                            C.exp_sharp_path_id = pi;
-                            C.exp_sharp_pos = pos}) in
-                        shar
+        I.exp_return_pos = pos} ->  
+            begin
+              (*let _ = print_endline("INSIDE RETURN"^Iprinter.string_of_exp ie) in*)
+              let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
+              let _=if(!Globals.proof_logging_txt) then (*proof logging*)   
+                Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
+              match oe with 
+                | None -> 
+                      if CP.are_same_types cret_type C.void_type then
+                        (C.Sharp ({ C.exp_sharp_type = C.void_type;
+                        C.exp_sharp_flow_type = C.Sharp_ct 
+                                {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                        C.exp_sharp_val = Cast.Sharp_no_val;
+                        C.exp_sharp_unpack = false;
+                        C.exp_sharp_path_id = pi;
+                        C.exp_sharp_pos = pos}), C.void_type)
                       else
-                        let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
-                        let vd = C.VarDecl { 
-                            C.exp_var_decl_type = ct;
-                            C.exp_var_decl_name = fn;
-                            C.exp_var_decl_pos = e_pos;} in
-                        let init_e = C.Assign { 
-                            C.exp_assign_lhs = fn;
-                            C.exp_assign_rhs = ce;
-                            C.exp_assign_pos = e_pos;} in
-                        let shar = C.Sharp ({
-                            C.exp_sharp_type = C.void_type;
-                            C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
-                            C.exp_sharp_unpack = false;
-                            C.exp_sharp_val = Cast.Sharp_var (ct,fn);
-                            C.exp_sharp_path_id = pi;
-                            C.exp_sharp_pos = pos}) in
-                        let tmp_e1 = C.Seq { 
-                            C.exp_seq_type = C.void_type;
-                            C.exp_seq_exp1 = init_e;
-                            C.exp_seq_exp2 = shar;
-                            C.exp_seq_pos = e_pos;} in
-                        C.Seq { 
-                            C.exp_seq_type = C.void_type;
-                            C.exp_seq_exp1 = vd;
-                            C.exp_seq_exp2 = tmp_e1;
-                            C.exp_seq_pos = e_pos;} in 
-                    begin
-                      (* Debug.info_hprint (add_str "return(iast-e)" Iprinter.string_of_exp) e e_pos; *)
-                      (* Debug.info_hprint (add_str "return(cast-ce)" Cprinter.string_of_exp) ce e_pos; *)
-                      (* Debug.info_hprint (add_str "return(cast-tmp_e2)" Cprinter.string_of_exp) tmp_e2 e_pos; *)
-                      (tmp_e2, C.void_type)
-                    end
-                  else
-                    Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
+                        Err.report_error { Err.error_loc = proc.I.proc_loc; 
+                        Err.error_text = "return statement for procedures with non-void return type need a value" }
+                | Some e ->
+                      let e_pos = Iast.get_exp_pos e in
+                      (* let  _ = Debug.info_zprint (lazy (((string_of_loc e_pos) ^ ":e_pos" ))) pos in *)
+                      let ce, ct = helper e in
+                      (*
+                        139::return v_null_21_541
+                        !!! return(iast-e):x
+                        !!! return(cast-ce):x
+                        !!! return(cast-tmp_e2):node v_node_30_542;
+                        v_node_30_542 = x;
+                        138::return v_node_30_542
+                      *)
+                      if sub_type ct cret_type then
+                        let tmp_e2 =
+                          let ce_iv,ce_name = match ce with
+                            | Cast.Var {Cast.exp_var_name=v} -> (true,v)
+                            | _ -> (false,"")
+                          in
+                          (* Debug.info_hprint (add_str "return(cast-ce)" Cprinter.string_of_exp) ce e_pos; *)
+                          (* Debug.info_hprint (add_str "return(is_var ce)" string_of_bool) ce_iv e_pos; *)
+                          if ce_iv then
+                            (* let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in *)
+                            let shar = C.Sharp ({
+                                C.exp_sharp_type = C.void_type;
+                                C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                                C.exp_sharp_unpack = false;
+                                C.exp_sharp_val = Cast.Sharp_var (ct,ce_name);
+                                C.exp_sharp_path_id = pi;
+                                C.exp_sharp_pos = pos}) in
+                            shar
+                          else
+                            let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
+                            let vd = C.VarDecl { 
+                                C.exp_var_decl_type = ct;
+                                C.exp_var_decl_name = fn;
+                                C.exp_var_decl_pos = e_pos;} in
+                            let init_e = C.Assign { 
+                                C.exp_assign_lhs = fn;
+                                C.exp_assign_rhs = ce;
+                                C.exp_assign_pos = e_pos;} in
+                            let shar = C.Sharp ({
+                                C.exp_sharp_type = C.void_type;
+                                C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                                C.exp_sharp_unpack = false;
+                                C.exp_sharp_val = Cast.Sharp_var (ct,fn);
+                                C.exp_sharp_path_id = pi;
+                                C.exp_sharp_pos = pos}) in
+                            let tmp_e1 = C.Seq { 
+                                C.exp_seq_type = C.void_type;
+                                C.exp_seq_exp1 = init_e;
+                                C.exp_seq_exp2 = shar;
+                                C.exp_seq_pos = e_pos;} in
+                            C.Seq { 
+                                C.exp_seq_type = C.void_type;
+                                C.exp_seq_exp1 = vd;
+                                C.exp_seq_exp2 = tmp_e1;
+                                C.exp_seq_pos = e_pos;} in 
+                        begin
+                          (* Debug.info_hprint (add_str "return(iast-e)" Iprinter.string_of_exp) e e_pos; *)
+                          (* Debug.info_hprint (add_str "return(cast-ce)" Cprinter.string_of_exp) ce e_pos; *)
+                          (* Debug.info_hprint (add_str "return(cast-tmp_e2)" Cprinter.string_of_exp) tmp_e2 e_pos; *)
+                          (tmp_e2, C.void_type)
+                        end
+                      else
+                        Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
         end
       | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }->
+            (*let _ = print_endline "Inside seq" in*)
             let (ce1', te1) = trans_exp prog proc e1 in
             let (ce2, te2) = trans_exp prog proc e2 in
             let ce1 = insert_dummy_vars ce1' pos in
@@ -5090,8 +5447,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
-            let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then let _ = print_endline("!exists return") in true else false in
-            let _ = if I.exists_return body then let _ = print_endline("!!!exists return") in true else false in
+            let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
+            (*let _ = if I.exists_return body then let _ = print_endline("!!!exists return") in true else false in*)
             
             let _ = Debug.ninfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let w_body_1 = body in
@@ -5197,6 +5554,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
             (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
+            (*let _ = print_endline("w_proc"^Iprinter.string_of_proc_decl w_proc) in*)
             let cw_proc = trans_loop_proc new_prog w_proc addr_vars in
             (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
@@ -5263,7 +5621,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     else
                       let e_pos = Iast.get_exp_pos oe in
                       let ce, ct = helper oe in
-                      let _ = print_endline("string_of_typ "^string_of_typ ct) in
+                      (*let _ = print_endline("string_of_typ "^string_of_typ ct) in*)
                       (*allow raise c_flow*)
                       if exlist # sub_type_obj (string_of_typ ct) c_flow (* raisable_class *) then                           
                         let fn = (fresh_ty_var_name (ct) pos.start_pos.Lexing.pos_lnum) in

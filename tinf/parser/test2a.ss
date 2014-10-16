@@ -9,7 +9,7 @@ requires true
 {
   while (!b) 
     requires true
-    ensures  eres::ret_bool<b> & !b & flow __RET or b & flow __norm;
+    ensures  eres::ret_bool<b> & !b & flow ret_bool or b & flow __norm;
   {
     return b;
   }
@@ -22,7 +22,7 @@ requires true
 {
   while (a>1) 
     requires true
-    ensures  eres::ret_int<a> & a>1 & flow __RET or a<=1 & flow __norm;
+    ensures  eres::ret_int<a> & a>1 & flow ret_int or a<=1 & flow __norm;
   {
     return a;
   }
