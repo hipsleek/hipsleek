@@ -10,6 +10,7 @@ module IF = Iformula
 
 let str_addr = "addr_"
 let str_deref = "deref"
+let str_offset = "offset"
 
 let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
 
@@ -218,10 +219,10 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
       ) in
       let param = (
         match base_data with
-        | "int" -> "<_>"
-        | "bool" -> "<_>"
-        | "float" -> "<_>"
-        | "void" -> "<_>"
+        | "int"   -> "<_,o>"
+        | "bool"  -> "<_,o>"
+        | "float" -> "<_,o>"
+        | "void"  -> "<_,o>"
         | _ -> (
             try 
               let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -238,7 +239,7 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         "    p =  null -> ensures res = null; \n" ^
         "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
         (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-        "                 ensures res::" ^ data_name ^ param ^ " ; \n" ^
+        "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
         "  }\n"
       ) in
       let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -255,11 +256,12 @@ let create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_de
     try
       Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
+      let pointer = "p::" ^ pointer_typ_name ^ "<val, addr>" in
       let cast_proc = (
         "int " ^ proc_name ^ " (" ^ pointer_typ_name ^ " p)\n" ^
         "  case { \n" ^
         "    p =  null -> ensures res = 0; \n" ^
-        "    p != null -> ensures res != 0; \n" ^
+        "    p != null -> requires " ^ pointer ^ " ensures " ^ pointer ^ " & res = addr & res != 0; \n" ^
         "  }\n"
       ) in
       let pd = Parser.parse_c_aux_proc "pointer_to_int_casting_proc" cast_proc in
@@ -756,8 +758,10 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                           with Not_found -> (
                               (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                               let ftyp = deref_ty in
-                let fname = str_deref in
-                              let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
+                              let fname = str_deref in
+                              let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
+                              let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
+                              let dfields = [val_field; offset_field] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in
                               Hashtbl.add tbl_pointer_typ refined_ty dtyp;
@@ -835,7 +839,9 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
                     (* create new Globals.typ and Iast.data_decl update to hash tables *)
                     let ftyp = translate_typ actual_ty pos in
                     let fname = str_deref in
-                    let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
+                    let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
+                    let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
+                    let dfields = [val_field; offset_field] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtype = Globals.Named dname in
                     Hashtbl.add tbl_pointer_typ actual_ty dtype;
@@ -1168,6 +1174,11 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
             | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
             | _ -> report_error pos "translate_intstr: invalid callee's name!" in
           let args = List.map (fun x -> translate_exp x) exps in
+          let _ =
+            if (Iast.is_tnt_prim_proc fname) then
+              Hashtbl.add Iast.tnt_prim_proc_tbl fname fname
+            else ()
+          in
           let func_call = Iast.mkCallNRecv fname None args None pos in (
               match lv_opt with
                 | None -> func_call
@@ -1796,17 +1807,19 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
-    let static_specs1, hp_decls,args_wi = match static_specs with
-      | Iformula.EList [] -> begin
-          match funbody with
-            | Some _ ->
-	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pos in
-	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-	          (ss, hps, args_wi)
-            | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
-        end
-      | _ ->
-	    static_specs, [],List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+    let static_specs1, hp_decls, args_wi = 
+      if not !Globals.sags then
+        static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+      else match static_specs with
+        | Iformula.EList [] -> begin
+            match funbody with
+              | Some _ ->
+  	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pos in
+  	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+  	          (ss, hps, args_wi)
+              | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+          end
+        | _ -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
     in
     let newproc : Iast.proc_decl = {
         Iast.proc_name = name;
@@ -1823,7 +1836,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
         Iast.proc_exceptions = [];
         Iast.proc_body = funbody;
-        Iast.proc_is_main = true;
+        Iast.proc_is_main = Gen.is_some funbody;
         Iast.proc_is_invoked = false;
         Iast.proc_file = filename;
         Iast.proc_loc = pos;

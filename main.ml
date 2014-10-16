@@ -116,7 +116,7 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
                  if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x) true
                  else 
                    let hip_dir = (Gen.get_path Sys.executable_name) ^x in
-                   parse_file_full hip_dir true (* WN is include file a primitve? *)
+                   parse_file_full hip_dir true (* WN is include file a primitive? *)
             )  file_list
 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
@@ -141,7 +141,7 @@ let rec process_header_with_pragma hlist plist =
         let new_hlist = if (hd = "NoImplicitPrelude") then [] else hlist in
             process_header_with_pragma new_hlist tl
 
-let process_include_files incl_files ref_file=
+let process_include_files incl_files ref_file =
    if(List.length incl_files >0) then
 	  let header_files = Gen.BList.remove_dups_eq (=) incl_files in 
       let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -412,10 +412,17 @@ let process_source_full source =
     in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
-		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
+		let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
                 
                 (*let _ = print_string (Iprinter.string_of_program prog^"haha") in*)
                
+    let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->
+      if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc
+      else 
+        match (Parser.create_tnt_prim_proc id) with
+        | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in
+    let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in
+    let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)

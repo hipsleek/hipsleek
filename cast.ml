@@ -984,6 +984,8 @@ and is_transparent e = match e with
 let mingle_name (m : ident) (targs : typ list) = 
   let param_tnames = String.concat "~" (List.map string_of_typ targs) in
 	m ^ "$" ^ param_tnames
+  
+let is_mingle_name m = String.contains m '$'
 
 let unmingle_name (m : ident) = 
   try
@@ -1924,21 +1926,21 @@ let get_catch_of_exp e = match e with
 (*   let pr = !print_prog_exp in *)
 (*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
 
-let check_proper_return cret_type exc_list f = 
-  let overlap_flow_type fl res_t = match res_t with 
+let check_proper_return cret_type exc_list f =
+  let overlap_flow_type fl res_t = match res_t with
 	| Named ot -> F.overlapping fl (exlist # get_hash ot)
 	| _ -> false in
   let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
-	      let res_t,b_rez = F.get_result_type f0 in
+              let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
 	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
                 & not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
-		  if not (sub_type res_t cret_type) then 					
+		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
-	      else if not (List.exists (fun c-> 
+	      else if not (List.exists (fun c->
                   (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
@@ -1946,39 +1948,39 @@ let check_proper_return cret_type exc_list f =
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
 	      else if not(overlap_flow_type fl_int res_t) then
 		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
-	      else 			
+	      else
 (* else *)
 		(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 		  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+		if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 		  Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normaesl flow"}
 		else ()
 	| F.Exists b->
 		  let res_t,b_rez = F.get_result_type f0 in
 		  let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
 		  if b_rez then
-			if (F.equal_flow_interval !norm_flow_int fl_int) then 
-			  if not (sub_type res_t cret_type) then 					
+			if (F.equal_flow_interval !norm_flow_int fl_int) then
+			  if not (sub_type res_t cret_type) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 			  else ()
-			else 
+			else
 			  if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
 			  else if not(overlap_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
-			  else ()			
-		  else 
+			  else ()
+		  else
 			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
 			   (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
-			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then 
+			if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
 			  Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
-			else ()			
+			else ()
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
-  let rec helper f0 = match f0 with 
+  let rec helper f0 = match f0 with
 	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
 	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume b -> 
-			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+	| F.EAssume b ->
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then ()
 			else check_proper_return_f b.F.formula_assume_simpl
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
@@ -3435,3 +3437,159 @@ let is_resourceless_h_formula prog (h: F.h_formula) =
   Debug.no_1 "is_resourceless_h_formula"
       !print_h_formula string_of_bool
       (fun _ -> is_resourceless_h_formula_x prog h) h
+
+(*************************************************)      
+(* Construct a data dependency graph from an exp *)
+(*************************************************)
+let is_prim_proc prog id = 
+  try
+    let proc = Hashtbl.find prog.new_proc_decls id in
+    not proc.proc_is_main
+  with _ -> false
+  
+let print_data_dependency_graph ddg = 
+  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
+
+let eq_str s1 s2 = String.compare s1 s2 == 0
+      
+let remove_dups_id = Gen.BList.remove_dups_eq eq_str
+
+(* src depends on exp *)
+let data_dependency_graph_of_exp prog src exp =
+  let rec helper ddg src exp = 
+    match exp with
+    | Label e -> helper ddg src e.exp_label_exp
+    | Assign e ->
+      (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
+      helper ddg e.exp_assign_lhs e.exp_assign_rhs
+    | Block e -> helper ddg src e.exp_block_body
+    | Cond e ->
+      let ddg = IG.add_edge ddg src e.exp_cond_condition in
+      let ddg = helper ddg src e.exp_cond_then_arm in
+      helper ddg src e.exp_cond_else_arm
+    | Cast e -> helper ddg src e.exp_cast_body 
+    | Catch e -> helper ddg src e.exp_catch_body 
+    | ICall e -> 
+      let ddg, dst =
+        let mn = e.exp_icall_method_name in
+        if is_prim_proc prog mn then ddg, src
+        else
+          let ddg = IG.add_edge ddg src mn in  
+          ddg, mn
+      in
+      List.fold_left (fun g i -> 
+        IG.add_edge g dst i) ddg e.exp_icall_arguments
+    | SCall e -> 
+      let ddg, dst =
+        let mn = e.exp_scall_method_name in
+        if is_prim_proc prog mn then ddg, src
+        else
+          let ddg = IG.add_edge ddg src mn in  
+          ddg, mn
+      in
+      List.fold_left (fun g i -> 
+        IG.add_edge g dst i) ddg e.exp_scall_arguments
+    | Seq e ->
+      let ddg = helper ddg src e.exp_seq_exp1 in
+      helper ddg src e.exp_seq_exp2
+    | Var e -> IG.add_edge ddg src e.exp_var_name
+    | While e -> 
+      let ddg = IG.add_edge ddg src e.exp_while_condition in
+      helper ddg src e.exp_while_body
+    | Try e ->
+      let ddg = helper ddg src e.exp_try_body in
+      helper ddg src e.exp_catch_clause
+    | _ -> ddg
+  in
+  let ddg = IG.empty in
+  helper ddg src exp
+  
+let data_dependency_graph_of_exp prog src exp =
+  Debug.no_1 "data_dependency_graph_of_exp" idf print_data_dependency_graph
+    (fun _ -> data_dependency_graph_of_exp prog src exp) src
+    
+let rec_calls_of_exp exp = 
+  let f exp = 
+    match exp with
+    | ICall e -> if e.exp_icall_is_rec then Some ([e.exp_icall_method_name]) else None
+    | SCall e -> if e.exp_scall_is_rec then Some ([e.exp_scall_method_name]) else None
+    | _ -> None
+  in fold_exp exp f List.concat []
+  
+let has_ref_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    proc.proc_by_name_params != []
+  with _ -> false
+  
+let is_rec_proc prog mn = 
+  try
+    let proc = find_proc prog mn in
+    proc.proc_is_recursive
+  with _ -> false
+
+let data_dependency_graph_of_proc prog proc = 
+  match proc.proc_body with
+  | None -> None
+  | Some e -> Some (data_dependency_graph_of_exp prog proc.proc_name e)
+  
+let rec collect_dependence_procs_aux prog init ws ddg src =
+  try
+    let succ = IG.succ ddg src in
+    match succ with
+    | [] -> [], ws
+    | _ -> 
+      let depend_mns = List.filter is_mingle_name succ in
+      let depend_mns = 
+        if init then 
+          if not (is_rec_proc prog src) then []
+          else List.filter (fun mn -> 
+            not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
+        else depend_mns
+      in
+      let working_succ = Gen.BList.difference_eq eq_str succ ws in 
+      List.fold_left (fun (acc, ws) d ->
+        let dd, ws = collect_dependence_procs_aux prog false (ws @ [d]) ddg d in
+        (acc @ dd), ws) (depend_mns, ws) working_succ
+  with _ -> [], ws
+  
+let collect_dependence_procs prog g pn = 
+  fst (collect_dependence_procs_aux prog true [pn] g pn)
+
+let dependence_procs_of_proc prog proc =
+  match proc.proc_body with
+  | None -> []
+  | Some e ->
+    let pn = proc.proc_name in
+    let ddg = data_dependency_graph_of_exp prog pn e in
+    let rec_pns = rec_calls_of_exp e in
+    let pns = remove_dups_id (pn::rec_pns) in
+    let r = List.fold_left (fun acc pn -> 
+      acc @ (collect_dependence_procs prog ddg pn)) [] pns in
+    remove_dups_id r
+    
+let add_inf_post_proc proc = 
+  { proc with 
+      proc_static_specs = Cformula.add_inf_post_struc proc.proc_static_specs; 
+      proc_dynamic_specs = Cformula.add_inf_post_struc proc.proc_dynamic_specs; }
+      
+let add_post_for_tnt_prog prog =
+  let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
+    let spec = proc.proc_static_specs in
+    if not (Cformula.is_inf_term_struc spec) then acc
+    else acc @ [proc]) prog.new_proc_decls [] in
+  let inf_post_procs = List.fold_left (fun acc proc ->
+    let dprocs = dependence_procs_of_proc prog proc in
+    let _ = 
+      if is_empty dprocs then ()
+      else print_endline ("\n !!! @post is added into " ^ 
+        (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
+    in
+    acc @ dprocs) [] inf_term_procs in
+  let inf_post_procs = Gen.BList.remove_dups_eq
+    (fun s1 s2 -> String.compare s1 s2 == 0) inf_post_procs in
+  { prog with
+      new_proc_decls = proc_decls_map (fun proc ->
+        if List.mem proc.proc_name inf_post_procs then
+          add_inf_post_proc proc
+        else proc) prog.new_proc_decls; }

@@ -89,9 +89,13 @@ let solve_base_trrels params base_trrels turels =
     simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
   let not_term_cond = List.fold_left (fun ac tu ->
     let ctx = simplify 9 tu.call_ctx params in
+    (* let _ = print_endline ("ctx: " ^ (!CP.print_formula ctx)) in *)
     mkOr ac ctx) (CP.mkFalse no_pos) turels in
   let not_term_cond = om_simplify not_term_cond in
   let term_cond = mkNot not_term_cond in
+  
+  (* let _ = print_endline ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
+  (* let _ = print_endline ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
     
   let base_cond = List.fold_left (fun ac bctx ->
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
@@ -106,6 +110,10 @@ let solve_base_trrels params base_trrels turels =
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in
   base_cond @ may_cond
+  
+let solve_base_trrels params base_trrels turels =
+  Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
+    (fun _ -> solve_base_trrels params base_trrels turels) params
 
 let solve_trrel_list params trrels turels = 
   (* print_endline (pr_list print_ret_trel trrel) *)
@@ -150,7 +158,7 @@ let solve_trrel_list params trrels turels =
     if is_empty rec_conds then [] 
     else
       let rec_conds = om_simplify (CP.join_disjunctions rec_conds) in
-      List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds) 
+      List.map (fun c -> Rec c) (CP.split_disjunctions rec_conds)
   in
   
   let conds = base_conds @ rec_conds in

@@ -837,12 +837,12 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
-		| P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
-		(match i with
-			| [] -> ()
-			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in
-				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
-		in fmt_string  (")"))
+    | P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
+	  (match i with
+	    | [] -> ()
+	    | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in
+	      let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+	      in fmt_string  (")"))
     | P.Template t ->
       fmt_string ((string_of_spec_var t.P.templ_id) ^
       (pr_list_round_sep "," !P.print_exp t.P.templ_args))
@@ -1006,8 +1006,8 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-		| [] -> ()
+    | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
+		| [] -> fmt_string ")"
 		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
 

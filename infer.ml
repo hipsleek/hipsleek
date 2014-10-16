@@ -1810,7 +1810,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         DD.tinfo_pprint "no relation in rhs" pos;
         (estate,lhs_mix,rhs_mix,None,[])
     )
-    else 
+    else
       (* let rhs_p_new = CP.disj_of_list  *)
       (*   ((List.map (fun x -> CP.join_conjunctions x) *)
       (*       other_rhs_ls)(\*@other_disjs*\)) no_pos in *)
@@ -1847,13 +1847,20 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         let rel_lhs_n = List.concat (List.map CP.get_rel_id_list rel_lhs) in
         let rel_rhs_n = List.concat (List.map CP.get_rel_id_list rel_rhs) in
         let rel_lhs_n = CP.intersect rel_lhs_n rel_rhs_n in
+        DD.binfo_hprint (add_str "rel_lhs_n:" (pr_list CP.string_of_spec_var)) rel_lhs_n pos;
+        DD.binfo_hprint (add_str "rel_rhs_n:" (pr_list CP.string_of_spec_var)) rel_rhs_n pos;
+        (* WN :filtering of rel below causes a problem for str1.slk
+           as intermeidate predicates are lost *)
+        let rel_lhs_n = [] in 
         let rel_to_del = if rel_lhs_n=[] then []
-        else 
+        else
           let lhs_rec_vars = CP.fv lhs_p_memo in
+          DD.binfo_hprint (add_str "lhs_rec_vars:" (pr_list CP.string_of_spec_var)) lhs_rec_vars pos;
           let rel_lhs_new = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+          DD.binfo_hprint (add_str "rel_lhs_new:" (pr_list !CP.print_formula)) rel_lhs_new pos;
           List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
         in
-        DD.ninfo_hprint (add_str "rel_to_del:" (pr_list !CP.print_formula)) rel_to_del pos;
+        DD.binfo_hprint (add_str "rel_to_del:" (pr_list !CP.print_formula)) rel_to_del pos;
         (* let lhs_h_p = MCP.pure_of_mix lhs_h_mix in *)
         let lhs = lhs_simplifier_tp lhs_h_p lhs_p_memo in
         let lhs_p_new = CP.restore_memo_formula subs bvars lhs in
@@ -1887,8 +1894,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           DD.tinfo_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
           DD.tinfo_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
-          let new_lhs,lhs_rel_list = 
-            if is_bag_cnt then 
+          let new_lhs,lhs_rel_list =
+            if is_bag_cnt then
               (* TODO: The better is to avoid generating redundant primed vars *)
               pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
             else
@@ -1907,14 +1914,14 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
               Debug.tinfo_hprint (add_str "rel-defn:new lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
               let new_lhs_local = filter_ante_wo_rel new_lhs_local rhs in
               Debug.tinfo_hprint (add_str "rel-defn:filter_ante lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
-              let rec_lhs_rel_vars = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_rhs_n) lhs_rel_list in 
+              let rec_lhs_rel_vars = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_rhs_n) lhs_rel_list in
               let lhs_vars_wo_rel = CP.remove_dups_svl (List.concat (List.map CP.fv_wo_rel lhs_rel_list)) in
               let rhs_vars_wo_rel = CP.fv_wo_rel rhs in
               let lhs_vars_wo_rel = CP.diff_svl lhs_vars_wo_rel rhs_vars_wo_rel in
               let rhs_vars_wo_rel = rhs_vars_wo_rel @ List.concat(List.map CP.fv_wo_rel rec_lhs_rel_vars) in
               let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure new_lhs_local) in
               let lhs_aset = build_var_aset lhs_als in
-              let subs_pairs = List.concat(List.map (fun r -> 
+              let subs_pairs = List.concat(List.map (fun r ->
                   let als_set = CP.EMapSV.find_equiv_all r lhs_aset in
                   let needed_set = CP.intersect als_set lhs_vars_wo_rel in
                   List.map (fun elem -> (elem,r)) needed_set

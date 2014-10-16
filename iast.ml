@@ -185,10 +185,11 @@ and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = { param_type : typ;
-param_name : ident;
-param_mod : param_modifier;
-param_loc : loc }
+and param = { 
+    param_type : typ;
+    param_name : ident;
+    param_mod : param_modifier;
+    param_loc : loc }
 
 (*
   and multi_spec = spec list
@@ -220,26 +221,28 @@ param_loc : loc }
   }
 *)
 
-and proc_decl = { proc_name : ident;
-mutable proc_mingled_name : ident;
-mutable proc_data_decl : data_decl option; (* the class containing the method *)
-mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
-proc_flags: (ident*ident*(flags option)) list;
-proc_source : ident;
-proc_constructor : bool;
-proc_args : param list;
-mutable proc_args_wi : (ident *hp_arg_kind) list;
-proc_return : typ;
-(*   mutable proc_important_vars : CP.spec_var list;*)
-proc_static_specs : Iformula.struc_formula;
-proc_dynamic_specs : Iformula.struc_formula;
-proc_exceptions : ident list;
-proc_body : exp option;
-proc_is_main : bool;
-mutable proc_is_invoked : bool;
-proc_file : string;
-proc_loc : loc;
-proc_test_comps: test_comps option}
+and proc_decl = { 
+  proc_name : ident;
+  mutable proc_mingled_name : ident;
+  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+  mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
+  proc_flags: (ident*ident*(flags option)) list;
+  proc_source : ident;
+  proc_constructor : bool;
+  proc_args : param list;
+  mutable proc_args_wi : (ident *hp_arg_kind) list;
+  proc_return : typ;
+  (*   mutable proc_important_vars : CP.spec_var list;*)
+  proc_static_specs : Iformula.struc_formula;
+  proc_dynamic_specs : Iformula.struc_formula;
+  proc_exceptions : ident list;
+  proc_body : exp option;
+  proc_is_main : bool;
+  mutable proc_is_invoked : bool;
+  proc_file : string;
+  proc_loc : loc;
+  proc_test_comps: test_comps option
+}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -838,11 +841,21 @@ let is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
+let is_num (e : exp) : bool = match e with
+  | FloatLit _ | IntLit _ -> true
+  | _ -> false
+
+let is_mult_op b = 
+  match b with | OpMult -> true | _ -> false
 
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
-  
+ 
+let get_ident (e : exp)  = match e with
+  | Var v -> Some v.exp_var_name
+  | _ -> None
+
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
@@ -3184,4 +3197,12 @@ let detect_invoke prog proc=
   let pr2 = pr_list pr_id in
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
-
+      
+let tnt_prim_procs = 
+  [ "__VERIFIER_nondet_int"; "__VERIFIER_error" ]
+  
+let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
+  
+let is_tnt_prim_proc id =
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs 
+      

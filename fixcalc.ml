@@ -14,12 +14,12 @@ module TP = Tpdispatcher
 (******************************************************************************)
 
 (* Operators *)
-let op_lt = "<" 
-let op_lte = "<=" 
-let op_gt = ">" 
-let op_gte = ">=" 
-let op_eq = "=" 
-let op_neq = "!=" 
+let op_lt = "<"
+let op_lte = "<="
+let op_gt = ">"
+let op_gte = ">="
+let op_eq = "="
+let op_neq = "!="
 let op_and = " && "
 let op_or = " || "
 let op_add = "+"
@@ -31,9 +31,9 @@ let is_self = CP.is_self_var
 
 let is_null = CP.is_null
 
-let rec string_of_elems elems string_of sep = match elems with 
+let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
-  | h::[] -> string_of h 
+  | h::[] -> string_of h
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 (******************************************************************************)
@@ -364,28 +364,28 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
   let fs = List.map (fun (f,_) -> Cformula.subst sst (subst_inv_lower_view lower_invs f)) fml0 in
-  let input_fixcalc = 
+  let input_fixcalc =
     try
-      vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^ 
-      "] -> [] -> []: " ^ 
+      vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
+      "] -> [] -> []: " ^
       (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ^
           "\n};\n"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
-  in 
+  in
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc, fr_vars, rev_sst)
 
 let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=
   let vars =  para_names in
   let fs = List.map (fun (f,_) -> (subst_inv_lower_view lower_invs f)) fml0 in
-  let input_fixcalc = 
+  let input_fixcalc =
     try
-      vname ^ ":={[" ^ (self) ^ (if (List.length vars > 0) then "," else "") ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
-          "] -> [] -> []: " ^ 
+      vname ^ ":={[" ^ (self) ^ (if (List.length vars > 0) then "," else "") ^ (string_of_elems vars fixcalc_of_spec_var ",") ^
+          "] -> [] -> []: " ^
           (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ^
           "\n};\n"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
-  in 
+  in
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc)
 
@@ -764,8 +764,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
-  DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.binfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
+  DD.binfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
@@ -836,15 +836,17 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
   let pfs,no = process_base_rec pfs rel specs in
 
   (* Make existence *)
-  let pfs = List.concat (List.map (fun p -> 
+  let pfs = List.concat (List.map (fun p ->
     let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
     let res = CP.mkExists exists_vars p None no_pos in
-    if CP.isConstTrue (TP.simplify_raw res) then []
+    if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
     else [res]) pfs)
   in
 
+  Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
+
   (* Disjunctive defintion for each relation *)
-  let def = List.fold_left 
+  let def = List.fold_left
           (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
   [(rel, def, no)]
 

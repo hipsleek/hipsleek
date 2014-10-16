@@ -1279,6 +1279,7 @@ let infer_const = ref ""
 (* TNT Inference *)
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
+let tnt_add_post = ref true
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
