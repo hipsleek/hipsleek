@@ -1127,6 +1127,13 @@ type nt_res =
   | NT_Partial_Yes (* For mutual recursion *)
   | NT_No of (CP.formula list)
 
+type nt_cond = {
+  ntc_fn: string;
+  ntc_id: int;
+  ntc_is_loop_cond: bool;
+  ntc_cond: CP.formula;
+}
+
 let print_nt_res = function
   | NT_Yes -> "NT_Yes"
   | NT_Partial_Yes -> "NT_Partial_Yes"
@@ -1200,11 +1207,16 @@ let infer_loop_cond_list params ante conds =
 
 let search_nt_cond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
-  let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
-  let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
-  let cond = uid.CP.tu_cond in
-  let is_loop_cond = uid.CP.tu_id == CP.loop_id in
-  (fn, is_loop_cond, subst_cond_with_ann params ann cond) 
+  let uids = List.find_all (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+  let uids = Gen.BList.remove_dups_eq CP.eq_uid uids in
+  List.map (fun uid ->
+    let params = List.concat (List.map CP.afv uid.CP.tu_args) in
+    let cond = uid.CP.tu_cond in
+    let is_loop_cond = uid.CP.tu_id == CP.loop_id in
+    { ntc_fn = fn;
+      ntc_id = uid.CP.tu_id;
+      ntc_is_loop_cond = is_loop_cond;
+      ntc_cond = cond; }) uids 
   
 let search_rec_icond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
@@ -1249,25 +1261,26 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
     (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
     (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
     let nt_conds = List.fold_left (fun acc ann ->
-      try acc @ [search_nt_cond_ann lhs_uids ann]
-      with Not_found -> acc) [] trrel.termr_lhs in
+      acc @ (search_nt_cond_ann lhs_uids ann)) [] trrel.termr_lhs in
     
     (* nt_res with candidates for abductive inference *)
     let ntres =
-      let loop_conds, rec_conds = List.partition (fun (_, is_loop_cond, _) -> is_loop_cond) nt_conds in
-      let self_conds, other_conds = List.partition (fun (fnc, _, _) -> eq_str fn fnc) rec_conds in
-      if List.exists (fun (_, _, c) -> (imply eh_ctx c)) loop_conds then NT_Yes
+      let loop_conds, self_conds, other_conds = List.fold_left (fun (la, sa, oa) c ->
+        if c.ntc_is_loop_cond then (la @ [c.ntc_cond]), sa, oa
+        else if c.ntc_id == rhs_uid.CP.tu_id then la, (sa @ [c.ntc_cond]), oa
+        else la, sa, (oa @ [c.ntc_cond])) ([], [], []) nt_conds in
+      
+      if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)
-      (* else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) self_conds then NT_Yes *)
+      (* else if List.exists (fun c -> (imply eh_ctx c)) self_conds then NT_Yes *)
       else if (self_conds != []) && 
-              (imply eh_ctx (CP.join_disjunctions (List.map (fun (_, _, c) -> c) self_conds))) 
+              (imply eh_ctx (CP.join_disjunctions self_conds))
            then NT_Yes
       (* For relations to other methods' conditions *)
-      else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
+      else if List.exists (fun c -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
         (* Infer the conditions for to-loop nodes *)
         let params = params_of_term_ann prog trrel.termr_rhs in
-        let loop_conds = List.map (fun (_, _, c) -> c) loop_conds in
         let il = infer_loop_cond_list params eh_ctx loop_conds in
         (* Infer the conditions for self-looping nodes or mutual nodes *)
         let rec_iconds = List.map (fun ann ->
@@ -1310,56 +1323,76 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
     lhs_uids rhs_uid trrels
 
 (* Note that each vertex is a unique condition of a method (uid) *)        
+(* let proving_non_termination_one_vertex prog trrels tg scc v =                                *)
+(*   (* let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in                   *)       *)
+(*   (* let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in *)       *)
+(*   let out_edges_from_v = outside_edges_scc_vertex tg scc v in                                *)
+(*   let loop_edges_from_v = List.filter (fun (_, r, _) ->                                      *)
+(*     CP.is_Loop r.termu_rhs) out_edges_from_v in                                              *)
+(*   let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in             *)
+  
+(*   (* let _ = print_endline ("LOOP: " ^                                            *)         *)
+(*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) loop_edges_from_v)) in *)         *)
+  
+(*   let scc_edges_from_v = edges_of_scc_vertex tg scc v in                                     *)
+(*   let looping_edges, non_looping_edges =                                                     *)
+(*     List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in                              *)
+(*   (* let _ = print_endline ("LOOPING: " ^                                         *)         *)
+(*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in     *)         *)
+(*   (* let _ = print_endline ("NON-LOOPING: " ^                                     *)         *)
+(*   (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in *)         *)
+        
+(*   (* If the number of looping edges is > 1, it means there is          *)                    *)
+(*   (* multiple recursive calls of the same function in the same context *)                    *)
+(*   match looping_edges with                                                                   *)
+(*   | (_, looping_rel, _)::_ ->                                                                *)
+(*     begin match looping_rel.termu_lhs with                                                   *)
+(*     | TermU uid -> (* the uid here is same as the one in RHS of trrel *)                     *)
+(*       let rhs_uid = uid in                                                                   *)
+(*       let other_non_looping_edges = List.filter (fun (_, rel, _) ->                          *)
+(*         not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in *)
+(*       let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list                   *)
+(*         (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in                      *)
+(*       let ntres = proving_non_termination_trrels prog                                        *)
+(*         ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in                                      *)
+(*       (Some uid, ntres)                                                                      *)
+(*     | _ -> (None, NT_No [])                                                                  *)
+(*     end                                                                                      *)
+(*   | [] ->                                                                                    *)
+(*     begin match (loop_edges_from_v @ non_looping_edges) with                                 *)
+(*     | (_, rel, _)::_ ->                                                                      *)
+(*       begin match rel.termu_lhs with                                                         *)
+(*       | TermU uid ->                                                                         *)
+(*         let rhs_uid = uid in                                                                 *)
+(*         let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list                 *)
+(*           (CP.uid_of_term_ann rel.termu_rhs)) non_looping_edges) in                          *)
+(*         let ntres = proving_non_termination_trrels prog                                      *)
+(*           ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in                                    *)
+(*         (Some uid, ntres)                                                                    *)
+(*       | _ -> (None, NT_No [])                                                                *)
+(*       end                                                                                    *)
+(*     | [] -> (None, NT_No [])                                                                 *)
+(*     end                                                                                      *)
+
 let proving_non_termination_one_vertex prog trrels tg scc v =
-  (* let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in                   *)
-  (* let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in *)
   let out_edges_from_v = outside_edges_scc_vertex tg scc v in
   let loop_edges_from_v = List.filter (fun (_, r, _) -> 
     CP.is_Loop r.termu_rhs) out_edges_from_v in
   let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in
-  
-  (* let _ = print_endline ("LOOP: " ^                                            *)
-  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) loop_edges_from_v)) in *)
-  
   let scc_edges_from_v = edges_of_scc_vertex tg scc v in
-  let looping_edges, non_looping_edges = 
-    List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in
-  (* let _ = print_endline ("LOOPING: " ^                                         *)
-  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in     *)
-  (* let _ = print_endline ("NON-LOOPING: " ^                                     *)
-  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in *)
-        
-  (* If the number of looping edges is > 1, it means there is          *)
-  (* multiple recursive calls of the same function in the same context *)
-  match looping_edges with
-  | (_, looping_rel, _)::_ ->
-    begin match looping_rel.termu_lhs with
-    | TermU uid -> (* the uid here is same as the one in RHS of trrel *)
+  match (scc_edges_from_v @ loop_edges_from_v) with
+  | (_, rel, _)::_ ->
+    begin match rel.termu_lhs with
+    | TermU uid ->
       let rhs_uid = uid in
-      let other_non_looping_edges = List.filter (fun (_, rel, _) ->
-        not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in
-      let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
-        (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in
+      let lhs_uids = List.concat (List.map (fun (_, rel, _) -> 
+        opt_to_list (CP.uid_of_term_ann rel.termu_rhs)) scc_edges_from_v) in
       let ntres = proving_non_termination_trrels prog
-        ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in
+        (lhs_uids @ loop_uids) rhs_uid trrels in
       (Some uid, ntres)
     | _ -> (None, NT_No [])
     end
-  | [] -> 
-    begin match (loop_edges_from_v @ non_looping_edges) with
-    | (_, rel, _)::_ ->
-      begin match rel.termu_lhs with
-      | TermU uid ->
-        let rhs_uid = uid in
-        let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
-          (CP.uid_of_term_ann rel.termu_rhs)) non_looping_edges) in
-        let ntres = proving_non_termination_trrels prog 
-          ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in
-        (Some uid, ntres)
-      | _ -> (None, NT_No [])
-      end
-    | [] -> (None, NT_No [])
-    end
+  | [] -> (None, NT_No [])
     
 let proving_trivial_termination_one_vertex prog tg scc v =
   let out_edges_from_v = outside_edges_scc_vertex tg scc v in
