@@ -2,10 +2,10 @@ data Exp {
   int val;
 }.
 
-checkentail (exists v_int_12_1213': v_Exp_12_1214'::Exp<v_int_12_1213'>&0<x' & x'=x & 
-v_bool_11_1218' & 0<x' & v_bool_11_1218' & v_int_12_1213'=2 & 
-eres=v_Exp_12_1214'& flow Exp)
- |-  emp&res=2 & 0<x& flow Exp. 
+checkentail (exists v_int: eres::Exp<v_int>
+//& 0<x 
+& v_int=2 & flow Exp1)
+ |-  emp&res=2 & 0<x& flow Exp1. 
 print residue.
 
 /*
@@ -13,8 +13,8 @@ print residue.
 
 Why is context false?
 
-Entail 1: Valid. (bot)
-Residue:
- <1>hfalse&false&{FLOW,(0,0)=__false}[]
+If exception does not exist, should flag
+an error that exception is illegal.
+
 
 */

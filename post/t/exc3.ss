@@ -5,7 +5,7 @@ class Exp extends __Exc {
 int loop(int x)
  infer [@post_n]
   requires true
-  ensures true;
+  ensures true & flow __flow;
 //ensures eres::Exp<2> & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
 //ensures res=10;
 {

@@ -9983,6 +9983,8 @@ so just call get_may_falure_list_partial_context*)
 let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
     (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
+  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc")
+  else
     let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
     (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk)

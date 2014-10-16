@@ -206,7 +206,7 @@ let common_arguments = [
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set Globals.trace_failure,
-   "Enable trace all failure (and exception)");
+   "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
