@@ -929,10 +929,10 @@ let infer_abductive_cond prog ann ante conseq =
           (* let _ = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
           (* let _ = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
           let args = if is_empty incl_args then args else incl_args in
-          let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in
-          Some (mkNot neg_icond)
-          (* let tcond = simplify 1 (mkAnd abd_ante abd_conseq) args in *)
-          (* Some tcond                                                 *)
+          (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                    *)
+          (* Some (mkNot neg_icond)                                                                    *)
+          let tcond = simplify 1 (mkAnd abd_ante abd_conseq) args in
+          Some tcond
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -1257,10 +1257,12 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       let loop_conds, rec_conds = List.partition (fun (_, is_loop_cond, _) -> is_loop_cond) nt_conds in
       let self_conds, other_conds = List.partition (fun (fnc, _, _) -> eq_str fn fnc) rec_conds in
       if List.exists (fun (_, _, c) -> (imply eh_ctx c)) loop_conds then NT_Yes
+      (* For self loop on the same condition *)
       (* else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) self_conds then NT_Yes *)
       else if (self_conds != []) && 
               (imply eh_ctx (CP.join_disjunctions (List.map (fun (_, _, c) -> c) self_conds))) 
            then NT_Yes
+      (* For relations to other methods' conditions *)
       else if List.exists (fun (_, _, c) -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
         (* Infer the conditions for to-loop nodes *)
@@ -1307,7 +1309,7 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
     (fun _ _ _ -> proving_non_termination_trrels prog lhs_uids rhs_uid trrels)
     lhs_uids rhs_uid trrels
 
-(* Note that each vertex is a unique condition of a method *)        
+(* Note that each vertex is a unique condition of a method (uid) *)        
 let proving_non_termination_one_vertex prog trrels tg scc v =
   (* let loop_edges_from_v = TG.find_all_edges tg v CP.loop_id in                   *)
   (* let loop_uids = List.map (fun (_, r, _) -> uid_of_loop r) loop_edges_from_v in *)
@@ -1322,11 +1324,11 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
   let scc_edges_from_v = edges_of_scc_vertex tg scc v in
   let looping_edges, non_looping_edges = 
     List.partition (fun (_, _, d) -> d = v) scc_edges_from_v in
-  (* let _ = print_endline ("LOOPING: " ^                                           *)
-  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in       *)
-  (* let _ = print_endline ("NON-LOOPING: " ^                                       *)
-  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in   *)
-    
+  (* let _ = print_endline ("LOOPING: " ^                                         *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) looping_edges)) in     *)
+  (* let _ = print_endline ("NON-LOOPING: " ^                                     *)
+  (*   (pr_list (fun (_, r, _) -> print_call_trel_debug r) non_looping_edges)) in *)
+        
   (* If the number of looping edges is > 1, it means there is          *)
   (* multiple recursive calls of the same function in the same context *)
   match looping_edges with
