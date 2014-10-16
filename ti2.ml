@@ -1169,50 +1169,27 @@ let uid_of_loop trel =
 let rec infer_abductive_cond_list prog ann ante conds =
   match conds with
   | [] -> []
-  | c::cs -> 
-    if imply ante (mkNot c) 
-    then infer_abductive_cond_list prog ann ante cs
+  | cl::cs -> 
+    let cl = List.filter (fun c -> not (imply ante (mkNot c))) cl in
+    if is_empty cl then infer_abductive_cond_list prog ann ante cs
     else
-      let ic = infer_abductive_cond prog ann ante c in
-      match ic with
-      | None -> infer_abductive_cond_list prog ann ante cs
-      | Some c -> [c]
-      (* let cc = CP.split_conjunctions c in                           *)
-      (* let icc = List.map (infer_abductive_cond prog ann ante) cc in *)
-      (* let icc = List.concat (List.map opt_to_list icc) in           *)
-      (* match icc with                                                *)
-      (* | [] -> infer_abductive_cond_list prog ann ante cs            *)
-      (* | _ -> icc                                                    *)
-      (* let cc = CP.split_conjunctions c in                                           *)
-      (* let icc, tcc = List.fold_left (fun (icc, tcc) cons ->                         *)
-      (*   let icond = infer_abductive_cond prog ann ante cons in                      *)
-      (*   match icond with                                                            *)
-      (*   | None -> icc @ [icond], tcc                                                *)
-      (*   | Some ic ->                                                                *)
-      (*     if is_sat (mkAnd ante ic) then icc @ [icond], tcc                         *)
-      (*     else                                                                      *)
-      (*       (* Return trivial abductive condition *)                                *)
-      (*       let params = List.concat (List.map CP.afv (CP.args_of_term_ann ann)) in *)
-      (*       let excl_params = CP.fv ic in                                           *)
-      (*       let incl_params = diff params excl_params in                            *)
-      (*       let params = if is_empty incl_params then params else incl_params in    *)
-      (*       let neg_ic = simplify 1 (mkAnd ante (mkNot cons)) params in             *)
-      (*       icc, tcc @ [mkNot neg_ic])                                              *)
-      (*   ([], []) cc in                                                              *)
-      (* let icc = List.concat (List.map opt_to_list icc) in                           *)
-      (* match icc, tcc with                                                           *)
-      (* | [], [] -> infer_abductive_cond_list prog ann ante cs                        *)
-      (* | _ ->                                                                        *)
-      (*   let filter_true = List.filter (fun c -> not (CP.isConstTrue c)) in          *)
-      (*   let icc = filter_true icc in                                                *)
-      (*   let tcc = om_simplify (CP.join_conjunctions tcc) in                         *)
-      (*   if is_empty icc then [tcc]                                                  *)
-      (*   else icc @ [tcc]                                                            *)
+      let cl = 
+        if (List.length cl) <= 1 then cl 
+        else CP.split_disjunctions (pairwisecheck (CP.join_disjunctions cl))
+      in
+      let icl = List.fold_left (fun acc c -> 
+        let ic = infer_abductive_cond prog ann ante c in
+        match ic with
+        | None -> acc
+        | Some c -> acc @ [c]) [] cl in
+      if not (is_empty icl) then icl
+      else infer_abductive_cond_list prog ann ante cs
       
 let infer_abductive_cond_list prog ann ante conds =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list pr1 in
-  Debug.no_2 "infer_abductive_cond_list" pr1 pr2 pr2
+  let pr3 = pr_list pr2 in
+  Debug.no_2 "infer_abductive_cond_list" pr1 pr3 pr2
     (fun _ _ -> infer_abductive_cond_list prog ann ante conds) ante conds
 
 let infer_loop_cond_list params ante conds =
@@ -1231,10 +1208,16 @@ let search_nt_cond_ann lhs_uids ann =
   
 let search_rec_icond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
-  let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
-  let params = List.concat (List.map CP.afv uid.CP.tu_args) in  
-  let icond = uid.CP.tu_icond in
-  subst_cond_with_ann params ann icond 
+  (* let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in *)
+  (* let params = List.concat (List.map CP.afv uid.CP.tu_args) in           *)
+  (* let icond = uid.CP.tu_icond in                                         *)
+  (* subst_cond_with_ann params ann icond                                   *)
+  List.fold_left (fun acc uid ->
+    if not (eq_str uid.CP.tu_fname fn) then acc
+    else
+      let params = List.concat (List.map CP.afv uid.CP.tu_args) in
+      let icond = uid.CP.tu_icond in
+      acc @ [subst_cond_with_ann params ann icond]) [] lhs_uids
 
 (* Remove all constraints added from case specs *)    
 let elim_irrel_formula irrel_vars_lst f =
@@ -1351,11 +1334,11 @@ let proving_non_termination_one_vertex prog trrels tg scc v =
     begin match looping_rel.termu_lhs with
     | TermU uid -> (* the uid here is same as the one in RHS of trrel *)
       let rhs_uid = uid in
-      let other_non_looping_edges = List.filter (fun (_, rel, _) -> 
+      let other_non_looping_edges = List.filter (fun (_, rel, _) ->
         not (eq_str (CP.fn_of_term_ann rel.termu_rhs) uid.CP.tu_fname)) non_looping_edges in
       let lhs_uids = List.concat (List.map (fun (_, rel, _) -> opt_to_list
         (CP.uid_of_term_ann rel.termu_rhs)) other_non_looping_edges) in
-      let ntres = proving_non_termination_trrels prog 
+      let ntres = proving_non_termination_trrels prog
         ((uid::lhs_uids) @ loop_uids) rhs_uid trrels in
       (Some uid, ntres)
     | _ -> (None, NT_No [])
