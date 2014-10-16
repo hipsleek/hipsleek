@@ -3600,7 +3600,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                   | Bool  -> "ret_bool"
                   | _ -> failwith "TO BE IMPLEMENTED"
               in
-              let catch_clause = I.mkCatch (Some vn) (Some (Named (return_name proc.I.proc_return))) loop_ret_flow None return_exp pos in
+              let constant_flow = return_name proc.I.proc_return in
+              let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
               let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
               let new_body = fst (trans_exp prog proc new_body_e) in
               (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
