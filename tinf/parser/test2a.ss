@@ -17,7 +17,7 @@ requires true
   }
   return true;
 }
-
+*/
 int  test_int(int a)
 requires true
  ensures a>1 & res=a | a<=1 & res=2;
@@ -31,7 +31,8 @@ requires true
   return 2;
   dprint;
 }
-*/
+
+/*
 int  test_int_2(int a,int b)
 requires true
  ensures a>1 & b<=1 & res=a | a<=1 & res=2 | a>1 & b>1 & res=3;
@@ -44,6 +45,7 @@ requires true
       requires true
       ensures  eres::ret_int<3> & b>1 & flow ret_int or b<=1 & flow __norm;
     {
+      b = b+1;
       return 3;
     }
     return a;
@@ -51,4 +53,4 @@ requires true
   return 2;
   dprint;
 }
-
+*/

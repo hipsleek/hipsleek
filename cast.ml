@@ -222,6 +222,8 @@ and proc_decl = {
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;
+    proc_while_with_return : bool option; 
+        (* None - not while, Some(true) : while with ret *)
     proc_test_comps :  test_comps option}
 
 and test_comps = 

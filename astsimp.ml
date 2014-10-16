@@ -3391,7 +3391,9 @@ and trans_proc_x_loop (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
-	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in
+          C.proc_while_with_return = None;
+	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps
+      } in
       (E.pop_scope (); cproc)))
   in
   wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
@@ -3733,6 +3735,7 @@ in
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
+          C.proc_while_with_return = None;
 	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in
       (E.pop_scope (); cproc)))
   in
