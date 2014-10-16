@@ -9,8 +9,10 @@
  */
 
 void loop(int x, int y)
+/*
   requires Term[x, y]
   ensures true;
+*/
 {
   if (x >= 0) {
     y = y - 1;
