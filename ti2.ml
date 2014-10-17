@@ -1184,8 +1184,9 @@ let uid_of_loop trel =
 
 let infer_abductive_contra prog rhs_uid ante cons =
   let cl = CP.split_conjunctions cons in
-  (* if (List.length cl) <= 1 then [] *)
-  (* else                             *)
+  let cl = List.filter (fun c -> not (imply ante c)) cl in
+  if is_empty cl then [CP.mkTrue no_pos]
+  else
     List.fold_left (fun acc c ->
       let ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante c in
       match ic with
