@@ -922,17 +922,15 @@ let infer_abductive_cond prog ann ante conseq =
         else
           (* Return trivial abductive condition *)
           let args = List.concat (List.map CP.afv abd_templ_args) in
-          (* Some (simplify 1 (mkAnd abd_ante abd_conseq) args) *)
-          let excl_args = CP.fv icond in
-          let incl_args = diff args excl_args in
+          Some (simplify 1 (mkAnd abd_ante abd_conseq) args)
+          (* let excl_args = CP.fv icond in                                                            *)
+          (* let incl_args = diff args excl_args in                                                    *)
           (* let _ = print_endline ("Abductive synthesis: args: " ^ (!CP.print_svl args)) in           *)
           (* let _ = print_endline ("Abductive synthesis: excl_args: " ^ (!CP.print_svl excl_args)) in *)
           (* let _ = print_endline ("Abductive synthesis: incl_args: " ^ (!CP.print_svl incl_args)) in *)
-          let args = if is_empty incl_args then args else incl_args in
+          (* let args = if is_empty incl_args then args else incl_args in                              *)
           (* let neg_icond = simplify 1 (mkAnd abd_ante (mkNot abd_conseq)) args in                    *)
           (* Some (mkNot neg_icond)                                                                    *)
-          let tcond = simplify 1 (mkAnd abd_ante abd_conseq) args in
-          Some tcond
       | _ -> None
 
 let infer_abductive_cond prog ann ante conseq =
@@ -1130,7 +1128,6 @@ type nt_res =
 type nt_cond = {
   ntc_fn: string;
   ntc_id: int;
-  ntc_is_loop_cond: bool;
   ntc_cond: CP.formula;
 }
 
@@ -1212,24 +1209,20 @@ let search_nt_cond_ann lhs_uids ann =
   List.map (fun uid ->
     let params = List.concat (List.map CP.afv uid.CP.tu_args) in
     let cond = subst_cond_with_ann params ann uid.CP.tu_cond in
-    let is_loop_cond = uid.CP.tu_id == CP.loop_id in
     { ntc_fn = fn;
       ntc_id = uid.CP.tu_id;
-      ntc_is_loop_cond = is_loop_cond;
       ntc_cond = cond; }) uids 
   
 let search_rec_icond_ann lhs_uids ann =
   let fn = CP.fn_of_term_ann ann in
-  (* let uid = List.find (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in *)
-  (* let params = List.concat (List.map CP.afv uid.CP.tu_args) in           *)
-  (* let icond = uid.CP.tu_icond in                                         *)
-  (* subst_cond_with_ann params ann icond                                   *)
-  List.fold_left (fun acc uid ->
-    if not (eq_str uid.CP.tu_fname fn) then acc
-    else
-      let params = List.concat (List.map CP.afv uid.CP.tu_args) in
-      let icond = uid.CP.tu_icond in
-      acc @ [subst_cond_with_ann params ann icond]) [] lhs_uids
+  let uids = List.find_all (fun uid -> eq_str uid.CP.tu_fname fn) lhs_uids in
+  let uids = Gen.BList.remove_dups_eq CP.eq_uid uids in
+  List.map (fun uid ->
+    let params = List.concat (List.map CP.afv uid.CP.tu_args) in
+    let cond = subst_cond_with_ann params ann uid.CP.tu_icond in
+    { ntc_fn = fn;
+      ntc_id = uid.CP.tu_id;
+      ntc_cond = cond; }) uids
 
 (* Remove all constraints added from case specs *)    
 let elim_irrel_formula irrel_vars_lst f =
@@ -1266,13 +1259,14 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
     (* nt_res with candidates for abductive inference *)
     let ntres =
       let loop_conds, self_conds, other_conds = List.fold_left (fun (la, sa, oa) c ->
-        if c.ntc_is_loop_cond then (la @ [c.ntc_cond]), sa, oa
+        if c.ntc_id == CP.loop_id then (la @ [c.ntc_cond]), sa, oa
         else if c.ntc_id == rhs_uid.CP.tu_id then la, (sa @ [c.ntc_cond]), oa
-        else la, sa, (oa @ [c.ntc_cond])) ([], [], []) nt_conds in
+        else la, sa, (oa @ [c])) ([], [], []) nt_conds 
+      in
         
-      let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in
-      let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in
-      let _ = print_endline ("other_conds: " ^ (pr_list !CP.print_formula other_conds)) in      
+      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in   *)
+      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in   *)
+      (* let _ = print_endline ("other_conds: " ^ (pr_list !CP.print_formula other_conds)) in *)
       
       if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)
@@ -1281,18 +1275,27 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
               (imply eh_ctx (CP.join_disjunctions self_conds))
            then NT_Yes
       (* For relations to other methods' conditions *)
-      else if List.exists (fun c -> (imply eh_ctx c)) other_conds then NT_Partial_Yes
       else 
-        (* Infer the conditions for to-loop nodes *)
-        let params = params_of_term_ann prog trrel.termr_rhs in
-        let il = infer_loop_cond_list params eh_ctx loop_conds in
-        (* Infer the conditions for self-looping nodes or mutual nodes *)
-        let rec_iconds = List.map (fun ann ->
-          search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
-        in
-        (* let rec_iconds = List.concat (List.map CP.split_conjunctions rec_iconds) in *)
-        let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
-        NT_No (ir @ (opt_to_list il))
+        let other_groups = partition_by_key (fun c -> c.ntc_fn) eq_str other_conds in
+        if List.exists (fun (gn, gc) -> 
+          not (eq_str fn gn) && (gc != []) &&
+          (imply eh_ctx (CP.join_disjunctions (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
+        then NT_Partial_Yes
+        else 
+          (* Infer the conditions for to-loop nodes *)
+          let params = params_of_term_ann prog trrel.termr_rhs in
+          let il = infer_loop_cond_list params eh_ctx loop_conds in
+          (* Infer the conditions for self-looping nodes or mutual nodes *)
+          let rec_iconds = List.map (fun ann ->
+            search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
+          in
+          let rec_iconds = List.map (fun cl ->
+            List.fold_left (fun acc c ->
+              if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc
+              else acc @ [c.ntc_cond]) [] cl) rec_iconds
+          in
+          let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
+          NT_No (ir @ (opt_to_list il))
     in ntres
     
 let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
