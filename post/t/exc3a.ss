@@ -19,7 +19,7 @@ int loop(int x)
 }
 
 /*
-# exc3.ss
+# exc3a.ss
 
  infer [@post_n]
   requires true
