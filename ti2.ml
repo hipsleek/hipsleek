@@ -1170,31 +1170,51 @@ let uid_of_loop trel =
       CP.tu_pos = no_pos; }
   | _ -> report_error no_pos ("[TNT Inference]: Unexpected non-Loop constraint @ uid_of_loop.")
 
-let rec infer_abductive_cond_list prog ann ante conds =
+
+(* let infer_abductive_cond_disj prog rhs_uid ante cond_list =                     *)
+(*   let cl =                                                                      *)
+(*     if (List.length cond_list) <= 2 then cond_list                              *)
+(*     else CP.split_disjunctions (pairwisecheck (CP.join_disjunctions cond_list)) *)
+(*   in                                                                            *)
+(*   List.fold_left (fun acc c ->                                                  *)
+(*     let ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante c in             *)
+(*     match ic with                                                               *)
+(*     | None -> acc                                                               *)
+(*     | Some c -> acc @ [c]) [] cl                                                *)
+
+let infer_abductive_contra prog rhs_uid ante cons =
+  let cl = CP.split_conjunctions cons in
+  (* if (List.length cl) <= 1 then [] *)
+  (* else                             *)
+    List.fold_left (fun acc c ->
+      let ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante c in
+      match ic with
+      | None -> acc
+      | Some c -> acc @ [c]) [] cl
+
+let rec infer_abductive_cond_list prog rhs_uid ante conds =
   match conds with
   | [] -> []
   | cl::cs -> 
-    let cl = List.filter (fun c -> not (imply ante (mkNot c))) cl in
-    if is_empty cl then infer_abductive_cond_list prog ann ante cs
+    let cl = List.filter (fun c -> not (imply ante (mkNot c.ntc_cond))) cl in
+    if is_empty cl then infer_abductive_cond_list prog rhs_uid ante cs
     else
-      let cl = 
-        if (List.length cl) <= 1 then cl 
-        else CP.split_disjunctions (pairwisecheck (CP.join_disjunctions cl))
-      in
-      let icl = List.fold_left (fun acc c -> 
-        let ic = infer_abductive_cond prog ann ante c in
-        match ic with
-        | None -> acc
-        | Some c -> acc @ [c]) [] cl in
-      if not (is_empty icl) then icl
-      else infer_abductive_cond_list prog ann ante cs
+      try
+        let self_c = List.find (fun c -> c.ntc_id == rhs_uid.CP.tu_id) cl in
+        (* let self_ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante self_c.ntc_cond in *)
+        let icl = infer_abductive_contra prog rhs_uid ante self_c.ntc_cond in
+        let icl = icl (* @ (opt_to_list self_ic) *) in 
+        if not (is_empty icl) then icl
+        else infer_abductive_cond_list prog rhs_uid ante cs
+      with Not_found -> infer_abductive_cond_list prog rhs_uid ante cs
       
-let infer_abductive_cond_list prog ann ante conds =
+let infer_abductive_cond_list prog rhs_uid ante conds =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list pr1 in
   let pr3 = pr_list pr2 in
   Debug.no_2 "infer_abductive_cond_list" pr1 pr3 pr2
-    (fun _ _ -> infer_abductive_cond_list prog ann ante conds) ante conds
+    (fun _ _ -> infer_abductive_cond_list prog rhs_uid ante conds) 
+    ante (List.map (fun cl -> List.map (fun c -> c.ntc_cond) cl) conds)
 
 let infer_loop_cond_list params ante conds =
   (* print_endline ("TO-LOOP: " ^ (pr_list !CP.print_formula conds)) *)
@@ -1286,15 +1306,17 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
           let params = params_of_term_ann prog trrel.termr_rhs in
           let il = infer_loop_cond_list params eh_ctx loop_conds in
           (* Infer the conditions for self-looping nodes or mutual nodes *)
-          let rec_iconds = List.map (fun ann ->
-            search_rec_icond_ann lhs_uids ann) trrel.termr_lhs 
+          let rec_iconds = List.fold_left (fun acc ann ->
+            let icl = search_rec_icond_ann lhs_uids ann in
+            if eq_str fn (CP.fn_of_term_ann ann) then icl::acc
+            else acc @ [icl]) [] trrel.termr_lhs 
           in
-          let rec_iconds = List.map (fun cl ->
-            List.fold_left (fun acc c ->
-              if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc
-              else acc @ [c.ntc_cond]) [] cl) rec_iconds
-          in
-          let ir = infer_abductive_cond_list prog trrel.termr_rhs eh_ctx rec_iconds in
+          (* let rec_iconds = List.map (fun cl ->                                       *)
+          (*   List.fold_left (fun acc c ->                                             *)
+          (*     if (eq_str fn c.ntc_fn) && not (c.ntc_id == rhs_uid.CP.tu_id) then acc *)
+          (*     else acc @ [c.ntc_cond]) [] cl) rec_iconds                             *)
+          (* in                                                                         *)
+          let ir = infer_abductive_cond_list prog rhs_uid eh_ctx rec_iconds in
           NT_No (ir @ (opt_to_list il))
     in ntres
     
