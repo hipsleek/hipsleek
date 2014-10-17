@@ -1204,11 +1204,19 @@ let rec infer_abductive_cond_list prog rhs_uid ante conds =
         let self_c = List.find (fun c -> c.ntc_id == rhs_uid.CP.tu_id) cl in
         (* let self_ic = infer_abductive_cond prog (CP.TermU rhs_uid) ante self_c.ntc_cond in *)
         let icl = infer_abductive_contra prog rhs_uid ante self_c.ntc_cond in
-        let icl = icl (* @ (opt_to_list self_ic) *) in 
+        (* let icl = icl @ (opt_to_list self_ic) in *)
         if not (is_empty icl) then icl
         else infer_abductive_cond_list prog rhs_uid ante cs
-      with Not_found -> infer_abductive_cond_list prog rhs_uid ante cs
-      
+      with Not_found -> 
+        let rec helper cl = 
+          match cl with
+          | [] -> infer_abductive_cond_list prog rhs_uid ante cs
+          | c::cl -> 
+            let icl = infer_abductive_contra prog rhs_uid ante c.ntc_cond in
+            if not (is_empty icl) then icl
+            else helper cl
+        in helper cl
+        
 let infer_abductive_cond_list prog rhs_uid ante conds =
   let pr1 = !CP.print_formula in
   let pr2 = pr_list pr1 in
