@@ -10,11 +10,12 @@ int loop(int x)
 //ensures res=10;
 {
   if (x>0) {
+    //dprint;
     raise new Exp(2222);
     loop(x);
   } 
   //else {return x+1;}
-  dprint;
+  // dprint;
   return x+1111;
 }
 

@@ -9,10 +9,12 @@ infer [post] (exists v_int: v_Exp_12_1214'::Exp<v_int>&
  |-  emp&post(x,res) & flow __flow. 
 print residue.
 
+/*
 infer [post] (exists v_int: v_Exp_12_1214'::Exp<v_int>&
  0<x &  v_int=2 & eres=v_Exp_12_1214' & v_int=res & flow __norm)
  |-  emp&post(x,res) & flow __flow. 
 print residue.
+*/
 
 /*
 # sexc3i.slk --post-eres

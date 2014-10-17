@@ -13180,12 +13180,15 @@ let normalize_max_renaming_list_partial_context f pos b ctx =
   (* let _ = print_string("cris: normalize 11\n") in *)
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
+
+
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let norm_es = if !max_renaming then normalize_es f pos b else normalize_clash_es f pos b in
   let f_esc = proc_esc_stack pid norm_es in
   transform_list_failesc_context (idf,f_esc,norm_es) ctx 
     (* if !max_renaming then transform_list_failesc_context (idf,f_esc,(normalize_es f pos b)) ctx *)
     (*   else transform_list_failesc_context (idf,f_esc,(normalize_clash_es f pos b)) ctx *)
+
 
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let pr_f = !print_formula in
