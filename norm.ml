@@ -746,15 +746,16 @@ let combine_opt_ptrs f1 f2 =
     | _          -> None
   in res
 
-let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.view_decl) pos =
+let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap 
+    (vdef: C.view_decl) (ddef: C.data_decl) pos =
   let aliases = fwd_ptr_of_prev_node::(CP.EMapSV.find_equiv_all fwd_ptr_of_prev_node emap) in
-  let rec helper h (ddecl,fld_name) =
+  let rec helper h fld_name =
     match h with
       | CF.DataNode d ->
             if (Gen.BList.mem_eq CP.eq_spec_var d.CF.h_formula_data_node aliases) then
-              if (String.compare d.CF.h_formula_data_name ddecl.C.data_name == 0) then
-                let ddecl_fields = List.map (fun (a,b) -> snd a) ddecl.C.data_fields in
-                let lst = List.combine ddecl_fields d.CF.h_formula_data_arguments in
+              if (String.compare d.CF.h_formula_data_name ddef.C.data_name == 0) then
+                let ddef_fields = List.map (fun (a,b) -> snd a) ddef.C.data_fields in
+                let lst = List.combine ddef_fields d.CF.h_formula_data_arguments in
                 let _ = Debug.info_hprint (add_str "field:" (pr_id) ) fld_name no_pos in
                 let bck_sv = List.fold_left (fun acc (f,a) -> if (String.compare fld_name f == 0 )then acc@[a] else acc) [] lst in
                 if (List.length bck_sv >=1) then Some (List.hd bck_sv)
@@ -774,8 +775,8 @@ let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.vie
                 None
       | CF.Star({CF.h_formula_star_h1 = h1;
 	CF.h_formula_star_h2 = h2;}) -> 
-            let bk1 = helper h1 (ddecl,fld_name) in
-            let bk2 = helper h2 (ddecl,fld_name) in
+            let bk1 = helper h1 fld_name in
+            let bk2 = helper h2 fld_name in
             combine_opt_ptrs bk1 bk2
       | _ -> 
             let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view but we do not support linearization of non-star formulas" in
@@ -787,10 +788,12 @@ let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.vie
     let bck_field_ptr = List.hd vdef.C.view_backward_fields in
     (helper h bck_field_ptr)
 
-let back_ptr_of_heap (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.view_decl) pos =
+let back_ptr_of_heap (h: CF.h_formula) fwd_ptr_of_prev_node emap
+    (vdef: C.view_decl) (ddef: C.data_decl) pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = pr_opt Cprinter.string_of_spec_var in
-  Debug.no_1 "back_ptr_of_heap" pr1 pr2(fun _ ->  back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.view_decl) pos ) h 
+  Debug.no_1 "back_ptr_of_heap" pr1 pr2
+    (fun _ ->  back_ptr_of_heap_x h fwd_ptr_of_prev_node emap vdef ddef pos) h 
 
 let subs_head_with_free vdef hd p emap =
   let head = 
@@ -823,7 +826,8 @@ let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
     else (None, None) in
   (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
   let self_temp = CP.fresh_spec_var (CP.mk_self None) in
-  let bk_tn = back_ptr_of_heap tail fwd_ptr_n emap vdef (CF.pos_of_h_formula tail) in 
+  let ddef = C.look_up_data_def_raw prog.C.prog_data_decls vdef.C.view_data_name in
+  let bk_tn = back_ptr_of_heap tail fwd_ptr_n emap vdef ddef (CF.pos_of_h_formula tail) in 
   let (tail, p) = convert_substitution_helper_opt bk_tn bk_ptr_n tail pp emap false in
   let (tail, p) = convert_substitution_helper fwd_ptr_n self_temp tail p emap true in
   (* let (tail, p) = convert_substitution_helper new_self.field.bk fwd_ptr_n tail pp emap false in *)
@@ -837,7 +841,7 @@ let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
   (* substitute self var with fwd pointer of self in the head *)
   let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head p emap false in
   (* get last node of tail and set it to be the bck ptr of head view *)
-  let heap_chain = List.hd (Acc_fold.collect_heap_chains tail (MCP.mix_of_pure p) self_temp vdef prog) in
+  let heap_chain = List.hd (Accfold.collect_heap_chains tail (MCP.mix_of_pure p) self_temp vdef prog) in
   let (_, _, new_bk_of_nv, _) = fst heap_chain in 
   let (head, p) = convert_substitution_helper_opt bk_ptr_n (Some new_bk_of_nv) head p emap false in
   let head   = subs_head_with_free vdef head p emap in 
@@ -1023,13 +1027,13 @@ TODO1: transform the above assumptions into conditions
 TODO2: consider the non-empty heap for base case by introducing an extra pred
  *)
 let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
-  if not(vdef.C.view_is_tail_recursive) then vdef
+  if not(vdef.C.view_is_tail_rec) then vdef
   else 
     let vd = vdef in
     let f0 = vd.C.view_un_struc_formula in
     let f1 = map_l_fst (fun f -> convert_formula_to_linear prog vdef f) f0 in
     {vd with
-        (* C.view_is_tail_recursive = false; *)
+        (* C.view_is_tail_rec = false; *)
         (* view_formula : F.struc_formula *)
         C.view_linear_formula = f1; 
         C.view_un_struc_formula = f1;

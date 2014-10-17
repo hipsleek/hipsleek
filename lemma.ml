@@ -1293,10 +1293,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (* (* TRUNG: TODO remove it later *)                                                             *)
     (* let _ = try                                                                                   *)
     (*   let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in                     *)
-    (*   let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in                        *)
+    (*   let heap_chains = Accfold.collect_heap_chains f self_sv vd cprog in                        *)
     (*   let hc = List.hd heap_chains in                                                             *)
-    (*   let fold_seq = Acc_fold.detect_fold_sequence hc vd self_sv cprog in                         *)
-    (*   Debug.ninfo_hprint (add_str "fold_seq" (pr_list Acc_fold.print_fold_type)) fold_seq no_pos; *)
+    (*   let fold_seq = Accfold.detect_fold_sequence hc vd self_sv cprog in                         *)
+    (*   Debug.ninfo_hprint (add_str "fold_seq" (pr_list Accfold.print_fold_type)) fold_seq no_pos; *)
     (* with _ -> () in                                                                               *)
 
     let new_f = CF.elim_exists f in
@@ -1355,11 +1355,11 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       ) in
       let lem_body_heap = (
         let induct_vnode = List.hd induct_vnodes in
-        let v_subs = C.collect_subs_from_view_node induct_vnode vd in
+        let v_subs = Astsimp.collect_subs_from_view_node induct_vnode vd in
         let new_base_f = CF.subst_one_by_one v_subs base_f in
         Debug.ninfo_hprint (add_str "new_base_f" (!CF.print_formula)) new_base_f vpos;
-        let base_subs = C.collect_subs_from_view_formula new_base_f vd in
-        let induct_subs = C.collect_subs_from_view_formula induct_f vd in
+        let base_subs = Astsimp.collect_subs_from_view_formula new_base_f vd in
+        let induct_subs = Astsimp.collect_subs_from_view_formula induct_f vd in
 
         (* compute pred2 *)
         let pred2_node = (
@@ -1381,7 +1381,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
 
         (* compute pred1 *)
         let pred1_node = (
-          if not (vd.C.view_is_tail_recursive) then (self, Unprimed)
+          if not (vd.C.view_is_tail_rec) then (self, Unprimed)
           else (
             let subs_sv = CP.subs_one v_subs forward_ptr in
             let subs_sv = CP.subs_one induct_subs subs_sv in
@@ -1420,7 +1420,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         if not (is_pred1_ok) then None
         else (
           let pred1_params = List.map (fun sv ->
-            if (not vd.C.view_is_tail_recursive) && (CP.eq_spec_var sv forward_ptr) then 
+            if (not vd.C.view_is_tail_rec) && (CP.eq_spec_var sv forward_ptr) then 
               let vname, vprim = pred2_node in
               IP.Var ((vname,vprim), vpos)
             else
@@ -1442,12 +1442,12 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           Debug.ninfo_hprint (add_str "pred1" !IF.print_h_formula) pred1 vpos;
           Debug.ninfo_hprint (add_str "pred2" !IF.print_h_formula) pred2 vpos;
           let body_heap = (
-            if vd.C.view_is_tail_recursive then IF.mkStar pred2 pred1 vpos
+            if vd.C.view_is_tail_rec then IF.mkStar pred2 pred1 vpos
             else IF.mkStar pred1 pred2 vpos
           ) in
           (* now, refine the lemma body *)
           let refined_body_heap = (
-            if (vd.C.view_is_tail_recursive) then
+            if (vd.C.view_is_tail_rec) then
               refine_tail_coerc_body_heap body_heap vd
             else
               refine_nontail_coerc_body_heap body_heap vd
@@ -1525,8 +1525,9 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     | ((_,sv1),_)::rest -> if str_cmp sv sv1 then n
       else get_dfield_pos rest (n+1) sv
   in
-  let find_pos (view_fwd_para, (ddcl, data_fwd_fname) )=
+  let find_pos (view_fwd_para, data_fwd_fname)=
     try
+      let ddcl = C.look_up_data_def_raw cprog.C.prog_data_decls vd.C.view_data_name in
       let view_fwd_para_pos = Cfutil.get_pos vd.Cast.view_vars 0 view_fwd_para in
       let data_fwd_fname_pos =  get_dfield_pos ddcl.Cast.data_fields 0 data_fwd_fname in
       [(view_fwd_para, view_fwd_para_pos, (ddcl, data_fwd_fname),data_fwd_fname_pos )]

@@ -16686,6 +16686,20 @@ let add_proof_traces_ctx ctx0 proof_traces=
   in
   helper ctx0
 
+(* build eset of a formula based on pure constraint *)
+let build_eset_of_formula (f: formula) : CP.EMapSV.emap =
+  let (_,mf,_,_,_) = split_components f in
+  let pf = MCP.pure_of_mix mf in
+  CP.EMapSV.build_eset (CP.pure_ptr_equations pf)
+
+(* compute equivalent closure of a spec var based on an eset *)
+let compute_sv_equiv_closure (sv: CP.spec_var) (eset : CP.EMapSV.emap)
+    : CP.spec_var list =
+  let equiv_svl = (CP.EMapSV.find_equiv_all sv eset) in
+  if (List.exists (fun a -> CP.eq_spec_var a sv) equiv_svl) then
+    equiv_svl
+  else (sv::equiv_svl)
+
 let trans_n_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_struc_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in

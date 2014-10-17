@@ -49,7 +49,7 @@ and action =
   | M_match of match_res
   | M_split_match of match_res
   | M_fold of match_res
-  | M_acc_fold of (match_res * (Acc_fold.fold_type list))
+  | M_acc_fold of (match_res * (Accfold.fold_type list))
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
@@ -194,7 +194,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
   | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
   | M_acc_fold (e,steps) ->
-      let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
+      let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Accfold.print_fold_type s)) in
       fmt_string "AccFold =>"; pr_mr e; pr_steps steps
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
@@ -987,11 +987,11 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
 (*         let vnode = vn.CF.h_formula_view_node in                                              *)
 (*         let vname = vn.CF.h_formula_view_name in                                              *)
 (*         let vdecl = look_up_view_def_raw 0 prog.prog_view_decls vname in                      *)
-(*         let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in        *)
+(*         let heap_chains = Accfold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in        *)
 (*         (* remove the last chain which has only 1 atomic hformula                             *)
 (*            which is already extracted in normal spatial_ctx_extract *)                        *)
 (*         let heap_chains = List.filter (fun ((hf,_,_),hf_rest) ->                              *)
-(*           let coded_hf = Acc_fold.encode_h_formula hf in                                      *)
+(*           let coded_hf = Accfold.encode_h_formula hf in                                      *)
 (*           (List.length coded_hf > 1)                                                          *)
 (*         ) heap_chains in                                                                      *)
 (*         List.map (fun ((hf_chain,_,_),hf_rest) ->                                             *)
@@ -1224,17 +1224,19 @@ and check_lemma_not_exist vl vr=
     b_left && b_right &&(left_ls@right_ls)=[]
 
 and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
-    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula)
+    (rhs_h: CF.h_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
-  if !Globals.acc_fold then (
+  if (!Globals.acc_fold || !Globals.cts_acc_fold) then (
     let lhs_node = mt_res.match_res_lhs_node in
     let rhs_node = mt_res.match_res_rhs_node in
+    let rhs_rest = mt_res.match_res_rhs_rest in
     match lhs_node, rhs_node with
     | DataNode {h_formula_data_node = lv}, ViewNode vr
     | ViewNode {h_formula_view_node = lv}, ViewNode vr -> (
         let rv = vr.h_formula_view_node in
         let vr_name = vr.h_formula_view_name in
-        let try_accfold = (
+        let can_accfold = (
           if (CP.eq_spec_var lv rv) then true
           else 
             let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
@@ -1243,20 +1245,32 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
             if (CP.EMapSV.mem rv aliases) then true
             else false
         ) in
-        if (try_accfold) then (
+        Debug.ninfo_hprint (add_str "can_accfold" string_of_bool) can_accfold no_pos;
+        if (can_accfold) then (
           let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
-          let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
-          let fold_seqs = List.map (fun ((hf,_,_,_),hf_rest) ->
-            let fold_steps = Acc_fold.detect_fold_sequence hf lv vdecl prog in
-            (hf,hf_rest,fold_steps)
-          ) heap_chains in
-          let fold_seqs = List.filter (fun (_,_,fold_steps) ->
+          let lhs_heapchains = Accfold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
+          let fold_seqs = List.concat (List.map (fun ((lhf,_,_,_),lhf_rest) ->
+            if (!Globals.cts_acc_fold) then (
+              let rhs_heapchains = Accfold.collect_rhs_heap_chains rhs_h rhs_p lv vdecl prog in
+              List.map (fun ((rhf,_,_,_),rhf_rest) ->
+                let fold_steps = Accfold.detect_cts_fold_sequence lhf rhf lv vdecl prog in
+                (lhf, lhf_rest, rhf, rhf_rest, fold_steps)
+              ) rhs_heapchains
+            )
+            else (
+              let fold_steps = Accfold.detect_fold_sequence lhf lv vdecl prog in
+              [(lhf, lhf_rest, rhs_node, rhs_rest, fold_steps)]
+            )
+          ) lhs_heapchains) in
+          let fold_seqs = List.filter (fun (_,_,_,_,fold_steps) ->
             (* do acc-fold only there is more than 1 fold steps *)
             List.length fold_steps > 1
           ) fold_seqs in
-          let actions = List.map (fun (hf,hf_rest,fold_steps) ->
-            let mt_res = {mt_res with match_res_lhs_node = hf;
-                                      match_res_lhs_rest = hf_rest;} in
+          let actions = List.map (fun (lhf,lhf_rest,rhf,rhf_rest,fold_steps) ->
+            let mt_res = {mt_res with match_res_lhs_node = lhf;
+                                      match_res_lhs_rest = lhf_rest;
+                                      match_res_rhs_node = rhf;
+                                      match_res_rhs_rest = rhf_rest;} in
             (1, M_acc_fold (mt_res, fold_steps))
           ) fold_seqs in
           actions
@@ -1268,17 +1282,18 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
   else []
 
 and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
-    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula)
+    (rhs_h: CF.h_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
   let pr_mr = string_of_match_res in
   let pr_h = !CF.print_h_formula in
   let pr_p = !MCP.print_mix_formula in
   let pr_out = pr_list string_of_action_wt_res in
-  Debug.no_4 "process_one_match_accfold" 
-      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) 
-      (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
-      (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
-      mt_res lhs_h lhs_p rhs_p
+  Debug.no_5 "process_one_match_accfold" 
+      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
+      (add_str "rhs_h" pr_h) (add_str "rhs_p" pr_p) pr_out
+      (fun _ _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_h rhs_p)
+      mt_res lhs_h lhs_p rhs_h rhs_p
 
 
 and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
@@ -1615,7 +1630,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   | _ -> false                                      *)
                 (* ) a in                                              *)
                 (* try accelerated folding *)
-                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                let rhs_h = Cformula.mk_Star rhs_node rhs_rest no_pos in
+                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_h rhs_p in
                 Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
                 Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
@@ -1738,7 +1754,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   | _ -> false                                      *)
                 (* ) a in                                              *)
                 (* try accelerated folding *)
-                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                let rhs_h = Cformula.mk_Star rhs_node rhs_rest no_pos in
+                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_h rhs_p in
                 Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
                 Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)

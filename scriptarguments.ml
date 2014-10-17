@@ -690,6 +690,31 @@ let common_arguments = [
           Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
        ),
    "disable lemma generation");
+  (* enable, disable accelerated folding *)
+  ("--en-acc-fold", 
+      Arg.Unit (fun _ -> Globals.acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable accelerated folding");
+  ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  (* short-form options to enable, disable accelerated folding *)
+  ("--eaf", 
+      Arg.Unit (fun _ -> Globals.acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable accelerated folding");
+  ("--daf", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  (* enable, disable context-sensitive accelerated folding *)
+  ("--en-cts-acc-fold",
+      Arg.Unit (fun _ -> Globals.cts_acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable context-sensitive accelerated folding");
+  ("--dis-cts-acc-fold", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
+  (* short-form options to enable, disable context-sensitive accelerated folding *)
+  ("--ecaf",
+      Arg.Unit (fun _ -> Globals.cts_acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable context-sensitive accelerated folding");
+  ("--dcaf", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
+  (* enable, disable predicate transformation *)
+  ("--en-trans-pred", Arg.Set Globals.trans_pred, "enable transforming predicate");
+  ("--dis-trans-pred", Arg.Clear Globals.trans_pred, "disable transforming predicate");
+  ("--etp", Arg.Set Globals.trans_pred, "enable transforming predicate");
+  ("--dtp", Arg.Clear Globals.trans_pred, "disable transforming predicate");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

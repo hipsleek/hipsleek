@@ -73,10 +73,27 @@ and control_path_id = control_path_id_strict  option
 
 let gen_lemma_action_invalid = -1
 
-
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
+(* check if 2 strings are equal *)
 let eq_str s1 s2 = String.compare s1 s2 = 0
+
+(* check if a string is member of a list of strings *)
+let mem_str_list (s: string) (sl: string list) =
+  List.exists (fun x -> eq_str s x) sl
+
+(* remove duplicated string in a list of strings *)
+let rec remove_dups_str_list (sl: string list) =
+  match sl with
+  | [] -> []
+  | hd::tl -> (
+      if (mem_str_list hd tl) then remove_dups_str_list tl
+      else hd::(remove_dups_str_list tl)
+    )
+
+(* find the intersection of two string list *) 
+let intersect_str_list sl1 sl2 =
+  List.filter (fun s -> mem_str_list s sl1) sl2
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
@@ -611,7 +628,9 @@ let string_of_primed p =
 let string_of_primed_ident (id,p) =
   id ^ string_of_primed p
 
-let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p))
+let pr_primed_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p))
+
+let pr_ident_list = pr_list (fun i -> i)
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -871,12 +890,22 @@ let lemma_rev_unsafe = ref false     (* generating (without proving) both rev le
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 
 let acc_fold = ref false
+
+let acc_fold = ref false
+
+let cts_acc_fold = ref false
+
 let seg_fold = ref false
 
+let trans_pred = ref false
+
 let print_min = ref false
+
 let smart_lem_search = ref false
 
 let sa_en_split = ref false
+
+let fold_contra_detect = ref false
 
 let pred_split = ref false
 
