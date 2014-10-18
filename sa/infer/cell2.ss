@@ -1,0 +1,45 @@
+data cell {
+  int val;
+}
+
+void main(cell x, cell y)
+  infer[@shape]
+  requires true
+  ensures true;
+{
+    y.val=y.val+1;
+}
+/*
+# cell2.ss 
+
+Why do we have this? Is this from error-spec
+inference.Can we have an option to turn this off
+esp for @shape. We may later have @shape_err
+
+(0)HP_11(x@NI,y)&true --> emp&y=null(6,10),
+ // POST
+
+@incorrect inference below?
+
+[ HP_11(x_1247,y_1248) ::= emp&y_1248=null(6,10)
+   \/  y_1248::cell<val_10_1224>(4,5),
+ GP_12(x_1239,y_1240) ::= y_1240::cell<v_int_10_1236>(4,5)]
+
+[ // BIND
+(0)HP_11(x@NI,y)&true --> y::cell<val_10_1224>&
+true(4,5),
+ // BIND
+(0)HP_11(x@NI,y)&true --> emp&
+y=null(6,10),
+ // POST
+(0)y::cell<v_int_10_1236>&true --> GP_12(x,y)&
+true(4,5)]
+
+Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_r_1200_while_10_2$cell~cell for spec  EAssume ref [x;y]
+   emp&{FLOW,(4,5)=__norm}[]
+   , Line 0
+
+( []) bind: node  y'::cell<val_10_1205'>@L cannot be derived from context
+cell.ss_10:9_10:14
+
+*/
