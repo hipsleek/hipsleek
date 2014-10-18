@@ -7,7 +7,14 @@ int test_fun(int x, int y)
        // replace assume
        //return x + y;
     //}
-    while (!(x == 0)) {
+    while (!(x == 0)) 
+    /*@
+      case {
+        (x<0 & x<=y) | (x>y & y<=0 & x!=0) -> ensures eres::ret_int<x'> & flow __RET;
+        !((x<0 & x<=y) | (x>y & y<=0 & x!=0)) -> ensures true & flow __norm;
+      }
+     */
+    {
         if (x > y) {
             x = y;
         } else {

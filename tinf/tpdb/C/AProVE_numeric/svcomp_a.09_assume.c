@@ -2,19 +2,19 @@ extern int __VERIFIER_nondet_int(void);
 
 int test_fun(int x, int y, int z)
 {
-    if(y <= 0) {
-    	// replace assume
-    	return z;
-    }
-    while (x >= z) {
-    	if(y <= 0) {
-		// replace assume
-		//return z;
-		break;
-    	}
-        z = z + y;
-    }
+  if(y <= 0) {
+    // replace assume
     return z;
+  }
+  while (x >= z) {
+    if(y <= 0) {
+      // replace assume
+      return z;
+      //break;
+    }
+    z = z + y;
+  }
+  return z;
 }
 
 int main() {
