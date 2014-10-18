@@ -6,23 +6,24 @@
 
 int  test_int(int a,int y)
 requires true
- ensures a>1 & res=a | a<=1 & res=2;
+ ensures y<=0 & res=0 | y>0 & a>1 & res=a | y>0 & a<=1 & res=2;
 {
   while (y>0)
     requires true
-    ensures y<0 & res=2 & flow __norm
-           or eres::ret_int<a> & y>=0 & a>1 & flow __RET 
-           or y>=0 & a<=1 & flow __norm;
+    ensures y<=0 & flow __norm
+           or eres::ret_int<a> & y>0 & a>1 & flow __RET 
+           or eres::ret_int<2> & y>0 & a<=1 & flow __RET;
   {
       while (a>1) 
         requires true
-          ensures  eres::ret_int<a> & a>1 & flow __RET or a<=1 & flow __norm;
+        ensures  eres::ret_int<a> & a>1 & flow __RET or a<=1 & flow __norm;
       {
         return a;
       }
       return 2;
       y--;
    }
+   return 0;
   //dprint;
 }
 
