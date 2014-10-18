@@ -101,15 +101,16 @@ let solve_base_trrels params base_trrels turels =
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
   (* let base_conds = simplify_and_slit_disj base_cond in *)
   let base_cond = simplify_disj base_cond in
-  
-  let may_cond = List.fold_left (fun ac bctx ->
-    mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in
-  (* let may_conds = simplify_and_slit_disj may_cond in *)
-  let may_cond = simplify_disj may_cond in
-  
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
-  let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in
-  base_cond @ may_cond
+  
+  if !Globals.tnt_infer_lex then base_cond
+  else
+    let may_cond = List.fold_left (fun ac bctx ->
+      mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in
+    (* let may_conds = simplify_and_slit_disj may_cond in *)
+    let may_cond = simplify_disj may_cond in
+    let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in
+    base_cond @ may_cond
   
 let solve_base_trrels params base_trrels turels =
   Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
