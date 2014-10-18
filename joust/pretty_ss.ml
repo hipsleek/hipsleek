@@ -621,7 +621,24 @@ and print_var f v =
     fprintf f "%a " print_type v.v_type;
   print_ident f v.v_name
 
- 
+
+and combine_stmt o_stmt stmt_to_add =
+  match o_stmt with
+    | Block stmts ->
+          Block (stmts@stmt_to_add)
+    | _ -> Block ([o_stmt]@stmt_to_add)
+
+
+
+
+and for_to_while for_stmt =
+  match for_stmt with
+    | For (init, Some test, update, st) ->
+          
+          let new_st = combine_stmt st update in
+          let new_while = While (test,new_st) in
+          init@[new_while]
+    | _ -> failwith "for_to_while: Unexpected"
 
 and print_stmt f stmt =
   match stmt with
@@ -661,12 +678,16 @@ and print_stmt f stmt =
   | Do (st, e) ->
       fprintf f "do%a while (%a);" print_body st print_expr e
   | For (init, test, update, st) ->
-      fprintf f "for (%a;%a;%t%a)%a"
-	print_for_clause init
-	(print_option print_expr) test
-	(fun f -> if update <> [] then fprintf f " ")
-	print_for_clause update
-	print_body st
+        fprintf f "@\n%a@\n" print_stmts (for_to_while stmt)
+      (*
+          fprintf f "for (%a;%a;%t%a)%a"
+	  print_for_clause init
+	  (print_option print_expr) test
+	  (fun f -> if update <> [] then fprintf f " ")
+	  print_for_clause update
+	  print_body st
+      *)
+        
   | Break opt ->
       fprintf f "break%a;" (print_option print_ident) opt
   | Continue opt ->
