@@ -238,6 +238,7 @@ and proc_decl = {
   proc_exceptions : ident list;
   proc_body : exp option;
   proc_is_main : bool;
+  proc_is_while : bool; (* true if the proc is translated from a while loop *)
   mutable proc_is_invoked : bool;
   proc_file : string;
   proc_loc : loc;
@@ -1265,6 +1266,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_dynamic_specs = ds;
   proc_loc = pos;
   proc_is_main = true;
+  proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
@@ -2817,25 +2819,26 @@ let add_bar_inits prog =
             let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
-			{ proc_name = "init_"^b.barrier_name;
-                          proc_source = "source_file";
-			  proc_flags = [];
-			  proc_mingled_name = "";
-			  proc_data_decl = None ;
-			  proc_hp_decls = [];
-              proc_constructor = false;
-			  proc_args = ags;
-              proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
-			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
-			  proc_dynamic_specs = F.mkEFalseF ();
-			  proc_exceptions = [];
-			  proc_body = None;
-			  proc_is_main = false;
-              proc_is_invoked = false;
-			  proc_file = "";
-			  proc_loc = no_pos;
-			proc_test_comps = None}) prog.prog_barrier_decls in
+      { proc_name = "init_"^b.barrier_name;
+        proc_source = "source_file";
+        proc_flags = [];
+        proc_mingled_name = "";
+        proc_data_decl = None ;
+        proc_hp_decls = [];
+        proc_constructor = false;
+        proc_args = ags;
+        proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
+        proc_return = Void;
+        proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
+        proc_dynamic_specs = F.mkEFalseF ();
+        proc_exceptions = [];
+        proc_body = None;
+        proc_is_main = false;
+        proc_is_while = false;
+        proc_is_invoked = false;
+        proc_file = "";
+        proc_loc = no_pos;
+        proc_test_comps = None}) prog.prog_barrier_decls in
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }

@@ -1837,6 +1837,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_exceptions = [];
         Iast.proc_body = funbody;
         Iast.proc_is_main = Gen.is_some funbody;
+        Iast.proc_is_while = false;
         Iast.proc_is_invoked = false;
         Iast.proc_file = filename;
         Iast.proc_loc = pos;
