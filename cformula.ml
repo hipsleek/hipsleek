@@ -9983,6 +9983,8 @@ so just call get_may_falure_list_partial_context*)
 let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
     (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
+  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc")
+  else
     let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
     (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk)
@@ -11090,18 +11092,19 @@ if (Gen.is_empty fs) then true else false
 let isSuccessFailescCtx_new (fs,_,_) =
   List.for_all isSuccessBranchFail fs
 
+(* [] denotes failure *)
 let isSuccessListPartialCtx cl =
-  cl==[] || List.exists isSuccessPartialCtx cl 
+  (* cl==[] || *) List.exists isSuccessPartialCtx cl 
 
 let isSuccessListPartialCtx cl =
   let pr = !print_list_partial_context in
   Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
 
 let isSuccessListPartialCtx_new cl =
-  cl==[] || List.exists isSuccessPartialCtx_new cl
+  (* cl==[] || *) List.exists isSuccessPartialCtx_new cl
 
 let isSuccessListFailescCtx cl =
-  cl==[] || List.exists isSuccessFailescCtx cl 
+  (* cl==[] || *) List.exists isSuccessFailescCtx cl 
 
 let isSuccessListFailescCtx cl =
   (* let cl = list_failesc_context_simplify cl in *)
@@ -11109,7 +11112,7 @@ let isSuccessListFailescCtx cl =
   Debug.no_1 "isSuccessListFailescCtx" pr string_of_bool isSuccessListFailescCtx cl
 
 let isSuccessListFailescCtx_new cl =
-  cl==[] || List.exists isSuccessFailescCtx_new cl
+  (* cl==[] || *) List.exists isSuccessFailescCtx_new cl
 
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
@@ -13177,12 +13180,15 @@ let normalize_max_renaming_list_partial_context f pos b ctx =
   (* let _ = print_string("cris: normalize 11\n") in *)
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
+
+
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let norm_es = if !max_renaming then normalize_es f pos b else normalize_clash_es f pos b in
   let f_esc = proc_esc_stack pid norm_es in
   transform_list_failesc_context (idf,f_esc,norm_es) ctx 
     (* if !max_renaming then transform_list_failesc_context (idf,f_esc,(normalize_es f pos b)) ctx *)
     (*   else transform_list_failesc_context (idf,f_esc,(normalize_clash_es f pos b)) ctx *)
+
 
 let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
   let pr_f = !print_formula in
@@ -13195,6 +13201,12 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
   (* let _ = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
+
+let combine_pure_list_failesc_context f pos b ctx =
+  let combine_pure_es f pos b es=
+    Ctx {es with es_formula = mkAnd_pure es.es_formula f pos;}
+  in
+  transform_list_failesc_context (idf,idf,(combine_pure_es f pos b)) ctx
 
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   let pr_f = !print_formula in
