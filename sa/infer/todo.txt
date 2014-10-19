@@ -1,4 +1,4 @@
-# sa/infer/cell2.ss 
+# sa/infer/cell2.ss: FIXED
 
 Why do we have this? Is this from error-spec
 inference.Can we have an option to turn this off

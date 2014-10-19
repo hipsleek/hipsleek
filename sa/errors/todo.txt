@@ -409,6 +409,8 @@ infer [@efa]  x>1 & flow __norm |-  x>0 & flow __Error.
 Entail (2) : Fail.(must) cause:empty states
 Residue:
  { }
+
+
 =====================================================================
 #next.ss
 

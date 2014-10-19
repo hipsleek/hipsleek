@@ -17,10 +17,10 @@ requires x=null or x::node<q>
 ensures x=null & flow __Error or x::node<q> & q=res;
 */
 
-/*
+
   requires x=null
   ensures x=null & flow __Error;
-*/
+
 /*
   requires x::node<q>
   ensures x::node<q> & q=res;

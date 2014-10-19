@@ -2736,7 +2736,7 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
     else CF.rel_def_stk
     in
     let inferred_hpdefs = (rel_defs# get_stk) in
-    if not(rel_defs# is_empty) (* && !Globals.sap *) then
+    if !Globals.sae && not(rel_defs# is_empty) (* && !Globals.sap *) then
       begin
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         (* combine predicate based on flows *)
