@@ -13202,6 +13202,12 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 
+let combine_pure_list_failesc_context f pos b ctx =
+  let combine_pure_es f pos b es=
+    Ctx {es with es_formula = mkAnd_pure es.es_formula f pos;}
+  in
+  transform_list_failesc_context (idf,idf,(combine_pure_es f pos b)) ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   let pr_f = !print_formula in
   let pr_ctx = pr_list !print_failesc_context in
