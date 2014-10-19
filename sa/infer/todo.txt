@@ -28,7 +28,40 @@ Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_
    , Line 0
 
 =================================================================
+# cell.ss 
+
+  while (y.val<x.val) 
+    infer[@shape]
+      requires true
+      ensures true;
+
+What @shape spec is being composed for
+while loop? Can we print it?
+
+Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_
+r_1200_while_10_2$cell~cell for spec  EAssume ref [x;y]
+   emp&{FLOW,(4,5)=__norm}[]
+   , Line 0
+
+( []) bind: node  y'::cell<val_10_1205'>@L cannot be derived from context
+cell.ss_10:9_10:14
+
 =================================================================
+# cell5a.ss 
+
+  if (y.val<x.val) {
+    y.val = y.val +1;
+    wloop(x,y);
+  }
+
+[ HP_13(x_1290,y_1291) ::=  [
+      x_1290::cell<val_17_1253> * y_1291::cell<val_17_1287>],
+ GP_16(x_1292,x_1293,y_1294,y_1295) ::=  [
+  emp&y_1294!=null & x_1292!=null; 
+  y_1294::cell<val_17_1247> * x_1292::cell<val_17_1253>&x_1293=x_1292 
+  & y_1295=y_1294]]
+
+ Why is there an emp case for GP16?
 =================================================================
 =================================================================
 =================================================================
