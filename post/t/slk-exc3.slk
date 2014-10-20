@@ -1,0 +1,31 @@
+/*
+[RELDEFN post_1215: ( res=2222 & 1<=x) -->  post_1215(x,res),
+RELDEFN post_1215: ( x+1111=res & res<=1111) -->  post_1215(x,res)]
+*/
+
+relation post2(int x, int rr).
+
+relation post3(int x, int rr, int flow_n).
+
+infer [post2] res=2222 & 1<=x & flow __Exc 
+         |- post2(x,res) & flow __flow.
+print residue.
+
+infer [post2,@flow] res=2222 & 1<=x & flow __Exc 
+         |- post2(x,res) & flow __flow.
+print residue.
+/*
+
+GOT:
+ inferred rel: [RELDEFN post2: ( res=2222 & 1<=x) -->  post2(x,res)]
+
+Expecting:
+ res=2222 & 1<=x & 22<=flow<=23) -->  post2(x,res) 
+or:
+ res=2222 & 1<=x & 22<=flow<=23) -->  post2f(x,res,flow) 
+
+
+*/
+
+
+
