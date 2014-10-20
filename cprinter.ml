@@ -2442,8 +2442,15 @@ and pr_formula_guard ((e,g):formula_guard)=
     | None -> s1
     | Some f -> s1 ; fmt_string "|#|" ; (prtt_pr_formula f)
 
-and pr_formula_guard_list (es: formula_guard list)=
-  pr_seq "" pr_formula_guard es
+and pr_formula_guard_list (es0: formula_guard list)=
+  let rec recf es =
+    match es with
+      | [] -> ()
+      | [f] -> pr_formula_guard f
+      | f::rest -> ( pr_formula_guard f) ; fmt_string " \/ " ; recf rest
+            (* pr_seq "" pr_formula_guard es *)
+  in
+  recf es0
 
 and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 
