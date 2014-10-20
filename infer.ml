@@ -305,6 +305,7 @@ let init_infer_type ctx itype =
       | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
       | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx) 
       | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx) 
+      | INF_FLOW -> (es.es_infer_obj # set INF_FLOW; ctx) 
       end
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
   in 

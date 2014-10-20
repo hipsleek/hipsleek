@@ -3111,14 +3111,15 @@ let rec string_of_spec_var_list_noparen l = match l with
 
 (* "["^(string_of_spec_var_list_noparen l)^"]" ;; *)
 let string_of_inf_cmd i = 
-  match i with 
-  | INF_TERM -> "@term"
-  | INF_POST -> "@post"
-  | INF_PRE   -> "@pre"
-  | INF_SHAPE -> "@shape"
-  | INF_IMM -> "@imm"
-  | INF_EFA -> "@efa"
-  | INF_DFA -> "@dfa"
+  Globals.string_of_inf_const i
+  (* match i with  *)
+  (* | INF_TERM -> "@term" *)
+  (* | INF_POST -> "@post" *)
+  (* | INF_PRE   -> "@pre" *)
+  (* | INF_SHAPE -> "@shape" *)
+  (* | INF_IMM -> "@imm" *)
+  (* | INF_EFA -> "@efa" *)
+  (* | INF_DFA -> "@dfa" *)
 
 let rec string_of_inf_cmd_list il =
   match il with

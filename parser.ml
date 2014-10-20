@@ -2339,6 +2339,7 @@ infer_type:
    | `INFER_AT_SHAPE -> INF_SHAPE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
+   | `INFER_AT_FLOW -> INF_FLOW
    ]];
 
 infer_id:

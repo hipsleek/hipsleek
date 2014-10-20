@@ -1004,6 +1004,9 @@ checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
 =======================================================
 # sexc2.slk
 
+SLEEK cannot handle "class file". Need
+to fix.
+
 class Exp extends __Exc {
   int val;
 }.
@@ -1079,6 +1082,13 @@ while_7_2:  case {
 
 # Desired # can we combine the base and recursive case?
 =======================================================
+# slk-exc3a.slk
+
+relation post2(int x, int res).
+
+ why res not permitted in parameter of post?
+ Is it a keyword?
+
 =======================================================
 =======================================================
 =======================================================
