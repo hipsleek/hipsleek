@@ -3626,7 +3626,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc=
     let scc, ini_hpdefs = Da.find_rel_args_groups_scc prog scc in
-
+    
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let _ = if has_infer_pre_proc then Pi.add_pre_relation_scc prog scc in
 

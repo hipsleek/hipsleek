@@ -2,15 +2,24 @@ data cell {
   int val;
 }
 
+HeapPred H1(cell a, cell c).
+HeapPred G1(cell a, cell b).
+
 void wloop(cell x,cell y)
+/*
     infer[@shape]
     requires true
     ensures true;
+*/
+  infer [H1,G1] requires H1(x,y) ensures G1(x,y);
+//  requires x::cell<3>*y::cell<3> ensures x::cell<3>*y::cell<3>;
 {
+  //dprint;
   if (y.val<x.val) {
     y.val = y.val +1;
     wloop(x,y);
   }
+  // dprint;
 }
 
 /*

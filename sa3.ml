@@ -1547,7 +1547,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   let par_defs1 = List.concat (List.map (get_pdef_body unk_hps post_hps) par_defs) in
   let par_defs2 = (* List.filter is_valid_pardef *) par_defs1 in
   let groups = partition_pdefs_by_hp_name par_defs2 [] in
-  (*do not generate anyting for LINK preds*)
+  (*do not generate anything for LINK preds*)
   let groups1 = List.filter (fun grp ->
       match grp with
         | [] -> false
