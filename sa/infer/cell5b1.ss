@@ -19,10 +19,23 @@ void wloop(cell x,cell y)
 /*
 # cell5b1.ss 
 
-The inferred spec seems correct.
+Got:
 
- GP_12(x_1276,y_1277) ::=  [emp&y_1277!=null & x_1276!=null; y_1277::cell<val_10_1231> * 
-x_1276::cell<val_10_1237>]]
+ // POST
+(1;0)GP_12(x,y)&x!=null & y!=null --> GP_12(x,y)&
+true(4,5),
+ // POST
+(2;0)y::cell<val_10_1231> * x::cell<val_10_1237>&true --> GP_12(x,y)&
+true(4,5)]
+
+The inferred spec seems incorrect correct.
+
+ GP_12(x_1276,y_1277) ::=  [emp&y_1277!=null & x_1276!=null; 
+  y_1277::cell<val_10_1231> * x_1276::cell<val_10_1237>]]
+
+The fix-point seems to have approximated GP_12(x,y) to true 
+rather than false. I guess we need to correct this 
+fix-point process.
 
 The missing step seems to be a fixpoint operation,
 where GP_12(..) is first approximated to false. We can trigger this

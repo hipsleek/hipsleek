@@ -11,18 +11,16 @@ void main(cell x, cell y)
     y.val=x.val+1;
 }
 /*
-# cell2aq.ss --sa-dis-error
+# cell2aq.ss 
 
-How come post_n not performed after shape
-inference?
+This shows how post_n can be trigered after
+shape analysis.
 
-void main(cell x, cell y)
-  infer[@shape,
-  @post_n]
-  requires true
-  ensures true;
-{
-    y.val=x.val+1;
-}
+Post Inference result:
+main$cell~cell
+ requires x::cell<a> * y::cell<b> & MayLoop[]
+     ensures x::cell<c_1211> * 
+y::cell<d_1212> & a=d_1212-1 & c_1211=d_1212-1;
+
 
 */
