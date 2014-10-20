@@ -1223,7 +1223,12 @@ let genESpec_wNI body_header body_opt args ret pos=
           if is_simpl then
             let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE pos in
             (* let _ = print_gen_spec ss hps in *)
-            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            let ss = match ss with
+              | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
+                    F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
+              | _ -> ss
+            in
+            let _ = Debug.binfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
         else (body_header.proc_static_specs,[],body_header.proc_args_wi)

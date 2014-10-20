@@ -187,7 +187,7 @@ let rec is_infer_others sf = match sf with
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
         let inf_vars = ei.CF.formula_inf_vars in
-        (inf_obj # is_term) || (inf_obj # is_shape) || (inf_obj # is_imm)
+        (inf_obj # is_term) (* || (inf_obj # is_shape) || (inf_obj # is_imm) *)
   | _ -> false
 
 let is_infer_others sf =
