@@ -155,7 +155,7 @@ Two issues :
  GP_12(x_1282,y_1283) ::=  [emp&y_1283!=null & x_1282!=null]]
 
 =================================================================
-# cell5b3.ss 
+# cell5b3.ss: FIXED
 
 Expecting :
   HP(..) = true

@@ -1190,24 +1190,26 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
       [CP.SpecVar (t, dang_name, p)])
   ) unk_map
   in
-  let link_fr_map = List.map (fun ((hp,args)) ->
+  let link_fr_map, remain_links = List.fold_left (fun (acc_res, acc_links) ((hp,args)) ->
       let locs_i = Sautil.get_pos_of_hp_args_inst prog hp in
       let args_inst = Sautil.retrieve_args_from_locs args locs_i in
-      (* let (CP.SpecVar (_, _, p)) = hp in *)
-      let (CP.SpecVar (t, _, p)) = List.hd args_inst in
-      (hp,
-      let dang_name = dang_hp_default_prefix_name ^ "_" ^ (CP.name_of_spec_var hp) (* ^ "_" ^dang_hp_default_prefix_name *)  in
-      [CP.SpecVar (t, dang_name, p)])
-  ) link_hpargs
+      if args_inst = [] then (acc_res, acc_links@[(hp,args)]) else
+        (* let (CP.SpecVar (_, _, p)) = hp in *)
+        let (CP.SpecVar (t, _, p)) = List.hd args_inst in
+        let r = (hp,
+        let dang_name = dang_hp_default_prefix_name ^ "_" ^ (CP.name_of_spec_var hp) (* ^ "_" ^dang_hp_default_prefix_name *)  in
+        [CP.SpecVar (t, dang_name, p)]) in
+        acc_res@[r],acc_links
+  ) ([],[]) link_hpargs
   in
   let tupled_defs,hp_defs1 = List.partition Sautil.is_tupled_hpdef hp_defs in
   let hp_defs2 = transform_unk_hps_to_pure hp_defs1 (fr_map@link_fr_map) in
-  (hp_defs2@tupled_defs)
+  (hp_defs2@tupled_defs,remain_links)
 
 let transform_xpure_to_pure prog hp_defs (unk_map:((CP.spec_var * int list) * CP.xpure_view) list) link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "transform_xpure_to_pure" pr1 pr2 pr1
+  Debug.no_2 "transform_xpure_to_pure" pr1 pr2 (pr_pair pr1 pr2)
       (fun _ _ -> transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs)
       hp_defs link_hpargs
 
