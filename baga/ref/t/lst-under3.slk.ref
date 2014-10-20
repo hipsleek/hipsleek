@@ -1,0 +1,9 @@
+Starting Omega...oc
+Starting z3... 
+
+WARNING: t/lst-under3.slk_5:14_5:29:view defn for ll has incorrectly supplied invariant
+-- incorrect over-approx inv : Some([([], 1<=n)])
+-- incorrect under-approx inv : Some([([], self=null)])
+
+[Warning] False ctx
+

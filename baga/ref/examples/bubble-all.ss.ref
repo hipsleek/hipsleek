@@ -1,0 +1,231 @@
+
+!!!Full processing file "examples/bubble-all.ss"
+Parsing file "examples/bubble-all.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: exists(flted_9_27:flted_9_27=null) & exists(sm_28:sm_28=sm) & n=1 & sm=lg & 
+S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm})) & exists(qs:exists(lg_30:lg_30=lg & 
+qs<=lg_30) & sm<=qs) & exists(n1:n1+1=n & 1<=n1) & exists(q:q!=null) & 
+exists(sm_29:sm_29=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: exists(flted_9_27:flted_9_27=null) & exists(sm_28:sm_28=sm) & n=1 & sm=lg & 
+S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(S1:exists(qs:exists(lg_30:lg_30=lg & qs=lg_30) & 
+sm<=qs & S1={qs} & sm_28=qs) & S=union(S1,{sm}))) & exists(n1:n1+1=n & 
+n1=1) & exists(q:q!=null) & exists(sm_29:sm_29=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1444}")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(sm_29:exists(qs_1444:exists(lg_1445:exists(lg_30:lg_30=lg & 
+lg_1445=lg_30) & qs_1444=lg_1445) & 
+exists(S1_1446:exists(S1:exists(qs:sm<=qs & qs<=qs_1444 & S1=union(S1_1446,
+{qs}) & sm_29=qs) & S=union(S1,{sm})) & S1_1446={qs_1444}) & 
+sm_28=qs_1444) & sm_29=sm)) & exists(q_1442:q_1442!=null) & 
+exists(n1_1443:exists(n1:n1+1=n & n1_1443+1=n1) & n1_1443=1) & 
+exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1444}")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(sm_29:exists(qs_1444:exists(lg_1445:exists(lg_1450:exists(lg_30:lg_30=lg & 
+lg_1450=lg_30) & lg_1445=lg_1450) & qs_1444=lg_1445) & 
+exists(S1_1446:exists(qs_1449:exists(S1_1451:exists(S1:exists(qs:sm<=qs & 
+qs<=qs_1449 & S1=union(S1_1451,{qs}) & sm_29=qs) & S=union(S1,{sm})) & 
+S1_1451=union(S1_1446,{qs_1449})) & qs_1449<=qs_1444 & sm_29=qs_1449) & 
+S1_1446={qs_1444}) & sm_28=qs_1444) & sm_29=sm)) & 
+exists(q_1442:q_1442!=null) & exists(n1_1443:exists(n1_1448:exists(n1:n1+
+1=n & n1_1448+1=n1) & n1_1443+1=n1_1448) & n1_1443=1) & 
+exists(q_1447:q_1447!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm})) & exists(qs:exists(lg_30:lg_30=lg & 
+qs<=lg_30) & sm<=qs) & exists(n1:n1+1=n & 1<=n1) & exists(q:q!=null) & 
+exists(sm_29:sm_29=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: exists(flted_9_27:flted_9_27=null) & exists(sm_28:sm_28=sm) & n=1 & sm=lg & 
+S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(S1:exists(qs:exists(lg_30:lg_30=lg & qs=lg_30) & 
+sm<=qs & S1={qs} & sm_28=qs) & S=union(S1,{sm}))) & exists(n1:n1+1=n & 
+n1=1) & exists(q:q!=null) & exists(sm_29:sm_29=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1444}")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(sm_29:exists(qs_1444:exists(lg_1445:exists(lg_30:lg_30=lg & 
+lg_1445=lg_30) & qs_1444=lg_1445) & 
+exists(S1_1446:exists(S1:exists(qs:sm<=qs & qs<=qs_1444 & S1=union(S1_1446,
+{qs}) & sm_29=qs) & S=union(S1,{sm})) & S1_1446={qs_1444}) & 
+sm_28=qs_1444) & sm_29=sm)) & exists(q_1442:q_1442!=null) & 
+exists(n1_1443:exists(n1:n1+1=n & n1_1443+1=n1) & n1_1443=1) & 
+exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1444}")
+ Formula: exists(flted_9_27:flted_9_27=null) & 
+exists(sm_28:exists(sm_29:exists(qs_1444:exists(lg_1445:exists(lg_1450:exists(lg_30:lg_30=lg & 
+lg_1450=lg_30) & lg_1445=lg_1450) & qs_1444=lg_1445) & 
+exists(S1_1446:exists(qs_1449:exists(S1_1451:exists(S1:exists(qs:sm<=qs & 
+qs<=qs_1449 & S1=union(S1_1451,{qs}) & sm_29=qs) & S=union(S1,{sm})) & 
+S1_1451=union(S1_1446,{qs_1449})) & qs_1449<=qs_1444 & sm_29=qs_1449) & 
+S1_1446={qs_1444}) & sm_28=qs_1444) & sm_29=sm)) & 
+exists(q_1442:q_1442!=null) & exists(n1_1443:exists(n1_1448:exists(n1:n1+
+1=n & n1_1448+1=n1) & n1_1443+1=n1_1448) & n1_1443=1) & 
+exists(q_1447:q_1447!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm})) & exists(qs:exists(lg_30:lg_30=lg & 
+qs<=lg_30) & sm<=qs) & exists(n1:n1+1=n & 1<=n1) & exists(q:q!=null) & 
+exists(sm_29:sm_29=sm)
+
+WARNING: examples/bubble-all.ss_9:2_9:48:view defn for sll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([self], 1<=n & sm<=lg)])
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(r:r=null) & 
+exists(flted_25_23:flted_25_23+1=n & flted_25_23=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(flted_25_23:flted_25_23+1=n & 
+0<flted_25_23)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(S2:exists(d:S=union(S2,{d})) & S2={}) & exists(r:r=null) & 
+exists(flted_25_23:flted_25_23+1=n & flted_25_23=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(S2_1497:exists(S2:S=union(S2,{d}) & S2=union(S2_1497,
+{d})) & S2_1497={})) & exists(r_1495:r_1495=null) & 
+exists(flted_25_1496:exists(flted_25_23:flted_25_23+1=n & flted_25_1496+
+1=flted_25_23) & flted_25_1496=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(S2_1497:exists(S2_1500:exists(S2:S=union(S2,{d}) & 
+S2=union(S2_1500,{d})) & S2_1500=union(S2_1497,{d})) & S2_1497={})) & 
+exists(r_1495:r_1495=null) & 
+exists(flted_25_1496:exists(flted_25_1499:exists(flted_25_23:flted_25_23+
+1=n & flted_25_1499+1=flted_25_23) & flted_25_1496+1=flted_25_1499) & 
+flted_25_1496=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(r:r=null) & 
+exists(flted_25_23:flted_25_23+1=n & flted_25_23=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(flted_25_23:flted_25_23+1=n & 
+0<flted_25_23)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(S2:exists(d:S=union(S2,{d})) & S2={}) & exists(r:r=null) & 
+exists(flted_25_23:flted_25_23+1=n & flted_25_23=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(S2_1497:exists(S2:S=union(S2,{d}) & S2=union(S2_1497,
+{d})) & S2_1497={})) & exists(r_1495:r_1495=null) & 
+exists(flted_25_1496:exists(flted_25_23:flted_25_23+1=n & flted_25_1496+
+1=flted_25_23) & flted_25_1496=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(S2_1497:exists(S2_1500:exists(S2:S=union(S2,{d}) & 
+S2=union(S2_1500,{d})) & S2_1500=union(S2_1497,{d})) & S2_1497={})) & 
+exists(r_1495:r_1495=null) & 
+exists(flted_25_1496:exists(flted_25_1499:exists(flted_25_23:flted_25_23+
+1=n & flted_25_1499+1=flted_25_23) & flted_25_1496+1=flted_25_1499) & 
+flted_25_1496=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(r:r=null) & 
+exists(flted_25_23:flted_25_23+1=n & flted_25_23=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S2,{d})")
+ Formula: exists(S2:exists(d:S=union(S2,{d}))) & exists(flted_25_23:flted_25_23+1=n & 
+0<flted_25_23)
+
+WARNING: examples/bubble-all.ss_24:12_24:34:view defn for ll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & n=0),
+([self], 0<n)])
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+n2=0) & exists(p:p=null) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+0<n2) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d})) & Sb1={}) & 
+exists(n2:n2+1=n & n2=0) & exists(p:p=null) & exists(bg_25:bg_25=bg) & 
+exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1542:exists(sn_24:sn_24=sn & sn_24<=d & 
+sn_1542=sn_24)) & exists(bg_1543:exists(bg_25:bg_25=bg & d<bg_25 & 
+bg_1543=bg_25)) & exists(Sb1_1544:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1544,{d})) & Sb1_1544={}) & sn<=d & d<bg) & 
+exists(p_1540:p_1540=null) & exists(n2_1541:exists(n2:n2+1=n & n2_1541+
+1=n2) & n2_1541=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1542:exists(sn_1547:exists(sn_24:sn_24=sn & sn_24<=d & 
+sn_1547=sn_24) & sn_1547<=d & sn_1542=sn_1547)) & 
+exists(bg_1543:exists(bg_1548:exists(bg_25:bg_25=bg & d<bg_25 & 
+bg_1548=bg_25) & d<bg_1548 & bg_1543=bg_1548)) & 
+exists(Sb1_1544:exists(Sb1_1549:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1549,{d})) & Sb1_1549=union(Sb1_1544,{d})) & Sb1_1544={}) & 
+sn<=d & d<bg) & exists(p_1540:p_1540=null) & 
+exists(n2_1541:exists(n2_1546:exists(n2:n2+1=n & n2_1546+1=n2) & n2_1541+
+1=n2_1546) & n2_1541=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+n2=0) & exists(p:p=null) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+0<n2) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d})) & Sb1={}) & 
+exists(n2:n2+1=n & n2=0) & exists(p:p=null) & exists(bg_25:bg_25=bg) & 
+exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1542:exists(sn_24:sn_24=sn & sn_24<=d & 
+sn_1542=sn_24)) & exists(bg_1543:exists(bg_25:bg_25=bg & d<bg_25 & 
+bg_1543=bg_25)) & exists(Sb1_1544:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1544,{d})) & Sb1_1544={}) & sn<=d & d<bg) & 
+exists(p_1540:p_1540=null) & exists(n2_1541:exists(n2:n2+1=n & n2_1541+
+1=n2) & n2_1541=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1542:exists(sn_1547:exists(sn_24:sn_24=sn & sn_24<=d & 
+sn_1547=sn_24) & sn_1547<=d & sn_1542=sn_1547)) & 
+exists(bg_1543:exists(bg_1548:exists(bg_25:bg_25=bg & d<bg_25 & 
+bg_1548=bg_25) & d<bg_1548 & bg_1543=bg_1548)) & 
+exists(Sb1_1544:exists(Sb1_1549:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1549,{d})) & Sb1_1549=union(Sb1_1544,{d})) & Sb1_1544={}) & 
+sn<=d & d<bg) & exists(p_1540:p_1540=null) & 
+exists(n2_1541:exists(n2_1546:exists(n2:n2+1=n & n2_1546+1=n2) & n2_1541+
+1=n2_1546) & n2_1541=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+n2=0) & exists(p:p=null) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & exists(n2:n2+1=n & 
+0<n2) & exists(bg_25:bg_25=bg) & exists(sn_24:sn_24=sn)
+
+WARNING: examples/bubble-all.ss_17:2_17:29:view defn for bnd has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & n=0),
+([self], 0<n)])
+
+
+Mona is restarting ... cycle limit reached
+
+Checking procedure bubble$node... 
+Mona is restarting ... cycle limit reached
+
+Mona is restarting ... cycle limit reached
+
+Mona is restarting ... cycle limit reached
+
+Post condition cannot be derived:
+  (may) cause:  exists(sm_1819:exists(S_1818:S_1818={sm_1819}) & 
+exists(lg_1820:sm_1819=lg_1820) & d_1645=sm_1819) & S=union(S2_1647,{d_1645}) |-  S={d_1645}. LOCS:[0;25;9] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/bubble-all.ss",Line:62,Col:12
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+Procedure bubble$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure bubble$node
+
+Checking procedure bsort$node... 
+Procedure bsort$node SUCCESS.
+
+0 false contexts at: ()

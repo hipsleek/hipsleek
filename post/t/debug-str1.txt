@@ -1,0 +1,454 @@
+Starting Omega...oc
+
+!!! sleek : batch processing
+!!! after order_views
+!!! after check_fixpt
+!!! view_decls::[]
+!!! derv length:0
+!!! after compute_view
+!!! after materialzed_prop
+!!! sleek : after convert_data_and_pred_to_cast
+!!!:0: 0: 
+run_entail_check 1:
+ ### iante0 = IFORM:(EX vx . (emp)*((0 < i) & (((vv+2) = i) & ((post(vv,ww+1)) & ((post(ww,kk)) & ((post(kk,vx)) & (res = 1+vx))))))( FLOW __norm))
+ ### iconseq0 = IFORMStruc:EBase: [][](emp ; (emp ; emp))*(post(i,res))( FLOW __norm) 
+
+
+!!!:0: 0: case_normalize_formula :: CHECK POINT 1a ==> f = (EX vx . (emp)*((0 < i) & (((vv+2) = i) & ((post(vv,ww+1)) & ((post(ww,kk)) & ((post(kk,vx)) & (res = 1+vx))))))( FLOW __norm))
+
+!!!:0: 0: case_normalize_formula :: CHECK POINT 1b ==> f = (EX vx . (emp)*((0 < i) & (((vv+2) = i) & ((post(vv,ww+1)) & ((post(ww,kk)) & ((post(kk,vx)) & (res = 1+vx))))))( FLOW __norm))
+
+!!! new_expl:[]
+!!! init_expl:[]
+!!! onb_vars:[]
+!!! all_expl:[]
+!!! possib_impl:[]
+!!! p_vars:[(i,'),(vv,'),(ww,'),(post,'),(kk,'),(res,'),(vx_13,'),(post,')]
+!!! fvars:[i,vv,ww,post,kk,res,vx_13,post]
+!!! conseq(after meta-): EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! ante(after rem @A): emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!! conseq(after rem @A): EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! conseq(after prune): EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! conseq(after add param): EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!!:0: 0: 
+run_entail_check 2:
+ ### ivars = [post]
+ ### ante =  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+ ### conseq =  EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+
+
+!!!:0: 0: 
+run_entail_check 3: after normalization
+ ### ante =  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+ ### conseq =  EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+
+
+!!! f(b4 elim_exists_es_his): emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!! new_his(after elim_exists_es_his):[]
+!!! f(after elim_exists_es_his): emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!!:0: 0: SAT #1
+!!!:0: 0:  0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!!:0: 0: f : : 0<i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : 2+vv=i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(vv,1+ww)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(ww,kk)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(kk,vx_13)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : res=vx_13+1
+!!!:0: 0: NONE #
+!!!:0: 0: f : : false
+!!!:0: 0: NONE #Starting z3... 
+
+sat_label_filter_helper@2@1
+sat_label_filter_helper inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+sat_label_filter_helper@2 EXIT:true
+
+sat_label_filter@1
+sat_label_filter inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+sat_label_filter@1 EXIT:true
+
+!!! es_formula:: emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!! es_pure:: true
+!!!:0: 0: heap_entail_struc_init:
+ctx:
+ 
+Good Context: length= 1 [es_formula: 
+                          emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & 
+                          post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+                         es_infer_vars_rel: [post]] <1>emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+[[empty]]
+
+
+
+conseq:
+ EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!!:0: 0: heap_entail_one_context_struc:
+ctx:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! es(1): emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+  es_heap:emp
+  es_infer_vars_rel: [post]
+!!!:0: 0: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+tid:None
+delayed_f:None
+context:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ EBase emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! es(2): es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+!!! es(3): es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+!!!:0: 0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!!:0: 0: process_action :
+ ### action =  NothingToDo => No duplicated nodes!
+ ### estate =  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+  es_heap:emp
+  es_infer_vars_rel: [post]
+ ### conseq =  emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+
+
+imply_label_filter@3
+imply_label_filter inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+imply_label_filter inp2 : post(i,res)
+imply_label_filter@3 EXIT:[( 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1, post(i,res))]
+
+!!!:0: 0: ante 1: : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!!:0: 0: ante 3: : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!!:0: 0: ante 4: : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+filter_var@7@6@5@4
+filter_var inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+filter_var inp2 :[post,i,res]
+filter_var@7 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+filter_ante@6@5@4
+filter_ante inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+filter_ante inp2 : post(i,res)
+filter_ante@6 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+assumption_filter@5@4
+assumption_filter inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+assumption_filter inp2 : post(i,res)
+assumption_filter@5 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+assumption_filter@4
+assumption_filter inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+assumption_filter inp2 : post(i,res)
+assumption_filter@4 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+!!!:0: 0: IMP #2
+!!!:0: 0: imply_timeout: ante:  post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+!!!:0: 0: imply_timeout: conseq:  post(i,res)
+!!! Ann Vars:[]
+!!! Inv: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+!!!:0: 0: f : : post(kk,vx_13)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(ww,kk)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(vv,1+ww)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : 0<i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : 2+vv=i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : res=vx_13+1
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(i,res)
+!!!:0: 0: NONE #
+!!!:0: 0: res: :false
+!!! lhs(orig): : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!! rhs(orig): : post(i,res)
+filter_var@9@8
+filter_var inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+filter_var inp2 :[post,i,res]
+filter_var@9 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+filter_ante@8
+filter_ante inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+filter_ante inp2 : post(i,res)
+filter_ante@8 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+
+!!! lhs (after filter_ante): : post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<i & 2+vv=i & res=vx_13+1
+!!! fml: : true & true & true & 0<i & 2+vv=i & res=vx_13+1 & true
+!!!:0: 0: SAT #3
+!!!:0: 0:  0<i & 2+vv=i & res=vx_13+1
+!!!:0: 0: f : : 0<i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : 2+vv=i
+!!!:0: 0: NONE #
+!!!:0: 0: f : : res=vx_13+1
+!!!:0: 0: NONE #
+!!!:0: 0: f : : false
+!!!:0: 0: NONE #
+sat_label_filter_helper@11@10
+sat_label_filter_helper inp1 : 0<i & 2+vv=i & res=vx_13+1
+sat_label_filter_helper@11 EXIT:true
+
+sat_label_filter@10
+sat_label_filter inp1 : 0<i & 2+vv=i & res=vx_13+1
+sat_label_filter@10 EXIT:true
+
+!!! early_hp_contra_detection : :..in None
+!!!:0: 0: heap_entail_conjunct:
+context:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!!:0: 0: heap_entail_conjunct_helper:
+context:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! ctx0.es_heap bef: emp
+!!! ctx0.es_heap after: emp
+!!!:0: 0: heap_entail_conjunct_helper: conseq has an empty heap component
+context:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+conseq:
+ emp&post(i,res)&{FLOW,(4,5)=__norm}[]
+!!! h1: : emp
+!!! h2: : emp
+!!! prep_h1: : emp
+!!! es_infer_vars_hp_rel :[]
+!!! es_infer_vars :[]
+!!! es_infer_vars_rel :[post]
+!!! es_infer_vars_sel_hp_rel :[]
+!!! h1: : emp
+!!! h2: : emp
+!!! prep_h1: : emp
+!!! rhs_rest_emp: :true
+!!! is_folding: :false
+!!! !Globals.do_classic_frame_rule:false
+!!! is_rhs_emp:true
+!!! 
+
+filter_varperm_mix_formula@12
+filter_varperm_mix_formula inp1 : post(i,res)
+filter_varperm_mix_formula@12 EXIT:
+ ### ls = []
+ ### f =  post(i,res)
+
+!!! lhs_h: emp
+!!! estate_orig.es_heap: emp
+!!! curr_lhs_h: emp
+!!! lhs_p: 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!! curr_lhs_h0: emp
+!!! rel_rhs:[ post(i,res)]
+!!! other_rhs:[]
+!!!:0: 0: SAT #4
+!!!:0: 0:  0<i & 2+vv=i & res=vx_13+1
+sat_label_filter_helper@14@13
+sat_label_filter_helper inp1 : 0<i & 2+vv=i & res=vx_13+1
+sat_label_filter_helper@14 EXIT:true
+
+sat_label_filter@13
+sat_label_filter inp1 : 0<i & 2+vv=i & res=vx_13+1
+sat_label_filter@13 EXIT:true
+
+!!! lhs_p:: 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!! lhs_p_memo:: 0<i & 2+vv=i & memo_rel_hole_28 & memo_rel_hole_27 & memo_rel_hole_26 & 
+res=vx_13+1
+!!! lhs_h_p (lhs_h_mix):: true
+!!! lhs (after lhs_simplifier):: i=vv+2 & vx_13=res-1 & 0<=(1+vv) & memo_rel_hole_28 & memo_rel_hole_27 & 
+memo_rel_hole_26
+!!! lhs_p_new (b4 filter ass):: i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+!!!:0: 0: SAT #6
+!!!:0: 0:  i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+!!!:0: 0: f : : i=vv+2
+!!!:0: 0: NONE #
+!!!:0: 0: f : : vx_13=res-1
+!!!:0: 0: NONE #
+!!!:0: 0: f : : 0<=(1+vv)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(vv,1+ww)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(ww,kk)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : post(kk,vx_13)
+!!!:0: 0: NONE #
+!!!:0: 0: f : : false
+!!!:0: 0: NONE #
+sat_label_filter_helper@16@15
+sat_label_filter_helper inp1 : i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+sat_label_filter_helper@16 EXIT:true
+
+sat_label_filter@15
+sat_label_filter inp1 : i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+sat_label_filter@15 EXIT:true
+
+filter_var@18@17
+filter_var inp1 : i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+filter_var inp2 :[post,i,res]
+filter_var@18 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<=(1+vv) & i=vv+2 & 
+vx_13=res-1
+
+filter_ante@17
+filter_ante inp1 : i=vv+2 & vx_13=res-1 & 0<=(1+vv) & post(vv,1+ww) & post(ww,kk) & 
+post(kk,vx_13)
+filter_ante inp2 : post(i,res)
+filter_ante@17 EXIT: post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<=(1+vv) & i=vv+2 & 
+vx_13=res-1
+
+!!! Rel Inferred (b4 pairwise)::[( post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<=(1+vv) & i=vv+2 & 
+vx_13=res-1) -->  post(i,res)]
+!!! Rel Inferred (b4 wrap_exists)::[( post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<=(1+vv) & i=vv+2 & 
+vx_13=res-1) -->  post(i,res)]
+!!! diff_vs:[]
+!!! new_lhs (b4 elim_exists): post(kk,vx_13) & post(ww,kk) & post(vv,1+ww) & 0<=(1+vv) & i=vv+2 & 
+vx_13=res-1
+!!! rel-defn:rhs: post(i,res)
+!!! rel-defn:new lhs: vv=i-2 & res=vx_13+1 & 1<=i & post(vv,1+ww) & post(kk,vx_13)
+filter_var@20@19
+filter_var inp1 : vv=i-2 & res=vx_13+1 & 1<=i & post(vv,1+ww) & post(kk,vx_13)
+filter_var inp2 :[i,res]
+filter_var@20 EXIT: post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i
+
+filter_ante_wo_rel@19
+filter_ante_wo_rel inp1 : vv=i-2 & res=vx_13+1 & 1<=i & post(vv,1+ww) & post(kk,vx_13)
+filter_ante_wo_rel inp2 : post(i,res)
+filter_ante_wo_rel@19 EXIT: post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i
+
+!!! rel-defn:filter_ante lhs: post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i
+!!!:0: 0: >>>>>> infer_collect_rel <<<<<<
+!!! Infer Rel Ids:[post]
+!!! LHS pure: 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!! RHS pure: post(i,res)
+!!!:0: 0: Rel Inferred::[RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+!!! RHS Rel List:[ post(i,res)]
+!!! es: es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+ es_infer_rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+!!!:0: 0: heap_entail_empty_heap: ctx:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+ es_infer_rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+!!!:0: 0: heap_entail_empty_heap: rhs:
+ true
+!!! estate: es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+ es_infer_rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+!!! m_lhs: 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!! tmp3: 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+mix_cons_filter@21
+mix_cons_filter inp1 : true
+mix_cons_filter@21 EXIT: true
+
+mix_cons_filter@22
+mix_cons_filter inp1 : true
+mix_cons_filter@22 EXIT: true
+
+!!!:0: 0: rhs_p : : true
+!!!:0: 0: conseq0 : : true
+!!!:0: 0: conseq1 : : true
+!!!:0: 0: >>>>>> entail_empty_heap: cp1 <<<<<<
+!!!:0: 0: ante0 : : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!!:0: 0: ante1 : : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+!!!:0: 0: conseq : : true
+!!!:0: 0: SAT #8
+!!!:0: 0:  0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+sat_label_filter_helper@24@23
+sat_label_filter_helper inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+sat_label_filter_helper@24 EXIT:true
+
+sat_label_filter@23
+sat_label_filter inp1 : 0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1
+sat_label_filter@23 EXIT:true
+
+!!!:0: 0: heap_entail_empty_heap: formula is valid
+!!!:0: 0: heap_entail_empty_heap: res_ctx:
+ es_formula: 
+  emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & 
+  res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ es_infer_vars_rel: [post]
+ es_infer_rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+!!! l_inst: true
+!!! p2: post(i,res)
+!!! move_impl(l_inst):[]
+!!! move_impl(to_elim_evars):[]
+!!! move_impl(inst_to_keep):[]
+!!! move_impl(f): true
+!!! move_impl(new_to_elim):[]
+!!! es_formula:: emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!! es_pure:: true
+!!! new_ctx: 
+Good Context: length= 1 [es_formula: 
+                          emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & 
+                          post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+                         es_infer_vars_rel: [post]
+                         es_infer_rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]] <1>emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ inferred rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+[[empty]]
+
+
+
+Entail (1) : Valid. 
+
+Residue:
+
+!!! es_formula:: emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+
+1&{FLOW,(4,5)=__norm}[]
+!!! es_pure:: true <1>emp&0<i & 2+vv=i & post(vv,1+ww) & post(ww,kk) & post(kk,vx_13) & res=vx_13+1&{FLOW,(4,5)=__norm}[]
+ inferred rel: [RELDEFN post: ( post(kk,vx_13) & post(vv,1+ww) & vv=i-2 & res=vx_13+1 & 1<=i) -->  post(i,res)]
+
+Stop Omega... 2 invocations 
+SAT Count   : 5
+SAT % Hit   : 40.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001096 (seconds)
+
+!!! log(small):(0.020397,9)
+Total verification time: 0.08951 second(s)
+	Time spent in main process: 0.075312 second(s)
+	Time spent in child processes: 0.014198 second(s)
+
