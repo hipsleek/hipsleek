@@ -793,7 +793,7 @@ and struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
 	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
 	| EAssume b-> heap_fv b.formula_assume_simpl
-    | EInfer b -> struc_hp_fv b.formula_inf_continuation
+        | EInfer b -> struc_hp_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
 
 and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
@@ -802,11 +802,10 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 	| ECase b-> List.fold_left (fun a (c1,c2)-> (P.fv c1)@(struc_case_fv c2)@a)
 					[] b.formula_case_branches
 	| EAssume b-> []
-    | EInfer b -> struc_case_fv b.formula_inf_continuation
+        | EInfer b -> struc_case_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_case_fv b)
 
-	
-(*TO CHECK: how about formula_and*)	
+(*TO CHECK: how about formula_and*)
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in

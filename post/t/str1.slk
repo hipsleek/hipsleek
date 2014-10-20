@@ -1,0 +1,11 @@
+relation post(int x,int y).
+
+infer [post] (exists vx: 
+//emp&0<i & i=i & 
+ 0<i & 
+vv+2=i & 
+post(vv,ww+1) & 
+post(ww,kk) & 
+post(kk,vx) & res=1+vx )
+ |-  emp&post(i,res).
+print residue.

@@ -1,0 +1,12 @@
+
+!!!Full processing file "t/dll-td2.ss"
+Parsing file "t/dll-td2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure test_del2$node2~node2... 
+Procedure test_del2$node2~node2 SUCCESS.
+
+0 false contexts at: ()

@@ -1,0 +1,73 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>(exists q_61,flted_7_59: q_61::ll{}<flted_7_59>&flted_7_59+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [(y!=0 | n!=0)]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>(exists q_89,flted_7_87: q_89::ll{}<flted_7_87>&flted_7_87+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>(exists q_115,flted_7_113: q_115::ll{}<flted_7_113>&flted_7_113+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>emp&y=null & n=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n=0]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n!=1]
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n!=1]
+
+Residue:
+ <1>emp&0<n & m<n & 4<=n&{FLOW,(4,5)=__norm}[]
+ inferred pure: [4<=n]
+
+Residue:
+ <1>emp&0<n & m<n & 4<m & 9<=n&{FLOW,(4,5)=__norm}[]
+ inferred pure: [9<=n]
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n<=0]
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [(n<=m | n<=0)]
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError}[]
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [(m!=2 | n<=0)]
+
+Residue:
+ <1>emp&2<m&{FLOW,(4,8)=__MayError}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+Residue:
+ <1>emp&2<m&{FLOW,(4,8)=__MayError}[]
+
+Residue:
+ <1>emp&2<m&{FLOW,(4,8)=__MayError}[]
+
+Residue:
+ <1>emp&2<m & 5<=m & m<p&{FLOW,(4,5)=__norm}[]
+ inferred pure: [(1+m)<=p; 5<=m]
+
+
