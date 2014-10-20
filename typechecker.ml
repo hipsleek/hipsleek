@@ -3625,8 +3625,6 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc=
-    let _ = DD.binfo_hprint (add_str "spec init" (pr_list Cprinter.string_of_struc_formula)) (List.map (fun proc -> proc.proc_stk_of_static_specs # top) scc) no_pos in
-
     let scc, ini_hpdefs = Da.find_rel_args_groups_scc prog scc in
 
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
@@ -3708,8 +3706,8 @@ let rec check_prog iprog (prog : prog_decl) =
 
       (* Pure inference *)
       let _ = if (has_infer_post_proc || has_infer_pre_proc) then Pi.infer_pure prog scc in
-      let _ = List.iter (fun proc ->
-          DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in
+      (* let _ = List.iter (fun proc -> *)
+      (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
       let rem_pure_inf_prog_rel_decls = List.filter (fun rel_decl ->
           let r1 = Str.regexp "post_" in

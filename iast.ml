@@ -1228,7 +1228,7 @@ let genESpec_wNI body_header body_opt args ret pos=
                     F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
               | _ -> ss
             in
-            let _ = Debug.binfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
         else (body_header.proc_static_specs,[],body_header.proc_args_wi)
