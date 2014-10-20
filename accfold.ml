@@ -8,8 +8,6 @@ module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
 
-module LO = Label_only.LOne
-
 
 (* 
  * split maximum chain of a h_formula
@@ -688,7 +686,7 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
 (*
  * colelct reachable pointers in a formula, starting from 'roots' nodes
  *)
-let collect_reachable_pointers_in_formula (f: CF.formula) (roots: CP.spec_var list)
+let collect_reachable_pointers_in_formula_x (f: CF.formula) (roots: CP.spec_var list)
     : CP.spec_var list =
   let rec collect_helper f roots = (
     let reachable_ptrs = ref roots in
@@ -723,7 +721,24 @@ let collect_reachable_pointers_in_formula (f: CF.formula) (roots: CP.spec_var li
   (* return *)
   collect_helper f roots
 
-(* direction pointer is the forward, backward pointers *)
+
+let collect_reachable_pointers_in_formula (f: CF.formula) (roots: CP.spec_var list)
+    : CP.spec_var list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_roots = (add_str "roots" !CP.print_svl) in
+  let pr_res = (add_str "res" !CP.print_svl) in
+  Debug.no_2 "collect_reachable_pointers_in_formula" pr_f pr_roots pr_res
+      (fun _ _ -> collect_reachable_pointers_in_formula_x f roots) f roots
+
+(*
+ * - direction pointers are the pointers of view (or view arguments) which can
+ *   be reached from the root node of view
+ *)
+(* 
+ * TRUNG TODO: what is the other name for "direction pointers" ?
+ * - change to "bound pointer"? 
+ *)
+
 let compute_direction_pointers_of_view_x (vdecl: C.view_decl) : CP.spec_var list =
   let root = C.get_view_root vdecl in
   let direction_pointers = List.concat (List.map (fun (f,_) ->
@@ -746,8 +761,24 @@ let compute_direction_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
   Debug.no_1 "compute_direction_pointers_of_view" pr_v pr_res
       (fun _ -> compute_direction_pointers_of_view_x vdecl) vdecl
 
+(*
+ * - compute the head node of the main heap chain of a formula in context of a
+ *   view declaration.
+ * - head is just the node pointed by "self" (root node)
+ *)
+let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl) 
+    : CP.spec_var list =
+  
 
-(* let compute_direction_fields_of_data_x (ddecl: C.data_decl) : CP.spec_var list = *)
+
+ (* (direction_pointers) *)
+
+
+(* 
+ * direction fields of a data structure in context of a view declaration are
+ * the field by which starting from the root of view and follow only them and
+ *)
+(* let compute_direction_fields_of_data_x (ddecl: C.data_decl) (vdecl:  : CP.spec_var list = *)
   
 
 

@@ -903,9 +903,9 @@ let print_min = ref false
 
 let smart_lem_search = ref false
 
-let sa_en_split = ref false
-
 let fold_contra_detect = ref false
+
+let sa_en_split = ref false
 
 let pred_split = ref false
 

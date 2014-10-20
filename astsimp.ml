@@ -2807,14 +2807,14 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
   let fwp, fwf, bwp, bwf = ref [], ref [], ref [], ref [] in
   List.iter (fun induct_f ->
     let head_nodes, body_nodes = extract_head_body_node induct_f ddecl vdecl in
-    Debug.binfo_hprint (add_str "head_nodes" (pr_list !CF.print_h_formula)) head_nodes no_pos; 
-    Debug.binfo_hprint (add_str "body_nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
+    Debug.ninfo_hprint (add_str "head_nodes" (pr_list !CF.print_h_formula)) head_nodes no_pos; 
+    Debug.ninfo_hprint (add_str "body_nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
     
     (* find forward, backward info from head and body node *)
     let head_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) head_nodes) in
     let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
-    Debug.binfo_hprint (add_str "head_ptrs" !CP.print_svl) head_ptrs no_pos; 
-    Debug.binfo_hprint (add_str "body_ptrs" !CP.print_svl) body_ptrs no_pos;
+    Debug.ninfo_hprint (add_str "head_ptrs" !CP.print_svl) head_ptrs no_pos; 
+    Debug.ninfo_hprint (add_str "body_ptrs" !CP.print_svl) body_ptrs no_pos;
     
     let (hf,mf,_,_,_) = CF.split_components induct_f in
     let pf = MCP.pure_of_mix mf in
@@ -2838,7 +2838,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
           fwf := remove_dups_str_list (new_fwfs @ !fwf)
       | _ -> ()
     ) head_nodes in
-    Debug.binfo_hprint (add_str "heads -> bodies" (fun (x,y,z,t) -> 
+    Debug.ninfo_hprint (add_str "heads -> bodies" (fun (x,y,z,t) -> 
         "fwp: " ^ (!CP.print_svl x) ^ "; " ^ "fwf: " ^ (pr_ident_list y) ^ "; " 
         ^ "bwp: " ^ (!CP.print_svl z) ^ "; " ^ "bwf: " ^ (pr_ident_list t)
       ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
@@ -2862,7 +2862,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
           bwf := remove_dups_str_list (new_bwfs @ !bwf)
       | _ -> ()
     ) body_nodes in
-    Debug.binfo_hprint (add_str "bodies -> heads" (fun (x,y,z,t) -> 
+    Debug.ninfo_hprint (add_str "bodies -> heads" (fun (x,y,z,t) -> 
         "fwp: " ^ (!CP.print_svl x) ^ "; " ^ "fwf: " ^ (pr_ident_list y) ^ "; " 
         ^ "bwp: " ^ (!CP.print_svl z) ^ "; " ^ "bwf: " ^ (pr_ident_list t)
       ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
@@ -2877,7 +2877,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
         fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
-        Debug.binfo_hprint (add_str "after unfolding 1" (fun (x,y,z,t) -> 
+        Debug.ninfo_hprint (add_str "after unfolding 1" (fun (x,y,z,t) -> 
         "fwp: " ^ (!CP.print_svl x) ^ "; " ^ "fwf: " ^ (pr_ident_list y) ^ "; " 
         ^ "bwp: " ^ (!CP.print_svl z) ^ "; " ^ "bwf: " ^ (pr_ident_list t)
           ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
@@ -2903,7 +2903,7 @@ and compute_view_forward_backward_info_x (vdecl: C.view_decl)
         let new_fwp, new_fwf, new_bwp, new_bwf = 
           collect_forward_backward_from_formula unfold_f vdecl ddecl !fwp !fwf !bwp !bwf in
         fwp := new_fwp; fwf := new_fwf; bwp := new_bwp; bwf := new_bwf;
-        Debug.binfo_hprint (add_str "after unfolding 2" (fun (x,y,z,t) -> 
+        Debug.ninfo_hprint (add_str "after unfolding 2" (fun (x,y,z,t) -> 
             "fwp: " ^ (!CP.print_svl x) ^ "; " ^ "fwf: " ^ (pr_ident_list y) ^ "; " 
             ^ "bwp: " ^ (!CP.print_svl z) ^ "; " ^ "bwf: " ^ (pr_ident_list t)
           ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
@@ -3769,8 +3769,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         | IF.EBase b -> b.IF.formula_struc_implicit_inst
         | _ -> [] in
       let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in
-      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
-      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
+      (* let _ = Debug.ninfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
+      (* let _ = Debug.ninfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
       let imp_spec_vars = collect_important_vars_in_spec true static_specs_list in
       let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
       let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
@@ -5754,8 +5754,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                          String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                      ) w_formal_args in
-                     let _ =  Debug.binfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
-                     let _ =  Debug.binfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                     let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                     let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                      let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                  let full_args_wi = if ninfer_args = [] then args_wi
@@ -8402,7 +8402,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     | Some l-> 
                         let r1,r2 = helper h1prm new_strad_vs vars l in 
                         (Some r1,r2) in
-                (* Debug.binfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
+                (* Debug.ninfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
                 let implvar = diff (IF.unbound_heap_fv onb) all_vars in
                 let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
                   Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
