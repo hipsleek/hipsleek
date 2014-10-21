@@ -377,7 +377,7 @@ let print_view_arg v= match v with
   | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
 
 let print_rel_cat rel_cat = match rel_cat with
-  | RelDefn (v,vs) -> "RELDEFN " ^ (!print_sv v) ^ "[" ^ (!print_svl vs)  ^ "]"
+  | RelDefn (v,vs) -> "RELDEFN " ^ (!print_sv v) ^(if vs==[] then "" else (!print_svl vs)) 
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
   | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)

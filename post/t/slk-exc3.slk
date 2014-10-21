@@ -12,6 +12,12 @@ print residue.
 
 infer [post2,@flow] res=2222 & 1<=x & flow __Exc  |- post2(x,res) & flow __flow.
 print residue.
+
+infer [post2,@flow] res=2222 & 1<=x   |- post2(x,res) & flow __flow.
+print residue.
+
+infer [post2] res=2222 & 1<=x   |- post2(x,res) & flow __flow.
+print residue.
 /*
 # slk-exc3.slk
 

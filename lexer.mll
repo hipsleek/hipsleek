@@ -381,7 +381,7 @@ rule tokenizer file_name = parse
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
-(*  | "XPURE" {XPURE}*)
+(*  | "XPURE" {XPURE} *)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}

@@ -293,25 +293,25 @@ let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars =
   in helper ctx
   
 let init_infer_type ctx itype =
-  let rec helper ctx it =
+  let rec helper ctx =
     match ctx with
-    | Ctx es -> begin 
-      match it with
-      | INF_TERM -> (es.es_infer_obj # set INF_TERM; ctx)
-            (* Ctx { es with es_infer_tnt = true}) *)
-      | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx)
-      | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
-      | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
-      | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
-      | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx) 
-      | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx) 
-      | INF_FLOW -> (es.es_infer_obj # set INF_FLOW; ctx) 
-      end
-    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
-  in 
-  match itype with
-  | None -> ctx
-  | Some it -> helper ctx it
+    | Ctx es -> es.es_infer_obj # set_list itype ; ctx
+      (* match it with *)
+      (* | INF_TERM -> (es.es_infer_obj # set INF_TERM; ctx) *)
+      (*       (\* Ctx { es with es_infer_tnt = true}) *\) *)
+      (* | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx) *)
+      (* | INF_POST -> (es.es_infer_obj # set INF_POST; ctx)  *)
+      (* | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx)  *)
+      (* | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx)  *)
+      (* | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx)  *)
+      (* | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx)  *)
+      (* | INF_FLOW -> (es.es_infer_obj # set INF_FLOW; ctx)  *)
+      (* end *)
+    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+  (* match itype with *)
+  (* | None -> ctx *)
+  (* | Some it -> helper ctx it *)
 
 (* let conv_infer_heap hs = *)
 (*   let rec helper hs h = match hs with *)
@@ -1950,7 +1950,11 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
           (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
           let rel_cat = 
-            if rel_def_id != [] then CP.RelDefn ((List.hd rel_def_id),[CP.mk_typed_spec_var Int "flow"]) else 
+            if rel_def_id != [] 
+            then if (* Globals.infer_const_obj # is_add_flow || *) estate.es_infer_obj # is_add_flow then
+              CP.RelDefn ((List.hd rel_def_id),[CP.mk_typed_spec_var Int "flow"])
+            else CP.RelDefn ((List.hd rel_def_id),[])
+            else 
               (*            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else*)
               (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
               report_error pos "Relation belongs to unexpected category"
