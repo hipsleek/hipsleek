@@ -1950,7 +1950,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
           (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
           let rel_cat = 
-            if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) else 
+            if rel_def_id != [] then CP.RelDefn ((List.hd rel_def_id),[]) else 
               (*            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else*)
               (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
               report_error pos "Relation belongs to unexpected category"
