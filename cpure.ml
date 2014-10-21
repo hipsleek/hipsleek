@@ -119,7 +119,7 @@ let is_inf_sv sv = match sv with
   | _ -> false
 
 type rel_cat = 
-  | RelDefn of spec_var
+  | RelDefn of spec_var (* * (spec_var list) ["flow"]  *)(* WN : extra global flow var in 2nd parameter *)
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
