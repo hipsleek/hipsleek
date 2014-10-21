@@ -2442,8 +2442,15 @@ and pr_formula_guard ((e,g):formula_guard)=
     | None -> s1
     | Some f -> s1 ; fmt_string "|#|" ; (prtt_pr_formula f)
 
-and pr_formula_guard_list (es: formula_guard list)=
-  pr_seq "" pr_formula_guard es
+and pr_formula_guard_list (es0: formula_guard list)=
+  let rec recf es =
+    match es with
+      | [] -> ()
+      | [f] -> pr_formula_guard f
+      | f::rest -> ( pr_formula_guard f) ; fmt_string " \/ " ; recf rest
+            (* pr_seq "" pr_formula_guard es *)
+  in
+  recf es0
 
 and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 
@@ -2952,6 +2959,18 @@ let pr_only_lhs_rhs (lhs,rhs) =
   fmt_close()
 
 let string_of_only_lhs_rhs (e) : string =  poly_string_of_pr  pr_only_lhs_rhs e
+
+let pr_infer_state is =
+  fmt_open_box 1;
+  fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs));
+  fmt_string (string_of_spec_var_list (List.map fst is.is_dang_hpargs));
+  fmt_string (pr_list_round string_of_int is.is_cond_path);
+  fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
+  fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs);
+  fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
+  fmt_close()
+
+let string_of_infer_state is: string =  poly_string_of_pr  pr_infer_state is
 
 let pr_infer_state_short is =
   fmt_open_box 1;

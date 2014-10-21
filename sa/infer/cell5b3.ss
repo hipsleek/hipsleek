@@ -7,10 +7,7 @@ void wloop(cell x,cell y)
     requires true
     ensures true;
 {
-  bool t = y.val<x.val;
-  y.val = y.val +1;
   wloop(x,y);
-  // dprint;
 }
 
 /*
