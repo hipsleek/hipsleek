@@ -130,22 +130,22 @@ let get_weakest_imm  (ann_lst: CP.ann list): CP.ann =
       | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
   in helper (CP.ConstAnn(Mutable)) ann_lst
 
-let rec remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
+let rec remove_true_rd_phase (h : h_formula) : h_formula = 
   match h with
-    | CF.Phase ({CF.h_formula_phase_rd = h1;
-	  CF.h_formula_phase_rw = h2;
-	  CF.h_formula_phase_pos = pos
+    | Phase ({h_formula_phase_rd = h1;
+	  h_formula_phase_rw = h2;
+	  h_formula_phase_pos = pos
 	 }) -> 
-      if (h1 == CF.HEmp) then h2
-      else if (h2 == CF.HEmp) then h1
+      if (h1 == HEmp) then h2
+      else if (h2 == HEmp) then h1
       else h
-    | CF.Star ({CF.h_formula_star_h1 = h1;
-	  CF.h_formula_star_h2 = h2;
-	  CF.h_formula_star_pos = pos
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos
 	 }) -> 
       let h1r = remove_true_rd_phase h1 in
       let h2r = remove_true_rd_phase h2 in
-      CF.mkStarH h1r h2r pos
+      mkStarH h1r h2r pos
     | _ -> h
 
 
@@ -280,6 +280,7 @@ let maybe_replace_w_empty h =
           (*     | _,_         -> HEmp *)
           (* in new_h *)
     | _ -> h
+
 
 (* let maybe_replace_w_empty h = *)
 (*   match h with *)
@@ -1990,3 +1991,128 @@ let propagate_imm_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * C
 let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
   let res = propagate_imm_struc_formula sf view_name imm imm_p in
   normalize_field_ann_struc_formula res
+
+(* ===============================  below is for merging aliased nodes ================================= *)
+
+(* return (compatible_flag, to_keep_node, to_remove_node) *)
+let compatible_at_node_lvl imm1 imm2 h1 h2 =
+  if (isAccs imm1) then (true, h2, h1)
+  else if (isAccs imm2) then (true, h1, h2)
+  else (false, h1, h2)
+
+(* merged two nodes and return merged node and resulted equalities. *)
+let merge_two_nodes h1 h2 =
+  match h1, h2 with
+    | [(DataNode dn1) as h1], DataNode dn2  -> 
+          let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 in
+          if comp then
+            let eqs_lst= List.combine dn1.h_formula_data_arguments dn2.h_formula_data_arguments in
+            let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
+            (* add here merge code *)
+            ([ret_h], eqs)
+          else
+            ([h1;h2], [])
+    | [(ViewNode vn) as h1], DataNode dn   
+    | [(DataNode dn) as h1], ViewNode vn -> ([h1;h2], [])
+    | _, _ -> (h1@[h2], [])
+
+(* let get_node_var h =  *)
+
+let defined_node h1 = 
+  match h1 with
+    | DataNode _
+    | ViewNode _
+    | ThreadNode _ -> true
+    | _ -> false
+
+let aliased_nodes h1 h2 emap =
+  if (defined_node h1) && (defined_node h2) then
+    CP.EMapSV.is_equiv emap (get_node_var h1) (get_node_var h2)
+  else
+    false                               (* assume that if node is undefined, it does not have an aliased *)
+
+(* merge aliased nodes 
+ * return merged node and resulted qualities. *)
+let merge_alias_nodes_h_formula f p emap xpure = (* f *)
+   match f with
+    | Star _ ->
+          let rec merge h lst =
+            let aliases, disj = List.partition (fun n -> aliased_nodes h n emap) lst in 
+            let new_h, eqs = List.fold_left (fun (a, e) n -> 
+                let merged, eqs =  merge_two_nodes a n in
+                (merged, e@eqs)
+            ) ([h],[]) aliases in (* here!! *)
+            (new_h, disj, eqs)
+          in
+          let rec helper lst = 
+            match lst with 
+              | []   -> ([], [])
+              | [h]  ->         
+                    if (isAccs (get_imm h)) then
+                      let _ = xpure h p 1 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
+                      ([HEmp], [])
+                    else
+                      ([h], [])
+              | h::t ->
+                    let updated_head, updated_tail, eqs_lst = merge h t in
+                    let merged_tail, eqs_lst_tail = helper updated_tail in
+                    (updated_head@merged_tail, eqs_lst@eqs_lst_tail)  in
+          let node_lst = split_star_h f in
+          let node_lst, eqs = helper node_lst in
+          let updated_f = combine_star_h node_lst in
+          let aux_pure  = CP.join_conjunctions eqs in
+          (updated_f, Some aux_pure)
+    | _ -> (f, None)
+
+let merge_alias_nodes_formula f xpure = (* f *)
+  let rec helper  f = 
+    match f with 
+      | Base bf -> 
+            let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix bf.formula_base_pure) in
+            let emap = CP.EMapSV.build_eset subs in
+            let new_f, new_p = merge_alias_nodes_h_formula bf.formula_base_heap  bf.formula_base_pure emap xpure in
+            let new_p = 
+              match new_p with
+                | Some p -> MCP.memoise_add_pure bf.formula_base_pure p
+                | None   -> bf.formula_base_pure in
+            Base { bf with formula_base_heap = new_f; 
+                formula_base_pure = new_p; }
+      | Exists(ef) -> 
+            let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix ef.formula_exists_pure) in
+            let emap = CP.EMapSV.build_eset subs in
+            let new_f, new_p = merge_alias_nodes_h_formula ef.formula_exists_heap  ef.formula_exists_pure emap xpure in
+            let new_p = 
+              match new_p with
+                | Some p -> MCP.memoise_add_pure ef.formula_exists_pure p
+                | None   -> ef.formula_exists_pure in
+            Exists{ef with formula_exists_heap = new_f;
+                formula_exists_pure = new_p; }
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1; 
+            formula_or_f2 = helper orf.formula_or_f2;}
+  in
+  if not (!Globals.imm_merge) then f
+  else helper f 
+
+let merge_alias_nodes_formula f xpure  =
+  let pr = Cprinter.string_of_formula in 
+  Debug.no_1 "merge_alias_nodes_formula" pr pr (fun _ -> merge_alias_nodes_formula f xpure) f
+
+let rec merge_alias_nodes_struc_formula f xpure  = 
+  let res = 
+    match f with
+      | EBase f   -> EBase {f with 
+            formula_struc_base =  merge_alias_nodes_formula f.formula_struc_base xpure  }
+      | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula c xpure ) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c-> merge_alias_nodes_struc_formula c xpure ) f.formula_case_branches;}
+      | EAssume f -> EAssume {f with
+	    formula_assume_simpl = merge_alias_nodes_formula f.formula_assume_simpl xpure ;
+	    formula_assume_struc = merge_alias_nodes_struc_formula f.formula_assume_struc xpure ;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula f.formula_inf_continuation xpure } 
+  in if not (!Globals.imm_merge) then f
+  else res
+
+let merge_alias_nodes_struc_formula f xpure  =
+  let pr = Cprinter.string_of_struc_formula in 
+  Debug.no_1 "merge_alias_nodes_struc_formula" pr pr (fun _ -> merge_alias_nodes_struc_formula f xpure) f
+
+(* ===============================  end - merging aliased nodes ================================= *)

@@ -24,3 +24,26 @@ Residue:
 
 
 */
+
+/**
+merge:
+=====
+DN with DN:
+ x::node<v>@A * a::node<w>@A & a=x ---> x::node<v>@A & a=x  & v=w
+
+===========================================
+VN with VN (same view def):
+ x::pred<v>@A * a::pred<w>@A & a=x ---> x::pred<v>@A & a=x  & v=w
+ (ok because @A propagates inside the view def)
+
+===========================================
+VN with VN (dif view def): 
+ x::pred1<v>@A * a::pred2<w>@A & a=x ---> ?
+
+===========================================
+DN with VN (works only for normal recursion):
+   x::node<v>@A * a::pred<w>@A & a=x 
+     ---> x::node<v>@A * unfold(a::pred<w>@A) & a=x 
+     ---> x::node<v>@A * a::node<w0>@A * tail(a::pred<w>@A) & a=x 
+     ---> x::node<v>@A * tail(a::pred<w>@A) & a=x & v=w0
+*/

@@ -1046,3 +1046,8 @@ let convert_tail_vdefs_to_linear prog =
   { prog with C.prog_view_decls = vdecls }
 
   (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
+
+
+let imm_abs_norm (f:CF.formula) prog: CF.formula  = 
+  Immutable.merge_alias_nodes_formula f (Cvutil.xpure_heap 13 prog)
+  (* Cvutil.crop_h_formula f svl *)
