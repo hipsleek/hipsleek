@@ -5116,23 +5116,23 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
                 I.exp_block_body = I.Seq{
-                    I.exp_seq_exp1 = w_body_1;
-                    I.exp_seq_exp2 = I.CallNRecv {
-                        I.exp_call_nrecv_method = w_name;
-                        I.exp_call_nrecv_lock = None;
-                        I.exp_call_nrecv_arguments = w_args;
-                        I.exp_call_nrecv_pos = pos;
-                        I.exp_call_nrecv_path_id = pi; };
-                    I.exp_seq_pos = pos; };
+                I.exp_seq_exp1 = w_body_1;
+                I.exp_seq_exp2 = I.CallNRecv {
+                I.exp_call_nrecv_method = w_name;
+                I.exp_call_nrecv_lock = None;
+                I.exp_call_nrecv_arguments = w_args;
+                I.exp_call_nrecv_pos = pos;
+                I.exp_call_nrecv_path_id = pi; };
+                I.exp_seq_pos = pos; };
                 I.exp_block_local_vars = [];
                 I.exp_block_pos = pos;} in
-	    let w_body_wo_brk = I.Cond {
+            let w_body_wo_brk = I.Cond {
                 I.exp_cond_condition = cond;
                 I.exp_cond_then_arm = w_body_2;
                 I.exp_cond_else_arm = I.Empty pos;
                 I.exp_cond_pos = pos;
                 I.exp_cond_path_id = pi;} in
-	    let w_body_w_brk = match wrap with
+            let w_body_w_brk = match wrap with
               | None -> w_body_wo_brk
               | Some (e,_) -> (*let e,et = helper e in*)
                     match e with
@@ -5143,7 +5143,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_block_body = w_body_w_brk ;
                 I.exp_block_local_vars = [];
                 I.exp_block_pos = pos;} in
-	    let prepost = match wrap with 
+            let prepost = match wrap with 
               | None -> prepost
               | Some _ -> IF.add_post_for_flow (I.get_breaks w_body) prepost
             in

@@ -1067,12 +1067,12 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                 | _ -> translate_typ t pos
               ) in
               match new_t with
-                | Globals.Bool -> Iast.mkUnary o e None pos
-                | _ -> (
-                      let not_proc = create_logical_not_proc new_t in
-                      let proc_name = not_proc.Iast.proc_name in
-                      Iast.mkCallNRecv proc_name None [e] None pos
+                | Globals.Bool -> (
+                    let not_proc = create_logical_not_proc new_t in
+                    let proc_name = not_proc.Iast.proc_name in
+                    Iast.mkCallNRecv proc_name None [e] None pos
                   )
+                | _ -> Iast.mkUnary o e None pos
           ) in
           let target_typ = translate_typ ty pos in
           let newexp = Iast.mkCast target_typ unexp pos in 
