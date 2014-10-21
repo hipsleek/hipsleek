@@ -3924,7 +3924,11 @@ let seg_split prog unk_hps ass_stk hpdef_stk hp_def=
       hp_def
 
 (*return new hpdefs and hp split map *)
-let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list)  =
+let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs0: CF.hp_rel_def list)  =
+  let false_defs,hp_defs1 = List.partition (fun hp_def ->
+      List.for_all (fun (f,_) -> CF.isAnyConstFalse f ) hp_def.CF.def_rhs) hp_defs0 in
+  let true_defs,hp_defs = List.partition (fun hp_def ->
+      List.for_all (fun (f,_) -> CF.is_unknown_f f || CF.isAnyConstTrue f ) hp_def.CF.def_rhs) hp_defs1 in
   let sing_hp_defs, tupled_hp_defs, tupled_hps = List.fold_left (fun (s_hpdefs, t_hpdefs, t_hps)  hp_def->
       match hp_def.CF.def_cat with
         | CP.HPRelDefn _ -> (s_hpdefs@[hp_def], t_hpdefs, t_hps)
@@ -3973,7 +3977,7 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
       let fs,ogs = List.split def.CF.def_rhs in
       let f = CF.disj_of_list fs no_pos in
       {def with CF.def_rhs = [(CF.subst_hrel_f f ss_preds, CF.combine_guard ogs)]}) (tupled_hp_defs1@sing_hp_def1b) in
-  let r = (sing_hp_defs3@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,a5,_,_) -> (a1,a2,a3,a4,a5)) split_map_hprel_subst1) in
+  let r = (sing_hp_defs3@tupled_hp_defs2@true_defs@false_defs,List.map (fun (a1,a2,a3,a4,a5,_,_) -> (a1,a2,a3,a4,a5)) split_map_hprel_subst1) in
   r
 
 let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list *

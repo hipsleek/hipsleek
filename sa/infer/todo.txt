@@ -47,7 +47,7 @@ r_1200_while_10_2$cell~cell for spec  EAssume ref [x;y]
 cell.ss_10:9_10:14
 
 =================================================================
-# cell5a.ss 
+# cell5a.ss: FIXED
 
  same issue as cell5b.ss where some nodes
  are missing in the base-case.
@@ -126,7 +126,7 @@ main$cell~cell
 y::cell<d_1212> & a=d_1212-1 & c_1211=d_1212-1;
 
 =================================================================
-# cell5b2.ss 
+# cell5b2.ss: FIXED
 
 void wloop(cell x,cell y)
     infer[@shape]

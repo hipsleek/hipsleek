@@ -1045,7 +1045,10 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
             ) ([],[],[],[]) par_defs in
             let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
             (* let defs = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args0 f1 f2) defs0 in *)
-            let defs_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+            let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+            let defs_wg = if is_pre && List.length defs0a_wg > 1 then defs0a_wg else
+              List.filter (fun (f,_) -> not (CF.isAnyConstFalse f)) defs0a_wg
+            in
             let defs = List.map fst defs_wg in
             let _ = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
             let _ = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in

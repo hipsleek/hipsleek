@@ -3527,7 +3527,7 @@ let is_not_left_rec_constr cs=
         let lhds, _, lhpargs = CF.get_hp_rel_formula cs.CF.hprel_lhs in
         match lhpargs with
           | [(lhp,eargs,_)] -> if CP.eq_spec_var rhp lhp then
-              let args = List.fold_left (fun acc e -> acc@(CP.afv e)) [] eargs in
+              (* let args = List.fold_left (fun acc e -> acc@(CP.afv e)) [] eargs in *)
               List.for_all (fun hd -> not (CP.mem_svl hd.CF.h_formula_data_node r_args) ) lhds
             else false
           | _ -> false
@@ -3652,7 +3652,9 @@ let simplify_one_formula prog args f=
 let elim_useless_rec_preds_x prog hp args fs_wg=
   let process_one (f,og)=
     let hpargs = CF.get_HRels_f f in
-    let rec_hpargs = List.filter (fun (hp0,_) -> CP.eq_spec_var hp hp0) hpargs in
+    let rec_hpargs = List.filter (fun (hp0,args1) -> (CP.eq_spec_var hp hp0)
+        && CP.diff_svl args args1 != []
+    ) hpargs in
     if rec_hpargs = [] then [(f,og)] else
       let hds, hvs,_ = CF.get_hp_rel_formula f in
       let args_i = get_hp_args_inst prog hp args in
