@@ -4980,6 +4980,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_seq_exp2 = e;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+              | I.OpUMinus ->
+                    let sub_e = I.Binary {
+                        I.exp_binary_op = I.OpMinus;
+                        I.exp_binary_oper1 = I.IntLit { I.exp_int_lit_val = 0; I.exp_int_lit_pos = pos; };
+                        I.exp_binary_oper2 = e;
+                        I.exp_binary_path_id = pid;
+                        I.exp_binary_pos = pos; } in
+                    helper sub_e
               | _ -> failwith "u_op not supported yet")
       | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
             (try
