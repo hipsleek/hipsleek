@@ -993,6 +993,105 @@ post(..) predicate.
           List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
         in
 =======================================================
+# sexc3.slk --post-eres
+
+ Can we add: res=eres.val on the lhs
+ so that first entailment succeeds?
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214')
+ |-  emp&res=2 & 0<x . 
+=======================================================
+# sexc2.slk
+
+class Exp extends __Exc {
+  int val;
+}.
+
+File "sexc2.slk", line 1, characters 0-5
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+
+exception processing is not supported by sleek!
+can we add it ..
+=======================================================
+# exc1.ss --post-eres
+
+int loop(int x)
+  requires true
+  ensures res=2 & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
+{
+  if (x>0) {
+    raise new Exp(2);
+    loop(x);
+  } else {
+    return x+1;
+  }
+}
+
+If we add res=eres.val thru --post-eres, the post-condition
+should be provable.
+=======================================================
+# exc3a.ss
+
+ infer [@post_n]
+  requires true
+  ensures true;
+
+Post condition cannot be derived:
+Empty list_partial_contex
+
+
+Why is failure not reported by --esl?
+when we have empty lpc?
+
+id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1215]; c_heap: emp
+ checkentail emp&x'<=0 & x'=x & !(v_bool_12_1195') & x'<=0 & !(v_bool_12_1195') & 
+v_int_18_1198'=1111+x' & res=v_int_18_1198'&{FLOW,(4,5)=__norm}[]
+ |-  emp&post_1215(x,res)&{FLOW,(4,5)=__norm}[]. 
+pure rel_ass: [RELDEFN post_1215: ( x=res-1111 & res<=1111) -->  post_1215(x,res)]
+res:  1[
+   emp&x'<=0 & x'=x & !(v_bool_12_1195') & x'<=0 & !(v_bool_12_1195') & v_int_18_1198'=1111+x' & res=v_int_18_1198'&{FLOW,(4,5)=__norm}[]
+   es_infer_vars/rel/templ: [post_1215]
+   es_infer_rel: [RELDEFN post_1215: ( x=res-1111 & res<=1111) -->  post_1215(x,res)]
+   ]
+=======================================================
+# wloop.ss
+
+  while (y<x) 
+  infer[@post_n,@term]
+  requires true
+  ensures true; 
+  {
+    y++;
+  }
+
+Termination Inference Result:
+while_7_2:  case {
+  x<=y -> requires emp & Term[74,1]
+     ensures emp & ((x=y' & y<y') | 
+  (y=y' & x<=y')); 
+  y<x -> requires emp & Term[74,2,-1+(1*x)+(-1*
+  y)]
+     ensures emp & ((x=y' & y<y') | (y=y' & x<=y')); 
+  }
+
+# Desired # can we combine the base and recursive case?
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
 =======================================================
 =======================================================
 =======================================================

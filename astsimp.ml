@@ -1773,10 +1773,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   let rec helper n do_not_compute_flag =
     (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
-      (     
+      (
           let old_baga_imm_flag = !Globals.baga_imm in
           let _ = Globals.baga_imm := true in
-	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in	
+	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in
           let _ = Globals.baga_imm := old_baga_imm_flag in
 	  let addr_vars = CP.remove_dups_svl addr_vars' in
 	  let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
@@ -1918,13 +1918,55 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
       let baga_under_formula = match under_f with
-        | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
-        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos
+        | None -> CP.mkFalse pos
+        | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
       in
-      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in
-      let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
+      (* let baga_under_formula = match under_f with *)
+      (*   | None -> CF.mkFalse (CF.mkTrueFlow ()) pos *)
+      (*   | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos *)
+      (* in *)
+      (* let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in *)
+      (* let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in *)
       let over_fail = (CF.isFailCtx baga_over_rs) in
-      let under_fail = (CF.isFailCtx baga_under_rs) in
+      (* let under_fail = (CF.isFailCtx baga_under_rs) in *)
+      let check_under no uf fl =
+        (* unfold helper, now unfold 3 times *)
+        let rec helper_unfold no bfs ifs =
+          if no = 0 then []
+          else
+            let new_bfs = List.fold_left (fun acc f ->
+                acc@(List.map (fun bf ->
+                    Cast.unfold_base_case_formula f vdef bf
+                ) bfs)
+            ) [] ifs
+            in
+            new_bfs@(helper_unfold (no - 1) new_bfs ifs)
+        in
+        let _ = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) uf no_pos in
+        let (ifs,bfs) = List.partition CF.is_inductive fl in
+        let bfs = bfs@(helper_unfold no bfs ifs) in
+        let rs1 = List.exists (fun f ->
+            let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+            let _ = Debug.binfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
+            TP.imply_raw uf pf
+        ) bfs in
+        if rs1 then true
+        else
+          let rs2 = List.exists (fun f ->
+              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+              let _ = Debug.binfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
+              TP.imply_raw uf pf
+          ) ifs in
+          if rs2 then false
+          else
+            let pf = List.fold_left (fun acc f ->
+                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+                CP.mkOr acc pf None no_pos
+            ) (CP.mkFalse no_pos) (bfs@ifs) in
+            let _ = Debug.binfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
+            TP.imply_raw uf pf
+      in
+      let under_fail = if (CP.is_False baga_under_formula) then false else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with

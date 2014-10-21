@@ -1,0 +1,21 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>xxx::ll{}<nnnn>&nnnn<0&{FLOW,(6,7)=__Error}[]
+
+Residue:
+ <1>x::ll{}<n>&n=0&{FLOW,(4,8)=__MayError}[]
+
+Residue:
+ <1>x::ll{}<n>&n=0&{FLOW,(4,8)=__MayError}[]
+
+Residue:
+ <1>x::ll{}<n>&0<n&{FLOW,(4,5)=__norm}[]
+
+Residue:
+ <1>x::ll{}<n>&2<n&{FLOW,(4,5)=__norm}[]
+
+Residue:
+ <1>x::ll{}<n>&x!=null&{FLOW,(4,8)=__MayError}[]
+
+

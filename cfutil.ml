@@ -2399,3 +2399,43 @@ let update_hprel_flow hprels conseq=
   in
   List.map update_hprel hprels
 
+let look_up_first_field prog lsctx0 dname=
+  let rec look_up_ctx ctx=
+    match ctx with
+      | Ctx es ->
+            List.find (fun dn -> string_compare dname dn.h_formula_data_name)
+                (get_datas es.es_formula)
+      | OCtx (c1,c2) -> begin
+          try
+            look_up_ctx c1
+          with _ -> look_up_ctx c2
+        end
+  in
+  let rec look_up_ctxs br_ctxs=
+    match br_ctxs with
+      | []-> raise Not_found
+      | (_,ctx)::rest -> begin
+          try
+            look_up_ctx ctx
+          with _ -> look_up_ctxs rest
+        end
+  in
+  let rec look_up_esc_ctx esc_ctxs=
+    match esc_ctxs with
+      | []-> raise Not_found
+      | (_,br_ctxs)::rest -> begin
+          try
+            look_up_ctxs br_ctxs
+          with _ -> look_up_esc_ctx rest
+        end
+  in
+  let rec process_failesc_contexts lsctx=
+    match lsctx with
+      | [] -> raise Not_found
+      | (_,(* esc_ctxs *)_ ,br_ctxs)::rest -> begin
+          try
+            let d = look_up_ctxs br_ctxs in d
+          with _ -> process_failesc_contexts rest
+        end
+  in
+  process_failesc_contexts lsctx0

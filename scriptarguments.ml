@@ -1,6 +1,5 @@
 open GlobProver
 
-
 let parse_only = ref false
 
 let dump_ss = ref false
@@ -206,7 +205,7 @@ let common_arguments = [
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set Globals.trace_failure,
-   "Enable trace all failure (and exception)");
+   "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
@@ -369,6 +368,9 @@ let common_arguments = [
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
+  ("-prelude", Arg.String (fun s ->
+      Globals.prelude_file:=Some s),
+   "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
@@ -505,6 +507,9 @@ let common_arguments = [
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--post-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
+  ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 

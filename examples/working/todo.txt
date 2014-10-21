@@ -918,6 +918,34 @@ Total verification time: 756.47 second
 	Time spent in child processes: 436.25 second
 	Number of false contexts: 63
 ====================================================================
+./run-fast-tests.pl hip -flags "--eps"
+
+minimise wrong false_flow
+
+Total number of errors: 3 in files:
+ error at: conchip/latch-exp2.ss main
+ error at: conchip/latch-exp2.ss thread1
+ error at: conchip/deadpool.ss forkHelper
+
+# conchip/latch-exp2.ss main
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of Object
+ Stop Omega... 0 invocations caught
+
+The exception is raised in exc.ml. It seems to
+be looking for "Object" inside exc hierarchy.
+Can you check if there is a problem with hip
+or the example itself.
+                
+We are in "post" branch.
+                
+                let rec get (lst:(string*string*nflow)list):nflow = match
+lst with
+                  | [] -> report_error no_pos ("Can not find flow of " ^
+f) (* false_flow_int *)
+                  | (a,_,(b,c))::rst -> if (String.compare f a)==0 then
+
 ====================================================================
 ====================================================================
 ====================================================================

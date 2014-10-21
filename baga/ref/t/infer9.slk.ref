@@ -1,0 +1,57 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [x!=0]
+
+Residue:
+ <1>(exists q_76,flted_7_74: q_76::ll{}<flted_7_74>&flted_7_74+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [x!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>(exists q_385,flted_7_383: q_385::ll{}<flted_7_383>&flted_7_383+1=n&{FLOW,(4,5)=__norm})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>(exists q_427,flted_7_425: q_427::ll{}<flted_7_425>&flted_7_425+1=n&{FLOW,(4,5)=__norm})[]
+ inferred pure: [x!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>(exists q_465,flted_7_463: q_465::ll{}<flted_7_463>&flted_7_463+1=n&{FLOW,(4,5)=__norm})[]
+ inferred pure: [x!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>(exists q_503,flted_7_501: q_503::ll{}<flted_7_501>&flted_7_501+1=n&{FLOW,(4,5)=__norm})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+

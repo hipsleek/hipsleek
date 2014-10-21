@@ -366,7 +366,10 @@ let process_source_full source =
   let prog = process_lib_file prog in
   let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
+  let header_files = match !Globals.prelude_file with
+    | None -> ["\"prelude.ss\""]
+    | Some s -> ["\""^s^"\""] in 
+  (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
@@ -663,7 +666,10 @@ let process_source_full_parse_only source =
   flush stdout;
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
-  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
+  let header_files = match !Globals.prelude_file with
+    | None -> ["\"prelude.ss\""]
+    | Some s -> ["\""^s^"\""] in 
+  (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
 	
