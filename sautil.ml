@@ -3521,18 +3521,18 @@ let is_trivial_constr cs=
     | _ -> false
 
 let is_not_left_rec_constr cs=
-  let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
+  let r_ohp = CF.check_and_get_one_hpargs cs.CF.hprel_rhs in
   match r_ohp with
-    | Some rhp -> begin
+    | [(rhp,r_args,_)] -> begin
         let lhds, _, lhpargs = CF.get_hp_rel_formula cs.CF.hprel_lhs in
         match lhpargs with
           | [(lhp,eargs,_)] -> if CP.eq_spec_var rhp lhp then
               let args = List.fold_left (fun acc e -> acc@(CP.afv e)) [] eargs in
-              List.for_all (fun hd -> not (CP.mem_svl hd.CF.h_formula_data_node args) ) lhds
+              List.for_all (fun hd -> not (CP.mem_svl hd.CF.h_formula_data_node r_args) ) lhds
             else false
           | _ -> false
       end
-    | None -> false
+    | _ -> false
 
 let collect_post_preds prog constrs=
   let collect_one r_post_hps cs=
