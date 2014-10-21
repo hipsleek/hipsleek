@@ -278,7 +278,7 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
 
-axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
+//axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
 
 relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
@@ -308,14 +308,17 @@ int array_get_elm_at___1d(int[] a, int i)
 				& ahalb <= i 
 				& i <= ahaub
   ensures true;
-  requires true
-  ensures res = a[i];
-	*/
+
 	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures res = a[i];
+	*/
+
+  requires true
+  ensures res = a[i];
+
 	
 bool array_get_elm_at___1d(bool[] a, int i) 
 	requires [ahalb,ahaub]
