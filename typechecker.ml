@@ -2798,7 +2798,8 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
     let _ = if !Globals.pred_trans_view then
       let _ = match scc_procs with
         | [] -> ()
-        | [p] -> if (!Globals.reverify_all_flag || p.Cast.proc_is_invoked) && p.Cast.proc_sel_hps != [] then
+              (* Long: Why we need reverify to substitute *)
+        | [p] -> if (* (!Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked) && *) p.Cast.proc_sel_hps != [] then
             let _ = Saout.plug_shape_into_specs prog iprog dang_hps
               (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
               scc_inferred_hps
@@ -2863,7 +2864,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   let _ = if sel_hps = [] then () else begin
                     print_endline "";
                     print_endline "\n\n******************************";
-                    print_endline "   ******* SPECIFICATION ********";
+                    print_endline "   ******* SPECIFICATION1 ********";
                     print_endline "******************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
                   end
@@ -3314,7 +3315,6 @@ let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
       "check_proc" pr string_of_bool (fun _ -> check_proc iprog prog proc cout_option mutual_grp) proc
 
-
 let reverify_proc prog proc do_infer =
   if !reverify_flag then
     match proc.proc_body with
@@ -3339,9 +3339,9 @@ let reverify_proc prog proc do_infer =
                 if (not !Globals.web_compile_flag) then
                   print_endline "";
                 print_endline "\n\n******************************";
-                print_endline "******* SPECIFICATION ********";
+                print_endline "******* SPECIFICATION2 ********";
                 print_endline "******************************";
-                print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec)
+                print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
               end
             in
             (*****LOCKSET variable: ls'=ls *********)

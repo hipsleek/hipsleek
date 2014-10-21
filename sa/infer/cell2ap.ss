@@ -3,8 +3,9 @@ data cell {
 }
 
 void main(cell x, cell y)
-  infer[@shape,
-  @post_n]
+  infer[//@shape
+        @post_n
+        ]
   requires true
   ensures true;
 {
