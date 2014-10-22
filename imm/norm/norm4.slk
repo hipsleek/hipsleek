@@ -23,3 +23,16 @@ expect Valid.
 checkentail x::ls<p> * x::ls<q>@A |- x::ls<q>.
 print residue.
 expect Fail.
+/*
+
+Succeeds, but it should fail:
+
+Entail 4: Valid.
+
+Residue:
+ <1>emp&p=q&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+*/
