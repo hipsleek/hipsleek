@@ -30,8 +30,8 @@ let rec add_relation_to_formula f rel =
           let f1 = add_relation_to_formula o.CF.formula_or_f1 rel in
           let f2 = add_relation_to_formula o.CF.formula_or_f2 rel in
           CF.Or { o with
-              formula_or_f1 = f1;
-              formula_or_f2 = f2 }
+              CF.formula_or_f1 = f1;
+              CF.formula_or_f2 = f2 }
     | CF.Exists e ->
           let h,p,fl,t,a = CF.split_components f in
           let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
@@ -379,12 +379,24 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
+            let rels,exc_rels = List.partition (fun (cat,_,_) -> match cat with
+              | CP.RelDefn(_,Some _)  -> false
+              | _ -> true
+            ) rels in
             if rels !=[] then
               begin
                 print_endline "\n*************************************";
-                print_endline "*******pure relation assumption ******";
+                print_endline "***pure relation assumption (norm)***";
                 print_endline "*************************************";
                 print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
+                print_endline "*************************************";
+              end;
+            if rels !=[] then
+              begin
+                print_endline "\n*************************************";
+                print_endline "***pure relation assumption (exc)****";
+                print_endline "*************************************";
+                print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev exc_rels));
                 print_endline "*************************************";
               end;
             let _ = if !Globals.sa_gen_slk then
