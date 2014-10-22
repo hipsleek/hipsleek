@@ -1952,8 +1952,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           let rel_cat = 
             if rel_def_id != [] 
             then if (* Globals.infer_const_obj # is_add_flow || *) estate.es_infer_obj # is_add_flow then
-              CP.RelDefn ((List.hd rel_def_id),[CP.mk_typed_spec_var Int "flow"])
-            else CP.RelDefn ((List.hd rel_def_id),[])
+              CP.RelDefn ((List.hd rel_def_id), Some (1,1)) (* WN : to fix *)
+            else CP.RelDefn ((List.hd rel_def_id),None)
             else 
               (*            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else*)
               (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
