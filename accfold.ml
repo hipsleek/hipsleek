@@ -767,23 +767,23 @@ let compute_direction_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
  * - head is just the node pointed by "self" (root node)
  *)
 let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl)
-    : CP.spec_var list =
-  let search_f = (fun _ -> None) in
-  let search_mf = (fun mf -> Some mf) in
+    : CP.spec_var =
+  (* let (search_f, _, search_mf) = Afutil.get_default_formula_searcher () in *)
+  let search = Afutil.get_default_formula_searcher () in
   let search_hf hf = (match hf with
     | CF.ViewNode vn ->
         let name = CP.name_of_sv vn.CF.h_formula_view_node in
         if (eq_str name self) then Some [hf]
         else Some []
     | CF.DataNode dn ->
-        let name = CP.name_of_sv dn.CF.h_formula_data in
+        let name = CP.name_of_sv dn.CF.h_formula_data_node in
         let x = 1 in
         if (eq_str name self) then Some [hf]
         else Some []
     | _ -> None
   ) in
-  let searcher = (search_f, search_hf, search_mf) in
-  let res_list = Afutil.search_in_formula searcher f in
+  (* let search = (search_f, search_hf, search_mf) in *)
+  let res_list = Afutil.search_in_formula search f in
   match res_list with
   | [] -> report_error no_pos "compute head: head not found"
   | [hd] -> hd
