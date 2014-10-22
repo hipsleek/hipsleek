@@ -15,35 +15,35 @@ module MCPD = Mcpure_D
  * various search types
  ************************
  *)
-type search_res_t = 'a list
+type 'a search_res_t = 'a list
 
-and search_formula_t = (CF.formula -> search_res_t option)
-                       * search_heap_formula_t
-                       * search_mix_formula_t
+and 'a search_formula_t = (CF.formula -> 'a search_res_t option)
+                       * 'a search_heap_formula_t
+                       * 'a search_mix_formula_t
 
-and search_heap_formula_t = (CF.h_formula -> search_res_t option)
+and 'a search_heap_formula_t = (CF.h_formula -> 'a search_res_t option)
 
-and search_mix_formula_t = search_memo_pure_t
+and 'a search_mix_formula_t = search_memo_pure_t
                            * search_var_aset_t
                            * search_pure_formula_t
 
-and search_memo_formula_t = search_mix_formula_t
+and 'a search_memo_formula_t = search_mix_formula_t
 
-and search_memo_pure_t = (MCPD.memo_pure -> search_res_t option)
+and 'a search_memo_pure_t = (MCPD.memo_pure -> 'a search_res_t option)
 
-and search_var_aset_t = (MCPD.var_aset -> search_res_t option)
+and 'a search_var_aset_t = (MCPD.var_aset -> 'a search_res_t option)
 
-and search_pure_formula_t = (CP.formula -> search_res_t option)
+and 'a search_pure_formula_t = (CP.formula -> 'a search_res_t option)
                             * search_pure_bformula_t 
 
-and search_pure_bformula_t = (CP.b_formula -> search_res_t option)
+and 'a search_pure_bformula_t = (CP.b_formula -> 'a search_res_t option)
                              * search_pure_exp_t
 
-and search_pure_exp_t = (CP.exp -> search_res_t option)
+and 'a search_pure_exp_t = (CP.exp -> 'a search_res_t option)
 
 
-let combine_search_results (r1: search_res_t opt) (e2: search_res_t opt)
-    : search_res_t =
+let combine_search_results (r1: 'a search_res_t opt) (e2: 'a search_res_t opt)
+    : 'a search_res_t =
   match e1, e2 with
   | None, None -> []
   | Some e1', None -> e1'

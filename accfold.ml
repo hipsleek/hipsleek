@@ -766,21 +766,28 @@ let compute_direction_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
  *   view declaration.
  * - head is just the node pointed by "self" (root node)
  *)
-(* let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl) *)
-(*     : CP.spec_var list =                                               *)
-(*   let search_f = (fun _ -> None) in                                    *)
-(*   let search_mf = (fun mf -> Some mf) in                               *)
-(*   let search_hf hf = (match hf with                                    *)
-(*     | CF.ViewNode vn ->                                                *)
-(*         let vnode = vn.CF.h_formula_view_node in                       *)
-(*         let vnode = name_of_spec_var asdfasdf vno                      *)
-(*         List.                                                          *)
-(*         Some [hf]                                                      *)
-(*     | CF.DataNode _ -> Some [hf]                                       *)
-(*     | _ -> None                                                        *)
-(*   ) in Cfo                                                             *)
-(*   let                                                                  *)
-(*   ()                                                                   *)
+let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl)
+    : CP.spec_var list =
+  let search_f = (fun _ -> None) in
+  let search_mf = (fun mf -> Some mf) in
+  let search_hf hf = (match hf with
+    | CF.ViewNode vn ->
+        let name = CP.name_of_sv vn.CF.h_formula_view_node in
+        if (eq_str name self) then Some [hf]
+        else Some []
+    | CF.DataNode dn ->
+        let name = CP.name_of_sv dn.CF.h_formula_data in
+        let x = 1 in
+        if (eq_str name self) then Some [hf]
+        else Some []
+    | _ -> None
+  ) in
+  let searcher = (search_f, search_hf, search_mf) in
+  let res_list = Afutil.search_in_formula searcher f in
+  match res_list with
+  | [] -> report_error no_pos "compute head: head not found"
+  | [hd] -> hd
+  | _ -> report_error no_pos "compute head: expect only 1 head but found many"
 
 
  (* (direction_pointers) *)
