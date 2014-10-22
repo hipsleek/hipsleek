@@ -1426,6 +1426,7 @@ object (self)
   method is_dfa  = self # get INF_DFA
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
+  method is_infer_type t  = self # get t
   method get_lst = arr
   method set c  = if self#get c then () else arr <- c::arr
   (* method set_ind i  = Array.set arr i true *)

@@ -121,7 +121,7 @@ let is_inf_sv sv = match sv with
 type flow_range = int * int 
 
 type rel_cat = 
-  | RelDefn of spec_var * (flow_range option) (* WN : extra global flow var in 2nd parameter; for non-normal flows *)
+  | RelDefn of spec_var * (string option) (* WN : extra global flow var in 2nd parameter; for non-normal flows *)
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
@@ -379,7 +379,7 @@ let print_view_arg v= match v with
   | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
 
 let print_rel_cat rel_cat = match rel_cat with
-  | RelDefn (v,vs) -> "RELDEFN " ^ (!print_sv v) ^(match vs with None -> "" | Some t -> (pr_pair string_of_int string_of_int) t)
+  | RelDefn (v,vs) -> "RELDEFN " ^ (!print_sv v) ^(match vs with None -> "" | Some t -> (* pr_pair string_of_int string_of_int *) "("^t^")")
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
   | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
