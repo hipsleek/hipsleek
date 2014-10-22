@@ -428,6 +428,8 @@ let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 
+let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
+
 (*sleek logging*)
 let sleek_logging_txt = ref false
 let dump_proof = ref false

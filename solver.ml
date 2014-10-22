@@ -2327,7 +2327,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
-        let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
+        let heap_enatil = heap_entail_one_context_struc_nth 99 prog true false new_ctx view_form None None None pos (* None *) in
         Debug.tinfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
 
@@ -3576,12 +3576,12 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	  in
           (* let _ = print_string("\ncl2:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
 	  if !Globals.use_set || Gen.is_empty cl then
-	    let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding has_post c conseq tid delayed_f join_id pos pid) cl in
+	    let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth 4 prog is_folding has_post c conseq tid delayed_f join_id pos pid) cl in
 	    let tmp2, tmp_prfs = List.split tmp1 in
 	    let prf = mkContextList cl conseq tmp_prfs in
             ((fold_context_left 20 tmp2), prf)
 	  else
-	    (heap_entail_one_context_struc_nth "5" prog is_folding has_post (List.hd cl) conseq tid delayed_f join_id pos pid)
+	    (heap_entail_one_context_struc_nth 5 prog is_folding has_post (List.hd cl) conseq tid delayed_f join_id pos pid)
 
 and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id): (list_context * proof) =
   Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
@@ -3593,10 +3593,11 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
 and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
   (* this is not called by hip? *)
   let str="heap_entail_one_context_struc" in
-  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc p i1 hp cl) cs tid delayed_f join_id pos pid
+  let n_str = string_of_int n in
+  Gen.Profiling.do_3_num n_str str (heap_entail_one_context_struc n p i1 hp cl) cs tid delayed_f join_id pos pid
 
-and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
-  Debug.no_4 "heap_entail_one_context_struc"
+and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
+  Debug.no_4_num i "heap_entail_one_context_struc"
       Cprinter.string_of_struc_formula
       Cprinter.string_of_context
       (add_str "is_folding" string_of_bool)
@@ -13993,16 +13994,16 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
 (*  let _ = count_br_specialized prog cl in*)
   let conseq = prune_pred_struc prog false conseq in
   Gen.Profiling.pop_time "entail_prune";
-  heap_entail_prefix_init prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "1"))
+  heap_entail_prefix_init prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth 111))
 
 (* this isn't called by hip at all *)
-(* let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context) *)
-(*         (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) =  *)
-(*   let pr1 = Cprinter.string_of_list_partial_context in *)
-(*   let pr2 = Cprinter.string_of_struc_formula in *)
-(*   let pr3 (l,_)  = pr1 l in *)
-(*   Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3 *)
-(*       (fun _ _ -> heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid pos pid) cl conseq *)
+let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
+        (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) =
+  let pr1 = Cprinter.string_of_list_partial_context in
+  let pr2 = Cprinter.string_of_struc_formula in
+  let pr3 (l,_)  = pr1 l in
+  Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3
+      (fun _ _ -> heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
 
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) = 
@@ -14013,7 +14014,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
   ^"\n")) pos; 
-  let res,prf = heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
+  let res,prf = heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth 2)) in
   (CF.list_failesc_context_simplify res,prf)
 
 let heap_entail_struc_list_failesc_context_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)

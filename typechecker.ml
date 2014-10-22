@@ -2345,7 +2345,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_sharp_val = v; (*maybe none*)
           exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
           exp_sharp_path_id = pid;
-          exp_sharp_pos = pos})	-> 
+          exp_sharp_pos = pos})	->
+              (**********INTERNAL************)
+              let look_up_typ_first_fld obj_name=
+                let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
+                let (t,_),_ = (List.hd dclr.Cast.data_fields) in
+                t
+              in
 	        (*   let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
 	        (*   let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
 	        (*   let _ = print_string ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
@@ -2363,10 +2369,30 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         let t1 = (get_sharp_flow ft) in
                         (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
-                        let vr = if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then (CP.mkeRes t)
-                        else (CP.mkRes t) in
-		        let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr (CP.SpecVar (t, v, Primed)) pos)) pos in
+                        let ctx, vr,vf = if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
+                           match t with
+                            | Named objn ->(
+                                  let ft = (look_up_typ_first_fld objn) in
+                                  let fv = (CP.mkRes ft) in
+                                  try
+                                    let dnode =Cfutil.look_up_first_field prog ctx objn in
+                                    let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv)== ft) dnode.Cformula.h_formula_data_arguments) in
+                                    let fr_v_exc = CP.fresh_spec_var v_exc in
+                                    let p = CP.mkEqVar v_exc fr_v_exc pos in
+                                    let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in
+                                    (ctx_w_pure,fv,fr_v_exc)
+                                        (* (false,(CP.mkeRes t),(CP.SpecVar (t, v, Primed))) *)
+                                  with _ ->
+                                      (ctx,(CP.mkeRes t),(CP.SpecVar (t, v, Primed)))
+                              )
+                            | _ -> ctx,(CP.mkeRes t), (CP.SpecVar (t, v, Primed))
+                        else ctx, (CP.mkRes t), (CP.SpecVar (t, v, Primed))
+                        in
+		        let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
+                         (* let _ = print_string ("tmp: "^(Cprinter.string_of_formula tmp)^"\n") in *)
 		        let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
+                         (* let _ = print_endline ("ctx :"^(Cprinter.string_of_list_failesc_context ctx)) in *)
+                         (*  let _ = print_endline ("ctx1 :"^(Cprinter.string_of_list_failesc_context ctx1)) in *)
 		        ctx1
 	        | Sharp_flow v ->
 		      let fct es = 

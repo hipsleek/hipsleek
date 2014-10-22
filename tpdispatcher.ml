@@ -459,8 +459,8 @@ let _ =
   ()
   else ())
   in
-  (* set_tp !Smtsolver.smtsolver_name (\* "z3" *\) *)
-  set_tp "parahip"
+  set_tp !Smtsolver.smtsolver_name (* "z3" *)
+  (* set_tp "parahip" *)
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
