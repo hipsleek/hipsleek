@@ -53,7 +53,35 @@ Residue:
 Validate 2: Expecting Valid BUT got : Fail_May
 
 ================================================================
+#field4a.slk
+
+checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
+
+Why did @A in RHS fail?
+
+It seems that @A nodes are removed in RHS..
+
+
+INPUT: 
+ ### ante =  x::node<flted_12_34,q> * q::ll{}<n>&flted_12_34=2&{FLOW,(4,5)=__norm}[]
+ ### conseq =  EBase exists (Expl)[](Impl)[a](ex)[](exists q_42: emp&x!=null & 2<a & 
+       q_42=q&{FLOW,(4,5)=__norm})[]
+
 ================================================================
+#field4b.slk
+
+checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
+
+Why did @A in RHS fail?
+
+It seems that @A nodes are removed in RHS..
+
+
+INPUT: 
+ ### ante =  x::node<flted_12_35,q>@A&flted_12_35=3&{FLOW,(4,5)=__norm}[]
+ ### conseq =  EBase exists (Expl)[](Impl)[a; Anon_13](ex)[]emp&x!=null & 2<a&
+       {FLOW,(4,5)=__norm}[]
+
 ================================================================
 ================================================================
 ================================================================
