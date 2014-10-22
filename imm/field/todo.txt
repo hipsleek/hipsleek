@@ -1,4 +1,4 @@
-# field1.slk
+# field1.slk (FIXED)
 
 checkentail x::node<v,_>@A & v=5  |- x!=null.
 
@@ -8,7 +8,7 @@ I think it should be kept
 Residue:
  <1>emp&x!=null & v=5&{FLOW,(4,5)=__norm}[]
 ================================================================
-# field2.slk
+# field2.slk  (FIXED)
 
 checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
 print residue. // should succeed
@@ -20,6 +20,13 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm}[]
 
 ================================================================
+# field3.slk --field-imm
+
+checkentail x::node<v@A,_> * x::node<w,_@A>  |- v=w.
+print residue. // should succeed
+
+  currently:
+   unsound for --field-imm and also without field
 ================================================================
 ================================================================
 ================================================================

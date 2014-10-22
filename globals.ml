@@ -1207,7 +1207,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
