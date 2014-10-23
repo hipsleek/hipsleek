@@ -18,7 +18,7 @@ int f(int n, int k)
 
 // 90 -> 91
 int f91(int n)
-  infer [@term] 
+  infer [@term,@post_n] 
    requires true ensures true;
 /*
  case {

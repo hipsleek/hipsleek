@@ -584,6 +584,32 @@ append2:  requires x::ll<n1> * y::ll<n2> & 0<n1
          ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
   }
 ===================================================
+
+# rec-f91.ss
+
+int f91(int n)
+  infer [@term,@post_n] 
+   requires true ensures true;
+
+How come we still have MayLoop?
+ase/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=89@R,[5] n=90@R]
+]
+Termination Inference Result:
+
+f91:  case {
+  91<=n -> requires emp & Term[34,1]
+     ensures emp & ((res=91 & n<=90) | 
+  (res=n & 91<=n)); 
+  n<=89 -> requires emp & MayLoop[]
+     ensures emp & ((res=91 & n<=90) | 
+  (res=n & 91<=n)); 
+  n=90 -> requires emp & Term[34,2]
+     ensures emp & ((res=91 & n<=90) | 
+  (res=n & 91<=n)); 
+  }
+S
+
 ===================================================
 ===================================================
 ===================================================
