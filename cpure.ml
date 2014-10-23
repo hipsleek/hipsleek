@@ -13628,6 +13628,9 @@ and compare_term_fail f1 f2 =
 let eq_term_ann a1 a2 = 
   compare_term_ann a1 a2 == 0
   
+let eq_uid u1 u2 = 
+  compare_uid u1 u2 == 0
+  
 let rec is_MayLoop ann = 
   match ann with
   | MayLoop -> true

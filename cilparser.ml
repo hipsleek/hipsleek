@@ -1066,13 +1066,19 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                 | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
                 | _ -> translate_typ t pos
               ) in
-              match new_t with
-                | Globals.Bool -> Iast.mkUnary o e None pos
-                | _ -> (
-                      let not_proc = create_logical_not_proc new_t in
-                      let proc_name = not_proc.Iast.proc_name in
-                      Iast.mkCallNRecv proc_name None [e] None pos
-                  )
+              (* match new_t with                                      *)
+              (*   | Globals.Bool -> (                                 *)
+              (*       let not_proc = create_logical_not_proc new_t in *)
+              (*       let proc_name = not_proc.Iast.proc_name in      *)
+              (*       Iast.mkCallNRecv proc_name None [e] None pos    *)
+              (*     )                                                 *)
+              (*   | _ -> Iast.mkUnary o e None pos                    *)
+              match op with
+              | Cil.LNot ->
+                let not_proc = create_logical_not_proc new_t in
+                let proc_name = not_proc.Iast.proc_name in
+                Iast.mkCallNRecv proc_name None [e] None pos
+              | _ -> Iast.mkUnary o e None pos
           ) in
           let target_typ = translate_typ ty pos in
           let newexp = Iast.mkCast target_typ unexp pos in 

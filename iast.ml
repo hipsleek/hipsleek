@@ -3031,7 +3031,7 @@ let exists_return_x e0=
             | _ -> false
       end
       | Return _ ->
-            let _ = print_endline("exists_return: true") in
+          (* let _ = print_endline("exists_return: true") in *)
           true
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
@@ -3045,7 +3045,7 @@ let exists_return_x e0=
                          helper el
       | _ ->
           (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
-            let _ = print_endline("exists_return: unexpected") in
+          (* let _ = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0

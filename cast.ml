@@ -561,6 +561,10 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 
 let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 
+let is_primitive_rel rel = 
+  let eq_str s1 s2 = (String.compare s1 s2 == 0) in
+  (eq_str rel.rel_name "dom") || (eq_str rel.rel_name "domb") 
+
 let name_of_proc p = p.proc_name
 
 

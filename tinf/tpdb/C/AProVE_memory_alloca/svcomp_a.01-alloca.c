@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdhip.h"
 
 extern int __VERIFIER_nondet_int(void);
 
@@ -10,9 +10,19 @@ int test_fun(int x, int y)
     *x_ref = x;
     *y_ref = y;
     *c = 0;
-    while (*x_ref > 0) {
+    while (*x_ref > 0) 
+      /*@
+        requires x_ref::int*<xv, _> * y_ref::int*<yv, _> * c::int*<cv, _>
+        ensures x_ref::int*<_, _> * y_ref::int*<_, _> * c::int*<_, _>;
+       */
+    {
         *y_ref = 0;
-        while (*y_ref < *x_ref) {
+        while (*y_ref < *x_ref) 
+          /*@
+            requires x_ref::int*<xv, _> * y_ref::int*<yv, _> * c::int*<cv, _>
+            ensures x_ref::int*<_, _> * y_ref::int*<_, _> * c::int*<_, _>;
+           */
+        {
             *y_ref = *y_ref + 1;
             *c = *c + 1;
         }

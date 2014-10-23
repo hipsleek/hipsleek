@@ -3,7 +3,7 @@
  * Author: heizmann@informatik.uni-freiburg.de
  *
  */
-#include "stdhip2.h"
+#include "stdhip.h"
 
 extern int __VERIFIER_nondet_int(void);
 
@@ -11,7 +11,7 @@ int main() {
 	int *p = malloc(sizeof(int));
 	while (*p >= 0) 
   /*@
-    requires p::int*<q,_,_>
+    requires p::int*<q,_>
     ensures true;
    */
 	{

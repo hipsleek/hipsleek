@@ -5,11 +5,6 @@ class ret_int extends __RET { int val }
 class ret_bool extends __RET { bool val } 
 class __RET extends __Exc {}
 
-
-int __VERIFIER_nondet_int()
-  requires true
-  ensures true;
-
 int add___(int a, int b) 
   requires true 
   ensures res = a + b;
