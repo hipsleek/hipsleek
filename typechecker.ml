@@ -990,7 +990,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
 	   if the call is not a recursive call *)
     (*TO CHECK: neccessary -> YES*)
     (*fork is not a recursive call*)
-	let stripped_spec = org_spec in
+    let stripped_spec = org_spec in
     (* org_spec -> stripped_spec *)
 	(* free vars = linking vars that appear both in pre and are not formal arguments *)
     let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
@@ -2062,8 +2062,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* Termination: Stripping the "variance" feature from
                      * org_spec if the call is not a recursive call *)
                     (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
+                    let _ = Debug.ninfo_hprint (add_str "org_spec 1" Cprinter.string_of_struc_formula) org_spec no_pos in
+                    let org_spec = CF.change_spec_flow org_spec in
+                    let _ = Debug.ninfo_hprint (add_str "org_spec 2" Cprinter.string_of_struc_formula) org_spec no_pos in
                     let lbl_ctx = store_label # get in
-                    let org_spec2 = 
+                    let org_spec2 =
                       if is_rec_flag && !auto_number then match org_spec with
                         | CF.EList b -> 
                               let l = CF.Label_Spec.filter_label_rec lbl_ctx b in

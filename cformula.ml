@@ -377,9 +377,11 @@ let mkEFalse flowt pos = EBase({
 	formula_struc_pos = pos})
 
 
-let mkTrueFlow () = 
+let mkTrueFlow () =
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
 
+let mkNormFlow () =
+  {formula_flow_interval = !norm_flow_int; formula_flow_link = None;}
 
 let mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 (* let mkFalseFlow () = mkTrueFlow () *)
@@ -1336,15 +1338,15 @@ and substitute_flow_in_f_x to_flow from_flow (f:formula):formula = match f with
 and substitute_flow_into_f to_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
 		    {formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}}
-  | Exists b-> Exists{b with formula_exists_flow = 
+  | Exists b-> Exists{b with formula_exists_flow =
 		    {formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}}
   | Or b-> Or {formula_or_f1 = substitute_flow_into_f to_flow b.formula_or_f1;
 	formula_or_f2 = substitute_flow_into_f to_flow b.formula_or_f2;
 	formula_or_pos = b.formula_or_pos}
-		
+
 and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula = match f with
     | EList b -> EList (map_l_snd (substitute_flow_in_struc_f to_flow from_flow) b)
-	| EBase b -> EBase {b with formula_struc_base = substitute_flow_in_f to_flow from_flow b.formula_struc_base ; 
+	| EBase b -> EBase {b with formula_struc_base = substitute_flow_in_f to_flow from_flow b.formula_struc_base ;
 		  formula_struc_continuation = map_opt (substitute_flow_in_struc_f to_flow from_flow)  b.formula_struc_continuation}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2) -> (c1,(substitute_flow_in_struc_f to_flow from_flow  c2))) b.formula_case_branches;}
 	| EAssume b -> EAssume {b with
@@ -1352,14 +1354,48 @@ and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula
 		formula_assume_struc = substitute_flow_in_struc_f to_flow from_flow b.formula_assume_struc;}
  | EInfer b -> EInfer {b with formula_inf_continuation =substitute_flow_in_struc_f to_flow from_flow b.formula_inf_continuation}
 
-and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
+and change_flow f = match f with
+  | Base fb ->
+        if formula_is_eq_flow f !top_flow_int then
+          Base {fb with
+              formula_base_flow = mkNormFlow ()}
+        else f
+  | Or fo -> Or {fo with
+        formula_or_f1 = change_flow fo.formula_or_f1;
+        formula_or_f2 = change_flow fo.formula_or_f2}
+  | Exists fe ->
+        if formula_is_eq_flow f !top_flow_int then
+          Exists {fe with
+              formula_exists_flow = mkNormFlow ()}
+        else f
+
+and change_spec_flow spec =
+  match spec with
+    | EList el -> EList (List.map (fun (lbl,sf) -> (lbl,change_spec_flow sf)) el)
+    | ECase ec -> ECase {ec with
+          formula_case_branches = List.map (fun (pf,sf) -> (pf,change_spec_flow sf)) ec.formula_case_branches}
+    | EBase eb -> (match eb.formula_struc_continuation with
+        | None ->
+              let f = eb.formula_struc_base in
+              let new_f = change_flow f in
+              EBase {eb with
+                  formula_struc_base = new_f}
+        | Some sf -> EBase {eb with
+              formula_struc_continuation = Some (change_spec_flow sf)}
+      )
+    | EAssume ea -> EAssume {ea with
+          formula_assume_simpl = change_flow ea.formula_assume_simpl;
+          formula_assume_struc = change_spec_flow ea.formula_assume_struc}
+    | EInfer ei -> EInfer {ei with
+          formula_inf_continuation = change_spec_flow ei.formula_inf_continuation}
+
+and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
   let pr = !print_flow_formula in
   let pr2 x = match x with Flow_combine -> "Combine" | Flow_replace -> "Replace" in
   Debug.no_3 "mkAndFlow" pr pr pr2 pr (fun _ _ _ -> mkAndFlow_x fl1 fl2 flow_tr) fl1 fl2 flow_tr
 
 (*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
-and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
-  let int1 = fl1.formula_flow_interval in
+and mkAndFlow_x (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =  let int1 = fl1.formula_flow_interval in
   let int2 = fl2.formula_flow_interval in
   let r = if (is_top_flow int1) then fl2
   else if (is_top_flow int2) then fl1 (*Loc: why?, at least with Flow_replace, we should use int2 anyway?*)
