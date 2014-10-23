@@ -9,10 +9,17 @@ infer [P,@flow] x<0 & flow __norm
     |- P(x) & flow __flow.
 print residue.
 
-infer_fixcalc[P].
+relation_infer[][P].
 
 /*
 # flow2.slk
+
+relation_infer[P].
+
+Please see how termu-6.slk does it.
+
+For each infer, can we push it somewhere that
+can later be retrieved for fix-point?
 
 Can we support infer_fixcalc under sleek to
 invoked fixcalc directly?
