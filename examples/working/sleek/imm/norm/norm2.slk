@@ -1,7 +1,5 @@
 data cell{int f1}.
 
-/* Valid.Valid.Valid.Valid.Valid. */
-
 //1
 checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
 print residue.
