@@ -4,6 +4,11 @@ pred ll<n> == self=null & n=0 or
      self::node<_, q> * q::ll<n-1> & n>0
    inv n>=0.
 
+
+pred lle<> == self=null or
+     self::node<_, q> * q::lle<>
+   inv true.
+
 //1
 checkentail x::ll<n> |- x::ll<n>@A.
 print residue.
@@ -59,7 +64,7 @@ Residue:
 //9
 checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<m+1>.
 print residue.
-expect Valid.
+expect Fail.
 
 /*
 [Warning] False ctx
@@ -70,3 +75,17 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm}[]
 */
 
+//10
+checkentail x::ll<n> * y::lle<>@A &x=y |- x::lle<>.
+print residue.
+expect Fail.
+
+//11
+checkentail x::ll<n> * y::lle<>@A &x=y |- y::lle<>@A.
+print residue.
+expect Fail.
+
+//12
+checkentail x::ll<n> * y::lle<>@A &x=y |- x::ll<n>.
+print residue.
+expect Valid.

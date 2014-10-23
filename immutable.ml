@@ -1996,21 +1996,39 @@ let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_
 
 (* return (compatible_flag, to_keep_node, to_remove_node) *)
 let compatible_at_node_lvl imm1 imm2 h1 h2 =
-  if (isAccs imm1) then (true, h2, h1)
-  else if (isAccs imm2) then (true, h1, h2)
+  if (isAccs imm2) then (true, h1, h2)
+  else  if (isAccs imm1) then (true, h2, h1)
   else (false, h1, h2)
 
 (* assume nodes are aliased *)
 let merge_two_view_nodes vn1 vn2 h1 h2 prog =
   let comp, ret_h, rem_h = compatible_at_node_lvl vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 in
-  if comp  && not(Cfutil.is_view_node_segmented vn1 prog) && not(Cfutil.is_view_node_segmented vn2 prog) then
+  let comp_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
+  let comp_view =  comp_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
+  (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
+  if comp  && comp_view then
     let eqs_lst= List.combine vn1.h_formula_view_arguments vn2.h_formula_view_arguments in
     let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
     (* add here merge code *)
-    ([ret_h], eqs)                      (* shoudl I also add the pure of merged (@A) node? *)
+    ([ret_h], eqs)                      (* should I also add the pure of merged (@A) node? *)
     (* ([], []) *)
   else
-    ([h1;h2], [])
+    (* remove node annotated with @A if it's not compatible for merging *)
+    if (isAccs vn1.h_formula_view_imm) then  ([h2], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [])
+    else ([h1;h2], [])
+
+(* assume nodes are aliased *)
+let merge_data_node_w_view_node dn1 vn2 h1 h2 =
+  let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 in
+  (* if comp then *)
+  if false then
+    (* add here merge code *)
+    ([], [])
+  else
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [])
+    else ([h1;h2], [])
 
 (* assume nodes are aliased *)
 let merge_two_data_nodes dn1 dn2 h1 h2 =
@@ -2027,8 +2045,8 @@ let merge_two_data_nodes dn1 dn2 h1 h2 =
 let merge_two_nodes h1 h2 prog =
   match h1, h2 with
     | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes dn1 dn2 h1 h2
-    | [(ViewNode vn) as h1], DataNode dn
-    | [(DataNode dn) as h1], ViewNode vn -> ([h1;h2], [])
+    | [(ViewNode vn) as h2], ((DataNode dn) as h1)
+    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node dn vn h1 h2  (* ([h1;h2], []) *)
     | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes vn1 vn2 h1 h2 prog
 (* ([h1;h2], []) *)
     | _, _ -> (h1@[h2], [])
