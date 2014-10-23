@@ -13,11 +13,11 @@ let wrap_under_baga f a =
       (do_under_baga_approx := flag;
       raise e)
 
-let wrap_reverify_scc f a b =
+let wrap_reverify_scc f a b c =
   let flag = !reverify_flag in
   reverify_flag := true;
   try
-    let res = f a b in
+    let res = f a b c in
     (* restore flag do_classic_frame_rule  *)
     reverify_flag := flag;
     res
@@ -38,6 +38,21 @@ let wrap_classic et f a =
   with _ as e ->
     (do_classic_frame_rule := flag;
     raise e)
+
+let wrap_set_infer_type t f a =
+  let flag = infer_const_obj # is_infer_type t in
+  let _ = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
+  let _ = infer_const_obj # set t in
+  try
+    let res = f a in
+    (* restore flag do_classic_frame_rule  *)
+    if not(flag) then infer_const_obj # reset t;
+    res
+  with _ as e ->
+    (if not(flag) then infer_const_obj # reset t ;
+    raise e)
+
+let wrap_add_flow f a = wrap_set_infer_type INF_FLOW f a
 
 let wrap_gen save_fn set_fn restore_fn flags f a =
   (* save old_value *)

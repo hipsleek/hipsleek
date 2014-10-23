@@ -326,7 +326,7 @@ let incremMethodsO = ref (new incremMethods)
 let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
     |[] -> ()
-		| "log"::rest -> check_prover_existence rest
+    | "log"::rest -> check_prover_existence rest
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
