@@ -1,6 +1,5 @@
 open GlobProver
 
-
 let parse_only = ref false
 
 let dump_ss = ref false
@@ -369,6 +368,9 @@ let common_arguments = [
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
+  ("-prelude", Arg.String (fun s ->
+      Globals.prelude_file:=Some s),
+   "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
@@ -641,7 +643,9 @@ let common_arguments = [
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
-  ("--sa-case", Arg.Set Globals.sac, "infer case spec");
+  ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
+  ("--sa-case", Arg.Set Globals.sac, "combine case spec");
+  ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
@@ -755,7 +759,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;

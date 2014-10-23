@@ -149,6 +149,22 @@ let rec is_need_to_add_post_rel sf = match sf with
         (inf_obj # is_post)
   | _ -> false
 
+let rec is_infer_shape sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_infer_shape sf) el
+  | CF.EInfer ei ->
+        let inf_obj = ei.CF.formula_inf_obj in
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_shape) || (List.length (List.filter (fun sv -> Cpure.is_hprel_typ sv) inf_vars) > 0)
+  | _ -> false
+
+let is_infer_shape sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "is_infer_shape" pr string_of_bool is_infer_shape sf
+
+let is_infer_shape_scc scc =
+  List.exists (fun proc -> is_infer_shape (proc.proc_stk_of_static_specs # top)) scc
+
 let rec is_infer_post sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
         is_infer_post sf) el
@@ -176,7 +192,7 @@ let rec is_infer_pre sf = match sf with
 
 let is_infer_pre sf =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "is_infer_post" pr string_of_bool is_infer_pre sf
+  Debug.no_1 "is_infer_pre" pr string_of_bool is_infer_pre sf
 
 let is_infer_pre_scc scc =
   List.exists (fun proc -> is_infer_pre (proc.proc_stk_of_static_specs # top)) scc
@@ -187,7 +203,7 @@ let rec is_infer_others sf = match sf with
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
         let inf_vars = ei.CF.formula_inf_vars in
-        (inf_obj # is_term) || (inf_obj # is_shape) || (inf_obj # is_imm)
+        (inf_obj # is_term) (* || (inf_obj # is_shape) || (inf_obj # is_imm) *)
   | _ -> false
 
 let is_infer_others sf =

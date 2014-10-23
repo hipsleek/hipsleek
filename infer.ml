@@ -304,6 +304,7 @@ let init_infer_type ctx itype =
       (* | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx)  *)
       (* | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx)  *)
       (* | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx)  *)
+      (* | INF_SIZE -> (es.es_infer_obj # set INF_SIZE; ctx) *)
       (* | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx)  *)
       (* | INF_FLOW -> (es.es_infer_obj # set INF_FLOW; ctx)  *)
       (* end *)
