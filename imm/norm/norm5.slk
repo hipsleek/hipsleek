@@ -12,3 +12,12 @@ checkentail x::node<b,q> * q::ll<n>
 print residue.
 expect Valid.
 
+checkentail x::node<b,q> * q::ll<n>  
+   |- x::node<b,_>@A *x::node<a,_>.
+print residue.
+expect Valid.
+
+checkentail x::node<b,q> * q::ll<n>  & a>0
+   |- x::node<b,_>@A *x::node<a,_>.
+print residue.
+expect Fail.
