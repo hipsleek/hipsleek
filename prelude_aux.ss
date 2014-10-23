@@ -1,9 +1,12 @@
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
+class ret_int extends __RET { int val }
+class ret_bool extends __RET { bool val } 
+class __RET extends __Exc {}
 
 int add___(int a, int b) 
   requires true 
-  ensures res = a + b -1;
+  ensures res = a + b;
 
 int minus___(int a, int b) 
   requires true
@@ -267,11 +270,14 @@ int array_get_elm_at___1d(int[] a, int i)
   requires true
   ensures res = a[i];
 	*/
-	requires [ahalb,ahaub]
+  /*requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures res = a[i];
+  */
+  requires true
+  ensures res = a[i];
 	
 bool array_get_elm_at___1d(bool[] a, int i) 
 	requires [ahalb,ahaub]
@@ -356,29 +362,13 @@ void delete_ptr(int_ptr_ptr@R x)
 /* ************************/
 
 int[] update___1d(int v, int[] a, int i)
-//void update___(ref int[] a, int i, int v) 
-	/* requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
-				& i <= ahaub
-     ensures dom(res,ahalb,ahaub);//'
-     requires true
-	 ensures  update_array(a,i,v,res);//' 
-	*/
-     /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
-     /* ensures bnd(res,s,b,low,high); */
-	requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
-				& i <= ahaub
-	ensures dom(res,ahalb,ahaub) 
-				& update_array_1d(a,res,v,i);
-				
-				
+  requires true
+ ensures update_array_1d(a,res,v,i);
+/*
 bool[] update___1d(bool v, bool[] a, int i)
 	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
 	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);
-
+*/
 int[,] update___2d(int v, int[,] a, int i, int j)
 	requires true
 	ensures update_array_2d(a,res,v,i,j);

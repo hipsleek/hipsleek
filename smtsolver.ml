@@ -808,10 +808,12 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
       (ante,conseq)
     else (ante,conseq)
   in
+  (*let _ = print_endline ("#### ante = " ^ (!CP.print_formula ante)) in*)
+  (*let _ = print_endline ("#### conseq = " ^ (!CP.print_formula conseq)) in*)
   (*-----------------------------*)
   let conseq_info = collect_formula_info conseq in
   (* remove occurences of dom in ante if conseq has nothing to do with dom *)
-  let ante = 
+  let ante =
     if (not (List.mem "dom" conseq_info.relations)) then
       CP.remove_primitive (fun x -> 
         match x with 
@@ -825,7 +827,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info in
-    (* let _ = print_endline (" ### res = \n " ^ res) in *)
+  (*let _ = print_endline (" ### res = \n " ^ res) in*)
     res
   
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
