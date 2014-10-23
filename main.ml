@@ -564,7 +564,7 @@ let process_source_full source =
       let _ = Log.process_proof_logging !Globals.source_files cprog prim_names in
       raise e
     end);
-	if (!Globals.reverify_all_flag)
+	if (!Globals.reverify_all_flag || !Globals.reverify_flag)
 	then
           let _ =  Debug.info_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)

@@ -159,6 +159,11 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 
+let is_node_typ t=
+  match t with
+    | Named id -> String.compare id "" !=0
+    | _ -> false
+
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   match param_typ with
   | [] -> FuncT (Void, ret_typ)
@@ -808,7 +813,7 @@ let dis_show_diff = ref false
 
 let sap = ref false
 let sae = ref false
-let sac = ref false
+let sac = ref true
 
 let sags = ref false
 
@@ -1289,10 +1294,12 @@ type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
-  | INF_SHAPE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@shape] *)
+  | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
+  | INF_FLOW (* For infer[@flow] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1308,9 +1315,11 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
+  | INF_FLOW -> "@flow"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1401,8 +1410,10 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
+      helper "@size" INF_SIZE;
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
+      helper "@flow" INF_FLOW;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1422,9 +1433,12 @@ object (self)
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
+  method is_infer_type t  = self # get t
   method get_lst = arr
   method set c  = if self#get c then () else arr <- c::arr
   (* method set_ind i  = Array.set arr i true *)

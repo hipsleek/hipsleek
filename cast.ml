@@ -209,6 +209,7 @@ and proc_decl = {
     mutable proc_sel_post_hps: P.spec_var list;
     mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
     mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
+    proc_verified_domains: infer_type list;
     (*set of heap predicate constraints derived from calls in this method*)
     (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;

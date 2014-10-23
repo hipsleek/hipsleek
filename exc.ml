@@ -150,7 +150,7 @@ let is_subset_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)
 
 (* is f1 an exact flow for subtype f2 *)
 let is_exact_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
-       s1==b1 & b1==b2
+       s1==s2 & b1==b2
 
 (* let is_exact_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
 (*   if is_empty_flow f1 then *)
@@ -527,6 +527,7 @@ module type ETABLE =
       method clear : unit
       method sub_type_obj : ident -> ident -> bool
       method union_flow_ne: nflow -> nflow -> nflow
+     method is_norm_flow : nflow -> bool
     end
     val exlist : exc
    end;;
@@ -772,6 +773,12 @@ struct
     method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
       begin
         ((min s1 s2),(max b1 b2))
+      end
+    method is_norm_flow (f:nflow) =
+      begin
+        (* print_endline ((add_str "f" string_of_flow) f); *)
+        (* print_endline ((add_str "norm_flow" string_of_flow) !norm_flow_int); *)
+        is_exact_flow f !norm_flow_int
       end
   end
   let exlist = new exc
@@ -1097,6 +1104,10 @@ struct
     method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
       begin
         ((min s1 s2),(max b1 b2))
+      end
+    method is_norm_flow (f:nflow) =
+      begin
+        is_exact_flow f !norm_flow_int
       end
   end
   let exlist = new exc

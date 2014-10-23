@@ -2337,8 +2337,10 @@ infer_type:
    | `INFER_AT_POST -> INF_POST
    | `INFER_AT_IMM -> INF_IMM
    | `INFER_AT_SHAPE -> INF_SHAPE
+   | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
+   | `INFER_AT_FLOW -> INF_FLOW
    ]];
 
 infer_id:

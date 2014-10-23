@@ -63,7 +63,7 @@ and mem_perm_formula = {mem_formula_exp : CP.exp;
 (* (\*later, type of formula, based on #nodes ....*\) *)
 
 type t_formula = (* type constraint *)
-	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
+(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
   	   | TypeExact of t_formula_sub_type (* for t = C *)
 	   | TypeSub of t_formula_sub_type (* for t <: C *)
 	   | TypeSuper of t_formula_sub_type (* for t < C *)
@@ -1128,13 +1128,13 @@ and subsume_flow t1 t2 : bool =
 
 and overlap_flow t1 t2 : bool = is_overlap_flow t1 t2
 
-and subtract_flow_list t1 t2  (* : (nflow list) *) = 
+and subtract_flow_list t1 t2  (* : (nflow list) *) =
    subtract_flow_l t1 t2
   (* if n1<p1 then (n1,p1-1)::(subtract_flow_list (p1,n2) (p1,p2)) *)
   (* else if n2>p2 then [(p2+1,n2)] *)
   (* else [] *)
 
-and disjoint_flow t1 t2 : bool = not(overlap_flow t1 t2) 
+and disjoint_flow t1 t2 : bool = not(overlap_flow t1 t2)
 
 and subsume_flow_f t1 f :bool = subsume_flow t1 f.formula_flow_interval
 
@@ -1150,11 +1150,11 @@ and overlap_flow_ff f1 f2 :bool = overlap_flow f1.formula_flow_interval f2.formu
 (*   let pr = !print_flow_formula in *)
 (*   Debug.no_2 "subsume_flow_ff" pr pr string_of_bool overlap_flow_ff_x f1 f2 *)
 
-and get_flow_from_stack c l pos = 
+and get_flow_from_stack c l pos =
   try
 	let r = List.find (fun h-> ((String.compare h.formula_store_name c)==0)) l in
 	r.formula_store_value
-  with Not_found -> Err.report_error { 
+  with Not_found -> Err.report_error {
 	  Err.error_loc = pos;
 	  Err.error_text = "the flow var stack \n "^
 		  (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
@@ -1168,7 +1168,7 @@ and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f 
   | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
 	formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
 	formula_or_pos = b.formula_or_pos}
-		
+
 and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !norm_flow_int b.formula_base_flow) then n else b.formula_base_flow}
   | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !norm_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
@@ -1284,11 +1284,11 @@ and formula_and_of_formula (f:formula) : one_formula list =
 	  Err.report_error { Err.error_loc = no_pos;
 		                 Err.error_text = "formula_and_of_formula: disjunctive formula"}
 
-and flow_formula_of_formula (f:formula) (*pos*) : flow_formula = 
+and flow_formula_of_formula (f:formula) (*pos*) : flow_formula =
   match f with
   | Base b-> b.formula_base_flow
   | Exists b-> b.formula_exists_flow
-  | Or b -> 
+  | Or b ->
 		let fl1 = flow_formula_of_formula b.formula_or_f1 in
 		let fl2 = flow_formula_of_formula b.formula_or_f2 in
 		if (equal_flow_interval fl1.formula_flow_interval fl2.formula_flow_interval) then fl1
