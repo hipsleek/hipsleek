@@ -1048,10 +1048,10 @@ let convert_tail_vdefs_to_linear prog =
   (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
 
 
-let imm_abs_norm_formula (f:CF.formula) prog: CF.formula  = 
-  Immutable.merge_alias_nodes_formula prog f (Cvutil.xpure_heap_symbolic 13 prog)
+let imm_abs_norm_formula (f:CF.formula) prog : CF.formula  = 
+  Immutable.merge_alias_nodes_formula prog f [] (Cvutil.xpure_heap_symbolic 13 prog)
   (* Cvutil.crop_h_formula f svl *)
 
-let imm_abs_norm_struc_formula (f:CF.struc_formula) prog: CF.struc_formula  = 
-  Immutable.merge_alias_nodes_struc_formula prog f (Cvutil.xpure_heap_symbolic 14 prog)
+let imm_abs_norm_struc_formula (f:CF.struc_formula) conseq prog: CF.struc_formula  = 
+  Immutable.merge_alias_nodes_struc_formula prog f (Cvutil.xpure_heap_symbolic 14 prog) conseq
   (* Cvutil.crop_h_formula f svl *)
