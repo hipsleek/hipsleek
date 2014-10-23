@@ -1916,10 +1916,10 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
     sel_post_hps1 unk_map6 unify_equiv_map3 in
   let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
     (* Sautil.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
-    let defs3a = Sacore.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
+    let defs3a,remain_links = Sacore.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
-    (defs3a, [])
+    (defs3a, remain_links)
   else (defs2,link_hpargs2@htrue_hpargs)
   in
   (constrs2, defs3, unk_hpargs4, link_hpargs3,(pre_equivs@unify_equiv_map2@unk_equivs))

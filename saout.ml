@@ -530,6 +530,36 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps to_unfold_hps hpdefs
       let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula s_spec3 in
       let _ =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos in
       let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
+      let n_static_spec = match proc.C.proc_static_specs with
+        | CF.EInfer ei ->
+              let inf_obj = ei.CF.formula_inf_obj in
+              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term then
+                let new_inf_obj = inf_obj # clone in
+                let _ = new_inf_obj # reset INF_SHAPE in
+                let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
+                CF.EInfer {ei with
+                    CF.formula_inf_obj = new_inf_obj;
+                    CF.formula_inf_continuation = n_static_spec;
+                    CF.formula_inf_vars = new_inf_vars
+                }
+              else n_static_spec
+        | _ -> n_static_spec
+      in
+      let n_dynamic_spec = match proc.C.proc_dynamic_specs with
+        | CF.EInfer ei ->
+              let inf_obj = ei.CF.formula_inf_obj in
+              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term then
+                let new_inf_obj = inf_obj # clone in
+                let _ = new_inf_obj # reset INF_SHAPE in
+                let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
+                CF.EInfer {ei with
+                    CF.formula_inf_obj = new_inf_obj;
+                    CF.formula_inf_continuation = n_dynamic_spec;
+                    CF.formula_inf_vars = new_inf_vars
+                }
+              else n_dynamic_spec
+        | _ -> n_dynamic_spec
+      in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
       (* let n_proc_stk_of_static_specs = List.map (fun s -> *)
       (*     CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps s) *)

@@ -3357,6 +3357,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_invoked = proc.I.proc_is_invoked;
+          C.proc_verified_domains = proc.I.proc_verified_domains;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
@@ -5141,6 +5142,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_body = Some w_body;
                   I.proc_is_main = proc.I.proc_is_main;
                   I.proc_is_invoked = true;
+                  I.proc_verified_domains = [];
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
                   I.proc_test_comps = if not !Globals.validate then None else
@@ -5153,7 +5155,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      ) w_formal_args in
                      let _ =  Debug.binfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
                      let _ =  Debug.binfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
-                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
+                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                  let full_args_wi = if ninfer_args = [] then args_wi
                  else List.fold_left (fun r p ->
