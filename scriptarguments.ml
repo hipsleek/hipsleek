@@ -1,6 +1,5 @@
 open GlobProver
 
-
 let parse_only = ref false
 
 let dump_ss = ref false
@@ -369,6 +368,9 @@ let common_arguments = [
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
+  ("-prelude", Arg.String (fun s ->
+      Globals.prelude_file:=Some s),
+   "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
