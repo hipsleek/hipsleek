@@ -49,31 +49,10 @@ checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- y::ll<n>.
 print residue.
 expect Valid.
 
-/*
-
-how to treat this cases?
-
-[Warning] False ctx
-
-Entail 8: Valid.
-
-Residue:
- <1>hfalse&false&{FLOW,(4,5)=__norm}[]
-*/
-
 //9
 checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<m+1>.
 print residue.
 expect Fail.
-
-/*
-[Warning] False ctx
-
-Entail 9: Valid.
-
-Residue:
- <1>hfalse&false&{FLOW,(4,5)=__norm}[]
-*/
 
 //10
 checkentail x::ll<n> * y::lle<>@A &x=y |- x::lle<>.
