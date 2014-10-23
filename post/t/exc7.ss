@@ -35,4 +35,12 @@ Display below can be improved:
 !!! cat:RELDEFN post_1219(Exp#E)
 !!! pf: res=2222 & 101<=x
 
+Also, post cond still missing o Exp specs:
+
+Post Inference result:
+loop$int
+ requires emp & MayLoop[]
+     ensures emp & res=x+1111 & x<=0;
+
+
 */
