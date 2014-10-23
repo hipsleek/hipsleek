@@ -1237,6 +1237,25 @@ loop$int
  requires emp & MayLoop[]
      ensures emp & res=x+1111 & x<=0;
 =======================================================
+# flow2.slk
+
+Can we support infer_fixcalc under sleek to
+invoked fixcalc directly?
+
+Just need to collect relational assumptions:
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: ( (x+1)<=0) -->  P(x)]
+
+After that collect a relational assumption with flow as follows:
+
+ x+1<=0 & 3<=flow<=4  \/ P(x1,flow) & x1+1=x --> P(x,flow)
+
+Fixcalc then give below but requires a separate
+flow parameter:
+
+ P(x,flow) == x+1<=0 & 3<=flow<=4
+           == x+1<=0 & flow __norm
 =======================================================
 =======================================================
 =======================================================
