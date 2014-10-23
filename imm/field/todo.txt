@@ -28,7 +28,7 @@ print residue. // should succeed
   currently:
    unsound for --field-imm and also without field
 ================================================================
-#field4.slk
+#field4.slk (FIXED)
 
 Why did these two examples
 fail with @A at RHS?
@@ -53,7 +53,7 @@ Residue:
 Validate 2: Expecting Valid BUT got : Fail_May
 
 ================================================================
-#field4a.slk
+#field4a.slk (FIXED)
 
 checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
 
@@ -68,7 +68,7 @@ INPUT:
        q_42=q&{FLOW,(4,5)=__norm})[]
 
 ================================================================
-#field4b.slk
+#field4b.slk (FIXED)
 
 checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
 

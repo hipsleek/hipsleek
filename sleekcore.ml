@@ -131,10 +131,10 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let _ = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = if (!Globals.remove_abs && not(!Globals.imm_merge)) then 
     Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) else ante in
-  let ante = Norm.imm_abs_norm ante cprog in
+  let ante = Norm.imm_abs_norm_formula ante cprog in
   let _ = Debug.tinfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
-  let conseq = if (!Globals.remove_abs) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
-  (* let conseq = Immutable.merge_alias_nodes_struc_formula conseq in *)
+  let conseq = if ((!Globals.remove_abs)  && not(!Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
+  let conseq = Norm.imm_abs_norm_struc_formula conseq cprog in
   let _ = Debug.tinfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
