@@ -35,7 +35,7 @@ print residue.
 expect Valid.
 
 //7
-checkentail x::ll<n> * y::ll<m>@A &x=y & m>0 |- x::node<_,q> * q::ll<n-1>.
+checkentail x::ll<n> * y::ll<m>@A &x=y & m>0 |- x::node<_,q> * q::ll<m-1>.
 print residue.
 expect Valid.
 

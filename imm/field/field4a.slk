@@ -9,10 +9,12 @@ pred ll<n> == self=null & n=0
 
 
 //OK
-checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
+checkentail x::node<3,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
 print residue.
 expect Valid.
 
+checkentail x::node<3,q> * q::ll<n>  
+   |- x::node<a,_>@A *x::node<b,_> & b>2.
 
 
 /*
