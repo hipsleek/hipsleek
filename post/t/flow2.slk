@@ -40,6 +40,26 @@ flow parameter:
            == x+1<=0 & flow __norm
 
 
+# flow2.slk
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&P(x1) & x1+1=x&{FLOW,(1,26)=__flow#E}[]
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+GOT:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=3) && flow<=4) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Expecting:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=4) && flow<=5) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Pick flow range from exclist. See below.
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+
 */
 
 
