@@ -23,6 +23,12 @@ expect Valid.
 checkentail x::ls<p> * x::ls<q>@A |- x::ls<q>.
 print residue.
 expect Fail.
+
+//5
+checkentail x::ls<p> * x::ls<q>@A |- p=q.
+print residue.
+expect Fail.
+
 /*
 
 Succeeds, but it should fail:
