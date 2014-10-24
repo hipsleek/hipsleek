@@ -5,7 +5,7 @@ infer [P,@flow] P(x1) & x1=x-1 & flow __flow
     |- P(x) & flow __flow.
 print residue.
 
-infer [P,@flow] x>=0 & flow __norm
+infer [P,@flow] x=0 & flow __norm
     |- P(x) & flow __flow.
 print residue.
 
