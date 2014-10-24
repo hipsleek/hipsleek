@@ -1367,7 +1367,7 @@ let relation_pre_process constrs pre_hps post_hps=
   ) ([],[],[]) constrs in
   (pre_invs, pre_constrs, post_constrs,  pre_hp_rels, post_hp_rels)
 
-let process_rel_infer pre_rels post_rels=
+let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
   (*************INTERNAL*****************)
   let pr = !CP.print_formula in
@@ -1385,16 +1385,22 @@ let process_rel_infer pre_rels post_rels=
   (*************END INTERNAL*****************)
   let hp_lst_assume = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
-  let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
-  let _ = Debug.binfo_hprint (add_str "hp_lst_assume" (pr_list Cprinter.string_of_hprel)) hp_lst_assume no_pos in
-  let _ = Debug.binfo_hprint (add_str "pre_invs0" (pr_list pr)) pre_invs0 no_pos in
-  let _ = Debug.binfo_hprint (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
-  let _ = Debug.binfo_hprint (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
-  let rels = Infer.infer_rel_stk # string_of in
-  let _ = Debug.binfo_hprint (add_str "infer_rel_stk" (pr_id)) (rels) no_pos in
-  let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
+  (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
+  let rels = Infer.infer_rel_stk # get_stk in
+  let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+  let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
+  let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
+  let _ = Debug.ninfo_hprint (add_str "reldefns" (pr_list (pr_pair pr pr))) reldefns no_pos in
+  let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
+  let _ = Debug.ninfo_hprint (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
+  (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
+  (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
+  (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
+  (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
+  (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
+  let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
-      (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+      (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
   let _ = print_endline "" in
   ()
 

@@ -365,6 +365,13 @@ let filter_infer_pure_proc proc =
 let filter_infer_pure_scc scc =
   List.map (fun proc -> filter_infer_pure_proc proc) scc
 
+let is_post_rel fml pvars =
+  let _ = Debug.ninfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
+  let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
+  let _ = Debug.ninfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
+  let _ = Debug.ninfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
+  List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let _ = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
@@ -427,10 +434,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
-            let is_post_rel fml pvars =
-              let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
-              List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
-            in
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                 && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
