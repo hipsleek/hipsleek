@@ -1279,7 +1279,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 
     (* NT_No [] (* No result for infeasible context *) *)
-  else
+  else if is_empty trrel.termr_lhs then NT_No [] (* For base case *)
+  else 
     (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
     (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
     let nt_conds = List.fold_left (fun acc ann ->
@@ -1513,8 +1514,9 @@ let rec proving_non_termination_scc prog trrels tg scc =
     
 let proving_non_termination_scc prog trrels tg scc =
   let pr = print_graph_by_rel in
-  Debug.no_1 "proving_non_termination_scc" pr (fun _ -> "")
-    (fun _ -> proving_non_termination_scc prog trrels tg scc) tg
+  let pr1 = pr_list string_of_int in
+  Debug.no_2 "proving_non_termination_scc" pr pr1 (fun _ -> "")
+    (fun _ _ -> proving_non_termination_scc prog trrels tg scc) tg scc
 
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =

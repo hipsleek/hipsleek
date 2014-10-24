@@ -378,8 +378,9 @@ let solve_trel_init prog trrels turels =
   (*   (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in *)
     
   let tg = graph_of_trels irels in
-  let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in
-  solve_turel_graph_init prog rec_trrels tg
+  (* let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in *)
+  (* solve_turel_graph_init prog rec_trrels tg                                       *)
+  solve_turel_graph_init prog trrels tg
 
 let finalize () =
   reset_seq_num ();
