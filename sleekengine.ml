@@ -541,7 +541,7 @@ let process_list_lemma ldef_lst  =
     end
     in
     let _ =
-      let _ = Debug.info_hprint (add_str "fixpoint"
+      let _ = Debug.info_hprint (add_str "fixpoint1"
           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
       let _ = print_endline "" in
       ()
@@ -1386,8 +1386,14 @@ let process_rel_infer pre_rels post_rels=
   let hp_lst_assume = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
   let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
+  let _ = Debug.binfo_hprint (add_str "hp_lst_assume" (pr_list Cprinter.string_of_hprel)) hp_lst_assume no_pos in
+  let _ = Debug.binfo_hprint (add_str "pre_invs0" (pr_list pr)) pre_invs0 no_pos in
+  let _ = Debug.binfo_hprint (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
+  let _ = Debug.binfo_hprint (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
+  let rels = Infer.infer_rel_stk # string_of in
+  let _ = Debug.binfo_hprint (add_str "infer_rel_stk" (pr_id)) (rels) no_pos in
   let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
-  let _ = Debug.info_hprint (add_str "fixpoint"
+  let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
   let _ = print_endline "" in
   ()
