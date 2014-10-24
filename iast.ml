@@ -3202,7 +3202,7 @@ let detect_invoke prog proc=
       (fun _ -> detect_invoke_x prog proc) proc
       
 let tnt_prim_procs = 
-  [ "__VERIFIER_nondet_int"; "__VERIFIER_error" ]
+  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
   
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
   
