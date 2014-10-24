@@ -1,0 +1,73 @@
+
+global cex cx;
+
+pred_prim cex<x:int>
+  inv x>=0;
+
+void inf_loop()
+  requires Loop
+  ensures cx::cex<1> & false; // []
+
+void loop(int x, int y, int k)
+//infer [@term]
+ case {
+  x>=1 ->  requires Loop 
+           ensures cx::cex<1> & false; // [(20,if#1),(22,inf_loop)]
+  x<1 -> requires Term[] 
+         ensures true;
+}
+{
+  if (x>=1) 
+    // [if#1]
+    inf_loop();
+  else return;
+}
+
+
+
+
+
+void loop2(int x, int y, int k)
+//infer [@term]
+ case {
+  x>=1 ->  requires Loop 
+           ensures cx::cex<1> & false; // [(20,if#1),(22,inf_loop)]
+  x<1 -> requires Term[] 
+         ensures true;
+}
+{
+  if (x>=1) 
+    // [if#1]
+    inf_loop();
+  else return;
+}
+
+/*
+# nd5a.ss
+
+void loop(int x, int y)
+ infer [@term]
+ requires true
+ ensures true;
+{
+  int k = non_det();
+  if (x>=0 
+      && (k>0)) {
+    x = x + y;
+    loop(x, y);
+ }
+}
+
+I got below. Is it correct?
+It uses MayLoop rather than Loop
+
+Termination Inference Result:
+loop:  case {
+  x<=(0-1) -> requires emp & Term[72,1]
+     ensures emp & true; 
+  0<=x -> requires emp & MayLoop[]
+     ensures emp & true; 
+  }
+
+
+*/

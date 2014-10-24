@@ -1,0 +1,28 @@
+
+lemma self::trace<L1> * self::add<L2> 
+      --> self::trace<L1@l2>.
+
+checkentail x::trace<[1,1,2]>*x::add<[4,5]> |- true.
+print residue.
+//  x::trace<[1,1,2,4,5]>
+
+lemma self::trace<L1> * self::cex<L2> 
+      --> self::cex<L1@l2>.
+
+lemma self::cexset<S> * self::cex<L> 
+      --> self::cexset<L::S>.
+
+checkentail x::trace<[1,1,2]>*x::cex<[4,5]> |- true.
+print residue.
+//  x::cex<[1,1,2,4,5]>
+
+           L in S
+---------------------------------------
+checkentail x::cexset<S> |- x::cex<L>.
+
+
+
+ if * then e1 // x::cex<L1>
+ else e2 // x::cex<L2>
+
+  x::cex<L1> & s1 \/ x::cex<L2> & s2

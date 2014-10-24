@@ -1,0 +1,72 @@
+pred_prim cex<x:set[list[int]]>
+  inv true;
+
+pred_prim state<x:list[int]>
+  inv true;
+
+global cex cx;
+global state st;
+
+void inf_loop()
+  // every failure must have at least one counter-example
+  requires cx::cex{[#inf_loop]} & Loop 
+  ensures false; // []
+
+//counter-examples may be split
+// but can this be done across conditional?
+lemma cx::cex<S1 U S2> <-> cx::cex<S1> * cx::cex<S2>
+
+// we provide a predicate to track the flow of code
+// this state predicate may be updated as follows
+lemma state<L1> * add<L2> --> state<L1++L2>
+
+bool randbool()
+  requires Term[]
+  ensures true;
+
+// every declared counter-example must be present
+void loop(int x, int y, int k)
+  requires cx::cex{[#loop,#if,#inf_loop],[#loop,#else,#inf_loop]} 
+           & Loop
+  ensures false; 
+{
+  //st::state<[#loop] * cx::cex{[#loop,#if,#inf_loop],
+                                [#loop,#else,#inf_loop]} 
+  if (randbool()) 
+      //st::state<[#loop,#if] * cx::cex{[#loop,#if,#inf_loop]}
+      inf_loop(); 
+      //st::state<[#loop,#if] * cx::cex{}
+  else 
+      //st::state<[#loop,#else] * cx::cex{[#loop,#else,#inf_loop]}
+      inf_loop(); 
+      //st::state<[#loop,#if] * cx::cex{}
+}
+// Hoare rule must check that declared counter-examples
+// must be exhausted at the end of method body
+
+// we may chose to declare fewer counter-examples
+// but there must be at least one counter-example for each
+// error scenario
+void loop2(int x, int y, int k)
+  requires cx::cex{[#loop2,#if,#inf_loop]} & Loop
+  ensures false; 
+{
+  //st::state<[#loop] * cx::cex{[#loop,#if,#inf_loop]}
+  if (randbool()) 
+      //st::state<[#loop,#if] * cx::cex{[#loop,#if,#inf_loop]}
+      inf_loop(); 
+      //st::state<[#loop,#if] * cx::cex{}
+  else 
+      //st::state<[#loop,#else] * cx::cex{}
+      inf_loop(); 
+      //st::state<[#loop,#if] * cx::cex{}
+}
+
+/*
+
+        S1 subseteq L1++S2
+ ---- -----------------------------------------
+   st::state<L1>*cx::cex<S1> |- cx::cex<S2>
+     --> st::state<L1>*cx::cex<{}>
+
+*/
