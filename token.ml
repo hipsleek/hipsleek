@@ -14,7 +14,8 @@ type sleek_token =
   | LEMMA         of lemma_kind_t
         (*keywords*)
   | ANDLIST
-  | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
+  | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME 
+  | ALLN | APP | APPEND | AXIOM (* [4/10/2011] An Hoa *)
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
@@ -102,7 +103,9 @@ module Token = struct
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
     | ANDLIST -> "AndList" | ATPOS -> "at"
-    | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
+    | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact"
+    | ASSUME -> "assume" | ALLN-> "alln"
+    | APP -> "app" | APPEND -> "append" 
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"

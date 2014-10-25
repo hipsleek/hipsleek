@@ -368,7 +368,12 @@ let main () =
         print_endline "SLEEK FAILURE (END)";
         Log.last_cmd # dumping "sleek_dumEND)";
       )
-
+    | e -> (
+        dummy_exception();
+        print_endline ("An exception occurred: \"" ^ (Printexc.to_string e) ^ "\"");
+        print_endline "SLEEK FAILURE (END)";
+        Log.last_cmd # dumping "sleek_dumEND)";
+      )
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 

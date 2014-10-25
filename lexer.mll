@@ -114,7 +114,8 @@ module Make (Token : SleekTokenS)
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
-   ("app", APPEND);
+   ("app", APP);
+   ("append", APPEND);
    ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);

@@ -15,7 +15,10 @@ lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S>
 //    -> ss::state<L2> & L2=L1++[|n|].
 
 lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
-   -> ss::state<L2> & L2 = n:::L1.
+   -> ss::state<L2> & L2 = app(L1,[n]).
+
+lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
+   -> ss::state<L2> & L2 = append(L1,[n]).
 
 // checkentail cx::state<[|1,2,3|]> * cx::add<4> |- true.
 // print residue.
