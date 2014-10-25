@@ -30,20 +30,20 @@ void loop(int x)
   ensures true; 
 {
   //st::state<[#loop] * cx::cex{[#loop,#else,#loop]} 
-  if (random()) 
+  if (x<0) 
       //st::state<[#loop,#if_1] * cx::cex{}
     return;
       //st::state<[#loop,#if_1] * cx::cex{}
   else 
       //st::state<[#loop,#else_1] * cx::cex{[#loop,#else_1,#loop]}
-    loop(x-1); 
+    loop(x); 
       //st::state<[#loop,#else_1] * cx::cex{}
 }
 
 
 
 main()
-requires cx::cex{[#main,#loop]}} & MayLoop
+requires cx::cex{[#main,#loop,#else_1,#loop]}} & MayLoop
  ensures true;
 {
   loop(-5);

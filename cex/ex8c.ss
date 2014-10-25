@@ -26,27 +26,23 @@ bool randbool()
 
 // every declared counter-example must be present
 void loop(int x)
-  requires cx::cex{[#loop,#else_1,#loop]} & MayLoop
-  ensures true; 
+ case {
+  x<0 -> requires Term[] ensures ?
+  x>=0 ->  
+   requires cx::cex{[#loop,#else_1,#loop]} & Loop
+   ensures false; 
+ }
 {
-  //st::state<[#loop] * cx::cex{[#loop,#else,#loop]} 
-  if (random()) 
-      //st::state<[#loop,#if_1] * cx::cex{}
+  //st::state<[#loop] * cx::cex{[#loop,#else,#loop]} & x>=0
+  if (x<0) 
+      //st::state<[#loop,#if_1] * cx::cex{[#loop,#else,#loop]} & x>=0 & x<0
+      // false
     return;
-      //st::state<[#loop,#if_1] * cx::cex{}
+      // false
   else 
       //st::state<[#loop,#else_1] * cx::cex{[#loop,#else_1,#loop]}
-    loop(x-1); 
+    loop(x); 
       //st::state<[#loop,#else_1] * cx::cex{}
-}
-
-
-
-main()
-requires cx::cex{[#main,#loop]}} & MayLoop
- ensures true;
-{
-  loop(-5);
 }
 
 /*
