@@ -1,4 +1,4 @@
-../sleek XXX
+../sleek XXX (FIXED)
 
 Can we provide a more meaningful error msg
 like file "xxx" not found.
@@ -30,6 +30,22 @@ Total verification time: 0.069506 second(s)
 	Time spent in child processes: 0.021101 second(s)
 
 ===========================================================
+# cpure.ml
+
+List formula can be dropped prior to passing to Z3, in
+the following methods:
+
+(* WN : This need to be revised to drop list formula *)
+let drop_list_formula_ops =
+  let f b = match b with
+    | RelForm (_,_,p) -> Some p
+    | _ -> None in
+  drop_some_formula_ops f
+
+let drop_list_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_list_formula_ops in
+   drop_formula pr_weak pr_strong f
+
 ===========================================================
 ===========================================================
 ===========================================================
