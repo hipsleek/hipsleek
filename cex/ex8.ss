@@ -25,7 +25,7 @@ bool randbool()
   ensures true;
 
 // every declared counter-example must be present
-void loop(int x, int y, int k)
+void loop(int x)
   requires cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#loop]} & Loop
   ensures false; 
 {
@@ -37,7 +37,7 @@ void loop(int x, int y, int k)
       //st::state<[#loop,#if_1] * cx::cex{}
   else 
       //st::state<[#loop,#else_1] * cx::cex{[#loop,#else_1,#loop]}
-      loop(); 
+      loop(x); 
       //st::state<[#loop,#else_1] * cx::cex{}
 }
 
