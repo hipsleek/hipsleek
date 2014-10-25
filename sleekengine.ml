@@ -1410,8 +1410,8 @@ let process_rel_infer pre_rels post_rels =
                   let (s,b) = exlist # get_min_max nf in
                   (CP.add_flow_interval f1 s b,f2)
           | _ ->                       (* norm flow *)
-                let (s,b) = exlist # get_min_max !norm_flow_int in
-                (CP.add_flow_interval f1 s b,f2)
+                (* let (s,b) = exlist # get_min_max !norm_flow_int in *)
+                (f1,f2)
       else (f1,f2)
   ) reldefns in
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in

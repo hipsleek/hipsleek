@@ -3662,8 +3662,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
           CF.es_infer_vars_rel = CP.remove_dups_svl (false_iv_rel@false_iv@rel_id_conseq) }
       in
       let _ = Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
-      let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
-      let ans = Infer.infer_collect_rel (fun _ -> true) false_es (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) (Mcpure.mix_of_pure rhs) no_pos in
+      let _ = Debug.binfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+      (* let conseq_flow = !Exc.GTable.norm_flow_int in *)
+      let conseq_flow = CF.mkNormalFlow () in
+      let ans = Infer.infer_collect_rel (fun _ -> true) false_es conseq_flow (Mcpure.mkMFalse no_pos) (Mcpure.mkMFalse no_pos) (Mcpure.mix_of_pure rhs) no_pos in
       let es,_,_,_,_ = ans in
       (* set context as bot *)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
@@ -7271,7 +7273,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 let _ = DD.tinfo_hprint (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in
                                 let _ = DD.tinfo_pprint "\n" no_pos in
                                 (* let _ = DD.binfo_hprint (add_str "" pr_id) ("\n") no_pos in *)
-                                let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 rhs_h_matched_set pos in
+                                let _ = DD.binfo_hprint (add_str "conseq" pr_no) conseq no_pos in 
+                                let ctx, proof = heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
                                 (* let _ = DD.binfo_hprint (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
                                 let p2 = MCP.drop_varperm_mix_formula p2 in
                                 let new_ctx =
@@ -7680,14 +7683,14 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* rhs_wf = None --> measure succeeded *)
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
-and heap_infer_decreasing_wf_x prog estate rank is_folding lhs pos =
-  let lctx, _ = heap_entail_empty_rhs_heap 2 prog is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
+and heap_infer_decreasing_wf_x prog conseq estate rank is_folding lhs pos =
+  let lctx, _ = heap_entail_empty_rhs_heap 2 prog conseq is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
   in CF.estate_opt_of_list_context lctx
 
-and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
+and heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos =
   let pr = !CP.print_formula in
   Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
-      (fun _ -> heap_infer_decreasing_wf_x prog estate rank is_folding lhs pos) rank
+      (fun _ -> heap_infer_decreasing_wf_x prog conseq estate rank is_folding lhs pos) rank
 
 (*CP.mkTrue pos, CP.isConstTrue*)
 and subst_rel_by_def_x rel_w_defs (f0:CP.formula) =
@@ -7737,12 +7740,12 @@ and subst_rel_by_def_mix rel_w_defs mf =
    let p =  subst_rel_by_def rel_w_defs (MCP.pure_of_mix mf) in
    (MCP.mix_of_pure p)
 
-and heap_entail_empty_rhs_heap i p i_f es lhs rhs rhs_matched_set pos =
+and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhs_matched_set pos) es lhs rhs
+      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs
 
-and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
   (* Changed for merge.ss on 9/3/2013 *)
@@ -7867,9 +7870,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let pr = Cprinter.string_of_mix_formula in 
   let _ = Debug.ninfo_hprint (add_str "xpure_lhs_h1" pr) xpure_lhs_h1 no_pos in
   let _ = Debug.ninfo_hprint (add_str "xpure_lhs_h1_sym" pr) xpure_lhs_h1_sym no_pos in
-  let _ = Debug.ninfo_hprint (add_str "lhs_p2" pr) lhs_p2 no_pos in
+  let _ = Debug.info_hprint (add_str "NO RHS: lhs_p2" pr) lhs_p2 no_pos in
+  let _ = Debug.binfo_hprint (add_str "conseq1:" !CF.print_formula) conseq no_pos in
+  let conseq_flow = CF.flow_formula_of_formula conseq in
   let (estate,lhs_new,rhs_p,neg_lhs,rel_ass) = Infer.infer_collect_rel 
-      (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1_sym lhs_p2 rhs_p pos in
+      (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig conseq_flow xpure_lhs_h1_sym lhs_p2 rhs_p pos in
   let _ = match neg_lhs,rel_ass with
     | None,[] -> ()
     | None,[(h1,h2,_)] ->
@@ -7907,7 +7912,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     | None -> estate 
     | Some rank ->
           begin
-            match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
+            let _ = Debug.binfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
+            match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
               | None -> (try
                     let t_ann, ml, il = Term.find_lexvar_es estate in
                     let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in

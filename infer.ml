@@ -1764,7 +1764,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
      (add_str "(res,new_rhs)" pr)
      (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
-let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
+let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
   (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
   (* else *)
@@ -1944,20 +1944,23 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
               (*              CP.conj_of_list (conj_wo_rel@rel_lhs) pos*)
               new_lhs_local) lhs_list
           in
-          Debug.ninfo_hprint (add_str "simplified lhs" (pr_list !CP.print_formula)) new_lhs_list no_pos;
+          Debug.binfo_hprint (add_str "simplified lhs" (pr_list !CP.print_formula)) new_lhs_list no_pos;
+          Debug.binfo_hprint (add_str "rhs" (!CP.print_formula)) rhs no_pos;
           (* Simplification steps -- End *)
 
           let rel_def_id = CP.get_rel_id_list rhs in
           (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
           (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
           let flow_f = flow_formula_of_formula estate.es_formula in
-          let _ = Debug.tinfo_hprint (add_str "estate" Cprinter.string_of_estate) estate no_pos in
+          let _ = Debug.binfo_hprint (add_str "estate" Cprinter.string_of_estate) estate no_pos in
           let current_nflow = flow_f.formula_flow_interval in
+          let conseq_nflow = conseq_flow.formula_flow_interval in
+          let _ = Debug.binfo_hprint (add_str "flow_f" (Cprinter.string_of_flow_formula "xxx")) flow_f no_pos in
           let str_nflow = exlist # get_closest flow_f.formula_flow_interval in
           let _ = Debug.tinfo_hprint (add_str "closest flow" pr_id) str_nflow no_pos in
           let rel_cat = 
-            if rel_def_id != [] 
-            then if (estate.es_infer_obj # is_add_flow || infer_const_obj # is_add_flow) && not(exlist # is_norm_flow current_nflow) then
+            if rel_def_id != []
+            then if (estate.es_infer_obj # is_add_flow || infer_const_obj # is_add_flow) && not(Exc.GTable.is_eq_flow current_nflow conseq_nflow) then
               CP.RelDefn ((List.hd rel_def_id), Some str_nflow) (* WN : to fix ETable.nflow type?*)
             else CP.RelDefn ((List.hd rel_def_id),None)
             else 
@@ -2012,19 +2015,19 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
+let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
   else
     let pr0 = !print_svl in
     let pr1 = !print_mix_formula in
-    let pr2 = !print_entail_state in 
+    let pr2 = !print_entail_state in
     let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
     let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
     let pr3 (es,l,r,p,a) = 
       pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
     Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
         (fun _ _ _ _ _ -> 
-            infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
+            infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos) 
         estate estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
 
 (******************************************************************************)
