@@ -1,0 +1,13 @@
+../sleek XXX
+
+Can we provide a more meaningful error msg
+like file "xxx" not found.
+
+Starting Omega...oc
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.050982 second(s)
+	Time spent in main process: 0.03677 second(s)
+	Time spent in child processes: 0.014212 second(s)
+
