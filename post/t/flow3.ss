@@ -8,16 +8,15 @@ void loop(ref int x)
   ensures  true & flow __flow;
 {
   if (x>0) {
-    /* raise new Exp(2); */
     x = x-1;
     loop(x);
   } else {
-    return;
+    raise new Exp(2);
   }
 }
 
 /*
-# flow2.ss
+# flow3.ss
 
 Got:
 [RELDEFN post_1210(__norm#E): ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'),
