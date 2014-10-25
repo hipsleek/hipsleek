@@ -259,7 +259,7 @@ let rec smt_of_exp a qvars =
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> failwith ("[smtsolver.ml]: ERROR in constraints (set should not appear here)")
-  | CP.List _ 
+  | CP.ListT _ 
   | CP.ListCons _
   | CP.ListHead _
   | CP.ListTail _

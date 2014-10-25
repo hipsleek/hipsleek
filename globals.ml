@@ -145,7 +145,7 @@ type typ =
   | Tup2 of typ * typ
   | NUM
   | Void
-  | List of typ
+  | ListT of typ
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
@@ -187,7 +187,7 @@ let rec cmp_typ t1 t2=
     | Void, Void -> true
     | TVar i1, TVar i2 -> i1=i2
     | BagT t11, BagT t22
-    | List t11, List t22 -> cmp_typ t11 t22
+    | ListT t11, ListT t22 -> cmp_typ t11 t22
     | Named s1, Named s2 -> String.compare s1 s2 = 0
     | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
     | RelT lst1, RelT lst2 ->(
@@ -516,7 +516,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
-  | List t        -> "list("^(string_of_typ t)^")"
+  | ListT t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
   | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
@@ -563,7 +563,7 @@ let rec string_of_typ_alpha = function
   | Tup2 (t1,t2)  -> "tup2_"^(string_of_typ t1)^"_"^(string_of_typ t2)
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
-  | List t        -> "list_"^(string_of_typ t)
+  | ListT t        -> "list_"^(string_of_typ t)
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
@@ -579,7 +579,7 @@ let subs_tvar_in_typ t (i:int) nt =
   let rec helper t = match t with
     | TVar j -> if i==j then nt else t
     | BagT et -> BagT (helper et)
-    | List et -> List (helper et)
+    | ListT et -> ListT (helper et)
     | Array (et,d) -> Array (helper et,d)
     | _ -> t
   in helper t

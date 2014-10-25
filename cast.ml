@@ -861,7 +861,7 @@ let bool_type = Bool
 
 let bag_type = (BagT Int)
 
-let list_type = List Int
+let list_type = ListT Int
 
 let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 

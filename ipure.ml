@@ -1815,20 +1815,20 @@ let rec typ_of_exp (e: exp) : typ =
   (* list expressions *)
   | List (ex_list, _)         -> let ty_list = List.map typ_of_exp ex_list in 
                                  let ty = List.fold_left merge_types UNK ty_list in
-                                 Globals.List ty
+                                 Globals.ListT ty
   | ListCons (ex1, ex2, _)    -> let ty1 = typ_of_exp ex1 in
                                  let ty2 = typ_of_exp ex2 in
                                  let ty = merge_types ty1 ty2 in
-                                 Globals.List ty
+                                 Globals.ListT ty
   | ListHead (ex, _)          -> typ_of_exp ex
   | ListTail (ex, _)          -> let ty = typ_of_exp ex in
-                                 Globals.List ty
+                                 Globals.ListT ty
   | ListLength (ex, _)        -> Globals.Int
   | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
                                  let ty = List.fold_left merge_types UNK ty_list in
-                                 Globals.List ty
+                                 Globals.ListT ty
   | ListReverse (ex, _)       -> let ty = typ_of_exp ex in
-                                 Globals.List ty
+                                 Globals.ListT ty
   (* Array expressions *)
   | ArrayAt (_, ex_list, _)   -> 
       let ty_list = List.map typ_of_exp ex_list in 

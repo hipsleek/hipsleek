@@ -1051,7 +1051,7 @@ let rec get_exp_type (e : exp) : typ =
   | TypeCast (t, _, _) -> t
   | ListHead _ | ListLength _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
-  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
+  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.ListT Globals.Int
   | Func _ -> Int
   | ArrayAt (SpecVar (t, a, _), _, _) -> begin
           (* Type of a[i] is the type of the element of array a *)
@@ -1732,7 +1732,7 @@ and is_bag_type (t : typ) = match t with
   | _ -> false
         
 and is_list_type (t : typ) = match t with
-  | Globals.List _  -> true
+  | Globals.ListT _  -> true
   | _ -> false
 
 and is_int_type (t : typ) = match t with

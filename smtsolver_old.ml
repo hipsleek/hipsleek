@@ -58,7 +58,7 @@ let rec smt_of_typ t =
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "unexpected UNKNOWN type"}
 		| NUM -> "Int" (* Use default Int for NUM *)
-		| Void | (BagT _) | (TVar _) | List _ ->
+		| Void | (BagT _) | (TVar _) | ListT _ ->
 			Error.report_error {Error.error_loc = no_pos; 
 			Error.error_text = "spec not supported for SMT"}
 		| Named _ -> "Int" (* objects and records are just pointers *)

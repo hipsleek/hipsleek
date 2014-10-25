@@ -85,7 +85,7 @@ let default_value (t :typ) pos : exp =
               "default_value: void/NUM/UNK/AnnT/FORM/Tup2 in variable declaration should have been rejected by parser"
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
-    | List _ ->
+    | ListT _ ->
           failwith "default_value: list can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"

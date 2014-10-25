@@ -39,7 +39,7 @@ let rec isabelle_of_typ = function
   | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-  | List _    | FORM | Tup2 _     -> 	(* lists are not supported *)
+  | ListT _    | FORM | Tup2 _     -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list/FORM/Tup2 not supported for Isabelle"}
   | NUM

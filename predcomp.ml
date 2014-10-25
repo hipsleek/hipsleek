@@ -128,7 +128,7 @@ and aug_class_name (t : typ) = match t with
   | HpT -> "HeapP"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List t -> "List("^(aug_class_name t)^")"
+  | ListT t -> "List("^(aug_class_name t)^")"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*

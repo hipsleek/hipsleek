@@ -28,7 +28,7 @@ let rec coq_of_typ = function
   | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
-  | List _		  -> "list"
+  | ListT _		  -> "list"
   | Pointer _
   | Tree_sh 	  -> "int"
   | Tup2 _ -> illegal_format ("coq_of_typ: Tup2 type not supported for Coq")
@@ -45,7 +45,7 @@ let coq_of_spec_var (sv : CP.spec_var) = match sv with
 
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (t, _, _) -> begin match t with
-        | List _ -> "list Z"
+        | ListT _ -> "list Z"
         | _ -> "Z"
   end
 

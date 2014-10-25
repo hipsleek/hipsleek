@@ -5473,7 +5473,7 @@ and default_value (t :typ) pos : C.exp =
               "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
     | (BagT _) ->
           failwith "default_value: bag can only be used for constraints"
-    | List _ | FORM | Tup2 _ ->
+    | ListT _ | FORM | Tup2 _ ->
           failwith "default_value: list/FORM/Tup2 can only be used for constraints"
     | INFInt ->
           failwith "default_value: INFInt can only be used for constraints"

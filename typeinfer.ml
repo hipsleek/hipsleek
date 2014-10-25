@@ -232,9 +232,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   (match (unify x1 x2 tl) with
                   | (n_tl,Some t) -> (n_tl,Some (BagT t))
                   | (n_tl,None) -> (n_tl,None))
-              | List x1,List x2 -> 
+              | ListT x1,ListT x2 -> 
                   (match (unify x1 x2 tl) with
-                  | (n_tl,Some t) -> (n_tl,Some (List t))
+                  | (n_tl,Some t) -> (n_tl,Some (ListT t))
                   | (n_tl,None) -> (n_tl,None))
               | Array (x1,d1),Array (x2,d2) -> 
                   (match (dim_unify d1 d2), (unify x1 x2 tl) with
@@ -300,9 +300,9 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
                 | (n_tl,Some t) -> (n_tl,Some (BagT t))
                 | (n_tl,None) -> (n_tl,None)
               )
-            | List x1,List x2 -> (
+            | ListT x1,ListT x2 -> (
                 match (unify x1 x2 tl) with
-                | (n_tl,Some t) -> (n_tl,Some (List t))
+                | (n_tl,Some t) -> (n_tl,Some (ListT t))
                 | (n_tl,None) -> (n_tl,None)
               )
             | Tup2 (t1,t2),Tup2 (t3,t4) -> (
@@ -381,7 +381,7 @@ and get_type_entire tlist t =
   let rec helper t = match t with
     | TVar j -> get_type tlist j
     | BagT et -> BagT (helper et)
-    | List et -> List (helper et)
+    | ListT et -> ListT (helper et)
     | Array (et,d) -> Array (helper et,d)
     | _ -> t
   in helper t
@@ -640,29 +640,29 @@ and gather_type_info_exp_x prog a0 tlist et =
       | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))           
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
-      let lt = List fv in
+      let lt = ListT fv in
       let (n_tl,new_et) = must_unify lt et n_tl pos in
       let (n_tlist,lt) = gather_type_info_exp_x prog a n_tl new_et in
       (n_tlist,lt)
   | IP.ListAppend (es,pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
-      let lt = List fv in
+      let lt = ListT fv in
       let (n_tl,new_et) = must_unify lt et n_tl pos in
       let (n_tlist,n_type) = List.fold_left (fun (type_list,et) l -> 
         gather_type_info_exp_x prog l type_list et) (n_tl,new_et) es  in
       (n_tlist,n_type)
   | IP.ListHead (a, pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
-      let new_et = List fv in
+      let new_et = ListT fv in
       let (n_tl,lt) = gather_type_info_exp_x prog a n_tl new_et in
-      let (n_tlist,rs) = must_unify lt (List et) n_tl pos in
+      let (n_tlist,rs) = must_unify lt (ListT et) n_tl pos in
       (match rs with
-      | List r -> (n_tlist, r)
+      | ListT r -> (n_tlist, r)
       | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained "^(string_of_typ lt)))
   | IP.ListCons (e,es,pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
       let (n_tl,e1) = gather_type_info_exp_x prog e n_tl fv in
-      let lt = List e1 in
+      let lt = ListT e1 in
       let (n_tl,new_et) = must_unify lt et n_tl pos in
       let (n_tlist,lt) = gather_type_info_exp_x prog es n_tl new_et in
       (n_tlist,lt)
@@ -670,12 +670,12 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (fv,n_tl) = fresh_tvar tlist in
       let (n_tl,r) = List.fold_left (fun (type_list,et) l -> 
         gather_type_info_exp_x prog l type_list et) (n_tl,fv) es  in
-      let lt = List r in
+      let lt = ListT r in
       let (n_tlist,r) = must_unify lt et n_tl pos in
       (n_tlist,r)
   | IP.ListLength (a, pos) ->
       let (fv,n_tl) = fresh_tvar tlist in
-      let new_et = List fv in
+      let new_et = ListT fv in
       let (n_tl,r) = must_unify Int et n_tl pos in
       let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
       (n_tlist,r)
@@ -784,13 +784,13 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
   | IP.VarPerm _ -> tlist (*TO CHECK: no type info*)
   | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
-      let (n_tl,t1) = gather_type_info_exp prog e2 n_tl (List new_et) in
+      let (n_tl,t1) = gather_type_info_exp prog e2 n_tl (ListT new_et) in
       let (n_tl,t2) = gather_type_info_exp prog e1 n_tl new_et in
-      let (n_tl,_) = must_unify t1 (List t2) n_tl pos in
+      let (n_tl,_) = must_unify t1 (ListT t2) n_tl pos in
       n_tl
   | IP.ListPerm (e1, e2, pos) ->
       let (el_t,n_tl) = fresh_tvar tlist in
-      let new_et = List el_t in
+      let new_et = ListT el_t in
       let (n_tl,t1) = gather_type_info_exp_x prog e1 n_tl new_et in 
       let (n_tl,t2) = gather_type_info_exp_x prog e2 n_tl new_et in
       let (n_tl,_) = must_unify t1 t2 n_tl pos in
