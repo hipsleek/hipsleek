@@ -48,11 +48,11 @@ void loop(int x)
     //st::state<[#loop,#if_2] * cx::cex{} & MayLoop & x>0 x>0 & x'=x+1 \/ 
     //st::state<[#loop,#if_2] * cx::cex{} & MayLoop & x>0 & x'=x+2
   else
-    //st::state<[#loop,#el_2] * cx::cex{[#loop,#if_2,#inf_loop]} & MayLoop & x>0 x>0 & x'=x+1 \/ 
-    //st::state<[#loop,#el_2] * cx::cex{[#loop,#if_2,#inf_loop]} & MayLoop & x>0 & x'=x+2
+    //st::state<[#loop,#el_2] * cx::cex{..} & MayLoop & x>0 x>0 & x'=x+1 \/ 
+    //st::state<[#loop,#el_2] * cx::cex{...} & MayLoop & x>0 & x'=x+2
     skip;
-    //st::state<[#loop,#el_2] * cx::cex{[#loop,#if_2,#inf_loop]} & MayLoop & x>0 x>0 & x'=x+1 \/ 
-    //st::state<[#loop,#el_2] * cx::cex{[#loop,#if_2,#inf_loop]} & MayLoop & x>0 & x'=x+2
+    //st::state<[#loop,#el_2] * cx::cex{...} & MayLoop & x>0 x>0 & x'=x+1 \/ 
+    //st::state<[#loop,#el_2] * cx::cex{...} & MayLoop & x>0 & x'=x+2
 
   //Proving postcondition and find cx::cex{} in the residue.
 }

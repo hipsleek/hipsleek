@@ -4,9 +4,6 @@ pred_prim cex<x:set[list[int]]>
 pred_prim state<x:list[int]>
   inv true;
 
-pred_prim filter<x:int>
-  inv true;
-
 global cex cx;
 global state st;
 
@@ -28,39 +25,22 @@ bool randbool()
   ensures true;
 
 // every declared counter-example must be present
-void loop(int x, int y, int k)
-  requires cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#inf_loop]}  & Loop
-  ensures false; 
+void loop(int x)
+ case {
+   x<0 ->   requires Term[] ensures ..
+    x>=0 -> requires cx::cex{[#loop,#else_1,#loop]} & Loop
+            ensures false; 
+  }
 {
   //st::state<[#loop] * cx::cex{[#loop,#if_1,#inf_loop],
-                                [#loop,#else,#inf_loop]} 
-  if (randbool()) 
+                                [#loop,#else,#loop]} 
+  if (x<0) 
       //st::state<[#loop,#if_1] * cx::cex{[#loop,#if_1,#inf_loop]}
-      inf_loop(); 
+    return;
       //st::state<[#loop,#if_1] * cx::cex{}
   else 
-      //st::state<[#loop,#else_1] * cx::cex{[#loop,#else_1,#inf_loop]}
-      inf_loop(); 
-      //st::state<[#loop,#else_1] * cx::cex{}
-}
-// Hoare rule must check that declared counter-examples
-// must be exhausted at the end of method body
-
-// we may chose to declare fewer counter-examples
-// but there must be at least one counter-example for each
-// error scenario
-void loop2(int x, int y, int k)
-  requires cx::cex{[#loop2,#if_1,#inf_loop]} & Loop
-  ensures false; 
-{
-  //st::state<[#loop] * cx::cex{[#loop,#if_1,#inf_loop]}
-  if (randbool()) 
-      //st::state<[#loop,#if_1] * cx::cex{[#loop,#if_1,#inf_loop]}
-      inf_loop(); 
-      //st::state<[#loop,#if_1] * cx::cex{}
-  else 
-      //st::state<[#loop,#else_1] * cx::cex{}
-      inf_loop(); 
+      //st::state<[#loop,#else_1] * cx::cex{[#loop,#else_1,#loop]}
+      loop(x); 
       //st::state<[#loop,#else_1] * cx::cex{}
 }
 

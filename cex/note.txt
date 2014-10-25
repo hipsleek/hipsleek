@@ -1,0 +1,35 @@
+We must declare at least one counter-example per error, but may
+declare more. Every counter-exmaple must be accounted during
+method verification, and this could be checked by verification.
+I gave below the same method but one declared with one
+counter-example, while the other is declared with two counter-examples.
+The only problem I have is how we perform the split.
+Currently, I allow the split across conditional, but this
+needs more thought to ensure soundness.
+
+Questions
+---------
+(i) Must we uniquely label every conditional and try-catch?
+(ii) Must we uniquely label every conditional?
+
+
+
+         S3 subseteq L1++S2
+        (S3,S4) = split(S1,L1)
+ ---- -----------------------------------------
+   st::state<L1>*cx::cex<S1> |- cx::cex<S2>
+     --> st::state<L1>*cx::cex<S4>
+
+   st::state<L1>*cx::cex<S1> |- cx::cex<S2>
+
+
+   if (..)
+      inf_loop()
+   else 
+      skip();
+   inf_loop();
+
+
+   cex<S1> * split(#if_n) --> 
+           cex(S1 filterNot #if_n);
+           cex(S1 filterNot #el_n) 
