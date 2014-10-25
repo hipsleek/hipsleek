@@ -9936,14 +9936,49 @@ let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formu
         | Forall (vs,f,l,p) -> Forall (vs, helper f, l, p)
   in helper f
 
-let drop_rel_formula_ops =
-  let pr_weak b = match b with
-        | RelForm (_,_,p) -> Some (mkTrue p)
-        | _ -> None in
-  let pr_strong b = match b with
-        | RelForm (_,_,p) -> Some (mkFalse p)
-        | _ -> None in
+let drop_some_formula_ops f =
+  let pr_weak b = match (f b) with
+    | Some p -> Some (mkTrue p) 
+    | None -> None in
+  let pr_strong b = match (f b) with
+    | Some p -> Some (mkFalse p) 
+    | None -> None in
   (pr_weak,pr_strong)
+
+
+(* let drop_rel_formula_ops = *)
+(*   let pr_weak b = match b with *)
+(*         | RelForm (_,_,p) -> Some (mkTrue p) *)
+(*         | _ -> None in *)
+(*   let pr_strong b = match b with *)
+(*         | RelForm (_,_,p) -> Some (mkFalse p) *)
+(*         | _ -> None in *)
+(*   (pr_weak,pr_strong) *)
+
+let drop_rel_formula_ops =
+  let f b = match b with
+    | RelForm (_,_,p) -> Some p
+    | _ -> None in
+  drop_some_formula_ops f
+
+let drop_rel_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_rel_formula_ops in
+   drop_formula pr_weak pr_strong f
+
+let strong_drop_rel_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_rel_formula_ops in
+   drop_formula pr_strong pr_weak f
+
+(* WN : This need to be revised to drop list formula *)
+let drop_list_formula_ops =
+  let f b = match b with
+    | RelForm (_,_,p) -> failwith "to be implemented"
+    | _ -> None in
+  drop_some_formula_ops f
+
+let drop_list_formula (f:formula) : formula =
+  let (pr_weak,pr_strong) = drop_list_formula_ops in
+   drop_formula pr_weak pr_strong f
 
 let no_drop_ops =
   let pr x = None in
@@ -10000,13 +10035,6 @@ let memo_complex_ops stk bool_vars is_complex =
           else None 
   in (pr, pr)
 
-let drop_rel_formula (f:formula) : formula =
-  let (pr_weak,pr_strong) = drop_rel_formula_ops in
-   drop_formula pr_weak pr_strong f
-
-let strong_drop_rel_formula (f:formula) : formula =
-  let (pr_weak,pr_strong) = drop_rel_formula_ops in
-   drop_formula pr_strong pr_weak f
 
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
