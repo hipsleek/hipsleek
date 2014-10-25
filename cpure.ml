@@ -4559,20 +4559,20 @@ let add_gte0_for_mona (f0 : formula): (formula) =
   let pr = !print_formula in
   Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
 
-let add_flow_interval (f0 : formula) : formula =
+let add_flow_interval (f0 : formula) s b : formula =
   let pos = pos_of_formula f0 in
   let var = Var (mk_typed_spec_var Int "flow",pos) in
-  let f1 = And (f0, mkGteExp var (IConst (3,pos)) pos, pos) in
-  let f2 = And (f1, mkLteExp var (IConst (4,pos)) pos, pos) in
+  let f1 = And (f0, mkGteExp var (IConst (s,pos)) pos, pos) in
+  let f2 = And (f1, mkLteExp var (IConst (b,pos)) pos, pos) in
   (* let bf1 = (pf1,None) in *)
   (* let bf2 = (pf2,None) in *)
   (* let f1 = BForm (bf1,None) in *)
   (* let f2 = BForm (bf2,None) in *)
   f2
 
-let add_flow_interval (f0 : formula) : formula =
+let add_flow_interval (f0 : formula) s b : formula =
   let pr = !print_formula in
-  Debug.no_1 "add_flow_interval" pr pr add_flow_interval f0
+  Debug.no_1 "add_flow_interval" pr pr (fun _ -> add_flow_interval f0 s b) f0
 
 let add_flow_var_pf (pf0 : p_formula) : p_formula =
   match pf0 with

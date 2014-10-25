@@ -1393,13 +1393,25 @@ let process_rel_infer pre_rels post_rels =
         | CP.RelDefn(_,Some _) -> true
         | _ -> false
   ) reldefns in
-  let _ = Debug.binfo_pprint (string_of_bool is_infer_flow) no_pos in
   let reldefns = List.map (fun (cat,f1,f2) ->
       if is_infer_flow then
         let (f1,f2) = (CP.add_flow_var f1,CP.add_flow_var f2) in
         match cat with
-          | CP.RelDefn(_,Some _) -> (f1,f2)
-          | _ -> (CP.add_flow_interval f1,f2)
+          | CP.RelDefn(_,Some s) ->
+                let s = try
+                  let idx = String.index s '#' in
+                  String.sub s 0 idx
+                with _ -> s
+                in
+                let nf = exlist # get_hash s in
+                let is_top = exlist # is_top_flow nf in
+                if is_top then (f1,f2) (* top flow *)
+                else                   (* other flow *)
+                  let (s,b) = exlist # get_min_max nf in
+                  (CP.add_flow_interval f1 s b,f2)
+          | _ ->                       (* norm flow *)
+                let (s,b) = exlist # get_min_max !norm_flow_int in
+                (CP.add_flow_interval f1 s b,f2)
       else (f1,f2)
   ) reldefns in
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
