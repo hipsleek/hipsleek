@@ -1237,7 +1237,7 @@ loop$int
  requires emp & MayLoop[]
      ensures emp & res=x+1111 & x<=0;
 =======================================================
-# flow2.slk
+# flow2.slk (FIXED)
 
 Can we support infer_fixcalc under sleek to
 invoked fixcalc directly?
@@ -1257,7 +1257,7 @@ flow parameter:
  P(x,flow) == x+1<=0 & 3<=flow<=4
            == x+1<=0 & flow __norm
 =======================================================
-# flow3.slk
+# flow3.slk (FIXED)
 
  inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
  inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
@@ -1276,7 +1276,7 @@ bottomupgen([P], [2], SimHeur);
 !!! fixpoint2:[( P(x,flow), x>=0)]
 
 =======================================================
-# flow4.slk
+# flow4.slk (FIXED)
 
 Entail (1) : Valid. 
 
@@ -1301,7 +1301,7 @@ Why did we not form:
 Before passing to fixcalc?
 
 =======================================================
-# flow2.slk
+# flow2.slk (FIXED)
 
 Entail (1) : Valid. 
 Residue:
@@ -1321,6 +1321,29 @@ Expecting:
 Pick flow range from exclist. See below.
  <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
 =======================================================
+# flow2.ss
+
+Got:
+*************************************
+***pure relation assumption (norm)***
+*************************************
+[RELDEFN post_1210: ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'),
+RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+*************************************
+
+Expecting: post_1210(__norm#): ( x=x' & x'<=0) -->  post_1210(x,x')]
+why wasn't this captured in the --esl log?
+
+id: 7; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1210]; c_heap: emp
+ checkentail emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&post_1210(x,x')&{FLOW,(1,30)=__flow#E}[]. 
+pure rel_ass: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+res:  1[
+   emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&{FLOW,(4,5)=__norm#E}[]
+   es_infer_vars/rel/templ: [post_1210]
+   es_infer_rel: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+   ]
 =======================================================
 =======================================================
 =======================================================
