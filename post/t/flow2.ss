@@ -20,25 +20,22 @@ void loop(ref int x)
 # flow2.ss
 
 Got:
-*************************************
-***pure relation assumption (norm)***
-*************************************
-[RELDEFN post_1210: ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'),
-RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
-*************************************
+[RELDEFN post_1210(__norm#E): ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'),
+RELDEFN post_1210(__norm#E): ( x=x' & x'<=0) -->  post_1210(x,x')]
 
-Expecting: post_1210(__norm#): ( x=x' & x'<=0) -->  post_1210(x,x')]
-why wasn't this captured in the --esl log?
+Expecting:
+[RELDEFN post_1210: ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'), (#which denotes __flow)
 
-id: 7; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1210]; c_heap: emp
- checkentail emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&
-{FLOW,(4,5)=__norm#E}[]
- |-  emp&post_1210(x,x')&{FLOW,(1,30)=__flow#E}[]. 
-pure rel_ass: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
-res:  1[
-   emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&{FLOW,(4,5)=__norm#E}[]
-   es_infer_vars/rel/templ: [post_1210]
-   es_infer_rel: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+Problem is at check_post, since we got __norm rather than __flow.
+
+check_pre_post(2)@3 EXIT: List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:(exists x_1226: emp&0<x_1223 & x_1223=x & v_bool_10_1193' & 0<x_1223 & v_bool_10_1193' & x_1226+1=x_1223 & post_1210(x_1226,x')&{FLOW,(4,5)=__norm#E})[]
+
+ ]
    ]
 
 */
