@@ -468,7 +468,7 @@ let pr_list_none f xs = pr_args None (Some "A") "" "" "" "," f xs
  (** print a set with cut after separator*)  
 let pr_set f xs = pr_args None (Some "A") "" "{" "}" "," f xs
 
-let pr_coq_list f xs = pr_args None (Some "A") "" "[|" "|]" "," f xs
+let pr_coq_list f xs = pr_args None (Some "A") "" "[" "]" "," f xs
 
  (** print a set with cut after separator in a VBOX*)  
 let pr_set_vbox f xs = pr_args (Some ("V",1)) (Some "A") "{" "}" "," f xs

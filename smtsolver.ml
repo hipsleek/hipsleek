@@ -81,7 +81,8 @@ let rec smt_of_typ t =
   | Tup2 _ -> "Int" (*TODO: handle this*)
   | TVar _ -> "Int"
   | Void -> "Int"
-  | ListT _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | ListT _ -> "List"
+  | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
@@ -127,13 +128,13 @@ let rec smt_of_exp a =
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here : "  ^ str)
-  | CP.List _ 
-  | CP.ListCons _
-  | CP.ListHead _
-  | CP.ListTail _
-  | CP.ListLength _
-  | CP.ListAppend _
-  | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+  | CP.List (l,_) -> illegal_format ("z3.smt_of_exp: ERROR in constraints (List should not appear here)")
+  | CP.ListCons _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListCons should not appear here)")
+  | CP.ListHead (l,_) -> "(head " ^ (smt_of_exp l) ^ ")" 
+  | CP.ListTail (l,_) -> "(tail " ^ (smt_of_exp l) ^ ")"
+  | CP.ListLength _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListLength should not appear here)")
+  | CP.ListAppend _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListAppend should not appear here)")
+  | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListReverse should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple should not appear here)")

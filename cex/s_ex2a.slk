@@ -11,8 +11,11 @@ lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S>
  ->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c1,c2)}) & a>0 & b<0.
 */
 
+// lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
+//    -> ss::state<L2> & L2=L1++[|n|].
+
 lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
-   -> ss::state<L2> & L2=L1++[|n|].
+   -> ss::state<L2> & L2 = n:::L1.
 
 // checkentail cx::state<[|1,2,3|]> * cx::add<4> |- true.
 // print residue.

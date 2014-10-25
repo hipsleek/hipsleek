@@ -266,12 +266,15 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
 *)
 (* let sleek_entail_check itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
 *)
-and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = Cprinter.string_of_struc_formula in
-  let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
-  let pr4 = pr_list_ln (pr_pair pr1 pr1) in
-  Debug.no_5 "sleek_entail_check" string_of_int !CP.print_svl pr1 pr2 pr4 pr3
+and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conseq =
+  let pr_f = Cprinter.prtt_string_of_formula in
+  let pr_ante = (add_str "ante" pr_f) in
+  let pr_conseq = (add_str "conseq" Cprinter.string_of_struc_formula) in
+  let pr_proof = (add_str "proof_traces" (pr_list_ln (pr_pair pr_f pr_f))) in
+  let pr_res = (add_str "res" 
+      (pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl)) in
+  Debug.no_5 "sleek_entail_check" 
+      string_of_int !CP.print_svl pr_ante pr_conseq pr_proof pr_res
       (fun _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
       i isvl ante conseq proof_traces
 
