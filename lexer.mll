@@ -212,6 +212,7 @@ module Make (Token : SleekTokenS)
 	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);
+   ("list", LIST);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("new", NEW);

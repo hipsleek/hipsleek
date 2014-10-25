@@ -1095,38 +1095,38 @@ view_decl_ext:
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
-view_decl_spec:
-  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      ->
-      let compare_list_string cmp ls1 ls2=
-        let rec helper ls01 ls02=
-          match ls01,ls02 with
-            | [],[] -> true
-            | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false
-            | _ -> false
-        in
-        helper ls1 ls2
-      in
-      let cmp_id id1 id2=
-        if String.compare id1 id2 =0 then true else false
-      in
-      let cmp_typed_id (t1,id1) (t2,id2)=
-        if t1=t2 && String.compare id1 id2 =0 then true else false
-      in
-      if not (compare_list_string cmp_id vh.view_vars va.view_vars &&
-                  compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then
-        report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)
-      else
-        let (oi, oboi) = oi in
-        { vh with view_formula = (fst vb);
-            view_invariant = oi;
-            view_baga_inv = obi;
-            view_baga_over_inv = oboi;
-            view_baga_under_inv = obui;
-            view_kind = Iast.View_SPEC;
-            view_parent_name = Some va.view_name;
-            view_inv_lock = li;
-            try_case_inference = (snd vb) } ]];
+(* view_decl_spec:                                                                                                                                              *)
+(*   [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock *)
+(*       ->                                                                                                                                                     *)
+(*       let compare_list_string cmp ls1 ls2=                                                                                                                   *)
+(*         let rec helper ls01 ls02=                                                                                                                            *)
+(*           match ls01,ls02 with                                                                                                                               *)
+(*             | [],[] -> true                                                                                                                                  *)
+(*             | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false                                                                         *)
+(*             | _ -> false                                                                                                                                     *)
+(*         in                                                                                                                                                   *)
+(*         helper ls1 ls2                                                                                                                                       *)
+(*       in                                                                                                                                                     *)
+(*       let cmp_id id1 id2=                                                                                                                                    *)
+(*         if String.compare id1 id2 =0 then true else false                                                                                                    *)
+(*       in                                                                                                                                                     *)
+(*       let cmp_typed_id (t1,id1) (t2,id2)=                                                                                                                    *)
+(*         if t1=t2 && String.compare id1 id2 =0 then true else false                                                                                           *)
+(*       in                                                                                                                                                     *)
+(*       if not (compare_list_string cmp_id vh.view_vars va.view_vars &&                                                                                        *)
+(*                   compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then                                                               *)
+(*         report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)                                                          *)
+(*       else                                                                                                                                                   *)
+(*         let (oi, oboi) = oi in                                                                                                                               *)
+(*         { vh with view_formula = (fst vb);                                                                                                                   *)
+(*             view_invariant = oi;                                                                                                                             *)
+(*             view_baga_inv = obi;                                                                                                                             *)
+(*             view_baga_over_inv = oboi;                                                                                                                       *)
+(*             view_baga_under_inv = obui;                                                                                                                      *)
+(*             view_kind = Iast.View_SPEC;                                                                                                                      *)
+(*             view_parent_name = Some va.view_name;                                                                                                            *)
+(*             view_inv_lock = li;                                                                                                                              *)
+(*             try_case_inference = (snd vb) } ]];                                                                                                              *)
 
 
 opt_inv_lock: [[t=OPT inv_lock -> t]];
@@ -1345,7 +1345,6 @@ opt_brace_vars : [[ `OBRACE;sl= id_ann_list_opt ;`CBRACE -> sl   ]];
 
 brace_form_args : [[ `OBRACE;sl= form_list_opt (*id_list*) ;`CBRACE -> 
     List.map (F.subst_stub_flow n_flow) sl   ]];
-
 
 view_header_ext:
     [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
@@ -1628,7 +1627,7 @@ heap_wr:
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list -> ()]];
+(* simple2:  [[ t= opt_type_var_list -> ()]]; *)
 
 heap_id:
   [[
@@ -1800,8 +1799,8 @@ opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 
-pure_constr_w_brace:
-  [[ `OBRACE; c = pure_constr; `CBRACE -> c ]];
+(* pure_constr_w_brace:                            *)
+(*   [[ `OBRACE; c = pure_constr; `CBRACE -> c ]]; *)
 
 (* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
 (*                   | t= pure_constr ->t *)
@@ -1883,8 +1882,6 @@ cexp_w:
     [ pc1=SELF; `OR; pc2=SELF ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
     [ pc1=SELF; peek_and; `AND; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
-  | "pure_exclusive" RIGHTA
-    [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
   |"bconstrp" RIGHTA
     [ lc=SELF; `NEQ; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -1974,7 +1971,8 @@ cexp_w:
     | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN -> Pure_c (P.BagUnion (c, get_pos_camlp4 _loc 1))
     | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
     | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
-    | `OLIST; c1 = opt_cexp_list; `CLIST -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
+    | `OLIST; c1 = opt_cexp_list; `CLIST -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
+    | `OSQUARE; c1 = opt_cexp_list; `CSQUARE -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
     |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
     | `TAIL; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
     | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
@@ -2086,6 +2084,8 @@ cexp_w:
     | `NOT; `OPAREN; c=pure_constr; `CPAREN -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
     | `NOT; t=cid -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
     ]
+  | "pure_exclusive" RIGHTA
+    [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
   ];
 
 	  
@@ -2348,8 +2348,8 @@ infer_id:
 infer_type_list:
     [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
 
-id_list_w_sqr:
-    [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
+(* id_list_w_sqr:                                                     *)
+(*     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]]; *)
 
 (* id_list_w_itype: *)
 (*   [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il)  *)
@@ -2498,6 +2498,7 @@ non_array_type:
    | `BOOL               -> bool_type
    | `BAG               -> bag_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
+   | `LIST; `OPAREN; t = non_array_type; `CPAREN -> ListT t
    | `IDENTIFIER id      -> Named id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)
    | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
@@ -2623,12 +2624,12 @@ id_part_ann: [[
 ]]
 ;
 
-typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
-  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
-  | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
-  |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
-  |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
- ]];
+(* typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)                    *)
+(*   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)                                    *)
+(*   | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)        *)
+(*   |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*   |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*  ]];                                                                                       *)
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
@@ -3050,7 +3051,7 @@ cid_list_w_itype:
    (* | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, []) *)
   ]];
 
-opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
+(* opt_vlist: [[t = OPT opt_cid_list -> un_option t []]]; *)
 
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 

@@ -1132,7 +1132,7 @@ let param_of_v ht md lc nm =
   Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht;
   let t = H.find ht nm in
   match t with 
-  | Bool | Float | Int | Void | List _  ->
+  | Bool | Float | Int | Void | ListT _  ->
       { param_type = t;
         param_name = nm;
         param_mod = md;

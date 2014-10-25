@@ -6,8 +6,11 @@ pred_prim add<n:int>
 
 //lemma self::state<L1> * self::add<n> --> state<L1++[n]>
 
+// checkentail cx::state<[|1,2,3|]> * cx::add<4> |- true.
+// print residue.
+
 checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
 print residue.
 
-check_normalize cx::state<[1,2,3]> * cx::add<4>.
-print residue.
+// check_normalize cx::state<[1,2,3]> * cx::add<4>.
+// print residue.
