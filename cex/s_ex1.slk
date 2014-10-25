@@ -1,0 +1,28 @@
+
+
+checkentail cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#inf_loop]}
+            * cx::filter<#if_1> |- true.
+print residue.
+// cx::cex{[#loop,#if_1,#inf_loop]}
+
+checkentail cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#inf_loop]}
+            * cx::filter<#else_1> |- true.
+print residue.
+// cx::cex{[[#loop,#else_1,#inf_loop]}
+
+
+checkentail cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#inf_loop]}
+            * cx::filter<#else_2> |- true.
+print residue.
+// cx::cex{[#loop,#if_1,#inf_loop],[#loop,#else_1,#inf_loop]}
+
+
+// +ve for function names
+// 0 - no_info  
+// odd -ve num   for if_n --> 2n-1
+// even -ve num  for else_n --> 2n
+
+// [#loop, if_1, if_2, #inf_loop]
+// [(#loop,..), (0,..), if_1, (0,..), 
+//      (0,..), (if_2,..), (#inf_loop,..)]
+

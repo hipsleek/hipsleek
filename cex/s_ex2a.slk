@@ -1,0 +1,13 @@
+pred_prim state<x:list(int)>
+  inv true.
+
+pred_prim add<n:int>
+  inv true.
+
+//lemma self::state<L1> * self::add<n> --> state<L1++[n]>
+
+checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
+print residue.
+
+check_normalize cx::state<[1,2,3]> * cx::add<4>.
+print residue.

@@ -21,7 +21,7 @@ lemma cx::cex<S1 U S2> <-> cx::cex<S1> * cx::cex<S2>
 
 // we provide a predicate to track the flow of code
 // this state predicate may be updated as follows
-lemma state<L1> * add<L2> --> state<L1++L2>
+lemma self::state<L1> * self::add<L2> --> state<L1++L2>
 
 bool randbool()
   requires Term[]

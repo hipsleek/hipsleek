@@ -1,0 +1,8 @@
+pred_prim state<x:bag(int)>
+  inv true.
+
+pred_prim add<n:int>
+  inv true.
+
+checkentail cx::state<{1,2,3}> * cx::add<4> |- true.
+print residue.

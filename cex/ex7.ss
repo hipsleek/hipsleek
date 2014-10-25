@@ -38,7 +38,7 @@ void loop(int x)
   ensures false;
 {
   //st::state<[#loop] * cx::cex{[#loop,#if_2,#inf_loop] & MayLoop 
-  if (x>0) 
+  if (true) 
       //st::state<[#loop,#if_1] * cx::cex{[#loop,#if_2,#inf_loop] & MayLoop & x>0 
     x=x+1;
       //st::state<[#loop,#if_1] * cx::cex{[#loop,#if_2,#inf_loop] & MayLoop & x>0 & x'=x+1 
