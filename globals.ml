@@ -10,6 +10,8 @@ let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
+let change_flow = ref false
+
 type formula_type =
   | Simple
   | Complex

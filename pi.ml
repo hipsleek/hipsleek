@@ -402,10 +402,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples,exc_rels =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
-            let rels,exc_rels = List.partition (fun (cat,_,_) -> match cat with
-              | CP.RelDefn(_,Some _)  -> false
-              | _ -> true
-            ) rels in
+            let exc_rels = [] in
+            (* let rels,exc_rels = List.partition (fun (cat,_,_) -> match cat with *)
+            (*   | CP.RelDefn(_,Some _)  -> false *)
+            (*   | _ -> true *)
+            (* ) rels in *)
             if rels !=[] then
               begin
                 print_endline "\n*************************************";
@@ -509,11 +510,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     in
     (* let new_specs = List.map (fun new_spec -> CF.norm_struc_with_lexvar new_spec false) new_specs in *)
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
-    let _ = List.iter (fun (cat,pf,_) ->
-        let _ = Debug.binfo_hprint (add_str "cat" CP.print_rel_cat) cat no_pos in
-        let _ = Debug.binfo_hprint (add_str "pf" Cprinter.string_of_pure_formula) pf no_pos in
-        ()
-    ) exc_rels in
     let _ = List.iter (fun (proc,new_spec) ->
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline "\nPost Inference result:";
