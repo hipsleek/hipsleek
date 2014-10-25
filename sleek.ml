@@ -361,16 +361,13 @@ let main () =
             let _ = List.map (parse_file NF.list_parse) !Globals.source_files in ()
         end
   with
-    | End_of_file ->
-        begin
-            print_string ("\n")
-        end
-    | _ -> 
-          begin
-            dummy_exception();
-            print_endline "SLEEK FAILURE (END)";
-            Log.last_cmd # dumping "sleek_dumEND)";
-          end
+    | End_of_file -> print_string ("\n");
+    | Sys_error e -> (
+        dummy_exception();
+        print_endline ("An exception occurred: \"" ^ e ^ "\"");
+        print_endline "SLEEK FAILURE (END)";
+        Log.last_cmd # dumping "sleek_dumEND)";
+      )
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
