@@ -185,8 +185,8 @@ and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = 
-    { param_type : typ;
+and param = { 
+    param_type : typ;
     param_name : ident;
     param_mod : param_modifier;
     param_loc : loc }
@@ -221,28 +221,30 @@ and param =
   }
 *)
 
-and proc_decl = 
-    { proc_name : ident;
-    mutable proc_mingled_name : ident;
-    mutable proc_data_decl : data_decl option; (* the class containing the method *)
-    mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
-    proc_flags: (ident*ident*(flags option)) list;
-    proc_source : ident;
-    proc_constructor : bool;
-    proc_args : param list;
-    mutable proc_args_wi : (ident *hp_arg_kind) list;
-    proc_return : typ;
-    (*   mutable proc_important_vars : CP.spec_var list;*)
-    proc_static_specs : Iformula.struc_formula;
-    proc_dynamic_specs : Iformula.struc_formula;
-    proc_exceptions : ident list;
-    proc_body : exp option;
-    proc_is_main : bool;
-    mutable proc_is_invoked : bool;
+and proc_decl = { 
+  proc_name : ident;
+  mutable proc_mingled_name : ident;
+  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+  mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
+  proc_flags: (ident*ident*(flags option)) list;
+  proc_source : ident;
+  proc_constructor : bool;
+  proc_args : param list;
+  mutable proc_args_wi : (ident *hp_arg_kind) list;
+  proc_return : typ;
+  (*   mutable proc_important_vars : CP.spec_var list;*)
+  proc_static_specs : Iformula.struc_formula;
+  proc_dynamic_specs : Iformula.struc_formula;
+  proc_exceptions : ident list;
+  proc_body : exp option;
+  proc_is_main : bool;
+  proc_is_while : bool; (* true if the proc is translated from a while loop *)
+  mutable proc_is_invoked : bool;
 proc_verified_domains: infer_type list;
-    proc_file : string;
-    proc_loc : loc;
-    proc_test_comps: test_comps option}
+  proc_file : string;
+  proc_loc : loc;
+  proc_test_comps: test_comps option
+}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -841,6 +843,12 @@ let is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
+let is_num (e : exp) : bool = match e with
+  | FloatLit _ | IntLit _ -> true
+  | _ -> false
+
+let is_mult_op b = 
+  match b with | OpMult -> true | _ -> false
 
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
@@ -1210,14 +1218,16 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls,args_wi =
-    match body_header.proc_static_specs with
-      | F.EList [] ->
+  if not !Globals.sags then body_header
+  else
+    let ss, n_hp_dcls,args_wi =
+      match body_header.proc_static_specs with
+        | F.EList [] ->
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
             (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE pos in
-          (* let _ = print_gen_spec ss hps in *)
-          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps,args_wi)
+            (* let _ = print_gen_spec ss hps in *)
+            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
       | F.EInfer i_sf -> if i_sf.F.formula_inf_obj # is_shape then
           let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then
@@ -1232,22 +1242,22 @@ let genESpec_wNI body_header body_opt args ret pos=
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
         else (body_header.proc_static_specs,[],body_header.proc_args_wi)
-      | _ ->
-            (* let _ = if !Globals.sags then *)
-            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
-            (*   let _ = print_gen_spec ss hps in *)
-            (*   () *)
-            (* else () *)
-            (* in *)
-            (body_header.proc_static_specs,[],body_header.proc_args_wi)
-  in
-  {body_header with
-      proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
-      proc_static_specs = ss;
+        | _ ->
+              (* let _ = if !Globals.sags then *)
+              (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+              (*   let _ = print_gen_spec ss hps in *)
+              (*   () *)
+              (* else () *)
+              (* in *)
+              (body_header.proc_static_specs,[],body_header.proc_args_wi)
+    in
+    {body_header with
+        proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
+        proc_static_specs = ss;
       proc_verified_domains = body_header.proc_verified_domains@[INF_SHAPE];
-      proc_args_wi = args_wi;
-  }
-
+        proc_args_wi = args_wi;
+    }
+  
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
@@ -1282,6 +1292,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_loc = pos;
   proc_verified_domains = [];
   proc_is_main = true;
+  proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
@@ -2834,26 +2845,27 @@ let add_bar_inits prog =
             let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
-			{ proc_name = "init_"^b.barrier_name;
-                          proc_source = "source_file";
-			  proc_flags = [];
-			  proc_mingled_name = "";
-			  proc_data_decl = None ;
-			  proc_hp_decls = [];
-              proc_constructor = false;
-			  proc_args = ags;
-              proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
-			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
-			  proc_dynamic_specs = F.mkEFalseF ();
-			  proc_exceptions = [];
-			  proc_body = None;
-			  proc_is_main = false;
-                          proc_is_invoked = false;
+      { proc_name = "init_"^b.barrier_name;
+        proc_source = "source_file";
+        proc_flags = [];
+        proc_mingled_name = "";
+        proc_data_decl = None ;
+        proc_hp_decls = [];
+        proc_constructor = false;
+        proc_args = ags;
+        proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
+        proc_return = Void;
+        proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
+        proc_dynamic_specs = F.mkEFalseF ();
+        proc_exceptions = [];
+        proc_body = None;
+        proc_is_main = false;
+        proc_is_while = false;
+        proc_is_invoked = false;
                           proc_verified_domains = [];
-			  proc_file = "";
-			  proc_loc = no_pos;
-			proc_test_comps = None}) prog.prog_barrier_decls in
+        proc_file = "";
+        proc_loc = no_pos;
+        proc_test_comps = None}) prog.prog_barrier_decls in
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
@@ -3019,6 +3031,7 @@ let exists_return_x e0=
             | _ -> false
       end
       | Return _ ->
+          (* let _ = print_endline("exists_return: true") in *)
           true
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
@@ -3032,6 +3045,7 @@ let exists_return_x e0=
                          helper el
       | _ ->
           (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let _ = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0
@@ -3213,3 +3227,12 @@ let detect_invoke prog proc=
   let pr2 = pr_list pr_id in
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
+      
+let tnt_prim_procs = 
+  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
+  
+let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
+  
+let is_tnt_prim_proc id =
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs 
+      
