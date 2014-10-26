@@ -830,7 +830,6 @@ let is_relation_constraint (e: CP.formula) : bool =
   CP.fold_formula e (nonef, is_relation_b_formula, nonef) or_list
 
 let is_list_constraint (e: CP.formula) : bool =
- 
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
 
@@ -1594,6 +1593,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         let r = Dp.is_sat f sat_no in
         if test_db then (
           (* let r2 = Smtsolver.is_sat f sat_no in *)
+          let f = CP.drop_list_formula f in
           let r2 = z3_is_sat f in
           if r=r2 then r
           else failwith ("dp-omega mismatch on sat: "^(Cprinter.string_of_pure_formula f)^" d:"^(string_of_bool r)^" o:"^(string_of_bool r2)^"\n")
@@ -1608,8 +1608,12 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           |Some proc -> Cvc3.is_sat_increm !provers_process f sat_no
           | _ -> Cvc3.is_sat f sat_no
       )
-    | Z3 -> z3_is_sat f
-    | Z3N -> z3n_is_sat f
+    | Z3 -> 
+        let f = CP.drop_list_formula f in
+        z3_is_sat f
+    | Z3N -> 
+        let f = CP.drop_list_formula f in
+        z3_is_sat f
     | Isabelle -> Isabelle.is_sat wf sat_no
     | Coq ->
         if (is_list_constraint wf) then (coq_is_sat wf)
@@ -1637,10 +1641,15 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | AUTO ->
         if (is_bag_constraint wf) then (mona_is_sat wf)
         else if (is_list_constraint wf) then (coq_is_sat wf)
-        else if (is_array_constraint f) then (z3_is_sat f)
+        else if (is_array_constraint f) then (
+          let f = CP.drop_list_formula f in
+          z3_is_sat f
+        )
         else (omega_is_sat f)
     | OZ ->
-        if (is_array_constraint f) then (z3_is_sat f)
+        if (is_array_constraint f) then
+          let f = CP.drop_list_formula f in
+          (z3_is_sat f)
         else (omega_is_sat f)
     | OI ->
         if (is_bag_constraint wf) then (Isabelle.is_sat wf sat_no)
@@ -1678,7 +1687,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             in
             let b1 = mona_is_sat f_no_float_rel in
             let b2 = redlog_is_sat f_no_bag_rel in
-            let b3 = z3_is_sat f_no_float_bag in
+            let f_z3 = CP.drop_list_formula f_no_float_bag in
+            let b3 = z3_is_sat f_z3 in
             (b1 && b2 &&b3)
           else
           (*UNSOUND - for experimental purpose only*)
@@ -1691,7 +1701,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             in
             let f_no_float_bag_only = CP.collect_all_constraints is_bag_constraint f_no_float in
             let f_no_float_no_bag = CP.drop_bag_formula f_no_float in
-            let b =  z3_is_sat f_no_float_no_bag in
+            let f_z3 = CP.drop_list_formula f_no_float_no_bag in
+            let b =  z3_is_sat f_z3 in
             let b1 = mona_is_sat f_no_float_bag_only in
             (* let b1 = mona_is_sat f_no_float in *)
             let b2 = redlog_is_sat f_no_bag in
@@ -1700,23 +1711,28 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           else
           if (is_relation_constraint wf) then
             let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
+            let f = CP.drop_list_formula f in
             z3_is_sat f
           else if (is_bag_constraint wf ) then
             let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
             let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs f) in
             let bag_f = conj_of_list bag_cnts no_pos in
             let no_bag_f =  conj_of_list others no_pos in
+            let f_z3 =  CP.drop_list_formula no_bag_f in
             (* Approx: mona can only deal with natural numbers (non negative) *)
-            (mona_is_sat bag_f && z3_is_sat no_bag_f)
+            (mona_is_sat bag_f && z3_is_sat f_z3)
           else if (is_float_formula wf ) then
             let f = CP.drop_bag_formula (CP.drop_rel_formula wf) in
             redlog_is_sat f
           else
             (* Anything else -> z3: faster *)
+            let f = CP.drop_list_formula f in
             z3_is_sat f
     | ZM ->
         if (is_bag_constraint wf) then mona_is_sat wf
-        else z3_is_sat wf
+        else 
+          let wf = CP.drop_list_formula wf in
+          z3_is_sat wf
     | SPASS -> Spass.is_sat f sat_no
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no

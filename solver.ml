@@ -5443,7 +5443,6 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     in
     let process_entail_state (es : entail_state) =
       let pr = Cprinter.string_of_formula in
-      let pr2 = Cprinter.string_of_entail_state in
       Debug.no_2 "process_entail_state"  pr pr
           (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
           (* (fun (_,b) -> string_of_bool b)  *)
@@ -5550,8 +5549,6 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
                 let _ = Debug.tinfo_pprint "Early lhs-rhs contra detected" no_pos in
-                let pr = Cprinter.string_of_formula in
-                let pr2 = Cprinter.string_of_context in
                 let cex = (mk_cex true) in
                 let ante, prf, estate = match ctx with 
                   | Ctx es -> es.es_formula,mkPure es (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None, es
@@ -5661,8 +5658,8 @@ and handle_disjunctive_conseq (ctx:context) (conseq:CF.formula) : context * CF.f
 
 and log_contra_detect hec_num conseq result pos =
   let new_slk_log result es =
-    let avoid = CF.is_emp_term conseq in
-    let avoid = avoid || (not (hec_stack # is_empty)) in
+    (* let avoid = CF.is_emp_term conseq in                 *)
+    (* let avoid = avoid || (not (hec_stack # is_empty)) in *)
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 2) in
     (* let _ = hec_stack # push slk_no in *)
@@ -7690,7 +7687,6 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 (*CP.mkTrue pos, CP.isConstTrue*)
 and subst_rel_by_def_x rel_w_defs (f0:CP.formula) =
-  let pos = CP.pos_of_formula f0 in
   let rec look_up_def id args ls=
     match ls with
       | [] -> raise Not_found
@@ -7888,7 +7884,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   (*let _ = print_string "what is going on?\n" in*)
   (* Termination *)
-  let pr = Cprinter.string_of_formula in
   (* let _ = Debug.info_hprint (add_str "stk_estate" (pr_list pr))  *)
   (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
   let (estate,_,rhs_p,rhs_wf) =
@@ -8323,7 +8318,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         (*filter out vperm which has been proven in rhs_p*)
           let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
           let to_keep = estate.es_gen_impl_vars @ estate.es_gen_expl_vars in
-          let to_remove =  Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv rhs_p)to_keep in
+          (* let to_remove =  Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv rhs_p)to_keep in *)
           (* Debug.info_hprint (add_str "es_formula" !CF.print_formula) estate.es_formula no_pos; *)
           (* Debug.info_hprint (add_str "es_pure" !print_mix_formula) estate.es_pure no_pos; *)
           (* Debug.info_hprint (add_str "rhs_p" !print_mix_formula) rhs_p no_pos; *)
@@ -8650,7 +8645,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
                   CP.split_disjunctions a0 
                 else
                   (* why andl need to be handled in a special way *)
-	          let r = ref (-999) in
+	          (* let r = ref (-999) in *)
 	          let is_sat f = CP.is_sat_eq_ineq f (*TP.is_sat_sub_no 6 f r*) in
 		  let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
 	          let a0l = List.filter is_sat a0l in a0l

@@ -1700,8 +1700,8 @@ and is_bag_bform (b: b_formula) : bool =
 and is_list_bform (b: b_formula) : bool =
   let (pf,_) = b in
   match pf with
-    | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
-    | _ -> false
+  | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
+  | _ -> false
 
 and is_bool_bform b = 
   let (pf, _) = b in
@@ -2093,6 +2093,25 @@ and template_of_exp e = match e with
 and exp_of_template_exp e = match e with
   | Template t -> exp_of_template t
   | _ -> e
+
+and exp_of_p_formula pf : exp list =
+  match pf with 
+  | Frm _ | XPure _ | BConst _ | BVar _
+  | BagMin _ | BagMax _   | VarPerm _ -> []
+  | LexVar lex -> lex.lex_exp @ lex.lex_tmp
+  | Lt (e1, e2, _) | Lte (e1, e2, _)
+  | Gt (e1, e2, _) | Gte (e1, e2, _)
+  | Eq  (e1, e2, _) | Neq (e1, e2, _)
+  | SubAnn (e1, e2, _) | BagSub (e1, e2, _)
+  | ListIn (e1, e2, _) | ListNotIn (e1, e2, _)
+  | ListAllN (e1, e2, _) | ListPerm (e1, e2, _) -> [e1; e2]
+  | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _) -> [e1; e2; e3]
+  | BagIn (_, e, _) | BagNotIn (_, e, _) -> [e]
+  | RelForm (_, es, _) -> es
+
+and exp_of_b_formula bf : exp list =
+  let pf = fst bf in
+  exp_of_p_formula pf 
 
 and mkTemplate id (args: exp list) pos =
   let mkUnk i pos = mkVar (SpecVar (Int, id ^ "_" ^ (string_of_int i), Unprimed)) pos in
@@ -3009,7 +3028,10 @@ and pos_of_exp (e : exp) = match e with
   | Template t -> t.templ_pos
 
 and pos_of_b_formula (b: b_formula) = 
-  let (p, _) = b in
+  let p = fst b in
+  pos_of_p_formula p
+
+and pos_of_p_formula (p: p_formula) = 
   match p with
     | Frm (_, p) -> p
     | LexVar l_info -> l_info.lex_loc
@@ -9924,26 +9946,27 @@ let has_template_b_formula (f: b_formula): bool =
 
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
-        | BForm ((b,_),_) -> 
-              (match pr_w b with
-                | None -> f
-                | Some nf -> nf)
-        | And (f1,f2,p) -> And (helper f1,helper f2,p)
-		| AndList b -> AndList (map_l_snd helper b)
-        | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
-        | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
-        | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)
-        | Forall (vs,f,l,p) -> Forall (vs, helper f, l, p)
+    | BForm ((b,_),_) -> (
+        match pr_w b with
+        | None -> f
+        | Some nf -> nf
+      )
+    | And (f1,f2,p) -> And (helper f1,helper f2,p)
+    | AndList b -> AndList (map_l_snd helper b)
+    | Or (f1,f2,l,p) -> Or (helper f1,helper f2,l,p)
+    | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
+    | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)
+    | Forall (vs,f,l,p) -> Forall (vs, helper f, l, p)
   in helper f
 
 let drop_some_formula_ops f =
-  let pr_weak b = match (f b) with
+  let drop_weak b = match (f b) with
     | Some p -> Some (mkTrue p) 
     | None -> None in
-  let pr_strong b = match (f b) with
+  let drop_strong b = match (f b) with
     | Some p -> Some (mkFalse p) 
     | None -> None in
-  (pr_weak,pr_strong)
+  (drop_weak, drop_strong)
 
 
 (* let drop_rel_formula_ops = *)
@@ -9969,16 +9992,29 @@ let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
    drop_formula pr_strong pr_weak f
 
-(* WN : This need to be revised to drop list formula *)
 let drop_list_formula_ops =
-  let f b = match b with
-    | RelForm (_,_,p) -> failwith "to be implemented"
-    | _ -> None in
+  let f p = match p with
+    | ListIn (_, _, pos)
+    | ListNotIn (_, _, pos)
+    | ListAllN (_, _, pos)
+    | ListPerm (_, _, pos) -> Some pos
+    | _ -> (
+        let pos = pos_of_p_formula p in
+        let es = exp_of_p_formula p in
+        if (List.exists (fun e -> is_list e) es) then Some pos
+        else None
+      ) in
   drop_some_formula_ops f
 
+let drop_list_formula_x (f:formula) : formula =
+  let (drop_weak,drop_strong) = drop_list_formula_ops in
+   drop_formula drop_weak drop_strong f
+
 let drop_list_formula (f:formula) : formula =
-  let (pr_weak,pr_strong) = drop_list_formula_ops in
-   drop_formula pr_weak pr_strong f
+  let pr_f = (add_str "f" !print_formula) in
+  let pr_res = (add_str "res" !print_formula) in
+  Debug.no_1 "drop_list_formula" pr_f pr_res
+      (fun _ -> drop_list_formula_x f) f
 
 let no_drop_ops =
   let pr x = None in
