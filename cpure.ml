@@ -1096,7 +1096,7 @@ let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option 
           end;
         None
       end
-	  
+
 let do_with_check_default msg prv_call (pe : formula) (df:'a) : 'a =
   match (do_with_check msg prv_call pe) with
     | Some r -> r
@@ -1137,7 +1137,7 @@ and fv_preserved_order (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Gen.BList.remove_dups_eq_reserved_order eq_spec_var tmp in
   res
-      
+
 and check_dups_svl ls = 
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
@@ -1350,7 +1350,7 @@ and is_strict_formula (f: formula) =
   | BForm ((Gt _, _), _)
   | BForm ((Lt _, _), _) -> true
   | _ -> false
-        
+
 and isConstBTrue (p:b_formula) =
   let (pf,_) = p in
   match pf with
@@ -1624,7 +1624,7 @@ and can_be_aliased_aux_bag with_emp (e : exp) : bool =
     | Bag (es,_) -> List.for_all (can_be_aliased_aux_bag with_emp) es
     | BagUnion (es, _) -> List.for_all (can_be_aliased_aux_bag with_emp) es
     | _ -> false
-          
+
 and get_alias_bag (e : exp) : spec_var =
   match e with
     | Var (sv, _)
@@ -1663,7 +1663,7 @@ and get_boolean_var (e : exp) =
   match e with
     | Var (SpecVar (Bool, _, _) as v,_) -> Some v
     | _ -> None
-          
+
 and is_bag (e : exp) : bool =
   match e with
     | Bag _
@@ -2290,7 +2290,7 @@ and and_list_to_and l = match l with
   with Not_found -> (branch, mkTrue pos )
   in
   Label_Pure.norm  (List.map map_fun branches)*)
-	
+
 and mkOr_x f1 f2 lbl pos= 
   if (isConstFalse f1) then f2
   else if (isConstTrue f1) then f1
@@ -2301,9 +2301,9 @@ and mkOr_x f1 f2 lbl pos=
 	 | AndList l, f
 	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
 	 | _ -> *)Or (f1, f2, lbl ,pos)
-	 
+
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
-	 
+
 and mkStupid_Or_x f1 f2 lbl pos= 
 	let or_branches l1 l2 lbl pos=
 	  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -2328,7 +2328,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
 	 | _ -> Or (f1, f2, lbl ,pos)
 
 and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
-  
+
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->
@@ -2485,9 +2485,9 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 	let lst1 = List.fold_left (fun lbl v-> 
 	    let l1,l2 = List.partition (fun (_,vl,_)-> List.mem v vl) lbl in 
 	    if l1=[] then l2 
-	    else  pusher v l1 l2 				
+	    else  pusher v l1 l2
 	      (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
-		if lul=[] || ll=[] then pusher v l1 l2 				
+		if lul=[] || ll=[] then pusher v l1 l2
 		else
 		let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
 		let lrel,lunrel = List.partition (fun c->List.mem v (fv c)) lrel in
@@ -4555,10 +4555,47 @@ let add_gte0_for_mona (f0 : formula): (formula)=
       | BForm _ -> f0 in
   helper f0
 
-let add_gte0_for_mona (f0 : formula): (formula)=
+let add_gte0_for_mona (f0 : formula): (formula) =
   let pr = !print_formula in
   Debug.no_1 "add_gte0_for_mona" pr pr add_gte0_for_mona f0
 
+let add_flow_interval (f0 : formula) s b : formula =
+  let pos = pos_of_formula f0 in
+  let var = Var (mk_typed_spec_var Int "flow",pos) in
+  let f1 = And (f0, mkGteExp var (IConst (s,pos)) pos, pos) in
+  let f2 = And (f1, mkLteExp var (IConst (b,pos)) pos, pos) in
+  (* let bf1 = (pf1,None) in *)
+  (* let bf2 = (pf2,None) in *)
+  (* let f1 = BForm (bf1,None) in *)
+  (* let f2 = BForm (bf2,None) in *)
+  f2
+
+let add_flow_interval (f0 : formula) s b : formula =
+  let pr = !print_formula in
+  Debug.no_1 "add_flow_interval" pr pr (fun _ -> add_flow_interval f0 s b) f0
+
+let add_flow_var_pf (pf0 : p_formula) : p_formula =
+  match pf0 with
+    | RelForm (sv,el,pos) -> RelForm (sv,el@[Var(mk_typed_spec_var Int "flow",pos)],pos)
+    | _ -> pf0
+
+let add_flow_var_pf (pf0 : p_formula) : p_formula =
+  let pr = !print_p_formula in
+  Debug.no_1 "add_flow_var_pf" pr pr add_flow_var_pf pf0
+
+let rec add_flow_var (f0 : formula) : formula =
+  match f0 with
+    | BForm ((pf,ann),lbl) -> BForm ((add_flow_var_pf pf,ann),lbl)
+    | And (f1,f2,pos) -> And (add_flow_var f1, add_flow_var f2, pos)
+    | AndList al -> AndList (List.map (fun (t,f) -> (t, add_flow_var f)) al)
+    | Or (f1,f2,lbl,pos) -> Or (add_flow_var f1, add_flow_var f2, lbl, pos)
+    | Not (f,lbl,pos) -> Not (add_flow_var f, lbl, pos)
+    | Forall (sv,f,lbl,pos) -> Forall (sv, add_flow_var f, lbl, pos)
+    | Exists (sv,f,lbl,pos) -> Exists (sv, add_flow_var f, lbl, pos)
+
+let add_flow_var (f0 : formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "add_flow_var" pr pr add_flow_var f0
 
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
@@ -9999,7 +10036,7 @@ let memo_complex_ops stk bool_vars is_complex =
             let rel_f = BForm ((b,None),None) in
             stk # push (v,rel_f);
             Some (BForm ((BVar (v,no_pos),None),None))
-          else None 
+          else None
   in (pr, pr)
 
 let drop_rel_formula (f:formula) : formula =

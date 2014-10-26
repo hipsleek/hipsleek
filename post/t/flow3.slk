@@ -1,0 +1,38 @@
+
+relation P(int x).
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] x=0 & flow __Exc
+    |- P(x) & flow __flow.
+print residue.
+
+relation_infer[][P].
+
+/*
+# flow3.slk
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+
+This is almost similar to flow2.slk, except we used __Exc instead
+of __norm.
+ <1>emp&x=0&{FLOW,(22,23)=__Exc#E}[]
+We got: !!! fixpoint2:[( P(x,flow), x>=0)]
+
+Why did we not have: [( P(x,flow), x>=0 & 22<=flow<=23)]
+
+!!! Input of fixcalc: 
+P:={[] -> [x,flow] -> []: (x=0 
+   ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )};
+bottomupgen([P], [2], SimHeur);
+!!! fixpoint2:[( P(x,flow), x>=0)]
+
+
+
+
+*/
+
+

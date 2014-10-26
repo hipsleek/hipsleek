@@ -2,6 +2,7 @@ data cell {
   int val;
 }
 
+/*
 void main(cell x, cell y)
   infer[@shape,@post_n,@term]
   requires true
@@ -15,9 +16,29 @@ void main(cell x, cell y)
     x.val = x.val-1;
   }
 }
-/*
-# cell.ss -pcp
+*/
 
+void loop(cell x,cell y)
+  infer [@shape,@post_n]
+ requires true
+  ensures true;
+{
+  if (y.val<x.val) {
+    x.val = x.val-1;
+    loop(x,y);
+  }
+}
+
+/*
+# dell.ss -pcp
+
+@shape
+
+# TODO: should display the actual pre/post inferred.
+*********************************************************
+[ HP_11(x_1272,y_1273) ::=  x_1272::cell<val_26_1237> * y_1273::cell<val_26_1269>,
+ GP_12(x_1274,y_1275) ::=  y_1275::cell<val_26_1231> * x_1274::cell<val_26_1237>]
+=========================================================
   while (y.val<x.val) 
     infer[@shape]
       requires true

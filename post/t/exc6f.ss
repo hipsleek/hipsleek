@@ -1,27 +1,23 @@
-class Exp extends __Exc {
-  int val;
-}
+
 
 int loop(int x)
  infer [@post_n]
   requires true
-  ensures true// & flow __flow
-  ;
-//ensures eres::Exp<2> & x>0 & flow Exp or x<=0 & res=x+1 & flow __norm;
-//ensures res=10;
+//ensures true & flow __norm; //for pre-post assume
+  ensures true & flow __flow;  //for post-cond
 {
-  if (x>0) {
-    if (x>100) raise new Exp(2222);
+    //if (x>100) raise new Exp(2222);
     x=x-1;
-    dprint;
     loop(x);
-    dprint;
-  } 
-  return x;
+    return x;
 }
 
 /*
-# exc6a.ss
+# exc6f.ss
+
+
+[RELDEFN post_1174: ( x=1+res & post_1174(res,v_int_10_1184)) 
+       -->  post_1174(x,res)]
 
  infer [@post_n]
   requires true
