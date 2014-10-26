@@ -10036,7 +10036,7 @@ let memo_complex_ops stk bool_vars is_complex =
             let rel_f = BForm ((b,None),None) in
             stk # push (v,rel_f);
             Some (BForm ((BVar (v,no_pos),None),None))
-          else None 
+          else None
   in (pr, pr)
 
 let drop_rel_formula (f:formula) : formula =

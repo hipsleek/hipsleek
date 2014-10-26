@@ -1388,32 +1388,8 @@ let process_rel_infer pre_rels post_rels =
   (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
   let rels = Infer.infer_rel_stk # get_stk in
   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
-  let is_infer_flow = List.exists (fun (cat,_,_) ->
-      match cat with
-        | CP.RelDefn(_,Some _) -> true
-        | _ -> false
-  ) reldefns in
-  let reldefns = List.map (fun (cat,f1,f2) ->
-      if is_infer_flow then
-        let (f1,f2) = (CP.add_flow_var f1,CP.add_flow_var f2) in
-        match cat with
-          | CP.RelDefn(_,Some s) ->
-                let s = try
-                  let idx = String.index s '#' in
-                  String.sub s 0 idx
-                with _ -> s
-                in
-                let nf = exlist # get_hash s in
-                let is_top = exlist # is_top_flow nf in
-                if is_top then (f1,f2) (* top flow *)
-                else                   (* other flow *)
-                  let (s,b) = exlist # get_min_max nf in
-                  (CP.add_flow_interval f1 s b,f2)
-          | _ ->                       (* norm flow *)
-                (* let (s,b) = exlist # get_min_max !norm_flow_int in *)
-                (f1,f2)
-      else (f1,f2)
-  ) reldefns in
+  let is_infer_flow = Pi.is_infer_flow reldefns in
+  let reldefns = if is_infer_flow then Pi.add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
   let _ = Debug.ninfo_hprint (add_str "reldefns" (pr_list (pr_pair pr pr))) reldefns no_pos in
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
