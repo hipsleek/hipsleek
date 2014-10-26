@@ -11,7 +11,8 @@ void main() {
   int y;
   while (x >= 2) {
     x--; y = y + x;
-    while (y >= x + 1 && (__VERIFIER_nondet_int() > 0)) {
+    int tmp = __VERIFIER_nondet_int() + 1;
+    while (y >= x + 1 && tmp) {
       y--;
       while (y >= x + 3 && (__VERIFIER_nondet_int() > 0)) {
         x++; y = y - 2;
