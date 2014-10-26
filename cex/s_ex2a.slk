@@ -14,17 +14,31 @@ lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S>
 // lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
 //    -> ss::state<L2> & L2=L1++[|n|].
 
-lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
-   -> ss::state<L2> & L2 = app(L1,[n]).
+lemma_prop "XXX" self::state<L1> * self::add<n> & true
+   -> self::state<L2> & L2 = app(L1,[n]).
 
-lemma_prop "XXX" ss::state<L1> * ss::add<n> & true
-   -> ss::state<L2> & L2 = append(L1,[n]).
+/*
+lemma_prop "XXX" self::state<L1> * self::add<n> & true
+   -> self::state<L2> & L2 = append(L1,[n]).
+*/
 
 // checkentail cx::state<[|1,2,3|]> * cx::add<4> |- true.
 // print residue.
 
 checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
-//print residue.
+print residue.
 
 check_normalize cx::state<[1,2,3]> * cx::add<4>.
 print residue.
+
+
+/*
+# s_ex2a.slk
+
+Need to trigger the normalization. Can look 
+at how it is currently done for lemma-prop.slk?
+
+ <1>cx::state{}<L2_53>&flted_28_39=[1,2,3] & flted_28_38=4 & n_48=flted_28_38 & L2_53=app(flted_28_39,[n_48])&{FLOW,(4,5)=__norm}[]
+
+
+*/

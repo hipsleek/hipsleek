@@ -1,0 +1,12 @@
+ ND+_ => ND
+ ND*0 = 0
+ ND*n = n=0->0/\n!=0->ND
+
+ ND & false = false
+ ND & x = (x -> ND /\ not(x)->false)
+ ND | x = (x -> true /\ not(x)->ND)
+ not(ND) = ND
+ ND>x = ND
+ ND=x = ND
+ ND>=x = ND
+ 

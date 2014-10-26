@@ -11,6 +11,18 @@ lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S>
 check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
 //output one state
 
+/*
+# lemma_prop.slk
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+
+How was this accumulation done?
+
+CheckNorm (1) :  c1::CNT{}<a_87> * c2::CNT{}<b_88> * x::WAIT{}<S1_97>&flted_11_74=a_87 & 
+flted_11_73=b_88 & S=S_89 & flted_11_74=1 & flted_11_73+1=0 & S={} & 
+S1_97=union(S_89,{(c1,c2)}) & 0<a_87 & b_88<0&{FLOW,(4,5)=__norm}[]
+*/
+
 check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> * c3::CNT<(-1)> & S={}.
 //output one state since there are two normalization applications
 
