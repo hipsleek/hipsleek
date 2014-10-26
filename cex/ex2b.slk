@@ -1,0 +1,12 @@
+pred_prim state<x:list(int)>
+  inv true.
+
+pred_prim add<n:int>
+  inv true.
+
+checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
+
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cs::state<[1,2,3,4]>.
+
+// check_normalize cx::state<[1,2,3]> * cx::add<4>.
+// print residue.
