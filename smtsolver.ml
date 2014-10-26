@@ -128,8 +128,11 @@ let rec smt_of_exp a =
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here : "  ^ str)
-  | CP.List (l,_) -> illegal_format ("z3.smt_of_exp: ERROR in constraints (List should not appear here)")
-  | CP.ListCons _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListCons should not appear here)")
+  | CP.List (es,_) ->
+      List.fold_left (fun smt_list e ->
+        "(insert " ^ (smt_of_exp e) ^ smt_list ^ ")"
+      ) "nil" es
+  | CP.ListCons (e1, e2, _) -> "(insert " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2) ^ ")"
   | CP.ListHead (l,_) -> "(head " ^ (smt_of_exp l) ^ ")" 
   | CP.ListTail (l,_) -> "(tail " ^ (smt_of_exp l) ^ ")"
   | CP.ListLength _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (ListLength should not appear here)")
