@@ -3520,6 +3520,20 @@ let is_trivial_constr cs=
       (* else false *)
     | _ -> false
 
+let is_not_left_rec_constr cs=
+  let r_ohp = CF.check_and_get_one_hpargs cs.CF.hprel_rhs in
+  match r_ohp with
+    | [(rhp,r_args,_)] -> begin
+        let lhds, _, lhpargs = CF.get_hp_rel_formula cs.CF.hprel_lhs in
+        match lhpargs with
+          | [(lhp,eargs,_)] -> if CP.eq_spec_var rhp lhp then
+              (* let args = List.fold_left (fun acc e -> acc@(CP.afv e)) [] eargs in *)
+              List.for_all (fun hd -> not (CP.mem_svl hd.CF.h_formula_data_node r_args) ) lhds
+            else false
+          | _ -> false
+      end
+    | _ -> false
+
 let collect_post_preds prog constrs=
   let collect_one r_post_hps cs=
     let hps = (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
@@ -3568,7 +3582,11 @@ let classify_post_fix constrs=
     {cs with CF.hprel_rhs = CF.mkHTrue (CF. mkTrueFlow ()) (CF.pos_of_formula cs.CF.hprel_rhs)}
     else
       {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
-  else cs
+  else
+    if not is_pre && is_not_left_rec_constr cs then
+      {cs with CF.hprel_lhs = CF.mkFalse (CF.flow_formula_of_formula cs.CF.hprel_rhs) (CF.pos_of_formula cs.CF.hprel_rhs)}
+    else
+      cs
 
 let weaken_strengthen_special_constr_pre is_pre cs=
   let pr1 = Cprinter.string_of_hprel_short in
@@ -3634,7 +3652,9 @@ let simplify_one_formula prog args f=
 let elim_useless_rec_preds_x prog hp args fs_wg=
   let process_one (f,og)=
     let hpargs = CF.get_HRels_f f in
-    let rec_hpargs = List.filter (fun (hp0,_) -> CP.eq_spec_var hp hp0) hpargs in
+    let rec_hpargs = List.filter (fun (hp0,args1) -> (CP.eq_spec_var hp hp0)
+        && CP.diff_svl args args1 != []
+    ) hpargs in
     if rec_hpargs = [] then [(f,og)] else
       let hds, hvs,_ = CF.get_hp_rel_formula f in
       let args_i = get_hp_args_inst prog hp args in

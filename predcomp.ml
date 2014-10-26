@@ -1737,6 +1737,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_is_main = false;
     proc_is_while = false;
     proc_is_invoked = false;
+    proc_verified_domains = [];
     proc_file = "";
     proc_loc = pos ;
     proc_test_comps = None} 
@@ -1861,6 +1862,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_is_main = false;
     proc_is_while = false;
     proc_is_invoked = false;
+    proc_verified_domains = [];
     proc_file = "";
     proc_loc = no_pos;
     proc_test_comps = None} in
