@@ -8,11 +8,11 @@ void main(cell x, cell y)
   ensures true;
 {
   while (y.val<x.val) 
-    infer[@shape]
+    infer[@shape,@term]
       requires true
       ensures true;
   {
-    y.val = y.val+1;
+    x.val = x.val-1;
   }
 }
 /*
