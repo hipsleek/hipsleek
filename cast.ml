@@ -2973,16 +2973,16 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
                   let vl = List.map (fun (_,sv) -> sv) subs in
                   let qvars = List.filter (fun sv -> not(List.mem sv vl)) qvars in
                   List.map (fun sv -> match sv with
-                    | CP.SpecVar (t,n,p) -> (CP.SpecVar (t,fresh_any_name n,p),sv)) qvars
+                    | P.SpecVar (t,n,p) -> (P.SpecVar (t,fresh_any_name n,p),sv)) qvars
             | _ -> []
           in
           let subs = subs@new_subs in
-          let _ = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) subs no_pos in
+          let _ = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !P.print_sv !P.print_sv))) subs no_pos in
           let replacing_f = F.subst_one_by_one subs base_f in
           let _ = Debug.ninfo_hprint (add_str "replacing_f" !F.print_formula) replacing_f no_pos in
           let (replacing_hf,extra_pf,_,_,_) = F.split_components replacing_f in
           let extra_qvars = F.get_exists replacing_f in
-          let _ = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !CP.print_sv)) extra_qvars no_pos in
+          let _ = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !P.print_sv)) extra_qvars no_pos in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
           Some replacing_hf                  (* replace the heap part *)
         else (Some hf)
