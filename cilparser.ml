@@ -23,6 +23,9 @@ let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
 (* hash table map lval expressions (in string form) to their address holder generated-pointers *)
 let tbl_addrof_info : (string, string) Hashtbl.t = Hashtbl.create 1
 
+(* list of nondeterministic variables *)
+let nondet_vars : string list = ref []
+
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
 
@@ -38,7 +41,21 @@ let reset_global_vars () =
 (*         string conversion functions for CIL         *)
 (*******************************************************)
 let string_of_cil_exp (e: Cil.exp) : string =
-  Pretty.sprint 10 (Cil.d_exp () e)
+  (match e with
+  | Cil.Const _ -> "Const "
+  | Cil.Lval _ -> "Lval "
+  | Cil.SizeOf _ -> "SizeOf "
+  | Cil.SizeOfE _ -> "SizeOfE "
+  | Cil.SizeOfStr _ -> "SizeOfStr "
+  | Cil.AlignOf _ -> "AlignOf "
+  | Cil.AlignOfE _ -> "AlignOfE "
+  | Cil.UnOp _ -> "UnOp "
+  | Cil.BinOp _ -> "BinOp "
+  | Cil.Question _ -> "Question "
+  | Cil.CastE _ -> "CastE "
+  | Cil.AddrOf _ -> "AddrOf "
+  | Cil.StartOf _ -> "StartOf ") ^ 
+  (Pretty.sprint 10 (Cil.d_exp () e))
 
 let string_of_cil_unop (e: Cil.unop) : string =
   Pretty.sprint 10 (Cil.d_unop () e)
@@ -197,6 +214,16 @@ let startPos (loc: Globals.loc) : Lexing.position =
 
 let endPos (loc: Globals.loc) : Lexing.position =
   loc.Globals.end_pos
+  
+let is_arith_comparison_op op = 
+  match op with
+  | Cil.Lt
+  | Cil.Gt  
+  | Cil.Le
+  | Cil.Ge
+  | Cil.Eq
+  | Cil.Ne -> true
+  | _ -> false  
 
 (**********************************************)
 (****** create intermediate procedures  *******)
@@ -1198,7 +1225,6 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           (Iast.Empty pos)
       )
 
-
 and translate_stmt (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
   match skind with
@@ -1242,19 +1268,21 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (
-            match exp with
-            (* simplify conditional expression in if-statement *)
-            | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) 
-              when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->
-                let e1 = translate_exp exp1 in
-                let e2 = translate_exp exp2 in
-                let o = translate_binary_operator op pos in
-                Iast.mkBinary o e1 e2 None pos
-            | _ ->
-                let e = translate_exp exp in
-                let bool_of_proc = create_bool_casting_proc new_ty in
-                let proc_name = bool_of_proc.Iast.proc_name in
-                Iast.mkCallNRecv proc_name None [e] None pos
+                  match exp with
+                  (* simplify conditional expression in if-statement *)
+                  (* | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) *)
+                  (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
+                  | Cil.BinOp (op, exp1, exp2, ty, l) 
+                    when (is_arith_comparison_op op) ->
+                      let e1 = translate_exp exp1 in
+                      let e2 = translate_exp exp2 in
+                      let o = translate_binary_operator op pos in
+                      Iast.mkBinary o e1 e2 None pos
+                  | _ ->
+                      let e = translate_exp exp in
+                      let bool_of_proc = create_bool_casting_proc new_ty in
+                      let proc_name = bool_of_proc.Iast.proc_name in
+                      Iast.mkCallNRecv proc_name None [e] None pos
                   )
           ) in
           let e1 = translate_block blk1 in
@@ -1758,7 +1786,8 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
-  aux_local_vardecls := [];
+    aux_local_vardecls := [];
+    nondet_vars := []; (* To handle nondeterministic if conditions *)
     let _ = gather_addrof_fundec fundec in
     (* start translating function *)
     let pos = match lopt with None -> no_pos | Some l -> translate_location l in
