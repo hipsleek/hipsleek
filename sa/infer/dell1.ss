@@ -48,4 +48,15 @@ void loop(cell x,cell y)
 Is it true to val37 is unchanged? The spec 
 inferred seems wrong
 
+# TODO: should display the actual pre/post inferred.
+*********************************************************
+[ HP_11(x2,y3) ::=  x2::cell<val37> * y3::cell<val69>,
+ GP_12(x4,y5) ::=  y5::cell<val31> * x4::cell<val37>]
+=========================================================
+
+Is it true to val37 is unchanged? The spec 
+inferred seems wrong
+
+   see #dell1a.ss
+
 */
