@@ -4,9 +4,26 @@ pred_prim state<x:list(int)>
 pred_prim add<n:int>
   inv true.
 
+// expect Valid.
 checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
+// OK
 
-checkentail cx::state<[1,2,3]> * cx::add<4> |- cs::state<[1,2,3,4]>.
+
+lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
+   -> ss::state<L2> & L2 = append(L1,[n]).
+
+lemma_unsafe "lemma_unsafe_list" self::state<L1> * self::add<n> & true
+   -> self::state<L2> & L2 = append(L1,[n]).
+
+// expect Valid
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4]>.
+print residue.
+// OK
+
+// expect Invalid
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4,5]>.
+print residue.
+// Not OK.Bug!
 
 // check_normalize cx::state<[1,2,3]> * cx::add<4>.
 // print residue.

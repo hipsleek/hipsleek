@@ -1959,7 +1959,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   else r
 
 
-and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+and process_infer_heap_match_x prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
   let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
   let ptr_vs = estate.es_infer_vars in
   let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
@@ -2050,6 +2050,18 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (
     (-1, (Cond_action (rs@cyc_acts@[r;r0])))
   else (-1, Cond_action (rs@[r0]))
     (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
+
+and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+  let pr_lhs_h = (add_str "lhs_h" !CF.print_h_formula) in
+  let pr_lhs_p = (add_str "lhs_p" !CF.print_mix_f) in
+  let pr_rhs_node = (add_str "rhs_node" !CF.print_h_formula) in
+  let pr_rhs_rest = (add_str "rhs_rest" !CF.print_h_formula) in
+  let pr_res = (add_str "res" (fun (_,a) -> string_of_action_name a)) in
+  Debug.no_4 "process_infer_heap_match"
+    pr_lhs_h pr_lhs_p pr_rhs_node pr_rhs_rest pr_res
+    (fun _ _ _ _ -> process_infer_heap_match_x prog estate lhs_h lhs_p 
+        is_normalizing rhs reqset (rhs_node,rhs_rest))
+    lhs_h lhs_p rhs_node rhs_rest
 
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in
