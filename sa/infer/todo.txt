@@ -28,7 +28,7 @@ Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_
    , Line 0
 
 =================================================================
-# cell.ss 
+# cell.ss : FIXED
 
   while (y.val<x.val) 
     infer[@shape]
