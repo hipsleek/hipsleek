@@ -2261,22 +2261,30 @@ and view_node_types (f:formula):ident list =
     | Base b -> helper b.formula_base_heap
     | Exists b -> helper b.formula_exists_heap
 
-and has_top_flow_struc (f:struc_formula) = 
-	let rec has_top_flow (f:formula) = match f with
-		| Base b-> if (String.compare b.formula_base_flow top_flow)<>0 then Error.report_error {
-						Error.error_loc = b.formula_base_pos;
-						Error.error_text = ("view formula can not have a non top flow( "^b.formula_base_flow^")")} else ()
-		| Exists b-> if (String.compare b.formula_exists_flow top_flow)<>0 then Error.report_error {
-						Error.error_loc = b.formula_exists_pos;
-						Error.error_text = ("view formula can not have a non top flow("^b.formula_exists_flow^")")} else ()
-		| Or b -> (has_top_flow b.formula_or_f1);(has_top_flow b.formula_or_f2) in
-	let rec helper f0 = match f0 with
-		| EBase b->   has_top_flow b.formula_struc_base; (match  b.formula_struc_continuation with | None -> () | Some l-> helper l)
-		| ECase b->   List.iter (fun (_,b1)-> (helper b1)) b.formula_case_branches
-		| EAssume b-> has_top_flow b.formula_assume_simpl
-		| EInfer b-> helper b.formula_inf_continuation
-		| EList b-> List.iter (fun c-> helper (snd c)) b  in
-	helper f
+and has_top_flow_struc (f:struc_formula) =
+  let compare_top_flow fl=
+    (String.compare fl (top_flow))<>0 &&
+        (String.compare fl (top_flow^"#E"))<>0
+  in
+  let rec has_top_flow (f:formula) = match f with
+    | Base b-> if (* (String.compare b.formula_base_flow top_flow)<>0 *)
+        compare_top_flow b.formula_base_flow
+      then Error.report_error {
+	  Error.error_loc = b.formula_base_pos;
+	  Error.error_text = ("view formula can not have a non top flow( "^b.formula_base_flow^")")} else ()
+    | Exists b-> if (* (String.compare b.formula_exists_flow top_flow)<>0 *)
+        compare_top_flow b.formula_exists_flow
+      then Error.report_error {
+	  Error.error_loc = b.formula_exists_pos;
+	  Error.error_text = ("view formula can not have a non top flow("^b.formula_exists_flow^")")} else ()
+    | Or b -> (has_top_flow b.formula_or_f1);(has_top_flow b.formula_or_f2) in
+  let rec helper f0 = match f0 with
+    | EBase b->   has_top_flow b.formula_struc_base; (match  b.formula_struc_continuation with | None -> () | Some l-> helper l)
+    | ECase b->   List.iter (fun (_,b1)-> (helper b1)) b.formula_case_branches
+    | EAssume b-> has_top_flow b.formula_assume_simpl
+    | EInfer b-> helper b.formula_inf_continuation
+    | EList b-> List.iter (fun c-> helper (snd c)) b  in
+  helper f
 
 
 and subst_flow_of_formula fr t (f:formula):formula = match f with

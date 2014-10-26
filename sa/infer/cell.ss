@@ -3,12 +3,12 @@ data cell {
 }
 
 void main(cell x, cell y)
-  infer[@shape]
+  infer[@shape,@post_n,@term]
   requires true
   ensures true;
 {
   while (y.val<x.val) 
-    infer[@shape,@term]
+    infer[@shape,@post_n,@term]
       requires true
       ensures true;
   {

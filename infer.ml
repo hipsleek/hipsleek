@@ -293,25 +293,26 @@ let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars =
   in helper ctx
   
 let init_infer_type ctx itype =
-  let rec helper ctx it =
+  let rec helper ctx =
     match ctx with
-    | Ctx es -> begin 
-      match it with
-      | INF_TERM -> (es.es_infer_obj # set INF_TERM; ctx)
-            (* Ctx { es with es_infer_tnt = true}) *)
-      | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx)
-      | INF_POST -> (es.es_infer_obj # set INF_POST; ctx) 
-      | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx) 
-      | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx) 
-      | INF_SIZE -> (es.es_infer_obj # set INF_SIZE; ctx) 
-      | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx) 
-      | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx) 
-      end
-    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1 it, helper ctx2 it)
-  in 
-  match itype with
-  | None -> ctx
-  | Some it -> helper ctx it
+    | Ctx es -> es.es_infer_obj # set_list itype ; ctx
+      (* match it with *)
+      (* | INF_TERM -> (es.es_infer_obj # set INF_TERM; ctx) *)
+      (*       (\* Ctx { es with es_infer_tnt = true}) *\) *)
+      (* | INF_PRE -> (es.es_infer_obj # set INF_PRE; ctx) *)
+      (* | INF_POST -> (es.es_infer_obj # set INF_POST; ctx)  *)
+      (* | INF_IMM -> (es.es_infer_obj # set INF_IMM; ctx)  *)
+      (* | INF_SHAPE -> (es.es_infer_obj # set INF_SHAPE; ctx)  *)
+      (* | INF_EFA -> (es.es_infer_obj # set INF_EFA; ctx)  *)
+      (* | INF_SIZE -> (es.es_infer_obj # set INF_SIZE; ctx) *)
+      (* | INF_DFA -> (es.es_infer_obj # set INF_DFA; ctx)  *)
+      (* | INF_FLOW -> (es.es_infer_obj # set INF_FLOW; ctx)  *)
+      (* end *)
+    | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in helper ctx
+  (* match itype with *)
+  (* | None -> ctx *)
+  (* | Some it -> helper ctx it *)
 
 (* let conv_infer_heap hs = *)
 (*   let rec helper hs h = match hs with *)
@@ -1763,7 +1764,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
      (add_str "(res,new_rhs)" pr)
      (fun _ _ _ -> detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos) ivs lhs_c rhs_mix
 
-let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
+let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
   (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
   (* else *)
@@ -1941,28 +1942,81 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
               (*                  res*)
               (*              in*)
               (*              CP.conj_of_list (conj_wo_rel@rel_lhs) pos*)
-              new_lhs_local) lhs_list 
+              new_lhs_local) lhs_list
           in
           Debug.ninfo_hprint (add_str "simplified lhs" (pr_list !CP.print_formula)) new_lhs_list no_pos;
+          Debug.ninfo_hprint (add_str "rhs" (!CP.print_formula)) rhs no_pos;
           (* Simplification steps -- End *)
 
           let rel_def_id = CP.get_rel_id_list rhs in
           (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
           (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
-          let rel_cat = 
-            if rel_def_id != [] then CP.RelDefn (List.hd rel_def_id) else 
+          let flow_f = flow_formula_of_formula estate.es_formula in
+          let _ = Debug.ninfo_hprint (add_str "estate" Cprinter.string_of_estate) estate no_pos in
+          let current_nflow = flow_f.formula_flow_interval in
+          let conseq_nflow = conseq_flow.formula_flow_interval in
+          let _ = Debug.ninfo_hprint (add_str "lhs" (Cprinter.string_of_formula)) estate.es_formula no_pos in
+          let _ = Debug.ninfo_hprint (add_str "rhs" (Cprinter.string_of_pure_formula)) rhs no_pos in
+          let _ = Debug.ninfo_hprint (add_str "lhs_flow" (Cprinter.string_of_flow_formula "xxx1")) flow_f no_pos in
+          let _ = Debug.ninfo_hprint (add_str "rhs_flow" (Cprinter.string_of_flow_formula "xxx2")) conseq_flow no_pos in
+          let str_nflow = exlist # get_closest flow_f.formula_flow_interval in
+          let _ = Debug.tinfo_hprint (add_str "closest flow" pr_id) str_nflow no_pos in
+          let lhs_fv = CF.fv estate.es_formula in
+          let rhs_fv = CP.fv rhs in
+          let _ = Debug.ninfo_hprint (add_str "lhs_fv" (pr_list Cprinter.string_of_typed_spec_var)) lhs_fv no_pos in
+          let _ = Debug.ninfo_hprint (add_str "rhs_fv" (pr_list Cprinter.string_of_typed_spec_var)) rhs_fv no_pos in
+          let lhs_rels = List.filter (fun sv -> CP.is_rel_var sv) lhs_fv in
+          let rhs_rels = List.filter (fun sv -> CP.is_rel_var sv) rhs_fv in
+          let _ = Debug.ninfo_hprint (add_str "lhs_rel" (pr_list Cprinter.string_of_typed_spec_var)) lhs_rels no_pos in
+          let _ = Debug.ninfo_hprint (add_str "rhs_rel" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rels no_pos in
+          let is_rec = List.exists (fun sv -> List.mem sv lhs_rels) rhs_rels in
+          let _ = Debug.ninfo_hprint (add_str "is_rec" string_of_bool) is_rec no_pos in
+          let rel_cat =
+            if rel_def_id != [] then
+              if (estate.es_infer_obj # is_add_flow || infer_const_obj # is_add_flow) then
+                if (exlist # is_top_flow current_nflow) then
+                  let _ = report_warning pos "LHS should not be top_flow" in None
+                else
+                  if is_rec then
+                    if (exlist # is_norm_flow current_nflow && exlist # is_top_flow conseq_nflow) then
+                      Some (CP.RelDefn ((List.hd rel_def_id),None))
+                    else if (not (exlist # is_norm_flow current_nflow) && exlist # is_top_flow conseq_nflow) then
+                      Some (CP.RelDefn ((List.hd rel_def_id), Some str_nflow))
+                    else if not(Exc.GTable.is_eq_flow current_nflow conseq_nflow) then
+                      Some (CP.RelDefn ((List.hd rel_def_id), Some str_nflow)) (* WN : to fix ETable.nflow type?*)
+                    else Some (CP.RelDefn ((List.hd rel_def_id),None))
+                  else
+                    if not(Exc.GTable.is_eq_flow current_nflow conseq_nflow) then
+                      Some (CP.RelDefn ((List.hd rel_def_id), Some str_nflow)) (* WN : to fix ETable.nflow type?*)
+                    else Some (CP.RelDefn ((List.hd rel_def_id),None))
+              else Some (CP.RelDefn ((List.hd rel_def_id),None))
+            else
               (*            if rank_bnd_id != [] then CP.RankBnd (List.hd rank_bnd_id) else*)
               (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
               report_error pos "Relation belongs to unexpected category"
           in
-          List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
+          match rel_cat with
+            | None -> []
+            | Some rel_cat ->
+                  if not (estate.es_infer_obj # is_add_flow || infer_const_obj # is_add_flow) then
+                    List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
+                  else if (is_rec && not (exlist # is_norm_flow current_nflow) && exlist # is_top_flow conseq_nflow) then
+                    let _ = print_endline "here" in
+                    let l1 = List.map (fun x -> (rel_cat,CP.drop_sel_rel_formula x rhs_rels,rhs)) new_lhs_list in
+                    let l2 = List.map (fun x -> match rel_cat with
+                          | CP.RelDefn (id,_) -> (CP.RelDefn (id,None),x,rhs)
+                          | _ -> report_error pos "rel_cat have to be CP.RelDefn"
+                    ) new_lhs_list in
+                    l1@l2
+                  else
+                    List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
         in
         (* End - Auxiliary function *)
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
-        let inf_rel_ls = 
-          if is_bag_cnt then 
-            List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls 
+        let inf_rel_ls =
+          if is_bag_cnt then
+            List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls
           else inf_rel_ls in
         DD.trace_hprint (add_str "Rel Inferred (b4 wrap_exists):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
         let inf_rel_ls = List.concat (List.map wrap_exists inf_rel_ls) in
@@ -2001,19 +2055,19 @@ RHS pure R(rs,n) & x=null
 *)
 
 
-let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
+let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
   else
     let pr0 = !print_svl in
     let pr1 = !print_mix_formula in
-    let pr2 = !print_entail_state in 
+    let pr2 = !print_entail_state in
     let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
     let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
     let pr3 (es,l,r,p,a) = 
       pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
     Debug.no_5 "infer_collect_rel" pr2 pr0 pr1 pr1 pr1 pr3
         (fun _ _ _ _ _ -> 
-            infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
+            infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos) 
         estate estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
 
 (******************************************************************************)
