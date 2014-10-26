@@ -542,7 +542,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
                 let classify_rel v =
                   let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
-                  if CP.isConstTrue rel_decl.rel_formula then true else false in
+                  if not (is_primitive_rel rel_decl) && (CP.isConstTrue rel_decl.rel_formula) then true else false in
                 let (unknown_rel,known_rel) = List.partition classify_rel
                   (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
                 let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
