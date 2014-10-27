@@ -249,7 +249,7 @@ On the other hand, GP_13b is just the linked-list data structure:
   \/ emp & res=null
 
 =================================================================
-# dell1.ss
+# dell1.ss: DONE
 
 void loop(cell x,cell y)
   infer [@shape
