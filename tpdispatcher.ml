@@ -326,7 +326,7 @@ let incremMethodsO = ref (new incremMethods)
 let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
     |[] -> ()
-		| "log"::rest -> check_prover_existence rest
+    | "log"::rest -> check_prover_existence rest
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
@@ -459,8 +459,8 @@ let _ =
   ()
   else ())
   in
-  (* set_tp !Smtsolver.smtsolver_name (\* "z3" *\) *)
-  set_tp "parahip"
+  set_tp !Smtsolver.smtsolver_name (* "z3" *)
+  (* set_tp "parahip" *)
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -3222,17 +3222,17 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let _ = Gen.Profiling.pop_time s in
   if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
-	
+
 let imply_timeout a c i t dc process =
   disj_cnt a (Some c) "imply";
   Gen.Profiling.do_5 "TP.imply_timeout" imply_timeout a c i t dc process
-	
+
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: memo_imply_timeout") in *)
   let _ = Gen.Profiling.push_time "memo_imply" in
   let r = List.fold_left (fun (r1,r2,r3) c->
     if not r1 then (r1,r2,r3)
-    else 
+    else
       let l = List.filter (fun d -> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.memo_group_fv d.memo_group_fv))>0) ante0 in
       let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
       let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
@@ -3247,45 +3247,52 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
 	(Cprinter.string_of_memoised_list)
 	(fun (r,_,_) -> string_of_bool r)
 	(fun a c -> memo_imply_timeout a c imp_no timeout) ante0 conseq0
-	
-let mix_imply_timeout ante0 conseq0 imp_no timeout = 
+
+let mix_imply_timeout ante0 conseq0 imp_no timeout =
   match ante0,conseq0 with
   | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
-    | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
+  | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
   | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
+let mix_imply_timeout ante0 conseq0 imp_no timeout =
+  Debug.no_2 "mix_imply_timeout"
+	(Cprinter.string_of_mix_formula)
+	(Cprinter.string_of_mix_formula)
+	(fun (r,_,_) -> string_of_bool r)
+	(fun a c -> mix_imply_timeout a c imp_no timeout) ante0 conseq0
+
 let rec imply_one i ante0 conseq0 imp_no do_cache process =
-Debug.no_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
+Debug.no_2_num i "imply_one" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
       (fun (r, _, _) -> string_of_bool r)
       (fun ante0 conseq0 -> imply_x ante0 conseq0 imp_no do_cache process) ante0 conseq0
 
 and imply_x ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
 
-let simpl_imply_raw_x ante conseq = 
+let simpl_imply_raw_x ante conseq =
 	let (r,_,_)= imply_one 0 ante conseq "0" false None in
 	r
 
-let simpl_imply_raw ante conseq = 
+let simpl_imply_raw ante conseq =
 Debug.no_2 "simpl_imply_raw" (Cprinter.string_of_pure_formula)(Cprinter.string_of_pure_formula) string_of_bool
 	simpl_imply_raw_x ante conseq
-	
+
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
 
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
 
 (* CP.formula -> string -> 'a -> bool *)
 let is_sat f sat_no do_cache =
-  if !external_prover then 
+  if !external_prover then
       match Netprover.call_prover (Sat f) with
-      Some res -> res       
+      Some res -> res
       | None -> false
-  else  begin   
+  else  begin
     disj_cnt f None "sat";
     Gen.Profiling.do_1 "is_sat" (is_sat f) sat_no
   end
 ;;
 
-let is_sat i f sat_no do_cache = 
+let is_sat i f sat_no do_cache =
   Debug.no_1_num i "is_sat" Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no do_cache) f
 
 
@@ -3760,6 +3767,10 @@ let is_sat_raw (f: MCP.mix_formula) =
 let imply_raw ante conseq =
   let (res,_,_) = mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
   res
+
+let imply_raw ante conseq =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "imply_raw" pr pr string_of_bool imply_raw ante conseq
 
 let imply_raw_mix ante conseq =
   let (res,_,_) = mix_imply ante conseq "99" in

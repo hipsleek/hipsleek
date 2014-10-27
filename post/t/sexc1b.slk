@@ -1,0 +1,19 @@
+data Exp {
+  int val;
+}.
+
+checkentail (exists v_int: eres::Exp<v_int>
+//& 0<x 
+& v_int=2 & flow ExpX)
+ |-  emp&res=2 & 0<x& flow ExpX. 
+print residue.
+
+/*
+# sexc1.slk
+
+Illegal exception should throw an error
+rather than translate to false ...
+
+<1>hfalse&false&{FLOW,(0,0)=__false}[]
+
+*/

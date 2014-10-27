@@ -1,0 +1,24 @@
+
+!!!Full processing file "t/cll.ss"
+Parsing file "t/cll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure count_rest$node~node... 
+Procedure count_rest$node~node SUCCESS.
+
+Checking procedure count$node... 
+Procedure count$node SUCCESS.
+
+Checking procedure delete$node... 
+Procedure delete$node SUCCESS.
+
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS.
+
+Checking procedure test$... 
+Procedure test$ SUCCESS.
+
+0 false contexts at: ()

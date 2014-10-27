@@ -1,0 +1,17 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>emp&n=0 & x=y&{FLOW,(4,8)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&n=0 & x=y&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [q!=0]
+
+
