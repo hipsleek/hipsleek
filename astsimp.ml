@@ -3271,7 +3271,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         | Some e -> (* Some (fst (trans_exp prog proc new_body_e)) in *)
           (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
           (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
-          if proc.I.proc_is_while then Some (fst (trans_exp prog proc e))
+          if proc.I.proc_is_while || (not (I.exists_while_return e))then Some (fst (trans_exp prog proc e))
           else
             let vn = fresh_name () in
             let pos = I.get_exp_pos e in
@@ -3285,7 +3285,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               | _ -> "__RET"
             in
             let constant_flow = return_name proc.I.proc_return in
-            if constant_flow = "ret_int" || constant_flow = "ret_bool" then
+            if I.exists_while_return e && (constant_flow = "ret_int" || constant_flow = "ret_bool") then
               let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
               let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
               let new_body = fst (trans_exp prog proc new_body_e) in

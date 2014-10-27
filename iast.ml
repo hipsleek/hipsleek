@@ -3050,10 +3050,52 @@ let exists_return_x e0=
   in
   helper e0
 
+
+
 let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
       (fun _ -> exists_return_x e0) e0
+let exists_while_return_x e0=
+  let rec helper e=
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          match et with
+            | Const_flow f ->
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
+            | _ -> false
+      end
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (helper wb) || (exists_return wb)
+      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let _ = print_endline("exists_return: unexpected") in *)
+          false
+  in
+  helper e0
+
+
+let exists_while_return e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_while_return" pr1 string_of_bool
+      (fun _ -> exists_while_return_x e0) e0
 
 let exists_return_val_x e0=
   let rec helper e=
