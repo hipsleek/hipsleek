@@ -944,7 +944,8 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
     | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
     | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
     | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
-    | Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"
+    (*| Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"*)
+    | Cil.CChr c -> Iast.mkIntLit (Char.code c) pos
     | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
     | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
 

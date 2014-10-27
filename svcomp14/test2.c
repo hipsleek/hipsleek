@@ -21,8 +21,8 @@ char* __VERIFIER_nondet_String(void) {
     if (length < 1) {
         length = 1;
     }
-    char* nondetString = (char*) malloc(length * sizeof(char));
-    //    nondetString[length-1] = '\0';
+    char[] nondetString = (char*) malloc(length * sizeof(char));
+    nondetString[length-1] = '\0';
     return nondetString;
 }
 
