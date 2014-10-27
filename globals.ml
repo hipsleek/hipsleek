@@ -1464,7 +1464,7 @@ let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
-let tnt_thres = ref 5
+let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
