@@ -8,7 +8,7 @@ void loop(ref int x)
   ensures  true & flow __flow;
 {
   if (x>0) {
-    /* raise new Exp(2); */
+    /*  raise new Exp(2);*/
     x = x-1;
     loop(x);
   } else {

@@ -5687,36 +5687,6 @@ let rec mkAnd_pre_struc_formula sf f=
    | EInfer b-> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation;}
    | EList l-> EList (Gen.map_l_snd recf l)
 
-(* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
-(*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
-(*   match f with *)
-(*     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches} *)
-(*     | EBase b -> EBase {b with *)
-(* 	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation; *)
-(* 	  formula_struc_base=(\* formula_trans_heap_node fct *\)formula_fct hf_fct b.formula_struc_base;} *)
-(*     | EAssume ea-> EAssume {ea with  formula_assume_simpl = (\* formula_trans_heap_node fct *\) *)
-(*               formula_fct hf_fct ea.formula_assume_simpl; *)
-(*           formula_assume_struc = recf ea.formula_assume_struc} *)
-(*           (\* (formula_trans_heap_node fct f, fl, et) *\) *)
-(*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
-(*     | EList l -> EList (Gen.map_l_snd recf l) *)
-
-let rec struc_formula_trans_heap_node formula_fct f =
- let recf = struc_formula_trans_heap_node formula_fct in
-  match f with
-    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
-    | EBase b -> EBase {b with
-	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
-	  formula_struc_base=(* formula_trans_heap_node fct *)formula_fct b.formula_struc_base;}
-    | EAssume ea-> EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) formula_fct ea.formula_assume_simpl;
-          formula_assume_struc = recf ea.formula_assume_struc}
-          (* (formula_trans_heap_node fct f, fl, et) *)
-    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
-    | EList l -> EList (Gen.map_l_snd recf l)
-
-let struc_formula_trans_heap_node fct f =
-  let pr = !print_struc_formula in
-  Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
 
 let rec mkAnd_pure_pre_struc_formula_x p f =
  let recf =  mkAnd_pure_pre_struc_formula_x p in
@@ -6526,6 +6496,52 @@ let do_unfold_view_hf cprog pr_views hf0 =
       | HTrue  | HFalse | HEmp | HVar _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in
   helper hf0
+
+(* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
+(*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
+(*   match f with *)
+(*     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches} *)
+(*     | EBase b -> EBase {b with *)
+(* 	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation; *)
+(* 	  formula_struc_base=(\* formula_trans_heap_node fct *\)formula_fct hf_fct b.formula_struc_base;} *)
+(*     | EAssume ea-> EAssume {ea with  formula_assume_simpl = (\* formula_trans_heap_node fct *\) *)
+(*               formula_fct hf_fct ea.formula_assume_simpl; *)
+(*           formula_assume_struc = recf ea.formula_assume_struc} *)
+(*           (\* (formula_trans_heap_node fct f, fl, et) *\) *)
+(*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
+(*     | EList l -> EList (Gen.map_l_snd recf l) *)
+
+let rec struc_formula_trans_heap_node formula_fct f =
+  let fresh_data_v f=
+   let quans, f0 = split_quantifiers f in
+   let hds, hvs, hrs = get_hp_rel_formula f0 in
+   let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
+   let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
+   let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
+   fr_v_sps2
+  in
+ let recf = struc_formula_trans_heap_node formula_fct in
+  match f with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b ->
+          let f1= formula_fct b.formula_struc_base in
+          EBase {b with
+	      formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
+              formula_struc_implicit_inst =  CP.remove_dups_svl (b.formula_struc_implicit_inst@(fresh_data_v  b.formula_struc_base));
+	      formula_struc_base=(* formula_trans_heap_node fct *)f1;
+          }
+    | EAssume ea->
+          let f1 = formula_fct ea.formula_assume_simpl in
+          let quans = fresh_data_v f1 in
+          EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1;
+          formula_assume_struc = recf ea.formula_assume_struc}
+          (* (formula_trans_heap_node fct f, fl, et) *)
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+let struc_formula_trans_heap_node fct f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
 
 let do_unfold_view_x cprog pr_views (f0: formula) =
   let rec helper f=

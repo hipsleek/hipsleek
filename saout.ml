@@ -494,8 +494,17 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps to_unfold_hps hpdefs
       end
     | _ -> hn
   in
-  let formula_subst_dangling_pred dang_hps to_unfold_hps f0=
+  (* let fresh_data_v f= *)
+  (*  let quans, f0 = CF.split_quantifiers f in *)
+  (*  let hds, hvs, hrs = CF.get_hp_rel_formula f0 in *)
+  (*  let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.CF.h_formula_data_arguments)) [] hds in *)
+  (*  let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.CF.h_formula_view_arguments)) v_sps1 hvs in *)
+  (*  let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in *)
+  (*  CF.add_quantifiers (quans@fr_v_sps2) f0 *)
+  (* in *)
+  let formula_subst_dangling_pred dang_hps to_unfold_hps post_hps f0=
     let _ =  Debug.ninfo_hprint (add_str "f0" (Cprinter.string_of_formula)) f0 no_pos in
+    let _ =  Debug.ninfo_hprint (add_str "post_hps" (!CP.print_svl)) post_hps no_pos in
     (* let hp_opt = CF.extract_hrel_head_w_args f0 in *)
     let hp_opt = CF. extract_hprel_pure f0 in
     match hp_opt with
@@ -509,9 +518,12 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps to_unfold_hps hpdefs
               let f1 = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
               let _,fm_args = CF.extract_HRel hp_def.CF.def_lhs in
               let ss = List.combine fm_args args in
-              let f2 = CF.subst ss f1 in
+              let f2 =  (CF.subst ss f1) in
+              let f3= (* if CP.mem_svl hp post_hps then fresh_data_v f2 else *) f2 in
               let p2 = CP.subst ss p in
-              CF. mkAnd_pure f2 (MCP.mix_of_pure p2) pos
+              let f4 = CF. mkAnd_pure f3 (MCP.mix_of_pure p2) pos in
+              let _ =  Debug.ninfo_hprint (add_str "f4" (Cprinter.string_of_formula)) f4 no_pos in
+              f4
             with _ -> f0
           else
             f0
@@ -526,7 +538,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps to_unfold_hps hpdefs
       let _ =  Debug.ninfo_hprint (add_str "to_unfold_hps" (!CP.print_svl)) to_unfold_hps no_pos in
       let s_spec2 = if unk_hps=[] && to_unfold_hps=[] then s_spec1 else
         (* let to_unfold_vnames = List.map (CP.name_of_spec_var) to_unfold_hps in *)
-        CF.struc_formula_trans_heap_node (formula_subst_dangling_pred unk_hps to_unfold_hps) s_spec1
+        CF.struc_formula_trans_heap_node (formula_subst_dangling_pred unk_hps to_unfold_hps proc.C.proc_sel_post_hps) s_spec1
       in
        let _ =  Debug.ninfo_hprint (add_str "s_spec2" (Cprinter.string_of_struc_formula)) s_spec2 no_pos in
       let s_spec3 = if sst_hps = [] then s_spec2 else
