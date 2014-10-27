@@ -1,0 +1,15 @@
+pred_prim state<x:list(int)>
+  inv true.
+
+pred_prim state_foo<x:list(int)>
+  inv true.
+
+pred_prim add<n:int>
+  inv true.
+
+lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
+   -> ss::state_foo<L2> & L2 = append(L1,[n]).
+
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state_foo<[1,2,3,4]>.
+print residue.
+
