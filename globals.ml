@@ -817,7 +817,7 @@ let sap = ref false
 let sae = ref false
 let sac = ref true
 
-let sags = ref false
+let sags = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false

@@ -26,7 +26,9 @@ void loop(cell x,cell y)
   ensures true;
 {
   if (y.val<x.val) {
+    //dprint;
     x.val = x.val-1;
+    // dprint;
     loop(x,y);
   }
 }

@@ -1006,9 +1006,11 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
         Cformula.add_quantifiers quan_null_svl0 (Cformula.subst ss base_f2)
       else f2
     in
+    (* fresh non-shape values *)
+    let f4 = Cfutil.fresh_data_v f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
-    (f3,Cformula.subst_opt subst og, unk_args1)
+    (f4,Cformula.subst_opt subst og, unk_args1)
   in
   DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
