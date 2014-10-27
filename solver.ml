@@ -4299,8 +4299,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;
 				  formula_assume_lbl = (i,y);} ->
-                                  DD.ninfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
-                                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
+                                  DD.tinfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
+                                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" does not have a post condition!")
 	                          else
                                     (match tid with
 			              | Some id ->
