@@ -7,9 +7,14 @@ pred_prim state_foo<x:list(int)>
 pred_prim add<n:int>
   inv true.
 
-lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
-   -> ss::state_foo<L2> & L2 = append(L1,[n]).
+// This lemma is used because if it is commented out, 2 entailments below fail.
+lemma_prop "lemma_prop" self::state<X1> * self::add<y>
+   -> self::state_foo<X2> & X2 = append(X1,[y]).
 
+// Valid! However, in trace, the lemma above seems not be used (?)
 checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state_foo<[1,2,3,4]>.
 print residue.
 
+// Valid! However, in trace, the lemma above seems not be used (?)
+checkentail cx::state<[1,2,3]> * cx::add<4> * cx::add<5> |- cx::state_foo<[1,2,3,4]>.
+print residue.
