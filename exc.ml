@@ -473,7 +473,7 @@ module type ETABLE =
     val c_flow : ident
     val raisable_class : ident
     val ret_flow : ident
-	val loop_ret_flow : ident
+    val loop_ret_flow : ident
     val spec_flow : ident
     val false_flow : ident
     val abnormal_flow : ident

@@ -2988,7 +2988,8 @@ spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
-     let inf_o = Globals.infer_const_obj # clone in
+     (* let inf_o = Globals.infer_const_obj # clone in *)
+     let inf_o = new inf_obj in
      let (i_consts,ivl) = List.fold_left
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
@@ -3599,6 +3600,11 @@ invocation_expression:
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+    let _ =
+      if (Iast.is_tnt_prim_proc id) then
+        Hashtbl.add Iast.tnt_prim_proc_tbl id id 
+      else () 
+    in
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
@@ -3790,6 +3796,7 @@ let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
 
 (*****************************************************************)
 (******** The function below will be used by CIL parser **********)
+(*****************************************************************)
 
 let parse_c_aux_proc (fname: string) (proc: string) =
   (* save states of current parser *)
@@ -3801,7 +3808,7 @@ let parse_c_aux_proc (fname: string) (proc: string) =
   (* restore states of previous parser *)
   is_cparser_mode := old_parser_mode;
   (* return *)
-  res
+  { res with Iast.proc_is_main = false; }
 
 let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
                           (* (env : (string, (Cabs2cil.envdata * Cil.location)) Hashtbl.t) *)
@@ -3853,3 +3860,33 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
 
 (***************** End of CIL parser's functions *****************)
 (*****************************************************************)
+
+(* ////////////////////////////////////////////// *)
+(* // Prelude for Termination Competition TPDB // *)
+(* ////////////////////////////////////////////// *)
+(* int __VERIFIER_nondet_int() *)
+(*   requires true             *)
+(*   ensures true;             *)
+  
+(* int __VERIFIER_error()      *)
+(*   requires true             *)
+(*   ensures res = 0;          *)
+      
+let create_tnt_prim_proc id : Iast.proc_decl option =
+  let proc_source = 
+    if String.compare id Globals.nondet_int_proc_name == 0 then Some (
+      "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
+      "  requires true\n" ^
+      "  ensures true;\n")
+    else if String.compare id "__VERIFIER_error" == 0 then Some (
+      "int __VERIFIER_error()\n" ^
+      "  requires true\n" ^
+      "  ensures res = 0;\n")
+    else None
+  in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
+  
+let create_tnt_prim_proc_list ids : Iast.proc_decl list =
+  List.concat (List.map (fun id -> 
+    match (create_tnt_prim_proc id) with
+    | None -> [] | Some pd -> [pd]) ids)
+

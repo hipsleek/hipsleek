@@ -522,6 +522,8 @@ let common_arguments = [
       "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
       "enable lexicographic ranking function inference");
+  ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
+  ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

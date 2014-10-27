@@ -542,7 +542,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
                 let classify_rel v =
                   let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
-                  if CP.isConstTrue rel_decl.rel_formula then true else false in
+                  if not (is_primitive_rel rel_decl) && (CP.isConstTrue rel_decl.rel_formula) then true else false in
                 let (unknown_rel,known_rel) = List.partition classify_rel
                   (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
                 let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
@@ -2647,7 +2647,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   let res = helper true proc_lst in
   res (*()*)
 
-let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
+let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
@@ -2797,22 +2797,29 @@ let proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc_procs =
     (*
       scc_inferred_hps
     *)
-    let _ = if !Globals.pred_trans_view then
-      let _ = match scc_procs with
-        | [] -> ()
-              (* Long: Why we need reverify to substitute *)
-        | [p] -> if (* (!Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked) && *) p.Cast.proc_sel_hps != [] then
-            let _ = Saout.plug_shape_into_specs prog iprog dang_hps
-              (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
+    let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs)) in
+    let new_scc_procs = if !Globals.pred_trans_view then
+      let nprog = match scc_procs with
+        | [] -> prog
+        | [p] -> if (!Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && p.Cast.proc_sel_hps != [] then
+            let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names
               scc_inferred_hps
-            in ()
-          else ()
-        | _ -> let _ = Saout.plug_shape_into_specs prog iprog dang_hps
-              (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
-                  scc_inferred_hps
-          in ()
-      in ()
-    else ()
+            in
+            nprog
+          else prog
+        | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names scc_inferred_hps in
+          nprog
+      in
+      let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+      let _ = List.iter (fun proc ->
+          (* if proc.Cast.proc_sel_hps != [] then *)
+          let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+              (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+          ()
+          (* else () *)
+      ) new_scc_procs in
+      new_scc_procs
+    else scc_procs
     in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
@@ -3699,7 +3706,7 @@ let rec check_prog iprog (prog : prog_decl) =
 	CF.def_lhs = def.CF.hprel_def_hrel;
 	CF.def_rhs = [(CF.disj_of_list fs no_pos, None)];
 	}) ini_hpdefs in
-        let _ = proc_mutual_scc_shape_infer iprog prog ini_hp_defs scc in
+        let _ = proc_mutual_scc_shape_infer iprog prog (has_infer_pre_proc || has_infer_post_proc) ini_hp_defs scc in
         let _ = Infer.rel_ass_stk # reset in
         let _ = Infer.scc_rel_ass_stk # reset in
         let _ = scc_proc_sel_hps := [] in

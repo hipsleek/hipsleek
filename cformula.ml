@@ -394,6 +394,7 @@ let mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_flow = flowt (*(mkTrueFlow ())*);
 		formula_base_label = dummy_lbl 2;
 		formula_base_pos = pos}
+
 let mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 let mkETrue flowt pos = EBase({
@@ -9156,6 +9157,18 @@ let rec is_inf_term_ctx ctx =
   | Ctx es -> es.es_infer_obj # is_term
   | OCtx (ctx1, ctx2) -> (is_inf_term_ctx ctx1) || (is_inf_term_ctx ctx2)
 
+let rec is_inf_term_struc f =
+  match f with
+  | EInfer ei -> ei.formula_inf_obj # is_term
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_struc c) el
+    
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with
   | Ctx es -> Ctx { es with es_infer_vars_templ = es.es_infer_vars_templ @ inf_vars_templ; }
@@ -14884,22 +14897,27 @@ let rec norm_assume_with_lexvar tpost struc_f =
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_f ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
-let norm_lexvar_for_infer uid (f: formula): formula =
-  let f_b bf =
+let norm_lexvar_for_infer uid (f: formula): formula * bool =
+  let f_b _ bf =
     let (pf, il) = bf in
     match pf with
     | LexVar t_info ->
-      let nann = match t_info.lex_ann with
-      | MayLoop -> CP.mkUTPre uid
-      | _ -> t_info.lex_ann in
+      let has_mayloop, nann = match t_info.lex_ann with
+      | MayLoop -> true, CP.mkUTPre uid
+      | _ -> false, t_info.lex_ann in
       let npf = LexVar { t_info with
         lex_ann = nann;
         lex_fid = uid.CP.tu_fname;
         lex_tmp = uid.CP.tu_args } in
-      Some (npf, il)
-    | _ -> Some bf
-  in transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, f_b, nonef)) f
-
+      Some ((npf, il), has_mayloop)
+    | _ -> Some (bf, false)
+  in 
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  let f_aset _ a = (a, []) in
+  let f_m a _ = (a, false) in
+  let f_trans = (nonef2, nonef2, nonef2, (nonef2, f_b, nonef2), (nonef2, f_m, f_aset, f_m, f_m)) in
+  trans_formula f () f_trans f_arg or_list
+  
 let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   let norm_f = norm_struc_with_lexvar is_primitive is_tnt_inf uid in
   match struc_f with
@@ -14909,10 +14927,18 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
     if (has_lexvar_formula eb.formula_struc_base) then
       if not is_tnt_inf then struc_f
       else
+        let norm_base, has_mayloop = norm_lexvar_for_infer uid eb.formula_struc_base in
+        (* if not has_mayloop then struc_f                                                 *)
+        (* else                                                                            *)
+        (*   let tpost = CP.mkUTPost uid in                                                *)
+        (*   EBase { eb with                                                               *)
+        (*     (* MayLoop will be changed to UTPre *)                                      *)
+        (*     formula_struc_base = norm_base;                                             *)
+        (*     formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } *)
         let tpost = CP.mkUTPost uid in
         EBase { eb with
           (* MayLoop will be changed to UTPre *)
-          formula_struc_base = norm_lexvar_for_infer uid eb.formula_struc_base; 
+          formula_struc_base = norm_base; 
           formula_struc_continuation = map_opt (norm_assume_with_lexvar tpost) cont } 
     else EBase { eb with formula_struc_continuation = map_opt norm_f cont }
   | EAssume _ ->
@@ -14932,6 +14958,51 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid struc_f =
   | EInfer ei -> EInfer { ei with formula_inf_continuation = norm_struc_with_lexvar is_primitive 
       (is_tnt_inf || ei.formula_inf_obj # is_term) uid ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
+
+(* TNT: Add inf_obj from cmd line *)
+let rec add_inf_cmd_struc is_primitive f =
+  if is_primitive || Globals.infer_const_obj # is_empty then f
+  else
+    match f with
+    | EInfer ei -> EInfer { ei with 
+        formula_inf_obj = ei.formula_inf_obj # mk_or Globals.infer_const_obj; }
+    | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_cmd_struc is_primitive s)) el)
+    | _ -> EInfer {
+        formula_inf_obj = Globals.infer_const_obj # clone;
+        formula_inf_post = true (* Globals.infer_const_obj # is_post *);
+        formula_inf_xpost = None;
+        formula_inf_transpec = None;
+        formula_inf_vars = [];
+        formula_inf_continuation = f;
+        formula_inf_pos = pos_of_struc_formula f }
+        
+let add_inf_cmd_struc is_primitive f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_inf_cmd_struc" pr pr 
+    (fun _ -> add_inf_cmd_struc is_primitive f) f
+    
+let rec add_inf_post_struc f =
+  match f with
+  | EInfer ei -> 
+    let _ = ei.formula_inf_obj # set INF_POST in
+    EInfer ei
+  | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_post_struc s)) el)
+  | _ -> 
+    let new_inf_obj = new Globals.inf_obj in
+    let _ = new_inf_obj # set INF_POST in
+    EInfer {
+      formula_inf_obj = new_inf_obj;
+      formula_inf_post = true (* Globals.infer_const_obj # is_post *);
+      formula_inf_xpost = None;
+      formula_inf_transpec = None;
+      formula_inf_vars = [];
+      formula_inf_continuation = f;
+      formula_inf_pos = pos_of_struc_formula f }
+      
+let add_inf_post_struc f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "add_inf_post_struc" pr pr 
+    (fun _ -> add_inf_post_struc f) f
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

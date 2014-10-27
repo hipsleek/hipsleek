@@ -28,7 +28,7 @@ Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_
    , Line 0
 
 =================================================================
-# cell.ss 
+# cell.ss : FIXED
 
   while (y.val<x.val) 
     infer[@shape]
@@ -66,7 +66,7 @@ cell.ss_10:9_10:14
 
  Why is there an emp case for GP16?
 =================================================================
-# cell5b.ss 
+# cell5b.ss:FIXED
 
   if (y.val<x.val) {
     y.val = y.val +1;
@@ -95,7 +95,7 @@ val_11_1258=val_10_1231 & x!=null & y'!=null&{FLOW,(4,5)=__norm}[]
     [emp&y_1275!=null & x_1274!=null; 
      y_1275::cell<val_10_1231> * x_1274::cell<val_10_1237>]]
 =================================================================
-# cell2ap.ss 
+# cell2ap.ss: FIXED
 
 How come post_n not performed after shape
 inference?
@@ -249,7 +249,27 @@ On the other hand, GP_13b is just the linked-list data structure:
   \/ emp & res=null
 
 =================================================================
-=================================================================
+# dell1.ss: DONE
+
+void loop(cell x,cell y)
+  infer [@shape
+         //,@post_n
+  ]
+
+# TODO: should display the actual pre/post inferred.
+*********************************************************
+[ HP_11(x2,y3) ::=  x2::cell<val37> * y3::cell<val69>,
+ GP_12(x4,y5) ::=  y5::cell<val31> * x4::cell<val37>]
+=========================================================
+
+Is it true to val37 is unchanged? The spec 
+inferred seems wrong
+
+   see #dell1a.ss
+
+This later caused post to be inferred wrongly.
+
+==============================================
 =================================================================
 =================================================================
 =================================================================
