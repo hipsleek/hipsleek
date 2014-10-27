@@ -509,7 +509,6 @@ and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
 
 let match_stmt stmt1 stmt2 =
   let s1 = string_of_cil_stmt stmt1 in
-  let s1 = string_of_cil_stmt stmt1 in
   let s2 = string_of_cil_stmt stmt2 in
   if (String.compare s1 s2 == 0) then true else false
 
@@ -806,22 +805,42 @@ and translate_location (loc: Cil.location) : Globals.loc =
   (* return *)
   newloc
 
-and get_actual_cil_typ (t: Cil.typ) : Cil.typ = (
-    let actual_typ = (
-        match t with
-          | Cil.TNamed (tinfo, _) -> get_actual_cil_typ tinfo.Cil.ttype
-          | Cil.TComp (cinfo, _) -> (
-	        try
-                  let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
-                  get_actual_cil_typ ty
-                with _ -> t
-            )
-          | _ -> t
-    ) in
-    actual_typ
+(* remove all unnecessary attributes *)
+and get_core_cil_typ (t: Cil.typ) : Cil.typ = (
+  let actual_typ = (
+    match t with
+    | Cil.TVoid _ -> Cil.TVoid []
+    | Cil.TInt (ik, _) -> Cil.TInt (ik, [])
+    | Cil.TFloat (fk, _) -> Cil.TFloat (fk, [])
+    | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
+    | Cil.TArray (ty, e, _) -> Cil.TArray (get_core_cil_typ ty, e, [])
+    | Cil.TFun (ty, ids_opt, b, _) -> 
+        let new_ty = get_core_cil_typ ty in
+        let new_ids_opt = (match ids_opt with
+          | Some ids ->
+              let new_ids = List.map (fun (id,t,_) ->
+                (id, get_core_cil_typ t, [])
+              ) ids in
+              Some ids
+          | None -> None 
+        ) in
+        Cil.TFun (new_ty, new_ids_opt, b, [])
+    | Cil.TNamed (tinfo, _) -> get_core_cil_typ tinfo.Cil.ttype
+    | Cil.TComp (cinfo, _) -> (
+        try
+          let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
+          get_core_cil_typ ty
+        with _ -> t
+      )
+    | Cil.TEnum (enum, _) ->
+        let new_enum = {enum with Cil.eattr = []} in
+        Cil.TEnum (new_enum, []) 
+    | Cil.TBuiltin_va_list _ -> t
+  ) in
+  actual_typ
 )
 
-and translate_typ (t: Cil.typ) pos : Globals.typ =
+and translate_typ_x (t: Cil.typ) pos : Globals.typ =
   let newtype = 
     match t with
       | Cil.TVoid _ -> Globals.Void
@@ -829,29 +848,33 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
       | Cil.TInt _ -> Globals.Int
       | Cil.TFloat _ -> Globals.Float
       | Cil.TPtr (ty, _) -> (
-            let actual_ty = get_actual_cil_typ ty in
-            (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
-            let newt = (
-                (* find if this pointer was handled before or not *)
-                try 
-                  Hashtbl.find tbl_pointer_typ actual_ty
-                with Not_found -> (
-                    (* create new Globals.typ and Iast.data_decl update to hash tables *)
-                    let ftyp = translate_typ actual_ty pos in
-                    let fname = str_deref in
-                    let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
-                    let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
-                    let dfields = [val_field; offset_field] in
-                    let dname = (Globals.string_of_typ ftyp) ^ "_star" in
-                    let dtype = Globals.Named dname in
-                    Hashtbl.add tbl_pointer_typ actual_ty dtype;
-                    let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-                    Hashtbl.add tbl_data_decl dtype ddecl;
-                    (* return new type*)
-                    dtype
-                )
-            ) in
-            newt
+          let actual_ty = get_core_cil_typ ty in
+          (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
+          let newt = (
+            (* find if this pointer was handled before or not *)
+            try 
+              Hashtbl.find tbl_pointer_typ actual_ty
+            with Not_found -> (
+              (* create new Globals.typ and Iast.data_decl update to hash tables *)
+              let ftyp = translate_typ actual_ty pos in
+              let fname = str_deref in
+              let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
+              let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
+              let dfields = [val_field; offset_field] in
+              let dname = (Globals.string_of_typ ftyp) ^ "_star" in
+              let dtype = Globals.Named dname in
+              Hashtbl.add tbl_pointer_typ actual_ty dtype;
+              let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+              Debug.ninfo_hprint (add_str "actual_ty" string_of_cil_typ)
+                  actual_ty no_pos;
+              Debug.ninfo_hprint (add_str "new ddecl for pointer type"
+                  !Iast.print_data_decl) ddecl no_pos;
+              Hashtbl.add tbl_data_decl dtype ddecl;
+              (* return new type*)
+              dtype
+            )
+          ) in
+          newt
         )
       | Cil.TArray (ty, _, _) ->
             let arrayty = translate_typ ty pos in
@@ -859,13 +882,21 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
       | Cil.TFun _ ->
             report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
       | Cil.TNamed _ ->                                          (* typedef type *)
-            let ty = get_actual_cil_typ t in
+            let ty = get_core_cil_typ t in
             translate_typ ty pos
       | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
       | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
       | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
+
+
+and translate_typ (t: Cil.typ) pos : Globals.typ =
+  let pr_t = (add_str "cil type" string_of_cil_typ) in
+  let pr_res = (add_str "res" string_of_typ) in
+  Debug.no_1 "translate_typ" pr_t pr_res
+      (fun _ -> translate_typ_x t pos) t
+
 
 and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
@@ -1907,7 +1938,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   List.iter (fun gl ->
       match gl with
         | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
-              let actual_typ = get_actual_cil_typ tinfo.Cil.ttype in
+              let actual_typ = get_core_cil_typ tinfo.Cil.ttype in
               Hashtbl.add tbl_typedef tinfo.Cil.tname actual_typ;
         | _ -> ();
   ) globals;
