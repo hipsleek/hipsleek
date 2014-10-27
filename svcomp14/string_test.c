@@ -29,9 +29,9 @@ char* __VERIFIER_nondet_String(void) {
 
 
 
-int (cstrlen)(const char *s)
+int (cstrlen)(char *s)
  {
-   const char *p = s;
+   char *p = s;
    
    /* Loop over the data in s.  */
     while (*p != 'a')
