@@ -42,6 +42,11 @@ let simplify_disj f =
     if CP.is_disjunct f then pairwisecheck f
     else f 
   in f
+  
+let simplify_disj f =
+  let pr = !CP.print_formula in
+  Debug.no_1 "simplify_disj" pr pr
+    simplify_disj f
 
 let simplify_and_slit_disj f = 
   let f = simplify_disj f in
@@ -1243,7 +1248,7 @@ let search_nt_cond_ann lhs_uids ann =
     let params = List.concat (List.map CP.afv uid.CP.tu_args) in
     let cond = subst_cond_with_ann params ann uid.CP.tu_cond in
     { ntc_fn = fn;
-      ntc_id = uid.CP.tu_id;
+      ntc_id = if CP.is_Loop_uid uid then CP.loop_id else uid.CP.tu_id;
       ntc_cond = cond; }) uids 
   
 let search_rec_icond_ann lhs_uids ann =
@@ -1298,9 +1303,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         else la, sa, (oa @ [c])) ([], [], []) nt_conds 
       in
         
-      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in   *)
-      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in   *)
-      (* let _ = print_endline ("other_conds: " ^ (pr_list !CP.print_formula other_conds)) in *)
+      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
+      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
       
       if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)

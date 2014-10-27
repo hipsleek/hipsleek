@@ -1187,6 +1187,7 @@ let simplify (pe : CP.formula) : CP.formula =
   Debug.no_1 "simplify" pr pr simplify pe 
 
 let hull (f: CP.formula) : CP.formula = f
+
 let pairwisecheck (f: CP.formula): CP.formula = f
 
 (* Template Solving by Z3 *)
