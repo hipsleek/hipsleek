@@ -587,7 +587,7 @@ and create_int_to_pointer_casting_proc (pointer_typ_name: string) : Iast.proc_de
 
 and create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
   let typ_name = Globals.string_of_typ typ in
-  let proc_name = "__is_not_" ^ typ_name ^ "__" in
+  let proc_name = "__make_not_of_" ^ typ_name ^ "__" in
   try
     Hashtbl.find tbl_aux_proc proc_name
   with Not_found -> (
@@ -665,7 +665,7 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   ) in
   let typ1_name = string_of_typ typ1 in
   let typ2_name = string_of_typ typ2 in
-  let proc_name = "__" ^ op_name ^ "_" ^ typ1_name ^ "_" ^ typ2_name ^ "__" in
+  let proc_name = "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__" ^ typ2_name ^ "__" in
   try
     Hashtbl.find tbl_aux_proc proc_name
   with Not_found -> (
