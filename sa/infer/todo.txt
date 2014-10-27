@@ -324,6 +324,75 @@ y::cell<b> & truecase {
                   a<=b))) & e_1444=b; 
                   }
 =================================================================
+# dell3.ss 
+
+void loop(cell x,cell y)
+  infer [@shape
+         ,@post_n
+  ]
+
+Why @term capture an incomplete result:
+with only cbase-case?
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & x=1 & 
+y=2 --> looppost_1433().
+
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510 & x=1 & y=2 --> looppost_1433().
+
+ termAssume y'=y & x'=x & val_28_1511<val_28_1510 & v_bool_28_1444' & 
+val_28_1511<val_28_1510 & v_bool_28_1444' & v_int_30_1606+1=val_28_1510 & 
+val_30_1601=val_28_1510 & val_28_1510=v_int_30_1606 & x'=1 & 
+y=2 & looppre_0() --> looppre_0().
+
+
+Base/Rec Case Splitting:
+[	loop: [[2] true@B]
+]
+Termination Inference Result:
+loop:  requires x::cell<val_28_1510> * 
+y::cell<val_28_1511> & truerequires emp & Term[76,1]
+     ensures y::cell<val_28_1514> * 
+x::cell<val_28_1515> & val_28_1510<=val_28_1511 & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510;
+
+However, dell3a.ss had a better result
+
+Temporal Assumptions:
+ termAssume a<=b & !(v_bool_28_1440') & a<=b & !(v_bool_28_1440') & 
+d_1443=a & x=1 & y=2 --> looppost_1429(a,b).
+
+ termAssume (((d_1542=b_1534 & b_1534<a_1533) | (d_1542=a_1533 & 
+a_1533<=b_1534))) & x!=null & y!=null & b_1534=b & a_1533=v_int_30_1539 & 
+val_30_1532=a & v_int_30_1539+1=a & v_bool_28_1440' & b<a & 
+v_bool_28_1440' & b<a & d_1443=d_1542 & x=1 & 
+y=2 & looppost_1429(a_1533,b_1534) --> looppost_1429(a,b).
+
+ termAssume y'=y & x'=x & b<a & v_bool_28_1440' & b<a & v_bool_28_1440' & 
+v_int_30_1539+1=a & val_30_1532=a & a_1533=v_int_30_1539 & b_1534=b & x'=1 & 
+y=2 & looppre_0(a,b) --> looppre_0(a_1533,b_1534).
+
+
+Termination Inference Result:
+loop:  requires x::cell<a> * 
+y::cell<b> & truecase {
+                  a<=b -> requires emp & Term[76,1]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  b<a -> requires emp & Term[76,2,-1+(1*a)+(-1*
+                  b)]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  }
+
 =================================================================
 =================================================================
 =================================================================
