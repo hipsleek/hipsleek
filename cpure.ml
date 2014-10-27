@@ -4584,7 +4584,9 @@ let add_flow_var_pf (pf0 : p_formula) : p_formula =
   Debug.no_1 "add_flow_var_pf" pr pr add_flow_var_pf pf0
 
 let rec add_flow_var (f0 : formula) : formula =
-  match f0 with
+  let fv = fv f0 in
+  if List.mem (mk_typed_spec_var Int "flow") fv then f0
+  else match f0 with
     | BForm ((pf,ann),lbl) -> BForm ((add_flow_var_pf pf,ann),lbl)
     | And (f1,f2,pos) -> And (add_flow_var f1, add_flow_var f2, pos)
     | AndList al -> AndList (List.map (fun (t,f) -> (t, add_flow_var f)) al)

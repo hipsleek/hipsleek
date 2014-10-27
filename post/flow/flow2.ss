@@ -3,7 +3,7 @@ class Exp extends __Exc {
 }
 
 void loop(ref int x)
-  infer [@post_n]
+  infer [@flow,@post_n]
   requires true
   ensures  true & flow __flow;
 {
