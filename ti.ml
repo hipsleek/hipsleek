@@ -164,9 +164,12 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
+  let may_cond = mkNot (join_disjs (List.map get_cond conds)) in
+  if is_sat may_cond then conds @ [MayTerm may_cond]
+  else conds
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
-  conds
+  (* conds                                                            *)
   
 let case_split_init trrels turels = 
   let fn_trrels = 

@@ -57,6 +57,10 @@ let fp_imply f p =
 let f_is_sat f =
   let _, pf, _, _, _ = CF.split_components f in
   Tpdispatcher.is_sat_raw pf
+  
+let join_disjs f_lst = 
+  if is_empty f_lst then CP.mkFalse no_pos
+  else CP.join_disjunctions f_lst
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
 let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos
