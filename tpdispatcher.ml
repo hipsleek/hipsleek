@@ -2202,7 +2202,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | CM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else om_pairwisecheck f
-    | Z3 -> Smtsolver.pairwisecheck f
+    | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
     | Z3N -> Z3.pairwisecheck f
     | Redlog -> Redlog.pairwisecheck f
     | OCRed -> Redlog.pairwisecheck f

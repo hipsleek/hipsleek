@@ -22,7 +22,8 @@ int f(int a, int b) {
 	}
 }
 
-int g(int c, int d) {
+int g(int c, int d) 
+{
 	if (c == 0) {
 		return d;
 	} else {

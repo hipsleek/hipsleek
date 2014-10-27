@@ -12,6 +12,8 @@ let str_addr = "addr_"
 let str_deref = "deref"
 let str_offset = "offset"
 
+let eq_str s1 s2 = String.compare s1 s2 == 0
+
 let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
@@ -22,6 +24,9 @@ let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 1
 
 (* hash table map lval expressions (in string form) to their address holder generated-pointers *)
 let tbl_addrof_info : (string, string) Hashtbl.t = Hashtbl.create 1
+
+(* list of nondeterministic variables *)
+let nondet_vars : string list ref = ref []
 
 (* list of address-represented pointer declaration *)
 let aux_local_vardecls : Iast.exp list ref = ref []
@@ -38,7 +43,21 @@ let reset_global_vars () =
 (*         string conversion functions for CIL         *)
 (*******************************************************)
 let string_of_cil_exp (e: Cil.exp) : string =
-  Pretty.sprint 10 (Cil.d_exp () e)
+  (match e with
+  | Cil.Const _ -> "Const "
+  | Cil.Lval _ -> "Lval "
+  | Cil.SizeOf _ -> "SizeOf "
+  | Cil.SizeOfE _ -> "SizeOfE "
+  | Cil.SizeOfStr _ -> "SizeOfStr "
+  | Cil.AlignOf _ -> "AlignOf "
+  | Cil.AlignOfE _ -> "AlignOfE "
+  | Cil.UnOp _ -> "UnOp "
+  | Cil.BinOp _ -> "BinOp "
+  | Cil.Question _ -> "Question "
+  | Cil.CastE _ -> "CastE "
+  | Cil.AddrOf _ -> "AddrOf "
+  | Cil.StartOf _ -> "StartOf ") ^ 
+  (Pretty.sprint 10 (Cil.d_exp () e))
 
 let string_of_cil_unop (e: Cil.unop) : string =
   Pretty.sprint 10 (Cil.d_unop () e)
@@ -197,6 +216,25 @@ let startPos (loc: Globals.loc) : Lexing.position =
 
 let endPos (loc: Globals.loc) : Lexing.position =
   loc.Globals.end_pos
+  
+let is_arith_comparison_op op = 
+  match op with
+  | Cil.Lt
+  | Cil.Gt  
+  | Cil.Le
+  | Cil.Ge
+  | Cil.Eq
+  | Cil.Ne -> true
+  | _ -> false  
+
+let get_vars_exp (e: Iast.exp): ident list =
+  let f e =
+    match e with
+      | Iast.Var { Iast.exp_var_name = id } -> Some [id]
+      | Iast.CallRecv { Iast.exp_call_recv_method = id } -> Some [id]
+      | Iast.CallNRecv { Iast.exp_call_nrecv_method = id } -> Some [id]
+      | _ -> None
+  in Iast.fold_exp e f (List.concat) []  
 
 (**********************************************)
 (****** create intermediate procedures  *******)
@@ -1171,6 +1209,11 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           let pos = translate_location l in
           let le = translate_lval lv in
           let re = translate_exp exp in
+          let re_vars = get_vars_exp re in
+          (if Gen.BList.overlap_eq eq_str re_vars !nondet_vars then
+            let le_vars = get_vars_exp le in
+            nondet_vars := !nondet_vars @ le_vars
+           else ());
           (Iast.mkAssign Iast.OpAssign le re None pos)
       )
     | Cil.Call (lv_opt, exp, exps, l) -> (
@@ -1190,6 +1233,10 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                 | None -> func_call
                 | Some lv ->
                       let le = translate_lval lv in
+                      (if eq_str fname nondet_int_proc_name then
+                        let le_vars = get_vars_exp le in
+                        nondet_vars := !nondet_vars @ le_vars 
+                       else ());
                       Iast.mkAssign Iast.OpAssign le func_call None pos
           )
       )
@@ -1197,7 +1244,6 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           let pos = translate_location l in
           (Iast.Empty pos)
       )
-
 
 and translate_stmt (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
@@ -1242,19 +1288,34 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (
-            match exp with
-            (* simplify conditional expression in if-statement *)
-            | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) 
-              when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->
-                let e1 = translate_exp exp1 in
-                let e2 = translate_exp exp2 in
-                let o = translate_binary_operator op pos in
-                Iast.mkBinary o e1 e2 None pos
-            | _ ->
-                let e = translate_exp exp in
-                let bool_of_proc = create_bool_casting_proc new_ty in
-                let proc_name = bool_of_proc.Iast.proc_name in
-                Iast.mkCallNRecv proc_name None [e] None pos
+                  match exp with
+                  (* simplify conditional expression in if-statement *)
+                  (* | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) *)
+                  (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
+                  | Cil.BinOp (op, exp1, exp2, ty, l) 
+                    when (is_arith_comparison_op op) ->
+                      let e1 = translate_exp exp1 in
+                      let e2 = translate_exp exp2 in
+                      let o = translate_binary_operator op pos in
+                      Iast.mkBinary o e1 e2 None pos
+                  | _ ->
+                      let cast_e e ty = 
+                        let bool_of_proc = create_bool_casting_proc ty in
+                        let proc_name = bool_of_proc.Iast.proc_name in
+                        Iast.mkCallNRecv proc_name None [e] None pos
+                      in
+                      let e = translate_exp exp in
+                      let e_vars = get_vars_exp e in
+                      if (Gen.BList.overlap_eq eq_str e_vars !nondet_vars) then
+                        match new_ty with
+                        | Globals.Int -> 
+                          let zero = Iast.mkIntLit 0 pos in
+                          Iast.mkBinary Iast.OpGt e zero None pos
+                        | Globals.Float -> 
+                          let zero = Iast.mkFloatLit 0.0 pos in
+                          Iast.mkBinary Iast.OpGt e zero None pos 
+                        | _ -> cast_e e new_ty
+                      else cast_e e new_ty
                   )
           ) in
           let e1 = translate_block blk1 in
@@ -1758,7 +1819,8 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
-  aux_local_vardecls := [];
+    aux_local_vardecls := [];
+    nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
     let _ = gather_addrof_fundec fundec in
     (* start translating function *)
     let pos = match lopt with None -> no_pos | Some l -> translate_location l in
