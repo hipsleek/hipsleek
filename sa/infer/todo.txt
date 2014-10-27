@@ -66,7 +66,7 @@ cell.ss_10:9_10:14
 
  Why is there an emp case for GP16?
 =================================================================
-# cell5b.ss 
+# cell5b.ss:FIXED
 
   if (y.val<x.val) {
     y.val = y.val +1;
@@ -95,7 +95,7 @@ val_11_1258=val_10_1231 & x!=null & y'!=null&{FLOW,(4,5)=__norm}[]
     [emp&y_1275!=null & x_1274!=null; 
      y_1275::cell<val_10_1231> * x_1274::cell<val_10_1237>]]
 =================================================================
-# cell2ap.ss 
+# cell2ap.ss: FIXED
 
 How come post_n not performed after shape
 inference?
