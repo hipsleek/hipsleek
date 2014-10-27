@@ -1210,7 +1210,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -1464,7 +1464,7 @@ let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
-let tnt_thres = ref 5
+let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
