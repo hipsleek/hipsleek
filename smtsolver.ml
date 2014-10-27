@@ -578,7 +578,7 @@ let prover_process = ref {
 }
 
 
-let smtsolver_path = (* "z3-4.3.2" *) "z3"
+let smtsolver_path = "z3-4.3.2" (* "z3" *)
 
 (***********)
 let test_number = ref 0
