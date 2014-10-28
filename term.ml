@@ -552,10 +552,11 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (_, TermR _) ->
         let estate = process_turel true estate in
         (estate, lhs_p, rhs_p, None)
-      | (TermU _, _) -> begin
+      | (TermU uid, _) -> begin
         match t_ann_d with
         | Term -> (* Only add Call Relation of methods in the same scc *) 
-          let termu_src_order = get_call_order src_lv in
+          (* let termu_src_order = get_call_order src_lv in *)
+          let termu_src_order = uid.tu_call_num in
           let term_dst_order = get_call_order dst_lv in
           if termu_src_order > term_dst_order then
             (estate, lhs_p, rhs_p, None)

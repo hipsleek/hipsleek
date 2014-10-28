@@ -3189,55 +3189,55 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * Primitive functions: Term[] 
        * User-defined functions: MayLoop 
        * or TermR and TermU if @term *)
-      let fname = proc.I.proc_name in
       let args = List.map (fun p ->
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in
-      let rec find_vars sp = match sp with
-        | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []
-        | IF.EBase b -> b.IF.formula_struc_implicit_inst
-        | _ -> [] in
-      let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in
-      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
-      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
-      let imp_spec_vars = CF.collect_important_vars_in_spec true static_specs_list in
-      let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
-      let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
-      let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in
-      let params = imp_spec_vars @ params  in
-      let params = List.filter
-        (fun sv -> match sv with
-          | CP.SpecVar(t,_,_) ->
-            (match t with
-            | Int | Bool -> true
-            | _ -> false)) params in
-      let pos = proc.I.proc_loc in
+      (* let fname = proc.I.proc_name in                                                                                        *)
+      (* let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in                                              *)
+      (* let rec find_vars sp = match sp with                                                                                   *)
+      (*   | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []                                                             *)
+      (*   | IF.EBase b -> b.IF.formula_struc_implicit_inst                                                                     *)
+      (*   | _ -> [] in                                                                                                         *)
+      (* let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in                   *)
+      (* (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)                  *)
+      (* (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *) *)
+      (* let imp_spec_vars = CF.collect_important_vars_in_spec true static_specs_list in                                        *)
+      (* let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in                      *)
+      (* let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in          *)
+      (* let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in              *)
+      (* let params = imp_spec_vars @ params  in                                                                                *)
+      (* let params = List.filter                                                                                               *)
+      (*   (fun sv -> match sv with                                                                                             *)
+      (*     | CP.SpecVar(t,_,_) ->                                                                                             *)
+      (*       (match t with                                                                                                    *)
+      (*       | Int | Bool -> true                                                                                             *)
+      (*       | _ -> false)) params in                                                                                         *)
+      (* let pos = proc.I.proc_loc in                                                                                           *)
 
-      let utpre_name = fname ^ "pre" in
-      let utpost_name = fname ^ "post" in
+      (* let utpre_name = fname ^ "pre" in                                                                                      *)
+      (* let utpost_name = fname ^ "post" in                                                                                    *)
 
-      let utpre_decl = {
-        C.ut_name = utpre_name;
-        C.ut_params = params;
-        C.ut_is_pre = true;
-        C.ut_pos = pos } in
-      let utpost_decl = { utpre_decl with
-        C.ut_name = utpost_name;
-        C.ut_is_pre = false; } in
+      (* let utpre_decl = {                                                                                                     *)
+      (*   C.ut_name = utpre_name;                                                                                              *)
+      (*   C.ut_params = params;                                                                                                *)
+      (*   C.ut_is_pre = true;                                                                                                  *)
+      (*   C.ut_pos = pos } in                                                                                                  *)
+      (* let utpost_decl = { utpre_decl with                                                                                    *)
+      (*   C.ut_name = utpost_name;                                                                                             *)
+      (*   C.ut_is_pre = false; } in                                                                                            *)
 
-      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
-      let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
+      (* let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in           *)
+      (* let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in                                                            *)
 
-      let uid = {
-        CP.tu_id = 0;
-        CP.tu_sid = fname;
-        CP.tu_fname = fname;
-        CP.tu_call_num = 0;
-        CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-        CP.tu_cond = CP.mkTrue pos;
-        CP.tu_icond = CP.mkTrue pos;
-        CP.tu_sol = None;
-        CP.tu_pos = pos; } in
+      (* let uid = {                                                                                                            *)
+      (*   CP.tu_id = 0;                                                                                                        *)
+      (*   CP.tu_sid = fname;                                                                                                   *)
+      (*   CP.tu_fname = fname;                                                                                                 *)
+      (*   CP.tu_call_num = 0;                                                                                                  *)
+      (*   CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;                                                              *)
+      (*   CP.tu_cond = CP.mkTrue pos;                                                                                          *)
+      (*   CP.tu_icond = CP.mkTrue pos;                                                                                         *)
+      (*   CP.tu_sol = None;                                                                                                    *)
+      (*   CP.tu_pos = pos; } in                                                                                                *)
 
       let static_specs_list =
         if not !Globals.dis_term_chk then

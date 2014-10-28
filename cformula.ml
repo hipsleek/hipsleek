@@ -14919,10 +14919,13 @@ let norm_lexvar_for_infer uid (f: formula): formula * bool =
     match pf with
     | LexVar t_info ->
       let has_mayloop, nann = match t_info.lex_ann with
-      | MayLoop -> true, CP.mkUTPre uid
-      | _ -> false, t_info.lex_ann in
+        | MayLoop -> true, CP.mkUTPre uid
+        | _ -> false, t_info.lex_ann in
+      let call_num = uid.CP.tu_call_num in
+      let pos = t_info.lex_loc in
       let npf = LexVar { t_info with
         lex_ann = nann;
+        lex_exp = if has_mayloop then (mkIConst call_num pos)::t_info.lex_exp else t_info.lex_exp;
         lex_fid = uid.CP.tu_fname;
         lex_tmp = uid.CP.tu_args } in
       Some ((npf, il), has_mayloop)
@@ -15043,10 +15046,10 @@ let add_inf_post_struc f =
 let rec add_term_nums_struc struc_f log_vars call_num add_phase = 
   match struc_f with
   | ECase ef ->
-      let n_cl, pvs  = map_l_snd_res (fun c-> add_term_nums_struc c log_vars call_num add_phase) ef.formula_case_branches in
+      let n_cl, pvs  = map_l_snd_res (fun c -> add_term_nums_struc c log_vars call_num add_phase) ef.formula_case_branches in
       (ECase { ef with formula_case_branches = n_cl }, List.concat pvs)
   | EBase ef ->
-      let n_cont, pvc = map_opt_res (fun c-> add_term_nums_struc c log_vars call_num add_phase) ef.formula_struc_continuation in
+      let n_cont, pvc = map_opt_res (fun c -> add_term_nums_struc c log_vars call_num add_phase) ef.formula_struc_continuation in
       let n_base, pvb = add_term_nums_formula ef.formula_struc_base log_vars call_num add_phase in
       (EBase { ef with
         formula_struc_base = n_base;
