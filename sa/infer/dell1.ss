@@ -20,7 +20,7 @@ void main(cell x, cell y)
 
 void loop(cell x,cell y)
   infer [@shape
-         //,@post_n
+         ,@post_n
   ]
   requires true
   ensures true;
