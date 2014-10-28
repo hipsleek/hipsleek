@@ -1,5 +1,5 @@
 int fact(int x)
-  infer [@term,x]
+  infer [@term]
   requires true
   ensures //true
   res >= 1

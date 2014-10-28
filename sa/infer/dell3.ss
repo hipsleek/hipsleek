@@ -19,10 +19,11 @@ void main(cell x, cell y)
 */
 
 void loop(cell x,cell y)
-  infer [@shape
-         ,@post_n,@term
+  infer [//@shape
+         //,@post_n,
+         @term
   ]
-  requires true
+  requires x::cell<v1> * y::cell<v2>
   ensures true;
 {
   if (y.val<x.val) {

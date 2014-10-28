@@ -234,44 +234,47 @@ let is_infer_term_scc scc =
   List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
   
 let add_term_relation_proc prog proc spec = 
-  let fname = proc.proc_name in
-  let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
-  let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
-  let params = imp_spec_vars @ params  in
-  let params = List.filter (fun sv -> 
-    match sv with
-    | CP.SpecVar(t, _, _) -> (match t with
-      | Int | Bool -> true
-      | _ -> false)) params in
-  let pos = proc.proc_loc in
-
-  let utpre_name = fname ^ "pre" in
-  let utpost_name = fname ^ "post" in
-
-  let utpre_decl = {
-    ut_name = utpre_name;
-    ut_params = params;
-    ut_is_pre = true;
-    ut_pos = pos } in
-  let utpost_decl = { utpre_decl with
-    ut_name = utpost_name;
-    ut_is_pre = false; } in
-
-  let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
-  let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
-  let _ = prog.prog_ut_decls <- ([utpre_name; utpost_name] @ prog.prog_ut_decls) in
-
-  let uid = {
-    CP.tu_id = 0;
-    CP.tu_sid = fname;
-    CP.tu_fname = fname;
-    CP.tu_call_num = 0;
-    CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-    CP.tu_cond = CP.mkTrue pos;
-    CP.tu_icond = CP.mkTrue pos;
-    CP.tu_sol = None;
-    CP.tu_pos = pos; } in
-  CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
+  let is_primitive = not (proc.proc_is_main) in
+  if is_primitive then spec
+  else
+    let fname = unmingle_name proc.proc_name in
+    let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
+    let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
+    let params = imp_spec_vars @ params  in
+    let params = List.filter (fun sv -> 
+      match sv with
+      | CP.SpecVar(t, _, _) -> (match t with
+        | Int | Bool -> true
+        | _ -> false)) params in
+    let pos = proc.proc_loc in
+  
+    let utpre_name = fname ^ "pre" in
+    let utpost_name = fname ^ "post" in
+  
+    let utpre_decl = {
+      ut_name = utpre_name;
+      ut_params = params;
+      ut_is_pre = true;
+      ut_pos = pos } in
+    let utpost_decl = { utpre_decl with
+      ut_name = utpost_name;
+      ut_is_pre = false; } in
+  
+    let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
+    (* let _ = ut_decls # push_list [utpre_decl; utpost_decl] in *)
+    let _ = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
+  
+    let uid = {
+      CP.tu_id = 0;
+      CP.tu_sid = fname;
+      CP.tu_fname = fname;
+      CP.tu_call_num = 0;
+      CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+      CP.tu_cond = CP.mkTrue pos;
+      CP.tu_icond = CP.mkTrue pos;
+      CP.tu_sol = None;
+      CP.tu_pos = pos; } in
+    CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
   
 let add_term_relation_scc prog scc =
   List.iter (fun proc ->

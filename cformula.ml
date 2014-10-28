@@ -14984,6 +14984,13 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f =
       (is_tnt_inf || ei.formula_inf_obj # is_term) uid_opt ei.formula_inf_continuation }
   | EList el -> mkEList_no_flatten (map_l_snd norm_f el)
 
+let norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f =
+  if is_primitive then norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f
+  else
+    let pr = !print_struc_formula in
+    Debug.no_1 "norm_struc_with_lexvar" pr pr 
+      (fun _ -> norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f) struc_f
+
 (* TNT: Add inf_obj from cmd line *)
 let rec add_inf_cmd_struc is_primitive f =
   if is_primitive || Globals.infer_const_obj # is_empty then f
