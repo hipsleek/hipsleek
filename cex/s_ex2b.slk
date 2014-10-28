@@ -7,6 +7,7 @@ pred_prim add<n:int>
 // expect Valid.
 checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
 // OK
+print residue.
 
 
 // lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
