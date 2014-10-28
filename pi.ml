@@ -314,6 +314,7 @@ let rec turn_off_infer_pure spec old_spec =
           let old_inf_obj = ei.CF.formula_inf_obj # clone in
           let _ = old_inf_obj # reset INF_POST in
           let _ = old_inf_obj # reset INF_PRE in
+          let _ = old_inf_obj # reset INF_SHAPE in
           CF.EInfer {ei with
               CF.formula_inf_obj = old_inf_obj;
               CF.formula_inf_vars = [];
