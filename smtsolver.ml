@@ -535,16 +535,16 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let _ = Debug.binfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
+  let _ = Debug.ninfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let _ = Debug.binfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let _ = Debug.ninfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let _ = Debug.binfo_pprint "model:" no_pos in
-  let _ = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
+  let _ = Debug.ninfo_pprint "model:" no_pos in
+  let _ = List.map (fun s -> Debug.ninfo_pprint s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model
@@ -703,7 +703,7 @@ let check_formula f timeout =
        (push) ... (pop) (push) ... (pop) .... may lead to some error
        due to some declartions are duplicated, which should be remove
        by (pop)
-       - Use (reset) can remove all declarations, but it slow z3 down significantly
+       - Use (reset) can remove all declarations, but it slows z3 down significantly
     *)
     (* let new_f = "(push)\n" ^ f ^ "(pop)\n" in *)
     (* let new_f = "(reset)\n" ^ f in *)
@@ -777,9 +777,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
   let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
   (* Antecedent and consequence : split /\ into small asserts for easier management *)
-  Debug.binfo_hprint (add_str "ante" !CP.print_formula) ante no_pos;
+  Debug.ninfo_hprint (add_str "ante" !CP.print_formula) ante no_pos;
   let ante_clauses = CP.split_conjunctions ante in
-  Debug.binfo_hprint (add_str "ante_clauses" (pr_list_ln !CP.print_formula)) ante_clauses no_pos;
+  Debug.ninfo_hprint (add_str "ante_clauses" (pr_list_ln !CP.print_formula)) ante_clauses no_pos;
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
@@ -1074,7 +1074,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
   ) in
   if (should_run_smt) then
     let input = to_smt pr_weak pr_strong ante (Some conseq) prover in
-    Debug.binfo_hprint (add_str "smt_imply input" pr_id) input no_pos;
+    Debug.ninfo_hprint (add_str "smt_imply input" pr_id) input no_pos;
     (* let input = if (Cpure.contains_exists conseq) then ("(set-option :mbqi true)\n" ^ input) else input in *)
     let _ = !set_generated_prover_input input in
     let output =

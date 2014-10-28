@@ -5,25 +5,42 @@ pred_prim add<n:int>
   inv true.
 
 // expect Valid.
-// checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
+checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
 // OK
 
 
-lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
-   -> ss::state<L2> & L2 = append(L1,[n]).
+// lemma_prop "lemma_prop_list" ss::state<L1> * ss::add<n> & true
+//    -> ss::state<L2> & L2 = append(L1,[n]).
 
-lemma_unsafe "lemma_unsafe_list" self::state<L1> * self::add<n> & true
-   -> self::state<L2> & L2 = append(L1,[n]).
+lemma_prop "lemma_prop_list" self::state<L1> * self::add<n> & true
+    -> self::state<L2> & L2 = append(L1,[n]).
+
+// lemma_unsafe "lemma_unsafe_list" self::state<L1> * self::add<n> & true
+//    -> self::state<L2> & L2 = append(L1,[n]).
 
 // expect Valid
 checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4]>.
 print residue.
 // OK
 
+checkentail cx::state<[1,2,3]> * cx::add<4> * cx::add<5> |- cx::state<[1,2,3,4,5]>.
+print residue.
+
+checkentail cx::state<[1,2,3]> * cx::add<5> * cx::add<4> |- cx::state<[1,2,3,4]>.
+print residue.
+
 // expect Invalid
-// checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4,5]>.
-// print residue.
-// Not OK.Bug!
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4,5]>.
+print residue.
+
+// expect Invalid
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[2,1,3,4]>.
+print residue.
+
+// expect Invalid
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,3,4]>.
+print residue.
+
 
 // check_normalize cx::state<[1,2,3]> * cx::add<4>.
 // print residue.
