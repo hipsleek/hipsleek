@@ -1,1 +1,1 @@
-../hip $1 > result/out.$1
+../hip $1 --print-min > result/out.$1

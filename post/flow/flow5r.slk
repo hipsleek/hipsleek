@@ -1,0 +1,48 @@
+
+relation P(int x).
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __norm |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __Exc  |- P(x) & flow __flow.
+print residue.
+
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __flow  |- P(x) & flow __flow.
+print residue.
+
+//relation_infer[][P].
+
+/*
+# flow5r.slk
+
+ infer [P,@flow] P(x1) & x1=x-1 & flow __norm |- P(x) & flow __flow.
+ infer [P,@flow] P(x1) & x1=x-1 & flow __Exc  |- P(x) & flow __flow.
+ infer [P,@flow] P(x1) & x1=x-1 & flow __flow  |- P(x) & flow __flow.
+
+GOT
+---
+ inferred rel: [RELDEFN P(__norm#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: ( P(x1) & x1+1=x) -->  P(x)]
+
+
+First scenario is normal one. We should provide the following answer
+instead:
+ inferred rel: [RELDEFN P: ( P(x1) & x1+1=x) -->  P(x)]
+
+Second scenario means that there is an exception after the recursive
+loop. We must therefore provide two relational assumptions,
+one for the exception and one for the loop; as follows:
+ inferred rel: [RELDEFN P(_Exc#E): ( x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: (P(x1) & x1+1=x) -->  P(x)]
+Reason is that recursion has already been entered, and the 
+recursion occurred after coming back from the recursion.
+
+Third scenario is impossible since LHS must not be __flow.
+We should print a warning message when this occurs; and 
+do not provide any relational assumptions.
+
+*/
+
+

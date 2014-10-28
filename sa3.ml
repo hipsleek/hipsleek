@@ -920,7 +920,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       let hp_opt = Cformula.extract_hrel_head cs.Cformula.hprel_rhs in
       match hp_opt with
         | None -> false
-        | Some hp -> CP.mem_svl hp link_hps (*Cformula.isStrictConstHTrue cs.Cformula.hprel_rhs*)
+        | Some hp -> CP.mem_svl hp link_hps (* Cformula.isStrictConstHTrue cs.Cformula.hprel_rhs *)
               && (cs.Cformula.hprel_guard != None)
   ) pr_pdefs in
   (*group*)
@@ -1006,9 +1006,11 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
         Cformula.add_quantifiers quan_null_svl0 (Cformula.subst ss base_f2)
       else f2
     in
+    (* fresh non-shape values *)
+    let f4 = Cfutil.fresh_data_v f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
-    (f3,Cformula.subst_opt subst og, unk_args1)
+    (f4,Cformula.subst_opt subst og, unk_args1)
   in
   DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
@@ -1045,7 +1047,10 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
             ) ([],[],[],[]) par_defs in
             let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
             (* let defs = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args0 f1 f2) defs0 in *)
-            let defs_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+            let defs0a_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) defs0_wg in
+            let defs_wg = if is_pre && List.length defs0a_wg > 1 then defs0a_wg else
+              List.filter (fun (f,_) -> not (CF.isAnyConstFalse f)) defs0a_wg
+            in
             let defs = List.map fst defs_wg in
             let _ = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
             let _ = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in
@@ -1547,7 +1552,7 @@ let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps pos
   let par_defs1 = List.concat (List.map (get_pdef_body unk_hps post_hps) par_defs) in
   let par_defs2 = (* List.filter is_valid_pardef *) par_defs1 in
   let groups = partition_pdefs_by_hp_name par_defs2 [] in
-  (*do not generate anyting for LINK preds*)
+  (*do not generate anything for LINK preds*)
   let groups1 = List.filter (fun grp ->
       match grp with
         | [] -> false
@@ -2193,7 +2198,13 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
   ) ([],[]) pdefs_fix_pre_grps0 (* pdefs_grps0 *) in
   let _, _, new_map = Sacore.generate_xpure_view_hp (List.map Sacore.build_args_locs n_unk_hpargs) is.CF.is_unk_map in
   let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
-    (is.Cformula.is_dang_hpargs@n_unk_hpargs, is.Cformula.is_link_hpargs)
+    (* dang predicate has at least one inst arg *)
+    let n_dang_hps, n_link_hps = List.partition (fun (hp,args) ->
+        let locs_i = Sautil.get_pos_of_hp_args_inst prog hp in
+        let args_inst = Sautil.retrieve_args_from_locs args locs_i in
+        args_inst != []
+    ) n_unk_hpargs in
+    (is.Cformula.is_dang_hpargs@n_dang_hps, is.Cformula.is_link_hpargs@n_link_hps)
   else (is.Cformula.is_dang_hpargs, is.Cformula.is_link_hpargs@n_unk_hpargs)
   in
   let _ = DD.ninfo_hprint (add_str "  n_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in
@@ -2698,11 +2709,11 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     is_post_oblg1.Cformula.is_post_hps is_post_oblg1.Cformula.is_unk_map is_post_oblg1.Cformula.is_hp_equivs
   in
   let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
-    let defs3a = Sacore.transform_xpure_to_pure prog defs2 is_post_oblg1.CF.is_unk_map
+    let defs3a,remain_links = Sacore.transform_xpure_to_pure prog defs2 is_post_oblg1.CF.is_unk_map
       (is_post_oblg1.Cformula.is_link_hpargs@htrue_hpargs) in
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
-    (defs3a, List.filter (fun (hp,_) -> CP.mem_svl hp is_post_oblg1.CF.is_sel_hps) is_post_oblg1.CF.is_link_hpargs)
+    (defs3a, remain_links@(List.filter (fun (hp,_) -> CP.mem_svl hp is_post_oblg1.CF.is_sel_hps) is_post_oblg1.CF.is_link_hpargs))
   else (Sacore.elim_dangling_conj_heap prog defs2 (List.map fst (is_post_oblg1.CF.is_link_hpargs@is_post_oblg1.CF.is_dang_hpargs@htrue_hpargs)),is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
   in
   {is_post_oblg1 with Cformula.is_link_hpargs = link_hpargs3;
@@ -2879,7 +2890,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
     in non-dangling branches.
   *)
   let process_path_defs_setting globals_unk_hps is =
-    (* let _ = print_endline ("Infer state before: " ^ (Cprinter.string_of_infer_state_short is)) in *)
+    (* let _ = print_endline ("Infer state before: " ^ (Cprinter.string_of_infer_state is)) in *)
     let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
     (* let _ = List.map (fun (sp, spl) -> print_endline ("dang: " ^ (Cprinter.string_of_spec_var sp))) dang_hpargs in *)
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_link_hpargs in
@@ -2907,6 +2918,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
         (dang_hpargs@new_unk_hpargs, link_hpargs)
       else (dang_hpargs, link_hpargs@new_unk_hpargs)
       in
+      (* let _ = DD.info_hprint (add_str "n_dang_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_dang_hpargs no_pos in *)
+      (* let _ = DD.info_hprint (add_str "n_link_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in *)
       let is1 = {is with Cformula.is_hp_defs = n_hp_defs;
           Cformula.is_dang_hpargs = n_dang_hpargs;
           Cformula.is_link_hpargs = n_link_hpargs;
@@ -2919,6 +2932,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
     let hp_defs1,tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
     let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_link_hpargs in
+    let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_dang_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_dang_hpargs no_pos in
+    let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_link_hpargs no_pos in
     let hp_defs1,tupled_defs = Sautil.partition_tupled is.Cformula.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then

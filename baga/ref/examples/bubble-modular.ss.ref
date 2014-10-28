@@ -1,0 +1,240 @@
+
+!!!Full processing file "examples/bubble-modular.ss"
+Parsing file "examples/bubble-modular.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(S1:exists(qs:sm_37=qs & exists(lg_39:lg_39=lg & 
+qs=lg_39) & sm<=qs & S1={qs}) & S=union(S1,{sm}))) & exists(q:q!=null) & 
+exists(sm_38:sm_38=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1453}")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(sm_38:exists(qs_1453:exists(lg_1454:exists(lg_39:lg_39=lg & 
+lg_1454=lg_39) & qs_1453=lg_1454) & 
+exists(S1_1455:exists(S1:exists(qs:sm_38=qs & sm<=qs & qs<=qs_1453 & 
+S1=union(S1_1455,{qs})) & S=union(S1,{sm})) & S1_1455={qs_1453}) & 
+sm_37=qs_1453) & sm_38=sm)) & exists(q_1451:q_1451!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1453}")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(sm_38:exists(qs_1453:exists(lg_1454:exists(lg_1459:exists(lg_39:lg_39=lg & 
+lg_1459=lg_39) & lg_1454=lg_1459) & qs_1453=lg_1454) & 
+exists(S1_1455:exists(qs_1458:exists(S1_1460:exists(S1:exists(qs:sm_38=qs & 
+sm<=qs & qs<=qs_1458 & S1=union(S1_1460,{qs})) & S=union(S1,{sm})) & 
+S1_1460=union(S1_1455,{qs_1458})) & sm_38=qs_1458 & qs_1458<=qs_1453) & 
+S1_1455={qs_1453}) & sm_37=qs_1453) & sm_38=sm)) & 
+exists(q_1451:q_1451!=null) & exists(q_1456:q_1456!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {sm}")
+ Formula: S={sm}
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(S1:exists(qs:sm_37=qs & exists(lg_39:lg_39=lg & 
+qs=lg_39) & sm<=qs & S1={qs}) & S=union(S1,{sm}))) & exists(q:q!=null) & 
+exists(sm_38:sm_38=sm)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1453}")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(sm_38:exists(qs_1453:exists(lg_1454:exists(lg_39:lg_39=lg & 
+lg_1454=lg_39) & qs_1453=lg_1454) & 
+exists(S1_1455:exists(S1:exists(qs:sm_38=qs & sm<=qs & qs<=qs_1453 & 
+S1=union(S1_1455,{qs})) & S=union(S1,{sm})) & S1_1455={qs_1453}) & 
+sm_37=qs_1453) & sm_38=sm)) & exists(q_1451:q_1451!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {qs_1453}")
+ Formula: exists(flted_9_36:flted_9_36=null) & 
+exists(sm_37:exists(sm_38:exists(qs_1453:exists(lg_1454:exists(lg_1459:exists(lg_39:lg_39=lg & 
+lg_1459=lg_39) & lg_1454=lg_1459) & qs_1453=lg_1454) & 
+exists(S1_1455:exists(qs_1458:exists(S1_1460:exists(S1:exists(qs:sm_38=qs & 
+sm<=qs & qs<=qs_1458 & S1=union(S1_1460,{qs})) & S=union(S1,{sm})) & 
+S1_1460=union(S1_1455,{qs_1458})) & sm_38=qs_1458 & qs_1458<=qs_1453) & 
+S1_1455={qs_1453}) & sm_37=qs_1453) & sm_38=sm)) & 
+exists(q_1451:q_1451!=null) & exists(q_1456:q_1456!=null) & exists(q:q!=null)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(S1,{sm})")
+ Formula: exists(S1:S=union(S1,{sm}))
+
+WARNING: examples/bubble-modular.ss_9:2_9:64:view defn for sll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([self], n=1 & sm=lg),
+([self], 1<n & sm<=lg)])
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Anon_13:Anon_13={}) & exists(r:r=null) & 
+exists(flted_25_32:flted_25_32+1=n & flted_25_32=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(r_1465:r_1465=null) & 
+exists(flted_25_1466:exists(flted_25_32:flted_25_32+1=n & flted_25_1466+
+1=flted_25_32) & flted_25_1466=0) & exists(Anon_1467:Anon_1467={})
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(r_1465:r_1465=null) & 
+exists(flted_25_1466:exists(flted_25_1469:exists(flted_25_32:flted_25_32+
+1=n & flted_25_1469+1=flted_25_32) & flted_25_1466+1=flted_25_1469) & 
+flted_25_1466=0) & exists(Anon_1467:Anon_1467={})
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Anon_13:Anon_13={}) & exists(r:r=null) & 
+exists(flted_25_32:flted_25_32+1=n & flted_25_32=0)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(r_1465:r_1465=null) & 
+exists(flted_25_1466:exists(flted_25_32:flted_25_32+1=n & flted_25_1466+
+1=flted_25_32) & flted_25_1466=0) & exists(Anon_1467:Anon_1467={})
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(r_1465:r_1465=null) & 
+exists(flted_25_1466:exists(flted_25_1469:exists(flted_25_32:flted_25_32+
+1=n & flted_25_1469+1=flted_25_32) & flted_25_1466+1=flted_25_1469) & 
+flted_25_1466=0) & exists(Anon_1467:Anon_1467={})
+
+WARNING: examples/bubble-modular.ss_24:12_24:34:view defn for ll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & n=0),
+([self], 0<n)])
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d})) & Sb1={}) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1489:exists(sn_33:sn_33=sn & sn_33<=d & 
+sn_1489=sn_33)) & exists(bg_1490:exists(bg_34:d<bg_34 & bg_34=bg & 
+bg_1490=bg_34)) & sn<=d & d<bg & exists(Sb1_1491:exists(Sb1:Sb=union(Sb1,
+{d}) & Sb1=union(Sb1_1491,{d})) & Sb1_1491={}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1489:exists(sn_1494:exists(sn_33:sn_33=sn & sn_33<=d & 
+sn_1494=sn_33) & sn_1494<=d & sn_1489=sn_1494)) & 
+exists(bg_1490:exists(bg_1495:exists(bg_34:d<bg_34 & bg_34=bg & 
+bg_1495=bg_34) & d<bg_1495 & bg_1490=bg_1495)) & sn<=d & d<bg & 
+exists(Sb1_1491:exists(Sb1_1496:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1496,{d})) & Sb1_1496=union(Sb1_1491,{d})) & Sb1_1491={}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d})) & Sb1={}) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1489:exists(sn_33:sn_33=sn & sn_33<=d & 
+sn_1489=sn_33)) & exists(bg_1490:exists(bg_34:d<bg_34 & bg_34=bg & 
+bg_1490=bg_34)) & sn<=d & d<bg & exists(Sb1_1491:exists(Sb1:Sb=union(Sb1,
+{d}) & Sb1=union(Sb1_1491,{d})) & Sb1_1491={}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  {}")
+ Formula: exists(d:exists(sn_1489:exists(sn_1494:exists(sn_33:sn_33=sn & sn_33<=d & 
+sn_1494=sn_33) & sn_1494<=d & sn_1489=sn_1494)) & 
+exists(bg_1490:exists(bg_1495:exists(bg_34:d<bg_34 & bg_34=bg & 
+bg_1495=bg_34) & d<bg_1495 & bg_1490=bg_1495)) & sn<=d & d<bg & 
+exists(Sb1_1491:exists(Sb1_1496:exists(Sb1:Sb=union(Sb1,{d}) & 
+Sb1=union(Sb1_1496,{d})) & Sb1_1496=union(Sb1_1491,{d})) & Sb1_1491={}))
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Sb1,{d})")
+ Formula: exists(Sb1:exists(d:sn<=d & d<bg & Sb=union(Sb1,{d}))) & 
+exists(sn_33:sn_33=sn)
+
+WARNING: examples/bubble-modular.ss_17:2_17:40:view defn for bnd has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & n=0),
+([self], 0<n)])
+
+
+Mona is restarting ... cycle limit reached
+
+Checking procedure bubble$node... Proving binding in method bubble$node for spec  EAssume 
+   
+   (exists n_1519,sm_1520,lg_1521,
+   S_1522: xs::sll{}<n_1519,sm_1520,lg_1521,S_1522>&
+   
+ AndList( "":!(res) & Sb=S_1522 & (((xs=null & n=0) | (xs>0 & 0<n) | 
+              (xs=null & n=0) | (xs>0 & 0<n)))
+    ; "n":n_1519=n) &{FLOW,(4,5)=__norm})[]
+   or (exists n_1523,Anon_1524,Anon_1525,
+      S1_1526: xs::sll{}<n_1523,Anon_1524,Anon_1525,S1_1526>&
+      
+ AndList( "":0<=n & res & (((xs=null & n=0) | (xs>0 & 0<n) | 
+                 (xs=null & n=0) | (xs>0 & 0<n)))
+       ; "n":n_1523=n) &{FLOW,(4,5)=__norm})[]
+   
+   , Line 0
+
+( []) bind: node  xs'::node<val_46_1405',next_46_1406'>@L cannot be derived from context
+examples/bubble-modular.ss_46:6_46:13
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: do_unmatched_rhs : xs'::node<val_46_1405',next_46_1406'>@L
+                   fc_current_lhs_flow: {FLOW,(6,10)=__Error}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+       FAIL_OR 
+        
+         fe_kind: Valid
+         fe_name: 
+         fe_locs: Failure_Valid
+[[empty]]
+       FAIL_OR 
+        
+         fe_kind: Valid
+         fe_name: 
+         fe_locs: Failure_Valid
+[[empty]]
+       
+ ]examples/bubble-modular.ss_46:6_46:13
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/bubble-modular.ss",Line:46,Col:6
+
+Procedure bubble$node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure bubble$node
+
+Checking procedure bsort$node... 
+Post condition cannot be derived:
+  (may) cause: OrL[ 
+ AndList( "Sb":Sb!=({}) & Sb_1607=Sb)  |-  
+ AndList( "S":Sb_1633=Sb) . LOCS:[68;73;69] (may-bug), true |-  
+ AndList( "S":Sb_1633=Sb) . LOCS:[0;69] (may-bug)]
+OrR
+  (may) cause: OrL[ 
+ AndList( "Sb":Sb!=({}) & Sb_1607=Sb)  |-  
+ AndList( "S":Sb_1607=Sb) . LOCS:[68;73;69] (may-bug), true |-  
+ AndList( "S":Sb_1607=Sb) . LOCS:[0;69] (may-bug)]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/bubble-modular.ss",Line:75,Col:4
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+Procedure bsort$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure bsort$node
+
+0 false contexts at: ()

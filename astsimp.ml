@@ -1524,8 +1524,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
-          let ut_vs = cuts @ C.ut_decls # get_stk in
-          let _ = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
+    let ut_vs = cuts @ C.ut_decls # get_stk in
+    let _ = Debug.ninfo_hprint (add_str "ut_vs added" (pr_list (fun ut -> ut.C.ut_name))) ut_vs no_pos in
 	  let cprog = {
 	      C.prog_data_decls = cdata;
 	      C.prog_view_decls = cviews2;
@@ -1533,7 +1533,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
 	      C.prog_templ_decls = ctempls;
-              C.prog_ut_decls = (ut_vs);
+        C.prog_ut_decls = (ut_vs);
 	      C.prog_hp_decls = chps;
 	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -1762,10 +1762,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   let rec helper n do_not_compute_flag =
     (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
-      (     
+      (
           let old_baga_imm_flag = !Globals.baga_imm in
           let _ = Globals.baga_imm := true in
-	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in	
+	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in
           let _ = Globals.baga_imm := old_baga_imm_flag in
 	  let addr_vars = CP.remove_dups_svl addr_vars' in
 	  let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
@@ -1907,13 +1907,55 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
       let baga_under_formula = match under_f with
-        | None -> CF.mkFalse (CF.mkTrueFlow ()) pos
-        | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos
+        | None -> CP.mkFalse pos
+        | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
       in
-      let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in
-      let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
+      (* let baga_under_formula = match under_f with *)
+      (*   | None -> CF.mkFalse (CF.mkTrueFlow ()) pos *)
+      (*   | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos *)
+      (* in *)
+      (* let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_under_formula pos in *)
+      (* let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in *)
       let over_fail = (CF.isFailCtx baga_over_rs) in
-      let under_fail = (CF.isFailCtx baga_under_rs) in
+      (* let under_fail = (CF.isFailCtx baga_under_rs) in *)
+      let check_under no uf fl =
+        (* unfold helper, now unfold 3 times *)
+        let rec helper_unfold no bfs ifs =
+          if no = 0 then []
+          else
+            let new_bfs = List.fold_left (fun acc f ->
+                acc@(List.map (fun bf ->
+                    Cast.unfold_base_case_formula f vdef bf
+                ) bfs)
+            ) [] ifs
+            in
+            new_bfs@(helper_unfold (no - 1) new_bfs ifs)
+        in
+        let _ = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) uf no_pos in
+        let (ifs,bfs) = List.partition CF.is_inductive fl in
+        let bfs = bfs@(helper_unfold no bfs ifs) in
+        let rs1 = List.exists (fun f ->
+            let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+            let _ = Debug.binfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
+            TP.imply_raw uf pf
+        ) bfs in
+        if rs1 then true
+        else
+          let rs2 = List.exists (fun f ->
+              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+              let _ = Debug.binfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
+              TP.imply_raw uf pf
+          ) ifs in
+          if rs2 then false
+          else
+            let pf = List.fold_left (fun acc f ->
+                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+                CP.mkOr acc pf None no_pos
+            ) (CP.mkFalse no_pos) (bfs@ifs) in
+            let _ = Debug.binfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
+            TP.imply_raw uf pf
+      in
+      let under_fail = if (CP.is_False baga_under_formula) then false else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
@@ -3147,64 +3189,64 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * Primitive functions: Term[] 
        * User-defined functions: MayLoop 
        * or TermR and TermU if @term *)
-      let fname = proc.I.proc_name in
-      let args = List.map (fun p -> 
+      let args = List.map (fun p ->
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-      let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in  
-      let rec find_vars sp = match sp with
-        | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []
-        | IF.EBase b -> b.IF.formula_struc_implicit_inst
-        | _ -> [] in
-      let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in
-      (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)
-      (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *)
-      let imp_spec_vars = collect_important_vars_in_spec true static_specs_list in
-      let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in
-      let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in
-      let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in
-      let params = imp_spec_vars @ params  in
-      let params = List.filter 
-        (fun sv -> match sv with
-          | CP.SpecVar(t,_,_) -> 
-            (match t with
-            | Int | Bool -> true
-            | _ -> false)) params in
-      let pos = proc.I.proc_loc in
+      (* let fname = proc.I.proc_name in                                                                                        *)
+      (* let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in                                              *)
+      (* let rec find_vars sp = match sp with                                                                                   *)
+      (*   | IF.ECase _ (* {I.formula_case_branches = lst} *) -> []                                                             *)
+      (*   | IF.EBase b -> b.IF.formula_struc_implicit_inst                                                                     *)
+      (*   | _ -> [] in                                                                                                         *)
+      (* let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in                   *)
+      (* (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)                  *)
+      (* (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *) *)
+      (* let imp_spec_vars = CF.collect_important_vars_in_spec true static_specs_list in                                        *)
+      (* let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in                      *)
+      (* let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in          *)
+      (* let _ = Debug.tinfo_hprint (add_str "specs" Cprinter.string_of_struc_formula) static_specs_list no_pos in              *)
+      (* let params = imp_spec_vars @ params  in                                                                                *)
+      (* let params = List.filter                                                                                               *)
+      (*   (fun sv -> match sv with                                                                                             *)
+      (*     | CP.SpecVar(t,_,_) ->                                                                                             *)
+      (*       (match t with                                                                                                    *)
+      (*       | Int | Bool -> true                                                                                             *)
+      (*       | _ -> false)) params in                                                                                         *)
+      (* let pos = proc.I.proc_loc in                                                                                           *)
 
-      let utpre_name = fname ^ "pre" in
-      let utpost_name = fname ^ "post" in
+      (* let utpre_name = fname ^ "pre" in                                                                                      *)
+      (* let utpost_name = fname ^ "post" in                                                                                    *)
 
-      let utpre_decl = {
-        C.ut_name = utpre_name;
-        C.ut_params = params;
-        C.ut_is_pre = true;
-        C.ut_pos = pos } in
-      let utpost_decl = { utpre_decl with
-        C.ut_name = utpost_name;
-        C.ut_is_pre = false; } in
+      (* let utpre_decl = {                                                                                                     *)
+      (*   C.ut_name = utpre_name;                                                                                              *)
+      (*   C.ut_params = params;                                                                                                *)
+      (*   C.ut_is_pre = true;                                                                                                  *)
+      (*   C.ut_pos = pos } in                                                                                                  *)
+      (* let utpost_decl = { utpre_decl with                                                                                    *)
+      (*   C.ut_name = utpost_name;                                                                                             *)
+      (*   C.ut_is_pre = false; } in                                                                                            *)
 
-      let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name;utpost_name] no_pos in
-      let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in
+      (* let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in           *)
+      (* let _ = C.ut_decls # push_list [utpre_decl; utpost_decl] in                                                            *)
 
-      let uid = {
-        CP.tu_id = 0;
-        CP.tu_sid = fname;
-        CP.tu_fname = fname;
-        CP.tu_call_num = 0;
-        CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
-        CP.tu_cond = CP.mkTrue pos;
-        CP.tu_icond = CP.mkTrue pos;
-        CP.tu_sol = None;
-        CP.tu_pos = pos; } in
+      (* let uid = {                                                                                                            *)
+      (*   CP.tu_id = 0;                                                                                                        *)
+      (*   CP.tu_sid = fname;                                                                                                   *)
+      (*   CP.tu_fname = fname;                                                                                                 *)
+      (*   CP.tu_call_num = 0;                                                                                                  *)
+      (*   CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;                                                              *)
+      (*   CP.tu_cond = CP.mkTrue pos;                                                                                          *)
+      (*   CP.tu_icond = CP.mkTrue pos;                                                                                         *)
+      (*   CP.tu_sol = None;                                                                                                    *)
+      (*   CP.tu_pos = pos; } in                                                                                                *)
 
       let static_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive false uid static_specs_list
+          CF.norm_struc_with_lexvar is_primitive false None static_specs_list
         else static_specs_list
       in
       let dynamic_specs_list =
         if not !Globals.dis_term_chk then
-          CF.norm_struc_with_lexvar is_primitive false uid dynamic_specs_list
+          CF.norm_struc_with_lexvar is_primitive false None dynamic_specs_list
         else dynamic_specs_list
       in
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
@@ -3315,7 +3357,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (** An Hoa : print out final_static_specs_list for inspection **)
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula final_static_specs_list) in *)
-      let imp_spec_vars = collect_important_vars_in_spec false final_static_specs_list in
+      let imp_spec_vars = CF.collect_important_vars_in_spec false final_static_specs_list in
       let imp_vars = List.append imp_vars imp_spec_vars in
       let imp_vars = List.append imp_vars [CP.mkRes cret_type] in (* The res variable is also important! *)
       (* let _ = print_string "Important variables found: " in *)
@@ -3372,6 +3414,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_invoked = proc.I.proc_is_invoked;
+          C.proc_verified_domains = proc.I.proc_verified_domains;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
@@ -3380,31 +3423,6 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (E.pop_scope (); cproc)))
   in
   wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
-
-(** An Hoa : collect important variables in the specification
-    Important variables are the ones that appears in the
-    post-condition. Those variables are necessary in order
-    to prove the final correctness. **)
-and collect_important_vars_in_spec deep_flag (spec : CF.struc_formula) : (CP.spec_var list) =
-  (** An Hoa : Internal function to collect important variables in the an ext_formula **)
-  let rec helper f = match f with
-    | CF.ECase b -> List.fold_left (fun x y -> List.append x (helper (* collect_important_vars_in_spec *) (snd y))) [] b.CF.formula_case_branches
-    | CF.EBase b -> 
-      (b.CF.formula_struc_implicit_inst) @ (
-      if deep_flag then
-        match b.CF.formula_struc_continuation with
-        | None -> []
-        | Some f -> helper f 
-      else [])
-    | CF.EAssume b -> []
-    | CF.EInfer b ->
-          if deep_flag then helper b.CF.formula_inf_continuation
-          else []
-    | CF.EList b -> fold_l_snd helper b
-  in
-  helper spec
-
-(** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
   let v = get_spec_var_ident n_tl id p (* Unprimed  *)in
@@ -5180,6 +5198,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.proc_is_main = proc.I.proc_is_main;
                 I.proc_is_while = true;
                 I.proc_is_invoked = true;
+                  I.proc_verified_domains = [];
                 I.proc_file = proc.I.proc_file;
                 I.proc_loc = pos; 
                 I.proc_test_comps = if not !Globals.validate then None else
@@ -5192,19 +5211,41 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      ) w_formal_args in
                      let _ =  Debug.binfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
                      let _ =  Debug.binfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
-                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
-                 let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
-                 let full_args_wi = if ninfer_args = [] then args_wi
-                 else List.fold_left (fun r p ->
-                     try
-                       let iarg = List.find (fun (id,_) -> String.compare id p.Iast.param_name = 0) args_wi in
-                       r@[iarg]
-                     with _ -> r@[(p.Iast.param_name, NI)]
-                 ) [] w_formal_args in
-                 {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
-                     I.proc_static_specs = new_prepost;
-                     I.proc_args_wi = full_args_wi;
+                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE pos in
+                     let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
+                     let full_args_wi = if ninfer_args = [] then args_wi
+                     else List.fold_left (fun r p ->
+                         try
+                           let iarg = List.find (fun (id,_) -> String.compare id p.Iast.param_name = 0) args_wi in
+                           r@[iarg]
+                         with _ -> r@[(p.Iast.param_name, NI)]
+                     ) [] w_formal_args in
+                     {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
+                         I.proc_static_specs = new_prepost;
+                         I.proc_args_wi = full_args_wi;
                  }
+              | IF.EInfer i_sf -> if i_sf.IF.formula_inf_obj # is_shape then
+                  let is_simpl, pre,post = IF.get_pre_post i_sf.IF.formula_inf_continuation in
+                  if is_simpl then
+                    let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
+                         String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
+                    ) w_formal_args in
+                    let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pre
+                      post INF_SHAPE pos in
+                    let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
+                    let full_args_wi = if ninfer_args = [] then args_wi
+                    else List.fold_left (fun r p ->
+                        try
+                          let iarg = List.find (fun (id,_) -> String.compare id p.Iast.param_name = 0) args_wi in
+                          r@[iarg]
+                        with _ -> r@[(p.Iast.param_name, NI)]
+                    ) [] w_formal_args in
+                    {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
+                        I.proc_static_specs = new_prepost;
+                        I.proc_args_wi = full_args_wi;
+                    }
+                  else  w_proc
+                else w_proc
               | _ -> w_proc
             in
               let temp_call =  I.CallNRecv {

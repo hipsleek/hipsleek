@@ -1,0 +1,160 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+Starting z3... 
+Residue:
+ <1>HP_75(d)&{FLOW,(4,5)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::node<a,b> * HP_70(b)&true(4,5); 
+                  HP_70(b)&true --> b::node<c,d> * HP_75(d)&true(4,5)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>HP_91(b)&{FLOW,(4,5)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::node<a,b> * HP_91(b)&true(4,5)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::ll<n>&true(4,5)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&n=0&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&n=0 & y=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+Residue:
+ <1>emp&y=null & n=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n=0]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+Residue:
+ <1>emp&y!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n!=1]
+
+Residue:
+ <1>emp&n=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n=0]
+ inferred hprel: [H1(y)&true --> y::ll<n>&true(4,5)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [x!=0]
+
+Residue:
+ <1>(exists q_226,flted_7_224: q_226::ll{}<flted_7_224>&flted_7_224+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>(exists q_252,flted_7_250: q_252::ll{}<flted_7_250>&flted_7_250+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>y::ll{}<n>&n=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n=0]
+
+Residue:
+ <1>y::ll{}<n>&y=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [y=0]
+
+Residue:
+ <1>y::ll{}<n>&y=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [y=0]
+
+Residue:
+ <1>(exists q_298,flted_7_296: q_298::ll{}<flted_7_296>&flted_7_296+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [y!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>(exists q_326,flted_7_324: q_326::ll{}<flted_7_324>&flted_7_324+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [(y!=0 | n!=0)]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>(exists q_354,flted_7_352: q_354::ll{}<flted_7_352>&flted_7_352+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [x!=0]
+
+Residue:
+ <1>(exists q_392,flted_7_390: q_392::ll{}<flted_7_390>&flted_7_390+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [x!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+Residue:
+ <1>(exists q_420,flted_7_418: q_420::ll{}<flted_7_418>&flted_7_418+1=nn&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [nn!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>y::ll{}<n>&n=0&{FLOW,(4,5)=__norm}[]
+ inferred pure: [n=0]
+
+Residue:
+ <1>(exists q_452,flted_7_450: q_452::ll{}<flted_7_450>&flted_7_450+1=n&{FLOW,(4,8)=__MayError})[]
+ inferred pure: [n!=0]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(y,y) ==> ]]
+
+
+Residue:
+ <1>emp&{FLOW,(6,7)=__Error}[]
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Residue:
+ <1>emp&m+1=0&{FLOW,(6,7)=__Error}[]
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+ inferred pure: [m!=-1]
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::node<a,b> * HP_587(b)&true(4,5); 
+                  HP_587(b)&true --> b::ll<m>&true(4,5)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+

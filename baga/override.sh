@@ -1,0 +1,20 @@
+EX="./override_one.sh"
+#$EX examples/2-3trees.ss
+#$EX examples/avl-orig-3.ss
+$EX examples/avl-orig-4.ss
+$EX examples/bubble-all.ss
+$EX examples/bubble-modular.ss
+$EX examples/sll.ss
+$EX t/cll-d.ss
+$EX t/cll.ss
+$EX t/dll-append-mod.ss
+$EX t/dll-modular.ss
+$EX t/dll.ss
+$EX t/dll-td2.ss
+#$EX t/heaps.ss
+$EX t/ll.ss
+$EX t/modular.ss
+$EX t/pr.ss
+#$EX t/rb.ss
+$EX t/under2.ss
+$EX t/under.ss

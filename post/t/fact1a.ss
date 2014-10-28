@@ -10,7 +10,7 @@ int fact(int x)
 }
 
 /*
-# fact1.ss
+# fact1a.ss
 
 Need to support a mix of
 infer_consts @sym and varid.

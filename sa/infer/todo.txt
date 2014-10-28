@@ -1,0 +1,450 @@
+# sa/infer/cell2.ss: FIXED
+
+Why do we have this? Is this from error-spec
+inference.Can we have an option to turn this off
+esp for @shape. We may later have @shape_err
+
+(0)HP_11(x@NI,y)&true --> emp&y=null(6,10),
+ // POST
+
+@incorrect inference below?
+
+[ HP_11(x_1247,y_1248) ::= emp&y_1248=null(6,10)
+   \/  y_1248::cell<val_10_1224>(4,5),
+ GP_12(x_1239,y_1240) ::= y_1240::cell<v_int_10_1236>(4,5)]
+
+[ // BIND
+(0)HP_11(x@NI,y)&true --> y::cell<val_10_1224>&
+true(4,5),
+ // BIND
+(0)HP_11(x@NI,y)&true --> emp&
+y=null(6,10),
+ // POST
+(0)y::cell<v_int_10_1236>&true --> GP_12(x,y)&
+true(4,5)]
+
+Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_r_1200_while_10_2$cell~cell for spec  EAssume ref [x;y]
+   emp&{FLOW,(4,5)=__norm}[]
+   , Line 0
+
+=================================================================
+# cell.ss : FIXED
+
+  while (y.val<x.val) 
+    infer[@shape]
+      requires true
+      ensures true;
+
+What @shape spec is being composed for
+while loop? Can we print it?
+
+Checking procedure f_r_1200_while_10_2$cell~cell... Proving binding in method f_
+r_1200_while_10_2$cell~cell for spec  EAssume ref [x;y]
+   emp&{FLOW,(4,5)=__norm}[]
+   , Line 0
+
+( []) bind: node  y'::cell<val_10_1205'>@L cannot be derived from context
+cell.ss_10:9_10:14
+
+=================================================================
+# cell5a.ss: FIXED
+
+ same issue as cell5b.ss where some nodes
+ are missing in the base-case.
+
+  if (y.val<x.val) {
+    y.val = y.val +1;
+    wloop(x,y);
+  }
+
+[ HP_13(x_1290,y_1291) ::=  [
+      x_1290::cell<val_17_1253> * y_1291::cell<val_17_1287>],
+ GP_16(x_1292,x_1293,y_1294,y_1295) ::=  [
+  emp&y_1294!=null & x_1292!=null; 
+  y_1294::cell<val_17_1247> * x_1292::cell<val_17_1253>&x_1293=x_1292 
+  & y_1295=y_1294]]
+
+ Why is there an emp case for GP16?
+=================================================================
+# cell5b.ss:FIXED
+
+  if (y.val<x.val) {
+    y.val = y.val +1;
+    wloop(x,y);
+  }
+
+ Some cell nodes are missing in the base-case.
+
+ Why is there an emp case for GP_12?
+
+ What happens to the x,y nodes?
+
+(1;0)GP_12(x,y)&x!=null & y!=null --> GP_12(x,y)&
+true(4,5),
+
+--esl
+
+id: 15; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ HP_11,GP_12,HP_1232]; c_heap: emp
+ checkentail GP_12(x',y')&y'=y & x'=x & val_10_1231<val_10_1237 & v_bool_10_1209' & 
+val_10_1231<val_10_1237 & v_bool_10_1209' & v_int_11_1263=1+val_10_1231 & 
+val_11_1258=val_10_1231 & x!=null & y'!=null&{FLOW,(4,5)=__norm}[]
+ |-  GP_12(x,y)&{FLOW,(4,5)=__norm}[]. 
+
+[ HP_11(x_1272,y_1273) ::=  [x_1272::cell<val_10_1237> * y_1273::cell<val_10_1269>],
+ GP_12(x_1274,y_1275) ::=  
+    [emp&y_1275!=null & x_1274!=null; 
+     y_1275::cell<val_10_1231> * x_1274::cell<val_10_1237>]]
+=================================================================
+# cell2ap.ss: FIXED
+
+How come post_n not performed after shape
+inference?
+
+void main(cell x, cell y)
+  infer[@shape,
+  @post_n]
+  requires true
+  ensures true;
+{
+    y.val=x.val+1;
+}
+
+# cell2aq.ss 
+
+This shows how post_n can be trigered after
+shape analysis.
+
+  infer[//@shape,
+  @post_n]
+  requires x::cell<a>*y::cell<b>
+  ensures x::cell<c>*y::cell<d>;
+
+Post Inference result:
+main$cell~cell
+ requires x::cell<a> * y::cell<b> & MayLoop[]
+     ensures x::cell<c_1211> * 
+y::cell<d_1212> & a=d_1212-1 & c_1211=d_1212-1;
+
+=================================================================
+# cell5b2.ss: FIXED
+
+void wloop(cell x,cell y)
+    infer[@shape]
+    requires true
+    ensures true;
+{
+  bool t = y.val<x.val;
+  y.val = y.val +1;
+  wloop(x,y);
+  dprint;
+}
+
+Got:
+
+ (0)GP_12(x,y)&x!=null & y!=null --> GP_12(x,y)& true(4,5)
+
+Two issues : 
+
+ (1) Got  true(4,5). Isn't it norm flow?
+ (2) Why did we not get false post-condition?
+
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ HP_11(x_1280,y_1281) ::=  [x_1280::cell<val_10_1237> * y_1281::cell<val_10_1277>],
+ GP_12(x_1282,y_1283) ::=  [emp&y_1283!=null & x_1282!=null]]
+
+=================================================================
+# cell5b3.ss: FIXED
+
+Expecting :
+  HP(..) = true
+  GP(..) = false
+
+But currently has an error:
+
+[ // PRE_REC
+(0)HP_11(x@NI,y@NI)&true --> HP_11(x@NI,y@NI)&
+true(4,5),
+ // POST
+(0)GP_12(x,y)&true --> GP_12(x,y)&
+true(4,5)]
+
+Procedure wloop$cell~cell SUCCESS.
+
+!!! shape inference for flow:(4,5)
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+=================================================================
+# cell5b7.ss 
+
+cell wloop(cell x,cell y)
+    infer[@shape]
+    requires true
+    ensures true;
+{
+  bool t = y.val<x.val;
+  dprint;
+  if (t) {
+    y.val = y.val +1;
+    cell r;
+    r = wloop(x,y);
+    return new cell(0,r);
+  }
+  return null;
+}
+
+We can only approx the recursive branch to false
+only if we have a looping left-recursion of the form:
+
+  G(x,y) = G(x,y) & pure(x,y) \/ base(x,y)
+
+In this example, we do not have a looping scenario
+since we have:
+
+  G(x,y,res) = G(x,y,r) * res::cell<_,r> & pure(x,y) \/ base(x,y,res)
+
+This scenario should not be replaced by false; as it
+would be unsound.
+
+[ HP_12(x,y) ::=  [x::cell<val_49,DP_1251> * 
+y::cell<val_87,DP_1243>],
+ GP_13(x,y,res) ::=  [hfalse; 
+   y::cell<val_41,DP_1243> * 
+   x::cell<val_49,DP_1251>&res=null]]
+
+Here, the relational assumption has a constructor res::cell<..>;
+as shown below and the 3rd parameter of GP_13(..) is
+changing.
+
+(1;0)GP_13(x,y,r_1283) * res::cell<v_int_18_1282,r_1283>&x!=null & 
+y!=null --> GP_13(x,y,res)&
+true(4,5),
+
+In this scenario, we should return:
+
+[ HP_12(x,y) ::=  [x::cell<val_49,DP_1251> * y::cell<val_87,DP_1243>],
+ GP_13(x,y,res) ::=  [GP_13(x,y,r_1283) * 
+   res::cell<v_18_1282,r_1283>&x!=null & y!=null;
+   y::cell<val_41,DP_1243> * 
+   x::cell<val_49,DP_1251>&res=null]]
+
+If we support a predicate split for GP_13, we will obtain two predicates
+
+ GP_13a(x,y) ::=[GP_13a(x,y) x!=null & y!=null;
+   y::cell<val_41,DP_1243> * x::cell<val_49,DP_1251>]]
+
+ GP_13b(res) ::= [GP_13b(r_1283) * res::cell<v_18_1282,r_1283>;
+   res=null]]
+
+GP_13a now have looping left-recursion; and can have
+its recursion approximated to hfalse, as follows:
+
+   GP_13a(x,y) ::=[hfalse;
+    y::cell<val_41,DP_1243> * x::cell<val_49,DP_1251>]]
+
+On the other hand, GP_13b is just the linked-list data structure:
+
+ GP_13b(res) ::= GP_13b(r_1283) * res::cell<v_18_1282,r_1283>
+  \/ emp & res=null
+
+=================================================================
+# dell1.ss: DONE
+
+void loop(cell x,cell y)
+  infer [@shape
+         //,@post_n
+  ]
+
+# TODO: should display the actual pre/post inferred.
+*********************************************************
+[ HP_11(x2,y3) ::=  x2::cell<val37> * y3::cell<val69>,
+ GP_12(x4,y5) ::=  y5::cell<val31> * x4::cell<val37>]
+=========================================================
+
+Is it true to val37 is unchanged? The spec 
+inferred seems wrong
+
+   see #dell1a.ss
+
+This later caused post to be inferred wrongly.
+
+=================================================================
+
+# dell1.ss: 
+
+should print with the substitition
+
+[ HP_11(x_1507,y_1508) ::=  x_1507::cell<val_28_1509> * y_1508::cell<val_28_1510>,
+ GP_12(x_1511,y_1512) ::=  y_1512::cell<val_28_1513> * x_1511::cell<val_28_1514>]
+
+!!! SHAPE inferred spec: EInfer @shape[HP_11,GP_12]
+   EBase HP_11(x,y)&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     GP_12(x,y)&{FLOW,(4,5)=__norm#E}[]
+
+
+==============================================
+# dell3.ss -pcp
+
+void loop(cell x,cell y)
+  infer [@shape
+         ,@post_n
+  ]
+
+
+Why post did not have base-case branch?
+                     ]
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1541: ( val_28_1514=val_28_1509 & val_28_1513=val_28_1510 & val_28_1509<=val_28_1510) -->  post_1541(val_28_1513,val_28_1514,val_28_1509,val_28_1510)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1541(val_28_1509,val_28_1510,val_28_1513,val_28_1514), val_28_1509=val_28_1514 & val_28_1510=val_28_1513 & val_28_1514<=val_28_1513, true, true)]
+*************************************
+
+!!! REL POST :  post_1541(val_28_1509,val_28_1510,val_28_1513,val_28_1514)
+!!! POST:  val_28_1509=val_28_1514 & val_28_1510=val_28_1513 & val_28_1514<=val_28_1513
+!!! REL PRE :  true
+!!! PRE :  true
+
+void loop(cell x,cell y)
+  infer [@post_n
+  ]
+
+Why does the above different from dell3a.ss woeka...
+
+[RELDEFN post_1460: ( post_1460(d_1442,e_1443,a_1488,b) & a=1+a_1488 & b<=a_1488) -->  post_1460(d_1442,e_1443,a,b),
+RELDEFN post_1460: ( d_1442=a & e_1443=b & a<=b) -->  post_1460(d_1442,e_1443,a,b)]
+*************************************
+
+!!! >>>>>> compute_fixpoint <<<<<<
+!!! Input of fixcalc: post_1460:={[a,b] -> [d_1442,e_1443] -> []: (((d_1442=a && e_1443=b) && a<=b) || ( (exists (a_1488:(a_1488+1=a && post_1460(a_1488,b,d_1442,e_1443))))  && b<a))
+};
+bottomupgen([post_1460], [2], SimHeur);
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1460(a,b,d_1442,e_1443), ((e_1443=d_1442 & b=d_1442 & d_1442<a) | (a=d_1442 & b=e_1443 & 
+d_1442<=e_1443)), true, true)]
+*************************************
+                  b<a -> requires emp & Term[76,2,-1+(1*a)+(-1*
+                  b)]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  }
+=================================================================
+# dell3.ss 
+
+void loop(cell x,cell y)
+  infer [@shape
+         ,@post_n
+  ]
+
+Why @term capture an incomplete result:
+with only cbase-case?
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & x=1 & 
+y=2 --> looppost_1433().
+
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510 & x=1 & y=2 --> looppost_1433().
+
+ termAssume y'=y & x'=x & val_28_1511<val_28_1510 & v_bool_28_1444' & 
+val_28_1511<val_28_1510 & v_bool_28_1444' & v_int_30_1606+1=val_28_1510 & 
+val_30_1601=val_28_1510 & val_28_1510=v_int_30_1606 & x'=1 & 
+y=2 & looppre_0() --> looppre_0().
+
+
+Base/Rec Case Splitting:
+[	loop: [[2] true@B]
+]
+Termination Inference Result:
+loop:  requires x::cell<val_28_1510> * 
+y::cell<val_28_1511> & truerequires emp & Term[76,1]
+     ensures y::cell<val_28_1514> * 
+x::cell<val_28_1515> & val_28_1510<=val_28_1511 & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510;
+
+However, dell3a.ss had a better result
+
+Temporal Assumptions:
+ termAssume a<=b & !(v_bool_28_1440') & a<=b & !(v_bool_28_1440') & 
+d_1443=a & x=1 & y=2 --> looppost_1429(a,b).
+
+ termAssume (((d_1542=b_1534 & b_1534<a_1533) | (d_1542=a_1533 & 
+a_1533<=b_1534))) & x!=null & y!=null & b_1534=b & a_1533=v_int_30_1539 & 
+val_30_1532=a & v_int_30_1539+1=a & v_bool_28_1440' & b<a & 
+v_bool_28_1440' & b<a & d_1443=d_1542 & x=1 & 
+y=2 & looppost_1429(a_1533,b_1534) --> looppost_1429(a,b).
+
+ termAssume y'=y & x'=x & b<a & v_bool_28_1440' & b<a & v_bool_28_1440' & 
+v_int_30_1539+1=a & val_30_1532=a & a_1533=v_int_30_1539 & b_1534=b & x'=1 & 
+y=2 & looppre_0(a,b) --> looppre_0(a_1533,b_1534).
+
+
+Termination Inference Result:
+loop:  requires x::cell<a> * 
+y::cell<b> & truecase {
+                  a<=b -> requires emp & Term[76,1]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  b<a -> requires emp & Term[76,2,-1+(1*a)+(-1*
+                  b)]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  }
+
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================

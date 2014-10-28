@@ -10,6 +10,8 @@ let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
+let change_flow = ref false
+
 type formula_type =
   | Simple
   | Complex
@@ -158,6 +160,11 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+
+let is_node_typ t=
+  match t with
+    | Named id -> String.compare id "" !=0
+    | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   match param_typ with
@@ -427,6 +434,8 @@ let proof_logging_txt = ref false
 let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
+
+let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
@@ -806,9 +815,9 @@ let dis_show_diff = ref false
 
 let sap = ref false
 let sae = ref false
-let sac = ref false
+let sac = ref true
 
-let sags = ref false
+let sags = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false
@@ -1201,7 +1210,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -1269,6 +1278,8 @@ let term_bnd_pre_flag = ref true
 let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
+let post_add_eres = ref false
+let post_infer_flow = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
 let phase_infer_ind = ref false
@@ -1281,14 +1292,18 @@ let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
 let tnt_add_post = ref true
 
+let nondet_int_proc_name = "__VERIFIER_nondet_int"
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
-  | INF_SHAPE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@shape] *)
+  | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
+  | INF_FLOW (* For infer[@flow] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1304,9 +1319,11 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
+  | INF_FLOW -> "@flow"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1397,8 +1414,10 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
+      helper "@size" INF_SIZE;
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
+      helper "@flow" INF_FLOW;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1418,9 +1437,12 @@ object (self)
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
+  method is_infer_type t  = self # get t
   method get_lst = arr
   method set c  = if self#get c then () else arr <- c::arr
   (* method set_ind i  = Array.set arr i true *)
@@ -1442,7 +1464,7 @@ let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
-let tnt_thres = ref 5
+let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
@@ -1692,28 +1714,28 @@ let fresh_ty_var_name (t:typ)(ln:int):string =
 let fresh_var_name (tn:string)(ln:int):string = 
 	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
-let fresh_trailer () = 
+let fresh_trailer () =
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
 
-let fresh_any_name (any:string) = 
+let fresh_any_name (any:string) =
   let str = string_of_int (fresh_int ()) in
     any ^"_"^ str
 
-let fresh_name () = 
+let fresh_name () =
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str
 
-let fresh_label pos = 
+let fresh_label pos =
  (* let str = string_of_int (fresh_int ()) in*)
     let line = if pos.start_pos.Lexing.pos_lnum > 0 then
                  string_of_int pos.start_pos.Lexing.pos_lnum
                else "0" in
     "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
-	
+
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
     for i = 1 to n do
