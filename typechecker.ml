@@ -2805,19 +2805,33 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
             let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names
               scc_inferred_hps
             in
+            let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+            let _ = List.iter (fun proc ->
+              (* if proc.Cast.proc_sel_hps != [] then *)
+              let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+                  (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              ()
+          ) new_scc_procs in
             nprog
           else prog
         | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names scc_inferred_hps in
+          let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+          let _ = List.iter (fun proc ->
+              (* if proc.Cast.proc_sel_hps != [] then *)
+              let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+                  (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              ()
+          ) new_scc_procs in
           nprog
       in
       let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-      let _ = List.iter (fun proc ->
-          (* if proc.Cast.proc_sel_hps != [] then *)
-          let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
-              (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
-          ()
-          (* else () *)
-      ) new_scc_procs in
+      (* let _ = List.iter (fun proc -> *)
+      (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
+      (*     let _ =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
+      (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
+      (*     () *)
+      (*     (\* else () *\) *)
+      (* ) new_scc_procs in *)
       new_scc_procs
     else scc_procs
     in
