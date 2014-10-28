@@ -19,7 +19,7 @@ void main(cell x, cell y)
 */
 
 void loop(cell x,cell y)
-  infer [@post_n
+  infer [@post_n,@term
   ]
   requires x::cell<a>*y::cell<b>
   ensures x::cell<d>*y::cell<e>;

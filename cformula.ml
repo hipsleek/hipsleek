@@ -376,12 +376,17 @@ let mkEFalse flowt pos = EBase({
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
 
+let mkFlow i1 i2 =
+  {formula_flow_interval = exlist # mk_nflow_from_min_max i1 i2; formula_flow_link = None;}
 
 let mkTrueFlow () =
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
 
 let mkNormFlow () =
   {formula_flow_interval = !norm_flow_int; formula_flow_link = None;}
+
+let mkErrorFlow () =
+  {formula_flow_interval = !error_flow_int; formula_flow_link = None;}
 
 let mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 (* let mkFalseFlow () = mkTrueFlow () *)
@@ -3865,45 +3870,45 @@ and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match
 		formula_base_label = lbl;
         formula_base_pos = pos}) -> mkExists_w_lbl qvars h p t fl a pos lbl
   | Exists ({formula_exists_qvars = qvs;
-	formula_exists_heap = h; 
-	formula_exists_pure = p; 
+	formula_exists_heap = h;
+	formula_exists_pure = p;
 	formula_exists_type = t;
 	formula_exists_flow = fl;
     formula_exists_and = a;
 	formula_exists_label = lbl;
-	formula_exists_pos = pos}) -> 
+	formula_exists_pos = pos}) ->
 	    let new_qvars = CP.remove_dups_svl (qvs @ qvars) in
 		mkExists_w_lbl new_qvars h p t fl a pos lbl
   | _ -> failwith ("add_quantifiers: invalid argument")
 
-and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = 
+and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula =
   Debug.no_2 "add_quantifiers" !print_svl !print_formula !print_formula add_quantifiers_x qvars f
 
 (* 19.05.2008 *)
 and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
   | Base _ -> f
-  | Exists ({formula_exists_qvars = qvs; 
-	formula_exists_heap = h; 
-	formula_exists_pure = p; 
+  | Exists ({formula_exists_qvars = qvs;
+	formula_exists_heap = h;
+	formula_exists_pure = p;
 	formula_exists_type = t;
 	formula_exists_flow = fl;
     formula_exists_and = a;
-	formula_exists_pos = pos}) -> 
+	formula_exists_pos = pos}) ->
 	    let new_qvars = (List.filter (fun x -> not(List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
 	  	if (List.length new_qvars == 0) then mkBase h p t fl a pos
 	  	else mkExists new_qvars h p t fl a pos
   | _ -> failwith ("add_quantifiers: invalid argument")
         (* 19.05.2008 *)
 
-and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = 
+and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) =
   let pr = !print_struc_formula in
   Debug.no_2 "push_struc_exists" !print_svl pr pr push_struc_exists_x qvars f
 
 and push_struc_exists_x (qvars : CP.spec_var list) (f : struc_formula) = match f with
-	| EBase b -> 
+	| EBase b ->
 		(match b.formula_struc_continuation with
 			| None -> EBase {b with formula_struc_base = push_exists qvars b.formula_struc_base}
-			| _ -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars})			
+			| _ -> EBase {b with formula_struc_exists = b.formula_struc_exists @ qvars})
 	(* | ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars} *)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (f,sf) -> (f,push_struc_exists_x qvars sf) ) b.formula_case_branches; }
               (* b with formula_case_exists = b.formula_case_exists @ qvars} *)
@@ -9713,7 +9718,7 @@ let is_mayerror_flow f=
 let rec is_top_flow f =   match f with
   | Base b-> equal_flow_interval !top_flow_int b.formula_base_flow.formula_flow_interval
   | Exists b-> equal_flow_interval !top_flow_int b.formula_exists_flow.formula_flow_interval
-  | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2 
+  | Or b ->  is_top_flow b.formula_or_f1 && is_top_flow b.formula_or_f2
 
 let get_error_flow f = flow_formula_of_formula f
 let get_top_flow f = flow_formula_of_formula f
@@ -16239,6 +16244,73 @@ let collect_node_var_formula (f:formula) =
       (helper f1)@(helper f2)
   in
   helper f
+
+let trans_flow_formula f =
+  let get_interval mf =
+    let fv = Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv mf) [CP.mk_spec_var "flow"] in
+    let inf = CP.remove_redundant (MCP.pure_of_mix (MCP.drop_svl_mix_formula mf fv)) in
+    let il = List.sort compare (CP.get_num_int_list inf) in
+    let _ = Debug.ninfo_hprint (add_str "il" (pr_list string_of_int)) il no_pos in
+    il
+  in
+  let rec helper f = match f with
+    | Base b ->
+          let il = get_interval b.formula_base_pure in
+          ( match il with
+            | i1::i2::[] -> Base { b with
+                formula_base_flow = mkFlow i1 i2
+              }
+            | _ -> f )
+    | Or o -> Or { o with
+          formula_or_f1 = helper o.formula_or_f1;
+          formula_or_f2 = helper o.formula_or_f2
+      }
+    | Exists e ->
+          let il = get_interval e.formula_exists_pure in
+          ( match il with
+            | i1::i2::[] -> Exists { e with
+                formula_exists_flow = mkFlow i1 i2
+              }
+            | _ -> f )
+  in
+  let f = helper f in
+  simplify_pure_f (drop_svl f [CP.mk_spec_var "flow"])
+
+let trans_flow_formula f =
+  let pr = !print_formula in
+  Debug.no_1 "trans_flow_formula" pr pr trans_flow_formula f
+
+let trans_flow sf =
+  let rec helper sf =
+    match sf with
+      | EList el -> EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
+      | ECase ec -> ECase { ec with
+          formula_case_branches = List.map (fun (pf,sf) -> (pf,helper sf)) ec.formula_case_branches
+        }
+      | EBase eb ->
+            let new_cont,new_base = match eb.formula_struc_continuation with
+              | None -> None,eb.formula_struc_base
+              | Some f -> Some (helper f),trans_flow_formula eb.formula_struc_base
+            in
+            EBase { eb with
+                formula_struc_base = new_base;
+                formula_struc_continuation = new_cont
+        }
+      | EInfer ei -> EInfer { ei with
+            formula_inf_continuation = helper ei.formula_inf_continuation
+        }
+      | EAssume ea -> EAssume { ea with
+            formula_assume_simpl = trans_flow_formula ea.formula_assume_simpl;
+            formula_assume_struc = helper ea.formula_assume_struc
+        }
+  in
+  let sfv = struc_fv sf in
+  if List.mem (CP.mk_spec_var "flow") sfv then helper sf
+  else sf
+
+let trans_flow sf =
+  let pr = !print_struc_formula in
+  Debug.no_1 "trans_flow" pr pr trans_flow sf
 
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;

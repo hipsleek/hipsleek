@@ -530,6 +530,7 @@ module type ETABLE =
       method is_norm_flow : nflow -> bool
       method is_top_flow : nflow -> bool
       method get_min_max : nflow -> (int*int)
+      method mk_nflow_from_min_max : int -> int -> nflow
     end
     val exlist : exc
    end;;
@@ -785,6 +786,10 @@ struct
         is_exact_flow f !top_flow_int
       end
     method get_min_max ((s,b):nflow) =
+      begin
+        (s,b)
+      end
+    method mk_nflow_from_min_max (s:int) (b:int) =
       begin
         (s,b)
       end
@@ -1124,6 +1129,10 @@ struct
     method get_min_max (((s,b),_):nflow) =
       begin
         (s,b)
+      end
+    method mk_nflow_from_min_max (s:int) (b:int) =
+      begin
+        ((s,b),[(s,b)])
       end
   end
   let exlist = new exc
