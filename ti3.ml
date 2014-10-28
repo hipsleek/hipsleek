@@ -3,6 +3,7 @@ module CF = Cformula
 module MCP = Mcpure
 
 open Globals
+open Cast
 open Cprinter
 open Gen
 
@@ -218,4 +219,66 @@ let and_or_tree_of_path_traces path_traces =
   let sorted_path_traces = List.sort (fun p1 p2 -> 
     compare (List.length p1) (List.length p2)) path_traces in
   and_or_tree_of_path_traces sorted_path_traces
+
+(* Specification-related stuffs *)  
+let rec is_infer_term sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl, sf) -> is_infer_term sf) el
+  | CF.EInfer ei -> ei.CF.formula_inf_obj # is_term
+  | _ -> false
+
+let is_infer_term sf =
+  let pr = string_of_struc_formula in
+  Debug.no_1 "is_infer_term" pr string_of_bool is_infer_term sf
+
+let is_infer_term_scc scc =
+  List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
+  
+let add_term_relation_proc prog proc spec = 
+  let is_primitive = not (proc.proc_is_main) in
+  if is_primitive then spec
+  else
+    let fname = unmingle_name proc.proc_name in
+    let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
+    let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
+    let params = imp_spec_vars @ params  in
+    let params = List.filter (fun sv -> 
+      match sv with
+      | CP.SpecVar(t, _, _) -> (match t with
+        | Int | Bool -> true
+        | _ -> false)) params in
+    let pos = proc.proc_loc in
+  
+    let utpre_name = fname ^ "pre" in
+    let utpost_name = fname ^ "post" in
+  
+    let utpre_decl = {
+      ut_name = utpre_name;
+      ut_params = params;
+      ut_is_pre = true;
+      ut_pos = pos } in
+    let utpost_decl = { utpre_decl with
+      ut_name = utpost_name;
+      ut_is_pre = false; } in
+  
+    let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
+    (* let _ = ut_decls # push_list [utpre_decl; utpost_decl] in *)
+    let _ = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
+  
+    let uid = {
+      CP.tu_id = 0;
+      CP.tu_sid = fname;
+      CP.tu_fname = fname;
+      CP.tu_call_num = proc.proc_call_order;
+      CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+      CP.tu_cond = CP.mkTrue pos;
+      CP.tu_icond = CP.mkTrue pos;
+      CP.tu_sol = None;
+      CP.tu_pos = pos; } in
+    CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
+  
+let add_term_relation_scc prog scc =
+  List.iter (fun proc ->
+    let spec = proc.proc_stk_of_static_specs # top in
+    let new_spec = add_term_relation_proc prog proc spec in
+    proc.proc_stk_of_static_specs # push new_spec) scc
   

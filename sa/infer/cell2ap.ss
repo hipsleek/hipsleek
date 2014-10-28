@@ -2,6 +2,7 @@ data cell {
   int val;
 }
 
+
 void main(cell x, cell y)
   infer[@shape,
         @post_n,@term
@@ -12,6 +13,8 @@ void main(cell x, cell y)
     y.val=x.val+1;
 }
 
+
+/*
 void main1(cell x, cell y)
   infer[   @post_n,@term
         ]
@@ -20,6 +23,8 @@ void main1(cell x, cell y)
 {
     y.val=x.val+1;
 }
+*/
+
 /*
 # cell2ap.ss --sa-dis-error
 

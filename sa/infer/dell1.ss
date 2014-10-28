@@ -20,13 +20,15 @@ void main(cell x, cell y)
 
 void loop(cell x,cell y)
   infer [@shape
-         //,@post_n
+         ,@post_n
   ]
   requires true
   ensures true;
 {
   if (y.val<x.val) {
+    //dprint;
     x.val = x.val-1;
+    // dprint;
     loop(x,y);
   }
 }
