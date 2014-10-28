@@ -4,10 +4,10 @@
 */
 
 
-/*
+
 bool test_bool(bool b)
-requires true
- ensures !b & !res | b & res;
+  requires true
+  ensures !b & !res | b & res;
 {
   while (!b) 
     requires true
@@ -17,18 +17,20 @@ requires true
   }
   return true;
 }
-*/
+
 int test_int(int a)
 {
-  /*while (a>1) 
+  while (a>1) 
     requires true
     ensures  eres::ret_int<a> & a>1 & flow ret_int or a<=1 & flow __norm;
   {
     return a;
-    }*/
+  }
+  /*
   while(a<1){
     a = a+1;
   }
+  */
   return 1;
 }
 

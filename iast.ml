@@ -3276,5 +3276,32 @@ let tnt_prim_procs =
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
   
 let is_tnt_prim_proc id =
-  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs 
-      
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs
+
+(* Input is a list of proc_decl, output is a list containing non-duplicate element of the types that will be returned inside a while loop *)
+let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) =
+  let rec helper (proc:proc_decl): (typ option) =
+    match proc.proc_body with
+      | None -> None
+      | Some e ->
+            if exists_while_return e
+            then Some proc.proc_return
+            else None
+  in
+  let is_duplicate (tlst:typ list) (t:typ):bool =
+    match tlst with
+      | h::rest -> Globals.cmp_typ h t
+      | [] -> false
+  in
+  match proclst with
+    | h::rest -> 
+          let t = helper h in
+          begin
+            match t with
+              | None -> no_duplicate_while_return_type_list rest
+              | Some new_t ->
+                    let restlst = no_duplicate_while_return_type_list rest in
+                    if is_duplicate restlst new_t then restlst
+                    else new_t::restlst
+          end
+    | [] -> []

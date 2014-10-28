@@ -1323,7 +1323,31 @@ and case_inference_x (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
 
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
-  
+
+
+let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
+  let type_name = string_of_typ t in
+  let new_data_fields = [((t,"val"),no_pos,false,[])] in
+  {
+      I.data_name = "ret_"^type_name;
+      I.data_fields = new_data_fields;
+      I.data_parent_name = "__RET";
+      I.data_invs = [];
+      I.data_is_template = false;
+      I.data_methods = [];
+      I.data_pos = no_pos;
+  }
+
+let mk_ret_type_into_data_decls (prog:I.prog_decl):(I.data_decl list)=
+  let rec helper (typlst:typ list):(I.data_decl list)=
+    match typlst with
+      | h::rest -> (mk_new_return_data_decl_from_typ h) :: (helper rest)
+      | [] -> []
+  in
+  let typ_list = I.no_duplicate_while_return_type_list prog.prog_proc_decls in
+  helper typ_list
+
+
 (*HIP*)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
@@ -1333,6 +1357,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let _ = (exlist # add_edge raisable_class "Object") in
   (* let _ = (exlist # add_edge c_flow "Object") in *)
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  let _ = print_endline (exlist # string_of ) in
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = if (!Globals.perm = Globals.Dperm)
@@ -1367,6 +1392,12 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (*let _ = exlist # compute_hierarchy in*)
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
+  (* Added by Zhuohong *)
+  (*let prog3 = { prog4 with I.prog_data_decls = (mk_ret_type_into_data_decls prog4)@(prog4.I.prog_data_decls;)}
+  in*)
+  (*let _ = print_endline(Iprinter.string_of_program prog3) in*)
+  (* ***************** *)
+
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
@@ -3269,29 +3300,31 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let body = match proc.I.proc_body with
         | None -> None
         | Some e -> (* Some (fst (trans_exp prog proc new_body_e)) in *)
-          (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
-          (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
-          if proc.I.proc_is_while || (not (I.exists_while_return e))then Some (fst (trans_exp prog proc e))
-          else
-            let vn = fresh_name () in
-            let pos = I.get_exp_pos e in
-            let nl2 = fresh_branch_point_id "" in
-            let return_target = I.mkMember (I.mkVar vn pos) ["val"] None pos in
-            let return_exp  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
-            let return_name ret_type =
-              match ret_type with
-              | Int -> "ret_int"
-              | Bool  -> "ret_bool"
-              | _ -> "__RET"
-            in
-            let constant_flow = return_name proc.I.proc_return in
-            if I.exists_while_return e && (constant_flow = "ret_int" || constant_flow = "ret_bool") then
-              let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
-              let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
-              let new_body = fst (trans_exp prog proc new_body_e) in
-              (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
-              Some new_body
-            else Some (fst (trans_exp prog proc e))
+              (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
+              (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
+
+              (*If it is a new while procedure produced by "while_return" or when there is not any return inside while, no need to wrap with "try-catch" *)
+              if proc.I.proc_is_while || (not (I.exists_while_return e)) then Some (fst (trans_exp prog proc e))
+              else
+                let vn = fresh_name () in
+                let pos = I.get_exp_pos e in
+                let nl2 = fresh_branch_point_id "" in
+                let return_target = I.mkMember (I.mkVar vn pos) ["val"] None pos in
+                let return_exp  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
+                let return_name ret_type =
+                  match ret_type with
+                    | Int -> "ret_int"
+                    | Bool  -> "ret_bool"
+                    | _ -> "__RET"
+                in
+                let constant_flow = return_name proc.I.proc_return in
+                if I.exists_while_return e && (constant_flow = "ret_int" || constant_flow = "ret_bool") then
+                  let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
+                  let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
+                  let new_body = fst (trans_exp prog proc new_body_e) in
+                  (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
+                  Some new_body
+                else Some (fst (trans_exp prog proc e))
       in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
       (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
