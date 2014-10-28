@@ -5,7 +5,7 @@ pred_prim add<n:int>
   inv true.
 
 // expect Valid.
-checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
+// checkentail cx::state<[1,2,3]> * cx::add<4> |- true.
 // OK
 
 
@@ -21,8 +21,8 @@ print residue.
 // OK
 
 // expect Invalid
-checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4,5]>.
-print residue.
+// checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state<[1,2,3,4,5]>.
+// print residue.
 // Not OK.Bug!
 
 // check_normalize cx::state<[1,2,3]> * cx::add<4>.

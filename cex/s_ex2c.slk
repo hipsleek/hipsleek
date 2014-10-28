@@ -15,6 +15,11 @@ lemma_prop "lemma_prop" self::state<X1> * self::add<y>
 checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state_foo<[1,2,3,4]>.
 print residue.
 
+// Expect Fail.
+checkentail cx::state<[1,2,3]> * cx::add<4> |- cx::state_foo<[1,2,3,4,5]>.
+print residue.
+// Not OK
+
 // Valid! However, in trace, the lemma above seems not be used (?)
 checkentail cx::state<[1,2,3]> * cx::add<4> * cx::add<5> |- cx::state_foo<[1,2,3,4]>.
 print residue.
