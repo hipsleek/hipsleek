@@ -42,6 +42,11 @@ let simplify_disj f =
     if CP.is_disjunct f then pairwisecheck f
     else f 
   in f
+  
+let simplify_disj f =
+  let pr = !CP.print_formula in
+  Debug.no_1 "simplify_disj" pr pr
+    simplify_disj f
 
 let simplify_and_slit_disj f = 
   let f = simplify_disj f in
@@ -57,6 +62,10 @@ let fp_imply f p =
 let f_is_sat f =
   let _, pf, _, _, _ = CF.split_components f in
   Tpdispatcher.is_sat_raw pf
+  
+let join_disjs f_lst = 
+  if is_empty f_lst then CP.mkFalse no_pos
+  else CP.join_disjunctions f_lst
 
 let mkAnd f1 f2 = CP.mkAnd f1 f2 no_pos
 let mkOr f1 f2 = CP.mkOr f1 f2 None no_pos
@@ -1239,7 +1248,7 @@ let search_nt_cond_ann lhs_uids ann =
     let params = List.concat (List.map CP.afv uid.CP.tu_args) in
     let cond = subst_cond_with_ann params ann uid.CP.tu_cond in
     { ntc_fn = fn;
-      ntc_id = uid.CP.tu_id;
+      ntc_id = if CP.is_Loop_uid uid then CP.loop_id else uid.CP.tu_id;
       ntc_cond = cond; }) uids 
   
 let search_rec_icond_ann lhs_uids ann =
@@ -1279,7 +1288,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 
     (* NT_No [] (* No result for infeasible context *) *)
-  else
+  else if is_empty trrel.termr_lhs then NT_No [] (* For base case *)
+  else 
     (* let nt_conds = List.fold_left (fun ann -> search_nt_cond_ann lhs_uids ann) trrel.termr_lhs in *)
     (* We eliminate all un-interesting LHS nodes, e.g., nodes outside scc *)
     let nt_conds = List.fold_left (fun acc ann ->
@@ -1293,9 +1303,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         else la, sa, (oa @ [c])) ([], [], []) nt_conds 
       in
         
-      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in   *)
-      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in   *)
-      (* let _ = print_endline ("other_conds: " ^ (pr_list !CP.print_formula other_conds)) in *)
+      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
+      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
       
       if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)
@@ -1513,8 +1522,9 @@ let rec proving_non_termination_scc prog trrels tg scc =
     
 let proving_non_termination_scc prog trrels tg scc =
   let pr = print_graph_by_rel in
-  Debug.no_1 "proving_non_termination_scc" pr (fun _ -> "")
-    (fun _ -> proving_non_termination_scc prog trrels tg scc) tg
+  let pr1 = pr_list string_of_int in
+  Debug.no_2 "proving_non_termination_scc" pr pr1 (fun _ -> "")
+    (fun _ _ -> proving_non_termination_scc prog trrels tg scc) tg scc
 
 (* Auxiliary methods for main algorithms *)
 let aux_solve_turel_one_scc prog trrels tg scc =

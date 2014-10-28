@@ -13705,12 +13705,13 @@ let rec is_MayLoop ann =
 let rec is_Loop ann = 
   match ann with
   | Loop -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_Loop s
-    end
+  | TermU uid -> is_Loop_uid uid
   | _ -> false
+
+and is_Loop_uid uid = 
+  match uid.tu_sol with
+  | None -> false
+  | Some (s, _) -> is_Loop s
 
 let rec is_Term ann = 
   match ann with

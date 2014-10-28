@@ -172,7 +172,7 @@ let rec is_infer_post sf = match sf with
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
         let inf_vars = ei.CF.formula_inf_vars in
-        (inf_obj # is_post) || (List.length (List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) inf_vars) > 0)
+        (inf_obj # is_post) || (List.length (List.filter (fun sv -> (Cpure.is_rel_typ sv)) inf_vars) > 0)
   | _ -> false
 
 let is_infer_post sf =
@@ -314,6 +314,7 @@ let rec turn_off_infer_pure spec old_spec =
           let old_inf_obj = ei.CF.formula_inf_obj # clone in
           let _ = old_inf_obj # reset INF_POST in
           let _ = old_inf_obj # reset INF_PRE in
+          let _ = old_inf_obj # reset INF_SHAPE in
           CF.EInfer {ei with
               CF.formula_inf_obj = old_inf_obj;
               CF.formula_inf_vars = [];

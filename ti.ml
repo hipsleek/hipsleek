@@ -102,15 +102,16 @@ let solve_base_trrels params base_trrels turels =
   (* let base_conds = simplify_and_slit_disj base_cond in *)
   let base_cond = simplify_disj base_cond in
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
+  base_cond
   
-  if !Globals.tnt_infer_lex then base_cond
-  else
-    let may_cond = List.fold_left (fun ac bctx ->
-      mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in
-    (* let may_conds = simplify_and_slit_disj may_cond in *)
-    let may_cond = simplify_disj may_cond in
-    let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in
-    base_cond @ may_cond
+  (* if !Globals.tnt_infer_lex then base_cond                                *)
+  (* else                                                                    *)
+  (*   let may_cond = List.fold_left (fun ac bctx ->                         *)
+  (*     mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in *)
+  (*   (* let may_conds = simplify_and_slit_disj may_cond in *)              *)
+  (*   let may_cond = simplify_disj may_cond in                              *)
+  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in  *)
+  (*   base_cond @ may_cond                                                  *)
   
 let solve_base_trrels params base_trrels turels =
   Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
@@ -163,9 +164,12 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
+  let may_cond = mkNot (join_disjs (List.map get_cond conds)) in
+  if is_sat may_cond then conds @ [MayTerm may_cond]
+  else conds
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
-  conds
+  (* conds                                                            *)
   
 let case_split_init trrels turels = 
   let fn_trrels = 
@@ -278,7 +282,9 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
       if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
-      else update_ann scc (subst (CP.Loop, [])) (* Loop *)
+      else 
+        (* update_ann scc (subst (CP.Loop, [])) (* Loop *) *)
+        proving_non_termination_scc prog trrels tg scc
       
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
@@ -375,8 +381,9 @@ let solve_trel_init prog trrels turels =
   (*   (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in *)
     
   let tg = graph_of_trels irels in
-  let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in
-  solve_turel_graph_init prog rec_trrels tg
+  (* let rec_trrels = List.filter (fun tr -> List.length tr.termr_lhs > 0) trrels in *)
+  (* solve_turel_graph_init prog rec_trrels tg                                       *)
+  solve_turel_graph_init prog trrels tg
 
 let finalize () =
   reset_seq_num ();

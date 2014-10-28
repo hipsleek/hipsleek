@@ -2805,19 +2805,33 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
             let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names
               scc_inferred_hps
             in
+            let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+            let _ = List.iter (fun proc ->
+              (* if proc.Cast.proc_sel_hps != [] then *)
+              let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+                  (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              ()
+          ) new_scc_procs in
             nprog
           else prog
         | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names scc_inferred_hps in
+          let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+          let _ = List.iter (fun proc ->
+              (* if proc.Cast.proc_sel_hps != [] then *)
+              let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+                  (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              ()
+          ) new_scc_procs in
           nprog
       in
       let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-      let _ = List.iter (fun proc ->
-          (* if proc.Cast.proc_sel_hps != [] then *)
-          let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
-              (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
-          ()
-          (* else () *)
-      ) new_scc_procs in
+      (* let _ = List.iter (fun proc -> *)
+      (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
+      (*     let _ =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
+      (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
+      (*     () *)
+      (*     (\* else () *\) *)
+      (* ) new_scc_procs in *)
       new_scc_procs
     else scc_procs
     in
@@ -3347,10 +3361,10 @@ let reverify_proc prog proc do_infer =
               begin
                 if (not !Globals.web_compile_flag) then
                   print_endline "";
-                print_endline "\n\n******************************";
-                print_endline "******* SPECIFICATION2 ********";
-                print_endline "******************************";
-                print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
+                  print_endline "\n\n******************************";
+                  print_endline "******* SPECIFICATION2 ********";
+                  print_endline "******************************";
+                  print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
               end
             in
             (*****LOCKSET variable: ls'=ls *********)
@@ -3736,8 +3750,15 @@ let rec check_prog iprog (prog : prog_decl) =
       (*     DD.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
       (* Reverify *)
-      let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in
-      let _ = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in
+      (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
+      (* let _ = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
+      let has_infer_term_scc = Ti3.is_infer_term_scc scc in
+      let _ =
+        if has_infer_term_scc then
+          let _ = Ti3.add_term_relation_scc prog scc in
+          wrap_reverify_scc reverify_scc prog scc false
+        else ()
+      in
 
       (* let _ = DD.info_hprint (add_str "reverify" pr_id) "" no_pos in *)
 
