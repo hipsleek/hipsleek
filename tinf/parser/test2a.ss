@@ -19,6 +19,8 @@ bool test_bool(bool b)
 }
 
 int test_int(int a)
+  requires true
+  ensures a>1 & res = a | a<=1 & res = 1;
 {
   while (a>1) 
     requires true
@@ -34,7 +36,7 @@ int test_int(int a)
   return 1;
 }
 
-/*
+
 int  test_int_2(int a,int b)
 requires true
  ensures a>1 & b<=1 & res=a | a<=1 & res=2 | a>1 & b>1 & res=3;
@@ -55,4 +57,4 @@ requires true
   return 2;
   dprint;
 }
-*/
+
