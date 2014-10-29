@@ -1174,6 +1174,7 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst po
     (* generate Iformula.struc_infer_formula*)
     let inf_obj = Globals.infer_const_obj # clone in
     let _ = inf_obj#set_list infer_lst in
+    let _ =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
         (* F.formula_inf_tnt = false; *)
         F.formula_inf_obj = inf_obj (* Globals.infer_const_obj # clone*);
@@ -1232,7 +1233,7 @@ let genESpec_wNI body_header body_opt args ret pos=
             let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
-      | F.EInfer i_sf -> if i_sf.F.formula_inf_obj # is_shape then
+      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
           let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then
             let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in

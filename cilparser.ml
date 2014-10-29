@@ -2038,6 +2038,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         | Iformula.EList [] -> begin
             match funbody with
               | Some _ ->
+                    let _ =  Debug.ninfo_hprint (add_str "infer_const_obj" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
 	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
                     (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
   	          let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in

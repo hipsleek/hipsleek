@@ -5237,8 +5237,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                  }
                      else w_proc
               | IF.EInfer i_sf ->
-                    let _ =  Debug.info_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
-                    if i_sf.IF.formula_inf_obj # is_shape then
+                    let _ =  Debug.ninfo_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
+                    if Globals.infer_const_obj # is_shape || i_sf.IF.formula_inf_obj # is_shape then
                       let is_simpl, pre,post = IF.get_pre_post i_sf.IF.formula_inf_continuation in
                       if is_simpl then
                         let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
