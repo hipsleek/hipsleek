@@ -1464,7 +1464,7 @@ and is_float (e : exp) : bool =
 
 and is_specific_val (e: exp): bool =
   is_int e || is_float e || is_null e
-  
+
 and eq_num_exp e1 e2 =
   match e1, e2 with
   | IConst (i1, _), IConst (i2, _) -> i1 == i2
@@ -1504,6 +1504,29 @@ and get_num_float (e : exp) : float =
   match e with
     | FConst (f, _) -> f
     | _ -> 0.0
+
+and get_num_int_list_bf (bf: b_formula) : int list =
+  let (pf,_) = bf in
+  match pf with
+    | Lt (e1,e2,_)
+    | Lte (e1,e2,_)
+    | Gt (e1,e2,_)
+    | Gte (e1,e2,_)
+    | Eq (e1,e2,_)
+    | Neq (e1,e2,_) ->
+          let l1 = if is_int e1 then [get_num_int e1] else [] in
+          let l2 = if is_int e2 then [get_num_int e2] else [] in
+          l1@l2
+    | _ -> []
+
+and get_num_int_list (f : formula) : int list = match f with
+  | BForm (bf,_) -> get_num_int_list_bf bf
+  | And (f1,f2,_) -> (get_num_int_list f1) @ (get_num_int_list f2)
+  | Or (f1,f2,_,_) -> (get_num_int_list f1) @ (get_num_int_list f2)
+  | Not (f,_,_) -> get_num_int_list f
+  | Forall (_,f,_,_) -> get_num_int_list f
+  | Exists (_,f,_,_) -> get_num_int_list f
+  | AndList l -> List.fold_left (fun acc (_,f) -> acc@(get_num_int_list f)) [] l
 
 and is_var_num (e : exp) : bool =
   match e with
@@ -4584,7 +4607,9 @@ let add_flow_var_pf (pf0 : p_formula) : p_formula =
   Debug.no_1 "add_flow_var_pf" pr pr add_flow_var_pf pf0
 
 let rec add_flow_var (f0 : formula) : formula =
-  match f0 with
+  let fv = fv f0 in
+  if List.mem (mk_typed_spec_var Int "flow") fv then f0
+  else match f0 with
     | BForm ((pf,ann),lbl) -> BForm ((add_flow_var_pf pf,ann),lbl)
     | And (f1,f2,pos) -> And (add_flow_var f1, add_flow_var f2, pos)
     | AndList al -> AndList (List.map (fun (t,f) -> (t, add_flow_var f)) al)
@@ -10654,8 +10679,7 @@ let rec tpd_drop_nperm f = match f with
 	| Not (b,_,_) ->  if tpd_drop_nperm b=[] then [] else report_error no_pos "tree shares under negation"
 	| Forall (_,b,_,_) -> if tpd_drop_nperm b =[] then [] else report_error no_pos "tree shares under forall"
 	| Exists _ -> report_error no_pos ("tpd_drop_nperm: to_dnf has failed "^(!print_formula f))
-	
-	
+
 let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_list (fun c-> !print_b_formula (c,None))) tpd_drop_nperm f
 
 

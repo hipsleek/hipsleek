@@ -1218,7 +1218,8 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  if not !Globals.sags then body_header
+  let has_shape_args = List.exists (fun p -> is_node_typ p.param_type) args in
+  if not has_shape_args ||  not !Globals.sags then body_header
   else
     let ss, n_hp_dcls,args_wi =
       match body_header.proc_static_specs with
