@@ -4,6 +4,7 @@
  * Created: Oct. 31, 2013.
  */
 
+typedef unsigned int size_t;
 
 void* malloc(int size) __attribute__ ((noreturn))
 /*@
