@@ -528,6 +528,7 @@ module type ETABLE =
       method sub_type_obj : ident -> ident -> bool
       method union_flow_ne: nflow -> nflow -> nflow
       method is_norm_flow : nflow -> bool
+      method is_exc_flow : nflow -> bool
       method is_top_flow : nflow -> bool
       method get_min_max : nflow -> (int*int)
       method mk_nflow_from_min_max : int -> int -> nflow
@@ -780,6 +781,10 @@ struct
     method is_norm_flow (f:nflow) =
       begin
         is_exact_flow f !norm_flow_int
+      end
+    method is_exc_flow (f:nflow) =
+      begin
+        is_exact_flow f !raisable_flow_int
       end
     method is_top_flow (f:nflow) =
       begin
@@ -1121,6 +1126,10 @@ struct
     method is_norm_flow (f:nflow) =
       begin
         is_exact_flow f !norm_flow_int
+      end
+    method is_exc_flow (f:nflow) =
+      begin
+        is_exact_flow f !raisable_flow_int
       end
     method is_top_flow (f:nflow) =
       begin
