@@ -193,6 +193,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+   ("string", STRING);
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
@@ -305,6 +306,7 @@ module Make (Token : SleekTokenS)
   let bin_literal = '0' ['b' 'B'] ['0'-'1'] ['0'-'1' '_']*
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
   let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
+  let label = '#' identseq
   
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
@@ -324,6 +326,8 @@ rule tokenizer file_name = parse
   | (int_literal as i) "n"
         { try INT_LITER(int_of_string i, i) (*can try different converter if needed*)
           with Failure _ -> err (Literal_overflow "nativeint") (Loc.of_lexbuf lexbuf) }
+  | (label as l)
+        { LABEL l }
   | "'\\" (_ as c)
         { err (Illegal_escape (String.make 1 c)) (Loc.of_lexbuf lexbuf)         }
   | "/*" { comment_level := 0; comment file_name lexbuf }
@@ -337,7 +341,7 @@ rule tokenizer file_name = parse
           move_start_p (-1) file_name; STAR                                      }
   | '"'
         { with_curr_loc string file_name;
-          let s = buff_contents file_name in STRING (Camlp4.Struct.Token.Eval.string s, s)     }
+          let s = buff_contents file_name in STRING_LIT (Camlp4.Struct.Token.Eval.string s, s)     }
   | "'" (newline as x) "'"
         { update_loc file_name None 1 false 1; CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x)       }
   | "'" ( [^ '\\' '\010' '\013']

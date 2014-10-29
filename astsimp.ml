@@ -536,7 +536,8 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Debug _ 
   | C.Dprint _
   | C.FConst _
-  | C.IConst _ 
+  | C.IConst _
+  | C.SConst _ 
   | C.Print _ 
   | C.Java _ -> e
     (*| C.ArrayAlloc a -> C.ArrayAlloc {a with (* An Hoa *)
@@ -2923,6 +2924,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.FloatLit _ -> false
     | I.Finally b-> all_paths_return b.I.exp_finally_body
     | I.IntLit _ -> false
+    | I.StringLit _ -> false
     | I.Java _ -> false
     | I.Label (_,e)-> all_paths_return e
     | I.Member _ -> false
@@ -5228,6 +5230,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
             (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
+      | Iast.StringLit {I.exp_string_lit_val = fval; I.exp_string_lit_pos = pos} -> 
+            (C.SConst {C.exp_sconst_val = fval; C.exp_sconst_pos = pos}, C.string_type)
       | Iast.Cast {I.exp_cast_target_type = ty;
         I.exp_cast_body = exp;
         I.exp_cast_pos = pos} ->
@@ -5465,6 +5469,8 @@ and default_value (t :typ) pos : C.exp =
           C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
     | Float ->
           C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
+    | StringT ->
+          C.SConst { C.exp_sconst_val = ""; C.exp_sconst_pos = pos; }
     | (TVar _) ->
           failwith
               "default_value: typevar in variable declaration should have been rejected"
@@ -7193,6 +7199,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Ann_Exp (e, t, pos) -> trans_pure_exp e tlist
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
+    | IP.SConst (s, pos) -> CP.SConst (s, pos)
     | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
     | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
     | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 tlist, trans_pure_exp e2 tlist, pos)
@@ -8026,6 +8033,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Block b-> Iast.Block{b with Iast.exp_block_body = helper ren b.Iast.exp_block_body}
     | Iast.FloatLit _
     | Iast.IntLit _
+    | Iast.StringLit _
     | Iast.Java _     
     | Iast.Null _
     | Iast.Break _
@@ -8126,7 +8134,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
         (Iast.Block { b with Iast.exp_block_body = fst (case_rename_var_decls b.Iast.exp_block_body)},[])
             
   | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
-  | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
+  | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _ | Iast.StringLit _
   | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
   | Iast.Break _ | Iast.Barrier _ -> (f,[])  
   | Iast.CallNRecv b ->
@@ -8298,7 +8306,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.Dprint _ 
         | Iast.Empty _ 
         | Iast.FloatLit _ 
-        | Iast.IntLit _ 
+        | Iast.IntLit _
+        | Iast.StringLit _
         | Iast.Java _ 
         | Iast.BoolLit _
         | Iast.Null _  
@@ -9194,6 +9203,7 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
     | C.Dprint _
     | C.FConst _ 
     | C.IConst _
+    | C.SConst _
     | C.New _
     | C.Null _ 
     | C.EmptyArray _ 

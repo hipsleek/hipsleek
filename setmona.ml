@@ -242,6 +242,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
+  | SConst _ -> failwith ("[setmona.ml]: string is not supported")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")
   | Tup2 _ -> failwith ("[setmona.ml]: ERROR in constraints (Tup2 should not appear here)")

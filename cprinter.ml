@@ -793,6 +793,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Var (x, l) -> fmt_string (string_of_spec_var x) (* fmt_string (string_of_typed_spec_var x) *)
     | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
+    | P.SConst (s, l) -> fmt_string s
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
     | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
@@ -4337,6 +4338,7 @@ let rec string_of_exp = function
         (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
         (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)
   | IConst ({exp_iconst_val = i; exp_iconst_pos = l}) -> string_of_int i 
+  | SConst ({exp_sconst_val = s}) -> s 
   | New ({exp_new_class_name = id;
 	exp_new_arguments = idl;
 	exp_new_pos = l}) -> 
@@ -4793,6 +4795,7 @@ let rec html_of_formula_exp e =
     | P.Level (x, l) -> "<level>" ^ html_of_spec_var x ^ "</level>"
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
+    | P.SConst (s, l) -> s
     | P.AConst (f, l) -> string_of_heap_ann f
     | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
     | P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"

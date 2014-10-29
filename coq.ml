@@ -34,6 +34,7 @@ let rec coq_of_typ = function
   | Tup2 _ -> illegal_format ("coq_of_typ: Tup2 type not supported for Coq")
   | FORM -> illegal_format ("coq_of_typ: FORMULA type not supported for Coq")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
+  | StringT -> "coq_of_type: string is not supported"
   | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT | HpT->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
@@ -85,6 +86,7 @@ and coq_of_exp e0 =
   | CP.Bptriple _ | CP.Tup2 _ ->  illegal_format "coq_of_exp : bptriple/Tup2 cannot be handled"
   | CP.AConst (i, _) -> string_of_heap_ann i
   | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
+  | CP.SConst (f, _) -> illegal_format "coq_of_exp : string cannot be handled"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"

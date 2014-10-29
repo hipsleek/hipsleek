@@ -383,7 +383,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
     | Cpure.IConst _       -> false
     | Cpure.FConst _       -> false
     | Cpure.AConst _       -> false
-          (* arithmetic expressions *)
+    | Cpure.SConst _       -> false
+    (* arithmetic expressions *)
     | Cpure.Add _
     | Cpure.Subtract _
     | Cpure.Mult _
@@ -391,12 +392,12 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
     | Cpure.Max _
     | Cpure.Min _
     | Cpure.TypeCast _     -> false
-          (* bag expressions *)
+    (* bag expressions *)
     | Cpure.Bag _
     | Cpure.BagUnion _
     | Cpure.BagIntersect _
     | Cpure.BagDiff _      -> false
-          (* list expressions *)
+    (* list expressions *)
     | Cpure.List _
     | Cpure.ListCons _
     | Cpure.ListHead _
@@ -404,12 +405,12 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
     | Cpure.ListLength _
     | Cpure.ListAppend _
     | Cpure.ListReverse _  -> false
-          (* array expressions *)
+    (* array expressions *)
     | Cpure.ArrayAt _      -> false
     | Cpure.Func _ ->  false 
-  | Cpure.Template _ -> false
+    | Cpure.Template _ -> false
     | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
-  | Cpure.Tup2 _ -> Error.report_no_pattern()
+    | Cpure.Tup2 _ -> Error.report_no_pattern()
     | Cpure.Bptriple _ -> Error.report_no_pattern()
 
 

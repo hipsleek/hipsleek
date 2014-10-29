@@ -240,7 +240,8 @@ and afv (af : exp) : (ident * primed) list = match af with
       if (id.[0] = '#') then [] else [sv]
   | Null _ 
   | AConst _ 
-  | IConst _ 
+  | IConst _
+  | SConst _ 
   | Tsconst _ 
   | InfConst _
   | FConst _ -> []
@@ -597,7 +598,8 @@ and pos_of_exp (e : exp) = match e with
   | Var (_, p) 
   | Level (_, p) 
   | IConst (_, p) 
-  | FConst (_, p) 
+  | FConst (_, p)
+  | SConst (_, p)
   | Tsconst (_, p)
   | Bptriple (_, p)
   | Tup2 (_, p)
@@ -813,7 +815,8 @@ and subst_exp sst (e: exp) : exp =
 and e_apply_one ((fr, t) as p) e = match e with
   | Null _ 
   | IConst _ 
-  | FConst _ 
+  | FConst _
+  | SConst _
   | Tsconst _
   | InfConst _
   | AConst _ -> e
@@ -1026,6 +1029,7 @@ and find_lexp_exp (e: exp) ls =
   | Var _
   | Level _
   | IConst _
+  | SConst _
   | AConst _
   | Tsconst _
   | InfConst _
@@ -1095,7 +1099,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Null _ 
   | Var _ 
   | Level _ 
-  | IConst _ 
+  | IConst _
+  | SConst _
   | AConst _ 
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
@@ -1169,7 +1174,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Null _ 
   | Var _ 
   | Level _ 
-  | IConst _ 
+  | IConst _
+  | SConst _
   | AConst _ 
   | Tsconst _
   | InfConst _ 
@@ -1787,6 +1793,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
+  | SConst _                  -> Globals.StringT
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
@@ -2007,7 +2014,7 @@ let rec transform_exp_x f (e : exp) : exp =
   match r with
   | Some ne -> ne
   | None -> (match e with
-      | Null _  | Var _ | Level _ | IConst _ | AConst _ 
+      | Null _  | Var _ | Level _ | IConst _ | AConst _ | SConst _
       | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ -> e
       | Ann_Exp (e,t,l) ->
           let ne = transform_exp f e in

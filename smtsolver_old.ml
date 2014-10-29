@@ -76,6 +76,7 @@ let rec smt_of_exp a =
 	| CP.Var (sv, _) -> smt_of_spec_var sv
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
 	| CP.FConst _ -> failwith ("[smtsolver.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[smtsolver.ml]: string is not supported")
 	| CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
 	| CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -235,7 +236,7 @@ and collect_bformula_info b = match b with
 				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
-	| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> default_formula_info
+	| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.SConst _ -> default_formula_info
 	| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in

@@ -358,6 +358,10 @@ and exp_fconst = {
     exp_fconst_val : float;
     exp_fconst_pos : loc }
 
+and exp_sconst = {
+    exp_sconst_val : string;
+    exp_sconst_pos : loc }
+
 (* instance call *)
 and exp_icall = { exp_icall_type : typ;
 exp_icall_receiver : ident;
@@ -484,6 +488,7 @@ and exp = (* expressions keep their types *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
+  | SConst of exp_sconst
         (*
 	  | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
         (* v.f --> (type of f, v, (f, position of f in field list), pos *)
@@ -734,6 +739,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | FConst _
 	          | ICall _
 	          | IConst _
+            | SConst _
 						(* | ArrayAlloc _ *) (* An Hoa *)
 	          | New _
 	          | Null _
@@ -853,6 +859,8 @@ let void_type = Void
 
 let int_type = Int
 
+let string_type = StringT
+
 let infint_type = INFInt
 
 let float_type = Float
@@ -942,6 +950,7 @@ let rec type_of_exp (e : exp) = match e with
 	  (*| FieldRead (t, _, _, _) -> Some t*)
 	  (*| FieldWrite _ -> Some Void*)
   | IConst _ -> Some int_type
+  | SConst _ -> Some string_type
 	(* An Hoa *)
 	(* | ArrayAlloc ({exp_aalloc_etype = t; 
 		  exp_aalloc_dimension = _; 
@@ -1609,6 +1618,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
     exp_icall_arguments = _;
     exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
+  | SConst _ -> []
 	(*| ArrayAlloc _ -> []*)
   | New _ -> []
   | Null _ -> []
@@ -1873,6 +1883,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Assign _
   | ICall _
   | IConst _
+  | SConst _
   | While _ 
   | This _
   | Var _
@@ -1900,6 +1911,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | FConst b -> b.exp_fconst_pos
   | ICall b -> b.exp_icall_pos
   | IConst b -> b.exp_iconst_pos
+  | SConst b -> b.exp_sconst_pos
   | Print (_,b) -> b
   | Seq b -> b.exp_seq_pos
   | VarDecl b -> b.exp_var_decl_pos

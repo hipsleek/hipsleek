@@ -74,6 +74,7 @@ let rec smt_of_typ t =
   | Float -> "Real" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
+  | StringT -> "String"
   | AnnT -> "Int"
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
@@ -115,6 +116,7 @@ let rec smt_of_exp_x a =
   | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f
+  | CP.SConst (s, _) -> s
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -1036,7 +1038,6 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 *)
 
 and smt_imply pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
-  let pr = !print_pure in
   let pr_ante = (add_str "ante" !CP.print_formula) in
   let pr_conseq = (add_str "conseq" !CP.print_formula) in
   let pr_timeout = (add_str "timeout" string_of_float) in

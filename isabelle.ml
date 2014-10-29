@@ -59,6 +59,7 @@ let rec isabelle_of_typ = function
   | Bptyp ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "Bptyp type not supported for Isabelle"}
+  | StringT -> report_error no_pos "string is not supported in Isabelle"
 ;;
 
 (* pretty printing for spec_vars *)
@@ -115,6 +116,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[isabelle.ml]: string is not supported")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
   | CP.Tup2 _ -> failwith ("[isabelle.ml]: ERROR in constraints (Tup2 should not appear here)")

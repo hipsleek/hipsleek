@@ -290,6 +290,7 @@ let rec rl_of_exp e0 =
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> string_of_float f
+  | CP.SConst (f, _) -> failwith ("redlog.rl_of_exp: string can't appear here")
   | CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " + " ^ (rl_of_exp e2) ^ ")"
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
   | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
@@ -1518,7 +1519,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 
 	(* filter out the array accesses *)
 	let rec contains_no_arr e = match e with
-		| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ -> true
+		| CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.SConst _ -> true
 		| CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) -> (contains_no_arr e1) && (contains_no_arr e2)
 		| CP.ArrayAt _ -> false
 		| _ -> false (* filter out all multiplication as well *) in
@@ -1552,6 +1553,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 			| Not_found -> let _ = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
+    | CP.SConst _ -> failwith ("redlog: string is unsupported!")
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
 		| CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " - " ^ (rl_of_exp varsmap e2) ^ ")"
 		(*| CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " * " ^ (rl_of_exp varsmap e2) ^ ")"*)

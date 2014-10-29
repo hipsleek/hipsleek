@@ -338,6 +338,7 @@ and java_of_exp = function
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
   | FloatLit ({exp_float_lit_val = f})
                                    -> string_of_float f
+  | StringLit ({exp_string_lit_val = s}) -> s
   | Null l                         -> "null"
   | Assert _                       -> ""
   | Dprint l                       -> ""

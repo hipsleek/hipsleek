@@ -16568,6 +16568,7 @@ let elim_prm e =
   let f_e e = match e with 
     | CP.Null _ 
     | CP.IConst _
+    | CP.SConst _
     | CP.AConst _
     | CP.Tsconst _
     | CP.FConst _ 

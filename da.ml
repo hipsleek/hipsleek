@@ -111,7 +111,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
       | Assert _   | Java _
       | CheckRef _ | BConst _
       | Debug _    | Dprint _
-      | FConst _   | ICall _
+      | FConst _   | ICall _ | SConst _
       | IConst _   | New _
       | Null _  | EmptyArray _ (* An Hoa *)
       | Print _ | Barrier _
@@ -291,7 +291,7 @@ let find_rel_args_groups_x prog proc e0=
       | Assert _   | Java _
       | CheckRef _ | BConst _
       | Debug _    | Dprint _
-      | FConst _   | ICall _
+      | FConst _   | ICall _ | SConst _
       | IConst _   | New _
       | Null _  | EmptyArray _ (* An Hoa *)
       | Print _ | Barrier _

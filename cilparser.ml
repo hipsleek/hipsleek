@@ -121,6 +121,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.FloatLit e -> e.Iast.exp_float_lit_pos
   | Iast.Finally e -> e.Iast.exp_finally_pos
   | Iast.IntLit e -> e.Iast.exp_int_lit_pos
+  | Iast.StringLit e -> e.Iast.exp_string_lit_pos
   | Iast.Java e -> e.Iast.exp_java_pos
   | Iast.Label (_, e1) -> loc_of_iast_exp e1
   | Iast.Member e -> e.Iast.exp_member_pos
@@ -508,7 +509,6 @@ and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
     (fun _ -> normalize_goto_fundec_x fd) fd
 
 let match_stmt stmt1 stmt2 =
-  let s1 = string_of_cil_stmt stmt1 in
   let s1 = string_of_cil_stmt stmt1 in
   let s2 = string_of_cil_stmt stmt2 in
   if (String.compare s1 s2 == 0) then true else false
@@ -1602,6 +1602,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                     Iast.mkMember addr_var ["deref"] None pos*)
         | Ipure.IConst (i, pos) ->
               Ipure.IConst (i, pos)
+        | Ipure.SConst _ -> e 
         | Ipure.FConst (f, pos) ->
               Ipure.FConst (f, pos)
         | Ipure.AConst (ha, pos) ->

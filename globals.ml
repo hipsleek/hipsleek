@@ -25,7 +25,10 @@ type ('a,'b) twoAns =
   | SndAns of 'b
 
 type ident = string
+
 type constant_flow = string
+
+type label = string
 
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
@@ -140,6 +143,7 @@ type typ =
   | AnnT
   | Bool
   | Float
+  | StringT
   | Int
   | INFInt
   | Tup2 of typ * typ
@@ -184,6 +188,7 @@ let rec cmp_typ t1 t2=
     | Int, Int
     | INFInt, INFInt
     | NUM, NUM
+    | StringT, StringT
     | Void, Void -> true
     | TVar i1, TVar i2 -> i1=i2
     | BagT t11, BagT t22
@@ -508,6 +513,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
+  | StringT        -> "string"
   | Int           -> "int"
   | INFInt        -> "INFint"
   | Void          -> "void"
@@ -526,8 +532,8 @@ let rec string_of_typ (x:typ) : string = match x with
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
-		(string_of_typ et) ^ (repeat r)
+      let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
+      (string_of_typ et) ^ (repeat r)
 ;;
 
 let is_RelT x =
@@ -547,32 +553,33 @@ let is_HpT x =
 ;;
 
 (* aphanumeric name *)
-let rec string_of_typ_alpha = function 
+let rec string_of_typ_alpha t = match t with
    (* may be based on types used !! *)
   | FORM          -> "Formula"
-  | UNK          -> "Unknown"
+  | UNK           -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
+  | StringT        -> "string"
   | Int           -> "int"
   | INFInt        -> "INFint"
   | Void          -> "void"
-  | NUM          -> "NUM"
+  | NUM           -> "NUM"
   | AnnT          -> "AnnT"
-  | Tree_sh		  -> "Tsh"
-  | Bptyp		  -> "Bptyp"
+  | Tree_sh       -> "Tsh"
+  | Bptyp         -> "Bptyp"
   | Tup2 (t1,t2)  -> "tup2_"^(string_of_typ t1)^"_"^(string_of_typ t2)
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
-  | ListT t        -> "list_"^(string_of_typ t)
-  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
-  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
-  | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
-  | UtT -> "UtT"
-  | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | ListT t       -> "list_"^(string_of_typ t)
+  | RelT a        -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t     -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2)-> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
+  | UtT           -> "UtT"
+  | HpT           -> "HpT"
+  | Named ot      -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
-		(string_of_typ et) ^ (repeat r)
+      let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
+      (string_of_typ et) ^ (repeat r)
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =

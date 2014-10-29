@@ -429,6 +429,11 @@ exp_float_lit_pos : loc }
 and exp_int_lit = { exp_int_lit_val : int;
 exp_int_lit_pos : loc }
 
+and exp_string_lit = {
+  exp_string_lit_val : string;
+  exp_string_lit_pos : loc
+}
+
 and exp_java = { exp_java_code : string;
 exp_java_pos : loc }
 
@@ -525,6 +530,7 @@ and exp =
   | FloatLit of exp_float_lit
   | Finally of exp_finally
   | IntLit of exp_int_lit
+  | StringLit of exp_string_lit
   | Java of exp_java
   | Label of ((control_path_id * path_label) * exp)
   | Member of exp_member
@@ -553,6 +559,8 @@ let infint_type = INFInt
 let ann_type = AnnT
 
 let float_type = Float
+
+let string_type = StringT
 
 let bool_type = Bool
 
@@ -654,6 +662,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
                   | Empty _ 
                   | FloatLit _ 
                   | IntLit _
+                  | StringLit _
                   | Java _ 
                   | Null _ 
                   | This _ 
@@ -881,6 +890,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | FloatLit e -> e.exp_float_lit_pos
   | Finally e -> e.exp_finally_pos
   | IntLit e -> e.exp_int_lit_pos
+  | StringLit e -> e.exp_string_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
   | ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)

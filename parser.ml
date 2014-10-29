@@ -497,6 +497,13 @@ let peek_try =
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
 
+ let peek_label = 
+ SHGram.Entry.of_parser "peek_label" 
+     (fun strm ->
+       match Stream.npeek 1 strm with
+          | [LABEL l, _] -> ()
+          | _ -> raise Stream.Failure)
+
  let peek_try_st = 
  SHGram.Entry.of_parser "peek_try_st" 
      (fun strm ->
@@ -574,7 +581,7 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm ->
            match Stream.npeek 3 strm with
              | [AND,_;FLOW i,_;_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING_LIT _,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_pure = 
@@ -637,7 +644,7 @@ let peek_dc =
        (fun strm -> 
            match Stream.npeek 3 strm with
              | [AND,_;FLOW i,_;_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING_LIT _,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_view_decl = 
@@ -1267,9 +1274,9 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
+(* one_branch_single : [[ `STRING_LIT (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
-one_string: [[`STRING (_,id)-> id]];
+one_string: [[`STRING_LIT (_,id)-> id]];
 
 one_string_w_ann: [[  id = one_string; ann_lbl = OPT ann_label -> (id, un_option ann_lbl (Lbl.LA_Both) )]];
 
@@ -1282,7 +1289,7 @@ one_branch : [[ lbl = one_string; lblA = opt_string_w_ann_list ; `COLON; pc=pure
 
 opt_branch:[[t=OPT branch -> un_option t LO.unlabelled]];
 
-branch: [[ `STRING (_,id);`COLON -> 
+branch: [[ `STRING_LIT (_,id);`COLON -> 
     if !Globals.remove_label_flag then  LO.unlabelled
     else LO.singleton id ]];
 
@@ -1577,15 +1584,15 @@ opt_formula_label: [[t=OPT formula_label -> un_option t None]];
 
 opt_label: [[t= OPT label->un_option t ""]]; 
 
-label : [[  `STRING (_,id);  `COLON -> id ]];
+label : [[  `STRING_LIT (_,id);  `COLON -> id ]];
 
-(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
+(* label_w_ann : [[  `STRING_LIT (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
 pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id]];
 
-formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
+formula_label: [[ `AT; `STRING_LIT (_,id) ->(fresh_branch_point_id id)]];
 
 opt_heap_constr: [[ t = heap_constr -> t]];
 
@@ -1972,6 +1979,7 @@ cexp_w:
     | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
     | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
     | `OLIST; c1 = opt_cexp_list; `CLIST -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
+    | `OSQUARE; c1 = stmt_label_list; `CSQUARE -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
     | `OSQUARE; c1 = opt_cexp_list; `CSQUARE -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
     |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
     | `TAIL; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
@@ -1981,6 +1989,8 @@ cexp_w:
     | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
     | `REVERSE; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1
     ] 
+  | "pure_exclusive" RIGHTA
+    [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
   | "addit"
     [ c1=SELF ; `PLUS; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
     | c1=SELF ; `MINUS; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos_camlp4 _loc 2)) c1 c2
@@ -2085,8 +2095,6 @@ cexp_w:
     | `NOT; `OPAREN; c=pure_constr; `CPAREN -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
     | `NOT; t=cid -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
     ]
-  | "pure_exclusive" RIGHTA
-    [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
   ];
 
 	  
@@ -2123,6 +2131,10 @@ opt_measures_seq_sqr: [[ il = OPT measures_seq_sqr -> un_option il [] ]];
 measures_seq_sqr: [[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_cexp_list: [[t=LIST0 cexp SEP `COMMA -> t]];
+
+stmt_label: [[`LABEL lbl -> P.SConst (lbl, get_pos_camlp4 _loc 1) ]];
+
+stmt_label_list: [[peek_label; t = LIST0 stmt_label SEP `COMMA -> t]];
 
 (* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
 
@@ -2484,7 +2496,7 @@ coercion_direction:
 
 opt_name: [[t= OPT name-> un_option t ""]];
 
-name:[[ `STRING(_,id)  -> id]];
+name:[[ `STRING_LIT(_,id)  -> id]];
 
 typ:
   [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
@@ -2494,7 +2506,8 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `FLOAT              -> float_type 
+   | `FLOAT              -> float_type
+   | `STRING             -> string_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG               -> bag_type
@@ -3239,7 +3252,7 @@ time_statement:
 
 dprint_statement:
   [[ `DPRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos_camlp4 _loc 1)})
-   | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
+   | `DPRINT; `STRING_LIT(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
    
 bind_statement:
   [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->

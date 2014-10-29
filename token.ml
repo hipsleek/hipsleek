@@ -7,7 +7,8 @@ type sleek_token =
   | INT_LITER     of int * string
   | FLOAT_LIT     of float * string
   | CHAR_LIT      of char * string
-  | STRING        of string * string
+  | STRING_LIT        of string * string
+  | LABEL         of string
         (*| COMMENT       of string*)
   | EOF 
   | JAVA          of string
@@ -53,7 +54,7 @@ type sleek_token =
   | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE
   | UTPRE | UTPOST
   | UNFOLD | UNION
-  | VOID 
+  | VOID | STRING
   | WHILE | FLOW of string
         (*operators*)  
   | CARET 
@@ -97,7 +98,8 @@ module Token = struct
   let sf = Printf.sprintf
 
   let to_string k = match k with 
-    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING_LIT (_,s)-> s
+    | LABEL s -> s
           (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
@@ -135,7 +137,7 @@ module Token = struct
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
     | PRINT_LEMMAS -> "print_lemmas" 
-    |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    | CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
@@ -186,6 +188,7 @@ module Token = struct
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    | STRING -> "string"
 
 
   let print ppf x = pp_print_string ppf (to_string x)
@@ -193,7 +196,7 @@ module Token = struct
   let match_keyword kwd _ = false 
     
   let extract_string t = match t with
-     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
+     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING_LIT (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
      | _ -> ""
      
     

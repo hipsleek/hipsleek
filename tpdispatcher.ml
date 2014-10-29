@@ -700,7 +700,7 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _
-  | CP.Bptriple _
+  | CP.Bptriple _ | CP.SConst _
   | CP.Tup2 _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
@@ -738,7 +738,7 @@ let rec is_list_exp e = match e with
   | CP.Bptriple _
   | CP.Tup2 _
   | CP.Level _
-  | CP.FConst _ | CP.IConst _ -> Some false
+  | CP.FConst _ | CP.IConst _ | CP.SConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
 
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with

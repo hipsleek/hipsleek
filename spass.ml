@@ -40,26 +40,27 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   match e0 with
   | Cpure.Null _      -> ("NULL", ["NULL"], [])
   | Cpure.Var (sv, _) -> let func = spass_dfg_of_spec_var sv in (func, [func], [])
-                         (* illegal_format "SPASS don't support Var expresion" *)
-  | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
-  | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
-  | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
-  | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
-  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
-  | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
-  | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+                         (* illegal_format "SPASS doesn't support Var expresion" *)
+  | Cpure.IConst _    -> illegal_format "SPASS doesn't support IConst expresion"
+  | Cpure.FConst _    -> illegal_format "SPASS doesn't support FConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS doesn't support SConst expresion"
+  | Cpure.AConst _    -> illegal_format "SPASS doesn't support AConst expresion"
+  | Cpure.Tsconst _   -> illegal_format "SPASS doesn't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS doesn't support Bptriple expresion"
+  | Cpure.Tup2 _   -> illegal_format "SPASS doesn't support Tup2 expresion"
+  | Cpure.Add _       -> illegal_format "SPASS doesn't support Add expresion"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
-  | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
-  | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
-  | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
-  | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
-  | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
-  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
+  | Cpure.Subtract _  -> illegal_format "SPASS doesn't support Substract expresion"
+  | Cpure.Mult _      -> illegal_format "SPASS doesn't support Mult expresion"
+  | Cpure.Div _       -> illegal_format "SPASS doesn't support Div expresion"
+  | Cpure.Max _       -> illegal_format "SPASS doesn't support Max expresion"
+  | Cpure.Min _       -> illegal_format "SPASS doesn't support Min expresion"
+  | Cpure.TypeCast _       -> illegal_format "SPASS doesn't support TypeCast expresion"
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
-  | Cpure.BagDiff _   -> illegal_format "SPASS don't support Bag expresion"
+  | Cpure.BagDiff _   -> illegal_format "SPASS doesn't support Bag expresion"
   (* list expressions *)
   | Cpure.List _
   | Cpure.ListCons _
@@ -67,12 +68,12 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.ListTail _
   | Cpure.ListLength _
   | Cpure.ListAppend _
-  | Cpure.ListReverse _ -> illegal_format "SPASS don't support List expresion"
+  | Cpure.ListReverse _ -> illegal_format "SPASS doesn't support List expresion"
   (* array expressions *)
-  | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
+  | Cpure.ArrayAt _   -> illegal_format "SPASS doesn't support Array expresion"
   (* other *)
-  | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
-  | Cpure.Template _      -> illegal_format "SPASS don't support Template expresion"
+  | Cpure.Func _      -> illegal_format "SPASS doesn't support Func expresion"
+  | Cpure.Template _      -> illegal_format "SPASS doesn't support Template expresion"
   | Cpure.InfConst _ -> Error.report_no_pattern()
                            
 (* return b_formula in string * list of functions in string * list of predicates in string *)
@@ -87,17 +88,17 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
       let pred = spass_dfg_of_spec_var sv in
       (pred, [], [pred]) 
     ) 
-  | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
+  | LexVar _        -> illegal_format "SPASS doesn't support LexVar p_formula"
   | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
   | BVar (sv, _)    -> (
       let pred = spass_dfg_of_spec_var sv in
       (pred, [], [pred]) 
     ) 
-  | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
-  | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
-  | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
-  | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
-  | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
+  | Lt _            -> illegal_format "SPASS doesn't support Lt p_formula"
+  | Lte _           -> illegal_format "SPASS doesn't support Lte p_formula"
+  | Gt _            -> illegal_format "SPASS doesn't support Gt p_formula"
+  | Gte _           -> illegal_format "SPASS doesn't support Gte p_formula"
+  | SubAnn _        -> illegal_format "SPASS doesn't support SubAnn p_formula"
   | Eq (e1, e2, _)  -> (
       let (s1, func_list1, pred_list1) = spass_dfg_of_exp e1 in
       let (s2, func_list2, pred_list2) = spass_dfg_of_exp e2 in
@@ -114,21 +115,21 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
       let pred_list = Gen.BList.remove_dups_eq (=) pred_list1 @ pred_list2 in
       (s, func_list, pred_list)
     ) 
-  | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
-  | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  | EqMax _         -> illegal_format "SPASS doesn't support EqMax p_formula"
+  | EqMin _         -> illegal_format "SPASS doesn't support EqMin p_formula"
+  | VarPerm _       -> illegal_format "SPASS doesn't support VarPerm p_formula"
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
   | BagSub _
   | BagMin _
-  | BagMax _        -> illegal_format "SPASS don't support Bag p_formula"
+  | BagMax _        -> illegal_format "SPASS doesn't support Bag p_formula"
   (* list formulas *)
   | ListIn _
   | ListNotIn _
   | ListAllN _
   | ListPerm _
-  | RelForm _       -> illegal_format "SPASS don't support List p_formula"
+  | RelForm _       -> illegal_format "SPASS doesn't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
 
 (* return formula in string * list of functions in string * list of predicates in string *)
@@ -188,24 +189,25 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   match e0 with
   | Cpure.Null _      -> "ssNULL"
   | Cpure.Var (sv, _) -> spass_tptp_of_spec_var sv
-  | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
-  | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
-  | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
-  | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
-  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
-  | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
-  | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
-  | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
-  | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
-  | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
-  | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
-  | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
-  | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
+  | Cpure.IConst _    -> illegal_format "SPASS doesn't support IConst expresion"
+  | Cpure.FConst _    -> illegal_format "SPASS doesn't support FConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS doesn't support SConst expresion"
+  | Cpure.AConst _    -> illegal_format "SPASS doesn't support AConst expresion"
+  | Cpure.Tsconst _   -> illegal_format "SPASS doesn't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS doesn't support Bptriple expresion"
+  | Cpure.Tup2 _   -> illegal_format "SPASS doesn't support Tup2 expresion"
+  | Cpure.Add _       -> illegal_format "SPASS doesn't support Add expresion"
+  | Cpure.Subtract _  -> illegal_format "SPASS doesn't support Substract expresion"
+  | Cpure.Mult _      -> illegal_format "SPASS doesn't support Mult expresion"
+  | Cpure.Div _       -> illegal_format "SPASS doesn't support Div expresion"
+  | Cpure.Max _       -> illegal_format "SPASS doesn't support Max expresion"
+  | Cpure.Min _       -> illegal_format "SPASS doesn't support Min expresion"
+  | Cpure.TypeCast _       -> illegal_format "SPASS doesn't support TypeCast expresion"
     (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
-  | Cpure.BagDiff _    -> illegal_format "SPASS don't support Bag expresion"
+  | Cpure.BagDiff _    -> illegal_format "SPASS doesn't support Bag expresion"
   (* list expressions *)
   | Cpure.List _
   | Cpure.ListCons _
@@ -213,12 +215,12 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ListTail _
   | Cpure.ListLength _
   | Cpure.ListAppend _
-  | Cpure.ListReverse _ -> illegal_format "SPASS don't support List expresion"
+  | Cpure.ListReverse _ -> illegal_format "SPASS doesn't support List expresion"
   (* array expressions *)
-  | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
+  | Cpure.ArrayAt _    -> illegal_format "SPASS doesn't support Array expresion"
   (* other *)
-  | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
-  | Cpure.Template _       -> illegal_format "SPASS don't support Template expresion"
+  | Cpure.Func _       -> illegal_format "SPASS doesn't support Func expresion"
+  | Cpure.Template _       -> illegal_format "SPASS doesn't support Template expresion"
   | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern()
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
@@ -228,31 +230,31 @@ and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
 and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
     | Frm (sv, _)    -> spass_tptp_of_spec_var sv
-  | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
+  | LexVar _        -> illegal_format "SPASS doesn't support LexVar p_formula"
   | BConst (c, _)   -> if c then "$true" else "$false"
   | BVar (sv, _)    -> spass_tptp_of_spec_var sv
-  | Lt _            -> illegal_format "SPASS don't support Lt p_formula"
-  | Lte _           -> illegal_format "SPASS don't support Lte p_formula"
-  | Gt _            -> illegal_format "SPASS don't support Gt p_formula"
-  | Gte _           -> illegal_format "SPASS don't support Gte p_formula"
-  | SubAnn _        -> illegal_format "SPASS don't support SubAnn p_formula"
+  | Lt _            -> illegal_format "SPASS doesn't support Lt p_formula"
+  | Lte _           -> illegal_format "SPASS doesn't support Lte p_formula"
+  | Gt _            -> illegal_format "SPASS doesn't support Gt p_formula"
+  | Gte _           -> illegal_format "SPASS doesn't support Gte p_formula"
+  | SubAnn _        -> illegal_format "SPASS doesn't support SubAnn p_formula"
   | Eq (e1, e2, _)  -> "(" ^ (spass_tptp_of_exp e1) ^ " = " ^ (spass_tptp_of_exp e2) ^ ")"
   | Neq (e1, e2, _) -> "(" ^ (spass_tptp_of_exp e1) ^ " != " ^ (spass_tptp_of_exp e2) ^ ")"
-  | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
-  | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  | EqMax _         -> illegal_format "SPASS doesn't support EqMax p_formula"
+  | EqMin _         -> illegal_format "SPASS doesn't support EqMin p_formula"
+  | VarPerm _       -> illegal_format "SPASS doesn't support VarPerm p_formula"
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
   | BagSub _
   | BagMin _
-  | BagMax _        -> illegal_format "SPASS don't support Bag p_formula"
+  | BagMax _        -> illegal_format "SPASS doesn't support Bag p_formula"
   (* list formulas *)
   | ListIn _
   | ListNotIn _
   | ListAllN _
   | ListPerm _
-  | RelForm _       -> illegal_format "SPASS don't support List p_formula"
+  | RelForm _       -> illegal_format "SPASS doesn't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
 
 and spass_tptp_of_formula f =
@@ -276,6 +278,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Var _          -> true
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
+  | Cpure.SConst _       -> false
   | Cpure.AConst _       -> false
   | Cpure.Tsconst _      -> false
   (* arithmetic expressions *)
@@ -638,7 +641,7 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
   (* let _ = print_endline "** In function to_spass:" in *)
   let conseq = match conseq with
-    (* We don't have conseq part in is_sat checking *)
+    (* We doesn't have conseq part in is_sat checking *)
     | None   -> Cpure.mkFalse no_pos
     | Some f -> f
   in

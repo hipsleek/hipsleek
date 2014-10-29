@@ -60,6 +60,7 @@ and cvc3_of_exp a = match a with
   | CP.Var (sv, _) -> cvc3_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (float should not appear here)")
+  | CP.SConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (string should not appear here)")
   | CP.Add (a1, a2, _) ->  (cvc3_of_exp a1) ^ " + " ^ (cvc3_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvc3_of_exp a1) ^ " - " ^ (cvc3_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvc3_of_exp a1) ^ " * " ^ (cvc3_of_exp a2)

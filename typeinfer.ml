@@ -204,52 +204,66 @@ and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_typ
   unify_type_modify true k1 k2 tlist
 
 and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k 
-  and unify k1 k2 tl =
-    match k1,k2 with
-      | UNK, _ -> (tl,Some k2)
-      | _, UNK -> (tl,Some k1)
-      | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
-      | Float, NUM -> (tl,Some Float) (* give refined type *)
-      | NUM, Int -> (tl,Some Int)
-      | NUM, Float -> (tl,Some Float)
-      | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
-      | Float, Int -> (tl,Some Float) (*LDK*)
-      | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
-          (tl, Some (Named n2))
-      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
-          (tl, Some (Named n1))
-      | t1, t2  -> (
-          if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
-          else if sub_type t2 t1 then (tlist,Some k1)
-          else 
-            begin
-              match t1,t2 with
-              | TVar i1,_ -> repl_tlist i1 k2 tl
-              | _,TVar i2 -> repl_tlist i2 k1 tl
-              | BagT x1,BagT x2 -> 
-                  (match (unify x1 x2 tl) with
-                  | (n_tl,Some t) -> (n_tl,Some (BagT t))
-                  | (n_tl,None) -> (n_tl,None))
-              | ListT x1,ListT x2 -> 
-                  (match (unify x1 x2 tl) with
-                  | (n_tl,Some t) -> (n_tl,Some (ListT t))
-                  | (n_tl,None) -> (n_tl,None))
-              | Array (x1,d1),Array (x2,d2) -> 
-                  (match (dim_unify d1 d2), (unify x1 x2 tl) with
-                  | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
-                  | _,(n_tl,_) -> (n_tl,None))
-              | Tup2 (t1,t2),Tup2 (t3,t4) -> (
-                    let n_tl, t5 = unify t1 t3 tl in
-                    let n_tl2, t6 = unify t2 t4 n_tl in
-                    match t5,t6 with
-                      | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
-                      | _ -> (n_tl2,None))
-              | _,_ -> (tl,None)
-            end
+  let rec repl_tlist i k tl = (
+    repl_tvar_in unify_helper modify_flag tl i k
+  ) 
+  and unify_helper_x t1 t2 tl = (
+    match (t1,t2) with
+    | (UNK, _) -> (tl,Some t2)
+    | (_, UNK) -> (tl,Some t1)
+    | (Int, NUM) -> (tl,Some Int) (* HACK here : give refined type *)
+    | (Float, NUM) -> (tl,Some Float) (* give refined type *)
+    | (NUM, Int) -> (tl,Some Int)
+    | (NUM, Float) -> (tl,Some Float)
+    | (Int, Float) -> (tl,Some Float) (*LDK: support floating point*)
+    | (Float, Int) -> (tl,Some Float) (*LDK*)
+    | (Tree_sh, Tree_sh) -> (tl, Some Tree_sh)
+    | (StringT, StringT) -> (tl, Some StringT)
+    | (Named n1, Named n2) when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
+        (tl, Some (Named n2))
+    | (Named n1, Named n2) when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
+        (tl, Some (Named n1))
+    | (_, _)  -> (
+        if sub_type t1 t2 then (tlist, Some t2)  (* found t1, but expecting t2 *)
+        else if sub_type t2 t1 then (tlist,Some t1)
+        else (
+          match t1,t2 with
+          | TVar i1,_ -> repl_tlist i1 t2 tl
+          | _,TVar i2 -> repl_tlist i2 t1 tl
+          | BagT x1,BagT x2 -> (
+              match (unify_helper x1 x2 tl) with
+              | (n_tl,Some t) -> (n_tl,Some (BagT t))
+              | (n_tl,None) -> (n_tl,None)
+            )
+          | ListT x1,ListT x2 -> (
+              match (unify_helper x1 x2 tl) with
+              | (n_tl,Some t) -> (n_tl,Some (ListT t))
+              | (n_tl,None) -> (n_tl,None)
+            )
+          | Array (x1,d1),Array (x2,d2) -> (
+              match (dim_unify d1 d2), (unify_helper x1 x2 tl) with
+              | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
+              | _,(n_tl,_) -> (n_tl,None)
+            )
+          | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+              let n_tl, t5 = unify_helper t1 t3 tl in
+              let n_tl2, t6 = unify_helper t2 t4 n_tl in
+              match t5,t6 with
+              | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+              | _ -> (n_tl2,None)
+            )
+          | _,_ -> (tl,None)
         )
-  in unify k1 k2 tlist
+      )
+  )
+  and unify_helper t1 t2 tl = (
+    let pr_t = string_of_typ in
+    let pr_res (_, t) = pr_option pr_t t in
+    Debug.no_2 "unify_helper" pr_t pr_t pr_res
+        (fun _ _ -> unify_helper_x t1 t2 tl) t1 t2
+  ) in
+  (* return *)
+  unify_helper k1 k2 tlist
 
 (* k2 is expected type *)
 and unify_expect (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
@@ -520,6 +534,10 @@ and gather_type_info_exp_x prog a0 tlist et =
       (n_tl,n_typ)      
   | IP.FConst (_,pos) -> 
       let t = I.float_type in
+      let (n_tl,n_typ) = must_unify_expect t et tlist pos in
+      (n_tl,n_typ)
+  | IP.SConst (_,pos) -> 
+      let t = I.string_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)
   | IP.Tup2 ((p1,p2), pos) ->

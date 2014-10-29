@@ -112,6 +112,7 @@ and aug_class_name (t : typ) = match t with
   | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | StringT -> "StringAug"
   | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT _ -> "RelAug"
