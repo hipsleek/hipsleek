@@ -1986,7 +1986,10 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
-    let has_shape_args = List.exists (fun p -> is_node_typ p.Iast.param_type) funargs in
+    let has_shape_args = List.exists (fun p ->
+        (* let _ = print_endline (string_of_typ p.Iast.param_type) in *)
+        is_node_typ p.Iast.param_type
+    ) funargs in
     let static_specs1, hp_decls, args_wi = 
       if not has_shape_args || not !Globals.sags then
         static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
@@ -1996,10 +1999,25 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
               | Some _ ->
 	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
                     (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE pos in
-  	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+  	          let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
   	          (ss, hps, args_wi)
               | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
           end
+        (* |  Iformula.EInfer i_sf -> if i_sf.Iformula.formula_inf_obj # is_shape then *)
+        (*      let is_simpl, pre,post = Iformula.get_pre_post i_sf.Iformula.formula_inf_continuation in *)
+        (*      if is_simpl then *)
+        (*        let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pre post INF_SHAPE pos in *)
+        (*         let ss = match ss with *)
+        (*       | Iformula.EInfer i_sf2 -> Iformula.EInfer {i_sf2 with *)
+        (*             Iformula.formula_inf_obj = i_sf.Iformula.formula_inf_obj # mk_or i_sf2.Iformula.formula_inf_obj;} *)
+        (*       | _ -> ss *)
+        (*     in *)
+        (*     let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+        (*     (ss,hps,args_wi) *)
+        (*      else *)
+        (*        static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs *)
+        (*    else *)
+        (*      static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs *)
         | _ -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
     in
     let newproc : Iast.proc_decl = {
