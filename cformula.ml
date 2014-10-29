@@ -16263,7 +16263,7 @@ let collect_node_var_formula (f:formula) =
   in
   helper f
 
-let trans_flow_formula f =
+let trans_flow_formula f prog =
   let get_interval pf =
     let fv = Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) [CP.mk_spec_var "flow"] in
     let inf = CP.remove_redundant (CP.drop_svl_pure pf fv) in
@@ -16280,10 +16280,6 @@ let trans_flow_formula f =
     let pils = List.map (fun pf -> (pf,get_interval pf)) pl in
     let fl = List.map (fun (pf,il) ->
         let new_flow_f = mkAndFlow (mkFlow il) fl Flow_combine in
-        let pf = if exlist # is_exc_flow new_flow_f.formula_flow_interval then
-          let _ = print_endline "exc flow" in pf
-        else let _ = print_endline "norm_flow" in pf
-        in
         mk h (MCP.mix_of_pure pf) t new_flow_f a pos
     ) pils in
     if List.length fl = 0 then f
@@ -16308,13 +16304,13 @@ let trans_flow_formula f =
   let f = helper f in
   simplify_formula (drop_svl f [CP.mk_spec_var "flow"]) []
 
-let trans_flow_formula f =
+let trans_flow_formula f prog =
   let pr = !print_formula in
-  Debug.no_1 "trans_flow_formula" pr pr trans_flow_formula f
+  Debug.no_1 "trans_flow_formula" pr pr (fun _ -> trans_flow_formula f prog) f
 
-let trans_flow_struc_formula sf =
+let trans_flow_struc_formula sf prog =
   let rec helper sf =
-    let _ = Debug.binfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
+    let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
       | EList el -> EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
       | ECase ec -> ECase { ec with
@@ -16322,7 +16318,7 @@ let trans_flow_struc_formula sf =
         }
       | EBase eb ->
             let new_cont,new_base = match eb.formula_struc_continuation with
-              | None -> None,trans_flow_formula eb.formula_struc_base
+              | None -> None,trans_flow_formula eb.formula_struc_base prog
               | Some f -> Some (helper f),(* trans_flow_formula *) eb.formula_struc_base
             in
             EBase { eb with
@@ -16334,7 +16330,7 @@ let trans_flow_struc_formula sf =
         }
       | EAssume ea ->
             let pos = pos_of_struc_formula sf in
-            let new_simpl = trans_flow_formula ea.formula_assume_simpl in
+            let new_simpl = trans_flow_formula ea.formula_assume_simpl prog in
             let new_struc = struc_formula_of_formula new_simpl pos in
             EAssume { ea with
                 formula_assume_simpl = new_simpl;
@@ -16346,9 +16342,9 @@ let trans_flow_struc_formula sf =
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "flow") sfv then helper sf
   else sf
 
-let trans_flow_struc_formula sf =
+let trans_flow_struc_formula sf prog =
   let pr = !print_struc_formula in
-  Debug.no_1 "trans_flow_struc_formula" pr pr trans_flow_struc_formula sf
+  Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf prog) sf
 
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;
