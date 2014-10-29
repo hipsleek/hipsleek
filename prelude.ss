@@ -1,8 +1,8 @@
 //class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
-class ret_int extends __RET { int val }
-class ret_bool extends __RET { bool val } 
+//class ret_int extends __RET { int val }
+//class ret_bool extends __RET { bool val }
 class __RET extends __Exc {}
 
 int add___(int a, int b) 

@@ -415,7 +415,7 @@ let process_source_full source =
     in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
-		let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
+    let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
                 
                 (*let _ = print_string (Iprinter.string_of_program prog^"haha") in*)
                
@@ -478,7 +478,7 @@ let process_source_full source =
     (*used in lemma*)
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
     (* let _ = I.set_iprog intermediate_prog in *)
-    
+    (*let _ = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
     (* let _ = if !Globals.sa_pure then *)
     (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)

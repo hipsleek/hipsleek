@@ -237,6 +237,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
       I.proc_exceptions = [];
       I.proc_is_main = false;
       I.proc_is_while = false;
+      I.proc_has_while_return = false;
       I.proc_is_invoked = false;
       I.proc_verified_domains = [];
       I.proc_file = "";
@@ -318,6 +319,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
       I.proc_exceptions = [];
       I.proc_is_main = false;
       I.proc_is_while = false;
+      I.proc_has_while_return = false;
       I.proc_is_invoked = false;
       I.proc_verified_domains = [];
       I.proc_file = "";

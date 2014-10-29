@@ -239,6 +239,7 @@ and proc_decl = {
   proc_body : exp option;
   proc_is_main : bool;
   proc_is_while : bool; (* true if the proc is translated from a while loop *)
+  mutable proc_has_while_return: bool;
   mutable proc_is_invoked : bool;
 proc_verified_domains: infer_type list;
   proc_file : string;
@@ -1293,6 +1294,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_loc = pos;
   proc_verified_domains = [];
   proc_is_main = true;
+  proc_has_while_return = false;
   proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
@@ -2862,6 +2864,7 @@ let add_bar_inits prog =
         proc_body = None;
         proc_is_main = false;
         proc_is_while = false;
+        proc_has_while_return = false;
         proc_is_invoked = false;
                           proc_verified_domains = [];
         proc_file = "";
@@ -3055,6 +3058,44 @@ let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
       (fun _ -> exists_return_x e0) e0
+let exists_while_return_x e0=
+  let rec helper e=
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          match et with
+            | Const_flow f ->
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
+            | _ -> false
+      end
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (helper wb) || (exists_return wb)
+      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let _ = print_endline("exists_return: unexpected") in *)
+          false
+  in
+  helper e0
+let exists_while_return e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_while_return" pr1 string_of_bool
+      (fun _ -> exists_while_return_x e0) e0
 
 let exists_return_val_x e0=
   let rec helper e=
@@ -3235,5 +3276,32 @@ let tnt_prim_procs =
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
   
 let is_tnt_prim_proc id =
-  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs 
-      
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs
+
+(* Input is a list of proc_decl, output is a list containing non-duplicate element of the types that will be returned inside a while loop *)
+let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) =
+  let rec helper (proc:proc_decl): (typ option) =
+    match proc.proc_body with
+      | None -> None
+      | Some e ->
+            if exists_while_return e
+            then Some proc.proc_return
+            else None
+  in
+  let is_duplicate (tlst:typ list) (t:typ):bool =
+    match tlst with
+      | h::rest -> Globals.cmp_typ h t
+      | [] -> false
+  in
+  match proclst with
+    | h::rest ->
+          let t = helper h in
+          begin
+            match t with
+              | None -> no_duplicate_while_return_type_list rest
+              | Some new_t ->
+                    let restlst = no_duplicate_while_return_type_list rest in
+                    if is_duplicate restlst new_t then restlst
+                    else new_t::restlst
+          end
+    | [] -> []
