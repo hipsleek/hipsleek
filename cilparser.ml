@@ -1998,7 +1998,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
             match funbody with
               | Some _ ->
 	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
-                    (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE pos in
+                    (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
   	          let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
   	          (ss, hps, args_wi)
               | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
