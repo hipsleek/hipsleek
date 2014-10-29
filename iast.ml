@@ -1187,8 +1187,8 @@ let genESpec pname body_opt args ret cur_pre cur_post infer_type pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
-      (fun _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type pos) args ret
+  Debug.no_3 "genESpec" pr_id pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
+      (fun _ _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type pos) pname args ret
 
 let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
