@@ -1,10 +1,10 @@
-pred_prim state<x:list(int)>
+pred_prim state<x:list(string)>
   inv true.
 
-pred_prim add<n:int>
+pred_prim add<n:string>
   inv true.
 
-pred_prim state1<x:list(string)>
+pred_prim state_i<x:list(int)>
   inv true.
 
 
@@ -16,10 +16,10 @@ lemma_prop "lemma_prop_list" self::state<L1> * self::add<n> & true
 
 // checkentail cx::state<[2,3]> |- true.
 
-checkentail dx::state1<[#main]> |- true.
+checkentail dx::state<[#main]> |- true.
 
 // // expect Valid.
-// checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_1,#inf_loop]>.
+checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_1,#inf_loop]>.
 // // OK
 // print residue.
 
@@ -28,6 +28,6 @@ checkentail dx::state1<[#main]> |- true.
 // // OK
 // print residue.
 
-// checkentail cx::state<[1,2,3]> |- cx::state<[1,2,3]>.
+checkentail cx::state_i<[1,2,3]> |- cx::state_i<[1,2,3]>.
 // // OK
 // print residue.

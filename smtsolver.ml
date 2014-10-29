@@ -15,6 +15,10 @@ let set_prover_original_output = ref (fun _ -> ())
 let print_pure = ref (fun (c:CP.formula) -> " printing not initialized")
 let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
 
+(* encode strings to integers so that Z3 can handle strings uninterpretedly *)
+let tbl_uninterpreted_strings : (string, int) Hashtbl.t = Hashtbl.create 1
+
+
 (***************************************************************
                   GLOBAL VARIABLES & TYPES
  **************************************************************)
@@ -107,6 +111,14 @@ let smt_of_typed_spec_var sv =
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
+let encode_uninterpreted_string (s: string) : int =
+  try Hashtbl.find tbl_uninterpreted_strings s
+  with _ -> (
+    let index = (Hashtbl.length tbl_uninterpreted_strings) + 1 in
+    let _ = Hashtbl.add tbl_uninterpreted_strings s index in
+    index 
+  )
+
 let rec smt_of_exp_x a =
   let str = !Cpure.print_exp a in
   match a with
@@ -116,7 +128,11 @@ let rec smt_of_exp_x a =
   | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f
-  | CP.SConst (s, _) -> s
+  | CP.SConst (s, _) -> ( 
+      (* handle string as uninterpredted string by encode it to integer *)
+      let i = encode_uninterpreted_string s in
+      string_of_int i
+    )
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -759,7 +775,9 @@ let string_of_logic logic =
   | UFNIA -> "UFNIA"
 
 (* output for smt-lib v2.0 format *)
-let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
+let rec to_smt_v2_x pr_weak pr_strong ante conseq fvars info =
+  (* before translating a new problem, clear all encoded string *)
+  Hashtbl.reset tbl_uninterpreted_strings;
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
     let tp = (CP.type_of_spec_var v)in
@@ -767,6 +785,8 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
     match tp with
     | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
     | ListT Int -> "(declare-const " ^ (smt_of_spec_var v) ^ " (List Int))\n"
+    (* use (List Int) for list of string since Z3 encodes uninterpreted strings to integers *)
+    | ListT StringT -> "(declare-const " ^ (smt_of_spec_var v) ^ " (List Int))\n"
     | Int -> "(declare-const " ^ (smt_of_spec_var v) ^ " Int)\n"
     | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
   ) fvars in
@@ -799,6 +819,14 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
     (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")
   )
 
+and to_smt_v2 pr_weak pr_strong ante conseq fvars info =
+  let pr_ante = (add_str "ante" !CP.print_formula) in
+  let pr_conseq = (add_str "conseq" !CP.print_formula) in
+  let pr_res = (add_str "output in smt2 format" pr_id) in
+  Debug.no_2 "to_smt_v2" pr_ante pr_conseq pr_res
+      (fun _ _ -> to_smt_v2_x pr_weak pr_strong ante conseq fvars info)
+      ante conseq
+  
 (* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
   let rec defvars vars = match vars with

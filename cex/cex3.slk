@@ -1,0 +1,23 @@
+pred_prim state<x:list(string)>
+  inv true.
+
+pred_prim add<n:string>
+  inv true.
+
+
+lemma_prop "lemma_prop_list" self::state<L1> * self::add<n> & true
+    -> self::state<L2> & L2 = append(L1,[n]).
+
+checkentail dx::state<[#main]> |- true.
+
+checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_1,#inf_loop]>.
+
+checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_2,#inf_loop]>.
+
+checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_1]>.
+
+// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_1,#inf_loop]>.
+
+// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_2,#inf_loop]>.
+
+// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#inf_loop,#if_1]>.
