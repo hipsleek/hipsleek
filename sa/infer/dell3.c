@@ -2,7 +2,7 @@
 
 void main()
 /*@
-  infer[@shape]
+  infer[@shape,@post_n,@term]
   requires true
   ensures true;
 */
@@ -11,7 +11,7 @@ void main()
   int* y = alloca(sizeof(int));
   while (*y < *x) 
   /*@
-    infer[@shape]
+    infer[@shape,@post_n,@term]
     requires true
     ensures true;
   */

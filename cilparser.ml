@@ -1991,7 +1991,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         is_node_typ p.Iast.param_type
     ) funargs in
     let static_specs1, hp_decls, args_wi = 
-      if not has_shape_args ||not !Globals.sags then
+      if not has_shape_args || not !Globals.sags then
         static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
       else match static_specs with
         | Iformula.EList [] -> begin
