@@ -16293,14 +16293,15 @@ let trans_flow_formula f =
             | _ -> f )
   in
   let f = helper f in
-  simplify_pure_f (drop_svl f [CP.mk_spec_var "flow"])
+  simplify_formula (drop_svl f [CP.mk_spec_var "flow"]) []
 
 let trans_flow_formula f =
   let pr = !print_formula in
   Debug.no_1 "trans_flow_formula" pr pr trans_flow_formula f
 
-let trans_flow sf =
+let trans_flow_struc_formula sf =
   let rec helper sf =
+    let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
       | EList el -> EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
       | ECase ec -> ECase { ec with
@@ -16308,7 +16309,7 @@ let trans_flow sf =
         }
       | EBase eb ->
             let new_cont,new_base = match eb.formula_struc_continuation with
-              | None -> None,eb.formula_struc_base
+              | None -> None,trans_flow_formula eb.formula_struc_base
               | Some f -> Some (helper f),trans_flow_formula eb.formula_struc_base
             in
             EBase { eb with
@@ -16324,12 +16325,13 @@ let trans_flow sf =
         }
   in
   let sfv = struc_fv sf in
-  if List.mem (CP.mk_spec_var "flow") sfv then helper sf
+  let _ = Debug.ninfo_hprint (add_str "sfv" (pr_list !print_sv)) sfv no_pos in
+  if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "flow") sfv then helper sf
   else sf
 
-let trans_flow sf =
+let trans_flow_struc_formula sf =
   let pr = !print_struc_formula in
-  Debug.no_1 "trans_flow" pr pr trans_flow sf
+  Debug.no_1 "trans_flow_struc_formula" pr pr trans_flow_struc_formula sf
 
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;

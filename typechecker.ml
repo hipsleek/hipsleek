@@ -2385,9 +2385,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                       let dnode =Cfutil.look_up_first_field prog ctx objn in
                                       let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv)== ft) dnode.Cformula.h_formula_data_arguments) in
                                       let fr_v_exc = CP.fresh_spec_var v_exc in
-                                      (* let p = CP.mkEqVar v_exc res_inside_exc pos in *)
-                                      (* let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in *)
-                                      let ctx_w_pure = ctx in
+                                      let p = CP.mkEqVar v_exc res_inside_exc pos in
+                                      let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in
+                                      (* let ctx_w_pure = ctx in *)
                                       let _ = Debug.tinfo_hprint (add_str "ctx_w_pure" Cprinter.string_of_list_failesc_context) ctx_w_pure no_pos in
                                       let _ = Debug.tinfo_hprint (add_str "res_inside_exc" Cprinter.string_of_spec_var) res_inside_exc no_pos in
                                       let _ = Debug.tinfo_hprint (add_str "fr_v_exc" Cprinter.string_of_spec_var) fr_v_exc no_pos in
