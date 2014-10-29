@@ -39,6 +39,7 @@ type trans_exp_type =
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
+let ihp_decl = ref ([]: I.hp_decl list)
 (* let strip_exists_pure f = *)
 (*   let rec aux f = *)
 (*     match f with *)
@@ -1481,8 +1482,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
         else
           cviews1
       in
-	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
-	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+      (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
+      let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
       let chps1, pure_chps = List.split pr_chps in
@@ -1501,11 +1502,13 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                 []
           ) (prog.I.prog_proc_decls) in
           let old_i_hp_decls = prog.I.prog_hp_decls in
+          let _ = ihp_decl:= [] in
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-          let iloop_hp_decls = List.filter (fun hpdecl ->
-              not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0)
-                  old_i_hp_decls)
-          ) prog.I.prog_hp_decls in
+          let iloop_hp_decls = !ihp_decl in
+          (* List.filter (fun hpdecl -> *)
+          (*     not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0) *)
+          (*         old_i_hp_decls) *)
+          (* ) (prog.I.prog_hp_decls) in *)
           let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
           let c_loophps, loop_pure_chps = List.split pr_loop_chps in
           let chps = chps1@c_loophps in
@@ -2554,7 +2557,7 @@ and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
     C.ut_pos = pos; } in
   c_ut
 
-and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
+and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
   let hp_sv_vars = List.map (fun (var_type, var_name, i) -> (CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed), i))
     hpdef.I.hp_typed_inst_vars in
@@ -2576,6 +2579,12 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   in
   let c_p_hprel = Cast.generate_pure_rel chprel in
   chprel,c_p_hprel
+
+and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
+  let pr1 = Iprinter.string_of_hp_decl in
+  let pr2 = Cprinter.string_of_hp_decl in
+  Debug.no_1 "trans_hp" pr1 (pr_pair pr2 Cprinter.string_of_rel_decl)
+      (fun _ -> trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl)) hpdef
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in
@@ -5206,13 +5215,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let _ = Debug.ninfo_hprint (add_str "w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
             let w_proc = match w_proc.I.proc_static_specs with
               |  IF.EList [] ->
+                     if Globals.infer_const_obj # is_shape then
                      let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                          String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                      ) w_formal_args in (*??*)
                      let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
                      let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                      let infer_args = w_formal_args in
-                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE pos in
+                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
                      let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                      let full_args_wi = if ninfer_args = [] then args_wi
                      else List.fold_left (fun r p ->
@@ -5225,6 +5235,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                          I.proc_static_specs = new_prepost;
                          I.proc_args_wi = full_args_wi;
                  }
+                     else w_proc
               | IF.EInfer i_sf ->
                     let _ =  Debug.info_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
                     if i_sf.IF.formula_inf_obj # is_shape then
@@ -5233,11 +5244,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                             String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                         ) w_formal_args in (*???*)
-                        let _ =  Debug.info_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
-                        let _ =  Debug.info_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                        let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                        let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                         let infer_args = w_formal_args in
                         let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pre
-                          post INF_SHAPE pos in
+                          post INF_SHAPE i_sf.IF.formula_inf_obj #get_lst pos in
                         let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                         let full_args_wi = if ninfer_args = [] then args_wi
                         else List.fold_left (fun r p ->
@@ -5267,7 +5278,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                        | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                                        | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";}*) in
               let w_proc = case_normalize_proc prog w_proc in
-              let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
+              let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls;
+                  (* I.prog_hp_decls = prog.I.prog_hp_decls@w_proc.I.proc_hp_decls; *)
+              } in
+              let _ = ihp_decl := !ihp_decl@w_proc.I.proc_hp_decls in
               (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
               (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
               let (iw_call, _) = trans_exp new_prog w_proc w_call in
