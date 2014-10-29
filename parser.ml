@@ -1683,10 +1683,12 @@ simple_heap_constr_imm:
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT brace_form_args ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
-     (*For threads as resource*)
-     let (c, hid, deref) = get_heap_id_info c hid in
-     F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
+  [[
+     (* peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT brace_form_args ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label -> *)
+     peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT brace_form_args ; (* simple2 ; *) frac= opt_perm; `LT; `HASH; dl = opt_delayed_constr; rsr = disjunctive_constr; `HASH; `GT ; ofl = opt_formula_label ->
+       (*For threads as resource*)
+       let (c, hid, deref) = get_heap_id_info c hid in
+       F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
@@ -1979,7 +1981,6 @@ cexp_w:
     | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
     | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
     | `OLIST; c1 = opt_cexp_list; `CLIST -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
-    | `OSQUARE; c1 = stmt_label_list; `CSQUARE -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
     | `OSQUARE; c1 = opt_cexp_list; `CSQUARE -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1))
     |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
     | `TAIL; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
@@ -2074,6 +2075,8 @@ cexp_w:
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
     | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
     | `FLOAT_LIT (f,_) -> Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
+    | `STRING_LIT (s,_) -> Pure_c (P.SConst (s, get_pos_camlp4 _loc 1))
+    | `LABEL lbl -> Pure_c (P.SConst (lbl, get_pos_camlp4 _loc 1))
     | `TUP2; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
           apply_cexp_form2 (fun c1 c2-> (P.Tup2 ((c1,c2), get_pos_camlp4 _loc 1))) c1 c2
     | `OPAREN; t=SELF; `CPAREN -> t  
@@ -2132,9 +2135,7 @@ measures_seq_sqr: [[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_cexp_list: [[t=LIST0 cexp SEP `COMMA -> t]];
 
-stmt_label: [[`LABEL lbl -> P.SConst (lbl, get_pos_camlp4 _loc 1) ]];
 
-stmt_label_list: [[peek_label; t = LIST0 stmt_label SEP `COMMA -> t]];
 
 (* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
 

@@ -785,9 +785,10 @@ let rec to_smt_v2_x pr_weak pr_strong ante conseq fvars info =
     match tp with
     | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
     | ListT Int -> "(declare-const " ^ (smt_of_spec_var v) ^ " (List Int))\n"
-    (* use (List Int) for list of string since Z3 encodes uninterpreted strings to integers *)
     | ListT StringT -> "(declare-const " ^ (smt_of_spec_var v) ^ " (List Int))\n"
-    | Int -> "(declare-const " ^ (smt_of_spec_var v) ^ " Int)\n"
+    (* use Int for Stringt since Z3 encodes uninterpreted strings to integers *)
+    | ListT StringT -> "(declare-const " ^ (smt_of_spec_var v) ^ " (List Int))\n"
+    | StringT -> "(declare-const " ^ (smt_of_spec_var v) ^ " Int)\n"
     | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
   ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in

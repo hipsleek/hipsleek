@@ -16,8 +16,10 @@ checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_2,#inf_lo
 
 checkentail cx::state<[#main,#if_1,#inf_loop]> |- cx::state<[#main,#if_1]>.
 
-// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_1,#inf_loop]>.
+checkentail cx::state<[#main,#if_1]> * cx::add<#asfsdf> |- cx::state<[#main,#if_1,#inf_loop]>.
 
-// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_2,#inf_loop]>.
+checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_1,#inf_loop]>.
 
-// checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#inf_loop,#if_1]>.
+checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#if_2,#inf_loop]>.
+
+checkentail cx::state<[#main,#if_1]> * cx::add<#inf_loop> |- cx::state<[#main,#inf_loop,#if_1]>.

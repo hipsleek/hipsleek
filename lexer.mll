@@ -437,8 +437,10 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
-  | "<#" { TOPAREN }
-  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* Trung: token TOPAREN and TCPAREN limits the use of '#' for other purposes
+     In parser.ml, TOPAREN is replaced by `LT; `HASH  and TCPAREN by `GT; `HASH *)
+  (* | "<#" { TOPAREN }                                          *)
+  (* | "#>" { TCPAREN } (*Open and close paren for thread heap*) *)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }
