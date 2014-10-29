@@ -903,11 +903,11 @@ and translate_location (loc: Cil.location) : Globals.loc =
 
 (* remove all unnecessary attributes *)
 and get_core_cil_typ (t: Cil.typ) : Cil.typ = (
-  let actual_typ = (
+  let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
-    | Cil.TInt (ik, _) -> Cil.TInt (ik, [])
-    | Cil.TFloat (fk, _) -> Cil.TFloat (fk, [])
+    | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
+    | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
     | Cil.TArray (ty, e, _) -> Cil.TArray (get_core_cil_typ ty, e, [])
     | Cil.TFun (ty, ids_opt, b, _) -> 
@@ -933,7 +933,7 @@ and get_core_cil_typ (t: Cil.typ) : Cil.typ = (
         Cil.TEnum (new_enum, []) 
     | Cil.TBuiltin_va_list _ -> t
   ) in
-  actual_typ
+  core_typ
 )
 
 and translate_typ_x (t: Cil.typ) pos : Globals.typ =
@@ -944,24 +944,24 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
       | Cil.TInt _ -> Globals.Int
       | Cil.TFloat _ -> Globals.Float
       | Cil.TPtr (ty, _) -> (
-          let actual_ty = get_core_cil_typ ty in
+          let core_type = get_core_cil_typ ty in
           (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
           let newt = (
             (* find if this pointer was handled before or not *)
             try 
-              Hashtbl.find tbl_pointer_typ actual_ty
+              Hashtbl.find tbl_pointer_typ core_type
             with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
-              let value_typ = translate_typ actual_ty pos in
+              let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
               let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
               let dfields = [value_field; offset_field] in
               let dname = (Globals.string_of_typ value_typ) ^ "_star" in
               let dtype = Globals.Named dname in
-              Hashtbl.add tbl_pointer_typ actual_ty dtype;
+              Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              Debug.ninfo_hprint (add_str "actual_ty" string_of_cil_typ)
-                  actual_ty no_pos;
+              Debug.ninfo_hprint (add_str "core_type" string_of_cil_typ)
+                  core_type no_pos;
               Debug.ninfo_hprint (add_str "new ddecl for pointer type"
                   !Iast.print_data_decl) ddecl no_pos;
               Hashtbl.add tbl_data_decl dtype ddecl;
@@ -2101,8 +2101,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   List.iter (fun gl ->
       match gl with
         | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
-              let actual_typ = get_core_cil_typ tinfo.Cil.ttype in
-              Hashtbl.add tbl_typedef tinfo.Cil.tname actual_typ;
+              let core_typ = get_core_cil_typ tinfo.Cil.ttype in
+              Hashtbl.add tbl_typedef tinfo.Cil.tname core_typ;
         | _ -> ();
   ) globals;
   (* translate the rest *)
