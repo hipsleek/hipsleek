@@ -16280,6 +16280,10 @@ let trans_flow_formula f =
     let pils = List.map (fun pf -> (pf,get_interval pf)) pl in
     let fl = List.map (fun (pf,il) ->
         let new_flow_f = mkAndFlow (mkFlow il) fl Flow_combine in
+        let pf = if exlist # is_exc_flow new_flow_f.formula_flow_interval then
+          let _ = print_endline "exc flow" in pf
+        else let _ = print_endline "norm_flow" in pf
+        in
         mk h (MCP.mix_of_pure pf) t new_flow_f a pos
     ) pils in
     if List.length fl = 0 then f
@@ -16310,7 +16314,7 @@ let trans_flow_formula f =
 
 let trans_flow_struc_formula sf =
   let rec helper sf =
-    let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
+    let _ = Debug.binfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
       | EList el -> EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
       | ECase ec -> ECase { ec with
@@ -16319,7 +16323,7 @@ let trans_flow_struc_formula sf =
       | EBase eb ->
             let new_cont,new_base = match eb.formula_struc_continuation with
               | None -> None,trans_flow_formula eb.formula_struc_base
-              | Some f -> Some (helper f),trans_flow_formula eb.formula_struc_base
+              | Some f -> Some (helper f),(* trans_flow_formula *) eb.formula_struc_base
             in
             EBase { eb with
                 formula_struc_base = new_base;
@@ -16328,10 +16332,14 @@ let trans_flow_struc_formula sf =
       | EInfer ei -> EInfer { ei with
             formula_inf_continuation = helper ei.formula_inf_continuation
         }
-      | EAssume ea -> EAssume { ea with
-            formula_assume_simpl = trans_flow_formula ea.formula_assume_simpl;
-            formula_assume_struc = helper ea.formula_assume_struc
-        }
+      | EAssume ea ->
+            let pos = pos_of_struc_formula sf in
+            let new_simpl = trans_flow_formula ea.formula_assume_simpl in
+            let new_struc = struc_formula_of_formula new_simpl pos in
+            EAssume { ea with
+                formula_assume_simpl = new_simpl;
+                formula_assume_struc = new_struc (* helper ea.formula_assume_struc *)
+            }
   in
   let sfv = struc_fv sf in
   let _ = Debug.ninfo_hprint (add_str "sfv" (pr_list !print_sv)) sfv no_pos in
