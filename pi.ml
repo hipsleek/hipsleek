@@ -402,6 +402,95 @@ let add_flow reldefns =
               (f1,f2)
   ) reldefns
 
+let trans_res_formula prog f =
+  let mk_new_formula mk f =
+    let h,p,fl,tf,a = CF.split_components f in
+    let pos = CF.pos_of_formula f in
+    let new_f = if exlist # is_exc_flow fl.CF.formula_flow_interval then
+      let exc_name = exlist # get_closest fl.CF.formula_flow_interval in
+      let exc_name = try
+        let i = String.index exc_name '#' in
+        String.sub exc_name 0 i
+      with _ -> exc_name
+      in
+      let _ = Debug.ninfo_pprint exc_name no_pos in
+      let dclr = Cast.look_up_data_def_raw prog.Cast.prog_data_decls exc_name in
+      let (t,_),_ = (List.hd dclr.Cast.data_fields) in
+      let eres = CP.mkeRes (Named exc_name) in
+      let res = CP.mkRes t in
+      let _ = Debug.ninfo_hprint (add_str "eres" Cprinter.string_of_typed_spec_var) eres no_pos in
+      let _ = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_typed_spec_var) res no_pos in
+      let dnode = CF.DataNode {
+          CF.h_formula_data_node = eres;
+          CF.h_formula_data_name = exc_name;
+          CF.h_formula_data_derv = false;
+          CF.h_formula_data_split = SPLIT0;
+          CF.h_formula_data_imm = CP.NoAnn;
+          CF.h_formula_data_param_imm = [];
+          CF.h_formula_data_perm = None;
+          CF.h_formula_data_origins = [];
+          CF.h_formula_data_original = false;
+          CF.h_formula_data_arguments = [res];
+          CF.h_formula_data_holes = [];
+          CF.h_formula_data_label = None;
+          CF.h_formula_data_remaining_branches = None;
+          CF.h_formula_data_pruning_conditions = [];
+          CF.h_formula_data_pos = pos }
+      in
+      let _ = Debug.ninfo_hprint (add_str "dnode" Cprinter.string_of_h_formula) dnode no_pos in
+      let new_h = CF.mkStarH h dnode pos in
+      mk new_h p tf fl a pos
+    else f in
+    new_f
+  in
+  let rec helper f =
+    let _ = Debug.ninfo_hprint (add_str "f" !CF.print_formula) f no_pos in
+    match f with
+      | CF.Base b ->
+            mk_new_formula CF.mkBase f
+      | CF.Or o -> Or { o with
+            CF.formula_or_f1 = helper o.CF.formula_or_f1;
+            CF.formula_or_f2 = helper o.CF.formula_or_f2
+        }
+      | CF.Exists e ->
+            mk_new_formula (CF.mkExists e.CF.formula_exists_qvars) f
+  in
+  helper f
+
+let trans_res_struc_formula prog sf =
+  let rec helper sf =
+    let _ = Debug.ninfo_hprint (add_str "sf" !CF.print_struc_formula) sf no_pos in
+    match sf with
+      | CF.EList el -> CF.EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
+      | CF.ECase ec -> CF.ECase { ec with
+            CF.formula_case_branches = List.map (fun (pf,sf) -> (pf,helper sf)) ec.CF.formula_case_branches
+        }
+      | CF.EBase eb ->
+            let new_cont,new_base = match eb.CF.formula_struc_continuation with
+              | None -> None,trans_res_formula prog eb.CF.formula_struc_base
+              | Some f -> Some (helper f),eb.CF.formula_struc_base
+            in
+            CF.EBase { eb with
+                CF.formula_struc_base = new_base;
+                CF.formula_struc_continuation = new_cont
+            }
+      | CF.EInfer ei -> CF.EInfer { ei with
+            CF.formula_inf_continuation = helper ei.CF.formula_inf_continuation
+        }
+      | CF.EAssume ea ->
+            let pos = CF.pos_of_struc_formula sf in
+            let new_simpl = trans_res_formula prog ea.CF.formula_assume_simpl in
+            let new_struc = CF.struc_formula_of_formula new_simpl pos in
+            CF.EAssume { ea with
+                CF.formula_assume_simpl = new_simpl;
+                CF.formula_assume_struc = new_struc
+            }
+  in
+  let sfv = CF.struc_fv sf in
+  let _ = Debug.ninfo_hprint (add_str "sfv" (pr_list !CF.print_sv)) sfv no_pos in
+  if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "res") sfv then helper sf
+  else sf
+
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let _ = DD.binfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
@@ -529,7 +618,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     in
     (* let new_specs = List.map (fun new_spec -> CF.norm_struc_with_lexvar new_spec false) new_specs in *)
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
-    let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec prog) new_specs in
+    let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec) new_specs in
+    let new_specs = List.map (fun new_spec -> trans_res_struc_formula prog new_spec) new_specs in
     let _ = List.iter (fun (proc,new_spec) ->
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline "\nPost Inference result:";
