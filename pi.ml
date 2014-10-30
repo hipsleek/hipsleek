@@ -403,7 +403,15 @@ let add_flow reldefns =
   ) reldefns
 
 let trans_res_formula prog f =
+  let mk_new_p t p =
+    match t with
+      | Int -> p
+      | Bool -> p
+            (* CP.drop_svl_pure p [CP.mkRes Int] *)
+      | _ -> p
+  in
   let mk_new_formula mk f =
+    let svl = CF.fv f in
     let h,p,fl,tf,a = CF.split_components f in
     let pos = CF.pos_of_formula f in
     let new_f = if exlist # is_exc_flow fl.CF.formula_flow_interval then
@@ -439,7 +447,8 @@ let trans_res_formula prog f =
       in
       let _ = Debug.ninfo_hprint (add_str "dnode" Cprinter.string_of_h_formula) dnode no_pos in
       let new_h = CF.mkStarH h dnode pos in
-      mk new_h p tf fl a pos
+      let new_p = mk_new_p t p in
+      mk new_h new_p tf fl a pos
     else f in
     new_f
   in
