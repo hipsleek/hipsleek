@@ -12,14 +12,7 @@ int test_fun(int x, int y)
     *c = 0;
     while (*x_ref > 0) {
         *y_ref = 0;
-        while (*y_ref < *x_ref) 
-        /*@
-          //infer [@shape,@post_n]
-          infer [@post_n]
-          requires true
-          ensures true;
-        */
-        {
+        while (*y_ref < *x_ref) {
             *y_ref = *y_ref + 1;
             *c = *c + 1;
         }
