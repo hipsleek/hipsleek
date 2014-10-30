@@ -404,13 +404,22 @@ let add_flow reldefns =
 
 let trans_res_formula prog f =
   let mk_new_p t p =
+    let pos = CP.pos_of_formula p in
     match t with
       | Int -> p
-      | Bool -> p
-            (* CP.drop_svl_pure p [CP.mkRes Int] *)
+      | Bool ->
+            let svl = CP.fv p in
+            let p1 = CP.remove_redundant (CP.drop_svl_pure p [CP.mkRes Int]) in
+            let p2 = CP.drop_svl_pure p (Gen.BList.difference_eq CP.eq_spec_var svl [CP.mkRes Int]) in
+            let il = CP.get_num_int_list p2 in
+            let new_p = match il with
+              | [0] -> CP.mkAnd p1 (CP.mkNot (CP.BForm ((BVar (CP.mkRes Bool, pos),None),None)) None pos) pos
+              | [1] -> CP.mkAnd p1 (CP.BForm ((BVar (CP.mkRes Bool, pos),None),None)) pos
+              | _ -> p
+            in new_p
       | _ -> p
   in
-  let mk_new_formula mk f =
+  let mk_new_formula qvars f =
     let svl = CF.fv f in
     let h,p,fl,tf,a = CF.split_components f in
     let pos = CF.pos_of_formula f in
@@ -426,8 +435,6 @@ let trans_res_formula prog f =
       let (t,_),_ = (List.hd dclr.Cast.data_fields) in
       let eres = CP.mkeRes (Named exc_name) in
       let res = CP.mkRes t in
-      let _ = Debug.ninfo_hprint (add_str "eres" Cprinter.string_of_typed_spec_var) eres no_pos in
-      let _ = Debug.ninfo_hprint (add_str "res" Cprinter.string_of_typed_spec_var) res no_pos in
       let dnode = CF.DataNode {
           CF.h_formula_data_node = eres;
           CF.h_formula_data_name = exc_name;
@@ -447,8 +454,8 @@ let trans_res_formula prog f =
       in
       let _ = Debug.ninfo_hprint (add_str "dnode" Cprinter.string_of_h_formula) dnode no_pos in
       let new_h = CF.mkStarH h dnode pos in
-      let new_p = mk_new_p t p in
-      mk new_h new_p tf fl a pos
+      let new_p = MCP.mix_of_pure (mk_new_p t (MCP.pure_of_mix p)) in
+      CF.mkExists (res::qvars) new_h new_p tf fl a pos
     else f in
     new_f
   in
@@ -456,13 +463,13 @@ let trans_res_formula prog f =
     let _ = Debug.ninfo_hprint (add_str "f" !CF.print_formula) f no_pos in
     match f with
       | CF.Base b ->
-            mk_new_formula CF.mkBase f
+            mk_new_formula [] f
       | CF.Or o -> Or { o with
             CF.formula_or_f1 = helper o.CF.formula_or_f1;
             CF.formula_or_f2 = helper o.CF.formula_or_f2
         }
       | CF.Exists e ->
-            mk_new_formula (CF.mkExists e.CF.formula_exists_qvars) f
+            mk_new_formula e.CF.formula_exists_qvars f
   in
   helper f
 
