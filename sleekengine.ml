@@ -2110,20 +2110,35 @@ let process_sat_check (f : meta_formula) =
 let check_nondet_x (v: ident) (f: meta_formula) =
   let (_,f) = meta_to_formula f false [] [] in
   let pf = CF.get_pure f in
+  (* collect nondet variables *)
+  let nondet_svs = ref [] in
+  let (fh, fm) = (fun _ -> None), (fun _ -> None) in
+  let (ff, fe) = (fun _ -> None), (fun e -> Some e) in
+  let fb bf = (match (fst bf) with
+    | CP.RelForm (sv, args, _) -> (
+        let name = CP.name_of_sv sv in
+        if (String.length name >= 6) then (
+          let prefix = String.lowercase (String.sub name 0 6) in
+          if (eq_str prefix "nondet") then (
+            let args_svs = List.concat (List.map CP.afv args) in
+            nondet_svs := CP.remove_dups_svl (!nondet_svs @ args_svs);
+          )
+        );
+        Some bf
+      )
+    | _ -> Some bf
+  ) in
+  let _ = CP.transform_formula (fh, fm, ff, fb, fe) pf in
+  (* simplify formula *)
   let simp_pf = Omega.simplify pf in
-  let rel_ids = CP.get_rel_id_list simp_pf in
-  let rel_names = List.map CP.name_of_sv rel_ids in
-  (* Debug.binfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;             *)
-  (* Debug.binfo_hprint (add_str "sim_pf" !CP.print_formula) simp_pf no_pos;    *)
-  (* Debug.binfo_hprint (add_str "rel_names" (pr_list pr_id)) rel_names no_pos; *)
-  let res = List.exists (fun s ->
-    if (String.length s <= 6) then false
-    else
-      let prefix = String.lowercase (String.sub s 0 6) in
-      eq_str prefix "nondet"
-  ) rel_names in
+  let simp_svs = CP.fv simp_pf in
+  Debug.binfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;
+  Debug.binfo_hprint (add_str "nondet_svs" (pr_list !CP.print_sv)) !nondet_svs no_pos;
+  Debug.binfo_hprint (add_str "sim_pf" !CP.print_formula) simp_pf no_pos;
+  Debug.binfo_hprint (add_str "simp_svs" (pr_list !CP.print_sv)) simp_svs no_pos;
   (* return *)
-  res
+  let svl = CP.intersect_svl !nondet_svs simp_svs in
+  (List.length svl != 0)
   
 
 let check_nondet (v: ident) (f : meta_formula) =
@@ -2136,7 +2151,7 @@ let check_nondet (v: ident) (f : meta_formula) =
 let process_nondet_check (v: ident) (f: meta_formula) =
   let res = check_nondet v f in
   let nn = (sleek_proof_counter#inc_and_get) in
-  let res_str = if res then "Valid" else "False" in
+  let res_str = if res then "Valid" else "Fail" in
   let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
   print_endline msg
   

@@ -3,7 +3,7 @@ relation nondet_Int(int x).
 relation nondet_Bool(bool x).
 
 check_nondet [b] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) .
-// Valid
+// False
 
 check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=b.
 // Valid
@@ -11,7 +11,7 @@ check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(
 check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=!b.
 // Valid
 
-// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & (c=b | c=true).
+check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & (c=b | c).
 // Fail
 
 // check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=(b | d).
