@@ -228,27 +228,27 @@ let subst_sol_term_ann sol ann =
 let proc_case_specs: (ident, tnt_case_spec) Hashtbl.t = 
   Hashtbl.create 20
 
-let case_spec_of_trrel_sol call_num sol =
+let case_spec_of_trrel_sol call_num pos sol =
   match sol with
   | Base c -> (c, Sol (CP.Term, 
-    [CP.mkIConst call_num no_pos; CP.mkIConst (scc_fresh_int ()) no_pos]))
-  | Rec c -> (c, Unknown)
+    [CP.mkIConst call_num pos; CP.mkIConst (scc_fresh_int ()) pos]))
+  | Rec c -> (c, Unknown None)
   | MayTerm c -> (c, Sol (CP.MayLoop None, [])) 
 
 let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
-  let call_num = 
+  let call_num, proc_pos = 
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls fn in
-      proc.Cast.proc_call_order
-    with _ -> 0
+      proc.Cast.proc_call_order, proc.Cast.proc_loc
+    with _ -> 0, no_pos
   in
-  let cases = List.map (case_spec_of_trrel_sol call_num) sols in
+  let cases = List.map (case_spec_of_trrel_sol call_num proc_pos) sols in
   Hashtbl.add proc_case_specs fn (Cases cases)
   
 let rec update_case_spec spec cond sol = 
   match spec with
   | Sol _ -> spec
-  | Unknown -> sol
+  | Unknown _ -> sol
   | Cases cases -> 
     let rec helper cases =
       match cases with
@@ -271,12 +271,12 @@ let add_sol_case_spec_proc fn cond sol =
   
 let update_case_spec_with_icond_proc fn cond icond = 
   update_case_spec_proc fn cond 
-    (Cases [(icond, Unknown); (mkNot icond, Unknown)])
+    (Cases [(icond, Unknown None); (mkNot icond, Unknown None)])
     
 let update_case_spec_with_icond_list_proc fn cond icond_lst =
   if is_empty icond_lst then ()
   else update_case_spec_proc fn cond 
-    (Cases (List.map (fun c -> (c, Unknown)) icond_lst))
+    (Cases (List.map (fun c -> (c, Unknown None)) icond_lst))
 
 let rec merge_cases_tnt_case_spec spec = 
   match spec with
@@ -322,6 +322,36 @@ let rec flatten_case_tnt_spec f =
       ac @ mf) [] cases in
     Cases ncases
   | _ -> f
+
+let add_cex_by_cond for_loop turels c cex = 
+  let rec has_feasible_cex c turel =
+    (is_sat (mkAnd c turel.call_ctx)) &&
+    not (is_None (CP.cex_of_term_ann turel.termu_rhs)) 
+  in
+  try
+    let turel = List.find (has_feasible_cex c) turels in
+    let acex = CP.cex_of_term_ann turel.termu_rhs in
+    CP.merge_term_cex cex acex
+  with Not_found -> cex
+
+let rec add_cex_tnt_case_spec_cond turels c f =
+  match f with
+  | Cases cases ->
+    let ncases = List.map (fun (sc, sf) ->
+      (sc, add_cex_tnt_case_spec_cond turels (mkAnd c sc) sf)) cases in
+    Cases ncases
+  | Sol (s, r) ->
+    let ns = match s with
+      | CP.Loop cex -> CP.Loop (add_cex_by_cond true turels c cex)
+      | CP.MayLoop cex -> CP.MayLoop (add_cex_by_cond false turels c cex)
+      | _ -> s in
+    Sol (ns, r)
+  | Unknown cex -> Unknown (add_cex_by_cond false turels c cex)
+
+let add_cex_tnt_case_spec f = 
+  (* let turels = call_trel_stk # get_stk in *)
+  (* add_cex_tnt_case_spec_cond turels (CP.mkTrue no_pos) f  *)
+  f
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
@@ -372,7 +402,7 @@ let struc_formula_of_dead_path _ =
 let rec struc_formula_of_tnt_case_spec spec =
   match spec with
   | Sol s -> struc_formula_of_ann s
-  | Unknown -> struc_formula_of_ann (CP.MayLoop None, [])
+  | Unknown cex -> struc_formula_of_ann (CP.MayLoop cex, [])
   | Cases cases -> CF.ECase {
       CF.formula_case_branches = List.map (fun (c, s) -> 
         (c, struc_formula_of_tnt_case_spec s)) cases;
@@ -436,7 +466,7 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
 and merge_tnt_case_spec_into_assume ctx spec af =
   match spec with
   | Sol s -> struc_formula_of_ann_w_assume af s
-  | Unknown -> struc_formula_of_ann_w_assume af (CP.MayLoop None, [])
+  | Unknown cex -> struc_formula_of_ann_w_assume af (CP.MayLoop cex, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
       let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
@@ -509,6 +539,7 @@ let rec norm_struc struc_f =
 let tnt_spec_of_proc proc ispec =
   let ispec = merge_cases_tnt_case_spec
     (flatten_case_tnt_spec ispec) in
+  let ispec = add_cex_tnt_case_spec ispec in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
   let spec = merge_tnt_case_spec_into_struc_formula

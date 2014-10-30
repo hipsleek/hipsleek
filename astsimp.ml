@@ -7200,7 +7200,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_pos = uid.IP.tu_pos; } in 
   match ann with
     | IP.Term -> CP.Term
-    | IP.Loop -> CP.Loop (Some { CP.tcex_trace = [proving_loc # string_of]; })
+    | IP.Loop -> CP.Loop (Some { CP.tcex_trace = [proving_loc # get]; })
     | IP.MayLoop -> CP.MayLoop None
     | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
     | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)

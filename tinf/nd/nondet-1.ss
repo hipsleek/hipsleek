@@ -23,7 +23,6 @@ void f(int x)
   if (x < 0) return;
   else {
     bool b = nondet();
-    dprint;
     if (b) 
       loop();
     else f(x - 1);

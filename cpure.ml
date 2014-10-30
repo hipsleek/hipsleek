@@ -205,7 +205,7 @@ and uid = {
 }
 
 and term_cex = {
-  tcex_trace: string list; 
+  tcex_trace: loc list; 
 }
 
 and term_fail =
@@ -13771,6 +13771,34 @@ let uid_of_term_ann ann =
   | TermU uid
   | TermR uid -> Some uid
   | _ -> None
+
+let rec cex_of_term_ann ann = 
+  match ann with
+  | MayLoop cex -> cex
+  | Loop cex -> cex
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> None
+    | Some (s, _) -> cex_of_term_ann s
+    end
+  | _ -> None
+
+let rec cex_of_term_ann_list anns = 
+  match anns with
+  | [] -> None
+  | m::ms -> 
+    let mcex = cex_of_term_ann m in
+    match mcex with
+    | None -> cex_of_term_ann_list ms
+    | Some _ -> mcex
+
+let merge_term_cex c1 c2 = 
+  match c1, c2 with
+  | None, None -> None
+  | None, Some _ -> c2
+  | Some _, None -> c1
+  | Some t1, Some t2 ->
+    Some ({ tcex_trace = t1.tcex_trace @ t2.tcex_trace; })
 
 let mkUTPre uid = 
   TermU { uid with tu_sid = uid.tu_sid ^ "pre" }

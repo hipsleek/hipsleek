@@ -650,16 +650,16 @@ let check_term_assume prog lhs rhs =
     let t_ann_d, dst_il = (dst_tinfo.lex_ann, dst_tinfo.lex_tmp) in
       
     begin match t_ann_d with
-    | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
+    | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos
     | _ -> 
       let t_ann_s, _, _ = match lhs_lex with 
         | Some (t_ann, el, il) -> (t_ann, el, il)
         | None -> raise LexVar_Not_found in
       begin match t_ann_s with
-      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il
+      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
       | Term -> 
         begin match t_ann_d with
-        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il
+        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
         | _ -> () 
         end
       | _ -> () 

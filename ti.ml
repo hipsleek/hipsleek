@@ -11,20 +11,19 @@ open Ti3
 (*******************************)
 (* Temporal Relation at Return *)
 (*******************************)
-let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
-
-let add_ret_trel_stk prog ctx lhs rhs =
+let add_ret_trel_stk prog ctx lhs rhs pos =
   let params = params_of_term_ann prog rhs in
   let trel = {
     ret_ctx = MCP.pure_of_mix ctx;
     termr_fname = CP.fn_of_term_ann rhs;
     termr_rhs_params = params;
     termr_lhs = lhs;
-    termr_rhs = rhs; } in 
+    termr_rhs = rhs; 
+    termr_pos = pos; } in 
   (* let _ = print_endline (print_ret_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel
-
+  
 (* Only merge relations split by post *)
 let merge_trrels rec_trrels = 
   let same_flow_path r1 r2 =
@@ -193,9 +192,7 @@ let case_split_init trrels turels =
 (*****************************)
 (* Temporal Relation at Call *)
 (*****************************)
-let call_trel_stk: call_trel Gen.stack = new Gen.stack
-
-let add_call_trel_stk prog ctx lhs rhs callee args =
+let add_call_trel_stk prog ctx lhs rhs callee args pos =
   let params = params_of_term_ann prog rhs in
   let trel = {
     trel_id = tnt_fresh_int ();
@@ -205,7 +202,8 @@ let add_call_trel_stk prog ctx lhs rhs callee args =
     termu_rhs = rhs; 
     termu_rhs_params = params; 
     termu_cle = callee;
-    termu_rhs_args = args; } in 
+    termu_rhs_args = args; 
+    termu_pos = pos; } in 
   (* let _ = print_endline (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel
@@ -295,13 +293,23 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
     else if (List.exists (fun (_, v) -> CP.is_Loop v) outside_scc_succ)
     then proving_non_termination_scc prog trrels tg scc
     
-    else if (List.exists (fun (_, v) -> CP.is_MayLoop v) outside_scc_succ) then
-      if is_acyclic_scc tg scc
-      then update_ann scc (subst (CP.MayLoop None, [])) (* MayLoop *)
-      else proving_non_termination_scc prog trrels tg scc
+    (* else if (List.exists (fun (_, v) -> CP.is_MayLoop v) outside_scc_succ) then           *)
+    (*   if is_acyclic_scc tg scc                                                            *)
+    (*   then update_ann scc (subst (CP.MayLoop None, [])) (* MayLoop *)                     *)
+    (*   else proving_non_termination_scc prog trrels tg scc                                 *)
     
-    else (* Error: One of scc's succ is Unknown *)
-      report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown."
+    (* else (* Error: One of scc's succ is Unknown *)                                        *)
+    (*   report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown." *)
+    
+    else
+      let mayloop_lst = List.find_all (fun (_, v) -> CP.is_MayLoop v) outside_scc_succ in
+      if is_empty mayloop_lst then
+        report_error no_pos "[TNT Inference]: One of analyzed scc's successors is Unknown."
+      else if is_acyclic_scc tg scc then
+        let cex = CP.cex_of_term_ann_list (List.map snd mayloop_lst) in
+        update_ann scc (subst (CP.MayLoop cex, [])) (* MayLoop *)
+      else proving_non_termination_scc prog trrels tg scc
+        
   in
   let ntg = map_ann_scc tg scc update in
   ntg
