@@ -31,7 +31,24 @@ void main ()
 }
 
 /*
-# cex-1e.ss
+# cex-1e.ss --svcomp-compete
+
+Termination Inference Result:
+g:  requires emp & Term[34,1]
+     ensures emp & x=res-1;
+Termination Inference Result:
+hhh:  case {
+  x<=(0-1) -> requires emp & Term[38,1]
+     ensures emp & true; 
+  0<=x & x<=5 -> requires emp & MayLoop[]
+     ensures emp & true; 
+  6<=x -> requires emp & Loop{ 19:8}[]
+     ensures false & false; 
+  }
+Termination Inference Result:
+main:  requires emp & MayLoop[]
+     ensures emp & true;
+
 
 This example works nicely. Kudos!
 Automatic addition of @post_n works!

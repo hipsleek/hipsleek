@@ -434,11 +434,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
             if rels !=[] then
               begin
-                print_endline "\n*************************************";
-                print_endline "******pure relation assumption*******";
-                print_endline "*************************************";
-                print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
-                print_endline "*************************************";
+                print_endline_quiet "\n*************************************";
+                print_endline_quiet "******pure relation assumption*******";
+                print_endline_quiet "*************************************";
+                print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
+                print_endline_quiet "*************************************";
               end;
             let _ = if !Globals.sa_gen_slk then
               try
@@ -491,11 +491,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           Infer.fixcalc_rel_stk # push_list tuples;
           if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then
             begin
-              print_endline "\n*************************************";
-              print_endline "*******fixcalc of pure relation *******";
-              print_endline "*************************************";
-              print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
-              print_endline "*************************************"
+              print_endline_quiet "\n*************************************";
+              print_endline_quiet "*******fixcalc of pure relation *******";
+              print_endline_quiet "*************************************";
+              print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse);
+              print_endline_quiet "*************************************"
             end;
           Infer.fixcalc_rel_stk # reset;
           let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
@@ -531,9 +531,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
     let _ = List.iter (fun (proc,new_spec) ->
         let _ = proc.proc_stk_of_static_specs # push new_spec in
-        print_endline "\nPost Inference result:";
-        print_endline proc.proc_name;
-        print_endline (Cprinter.string_of_struc_formula_for_spec new_spec);
+        print_endline_quiet "\nPost Inference result:";
+        print_endline_quiet proc.proc_name;
+        print_endline_quiet (Cprinter.string_of_struc_formula_for_spec new_spec);
     ) (List.combine scc new_specs) in
     ()
 
