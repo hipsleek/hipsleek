@@ -17,7 +17,7 @@ check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Int(b
 check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Int(b) & c=b-b.
 // Fail
 
-check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d & nondet_Int(b) & c=b+d.
+check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d=1 & nondet_Int(b) & c=b+d.
 // Valid
 
 check_nondet [d] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Int(b) & c=b.

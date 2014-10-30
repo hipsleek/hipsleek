@@ -2111,35 +2111,66 @@ let check_nondet_x (v: ident) (f: meta_formula) =
   let (_,f) = meta_to_formula f false [] [] in
   let pf = CF.get_pure f in
   (* collect nondet variables *)
-  let nondet_svs = ref [] in
-  let (fh, fm) = (fun _ -> None), (fun _ -> None) in
-  let (ff, fe) = (fun _ -> None), (fun e -> Some e) in
-  let fb bf = (match (fst bf) with
-    | CP.RelForm (sv, args, _) -> (
-        let name = CP.name_of_sv sv in
-        if (String.length name >= 6) then (
-          let prefix = String.lowercase (String.sub name 0 6) in
-          if (eq_str prefix "nondet") then (
-            let args_svs = List.concat (List.map CP.afv args) in
-            nondet_svs := CP.remove_dups_svl (!nondet_svs @ args_svs);
-          )
-        );
-        Some bf
-      )
-    | _ -> Some bf
+  let collect_nondet_vars f = (
+    let nondet_svs = ref [] in
+    let (fh, fm) = (fun _ -> None), (fun _ -> None) in
+    let (ff, fe) = (fun _ -> None), (fun e -> Some e) in
+    let fb bf = (match (fst bf) with
+      | CP.RelForm (sv, args, _) -> (
+          let name = CP.name_of_sv sv in
+          if (String.length name >= 6) then (
+            let prefix = String.lowercase (String.sub name 0 6) in
+            if (eq_str prefix "nondet") then (
+              let args_svs = List.concat (List.map CP.afv args) in
+              nondet_svs := CP.remove_dups_svl (!nondet_svs @ args_svs);
+            )
+          );
+          Some bf
+        )
+      | _ -> Some bf
+    ) in
+    let _ = CP.transform_formula (fh, fm, ff, fb, fe) f in
+    !nondet_svs
   ) in
-  let _ = CP.transform_formula (fh, fm, ff, fb, fe) pf in
-  (* simplify formula *)
-  let simp_pf = Omega.simplify pf in
-  let simp_svs = CP.fv simp_pf in
-  Debug.binfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;
-  Debug.binfo_hprint (add_str "nondet_svs" (pr_list !CP.print_sv)) !nondet_svs no_pos;
-  Debug.binfo_hprint (add_str "sim_pf" !CP.print_formula) simp_pf no_pos;
-  Debug.binfo_hprint (add_str "simp_svs" (pr_list !CP.print_sv)) simp_svs no_pos;
-  (* return *)
-  let svl = CP.intersect_svl !nondet_svs simp_svs in
-  (List.length svl != 0)
-  
+  let nondet_svs = collect_nondet_vars pf in
+  if (List.exists (fun x -> eq_str (CP.name_of_sv x) v) nondet_svs) then true
+  else (
+    let simp_pf = Omega.simplify pf in
+    (* check iff there is connection between v and nondet-vars through simp_pf *)
+    let rec collect_related_vars vars = (
+      let related_vars = ref vars in
+      let (fh, fm) = (fun _ -> None), (fun _ -> None) in
+      let (ff, fe) = (fun _ -> None), (fun e -> Some e) in
+      let fb b = (
+        let svs = CP.bfv b in
+        let common_svs = CP.intersect_svl svs !related_vars in
+        if (List.length common_svs > 0) then (
+          (* Debug.binfo_hprint (add_str "common_svs" (pr_list !CP.print_sv)) common_svs no_pos; *)
+          (* Debug.binfo_hprint (add_str "svs" (pr_list !CP.print_sv)) svs no_pos; *)
+          related_vars := CP.remove_dups_svl (!related_vars @ svs);
+          (* Debug.binfo_hprint (add_str "related_vars" (pr_list !CP.print_sv)) !related_vars no_pos; *)
+        );
+        None
+      ) in
+      let _ = CP.transform_formula (fh, fm, ff, fb, fe) simp_pf in
+      if (List.length !related_vars) <= (List.length vars) then vars
+      else collect_related_vars !related_vars
+    ) in
+    let simp_svs = CP.fv simp_pf in
+    try 
+      let origin_var = List.find (fun x -> eq_str (CP.name_of_sv x) v) simp_svs in
+      let related_vars = collect_related_vars [origin_var] in
+      let related_nondet_svs = CP.intersect_svl nondet_svs related_vars in
+      (* Debug.binfo_hprint (add_str "check var" pr_id) v no_pos;                                            *)
+      (* Debug.binfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;                                      *)
+      (* Debug.binfo_hprint (add_str "nondet_svs" (pr_list !CP.print_sv)) nondet_svs no_pos;                 *)
+      (* Debug.binfo_hprint (add_str "sim_pf" !CP.print_formula) simp_pf no_pos;                             *)
+      (* Debug.binfo_hprint (add_str "related_vars" (pr_list !CP.print_sv)) related_vars no_pos;             *)
+      (* Debug.binfo_hprint (add_str "related_nondet_svs" (pr_list !CP.print_sv)) related_nondet_svs no_pos; *)
+      (List.length related_nondet_svs != 0)
+    with _ -> false
+  )
+
 
 let check_nondet (v: ident) (f : meta_formula) =
   let pr_v = (add_str "v" pr_id) in
