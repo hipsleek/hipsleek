@@ -13,18 +13,18 @@ void f(int x)
 {
   if (x < 0) return;
   else {
-    bool b = nondet();
     if (true)
-      /* return; */
       f(x + 1);
     else
-      /* f(x + 2); */
       return;
-      /* loop(); */
   }
 }
 
-void g(int x) {
+void g(int x) 
+  infer [@term]
+  requires true
+  ensures true;
+{
    if (x > 0)
       f(x);
 }
@@ -35,6 +35,7 @@ void main ()
   ensures true;
 {
   int x;
+  x = 1;
   g(x);
 }
 
@@ -43,6 +44,5 @@ void main ()
 Termination Inference Result:
 main:  requires emp & MayLoop[]
 
-expect: line 32 -> line 18
 
 */
