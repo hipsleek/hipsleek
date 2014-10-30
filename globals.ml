@@ -890,6 +890,7 @@ let sa_en_split = ref false
 let pred_split = ref false
 
 let pred_seg_split = ref false
+let pred_norm_overr = ref true
 
 (* let sa_dangling = ref false *)
 

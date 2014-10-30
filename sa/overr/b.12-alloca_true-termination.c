@@ -25,6 +25,8 @@ int test_fun(int x, int y)
     return *c;
 }
 
+/*
 int main() {
   return test_fun(__VERIFIER_nondet_int(),__VERIFIER_nondet_int());
 }
+*/

@@ -4694,6 +4694,16 @@ let rec look_up_hp_def hp_defs hp0=
           | _ -> look_up_hp_def rest hp0
       end
 
+let rec look_up_hp_def_with_remain hp_defs hp0 done_hpdefs=
+  match hp_defs with
+    | [] -> raise Not_found
+    | (hp_def)::rest -> begin
+        match hp_def.def_cat with
+          | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then (hp_def,done_hpdefs@rest)
+            else look_up_hp_def_with_remain rest hp0 (done_hpdefs@[hp_def])
+          | _ -> look_up_hp_def_with_remain rest hp0 (done_hpdefs@[hp_def])
+      end
+
 let is_unknown_f_x f0=
   let rec helper f=  match f with
     | Base fb ->
