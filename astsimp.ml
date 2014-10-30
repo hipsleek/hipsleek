@@ -1426,7 +1426,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   in
   (* Added by Zhuohong *)
   let prog4 = {prog4 with I.prog_data_decls = (mk_ret_type_into_data_decls prog4)@prog4.I.prog_data_decls; } in
-  let _ = print_endline ("@@prog4\n"^Iprinter.string_of_program prog4^"@@prog4\n") in
+  (*let _ = print_endline ("@@prog4\n"^Iprinter.string_of_program prog4^"@@prog4\n") in*)
   (* ***************** *)
 
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
