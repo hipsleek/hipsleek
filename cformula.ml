@@ -16263,7 +16263,7 @@ let collect_node_var_formula (f:formula) =
   in
   helper f
 
-let trans_flow_formula f =
+let trans_flow_formula f prog =
   let get_interval pf =
     let fv = Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) [CP.mk_spec_var "flow"] in
     let inf = CP.remove_redundant (CP.drop_svl_pure pf fv) in
@@ -16304,11 +16304,11 @@ let trans_flow_formula f =
   let f = helper f in
   simplify_formula (drop_svl f [CP.mk_spec_var "flow"]) []
 
-let trans_flow_formula f =
+let trans_flow_formula f prog =
   let pr = !print_formula in
-  Debug.no_1 "trans_flow_formula" pr pr trans_flow_formula f
+  Debug.no_1 "trans_flow_formula" pr pr (fun _ -> trans_flow_formula f prog) f
 
-let trans_flow_struc_formula sf =
+let trans_flow_struc_formula sf prog =
   let rec helper sf =
     let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
@@ -16318,8 +16318,8 @@ let trans_flow_struc_formula sf =
         }
       | EBase eb ->
             let new_cont,new_base = match eb.formula_struc_continuation with
-              | None -> None,trans_flow_formula eb.formula_struc_base
-              | Some f -> Some (helper f),trans_flow_formula eb.formula_struc_base
+              | None -> None,trans_flow_formula eb.formula_struc_base prog
+              | Some f -> Some (helper f),(* trans_flow_formula *) eb.formula_struc_base
             in
             EBase { eb with
                 formula_struc_base = new_base;
@@ -16328,19 +16328,23 @@ let trans_flow_struc_formula sf =
       | EInfer ei -> EInfer { ei with
             formula_inf_continuation = helper ei.formula_inf_continuation
         }
-      | EAssume ea -> EAssume { ea with
-            formula_assume_simpl = trans_flow_formula ea.formula_assume_simpl;
-            formula_assume_struc = helper ea.formula_assume_struc
-        }
+      | EAssume ea ->
+            let pos = pos_of_struc_formula sf in
+            let new_simpl = trans_flow_formula ea.formula_assume_simpl prog in
+            let new_struc = struc_formula_of_formula new_simpl pos in
+            EAssume { ea with
+                formula_assume_simpl = new_simpl;
+                formula_assume_struc = new_struc (* helper ea.formula_assume_struc *)
+            }
   in
   let sfv = struc_fv sf in
   let _ = Debug.ninfo_hprint (add_str "sfv" (pr_list !print_sv)) sfv no_pos in
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "flow") sfv then helper sf
   else sf
 
-let trans_flow_struc_formula sf =
+let trans_flow_struc_formula sf prog =
   let pr = !print_struc_formula in
-  Debug.no_1 "trans_flow_struc_formula" pr pr trans_flow_struc_formula sf
+  Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf prog) sf
 
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;

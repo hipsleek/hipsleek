@@ -784,7 +784,7 @@ struct
       end
     method is_exc_flow (f:nflow) =
       begin
-        is_exact_flow f !raisable_flow_int
+        is_subset_flow f !raisable_flow_int
       end
     method is_top_flow (f:nflow) =
       begin
@@ -1129,7 +1129,7 @@ struct
       end
     method is_exc_flow (f:nflow) =
       begin
-        is_exact_flow f !raisable_flow_int
+        is_subset_flow f !raisable_flow_int
       end
     method is_top_flow (f:nflow) =
       begin
