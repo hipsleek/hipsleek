@@ -137,6 +137,8 @@ let solve_trrel_list params trrels turels =
     else CP.join_disjunctions not_rec_conds 
   in
   
+  (* let _ = print_endline ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
+  
   let rec_conds = List.fold_left (fun acc rtr ->
     let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
     let rec_cond =
@@ -173,16 +175,29 @@ let solve_trrel_list params trrels turels =
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
   
-let case_split_init trrels turels = 
+let case_split_init prog trrels turels = 
   let fn_trrels = 
     let key_of r = (r.termr_fname, r.termr_rhs_params) in
     let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
     partition_by_key key_of key_eq trrels 
   in
-  let fn_cond_w_ids = List.map (fun (fn, trrels) ->
-    let fn_turels = List.find_all (fun r -> String.compare (fst fn) r.termu_fname == 0) turels in
-    let params = snd fn in  
-    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels fn_turels))) fn_trrels in
+  (* let fn_cond_w_ids = List.map (fun (fn, trrels) ->                                                        *)
+  (*   let fn_turels = List.find_all (fun r -> String.compare (fst fn) r.termu_fname == 0) turels in          *)
+  (*   let params = snd fn in                                                                                 *)
+  (*   (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels fn_turels))) fn_trrels in *)
+  let fn_turels = 
+    let key_of r = (r.termu_fname, List.concat (List.map CP.afv (CP.args_of_term_ann r.termu_lhs))) in
+    let key_eq (k1, _) (k2, _) = String.compare k1 k2 == 0 in  
+    partition_by_key key_of key_eq turels 
+  in
+  let fn_rels, rem_fn_turels = List.fold_left (fun (fn_rels, rem_fn_turels) (rfn, trrels) ->
+    let turels, rem_fn_turels = List.partition (fun (ufn, _) -> eq_str (fst rfn) (fst ufn)) rem_fn_turels in
+    let turels = List.concat (List.map snd turels) in
+    fn_rels @ [(rfn, trrels, turels)], rem_fn_turels) ([], fn_turels) fn_trrels in
+  let fn_rels = fn_rels @ (List.map (fun (fn, turels) -> (fn, [], turels)) rem_fn_turels) in
+  let fn_cond_w_ids = List.map (fun (fn, trrels, turels) ->
+    let params = snd fn in
+    (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels turels))) fn_rels in
   let _ = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline ("\nBase/Rec Case Splitting:\n" ^ 
@@ -379,7 +394,7 @@ let solve_turel_graph_init prog trrels tg =
   finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
-  let fn_cond_w_ids = case_split_init trrels turels in 
+  let fn_cond_w_ids = case_split_init prog trrels turels in 
   (* Update TNT case spec with base condition *)
   let _ = List.iter (add_case_spec_of_trrel_sol_proc prog)
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in

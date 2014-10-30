@@ -1398,19 +1398,21 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let trrels = List.filter (fun trrel -> 
     eq_str (CP.fn_of_term_ann trrel.termr_rhs) rhs_uid.CP.tu_fname) trrels in
-  let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
-  if ntres = [] then NT_No []
-  else if List.for_all is_nt_yes ntres then NT_Yes
-  else if not (List.exists is_nt_no ntres) then NT_Partial_Yes
+  if trrels = [] then NT_Yes (* No return *)
   else
-    let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
-    let full_disj_ic_list = get_full_disjoint_cond_list true ic_list in
-    (* We should terminate the analysis when there is no new inferred condition *)
-    let cond = rhs_uid.CP.tu_cond in 
-    let feasible_disj_ic_list = List.filter (fun c -> 
-      (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
-    if is_empty feasible_disj_ic_list then NT_No []
-    else NT_No feasible_disj_ic_list (* full_disj_ic_list *)
+    let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
+    if ntres = [] then NT_No []
+    else if List.for_all is_nt_yes ntres then NT_Yes
+    else if not (List.exists is_nt_no ntres) then NT_Partial_Yes
+    else
+      let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
+      let full_disj_ic_list = get_full_disjoint_cond_list true ic_list in
+      (* We should terminate the analysis when there is no new inferred condition *)
+      let cond = rhs_uid.CP.tu_cond in 
+      let feasible_disj_ic_list = List.filter (fun c -> 
+        (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
+      if is_empty feasible_disj_ic_list then NT_No []
+      else NT_No feasible_disj_ic_list (* full_disj_ic_list *)
     
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let pr = Cprinter.string_of_term_id in
