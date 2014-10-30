@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+use Try::Tiny;
 use File::Find;
 use File::Basename;
 use Getopt::Long;
@@ -12,29 +13,50 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseExcel::SaveParser;
 
 
+GetOptions( "--infer-lex"       => \$lex,          #register - update the xml
+    );
+
+
 #my @dirs=("termination-crafted-lit","termination-memory-alloca");
 #my @dirs=("termination-memory-alloca");
 # my @dirs=("test");
-my @dirs=("termination-crafted-lit");
+#my @dirs=("termination-crafted-lit");
+my @dirs=("termination-numeric");
+#my @dirs=("termination-crafted-lit","termination-crafted");
+#my @dirs=("termination-crafted");
 my $exec_path = '..';
 my $hip  = "$exec_path/hip ";
 my $args = '-infer "\@term"';
 my $result_file = "SV-COMP 2015.xls";
+my $timeout = 60;
 
 #my $root_dir = getcwd();
 my $first_row = 2;
 my $col = 0;
 my $filename_col = $col++;
 my $res_col = $col++;
-$col++;
+$col++; #empty col
 my $bench_col = $col++;
+$col++;#empty col
+$col++;
+$col++;
+my $lex_col = $col++;
+
+my $working_col =  $res_col;
 
 my $row_sum_old     =  8;
 my $row_sum_new     =  9;
-my $col_sum_term    = 11;
-my $col_sum_mayloop = 12;
-my $col_sum_fail    = 13;
-my $col_sum_err     = 14;
+my $row_sum_lex     =  10;
+my $col_sum_term    = 14;
+my $col_sum_mayloop = 15;
+my $col_sum_fail    = 16;
+my $col_sum_timeout = 17;
+my $col_sum_err     = 18;
+
+my $sum_row = $row_sum_new;
+if($lex) {$working_col =  $lex_col;  $sum_row = $row_sum_lex;
+         $args = $args.' --infer-lex '; 
+}
 
 my $parser = new Spreadsheet::ParseExcel::SaveParser;
 
@@ -53,6 +75,13 @@ if(-e "$result_file")  {#check for file existance
         my $mayloop_cnt = 0;
         my $fail_cnt = 0;
         my $err_cnt = 0;
+        my $timeout_cnt = 0;
+
+        my $lex_term_cnt = 0;
+        my $lex_mayloop_cnt = 0;
+        my $lex_fail_cnt = 0;
+        my $lex_err_cnt = 0;
+        my $lex_timeout_cnt = 0;
 
         my @files = <$current_dir*.c>;
         #my @files = <termination-crafted-lit/*.c>;
@@ -61,11 +90,25 @@ if(-e "$result_file")  {#check for file existance
             $filename = basename($file);
             print  "\n\n\n$filename" . "\n";
             #$1="";$2=""; #reset the output channels
-            my $output = `$hip $file $args 2>&1`;
+
+            my $res_cell = "ERR";
+            my $output = " ";
+
+            try {
+                local $SIG{ALRM} = sub { die "alarm\n" };
+                alarm $timeout;
+                $output = `$hip $file $args 2>&1`;
+                alarm 0;
+            } catch {
+                die $_ unless $_ eq "alarm\n";
+                print "timed out\n";
+                $res_cell = "TIMEOUT";
+            };
+
             # print  "\n $hip $file $args  2>&1 \n";
             # print " ------------- \n$output \n -------------\n";
             # print "#################\n$1 \n #################";
-            my $res_cell = "ERR";
+            
             if ($output =~ m/(Checking procedure main.*)/s){
                 my $res = $1;
                 #print "$res \n";
@@ -89,7 +132,6 @@ if(-e "$result_file")  {#check for file existance
                     # print "$res_inf \n";
 
                     my @lines = split /\n/, $res_inf; 
-                    
                     foreach my $line (@lines) { 
                         if($line =~ m/.*requires.*/){
                             if($line =~ m/Term/i # && $term =~ m/Term/i
@@ -100,18 +142,19 @@ if(-e "$result_file")  {#check for file existance
                             # elsif($line =~ m/Loop/i)    { $res_cell = "Loop"; }
                         }
                     }
-                    print "$res_cell \n";
                 }
             }
+            print "$res_cell \n";
             if ($res_cell =~ m/ERR/i) {$err_cnt++;}
-            $worksheet->AddCell($row++, $res_col, $res_cell);
-            
+            elsif ($res_cell =~ m/TIMEOUT/i) {$timeout_cnt++;}
+            $worksheet->AddCell($row++, $working_col, $res_cell);
         }
         
-        $worksheet->AddCell($row_sum_new, $col_sum_term, $term_cnt);
-        $worksheet->AddCell($row_sum_new, $col_sum_mayloop, $mayloop_cnt);
-        $worksheet->AddCell($row_sum_new, $col_sum_fail, $fail_cnt);
-        $worksheet->AddCell($row_sum_new, $col_sum_err, $err_cnt);
+        $worksheet->AddCell($sum_row, $col_sum_term, $term_cnt);
+        $worksheet->AddCell($sum_row, $col_sum_mayloop, $mayloop_cnt);
+        $worksheet->AddCell($sum_row, $col_sum_fail, $fail_cnt);
+        $worksheet->AddCell($sum_row, $col_sum_timeout, $timeout_cnt);
+        $worksheet->AddCell($sum_row, $col_sum_err, $err_cnt);
     }
     $workbook->SaveAs("$result_file");
 } else {
