@@ -6064,8 +6064,8 @@ and b_form_simplify_x (b:b_formula) :b_formula =
    1+x>-2 --> 3+x>0
 *)  
 
-and arith_simplify (i:int) (pf : formula) :  formula =   
-  Debug.no_1 ("arith_simplify LHS") !print_formula !print_formula 
+and arith_simplify (i:int) (pf : formula) :  formula =
+  Debug.no_1 ("arith_simplify LHS") !print_formula !print_formula
       arith_simplify_x pf
 
 
@@ -6084,7 +6084,7 @@ and arith_simplify_x (pf : formula) :  formula =
     |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
     |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
   in helper pf
-	  
+
 let get_pure_label n =  match n with
   | And _ 
   | AndList _ ->  None

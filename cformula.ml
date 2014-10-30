@@ -1538,7 +1538,7 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
-                       
+
 and mkStarMinusH (f1 : h_formula) (f2 : h_formula) (al: aliasing_scenario) (pos : loc) (no: int) = 
   let pr = !print_h_formula in
   Debug.no_3 "mkStarMinusH" string_of_int pr pr pr (fun _ _ _ -> mkStarMinusH_x f1 f2 al pos) no f1 f2
@@ -13112,16 +13112,15 @@ let rec erase_propagated f =
 (* 		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in *)
 (* 		 Some (transform_list_context (scc_f, (fun a -> a)) l) *)
 (* 	 with Not_found -> None *)
-  
-  
-and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
-  transform_list_context ((fun es -> Ctx{es with 
-				es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_expl_vars expvars; 
+
+and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context =
+  transform_list_context ((fun es -> Ctx{es with
+				es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_expl_vars expvars;
 				es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_impl_vars impvars;
 				es_evars = Gen.BList.difference_eq (=) es.es_evars expvars;
 				}), fun c->c) ctx
 
-and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
+and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : list_context =
   transform_list_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
 
 
@@ -16273,7 +16272,7 @@ let collect_node_var_formula (f:formula) =
   in
   helper f
 
-let trans_flow_formula f prog =
+let trans_flow_formula f =
   let get_interval pf =
     let fv = Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) [CP.mk_spec_var "flow"] in
     let inf = CP.remove_redundant (CP.drop_svl_pure pf fv) in
@@ -16314,11 +16313,11 @@ let trans_flow_formula f prog =
   let f = helper f in
   simplify_formula (drop_svl f [CP.mk_spec_var "flow"]) []
 
-let trans_flow_formula f prog =
+let trans_flow_formula f =
   let pr = !print_formula in
-  Debug.no_1 "trans_flow_formula" pr pr (fun _ -> trans_flow_formula f prog) f
+  Debug.no_1 "trans_flow_formula" pr pr (fun _ -> trans_flow_formula f) f
 
-let trans_flow_struc_formula sf prog =
+let trans_flow_struc_formula sf =
   let rec helper sf =
     let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
@@ -16328,7 +16327,7 @@ let trans_flow_struc_formula sf prog =
         }
       | EBase eb ->
             let new_cont,new_base = match eb.formula_struc_continuation with
-              | None -> None,trans_flow_formula eb.formula_struc_base prog
+              | None -> None,trans_flow_formula eb.formula_struc_base
               | Some f -> Some (helper f),(* trans_flow_formula *) eb.formula_struc_base
             in
             EBase { eb with
@@ -16340,7 +16339,7 @@ let trans_flow_struc_formula sf prog =
         }
       | EAssume ea ->
             let pos = pos_of_struc_formula sf in
-            let new_simpl = trans_flow_formula ea.formula_assume_simpl prog in
+            let new_simpl = trans_flow_formula ea.formula_assume_simpl in
             let new_struc = struc_formula_of_formula new_simpl pos in
             EAssume { ea with
                 formula_assume_simpl = new_simpl;
@@ -16352,9 +16351,9 @@ let trans_flow_struc_formula sf prog =
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "flow") sfv then helper sf
   else sf
 
-let trans_flow_struc_formula sf prog =
+let trans_flow_struc_formula sf =
   let pr = !print_struc_formula in
-  Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf prog) sf
+  Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf) sf
 
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;

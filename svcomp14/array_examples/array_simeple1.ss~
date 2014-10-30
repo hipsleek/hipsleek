@@ -1,0 +1,15 @@
+// !!!! This function need to use -prelude "prelude_aux.ss" 
+int foo(int x)
+  requires true
+  ensures res=x+1;
+{
+  int[] a;
+  //a = update_arr(a,5,x+1);
+  a[5] = x+1;
+  //a = update___1d(x+1,a,5);
+  int r;
+  r = a[5];
+  //dprint;
+  return r;
+
+}
