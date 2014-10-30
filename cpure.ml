@@ -205,7 +205,7 @@ and uid = {
 }
 
 and term_cex = {
-  tcex_trace: int list; 
+  tcex_trace: string list; 
 }
 
 and term_fail =

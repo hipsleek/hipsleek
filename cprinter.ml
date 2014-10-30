@@ -83,7 +83,7 @@ let pr_opt f x = match x with
     | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
 
 let pr_opt_silent f x = match x with
-    | None -> fmt_string ""
+    | None -> ()
     | Some v -> f v
   
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
@@ -1080,7 +1080,8 @@ and pr_term_ann_assume ann =
     | P.TermErr_Must -> fmt_string "TermErr_Must"
 
 and pr_term_cex cex = 
-  pr_wrap_test "" Gen.is_None (fun _ -> ()) cex
+  pr_wrap_test "" Gen.is_None (pr_opt_silent (fun cex ->
+    pr_set fmt_string cex.P.tcex_trace)) cex
 
 and pr_term_ann debug ann =
   if debug then pr_term_ann_debug false ann

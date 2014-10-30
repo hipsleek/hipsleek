@@ -3091,7 +3091,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
-    let _= proving_loc #set (proc.I.proc_loc) in
+    let _= proving_loc # set (proc.I.proc_loc) in
     let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
     let check_return_res = check_return proc in
     if not (Gen.is_empty dup_names) then
@@ -7200,7 +7200,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_pos = uid.IP.tu_pos; } in 
   match ann with
     | IP.Term -> CP.Term
-    | IP.Loop -> CP.Loop None
+    | IP.Loop -> CP.Loop (Some { CP.tcex_trace = [proving_loc # string_of]; })
     | IP.MayLoop -> CP.MayLoop None
     | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
     | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
