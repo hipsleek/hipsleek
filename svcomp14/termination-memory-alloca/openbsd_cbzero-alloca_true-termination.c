@@ -37,7 +37,7 @@ void
 cbzero(void *b, size_t length)
 {
 	char *p;
-
+        //@ dprint;
 	for (p = b; length--;)
 		*p++ = '\0';
 }

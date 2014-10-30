@@ -459,6 +459,7 @@ let _ =
   ()
   else ())
   in
+  let _ = print_endline ("!!! Using Z3 by default") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 
@@ -1733,9 +1734,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
-	Debug.no_2 "tp_is_sat_no_cache" 
-	Cprinter.string_of_pure_formula (fun s -> s) string_of_bool
-	tp_is_sat_no_cache f sat_no
+	Debug.no_3 "tp_is_sat_no_cache"
+    string_of_prover Cprinter.string_of_pure_formula (fun s -> s) string_of_bool
+	  (fun _ _ _ -> tp_is_sat_no_cache f sat_no) !pure_tp f sat_no
   
 let tp_is_sat_perm f sat_no = 
   if !perm=Dperm then match CP.has_tscons f with

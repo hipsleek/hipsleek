@@ -2809,12 +2809,18 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
           (* CF.is_post_hps = all_post_hps; *)
       } in
       let unk_hps = List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs) in
-      let is2 = if !Globals.pred_elim_useless then
+      let is2a = if !Globals.pred_elim_useless then
         (*detect and elim useless paramters*)
         {is1 with CF.is_hp_defs = Sacore.norm_elim_useless_paras prog
                 unk_hps (* (CP.remove_dups_svl is1.CF.is_sel_hps) *) sel_hps
                 all_post_hps is1.CF.is_hp_defs}
       else is1
+      in
+      let is2=
+        if !pred_norm_overr then
+          let n_hp_defs = Sacore.norm_overr is2a.is_hp_defs in
+          {is2a with CF.is_hp_defs = n_hp_defs}
+        else is2a
       in
       let post_hps = is2.CF.is_post_hps in
       let is3 = if not !Globals.pred_seg_unify then is2 else

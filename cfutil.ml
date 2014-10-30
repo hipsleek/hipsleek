@@ -131,8 +131,9 @@ let fresh_data_v f0=
   let hds, hvs, hrs = get_hp_rel_formula f0 in
   let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
   let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-  let fr_v_sps2 = CP.fresh_spec_vars (CP.remove_dups_svl v_sps2) in
-  let sst = List.combine v_sps2 fr_v_sps2 in
+  let v_sps3 = (CP.remove_dups_svl v_sps2) in
+  let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in
+  let sst = List.combine v_sps3 fr_v_sps2 in
   subst sst f0
 
 
