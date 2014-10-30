@@ -23,15 +23,15 @@ c.01_assume-alloca_true-termination.c
 (OK)c.02-alloca_true-termination.c
 (OK)c.08-alloca_true-termination.c
 count_down-alloca_true-termination.c
-diff-alloca_true-termination.c
+(too long)diff-alloca_true-termination.c
 easySum-alloca_true-termination.c
-ex1-alloca_true-termination.c
+(OC error)ex1-alloca_true-termination.c
 ex2-alloca_true-termination.c
-fermat-alloca_true-termination.c
+(too long)fermat-alloca_true-termination.c
 (OK)gcd1-alloca_true-termination.c
 genady-alloca_true-termination.c
 HarrisLalNoriRajamani-2010SAS-Fig1-alloca_true-termination.c
-HarrisLalNoriRajamani-2010SAS-Fig2-alloca_unknown-termination.c
+(too long)HarrisLalNoriRajamani-2010SAS-Fig2-alloca_unknown-termination.c
 insertionsort-alloca_true-termination.c
 java_BubbleSort-alloca_true-termination.c
 java_Nested-alloca_true-termination.c
