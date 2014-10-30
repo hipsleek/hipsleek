@@ -29,6 +29,13 @@ my $res_col = $col++;
 $col++;
 my $bench_col = $col++;
 
+my $row_sum_old     =  8;
+my $row_sum_new     =  9;
+my $col_sum_term    = 11;
+my $col_sum_mayloop = 12;
+my $col_sum_fail    = 13;
+my $col_sum_err     = 14;
+
 my $parser = new Spreadsheet::ParseExcel::SaveParser;
 
 if(-e "$result_file")  {#check for file existance
@@ -41,6 +48,12 @@ if(-e "$result_file")  {#check for file existance
         my $current_dir = "$dir/";
         #print "$current_dir"."*.c";
         print "\n";
+
+        my $term_cnt = 0;
+        my $mayloop_cnt = 0;
+        my $fail_cnt = 0;
+        my $err_cnt = 0;
+
         my @files = <$current_dir*.c>;
         #my @files = <termination-crafted-lit/*.c>;
         foreach $file (@files) {
@@ -80,18 +93,25 @@ if(-e "$result_file")  {#check for file existance
                     foreach my $line (@lines) { 
                         if($line =~ m/.*requires.*/){
                             if($line =~ m/Term/i # && $term =~ m/Term/i
-                                )       { $res_cell = "OK - Term"; }
-                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; }
-                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; }
+                                )       { $res_cell = "OK - Term"; $term_cnt++; }
+                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; }
+                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; $fail_cnt++; }
+                            # else { $err_cnt++; }
                             # elsif($line =~ m/Loop/i)    { $res_cell = "Loop"; }
                         }
                     }
                     print "$res_cell \n";
                 }
             }
+            if ($res_cell =~ m/ERR/i) {$err_cnt++;}
             $worksheet->AddCell($row++, $res_col, $res_cell);
             
         }
+        
+        $worksheet->AddCell($row_sum_new, $col_sum_term, $term_cnt);
+        $worksheet->AddCell($row_sum_new, $col_sum_mayloop, $mayloop_cnt);
+        $worksheet->AddCell($row_sum_new, $col_sum_fail, $fail_cnt);
+        $worksheet->AddCell($row_sum_new, $col_sum_err, $err_cnt);
     }
     $workbook->SaveAs("$result_file");
 } else {
