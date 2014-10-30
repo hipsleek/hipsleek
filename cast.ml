@@ -3489,6 +3489,12 @@ let data_dependency_graph_of_exp prog src exp =
     | Assign e ->
       (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
       helper ddg e.exp_assign_lhs e.exp_assign_rhs
+    | Bind e ->
+      let bvar = snd e.exp_bind_bound_var in
+      let ddg = IG.add_edge ddg src bvar in
+      let ddg = List.fold_left (fun g (_, i) ->
+        IG.add_edge g bvar i) ddg e.exp_bind_fields in
+      helper ddg bvar e.exp_bind_body
     | Block e -> helper ddg src e.exp_block_body
     | Cond e ->
       let ddg = IG.add_edge ddg src e.exp_cond_condition in
