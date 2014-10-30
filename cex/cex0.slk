@@ -1,0 +1,22 @@
+pred_prim state<x:list(int)>
+  inv true.
+
+pred_prim cex<x::set(list(int))>
+
+pred_prim add<n:int>
+  inv true.
+
+pred_prim member<n:int>
+  inv true.
+
+pred_prim filter<n:int>
+  inv true.
+
+// TODO: to be supported in Sleek
+checkentail cx::state<[1,2,3,4]> * cx::member<2> |- true.
+// expect Valid
+// (Valid -> is member, Fail -> isn't member)
+
+// TODO: need to be supported in Sleek
+checkentail cx::cex<{[1,2,3],[2,3,4]}> * cx::filter<1> |- cx::state<{[1,2,3]}>.
+// expect Valid
