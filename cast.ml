@@ -3475,7 +3475,7 @@ let is_prim_proc prog id =
   with _ -> false
   
 let print_data_dependency_graph ddg = 
-  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
+  IG.fold_edges (fun s d a -> "\n" ^ s ^ " -> " ^ d ^ a)  ddg ""
 
 let eq_str s1 s2 = String.compare s1 s2 == 0
       
@@ -3549,6 +3549,12 @@ let has_ref_params prog mn =
     proc.proc_by_name_params != []
   with _ -> false
   
+let has_named_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
+  with _ -> false
+  
 let is_rec_proc prog mn = 
   try
     let proc = find_proc prog mn in
@@ -3571,7 +3577,8 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
         if init then 
           if not (is_rec_proc prog src) then []
           else List.filter (fun mn -> 
-            not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
+            not (eq_str mn src) && 
+            ((has_ref_params prog mn) || (has_named_params prog mn))) depend_mns  
         else depend_mns
       in
       let working_succ = Gen.BList.difference_eq eq_str succ ws in 
