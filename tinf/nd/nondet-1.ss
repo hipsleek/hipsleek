@@ -7,7 +7,6 @@ prim_pred ND<>
 inv true;
 */
 
-
 relation ND_Int(int x).
 relation ND_Bool(bool x).
 
@@ -22,9 +21,13 @@ void f(int x)
   ensures true;
 {
   if (x < 0) return;
-  else 
-    if (nondet()) loop();
+  else {
+    bool b = nondet();
+    dprint;
+    if (b) 
+      loop();
     else f(x - 1);
+  }
 }
 
 /*
@@ -36,6 +39,15 @@ void f(int x)
     if (nondet()) loop();
     else f(x - 1);
 }
+
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:emp&0<=x' & x'=x & !(v_bool_23_1396') & 0<=x' & !(v_bool_23_1396') & ND_Bool(b_38')&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: []emp&0<=x' & x'=x & !(v_bool_23_1396') & 0<=x' & !(v_bool_23_1396') & ND_Bool(b_38')
+
+ ]
 
 This currently infers MayLoop which will be treated as a maybe.
 I wonder if we can have another temporal category, called NDLoop, which
