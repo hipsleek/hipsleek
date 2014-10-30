@@ -529,6 +529,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     in
     (* let new_specs = List.map (fun new_spec -> CF.norm_struc_with_lexvar new_spec false) new_specs in *)
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
+    let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec prog) new_specs in
     let _ = List.iter (fun (proc,new_spec) ->
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline "\nPost Inference result:";

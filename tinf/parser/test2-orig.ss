@@ -18,6 +18,7 @@ void loop(int a)
 {
   if (a>1) {
     raise new ret_int(a);
+    dprint;
     loop(a);
   }
 } 

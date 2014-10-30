@@ -2370,31 +2370,47 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       if (not b) then res (*do not have permission for variable v*)
                       else
                         let t1 = (get_sharp_flow ft) in
-                        (* let _ = print_endline ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) in *)
-                        let ctx, vr,vf = if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
-                           match t with
-                            | Named objn ->(
-                                  let ft = (look_up_typ_first_fld objn) in
-                                  let fv = (CP.mkRes ft) in
-                                  try
-                                    let dnode =Cfutil.look_up_first_field prog ctx objn in
-                                    let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv)== ft) dnode.Cformula.h_formula_data_arguments) in
-                                    let fr_v_exc = CP.fresh_spec_var v_exc in
-                                    let p = CP.mkEqVar v_exc fr_v_exc pos in
-                                    let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in
-                                    (ctx_w_pure,fv,fr_v_exc)
-                                        (* (false,(CP.mkeRes t),(CP.SpecVar (t, v, Primed))) *)
-                                  with _ ->
-                                      (ctx,(CP.mkeRes t),(CP.SpecVar (t, v, Primed)))
-                              )
-                            | _ -> ctx,(CP.mkeRes t), (CP.SpecVar (t, v, Primed))
-                        else ctx, (CP.mkRes t), (CP.SpecVar (t, v, Primed))
+                        let _ = Debug.tinfo_pprint ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) no_pos in
+                        let ctx, vr,vf = 
+                          let sharp_val = CP.SpecVar (t, v, Primed) in
+                          let eres_var = CP.mkeRes t in
+                          let res_var = CP.mkRes t in
+                          if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
+                            let _ = Debug.tinfo_pprint ("inside sharp flow capture") no_pos in
+                            match t with
+                              | Named objn ->(
+                                    let ft = (look_up_typ_first_fld objn) in
+                                    let res_inside_exc = (CP.mkRes ft) in
+                                    try
+                                      let dnode =Cfutil.look_up_first_field prog ctx objn in
+                                      let v_exc = (List.find (fun sv -> (Cpure.type_of_spec_var sv)== ft) dnode.Cformula.h_formula_data_arguments) in
+                                      let fr_v_exc = CP.fresh_spec_var v_exc in
+                                      let p = CP.mkEqVar v_exc res_inside_exc pos in
+                                      let ctx_w_pure = CF.combine_pure_list_failesc_context (MCP.mix_of_pure p) pos true ctx in
+                                      (* let ctx_w_pure = ctx in *)
+                                      let _ = Debug.tinfo_hprint (add_str "ctx_w_pure" Cprinter.string_of_list_failesc_context) ctx_w_pure no_pos in
+                                      let _ = Debug.tinfo_hprint (add_str "res_inside_exc" Cprinter.string_of_spec_var) res_inside_exc no_pos in
+                                      let _ = Debug.tinfo_hprint (add_str "fr_v_exc" Cprinter.string_of_spec_var) fr_v_exc no_pos in
+                                      let _ = Debug.tinfo_hprint (add_str "sharp_val" Cprinter.string_of_spec_var) sharp_val no_pos in
+                                      (* (ctx_w_pure,fv,fr_v_exc) *)
+                                      (ctx_w_pure,eres_var,sharp_val)
+                                          (* (false,(CP.mkeRes t),(CP.SpecVar (t, v, Primed))) *)
+                                    with _ ->
+                                        (ctx,eres_var,sharp_val)
+                                        (* (ctx,(CP.mkeRes t),(CP.SpecVar (t, v, Primed))) *)
+                                )
+                              | _ -> 
+                                    (* ctx,(CP.mkeRes t), (CP.SpecVar (t, v, Primed)) *)
+                                    ctx,eres_var, sharp_val
+                          else ctx, res_var, sharp_val
                         in
 		        let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
                          (* let _ = print_string ("tmp: "^(Cprinter.string_of_formula tmp)^"\n") in *)
 		        let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
-                         (* let _ = print_endline ("ctx :"^(Cprinter.string_of_list_failesc_context ctx)) in *)
-                         (*  let _ = print_endline ("ctx1 :"^(Cprinter.string_of_list_failesc_context ctx1)) in *)
+                        (* let _ = Debug.binfo_pprint ("ctx :"^(Cprinter.string_of_list_failesc_context ctx)) no_pos in *)
+                        (* let _ = Debug.binfo_pprint ("ctx1 :"^(Cprinter.string_of_list_failesc_context ctx1)) no_pos in *)
+                        (* let _ = Debug.binfo_hprint (add_str "vr" Cprinter.string_of_spec_var) vr no_pos in *)
+                        (* let _ = Debug.binfo_hprint (add_str "vf" Cprinter.string_of_spec_var) vf no_pos in *)
 		        ctx1
 	        | Sharp_flow v ->
 		      let fct es = 
