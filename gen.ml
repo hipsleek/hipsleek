@@ -39,13 +39,15 @@ struct
   let pr_id x = x
   let pr_string x = "\""^x^"\""
   
-  let print_endline_quiet s = 
-    if !Globals.smt_compete_mode then () 
+  let print_endline_quiet s =
+    let flag = !Globals.compete_mode in
+    (* print_endline ("compete mode : "^(string_of_bool flag)); *)
+    if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !Globals.smt_compete_mode then () 
+    if !Globals.compete_mode then () 
     else print_string s 
 
   let pr_var_prime (id,p) = match p with
@@ -212,7 +214,7 @@ struct
      { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
-    if !Globals.smt_compete_mode then ()
+    if !Globals.compete_mode then ()
     else 
       Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
