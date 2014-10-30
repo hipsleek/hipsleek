@@ -24,7 +24,10 @@ void f(int x)
   }
 }
 
-void g(int x) {
+
+void g(int x) 
+//infer [@term]  requires true ensures true;
+{
    if (x > 0)
       f(x);
 }
@@ -38,6 +41,32 @@ void main ()
   g(x);
 }
 
+/*
+# cex-1a.ss
+
+void g(int x) 
+//infer [@term]  requires true ensures true;
+
+Why did g has an empty spec?
+I guess the problem can be resolved by using --infer "@term"
+
+f:  case {
+  x<=(0-1) -> requires emp & Term[34,1]
+     ensures emp & true; 
+  0<=x -> requires emp & Loop{ 19:6}[]
+     ensures false & false; 
+  }
+
+!!! Termination Inference is not performed due to empty set of relational assumptions.
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Termination Inference Result:
+main:  requires emp & MayLoop[]
+     ensures emp & true;
+
+*/
 /*
 
 Termination Inference Result:

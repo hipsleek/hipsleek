@@ -40,9 +40,29 @@ void main ()
 }
 
 /*
+# cex-1a.ss
+
 
 Termination Inference Result:
-main:  requires emp & MayLoop[]
+f:  case {
+  x<=(0-1) -> requires emp & Term[33,1]
+     ensures emp & true; 
+  0<=x -> requires emp & Loop{ 17:6}[]
+     ensures false & false; 
+  }
+
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[37,1]
+     ensures emp & true; 
+  1<=x -> requires emp & Loop{ 29:6, 17:6}[]
+     ensures false & false; 
+  }
+
+Termination Inference Result:
+main:  requires emp & Loop{ 39:2, 29:6, 17:6}[]
+     ensures false & false;
+
 
 
 */
