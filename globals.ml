@@ -161,9 +161,9 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 
-let is_node_typ t=
+let is_node_typ t =
   match t with
-    | Named id -> String.compare id "" !=0
+    | Named id -> String.compare id "" != 0
     | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
