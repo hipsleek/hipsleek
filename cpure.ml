@@ -185,12 +185,12 @@ and lex_info = {
 }
 
 and term_ann = 
-  | Term    (* definite termination *)
-  | Loop    (* definite non-termination *)
-  | MayLoop (* possible non-termination *)
-  | Fail of term_fail (* Failure because of invalid trans *)
-  | TermU of uid (* unknown precondition with sol *)
-  | TermR of uid (* unknown postcondition *)
+  | Term                       (* definite termination *)
+  | Loop of term_cex option    (* definite non-termination *)
+  | MayLoop of term_cex option (* possible non-termination *)
+  | Fail of term_fail          (* Failure because of invalid trans *)
+  | TermU of uid               (* unknown precondition with sol *)
+  | TermR of uid               (* unknown postcondition *)
 
 and uid = {
   tu_id: int;
@@ -202,6 +202,10 @@ and uid = {
   tu_icond: formula;
   tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
   tu_pos: loc;
+}
+
+and term_cex = {
+  tcex_trace: int list; 
 }
 
 and term_fail =
@@ -307,6 +311,79 @@ and rounding_func =
   | Floor
 
 and infer_rel_type =  (rel_cat * formula * formula)
+
+let rec compare_term_ann a1 a2 =
+  match a1, a2 with 
+  | Term, Term -> 0
+  | Loop _, Loop _ -> 0
+  | MayLoop _, MayLoop _ -> 0
+  | Fail f1, Fail f2 -> compare_term_fail f1 f2
+  | TermU u1, TermU u2 -> compare_uid u1 u2
+  | TermR u1, TermR u2 -> compare_uid u1 u2
+  | _ -> 1
+
+and compare_uid u1 u2 = 
+  let cid = compare u1.tu_id u2.tu_id in
+  if cid != 0 then cid
+  else String.compare u1.tu_sid u2.tu_sid
+  
+and compare_term_fail f1 f2 = 
+  match f1, f2 with
+  | TermErr_May, TermErr_May -> 0
+  | TermErr_Must, TermErr_Must -> 0
+  | _ -> 1
+
+let eq_term_ann a1 a2 = 
+  compare_term_ann a1 a2 == 0
+  
+let eq_uid u1 u2 = 
+  compare_uid u1 u2 == 0
+  
+let rec is_MayLoop ann = 
+  match ann with
+  | MayLoop _ -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_MayLoop s
+    end
+  | _ -> false 
+    
+let rec is_Loop ann = 
+  match ann with
+  | Loop _ -> true
+  | TermU uid -> is_Loop_uid uid
+  | _ -> false
+
+and is_Loop_uid uid = 
+  match uid.tu_sol with
+  | None -> false
+  | Some (s, _) -> is_Loop s
+
+let rec is_Term ann = 
+  match ann with
+  | Term -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Term s
+    end
+  | _ -> false
+
+let is_TermU ann =
+  match ann with
+  | TermU _ -> true
+  | _ -> false
+
+let is_unknown_term_ann ann =
+  match ann with
+  | TermU uid 
+  | TermR uid -> begin
+    match uid.tu_sol with
+    | None -> true
+    | _ -> false
+    end
+  | _ -> false
 
 let rec map_term_ann f_f f_e ann = 
   match ann with
@@ -1337,7 +1414,8 @@ and isConstTrue_debug (p:formula) =
   Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 and isTrivTerm (p:formula) = match p with
-  | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
+  | BForm ((LexVar l, _),_) -> 
+    ((is_Term l.lex_ann) || (is_MayLoop l.lex_ann)) && l.lex_exp == []
   | _ -> false
 
 and is_Gt_formula (f: formula) = 
@@ -9591,8 +9669,8 @@ let termErr_id = 4
 let sid_of_term_ann ann = 
   match ann with
   | Term -> string_of_int term_id
-  | Loop -> string_of_int loop_id
-  | MayLoop -> string_of_int mayLoop_id
+  | Loop _ -> string_of_int loop_id
+  | MayLoop _ -> string_of_int mayLoop_id
   | Fail _ -> string_of_int termErr_id
   | TermU uid -> uid.tu_sid
   | TermR uid -> uid.tu_sid
@@ -13643,85 +13721,11 @@ let transform_bexpr p=
   Debug.no_1 "CP.transform_bexpr" pr1 pr1
       (fun _ -> transform_bexpr_x p) p
       
-let rec compare_term_ann a1 a2 =
-  match a1, a2 with 
-  | Term, Term -> 0
-  | Loop, Loop -> 0
-  | MayLoop, MayLoop -> 0
-  | Fail f1, Fail f2 -> compare_term_fail f1 f2
-  | TermU u1, TermU u2 -> compare_uid u1 u2
-  | TermR u1, TermR u2 -> compare_uid u1 u2
-  | _ -> 1
-
-and compare_uid u1 u2 = 
-  let cid = compare u1.tu_id u2.tu_id in
-  if cid != 0 then cid
-  else String.compare u1.tu_sid u2.tu_sid
-  
-and compare_term_fail f1 f2 = 
-  match f1, f2 with
-  | TermErr_May, TermErr_May -> 0
-  | TermErr_Must, TermErr_Must -> 0
-  | _ -> 1
-
-let eq_term_ann a1 a2 = 
-  compare_term_ann a1 a2 == 0
-  
-let eq_uid u1 u2 = 
-  compare_uid u1 u2 == 0
-  
-let rec is_MayLoop ann = 
-  match ann with
-  | MayLoop -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_MayLoop s
-    end
-  | _ -> false 
-    
-let rec is_Loop ann = 
-  match ann with
-  | Loop -> true
-  | TermU uid -> is_Loop_uid uid
-  | _ -> false
-
-and is_Loop_uid uid = 
-  match uid.tu_sol with
-  | None -> false
-  | Some (s, _) -> is_Loop s
-
-let rec is_Term ann = 
-  match ann with
-  | Term -> true
-  | TermU uid -> begin
-    match uid.tu_sol with
-    | None -> false
-    | Some (s, _) -> is_Term s
-    end
-  | _ -> false
-
-let is_TermU ann =
-  match ann with
-  | TermU _ -> true
-  | _ -> false
-
-let is_unknown_term_ann ann =
-  match ann with
-  | TermU uid 
-  | TermR uid -> begin
-    match uid.tu_sol with
-    | None -> true
-    | _ -> false
-    end
-  | _ -> false
-
-
 let id_of_term_ann ann = 
   match ann with
   | Term -> term_id
-  | Loop -> loop_id
-  | MayLoop -> mayLoop_id
+  | Loop _ -> loop_id
+  | MayLoop _ -> mayLoop_id
   | Fail _ -> termErr_id
   | TermU uid -> uid.tu_id
   | TermR uid -> uid.tu_id
@@ -13729,8 +13733,8 @@ let id_of_term_ann ann =
 let sid_of_term_ann ann = 
   match ann with
   | Term -> string_of_int term_id
-  | Loop -> string_of_int loop_id
-  | MayLoop -> string_of_int mayLoop_id
+  | Loop _ -> string_of_int loop_id
+  | MayLoop _ -> string_of_int mayLoop_id
   | Fail _ -> string_of_int termErr_id
   | TermU uid -> uid.tu_sid
   | TermR uid -> uid.tu_sid

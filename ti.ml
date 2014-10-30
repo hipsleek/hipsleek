@@ -149,7 +149,7 @@ let solve_trrel_list params trrels turels =
   
   let loop_conds = List.fold_left (fun acc tu ->
     match tu.termu_rhs with
-    | Loop ->
+    | Loop _ ->
       let loop_cond = simplify 10 tu.call_ctx params in
       let loop_cond = mkAnd loop_cond (mkNot not_rec_cond) in
       if is_sat loop_cond then acc @ [loop_cond] else acc
@@ -256,7 +256,7 @@ let inst_rhs_trel_base inst_lhs rel fn_cond_w_ids =
             CP.tu_icond = cond;
             CP.tu_sol = match c with 
               | Base _ -> Some (CP.Term, [])
-              | MayTerm _ -> Some (CP.MayLoop, [])
+              | MayTerm _ -> Some (CP.MayLoop None, [])
               | _ -> uid.CP.tu_sol }) fs_rconds
       with Not_found -> [rhs_ann] end
     | _ -> [rhs_ann] 
@@ -297,7 +297,7 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
     
     else if (List.exists (fun (_, v) -> CP.is_MayLoop v) outside_scc_succ) then
       if is_acyclic_scc tg scc
-      then update_ann scc (subst (CP.MayLoop, [])) (* MayLoop *)
+      then update_ann scc (subst (CP.MayLoop None, [])) (* MayLoop *)
       else proving_non_termination_scc prog trrels tg scc
     
     else (* Error: One of scc's succ is Unknown *)

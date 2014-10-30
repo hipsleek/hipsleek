@@ -64,8 +64,8 @@ let dummy_trel = {
   trel_id = -1;
   call_ctx = CP.mkTrue no_pos;
   termu_fname = "";
-  termu_lhs = CP.MayLoop;
-  termu_rhs = CP.MayLoop; 
+  termu_lhs = CP.MayLoop None;
+  termu_rhs = CP.MayLoop None; 
   termu_rhs_params = []; 
   termu_cle = "";
   termu_rhs_args = []; }
@@ -109,7 +109,7 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
   | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
   | Sol (ann, rnk) ->
     match ann with
-    | CP.Loop -> fmt_string "requires Loop ensures false"
+    | CP.Loop _ -> fmt_string "requires Loop ensures false"
     | _ -> 
       fmt_string "requires ";
       pr_var_measures (ann, rnk, []);
@@ -134,12 +134,12 @@ let eq_base_rank rnk1 rnk2 =
 let eq_tnt_case_spec sp1 sp2 =
   match sp1, sp2 with
   | Unknown, Unknown -> true
-  | Unknown, Sol (CP.MayLoop, _) -> true
-  | Sol (CP.MayLoop, _), Unknown -> true
+  | Unknown, Sol (CP.MayLoop _, _) -> true
+  | Sol (CP.MayLoop _, _), Unknown -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
-    | CP.Loop, CP.Loop -> true
-    | CP.MayLoop, CP.MayLoop -> true
+    | CP.Loop _, CP.Loop _ -> true
+    | CP.MayLoop _, CP.MayLoop _ -> true
     (* | CP.Term, CP.Term ->                          *)
     (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
     (*   eq_base_rank rnk1 rnk2                       *)

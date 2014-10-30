@@ -1045,8 +1045,8 @@ and pr_pure_formula  (e:P.formula) =
 and pr_term_ann_debug pr_short ann = 
   match ann with
   | P.Term -> fmt_string "Term"
-  | P.Loop -> fmt_string "Loop"
-  | P.MayLoop -> fmt_string "MayLoop"
+  | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
+  | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
   | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
   | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
   | P.Fail f -> match f with
@@ -1068,8 +1068,8 @@ and pr_term_id pr_short uid =
 and pr_term_ann_assume ann = 
   match ann with
   | P.Term -> fmt_string "Term"
-  | P.Loop -> fmt_string "Loop"
-  | P.MayLoop -> fmt_string "MayLoop"
+  | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
+  | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
@@ -1078,6 +1078,9 @@ and pr_term_ann_assume ann =
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
+
+and pr_term_cex cex = 
+  pr_wrap_test "" Gen.is_None (fun _ -> ()) cex
 
 and pr_term_ann debug ann =
   if debug then pr_term_ann_debug false ann

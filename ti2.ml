@@ -213,8 +213,8 @@ let subst_sol_term_ann sol ann =
       | _ -> uid.CP.tu_sol }
   | CP.Term -> 
     begin match (fst sol) with
-    | CP.Loop 
-    | CP.MayLoop -> report_error no_pos 
+    | CP.Loop _
+    | CP.MayLoop _ -> report_error no_pos 
         "[TNT Inference]: A non-terminating program state is specified with Term."
     | _ -> ann
     end
@@ -233,7 +233,7 @@ let case_spec_of_trrel_sol call_num sol =
   | Base c -> (c, Sol (CP.Term, 
     [CP.mkIConst call_num no_pos; CP.mkIConst (scc_fresh_int ()) no_pos]))
   | Rec c -> (c, Unknown)
-  | MayTerm c -> (c, Sol (CP.MayLoop, [])) 
+  | MayTerm c -> (c, Sol (CP.MayLoop None, [])) 
 
 let add_case_spec_of_trrel_sol_proc prog (fn, sols) =
   let call_num = 
@@ -329,7 +329,7 @@ let struc_formula_of_ann (ann, rnk) =
   let pos = no_pos in
   let p_pre = MCP.mix_of_pure (CP.mkLexVar_pure ann rnk []) in
   let p_post = match ann with
-    | CP.Loop -> MCP.mkMFalse pos 
+    | CP.Loop _ -> MCP.mkMFalse pos 
     | _ -> MCP.mkMTrue pos
   in
   let f_pre = CF.mkBase_simp CF.HEmp p_pre in
@@ -346,7 +346,7 @@ let struc_formula_of_ann_w_assume assume (ann, rnk) =
   let f_pre = CF.mkBase_simp CF.HEmp p_pre in
   
   let post = match ann with
-    | CP.Loop ->
+    | CP.Loop _ ->
       let f_post = CF.mkBase_simp CF.HEmp (MCP.mkMFalse pos) in
       CF.EAssume { assume with
         CF.formula_assume_simpl = f_post;
@@ -372,7 +372,7 @@ let struc_formula_of_dead_path _ =
 let rec struc_formula_of_tnt_case_spec spec =
   match spec with
   | Sol s -> struc_formula_of_ann s
-  | Unknown -> struc_formula_of_ann (CP.MayLoop, [])
+  | Unknown -> struc_formula_of_ann (CP.MayLoop None, [])
   | Cases cases -> CF.ECase {
       CF.formula_case_branches = List.map (fun (c, s) -> 
         (c, struc_formula_of_tnt_case_spec s)) cases;
@@ -436,7 +436,7 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
 and merge_tnt_case_spec_into_assume ctx spec af =
   match spec with
   | Sol s -> struc_formula_of_ann_w_assume af s
-  | Unknown -> struc_formula_of_ann_w_assume af (CP.MayLoop, [])
+  | Unknown -> struc_formula_of_ann_w_assume af (CP.MayLoop None, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
       let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
@@ -1167,7 +1167,7 @@ let cond_of_nt_res = function
 let uid_of_loop trel = 
   match trel.termu_rhs with
   | TermU uid -> uid
-  | Loop ->
+  | Loop _ ->
     let args = trel.termu_rhs_args in
     let params = List.concat (List.map CP.afv args) in
     let cond = simplify 2 trel.call_ctx params in
@@ -1178,7 +1178,7 @@ let uid_of_loop trel =
       CP.tu_args = trel.termu_rhs_args;
       CP.tu_cond = cond; 
       CP.tu_icond = cond;
-      CP.tu_sol = Some (CP.Loop, []);
+      CP.tu_sol = Some (CP.Loop None, []);
       CP.tu_pos = no_pos; }
   | _ -> report_error no_pos ("[TNT Inference]: Unexpected non-Loop constraint @ uid_of_loop.")
 
@@ -1482,7 +1482,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
     | None -> acc
     | Some uid -> acc @ [(uid, r)]) [] ntres_scc in
   if List.for_all (fun (_, r) -> (is_nt_yes r) || (is_nt_partial_yes r)) ntres_scc then
-    update_ann scc (subst (CP.Loop, []))
+    update_ann scc (subst (CP.Loop None, []))
   else
     let nonterm_uids = List.map fst (List.filter (fun (uid, r) -> is_nt_yes r) ntres_scc) in
     (* Update ann with nonterm_uid to Loop *)
@@ -1490,7 +1490,7 @@ let rec proving_non_termination_scc prog trrels tg scc =
       match ann with
       | CP.TermU uid ->
         if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
-        then subst (CP.Loop, []) ann
+        then subst (CP.Loop None, []) ann
         else ann
       | _ -> ann
     in

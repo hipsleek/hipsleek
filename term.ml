@@ -318,7 +318,7 @@ let find_lexvar_es (es: entail_state) :
   
 let is_Loop_es (es: entail_state): bool =
   match es.es_var_measures with
-  | Some (Loop, _, _) -> true
+  | Some (Loop _, _, _) -> true
   | _ -> false
 
 let zero_exp = [mkIConst 0 no_pos]
@@ -582,9 +582,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           add_term_res_stk term_res;
           let term_measures = match t_ann_d with
-            | Loop 
+            | Loop _
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
-            | MayLoop 
+            | MayLoop _
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
             | _ -> failwith "unexpected Term/TermU in check_term_rhs"
           in 
@@ -594,16 +594,16 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
-      | (Loop, Loop) ->
-          let term_measures = Some (MayLoop, [], []) in 
+      | (Loop _, Loop _) ->
+          let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
-      | (Loop, _) ->
-          let term_measures = Some (Loop, [], []) in 
+      | (Loop _, _) ->
+          let term_measures = Some (Loop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
-      | (MayLoop, _) ->
-          let term_measures = Some (MayLoop, [], []) in 
+      | (MayLoop _, _) ->
+          let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Fail TermErr_Must, _) ->
@@ -1289,7 +1289,7 @@ let rec get_loop_ctx c =
   match c with
     | Ctx es -> (match es.es_var_measures with
         | None -> []
-        | Some (a,_,_) -> if a==Loop then [es] else []
+        | Some (a,_,_) -> if (CP.is_Loop a) then [es] else []
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 

@@ -14919,7 +14919,7 @@ let norm_lexvar_for_infer uid (f: formula): formula * bool =
     match pf with
     | LexVar t_info ->
       let has_mayloop, nann = match t_info.lex_ann with
-        | MayLoop -> true, CP.mkUTPre uid
+        | MayLoop _ -> true, CP.mkUTPre uid
         | _ -> false, t_info.lex_ann in
       let call_num = uid.CP.tu_call_num in
       let pos = t_info.lex_loc in
@@ -14966,10 +14966,10 @@ let rec norm_struc_with_lexvar is_primitive is_tnt_inf uid_opt struc_f =
   | EAssume _ ->
     let lexvar, assume =
       if is_primitive then CP.mkLexVar Term [] [] no_pos, struc_f
-      else if not is_tnt_inf then CP.mkLexVar MayLoop [] [] no_pos, struc_f
+      else if not is_tnt_inf then CP.mkLexVar (MayLoop None) [] [] no_pos, struc_f
       else
         match uid_opt with
-        | None -> CP.mkLexVar MayLoop [] [] no_pos, struc_f
+        | None -> CP.mkLexVar (MayLoop None) [] [] no_pos, struc_f
         | Some uid ->
           let tpre = CP.mkUTPre uid in
           let tpost = CP.mkUTPost uid in
