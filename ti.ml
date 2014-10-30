@@ -11,6 +11,8 @@ open Ti3
 (*******************************)
 (* Temporal Relation at Return *)
 (*******************************)
+(* let ret_trel_stk: ret_trel Gen.stack = new Gen.stack *)
+
 let add_ret_trel_stk prog ctx lhs rhs pos =
   let params = params_of_term_ann prog rhs in
   let trel = {
@@ -192,6 +194,8 @@ let case_split_init trrels turels =
 (*****************************)
 (* Temporal Relation at Call *)
 (*****************************)
+(* let call_trel_stk: call_trel Gen.stack = new Gen.stack *)
+
 let add_call_trel_stk prog ctx lhs rhs callee args pos =
   let params = params_of_term_ann prog rhs in
   let trel = {
@@ -408,7 +412,8 @@ let solve no_verification_errors should_infer_tnt prog =
 
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
-  if turels = [] && trrels = [] then ()
+  if turels = [] && trrels = [] then 
+    print_endline ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n")
   else if not no_verification_errors then
     print_endline ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
   else if not should_infer_tnt then ()

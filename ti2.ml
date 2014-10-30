@@ -330,9 +330,24 @@ let add_cex_by_cond for_loop turels c cex =
   in
   try
     let turel = List.find (has_feasible_cex c) turels in
+    let cpos = turel.termu_pos in
     let acex = CP.cex_of_term_ann turel.termu_rhs in
-    CP.merge_term_cex cex acex
-  with Not_found -> cex
+    let mcex = CP.merge_term_cex cex acex in
+    begin match mcex with
+    | None -> if for_loop then Some ({ CP.tcex_trace = [cpos] }) else mcex
+    | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
+    end
+  with Not_found -> 
+    if for_loop then
+      try
+        let turel = List.find (fun tur -> is_sat (mkAnd c tur.call_ctx)) turels in
+        let cpos = turel.termu_pos in
+        begin match cex with
+        | None -> Some ({ CP.tcex_trace = [cpos] })
+        | Some t -> Some ({ t with CP.tcex_trace = cpos::t.CP.tcex_trace })
+        end 
+      with Not_found -> cex
+    else cex
 
 let rec add_cex_tnt_case_spec_cond turels c f =
   match f with
@@ -349,9 +364,8 @@ let rec add_cex_tnt_case_spec_cond turels c f =
   | Unknown cex -> Unknown (add_cex_by_cond false turels c cex)
 
 let add_cex_tnt_case_spec f = 
-  (* let turels = call_trel_stk # get_stk in *)
-  (* add_cex_tnt_case_spec_cond turels (CP.mkTrue no_pos) f  *)
-  f
+  let turels = call_trel_stk # get_stk in
+  add_cex_tnt_case_spec_cond turels (CP.mkTrue no_pos) f
     
 (* From TNT spec to struc formula *)
 (* For SLEEK *)
