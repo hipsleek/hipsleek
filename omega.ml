@@ -815,6 +815,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
                   let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+                  Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos;
+                  Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)

@@ -2107,6 +2107,39 @@ let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
+let check_nondet_x (v: ident) (f: meta_formula) =
+  let (_,f) = meta_to_formula f false [] [] in
+  let pf = CF.get_pure f in
+  let simp_pf = Omega.simplify pf in
+  let rel_ids = CP.get_rel_id_list simp_pf in
+  let rel_names = List.map CP.name_of_sv rel_ids in
+  (* Debug.binfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;             *)
+  (* Debug.binfo_hprint (add_str "sim_pf" !CP.print_formula) simp_pf no_pos;    *)
+  (* Debug.binfo_hprint (add_str "rel_names" (pr_list pr_id)) rel_names no_pos; *)
+  let res = List.exists (fun s ->
+    if (String.length s <= 6) then false
+    else
+      let prefix = String.lowercase (String.sub s 0 6) in
+      eq_str prefix "nondet"
+  ) rel_names in
+  (* return *)
+  res
+  
+
+let check_nondet (v: ident) (f : meta_formula) =
+  let pr_v = (add_str "v" pr_id) in
+  let pr_f = (add_str "f" string_of_meta_formula) in
+  let pr_res = (add_str "res" string_of_bool) in
+  Debug.no_2 "check_nondet" pr_v pr_f pr_res
+      (fun _ _ -> check_nondet_x v f) v f
+
+let process_nondet_check (v: ident) (f: meta_formula) =
+  let res = check_nondet v f in
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let res_str = if res then "Valid" else "False" in
+  let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
+  print_endline msg
+  
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)

@@ -11,13 +11,13 @@ check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(
 check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=!b.
 // Valid
 
-check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=(b | true).
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & (c=b | c=true).
 // Fail
 
-check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=(b | d).
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=(b | d).
 // Valid
 
-check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d & nondet_Bool(b) & c=(b | d).
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d & nondet_Bool(b) & c=(b | d).
 // Fail
 
 check_nondet [d] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=b.
