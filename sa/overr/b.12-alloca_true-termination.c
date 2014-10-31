@@ -10,17 +10,23 @@ int test_fun(int x, int y)
     *x_ref = x;
     *y_ref = y;
     *c = 0;
-    while (*x_ref > 0) {
-        *y_ref = 0;
-        while (*y_ref < *x_ref) {
-            *y_ref = *y_ref + 1;
-            *c = *c + 1;
+    while ((*x_ref > 0) || (*y_ref > 0)) {
+        if (*x_ref > 0) {
+            *x_ref = *x_ref - 1;
+        } else {
+            if (*y_ref > 0) {
+                *y_ref = *y_ref - 1;
+            } else {
+                
+            }
         }
-        *x_ref = *x_ref - 1;
+        *c = *c + 1;
     }
     return *c;
 }
 
+/*
 int main() {
   return test_fun(__VERIFIER_nondet_int(),__VERIFIER_nondet_int());
 }
+*/

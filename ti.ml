@@ -97,6 +97,7 @@ let solve_base_trrels params base_trrels turels =
   
   (* let _ = print_endline_quiet ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
   (* let _ = print_endline_quiet ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
+  (* let _ = print_endline ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
     
   let base_cond = List.fold_left (fun ac bctx ->
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in

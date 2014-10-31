@@ -3,7 +3,7 @@ class __ArrBoundErr extends __Error {}
 
 int add___(int a, int b) 
   requires true 
-  ensures res = a + b -1;
+  ensures res = a + b ;
 
 int minus___(int a, int b) 
   requires true
@@ -259,6 +259,8 @@ relation bnd(int[] a, int i, int j, int low, int high) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___1d(int[] a, int i) 
+  requires true
+  ensures res = a[i];
   /* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
@@ -267,11 +269,11 @@ int array_get_elm_at___1d(int[] a, int i)
   requires true
   ensures res = a[i];
 	*/
-	requires [ahalb,ahaub]
+  /*	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
-	ensures res = a[i];
+                                ensures res = a[i];*/
 	
 bool array_get_elm_at___1d(bool[] a, int i) 
 	requires [ahalb,ahaub]
@@ -356,6 +358,8 @@ void delete_ptr(int_ptr_ptr@R x)
 /* ************************/
 
 int[] update___1d(int v, int[] a, int i)
+  requires true
+  ensures update_array_1d(a,res,v,i);
 //void update___(ref int[] a, int i, int v) 
 	/* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
@@ -367,14 +371,14 @@ int[] update___1d(int v, int[] a, int i)
 	*/
      /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
      /* ensures bnd(res,s,b,low,high); */
-	requires [ahalb,ahaub]
+/*	requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
 	ensures dom(res,ahalb,ahaub) 
-				& update_array_1d(a,res,v,i);
-				
-				
+        & update_array_1d(a,res,v,i);*/
+		  	
+			       
 bool[] update___1d(bool v, bool[] a, int i)
 	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
 	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);

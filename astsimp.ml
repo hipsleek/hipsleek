@@ -55,6 +55,38 @@ let view_scc : (ident list) list ref = ref []
 (* list of views that are recursive *)
 let view_rec : (ident list) ref = ref []
 
+
+(* Add this to adapt to the ret_int problem. Because in string_of_typ in globals, bool will return "boolean", which will cause a lot of trouble.*)
+let rec new_string_of_typ (x:typ) : string = match x with
+   (* may be based on types used !! *)
+  | FORM          -> "Formula"
+  | UNK          -> "Unknown"
+  | Bool          -> "bool"
+  | Float         -> "float"
+  | Int           -> "int"
+  | INFInt        -> "INFint"
+  | Void          -> "void"
+  | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
+  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
+  | BagT t        -> "bag("^(string_of_typ t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
+  | List t        -> "list("^(string_of_typ t)^")"
+  | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
+  | UtT        -> "UtT"
+  | HpT        -> "HpT"
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Array (et, r) -> (* An Hoa *)
+	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
+		(string_of_typ et) ^ (repeat r)
+;;
+
+
+
 (* if no processed, conservatively assume a view is recursive *)
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
@@ -917,17 +949,19 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
           (*               } *)
           (* in *)
           (* Added by Zhuohong*)
-          let new_class_name ret_type = 
+(*          let new_class_name ret_type = 
             match ret_type with
               | Int -> "ret_int"
               | Bool -> "ret_bool"
               | _ -> failwith "while_return: TO BE IMPLEMENTED"
           in
+*)
+
           let new_raise_val v =
             match v with
               | Some e ->
                     let loc = I.get_exp_pos e in
-                    Some (I.New { exp_new_class_name = (new_class_name ret_type);
+                    Some (I.New { exp_new_class_name = "ret_"^(new_string_of_typ ret_type);
                     exp_new_arguments=[e];
                     exp_new_pos = loc
                     })
@@ -938,7 +972,7 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
               Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
           *)
           let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
-              Some (I.mkRaise (I.Const_flow (new_class_name ret_type)) true (new_raise_val b.I.exp_return_val) false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
+              Some (I.mkRaise (I.Const_flow ("ret_"^(new_string_of_typ ret_type))) true (new_raise_val b.I.exp_return_val) false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
           let b = {b with I.exp_while_body = new_body} in
           let pos = b.I.exp_while_pos in
           let nl2 = fresh_branch_point_id "" in
@@ -947,7 +981,7 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
           (*let return  = I.Return { I.exp_return_val = Some (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos}); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in*)
           let return  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
           (*let catch = I.mkCatch (Some vn) (Some ret_type) loop_ret_flow None return pos in*)
-          let catch = I.mkCatch (Some vn) (Some (Named (new_class_name ret_type))) loop_ret_flow  None return pos in
+          let catch = I.mkCatch (Some vn) (Some (Named ("ret_"^(new_string_of_typ ret_type)))) loop_ret_flow  None return pos in
 
           (* Modified by Zhuohong*)
           (*let _ = exlist # add_edge (string_of_typ ret_type) c_flow in*)
@@ -975,9 +1009,19 @@ and prepare_labels_x (fct: I.proc_decl): I.proc_decl =
                     else None)
       | _ -> None in
     I.iter_exp_args e (in_loop,l_lbl) f f_args in
+  
   match fct.I.proc_body with
     | None -> fct
-    | Some e-> (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling (while_return e fct.I.proc_return))})
+    | Some e->
+          let _ = fct.proc_has_while_return <- (I.exists_while_return e) in
+          (*let _ = 
+            if fct.proc_has_while_return then
+              let _ =print_endline("prepare_lables_x:proc_has_while_return is set\n"^Iprinter.string_of_exp e) in
+              ()
+            else ()
+              
+in*)
+          (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling (while_return e fct.I.proc_return))})
 
 and prepare_labels (fct: I.proc_decl): I.proc_decl =
   let pr = Iprinter.string_of_proc_decl in
@@ -1324,10 +1368,32 @@ and case_inference_x (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
 
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
-  
+
+let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
+  let type_name = new_string_of_typ t in
+  let new_data_fields = [((t,"val"),no_pos,false,[])] in
+  {
+      I.data_name = "ret_"^type_name;
+      I.data_fields = new_data_fields;
+      I.data_parent_name = "__RET";
+      I.data_invs = [];
+      I.data_is_template = false;
+      I.data_methods = [];
+      I.data_pos = no_pos;
+  }
+
+let mk_ret_type_into_data_decls (prog:I.prog_decl):(I.data_decl list)=
+  let rec helper (typlst:typ list):(I.data_decl list)=
+    match typlst with
+      | h::rest -> (mk_new_return_data_decl_from_typ h) :: (helper rest)
+      | [] -> []
+  in
+  let typ_list = I.no_duplicate_while_return_type_list prog.prog_proc_decls in
+  helper typ_list
+
 (*HIP*)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
-  (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
+  (*let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in*)
   (* print_string "trans_prog\n"; *)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
@@ -1359,6 +1425,11 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       }
     with _ -> prog4
   in
+  (* Added by Zhuohong *)
+  let prog4 = {prog4 with I.prog_data_decls = (mk_ret_type_into_data_decls prog4)@prog4.I.prog_data_decls; } in
+  (*let _ = print_endline ("@@prog4\n"^Iprinter.string_of_program prog4^"@@prog4\n") in*)
+  (* ***************** *)
+
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
   (*         { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls; *)
@@ -1368,6 +1439,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (*let _ = exlist # compute_hierarchy in*)
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
+ 
+  (*let _ = print_endline ("@@prog3\n"^Iprinter.string_of_program prog3^"@@prog3\n") in*)
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
           ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
@@ -1387,7 +1460,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let _ = I.find_empty_static_specs prog1 in *)
   let prog0 = { prog1 with
       I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
-
+  
   (* let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in *)
   (* let _ = I.find_empty_static_specs prog0 in *)
   let _ = I.build_hierarchy prog0 in
@@ -3160,8 +3233,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           id = fresh_int () } tl in
       let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in
       let n_tl =  List.fold_left add_logical n_tl log_vars in
+      (*let _ = print_endline ("@@@before") in*)
       let _ = check_valid_flows proc.I.proc_static_specs in
       let _ = check_valid_flows proc.I.proc_dynamic_specs in
+      (*let _ = print_endline ("@@@after") in*)
       (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
       (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
@@ -3258,6 +3333,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           CF.norm_struc_with_lexvar is_primitive false None dynamic_specs_list
         else dynamic_specs_list
       in
+     
       let exc_list = (List.map (exlist # get_hash) proc.I.proc_exceptions) in
       let r_int = exlist # get_hash abnormal_flow in
       (*annotated may and must error in specs*)
@@ -3280,7 +3356,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         | Some e -> (* Some (fst (trans_exp prog proc new_body_e)) in *)
           (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
           (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
-          if proc.I.proc_is_while then Some (fst (trans_exp prog proc e))
+          if proc.I.proc_is_while || (not proc.I.proc_has_while_return) then Some (fst (trans_exp prog proc e))
           else
             let vn = fresh_name () in
             let pos = I.get_exp_pos e in
@@ -3293,14 +3369,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               | Bool  -> "ret_bool"
               | _ -> "__RET"
             in
-            let constant_flow = return_name proc.I.proc_return in
-            if constant_flow = "ret_int" || constant_flow = "ret_bool" then
-              let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
-              let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
-              let new_body = fst (trans_exp prog proc new_body_e) in
-              (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
-              Some new_body
-            else Some (fst (trans_exp prog proc e))
+            let constant_flow = "ret_"^(new_string_of_typ proc.I.proc_return) in
+            let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
+            let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
+            let new_body = fst (trans_exp prog proc new_body_e) in
+            (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
+            Some new_body
       in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
       (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
@@ -5206,6 +5280,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.proc_body = Some w_body;
                 I.proc_is_main = proc.I.proc_is_main;
                 I.proc_is_while = true;
+                I.proc_has_while_return = false;
                 I.proc_is_invoked = true;
                   I.proc_verified_domains = [];
                 I.proc_file = proc.I.proc_file;
@@ -5237,8 +5312,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                  }
                      else w_proc
               | IF.EInfer i_sf ->
-                    let _ =  Debug.info_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
-                    if i_sf.IF.formula_inf_obj # is_shape then
+                    let _ =  Debug.ninfo_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
+                    if Globals.infer_const_obj # is_shape || i_sf.IF.formula_inf_obj # is_shape then
                       let is_simpl, pre,post = IF.get_pre_post i_sf.IF.formula_inf_continuation in
                       if is_simpl then
                         let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->

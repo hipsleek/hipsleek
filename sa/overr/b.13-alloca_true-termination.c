@@ -7,21 +7,24 @@ int test_fun(int x, int y, int z)
     int* x_ref = alloca(sizeof(int));
     int* y_ref = alloca(sizeof(int));
     int* z_ref = alloca(sizeof(int));
+    int* c = alloca(sizeof(int));
     *x_ref = x;
     *y_ref = y;
     *z_ref = z;
-    if(*y_ref <= 0) {
-        // replace assume
-        return *z_ref;
+    *c = 0;
+    while ((*x_ref > *z_ref) || (*y_ref > *z_ref)) {
+        if (*x_ref > *z_ref) {
+            *x_ref = *x_ref - 1;
+        } else {
+            if (*y_ref > *z_ref) {
+                *y_ref = *y_ref - 1;
+            } else {
+                
+            }
+        }
+        *c = *c + 1;
     }
-    while (*x_ref >= *z_ref) {
-      if(*y_ref <= 0) {
-        // replace assume
-        return *z_ref;
-      }
-      *z_ref = *z_ref + *y_ref;
-    }
-    return *z_ref;
+    return *c;
 }
 
 int main() {
