@@ -20,7 +20,8 @@ GetOptions( "--infer-lex"       => \$lex,          #register - update the xml
 #my @dirs=("termination-crafted-lit","termination-memory-alloca");
 #my @dirs=("termination-memory-alloca");
 # my @dirs=("test");
-my @dirs=("termination-crafted-lit", "termination-crafted","termination-numeric");
+#my @dirs=("termination-crafted-lit", "termination-crafted","termination-numeric","termination-memory-alloca");
+my @dirs=("termination-memory-alloca");
 #my @dirs=("termination-numeric");
 #my @dirs=("termination-crafted");
 #my @dirs=("termination-crafted");
@@ -54,9 +55,7 @@ my $col_sum_timeout = 17;
 my $col_sum_err     = 18;
 
 my $sum_row = $row_sum_new;
-if($lex) {$working_col =  $lex_col;  $sum_row = $row_sum_lex;
-         $args = $args.' --infer-lex '; 
-}
+if($lex) {$working_col =  $lex_col;  $sum_row = $row_sum_lex; }
 
 my $parser = new Spreadsheet::ParseExcel::SaveParser;
 
@@ -66,6 +65,13 @@ if(-e "$result_file")  {#check for file existance
         or die "File $result_file was not found";
     my $row = $first_row;
     foreach $dir (@dirs) {
+        if ($dir  =~ m/termination-memory-alloca/){
+            $hip = "C_INCLUDE_PATH=termination-memory-alloca/ ".$hip;
+            $args = '-infer "\@shape\@term"';
+        }
+        if($lex) {
+         $args = $args.' --infer-lex '; 
+        }
         $worksheet = $workbook->worksheet("$dir");
         my $current_dir = "$dir/";
         $row = $first_row;
