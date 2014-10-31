@@ -1433,7 +1433,9 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
       in
       (* gen_disj_conds ntres *)
       let nt_yes_rec = List.filter (fun (res, rel) ->
-        (is_nt_yes res) && not (is_empty rel.termr_lhs)) ntres_w_rel in
+        (is_nt_yes res) && 
+        not (is_empty rel.termr_lhs) && 
+        (CP.has_nondet_cond rel.ret_ctx)) ntres_w_rel in
       if is_empty nt_yes_rec then gen_disj_conds ntres
       else
         let nt_base_no = List.filter (fun (res, rel) ->
