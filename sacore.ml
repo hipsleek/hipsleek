@@ -3056,7 +3056,11 @@ let compute_lfp_x prog dang_hps defs pdefs=
           (*iterate*)
           let fixn = lfp_iter prog defs 0 hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
           (* let def = CF.formula_of_disjuncts fixn in *)
-          let def = List.map (fun f -> (f,None)) fixn in
+          let def0,is_diver = List.fold_left (fun (acc,acc_diver) f ->
+              let hps = CF.get_hp_rel_name_formula f in
+              acc@[(f,None)], acc_diver||(CP.mem_svl hp0 hps)
+          ) ([],false) fixn in
+          let def = if is_diver then [((CF.mkBase CF.HTrue (MCP.mkMTrue no_pos) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos ), None)] else def0 in
           let lhs = CF.HRel (hp0, List.map (fun x -> CP.mkVar x pos) args0, pos) in
           (hp0, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp0, r, non_r_args)) lhs def)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
