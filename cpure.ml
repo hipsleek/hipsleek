@@ -13788,7 +13788,7 @@ let collect_term_ann_fv_pure f =
  * assumption: given nondeterministic variables in formula are indicated by 
  * relation whose name starting by "nondet" string
  *)
-let check_non_determinism_x (v: ident) (f: formula) =
+let check_non_determinism_x (var_name: ident) (f: formula) =
   (* collect nondet variables *)
   let collect_nondet_vars f = (
     let nondet_svs = ref [] in
@@ -13850,8 +13850,8 @@ let check_non_determinism_x (v: ident) (f: formula) =
     with _ -> false
   )
 
-let check_non_determinism (v: ident) (f: formula) =
-  let pr_v = (add_str "v" pr_id) in
+let check_non_determinism (var_name: ident) (f: formula) =
+  let pr_v = (add_str "var_name" pr_id) in
   let pr_f = (add_str "f" !print_formula) in
   let pr_res = (add_str "res" string_of_bool) in
   Debug.no_2 "check_non_determinism" pr_v pr_f pr_res
