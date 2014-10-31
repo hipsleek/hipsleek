@@ -451,6 +451,7 @@ let print_formula = ref (fun (c:formula) -> "cpure printer has not been initiali
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_annot_arg = ref (fun (c:annot_arg) -> "cpure printer has not been initialized")
+let print_term_ann = ref (fun (t:term_ann) -> "cpure printer has not been initialized")
 let print_view_arg v= match v with
   | SVArg sv -> "SVArg " ^ (!print_sv sv)
   | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
