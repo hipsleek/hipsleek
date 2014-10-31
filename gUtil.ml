@@ -28,7 +28,7 @@ let log msg =
   if !verbose_flag then begin
     try !log_func msg
     with Not_found ->
-      log_func := (fun msg -> print_endline msg; flush stdout);
+      log_func := (fun msg -> print_endline_quiet msg; flush stdout);
       !log_func msg
   end
 
@@ -472,7 +472,7 @@ module HipHelper = struct
     let res = 
       try
         ignore (Str.search_forward regexp hip_output 0);
-        log "Success.";
+        log "SuccessXX.";
         true
       with Not_found -> (log "FAIL!"; false)
     in
