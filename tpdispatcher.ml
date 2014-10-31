@@ -453,7 +453,7 @@ let set_tp tp_str =
 let init_tp () =
   let _ = (if !Globals.is_solver_local then
   let _ = Smtsolver.is_local_solver := true in
-  let _ = Smtsolver.smtsolver_name := "./z3" in
+  let _ = Smtsolver.smtsolver_name := "z3" in
   let _ = Omega.is_local_solver := true in
   let _ = Omega.omegacalc := "./oc" in
   ()
