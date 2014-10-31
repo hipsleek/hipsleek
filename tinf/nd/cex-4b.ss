@@ -10,10 +10,20 @@ void f(int x)
   if (x < 0) return;
   else {
     if (nondet())
-      f(x + 1);
+      f(x + 6);
     else
       f(x + 4);
   }
+}
+
+void g(int x)
+  infer [@term]
+  requires true
+  ensures true;
+{
+
+  if (x > 1) f(x);
+  else g(x+1);
 }
 
 
@@ -27,6 +37,6 @@ void main ()
 }
 
 /*
-  OK
+  Expect Loop but return MayLoop
 
 */
