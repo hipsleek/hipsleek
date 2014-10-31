@@ -13891,3 +13891,21 @@ let check_non_determinism (var_name: ident) (f: formula) =
   let pr_res = (add_str "res" string_of_bool) in
   Debug.no_2 "check_non_determinism" pr_v pr_f pr_res
       (fun _ _ -> check_non_determinism_x var_name f) var_name f
+      
+let has_nondet_cond f =  
+  let f_b bf = 
+    let pf, _ = bf in
+    match pf with
+    | BVar _
+    | Lt _
+    | Lte _
+    | Gt _
+    | Gte _
+    | Eq _
+    | Neq _ ->
+      let fv = bfv bf in
+      Some (List.exists (fun v -> check_non_determinism (name_of_spec_var v) f) fv)
+    | _ -> Some false
+  in
+  let or_list = List.fold_left (||) false in
+  fold_formula f (nonef, f_b, nonef) or_list  
