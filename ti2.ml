@@ -1356,12 +1356,15 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
       (* let _ = print_endline ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
       
-      if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
+      (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes *)
       (* For self loop on the same condition *)
       (* else if List.exists (fun c -> (imply eh_ctx c)) self_conds then NT_Yes *)
-      else if (self_conds != []) && 
-              (imply eh_ctx (CP.join_disjunctions self_conds))
-           then NT_Yes
+      (* else if (self_conds != []) &&                            *)
+      (*         (imply eh_ctx (CP.join_disjunctions self_conds)) *)
+      (*      then NT_Yes                                         *)
+      
+      let disj_loop_conds = join_disjs (self_conds @ loop_conds) in
+      if (imply eh_ctx disj_loop_conds) then NT_Yes
       (* For relations to other methods' conditions *)
       else 
         let other_groups = partition_by_key (fun c -> c.ntc_fn) eq_str other_conds in
@@ -1401,8 +1404,9 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   if trrels = [] then NT_Yes (* No return *)
   else
     let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
-    if ntres = [] then NT_No []
-    else if List.for_all is_nt_yes ntres then NT_Yes
+    (* if ntres = [] then NT_No []                      *)
+    (* else if List.for_all is_nt_yes ntres then NT_Yes *)
+    if List.for_all is_nt_yes ntres then NT_Yes
     else if not (List.exists is_nt_no ntres) then NT_Partial_Yes
     else
       let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
@@ -1411,8 +1415,9 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
       let cond = rhs_uid.CP.tu_cond in 
       let feasible_disj_ic_list = List.filter (fun c -> 
         (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
-      if is_empty feasible_disj_ic_list then NT_No []
-      else NT_No feasible_disj_ic_list (* full_disj_ic_list *)
+      (* if is_empty feasible_disj_ic_list then NT_No []          *)
+      (* else NT_No feasible_disj_ic_list (* full_disj_ic_list *) *)
+      NT_No feasible_disj_ic_list
     
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let pr = Cprinter.string_of_term_id in
