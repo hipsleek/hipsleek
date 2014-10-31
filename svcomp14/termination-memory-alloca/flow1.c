@@ -6,15 +6,17 @@ int test_fun(int x)
  /*@ requires x>=0 ensures true;
        */
 {
-    while (x > 0)
-      /*@ requires x>=0 ensures x'=0 & res=0;
-       */
-      {
-       /*  if(x=0) { */
-      /*     // replace assume */
-      /*     return 0; */
+  int* x_ref = alloca(sizeof(int));
+  *x_ref = x;
+  while (*x_ref > 0)
+    /* requires x>=0 ensures x'=0;
+     */
+    {
+      /* if(0) { */
+      /*   // replace assume */
+      /*   return 0; */
       /* } */
-      x = x-1;
+      *x_ref = *x_ref-1;
     }
-    return x;
+  return *x_ref;
 }
