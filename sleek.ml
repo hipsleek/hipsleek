@@ -100,6 +100,7 @@ let proc_gen_cmd cmd =
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
     | SatCheck f -> (process_sat_check f;())
+    | NonDetCheck (v,f) -> (process_nondet_check v f)
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
@@ -194,6 +195,7 @@ let parse_file (parse) (source_file : string) =
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | SatCheck f -> (process_sat_check f; ())
+      | NonDetCheck (v, f) -> (process_nondet_check v f)
       | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
       | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
       | Simplify f -> process_simplify f
