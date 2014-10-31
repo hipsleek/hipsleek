@@ -564,12 +564,21 @@ let tnt_spec_of_proc proc ispec =
 
 let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
-    try
-      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-      let nspec = tnt_spec_of_proc proc ispec in
-      print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
-    with _ -> (* Proc Decl is not found - SLEEK *)
-      print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs
+    let mn_case_specs = (
+      try
+        let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
+        let nspec = tnt_spec_of_proc proc ispec in
+        (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
+      with _ -> (* Proc Decl is not found - SLEEK *)
+        (mn ^ ": " ^ (print_tnt_case_spec ispec))
+    ) in
+    if not !Globals.svcomp_compete_mode then
+      print_endline mn_case_specs
+    (* only in case specs of main function when is in svcomp-mode *)
+    else if !Globals.svcomp_compete_mode && (eq_str mn "main") then
+      print_endline mn_case_specs
+    else () 
+  ) proc_case_specs
       
 let pr_im_case_specs iter_num =
   if !Globals.tnt_verbosity == 0 then begin
