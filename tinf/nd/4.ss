@@ -9,16 +9,12 @@ bool nondet()
   requires Term
   ensures true & nondet_bool(res);
   
-bool det_f(int x) 
-  requires true
-  ensures true; //b & x*x>8 or ;
-
 void f(int x)
   infer [@term] requires true ensures true;
 {
   if (x < 0) return;
   else {
-    bool b = nondet(); // det_f(x)
+    bool b = nondet();
     dprint;
     if (b)
       f(x + 1);

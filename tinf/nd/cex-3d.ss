@@ -18,7 +18,7 @@ void f(int x)
 {
   if (x < 0) return;
   else {
-    bool b = nondet(); // det_f(x)
+    bool b = det_f(x);
     dprint;
     if (b)
       f(x + 1);
