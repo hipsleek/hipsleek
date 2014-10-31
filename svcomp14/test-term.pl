@@ -20,9 +20,9 @@ GetOptions( "--infer-lex"       => \$lex,          #register - update the xml
 #my @dirs=("termination-crafted-lit","termination-memory-alloca");
 #my @dirs=("termination-memory-alloca");
 # my @dirs=("test");
-#my @dirs=("termination-crafted-lit");
-my @dirs=("termination-numeric");
-#my @dirs=("termination-crafted-lit","termination-crafted");
+my @dirs=("termination-crafted-lit", "termination-crafted","termination-numeric");
+#my @dirs=("termination-numeric");
+#my @dirs=("termination-crafted");
 #my @dirs=("termination-crafted");
 my $exec_path = '..';
 my $hip  = "$exec_path/hip ";
@@ -68,6 +68,7 @@ if(-e "$result_file")  {#check for file existance
     foreach $dir (@dirs) {
         $worksheet = $workbook->worksheet("$dir");
         my $current_dir = "$dir/";
+        $row = $first_row;
         #print "$current_dir"."*.c";
         print "\n";
 
@@ -155,6 +156,7 @@ if(-e "$result_file")  {#check for file existance
         $worksheet->AddCell($sum_row, $col_sum_fail, $fail_cnt);
         $worksheet->AddCell($sum_row, $col_sum_timeout, $timeout_cnt);
         $worksheet->AddCell($sum_row, $col_sum_err, $err_cnt);
+        $workbook->SaveAs("$result_file");
     }
     $workbook->SaveAs("$result_file");
 } else {
