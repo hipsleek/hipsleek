@@ -1,8 +1,8 @@
 //class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
-//class ret_int extends __RET { int val }
-//class ret_bool extends __RET { bool val }
+class ret_int extends __RET { int val }
+class ret_bool extends __RET { bool val } 
 class __RET extends __Exc {}
 
 int add___(int a, int b) 
@@ -518,6 +518,9 @@ relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+relation nondet_int__(int x).
+relation nondet_bool__(bool x).
+
 
 int rand_int ()
   requires true
@@ -526,3 +529,5 @@ int rand_int ()
 bool rand_bool ()
   requires true
   ensures res or !res;
+
+

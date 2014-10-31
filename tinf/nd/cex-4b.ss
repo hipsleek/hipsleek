@@ -1,6 +1,6 @@
 bool nondet()
   requires Term
-  ensures true;
+  ensures true & nondet_bool__(res);
 
 void f(int x)
   infer [@term]
@@ -10,10 +10,20 @@ void f(int x)
   if (x < 0) return;
   else {
     if (nondet())
-      f(x + 1);
+      f(x + 6);
     else
       f(x + 4);
   }
+}
+
+void g(int x)
+  infer [@term]
+  requires true
+  ensures true;
+{
+
+  if (x > 0) f(x);
+  else g(x+1);
 }
 
 
@@ -23,7 +33,7 @@ void main ()
   ensures true;
 {
   int x;
-  f(x);
+  g(x);
 }
 
 /*

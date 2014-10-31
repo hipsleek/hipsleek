@@ -3883,7 +3883,7 @@ let create_tnt_prim_proc id : Iast.proc_decl option =
     if String.compare id Globals.nondet_int_proc_name == 0 then Some (
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
-      "  ensures true;\n")
+      "  ensures true & nondet_int__(res);\n")
     else if String.compare id "__VERIFIER_error" == 0 then Some (
       "int __VERIFIER_error()\n" ^
       "  requires true\n" ^
