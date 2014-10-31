@@ -34,7 +34,7 @@ extern int __VERIFIER_nondet_int(void);
  * bzero -- vax movc5 instruction
  */
 void
-cbzero(void *b, size_t length)
+cbzero(char *b, size_t length)
 {
 	char *p;
         // dprint;

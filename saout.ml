@@ -504,8 +504,11 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps to_unfold_hps hpdefs
   (* in *)
   let formula_subst_dangling_pred dang_hps to_unfold_hps post_hps f0=
     let _ =  Debug.ninfo_hprint (add_str "f0" (Cprinter.string_of_formula)) f0 no_pos in
+    let _ =  print_endline ("f0" ^ (Cprinter.string_of_formula f0))  in
     let _ =  Debug.ninfo_hprint (add_str "dang_hps" (!CP.print_svl)) dang_hps no_pos in
     let _ =  Debug.ninfo_hprint (add_str "post_hps" (!CP.print_svl)) post_hps no_pos in
+    let _ =  Debug.ninfo_hprint (add_str " to_unfold_hps" (!CP.print_svl))  to_unfold_hps no_pos in
+    let _ =  print_endline (" to_unfold_hps : " ^ (!CP.print_svl  to_unfold_hps)) in
     (* let hp_opt = CF.extract_hrel_head_w_args f0 in *)
     let hp_opt = CF. extract_hprel_pure f0 in
     match hp_opt with
