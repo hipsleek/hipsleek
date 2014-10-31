@@ -13787,6 +13787,9 @@ let collect_term_ann_fv_pure f =
  * Check if a variable's value is nondeterminstic in a formula
  * assumption: given nondeterministic variables in formula are indicated by 
  * relation whose name starting by "nondet" string
+ * For example: check_non_determinism "c" f
+ *        with f = (v_bool) & nondet_Bool(b) & c=b.
+ * Then b is given as non-deterministic var.
  *)
 let check_non_determinism_x (var_name: ident) (f: formula) =
   (* collect nondet variables *)
@@ -13812,10 +13815,10 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
     !nondet_svs
   ) in
   let nondet_svs = collect_nondet_vars f in
-  if (List.exists (fun x -> eq_str (name_of_sv x) v) nondet_svs) then true
+  if (List.exists (fun x -> eq_str (name_of_sv x) var_name) nondet_svs) then true
   else (
     let simp_f = !simplify f in
-    (* check iff there is connection between v and nondet-vars through simp_pf *)
+    (* check iff there is connection between var_name and nondet-vars through simp_pf *)
     let rec collect_related_vars vars = (
       let related_vars = ref vars in
       let (fh, fm) = (fun _ -> None), (fun _ -> None) in
@@ -13837,7 +13840,7 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
     ) in
     let simp_svs = fv simp_f in
     try 
-      let origin_var = List.find (fun x -> eq_str (name_of_sv x) v) simp_svs in
+      let origin_var = List.find (fun x -> eq_str (name_of_sv x) var_name) simp_svs in
       let related_vars = collect_related_vars [origin_var] in
       let related_nondet_svs = intersect_svl nondet_svs related_vars in
       (* Debug.binfo_hprint (add_str "check var" pr_id) v no_pos;                                         *)
@@ -13855,4 +13858,4 @@ let check_non_determinism (var_name: ident) (f: formula) =
   let pr_f = (add_str "f" !print_formula) in
   let pr_res = (add_str "res" string_of_bool) in
   Debug.no_2 "check_non_determinism" pr_v pr_f pr_res
-      (fun _ _ -> check_non_determinism_x v f) v f
+      (fun _ _ -> check_non_determinism_x var_name f) var_name f
