@@ -1,6 +1,6 @@
 bool nondet()
   requires Term
-  ensures true;
+  ensures true & nondet_bool__(res);
 
 void f(int x)
   infer [@term]
@@ -22,7 +22,7 @@ void g(int x)
   ensures true;
 {
 
-  if (x > 1) f(x);
+  if (x > 0) f(x);
   else g(x+1);
 }
 
@@ -33,10 +33,10 @@ void main ()
   ensures true;
 {
   int x;
-  f(x);
+  g(x);
 }
 
 /*
-  Expect Loop but return MayLoop
+  OK
 
 */
