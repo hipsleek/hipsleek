@@ -2,12 +2,12 @@ void loop()
   requires Loop
   ensures false;
 
-relation nondet_bool(bool b).
-  relation nondet_int(bool i).
+//relation nondet_bool(bool b).
+//relation nondet_int(bool i).
 
 bool nondet()
   requires Term
-  ensures true & nondet_bool(res);
+  ensures true ; //& nondet_bool(res);
   
 void f(int x)
   infer [@term] requires true ensures true;
