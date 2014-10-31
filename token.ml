@@ -18,7 +18,9 @@ type sleek_token =
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
-  | CASE | CHECKNORM | CHECKEQ | SIMPLIFY | CHECKENTAIL | CHECKSAT | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
+  | CASE | SIMPLIFY | CAPTURERESIDUE | CLASS | COMPOSE | CONST | CONTINUE
+  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET 
+  | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
   | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
@@ -107,6 +109,7 @@ module Token = struct
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
+    | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
     |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"

@@ -578,7 +578,7 @@ let prover_process = ref {
 }
 
 
-let smtsolver_path = "z3-4.3.2" (* "z3" *)
+let smtsolver_path = if !Globals.compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
 
 (***********)
 let test_number = ref 0
@@ -594,7 +594,7 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> (smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
+  | "z3" -> (!smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "z3-4.2" -> ("z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
@@ -647,7 +647,7 @@ and start() =
       else if !smtsolver_name = "z3-4.3.1" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )

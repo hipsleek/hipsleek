@@ -2107,6 +2107,18 @@ let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
+let process_nondet_check (v: ident) (mf: meta_formula) =
+  if (!Globals.print_input || !Globals.print_input_all) then (
+    print_endline ("Check_nondet:\n ### var = " ^ v ^"\n ### formula = " ^ (string_of_meta_formula mf));
+  );
+  let (_,f) = meta_to_formula mf false [] [] in
+  let pf = CF.get_pure f in
+  let res = CP.check_non_determinism v pf in
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let res_str = if res then "Valid" else "Fail" in
+  let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
+  print_endline msg
+  
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
