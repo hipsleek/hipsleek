@@ -60,6 +60,28 @@ Termination Inference Result:
 main:  requires emp & MayLoop[]
      ensures emp & true;
 =======================================================
+# cex-3.ss
+
+with det:
+
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[34,1]
+     ensures emp & true; 
+  0<=x -> requires emp & Loop{ 19:6}[]
+     ensures false & false; 
+  }
+
+non-det if. Need to mark it as 
+a possible MayLoop[ND] with a cex.
+
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[34,1]
+     ensures emp & true; 
+  0<=x -> requires emp & MayLoop[]
+     ensures emp & true; 
+  }
 =======================================================
 =======================================================
 =======================================================

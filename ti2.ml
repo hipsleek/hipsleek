@@ -1181,7 +1181,6 @@ type nt_res =
   | NT_Yes
   | NT_Partial_Yes (* For mutual recursion *)
   | NT_No of (CP.formula list)
-  | NT_Nondet_May of loc (* For nondet non-termination *)
 
 type nt_cond = {
   ntc_fn: string;
@@ -1193,7 +1192,6 @@ let print_nt_res = function
   | NT_Yes -> "NT_Yes"
   | NT_Partial_Yes -> "NT_Partial_Yes"
   | NT_No ic -> "NT_No[" ^ (pr_list !CP.print_formula ic) ^ "]" 
-  | NT_Nondet_May pos -> "NT_Nondet_May @ " ^ (Cprinter.string_of_pos pos)
 
 let is_nt_yes = function
   | NT_Yes -> true
@@ -1205,10 +1203,6 @@ let is_nt_no = function
 
 let is_nt_partial_yes = function
   | NT_Partial_Yes -> true
-  | _ -> false
-
-let is_nt_nondet_may = function
-  | NT_Nondet_May _ -> true
   | _ -> false
 
 let cond_of_nt_res = function
@@ -1403,12 +1397,6 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
     (pr_list pr) pr print_ret_trel print_nt_res
     (fun _ _ _ -> proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel)
     lhs_uids rhs_uid trrel
-    
-let is_nondet_rec rec_trrel base_trrels = 
-  let base_ctx = List.map (fun btr ->
-    simplify 10 btr.ret_ctx btr.termr_rhs_params) base_trrels in
-  let rec_ctx = simplify 11 rec_trrel.ret_ctx rec_trrel.termr_rhs_params in
-  List.exists (fun bctx -> is_sat (mkAnd rec_ctx bctx)) base_ctx
 
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let trrels = List.filter (fun trrel -> 
@@ -1416,36 +1404,20 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   if trrels = [] then NT_Yes (* No return *)
   else
     let ntres = List.map (proving_non_termination_one_trrel prog lhs_uids rhs_uid) trrels in
-    let ntres_w_rel = List.combine ntres trrels in
     (* if ntres = [] then NT_No []                      *)
     (* else if List.for_all is_nt_yes ntres then NT_Yes *)
     if List.for_all is_nt_yes ntres then NT_Yes
     else if not (List.exists is_nt_no ntres) then NT_Partial_Yes
     else
-      let gen_disj_conds ntres =
-        let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
-        let full_disj_ic_list = get_full_disjoint_cond_list true ic_list in
-        (* We should terminate the analysis when there is no new inferred condition *)
-        let cond = rhs_uid.CP.tu_cond in 
-        let feasible_disj_ic_list = List.filter (fun c -> 
-          (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
-        (* if is_empty feasible_disj_ic_list then NT_No []          *)
-        (* else NT_No feasible_disj_ic_list (* full_disj_ic_list *) *)
-        NT_No feasible_disj_ic_list
-      in
-      (* gen_disj_conds ntres *)
-      let nt_yes_rec = List.filter (fun (res, rel) ->
-        (is_nt_yes res) && not (is_empty rel.termr_lhs)) ntres_w_rel in
-      if is_empty nt_yes_rec then gen_disj_conds ntres
-      else
-        let nt_base_no = List.filter (fun (res, rel) ->
-          (is_nt_no res) && (is_empty rel.termr_lhs)) ntres_w_rel in
-        let base_no_trrels = List.map snd nt_base_no in
-        try
-          let _, nd_rec_trrel = List.find (fun (_, rec_trrel) -> 
-            is_nondet_rec rec_trrel base_no_trrels) nt_yes_rec in
-          NT_Nondet_May nd_rec_trrel.termr_pos
-        with Not_found -> gen_disj_conds ntres
+      let ic_list = List.concat (List.map (fun r -> cond_of_nt_res r) ntres) in
+      let full_disj_ic_list = get_full_disjoint_cond_list true ic_list in
+      (* We should terminate the analysis when there is no new inferred condition *)
+      let cond = rhs_uid.CP.tu_cond in 
+      let feasible_disj_ic_list = List.filter (fun c -> 
+        (is_sat (mkAnd c cond)) && not (imply cond c)) full_disj_ic_list in
+      (* if is_empty feasible_disj_ic_list then NT_No []          *)
+      (* else NT_No feasible_disj_ic_list (* full_disj_ic_list *) *)
+      NT_No feasible_disj_ic_list
     
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
   let pr = Cprinter.string_of_term_id in
@@ -1565,27 +1537,17 @@ let rec proving_non_termination_scc prog trrels tg scc =
     update_ann scc (subst (CP.Loop None, []))
   else
     let nonterm_uids = List.map fst (List.filter (fun (uid, r) -> is_nt_yes r) ntres_scc) in
-    let nd_nonterm_uids = List.fold_left (fun acc (uid, r) -> 
-      match r with
-      | NT_Nondet_May pos -> acc @ [(uid, pos)]
-      | _ -> acc) [] ntres_scc in
     (* Update ann with nonterm_uid to Loop *)
     let subst_loop ann =
       match ann with
       | CP.TermU uid ->
         if Gen.BList.mem_eq (fun u1 u2 -> u1.CP.tu_id == u2.CP.tu_id) uid nonterm_uids
         then subst (CP.Loop None, []) ann
-        (* else ann *)
-        else 
-          begin try
-            let _, nd_pos = List.find (fun (nd_uid, _) -> 
-              uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
-            subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann
-          with Not_found -> ann end
+        else ann
       | _ -> ann
     in
-    let tg = match nonterm_uids, nd_nonterm_uids with
-    | [], [] -> tg
+    let tg = match nonterm_uids with
+    | [] -> tg
     | _ -> map_ann_scc tg scc (update_ann scc subst_loop)
     in
     (* let _ = print_endline (print_graph_by_rel tg) in *)
