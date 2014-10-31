@@ -533,7 +533,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline_quiet "\nPost Inference result:";
         print_endline_quiet proc.proc_name;
-        print_endline_quiet (Cprinter.string_of_struc_formula_for_spec new_spec);
+        print_endline_quiet (Cprinter.string_of_struc_formula new_spec);
     ) (List.combine scc new_specs) in
     ()
 
