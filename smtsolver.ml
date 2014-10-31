@@ -637,7 +637,7 @@ let rec prelude () = ()
 (* start z3 system in a separated process and load redlog package *)
 and start() =
   if not !is_z3_running then (
-    print_string_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
+    print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then

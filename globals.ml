@@ -1504,6 +1504,8 @@ let opt_classic = ref false                (* option --classic is turned on or n
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
+let compete_mode = ref false
+let svcomp_compete_mode = ref false
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
@@ -1511,7 +1513,7 @@ let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *
 let show_unexpected_ents = ref true
 
   let print_endline_q s =
-    if !smt_compete_mode then ()
+    if !compete_mode then ()
     else print_endline s
 
 (* generate baga inv from view *)
