@@ -1497,7 +1497,10 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
         try
           let _, nd_rec_trrel = List.find (fun (_, rec_trrel) -> 
             is_nondet_rec rec_trrel base_no_trrels) nt_yes_rec in
-          NT_Nondet_May nd_rec_trrel.termr_pos
+          (* WN : disabling on infer_lex *)
+          if !Globals.tnt_infer_lex then
+            gen_disj_conds ntres
+          else NT_Nondet_May nd_rec_trrel.termr_pos
         with Not_found -> gen_disj_conds ntres
     
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =

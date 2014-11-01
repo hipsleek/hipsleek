@@ -104,16 +104,16 @@ let solve_base_trrels params base_trrels turels =
   (* let base_conds = simplify_and_slit_disj base_cond in *)
   let base_cond = simplify_disj base_cond in
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
-  base_cond
-  
-  (* if !Globals.tnt_infer_lex then base_cond                                *)
-  (* else                                                                    *)
-  (*   let may_cond = List.fold_left (fun ac bctx ->                         *)
+  (* WN : attempt to rectify --infer-lex problem *)
+  base_cond  
+  (* if !Globals.tnt_infer_lex then base_cond *)
+  (* else *)
+  (*   let may_cond = List.fold_left (fun ac bctx -> *)
   (*     mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in *)
-  (*   (* let may_conds = simplify_and_slit_disj may_cond in *)              *)
-  (*   let may_cond = simplify_disj may_cond in                              *)
-  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in  *)
-  (*   base_cond @ may_cond                                                  *)
+  (*   (\* let may_conds = simplify_and_slit_disj may_cond in *\) *)
+  (*   let may_cond = simplify_disj may_cond in *)
+  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in *)
+  (*   base_cond @ may_cond *)
   
 let solve_base_trrels params base_trrels turels =
   Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
@@ -302,7 +302,8 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else 
-        (* update_ann scc (subst (CP.Loop, [])) (* Loop *) *)
+        (* WN : trying to recover --infer-lex outcome for ack *)
+        (* update_ann scc (subst (CP.Loop None, [])) (\* Loop *\) *)
         proving_non_termination_scc prog trrels tg scc
       
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
