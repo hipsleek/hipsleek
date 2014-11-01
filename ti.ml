@@ -345,9 +345,7 @@ let solve_turel_one_scc prog trrels tg scc =
     (fun _ -> solve_turel_one_scc prog trrels tg scc) tg
   
 let finalize_turel_graph prog tg =
-  if not !Globals.svcomp_compete_mode then (
-    print_endline "Termination Inference Result:";
-  );
+  print_endline_quiet "Termination Inference Result:";
   (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   

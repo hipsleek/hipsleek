@@ -14917,17 +14917,17 @@ let rec collect_term_ann_for_svcomp_competion_x sf =
         (CP.collect_term_ann f) @ (collect_term_ann_for_svcomp_competion sf)
       ) ec.formula_case_branches)
   | EBase eb ->
-      (* collect only term anns in precondition *)
       let r1 = collect_term_ann eb.formula_struc_base in
-      r1
-      (* let r2 = match eb.formula_struc_continuation with      *)
-      (*   | None -> []                                         *)
-      (*   | Some sf -> collect_term_ann_in_struc_formula sf in *)
-      (* r1 @ r2 *)
-  | EAssume ea ->
-      let r1 = collect_term_ann ea.formula_assume_simpl in
-      let r2 = collect_term_ann_for_svcomp_competion ea.formula_assume_struc in
+      let r2 = match eb.formula_struc_continuation with
+        | None -> []
+        | Some sf -> collect_term_ann_for_svcomp_competion sf in
       r1 @ r2
+  | EAssume ea ->
+      (* no collection in assume *)
+      []
+      (* let r1 = collect_term_ann ea.formula_assume_simpl in                      *)
+      (* let r2 = collect_term_ann_for_svcomp_competion ea.formula_assume_struc in *)
+      (* r1 @ r2                                                                   *)
   | EInfer ei ->
       collect_term_ann_for_svcomp_competion ei.formula_inf_continuation
 

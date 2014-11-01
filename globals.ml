@@ -1276,6 +1276,15 @@ let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
+let print_endline_q s =
+  if !compete_mode then ()
+  else print_endline s
+
+let print_backtrace_quiet () =
+  if !compete_mode then ()
+  else
+    Printexc.print_backtrace stdout
+
 (* for Termination *)
 let dis_term_chk = ref false
 let term_verbosity = ref 1
@@ -1412,9 +1421,7 @@ object (self)
         begin
           Str.search_forward reg s 0;
           arr <- c::arr;
-          if not !svcomp_compete_mode then (
-            print_endline ("infer option added :"^(string_of_inf_const c));
-          );
+          print_endline_q ("infer option added :"^(string_of_inf_const c));
         end
       with Not_found -> ()
     in
@@ -1514,10 +1521,6 @@ let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 
 let show_unexpected_ents = ref true
-
-  let print_endline_q s =
-    if !compete_mode then ()
-    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false

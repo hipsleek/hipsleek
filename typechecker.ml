@@ -3441,11 +3441,11 @@ let check_phase_only iprog prog proc =
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
     let _=check_proc iprog prog proc in ()
-  with _ as e ->
-      print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
-      print_string_quiet ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
-      Printexc.print_backtrace(stdout);
-      ()
+  with _ as e -> (
+    print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+    print_string_quiet ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
+    print_backtrace_quiet ();
+  )
 
 (* check entire program *)
 let check_proc_wrapper iprog prog proc cout_option mutual_grp =
@@ -3475,13 +3475,13 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     (* in n_res *)
     (* Log.last_cmd # dumping; *)
     res
-  with _ as e ->
+  with _ as e -> (
     if !Globals.check_all then begin
       (* dummy_exception(); *)
       let _ = Infer.rel_ass_stk # reset in
       print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
       print_string_quiet ("\nException "^(Printexc.to_string e)^" Occurred!\n");
-      Printexc.print_backtrace(stdout);
+      print_backtrace_quiet ();
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       Log.last_cmd # dumping (proc.proc_name^" FAIL2");
       (* print_endline "Last PURE PROOF FAILURE:"; *)
@@ -3489,6 +3489,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
       false
     end else
       raise e
+  )
 (*
 let check_view vdef =
   let ante = vdef.view_formula in

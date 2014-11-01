@@ -578,8 +578,8 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
     with _ -> ((* exception : return the safe result to ensure soundness *)
-        Printexc.print_backtrace stdout;
-        print_endline ("WARNING: Restarting prover due to timeout");
+        print_backtrace_quiet ();
+        print_endline_quiet ("WARNING: Restarting prover due to timeout");
         Unix.kill !minisat_process.pid 9;
         ignore (Unix.waitpid [] !minisat_process.pid);
         false

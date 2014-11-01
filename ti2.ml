@@ -571,58 +571,57 @@ let tnt_spec_of_proc proc ispec =
   let spec = norm_struc spec in
   spec
 
+let print_svcomp2015_result term_anns =
+  print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns));
+  (* no termination info --> UNKNOWN *)
+  if (List.length term_anns = 0) then
+    print_endline "UNKNOWN"
+  (* all cases terminates --> TRUE *)
+  else if (List.for_all Cpure.is_Term term_anns) then
+    print_endline "TRUE"
+  (* all cases are Loop --> FALSE *)
+  else if (List.exists Cpure.is_Loop term_anns) then (
+    let cex = Cpure.cex_of_term_ann_list term_anns in
+    let cex_str = Cprinter.string_of_term_cex cex in
+    print_endline ("FALSE\nCounterexample: " ^ cex_str)
+  )
+  (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
+  else if (List.exists Cpure.is_MayLoop term_anns) then (
+    let cex = Cpure.cex_of_term_ann_list term_anns in
+    let cex_str = (
+      match cex with
+      | None -> ""
+      | Some e when (e.Cpure.tcex_trace = []) -> ""
+      | _ -> Cprinter.string_of_term_cex cex
+    ) in
+    if (eq_str cex_str "") then
+      print_endline "UNKNOWN"
+    else
+      print_endline ("FALSE\nCounterexample: " ^ cex_str)
+  )
+  (* the rests are UNKNOWN *)
+  else
+    print_endline "UNKNOWN"
+
 let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
-    if not !Globals.svcomp_compete_mode then (
-      try
-        let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-        let nspec = tnt_spec_of_proc proc ispec in
-        print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
-      with _ -> (* Proc Decl is not found - SLEEK *)
-        print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))
+    try
+      let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
+      let nspec = tnt_spec_of_proc proc ispec in
+      print_endline_quiet (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec));
+      (* print result for svcomp 2015 *)
+      if !Globals.svcomp_compete_mode && (eq_str mn "main") then (
+        let term_anns = Cformula.collect_term_ann_for_svcomp_competion nspec in
+        print_svcomp2015_result term_anns
+      );
+    (* Proc Decl is not found - SLEEK *)
+    with _ -> (
+      print_endline_quiet (mn ^ ": " ^ (print_tnt_case_spec ispec));
+      (* if !Globals.svcomp_compete_mode && (eq_str mn "main") then ( *)
+      (*   let term_anns = collect_term_ann_in_tnt_case_spec ispec in *)
+      (*   print_svcomp2015_result term_anns                          *)
+      (* );                                                           *)
     )
-    (* only in case specs of main function when is in svcomp-mode *)
-    else if !Globals.svcomp_compete_mode && (eq_str mn "main") then
-      let term_anns = 
-        try
-          let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-          let nspec = tnt_spec_of_proc proc ispec in
-          let _ = print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec)) in
-          Cformula.collect_term_ann_for_svcomp_competion nspec
-        with _ ->
-          let _ = print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec)) in
-          collect_term_ann_in_tnt_case_spec ispec
-      in
-      Debug.binfo_hprint (add_str "term_anns" (pr_list string_of_term_ann)) term_anns no_pos;
-      (* no termination info --> UNKNOWN *)
-      if (List.length term_anns = 0) then
-        print_endline "UNKNOWN"
-      (* all cases terminates --> TRUE *)
-      else if (List.for_all Cpure.is_Term term_anns) then
-        print_endline "TRUE"
-      (* all cases are Loop --> FALSE *)
-      else if (List.for_all Cpure.is_Loop term_anns) then (
-        let cex = Cpure.cex_of_term_ann_list term_anns in
-        let cex_str = Cprinter.string_of_term_cex cex in
-        print_endline ("FALSE\nCounterexample: " ^ cex_str)
-      )
-      (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
-      else if (List.exists Cpure.is_MayLoop term_anns) then (
-        let cex = Cpure.cex_of_term_ann_list term_anns in
-        let cex_str = (
-          match cex with
-          | None -> ""
-          | Some e when (e.Cpure.tcex_trace = []) -> ""
-          | _ -> Cprinter.string_of_term_cex cex
-        ) in
-        if (eq_str cex_str "") then
-          print_endline "UNKNOWN"
-        else
-          print_endline ("FALSE\nCounterexample: " ^ cex_str)
-      )
-      (* the rests are UNKNOWN *)
-      else
-        print_endline "UNKNOWN"
   ) proc_case_specs
       
 let pr_im_case_specs iter_num =

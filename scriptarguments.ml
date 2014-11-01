@@ -789,6 +789,7 @@ let common_arguments = [
           Globals.compete_mode:=true; (* main flag *)
           Globals.svcomp_compete_mode:=true; (* main flag *)
           Globals.show_unexpected_ents := false;
+          Globals.trace_failure := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
