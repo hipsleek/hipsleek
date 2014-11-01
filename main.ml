@@ -873,7 +873,7 @@ let main1 () =
 	print_version ()
   end else
   (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = record_backtrace_quite () in
   (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
@@ -899,7 +899,7 @@ let pre_main () =
 	  let _ = print_version ()
     in []
   else
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = record_backtrace_quite () in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
 		List.map ( fun x-> let _= print_endline_quiet ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files

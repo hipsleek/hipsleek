@@ -1476,7 +1476,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 						Debug.no_2(* _loop *) "barrier entail" pr1 pr2 (fun c-> "") 
 							(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
 							(*try
-							  Printexc.record_backtrace true ;
+							  record_backtrace_quite ();
 							  with e ->
 							  (print_string_quiet "gagamita\n"; let bt = Printexc.get_backtrace () in print_endline bt; raise e)*) in 
 			      helper c bd_spec in

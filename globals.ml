@@ -1285,6 +1285,11 @@ let print_backtrace_quiet () =
   else
     Printexc.print_backtrace stdout
 
+let record_backtrace_quite () =
+  if !compete_mode then ()
+  else
+    Printexc.record_backtrace !trace_failure
+
 (* for Termination *)
 let dis_term_chk = ref false
 let term_verbosity = ref 1

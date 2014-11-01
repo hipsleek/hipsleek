@@ -610,7 +610,7 @@ let pr_proc_case_specs prog =
       let nspec = tnt_spec_of_proc proc ispec in
       print_endline_quiet (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec));
       (* print result for svcomp 2015 *)
-      if !Globals.svcomp_compete_mode && (eq_str mn "main") then (
+      if !Globals.svcomp_compete_mode && (eq_str (Cast.unmingle_name mn) "main") then (
         let term_anns = Cformula.collect_term_ann_for_svcomp_competion nspec in
         print_svcomp2015_result term_anns
       );
