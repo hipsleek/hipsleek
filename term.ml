@@ -1269,9 +1269,11 @@ let term_check_output () =
   if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && 
      not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
   begin
-    print_string_quiet "\nTermination checking result: ";
-    pr_term_res_stk (term_res_stk # get_stk);
-    fmt_print_newline ()
+    if not !Globals.svcomp_compete_mode then (
+      print_string_quiet "\nTermination checking result: ";
+      pr_term_res_stk (term_res_stk # get_stk);
+      fmt_print_newline ()
+    );
     (* if (!Globals.term_verbosity == 0) then          *)
     (* begin                                           *)
     (*   fmt_string "\n";                              *)
