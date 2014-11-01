@@ -2692,17 +2692,17 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs1 = pre_preds@post_pred@rem in
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_hp_def defs1 else defs1 in
-        print_endline "\n*********************************************************";
-        print_endline ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
-        print_endline "*********************************************************";
+        print_endline_quiet "\n*********************************************************";
+        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
         let old_print_imm = !print_ann in
          let _= if !print_html then let _ = print_ann:= false in () else () in
-        print_endline (pr1 defs);
+        print_endline_quiet (pr1 defs);
           let _ = print_ann:=  old_print_imm in
         if !Globals.testing_flag then print_endline "<dstop>"; 
-        print_endline "*************************************";
+        print_endline_quiet "*************************************";
         ()
       end;
     in
@@ -2793,16 +2793,16 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs" pr_id) "" no_pos in *)
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in *)
-        print_endline "\n*************************************";
-        print_endline "*******relational definition ********";
-        print_endline "*************************************";
+        print_endline_quiet "\n*************************************";
+        print_endline_quiet "*******relational definition ********";
+        print_endline_quiet "*************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
         (* let pr1 = if !Globals.print_html then pr_list_ln Cprinter.string_of_html_hprel_def_short else pr1 in *)
         (* print_endline (rel_defs # string_of_reverse); *)
         let old_print_imm = !print_ann in
          let _= if !print_html then let _ = print_ann:= false in () else () in
-        print_endline (pr1 defs);
+        print_endline_quiet (pr1 defs);
           let _ = print_ann:=  old_print_imm in
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline "*************************************";
@@ -3034,10 +3034,10 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
                           if (* !Globals.sap *) true then begin
-                            print_endline "";
-                            print_endline "*************************************";
-                            print_endline "*******shape relational assumptions ********";
-                            print_endline "*************************************";
+                            print_endline_quiet "";
+                            print_endline_quiet "*************************************";
+                            print_endline_quiet "*******shape relational assumptions ********";
+                            print_endline_quiet "*************************************";
                         end;
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
@@ -3054,7 +3054,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
                           let old_print_imm = !print_ann in
                           let _= if !print_html then let _ = print_ann:= false in () else () in
-                          let _  = print_endline (pr (ras1)) in
+                          let _  = print_endline_quiet (pr (ras1)) in
                           let _ = print_ann:=  old_print_imm in
                           (* print_endline (pr (hp_lst_assume)); *)
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
@@ -3378,11 +3378,11 @@ let reverify_proc prog proc do_infer =
             let _ = if proc.proc_sel_hps = [] then () else
               begin
                 if (not !Globals.web_compile_flag) then
-                  print_endline "";
-                  print_endline "\n\n******************************";
-                  print_endline "******* SPECIFICATION2 ********";
-                  print_endline "******************************";
-                  print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
+                  print_endline_quiet "";
+                  print_endline_quiet "\n\n******************************";
+                  print_endline_quiet "******* SPECIFICATION2 ********";
+                  print_endline_quiet "******************************";
+                  print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
               end
             in
             (*****LOCKSET variable: ls'=ls *********)
