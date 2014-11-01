@@ -1129,7 +1129,7 @@ let ht_of_gvdef gvdefs =
 let param_of_v ht md lc nm =
   try
   (* let _ = print_endline ("== ht length = " ^ (string_of_int (Hashtbl.length ht))) in *)
-  Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht;
+  (* Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht; *)
   let t = H.find ht nm in
   match t with 
   | Bool | Float | Int | Void | List _  ->
