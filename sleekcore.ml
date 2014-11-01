@@ -78,11 +78,7 @@ let sleek_unsat_check isvl cprog ante=
   let ante0a = (CF.simplify_pure_f (CF.force_elim_exists bare quans)) in
   let r,fail_of = Frame.check_unsat_w_norm cprog ante0a false in
   if r then
-    let _ = if not !Globals.smt_compete_mode then
     let _ = print_endline_quiet ("[Warning] False ctx") in
-    ()
-    else ()
-    in
     (true, CF.SuccCtx [init_ctx], [])
   else
     (false, CF.FailCtx (CF.Trivial_Reason

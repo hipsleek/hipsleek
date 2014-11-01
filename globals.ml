@@ -1431,7 +1431,8 @@ object (self)
         begin
           Str.search_forward reg s 0;
           arr <- c::arr;
-          print_endline_q ("infer option added :"^(string_of_inf_const c));
+          (* Trung: temporarily disable printing for svcomp15, undo it later *) 
+          (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
         end
       with Not_found -> ()
     in

@@ -5,7 +5,7 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
-let _ = if !smt_compete_mode then
+let _ = if !compete_mode then
   begin
     trace_on := false;
   end
@@ -209,20 +209,20 @@ let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
 let info_pprint (msg:string) (pos:loc) : unit =
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
   else ()
 
 let info_zprint m (pos:loc) = 
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)

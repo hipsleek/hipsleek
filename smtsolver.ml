@@ -694,7 +694,7 @@ let check_formula f timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+      let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
     { original_output_text = []; sat_result = Unknown; } 
   ) in

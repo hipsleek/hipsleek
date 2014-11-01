@@ -192,7 +192,7 @@ and omega_of_formula_x pr_w pr_s f  =
 	helper f
   with _ as e -> 
       let s = Printexc.to_string e in
-      let _ = print_string ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      let _ = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
       (* let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
@@ -238,7 +238,7 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag && (not !Globals.smt_compete_mode) then
+	(if !log_all_flag && (not !Globals.compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done

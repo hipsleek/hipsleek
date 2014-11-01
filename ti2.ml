@@ -583,7 +583,7 @@ let print_svcomp2015_result term_anns =
   else if (List.exists Cpure.is_Loop term_anns) then (
     let cex = Cpure.cex_of_term_ann_list term_anns in
     let cex_str = Cprinter.string_of_term_cex cex in
-    print_endline ("FALSE\nCounterexample: " ^ cex_str)
+    print_endline ("FALSE - Counterexample: " ^ cex_str)
   )
   (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
   else if (List.exists Cpure.is_MayLoop term_anns) then (
@@ -597,7 +597,7 @@ let print_svcomp2015_result term_anns =
     if (eq_str cex_str "") then
       print_endline "UNKNOWN"
     else
-      print_endline ("FALSE\nCounterexample: " ^ cex_str)
+      print_endline ("FALSE - Counterexample: " ^ cex_str)
   )
   (* the rests are UNKNOWN *)
   else
