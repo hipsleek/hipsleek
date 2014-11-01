@@ -572,7 +572,7 @@ let tnt_spec_of_proc proc ispec =
   spec
 
 let print_svcomp2015_result term_anns =
-  print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns));
+  (* print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns)); *)
   (* no termination info --> UNKNOWN *)
   if (List.length term_anns = 0) then
     print_endline "UNKNOWN"

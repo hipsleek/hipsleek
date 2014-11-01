@@ -146,7 +146,8 @@ let parse_file (parse) (source_file : string) =
     with
       | End_of_file -> List.rev cmds
       | M.Loc.Exc_located (l,t)-> (
-          print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+          print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n error: "
+                              ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
           raise t
         ) in
   let parse_first (cmds:command list) : (command list)  =

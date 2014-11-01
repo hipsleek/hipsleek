@@ -90,7 +90,6 @@ let process_exct e=
                 ("theorem prover: " ^ prover_name) msg
         | _ -> print_endline (Printexc.to_string e)
       );
-      Printexc.print_backtrace stdout;
       dummy_exception() ;
   end
 *)

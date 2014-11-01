@@ -90,7 +90,8 @@ let parse_file_full file_name (primitive: bool) =
   with
       End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)-> (
-        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "
+                            ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
         raise t
       )
 
@@ -925,7 +926,8 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize ();
-    print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
+    print_string_quiet "caught\n"; 
+    print_backtrace_quiet ();
     print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
     print_string_quiet ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)

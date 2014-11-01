@@ -1285,6 +1285,11 @@ let print_backtrace_quiet () =
   else
     Printexc.print_backtrace stdout
 
+let get_backtrace_quiet () =
+  if !compete_mode then ""
+  else
+    Printexc.get_backtrace ()
+
 let record_backtrace_quite () =
   if !compete_mode then ()
   else
