@@ -57,3 +57,5 @@ void foo2(ref int[] a)
     foo2(a);
   }
 }
+
+

@@ -187,7 +187,7 @@ and lex_info = {
 and term_ann = 
   | Term    (* definite termination *)
   | Loop    (* definite non-termination *)
-  | MayLoop (* possible non-termination *)
+  | MayLoop (* of int option *) (* true = non-determistic loop; possible non-termination *)
   | Fail of term_fail (* Failure because of invalid trans *)
   | TermU of uid (* unknown precondition with sol *)
   | TermR of uid (* unknown postcondition *)
