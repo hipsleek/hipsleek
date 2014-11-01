@@ -5,8 +5,8 @@ int main(int x)
   while (x > 0)
     infer [@post_n]
     requires true
-      ensures true;
-    //ensures x>=1 & x'=0 or x'>=2223 & x'=x or x'<=0 & x=x';
+    ensures true;
+  //ensures x>=1 & x'=0 or x'>=2223 & x'=x or x'<=0 & x=x';
     // ensures true & flow __flow;
     // ensures x'<=x & x'<=0 & flow __norm or eres::ret_int<1> & x=x' & 2223<=x' & flow ret_int;
     //ensures x'=x;
