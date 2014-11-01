@@ -127,15 +127,33 @@ let elim_eqnull hn_elim_heap to_elim_null_svl f0=
   Debug.no_2 "elim_eqnull" pr1!CP.print_svl  pr1
       (fun _ _ -> elim_eqnull_x hn_elim_heap to_elim_null_svl f0) f0 to_elim_null_svl
 
-let fresh_data_v f0=
-  let hds, hvs, hrs = get_hp_rel_formula f0 in
-  let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
-  let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
-  let v_sps3 = (CP.remove_dups_svl v_sps2) in
-  let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in
-  let sst = List.combine v_sps3 fr_v_sps2 in
-  subst sst f0
+let fresh_data_v_x f0=
+  let fresh_hf hf= match hf with
+    | DataNode dn ->
+          let args = List.filter (fun sv -> not (CP.is_node_typ sv)) dn.h_formula_data_arguments in
+          if args = [] then hf else
+            let fr_args = CP.fresh_spec_vars args in
+            h_subst (List.combine args fr_args) hf
+    | ViewNode vn ->
+          let args = List.filter (fun sv -> not (CP.is_node_typ sv)) vn.h_formula_view_arguments in
+          if args = [] then hf else
+            let fr_args = CP.fresh_spec_vars args in
+            h_subst (List.combine args fr_args) hf
+    | _ -> hf
+  in
+  (* let hds, hvs, hrs = get_hp_rel_formula f0 in *)
+  (* let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in *)
+  (* let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in *)
+  (* let v_sps3 = ((\* CP.remove_dups_svl *\) v_sps2) in *)
+  (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
+  (* let sst = List.combine v_sps3 fr_v_sps2 in *)
+  (* subst sst f0 *)
+  formula_trans_heap_node fresh_hf f0
 
+let fresh_data_v f0=
+  let pr1= !print_formula in
+  Debug.no_1 "fresh_data_v" pr1 pr1
+      (fun _ -> fresh_data_v_x f0) f0
 
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=

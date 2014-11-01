@@ -36,7 +36,9 @@ let is_long n = (n==0);;
 (* ;; *)
 
 
-
+let string_of_pos p = 
+  " " ^ (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
@@ -83,7 +85,7 @@ let pr_opt f x = match x with
     | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
 
 let pr_opt_silent f x = match x with
-    | None -> fmt_string ""
+    | None -> ()
     | Some v -> f v
   
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
@@ -1045,8 +1047,8 @@ and pr_pure_formula  (e:P.formula) =
 and pr_term_ann_debug pr_short ann = 
   match ann with
   | P.Term -> fmt_string "Term"
-  | P.Loop -> fmt_string "Loop"
-  | P.MayLoop -> fmt_string "MayLoop"
+  | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
+  | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
   | P.TermU uid -> fmt_string "TermU"; pr_term_id pr_short uid
   | P.TermR uid -> fmt_string "TermR"; pr_term_id pr_short uid
   | P.Fail f -> match f with
@@ -1068,8 +1070,8 @@ and pr_term_id pr_short uid =
 and pr_term_ann_assume ann = 
   match ann with
   | P.Term -> fmt_string "Term"
-  | P.Loop -> fmt_string "Loop"
-  | P.MayLoop -> fmt_string "MayLoop"
+  | P.Loop cex -> fmt_string "Loop"; pr_term_cex cex
+  | P.MayLoop cex -> fmt_string "MayLoop"; pr_term_cex cex
   | P.TermU uid 
   | P.TermR uid ->
     let pr_args op f xs = pr_args None None op "(" ")" "," f xs in
@@ -1078,6 +1080,10 @@ and pr_term_ann_assume ann =
   | P.Fail f -> match f with
     | P.TermErr_May -> fmt_string "TermErr_May"
     | P.TermErr_Must -> fmt_string "TermErr_Must"
+
+and pr_term_cex cex = 
+  pr_wrap_test "" Gen.is_None (pr_opt_silent (fun cex ->
+    pr_set (fun pos -> fmt_string (string_of_pos pos)) cex.P.tcex_trace)) cex
 
 and pr_term_ann debug ann =
   if debug then pr_term_ann_debug false ann
@@ -1094,7 +1100,9 @@ let string_of_var_measures = poly_string_of_pr pr_var_measures
 
 let string_of_term_id = poly_string_of_pr (pr_term_id true)
   
-let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
+let string_of_term_ann = poly_string_of_pr (pr_term_ann true)
+
+let string_of_term_cex  = poly_string_of_pr pr_term_cex
 
 let pr_prune_status st = match st with
   | Implied_N -> fmt_string "(IN)"
@@ -3464,9 +3472,6 @@ let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_
 
 let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_failesc_context lc))^"]"
 
-let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
-				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
-
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
@@ -5173,6 +5178,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cpure.print_annot_arg := string_of_annot_arg;;
+Cpure.print_term_ann := string_of_term_ann;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;

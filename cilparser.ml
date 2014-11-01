@@ -2268,8 +2268,10 @@ let parse_hip (filename: string) : Iast.prog_decl =
   (* do the preprocess by GCC first *)
   let prep_filename = filename ^ ".prep" in
   let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
-  let _ = print_endline ("GCC Preprocessing...") in
-  let _ = print_endline cmd in
+  if not !Globals.compete_mode then (
+    print_endline ("GCC Preprocessing...");
+    print_endline cmd;
+  );
   let exit_code = Sys.command cmd in
   if (exit_code != 0) then
     report_error no_pos "GCC Preprocessing failed!";

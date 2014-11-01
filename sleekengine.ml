@@ -2087,9 +2087,9 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
     (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
 
 let print_exc (check_id: string) =
-  Printexc.print_backtrace stdout;
+  print_backtrace_quiet ();
   dummy_exception() ;
-  print_string ("exception caught " ^ check_id ^ " check\n")
+  print_string_quiet ("exception caught " ^ check_id ^ " check\n")
 
 let process_sat_check_x (f : meta_formula) =
   let nn = (sleek_proof_counter#inc_and_get) in
@@ -2107,6 +2107,18 @@ let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
 
+let process_nondet_check (v: ident) (mf: meta_formula) =
+  if (!Globals.print_input || !Globals.print_input_all) then (
+    print_endline ("Check_nondet:\n ### var = " ^ v ^"\n ### formula = " ^ (string_of_meta_formula mf));
+  );
+  let (_,f) = meta_to_formula mf false [] [] in
+  let pf = CF.get_pure f in
+  let res = CP.check_non_determinism v pf in
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let res_str = if res then "Valid" else "Fail" in
+  let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
+  print_endline msg
+  
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
@@ -2122,7 +2134,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
 		let _ = if !Globals.trace_failure then
-		  (print_string "caught\n"; Printexc.print_backtrace stdout) else () in
+		  (print_string "caught\n"; print_backtrace_quiet ()) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
         false
@@ -2249,7 +2261,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       res
     with ex -> 
         (* print_exc num_id *)
-        (if !Globals.trace_failure then (print_string "caught\n"; Printexc.print_backtrace stdout));
+        (if !Globals.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
         let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
         let _ = if is_tnt_flag then should_infer_tnt := false in
         (*   let _ = match itype with *)

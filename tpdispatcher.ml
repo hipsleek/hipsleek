@@ -165,7 +165,7 @@ module Netprover = struct
 	    set_priority := true;
 	    let lst = Str.split (Str.regexp ";") str in
 	    prio_list := List.map (fun name_prio -> let l = Str.split (Str.regexp ":") name_prio in ((List.hd l),int_of_string(List.nth l 1))) lst
-	  with e -> print_endline "set_prio_list error"; raise e
+	  with e -> print_endline_quiet "set_prio_list error"; raise e
  
   let index_of elem lst =
     (** return the first index of [elem] in the list [lst] *)
@@ -450,16 +450,16 @@ let set_tp tp_str =
 	();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
-let _ =
+let init_tp () =
   let _ = (if !Globals.is_solver_local then
   let _ = Smtsolver.is_local_solver := true in
-  let _ = Smtsolver.smtsolver_name := "./z3" in
+  let _ = Smtsolver.smtsolver_name := "z3" in
   let _ = Omega.is_local_solver := true in
   let _ = Omega.omegacalc := "./oc" in
   ()
   else ())
   in
-  let _ = print_endline ("!!! Using Z3 by default") in 
+  let _ = print_endline_quiet ("!!! Using Z3 by default") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 
@@ -1064,7 +1064,7 @@ let cnv_int_to_ptr f =
                 if is_valid_ann i then
                   Some(Neq(a1,int_to_ann i,ll),l)
                 else
-                  (*let _ = print_endline "xxxxxx" in*)
+                  (*let _ = print_endline_quiet "xxxxxx" in*)
                   Some(BConst (true,ll),l) (* of course *)
               else Some bf
       | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
@@ -1148,9 +1148,9 @@ let wrap_pre_post_print s fn x =
       (* if String.compare s1 s2 == 0 then r2 *)
       (* else  *)
         begin
-          print_endline s;
-          print_endline ("input :"^s1);
-          print_endline ("output:"^s2);
+          print_endline_quiet s;
+          print_endline_quiet ("input :"^s1);
+          print_endline_quiet ("output:"^s2);
           r2
         end
     else r2

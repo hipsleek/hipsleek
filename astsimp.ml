@@ -3173,7 +3173,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
-    let _= proving_loc #set (proc.I.proc_loc) in
+    let _= proving_loc # set (proc.I.proc_loc) in
     let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
     let check_return_res = check_return proc in
     if not (Gen.is_empty dup_names) then
@@ -5287,7 +5287,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.proc_loc = pos; 
                 I.proc_test_comps = if not !Globals.validate then None else
                   I.look_up_test_comps prog.I.prog_test_comps w_name} in
-            let _ = Debug.info_hprint (add_str "w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
+            let _ = Debug.ninfo_hprint (add_str "w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
             let w_proc = match w_proc.I.proc_static_specs with
               |  IF.EList [] ->
                      if Globals.infer_const_obj # is_shape then
@@ -5312,15 +5312,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                  }
                      else w_proc
               | IF.EInfer i_sf ->
-                    let _ =  Debug.info_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
+                    let _ =  Debug.ninfo_hprint (add_str " i_sf.IF.formula_inf_obj" pr_id) ( i_sf.IF.formula_inf_obj# string_of) in
                     if Globals.infer_const_obj # is_shape || i_sf.IF.formula_inf_obj # is_shape then
                       let is_simpl, pre,post = IF.get_pre_post i_sf.IF.formula_inf_continuation in
                       if is_simpl then
                         let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
                             String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
                         ) w_formal_args in (*???*)
-                        let _ =  Debug.info_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
-                        let _ =  Debug.info_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                        let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                        let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
                         let infer_args = w_formal_args in
                         let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pre
                           post INF_SHAPE i_sf.IF.formula_inf_obj #get_lst pos in
@@ -7295,8 +7295,8 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_pos = uid.IP.tu_pos; } in 
   match ann with
     | IP.Term -> CP.Term
-    | IP.Loop -> CP.Loop
-    | IP.MayLoop -> CP.MayLoop
+    | IP.Loop -> CP.Loop (Some { CP.tcex_trace = [proving_loc # get]; })
+    | IP.MayLoop -> CP.MayLoop None
     | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
     | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
     | IP.Fail f -> CP.Fail (trans_term_fail f)

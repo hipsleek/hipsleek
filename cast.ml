@@ -1250,7 +1250,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (* let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
+  (* let _ = print_endline_quiet(" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
@@ -1946,7 +1946,7 @@ let check_proper_return cret_type exc_list f =
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
 	      else if not (List.exists (fun c->
-                  (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
+                  (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
                 let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
@@ -2279,10 +2279,10 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
   let f e = 
     match e with
     | ICall e ->
-      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_icall_method_name) in *)
+      (* let _ = print_endline_quiet(mnv ^ " -> " ^ e.exp_icall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_icall_method_name)
     | SCall e ->
-      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_scall_method_name) in *)
+      (* let _ = print_endline_quiet(mnv ^ " -> " ^ e.exp_scall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_scall_method_name)
     | _ -> None
   in
@@ -3622,7 +3622,7 @@ let add_post_for_tnt_prog prog =
     let dprocs = dependence_procs_of_proc prog proc in
     let _ = 
       if is_empty dprocs then ()
-      else print_endline ("\n !!! @post is added into " ^ 
+      else print_endline_quiet("\n !!! @post is added into " ^ 
         (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
     in
     acc @ dprocs) [] inf_term_procs in

@@ -15,11 +15,11 @@ int test_fun(int x, int y, int z)
         return *z_ref;
     }
     while (*x_ref >= *z_ref) {
-        if(*y_ref <= 0) {
-            // replace assume
-            return *z_ref;
-        }
-        *z_ref = *z_ref + *y_ref;
+      if(*y_ref <= 0) {
+        // replace assume
+        return *z_ref;
+      }
+      *z_ref = *z_ref + *y_ref;
     }
     return *z_ref;
 }

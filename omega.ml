@@ -217,7 +217,7 @@ let omega_of_formula_old i f  =
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
-let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
 (* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
@@ -246,7 +246,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -818,6 +818,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
                   let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+                  (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
+                  (* Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)

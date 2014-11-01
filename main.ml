@@ -64,7 +64,7 @@ let parse_file_full file_name (primitive: bool) =
     (* start parsing *)
     if not primitive then
       if (not !Globals.web_compile_flag) then
-      print_endline ("Parsing file \"" ^ file_name ^ "\" by " 
+      print_endline_quiet ("Parsing file \"" ^ file_name ^ "\" by " 
                      ^ parser_to_use ^ " parser...");
     let _ = Gen.Profiling.push_time "Parsing" in
     let prog = (
@@ -75,7 +75,7 @@ let parse_file_full file_name (primitive: bool) =
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
         (*   let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in  *)
-        (*   (* let _ = print_endline "using jparser" in *)                                       *)
+        (*   (* let _ = print_endline_quiet "using jparser" in *)                                       *)
         (*   let input_channel = open_in ss_file_name in                                          *)
         (*   let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in *)
         (*   close_in input_channel;                                                              *)
@@ -89,9 +89,11 @@ let parse_file_full file_name (primitive: bool) =
     prog
   with
       End_of_file -> exit 0
-    | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-       raise t)
+    | M.Loc.Exc_located (l,t)-> (
+        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "
+                            ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
+        raise t
+      )
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -147,7 +149,7 @@ let process_include_files incl_files ref_file =
       let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
 		try
 		  let (curdir,_)=BatString.rsplit ref_file "/" in
-		  (* let _= print_endline ("BachLe curdir: "^curdir) in    *)
+		  (* let _= print_endline_quiet ("BachLe curdir: "^curdir) in    *)
       let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
 	    prims_list
 		with Not_found ->
@@ -168,9 +170,10 @@ let parse_file_cp file_name =
     a
   with
       End_of_file -> exit 0
-    | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-       raise t)
+    | M.Loc.Exc_located (l,t)-> (
+        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+        raise t
+      )
 
 let process_validate prog =
   let file_to_cp = if(String.compare !Globals.validate_target "" != 0) then !Globals.validate_target else (
@@ -403,9 +406,9 @@ let process_source_full source =
     (* let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
    
     (* Append all primitives in list into one only *)
-		(* let _ = print_endline ("process_source_full: before  process_intermediate_prims ") in *)
+		(* let _ = print_endline_quiet ("process_source_full: before  process_intermediate_prims ") in *)
     let iprims_list = process_intermediate_prims prims_list in
-		(* let _ = print_endline ("process_source_full: after  process_intermediate_prims") in *)
+		(* let _ = print_endline_quiet ("process_source_full: after  process_intermediate_prims") in *)
     let iprims = Iast.append_iprims_list_head iprims_list in
     
     let prim_names = 
@@ -413,8 +416,8 @@ let process_source_full source =
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
       ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
     in
-    (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
-		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
+    (* let _ = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
+		(* let _=print_endline_quiet ("PROG: "^Iprinter.string_of_program prog) in *)
     let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
                 
                 (*let _ = print_string (Iprinter.string_of_program prog^"haha") in*)
@@ -428,8 +431,8 @@ let process_source_full source =
     let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     
-    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
-    (* let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
+    (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _ = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
    
 	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
@@ -439,19 +442,19 @@ let process_source_full source =
 			if (!Globals.reverify_all_flag) then 
 					Marshal.from_string (Marshal.to_string intermediate_prog [Marshal.Closures]) 0 
 			else intermediate_prog in*)
-    (* let _ = print_endline ("process_source_full: before --pip") in *)
+    (* let _ = print_endline_quiet ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
 		        else if(!Globals.print_input) then
 							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
 						else () in
-    (* let _ = print_endline ("process_source_full: after --pip") in *)
+    (* let _ = print_endline_quiet ("process_source_full: after --pip") in *)
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
 (*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
-    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
+    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
     (**************************************)
     (*Simple heuristic for ParaHIP website*)
     (*Heuristic: check if waitlevel and locklevels have been used for verification
@@ -559,8 +562,8 @@ let process_source_full source =
       (* let _ = I.set_iprog intermediate_prog in *)
       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
-      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError1(s) detected at main "^"\n");
+      print_string_quiet ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      print_string_quiet ("\nError1(s) detected at main "^"\n");
       let _ = Log.process_proof_logging !Globals.source_files cprog prim_names in
       raise e
     end);
@@ -581,7 +584,7 @@ let process_source_full source =
     		begin 
     			print_string "\nExport proof to HTML file ... ";
     			Prooftracer.write_html_output ();
-    			print_endline "done!" 
+    			print_endline_quiet "done!" 
     		end
     in
     
@@ -608,15 +611,15 @@ let process_source_full source =
       (*   in *)
       (*   let tstoplog = Gen.Profiling.get_time () in *)
       (*   let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in () *)
-      (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
+      (*   (\* let _=print_endline_quiet ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
       (* end *)
     in
     (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
-    (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
+    (*let _ = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     hip_epilogue ();
     if (not !Globals.web_compile_flag) then 
-      print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+      print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
     else ();
@@ -698,22 +701,22 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* Append all primitives in list into one only *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
-	(* let _= List.map (fun x-> print_endline ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
-  (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
-    (* let _ = print_endline (Iprinter.string_of_program prog) in *)
+	(* let _= List.map (fun x-> print_endline_quiet ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
+  (* let _ = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
+    (* let _ = print_endline_quiet (Iprinter.string_of_program prog) in *)
   let intermediate_prog = Globalvars.trans_global_to_param prog in
-  (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
-    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
+  (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog") in *)
+    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-    (* let _ = print_endline ("process_source_full: before label_procs_prog") in *)
-    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
+    (* let _ = print_endline_quiet ("process_source_full: before label_procs_prog") in *)
+    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
-  (* let _ = print_endline ("process_source_full: before --pip") in *)
+  (* let _ = print_endline_quiet ("process_source_full: before --pip") in *)
   let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
 	         else if(!Globals.print_input) then
 							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
 						else () in
-  (* let _ = print_endline ("process_source_full: after --pip") in *)
+  (* let _ = print_endline_quiet ("process_source_full: after --pip") in *)
   let _ = Gen.Profiling.pop_time "Translating global var" in
   (* Global variables translated *)
   (* let ptime1 = Unix.times () in
@@ -824,16 +827,16 @@ let process_source_full_after_parser source (prog, prims_list) =
     begin 
       print_string "\nExport proof to HTML file ... ";
       Prooftracer.write_html_output ();
-      print_endline "done!" 
+      print_endline_quiet "done!" 
     end
   in
   
   (* print mapping table control path id and loc *)
-  (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
+  (*let _ = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
   if (not !Globals.web_compile_flag) then 
-    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+    print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
       (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
   else ();
@@ -870,9 +873,9 @@ let main1 () =
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
-  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in*)
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
-  (*let _ = print_endline (string_of_bool (Printexc.backtrace_status())) in *)
+  (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
+    let _ = record_backtrace_quite () in
+  (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
@@ -891,15 +894,16 @@ let main1 () =
 
 let pre_main () =
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then
 	  let _ = print_version ()
     in []
   else
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = record_backtrace_quite () in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
-		List.map ( fun x-> let _= print_endline ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
+		List.map ( fun x-> let _= print_endline_quiet ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
 
 let loop_cmd parsed_content = 
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
@@ -922,9 +926,13 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize ();
-    print_string "caught\n"; Printexc.print_backtrace stdout;
-    print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError3(s) detected at main \n");
+    print_string_quiet "caught\n"; 
+    print_backtrace_quiet ();
+    print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string_quiet ("\nError3(s) detected at main \n");
+    (* print result for svcomp 2015 *)
+    if (!Globals.svcomp_compete_mode) then
+      print_endline "UNKNOWN";
   end
 
 let _ = 
@@ -949,9 +957,12 @@ let _ =
           ()
         with _ as e -> begin
           finalize ();
-          print_string "caught\n"; Printexc.print_backtrace stdout;
-          print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError4(s) detected at main \n");
+          print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
+          print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+          print_string_quiet ("\nError4(s) detected at main \n");
+          (* print result for svcomp 2015 *)
+          if (!Globals.svcomp_compete_mode) then
+            print_endline "UNKNOWN"
         end
     done;
     hip_epilogue ()

@@ -100,6 +100,7 @@ let proc_gen_cmd cmd =
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
     | SatCheck f -> (process_sat_check f;())
+    | NonDetCheck (v,f) -> (process_nondet_check v f)
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
@@ -144,9 +145,11 @@ let parse_file (parse) (source_file : string) =
       parse source_file 
     with
       | End_of_file -> List.rev cmds
-      | M.Loc.Exc_located (l,t)-> 
-            (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-            raise t) in
+      | M.Loc.Exc_located (l,t)-> (
+          print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n error: "
+                              ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
+          raise t
+        ) in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
@@ -194,6 +197,7 @@ let parse_file (parse) (source_file : string) =
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | SatCheck f -> (process_sat_check f; ())
+      | NonDetCheck (v, f) -> (process_nondet_check v f)
       | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
       | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
       | Simplify f -> process_simplify f
@@ -272,7 +276,7 @@ let parse_file (parse) (source_file : string) =
 
 let main () =
   let _ = Globals.is_sleek_running := true in
-  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  let _ = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
 		            I.prog_data_decls = [iobj_def;ithrd_def];
                 I.prog_global_var_decls = [];
@@ -415,12 +419,13 @@ let sleek_proof_log_Z3 src_files =
 let _ =
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  Tpdispatcher.init_tp();
   let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
-    (* let _ = Printexc.record_backtrace !Globals.trace_failure in *)
+    (* let _ = record_backtrace_quite () in *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
