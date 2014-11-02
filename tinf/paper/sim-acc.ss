@@ -21,11 +21,25 @@ infer [@term] requires true ensures true;
                 int n1=n-1;
                 //int p = ranPos();
                 int r = Ack(m, n1);
-                return Ack(m-1, r);
+                int rr = Ack(m-1, r); 
+                dprint;
+                return rr;
  	}
 }
 /*
 # sim-acc.ss
+
+ termAssume 
+res=v_int_25_1318' & v_int_25_1318'=1 & v_int_25_1473+1=m & 
+m!=0 & !(v_boolean_18_1440) & m!=0 & n!=0 & !(v_boolean_18_1441) & n!=0 & 
+!(v_bool_18_1319') & !(v_boolean_18_1441) & !(v_boolean_18_1440) & 
+!(v_bool_18_1319') & m1_1471+1=m & n1_1472+1=n & 
+r_1474=1 & Ackpost_1406(m',n1_1472) & Ackpost_1406(v_int_25_1473,r_1474) 
+--> Ackpost_1406(m,n).
+
+Why wasn't information on m' captured in this relational assumption?
+
+
 
 	if (m==0 || n==0) return 1;
  	else {

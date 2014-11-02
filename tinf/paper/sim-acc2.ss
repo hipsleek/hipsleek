@@ -25,14 +25,14 @@ infer [@term] requires true ensures true;
  	}
 }
 /*
-# sim-acc.ss
+# sim-acc2.ss
 
 	if (m==0 || n==0) return 1;
  	else {
 		int m1=m-1;
                 int n1=n-1;
                 int r = Ack(m, n1);
-                return Ack(m-1, r);
+                return Ack(m-1, r+ranPos());
  	}
 
 GOT:
