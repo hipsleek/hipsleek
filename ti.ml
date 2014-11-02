@@ -97,23 +97,22 @@ let solve_base_trrels params base_trrels turels =
   
   (* let _ = print_endline_quiet ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
   (* let _ = print_endline_quiet ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
-  (* let _ = print_endline ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
+  (* let _ = print_endline_quite ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
     
   let base_cond = List.fold_left (fun ac bctx ->
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
   (* let base_conds = simplify_and_slit_disj base_cond in *)
   let base_cond = simplify_disj base_cond in
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
-  (* WN : attempt to rectify --infer-lex problem *)
   base_cond  
-  (* if !Globals.tnt_infer_lex then base_cond *)
-  (* else *)
-  (*   let may_cond = List.fold_left (fun ac bctx -> *)
+  (* if !Globals.tnt_infer_lex then base_cond                                *)
+  (* else                                                                    *)
+  (*   let may_cond = List.fold_left (fun ac bctx ->                         *)
   (*     mkOr ac (mkAnd bctx not_term_cond)) (CP.mkFalse no_pos) base_ctx in *)
-  (*   (\* let may_conds = simplify_and_slit_disj may_cond in *\) *)
-  (*   let may_cond = simplify_disj may_cond in *)
-  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in *)
-  (*   base_cond @ may_cond *)
+  (*   (* let may_conds = simplify_and_slit_disj may_cond in *)              *)
+  (*   let may_cond = simplify_disj may_cond in                              *)
+  (*   let may_cond = if is_sat may_cond then [MayTerm may_cond] else [] in  *)
+  (*   base_cond @ may_cond                                                  *)
   
 let solve_base_trrels params base_trrels turels =
   Debug.no_1 "solve_base_trrels" (!CP.print_svl) (pr_list print_trrel_sol)
@@ -355,11 +354,11 @@ let finalize_turel_graph prog tg =
 (*     try                                                                                     *)
 (*       let scc_list = Array.to_list (TGC.scc_array tg) in                                    *)
 (*       let scc_groups = partition_scc_list tg scc_list in                                    *)
-(*       (* let _ =                                                       *)                   *)
-(*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)                   *)
-(*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)                   *)
-(*       (* in                                                            *)                   *)
-(*       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)                   *)
+(*       (* let _ =                                                             *)             *)
+(*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)             *)
+(*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)             *)
+(*       (* in                                                                  *)             *)
+(*       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)             *)
 (*       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in *)
 (*       finalize_turel_graph prog tg                                                          *)
 (*     with                                                                                    *)
