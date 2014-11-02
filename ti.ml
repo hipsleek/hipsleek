@@ -169,8 +169,8 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let may_cond = mkNot (join_disjs (List.map get_cond conds)) in
-  if is_sat may_cond then conds @ [MayTerm may_cond]
+  let may_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
+  if (is_sat may_cond) && not !Globals.tnt_infer_lex then conds @ [Rec may_cond]
   else conds
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
