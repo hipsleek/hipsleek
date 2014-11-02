@@ -2262,6 +2262,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_tail_rec = false;           (* temporarily assigned *)
           C.view_mutual_rec_views = [];         (* temporarily assigned *)
           C.view_residents = [];
+          C.view_bound_pointers = [];
           C.view_forward_ptrs = [];
           C.view_forward_fields = [];
           C.view_backward_ptrs = [];
@@ -3024,27 +3025,35 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     let ddecl_opt = (
       match vd.C.view_data_decl with
       | Some _ -> vd.C.view_data_decl
-      | None -> 
+      | None ->
           try Some (C.look_up_data_def_raw data_decls vd.C.view_data_name)
           with _ ->
             report_warning no_pos "update_views_info: data_decl not found";
             None
     ) in
     let vd = { vd with C.view_data_decl = ddecl_opt } in
+    
+    (* update bound pointers *)
+    let bound_pointers = Accfold.compute_bound_pointers_of_view vd in
+    let vd = { vd with C.view_bound_pointers = bound_pointers } in
+
     (* update tail recursive property *)
     let tailrec = check_view_tail_rec vd in
     let vd = { vd with C.view_is_tail_rec = tailrec } in
+
     (* view residents *)
     let residents = compute_view_residents vd view_decls in
     let vd = { vd with C.view_residents = residents } in
+
     (* forward & backward pointers, fields *)
-    let vd = (try 
+    let vd = (try
       let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd data_decls view_decls in
       {vd with C.view_forward_ptrs = fwp;
                C.view_backward_ptrs = bwp;
                C.view_forward_fields = fwf;
                C.view_backward_fields = bwf;}
     with _ -> vd) in
+
     (* touching & segmented is computed only when the forward and backward pointers is available *)
     let touching = is_touching_view vd in
     let segmented = is_segmented_view vd in
@@ -3053,6 +3062,27 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     vd
   ) view_decls in
   new_view_decls
+
+
+(*
+ * Order view_decl list to follow to the order of an original view_decl list
+ *)
+and restore_original_views_order (vdecls: C.view_decl list)
+    (original_vdecls: I.view_decl list)
+    : C.view_decl list =
+  let rec restore_helper ordered_vds unordered_vds original_vds = (
+    match original_vds with
+    | [] -> ordered_vds @ unordered_vds
+    | orig_vd::rest_orig_vds -> (
+        let next_vds, rest_vds = List.partition (fun vd ->
+          eq_str orig_vd.I.view_name vd.C.view_name 
+        ) unordered_vds in
+        let new_ordered_vds = ordered_vds @ next_vds in
+        restore_helper new_ordered_vds rest_vds rest_orig_vds
+      )
+  ) in
+  restore_helper [] vdecls original_vdecls
+
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
 

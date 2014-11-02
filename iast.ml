@@ -2831,6 +2831,9 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
+let name_of_view (vdecl: view_decl) : string =
+  vdecl.view_name
+
 let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
   { coercion_type = coer_type;
   coercion_exact = false;

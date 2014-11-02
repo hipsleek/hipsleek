@@ -99,11 +99,12 @@ and view_decl = {
     view_type_of_self : typ option;
     view_is_touching : bool;
     view_is_segmented : bool;
-    view_is_tail_rec: bool;              (* true if view is tail-recursively defined *)
-    view_mutual_rec_views: ident list;   (* list of mutual-recursive views with this view *)
-    view_residents: P.spec_var list;     (* list of pointers reside in the memory allocated of view *) 
-    view_forward_ptrs: P.spec_var list;  (* forward pointers, associating with this view *)
-    view_forward_fields: ident list;     (* forward fields, associating with data type of view *)
+    view_is_tail_rec: bool;                  (* true if view is tail-recursively defined *)
+    view_mutual_rec_views: ident list;       (* list of mutual-recursive views with this view *)
+    view_residents: P.spec_var list;         (* list of pointers reside in the memory allocated of view *)
+    view_bound_pointers: P.spec_var list;    (* list of pointers that are boundary of this views *)
+    view_forward_ptrs: P.spec_var list;      (* forward pointers, associating with this view *)
+    view_forward_fields: ident list;         (* forward fields, associating with data type of view *)
     view_backward_ptrs: P.spec_var list;
     view_backward_fields: ident list;
     view_kind : view_kind;
@@ -1231,6 +1232,9 @@ let get_view_root (vdecl: view_decl) : CP.spec_var =
   let root_typ = Named (vdecl.view_data_name) in
   let root = CP.SpecVar (root_typ, self, Unprimed) in
   root
+
+let name_of_view (vdecl: view_decl) : string =
+  vdecl.view_name
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =

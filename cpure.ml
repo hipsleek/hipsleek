@@ -2939,6 +2939,10 @@ and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect_svl x y = intersect x y
 
+and check_intersection_svl x y =
+  let svl = intersect_svl x y in
+  (List.length svl != 0)
+
 and diff_svl_x (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> not(mem sv svs2)) svs1
 

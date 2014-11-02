@@ -673,53 +673,46 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
   ) prog.C.prog_view_decls
 
 
-(* let compute_direction_pointers_of_view (vdecl: C.view_decl)             *)
-(*     (data_decls: C.data_decl list) (view_decls: C.view_decl list)       *)
-(*     : (CP.spec_var list * ident list * CP.spec_var list * ident list) = *)
-
-
-(* let compute_direction_pointers_of_paramed_view (vdecl: C.view_decl)     *)
-(*     (data_decls: C.data_decl list) (view_decls: C.view_decl list)       *)
-(*     : (CP.spec_var list * ident list * CP.spec_var list * ident list) = *)
-
-
 (*
  * colelct reachable pointers in a formula, starting from 'roots' nodes
  *)
 let collect_reachable_pointers_in_formula_x (f: CF.formula) (roots: CP.spec_var list)
     : CP.spec_var list =
-  let rec collect_helper f roots = (
-    let reachable_ptrs = ref roots in
-    let trans_ef, trans_f = (fun _ -> None), (fun _ -> None) in
-    let trans_hf hf = (
-      let hf_args = (match hf with
-        | CF.ViewNode vn ->
-            if not (CP.mem_svl vn.CF.h_formula_view_node !reachable_ptrs) then []
-            else vn.CF.h_formula_view_arguments
-        | CF.DataNode dn ->
-            if not (CP.mem_svl dn.CF.h_formula_data_node !reachable_ptrs) then []
-            else dn.CF.h_formula_data_arguments
-        | _ -> []
-      ) in
-      let pointers = List.filter (fun arg -> CP.is_node_typ arg) hf_args in 
-      let _ = (if List.length pointers > 0 then
-        (* update related vars *)
-        reachable_ptrs := CP.remove_dups_svl (!reachable_ptrs @ pointers)
-      ) in
-      None
+  let rec collect_helper f roots eset = (
+    let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
+    let search_hf hf = (match hf with
+      | CF.ViewNode vn ->
+          if not (CP.mem_svl vn.CF.h_formula_view_node roots) then (Some [])
+          else (
+            let vars = vn.CF.h_formula_view_arguments in
+            let pointers = List.filter CP.is_node_typ vars in
+            let reachable_ptrs = List.concat (List.map (fun v ->
+              CF.compute_sv_equiv_closure v eset
+            ) pointers) in
+            Some (CP.remove_dups_svl reachable_ptrs)
+          )
+      | CF.DataNode dn ->
+          if not (CP.mem_svl dn.CF.h_formula_data_node roots) then (Some [])
+          else (
+            let vars = dn.CF.h_formula_data_arguments in
+            let pointers = List.filter CP.is_node_typ vars in
+            let reachable_ptrs = List.concat (List.map (fun v ->
+              CF.compute_sv_equiv_closure v eset
+            ) pointers) in
+            Some (CP.remove_dups_svl reachable_ptrs)
+          )
+      | _ -> None
     ) in
-    let trans_m, trans_a = (fun mp -> Some mp), (fun a -> Some a) in
-    let trans_pf, trans_e = (fun pf -> Some pf), (fun e -> Some e) in
-    let trans_bf bf = Some bf in
-    let trans_func = (trans_ef, trans_f, trans_hf,
-        (trans_m, trans_a, trans_pf, trans_bf, trans_e)) in
-    let _ = CF.transform_formula trans_func f in
-    if (List.length !reachable_ptrs != List.length roots) then
-      collect_helper f !reachable_ptrs
-    else !reachable_ptrs
+    let searcher = (search_f, search_hf, search_mf) in
+    let reachable_ptrs = Afutil.search_in_formula searcher f in
+    let reachable_ptrs = CP.remove_dups_svl (roots @ reachable_ptrs) in
+    if (List.length reachable_ptrs != List.length roots) then
+      collect_helper f reachable_ptrs eset
+    else roots
   ) in
   (* return *)
-  collect_helper f roots
+  let eset = CF.build_eset_of_formula f in
+  collect_helper f roots eset
 
 
 let collect_reachable_pointers_in_formula (f: CF.formula) (roots: CP.spec_var list)
@@ -731,17 +724,13 @@ let collect_reachable_pointers_in_formula (f: CF.formula) (roots: CP.spec_var li
       (fun _ _ -> collect_reachable_pointers_in_formula_x f roots) f roots
 
 (*
- * - direction pointers are the pointers of view (or view arguments) which can
+ * - bound pointers are the pointers of view (or view arguments) which can
  *   be reached from the root node of view
  *)
-(* 
- * TRUNG TODO: what is the other name for "direction pointers" ?
- * - change to "bound pointer"? 
- *)
 
-let compute_direction_pointers_of_view_x (vdecl: C.view_decl) : CP.spec_var list =
+let compute_bound_pointers_of_view_x (vdecl: C.view_decl) : CP.spec_var list =
   let root = C.get_view_root vdecl in
-  let direction_pointers = List.concat (List.map (fun (f,_) ->
+  let bound_pointers = List.concat (List.map (fun (f,_) ->
     let eset = CF.build_eset_of_formula f in
     let reachable_ptrs = collect_reachable_pointers_in_formula f [root] in
     (* compute list of view vars can be reached from root by this view formula *)
@@ -752,24 +741,21 @@ let compute_direction_pointers_of_view_x (vdecl: C.view_decl) : CP.spec_var list
         CP.EMapSV.overlap reachable_ptrs equiv_svl
     ) vdecl.C.view_vars
   ) vdecl.C.view_un_struc_formula ) in
-  CP.remove_dups_svl direction_pointers
+  CP.remove_dups_svl bound_pointers
 
 
-let compute_direction_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
+let compute_bound_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
   let pr_v = (add_str "view" !C.print_view_decl_short) in
   let pr_res = (add_str "res" !CP.print_svl) in
-  Debug.no_1 "compute_direction_pointers_of_view" pr_v pr_res
-      (fun _ -> compute_direction_pointers_of_view_x vdecl) vdecl
+  Debug.no_1 "compute_bound_pointers_of_view" pr_v pr_res
+      (fun _ -> compute_bound_pointers_of_view_x vdecl) vdecl
 
 (*
- * - compute the head node of the main heap chain of a formula in context of a
- *   view declaration.
- * - head is just the node pointed by "self" (root node)
+ * Compute head node of main heap chain in a branch formula of a view declaration.
+ * Head nodes are the node pointed by "self" (root node)
  *)
-let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl)
-    : CP.spec_var =
-  (* let (search_f, _, search_mf) = Afutil.get_default_formula_searcher () in *)
-  let search = Afutil.get_default_formula_searcher () in
+let rec compute_head_nodes_of_formula_x  (f: CF.formula) : CF.h_formula list =
+  let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
   let search_hf hf = (match hf with
     | CF.ViewNode vn ->
         let name = CP.name_of_sv vn.CF.h_formula_view_node in
@@ -777,29 +763,67 @@ let compute_head_node_of_formula  (f: CF.formula) (vdecl: C.view_decl)
         else Some []
     | CF.DataNode dn ->
         let name = CP.name_of_sv dn.CF.h_formula_data_node in
-        let x = 1 in
         if (eq_str name self) then Some [hf]
         else Some []
     | _ -> None
   ) in
-  (* let search = (search_f, search_hf, search_mf) in *)
-  let res_list = Afutil.search_in_formula search f in
-  match res_list with
-  | [] -> report_error no_pos "compute head: head not found"
-  | [hd] -> hd
-  | _ -> report_error no_pos "compute head: expect only 1 head but found many"
+  let search_head = (search_f, search_hf, search_mf) in
+  Afutil.search_in_formula search_head f
 
 
- (* (direction_pointers) *)
+and compute_head_nodes_of_formula (f: CF.formula) : CF.h_formula list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_res = (add_str "res" (pr_list !CF.print_h_formula)) in
+  Debug.no_1 "compute_head_nodes_of_formula" pr_f pr_res
+      (fun _ -> compute_head_nodes_of_formula_x f) f
 
 
-(* 
- * direction fields of a data structure in context of a view declaration are
- * the field by which starting from the root of view and follow only them and
+(*
+ * Compute body nodes of main heap chain in a branch formula of a view declaration.
+ * Body nodes are nodes which can be reached from root, 
+ * and also starting from them can reach bound pointers of view
  *)
-(* let compute_direction_fields_of_data_x (ddecl: C.data_decl) (vdecl:  : CP.spec_var list = *)
-  
+let rec compute_body_nodes_of_formula_x (f: CF.formula) (vdecl: C.view_decl)
+    : CF.h_formula list =
+  let root = C.get_view_root vdecl in
+  let root_reachable_ptrs = collect_reachable_pointers_in_formula f [root] in
+  binfo_hprint (add_str "root_reachable_ptrs" !CP.print_svl ) root_reachable_ptrs no_pos;
+  let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
+  let search_hf hf = (match hf with
+    | CF.ViewNode vn ->
+        let vnode = vn.CF.h_formula_view_node in
+        if (CP.mem_svl vnode root_reachable_ptrs) then
+          let rch_ptrs = collect_reachable_pointers_in_formula f [vnode] in
+          if (CP.check_intersection_svl rch_ptrs vdecl.C.view_bound_pointers) then
+            Some [hf]
+          else Some []
+        else Some []
+    | CF.DataNode dn ->
+        let dnode = dn.CF.h_formula_data_node in
+        if (CP.mem_svl dnode root_reachable_ptrs) then
+          let rch_ptrs = collect_reachable_pointers_in_formula f [dnode] in
+          if (CP.check_intersection_svl rch_ptrs vdecl.C.view_bound_pointers) then
+            Some [hf]
+          else Some []
+        else Some []
+    | _ -> None
+  ) in
+  let search_bodies = (search_f, search_hf, search_mf) in
+  Afutil.search_in_formula search_bodies f
 
+
+and compute_body_nodes_of_formula (f: CF.formula) (vdecl: C.view_decl)
+    : CF.h_formula list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_v = (add_str "vdecl" C.name_of_view) in
+  let pr_res = (add_str "res" (pr_list !CF.print_h_formula)) in
+  Debug.no_2 "compute_body_nodes_of_formula" pr_f pr_v pr_res
+      (fun _ _ -> compute_body_nodes_of_formula_x f vdecl) f vdecl
+
+
+let compute
+
+      
 
 (*
  * A formula is well-formed iff all of its heap nodes must

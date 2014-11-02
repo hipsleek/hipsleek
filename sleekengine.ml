@@ -7,10 +7,35 @@ open Wrapper
 open Others
 open Sleekcommons
 open Gen.Basic
+open Debug
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
 open Label_only
+
+module H = Hashtbl
+module I = Iast
+(* module Inf = Infer *)
+(* module C = Cast *)
+module CF = Cformula
+module CP = Cpure
+module IF = Iformula
+module IP = Ipure
+(* module LP = Lemproving *)
+(* module AS = Astsimp *)
+(* module DD = Debug *)
+module XF = Xmlfront
+module NF = Nativefront
+module CEQ = Checkeq
+(* module TI = Typeinfer *)
+(* module SAU = Sautility *)
+(* module SAC = Sacore *)
+module MCP = Mcpure
+(* module SC = Sleekcore *)
+(* module LEM = Lemma *)
+module LO2 = Label_only.Lab2_List
+module TP = Tpdispatcher
+(* module FP = Fixpoint *)
 
 let string_of_vres t =
   match t with
@@ -56,29 +81,6 @@ let proc_sleek_result_validate lc =
   Cprinter.string_of_list_context_short string_of_vres 
   proc_sleek_result_validate lc
 
-module H = Hashtbl
-module I = Iast
-(* module Inf = Infer *)
-(* module C = Cast *)
-module CF = Cformula
-module CP = Cpure
-module IF = Iformula
-module IP = Ipure
-(* module LP = Lemproving *)
-(* module AS = Astsimp *)
-(* module DD = Debug *)
-module XF = Xmlfront
-module NF = Nativefront
-module CEQ = Checkeq
-(* module TI = Typeinfer *)
-(* module SAU = Sautility *)
-(* module SAC = Sacore *)
-module MCP = Mcpure
-(* module SC = Sleekcore *)
-(* module LEM = Lemma *)
-module LO2 = Label_only.Lab2_List
-module TP = Tpdispatcher
-(* module FP = Fixpoint *)
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -633,6 +635,7 @@ let convert_data_and_pred_to_cast_x () =
   ) iprog.I.prog_data_decls;
 
   (* convert pred *)
+  let original_views = List.rev iprog.I.prog_view_decls in
   let tmp_views = List.map (fun pdef ->
     let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
     let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
@@ -694,6 +697,7 @@ let convert_data_and_pred_to_cast_x () =
   let _ = Globals.lemma_syn := false in
   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   let cviews0 = Astsimp.update_views_info cviews0 !cprog.Cast.prog_data_decls in
+  let cviews0 = Astsimp.restore_original_views_order cviews0 original_views in
 
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
@@ -730,11 +734,20 @@ let convert_data_and_pred_to_cast_x () =
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ = if !Globals.trans_pred then Accfold.update_view_size_relations !cprog in
   (* Trung: temporary code *)
-  let _ = print_endline ("================") in
   let _ = List.iter (fun vd ->
-    let _ = print_endline ("  view " ^ vd.Cast.view_name) in
-    let direction_vars = Accfold.compute_direction_pointers_of_view vd in
-    let _ = print_endline ("      direction vars " ^ (!CP.print_svl direction_vars)) in
+    binfo_pprint "=============" no_pos;
+    binfo_hprint (add_str "views" Cast.name_of_view) vd no_pos;
+    let bound_pointers = Accfold.compute_bound_pointers_of_view vd in
+    binfo_hprint (add_str "bound pointers" !CP.print_svl) bound_pointers no_pos;
+    List.iter (fun (f, _) -> 
+      binfo_hprint (add_str "branch" !CF.print_formula) f no_pos;
+      (* let _ = print_endline ("         + formula: " ^ (!CF.print_formula f)) in *)
+      let head_nodes = Accfold.compute_head_nodes_of_formula f in
+      binfo_hprint (add_str "  head nodes" (pr_list !CF.print_h_formula)) head_nodes no_pos;
+      let body_nodes = Accfold.compute_body_nodes_of_formula f vd in
+      binfo_hprint (add_str "  body nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
+      ()
+    ) vd.Cast.view_un_struc_formula;
     (* let well_founded = if (Accfold.check_well_founded_view vd) then "OK" *)
     (*                    else "Not OK" in                                  *)
     (* let _ = print_endline ("     well-foundedness: " ^ well_founded) in  *)

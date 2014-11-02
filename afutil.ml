@@ -40,49 +40,49 @@ and 'a search_pure_bformula_t = (CP.b_formula -> 'a list option)
 and 'a search_pure_exp_t = (CP.exp -> 'a list option)
 
 
-let rec get_default_formula_searcher () : 'a search_formula_t =
+let rec create_default_formula_searcher () : 'a search_formula_t =
   let search_f = (fun _ -> None) in
-  let search_hf = get_default_heap_formula_searcher () in
-  let search_mf = get_default_mix_formula_searcher () in
+  let search_hf = create_default_heap_formula_searcher () in
+  let search_mf = create_default_mix_formula_searcher () in
   (search_f, search_hf, search_mf)
 
 
-and get_default_heap_formula_searcher () : 'a search_heap_formula_t =
+and create_default_heap_formula_searcher () : 'a search_heap_formula_t =
   (fun _ -> None)
 
 
-and get_default_mix_formula_searcher () : 'a search_mix_formula_t =
-  let search_m = get_default_memo_pure_searcher () in
-  let search_a = get_default_var_aset_searcher () in
-  let search_p = get_default_pure_formula_searcher () in
+and create_default_mix_formula_searcher () : 'a search_mix_formula_t =
+  let search_m = create_default_memo_pure_searcher () in
+  let search_a = create_default_var_aset_searcher () in
+  let search_p = create_default_pure_formula_searcher () in
   (search_m, search_a, search_p)
 
 
-and get_default_memo_formula_searcher () : 'a search_memo_formula_t =
-  get_default_mix_formula_searcher ()
+and create_default_memo_formula_searcher () : 'a search_memo_formula_t =
+  create_default_mix_formula_searcher ()
 
 
-and get_default_memo_pure_searcher () : 'a search_memo_pure_t =
+and create_default_memo_pure_searcher () : 'a search_memo_pure_t =
   (fun _ -> None)
 
 
-and get_default_var_aset_searcher () : 'a search_var_aset_t =
+and create_default_var_aset_searcher () : 'a search_var_aset_t =
   (fun _ -> None)
 
 
-and get_default_pure_formula_searcher () : 'a search_pure_formula_t = 
+and create_default_pure_formula_searcher () : 'a search_pure_formula_t = 
   let search_pf = (fun _ -> None) in
-  let search_bf = get_default_pure_bformula_searcher () in
+  let search_bf = create_default_pure_bformula_searcher () in
   (search_pf, search_bf)
 
 
-and get_default_pure_bformula_searcher () : 'a search_pure_bformula_t =
+and create_default_pure_bformula_searcher () : 'a search_pure_bformula_t =
   let search_bf = (fun _ -> None) in
-  let search_e = get_default_pure_exp_searcher () in
+  let search_e = create_default_pure_exp_searcher () in
   (search_bf, search_e)
 
 
-and get_default_pure_exp_searcher () : 'a search_pure_exp_t =
+and create_default_pure_exp_searcher () : 'a search_pure_exp_t =
   (fun _ -> None)
 
 
@@ -163,13 +163,16 @@ and search_in_memo_formula (search: 'a search_memo_formula_t) (mf: MCPD.memo_pur
   | Some res' -> res'
   | None ->
       let res_list = List.map (fun mg ->
-        (* let res1 = search_in_pure_bformula search_b mg.MCPD.memo_formula in *)
+        let res1_list = List.map (fun x -> 
+            search_in_pure_bformula search_b x.MCPD.memo_formula
+        ) mg.MCPD.memo_group_cons in
+        let res1 = List.concat res1_list in
         let res2_list = List.map (fun x ->
           search_in_pure_formula search_f x
         ) mg.MCPD.memo_group_slice in
         let res2 = List.concat res2_list in
         let res3 = search_in_aset search_a mg.MCPD.memo_group_aset in
-        res2 @ res3
+        res1 @ res2 @ res3
       ) mf in
       List.concat res_list   
 
