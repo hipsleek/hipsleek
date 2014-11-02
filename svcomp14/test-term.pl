@@ -70,10 +70,10 @@ if(-e "$result_file")  {#check for file existance
     #     or die "File $summary_file was not found";
     my $row = $first_row;
     foreach $dir (@dirs) {
-        if ($dir  =~ m/termination-memory-alloca/){
+        #if ($dir  =~ m/termination-memory-alloca/){
             $hip = "C_INCLUDE_PATH=termination-memory-alloca/ ".$hip;
             $args = '-infer "\@shape\@term"';
-        }
+        #}
         if($lex) {
          $args = $args.' --infer-lex '; 
         }
@@ -113,7 +113,7 @@ if(-e "$result_file")  {#check for file existance
                 alarm 0;
             } catch {
                 die $_ unless $_ eq "alarm\n";
-                print "timed out\n";
+                #print "timed out\n";
                 $res_cell = "TIMEOUT";
             };
 
@@ -146,12 +146,14 @@ if(-e "$result_file")  {#check for file existance
                     my @lines = split /\n/, $res_inf; 
                     foreach my $line (@lines) { 
                         if($line =~ m/.*requires.*/){
+                            #print "REQUIRES: \n";
                             if($line =~ m/Term/i # && $term =~ m/Term/i
-                                )       { $res_cell = "OK - Term"; $term_cnt++; }
-                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; }
-                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; $fail_cnt++; }
+                                )       { $res_cell = "OK - Term"; $term_cnt++;  last; }
+                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; last; }
+                            elsif($line =~ m/MayLoop\{.*\}/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; last; }
+                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; $fail_cnt++; last; }
                             # else { $err_cnt++; }
-                            # elsif($line =~ m/Loop/i)    { $res_cell = "Loop"; }
+                            elsif($line =~ m/Loop/i)    { $res_cell = "Loop";  $mayloop_cnt++;}
                         }
                     }
                 }
