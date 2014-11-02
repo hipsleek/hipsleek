@@ -900,9 +900,9 @@ let templ_rank_constr_of_rel for_lex rel =
   (* let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in                                            *)
   (* let constr = mkAnd dec bnd in                                                                 *)
   (* let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in                           *)
-  (* let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in              *)
-  (* let _ = print_endline ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in                  *)
-  (* let _ = print_endline ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in            *)
+  (* let _ = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in            *)
+  (* let _ = print_endline_quiet ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in      *)
   
   let ctx_bnd = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
@@ -910,11 +910,11 @@ let templ_rank_constr_of_rel for_lex rel =
   let ctx_dec = if not for_lex then mkAnd ctx_bnd (CP.cond_of_term_ann rel.termu_rhs) else ctx_bnd in
   let dec = mkGt src_rank dst_rank in
   let _ = add_templ_assume (MCP.mix_of_pure ctx_dec) dec inf_templs in
-  (* let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in                    *)
-  (* let _ = print_endline ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in                *)
-  (* let _ = print_endline ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in                        *)
-  (* let _ = print_endline ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in                *)
-  (* let _ = print_endline ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in                        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in                    *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in                *)
+  (* let _ = print_endline_quiet ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in                        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in                *)
+  (* let _ = print_endline_quiet ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in                        *)
   
   inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
   
@@ -1410,9 +1410,9 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         else la, sa, (oa @ [c])) ([], [], []) nt_conds 
       in
         
-      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
-      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
-      (* let _ = print_endline ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
+      (* let _ = print_endline_quiet ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
+      (* let _ = print_endline_quiet ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
+      (* let _ = print_endline_quiet ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
       
       (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes *)
       (* For self loop on the same condition *)
@@ -1497,10 +1497,7 @@ let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
         try
           let _, nd_rec_trrel = List.find (fun (_, rec_trrel) -> 
             is_nondet_rec rec_trrel base_no_trrels) nt_yes_rec in
-          (* WN : disabling on infer_lex *)
-          if !Globals.tnt_infer_lex then
-            gen_disj_conds ntres
-          else NT_Nondet_May nd_rec_trrel.termr_pos
+          NT_Nondet_May nd_rec_trrel.termr_pos
         with Not_found -> gen_disj_conds ntres
     
 let proving_non_termination_trrels prog lhs_uids rhs_uid trrels =
