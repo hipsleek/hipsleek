@@ -164,9 +164,10 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let may_cond = mkNot (join_disjs (List.map get_cond conds)) in
-  if is_sat may_cond then conds @ [MayTerm may_cond]
-  else conds
+  conds
+  (* let may_cond = mkNot (join_disjs (List.map get_cond conds)) in *)
+  (* if is_sat may_cond then conds @ [MayTerm may_cond]             *)
+  (* else conds                                                     *)
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
@@ -283,8 +284,8 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
       else 
-        (* update_ann scc (subst (CP.Loop, [])) (* Loop *) *)
-        proving_non_termination_scc prog trrels tg scc
+        update_ann scc (subst (CP.Loop, [])) (* Loop *)
+        (* proving_non_termination_scc prog trrels tg scc *)
       
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
