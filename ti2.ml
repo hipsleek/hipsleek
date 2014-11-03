@@ -575,7 +575,7 @@ let print_svcomp2015_result term_anns =
   (* print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns)); *)
   (* no termination info --> UNKNOWN *)
   if (List.length term_anns = 0) then
-    print_endline "UNKNOWN"
+    print_endline "UNKNOWN 1"
   (* all cases terminates --> TRUE *)
   else if (List.for_all Cpure.is_Term term_anns) then
     print_endline "TRUE"
@@ -595,13 +595,17 @@ let print_svcomp2015_result term_anns =
       | _ -> Cprinter.string_of_term_cex cex
     ) in
     if (eq_str cex_str "") then
-      print_endline "UNKNOWN"
+      print_endline "UNKNOWN 3"
     else
       print_endline ("FALSE - Counterexample: " ^ cex_str)
   )
   (* the rests are UNKNOWN *)
   else
-    print_endline "UNKNOWN"
+    print_endline "UNKNOWN 2"
+
+let print_svcomp2015_result term_anns =
+  print_endline "hello";
+  Debug.no_1 "print_svcomp2015_result" (add_str "result" (fun lst -> string_of_int (List.length lst))) pr_none print_svcomp2015_result term_anns
 
 let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->

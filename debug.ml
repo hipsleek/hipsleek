@@ -1314,6 +1314,6 @@ type: int ->
 
 end
 
-include DebugEmpty
-(* include DebugCore *)
+(* include DebugEmpty *)
+include DebugCore
 
