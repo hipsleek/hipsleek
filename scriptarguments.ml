@@ -809,15 +809,15 @@ let common_arguments = [
           (* Globals.graph_norm := true; *)
           
           Globals.is_solver_local := true;
-          Omega.omegacalc:= 
-            if (Sys.file_exists "./oc") then "./oc"
-            else "oc";
-          Fixcalc.fixcalc_exe :=
-            if (Sys.file_exists "./fixcalc") then "./fixcalc"
-            else "fixcalc";
-          Smtsolver.smtsolver_path :=
-            if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2"
-            else "z3-4.3.2";
+          (* Omega.omegacalc:=  *)
+          (*   if (Sys.file_exists "./oc") then "./oc" *)
+          (*   else "oc"; *)
+          (* Fixcalc.fixcalc_exe := *)
+          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+          (*   else "fixcalc"; *)
+          (* Smtsolver.smtsolver_path := *)
+          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+          (*   else "z3-4.3.2"; *)
           Globals.disable_failure_explaining := false;
           Globals.return_must_on_pure_failure := true;
           (* Globals.dis_impl_var := true *)
