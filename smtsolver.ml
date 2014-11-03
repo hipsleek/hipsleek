@@ -636,20 +636,29 @@ let rec prelude () = ()
 
 (* start z3 system in a separated process and load redlog package *)
 and start() =
-  if not !is_z3_running then (
-    print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
-    last_test_number := !test_number;
-    let _ = (
-      if !smtsolver_name = "z3-2.19" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
-      else if !smtsolver_name = "z3-4.2" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else if !smtsolver_name = "z3-4.3.1" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
-    ) in
-    is_z3_running := true;
+  try (
+    if not !is_z3_running then (
+      print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
+      last_test_number := !test_number;
+      let _ = (
+        if !smtsolver_name = "z3-2.19" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
+        else if !smtsolver_name = "z3-4.2" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else if !smtsolver_name = "z3-4.3.1" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+      ) in
+      is_z3_running := true;
+    )
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Z3!";
+      print_endline "Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed";
+    );
+    raise e
   )
 
 (* stop Z3 system *)

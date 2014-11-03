@@ -245,12 +245,22 @@ let prelude () =
 
   (* start omega system in a separated process and load redlog package *)
 let start() =
-  if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
-      last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
-      is_omega_running := true;
-  end
+  try (
+    if not !is_omega_running then begin
+        if (not !Globals.web_compile_flag) then 
+          print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+        last_test_number := !test_number;
+        let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
+        is_omega_running := true;
+    end
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Omega!";
+      print_endline "Please make sure its executable file (oc) is installed";
+    );
+    raise e
+  )
 
 (* stop Omega system *)
 let stop () =
