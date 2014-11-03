@@ -34,7 +34,9 @@ let pprint msg (pos:loc) =
 (* system development debugging *)
 let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
-  if flag (* !devel_debug_on *)  ||  not(d==None) then 
+  (* WN : should we use && or || *)
+  if !Globals.compete_mode then ()
+  else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
     let s = (pr m) in
     let msg = match d with 
       | None -> ("\n!!!" ^ s)
