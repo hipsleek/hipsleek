@@ -2,7 +2,7 @@ int ranPos ()
  requires Term[]
   ensures res>=0;
 
-int Ack(int m, int n)
+int Ack(int mmm, int n)
 infer [@term] requires true ensures true;
 /*
  case {
@@ -15,13 +15,13 @@ infer [@term] requires true ensures true;
 }
 */
 { 
-	if (m==0 || n==0) return 1;
+	if (mmm==0 || n==0) return 1;
  	else {
-		int m1=m-1;
+		int mmm1=mmm-1;
                 int n1=n-1;
                 //int p = ranPos();
-                int r = Ack(m, n1);
-                int rr = Ack(m-1, r); 
+                int r = Ack(mmm, n1);
+                int rr = Ack(mmm-1, r); 
                 dprint;
                 return rr;
  	}

@@ -2529,21 +2529,25 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (*       trans_level_list_partial_context ctx *)
     (*     else ctx *)
     (* in *)
+    (* WN : is code below redundant?  *)
     let fn_state=
-      if (!Globals.disable_failure_explaining) then
+      if (false (* !Globals.disable_failure_explaining *)) then
         let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
           proc.proc_args in
         let r = proc.proc_by_name_params in
         let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
-
+        (* WN: do not existentially quantify by-value parameters *)
+        let w=[] in
+        let _ = Debug.binfo_hprint (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
         (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
         let final_state_prim = CF.push_exists_list_partial_context w ctx in
-        (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
+        Debug.binfo_hprint  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
         (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
         (* let _ = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
         Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
         let final_state = 
           if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
+        Debug.binfo_hprint  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
         (* let _ = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
         (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
         (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
