@@ -643,24 +643,7 @@ let run st prover input timeout =
   remove_file outfile;
   res
 
-(* (*for z3-3.2*)                                                                      *)
-(* let rec prelude () =                                                                *)
-(*   let re = Str.regexp_string "command not found" in                                 *)
-(*   let line = input_line (!prover_process.inchannel) in                              *)
-(*   while strin do                                                                    *)
-(*     let line = input_line (!prover_process.inchannel) in                            *)
-(*     try  (                                                                          *)
-(*       let _ = (Str.search_forward re line 0) in                                     *)
-(*       finished := true;                                                             *)
-(*       raise Not_found;                                                              *)
-(*     )                                                                               *)
-(*     with _ -> ();                                                                   *)
-(*       (*let _ = print_endline line in *)                                            *)
-(*     (if !log_all_flag && (not !Globals.compete_mode) then                           *)
-(*           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") ); *)
-(*     if (start_with line "#") then finished := true;                                 *)
-(*   done                                                                              *)
-
+(*for z3-3.2*)
 let rec prelude () = ()
 
 (* start z3 system in a separated process and load redlog package *)
@@ -685,7 +668,7 @@ and start() =
   with e -> (
     if (!Globals.compete_mode) then (
       print_endline "Unable to run the prover Z3!";
-      print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed");
+      print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
     );
     raise e
   )
