@@ -1436,8 +1436,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       else 
         let other_groups = partition_by_key (fun c -> c.ntc_fn) eq_str other_conds in
         if List.exists (fun (gn, gc) -> 
-          not (eq_str fn gn) && (gc != []) &&
-          (imply eh_ctx (CP.join_disjunctions (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
+          (* not (eq_str fn gn) && (gc != []) && *)
+          (imply eh_ctx (join_disjs (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
         then NT_Partial_Yes
         else 
           (* Infer the conditions for to-loop nodes *)
