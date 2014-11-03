@@ -932,7 +932,7 @@ let old_main () =
     print_string ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)
     if (!Globals.svcomp_compete_mode) then
-      print_endline "UNKNOWN 5";
+      print_endline "UNKNOWN(5)";
   end
 
 let _ = 
@@ -962,7 +962,7 @@ let _ =
           print_string ("\nError4(s) detected at main \n");
           (* print result for svcomp 2015 *)
           if (!Globals.svcomp_compete_mode) then
-            print_endline "UNKNOWN 7"
+            print_endline "UNKNOWN(7)"
         end
     done;
     hip_epilogue ()
