@@ -217,8 +217,21 @@ let omega_of_formula_old i f  =
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
+
 let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
+
+let local_oc = "./oc"
+let global_oc = "/usr/local/bin/oc"
+
+let omegacalc = 
+  if (Sys.file_exists local_oc) then ref local_oc
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else 
+    begin
+      print_endline "ERROR : oc cannot be found!!"; ref ("oc_cannot be found":string)
+    end
+
 (* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
