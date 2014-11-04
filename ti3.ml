@@ -31,7 +31,10 @@ type ret_trel = {
   termr_lhs: CP.term_ann list;
   termr_rhs: CP.term_ann;
   termr_rhs_params: CP.spec_var list; (* For simplification on condition *)
+  termr_pos: loc;
 }
+
+let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
@@ -48,7 +51,10 @@ type call_trel = {
   (* For other term_ann *)
   termu_cle: ident; (* callee *)
   termu_rhs_args: CP.exp list;
+  termu_pos: loc;
 }
+
+let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let print_call_trel_debug rel = 
   string_of_turel_debug (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
@@ -64,11 +70,12 @@ let dummy_trel = {
   trel_id = -1;
   call_ctx = CP.mkTrue no_pos;
   termu_fname = "";
-  termu_lhs = CP.MayLoop;
-  termu_rhs = CP.MayLoop; 
+  termu_lhs = CP.MayLoop None;
+  termu_rhs = CP.MayLoop None; 
   termu_rhs_params = []; 
   termu_cle = "";
-  termu_rhs_args = []; }
+  termu_rhs_args = [];
+  termu_pos = no_pos; }
   
 let update_call_trel rel ilhs irhs = 
   { rel with
@@ -94,7 +101,7 @@ let subst_cond_with_ann params ann cond =
 (* TNT Case Spec *)
 type tnt_case_spec = 
   | Sol of (CP.term_ann * CP.exp list)
-  | Unknown
+  | Unknown of CP.term_cex option
   | Cases of (CP.formula * tnt_case_spec) list
 
 let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
@@ -106,10 +113,19 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
         (fun () -> pr_pure_formula c) " -> " )
         (fun () -> pr_tnt_case_spec s; fmt_string ";")
     ) cl 
-  | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
+  | Unknown cex -> 
+    (* fmt_string "Unk" *) 
+    (* fmt_string "requires MayLoop ensures true" *)
+    fmt_string "requires ";
+    pr_var_measures (MayLoop cex, [], []);
+    fmt_string " ensures true"
   | Sol (ann, rnk) ->
     match ann with
-    | CP.Loop -> fmt_string "requires Loop ensures false"
+    | CP.Loop _ -> 
+      (* fmt_string "requires Loop ensures false" *)
+      fmt_string "requires ";
+      pr_var_measures (ann, [], []);
+      fmt_string " ensures false"
     | _ -> 
       fmt_string "requires ";
       pr_var_measures (ann, rnk, []);
@@ -133,13 +149,13 @@ let eq_base_rank rnk1 rnk2 =
 
 let eq_tnt_case_spec sp1 sp2 =
   match sp1, sp2 with
-  | Unknown, Unknown -> true
-  | Unknown, Sol (CP.MayLoop, _) -> true
-  | Sol (CP.MayLoop, _), Unknown -> true
+  | Unknown _, Unknown _ -> true
+  | Unknown _, Sol (CP.MayLoop _, _) -> true
+  | Sol (CP.MayLoop _, _), Unknown _ -> true
   | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
     begin match ann1, ann2 with
-    | CP.Loop, CP.Loop -> true
-    | CP.MayLoop, CP.MayLoop -> true
+    | CP.Loop _, CP.Loop _ -> true
+    | CP.MayLoop _, CP.MayLoop _ -> true
     (* | CP.Term, CP.Term ->                          *)
     (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
     (*   eq_base_rank rnk1 rnk2                       *)

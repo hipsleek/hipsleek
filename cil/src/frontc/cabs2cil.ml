@@ -6487,7 +6487,7 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         let hspec = (
           match hs with
-          | None -> Iformula.mkETrueTrueF ();
+          | None -> (* Iformula.mkETrueTrueF (); *) Iformula.EList [];
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;

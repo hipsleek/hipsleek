@@ -75,7 +75,10 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+            | _ -> 
+                  let _ = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+                  "0=0"
+                  (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
                 (* Error.report_error { *)
                 (*   Error.error_loc = l; *)
                 (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
@@ -189,7 +192,7 @@ and omega_of_formula_x pr_w pr_s f  =
 	helper f
   with _ as e -> 
       let s = Printexc.to_string e in
-      let _ = print_string ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      let _ = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
       (* let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
@@ -214,8 +217,21 @@ let omega_of_formula_old i f  =
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
-let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+
+let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
+
+let local_oc = "./oc"
+let global_oc = "/usr/local/bin/oc"
+
+let omegacalc = 
+  if (Sys.file_exists local_oc) then ref local_oc
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else 
+    begin
+      print_endline "ERROR : oc cannot be found!!"; ref ("oc_cannot be found":string)
+    end
+
 (* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
@@ -235,19 +251,29 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag && (not !Globals.smt_compete_mode) then
+	(if !log_all_flag && (not !Globals.compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done
 
   (* start omega system in a separated process and load redlog package *)
 let start() =
-  if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
-      last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
-      is_omega_running := true;
-  end
+  try (
+    if not !is_omega_running then begin
+        if (not !Globals.web_compile_flag) then 
+          print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+        last_test_number := !test_number;
+        let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
+        is_omega_running := true;
+    end
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Omega!";
+      print_endline "Please make sure its executable file (oc) is installed";
+    );
+    raise e
+  )
 
 (* stop Omega system *)
 let stop () =
@@ -815,6 +841,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
                   let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+                  (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
+                  (* Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)

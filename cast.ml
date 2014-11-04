@@ -1250,7 +1250,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
-  (* let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
+  (* let _ = print_endline_quiet(" look_up_view_baga: baga= " ^ (!print_svl ba)) in *)
   let from_svs = (self_param vdef) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
@@ -1946,7 +1946,7 @@ let check_proper_return cret_type exc_list f =
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
 	      else if not (List.exists (fun c->
-                  (* let _ =print_endline "XX" in *) F.subsume_flow c fl_int) exc_list) then
+                  (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
                 let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
@@ -2279,10 +2279,10 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
   let f e = 
     match e with
     | ICall e ->
-      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_icall_method_name) in *)
+      (* let _ = print_endline_quiet(mnv ^ " -> " ^ e.exp_icall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_icall_method_name)
     | SCall e ->
-      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_scall_method_name) in *)
+      (* let _ = print_endline_quiet(mnv ^ " -> " ^ e.exp_scall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_scall_method_name)
     | _ -> None
   in
@@ -3212,7 +3212,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   let ddecl = (
     try look_up_data_def_raw prog.prog_data_decls dname 
     with _ ->
-        if !Globals.smt_compete_mode then raise Not_found else
+        if !Globals.compete_mode then raise Not_found else
           report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
   ) in
   let base_fs, induct_fs = split_view_branches vdecl in
@@ -3475,7 +3475,7 @@ let is_prim_proc prog id =
   with _ -> false
   
 let print_data_dependency_graph ddg = 
-  IG.fold_edges (fun s d a -> s ^ " -> " ^ d ^ "\n" ^ a)  ddg ""
+  IG.fold_edges (fun s d a -> "\n" ^ s ^ " -> " ^ d ^ a)  ddg ""
 
 let eq_str s1 s2 = String.compare s1 s2 == 0
       
@@ -3489,6 +3489,12 @@ let data_dependency_graph_of_exp prog src exp =
     | Assign e ->
       (* let ddg = IG.add_edge ddg src e.exp_assign_lhs in *)
       helper ddg e.exp_assign_lhs e.exp_assign_rhs
+    | Bind e ->
+      let bvar = snd e.exp_bind_bound_var in
+      let ddg = IG.add_edge ddg src bvar in
+      let ddg = List.fold_left (fun g (_, i) ->
+        IG.add_edge g bvar i) ddg e.exp_bind_fields in
+      helper ddg bvar e.exp_bind_body
     | Block e -> helper ddg src e.exp_block_body
     | Cond e ->
       let ddg = IG.add_edge ddg src e.exp_cond_condition in
@@ -3549,6 +3555,12 @@ let has_ref_params prog mn =
     proc.proc_by_name_params != []
   with _ -> false
   
+let has_named_params prog mn =
+  try
+    let proc = find_proc prog mn in
+    List.exists (fun (t, _) -> is_node_typ t) proc.proc_args
+  with _ -> false
+  
 let is_rec_proc prog mn = 
   try
     let proc = find_proc prog mn in
@@ -3571,7 +3583,8 @@ let rec collect_dependence_procs_aux prog init ws ddg src =
         if init then 
           if not (is_rec_proc prog src) then []
           else List.filter (fun mn -> 
-            not (eq_str mn src) && (has_ref_params prog mn)) depend_mns  
+            not (eq_str mn src) && 
+            ((has_ref_params prog mn) || (has_named_params prog mn))) depend_mns  
         else depend_mns
       in
       let working_succ = Gen.BList.difference_eq eq_str succ ws in 
@@ -3609,7 +3622,7 @@ let add_post_for_tnt_prog prog =
     let dprocs = dependence_procs_of_proc prog proc in
     let _ = 
       if is_empty dprocs then ()
-      else print_endline ("\n !!! @post is added into " ^ 
+      else print_endline_quiet("\n !!! @post is added into " ^ 
         (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
     in
     acc @ dprocs) [] inf_term_procs in

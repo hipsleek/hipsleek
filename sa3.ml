@@ -2809,12 +2809,18 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
           (* CF.is_post_hps = all_post_hps; *)
       } in
       let unk_hps = List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs) in
-      let is2 = if !Globals.pred_elim_useless then
+      let is2a = if !Globals.pred_elim_useless then
         (*detect and elim useless paramters*)
         {is1 with CF.is_hp_defs = Sacore.norm_elim_useless_paras prog
                 unk_hps (* (CP.remove_dups_svl is1.CF.is_sel_hps) *) sel_hps
                 all_post_hps is1.CF.is_hp_defs}
       else is1
+      in
+      let is2=
+        if !pred_norm_overr then
+          let n_hp_defs = Sacore.norm_overr is2a.is_hp_defs in
+          {is2a with CF.is_hp_defs = n_hp_defs}
+        else is2a
       in
       let post_hps = is2.CF.is_post_hps in
       let is3 = if not !Globals.pred_seg_unify then is2 else
@@ -3157,7 +3163,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   with _ ->
       let _ = Globals.lemma_ep := orig_lemma_ep in
       (* let _ = print_generated_slk_file () in *)
-      let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
+      let _ = print_endline_quiet ("\n --error: "^" at:"^(get_backtrace_quiet ())) in
       ([],[],[])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)

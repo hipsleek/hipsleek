@@ -37,11 +37,12 @@ void
 cbzero(void *b, size_t length)
 {
 	char *p;
-
+        // dprint;
 	for (p = b; length--;)
 		*p++ = '\0';
 }
 
+/*
 int main() {
   int length = __VERIFIER_nondet_int();
   int n = __VERIFIER_nondet_int();
@@ -56,3 +57,4 @@ int main() {
   cbzero(nondetArea, n);
   return 0;
 }
+*/

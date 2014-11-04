@@ -782,9 +782,52 @@ let common_arguments = [
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "Minimal printing only");
+  ("--svcomp-compete",
+     Arg.Unit
+      (fun _ ->
+          (* print_endline "inside svcomp-compete setting"; *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.svcomp_compete_mode:=true; (* main flag *)
+          (* Globals.show_unexpected_ents := false; *)
+          (* diable printing *)
+          Globals.trace_failure := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          
+          (* Globals.lemma_gen_unsafe:=true;    *)
+          (* Globals.lemma_syn := true;         *)
+          (* Globals.acc_fold := true;          *)
+          (* Globals.smart_lem_search := true;  *)
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          
+          Globals.is_solver_local := true;
+          (* Omega.omegacalc:=  *)
+          (*   if (Sys.file_exists "./oc") then "./oc" *)
+          (*   else "oc"; *)
+          (* Fixcalc.fixcalc_exe := *)
+          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+          (*   else "fixcalc"; *)
+          (* Smtsolver.smtsolver_path := *)
+          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+          (*   else "z3-4.3.2"; *)
+          Globals.disable_failure_explaining := false;
+          Globals.return_must_on_pure_failure := true;
+          (* Globals.dis_impl_var := true *)
+      ),
+   "SVCOMP14 competition mode - essential printing only");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode:=true;
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
@@ -803,7 +846,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode:=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
@@ -812,6 +854,8 @@ let common_arguments = [
       (fun _ ->
           (* Globals.show_unexpected_ents := true;  *)
           (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode :=true;
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
@@ -828,7 +872,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
   "SMT competition mode - essential printing only + show unexpected ents");
