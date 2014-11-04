@@ -135,6 +135,7 @@ let solve_trrel_list params trrels turels =
     then CP.mkFalse no_pos 
     else CP.join_disjunctions not_rec_conds 
   in
+  
   let rec_conds = List.fold_left (fun acc rtr ->
     let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
     let rec_cond =

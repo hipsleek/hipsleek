@@ -75,6 +75,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@proc_args@proc_primed_args) in
         let rel_vars = CP.remove_dups_svl rel_vars in
+        let rel_vars = if ei.CF.formula_inf_obj # is_add_flow then rel_vars@[CP.mk_typed_spec_var Int "flow"] else rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in
@@ -171,7 +172,7 @@ let rec is_infer_post sf = match sf with
   | CF.EInfer ei ->
         let inf_obj = ei.CF.formula_inf_obj in
         let inf_vars = ei.CF.formula_inf_vars in
-        (inf_obj # is_post) || (List.length (List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) inf_vars) > 0)
+        (inf_obj # is_post) || (List.length (List.filter (fun sv -> (Cpure.is_rel_typ sv)) inf_vars) > 0)
   | _ -> false
 
 let is_infer_post sf =
@@ -313,6 +314,7 @@ let rec turn_off_infer_pure spec old_spec =
           let old_inf_obj = ei.CF.formula_inf_obj # clone in
           let _ = old_inf_obj # reset INF_POST in
           let _ = old_inf_obj # reset INF_PRE in
+          let _ = old_inf_obj # reset INF_SHAPE in
           CF.EInfer {ei with
               CF.formula_inf_obj = old_inf_obj;
               CF.formula_inf_vars = [];
@@ -402,7 +404,7 @@ let add_flow reldefns =
 
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
-  let _ = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  let _ = DD.binfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in

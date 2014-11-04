@@ -128,7 +128,10 @@ module Make (Token : SleekTokenS)
    ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("checkentail_exact", CHECKENTAIL_EXACT);
+   ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("checksat", CHECKSAT);
+   ("check_nondet", CHECK_NONDET);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
@@ -148,8 +151,6 @@ module Make (Token : SleekTokenS)
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
    ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
-   ("checkentail_exact", CHECKENTAIL_EXACT);
-   ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("infer_exact", INFER_EXACT);
    ("infer_inexact", INFER_INEXACT);
    ("relation_infer", REL_INFER);
@@ -192,6 +193,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+         ("char",INT);
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);

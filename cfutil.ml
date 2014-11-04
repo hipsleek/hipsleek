@@ -127,6 +127,15 @@ let elim_eqnull hn_elim_heap to_elim_null_svl f0=
   Debug.no_2 "elim_eqnull" pr1!CP.print_svl  pr1
       (fun _ _ -> elim_eqnull_x hn_elim_heap to_elim_null_svl f0) f0 to_elim_null_svl
 
+let fresh_data_v f0=
+  let hds, hvs, hrs = get_hp_rel_formula f0 in
+  let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
+  let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
+  let fr_v_sps2 = CP.fresh_spec_vars (CP.remove_dups_svl v_sps2) in
+  let sst = List.combine v_sps2 fr_v_sps2 in
+  subst sst f0
+
+
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=
   (*********INTERNAL***************)

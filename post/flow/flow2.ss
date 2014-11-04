@@ -3,12 +3,12 @@ class Exp extends __Exc {
 }
 
 void loop(ref int x)
-  infer [@post_n]
+  infer [@flow,@post_n]
   requires true
   ensures  true & flow __flow;
 {
   if (x>0) {
-    /* raise new Exp(2); */
+    /*  raise new Exp(2);*/
     x = x-1;
     loop(x);
   } else {

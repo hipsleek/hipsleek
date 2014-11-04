@@ -30,7 +30,10 @@ let simplify num f args =
   Debug.no_2_num num "Ti.simplify" pr1 pr2 pr1
     (fun _ _ -> simplify f args) f args
     
-let is_sat f = Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
+let is_sat f = 
+  (* Tpdispatcher.is_sat_raw (MCP.mix_of_pure f) *)
+  let (pr_weak, pr_strong) = CP.drop_complex_ops in
+  Omega.is_sat_ops pr_weak pr_strong f ""
 
 let imply a c = Tpdispatcher.imply_raw a c
 
@@ -1262,7 +1265,8 @@ let search_rec_icond_ann lhs_uids ann =
       ntc_id = uid.CP.tu_id;
       ntc_cond = cond; }) uids
 
-(* Remove all constraints added from case specs *)    
+(* Remove all constraints added from case specs *)
+(* For tinf/paper/ex-2.ss vs Velroyen_false-termination.c *)    
 let elim_irrel_formula irrel_vars_lst f =
   let is_irrel_f irrel_vars_lst f =
     let fv = CP.fv f in
@@ -1282,8 +1286,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let fn = rhs_uid.CP.tu_fname in
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
-  let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in
-  let ctx = elim_irrel_formula irrel_vars_lst ctx in
+  (* let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in *)
+  (* let ctx = elim_irrel_formula irrel_vars_lst ctx in                                  *)
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 
@@ -1305,6 +1309,7 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         
       (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
       (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
+      (* let _ = print_endline ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
       
       if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes
       (* For self loop on the same condition *)
