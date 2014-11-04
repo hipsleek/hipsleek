@@ -2939,7 +2939,7 @@ and intersect_x fun_eq (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect_svl x y = intersect x y
 
-and check_intersection_svl x y =
+and is_intersected_svl x y =
   let svl = intersect_svl x y in
   (List.length svl != 0)
 

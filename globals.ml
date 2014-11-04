@@ -96,7 +96,7 @@ let intersect_str_list sl1 sl2 =
   List.filter (fun s -> mem_str_list s sl1) sl2
 
 (* check if two lists of string are intersected *) 
-let check_intersect_str_list sl1 sl2 =
+let is_intersected_str_list sl1 sl2 =
   let str_lst = List.filter (fun s -> mem_str_list s sl1) sl2 in
   (List.length str_lst = 0)
 
