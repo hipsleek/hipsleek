@@ -926,13 +926,13 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize ();
-    print_string_quiet "caught\n"; 
-    print_backtrace_quiet ();
-    print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string_quiet ("\nError3(s) detected at main \n");
+    print_string "caught\n"; 
+    Printexc.print_backtrace stderr;
+    print_string ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)
     if (!Globals.svcomp_compete_mode) then
-      print_endline "UNKNOWN";
+      print_endline "UNKNOWN(5)";
   end
 
 let _ = 
@@ -957,12 +957,12 @@ let _ =
           ()
         with _ as e -> begin
           finalize ();
-          print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
-          print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string_quiet ("\nError4(s) detected at main \n");
+          print_string "caught\n"; Printexc.print_backtrace stdout;
+          print_string ("\nException occurred: " ^ (Printexc.to_string e));
+          print_string ("\nError4(s) detected at main \n");
           (* print result for svcomp 2015 *)
           if (!Globals.svcomp_compete_mode) then
-            print_endline "UNKNOWN"
+            print_endline "UNKNOWN(7)"
         end
     done;
     hip_epilogue ()

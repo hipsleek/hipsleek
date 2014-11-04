@@ -97,15 +97,14 @@ let solve_base_trrels params base_trrels turels =
   
   (* let _ = print_endline_quiet ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
   (* let _ = print_endline_quiet ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
-  (* let _ = print_endline ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
+  (* let _ = print_endline_quite ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
     
   let base_cond = List.fold_left (fun ac bctx ->
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
   (* let base_conds = simplify_and_slit_disj base_cond in *)
   let base_cond = simplify_disj base_cond in
   let base_cond = if is_sat base_cond then [Base base_cond] else [] in
-  base_cond
-  
+  base_cond  
   (* if !Globals.tnt_infer_lex then base_cond                                *)
   (* else                                                                    *)
   (*   let may_cond = List.fold_left (fun ac bctx ->                         *)
@@ -169,8 +168,9 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let may_cond = mkNot (join_disjs (List.map get_cond conds)) in
-  if is_sat may_cond then conds @ [MayTerm may_cond]
+  let may_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
+  if (is_sat may_cond) && not !Globals.tnt_infer_lex then
+    conds @ [MayTerm may_cond]
   else conds
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
@@ -298,12 +298,20 @@ let solve_turel_one_unknown_scc prog trrels tg scc =
   let update = 
     (* We assume that all nodes in scc are unknown *)
     if List.for_all (fun (_, v) -> CP.is_Loop v) outside_scc_succ then
-      if (outside_scc_succ = []) && (is_acyclic_scc tg scc) 
+      if (outside_scc_succ = []) && (is_acyclic_scc tg scc)
            (* Term with phase number or MayLoop *)
       then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos]))
-      else 
-        (* update_ann scc (subst (CP.Loop, [])) (* Loop *) *)
-        proving_non_termination_scc prog trrels tg scc
+      else
+        update_ann scc (subst (CP.Loop None, [])) (* Loop *)
+        (* proving_non_termination_scc prog trrels tg scc *)
+      (* match outside_scc_succ with                                                      *)
+      (* | [] ->                                                                          *)
+      (*   if is_acyclic_scc tg scc                                                       *)
+      (*   (* Term with phase number or MayLoop *)                                        *)
+      (*   then update_ann scc (subst (CP.Term, [CP.mkIConst (scc_fresh_int ()) no_pos])) *)
+      (*   else                                                                           *)
+      (*     update_ann scc (subst (CP.Loop None, [])) (* Loop *)                         *)
+      (* | s::_ -> update_ann scc (subst (CP.Loop None, [])) (* Loop *)                   *)
       
     else if List.for_all (fun (_, v) -> CP.is_Term v) outside_scc_succ then
       if is_acyclic_scc tg scc 
@@ -354,11 +362,11 @@ let finalize_turel_graph prog tg =
 (*     try                                                                                     *)
 (*       let scc_list = Array.to_list (TGC.scc_array tg) in                                    *)
 (*       let scc_groups = partition_scc_list tg scc_list in                                    *)
-(*       (* let _ =                                                       *)                   *)
-(*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)                   *)
-(*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)                   *)
-(*       (* in                                                            *)                   *)
-(*       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)                   *)
+(*       (* let _ =                                                             *)             *)
+(*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)             *)
+(*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)             *)
+(*       (* in                                                                  *)             *)
+(*       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)             *)
 (*       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in *)
 (*       finalize_turel_graph prog tg                                                          *)
 (*     with                                                                                    *)

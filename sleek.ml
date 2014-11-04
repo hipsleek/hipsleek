@@ -508,5 +508,5 @@ let _ =
     let _ =
       if (!Globals.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string_if (not !Globals.smt_compete_mode)  "\n"
+    print_string_if (not !Globals.compete_mode)  "\n"
   )

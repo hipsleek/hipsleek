@@ -587,7 +587,7 @@ let is_pointer_typ_name (typ_name: string) : bool =
   if (len <= 5) then false
   else
     let suffix = String.sub typ_name (len - 5) 5 in
-    let _ = print_endline ("suffix = " ^ suffix) in
+    (* let _ = print_endline ("suffix = " ^ suffix) in *)
     eq_str suffix "_star"
 
 
