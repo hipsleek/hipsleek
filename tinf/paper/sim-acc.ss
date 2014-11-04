@@ -26,6 +26,13 @@ infer [@term] requires true ensures true;
                 return rr;
  	}
 }
+
+void main()
+ infer[@term] requires true
+  ensures true;
+{
+  int t = Ack(-1,6);
+}
 /*
 # sim-acc.ss
 
@@ -37,9 +44,12 @@ m!=0 & !(v_boolean_18_1440) & m!=0 & n!=0 & !(v_boolean_18_1441) & n!=0 &
 r_1474=1 & Ackpost_1406(m',n1_1472) & Ackpost_1406(v_int_25_1473,r_1474) 
 --> Ackpost_1406(m,n).
 
-Why wasn't information on m' captured in this relational assumption?
+Why wasn't information on m' captured in above relational assumption?
+Why aren't there two post in this dprint?
 
+ State:(exists v_int_24_1318': emp&r_30'=1 & n1_29'+1=n' & m1_28'+1=m' & !(v_bool_18_1319') & !(v_boolean_18_1440) & !(v_boolean_18_1441) & !(v_bool_18_1319') & n'!=0 & !(v_boolean_18_1441) & n'!=0 & m'!=0 & !(v_boolean_18_1440) & m'=m & n'=n & m'!=0 & v_int_24_1318'+1=m' & rr_31'=1 & Ackpost_1406(v_int_24_1318',r_30')[]&{FLOW,(4,5)=__norm#E})[]
 
+=====================================================
 
 	if (m==0 || n==0) return 1;
  	else {

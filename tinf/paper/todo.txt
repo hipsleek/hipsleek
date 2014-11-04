@@ -547,6 +547,16 @@ Why aren't there two post in this dprint?
  State:(exists v_int_24_1318': emp&r_30'=1 & n1_29'+1=n' & m1_28'+1=m' & !(v_bool_18_1319') & !(v_boolean_18_1440) & !(v_boolean_18_1441) & !(v_bool_18_1319') & n'!=0 & !(v_boolean_18_1441) & n'!=0 & m'!=0 & !(v_boolean_18_1440) & m'=m & n'=n & m'!=0 & v_int_24_1318'+1=m' & rr_31'=1 & Ackpost_1406(v_int_24_1318',r_30')[]&{FLOW,(4,5)=__norm#E})[]
 
 ====================================================================
+--esl problem caused here ..
+
+The first bad revision is:
+changeset:   13529:f9c7df779451
+branch:      ti_cex
+parent:      13527:6531d879d6f5
+user:        chinwn
+date:        Fri Oct 31 04:51:47 2014 +0800
+summary:     added svcomp-compete mode to minimise printing
+
 ====================================================================
 ====================================================================
 ====================================================================

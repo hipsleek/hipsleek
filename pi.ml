@@ -516,7 +516,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let lst_assume = Gen.Basic.remove_dups lst_assume in
   if rels = [] then ()
   else
-    let new_specs,exc_rels =
+    let new_specs =
       let rels = Infer.infer_rel_stk # get_stk in
       let _ = Infer.infer_rel_stk # reset in
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
@@ -534,13 +534,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       try
         begin
           let _ = DD.ninfo_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
-          let tuples,exc_rels =
+          let tuples =
             let rels = Gen.Basic.remove_dups rels in
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
-            let rels,exc_rels = List.partition (fun (cat,_,_) -> match cat with
-              | CP.RelDefn(_,Some _)  -> false
-              | _ -> true
-            ) rels in
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";
@@ -548,14 +544,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet "*************************************";
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
-              end;
-            if exc_rels !=[] then
-              begin
-                print_endline "\n*************************************";
-                print_endline "***pure relation assumption (exc)****";
-                print_endline "*************************************";
-                print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev exc_rels));
-                print_endline "*************************************";
               end;
             let _ = if !Globals.sa_gen_slk then
               try
@@ -601,7 +589,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 (r,p2)
             ) bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
-            (Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
+            Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
           in
@@ -648,9 +636,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> CF.trans_flow_struc_formula new_spec) new_specs in
     let new_specs = List.map (fun new_spec -> trans_res_struc_formula prog new_spec) new_specs in
-        let _ = Debug.binfo_hprint (add_str "pf" Cprinter.string_of_pure_formula) pf no_pos in
-        ()
-    ) exc_rels in
     let _ = List.iter (fun (proc,new_spec) ->
         let _ = proc.proc_stk_of_static_specs # push new_spec in
         print_endline_quiet "\nPost Inference result:";

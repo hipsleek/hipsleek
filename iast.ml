@@ -3102,8 +3102,6 @@ let exists_while_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_while_return" pr1 string_of_bool
       (fun _ -> exists_while_return_x e0) e0
-  Debug.no_1 "exists_while_return" pr1 string_of_bool
-      (fun _ -> exists_while_return_x e0) e0
 
 let exists_return_val_x e0=
   let rec helper e=

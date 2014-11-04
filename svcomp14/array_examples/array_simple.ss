@@ -1,7 +1,6 @@
-//relation update_array(int[] a, int[] r, int v, int i).
+relation update_array(int[] a, int[] r, int v, int i).
 // Any relation with prefix of "update_array" will be translated into "store".
 
-/*
   
 int[] update_arr(int[] a, int i, int v)
   requires true
@@ -12,17 +11,17 @@ int array_get(int[] a, int i)
    ensures res = a[i];
 // a[i] will be translated into "select"
 
-*/
 
 // !!!! This function need to use -prelude "prelude_aux.ss" 
 int foo(int x)
+  infer [@term]
   requires true
   ensures res=x+1;
 {
   int[] a;
   //a = update_arr(a,5,x+1);
   a[5] = x+1;
-  //a = update___1d(x+1,a,5);
+  //a = update_arr(a,5,x+1);
   int r;
   r = a[5];
   //dprint;
