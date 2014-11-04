@@ -89,9 +89,11 @@ let parse_file_full file_name (primitive: bool) =
     prog
   with
       End_of_file -> exit 0
-    | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-       raise t)
+    | M.Loc.Exc_located (l,t)-> (
+        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "
+                            ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
+        raise t
+      )
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -168,9 +170,10 @@ let parse_file_cp file_name =
     a
   with
       End_of_file -> exit 0
-    | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-       raise t)
+    | M.Loc.Exc_located (l,t)-> (
+        print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+        raise t
+      )
 
 let process_validate prog =
   let file_to_cp = if(String.compare !Globals.validate_target "" != 0) then !Globals.validate_target else (
@@ -559,8 +562,8 @@ let process_source_full source =
       (* let _ = I.set_iprog intermediate_prog in *)
       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
-      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError1(s) detected at main "^"\n");
+      print_string_quiet ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      print_string_quiet ("\nError1(s) detected at main "^"\n");
       let _ = Log.process_proof_logging !Globals.source_files cprog prim_names in
       raise e
     end);
@@ -871,7 +874,7 @@ let main1 () =
 	print_version ()
   end else
   (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = record_backtrace_quite () in
   (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
@@ -897,7 +900,7 @@ let pre_main () =
 	  let _ = print_version ()
     in []
   else
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    let _ = record_backtrace_quite () in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
 		List.map ( fun x-> let _= print_endline_quiet ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
@@ -923,9 +926,13 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize ();
-    print_string "caught\n"; Printexc.print_backtrace stdout;
+    print_string "caught\n"; 
+    Printexc.print_backtrace stderr;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError3(s) detected at main \n");
+    (* print result for svcomp 2015 *)
+    if (!Globals.svcomp_compete_mode) then
+      print_endline "UNKNOWN(5)";
   end
 
 let _ = 
@@ -953,6 +960,9 @@ let _ =
           print_string "caught\n"; Printexc.print_backtrace stdout;
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
           print_string ("\nError4(s) detected at main \n");
+          (* print result for svcomp 2015 *)
+          if (!Globals.svcomp_compete_mode) then
+            print_endline "UNKNOWN(7)"
         end
     done;
     hip_epilogue ()

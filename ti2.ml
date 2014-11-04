@@ -425,7 +425,16 @@ let rec struc_formula_of_tnt_case_spec spec =
 let print_tnt_case_spec spec =
   let struc = struc_formula_of_tnt_case_spec spec in
   string_of_struc_formula_for_spec struc 
-  
+
+let rec collect_term_ann_in_tnt_case_spec spec =
+  match spec with
+  | Sol (tann, _) -> [tann]
+  | Unknown _ -> []
+  | Cases fsl ->
+      List.concat (List.map (fun (f,s) ->
+       (Cpure.collect_term_ann f) @ (collect_term_ann_in_tnt_case_spec s)
+      ) fsl)
+
 let rec merge_tnt_case_spec_into_struc_formula ctx spec sf = 
   match sf with
   | CF.ECase ec -> CF.ECase { ec with 
@@ -562,14 +571,67 @@ let tnt_spec_of_proc proc ispec =
   let spec = norm_struc spec in
   spec
 
+let print_svcomp2015_result term_anns =
+  (* print_endline ("term_anns" ^ (pr_list string_of_term_ann term_anns)); *)
+  (* no termination info --> UNKNOWN *)
+  if (List.length term_anns = 0) then
+    (* print_endline "UNKNOWN 1" *)
+    print_endline "UNKNOWN"
+  (* all cases terminates --> TRUE *)
+  else if (List.for_all Cpure.is_Term term_anns) then
+    print_endline "TRUE"
+  (* all cases are Loop --> FALSE *)
+  else if (List.exists Cpure.is_Loop term_anns) then (
+    let cex = Cpure.cex_of_term_ann_list term_anns in
+    let cex_str = Cprinter.string_of_term_cex cex in
+    print_endline ("FALSE - Counterexample: " ^ cex_str)
+  )
+  (* some cases are MayLoop --> FALSE when having counterexamples, otherwise UNKNOWN *)
+  else if (List.exists Cpure.is_MayLoop term_anns) then (
+    let cex = Cpure.cex_of_term_ann_list term_anns in
+    let cex_str = (
+      match cex with
+      | None -> ""
+      | Some e when (e.Cpure.tcex_trace = []) -> ""
+      | _ -> Cprinter.string_of_term_cex cex
+    ) in
+    if (eq_str cex_str "") then
+      (* print_endline "UNKNOWN 3" *)
+      print_endline "UNKNOWN"
+    else
+      print_endline ("FALSE - Counterexample: " ^ cex_str)
+  )
+  (* the rests are UNKNOWN *)
+  else
+    (* print_endline "UNKNOWN 2" *)
+    print_endline "UNKNOWN"
+
+let print_svcomp2015_result term_anns =
+  (* print_endline "hello"; *)
+  Debug.no_1 "print_svcomp2015_result" 
+    (add_str "result" (fun lst -> string_of_int (List.length lst)))
+    pr_none print_svcomp2015_result term_anns
+
 let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
       let nspec = tnt_spec_of_proc proc ispec in
-      print_endline (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec))
-    with _ -> (* Proc Decl is not found - SLEEK *)
-      print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs
+      print_endline_quiet (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec));
+      (* print result for svcomp 2015 *)
+      if !Globals.svcomp_compete_mode && (eq_str (Cast.unmingle_name mn) "main") then (
+        let term_anns = Cformula.collect_term_ann_for_svcomp_competion nspec in
+        print_svcomp2015_result term_anns
+      );
+    (* Proc Decl is not found - SLEEK *)
+    with _ -> (
+      print_endline_quiet (mn ^ ": " ^ (print_tnt_case_spec ispec));
+      (* if !Globals.svcomp_compete_mode && (eq_str mn "main") then ( *)
+      (*   let term_anns = collect_term_ann_in_tnt_case_spec ispec in *)
+      (*   print_svcomp2015_result term_anns                          *)
+      (* );                                                           *)
+    )
+  ) proc_case_specs
       
 let pr_im_case_specs iter_num =
   if !Globals.tnt_verbosity == 0 then begin
@@ -847,9 +909,9 @@ let templ_rank_constr_of_rel for_lex rel =
   (* let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in                                            *)
   (* let constr = mkAnd dec bnd in                                                                 *)
   (* let _ = add_templ_assume (MCP.mix_of_pure ctx) constr inf_templs in                           *)
-  (* let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in              *)
-  (* let _ = print_endline ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in                  *)
-  (* let _ = print_endline ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in            *)
+  (* let _ = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx: " ^ (!CP.print_formula ctx)) in            *)
+  (* let _ = print_endline_quiet ("Rank synthesis: constr: " ^ (!CP.print_formula constr)) in      *)
   
   let ctx_bnd = mkAnd rel.call_ctx (CP.cond_of_term_ann rel.termu_lhs) in
   let bnd = mkGte src_rank (CP.mkIConst 0 no_pos) in
@@ -857,11 +919,11 @@ let templ_rank_constr_of_rel for_lex rel =
   let ctx_dec = if not for_lex then mkAnd ctx_bnd (CP.cond_of_term_ann rel.termu_rhs) else ctx_bnd in
   let dec = mkGt src_rank dst_rank in
   let _ = add_templ_assume (MCP.mix_of_pure ctx_dec) dec inf_templs in
-  (* let _ = print_endline ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in                    *)
-  (* let _ = print_endline ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in                *)
-  (* let _ = print_endline ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in                        *)
-  (* let _ = print_endline ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in                *)
-  (* let _ = print_endline ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in                        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: vars: " ^ (!CP.print_svl inf_templs)) in                    *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx_bnd: " ^ (!CP.print_formula ctx_bnd)) in                *)
+  (* let _ = print_endline_quiet ("Rank synthesis: bnd: " ^ (!CP.print_formula bnd)) in                        *)
+  (* let _ = print_endline_quiet ("Rank synthesis: ctx_dec: " ^ (!CP.print_formula ctx_dec)) in                *)
+  (* let _ = print_endline_quiet ("Rank synthesis: dec: " ^ (!CP.print_formula dec)) in                        *)
   
   inf_templs, (opt_to_list src_templ_decl) @ (opt_to_list dst_templ_decl)
   
@@ -1357,9 +1419,9 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
         else la, sa, (oa @ [c])) ([], [], []) nt_conds 
       in
         
-      (* let _ = print_endline ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
-      (* let _ = print_endline ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
-      (* let _ = print_endline ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
+      (* let _ = print_endline_quiet ("loop_conds: " ^ (pr_list !CP.print_formula loop_conds)) in *)
+      (* let _ = print_endline_quiet ("self_conds: " ^ (pr_list !CP.print_formula self_conds)) in *)
+      (* let _ = print_endline_quiet ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
       
       (* if List.exists (fun c -> (imply eh_ctx c)) loop_conds then NT_Yes *)
       (* For self loop on the same condition *)
@@ -1374,8 +1436,8 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       else 
         let other_groups = partition_by_key (fun c -> c.ntc_fn) eq_str other_conds in
         if List.exists (fun (gn, gc) -> 
-          not (eq_str fn gn) && (gc != []) &&
-          (imply eh_ctx (CP.join_disjunctions (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
+          (* not (eq_str fn gn) && (gc != []) && *)
+          (imply eh_ctx (join_disjs (List.map (fun c -> c.ntc_cond) gc)))) other_groups 
         then NT_Partial_Yes
         else 
           (* Infer the conditions for to-loop nodes *)

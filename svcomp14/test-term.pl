@@ -13,15 +13,16 @@ use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseExcel::SaveParser;
 
 
-GetOptions( "--infer-lex"       => \$lex,          #register - update the xml
+GetOptions( "infer-lex"       => \$lex,          #register - update the xml
+            "revid=s"         => \$revid,        #revision id
     );
 
 
 #my @dirs=("termination-crafted-lit","termination-memory-alloca");
 #my @dirs=("termination-memory-alloca");
-# my @dirs=("test");
-#my @dirs=("termination-crafted-lit", "termination-crafted","termination-numeric","termination-memory-alloca");
-my @dirs=("termination-memory-alloca");
+#my @dirs=("test");
+my @dirs=("termination-crafted-lit", "termination-crafted","termination-numeric","termination-memory-alloca");
+#my @dirs=("termination-memory-alloca");
 #my @dirs=("termination-numeric");
 #my @dirs=("termination-crafted");
 #my @dirs=("termination-crafted");
@@ -29,6 +30,7 @@ my $exec_path = '..';
 my $hip  = "$exec_path/hip ";
 my $args = '-infer "\@term"';
 my $result_file = "SV-COMP 2015.xls";
+my $summary_file = "SV-COMP 2015 - SUM.xls";
 my $timeout = 60;
 
 #my $root_dir = getcwd();
@@ -58,17 +60,20 @@ my $sum_row = $row_sum_new;
 if($lex) {$working_col =  $lex_col;  $sum_row = $row_sum_lex; }
 
 my $parser = new Spreadsheet::ParseExcel::SaveParser;
+#my $parser_sum = new Spreadsheet::ParseExcel::SaveParser;
 
 if(-e "$result_file")  {#check for file existance
 
     my $workbook = $parser->Parse("$result_file") #open file for modifying
         or die "File $result_file was not found";
+    # my $workbook_sum = $parser->Parse("$summary_file") #open file for modifying
+    #     or die "File $summary_file was not found";
     my $row = $first_row;
     foreach $dir (@dirs) {
-        if ($dir  =~ m/termination-memory-alloca/){
+        #if ($dir  =~ m/termination-memory-alloca/){
             $hip = "C_INCLUDE_PATH=termination-memory-alloca/ ".$hip;
             $args = '-infer "\@shape\@term"';
-        }
+        #}
         if($lex) {
          $args = $args.' --infer-lex '; 
         }
@@ -108,7 +113,7 @@ if(-e "$result_file")  {#check for file existance
                 alarm 0;
             } catch {
                 die $_ unless $_ eq "alarm\n";
-                print "timed out\n";
+                #print "timed out\n";
                 $res_cell = "TIMEOUT";
             };
 
@@ -141,12 +146,14 @@ if(-e "$result_file")  {#check for file existance
                     my @lines = split /\n/, $res_inf; 
                     foreach my $line (@lines) { 
                         if($line =~ m/.*requires.*/){
+                            #print "REQUIRES: \n";
                             if($line =~ m/Term/i # && $term =~ m/Term/i
-                                )       { $res_cell = "OK - Term"; $term_cnt++; }
-                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; }
-                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; $fail_cnt++; }
+                                )       { $res_cell = "OK - Term"; $term_cnt++;  last; }
+                            elsif($line =~ m/MayLoop/i && $loop =~ m/Loop/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; last; }
+                            elsif($line =~ m/MayLoop\{.*\}/i) { $res_cell = "OK - MayLoop"; $mayloop_cnt++; last; }
+                            elsif($line =~ m/MayLoop/i && $mayloop =~ m/MayLoop/i) { $res_cell = "Check MayLoop"; $fail_cnt++; last; }
                             # else { $err_cnt++; }
-                            # elsif($line =~ m/Loop/i)    { $res_cell = "Loop"; }
+                            elsif($line =~ m/Loop/i)    { $res_cell = "Loop";  $mayloop_cnt++;}
                         }
                     }
                 }
@@ -162,9 +169,12 @@ if(-e "$result_file")  {#check for file existance
         $worksheet->AddCell($sum_row, $col_sum_fail, $fail_cnt);
         $worksheet->AddCell($sum_row, $col_sum_timeout, $timeout_cnt);
         $worksheet->AddCell($sum_row, $col_sum_err, $err_cnt);
-        $workbook->SaveAs("$result_file");
+        #$workbook_sum->AddWorksheet("$revid-$dir");
+        
+        
     }
     $workbook->SaveAs("$result_file");
+    #$workbook_sum->SaveAs("$summary_file");
 } else {
     print "\n Oops, file $result_file was not found";
 }

@@ -3163,7 +3163,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   with _ ->
       let _ = Globals.lemma_ep := orig_lemma_ep in
       (* let _ = print_generated_slk_file () in *)
-      let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
+      let _ = print_endline_quiet ("\n --error: "^" at:"^(get_backtrace_quiet ())) in
       ([],[],[])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)

@@ -1100,7 +1100,9 @@ let string_of_var_measures = poly_string_of_pr pr_var_measures
 
 let string_of_term_id = poly_string_of_pr (pr_term_id true)
   
-let string_of_term_ann = poly_string_of_pr (pr_term_ann false)
+let string_of_term_ann = poly_string_of_pr (pr_term_ann true)
+
+let string_of_term_cex  = poly_string_of_pr pr_term_cex
 
 let pr_prune_status st = match st with
   | Implied_N -> fmt_string "(IN)"
@@ -5176,6 +5178,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cpure.print_annot_arg := string_of_annot_arg;;
+Cpure.print_term_ann := string_of_term_ann;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;

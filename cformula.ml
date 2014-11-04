@@ -14905,7 +14905,38 @@ let rec collect_term_ann f =
       CP.collect_term_ann (MCP.pure_of_mix pure_f) 
   | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
       (collect_term_ann f1) @ (collect_term_ann f2)
-      
+
+let rec collect_term_ann_for_svcomp_competion_x sf =
+  match sf with
+  | EList els ->
+      List.concat (List.map (fun (_,sf) ->
+        collect_term_ann_for_svcomp_competion sf
+      ) els)
+  | ECase ec ->
+      List.concat (List.map (fun (f,sf) ->
+        (CP.collect_term_ann f) @ (collect_term_ann_for_svcomp_competion sf)
+      ) ec.formula_case_branches)
+  | EBase eb ->
+      let r1 = collect_term_ann eb.formula_struc_base in
+      let r2 = match eb.formula_struc_continuation with
+        | None -> []
+        | Some sf -> collect_term_ann_for_svcomp_competion sf in
+      r1 @ r2
+  | EAssume ea ->
+      (* no collection in assume *)
+      []
+      (* let r1 = collect_term_ann ea.formula_assume_simpl in                      *)
+      (* let r2 = collect_term_ann_for_svcomp_competion ea.formula_assume_struc in *)
+      (* r1 @ r2                                                                   *)
+  | EInfer ei ->
+      collect_term_ann_for_svcomp_competion ei.formula_inf_continuation
+
+and collect_term_ann_for_svcomp_competion sf =
+  let pr_sf = (add_str "sf" !print_struc_formula) in
+  let pr_res = (add_str "res" (pr_list !CP.print_term_ann)) in
+  Debug.no_1 "collect_term_ann_for_svcomp_competion_x" pr_sf pr_res
+      (fun _ -> collect_term_ann_for_svcomp_competion_x sf) sf
+  
 let collect_term_ann_fv f =
   let ann_lst = collect_term_ann f in
   List.concat (List.map CP.fv_of_term_ann ann_lst)

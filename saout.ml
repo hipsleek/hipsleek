@@ -655,7 +655,7 @@ let plug_shape_into_specs_x cprog iprog dang_hps proc_names hp_defs=
   let cprog = List.fold_left (plug_proc need_trans_hprels1 chprels_decl) cprog proc_names in
   cprog
   with _ ->
-      let _ = print_endline ("\n --:plug_shape_into_specs warning: "^" at:"^(Printexc.get_backtrace ())) in
+      let _ = print_endline_quiet ("\n --:plug_shape_into_specs warning: "^" at:"^(get_backtrace_quiet ())) in
       cprog
 
 let plug_shape_into_specs cprog iprog dang_hps proc_names hp_defs=
