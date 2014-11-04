@@ -66,7 +66,7 @@ cell.ss_10:9_10:14
 
  Why is there an emp case for GP16?
 =================================================================
-# cell5b.ss 
+# cell5b.ss:FIXED
 
   if (y.val<x.val) {
     y.val = y.val +1;
@@ -95,7 +95,7 @@ val_11_1258=val_10_1231 & x!=null & y'!=null&{FLOW,(4,5)=__norm}[]
     [emp&y_1275!=null & x_1274!=null; 
      y_1275::cell<val_10_1231> * x_1274::cell<val_10_1237>]]
 =================================================================
-# cell2ap.ss 
+# cell2ap.ss: FIXED
 
 How come post_n not performed after shape
 inference?
@@ -249,8 +249,166 @@ On the other hand, GP_13b is just the linked-list data structure:
   \/ emp & res=null
 
 =================================================================
+# dell1.ss: DONE
+
+void loop(cell x,cell y)
+  infer [@shape
+         //,@post_n
+  ]
+
+# TODO: should display the actual pre/post inferred.
+*********************************************************
+[ HP_11(x2,y3) ::=  x2::cell<val37> * y3::cell<val69>,
+ GP_12(x4,y5) ::=  y5::cell<val31> * x4::cell<val37>]
+=========================================================
+
+Is it true to val37 is unchanged? The spec 
+inferred seems wrong
+
+   see #dell1a.ss
+
+This later caused post to be inferred wrongly.
+
 =================================================================
+
+# dell1.ss: 
+
+should print with the substitition
+
+[ HP_11(x_1507,y_1508) ::=  x_1507::cell<val_28_1509> * y_1508::cell<val_28_1510>,
+ GP_12(x_1511,y_1512) ::=  y_1512::cell<val_28_1513> * x_1511::cell<val_28_1514>]
+
+!!! SHAPE inferred spec: EInfer @shape[HP_11,GP_12]
+   EBase HP_11(x,y)&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     GP_12(x,y)&{FLOW,(4,5)=__norm#E}[]
+
+
+==============================================
+# dell3.ss -pcp
+
+void loop(cell x,cell y)
+  infer [@shape
+         ,@post_n
+  ]
+
+
+Why post did not have base-case branch?
+                     ]
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1541: ( val_28_1514=val_28_1509 & val_28_1513=val_28_1510 & val_28_1509<=val_28_1510) -->  post_1541(val_28_1513,val_28_1514,val_28_1509,val_28_1510)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1541(val_28_1509,val_28_1510,val_28_1513,val_28_1514), val_28_1509=val_28_1514 & val_28_1510=val_28_1513 & val_28_1514<=val_28_1513, true, true)]
+*************************************
+
+!!! REL POST :  post_1541(val_28_1509,val_28_1510,val_28_1513,val_28_1514)
+!!! POST:  val_28_1509=val_28_1514 & val_28_1510=val_28_1513 & val_28_1514<=val_28_1513
+!!! REL PRE :  true
+!!! PRE :  true
+
+void loop(cell x,cell y)
+  infer [@post_n
+  ]
+
+Why does the above different from dell3a.ss woeka...
+
+[RELDEFN post_1460: ( post_1460(d_1442,e_1443,a_1488,b) & a=1+a_1488 & b<=a_1488) -->  post_1460(d_1442,e_1443,a,b),
+RELDEFN post_1460: ( d_1442=a & e_1443=b & a<=b) -->  post_1460(d_1442,e_1443,a,b)]
+*************************************
+
+!!! >>>>>> compute_fixpoint <<<<<<
+!!! Input of fixcalc: post_1460:={[a,b] -> [d_1442,e_1443] -> []: (((d_1442=a && e_1443=b) && a<=b) || ( (exists (a_1488:(a_1488+1=a && post_1460(a_1488,b,d_1442,e_1443))))  && b<a))
+};
+bottomupgen([post_1460], [2], SimHeur);
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1460(a,b,d_1442,e_1443), ((e_1443=d_1442 & b=d_1442 & d_1442<a) | (a=d_1442 & b=e_1443 & 
+d_1442<=e_1443)), true, true)]
+*************************************
+                  b<a -> requires emp & Term[76,2,-1+(1*a)+(-1*
+                  b)]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  }
 =================================================================
+# dell3.ss 
+
+void loop(cell x,cell y)
+  infer [@shape
+         ,@post_n
+  ]
+
+Why @term capture an incomplete result:
+with only cbase-case?
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & x=1 & 
+y=2 --> looppost_1433().
+
+ termAssume val_28_1510<=val_28_1511 & !(v_bool_28_1444') & 
+val_28_1510<=val_28_1511 & !(v_bool_28_1444') & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510 & x=1 & y=2 --> looppost_1433().
+
+ termAssume y'=y & x'=x & val_28_1511<val_28_1510 & v_bool_28_1444' & 
+val_28_1511<val_28_1510 & v_bool_28_1444' & v_int_30_1606+1=val_28_1510 & 
+val_30_1601=val_28_1510 & val_28_1510=v_int_30_1606 & x'=1 & 
+y=2 & looppre_0() --> looppre_0().
+
+
+Base/Rec Case Splitting:
+[	loop: [[2] true@B]
+]
+Termination Inference Result:
+loop:  requires x::cell<val_28_1510> * 
+y::cell<val_28_1511> & truerequires emp & Term[76,1]
+     ensures y::cell<val_28_1514> * 
+x::cell<val_28_1515> & val_28_1510<=val_28_1511 & val_28_1514=val_28_1511 & 
+val_28_1515=val_28_1510;
+
+However, dell3a.ss had a better result
+
+Temporal Assumptions:
+ termAssume a<=b & !(v_bool_28_1440') & a<=b & !(v_bool_28_1440') & 
+d_1443=a & x=1 & y=2 --> looppost_1429(a,b).
+
+ termAssume (((d_1542=b_1534 & b_1534<a_1533) | (d_1542=a_1533 & 
+a_1533<=b_1534))) & x!=null & y!=null & b_1534=b & a_1533=v_int_30_1539 & 
+val_30_1532=a & v_int_30_1539+1=a & v_bool_28_1440' & b<a & 
+v_bool_28_1440' & b<a & d_1443=d_1542 & x=1 & 
+y=2 & looppost_1429(a_1533,b_1534) --> looppost_1429(a,b).
+
+ termAssume y'=y & x'=x & b<a & v_bool_28_1440' & b<a & v_bool_28_1440' & 
+v_int_30_1539+1=a & val_30_1532=a & a_1533=v_int_30_1539 & b_1534=b & x'=1 & 
+y=2 & looppre_0(a,b) --> looppre_0(a_1533,b_1534).
+
+
+Termination Inference Result:
+loop:  requires x::cell<a> * 
+y::cell<b> & truecase {
+                  a<=b -> requires emp & Term[76,1]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  b<a -> requires emp & Term[76,2,-1+(1*a)+(-1*
+                  b)]
+     ensures x::cell<d_1443> * 
+                  y::cell<e_1444> & (((d_1443=b & b<a) | (d_1443=a & 
+                  a<=b))) & e_1444=b; 
+                  }
+
 =================================================================
 =================================================================
 =================================================================

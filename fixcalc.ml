@@ -262,7 +262,8 @@ let subst_inv_lower_view view_invs f=
 (******************************************************************************)
 
 (* let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc " *)
-let fixcalc_exe = "fixcalc "
+(* let fixcalc_exe = "fixcalc " *)
+let fixcalc_exe = if !Globals.is_solver_local then (ref "./fixcalc ") else (ref "fixcalc ")
 let fixcalc_options = " -v:-1"
 (* to suppress some printing *)
 
@@ -296,7 +297,7 @@ let compute_inv name vars fml pf =
     Printf.fprintf oc "%s" input_fixcalc;
     flush oc;
     close_out oc;
-    let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+    let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
     let new_pf = List.hd (Parse_fix.parse_fix res) in
     (*let _ = Pr.fmt_string("\nInv: "^(Pr.string_of_pure_formula new_pf)) in*)
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
@@ -345,7 +346,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+  let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
@@ -409,7 +410,7 @@ let compute_invs_fixcalc input_fixcalc=
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+  let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
@@ -467,7 +468,7 @@ let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var l
   (* Printf.fprintf oc "%s" input_fixcalc; *)
   (* flush oc; *)
   (* close_out oc; *)
-  (* let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in *)
+  (* let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in *)
 
   (* (\* Remove parentheses *\) *)
   (* let res = remove_paren res (String.length res) in *)
@@ -612,7 +613,7 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+  let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
@@ -781,7 +782,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+  let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in

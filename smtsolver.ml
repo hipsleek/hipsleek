@@ -578,7 +578,7 @@ let prover_process = ref {
 }
 
 
-let smtsolver_path = (* "z3-4.3.2" *) "z3"
+let smtsolver_path = if !Globals.compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
 
 (***********)
 let test_number = ref 0
@@ -594,7 +594,7 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> (smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
+  | "z3" -> (!smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "z3-4.2" -> ("z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
@@ -637,7 +637,7 @@ let rec prelude () = ()
 (* start z3 system in a separated process and load redlog package *)
 and start() =
   if not !is_z3_running then (
-    print_string_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
+    print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then
@@ -647,7 +647,7 @@ and start() =
       else if !smtsolver_name = "z3-4.3.1" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
@@ -1187,6 +1187,7 @@ let simplify (pe : CP.formula) : CP.formula =
   Debug.no_1 "simplify" pr pr simplify pe 
 
 let hull (f: CP.formula) : CP.formula = f
+
 let pairwisecheck (f: CP.formula): CP.formula = f
 
 (* Template Solving by Z3 *)
@@ -1232,6 +1233,8 @@ let get_model is_linear vars assertions =
     (* "(check-sat)\n" ^ *)
     "(get-model)\n"
   in
+  
+  (* let _ = print_endline ("smt_inp: \n" ^ smt_inp) in *)
 
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))

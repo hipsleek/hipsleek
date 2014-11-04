@@ -1006,9 +1006,11 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
         Cformula.add_quantifiers quan_null_svl0 (Cformula.subst ss base_f2)
       else f2
     in
+    (* fresh non-shape values *)
+    let f4 = Cfutil.fresh_data_v f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
-    (f3,Cformula.subst_opt subst og, unk_args1)
+    (f4,Cformula.subst_opt subst og, unk_args1)
   in
   DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
@@ -2807,12 +2809,18 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
           (* CF.is_post_hps = all_post_hps; *)
       } in
       let unk_hps = List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs) in
-      let is2 = if !Globals.pred_elim_useless then
+      let is2a = if !Globals.pred_elim_useless then
         (*detect and elim useless paramters*)
         {is1 with CF.is_hp_defs = Sacore.norm_elim_useless_paras prog
                 unk_hps (* (CP.remove_dups_svl is1.CF.is_sel_hps) *) sel_hps
                 all_post_hps is1.CF.is_hp_defs}
       else is1
+      in
+      let is2=
+        if !pred_norm_overr then
+          let n_hp_defs = Sacore.norm_overr is2a.is_hp_defs in
+          {is2a with CF.is_hp_defs = n_hp_defs}
+        else is2a
       in
       let post_hps = is2.CF.is_post_hps in
       let is3 = if not !Globals.pred_seg_unify then is2 else

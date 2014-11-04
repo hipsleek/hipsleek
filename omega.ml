@@ -75,7 +75,10 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+            | _ -> 
+                  let _ = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+                  "0=0"
+                  (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
                 (* Error.report_error { *)
                 (*   Error.error_loc = l; *)
                 (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
@@ -214,7 +217,7 @@ let omega_of_formula_old i f  =
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
-let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
 (* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
@@ -243,7 +246,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
@@ -806,13 +809,17 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos;*) 
           omega_subst_lst := [];
-            let vars_list = get_vars_formula pe1 in
+            (* let vars_list = get_vars_formula pe1 in *)
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)
             begin
               try
-                  let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+                let sv_list = Gen.BList.remove_dups_eq Cpure.eq_spec_var (fv pe1) in
+                (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
+                  let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+                  (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
+                  (* Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)
@@ -834,7 +841,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    let r = Cpure.subst ss2 (match_vars (fv pe1) rel) in
+	                    let r = Cpure.subst ss2 (match_vars sv_list rel) in
                       trans_bool r
 	                  end
 	                with

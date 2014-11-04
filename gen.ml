@@ -39,13 +39,15 @@ struct
   let pr_id x = x
   let pr_string x = "\""^x^"\""
   
-  let print_endline_quiet s = 
-    if !Globals.smt_compete_mode then () 
+  let print_endline_quiet s =
+    let flag = !Globals.compete_mode in
+    (* print_endline ("compete mode : "^(string_of_bool flag)); *)
+    if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !Globals.smt_compete_mode then () 
+    if !Globals.compete_mode then () 
     else print_string s 
 
   let pr_var_prime (id,p) = match p with
@@ -212,7 +214,7 @@ struct
      { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
-    if !Globals.smt_compete_mode then ()
+    if !Globals.compete_mode then ()
     else 
       Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
@@ -255,9 +257,9 @@ struct
 
   (* List-handling stuff *)
 
-  let string_of_f (f:'a->string) (ls:'a list) : string = 
+  let string_of_f (f:'a->string) (ls:'a list) : string =
     ("["^(String.concat "," (List.map f ls))^"]")
-    
+
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
@@ -267,11 +269,11 @@ struct
           let (fs,l) = firsts_last xs1 in
           (x::fs,l)
 
-  let rec take n l  = if n<=0 then [] else 
+  let rec take n l  = if n<=0 then [] else
     match l with
       | h::t -> h::(take (n-1) t)
       | [] -> []
-            
+
   let rec drop n l  = if n<=0 then l else
     match l with
       | h::t -> (drop (n-1) t)
@@ -367,7 +369,7 @@ struct
 	if (l2 == []) then false
 	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
-  let rec find_dups_eq eq n = 
+  let rec find_dups_eq eq n =
     match n with
       | [] -> []
       | q::qs -> if (List.exists (eq q) qs) then q::(find_dups_eq eq qs) else find_dups_eq eq qs
@@ -381,14 +383,14 @@ struct
     List.exists (fun e -> eq x e) ls
 
   let intersect_eq eq l1 l2 =
-    List.filter (fun x -> List.exists (eq x) l2) l1  
+    List.filter (fun x -> List.exists (eq x) l2) l1
 
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-  let diff_split_eq eq l1 l2 = 
+  let diff_split_eq eq l1 l2 =
     List.partition (fun x -> not (List.exists (eq x) l2)) l1
-    
+
   let list_subset_eq eq l1 l2 = 
     let l = (List.length (difference_eq eq l1 l2)) in
     l==0

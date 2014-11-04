@@ -3,12 +3,12 @@ data cell {
 }
 
 void main(cell x, cell y)
-  infer[@post_n,@term]
+  infer[@shape,@post_n,@term]
   requires x::cell<_> * y::cell<_>
   ensures x::cell<_> * y::cell<_>;
 {
   while (y.val<x.val) 
-    infer[@post_n,@term]
+    infer[@shape,@post_n,@term]
       requires x::cell<_> * y::cell<_>
       ensures x::cell<_> * y::cell<_>;
   {

@@ -125,7 +125,8 @@ let sleek_entail prog ante_ctx conseq pos=
   let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
   rs, prf
 
-let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
+(* WN : why isn't itype added to estate? *)
+let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq =
   let _ = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
@@ -151,7 +152,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let es = {es with CF.es_proof_traces = proof_traces} in
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
+  let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
   ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
   ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -179,8 +181,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
       (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
-  let itype_opt = if List.mem INF_TERM itype then Some INF_TERM else None in
-  let ctx = Infer.init_infer_type ctx itype_opt in
+  (* let itype_opt = if List.mem INF_TERM itype then Some INF_TERM else None in *)
+  let ctx = Infer.init_infer_type ctx itype in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -271,9 +273,10 @@ and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conse
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
-  Debug.no_5 "sleek_entail_check" string_of_int !CP.print_svl pr1 pr2 pr4 pr3
+  let pr5 = pr_list string_of_inf_const in
+  Debug.no_5_num i "sleek_entail_check" pr5 !CP.print_svl  pr1 pr2 pr4 pr3
       (fun _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
-      i isvl ante conseq proof_traces
+      itype isvl ante conseq proof_traces
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ =

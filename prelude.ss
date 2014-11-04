@@ -1,19 +1,41 @@
+//class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}
+/* class ret_int extends __RET { int val } */
+/* class ret_bool extends __RET { bool val } */
+class __RET extends __Exc {}
 
-int add___(int a, int b) 
-  requires true 
+int add___(int a, int b)
+  requires true
   ensures res = a + b;
 
-int minus___(int a, int b) 
+ int minus___(int a, int b)
   requires true
   ensures res = a - b;
 
 int mult___(int a, int b) 
   requires true 
   ensures res = a * b;
+  
+int mults___(int a, int b)
+  //requires true 
+  //ensures res = a * b;
+  case {
+    a = 0 -> ensures res = 0;
+    a > 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res = a * b & res < 0 & res < -a & res < b;
+      b > 0 -> ensures res = a * b & res > 0 & res > a & res > b;
+    }
+    a < 0 -> case {
+      b = 0 -> ensures res = 0;
+      b < 0 -> ensures res = a * b & res > 0 & res > -a & res > -b;
+      b > 0 -> ensures res = a * b & res < 0 & res < a & res < -b;
+    }
+  }
 
 int div___(int a, int b) 
+/*
  case {
   a >= 0 -> case {
     b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
@@ -27,6 +49,53 @@ int div___(int a, int b)
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
+  }
+*/
+/*
+ case {
+  a >= 0 -> case {
+    b = 1 -> ensures res = a;
+    b > 1 -> ensures (exists r: a = b*res + r & 0 <= r <= b-1 & res >= 0 & res < a);
+    b <= -1 -> ensures (exists r: a = b*res + r & 0 <= r <= -b-1 & res <= 0);
+    /* -1 < b < 1 -> requires false ensures false; */
+    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+  }
+  a < 0 -> case {
+    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
+    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
+    /* -1 < b < 1 -> requires false ensures false; */
+    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+  }
+*/
+case {
+  a = 0 -> case {
+    b >= 1 -> ensures res = 0;
+    b <= -1 -> ensures res = 0;
+    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+  }
+  a > 0 -> case {
+    b = 1 -> ensures res = a;
+    b = -1 -> ensures res = -a;
+    b > 1 -> case {
+      a < b -> ensures res = 0;
+      a >= b -> ensures res >= 1 & res < a;
+    }
+    b < -1 -> case {
+      -a > b -> ensures res = 0;
+      -a <= b -> ensures res <= 1 & a + res > 0;
+    }
+    /* -1 < b < 1 -> requires false ensures false; */
+    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+  }
+  a < 0 -> case {
+    b = 1 -> ensures res = a;
+    b = -1 -> ensures res = -a;
+    b > 1 -> ensures res <= 0 & res > a;
+    b < -1 -> ensures res >= 0 & a + res < 0;
+    /* -1 < b < 1 -> requires false ensures false; */
+    -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+  }
 }
 
 // why is flow of div2 __Error rather __DivByZeroErr?
@@ -449,12 +518,16 @@ relation concrete(bag(Object) g).
 relation cyclic(bag((Object,Object)) g).
 relation acyclic(bag((Object,Object)) g).
 relation waitS(bag((Object,Object)) g, bag(Object) S, Object d).
+relation nondet_int__(int x).
+relation nondet_bool__(bool x).
+
 
 int rand_int ()
-requires true
-ensures true;
+  requires true
+  ensures true;
 
 bool rand_bool ()
-requires true
-ensures res or !res;
+  requires true
+  ensures res or !res;
+
 
