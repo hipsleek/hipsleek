@@ -145,9 +145,11 @@ let parse_file (parse) (source_file : string) =
       parse source_file 
     with
       | End_of_file -> List.rev cmds
-      | M.Loc.Exc_located (l,t)-> 
-            (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-            raise t) in
+      | M.Loc.Exc_located (l,t)-> (
+          print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n error: "
+                              ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
+          raise t
+        ) in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
@@ -274,7 +276,7 @@ let parse_file (parse) (source_file : string) =
 
 let main () =
   let _ = Globals.is_sleek_running := true in
-  let _ = Printexc.record_backtrace !Globals.trace_failure in
+  let _ = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
 		            I.prog_data_decls = [iobj_def;ithrd_def];
                 I.prog_global_var_decls = [];
@@ -423,7 +425,7 @@ let _ =
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
-    (* let _ = Printexc.record_backtrace !Globals.trace_failure in *)
+    (* let _ = record_backtrace_quite () in *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
@@ -506,5 +508,5 @@ let _ =
     let _ =
       if (!Globals.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string_if (not !Globals.smt_compete_mode)  "\n"
+    print_string_if (not !Globals.compete_mode)  "\n"
   )

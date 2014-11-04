@@ -1211,7 +1211,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
@@ -1268,6 +1268,32 @@ let cpfile = ref ""
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
+
+let smt_compete_mode = ref false
+let compete_mode = ref false
+let svcomp_compete_mode = ref false
+let return_must_on_pure_failure = ref false
+let smt_is_must_failure = ref (None: bool option)
+let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
+
+let print_endline_q s =
+  if !compete_mode then ()
+  else print_endline s
+
+let print_backtrace_quiet () =
+  if !compete_mode then ()
+  else
+    Printexc.print_backtrace stdout
+
+let get_backtrace_quiet () =
+  if !compete_mode then ""
+  else
+    Printexc.get_backtrace ()
+
+let record_backtrace_quite () =
+  if !compete_mode then ()
+  else
+    Printexc.record_backtrace !trace_failure
 
 (* for Termination *)
 let dis_term_chk = ref false
@@ -1405,7 +1431,8 @@ object (self)
         begin
           Str.search_forward reg s 0;
           arr <- c::arr;
-          print_endline ("infer option added :"^(string_of_inf_const c));
+          (* Trung: temporarily disable printing for svcomp15, undo it later *) 
+          (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
         end
       with Not_found -> ()
     in
@@ -1503,18 +1530,8 @@ let do_test_inv = ref false
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
-let smt_compete_mode = ref false
-let compete_mode = ref false
-let svcomp_compete_mode = ref false
-let return_must_on_pure_failure = ref false
-let smt_is_must_failure = ref (None: bool option)
-let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
-
-  let print_endline_q s =
-    if !compete_mode then ()
-    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false
