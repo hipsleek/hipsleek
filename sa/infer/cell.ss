@@ -3,14 +3,14 @@ data cell {
 }
 
 void main(cell x, cell y)
-  infer[@shape]
-  requires true
-  ensures true;
+  infer[@post_n,@term]
+  requires x::cell<_> * y::cell<_>
+  ensures x::cell<_> * y::cell<_>;
 {
   while (y.val<x.val) 
-    infer[@shape,@term]
-      requires true
-      ensures true;
+    infer[@post_n,@term]
+      requires x::cell<_> * y::cell<_>
+      ensures x::cell<_> * y::cell<_>;
   {
     x.val = x.val-1;
   }
