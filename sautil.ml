@@ -7615,7 +7615,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   ()
 
 (* combine all pred defs with the same name*)
-let combine_hpdef_flow_x hpdefs0=
+let combine_hpdef_flow_x pre_hps post_hps hpdefs0=
   let get_args hpdef= match hpdef.Cformula.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> report_error no_pos "sau.combine_hpdef_flow"
@@ -7649,8 +7649,8 @@ let combine_hpdef_flow_x hpdefs0=
   combine_helper hpdefs0 []
 
 
-let combine_hpdef_flow hpdefs=
+let combine_hpdef_flow pre_hps post_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-  Debug.no_1 "combine_hpdef_flow" pr1 pr1
-      (fun _ -> combine_hpdef_flow_x hpdefs)
-      hpdefs
+  Debug.no_3 "combine_hpdef_flow" !CP.print_svl !CP.print_svl pr1 pr1
+      (fun _ _ _ -> combine_hpdef_flow_x pre_hps post_hps hpdefs)
+      pre_hps post_hps hpdefs

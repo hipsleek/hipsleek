@@ -6525,15 +6525,16 @@ let do_unfold_view_hf cprog pr_views hf0 =
 (*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
 (*     | EList l -> EList (Gen.map_l_snd recf l) *)
 
-let rec struc_formula_trans_heap_node formula_fct f =
-  let fresh_data_v f=
+let fresh_data_v f=
    let quans, f0 = split_quantifiers f in
    let hds, hvs, hrs = get_hp_rel_formula f0 in
    let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
    let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
    let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
    fr_v_sps2
-  in
+
+
+let rec struc_formula_trans_heap_node formula_fct f =
  let recf = struc_formula_trans_heap_node formula_fct in
   match f with
     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}

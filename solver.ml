@@ -11739,7 +11739,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let res = (CF.isFailCtx) cl in
                 if not(res) then first_heap_r
                 else
-                  let _ =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx1" pos in
+                  (* let _ =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx1" pos in *)
                   let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es) = Infer.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
 		  (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
 		  if (not res) then (* r *)
