@@ -2571,8 +2571,13 @@ let string_of_hp_rel_def hp_rel =
   (*           end *)
   (*    ) *)
   (* in *)
+  let pr_flow ofl=
+    match ofl with
+      | None -> ""
+      | Some fl -> (string_of_flow fl)
+  in
  let str_of_hp_rel (* (r,f1, g, f2) *) def =
-   ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs)) in
+   ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs) ^  "(" ^ (pr_flow def.def_flow) ^ ")") in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =

@@ -2822,7 +2822,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       let nprog = match scc_procs with
         | [] -> prog
         | [p] -> if (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && p.Cast.proc_sel_hps != [] then
-            let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names
+            let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
               scc_inferred_hps
             in
             let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
@@ -2834,7 +2834,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           (* ) new_scc_procs in *)
             nprog
           else prog
-        | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names scc_inferred_hps in
+        | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
           let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
           (* let _ = List.iter (fun proc -> *)
           (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
@@ -3755,9 +3755,10 @@ let rec check_prog iprog (prog : prog_decl) =
 	| Some f -> r@[f]
 	| None -> r
 	) [] def.CF.hprel_def_body in
-	 {CF.def_cat = def.CF.hprel_def_kind;
+	 { CF.def_cat = def.CF.hprel_def_kind;
 	CF.def_lhs = def.CF.hprel_def_hrel;
 	CF.def_rhs = [(CF.disj_of_list fs no_pos, None)];
+        CF.def_flow = def.CF.hprel_def_flow;
 	}) ini_hpdefs in
         let _ = proc_mutual_scc_shape_infer iprog prog (has_infer_pre_proc || has_infer_post_proc) ini_hp_defs scc in
         let _ = Infer.rel_ass_stk # reset in
@@ -3872,7 +3873,7 @@ let rec check_prog iprog (prog : prog_decl) =
         end
       | _ -> verify_scc_helper prog verified_sccs scc
   in
-  let verify_scc_incr prog verified_sccs scc=
+  let rec verify_scc_incr prog verified_sccs scc=
     let old_infer_err_flag = !Globals.sae in
     let _ = Globals.sae := (Pi.is_infer_error_scc scc || infer_const_obj # is_error) in
     (*extract props: shape - pure - sortedness - term*)
@@ -3882,6 +3883,9 @@ let rec check_prog iprog (prog : prog_decl) =
     let r = verify_scc_helper prog verified_sccs scc in
     let _ = Globals.sae := old_infer_err_flag in
     r
+    (*     let inf = Iincr.get_infer_type INF_SHAPE *)
+    (*   with Not_found -> scc *)
+    (* in *)
   in
   (********************************************************)
   (********************************************************)

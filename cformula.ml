@@ -4564,6 +4564,7 @@ and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
     def_rhs : ((* cond_path_type * *) formula_guard) list;
+    def_flow: nflow option;
 }
 
 
@@ -4651,14 +4652,16 @@ let check_neq_hrelnode id ls=
 let to_new_hp_rel_def (r,hf,g,f) = 
   { def_cat = r;
   def_lhs = hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_flow = None;
   }
 
 let from_new_hp_rel_def d : hp_rel_def_old =
   match d with
    { def_cat = r;
    def_lhs = hf;
-   def_rhs = rhs
+   def_rhs = rhs;
+   def_flow = fl;
    } -> (r,hf,None,fst (List.hd rhs))
 
 let flatten_hp_rel_def_wo_guard def=
@@ -4768,17 +4771,19 @@ let hpdef_cmp d1 d2 =
     with _ -> 1
   with _ -> -1
 
-let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
+let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
   { def_cat= (CP.HPRelDefn (hp, r, paras));
   def_lhs =hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_flow = ofl;
   }
 
-let mk_hp_rel_def1 c lhs rhs=
+let mk_hp_rel_def1 c lhs rhs ofl=
   { def_cat= c;
   def_lhs = lhs;
-  def_rhs = rhs
+  def_rhs = rhs;
+  def_flow = ofl;
   }
 
 let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
