@@ -115,9 +115,9 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
       ctx iante iconseq inf_vars exact
 
 let print_exc (check_id: string) =
-  Printexc.print_backtrace stdout;
+  print_backtrace_quiet ();
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string_quiet ("exception in " ^ check_id ^ " check\n")
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =

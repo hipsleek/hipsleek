@@ -527,7 +527,11 @@ module type ETABLE =
       method clear : unit
       method sub_type_obj : ident -> ident -> bool
       method union_flow_ne: nflow -> nflow -> nflow
-     method is_norm_flow : nflow -> bool
+      method is_norm_flow : nflow -> bool
+      method is_exc_flow : nflow -> bool
+      method is_top_flow : nflow -> bool
+      method get_min_max : nflow -> (int*int)
+      method mk_nflow_from_min_max : int -> int -> nflow
     end
     val exlist : exc
    end;;
@@ -652,21 +656,21 @@ struct
                       ,(if (o_max<n_max) then n_max else o_max)))) 
           ([],(-1,-1)) 
           l1 
-        in let _ = cnt # inc in  (* to account for internal node *)      
-        ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1)) 
+        in let _ = cnt # inc in  (* to account for internal node *)
+        ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1))
     in
     let r,_ = (lrr top_flow "") in
     r
-	
+
   let compute_hierarchy_aux cnt elist =
 	let pr = pr_list (pr_triple (fun c->c) (fun c->c) (pr_pair string_of_int string_of_int)) in
 	Debug.no_1 "compute_hierarchy_aux" pr pr (fun _ -> compute_hierarchy_aux_x cnt elist) elist
-	
+
   class exc =
   object (self)
     val mutable elist = ([]:flow_entry list)
     val mutable cnt = new counter 0
-    method clear = 
+    method clear =
       begin
         norm_flow_int := empty_flow;
         c_flow_int := empty_flow;
@@ -715,11 +719,11 @@ struct
       begin
         (elist <- elist@ [(n1,n2,false_flow_int)])
       end
-    method private reset_exc = 
+    method private reset_exc =
       begin
-        let _ = self # remove_dupl in        
+        let _ = self # remove_dupl in
         let _ = cnt # reset in
-        let el = List.fold_left (fun acc (a,b,_) -> 
+        let el = List.fold_left (fun acc (a,b,_) ->
             if a="" then acc else (a,b,(0,0))::acc) [] elist in
         elist <- el
       end
@@ -744,7 +748,7 @@ struct
         self # update_values;
         self # sort
       end
-    method get_closest (((min,max):nflow) as nf):(string) = 
+    method get_closest (((min,max):nflow) as nf):(string) =
       begin
         let (s,t)=(get_closest_new elist nf) in
         s ^ (
@@ -754,10 +758,10 @@ struct
       end
     method has_cycles : bool =
       begin
-        let rec cc (crt:string)(visited:string list):bool = 
+        let rec cc (crt:string)(visited:string list):bool =
 	      let sons = List.fold_left (fun a (d1,d2,_)->if ((String.compare d2 crt)==0) then d1::a else a) [] elist in
 	      if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
-	      else (List.exists (fun c-> (cc c (c::visited))) sons) in	
+	      else (List.exists (fun c-> (cc c (c::visited))) sons) in
         (cc top_flow [top_flow])
       end
     method sub_type_obj (t1 : ident) (t2 : ident): bool = 
@@ -766,7 +770,7 @@ struct
         let n2 = self#get_hash t2 in
         Debug.ninfo_pprint t1 no_pos;
         Debug.ninfo_pprint t2 no_pos;
-        if (is_false_flow n2) 
+        if (is_false_flow n2)
         then t1=t2
         else is_subset_flow n1 n2
       end
@@ -776,9 +780,23 @@ struct
       end
     method is_norm_flow (f:nflow) =
       begin
-        (* print_endline ((add_str "f" string_of_flow) f); *)
-        (* print_endline ((add_str "norm_flow" string_of_flow) !norm_flow_int); *)
         is_exact_flow f !norm_flow_int
+      end
+    method is_exc_flow (f:nflow) =
+      begin
+        is_subset_flow f !raisable_flow_int
+      end
+    method is_top_flow (f:nflow) =
+      begin
+        is_exact_flow f !top_flow_int
+      end
+    method get_min_max ((s,b):nflow) =
+      begin
+        (s,b)
+      end
+    method mk_nflow_from_min_max (s:int) (b:int) =
+      begin
+        (s,b)
       end
   end
   let exlist = new exc
@@ -1047,9 +1065,9 @@ struct
       begin
         (elist <- elist@ [(n1,n2,false_flow_int)])
       end
-    method private reset_exc = 
+    method private reset_exc =
       begin
-        let _ = self # clean in        
+        let _ = self # clean in
         let _ = cnt # reset in
         let el = List.fold_left (fun acc (a,b,_) -> 
             if a="" then acc else (a,b,((0,0),[(0,0)]))::acc) [] elist in
@@ -1060,7 +1078,7 @@ struct
         norm_flow_int := self # get_hash n_flow;
         c_flow_int := self # get_hash c_flow;
         ret_flow_int := self # get_hash ret_flow;
-		loop_ret_flow_int := self # get_hash loop_ret_flow;
+	loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
@@ -1108,6 +1126,22 @@ struct
     method is_norm_flow (f:nflow) =
       begin
         is_exact_flow f !norm_flow_int
+      end
+    method is_exc_flow (f:nflow) =
+      begin
+        is_subset_flow f !raisable_flow_int
+      end
+    method is_top_flow (f:nflow) =
+      begin
+        is_exact_flow f !top_flow_int
+      end
+    method get_min_max (((s,b),_):nflow) =
+      begin
+        (s,b)
+      end
+    method mk_nflow_from_min_max (s:int) (b:int) =
+      begin
+        ((s,b),[(s,b)])
       end
   end
   let exlist = new exc

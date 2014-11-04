@@ -1,0 +1,6 @@
+post_1345:={[x] -> [PRIx] -> []: 
+(x=PRIx && x<=0 ) 
+#|| (x=PRIx && 2223<=x) 
+|| exists (x_1369:x_1369+1=x  && 1<=x && x<=2222 && post_1345(x_1369,PRIx) )
+};
+bottomupgen([post_1345], [3], SimHeur);

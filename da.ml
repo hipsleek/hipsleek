@@ -265,7 +265,8 @@ let get_spec_cases_x prog proc e0: (Cpure.formula list) =
   (*get all path conditions with context-sensitive*)
   let path_conds =  case_analysis proc proc.proc_args e0 (CP.mkTrue no_pos) in
   (**************END**INTERNAL****************)
-   List.map (fun sp -> sp.sp_constr) path_conds
+  List.filter (fun p -> not (CP.isConstTrue p))
+      (CP.remove_redundant_helper (List.map (fun sp -> sp.sp_constr) path_conds) [])
 
 let get_spec_cases prog proc e0: (Cpure.formula list) =
   let pr1 = !print_prog_exp in

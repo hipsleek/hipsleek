@@ -2110,6 +2110,82 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
       (fun _ _ _ _ -> reverify_cond_x prog unk_hps link_hps hpdefs cond_equivs)
        unk_hps link_hps hpdefs cond_equivs
 
+
+let norm_overr_x hpdefs=
+  (*********INTERNAL************)
+  let rec norm_overr_h_formula res hf=
+    match hf with
+      | CF.Conj {CF.h_formula_conj_h1=hf1;
+        CF.h_formula_conj_h2=hf2;
+        CF.h_formula_conj_pos=p} -> begin
+          (* check either of hf* is unknown pred *)
+          match hf1 with
+          | CF.HRel _ -> hf2, res@[(hf1, hf2)]
+          | _ -> begin
+              match hf2 with
+                | CF.HRel _ -> hf1, res@[(hf2, hf1)]
+                | _ -> hf,res
+            end
+        end
+      | CF.Star { CF.h_formula_star_h1=hf1;
+        CF.h_formula_star_h2=hf2;
+        CF.h_formula_star_pos = p;} ->
+            let n_hf1,res1 = norm_overr_h_formula res hf1 in
+            let n_hf2,res2 = norm_overr_h_formula res1 hf2 in
+            let n_hf =  CF.Star { CF.h_formula_star_h1=n_hf1;
+            CF.h_formula_star_h2=n_hf2;
+            CF.h_formula_star_pos = p;} in
+            n_hf,res2
+      | _ -> hf,res
+  in
+  let rec norm_overr_formula f=
+    match f with
+      | CF.Base fb ->
+            let nh,rels = norm_overr_h_formula [] fb.CF.formula_base_heap in
+            CF.Base {fb with CF.formula_base_heap = nh}, rels
+      | CF.Exists _ ->
+            let quans, bare = CF.split_quantifiers f in
+            let nbare, rels = norm_overr_formula bare in
+            CF.add_quantifiers quans nbare, rels
+      | CF.Or orf ->
+            let f1,rels1 = norm_overr_formula orf.CF.formula_or_f1 in
+            let f2,rels2 = norm_overr_formula orf.CF.formula_or_f2 in
+            CF.Or {orf with CF.formula_or_f1 = f1;
+            CF.formula_or_f2 = f2}, rels2@rels2
+  in
+  let norm_overr_one hpdef=
+    let n_rhs, new_hprels = List.fold_left (fun (r1,r2) (f,og) ->
+        let nf, rels = norm_overr_formula f in
+        (r1@[(nf,og)], r2@rels)
+    ) ([],[]) hpdef.CF.def_rhs in
+    {hpdef with CF.def_rhs = n_rhs},new_hprels
+  in
+  let add_one_rel hpdefs (hprel, rel)=
+    let hp, args = CF.extract_HRel hprel in
+    try
+      let def, rest = CF.look_up_hp_def_with_remain hpdefs hp [] in
+      let _,args0 = CF.extract_HRel def.CF.def_lhs in
+      let n_rel = CF.subst (List.combine args args0) (CF.formula_of_heap rel no_pos) in
+      let n_def = {def with CF.def_rhs = def.CF.def_rhs@[(n_rel,None)]} in
+      rest@[n_def]
+    with _ ->
+        let def = CF.mk_hp_rel_def hp (args, List.hd args, List.tl args) None (CF.formula_of_heap rel no_pos) no_pos in
+        hpdefs@[def]
+  in
+  (*********INTERNAL************)
+  let n_hpdefs, nrels = List.fold_left (fun (acc1,acc2) def ->
+      let n_def, n_rels = norm_overr_one def in
+      (acc1@[n_def], acc2@n_rels)
+  ) ([],[]) hpdefs in
+  (*to add nrels into hpdefs*)
+  let n_hpdefs1 = List.fold_left (fun acc rel -> add_one_rel acc rel) n_hpdefs nrels in
+  n_hpdefs1
+
+let norm_overr hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "norm_overr" pr1 pr1
+      (fun _ -> norm_overr_x hpdefs) hpdefs
+
 (*************************************************)
 (**********       DISJ-UNIFY       ***************)
 (*************************************************)

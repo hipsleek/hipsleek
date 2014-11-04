@@ -431,7 +431,7 @@ let run prover input =
 			Procutils.PrvComms.maybe_raise_timeout fnc () !timeout 
 		with
 			| _ -> begin (* exception : return the safe result to ensure soundness *)
-				Printexc.print_backtrace stdout;
+				print_backtrace_quiet ();
 				Unix.kill !prover_process.pid 9;
 				ignore (Unix.waitpid [] !prover_process.pid);
 				{ original_output_text = []; sat_result = Unknown; }

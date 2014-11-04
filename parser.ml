@@ -899,6 +899,7 @@ non_empty_command:
       | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t= checksat_cmd     -> SatCheck t
+      | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
@@ -1095,38 +1096,38 @@ view_decl_ext:
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
-view_decl_spec:
-  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      ->
-      let compare_list_string cmp ls1 ls2=
-        let rec helper ls01 ls02=
-          match ls01,ls02 with
-            | [],[] -> true
-            | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false
-            | _ -> false
-        in
-        helper ls1 ls2
-      in
-      let cmp_id id1 id2=
-        if String.compare id1 id2 =0 then true else false
-      in
-      let cmp_typed_id (t1,id1) (t2,id2)=
-        if t1=t2 && String.compare id1 id2 =0 then true else false
-      in
-      if not (compare_list_string cmp_id vh.view_vars va.view_vars &&
-                  compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then
-        report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)
-      else
-        let (oi, oboi) = oi in
-        { vh with view_formula = (fst vb);
-            view_invariant = oi;
-            view_baga_inv = obi;
-            view_baga_over_inv = oboi;
-            view_baga_under_inv = obui;
-            view_kind = Iast.View_SPEC;
-            view_parent_name = Some va.view_name;
-            view_inv_lock = li;
-            try_case_inference = (snd vb) } ]];
+(* view_decl_spec:                                                                                                                                              *)
+(*   [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock *)
+(*       ->                                                                                                                                                     *)
+(*       let compare_list_string cmp ls1 ls2=                                                                                                                   *)
+(*         let rec helper ls01 ls02=                                                                                                                            *)
+(*           match ls01,ls02 with                                                                                                                               *)
+(*             | [],[] -> true                                                                                                                                  *)
+(*             | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false                                                                         *)
+(*             | _ -> false                                                                                                                                     *)
+(*         in                                                                                                                                                   *)
+(*         helper ls1 ls2                                                                                                                                       *)
+(*       in                                                                                                                                                     *)
+(*       let cmp_id id1 id2=                                                                                                                                    *)
+(*         if String.compare id1 id2 =0 then true else false                                                                                                    *)
+(*       in                                                                                                                                                     *)
+(*       let cmp_typed_id (t1,id1) (t2,id2)=                                                                                                                    *)
+(*         if t1=t2 && String.compare id1 id2 =0 then true else false                                                                                           *)
+(*       in                                                                                                                                                     *)
+(*       if not (compare_list_string cmp_id vh.view_vars va.view_vars &&                                                                                        *)
+(*                   compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then                                                               *)
+(*         report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)                                                          *)
+(*       else                                                                                                                                                   *)
+(*         let (oi, oboi) = oi in                                                                                                                               *)
+(*         { vh with view_formula = (fst vb);                                                                                                                   *)
+(*             view_invariant = oi;                                                                                                                             *)
+(*             view_baga_inv = obi;                                                                                                                             *)
+(*             view_baga_over_inv = oboi;                                                                                                                       *)
+(*             view_baga_under_inv = obui;                                                                                                                      *)
+(*             view_kind = Iast.View_SPEC;                                                                                                                      *)
+(*             view_parent_name = Some va.view_name;                                                                                                            *)
+(*             view_inv_lock = li;                                                                                                                              *)
+(*             try_case_inference = (snd vb) } ]];                                                                                                              *)
 
 
 opt_inv_lock: [[t=OPT inv_lock -> t]];
@@ -1628,7 +1629,7 @@ heap_wr:
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
-simple2:  [[ t= opt_type_var_list -> ()]];
+(* simple2:  [[ t= opt_type_var_list -> ()]]; *)
 
 heap_id:
   [[
@@ -1800,8 +1801,8 @@ opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 
-pure_constr_w_brace:
-  [[ `OBRACE; c = pure_constr; `CBRACE -> c ]];
+(* pure_constr_w_brace:                            *)
+(*   [[ `OBRACE; c = pure_constr; `CBRACE -> c ]]; *)
 
 (* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
 (*                   | t= pure_constr ->t *)
@@ -2141,11 +2142,16 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, None)
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> ([t], b, Some false)
-   |`CHECKENTAIL; `OBRACE; t=opt_list_meta_constr ; `CBRACE ; `DERIVE; b=extended_meta_constr -> (t, b, None)
+   | `CHECKENTAIL; `OBRACE; t=opt_list_meta_constr ; `CBRACE ; `DERIVE; b=extended_meta_constr -> (t, b, None)
   ]];
 
 checksat_cmd:
   [[ `CHECKSAT; t=meta_constr -> t
+  ]];
+
+checknondet_cmd: 
+  [[ 
+    `CHECK_NONDET; `OSQUARE; `IDENTIFIER v; `CSQUARE; f = meta_constr -> (v,f)
   ]];
 
 templ_solve_cmd: 
@@ -2350,8 +2356,8 @@ infer_id:
 infer_type_list:
     [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
 
-id_list_w_sqr:
-    [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]];
+(* id_list_w_sqr:                                                     *)
+(*     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]]; *)
 
 (* id_list_w_itype: *)
 (*   [[ `OSQUARE; t = infer_type; `COMMA; il = id_list; `CSQUARE -> (Some t, il)  *)
@@ -2625,12 +2631,12 @@ id_part_ann: [[
 ]]
 ;
 
-typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
-  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
-  | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
-  |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
-  |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
- ]];
+(* typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)                    *)
+(*   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)                                    *)
+(*   | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)        *)
+(*   |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*   |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*  ]];                                                                                       *)
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
@@ -3052,7 +3058,7 @@ cid_list_w_itype:
    (* | `OSQUARE; t = infer_type_list; `CSQUARE -> (Some t, []) *)
   ]];
 
-opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
+(* opt_vlist: [[t = OPT opt_cid_list -> un_option t []]]; *)
 
 branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
@@ -3874,10 +3880,10 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
       
 let create_tnt_prim_proc id : Iast.proc_decl option =
   let proc_source = 
-    if String.compare id "__VERIFIER_nondet_int" == 0 then Some (
-      "int __VERIFIER_nondet_int()\n" ^
+    if String.compare id Globals.nondet_int_proc_name == 0 then Some (
+      "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
-      "  ensures true;\n")
+      "  ensures true & nondet_int__(res);\n")
     else if String.compare id "__VERIFIER_error" == 0 then Some (
       "int __VERIFIER_error()\n" ^
       "  requires true\n" ^

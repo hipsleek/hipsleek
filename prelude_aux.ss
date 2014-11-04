@@ -6,7 +6,7 @@ class __RET extends __Exc {}
 
 int add___(int a, int b) 
   requires true 
-  ensures res = a + b;
+  ensures res = a + b ;
 
 int minus___(int a, int b) 
   requires true
@@ -262,6 +262,8 @@ relation bnd(int[] a, int i, int j, int low, int high) ==
 //////////////////////////////////////////////////////////////////
 
 int array_get_elm_at___1d(int[] a, int i) 
+  requires true
+  ensures res = a[i];
   /* requires [ahalb,ahaub]
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
@@ -274,7 +276,7 @@ int array_get_elm_at___1d(int[] a, int i)
 				dom(a,ahalb,ahaub) 
 				& ahalb <= i 
 				& i <= ahaub
-	ensures res = a[i];
+                                ensures res = a[i];*/
   */
   requires true
   ensures res = a[i];
@@ -363,8 +365,14 @@ void delete_ptr(int_ptr_ptr@R x)
 
 int[] update___1d(int v, int[] a, int i)
   requires true
+  ensures update_array_1d(a,res,v,i);
+  requires true
  ensures update_array_1d(a,res,v,i);
 /*
+/*	requires [ahalb,ahaub]
+        & update_array_1d(a,res,v,i);*/
+		  	
+			       
 bool[] update___1d(bool v, bool[] a, int i)
 	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
 	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);

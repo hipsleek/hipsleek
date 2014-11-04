@@ -3,6 +3,24 @@
 } //exception when return from a loop
 */
 
+data node{
+}
+
+node test_node(int a)
+//requires true
+//ensures res::node<_>;
+{
+  node b;
+  while (a>1) 
+    requires true
+    ensures  eres::ret_node<b> & a>1 & flow ret_node or a<=1 & flow __norm;
+  {
+    
+    return b;
+  }
+  return b;
+  //dprint;
+}
 
 
 bool test_bool(bool b)
@@ -30,10 +48,24 @@ int test_int(int a)
   }
   /*
   while(a<1){
+  //dprint;
     a = a+1;
   }
   */
   return 1;
+}
+
+
+int test_no_while_return(int a)
+requires true
+  ensures res=2;
+{
+  while (a>1) 
+  {
+    a = a + 1;
+  }
+  return 2;
+  //dprint;
 }
 
 
@@ -55,6 +87,6 @@ requires true
     return a;
   }
   return 2;
-  dprint;
+  //dprint;
 }
 

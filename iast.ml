@@ -239,6 +239,7 @@ and proc_decl = {
   proc_body : exp option;
   proc_is_main : bool;
   proc_is_while : bool; (* true if the proc is translated from a while loop *)
+  mutable proc_has_while_return: bool;
   mutable proc_is_invoked : bool;
 proc_verified_domains: infer_type list;
   proc_file : string;
@@ -1089,7 +1090,7 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type pos=
+let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst pos=
   let is_infer_ret r=
     (infer_type = INF_SHAPE && is_node_typ r)
   in
@@ -1172,9 +1173,12 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type pos=
     let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in
     let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
+    let inf_obj = Globals.infer_const_obj # clone in
+    let _ = inf_obj#set_list infer_lst in
+    let _ =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
         (* F.formula_inf_tnt = false; *)
-        F.formula_inf_obj = Globals.infer_const_obj # clone;
+        F.formula_inf_obj = inf_obj (* Globals.infer_const_obj # clone*);
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
@@ -1183,12 +1187,12 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type pos=
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
-let genESpec pname body_opt args ret cur_pre cur_post infer_type pos=
+let genESpec pname body_opt args ret cur_pre cur_post infer_type  infer_lst pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
-      (fun _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type pos) args ret
+  Debug.no_3 "genESpec" pr_id pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
+      (fun _ _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type infer_lst pos) pname args ret
 
 let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
@@ -1218,20 +1222,22 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  if not !Globals.sags then body_header
+  let has_shape_args = List.exists (fun p -> is_node_typ p.param_type) args in
+  if not has_shape_args ||  not !Globals.sags then body_header
   else
     let ss, n_hp_dcls,args_wi =
       match body_header.proc_static_specs with
-        | F.EList [] ->
+        | F.EList [] -> if Globals.infer_const_obj # is_shape then
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
-            (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE pos in
+            (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE [] pos in
             (* let _ = print_gen_spec ss hps in *)
             let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
-      | F.EInfer i_sf -> if i_sf.F.formula_inf_obj # is_shape then
+          else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
           let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then
-            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE pos in
+            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in
             (* let _ = print_gen_spec ss hps in *)
             let ss = match ss with
               | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
@@ -1292,6 +1298,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_loc = pos;
   proc_verified_domains = [];
   proc_is_main = true;
+  proc_has_while_return = false;
   proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
@@ -2861,8 +2868,9 @@ let add_bar_inits prog =
         proc_body = None;
         proc_is_main = false;
         proc_is_while = false;
+        proc_has_while_return = false;
                           proc_is_invoked = false;
-                         proc_verified_domains = [];
+                          proc_verified_domains = [];
         proc_file = "";
         proc_loc = no_pos;
         proc_test_comps = None}) prog.prog_barrier_decls in
@@ -3090,10 +3098,10 @@ let exists_while_return_x e0=
           false
   in
   helper e0
-
-
 let exists_while_return e0=
   let pr1 = !print_exp in
+  Debug.no_1 "exists_while_return" pr1 string_of_bool
+      (fun _ -> exists_while_return_x e0) e0
   Debug.no_1 "exists_while_return" pr1 string_of_bool
       (fun _ -> exists_while_return_x e0) e0
 
@@ -3271,7 +3279,7 @@ let detect_invoke prog proc=
       (fun _ -> detect_invoke_x prog proc) proc
       
 let tnt_prim_procs = 
-  [ "__VERIFIER_nondet_int"; "__VERIFIER_error" ]
+  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
   
 let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
   
@@ -3294,7 +3302,7 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
       | [] -> false
   in
   match proclst with
-    | h::rest -> 
+    | h::rest ->
           let t = helper h in
           begin
             match t with

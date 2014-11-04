@@ -1,0 +1,86 @@
+post1 := {[x] -> [PRIx] -> []:
+  (x<=0 && x=PRIx) ||
+  exists (x1: (x1=x-1 && post1(x1,PRIx) && 1<=x))
+};
+
+bottomupgen([post1], [2], SimHeur);
+
+p0 := {[]: 0=1};
+p1 := post1(p0);
+p2 := post1(p1);
+p3 := post1(p2);
+p0;p1;p2;p3;
+
+# ((x >= 1 && 0 = PRIx) || (0 >= x && PRIx = x))
+
+###################################
+
+post2 := {[x] -> [PRIx] -> []:
+  (x<=0 && x=PRIx) ||
+  exists (x1: (x1=x-1 && post2(x1,PRIx) && 1<=x && x<=1000))
+};
+
+bottomupgen([post2], [2], SimHeur);
+
+pb := {[x] : (1<=x && x<=1000)};
+pb;
+p0 := {[]: 0=1};
+p1 := post2(p0);
+p2 := post2(p1);
+p3 := post2(p2);
+p3h := selhull(p3,2,SimHeur);
+p4 := post2(p3h);
+p4h := selhull(p4,2,SimHeur);
+p4w := widen(p3h,p4h,SimHeur);
+p4w1 := widen(p4w,pb,SimHeur);
+p0;p1;p2;p3;p3h;p4;p4h;p4w;p4w1;
+
+# ((x >= 1 && 0 = PRIx) || (0 >= x && PRIx = x))
+
+###################################
+
+# post3 := {[x] -> [PRIx] -> []:
+#   (x<=0 && x=PRIx) ||
+#   (x>=1001 && x=PRIx) ||
+#   exists (x1: (x1=x-1 && post3(x1,PRIx) && 1<=x && x<=1000))
+# };
+
+# bottomupgen([post3], [3], SimHeur);
+
+# p0 := {[]: 0=1};
+# p1 := post3(p0);
+# p2 := post3(p1);
+# p3 := post3(p2);
+# p3h := selhull(p3,2,SimHeur);
+# p0;p1;p2;p3;p3h;
+
+# ((x >= 1 && 0 = PRIx) || (x >= 1001 && PRIx = x) || (0 >= x && PRIx = x))
+
+###################################
+
+# post4 := {[x] -> [PRIx] -> []:
+#   (x>=1001 && x=PRIx) ||
+#   exists (x1: (x1=x-1 && post4(x1,PRIx) && 1<=x && x<=1000))
+# };
+
+# bottomupgen([post4], [2], SimHeur);
+
+# (x >= 1001 && x = PRIx)
+
+###################################
+
+# post5 := {[x] -> [PRIx] -> []:
+#   (x>=1001 && x=PRIx) ||
+#   exists (x1: (x1=x+1 && post5(x1,PRIx) && 1<=x && x<=1000))
+# };
+
+# bottomupgen([post5], [2], SimHeur);
+
+# ((1000 >= x && 1001 = PRIx) || (x >= 1001 && PRIx = x))
+
+# p0 := {[]: 0=1};
+# p1 := post5(p0);
+# p2 := post5(p1);
+# p3 := post5(p2);
+# p0;p1;p2;p3;
+

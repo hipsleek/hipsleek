@@ -947,6 +947,28 @@ f) (* false_flow_int *)
                   | (a,_,(b,c))::rst -> if (String.compare f a)==0 then
 
 ====================================================================
+After merge with svcomp14
+=========================
+
+./rfp sleek
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  label-dll.slk({E1#Fail}) fracperm/split-combine.slk({E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+./rfp sleek --eps
+
+very slow with below, loop?
+
+Checking fracperm/split-combine.slk (runs with extra options: --en-para -perm fperm -tp redlog)
+
+
+Total number of errors: 2 in files:
+  label-dll.slk({E1#Fail}) fracperm/split-combine.slk({E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+
 ====================================================================
 ====================================================================
 ====================================================================
