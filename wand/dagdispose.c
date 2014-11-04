@@ -47,10 +47,10 @@ ensures x::tree<T> & subset_edges(T,D) & reach_eq(T,x,D);
   l = x->left;
   r = x->right;
   x->val = 1;
-  if(l !=NULL && l->val != 1)
+  if(l != NULL && l->val != 1)
     spanning(l);
   else x->left = NULL;
-  if(r != NULL && r->val !=1)
+  if(r != NULL && r->val != 1)
     spanning(r);
   else x->right = NULL;
 }

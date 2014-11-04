@@ -1068,6 +1068,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
       h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
           let rdels = prog.C.prog_rel_decls in
+          (* Add update relation during XPure *)
           let update_rel = List.filter (fun r -> if r.rel_name = "update" then true else false) rdels in
           let rec last = function
             | [] -> failwith "No Last Element in list"
