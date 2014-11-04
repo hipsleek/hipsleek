@@ -1514,7 +1514,15 @@ let memo_check_syn_prun_debug (p,pn,br) c corr =
   let _ = print_string (" Check_syn1: "^(!print_bf_f p)^"\n") in
   let _ = print_string (" Check_syn2: "^(!print_mp_f [corr])^"\n") in
     memo_check_syn_prun_imply (p,pn,br) c corr
-    
+
+let create_default_memo_formula_transformer (go_down: bool) =
+  let trans_m m = if go_down then None else Some m in
+  let trans_a a = if go_down then None else Some a in
+  let trans_b b = if go_down then None else Some b in
+  let trans_e e = if go_down then None else Some e in
+  let trans_g g = if go_down then None else Some g in
+  (trans_m, trans_a, trans_b, trans_e, trans_g)
+
 let transform_memo_formula f l : memo_pure =
   let (f_memo, f_aset, f_formula, f_b_formula, f_exp) = f in
   let r = f_memo l in 
@@ -2234,7 +2242,15 @@ let reset_unsat_flag_mix m =
 let replace_mix_formula_label lb s = match s with
   | MemoF f -> MemoF (replace_memo_pure_label lb f)
   | OnePF f -> OnePF (replace_pure_formula_label lb f)
-	
+
+let create_default_mix_formula_transformer (go_down: bool) =
+  let trans_m m = if go_down then None else Some m in
+  let trans_a a = if go_down then None else Some a in
+  let trans_b b = if go_down then None else Some b in
+  let trans_e e = if go_down then None else Some e in
+  let trans_g g = if go_down then None else Some g in
+  (trans_m, trans_a, trans_b, trans_e, trans_g)
+
 let transform_mix_formula f_p_t f = 
   match f with
     | MemoF f -> MemoF (transform_memo_formula f_p_t f)

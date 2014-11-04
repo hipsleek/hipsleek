@@ -2582,6 +2582,11 @@ let get_emp_map_x cprog=
   in
   List.map helper cprog.prog_view_decls
 
+let eq_typed_ident tid1 tid2 =
+  let (t1, id1) = tid1 in
+  let (t2, id2) = tid2 in
+  (cmp_typ t1 t2) && (eq_str id1 id2)
+
 let get_emp_map cprog=
   let pr1 = fun _ -> "cprog" in
   let pr3 = fun p -> match p with

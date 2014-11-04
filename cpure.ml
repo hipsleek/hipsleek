@@ -6153,6 +6153,9 @@ let fold_exp (e: exp) (f: exp -> 'b option) (f_comb: 'b list -> 'b) : 'b =
   let new_f a e = push_opt_val_rev (f e) e in
   snd (trans_exp e () new_f voidf2 f_comb)
 
+let create_default_exp_transformer (go_down: bool) =
+  (fun e -> if go_down then None else Some e)
+
 let rec transform_exp f e  =
   let r =  f e in
   match r with
@@ -6345,7 +6348,12 @@ let fold_b_formula (e: b_formula) (f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
   let new_f = trans_func f_bf, trans_func f_e in
   let f_arg = voidf2, voidf2 in
   snd (trans_b_formula e () new_f f_arg f_comb)
-	
+
+let create_default_b_formula_transformer (go_down: bool) = 
+  let trans_b b = if go_down then None else Some b in
+  let trans_e e = if go_down then None else Some e in
+  (trans_b, trans_e)
+
 let transform_b_formula f (e:b_formula) :b_formula =
   let (f_b_formula, f_exp) = f in
   let r =  f_b_formula e in
@@ -6555,6 +6563,14 @@ let map_formula (e: formula) (f_f, f_bf, f_e) : formula =
     (* let _ = print_string ("[cpure.ml]  map_formula: \n") in *)
 
     fst (trans_formula e () new_f f_arg voidf)
+
+let create_default_formula_transformer (go_down: bool) =
+  let trans_s s = if go_down then None else Some s in
+  let trans_h h = if go_down then None else Some h in
+  let trans_f f = if go_down then None else Some f in
+  let trans_b b = if go_down then None else Some b in
+  let trans_e e = if go_down then None else Some e in
+  (trans_s, trans_h, trans_f, trans_b, trans_e)
 
 let rec transform_formula f (e:formula) :formula = 
 	let (_ , _, f_formula, f_b_formula, f_exp) = f in

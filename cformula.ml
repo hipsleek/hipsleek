@@ -6272,6 +6272,13 @@ let get_vnodes (f: formula) =
   Debug.no_1 "get_vnodes" pr1 pr2
       (fun _ -> get_vnodes_x f) f
 
+let get_view_nodes (f: formula) =
+  let helper hf = match hf with
+    | ViewNode _ -> [hf]
+    | _ -> []
+  in
+  get_one_kind_heap helper f
+
 let get_vptrs_x (f: formula) =
   let get_view_ptr hf=
     match hf with
@@ -12487,6 +12494,9 @@ and subst_hvar_es es subst : context =
   Debug.no_2 "subst_hvar_es" pr1 pr2 pr_out
       subst_hvar_es_x es subst
 
+let create_default_h_formula_transformer (go_down: bool) =
+  (fun h -> if go_down then None else Some h)
+
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
   let r =  f e in 
@@ -12556,10 +12566,16 @@ let transform_formula_x f (e:formula):formula =
                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
   in helper f e
 
-
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
   Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+
+let create_default_formula_transformer (go_down: bool) =
+  let trans_s s = if go_down then None else Some s in
+  let trans_f f = if go_down then None else Some f in
+  let trans_h h = if go_down then None else Some h in
+  let trans_p = MCP.create_default_memo_formula_transformer go_down in
+  (trans_s, trans_f, trans_h, trans_p)
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
 	let r =  f e in 
@@ -12697,6 +12713,12 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
 (*   let no_f _ _ = () in *)
 (*   let new_f_arg = (no_f,no_f,no_f,(no_f,no_f,no_f),no_f) in *)
 (*   trans_formula e () new_f new_f_arg f_comb *)
+
+let create_default_struc_formula_transformer (go_down: bool) =
+  let trans_s s = if go_down then None else Some s in
+  let trans_f f = if go_down then None else Some f in
+  let trans_p = MCP.create_default_mix_formula_transformer go_down in
+  (trans_s, trans_f, trans_p)
 
 let rec transform_struc_formula f (e:struc_formula) :struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
@@ -16692,13 +16714,25 @@ let build_eset_of_formula (f: formula) : CP.EMapSV.emap =
   let pf = MCP.pure_of_mix mf in
   CP.EMapSV.build_eset (CP.pure_ptr_equations pf)
 
-(* compute equivalent closure of a spec var based on an eset *)
-let compute_sv_equiv_closure (sv: CP.spec_var) (eset : CP.EMapSV.emap)
+(* 
+ * Compute closure of all equivalent vars to a spec_var based on an eset
+ * The closure includes spec_var its self 
+ *)
+let compute_equiv_closure_of_sv (sv: CP.spec_var) (eset : CP.EMapSV.emap)
     : CP.spec_var list =
   let equiv_svl = (CP.EMapSV.find_equiv_all sv eset) in
   if (List.exists (fun a -> CP.eq_spec_var a sv) equiv_svl) then
     equiv_svl
   else (sv::equiv_svl)
+
+(* 
+ * Compute equivalent vars of a spec var, excludes itself
+ *)
+let compute_equiv_vars_of_sv (sv: CP.spec_var) (eset : CP.EMapSV.emap)
+    : CP.spec_var list =
+  let equiv_svl = (CP.EMapSV.find_equiv_all sv eset) in
+  List.filter (fun a -> not (CP.eq_spec_var a sv)) equiv_svl 
+
 
 let trans_n_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_struc_f, f_f, f_heap_f, f_pure, f_memo = f in

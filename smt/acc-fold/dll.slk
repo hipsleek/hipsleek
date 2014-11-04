@@ -21,6 +21,7 @@ pred dll<pr,last,out> ==
  or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
 
 
+
 /*
  -> possibly touching
  -> node.next2,lsso.p  (forward)

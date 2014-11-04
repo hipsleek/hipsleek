@@ -687,7 +687,7 @@ let collect_reachable_pointers_in_formula_x (f: CF.formula) (roots: CP.spec_var 
             let vars = vn.CF.h_formula_view_arguments in
             let pointers = List.filter CP.is_node_typ vars in
             let reachable_ptrs = List.concat (List.map (fun v ->
-              CF.compute_sv_equiv_closure v eset
+              CF.compute_equiv_closure_of_sv v eset
             ) pointers) in
             Some (CP.remove_dups_svl reachable_ptrs)
           )
@@ -697,7 +697,7 @@ let collect_reachable_pointers_in_formula_x (f: CF.formula) (roots: CP.spec_var 
             let vars = dn.CF.h_formula_data_arguments in
             let pointers = List.filter CP.is_node_typ vars in
             let reachable_ptrs = List.concat (List.map (fun v ->
-              CF.compute_sv_equiv_closure v eset
+              CF.compute_equiv_closure_of_sv v eset
             ) pointers) in
             Some (CP.remove_dups_svl reachable_ptrs)
           )
@@ -737,7 +737,7 @@ let compute_bound_pointers_of_view_x (vdecl: C.view_decl) : CP.spec_var list =
     List.filter (fun vvar ->
       if not (CP.is_node_typ vvar) then false
       else
-        let equiv_svl = CF.compute_sv_equiv_closure vvar eset in
+        let equiv_svl = CF.compute_equiv_closure_of_sv vvar eset in
         CP.EMapSV.overlap reachable_ptrs equiv_svl
     ) vdecl.C.view_vars
   ) vdecl.C.view_un_struc_formula ) in
@@ -786,13 +786,16 @@ and compute_head_nodes_of_formula (f: CF.formula) : CF.h_formula list =
 let rec compute_body_nodes_of_formula_x (f: CF.formula) (vdecl: C.view_decl)
     : CF.h_formula list =
   let root = C.get_view_root vdecl in
-  let root_reachable_ptrs = collect_reachable_pointers_in_formula f [root] in
-  binfo_hprint (add_str "root_reachable_ptrs" !CP.print_svl ) root_reachable_ptrs no_pos;
+  let reachable_ptrs = collect_reachable_pointers_in_formula f [root] in
+  let reachable_ptrs = List.filter (fun sv ->
+    not (CP.eq_spec_var sv root)
+  ) reachable_ptrs in
+  (* binfo_hprint (add_str "reachable_ptrs" !CP.print_svl ) reachable_ptrs no_pos; *)
   let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
   let search_hf hf = (match hf with
     | CF.ViewNode vn ->
         let vnode = vn.CF.h_formula_view_node in
-        if (CP.mem_svl vnode root_reachable_ptrs) then
+        if (CP.mem_svl vnode reachable_ptrs) then
           let rch_ptrs = collect_reachable_pointers_in_formula f [vnode] in
           if (CP.check_intersection_svl rch_ptrs vdecl.C.view_bound_pointers) then
             Some [hf]
@@ -800,7 +803,7 @@ let rec compute_body_nodes_of_formula_x (f: CF.formula) (vdecl: C.view_decl)
         else Some []
     | CF.DataNode dn ->
         let dnode = dn.CF.h_formula_data_node in
-        if (CP.mem_svl dnode root_reachable_ptrs) then
+        if (CP.mem_svl dnode reachable_ptrs) then
           let rch_ptrs = collect_reachable_pointers_in_formula f [dnode] in
           if (CP.check_intersection_svl rch_ptrs vdecl.C.view_bound_pointers) then
             Some [hf]
@@ -821,9 +824,248 @@ and compute_body_nodes_of_formula (f: CF.formula) (vdecl: C.view_decl)
       (fun _ _ -> compute_body_nodes_of_formula_x f vdecl) f vdecl
 
 
-let compute
+(* 
+  let compute_direction_info_of_view (vdecl: C.view_decl)  = 
+   - base case, inductive case, inductive instantiated case.
+*)
 
+type direction_pointer_t = (string * CP.spec_var)
+type direction_field_t = (string * C.typed_ident)
+
+
+(*
+ * Collect forward, backward information from a formula:
+ * find forward info: head_nodes --> body_nodes
+ * find backward info: body_nodes --> head_nodes
+ *)
+let compute_direction_info_from_formula (f: CF.formula)
+    (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)
+    (data_decls: C.data_decl list) (view_decls: C.view_decl list)
+    : direction_pointer_t list * direction_field_t list
+      * direction_pointer_t list * direction_field_t list =
+  let eset = CF.build_eset_of_formula f in
+  let fwps, fwfs, bwps, bwfs = ref [], ref [], ref [], ref [] in
+  (* forward fields or pointers: connect directly head nodes to body nodes *)
+  let body_ptrs = List.map CF.get_node_var body_nodes in 
+  List.iter (fun node -> match node with
+    | CF.ViewNode vn ->
+        let view_name = vn.CF.h_formula_view_name in
+        let view_decl = C.look_up_view_def_raw 0 view_decls view_name in
+        List.iter2 (fun vn_arg view_var ->
+          let vn_arg_closure = CF.compute_equiv_closure_of_sv vn_arg eset in
+          if (CP.check_intersection_svl vn_arg_closure body_ptrs) then (
+            let is_existing_fwp = List.exists (fun (x,y) ->
+              (eq_str view_name x) && (CP.eq_spec_var y view_var)
+            ) !fwps in
+            if not is_existing_fwp then
+              fwps := !fwps @ [(view_name, view_var)]
+          );
+        ) vn.CF.h_formula_view_arguments view_decl.C.view_vars
+    | CF.DataNode dn ->
+        let data_name = dn.CF.h_formula_data_name in
+        let data_decl = C.look_up_data_def_raw data_decls data_name in
+        List.iter2 (fun dn_arg (data_field_tid,_) ->
+          let dn_arg_closure = CF.compute_equiv_closure_of_sv dn_arg eset in
+          if (CP.check_intersection_svl dn_arg_closure body_ptrs) then (
+            let is_existing_fwf = List.exists (fun (x,y) ->
+              (eq_str data_name x) && (C.eq_typed_ident y data_field_tid)
+            ) !fwfs in
+            if not is_existing_fwf then
+              fwfs := !fwfs @ [(data_name, data_field_tid)]
+          )
+        ) dn.CF.h_formula_data_arguments data_decl.C.data_fields
+    | _ -> ()
+  ) head_nodes;
+  (* backward fields or pointers: connect directly body nodes to head nodes *)
+  let head_ptrs = List.map CF.get_node_var head_nodes in 
+  List.iter (fun node -> match node with
+    | CF.ViewNode vn ->
+        let view_name = vn.CF.h_formula_view_name in
+        let view_decl = C.look_up_view_def_raw 0 view_decls view_name in
+        List.iter2 (fun vn_arg view_var ->
+          let vn_arg_closure = CF.compute_equiv_closure_of_sv vn_arg eset in
+          if (CP.check_intersection_svl vn_arg_closure head_ptrs) then (
+            let is_existing_bwp = List.exists (fun (x,y) ->
+              (eq_str view_name x) && (CP.eq_spec_var y view_var)
+            ) !bwps in
+            if not is_existing_bwp then
+              bwps := !bwps @ [(view_name, view_var)]
+          );
+        ) vn.CF.h_formula_view_arguments view_decl.C.view_vars
+    | CF.DataNode dn ->
+        let data_name = dn.CF.h_formula_data_name in
+        let data_decl = C.look_up_data_def_raw data_decls data_name in
+        List.iter2 (fun dn_arg (data_field_tid,_) ->
+          let dn_arg_closure = CF.compute_equiv_closure_of_sv dn_arg eset in
+          if (CP.check_intersection_svl dn_arg_closure head_ptrs) then (
+            let is_existing_bwf = List.exists (fun (x,y) ->
+              (eq_str data_name x) && (C.eq_typed_ident y data_field_tid)
+            ) !bwfs in
+            if not is_existing_bwf then
+              bwfs := !bwfs @ [(data_name, data_field_tid)]
+          )
+        ) dn.CF.h_formula_data_arguments data_decl.C.data_fields
+    | _ -> ()
+  ) body_nodes;
+  (* return *)
+  (!fwps, !fwfs, !bwps, !bwfs)
+
+
+let get_view_base_branches_x (vdecl: C.view_decl) : CF.formula list =
+  let rec_view_names = (vdecl.C.view_mutual_rec_views @ [vdecl.C.view_name]) in
+  let branches = fst (List.split vdecl.C.view_un_struc_formula) in 
+  List.filter (fun f ->
+    let used_vnodes = CF.get_view_nodes f in
+    let used_vnodes_names = List.map CF.get_node_name used_vnodes in
+    not (check_intersect_str_list rec_view_names used_vnodes_names)
+  ) branches
+
+
+let get_view_base_branches (vdecl: C.view_decl) : CF.formula list =
+  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_res = (add_str "result" (pr_list !CF.print_formula)) in
+  Debug.no_1 "get_view_base_branches" pr_v pr_res
+      (fun _ -> get_view_base_branches_x vdecl) vdecl
+
+
+let get_view_inductive_branches_x (vdecl: C.view_decl) : CF.formula list =
+  let rec_view_names = (vdecl.C.view_mutual_rec_views @ [vdecl.C.view_name]) in
+  let branches = fst (List.split vdecl.C.view_un_struc_formula) in
+  List.filter (fun f ->
+    let used_vnodes = CF.get_view_nodes f in
+    let used_vnodes_names = List.map CF.get_node_name used_vnodes in
+    (check_intersect_str_list rec_view_names used_vnodes_names)
+  ) branches
+
+
+let get_view_inductive_branches (vdecl: C.view_decl) : CF.formula list =
+  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_res = (add_str "result" (pr_list !CF.print_formula)) in
+  Debug.no_1 "get_view_inductive_branches" pr_v pr_res
+      (fun _ -> get_view_inductive_branches_x vdecl) vdecl
+
+
+(* unfold the occurences of a view in a formula by its base case *)
+let rec do_unfold_view_base_case_x (f: CF.formula) (vd: C.view_decl)
+    : CF.formula list =
+  let view_name = vd.C.view_name in
+  let base_fs = get_view_base_branches vd in
+  let (trans_s, trans_f, _, _) = CF.create_default_formula_transformer true in
+  let trans_p = CP.create_default_formula_transformer false in
+  List.map (fun base_f ->
+    let extra_pure = ref [] in
+    let trans_h hf = (match hf with
+      | CF.ViewNode vn when (eq_str view_name vn.CF.h_formula_view_name) ->
+          (* replace this view node by base formula *)
+          (* step 1: collect substitution of view root and vars *)
+          let subs_view = (
+            let view_root = C.get_view_root vd in
+            let subs_root = (view_root, vn.CF.h_formula_view_node) in
+            List.fold_left2 (fun subs vvar harg ->
+              subs @ [(vvar, harg)]
+            ) [subs_root] vd.C.view_vars vn.CF.h_formula_view_arguments 
+          ) in
+          (* step 2: collect substitution of quantified vars in base_f *)
+          let subs_quant_vars = match base_f with
+            | CF.Exists fe ->
+                let quant_vars = fe.CF.formula_exists_qvars in
+                List.map (fun sv -> match sv with
+                  | CP.SpecVar (t,n,p) -> 
+                      let new_sv = CP.SpecVar (t,fresh_any_name n,p) in
+                      (sv, new_sv)
+                ) quant_vars
+            | _ -> []
+          in
+          (* step 3: build new formula by substitution, replace this view node
+             by h_formula and save pure formula to add later *)
+          let subs = subs_view @ subs_quant_vars in
+          let replacing_f = CF.subst_one_by_one subs base_f in
+          let (replacing_hf,extra_pf,_,_,_) = CF.split_components replacing_f in
+          let extra_qvars = CF.get_exists replacing_f in
+          extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
+          Some replacing_hf                  (* replace the heap part *)
+      | _ -> None) in
+    let transformer = (trans_s, trans_f, trans_h, trans_p) in
+    let new_f = CF.transform_formula transformer f in
+    let pos = CF.pos_of_formula new_f in
+    let new_f = List.fold_left (fun f (mf,qv) ->
+      let nf = CF.mkAnd_pure f mf pos in       (* add the pure part back *)
+      CF.push_exists qv nf
+    ) new_f !extra_pure in
+    new_f
+  ) base_fs
+
+and do_unfold_view_base_case (f: CF.formula) (vd: C.view_decl)
+    : CF.formula list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_res = (add_str "res" (pr_list !CF.print_formula)) in
+  Debug.no_2 "do_unfold_view_base_case" pr_f pr_v pr_res
+      (fun _ _ -> do_unfold_view_base_case_x f vd) f vd
+
+(* let do_unfold_inductive_branches_by_base_cases (vdecl: C.view_decl)                *)
+(*     (view_decls: C.view_decl list)                                                 *)
+(*     : CF.formula list =                                                            *)
+(*   let rec_view_names = (vdecl.C.view_mutual_rec_views @ vdec.C.view_name) in       *)
+(*   let inductive_branches = get_view_inductive_branches vdecl in                    *)
+(*   List.map (fun inductive_f ->                                                     *)
+(*     let used_vnodes = CF.get_view_nodes f in                                       *)
+(*     let used_vnode_names = List.map CF.get_node_name used_vnodes in                *)
+(*     let unfold_vnode_names = intersect_str_list used_vnode_names rec_view_names in *)
+(*     let unfold_vnode_names = remove_dups_str_list unfold_vnode_names in            *)
+(*     let unfold_vdecls = List.map (fun s ->                                         *)
+(*       C.look_up_view_def_raw 0 view_decls s                                        *)
+(*     ) unfold_vnode_names in                                                        *)
+(*     List.fold_left (fun fs vd ->                                                   *)
+(*       let base_branches = get_view_base_branches vd in                             *)
+(*       List.concat (                                                                *)
+(*         List.map (fun f ->                                                         *)
+(*           List.map (fun base_f ->                                                  *)
+(*             Astsimp.unfold_base_case_formula_x f vd base_f                         *)
+(*           ) base_branches                                                          *)
+(*         ) fs                                                                       *)
+(*       )                                                                            *)
+(*     ) [inductive_f] unfold_vdecls                                                  *)
+(*   ) inductive_branches                                                             *)
+
+
+(*
+ * Based on existing direction info in view, do widening to collect more 
+ * direction info
+ *)
+(* let compute_direction_info_from_view (vdecl: C.view_decl)                *)
+(*     (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)      *)
+(*     (view_decls: C.view_decl list) (data_decl: C.data_decl list)         *)
+(*     : direction_pointer_t list * direction_field_t list                  *)
+(*       * direction_pointer_t list * direction_field_t list =              *)
+(*   let eset = CF.build_eset_of_formula f in                               *)
+(*   let fwps, fwfs, bwps, bwfs = ref [], ref [], ref [], ref [] in         *)
+(*   List.iter (fun node -> match node with                                 *)
+(*     | CF.ViewNode vn ->                                                  *)
+(*         let view_name = vn.CF.h_formula_view_name in                     *)
+(*         let view_decl = C.look_up_view_def_raw 0 view_decls view_name in *)
+        
+(*         vn.CF.h_formula_view_arguments                                   *)
+(*     | CF.DataNode dn -> dn.CF.h_formula_data_arguments                   *)
+(*     | _ -> ()                                                            *)
+(*   ) head_nodes @ body_nodes;                                             *)
+
+
+
+(* (* fixpoint compute *)                                                 *)
+(* let compute_direction_info_of_view_list (view_decls: C.view_decl list) *)
+(*     (data_decls: C.data_decl list)                                     *)
+(*     : C.view_decl list =                                               *)
+(*   let compute_helper vdecls = (                                        *)
+(*     let ref is_updated = false in                                      *)
+(*     let new_vdecls = List.map (fun vdecl ->                            *)
       
+(*     ) vdecls in                                                        *)
+(*     if !is_updated then compute_helper new_vdecls                      *)
+(*     else vdecls                                                        *)
+(*   )                                                                    *)
+  
+
 
 (*
  * A formula is well-formed iff all of its heap nodes must
@@ -836,11 +1078,11 @@ let check_well_formed_formula_x (f: CF.formula) (roots: CP.spec_var list) : bool
       match hf with
       | CF.ViewNode vn -> 
           let vnode = vn.CF.h_formula_view_node in
-          let vnode_equiv_svl = CF.compute_sv_equiv_closure vnode eset in
+          let vnode_equiv_svl = CF.compute_equiv_closure_of_sv vnode eset in
           (CP.EMapSV.overlap vnode_equiv_svl reached_ptrs)
       | CF.DataNode dn -> 
           let dnode = dn.CF.h_formula_data_node in
-          let dnode_equiv_svl = CF.compute_sv_equiv_closure dnode eset in
+          let dnode_equiv_svl = CF.compute_equiv_closure_of_sv dnode eset in
           (CP.EMapSV.overlap dnode_equiv_svl reached_ptrs)
       | _ -> report_error no_pos "check_well_formed_formula_x: unexpected node"
     ) nodes in
@@ -1127,7 +1369,7 @@ let collect_main_heap_chain_in_formula_x (f: CF.formula) (root: CP.spec_var)
     let trans_hf hf = (match hf with
       | CF.ViewNode {CF.h_formula_view_node = vnode;
                      CF.h_formula_view_arguments = arguments} ->
-          let vnode_equiv_svl = CF.compute_sv_equiv_closure vnode eset in
+          let vnode_equiv_svl = CF.compute_equiv_closure_of_sv vnode eset in
           if (CP.EMapSV.overlap !current_pointers vnode_equiv_svl) then (
             current_pointers := CP.remove_dups_svl (vnode_equiv_svl @ !current_pointers);
             List.iter2 (fun arg var ->
@@ -1139,7 +1381,7 @@ let collect_main_heap_chain_in_formula_x (f: CF.formula) (root: CP.spec_var)
           None
       | CF.DataNode {CF.h_formula_data_node = dnode;
                      CF.h_formula_data_arguments = arguments} ->
-          let dnode_equiv_svl = CF.compute_sv_equiv_closure dnode eset in
+          let dnode_equiv_svl = CF.compute_equiv_closure_of_sv dnode eset in
           if (CP.EMapSV.overlap !current_pointers dnode_equiv_svl) then (
             current_pointers := CP.remove_dups_svl (dnode_equiv_svl @ !current_pointers);
             List.iter2 (fun arg ((_,fname),_) ->
