@@ -1197,22 +1197,34 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl) (f: CF.formula)
     | CF.ViewNode vn ->
         let view_name = vn.CF.h_formula_view_name in
         let vd = C.look_up_view_def_raw 0 view_decls view_name in
-        List.iter2 (fun harg vvar ->
-          let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
-          (* current argument of view node is a forward pointer
+        List.iter2 (fun vn_arg vvar ->
+          let vn_arg_closure = CF.compute_equiv_closure_of_sv vn_arg eset in
+          (* current var of view node is a direction pointer
              -> use it to find corresponding data field *)
-          if (is_view_forward_pointer vvar vd) then (
-            (* TRUNG TODO: how to handle this case? *)
+          if (is_view_direction_pointer vvar vd) then (
+            let data_nodes = List.concat (List.map (fun node ->
+              match node with
+              | CF.DataNode dn -> [dn]
+              | _ -> []
+            ) head_and_body_nodes) in
+            List.iter (fun dnode ->
+              let data_name = dnode.CF.h_formula_data_name in
+              let dd = C.look_up_data_def_raw data_decls data_name in
+              List.iter2 (fun dn_arg ((_,fname),_) ->
+                if (CP.mem_svl dn_arg vn_arg_closure) then
+                  if (is_view_forward_pointer vvar vd) then
+                    fwfs := !fwfs @ [(view_name, data_name, fname)]
+                  else if (is_view_backward_pointer vvar vd) then
+                    bwfs := !bwfs @ [(view_name, data_name, fname)]
+              ) dnode.CF.h_formula_data_arguments dd.C.data_fields
+            ) data_nodes
           )
-          (* current argument of view node is a backward pointer
-             -> use it to find corresponding data field *)
-          else if (is_view_backward_pointer vvar vd) then (
-            (* TRUNG TODO: how to handle this case? *)
-          )
+          (* current var of view node isn't a direction pointer
+             -> use the argument to determine if the this var is a direction poitner *)
           else (
-            if (CP.is_intersected_svl harg_closure vdecl.C.view_forward_ptrs) then
+            if (CP.is_intersected_svl vn_arg_closure vdecl.C.view_forward_ptrs) then
               fwps := !fwps @ [(view_name, vvar)]
-            else if (CP.is_intersected_svl harg_closure vdecl.C.view_backward_ptrs) then
+            else if (CP.is_intersected_svl vn_arg_closure vdecl.C.view_backward_ptrs) then
               bwps := !bwps @ [(view_name, vvar)]
           )
         ) vn.CF.h_formula_view_arguments vd.C.view_vars
@@ -1221,12 +1233,12 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl) (f: CF.formula)
         let dd = C.look_up_data_def_raw data_decls data_name in
         List.iter2 (fun harg field ->
           let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
-          Debug.binfo_hprint (add_str "harg_closure" (pr_list !CP.print_sv)) harg_closure no_pos;
+          Debug.ninfo_hprint (add_str "harg_closure" (pr_list !CP.print_sv)) harg_closure no_pos;
           let ((_, fname), _) = field in
           (* current argument of data node is a forward field 
              -> use it to find corresponding forward pointer *)
           if (is_view_forward_field fname vdecl) then (
-            Debug.binfo_hprint (add_str "== forward field" pr_id) fname no_pos;
+            Debug.ninfo_hprint (add_str "== forward field" pr_id) fname no_pos;
             let new_fwp_vars = CP.intersect_svl harg_closure vdecl.C.view_vars in
             let new_fwps = List.map (fun x -> (vdecl.C.view_name, x)) new_fwp_vars in
             fwps := !fwps @ new_fwps
@@ -1335,17 +1347,22 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
       (a1@a2, b1@b2, c1@c2, d1@d2)
     ) ([], [], [], []) vdecls in
     (* update to view *)
-    let need_widen_again = ref false in
     let new_vdecls = List.map (update_direction_info fwps fwfs bwps bwfs) vdecls in
-    Debug.binfo_hprint (add_str "fixpoint compute view's direction info" 
+    Debug.ninfo_hprint (add_str "fixpoint compute view's direction info" 
         (pr_list string_of_view_direction_info)) new_vdecls no_pos;
-    if (!need_widen_again) then widen_view_direction_info new_vdecls
+    let need_widen_again = List.exists2 (fun vd new_vd ->
+      (List.length new_vd.C.view_forward_ptrs > List.length vd.C.view_forward_ptrs)
+      || (List.length new_vd.C.view_forward_fields > List.length vd.C.view_forward_fields)
+      || (List.length new_vd.C.view_backward_ptrs > List.length vd.C.view_backward_ptrs)
+      || (List.length new_vd.C.view_backward_fields > List.length vd.C.view_backward_fields)
+    ) vdecls new_vdecls in
+    if (need_widen_again) then widen_view_direction_info new_vdecls
     else new_vdecls
   ) in
 
   (* do fixpoint computation to find direction info in all views *)
   let new_vdecls = init_view_direction_info view_decls in
-  Debug.binfo_hprint (add_str "init view's direction info"
+  Debug.ninfo_hprint (add_str "init view's direction info"
       (pr_list string_of_view_direction_info)) new_vdecls no_pos;
   widen_view_direction_info new_vdecls 
 
