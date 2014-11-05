@@ -1903,6 +1903,7 @@ my $inv = '--inv-test';
                       ["imm/norm/norm2.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid."],
                       ["imm/norm/norm3.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid."],
                       ["imm/norm/norm4.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/norm/norm5.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
                       ["imm/norm/field.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
                       ["classic/classic1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],

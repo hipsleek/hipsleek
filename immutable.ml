@@ -2000,31 +2000,50 @@ let compatible_at_node_lvl imm1 imm2 h1 h2 =
   else  if (isAccs imm1) then (true, h2, h1)
   else (false, h1, h2)
 
+let partition_eqs_subs lst1 lst2 quantif =
+  let eqs_lst = List.combine lst1 lst2 in
+  let eqs_lst = List.map (fun (a,b) -> 
+      if Gen.BList.mem_eq CP.eq_spec_var a quantif then (a,b)
+      else if Gen.BList.mem_eq CP.eq_spec_var b quantif then (b,a)
+      else (a,b) ) eqs_lst in
+  let subs, eqs_lst = List.partition (fun (a,b) ->
+      Gen.BList.mem_eq CP.eq_spec_var a quantif ||  Gen.BList.mem_eq CP.eq_spec_var b quantif 
+  ) eqs_lst in 
+  let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
+  (eqs, subs)
+
+let norm_abs_node h p xpure =
+  if (isAccs (get_imm h)) then
+    let xpured, _, _ = xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
+    (HEmp, Some (MCP.pure_of_mix xpured))
+  else
+    (h, None)  
+
 (* assume nodes are aliased *)
-let merge_two_view_nodes vn1 vn2 h1 h2 prog =
+let merge_two_view_nodes vn1 vn2 h1 h2 prog quantif =
   let comp, ret_h, rem_h = compatible_at_node_lvl vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 in
-  let comp_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
-  let comp_view =  comp_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
+  let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
+  let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
   if comp  && comp_view then
-    let eqs_lst= List.combine vn1.h_formula_view_arguments vn2.h_formula_view_arguments in
-    let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
-    (* add here merge code *)
-    ([ret_h], eqs, [])                      (* should I also add the pure of merged (@A) node? *)
+    let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
+    ([ret_h], eqs, subs)                      (* should I also add the pure of merged (@A) node? *)
     (* ([], []) *)
   else
+    (* let xpure1 =  *)
     (* remove node annotated with @A if it's not compatible for merging *)
     if (isAccs vn1.h_formula_view_imm) then  ([h2], [], [])
     else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [])
     else ([h1;h2], [], [])
 
 (* assume nodes are aliased *)
-let merge_data_node_w_view_node dn1 vn2 h1 h2 =
+let merge_data_node_w_view_node dn1 vn2 h1 h2 quantif =
   let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 in
   (* if comp then *)
   if false then
+    let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in
     (* add here merge code *)
-    ([], [], [])
+    ([ret_h], eqs, subs)  
   else
     if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [])
     else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [])
@@ -2033,29 +2052,22 @@ let merge_data_node_w_view_node dn1 vn2 h1 h2 =
 (* assume nodes are aliased *)
 let merge_two_data_nodes dn1 dn2 h1 h2 quantif =
   let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 in
-  if comp then
-    let eqs_lst = List.combine dn1.h_formula_data_arguments dn2.h_formula_data_arguments in
-    let eqs_lst = List.map (fun (a,b) -> 
-        if Gen.BList.mem_eq CP.eq_spec_var a quantif then (a,b)
-        else if Gen.BList.mem_eq CP.eq_spec_var b quantif then (b,a)
-    else (a,b) ) eqs_lst in
-    let subs, eqs_lst = List.partition (fun (a,b) ->
-        Gen.BList.mem_eq CP.eq_spec_var a quantif ||  Gen.BList.mem_eq CP.eq_spec_var b quantif 
-    ) eqs_lst in 
-    let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
-    (* let eqs, subst = List.partition  *)
-    (* add here merge code *)
+  let comp_data = comp && (String.compare dn1.h_formula_data_name dn2.h_formula_data_name = 0) in
+  if comp_data then
+    let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
     ([ret_h], eqs, subs)
   else
-    ([h1;h2], [], [])
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [])
+    else if (isAccs dn2.h_formula_data_imm) then  ([h1], [], [])
+    else ([h1;h2], [], [])
 
 (* merged two nodes and return merged node and resulted equalities. *)
 let merge_two_nodes h1 h2 prog quantif =
   match h1, h2 with
     | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes dn1 dn2 h1 h2 quantif
     | [(ViewNode vn) as h2], ((DataNode dn) as h1)
-    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node dn vn h1 h2  (* ([h1;h2], []) *)
-    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes vn1 vn2 h1 h2 prog
+    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node dn vn h1 h2 quantif (* ([h1;h2], []) *)
+    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes vn1 vn2 h1 h2 prog quantif
 (* ([h1;h2], []) *)
     | _, _ -> (h1@[h2], [], [])
 
@@ -2081,13 +2093,6 @@ let merge_list_w_node node lst emap prog quantif =
       (merged, e@eqs, subs@s)
   ) ([node],[], []) aliases in (* here!! *)
   (new_h, disj, eqs, subs)
-
-let norm_abs_node h p xpure =
-  if (isAccs (get_imm h)) then
-    let xpured, _, _ = xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
-    (HEmp, Some (MCP.pure_of_mix xpured))
-  else
-    (h, None)  
 
 let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure =
   let rec helper lst = 

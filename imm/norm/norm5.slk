@@ -12,12 +12,15 @@ checkentail x::node<b,q> * q::ll<n>
 print residue.
 expect Valid.
 
+//below is ok to be Valid as a it's not global, so it can be substituted by global b during imm merging
 checkentail x::node<b,q> * q::ll<n>  
    |- x::node<b,_>@A *x::node<a,_>.
 print residue.
 expect Valid.
 
+//below is ok to Fail as a it's global, so the merge will add the extra pure a=b to the RHS
 checkentail x::node<b,q> * q::ll<n>  & a>0
    |- x::node<b,_>@A *x::node<a,_>.
 print residue.
 expect Fail.
+
