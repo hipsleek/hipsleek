@@ -1101,16 +1101,24 @@ let get_view_inductive_branches_unfolded_by_base_case (vdecl: C.view_decl)
       vdecl
 
 
+let get_view_formulas_for_direction_info_x vdecl view_decls =
+  let branches = get_view_all_branches vdecl in
+  let unfolded_branches =
+      get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
+  branches @ unfolded_branches
+
+
+let get_view_formulas_for_direction_info vdecl view_decls =
+  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_res = (add_str "res" (pr_list !CF.print_formula)) in
+  Debug.no_1 "get_view_formulas_for_direction_info" pr_v pr_res
+      (fun _ -> get_view_formulas_for_direction_info_x vdecl view_decls)
+      vdecl
+  
+
 (* compute view vars that reside inside memory allocated to current view *)
 let compute_view_residents_x (vdecl: C.view_decl) (view_decls: C.view_decl list)
     : CP.spec_var list =
-  let get_view_considered_formulas vdecl view_decls = (
-    let branches = get_view_all_branches vdecl in
-    let unfolded_branches =
-        get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
-    branches @ unfolded_branches
-  ) in
-
   let collect_pointer_residents vdecl f = (
     let search_f = fun _ -> None in
     let search_mf = Afutil.create_default_mix_formula_searcher false in
@@ -1129,10 +1137,10 @@ let compute_view_residents_x (vdecl: C.view_decl) (view_decls: C.view_decl list)
     residents
   ) in
 
-  let considered_fs = get_view_considered_formulas vdecl view_decls in
+  let formulas = get_view_formulas_for_direction_info vdecl view_decls in
   let residents = List.concat (List.map (fun f ->
     collect_pointer_residents vdecl f
-  ) considered_fs) in
+  ) formulas) in
   (* return *)
   (CP.remove_dups_svl residents)
 
@@ -1213,10 +1221,12 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl) (f: CF.formula)
         let dd = C.look_up_data_def_raw data_decls data_name in
         List.iter2 (fun harg field ->
           let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
+          Debug.binfo_hprint (add_str "harg_closure" (pr_list !CP.print_sv)) harg_closure no_pos;
           let ((_, fname), _) = field in
           (* current argument of data node is a forward field 
              -> use it to find corresponding forward pointer *)
           if (is_view_forward_field fname vdecl) then (
+            Debug.binfo_hprint (add_str "== forward field" pr_id) fname no_pos;
             let new_fwp_vars = CP.intersect_svl harg_closure vdecl.C.view_vars in
             let new_fwps = List.map (fun x -> (vdecl.C.view_name, x)) new_fwp_vars in
             fwps := !fwps @ new_fwps
@@ -1277,13 +1287,6 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
     (eq_str vname vdecl.C.view_name) && (eq_str dname vdecl.C.view_data_name)
   ) in
 
-  let get_view_considered_formulas vdecl view_decls = (
-    let branches = get_view_all_branches vdecl in
-    let unfolded_branches =
-        get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
-    branches @ unfolded_branches
-  ) in
-
   let update_direction_info fwps fwfs bwps bwfs vd = (
     let fwps = List.filter (select_pointer vd) fwps in
     let bwps = List.filter (select_pointer vd) bwps in
@@ -1307,12 +1310,12 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
   let init_view_direction_info vdecls = (
     (* compute direction info by considering connection between head and body nodes *) 
     let (fwps, fwfs, bwps, bwfs) = List.fold_left (fun (a1,b1,c1,d1) vdecl ->
-      let considered_fs = get_view_considered_formulas vdecl vdecls in
+      let formulas = get_view_formulas_for_direction_info vdecl vdecls in
       let (a2,b2,c2,d2) = List.fold_left (fun (x1,y1,z1,t1) f ->
         let (x2,y2,z2,t2) = compute_direction_info_from_formula vdecl f
             data_decls view_decls in
         (x1@x2, y1@y2, z1@z2, t1@t2)
-      ) ([],[],[],[]) considered_fs in
+      ) ([],[],[],[]) formulas in
       (a1@a2, b1@b2, c1@c2, d1@d2)
     ) ([], [], [], []) vdecls in
     (* update to view *)
@@ -1323,18 +1326,18 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
   let rec widen_view_direction_info vdecls = (
     let (fwps, fwfs, bwps, bwfs) = List.fold_left (fun (a1,b1,c1,d1) vdecl ->
       (* compute direction info by aggregating info from view to formula *) 
-      let considered_fs = get_view_considered_formulas vdecl vdecls in
+      let formulas = get_view_formulas_for_direction_info vdecl vdecls in
       let (a2,b2,c2,d2) = List.fold_left (fun (x1,y1,z1,t1) f ->
         let (x2,y2,z2,t2) = compute_direction_info_from_view vdecl f 
             data_decls view_decls in
         (x1@x2, y1@y2, z1@z2, t1@t2)
-      ) ([],[],[],[]) considered_fs in
+      ) ([],[],[],[]) formulas in
       (a1@a2, b1@b2, c1@c2, d1@d2)
     ) ([], [], [], []) vdecls in
     (* update to view *)
     let need_widen_again = ref false in
     let new_vdecls = List.map (update_direction_info fwps fwfs bwps bwfs) vdecls in
-    Debug.ninfo_hprint (add_str "fixpoint compute view's direction info" 
+    Debug.binfo_hprint (add_str "fixpoint compute view's direction info" 
         (pr_list string_of_view_direction_info)) new_vdecls no_pos;
     if (!need_widen_again) then widen_view_direction_info new_vdecls
     else new_vdecls
@@ -1342,7 +1345,7 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
 
   (* do fixpoint computation to find direction info in all views *)
   let new_vdecls = init_view_direction_info view_decls in
-  Debug.ninfo_hprint (add_str "init view's direction info"
+  Debug.binfo_hprint (add_str "init view's direction info"
       (pr_list string_of_view_direction_info)) new_vdecls no_pos;
   widen_view_direction_info new_vdecls 
 

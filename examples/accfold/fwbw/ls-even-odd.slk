@@ -1,0 +1,10 @@
+data node {
+  int val;
+  node next; 
+}.
+
+pred leven<p> == self = p
+    or self::node<_,r> * r::lodd<p>.
+
+pred lodd<q> == self::node<_,q>
+    or self::node<_,s> * s::leven<q>.

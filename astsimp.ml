@@ -2345,6 +2345,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     else cur_mutrec_views
     in
     let nview = trans_view iprog mutrec_views transed_views typ_infos view in
+    (* update mutual recursive views *)
+    let nview = (
+      try 
+        let mutual_rec_views = List.find (fun ids ->
+          mem_str_list nview.C.view_name ids
+        ) ls_mut_rec_views in
+        {nview with C.view_mutual_rec_views = mutual_rec_views}
+      with _ -> nview
+    ) in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
       let transed_views2,mutrec_views = if mutrec_views!=[] &&
