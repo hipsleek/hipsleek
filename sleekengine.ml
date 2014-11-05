@@ -734,29 +734,32 @@ let convert_data_and_pred_to_cast_x () =
   let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ = if !Globals.trans_pred then Accfold.update_view_size_relations !cprog in
   (* Trung: temporary code *)
-  let _ = List.iter (fun vd ->
-    binfo_pprint "=============" no_pos;
-    binfo_hprint (add_str "views" Cast.name_of_view) vd no_pos;
-    let bound_pointers = Accfold.compute_bound_pointers_of_view vd in
-    binfo_hprint (add_str "bound pointers" !CP.print_svl) bound_pointers no_pos;
-    List.iter (fun (f, _) -> 
-      binfo_hprint (add_str "branch" !CF.print_formula) f no_pos;
-      (* let _ = print_endline ("         + formula: " ^ (!CF.print_formula f)) in *)
-      let head_nodes = Accfold.compute_head_nodes_of_formula f in
-      binfo_hprint (add_str "  head nodes" (pr_list !CF.print_h_formula)) head_nodes no_pos;
-      let body_nodes = Accfold.compute_body_nodes_of_formula f vd in
-      binfo_hprint (add_str "  body nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
-      ()
-    ) vd.Cast.view_un_struc_formula;
-    (* let well_founded = if (Accfold.check_well_founded_view vd) then "OK" *)
-    (*                    else "Not OK" in                                  *)
-    (* let _ = print_endline ("     well-foundedness: " ^ well_founded) in  *)
-    (* let _ = print_endline ("     main heap chain: ") in                  *)
-    (* let heap_chains = Accfold.collect_main_heap_chain_in_view vd in      *)
-    (* List.iter (fun f ->                                                  *)
-    (*   print_endline ("         + " ^ (!CF.print_formula f));             *)
-    ()
-  ) !cprog.Cast.prog_view_decls in 
+  (* let _ = List.iter (fun vd ->                                                               *)
+  (*   binfo_pprint "=============" no_pos;                                                     *)
+  (*   binfo_hprint (add_str "views" Cast.name_of_view) vd no_pos;                              *)
+  (*   let bound_pointers = Accfold.compute_bound_pointers_of_view vd in                        *)
+  (*   binfo_hprint (add_str "bound pointers" !CP.print_svl) bound_pointers no_pos;             *)
+  (*   List.iter (fun (f, _) ->                                                                 *)
+  (*     binfo_hprint (add_str "branch" !CF.print_formula) f no_pos;                            *)
+  (*     (* let _ = print_endline ("         + formula: " ^ (!CF.print_formula f)) in *)        *)
+  (*     let head_nodes = Accfold.compute_head_nodes_of_formula f in                            *)
+  (*     binfo_hprint (add_str "  head nodes" (pr_list !CF.print_h_formula)) head_nodes no_pos; *)
+  (*     let body_nodes = Accfold.compute_body_nodes_of_formula f vd in                         *)
+  (*     binfo_hprint (add_str "  body nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos; *)
+  (*     ()                                                                                     *)
+  (*   ) vd.Cast.view_un_struc_formula;                                                         *)
+  (*   (* let well_founded = if (Accfold.check_well_founded_view vd) then "OK" *)               *)
+  (*   (*                    else "Not OK" in                                  *)               *)
+  (*   (* let _ = print_endline ("     well-foundedness: " ^ well_founded) in  *)               *)
+  (*   (* let _ = print_endline ("     main heap chain: ") in                  *)               *)
+  (*   (* let heap_chains = Accfold.collect_main_heap_chain_in_view vd in      *)               *)
+  (*   (* List.iter (fun f ->                                                  *)               *)
+  (*   (*   print_endline ("         + " ^ (!CF.print_formula f));             *)               *)
+  (*   ()                                                                                       *)
+  (* ) !cprog.Cast.prog_view_decls in                                                           *)
+  Debug.binfo_pprint "=== compute views' direction info\n" no_pos;
+  let new_views = Accfold.compute_direction_info_of_views
+      !cprog.Cast.prog_view_decls !cprog.Cast.prog_data_decls in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
