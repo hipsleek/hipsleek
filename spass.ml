@@ -500,9 +500,9 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
-    with _ -> ((* exception : return the safe result to ensure soundness *)
-      Printexc.print_backtrace stdout;
-      print_endline ("WARNING: Restarting prover due to timeout");
+    with _ -> (
+      print_backtrace_quiet ();
+      print_endline_quiet ("WARNING: Restarting prover due to timeout");
       Unix.kill !spass_process.pid 9;
       ignore (Unix.waitpid [] !spass_process.pid);
       { original_output_text = []; validity_result = Aborted; }
@@ -552,12 +552,13 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
         let res = Procutils.PrvComms.maybe_raise_timeout fnc input timeout in
         res
       with 
-      | _ -> ((* exception : return the safe result to ensure soundness *)
-        Printexc.print_backtrace stdout;
+      | _ -> (
+        print_backtrace_quiet ();
         print_endline ("WARNING: Restarting prover due to timeout");
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
-        { original_output_text = []; validity_result = Aborted; }) 
+        { original_output_text = []; validity_result = Aborted; }
+      ) 
     else 
       try fnc input
       with

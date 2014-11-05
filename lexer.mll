@@ -129,7 +129,10 @@ module Make (Token : SleekTokenS)
    ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
+   ("checkentail_exact", CHECKENTAIL_EXACT);
+   ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("checksat", CHECKSAT);
+   ("check_nondet", CHECK_NONDET);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
@@ -149,8 +152,6 @@ module Make (Token : SleekTokenS)
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
    ("shape_weaken_ante", SHAPE_WEAKEN_ANTE );
-   ("checkentail_exact", CHECKENTAIL_EXACT);
-   ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("infer_exact", INFER_EXACT);
    ("infer_inexact", INFER_INEXACT);
    ("relation_infer", REL_INFER);
@@ -193,6 +194,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+         ("char",INT);
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
@@ -376,12 +378,14 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@imm" { INFER_AT_IMM }
   | "@shape" { INFER_AT_SHAPE }
+  | "@flow" { INFER_AT_FLOW }
+  | "@size" { INFER_AT_SIZE }
   | "@efa" { INFER_AT_EFA }
   | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
-(*  | "XPURE" {XPURE}*)
+(*  | "XPURE" {XPURE} *)
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}

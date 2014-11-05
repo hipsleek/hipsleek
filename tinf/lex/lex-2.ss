@@ -8,7 +8,7 @@ bool brand ()
   
 void loop (int x, int y, int d)
   //infer [@term]
-  infer []
+  //infer []
   requires true
   ensures true;
 {

@@ -1,0 +1,30 @@
+
+relation nondet_Int(int x).
+relation nondet_Bool(bool x).
+
+check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Int(b) & c!=b.
+// Valid
+
+check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=!b.
+// Valid
+
+check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Int(b) & c=(b-b+1).
+// Valid
+
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & (c=b | c).
+// // Fail
+
+// // check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=(b | d).
+// // Valid
+
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d & nondet_Bool(b) & (c=b | c=d).
+// // Fail
+
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & d & nondet_Bool(b) & (c=b & c=d).
+// // Valid
+
+// check_nondet [d] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=b.
+// // Fail
+
+// check_nondet [c] emp&0<=x' & x'=x & !(v_bool) & 0<=x' & !(v_bool) & nondet_Bool(b) & c=!b.
+// // Valid

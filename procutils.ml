@@ -91,16 +91,14 @@ struct
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      | Timeout ->
-            if !smt_compete_mode then Printf.eprintf "" else
-            Printf.eprintf " Timeout after %s secs" (string_of_float tsec) ;
+      | Timeout -> (
+          print_endline_quiet (" Timeout after " ^ (string_of_float tsec) ^ " secs") ;
           (with_timeout ())
-      | exc -> begin
-          Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
+        )
+      | exc -> (
+          print_endline_quiet ("maybe_raise_and_catch_timeout : Unexpected exception : " ^ (Printexc.to_string exc));
           raise exc
-          (* print_endline "Non-timeout Exception from maybe_raise_and_catch" ;  *)
-          (* with_timeout () *)
-              end
+        )
 
   let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
     try 
@@ -153,7 +151,7 @@ struct
       prelude ()
     with
       | e -> begin
-          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^ "\n") in
+          print_endline_quiet ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name);
           flush stdout; flush stderr;
           log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
           raise e

@@ -10,6 +10,8 @@ let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
+let change_flow = ref false
+
 type formula_type =
   | Simple
   | Complex
@@ -158,6 +160,11 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+
+let is_node_typ t =
+  match t with
+    | Named id -> String.compare id "" != 0
+    | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   match param_typ with
@@ -810,7 +817,7 @@ let sap = ref false
 let sae = ref false
 let sac = ref false
 
-let sags = ref false
+let sags = ref true
 
 let sa_gen_slk = ref false
 let gen_fixcalc = ref false
@@ -883,6 +890,7 @@ let sa_en_split = ref false
 let pred_split = ref false
 
 let pred_seg_split = ref false
+let pred_norm_overr = ref true
 
 (* let sa_dangling = ref false *)
 
@@ -1265,6 +1273,32 @@ let cpfile = ref ""
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
 
+let smt_compete_mode = ref false
+let compete_mode = ref false
+let svcomp_compete_mode = ref false
+let return_must_on_pure_failure = ref false
+let smt_is_must_failure = ref (None: bool option)
+let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
+
+let print_endline_q s =
+  if !compete_mode then ()
+  else print_endline s
+
+let print_backtrace_quiet () =
+  if !compete_mode then ()
+  else
+    Printexc.print_backtrace stdout
+
+let get_backtrace_quiet () =
+  if !compete_mode then ""
+  else
+    Printexc.get_backtrace ()
+
+let record_backtrace_quite () =
+  if !compete_mode then ()
+  else
+    Printexc.record_backtrace !trace_failure
+
 (* for Termination *)
 let dis_term_chk = ref false
 let term_verbosity = ref 1
@@ -1287,15 +1321,20 @@ let infer_const = ref ""
 (* TNT Inference *)
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
+let tnt_add_post = ref true
+
+let nondet_int_proc_name = "__VERIFIER_nondet_int"
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
-  | INF_SHAPE (* For infer[@pre] *)
+  | INF_SHAPE (* For infer[@shape] *)
+  | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
+  | INF_FLOW (* For infer[@flow] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1311,9 +1350,11 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
+  | INF_FLOW -> "@flow"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1394,7 +1435,8 @@ object (self)
         begin
           Str.search_forward reg s 0;
           arr <- c::arr;
-          print_endline ("infer option added :"^(string_of_inf_const c));
+          (* Trung: temporarily disable printing for svcomp15, undo it later *) 
+          (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
         end
       with Not_found -> ()
     in
@@ -1404,8 +1446,10 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
+      helper "@size" INF_SIZE;
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
+      helper "@flow" INF_FLOW;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1425,9 +1469,12 @@ object (self)
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
+  method is_infer_type t  = self # get t
   method get_lst = arr
   method set c  = if self#get c then () else arr <- c::arr
   (* method set_ind i  = Array.set arr i true *)
@@ -1449,7 +1496,7 @@ let infer_const_obj = new inf_obj;;
 
 (* let set_infer_const s = *)
 
-let tnt_thres = ref 5
+let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* Template: Option for Template Inference *)
@@ -1487,16 +1534,8 @@ let do_test_inv = ref false
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
-let smt_compete_mode = ref false
-let return_must_on_pure_failure = ref false
-let smt_is_must_failure = ref (None: bool option)
-let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
-
-  let print_endline_q s =
-    if !smt_compete_mode then ()
-    else print_endline s
 
 (* generate baga inv from view *)
 let double_check = ref false

@@ -1,5 +1,6 @@
 int mc91_i (int n)
-  infer [@term]
+  //infer [@term]
+  //infer []
   requires true
   ensures true;
   
@@ -9,7 +10,8 @@ int mc91_i (int n)
 {
   int c = 1;
   while (c > 0) 
-    infer [@term]
+    //infer [@term]
+    //infer []
     requires true
     ensures true;
     /*

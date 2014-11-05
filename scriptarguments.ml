@@ -243,6 +243,8 @@ let common_arguments = [
 	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--dis-change-flow", Arg.Clear Globals.change_flow,"disable change spec flow");
+  ("--en-change-flow", Arg.Set Globals.change_flow,"enable change spec flow");
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
@@ -523,6 +525,8 @@ let common_arguments = [
       "level of detail in termination inference printing 0-verbose 1-standard (default)");
   ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
       "enable lexicographic ranking function inference");
+  ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
+  ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -646,7 +650,9 @@ let common_arguments = [
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
-  ("--sa-case", Arg.Set Globals.sac, "infer case spec");
+  ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
+  ("--sa-case", Arg.Set Globals.sac, "combine case spec");
+  ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
@@ -760,7 +766,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -779,9 +785,52 @@ let common_arguments = [
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "Minimal printing only");
+  ("--svcomp-compete",
+     Arg.Unit
+      (fun _ ->
+          (* print_endline "inside svcomp-compete setting"; *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.svcomp_compete_mode:=true; (* main flag *)
+          (* Globals.show_unexpected_ents := false; *)
+          (* diable printing *)
+          Globals.trace_failure := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          
+          (* Globals.lemma_gen_unsafe:=true;    *)
+          (* Globals.lemma_syn := true;         *)
+          (* Globals.acc_fold := true;          *)
+          (* Globals.smart_lem_search := true;  *)
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          
+          Globals.is_solver_local := true;
+          (* Omega.omegacalc:=  *)
+          (*   if (Sys.file_exists "./oc") then "./oc" *)
+          (*   else "oc"; *)
+          (* Fixcalc.fixcalc_exe := *)
+          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+          (*   else "fixcalc"; *)
+          (* Smtsolver.smtsolver_path := *)
+          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+          (*   else "z3-4.3.2"; *)
+          Globals.disable_failure_explaining := false;
+          Globals.return_must_on_pure_failure := true;
+          (* Globals.dis_impl_var := true *)
+      ),
+   "SVCOMP14 competition mode - essential printing only");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode:=true;
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
@@ -800,7 +849,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode:=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
@@ -809,6 +857,8 @@ let common_arguments = [
       (fun _ ->
           (* Globals.show_unexpected_ents := true;  *)
           (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode :=true;
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
@@ -825,7 +875,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
   "SMT competition mode - essential printing only + show unexpected ents");

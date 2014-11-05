@@ -578,8 +578,8 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
     with _ -> ((* exception : return the safe result to ensure soundness *)
-        Printexc.print_backtrace stdout;
-        print_endline ("WARNING: Restarting prover due to timeout");
+        print_backtrace_quiet ();
+        print_endline_quiet ("WARNING: Restarting prover due to timeout");
         Unix.kill !minisat_process.pid 9;
         ignore (Unix.waitpid [] !minisat_process.pid);
         false
@@ -773,7 +773,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   (*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
   let cons= (mkNot_s conseq) in
   let imply_f= mkAnd ante cons no_pos  in
-  Debug.tinfo_pprint "hello\n" no_pos;
+  (* Debug.tinfo_pprint "hello\n" no_pos; *)
   let res =is_sat imply_f ""
   in 	
   (*		let _=if(res) then print_endline ("SAT") else print_endline ("UNSAT") in *)

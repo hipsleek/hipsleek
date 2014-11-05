@@ -378,6 +378,14 @@ let infer_lex_template_res prog (inf_templs: ident list)
     List.concat res
   with Lex_Infer_Failure _ -> []
   
+let infer_lex_template_res prog (inf_templs: ident list) 
+    templ_unks (templ_assumes: templ_assume list) =
+  let pr1 = string_of_bool in
+  let pr2 = pr_list !print_exp in
+  Debug.no_1 "infer_lex_template_res" pr1 pr2 
+    (fun _ -> infer_lex_template_res prog inf_templs templ_unks templ_assumes)
+    (!Tlutils.oc_solver)
+  
 let infer_rank_template_init prog (inf_templs: ident list) =
   let res, templ_assumes, templ_unks = collect_and_solve_templ_assumes_common false prog inf_templs in
   match res with

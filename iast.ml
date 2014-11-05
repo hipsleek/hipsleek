@@ -185,8 +185,8 @@ and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = 
-    { param_type : typ;
+and param = { 
+    param_type : typ;
     param_name : ident;
     param_mod : param_modifier;
     param_loc : loc }
@@ -221,27 +221,31 @@ and param =
   }
 *)
 
-and proc_decl = 
-    { proc_name : ident;
-    mutable proc_mingled_name : ident;
-    mutable proc_data_decl : data_decl option; (* the class containing the method *)
-    mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
-    proc_flags: (ident*ident*(flags option)) list;
-    proc_source : ident;
-    proc_constructor : bool;
-    proc_args : param list;
-    mutable proc_args_wi : (ident *hp_arg_kind) list;
-    proc_return : typ;
-    (*   mutable proc_important_vars : CP.spec_var list;*)
-    proc_static_specs : Iformula.struc_formula;
-    proc_dynamic_specs : Iformula.struc_formula;
-    proc_exceptions : ident list;
-    proc_body : exp option;
-    proc_is_main : bool;
-    mutable proc_is_invoked : bool;
-    proc_file : string;
-    proc_loc : loc;
-    proc_test_comps: test_comps option}
+and proc_decl = { 
+  proc_name : ident;
+  mutable proc_mingled_name : ident;
+  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+  mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
+  proc_flags: (ident*ident*(flags option)) list;
+  proc_source : ident;
+  proc_constructor : bool;
+  proc_args : param list;
+  mutable proc_args_wi : (ident *hp_arg_kind) list;
+  proc_return : typ;
+  (*   mutable proc_important_vars : CP.spec_var list;*)
+  proc_static_specs : Iformula.struc_formula;
+  proc_dynamic_specs : Iformula.struc_formula;
+  proc_exceptions : ident list;
+  proc_body : exp option;
+  proc_is_main : bool;
+  proc_is_while : bool; (* true if the proc is translated from a while loop *)
+  mutable proc_has_while_return: bool;
+  mutable proc_is_invoked : bool;
+proc_verified_domains: infer_type list;
+  proc_file : string;
+  proc_loc : loc;
+  proc_test_comps: test_comps option
+}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -840,6 +844,12 @@ let is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
+let is_num (e : exp) : bool = match e with
+  | FloatLit _ | IntLit _ -> true
+  | _ -> false
+
+let is_mult_op b = 
+  match b with | OpMult -> true | _ -> false
 
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
@@ -1080,7 +1090,10 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x pname body_opt args0 ret pos=
+let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst pos=
+  let is_infer_ret r=
+    (infer_type = INF_SHAPE && is_node_typ r)
+  in
   (*keep pointers only*)
   let args = List.filter (fun p -> match p.param_type with
     | Named _ -> true
@@ -1128,9 +1141,10 @@ let genESpec_x pname body_opt args0 ret pos=
             in
             r@ref_args
         ) [] args)@
-	    (match ret with
-	      | Globals.Void -> []
-	      | _ -> [(ret, res_name, Globals.I)]
+	    (if is_infer_ret ret then [(ret, res_name, Globals.I)] else []
+              (* match ret with *)
+	      (* | Globals.Void | Bool -> [] *)
+	      (* | _ -> [(ret, res_name, Globals.I)] *)
 	    );
         hp_part_vars = [];
         hp_root_pos = 0;
@@ -1148,18 +1162,25 @@ let genESpec_x pname body_opt args0 ret pos=
         in
         r@hp_args
     ) [] args in
-    let post_eargs = match ret with
-      | Void -> post_eargs0
-      | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
+    let post_eargs = if is_infer_ret ret then post_eargs0@[P.Var ((res_name, Unprimed),pos)] else post_eargs0
+      (* match ret with *)
+      (* | Void | Bool -> post_eargs0 *)
+      (* | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)] *)
     in
     let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
-    let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
+    let ipost_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
+    let ipost_simpl = F.mkStar_formula cur_post ipost_simpl0 pos in
     let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
-    let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
+    let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+    let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in
+    let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
+    let inf_obj = Globals.infer_const_obj # clone in
+    let _ = inf_obj#set_list infer_lst in
+    let _ =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
         (* F.formula_inf_tnt = false; *)
-        F.formula_inf_obj = Globals.infer_const_obj # clone;
+        F.formula_inf_obj = inf_obj (* Globals.infer_const_obj # clone*);
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
@@ -1168,12 +1189,12 @@ let genESpec_x pname body_opt args0 ret pos=
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
-let genESpec pname body_opt args ret pos=
+let genESpec pname body_opt args ret cur_pre cur_post infer_type  infer_lst pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
-      (fun _ _ -> genESpec_x pname body_opt args ret pos) args ret
+  Debug.no_3 "genESpec" pr_id pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
+      (fun _ _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type infer_lst pos) pname args ret
 
 let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
@@ -1203,28 +1224,48 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls,args_wi =
-    match body_header.proc_static_specs with
-      | F.EList [] ->
-          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
-          (* let _ = print_gen_spec ss hps in *)
-          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps,args_wi)
-      | _ ->
-            (* let _ = if !Globals.sags then *)
-            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
-            (*   let _ = print_gen_spec ss hps in *)
-            (*   () *)
-            (* else () *)
-            (* in *)
-            (body_header.proc_static_specs,[],body_header.proc_args_wi)
-  in
-  {body_header with
-      proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
-      proc_static_specs = ss;
-      proc_args_wi = args_wi;
-  }
-
+  let has_shape_args = List.exists (fun p -> is_node_typ p.param_type) args in
+  if not has_shape_args ||  not !Globals.sags then body_header
+  else
+    let ss, n_hp_dcls,args_wi =
+      match body_header.proc_static_specs with
+        | F.EList [] -> if Globals.infer_const_obj # is_shape then
+          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
+            (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE [] pos in
+            (* let _ = print_gen_spec ss hps in *)
+            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
+          else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
+          let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
+          if is_simpl then
+            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in
+            (* let _ = print_gen_spec ss hps in *)
+            let ss = match ss with
+              | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
+                    F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
+              | _ -> ss
+            in
+            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
+          else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+        else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+        | _ ->
+              (* let _ = if !Globals.sags then *)
+              (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+              (*   let _ = print_gen_spec ss hps in *)
+              (*   () *)
+              (* else () *)
+              (* in *)
+              (body_header.proc_static_specs,[],body_header.proc_args_wi)
+    in
+    {body_header with
+        proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
+        proc_static_specs = ss;
+      proc_verified_domains = body_header.proc_verified_domains@[INF_SHAPE];
+        proc_args_wi = args_wi;
+    }
+  
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
@@ -1257,7 +1298,10 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_static_specs = ss;
   proc_dynamic_specs = ds;
   proc_loc = pos;
+  proc_verified_domains = [];
   proc_is_main = true;
+  proc_has_while_return = false;
+  proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
@@ -2810,25 +2854,28 @@ let add_bar_inits prog =
             let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
-			{ proc_name = "init_"^b.barrier_name;
-                          proc_source = "source_file";
-			  proc_flags = [];
-			  proc_mingled_name = "";
-			  proc_data_decl = None ;
-			  proc_hp_decls = [];
-              proc_constructor = false;
-			  proc_args = ags;
-              proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
-			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
-			  proc_dynamic_specs = F.mkEFalseF ();
-			  proc_exceptions = [];
-			  proc_body = None;
-			  proc_is_main = false;
-              proc_is_invoked = false;
-			  proc_file = "";
-			  proc_loc = no_pos;
-			proc_test_comps = None}) prog.prog_barrier_decls in
+      { proc_name = "init_"^b.barrier_name;
+        proc_source = "source_file";
+        proc_flags = [];
+        proc_mingled_name = "";
+        proc_data_decl = None ;
+        proc_hp_decls = [];
+        proc_constructor = false;
+        proc_args = ags;
+        proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
+        proc_return = Void;
+        proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
+        proc_dynamic_specs = F.mkEFalseF ();
+        proc_exceptions = [];
+        proc_body = None;
+        proc_is_main = false;
+        proc_is_while = false;
+        proc_has_while_return = false;
+        proc_is_invoked = false;
+                          proc_verified_domains = [];
+        proc_file = "";
+        proc_loc = no_pos;
+        proc_test_comps = None}) prog.prog_barrier_decls in
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
@@ -2994,6 +3041,7 @@ let exists_return_x e0=
             | _ -> false
       end
       | Return _ ->
+          (* let _ = print_endline("exists_return: true") in *)
           true
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
@@ -3007,6 +3055,7 @@ let exists_return_x e0=
                          helper el
       | _ ->
           (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let _ = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0
@@ -3015,6 +3064,44 @@ let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
       (fun _ -> exists_return_x e0) e0
+let exists_while_return_x e0=
+  let rec helper e=
+    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          match et with
+            | Const_flow f ->
+                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
+            | _ -> false
+      end
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (helper wb) || (exists_return wb)
+      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let _ = print_endline("exists_return: unexpected") in *)
+          false
+  in
+  helper e0
+let exists_while_return e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_while_return" pr1 string_of_bool
+      (fun _ -> exists_while_return_x e0) e0
 
 let exists_return_val_x e0=
   let rec helper e=
@@ -3188,3 +3275,39 @@ let detect_invoke prog proc=
   let pr2 = pr_list pr_id in
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
+      
+let tnt_prim_procs = 
+  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
+  
+let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
+  
+let is_tnt_prim_proc id =
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs
+
+(* Input is a list of proc_decl, output is a list containing non-duplicate element of the types that will be returned inside a while loop *)
+let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) =
+  let rec helper (proc:proc_decl): (typ option) =
+    match proc.proc_body with
+      | None -> None
+      | Some e ->
+            if exists_while_return e
+            then Some proc.proc_return
+            else None
+  in
+  let is_duplicate (tlst:typ list) (t:typ):bool =
+    match tlst with
+      | h::rest -> Globals.cmp_typ h t
+      | [] -> false
+  in
+  match proclst with
+    | h::rest ->
+          let t = helper h in
+          begin
+            match t with
+              | None -> no_duplicate_while_return_type_list rest
+              | Some new_t ->
+                    let restlst = no_duplicate_while_return_type_list rest in
+                    if is_duplicate restlst new_t then restlst
+                    else new_t::restlst
+          end
+    | [] -> []
