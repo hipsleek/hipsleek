@@ -679,7 +679,8 @@ let update_view_size_relations (prog: C.prog_decl) : unit =
 let collect_reachable_pointers_in_formula_x (f: CF.formula) (roots: CP.spec_var list)
     : CP.spec_var list =
   let rec collect_helper f roots eset = (
-    let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
+    let search_f = fun _ -> None in
+    let search_mf = Afutil.create_default_mix_formula_searcher false in
     let search_hf hf = (match hf with
       | CF.ViewNode vn ->
           if not (CP.mem_svl vn.CF.h_formula_view_node roots) then (Some [])
@@ -755,7 +756,8 @@ let compute_bound_pointers_of_view (vdecl: C.view_decl) : CP.spec_var list =
  * Head nodes are the node pointed by "self" (root node)
  *)
 let rec compute_head_nodes_of_formula_x  (f: CF.formula) : CF.h_formula list =
-  let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
+  let search_f = fun _ -> None in
+  let search_mf = Afutil.create_default_mix_formula_searcher false in
   let search_hf hf = (match hf with
     | CF.ViewNode vn ->
         let name = CP.name_of_sv vn.CF.h_formula_view_node in
@@ -791,7 +793,8 @@ let rec compute_body_nodes_of_formula_x (f: CF.formula) (vdecl: C.view_decl)
     not (CP.eq_spec_var sv root)
   ) reachable_ptrs in
   (* binfo_hprint (add_str "reachable_ptrs" !CP.print_svl ) reachable_ptrs no_pos; *)
-  let (search_f, _, search_mf) = Afutil.create_default_formula_searcher () in
+  let search_f = fun _ -> None in 
+  let search_mf = Afutil.create_default_mix_formula_searcher false in
   let search_hf hf = (match hf with
     | CF.ViewNode vn ->
         let vnode = vn.CF.h_formula_view_node in
@@ -833,6 +836,20 @@ type direction_pointer_t = (ident * CP.spec_var) (* (view_name, view_var) *)
 type direction_field_t = (ident * ident * ident)         (* (view_name, data_name, data_field) *)
 
 
+let string_of_view_direction_info (vdecl: C.view_decl) =
+  let vn = vdecl.C.view_name in
+  let dn = vdecl.C.view_data_name in
+  "  view name: " ^ vdecl.C.view_name ^ "\n"
+      ^ "    forward ptrs: "
+      ^ (pr_list (fun sv -> vn^"."^(!CP.print_sv sv)) vdecl.C.view_forward_ptrs) ^ "\n"
+      ^ "    forward fields: "
+      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_forward_fields) ^ "\n"
+      ^ "    backward ptrs: "
+      ^ (pr_list (fun sv -> vn^"."^(!CP.print_sv sv)) vdecl.C.view_backward_ptrs) ^ "\n"
+      ^ "    backward fields: "
+      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_backward_fields) ^ "\n"
+
+
 (*
  * Collect forward, backward information from a formula by considering the
  * connection between head and body nodes
@@ -840,14 +857,28 @@ type direction_field_t = (ident * ident * ident)         (* (view_name, data_nam
  * find backward info: body_nodes --> head_nodes
  *)
 let compute_direction_info_from_formula_x (vdecl: C.view_decl) (f: CF.formula)
-    (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
       * direction_pointer_t list * direction_field_t list =
+  let get_node_residents node = (
+    match node with
+    | CF.DataNode dn -> [dn.CF.h_formula_data_node]
+    | CF.ViewNode vn ->
+        let vd = C.look_up_view_def_raw 0 view_decls vn.CF.h_formula_view_name in
+        let residents = List.concat (List.map2 (fun harg vvar ->
+          if (CP.mem_svl vvar vd.C.view_residents) then [harg]
+          else []
+        ) vn.CF.h_formula_view_arguments vd.C.view_vars) in
+        residents @ [vn.CF.h_formula_view_node]
+    | _ -> []
+  ) in
+
+  let head_nodes = compute_head_nodes_of_formula f in
+  let body_nodes = compute_body_nodes_of_formula f vdecl in
   let eset = CF.build_eset_of_formula f in
   let fwps, fwfs, bwps, bwfs = ref [], ref [], ref [], ref [] in
   (* forward fields or pointers: connect directly head nodes to body nodes *)
-  let body_ptrs = List.map CF.get_node_var body_nodes in 
+  let body_ptrs = List.concat (List.map get_node_residents body_nodes) in 
   List.iter (fun node -> match node with
     | CF.ViewNode vn ->
         let view_name = vn.CF.h_formula_view_name in
@@ -863,7 +894,6 @@ let compute_direction_info_from_formula_x (vdecl: C.view_decl) (f: CF.formula)
           );
         ) vn.CF.h_formula_view_arguments view_decl.C.view_vars
     | CF.DataNode dn ->
-        
         let data_name = dn.CF.h_formula_data_name in
         let data_decl = C.look_up_data_def_raw data_decls data_name in
         List.iter2 (fun dn_arg ((_,field_name),_) ->
@@ -880,7 +910,7 @@ let compute_direction_info_from_formula_x (vdecl: C.view_decl) (f: CF.formula)
     | _ -> ()
   ) head_nodes;
   (* backward fields or pointers: connect directly body nodes to head nodes *)
-  let head_ptrs = List.map CF.get_node_var head_nodes in 
+  let head_ptrs = List.concat (List.map get_node_residents head_nodes) in 
   List.iter (fun node -> match node with
     | CF.ViewNode vn ->
         let view_name = vn.CF.h_formula_view_name in
@@ -915,14 +945,11 @@ let compute_direction_info_from_formula_x (vdecl: C.view_decl) (f: CF.formula)
 
 
 let compute_direction_info_from_formula (vdecl: C.view_decl) (f: CF.formula)
-    (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
       * direction_pointer_t list * direction_field_t list =
-  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_v = (add_str "view" string_of_view_direction_info) in
   let pr_f = (add_str "f" !CF.print_formula) in
-  let pr_head = (add_str "head_nodes" (pr_list !CF.print_h_formula)) in
-  let pr_body = (add_str "body_nodes" (pr_list !CF.print_h_formula)) in
   let pr_pointers = pr_list (fun (vn,sv) -> vn^"."^(!CP.print_sv sv)) in
   let pr_fields = pr_list (fun (vn,dn,fn) -> "("^vn^")"^dn^"."^fn) in
   let pr_res = (
@@ -931,10 +958,9 @@ let compute_direction_info_from_formula (vdecl: C.view_decl) (f: CF.formula)
         "fwps: " ^ (pr_pointers fwps) ^ "; fwfs: " ^ (pr_fields fwfs)
         ^ "; bwps: " ^ (pr_pointers bwps) ^ "; bwfs: " ^ (pr_fields bwfs))
   ) in
-  Debug.no_4 "compute_direction_info_from_formula" pr_v pr_f pr_head pr_body pr_res
-      (fun _ _ _ _ -> compute_direction_info_from_formula_x vdecl f
-                      head_nodes body_nodes data_decls view_decls)
-      vdecl f head_nodes body_nodes
+  Debug.no_2 "compute_direction_info_from_formula" pr_v pr_f pr_res
+      (fun _ _ -> compute_direction_info_from_formula_x vdecl f data_decls view_decls)
+      vdecl f
 
 
 let get_view_base_branches_x (vdecl: C.view_decl) : CF.formula list =
@@ -1071,10 +1097,63 @@ let get_view_inductive_branches_unfolded_by_base_case (vdecl: C.view_decl)
       vdecl
 
 
+(* compute view vars that reside inside memory allocated to current view *)
+let compute_view_residents_x (vdecl: C.view_decl) (view_decls: C.view_decl list)
+    : CP.spec_var list =
+  let get_view_considered_formulas vdecl view_decls = (
+    let branches = get_view_all_branches vdecl in
+    let unfolded_branches =
+        get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
+    branches @ unfolded_branches
+  ) in
+
+  let collect_pointer_residents vdecl f = (
+    let search_f = fun _ -> None in
+    let search_mf = Afutil.create_default_mix_formula_searcher false in
+    let search_hf hf = (match hf with
+      | CF.ViewNode vn -> Some [vn.CF.h_formula_view_node]
+      | CF.DataNode dn -> Some [dn.CF.h_formula_data_node]
+      | _ -> None
+    ) in
+    let searcher = (search_f, search_hf, search_mf) in
+    let pointer_vars = Afutil.search_in_formula searcher f in
+    let eset = CF.build_eset_of_formula f in
+    let residents = List.filter (fun vvar ->
+      let vvar_closure = CF.compute_equiv_closure_of_sv vvar eset in
+      (CP.is_intersected_svl vvar_closure pointer_vars)
+    ) (vdecl.C.view_vars @ [(C.get_view_root vdecl)])in
+    residents
+  ) in
+
+  let considered_fs = get_view_considered_formulas vdecl view_decls in
+  let residents = List.concat (List.map (fun f ->
+    collect_pointer_residents vdecl f
+  ) considered_fs) in
+  (* return *)
+  (CP.remove_dups_svl residents)
+
+
+(* compute view vars that reside inside memory allocated to current view *)  
+let compute_view_residents (vd: C.view_decl) (view_decls: C.view_decl list) 
+    : CP.spec_var list =
+  let pr_vd = (add_str "view" C.name_of_view) in
+  let pr_res = (add_str "residents" (pr_list !CP.print_sv)) in
+  Debug.no_1 "compute_view_residents" pr_vd pr_res
+      (fun _ -> compute_view_residents_x vd view_decls) vd
+
+
 (* check if sv is a direction pointer of a view *)
 let is_view_direction_pointer (sv: CP.spec_var) (vdecl: C.view_decl) =
   (CP.mem_svl sv vdecl.C.view_backward_ptrs)
   || (CP.mem_svl sv vdecl.C.view_forward_ptrs)
+
+
+let is_view_forward_pointer (sv: CP.spec_var) (vdecl: C.view_decl) =
+  (CP.mem_svl sv vdecl.C.view_forward_ptrs)
+
+
+let is_view_backward_pointer (sv: CP.spec_var) (vdecl: C.view_decl) =
+  (CP.mem_svl sv vdecl.C.view_backward_ptrs)
 
 
 let is_view_direction_field (field_name: ident) (vdecl: C.view_decl) =
@@ -1082,15 +1161,24 @@ let is_view_direction_field (field_name: ident) (vdecl: C.view_decl) =
   || (mem_str_list field_name vdecl.C.view_forward_fields)
 
 
+let is_view_forward_field (field_name: ident) (vdecl: C.view_decl) =
+  (mem_str_list field_name vdecl.C.view_forward_fields)
+
+
+let is_view_backward_field (field_name: ident) (vdecl: C.view_decl) =
+  (mem_str_list field_name vdecl.C.view_backward_fields)
+
+
 (*
  * Based on existing direction info in view, do widening to collect more 
  * direction info
  *)
-let compute_direction_info_from_view_x (vdecl: C.view_decl)
-    (f: CF.formula) (head_and_body_nodes: CF.h_formula list)
+let compute_direction_info_from_view_x (vdecl: C.view_decl) (f: CF.formula)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
       * direction_pointer_t list * direction_field_t list =
+  let head_and_body_nodes = (compute_head_nodes_of_formula f)
+      @ (compute_body_nodes_of_formula f vdecl) in
   let eset = CF.build_eset_of_formula f in
   let fwps, fwfs, bwps, bwfs = ref [], ref [], ref [], ref [] in
   List.iter (fun node -> match node with
@@ -1098,8 +1186,17 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl)
         let view_name = vn.CF.h_formula_view_name in
         let vd = C.look_up_view_def_raw 0 view_decls view_name in
         List.iter2 (fun harg vvar ->
-          if not (is_view_direction_pointer vvar vd) then (
-            let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
+          let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
+          (* current argument of view node is a forward pointer
+             -> use it to find corresponding data field *)
+          if (is_view_forward_pointer vvar vd) then (
+            (* let new_fwf_ *)
+            
+          )
+          else if (is_view_backward_pointer vvar vd) then (
+            
+          )
+          else (
             if (CP.is_intersected_svl harg_closure vdecl.C.view_forward_ptrs) then
               fwps := !fwps @ [(view_name, vvar)]
             else if (CP.is_intersected_svl harg_closure vdecl.C.view_backward_ptrs) then
@@ -1107,16 +1204,34 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl)
           )
         ) vn.CF.h_formula_view_arguments vd.C.view_vars
     | CF.DataNode dn ->
+        Debug.binfo_hprint (add_str "==== data node" !CF.print_h_formula) node no_pos;
         let data_name = dn.CF.h_formula_data_name in
         let dd = C.look_up_data_def_raw data_decls data_name in
         List.iter2 (fun harg field ->
+          let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
           let ((_, fname), _) = field in
-          if not (is_view_direction_field fname vdecl) then (
-            let harg_closure = CF.compute_equiv_closure_of_sv harg eset in
-            let harg_closure_names = List.map CP.name_of_sv harg_closure in
-            if (is_intersected_str_list harg_closure_names vdecl.C.view_forward_fields) then
+          (* current argument of data node is a forward field 
+             -> use it to find corresponding forward pointer *)
+          if (is_view_forward_field fname vdecl) then (
+            let new_fwp_vars = CP.intersect_svl harg_closure vdecl.C.view_vars in
+            let new_fwps = List.map (fun x -> (vdecl.C.view_name, x)) new_fwp_vars in
+            fwps := !fwps @ new_fwps
+          )
+          (* current argument of data node is a backward field 
+             -> use it to find corresponding backward pointer *)
+          else if (is_view_backward_field fname vdecl) then (
+            let _ = print_endline ("======== backward field") in
+            Debug.binfo_hprint (add_str "harg_closure" (pr_list !CP.print_sv)) harg_closure no_pos;
+            let new_bwp_vars = CP.intersect_svl harg_closure vdecl.C.view_vars in
+            let new_bwps = List.map (fun x -> (vdecl.C.view_name, x)) new_bwp_vars in
+            bwps := !bwps @ new_bwps
+          )
+          (* current argument of data node isn't a direction field 
+             -> use direction pointers in view to determine direction of current data field *)
+          else (
+            if (CP.is_intersected_svl harg_closure vdecl.C.view_forward_ptrs) then
               fwfs := !fwfs @ [(vdecl.C.view_name, data_name, fname)]
-            else if (is_intersected_str_list harg_closure_names vdecl.C.view_backward_fields) then
+            else if (CP.is_intersected_svl harg_closure vdecl.C.view_backward_ptrs) then
               bwfs := !bwfs @ [(vdecl.C.view_name, data_name, fname)]
           )
         ) dn.CF.h_formula_data_arguments dd.C.data_fields
@@ -1126,12 +1241,11 @@ let compute_direction_info_from_view_x (vdecl: C.view_decl)
   (!fwps, !fwfs, !bwps, !bwfs)
 
 
-let compute_direction_info_from_view (vdecl: C.view_decl)
-    (f: CF.formula) (head_and_body_nodes: CF.h_formula list)
+let compute_direction_info_from_view (vdecl: C.view_decl) (f: CF.formula)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
       * direction_pointer_t list * direction_field_t list =
-  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_v = (add_str "view" string_of_view_direction_info) in
   let pr_f = (add_str "f" !CF.print_formula) in
   let pr_pointers = pr_list (fun (vn,sv) -> vn^"."^(!CP.print_sv sv)) in
   let pr_fields = pr_list (fun (vn,dn,fn) -> "("^vn^")"^dn^"."^fn) in
@@ -1142,22 +1256,8 @@ let compute_direction_info_from_view (vdecl: C.view_decl)
         ^ "; bwps: " ^ (pr_pointers bwps) ^ "; bwfs: " ^ (pr_fields bwfs))
   ) in
   Debug.no_2 "compute_direction_info_from_view" pr_v pr_f pr_res
-      (fun _ _ -> compute_direction_info_from_view_x vdecl f head_and_body_nodes
-                      data_decls view_decls)
+      (fun _ _ -> compute_direction_info_from_view_x vdecl f data_decls view_decls)
       vdecl f
-
-let string_of_view_direction_info (vdecl: C.view_decl) =
-  let dn = vdecl.C.view_data_name in
-  "  view name: " ^ vdecl.C.view_name ^ "\n"
-      ^ "    forward ptrs: "
-      ^ (pr_list !CP.print_sv vdecl.C.view_forward_ptrs) ^ "\n"
-      ^ "    forward fields: "
-      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_forward_fields) ^ "\n"
-      ^ "    backward ptrs: "
-      ^ (pr_list !CP.print_sv vdecl.C.view_backward_ptrs) ^ "\n"
-      ^ "    backward fields: "
-      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_backward_fields) ^ "\n"
-
 
 (* compute direction info of all views *)
 let compute_direction_info_of_views_x (view_decls: C.view_decl list)
@@ -1174,9 +1274,10 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
     (eq_str vname vdecl.C.view_name) && (eq_str dname vdecl.C.view_data_name)
   ) in
 
-  let get_view_candidate_formulas vdecl view_decls = (
+  let get_view_considered_formulas vdecl view_decls = (
     let branches = get_view_all_branches vdecl in
-    let unfolded_branches = get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
+    let unfolded_branches =
+        get_view_inductive_branches_unfolded_by_base_case vdecl view_decls in
     branches @ unfolded_branches
   ) in
 
@@ -1203,14 +1304,12 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
   let init_view_direction_info vdecls = (
     (* compute direction info by considering connection between head and body nodes *) 
     let (fwps, fwfs, bwps, bwfs) = List.fold_left (fun (a1,b1,c1,d1) vdecl ->
-      let candidate_fs = get_view_candidate_formulas vdecl vdecls in
+      let considered_fs = get_view_considered_formulas vdecl vdecls in
       let (a2,b2,c2,d2) = List.fold_left (fun (x1,y1,z1,t1) f ->
-        let head_nodes = compute_head_nodes_of_formula f in
-        let body_nodes = compute_body_nodes_of_formula f vdecl in
         let (x2,y2,z2,t2) = compute_direction_info_from_formula vdecl f
-            head_nodes body_nodes data_decls view_decls in
+            data_decls view_decls in
         (x1@x2, y1@y2, z1@z2, t1@t2)
-      ) ([],[],[],[]) candidate_fs in
+      ) ([],[],[],[]) considered_fs in
       (a1@a2, b1@b2, c1@c2, d1@d2)
     ) ([], [], [], []) vdecls in
     (* update to view *)
@@ -1221,20 +1320,18 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
   let rec widen_view_direction_info vdecls = (
     let (fwps, fwfs, bwps, bwfs) = List.fold_left (fun (a1,b1,c1,d1) vdecl ->
       (* compute direction info by aggregating info from view to formula *) 
-      let candidate_fs = get_view_candidate_formulas vdecl vdecls in
+      let considered_fs = get_view_considered_formulas vdecl vdecls in
       let (a2,b2,c2,d2) = List.fold_left (fun (x1,y1,z1,t1) f ->
-        let head_and_body_nodes = (compute_head_nodes_of_formula f)
-            @ (compute_body_nodes_of_formula f vdecl) in
         let (x2,y2,z2,t2) = compute_direction_info_from_view vdecl f 
-            head_and_body_nodes data_decls view_decls in
+            data_decls view_decls in
         (x1@x2, y1@y2, z1@z2, t1@t2)
-      ) ([],[],[],[]) candidate_fs in
+      ) ([],[],[],[]) considered_fs in
       (a1@a2, b1@b2, c1@c2, d1@d2)
     ) ([], [], [], []) vdecls in
     (* update to view *)
     let need_widen_again = ref false in
     let new_vdecls = List.map (update_direction_info fwps fwfs bwps bwfs) vdecls in
-    Debug.ninfo_hprint (add_str "view info 2" 
+    Debug.binfo_hprint (add_str "view info 2" 
         (pr_list string_of_view_direction_info)) new_vdecls no_pos;
     if (!need_widen_again) then widen_view_direction_info new_vdecls
     else new_vdecls
@@ -1242,7 +1339,7 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
 
   (* do fixpoint computation to find direction info in all views *)
   let new_vdecls = init_view_direction_info view_decls in
-  Debug.ninfo_hprint (add_str "view info 1"
+  Debug.binfo_hprint (add_str "view info 1"
       (pr_list string_of_view_direction_info)) new_vdecls no_pos;
   widen_view_direction_info new_vdecls 
 
@@ -1255,6 +1352,7 @@ let compute_direction_info_of_views (view_decls: C.view_decl list)
   Debug.no_1 "compute_direction_info_of_views" pr_vs pr_res
       (fun _ -> compute_direction_info_of_views_x view_decls data_decls)
       view_decls
+
 
 (*
  * A formula is well-formed iff all of its heap nodes must

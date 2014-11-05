@@ -40,50 +40,50 @@ and 'a search_pure_bformula_t = (CP.b_formula -> 'a list option)
 and 'a search_pure_exp_t = (CP.exp -> 'a list option)
 
 
-let rec create_default_formula_searcher () : 'a search_formula_t =
-  let search_f = (fun _ -> None) in
-  let search_hf = create_default_heap_formula_searcher () in
-  let search_mf = create_default_mix_formula_searcher () in
+let rec create_default_formula_searcher (go_down: bool) : 'a search_formula_t =
+  let search_f f = if (go_down) then None else (Some []) in
+  let search_hf = create_default_heap_formula_searcher go_down in
+  let search_mf = create_default_mix_formula_searcher go_down in
   (search_f, search_hf, search_mf)
 
 
-and create_default_heap_formula_searcher () : 'a search_heap_formula_t =
-  (fun _ -> None)
+and create_default_heap_formula_searcher (go_down: bool) : 'a search_heap_formula_t =
+  if go_down then (fun _ -> None) else (fun _ -> Some [])
 
 
-and create_default_mix_formula_searcher () : 'a search_mix_formula_t =
-  let search_m = create_default_memo_pure_searcher () in
-  let search_a = create_default_var_aset_searcher () in
-  let search_p = create_default_pure_formula_searcher () in
+and create_default_mix_formula_searcher (go_down: bool) : 'a search_mix_formula_t =
+  let search_m = create_default_memo_pure_searcher go_down in
+  let search_a = create_default_var_aset_searcher go_down in
+  let search_p = create_default_pure_formula_searcher go_down in
   (search_m, search_a, search_p)
 
 
-and create_default_memo_formula_searcher () : 'a search_memo_formula_t =
-  create_default_mix_formula_searcher ()
+and create_default_memo_formula_searcher (go_down: bool) : 'a search_memo_formula_t =
+  create_default_mix_formula_searcher go_down
 
 
-and create_default_memo_pure_searcher () : 'a search_memo_pure_t =
-  (fun _ -> None)
+and create_default_memo_pure_searcher (go_down: bool) : 'a search_memo_pure_t =
+  if go_down then (fun _ -> None) else (fun _ -> Some [])
 
 
-and create_default_var_aset_searcher () : 'a search_var_aset_t =
-  (fun _ -> None)
+and create_default_var_aset_searcher (go_down: bool) : 'a search_var_aset_t =
+  if (go_down) then (fun _ -> None) else (fun _ -> Some [])
 
 
-and create_default_pure_formula_searcher () : 'a search_pure_formula_t = 
-  let search_pf = (fun _ -> None) in
-  let search_bf = create_default_pure_bformula_searcher () in
+and create_default_pure_formula_searcher (go_down: bool) : 'a search_pure_formula_t = 
+  let search_pf pf = if go_down then None else (Some []) in
+  let search_bf = create_default_pure_bformula_searcher go_down in
   (search_pf, search_bf)
 
 
-and create_default_pure_bformula_searcher () : 'a search_pure_bformula_t =
-  let search_bf = (fun _ -> None) in
-  let search_e = create_default_pure_exp_searcher () in
+and create_default_pure_bformula_searcher (go_down: bool) : 'a search_pure_bformula_t =
+  let search_bf bf = if go_down then None else (Some []) in
+  let search_e = create_default_pure_exp_searcher go_down in
   (search_bf, search_e)
 
 
-and create_default_pure_exp_searcher () : 'a search_pure_exp_t =
-  (fun _ -> None)
+and create_default_pure_exp_searcher (go_down: bool) : 'a search_pure_exp_t =
+  if go_down then (fun _ -> None) else (fun _ -> Some [])
 
 
 let rec search_in_formula (search : 'a search_formula_t) (f: CF.formula)

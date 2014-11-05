@@ -758,6 +758,9 @@ let convert_data_and_pred_to_cast_x () =
   (*   ()                                                                                       *)
   (* ) !cprog.Cast.prog_view_decls in                                                           *)
   Debug.binfo_pprint "=== compute views' direction info\n" no_pos;
+  List.iter (fun vd ->
+    let _ = Accfold.compute_view_residents vd !cprog.Cast.prog_view_decls in ()
+  ) !cprog.Cast.prog_view_decls;
   let new_views = Accfold.compute_direction_info_of_views
       !cprog.Cast.prog_view_decls !cprog.Cast.prog_data_decls in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;

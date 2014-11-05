@@ -1,0 +1,18 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+pred dll<pr,last,out> == self=out & last=pr
+    or (exists u: self::dll<pr,u,last> * last::node2<u,out>).
+    // or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
+
+// check why node2<pr,..> --> pr must be backward field
+
+// consider resident of view when checking between head nodes vs body nodes
+
+// pred lsso<out> == self = out
+//     or (exists u: self::node2<v,u> * u::lsso<out> & v=u).
+
+
