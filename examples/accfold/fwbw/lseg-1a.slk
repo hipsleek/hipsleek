@@ -1,0 +1,24 @@
+data node2{
+  int val;
+  node2 next;
+  node2 down;
+}.
+
+pred lseg3<p> == self::node2<_,p,_>
+  or self::node2<v,r,s> * s::node2<_,_,_> * r::lseg3<p>.
+
+// pred lseg3b<p> == self::node2<_,p,_>
+//   or self::node2<v,r,s> * s::node2<_,_,_> * r::lseg3b<p>.
+
+// // expect: p, q
+// pred lseg3c<p,q> == self::node2<_,p,_> * q::node2<x1,x2,x3>
+//   or self::node2<v,r,s> * s::node2<_,_,_> * r::lseg3c<p,q>.
+
+// // expect: p
+// // Note: q is not direction var since q isn't a pointer
+// pred lseg3d<p,q> == self::node2<_,p,_>
+//   or self::node2<v,r,s> * s::node2<_,_,_> * r::lseg3d<p,q>.
+
+// // expect: p
+// pred lseg3e<p,q> == self::node2<_,p,_> * t::node2<x1,q,x3>
+//   or self::node2<v,r,s> * s::node2<_,_,_> * r::lseg3e<p,u> * t::node2<_,_,q>.

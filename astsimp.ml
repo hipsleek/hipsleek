@@ -3041,18 +3041,20 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     let tailrec = check_view_tail_rec vd in
     let vd = { vd with C.view_is_tail_rec = tailrec } in
 
-    (* view residents *)
-    let residents = compute_view_residents vd view_decls in
-    let vd = { vd with C.view_residents = residents } in
+    (* TRUNG: disable code below because backward, forward info is now computed
+              in accfold module *)
+    (* (* view residents *)                                                                        *)
+    (* let residents = compute_view_residents vd view_decls in                                     *)
+    (* let vd = { vd with C.view_residents = residents } in                                        *)
 
-    (* forward & backward pointers, fields *)
-    let vd = (try
-      let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd data_decls view_decls in
-      {vd with C.view_forward_ptrs = fwp;
-               C.view_backward_ptrs = bwp;
-               C.view_forward_fields = fwf;
-               C.view_backward_fields = bwf;}
-    with _ -> vd) in
+    (* (* forward & backward pointers, fields *)                                                   *)
+    (* let vd = (try                                                                               *)
+    (*   let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd data_decls view_decls in *)
+    (*   {vd with C.view_forward_ptrs = fwp;                                                       *)
+    (*            C.view_backward_ptrs = bwp;                                                      *)
+    (*            C.view_forward_fields = fwf;                                                     *)
+    (*            C.view_backward_fields = bwf;}                                                   *)
+    (* with _ -> vd) in                                                                            *)
 
     (* touching & segmented is computed only when the forward and backward pointers is available *)
     let touching = is_touching_view vd in

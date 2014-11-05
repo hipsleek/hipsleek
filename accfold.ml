@@ -839,7 +839,7 @@ type direction_field_t = (string * ident)
  * find forward info: head_nodes --> body_nodes
  * find backward info: body_nodes --> head_nodes
  *)
-let compute_direction_info_from_formula (f: CF.formula)
+let compute_direction_info_from_formula_x (f: CF.formula)
     (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
@@ -910,6 +910,28 @@ let compute_direction_info_from_formula (f: CF.formula)
   ) body_nodes;
   (* return *)
   (!fwps, !fwfs, !bwps, !bwfs)
+
+
+let compute_direction_info_from_formula (f: CF.formula)
+    (head_nodes: CF.h_formula list) (body_nodes: CF.h_formula list)
+    (data_decls: C.data_decl list) (view_decls: C.view_decl list)
+    : direction_pointer_t list * direction_field_t list
+      * direction_pointer_t list * direction_field_t list =
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_head = (add_str "head_nodes" (pr_list !CF.print_h_formula)) in
+  let pr_body = (add_str "body_nodes" (pr_list !CF.print_h_formula)) in
+  let pr_pointers = pr_list (fun (vn,sv) -> vn^"."^(!CP.print_sv sv)) in
+  let pr_fields = pr_list (fun (dn,fn) -> dn^"."^fn) in
+  let pr_res = (
+    add_str "res"
+      (fun (fwps,fwfs,bwps,bwfs) -> 
+        "fwps: " ^ (pr_pointers fwps) ^ "; fwfs: " ^ (pr_fields fwfs)
+        ^ "; bwps: " ^ (pr_pointers bwps) ^ "; bwfs: " ^ (pr_fields bwfs))
+  ) in
+  Debug.no_3 "compute_direction_info_from_formula" pr_f pr_head pr_body pr_res
+      (fun _ _ _ -> compute_direction_info_from_formula_x f
+                      head_nodes body_nodes data_decls view_decls)
+      f head_nodes body_nodes
 
 
 let get_view_base_branches_x (vdecl: C.view_decl) : CF.formula list =
@@ -1061,7 +1083,7 @@ let is_view_direction_field (field_name: ident) (vdecl: C.view_decl) =
  * Based on existing direction info in view, do widening to collect more 
  * direction info
  *)
-let compute_direction_info_from_view (vdecl: C.view_decl)
+let compute_direction_info_from_view_x (vdecl: C.view_decl)
     (f: CF.formula) (head_and_body_nodes: CF.h_formula list)
     (data_decls: C.data_decl list) (view_decls: C.view_decl list)
     : direction_pointer_t list * direction_field_t list
@@ -1101,6 +1123,26 @@ let compute_direction_info_from_view (vdecl: C.view_decl)
   (!fwps, !fwfs, !bwps, !bwfs)
 
 
+let compute_direction_info_from_view (vdecl: C.view_decl)
+    (f: CF.formula) (head_and_body_nodes: CF.h_formula list)
+    (data_decls: C.data_decl list) (view_decls: C.view_decl list)
+    : direction_pointer_t list * direction_field_t list
+      * direction_pointer_t list * direction_field_t list =
+  let pr_v = (add_str "view" C.name_of_view) in
+  let pr_f = (add_str "f" !CF.print_formula) in
+  let pr_pointers = pr_list (fun (vn,sv) -> vn^"."^(!CP.print_sv sv)) in
+  let pr_fields = pr_list (fun (dn,fn) -> dn^"."^fn) in
+  let pr_res = (
+    add_str "res"
+      (fun (fwps,fwfs,bwps,bwfs) -> 
+        "fwps: " ^ (pr_pointers fwps) ^ "; fwfs: " ^ (pr_fields fwfs)
+        ^ "; bwps: " ^ (pr_pointers bwps) ^ "; bwfs: " ^ (pr_fields bwfs))
+  ) in
+  Debug.no_2 "compute_direction_info_from_view" pr_v pr_f pr_res
+      (fun _ _ -> compute_direction_info_from_view_x vdecl f head_and_body_nodes
+                      data_decls view_decls)
+      vdecl f
+
 let remove_dups_direction_pointers (pointers: direction_pointer_t list)
     : direction_pointer_t list =
   List.fold_left (fun refined_pointers p ->
@@ -1123,6 +1165,19 @@ let remove_dups_direction_fields (fields: direction_field_t list)
     if (is_added) then refined_fields
     else refined_fields @ [f]
   ) [] fields
+
+
+let string_of_view_direction_info (vdecl: C.view_decl) =
+  let dn = vdecl.C.view_data_name in
+  "  view name: " ^ vdecl.C.view_name ^ "\n"
+      ^ "    forward ptrs: "
+      ^ (pr_list !CP.print_sv vdecl.C.view_forward_ptrs) ^ "\n"
+      ^ "    forward fields: "
+      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_forward_fields) ^ "\n"
+      ^ "    backward ptrs: "
+      ^ (pr_list !CP.print_sv vdecl.C.view_backward_ptrs) ^ "\n"
+      ^ "    backward fields: "
+      ^ (pr_list (fun fn -> dn^"."^fn) vdecl.C.view_backward_fields) ^ "\n"
 
 
 (* compute direction info of all views *)
@@ -1207,12 +1262,16 @@ let compute_direction_info_of_views_x (view_decls: C.view_decl list)
                 C.view_backward_ptrs = new_bwps;
                 C.view_backward_fields = new_bwfs; }
     ) vdecls in
+    Debug.ninfo_hprint (add_str "view info 2" 
+        (pr_list string_of_view_direction_info)) new_vdecls no_pos;
     if (!need_widen_again) then widen_view_direction_info new_vdecls
     else new_vdecls
   ) in
 
   (* do fixpoint computation to find direction info in all views *)
   let new_vdecls = init_view_direction_info view_decls in
+  Debug.ninfo_hprint (add_str "view info 1"
+      (pr_list string_of_view_direction_info)) new_vdecls no_pos;
   widen_view_direction_info new_vdecls 
 
 
@@ -1220,17 +1279,7 @@ let compute_direction_info_of_views (view_decls: C.view_decl list)
     (data_decls: C.data_decl list)
     : C.view_decl list =
   let pr_vs = (add_str "views" (pr_list C.name_of_view)) in
-  let pr_direction_info vd = (
-    let dn = vd.C.view_data_name in
-    "  view name: " ^ vd.C.view_name ^ "\n"
-        ^ "    forward ptrs: " ^ (pr_list !CP.print_sv vd.C.view_forward_ptrs) ^ "\n"
-        ^ "    forward fields: "
-        ^ (pr_list (fun fn -> dn^"."^fn) vd.C.view_forward_fields) ^ "\n"
-        ^ "    backward ptrs: " ^ (pr_list !CP.print_sv vd.C.view_backward_ptrs) ^ "\n"
-        ^ "    backward fields: "
-        ^ (pr_list (fun fn -> dn^"."^fn) vd.C.view_backward_fields) ^ "\n"
-  ) in
-  let pr_res = (add_str "res" (pr_list_ln pr_direction_info)) in
+  let pr_res = (add_str "res" (pr_list_ln string_of_view_direction_info)) in
   Debug.no_1 "compute_direction_info_of_views" pr_vs pr_res
       (fun _ -> compute_direction_info_of_views_x view_decls data_decls)
       view_decls

@@ -95,10 +95,13 @@ let rec remove_dups_str_list (sl: string list) =
 let intersect_str_list sl1 sl2 =
   List.filter (fun s -> mem_str_list s sl1) sl2
 
-(* check if two lists of string are intersected *) 
+(* 
+ * check if two lists of string are intersected
+ * yes -> intersected, no -> non-intersected
+ *) 
 let is_intersected_str_list sl1 sl2 =
   let str_lst = List.filter (fun s -> mem_str_list s sl1) sl2 in
-  (List.length str_lst = 0)
+  (List.length str_lst > 0)
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
