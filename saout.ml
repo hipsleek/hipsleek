@@ -517,7 +517,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
         end
   in
   let case_detection_x iflow parts f0=
-    let _ =  Debug.info_hprint (add_str "case_detection" (Cprinter.string_of_formula)) f0 no_pos in
+    let _ =  Debug.ninfo_hprint (add_str "case_detection" (Cprinter.string_of_formula)) f0 no_pos in
     (* let hp_opt = CF.extract_hprel_pure f0 in *)
     let ls_hpargs = CF.get_HRels_f f0 in
     let f1,_ = CF.drop_hrel_f f0 (List.map fst ls_hpargs) in
@@ -683,7 +683,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
           | _ -> struc_fnc sf
       end
     | CF.EAssume ea->
-          let _ =  Debug.info_hprint (add_str " ea.CF.formula_assume_simpl" (Cprinter.string_of_formula))  ea.CF.formula_assume_simpl no_pos in
+          let _ =  Debug.ninfo_hprint (add_str " ea.CF.formula_assume_simpl" (Cprinter.string_of_formula))  ea.CF.formula_assume_simpl no_pos in
           let _ =  Debug.ninfo_hprint (add_str " ifl post" (string_of_flow)) ifl no_pos in
           let l_hpdefs = List.fold_left (fun r (fl1,defs) ->
               if CF.equal_flow_interval fl1 ifl then
@@ -691,7 +691,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
               else r
           ) [] parts in
           let f1 = formula_subst_dangling_pred_post dang_hps to_unfold_hps post_hps l_hpdefs ifl ea.CF.formula_assume_simpl in
-          let _ =  Debug.info_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
+          let _ =  Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
           let quans = CF.fresh_data_v f1 in
           CF.EAssume {ea with CF.formula_assume_simpl = CF.add_quantifiers quans f1;
               CF.formula_assume_struc = (recf parts ifl) ea.CF.formula_assume_struc}
