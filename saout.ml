@@ -513,7 +513,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
   in
   let case_detection_x iflow parts f0=
     let _ =  Debug.info_hprint (add_str "case_detection" (Cprinter.string_of_formula)) f0 no_pos in
-    let hp_opt = CF.extract_hprel_pure f0 in
+    (* let hp_opt = CF.extract_hprel_pure f0 in *)
     let ls_hpargs = CF.get_HRels_f f0 in
     let f1,_ = CF.drop_hrel_f f0 (List.map fst ls_hpargs) in
     match ls_hpargs with
@@ -582,6 +582,28 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
           else
             CF.substitute_flow_into_f iflow f0
   in
+  let elim_dup_with_guard g sf=
+    match sf with
+      | CF.EBase b -> begin
+          match b.CF.formula_struc_base with
+            | CF.Base {formula_base_heap = h;
+              formula_base_pure = mf;
+              }
+            | CF.Exists
+                    {formula_exists_heap = h;
+                    formula_exists_pure = mf;
+                    } -> begin
+                      let p = MCP.pure_of_mix mf in
+                      if CP.equalFormula g p then
+                        match b.CF.formula_struc_continuation with
+                          | None -> sf
+                          | Some sf1 -> sf1
+                      else sf
+                    end
+            | _ -> sf
+        end
+      | _ -> sf
+  in
   (*if can not find a post def in iflow, return true & __flow iflow*)
   let rec gen_case_spec parts ifl sf=
     let recf = gen_case_spec in
@@ -592,32 +614,58 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
     }
     in
     match sf with
-    | CF.ECase b-> ECase {b with CF.formula_case_branches= Gen.map_l_snd (recf parts ifl) b.CF.formula_case_branches}
+    | CF.ECase b-> CF.ECase {b with CF.formula_case_branches= Gen.map_l_snd (recf parts ifl) b.CF.formula_case_branches}
     | CF.EBase b -> begin
-          let pr_fl_fs= case_detection ifl parts b.formula_struc_base in
-          match pr_fl_fs with
-            | [] ->  CF.EBase b
-            | [(parts2,fl,f1)] -> rec_pre parts2 fl b f1
-            | _ -> (* case here *)
-                  let case_sfs = List.map (fun (part2,fl,f2) ->
-                      (* let sf2 = CF.EBase {b with CF.formula_struc_base = f2;} in *)
-                      (* let sf3 = recf parts fl sf2 in *)
-                      let sf2 = rec_pre part2 fl b f2 in
-                      let n_parts = if CF.equal_flow_interval fl !norm_flow_int then parts else parts in
-                      let sf3 = recf n_parts fl sf2 in
-                      let old_baga_flag = !baga_xpure in
-                      let _ = baga_xpure := true in
-                      let guard,_,_=(Cvutil.xpure_symbolic 11 prog f2) in
-                      let _ = baga_xpure := old_baga_flag in
-                      (MCP.pure_of_mix guard, sf3)
-                  ) pr_fl_fs in
-                  CF.ECase { CF.formula_case_branches = case_sfs;
-                  formula_case_pos = b.CF.formula_struc_pos;
-                  }
+        let ls_hpargs = CF.get_HRels_f b.formula_struc_base in
+        let pos = CF.pos_of_formula b.formula_struc_base in
+        match ls_hpargs with
+          |  [(hp,args)] -> begin
+               let f1,_ = CF.drop_hrel_f b.formula_struc_base [hp] in
+               let hfbase = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
+               let f1base = CF.formula_of_heap hfbase pos in
+               let pr_fl_fs= case_detection ifl parts f1base in
+               match pr_fl_fs with
+                 | [] ->  CF.EBase b
+                 | [(parts2,fl2,f2)] -> rec_pre parts2 fl2 b f2
+                 | _ -> (* case here *)
+                       let case_sfs = List.map (fun (parts2,fl2,f2) ->
+                           let sf2 = CF.EBase {b with CF.formula_struc_base = f2;} in
+                           let n_parts = if CF.equal_flow_interval fl2 !norm_flow_int then parts else parts2 in
+                           let sf3 = recf n_parts fl2 sf2 in
+                           let old_baga_flag = !baga_xpure in
+                           let _ = baga_xpure := true in
+                           let guard,_,_=(Cvutil.xpure_symbolic 11 prog f2) in
+                           let _ = baga_xpure := old_baga_flag in
+                           let p_guard = MCP.pure_of_mix guard in
+                           let sf4 = elim_dup_with_guard p_guard sf3 in
+                           (p_guard, sf4)
+                       ) pr_fl_fs in
+                       let n_sf = CF.ECase { CF.formula_case_branches = case_sfs;
+                       formula_case_pos = b.CF.formula_struc_pos;
+                       } in
+                       let _ =  Debug.ninfo_hprint (add_str " f1" (Cprinter.string_of_formula))  f1 no_pos in
+                       let _ =  Debug.ninfo_hprint (add_str " n_sf" (Cprinter.string_of_struc_formula)) n_sf no_pos in
+                       let sf4 = if CF.isConstTrueFormula f1 then n_sf
+                       else CF.EBase {b with
+                           CF.formula_struc_continuation = Some n_sf;
+                           CF.formula_struc_implicit_inst =  CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@(CF.fresh_data_v  f1));
+                           CF.formula_struc_base = f1;}
+                       in
+                       sf4
+             end
+          | [] ->
+                let f2 = formula_fct b.formula_struc_base in
+                rec_pre parts ifl b f2
+          | _ -> struc_fnc sf
       end
     | CF.EAssume ea->
           let _ =  Debug.ninfo_hprint (add_str " ea.CF.formula_assume_simpl" (Cprinter.string_of_formula))  ea.CF.formula_assume_simpl no_pos in
-          let l_hpdefs = List.fold_left (fun r (_,defs) -> r@defs) [] parts in
+          let _ =  Debug.ninfo_hprint (add_str " ifl post" (string_of_flow)) ifl no_pos in
+          let l_hpdefs = List.fold_left (fun r (fl1,defs) ->
+              if CF.equal_flow_interval fl1 ifl then
+              r@defs
+              else r
+          ) [] parts in
           let f1 = formula_subst_dangling_pred_post dang_hps to_unfold_hps post_hps l_hpdefs ifl ea.CF.formula_assume_simpl in
           let _ =  Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
           let quans = CF.fresh_data_v f1 in
