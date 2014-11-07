@@ -760,6 +760,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let split_fixcalc = ref false
+
 let ptr_to_int_exact = ref false
 
 let is_sleek_running = ref false

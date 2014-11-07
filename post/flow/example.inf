@@ -102,6 +102,8 @@ bottomupgen([post6], [4], SimHeur);
 # (1<=x<=2000 && x'=0) ||
 # (1<=x<=2000 && x'=2001)
 
+# Old result: ((x<=2000 && x'=2001) || (x>=1 && x'=0) || (x<=0 && x'=x) || (x>=2001 && x'=x))
+
 ###################################
 
 # post7 := {[x] -> [PRIx] -> []:
@@ -119,11 +121,11 @@ bottomupgen([post6], [4], SimHeur);
 post8 := {[x] -> [PRIx] -> []:
   (x<=0 && x=PRIx) ||
   (x>=1001 && x<=2000 && x=PRIx) ||
-  exists (x1: (x1=x-1 && post8(x1,PRIx) && 1<=x && x<=1000)) # ||
-  #exists (x1: (x1=x-1 && post8(x1,PRIx) && 2001<=x))
+  exists (x1: (x1=x-1 && post8(x1,PRIx) && 1<=x && x<=1000)) ||
+  exists (x1: (x1=x-1 && post8(x1,PRIx) && 2001<=x))
 };
 
-bottomupgen([post8], [3], SimHeur);
+bottomupgen([post8], [4], SimHeur);
 
 # Result:
 
