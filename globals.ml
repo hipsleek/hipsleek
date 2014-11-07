@@ -930,7 +930,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_equiv_one = ref true
 

@@ -2686,6 +2686,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     let proc = List.hd scc_procs in
     (* ************************************ *)
     (* *************INTENAL********************* *)
+    (* inter form *)
     let print_hp_defs_one_flow hp_defs flow_int=
        begin
         let defs0 = List.sort CF.hp_def_cmp hp_defs in
@@ -2705,6 +2706,36 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
          let _= if !print_html then let _ = print_ann:= false in () else () in
         print_endline_quiet (pr1 defs);
           let _ = print_ann:=  old_print_imm in
+        if !Globals.testing_flag then print_endline "<dstop>"; 
+        print_endline_quiet "*************************************";
+        ()
+      end;
+    in
+    (* final form *)
+    let print_hpdefs_one_flow flow_int=
+      begin
+        let hpdefs = List.filter (fun hpdef ->
+            match hpdef.CF.hprel_def_flow with
+              | Some ifl -> CF.equal_flow_interval flow_int ifl
+              | None -> false
+        ) CF.rel_def_stk# get_stk in
+        let defs0 = List.sort CF.hpdef_cmp hpdefs in
+        let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d ->
+            match d.CF.hprel_def_kind with
+              | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp scc_sel_post_hps) then (r1,r2@[d],r3) else
+                  if (CP.mem_svl hp scc_sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
+              | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
+        let defs1 = pre_preds@post_pred@rem in
+        let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
+        print_endline_quiet "\n*********************************************************";
+        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        print_endline_quiet "*********************************************************";
+        if !Globals.testing_flag then print_endline "<dstart>";
+        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+        let old_print_imm = !print_ann in
+        let _= if !print_html then let _ = print_ann:= false in () else () in
+        print_endline_quiet (pr1 defs);
+        let _ = print_ann:=  old_print_imm in
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline_quiet "*************************************";
         ()
@@ -2743,7 +2774,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           let hprels_flows = Cformula.partition_hprel_flow scc_hprel_ass in
            List.fold_left (fun (r1,r2,r3,scc_sel_hps1) (hprels, flow_n) ->
                let l1,l2,l3, new_sel_hps = do_infer_one_flow hprels scc_sel_hps1 flow_n in
-               let _ = print_hp_defs_one_flow l2 flow_n in
+               let _ = print_hpdefs_one_flow (* l2 *) flow_n in
                (* to combine hpdefs of set of states *)
                r1@l1,r2@l2,r3@l3, CP.remove_dups_svl (scc_sel_hps1@new_sel_hps)
            ) ([],[],[],scc_sel_hps) hprels_flows
@@ -2819,9 +2850,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     *)
     let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs)) in
     let new_scc_procs = if !Globals.pred_trans_view then
-      let nprog = match scc_procs with
-        | [] -> prog
-        | [p] -> if (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && p.Cast.proc_sel_hps != [] then
+      let nprog,is_print_inferred_spec = match scc_procs with
+        | [] -> prog,false
+        | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
             let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
               scc_inferred_hps
             in
@@ -2832,8 +2863,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
           (*     () *)
           (* ) new_scc_procs in *)
-            nprog
-          else prog
+            nprog,true
+          else prog,false
         | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
           let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
           (* let _ = List.iter (fun proc -> *)
@@ -2842,15 +2873,15 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
           (*     () *)
           (* ) new_scc_procs in *)
-          nprog
+          nprog,true
       in
       let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
       let _ = List.iter (fun proc ->
-          (* if proc.Cast.proc_sel_hps != [] then *)
-          let _ =  Debug.info_hprint (add_str "SHAPE inferred spec"
+          if is_print_inferred_spec then
+          let _ =  Debug.info_hprint (add_str "INFERRED SHAPE SPEC"
               (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
           ()
-          (* else () *)
+          else ()
       ) new_scc_procs in
       new_scc_procs
     else scc_procs
