@@ -10,7 +10,7 @@ node get_next(node x)
 //  requires H(x)   ensures  G(x, res);
 //  infer [H,G] requires H(x)   ensures  G(x, res) ;
   infer [@shape
-         ,@error
+         //@error
          ] requires true   ensures  true ;
 ///  requires x::node<null> ensures x::node<p> & res=p;
 {

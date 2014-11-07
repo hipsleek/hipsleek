@@ -649,7 +649,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                  | [] ->  rec_pre parts ifl b b.formula_struc_base
                  | [(parts2,fl2,f2)] ->
                        let sf2 = rec_pre parts2 fl2 b f2 in
-                       let _ =  Debug.info_hprint (add_str "sf2" (Cprinter.string_of_struc_formula)) sf2 no_pos in
+                       let _ =  Debug.ninfo_hprint (add_str "sf2" (Cprinter.string_of_struc_formula)) sf2 no_pos in
                        sf2
                  | _ -> (* case here *)
                        let case_sfs = List.map (fun (parts2,fl2,f2) ->
@@ -817,7 +817,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       (* let _ = print_endline ("proc_name: "^name) in *)
       let s_spec1 = (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
       (*subst simple view def (equiv, should subst views with one branch also)*)
-      let _ =  Debug.info_hprint (add_str "to_unfold_hps" (!CP.print_svl)) to_unfold_hps no_pos in
+      let _ =  Debug.ninfo_hprint (add_str "to_unfold_hps" (!CP.print_svl)) to_unfold_hps no_pos in
       let s_spec2 = if unk_hps=[] && to_unfold_hps=[] then s_spec1 else
         (* let to_unfold_vnames = List.map (CP.name_of_spec_var) to_unfold_hps in *)
         (* CF.struc_formula_trans_heap_node *)
