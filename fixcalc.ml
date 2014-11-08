@@ -764,7 +764,6 @@ let compute_cmd rel_defs bottom_up =
   (* let nos = string_of_elems nos string_of_int "," in *)
   let nos = string_of_elems nos (fun _ -> 
       string_of_int !Globals.fixcalc_disj) "," in
-  let nos = string_of_int ((int_of_string nos) + 1) in
   let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
   let rels = List.map (fun (a,_,_) ->
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
@@ -1252,7 +1251,7 @@ let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
   let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
-  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res 
+  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res
     (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs false)
       input_pairs ante_vars
 

@@ -1140,12 +1140,12 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3
 
 let pre_residue_lvl = ref 0
-(* Lvl 0 - add conjunctive pre to residue only *) 
-(* Lvl 1 - add all pre to residue *) 
-(* Lvl -1 - never add any pre to residue *) 
+(* Lvl 0 - add conjunctive pre to residue only *)
+(* Lvl 1 - add all pre to residue *)
+(* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
 let dump_lemmas = ref false
