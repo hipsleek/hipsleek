@@ -1224,12 +1224,18 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
             | [] -> [(pf1,pf2)]
             | (pf3,pf4)::tl ->
                   if (CP.equalFormula pf1 pf3)
-                  then (pf1,Omega.simplify (CP.mkOr pf2 pf4 None no_pos))::tl
+                  then
+                    let pf5 = Omega.simplify (CP.mkOr pf2 pf4 None no_pos) in
+                    let _ = DD.ninfo_hprint (add_str "pf2" pr) pf2 no_pos in
+                    let _ = DD.ninfo_hprint (add_str "pf4" pr) pf4 no_pos in
+                    let _ = DD.ninfo_hprint (add_str "pf5" pr) pf5 no_pos in
+                    (pf1,pf5)::tl
                   else (pf3,pf4)::(helper tl (pf1,pf2))
         in
         let acc = List.fold_left (fun acc pf ->
             helper acc pf
         ) acc (res1@res2) in
+        let _ = DD.ninfo_hprint (add_str "acc" (pr_list (pr_pair pr pr))) acc no_pos in
         acc
     ) [] constrs in
     let _ = DD.ninfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
