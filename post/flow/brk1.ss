@@ -25,6 +25,6 @@ With --en-split-fixcalc:
 
 Without --en-split-fixcalc:
 
-((x'=0 & 1<=x) | (x=x' & 2223<=x') | (x=x' & x'<=0))
+x'<=x
 
 */
