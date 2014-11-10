@@ -759,10 +759,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
     in input_fixcalc
   with _ -> report_error no_pos "Error in translating the input for fixcalc"
 
-let compute_cmd rel_defs bottom_up = 
+let compute_cmd rel_defs bottom_up =
   let nos = List.map (fun (_,_,a) -> a) rel_defs in
   (* let nos = string_of_elems nos string_of_int "," in *)
-  let nos = string_of_elems nos (fun _ -> 
+  let nos = string_of_elems nos (fun _ ->
       string_of_int !Globals.fixcalc_disj) "," in
   let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
   let rels = List.map (fun (a,_,_) ->
