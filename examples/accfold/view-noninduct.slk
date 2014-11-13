@@ -1,0 +1,22 @@
+data node {
+  int val;
+  node next;
+}.	
+
+pred one_node<p> == self::node<_,p>.
+
+pred two_node<q> == self::node<_,p> * p::node<_,q>.
+
+// OK
+checkentail_exact x::one_node<y> * y::one_node<z> |- x::two_node<z>.
+
+// checkentail_exact x::node<_,y> * y::node<_,z> |- x::node<>.
+
+// OK
+checkentail_exact x::one_node<y> * y::one_node<z> |- x::two_node<y>.
+
+// OK
+checkentail_exact x::one_node<y> * y::one_node<z> |- x::one_node<y>.
+
+// OK
+checkentail_exact x::one_node<y> * y::one_node<z> |- x::one_node<y> * y::one_node<z>.

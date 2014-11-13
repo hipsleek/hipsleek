@@ -6,6 +6,9 @@ open Gen.Basic
 module C = Cast
 module CP = Cpure
 module CF = Cformula
+module I = Iast
+module IP = Ipure
+module IF = Iformula
 module MCP = Mcpure
 module MCPD = Mcpure_D
 
@@ -301,3 +304,38 @@ and search_in_pure_exp (search: 'a search_pure_exp_t) (e: CP.exp): 'a list =
             | None -> []
             | Some x -> search_in_pure_exp search x in
           r1 @ r2 @ r3
+
+
+(* let make_simple_view_decl (view_name: ident) (view_vars: ident list) *)
+(*     (view_body: IF.struct_formula) (pos: loc)                        *)
+(*     : CF.view_decl =                                                 *)
+(*   let vdecl = {                                                      *)
+(*     I.view_name = vn;                                                *)
+(*     I.view_pos = pos;                                                *)
+(*     I.view_data_name = "";                                           *)
+(*     I.view_imm_map = [];                                             *)
+(*     I.view_type_of_self = None;                                      *)
+(*     I.view_vars = view_vars;                                         *)
+(*     I.view_ho_vars = [];                                             *)
+(*     I.view_labels = br_labels,has_labels;                            *)
+(*     I.view_parent_name = None;                                       *)
+(*     I.view_derv = false;                                             *)
+(*     I.view_modes = [];                                               *)
+(*     I.view_typed_vars = [];                                          *)
+(*     I.view_pt_by_self  = [];                                         *)
+(*     I.view_formula = view_formula;                                   *)
+(*     I.view_inv_lock = None;                                          *)
+(*     I.view_is_prim = false;                                          *)
+(*     I.view_kind = View_EXTN;                                         *)
+(*     I.view_prop_extns = [];                                          *)
+(*     I.view_derv_info = [];                                           *)
+(*     I.view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);             *)
+(*     I.view_baga_inv = None;                                          *)
+(*     I.view_baga_over_inv = None;                                     *)
+(*     I.view_baga_under_inv = None;                                    *)
+(*     I.view_mem = None;                                               *)
+(*     I.view_materialized_vars = [];                                   *)
+(*     I.try_case_inference = false;                                    *)
+(*   } in                                                               *)
+(*   vdecl                                                              *)
+

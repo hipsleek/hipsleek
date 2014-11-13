@@ -699,6 +699,12 @@ let convert_data_and_pred_to_cast_x () =
   let cviews0 = Astsimp.update_views_info cviews0 !cprog.Cast.prog_data_decls in
   let cviews0 = Astsimp.restore_original_views_order cviews0 original_views in
 
+  (* TRUNG: temporarily code , to remove later *)
+  List.iter (fun cv ->
+    let _ = Accfold.collect_main_heap_chain_in_view cv in ()
+    
+  ) cviews0;
+
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
