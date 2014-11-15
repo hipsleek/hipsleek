@@ -19,6 +19,7 @@ checkentail
   |- emp & Term.
 print residue.
 
+
 checkentail x::dll<m> |- m>=0.
 print residue.
 
@@ -27,3 +28,4 @@ checkentail x::dll<m> |- true & ["n":m>=0].
 
 checkentail x::dll<m> & x!=null |- true & ["n":m>0].
 //expect Valid.
+

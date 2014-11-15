@@ -148,7 +148,9 @@ let fresh_data_v_x f0=
   (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
   (* let sst = List.combine v_sps3 fr_v_sps2 in *)
   (* subst sst f0 *)
-  formula_trans_heap_node fresh_hf f0
+  if not !Globals.sa_pure_field then
+    formula_trans_heap_node fresh_hf f0
+  else f0
 
 let fresh_data_v f0=
   let pr1= !print_formula in
