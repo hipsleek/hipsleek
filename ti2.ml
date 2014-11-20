@@ -1641,7 +1641,8 @@ let rec proving_non_termination_scc prog trrels tg scc =
           begin try
             let _, nd_pos = List.find (fun (nd_uid, _) -> 
               uid.CP.tu_id == nd_uid.CP.tu_id) nd_nonterm_uids in
-            subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann
+            (* subst (CP.MayLoop (Some { CP.tcex_trace = [nd_pos] }), []) ann *)
+            subst (CP.MayLoop None, []) ann
           with Not_found -> ann end
       | _ -> ann
     in
