@@ -27,6 +27,25 @@ int f91(int n)
   else return f91(f91(n+1));
 }
 /*
+# f91-rec5.ss
+
+ case {
+  //  n>91 -> requires Term[] ensures res=n;
+  n>=91 -> requires Term[] ensures res=n;
+  n<91 -> requires Term[91-n] ensures res=91;
+
+Why Term measure not captured?
+static  ECase case {
+        91<=n -> EBase emp&Term[31,pv_1326]&{FLOW,(4,5)=__norm#E}[]
+                         EAssume 
+                            emp&res=n&{FLOW,(4,5)=__norm#E}[]
+                            ;
+        n<91 -> EBase emp&Term[31,pv_1327]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&res=91&{FLOW,(4,5)=__norm#E}[]
+                           
+        }
+
 # f91-rec3.ss
 
 (1) use only @post_n
