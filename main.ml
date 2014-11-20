@@ -624,7 +624,7 @@ let process_source_full source =
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
     else ();
     Timelog.logtime # dump;
-    silenced_print print_string ("\nTotal verification time: " 
+    (* silenced_print *) print_string ("\nTotal verification time: " 
 	^ (string_of_float t4) ^ " second(s)\n"
 	^ "\tTime spent in main process: " 
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
@@ -840,7 +840,7 @@ let process_source_full_after_parser source (prog, prims_list) =
       (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
   else ();
-  silenced_print print_string ("\nTotal verification time: " 
+  (* silenced_print *) print_string ("\nTotal verification time: " 
   ^ (string_of_float t4) ^ " second(s)\n"
   ^ "\tTime spent in main process: " 
   ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
