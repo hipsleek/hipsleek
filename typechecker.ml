@@ -751,8 +751,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               let _ = Debug.ninfo_hprint (add_str "impl_vs" pr) impl_vs no_pos in
                               let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
                               let _ = Debug.ninfo_hprint (add_str "new_post" Cprinter.string_of_formula) new_post no_pos in
-                              let sst = List.combine impl_struc impl_vs in
-                              let new_post_struc = CF.subst_struc sst new_post_struc in
+                              let new_post_struc = if List.length impl_struc = List.length impl_vs then
+                                let sst = List.combine impl_struc impl_vs in
+                                CF.subst_struc sst new_post_struc
+                              else new_post_struc
+                              in
                               let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
                               (* print_string_quiet "check 1 fail\n"; *)
                               (impl_vs,new_post,new_post_struc)
@@ -780,11 +783,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         let cl = List.filter (fun f -> 
                             Gen.BList.overlap_eq CP.eq_spec_var (CP.fv f) log_vars) lp in
                         let _ = if not (Gen.is_empty lp) then 
-                          DD.ninfo_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
+                          DD.info_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                         let _ = Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                       in
-                      (* let _ = Debug.info_zprint (lazy (("res_ctx: " ^ (Cprinter.string_of_list_partial_context_short res_ctx) ^ "\n"))) no_pos in *)
-                      (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
+                      (* let _ = Debug.info_hprint (add_str "res_ctx: " Cprinter.string_of_list_partial_context_short) res_ctx no_pos in *)
+                      (* todo : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Infer.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_zprint (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                       (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
@@ -1268,7 +1271,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
     let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
-      (*let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
+      (* let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
       match e0 with
         | Label e ->
 	    let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
@@ -2459,13 +2462,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
     let check_exp1_x (ctx : CF.list_failesc_context) : CF.list_failesc_context =
       Gen.Profiling.do_1 "check_exp1" check_exp1_a ctx in
-
+    (* let _ = print_endline ("check_exp: 1 :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx  
     else ctx in
     (* An Hoa : Simplify the context before checking *)
     let ctx = if (!simplify_context) then
       CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
     else ctx in
+    (* let _ = print_endline ("check_exp: 2 :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
     (* fl denote all failed states *)
     let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (*let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
@@ -2530,36 +2534,35 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (*     else ctx *)
     (* in *)
     (* WN : is code below redundant?  *)
-    let fn_state=
-      if (false (* !Globals.disable_failure_explaining *)) then
-        let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
-          proc.proc_args in
-        let r = proc.proc_by_name_params in
-        let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
+    let fn_state= ctx in
+      (* if (false (\* !Globals.disable_failure_explaining *\)) then *)
+      (*   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed)) *)
+      (*     proc.proc_args in *)
+      (*   let r = proc.proc_by_name_params in *)
+      (*   let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in *)
         (* WN: do not existentially quantify by-value parameters *)
-        let w=[] in
-        let _ = Debug.binfo_hprint (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
-        (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
-        let final_state_prim = CF.push_exists_list_partial_context w ctx in
-        Debug.binfo_hprint  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
-        (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
-        (* let _ = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
-        Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
-        let final_state = 
-          if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
-        Debug.binfo_hprint  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
-        (* let _ = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
-        (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
-        (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
-        (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
-        Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  (fst posts)) ^ "\n")) pos;
-		Debug.devel_zprint (lazy ("Struc-post-cond:\n" ^ (Cprinter.string_of_struc_formula  (snd posts)) ^ "\n")) pos;
-        let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
-        Debug.devel_pprint to_print pos;
-        final_state
-      else
-        ctx
-    in
+        (* let w=[] in *)
+        (* let _ = Debug.binfo_hprint (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in *)
+      (*   let _ = print_endline ("final_state_prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
+      (*   (\* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *\) *)
+        (* Debug.binfo_hprint  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;   *)
+      (*   (\* let _ = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *\) *)
+      (*   Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos; *)
+      (*   let final_state =  *)
+      (*     if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in *)
+        (* Debug.binfo_hprint  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;   *)
+      (*   let _ = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
+      (*   (\* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *\) *)
+      (*   (\*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *\) *)
+      (*   (\* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *\) *)
+      (*   Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  (fst posts)) ^ "\n")) pos; *)
+      (*   	Debug.devel_zprint (lazy ("Struc-post-cond:\n" ^ (Cprinter.string_of_struc_formula  (snd posts)) ^ "\n")) pos; *)
+      (*   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in *)
+      (*   Debug.devel_pprint to_print pos; *)
+      (*   final_state *)
+      (* else *)
+    (*     ctx *)
+    (* in *)
     (* let _ = DD.info_zprint (lazy (("       sleek-logging (POST): "  ^ "\n" ^ (to_print)))) pos in *)
     let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)

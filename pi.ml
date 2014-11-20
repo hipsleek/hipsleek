@@ -510,6 +510,7 @@ let trans_res_struc_formula prog sf =
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
   let _ = DD.binfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in

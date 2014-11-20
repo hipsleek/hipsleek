@@ -3,9 +3,9 @@ data ptr {
 }
 
 void foo(ptr a, ref int r)
-  requires a::ptr<_>
-  ensures a::ptr<_>;
-  //true ensures true;
+  //requires a::ptr<_>
+  //ensures a::ptr<_>;
+  //requires true ensures true;
 {
   if (a.val>0) {
     a.val = a.val-1;
