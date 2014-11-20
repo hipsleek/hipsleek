@@ -7,5 +7,6 @@ void loop (int x, int y)
 void main ()
 {
   int x;
-  loop(x, 0);
+  //loop(x, 0);
+  loop(x, -1);
 }

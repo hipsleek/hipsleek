@@ -1,7 +1,8 @@
 int Ack(int m, int n)
   infer [@term]
   requires true
-  ensures res >= n + 1;
+  //ensures res >= n + 1; 
+  ensures true; // (2)
   
 {
   if (m == 0) return n + 1;
@@ -13,3 +14,5 @@ int Ack(int m, int n)
   }
 }
 
+// (1) ../../hip ack.ss -infer "@term" --dis-term-add-post --infer-lex
+// (2) ../../hip ack.ss -infer "@term" --dis-term-add-post
