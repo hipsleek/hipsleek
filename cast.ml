@@ -3633,3 +3633,4 @@ let add_post_for_tnt_prog prog =
         if List.mem proc.proc_name inf_post_procs then
           add_inf_post_proc proc
         else proc) prog.new_proc_decls; }
+  
