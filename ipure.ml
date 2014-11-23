@@ -930,7 +930,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagNotIn (b1, b2, _) -> (anon_var b1) @ (look_for_anonymous_exp b2)
   | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | BagMin (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
-  | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)	
+  | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   | VarPerm _ -> [] (*can not have anon_var*)
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)

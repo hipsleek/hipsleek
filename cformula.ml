@@ -4149,7 +4149,7 @@ and rename_bound_vars_x (f : formula) = match f with
 	    let new_base_f = subst rho base_f in (*TO CHECK*)
         let resform = add_quantifiers new_qvars new_base_f in
 		(resform,rho)
-		
+
 and propagate_perm_formula (f : formula) (permvar:cperm_var) : formula =
   Debug.no_2 "propagate_perm_formula"
       !print_formula
@@ -8216,6 +8216,79 @@ and mkAnd_fb_hf fb hf pos=
                          h_formula_star_pos = pos
   } in
   {fb with formula_base_heap = new_hf}
+
+
+and mk_and_formula f1 f2 : formula =
+  match f1, f2 with
+  | Or fo, _ ->
+      let new_or1 = mk_and_formula fo.formula_or_f1 f2 in
+      let new_or2 = mk_and_formula fo.formula_or_f2 f2 in
+      Or {formula_or_f1 = new_or1;
+          formula_or_f2 = new_or2;
+          formula_or_pos = no_pos;}
+  | _, Or fo -> 
+      let new_or1 = mk_and_formula f1 fo.formula_or_f1 in
+      let new_or2 = mk_and_formula f1 fo.formula_or_f2 in
+      Or {formula_or_f1 = new_or1;
+          formula_or_f2 = new_or2;
+          formula_or_pos = no_pos;}
+  | _, _ ->
+      let (qvars1, heap1, pure1, type1, and1, flow1, label1) = (
+        match f1 with
+        | Base fb -> 
+            ([], fb.formula_base_heap, fb.formula_base_pure,
+             fb.formula_base_type, fb.formula_base_and,
+             fb.formula_base_flow, fb.formula_base_label)
+        | Exists fe -> 
+            (fe.formula_exists_qvars, fe.formula_exists_heap,
+             fe.formula_exists_pure, fe.formula_exists_type,
+             fe.formula_exists_and, fe.formula_exists_flow,
+             fe.formula_exists_label)
+        | _ -> report_error no_pos "expect Base or Exists formula (1)"
+      ) in
+      let (qvars2, heap2, pure2, type2, and2, flow2, label2) = (
+        match f2 with
+        | Base fb -> 
+            ([], fb.formula_base_heap, fb.formula_base_pure,
+             fb.formula_base_type, fb.formula_base_and,
+             fb.formula_base_flow, fb.formula_base_label)
+        | Exists fe -> 
+            (fe.formula_exists_qvars, fe.formula_exists_heap,
+             fe.formula_exists_pure, fe.formula_exists_type,
+             fe.formula_exists_and, fe.formula_exists_flow,
+             fe.formula_exists_label)
+        | _ -> report_error no_pos "expect Base or Exists formula (2)"
+      ) in
+      let new_qvars = qvars1 @ qvars2 in
+      let new_heap = mk_Star heap1 heap2 no_pos in
+      let new_pure = MCP.merge_mems pure1 pure2 true in
+      let new_type = mkAndType type1 type2 in
+      let new_and = and1 @ and2 in
+      let new_flow = mkAndFlow flow1 flow2 Flow_combine in
+      let new_label = (match label1, label2 with
+        | None, None -> None
+        | Some _, None -> label1
+        | None, Some _ -> label2
+        | Some _, Some _ -> None (* how to combine two formula label ? *)
+      ) in
+      if (List.length new_qvars = 0) then 
+        Base {formula_base_heap = new_heap;
+              formula_base_pure = new_pure;
+              formula_base_type = new_type;
+              formula_base_and = new_and;
+              formula_base_flow = new_flow;
+              formula_base_label = new_label;
+              formula_base_pos = no_pos }
+      else
+        Exists {formula_exists_qvars = new_qvars;
+                formula_exists_heap = new_heap;
+                formula_exists_pure = new_pure;
+                formula_exists_type = new_type;
+                formula_exists_and = new_and;
+                formula_exists_flow = new_flow;
+                formula_exists_label = new_label;
+                formula_exists_pos = no_pos }
+
 
 (*List.combine but ls1 >= ls2*)
 let rec combine_length_geq_x ls1 ls2 res=

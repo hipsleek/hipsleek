@@ -8,6 +8,8 @@ module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
 
+exception Entailment_error of string
+
 
 (* 
  * split maximum chain of a h_formula
@@ -63,6 +65,11 @@ type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 (*     | _ -> None in                                                               *)
 (*   let _ = CF.transform_h_formula f_hf hf in                                      *)
 (*   !views                                                                         *)
+
+(* report a warning and then raise an Entailment_error exception *)
+let raise_entailment_error (msg: string) : 'a =
+  let _ = report_warning no_pos msg in
+  raise (Entailment_error msg)
 
 (* return: (a list of atomic heap chain * the rest of hformula *)
 let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
@@ -1114,7 +1121,7 @@ let get_view_formulas_for_direction_info vdecl view_decls =
   Debug.no_1 "get_view_formulas_for_direction_info" pr_v pr_res
       (fun _ -> get_view_formulas_for_direction_info_x vdecl view_decls)
       vdecl
-  
+
 
 (* compute view vars that reside inside memory allocated to current view *)
 let compute_view_residents_x (vdecl: C.view_decl) (view_decls: C.view_decl list)
@@ -1759,8 +1766,7 @@ let collect_main_heap_chain_in_formula_x (f: CF.formula) (root: CP.spec_var)
         let msg = "collect_main_heap_chain: expect only 1 forward field in view \'"
                    ^ vdecl.C.view_name ^ "\' but found "
                    ^ (string_of_int (List.length vdecl.C.view_forward_fields)) in
-        let _ = report_warning no_pos msg in
-        ""
+        raise_entailment_error msg
   ) in
   let fwd_ptr = (match vdecl.C.view_forward_ptrs with
     | [sv] -> sv
@@ -1768,8 +1774,7 @@ let collect_main_heap_chain_in_formula_x (f: CF.formula) (root: CP.spec_var)
         let msg = "collect_main_heap_chain: expect only 1 forward pointer in view \'"
                   ^ vdecl.C.view_name ^ "\' but found "
                   ^ (string_of_int (List.length vdecl.C.view_forward_ptrs)) in
-        let _ = report_warning no_pos msg in
-        (CP.mk_spec_var "")
+        raise_entailment_error msg
   ) in
   let eset = CF.build_eset_of_formula f in
   let main_pointers = collect_main_pointers f [root] vdecl ddecl fwd_ptr fwd_field eset in
@@ -1803,75 +1808,169 @@ let collect_main_heap_chain_in_view (vdecl: C.view_decl) : (CF.formula list) =
 (* TODO *)
 (* let collect_heap_around_node *)
 
+(* (* TODO *)                                                                            *)
+(* (* let build_non_inductive_predicate_from_a_formula *)                                *)
 
-(* TODO *)
-(* let build_non_inductive_predicate_from_a_formula *)
 
-let create_simple_noninductive_view (view_name: ident) (view_vars: CP.spec_var list)
-    (view_body_f: CF.formula) (pos: loc)
-    : C.view_decl =
-  let view_body = CF.formula_to_struc_formula view_body_f in
-  let vdecl = {
-    C.view_name = view_name;
-    C.view_ho_vars = [];
-    C.view_vars = view_vars;
-    C.view_cont_vars = [];
-    C.view_seg_opz = None;
-    C.view_case_vars = [];
-    C.view_uni_vars = [];
-    C.view_labels = [];
-    C.view_modes = [];
-    C.view_is_prim = false;
-    C.view_type_of_self = None;
-    C.view_is_touching = false;
-    C.view_is_segmented = false;
-    C.view_is_tail_rec = false;
-    C.view_mutual_rec_views = [];
-    C.view_residents = [];
-    C.view_bound_pointers = [];
-    C.view_forward_ptrs = [];
-    C.view_forward_fields = [];
-    C.view_backward_ptrs = [];
-    C.view_backward_fields = [];
-    C.view_kind = C.View_NORM;
-    C.view_prop_extns = [];
-    C.view_parent_name = None;
-    C.view_domains = [];
-    C.view_contains_L_ann = false;
-    C.view_ann_params = [];
-    C.view_params_orig = [];
-    C.view_partially_bound_vars = [];
-    C.view_materialized_vars = [];
-    C.view_data_name = "";
-    C.view_data_decl = None;
-    C.view_formula = view_body;
-    C.view_user_inv = MCP.mkMTrue pos;
-    C.view_mem = None;
-    C.view_inv_lock = None;
-    C.view_x_formula = MCP.mkMTrue pos;
-    C.view_baga_inv = None;
-    C.view_baga_over_inv = None;
-    C.view_baga_x_over_inv = None;
-    C.view_baga_under_inv = None;
-    C.view_xpure_flag = false;
-    C.view_baga = [];
-    C.view_addr_vars = [];
-    C.view_complex_inv = None;
-    C.view_un_struc_formula = [];
-    C.view_linear_formula = [];
-    C.view_base_case = None;
-    C.view_prune_branches = [];
-    C.view_is_rec = false;
-    C.view_pt_by_self = [];
-    C.view_prune_conditions= [];
-    C.view_prune_conditions_baga = [];
-    C.view_prune_invariants = [];
-    C.view_pos = pos;
-    C.view_raw_base_case = None;
-    C.view_ef_pure_disj = None;
-  } in
-  vdecl
 
+
+module AtomicView = 
+struct
+
+  let create_simple_noninductive_view_x (view_name: ident) (view_root: CP.spec_var)
+      (view_vars: CP.spec_var list) (view_body_f: CF.formula)
+      (fwd_ptrs: CP.spec_var list)
+      : C.view_decl =
+    let create_view_body f : CF.struc_formula = (
+      let search_mf = Afutil.create_default_mix_formula_searcher false in
+      let search_f = (fun _ -> None) in
+      let search_root_hf hf = (match hf with
+        | CF.ViewNode { CF.h_formula_view_node = vnode } ->
+            let _ = if (CP.eq_spec_var vnode view_root) then (
+              let msg = "create_simple_view: root shouldn't point to a view" in
+              raise_entailment_error msg
+            ) in
+            Some []
+        | CF.DataNode dn ->
+            let dnode = dn.CF.h_formula_data_node in
+            if (CP.eq_spec_var dnode view_root) then
+              let dname = dn.CF.h_formula_data_name in
+              Some [(dnode, dname)]
+            else Some []
+        | _ -> None
+      ) in
+      let search_root = (search_f, search_root_hf, search_mf) in
+      let root_svs = Afutil.search_in_formula search_root f in
+      let view_body = (match root_svs with
+        | [hd] ->
+            let (root_sv, data_name) = hd in
+            let self_sv = CP.mk_typed_spec_var (Named data_name) self in
+            
+            let subs_root = [(root_sv, self_sv)] in
+            CF.subst subs_root f
+        | _ ->
+            let msg = "create_simple_view: expect only 1 root node but found "
+                      ^ (string_of_int (List.length root_svs)) in
+            raise_entailment_error msg
+      ) in
+      CF.formula_to_struc_formula view_body
+    ) in
+    let view_body = create_view_body view_body_f in
+    let vdecl = {
+      C.view_name = view_name;
+      C.view_ho_vars = [];
+      C.view_vars = view_vars;
+      C.view_cont_vars = [];
+      C.view_seg_opz = None;
+      C.view_case_vars = [];
+      C.view_uni_vars = [];
+      C.view_labels = [];
+      C.view_modes = [];
+      C.view_is_prim = false;
+      C.view_type_of_self = None;
+      C.view_is_touching = false;
+      C.view_is_segmented = false;
+      C.view_is_tail_rec = false;
+      C.view_mutual_rec_views = [];
+      C.view_residents = [];
+      C.view_bound_pointers = [];
+      C.view_forward_ptrs = fwd_ptrs;
+      C.view_forward_fields = [];
+      C.view_backward_ptrs = [];
+      C.view_backward_fields = [];
+      C.view_kind = C.View_NORM;
+      C.view_prop_extns = [];
+      C.view_parent_name = None;
+      C.view_domains = [];
+      C.view_contains_L_ann = false;
+      C.view_ann_params = [];
+      C.view_params_orig = [];
+      C.view_partially_bound_vars = [];
+      C.view_materialized_vars = [];
+      C.view_data_name = "";
+      C.view_data_decl = None;
+      C.view_formula = view_body;
+      C.view_user_inv = MCP.mkMTrue no_pos;
+      C.view_mem = None;
+      C.view_inv_lock = None;
+      C.view_x_formula = MCP.mkMTrue no_pos;
+      C.view_baga_inv = None;
+      C.view_baga_over_inv = None;
+      C.view_baga_x_over_inv = None;
+      C.view_baga_under_inv = None;
+      C.view_xpure_flag = false;
+      C.view_baga = [];
+      C.view_addr_vars = [];
+      C.view_complex_inv = None;
+      C.view_un_struc_formula = [];
+      C.view_linear_formula = [];
+      C.view_base_case = None;
+      C.view_prune_branches = [];
+      C.view_is_rec = false;
+      C.view_pt_by_self = [];
+      C.view_prune_conditions= [];
+      C.view_prune_conditions_baga = [];
+      C.view_prune_invariants = [];
+      C.view_pos = no_pos;
+      C.view_raw_base_case = None;
+      C.view_ef_pure_disj = None;
+    } in
+    vdecl
+
+
+  let create_simple_noninductive_view (view_name: ident) (view_root: CP.spec_var)
+      (view_vars: CP.spec_var list) (view_body_f: CF.formula)
+      (fwd_ptrs: CP.spec_var list)
+      : C.view_decl =
+    let pr_vname = (add_str "view_name" pr_id) in
+    let pr_vroot = (add_str "view_root" !CP.print_sv) in
+    let pr_vvars = (add_str "view_vars" !CP.print_svl) in
+    let pr_vbody = (add_str "view_body" !CF.print_formula) in
+    let pr_fwd_ptrs = (add_str "view_fwd_ptrs" !CP.print_svl) in
+    let pr_res = (add_str "res" !C.print_view_decl) in
+    Debug.no_5 "create_simple_noninductive_view"
+        pr_vname pr_vroot pr_vvars pr_vbody pr_fwd_ptrs pr_res
+        create_simple_noninductive_view_x
+        view_name view_root view_vars view_body_f fwd_ptrs
+
+
+  let create_formula_from_view (vdecl: C.view_decl) (num_of_view_nodes: int)
+    : CF.formula =
+    let view_root = C.get_view_root vdecl in
+    let view_body_f = CF.struc_to_formula vdecl.C.view_formula in
+    let view_fwd_ptr = (match vdecl.C.view_forward_ptrs with
+      | [hd] -> hd
+      | _ ->
+          let msg = "expect 1 forward pointer, but found: "
+                    ^ (string_of_int (List.length vdecl.C.view_forward_ptrs)) in
+          raise_entailment_error msg
+    ) in
+
+    let rec create_helper f last_ptr num_of_view_nodes = (
+      if (num_of_view_nodes <= 0) then f
+      else (
+        (* rename vars in view_body_f then attach new formula to f *)
+        let new_last_ptr = CP.fresh_spec_var view_fwd_ptr in
+        let subs = [(view_root, last_ptr); (view_fwd_ptr, new_last_ptr)] in
+        let f_svars = CF.fv f in
+        let new_subs = List.fold_left (fun current_subs sv ->
+          if (CP.eq_spec_var sv view_root) then current_subs
+          else if (CP.eq_spec_var sv view_fwd_ptr) then current_subs
+          else
+            let new_sv = CP.fresh_spec_var sv in
+            current_subs @ [(sv,new_sv)]
+        ) subs f_svars in
+        let g = CF.subst new_subs view_body_f in
+        let newf = CF.mk_and_formula f g in
+        create_helper newf new_last_ptr (num_of_view_nodes-1)
+      )
+    ) in
+    create_helper view_body_f view_fwd_ptr num_of_view_nodes
+
+
+end;;
+
+      
 (* let create_atomic_view (f: CF.formula) : C.view_decl = *)
 (*   let                                                  *)
 
@@ -1890,7 +1989,7 @@ let create_simple_noninductive_view (view_name: ident) (view_vars: CP.spec_var l
  * A view_decl is atomic iff:
  * - Having only 2 branches: 1 base branch and 1 inductive branch
  * - Formula in base branch contains empty heap in the main heap chain
- * - Main heap chain of extension part of formula in inductive branch is irreducible 
+ * - Main heap chain of extension part of formula in inductive branch is irreducible
  *)
 (* let check_atomic_view (vdecl: C.view_decl) : bool =              *)
 (*   if (List.length vdecl.C.view_un_struc_formula != 2) then false *)
@@ -1904,6 +2003,6 @@ let create_simple_noninductive_view (view_name: ident) (view_vars: CP.spec_var l
 (*     let base_cases, inductive_cases = List.partition (fun f ->   *)
 (*        true                                                      *)
 (*     ) vdecl.C.view_un_struc_formula in                           *)
-    
+
 (*     (* true *)                                                   *)
 (*                                                                  *)
