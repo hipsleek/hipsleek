@@ -362,6 +362,8 @@ let common_arguments = [
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
+  ("--en-split-fixcalc", Arg.Set Globals.split_fixcalc, "Enable split fixcalc (for infer post)");
+  ("--dis-split-fixcalc", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
    "Restart Omega Calculator after number of proof. Default = 0, not restart");
   ("--use-field", Arg.Set Globals.use_field,
