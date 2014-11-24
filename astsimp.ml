@@ -2729,6 +2729,7 @@ and check_view_tail_rec (vdecl: C.view_decl) : bool =
 
 and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl list)
     : C.view_decl list =
+  let module AVU = Accfold.ViewUtil in
   let view_decls = List.map (fun vd ->
     (* update associating data decl *)
     let ddecl_opt = (
@@ -2743,7 +2744,7 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     let vd = { vd with C.view_data_decl = ddecl_opt } in
     
     (* update bound pointers *)
-    let bound_pointers = Accfold.compute_bound_pointers_of_view vd in
+    let bound_pointers = AVU.compute_bound_pointers_of_view vd in
     let vd = { vd with C.view_bound_pointers = bound_pointers } in
 
     (* update tail recursive property *)
@@ -2751,7 +2752,7 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     let vd = { vd with C.view_is_tail_rec = tailrec } in
 
     (* view residents *)
-    let residents = Accfold.compute_view_residents vd view_decls in
+    let residents = AVU.compute_view_residents vd view_decls in
     let vd = { vd with C.view_residents = residents } in
 
     (* touching & segmented is computed only when the forward and backward pointers is available *)
@@ -2762,7 +2763,7 @@ and update_views_info (view_decls: C.view_decl list) (data_decls: C.data_decl li
     vd
   ) view_decls in
   (* compute direction info of views *)
-  let view_decls = Accfold.compute_direction_info_of_views view_decls data_decls in
+  let view_decls = AVU.compute_direction_info_of_views view_decls data_decls in
   view_decls
 
 

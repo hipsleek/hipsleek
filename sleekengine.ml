@@ -701,7 +701,7 @@ let convert_data_and_pred_to_cast_x () =
 
   (* TRUNG: temporarily code , to remove later *)
   List.iter (fun cv ->
-    let _ = Accfold.collect_main_heap_chain_in_view cv in ()
+    let _ = Accfold.AtomicView.collect_main_heap_chain_in_view cv in ()
     
   ) cviews0;
 
