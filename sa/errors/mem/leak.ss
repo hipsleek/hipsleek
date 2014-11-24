@@ -1,0 +1,18 @@
+data node {int v}
+
+
+HeapPred H(node a).
+HeapPred G(node a).
+
+  int acc(node x, node y)
+  requires x::node<_> * y::node<_> ensures true & flow __Error;
+//  infer [H,G] requires H(x)   ensures  G(x) ;
+/*  infer [@shape,
+         @error
+         ] requires true   ensures  true ;
+*/
+{
+  x=null;
+  dprint;
+  return 1;
+}
