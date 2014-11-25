@@ -690,6 +690,9 @@ let inline_field_expand = "_"
 let sl_error = "separation entailment" (* sl_error is a may error *)
 let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
+let mem_leak_error = "mem leak detection"
+let mem_deref_error = "mem deref detection"
+let mem_dfree_error = "mem double free detection"
 let lemma_error = "lemma" (* may error *)
 let undefined_error = "undefined"
 let timeout_error = "timeout"
@@ -854,6 +857,8 @@ let pred_en_oblg = ref true
 let pred_syn_flag = ref true
 
 let sa_syn = ref true
+
+let mem_leak_detect = ref true
 
 let print_relassume  = ref true
 

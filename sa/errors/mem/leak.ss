@@ -5,7 +5,8 @@ HeapPred H(node a).
 HeapPred G(node a).
 
   int acc(node x, node y)
-  requires x::node<_> * y::node<_> ensures true & flow __Error;
+  requires x::node<_> ensures true & flow __Error;
+//requires x=null  ensures true;
 //  infer [H,G] requires H(x)   ensures  G(x) ;
 /*  infer [@shape,
          @error
@@ -13,6 +14,6 @@ HeapPred G(node a).
 */
 {
   x=null;
-  dprint;
+  // dprint;
   return 1;
 }
