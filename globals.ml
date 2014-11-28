@@ -858,7 +858,7 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
-let mem_leak_detect = ref true
+let mem_leak_detect = ref false
 
 let print_relassume  = ref true
 
