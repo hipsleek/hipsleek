@@ -8040,7 +8040,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label)) 
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
     let h,p,_,_,_ = CF.split_components b0 in
-    let cm,ba = Cvutil.xpure_heap_symbolic_i cp h 0 in
+    let cm,ba = Cvutil.xpure_heap_symbolic_i cp h p 0 in
 	let ms = Cvutil.formula_2_mem b0 cp in
 	let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
     let xp = fold_mem_lst (CP.mkTrue no_pos) true true cm in

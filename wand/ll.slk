@@ -1,0 +1,35 @@
+data node{
+int val;
+node next;
+}.
+
+relation lookup(abstract L, node x, int v, node p).
+
+relation update(abstract L, node x, int v, node p, abstract L1).
+
+relation reverse(abstract L1, abstract L2).
+
+relation append(abstract L1, abstract L2, abstract L3).
+
+relation isempty(abstract L).
+
+axiom x=null ==> lookup(L,x,_,_) & isempty(L).
+
+axiom isempty(L) ==> append(L1,L,L1). 
+
+axiom isempty(L) ==> reverse(L,L).
+
+axiom lookup(L,x,v,p) & update(L,x,v,p1,L1) ==> lookup(L1,x,v,p1).
+
+/* view for a singly linked list */
+pred ll<L> == self=null 
+	or self::node<v, p> * p::ll<L> & lookup(L,self,v,p).
+
+checkentail
+update(L1,xs_1026,v_1009,ys_1025,L2) & xs_1026!=null & 
+(((L1_961=L_1008 & p_1010!=null) | p_1010=null)) & tmp_42'=xs' & 
+next_41_1024=p_1010 & p_1010=tmp_42' & xs=xs_1026 & L1=L_1008 & 
+lookup(L1,xs_1026,v_1009,p_1010) & ys=ys_1025 & xs_1026=ys' & 
+v_1009=v_1056 & p_1057=ys_1025 & L2=L2_1028 & (((L1_961=L2 & ys!=null) | 
+ys=null))
+ |- lookup(L2,ys',v_1056,p_1057).

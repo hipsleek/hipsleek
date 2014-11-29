@@ -5,50 +5,45 @@ node left;
 node right
 }
 
-relation updG(bag(node) G, node x, int d, node l, node r, bag(node) G1).
-relation lookup(bag(node) G, node x, int d, node l, node r).
-relation sub(bag(node) R, bag(node) R1,bag(node) G, bag(node) G1).
-relation reach(bag(node) G, node x, bag(node) R).
-relation notreach(bag(node) G, node x, bag(node) NR).
+relation update(abstract D, node x, int d, node l, node r, abstract D1).
+relation lookup(abstract D, node x, int d, node l, node r).
 
-dag<G> == self = null
-       or self::node<v,l,r> * (l::dag<G> U* r::dag<G>)
-	& lookup(G,self,v,l,r);
+dag<D> == self = null
+       or self::node<v,l,r> * (l::dag<D> U* r::dag<D>)
+	& lookup(D,self,v,l,r);
 
-rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
-      & reach(G,x,R) & reach(G1,x,R1) 
-      & sub(R,R1,G,G1) 
-      & notreach(G,x,NR) & notreach(G1,x,NR)
-      -> x::dag<G1> U* y::dag<G1>;
+relation subset_reach(abstract D, node x, abstract D1).
+relation eq_notreach(abstract D, node x, abstract D1).
 
-//rlemma x::node<1,l,r> * (l::dag<G> U* r::dag<G>)
-//	& lookup(G,x,v,l,r) -> x::dag<G1> & updG(G,x,1,l,r,G1);
- 
-//========================================//
+rlemma x::dag<D1> * x::dag<D> --@ (x::dag<D> U* y::dag<D>)
+      & subset_reach(D,x,D1) & eq_notreach(D,x,D1)
+      -> x::dag<D1> U* y::dag<D1>;
 
-relation mark(bag(node) G,node x,bag(node) G1).
-relation mark1(bag(node) G,node x,bag(node) G1).
+relation mark(abstract D,node x,abstract D1).
 
-//axiom mark(G,null,G1) ==> G = G1.
-//axiom G = G1 ==> mark(G,null,G1).
-//axiom lookup(G1,x,1,l,r) ==> mark1(_,x,G1).
-axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
-//axiom mark1(G,x,G1) ==> mark(G,x,G1).
-//axiom lookup(G,x,v,l,r) ==> updG(G,x,1,l,r,G1).
-//axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
-//axiom updG(G,x,1,l,r,G1) ==> lookup(G,x,_,null,null) & mark(G,x,G1).
-//axiom lookup(G,x,v,l,r) ==> updG(G,x,v,l,r,_).
+axiom true ==> mark(D,null,D).
 
-//axiom lookup(G,x,1,l,r) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
+axiom lookup(D,x,1,l,r) ==> mark(D,x,D).
 
-axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1).
-axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
+axiom mark(D,x,D1) ==> subset_reach(D,x,D1) & eq_notreach(D,x,D1).
 
-axiom mark(G,x,G1) & mark(G1,y,G2) ==> mark(G,y,G1) & mark(G1,x,G2).
-axiom mark(G,l,G1) & mark(G1,r,G2) & mark1(G2,x,G3) ==> mark(G,x,G3).
-axiom mark(G,r,G1) & mark1(G1,x,G2) & mark(G2,l,G3) ==> mark(G,x,G3).
-axiom mark(G,l,G1) & mark1(G1,x,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
-axiom mark1(G,x,G1) & mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
+axiom lookup(D,x,v,l,r) & update(D,x,1,l,r,D1) & v != 1 & //v is unmarked skipped in paper
+mark(D1,l,D2) & mark(D2,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & update(D,x,1,l,r,D1) & v != 1 & //v is unmarked skipped in paper
+mark(D1,r,D2) & mark(D2,l,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
+& mark(D1,r,D2) & update(D2,x,1,l,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,r,D1) & v != 1
+& mark(D1,l,D2) & update(D2,x,1,l,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
+& mark(D2,r,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,r,D1) & v != 1
+& mark(D2,l,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
 
 void mark(node x)
 requires x::dag<G>
@@ -82,5 +77,5 @@ else {
 //[x::node<1,l,r> * dag(l,G2) U* dag(r,G2) // Apply Ramification Lemma]
 //[x::node<1,l,r> * dag(l,G2) U* dag(r,G2) /\ mark(G,l,G1) /\ mark(G1,r,G2) /\ d(x,1,l,r,G) |- dag(x,G2) /\ mark(G,x,G2) // POST]
 }
-dprint;
+//dprint;
 }
