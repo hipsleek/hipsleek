@@ -246,6 +246,7 @@ let common_arguments = [
   "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+  ("--gen-coq-file", Arg.Set Globals.gen_coq_file, "Generate a Coq file with all axioms and lemmas to prove for certified reasoning");
   ("--allow-ramify", Arg.Unit (fun _ -> 
     Globals.allow_ramify := true; 
     Solver.unfold_duplicated_pointers := false;)

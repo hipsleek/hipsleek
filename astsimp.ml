@@ -1477,6 +1477,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
 	  (*C.prog_left_coercions = l2r_coers;*)
 	  (*C.prog_right_coercions = r2l_coers;*)} in
+      
       let cprog1 = { cprog with			
 	  (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
@@ -1503,6 +1504,23 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          else c 
        in
        let c = (add_pre_to_cprog c) in
+       let () = if !Globals.gen_coq_file 
+         then 
+           let () = print_endline "Generating Coq file ..."in
+           let filename = (List.hd !Globals.source_files) in
+           let i = (String.rindex filename '.') in
+           let file = (String.sub filename 0  i) ^".v" in
+           let oc = open_out file in
+           let imports = "Require Import ZArith.\n" in
+           let moduletype = "\nModule Type Mhip.\n" in
+           let endmoduletype = "\nEnd Mhip." in
+           let parameter_formula = " Parameter formula : Type.\n" in
+           let parameter_valid = " Parameter valid : formula -> Prop.\n" in
+           fprintf oc "%s\n" (imports^moduletype^parameter_formula^
+           parameter_valid^endmoduletype);
+           close_out oc;
+           print_endline ("Complete the proof in "^file);
+         else () in 
        (* let _ = print_endline (exlist # string_of) in *)
        (* let _ = exlist # sort in *)
 	   (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
