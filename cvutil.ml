@@ -1195,7 +1195,36 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
     | HFalse -> (mkMFalse no_pos, [])
     | HEmp   -> (mkMTrue no_pos, []) in
-  helper h0
+  (* Add lookup relation during XPure *)
+  let rdels = prog.C.prog_rel_decls in
+  let lookup_rel = List.filter (fun r -> if r.rel_name = "lookup" then true else false) rdels in
+  if (List.length lookup_rel = 1) then
+    let lookup = List.hd lookup_rel in
+    let lookup_args = lookup.rel_vars in
+    let null_vars = CP.get_null_ptrs (MCP.pure_of_mix p0) in
+    let lookup_rels = List.map (fun sv -> 
+      let fresh_args = CP.fresh_spec_vars lookup_args in
+      let f_var = List.hd fresh_args in
+      let rest_vars = List.tl (List.tl fresh_args) in
+          let rec last_elm = function
+            | [] -> failwith "No Last Element in list2"
+            | [x] -> x
+            | _ :: t -> last_elm t in
+      let heaps = List.filter CF.is_view (CF.split_star_conjunctions h) in
+                 (*let () = (print_endline (string_of_int (List.length view_heaps))) in*)
+      let n_f_var = if(List.length heaps != 0) 
+                   then last_elm (CF.h_fv (List.hd heaps))
+        else f_var in
+      let subt_vars = [n_f_var]@[sv]@rest_vars in
+      let st = List.combine  lookup_args subt_vars in
+      let rel_exps = List.map CP.conv_var_to_exp lookup_args in
+      let rel = CP.mkRel (CP.mkRel_sv lookup.rel_name) rel_exps no_pos in
+      CP.subst st rel
+    ) null_vars in
+    let add_p = CP.join_conjunctions lookup_rels in
+    let mcp,rst = helper h0 in
+    (MCP.merge_mems mcp (MCP.mix_of_pure add_p) true),rst
+ else (helper h0)
 
 let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
