@@ -1589,9 +1589,12 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
              | CP.BForm((pf,_),_) -> (match pf with 
                  | CP.Eq(e1,e2,_) -> "(eq "^(CP.exp_to_name_spec_var e1)
                      ^" "^(CP.exp_to_name_spec_var e2)^")"
+                 | CP.Neq(e1,e2,_) ->"(neq "^(CP.exp_to_name_spec_var e1)
+                     ^" "^(CP.exp_to_name_spec_var e2)^")"
                  | CP.RelForm(sv,elist,_) -> "("^(CP.name_of_spec_var sv)^" "^
                      (String.concat " " (List.map (fun e ->
                      CP.exp_to_name_spec_var e) elist))^")"
+                 (*| CP.BConst(b,_) -> if b then "true" else "false"*)
                  | _ -> ""
              )
              | CP.And(f1,f2,_) -> "(and "^(convert_cp_formula f1) ^" "^
@@ -1605,12 +1608,18 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                   (fun sv -> CP.name_of_spec_var sv) var_list) in
               "  Axiom axiom_"^(string_of_int (Globals.fresh_int2()))
                 ^" : forall "^var_list_string^
+                (if(CP.isConstTrue axd.C.axiom_hypothesis)
+                then ", valid "^(convert_cp_formula axd.C.axiom_conclusion)^".\n"
+                else
                 ", valid (imp "^(convert_cp_formula axd.C.axiom_hypothesis)
-                ^" "^(convert_cp_formula axd.C.axiom_conclusion)^").\n"
-           ) (List.filter (fun a -> if ExtString.String.starts_with (CP.name_of_spec_var
+                ^" "^(convert_cp_formula axd.C.axiom_conclusion)^").\n")
+           ) (List.filter (fun a -> 
+             if List.length (CP.fv a.C.axiom_hypothesis) > 0 then 
+               if ExtString.String.starts_with (CP.name_of_spec_var
                (List.hd (CP.fv a.C.axiom_hypothesis))) "dom"
-             then false
-             else true) 
+               then false
+               else true
+              else true)
                 c.C.prog_axiom_decls) in
            let parameter_axioms = String.concat "" axioms_list in
            fprintf oc "%s\n" (imports^moduletype^parameter_formula^

@@ -375,6 +375,7 @@ let exp_to_name_spec_var e =
 match e with
   | Var(sv,_) -> name_of_spec_var sv 
   | Null _ -> "null_node"
+  | IConst(i,_) -> (string_of_int i)
   | _ -> ""
 
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
