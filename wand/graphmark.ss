@@ -14,15 +14,15 @@ graph<G> == self = null
 relation subset_reach(abstract G, node x, abstract G1).
 relation eq_notreach(abstract G, node x, abstract G1).
 
-rlemma l::graph<G1> * l::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
+rlemma "subgraphupdate_l" l::graph<G1> * (l::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
       & subset_reach(G,l,G1) & eq_notreach(G,l,G1) & lookup(G,x,v,l,r) & lookup(G1,x,v1,l,r)
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
-rlemma r::graph<G1> * r::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
+rlemma "subgraphupdate_r" r::graph<G1> * (r::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
       & subset_reach(G,r,G1) & eq_notreach(G,r,G1) & lookup(G,x,v,l,r) & lookup(G1,x,v1,l,r)
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
-rlemma x::node<v1,l,r> * x::node<v,l,r> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
+rlemma "pttoupdate" x::node<v1,l,r> * (x::node<v,l,r> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
       & lookup(G,x,v,l,r)
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 

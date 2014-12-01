@@ -15,7 +15,7 @@ dag<D> == self = null
 relation subset_reach(abstract D, node x, abstract D1).
 relation eq_notreach(abstract D, node x, abstract D1).
 
-rlemma x::dag<D1> * x::dag<D> --@ (x::dag<D> U* y::dag<D>)
+rlemma "subdagupdate" x::dag<D1> * (x::dag<D> --@ (x::dag<D> U* y::dag<D>))
       & subset_reach(D,x,D1) & eq_notreach(D,x,D1)
       -> x::dag<D1> U* y::dag<D1>;
 
