@@ -1,36 +1,13 @@
+Require linkedlist.
 Require Import ZArith.
-
-Module Type Mlinkedlist.
-  Parameter formula : Type.
-  Parameter L : Type.
-  Parameter node : Type.
-  Parameter null : node.
-  Parameter star : formula -> formula -> formula.
-  Parameter and : formula -> formula -> formula.
-  Parameter imp : formula -> formula -> formula.
-  Parameter ptto : node -> Z -> node -> formula.
-  Parameter eq : node -> node -> formula.
-  Parameter lookup : L -> node -> Z -> node -> formula.
-  Parameter update : L -> node -> Z -> node -> L -> formula.
-  Parameter reverse : L -> L -> formula.
-  Parameter append : L -> L -> L -> formula.
-  Parameter isempty : L -> formula.
-  Parameter ll : node -> L -> formula.
-  Parameter valid : formula -> Prop.
-  Axiom axiom1 : forall x v p l, valid (imp (and (eq x null) (lookup l x v p))  (isempty l)).
-  Axiom axiom2 : forall l l1, valid (imp (isempty l1) (append l l1 l)).
-  Axiom axiom3 : forall l, valid (imp (isempty l) (reverse l l)).
-  Axiom axiom4 : forall l x v p l1 p1, valid (imp (and (lookup l x v p) (update l x v p1 l1)) (lookup l1 x v p1)).
-End Mlinkedlist.
-
 Require Import Sets.Ensembles.
 Require Import Coq.Lists.List.
 
-Module Mlinkedlistimpl <: Mlinkedlist.
+Module Mlinkedlistimpl <: linkedlist.Mlinkedlist.
 
-Definition L := list nat.
+Definition A := list nat.
 Definition node := nat.
-Definition null := 0.
+Definition null_node := 0.
 
 Inductive HF : Type :=
   | H_emp : HF
@@ -39,19 +16,19 @@ Inductive HF : Type :=
   | H_and : HF -> HF -> HF
   | H_imp : HF -> HF -> HF
   | H_eq : nat -> nat -> HF
-  | H_lookup : L -> nat -> Z -> nat -> HF
-  | H_update : L -> nat -> Z -> nat -> L -> HF
-  | H_reverse : L -> L -> HF
-  | H_append : L -> L -> L -> HF
-  | H_isempty : L -> HF
-  | H_ll : nat -> L -> HF.
+  | H_lookup : A -> nat -> Z -> nat -> HF
+  | H_update : A -> nat -> Z -> nat -> A -> HF
+  | H_reverse : A -> A -> HF
+  | H_append : A -> A -> A -> HF
+  | H_isempty : A -> HF
+  | H_ll : nat -> A -> HF.
 
 Definition formula := HF.  
 Definition star := H_star.
 Definition and := H_and.
 Definition imp := H_imp.
 Definition eq := H_eq.
-Definition ptto := H_ptto.
+Definition ptto_node := H_ptto.
 
 Definition lookup := H_lookup. 
 Definition update := H_update.
@@ -68,7 +45,7 @@ Definition heap_union h1 h2 := Union nat h1 h2.
 
 Definition heap_is_disjoint h1 h2 := Disjoint nat h1 h2.
 
-Inductive LL (n:nat) (l:L) : heap -> Prop :=
+Inductive LL (n:nat) (l:A) : heap -> Prop :=
   | NIL_LL : LL n l empty_heap
   | CONS_LL : forall h h1 h2 n1 n2, h = heap_union h1 h2
               -> heap_is_disjoint h1 h2 
@@ -94,7 +71,45 @@ end.
 
 Definition valid (f:formula) := forall h, satis f h.
 
-Lemma axiom1 : forall x v p l, valid (imp (and (eq x 0) (lookup l x v p))  (isempty l)).
+Lemma axiom_1 : forall p L L1 x v p1, valid (imp (and (lookup L x v p) (update L x v p1 L1)) (lookup L1 x v p1)).
+intros.
+unfold valid.
+intros.
+unfold satis;simpl.
+intros.
+destruct H,H.
+destruct H1.
+destruct H0.
+destruct H3.
+split.
+apply H0.
+split.
+apply H3.
+apply H2.
+Qed.
+
+Lemma axiom_2 : forall L, valid (imp (isempty L) (reverse L L)).
+intros.
+unfold valid.
+intros.
+unfold satis;simpl.
+intros.
+subst.
+tauto.
+Qed.
+
+Lemma axiom_3 : forall L L1, valid (imp (isempty L) (append L1 L L1)).
+intros.
+unfold valid.
+intros.
+unfold satis;simpl.
+intros.
+subst.
+apply eq_sym.
+apply app_nil_r.
+Qed.
+
+Lemma axiom_4 : forall x v p L, valid (imp (and (eq x 0) (lookup L x v p)) (isempty L)).
 intros.
 unfold valid. intros.
 unfold satis. simpl.
@@ -131,43 +146,5 @@ unfold satis. simpl.
 intros.
 left.
 *)
-
-Lemma axiom2 : forall l l1, valid (imp (isempty l1) (append l l1 l)).
-intros.
-unfold valid.
-intros.
-unfold satis;simpl.
-intros.
-subst.
-apply eq_sym.
-apply app_nil_r.
-Qed.
-
-Lemma axiom3 : forall l, valid (imp (isempty l) (reverse l l)).
-intros.
-unfold valid.
-intros.
-unfold satis;simpl.
-intros.
-subst.
-tauto.
-Qed.
-
-Lemma axiom4 : forall l x v p l1 p1, valid (imp (and (lookup l x v p) (update l x v p1 l1)) (lookup l1 x v p1)).
-intros.
-unfold valid.
-intros.
-unfold satis;simpl.
-intros.
-destruct H,H.
-destruct H1.
-destruct H0.
-destruct H3.
-split.
-apply H0.
-split.
-apply H3.
-apply H2.
-Qed.
 
 End Mlinkedlistimpl.
