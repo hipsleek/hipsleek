@@ -31,3 +31,4 @@ Module Type Mdagmark.
   Axiom axiom_9 : forall D, valid (mark D null_node D).
   Axiom lem_subdagupdate : forall y D x D1, valid (imp (and (star (dag x D1) (mwand (dag x D) (union (dag x D) (dag y D)))) (and (subset_reach D x D1) (eq_notreach D x D1))) (union (dag x D1) (dag y D1))).
 End Mdagmark.
+

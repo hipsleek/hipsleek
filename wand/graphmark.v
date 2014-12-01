@@ -34,3 +34,4 @@ Module Type Mgraphmark.
   Axiom lem_subgraphupdate_r : forall G v G1 x v1 l r, valid (imp (and (star (graph r G1) (mwand (graph r G) (union (ptto_node x v l r) (union (graph l G) (graph r G))))) (and (subset_reach G r G1) (and (eq_notreach G r G1) (and (lookup G x v l r) (lookup G1 x v1 l r))))) (union (ptto_node x v1 l r) (union (graph l G1) (graph r G1)))).
   Axiom lem_pttoupdate : forall v1 G1 G x v l r, valid (imp (and (star (ptto_node x v1 l r) (mwand (ptto_node x v l r) (union (ptto_node x v l r) (union (graph l G) (graph r G))))) (lookup G x v l r)) (union (ptto_node x v1 l r) (union (graph l G1) (graph r G1)))).
 End Mgraphmark.
+
