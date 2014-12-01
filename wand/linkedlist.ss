@@ -16,7 +16,7 @@ relation append(abstract L1, abstract L2, abstract L3).
 
 relation isempty(abstract L).
 
-axiom x=null & lookup(L,x,_,_) ==> isempty(L).
+axiom x=null & lookup(L,x,v,p) ==> isempty(L).
 
 axiom isempty(L) ==> append(L1,L,L1). 
 

@@ -371,6 +371,12 @@ let primed_of_spec_var (sv : spec_var) : primed = match sv with
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let exp_to_name_spec_var e = 
+match e with
+  | Var(sv,_) -> name_of_spec_var sv 
+  | Null _ -> "null_node"
+  | _ -> ""
+
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
