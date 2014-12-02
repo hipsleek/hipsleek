@@ -63,8 +63,8 @@ match f with
   | H_eq n1 n2 => n1 = n2
   | H_lookup l n1 _ n2 => n1 = (hd 0 l) /\ n2 = hd 0 (tl l) /\ n1 > 0
   | H_update l1 n1 _ n2 l2 => n1 = (hd 0 l2) /\ n2 = hd 0 (tl l2) /\ tl (tl l1) = tl (tl l2)
-  | H_reverse l1 l2 => l1 = (rev l2)
-  | H_append l1 l2 l => l = l1 ++ l2
+  | H_reverse l l1 => l = (rev l1)
+  | H_append l l1 l2 => l = l1 ++ l2
   | H_isempty l => l = nil
   | H_ll n l => LL n l h
 end.
@@ -105,8 +105,8 @@ intros.
 unfold satis;simpl.
 intros.
 subst.
-apply eq_sym.
-apply app_nil_r.
+(*apply eq_sym.*)
+apply app_nil_l.
 Qed.
 
 Lemma axiom_4 : forall x v p L, valid (imp (and (eq x 0) (lookup L x v p)) (isempty L)).

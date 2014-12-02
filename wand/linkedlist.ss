@@ -10,9 +10,9 @@ relation lookup(abstract L, node x, int v, node p).
 
 relation update(abstract L, node x, int v, node p, abstract L1).
 
-relation reverse(abstract L1, abstract L2).
+relation reverse(abstract L, abstract L1).
 
-relation append(abstract L1, abstract L2, abstract L3).
+relation append(abstract L, abstract L1, abstract L2).
 
 relation isempty(abstract L).
 
@@ -32,7 +32,7 @@ ll<L> == self=null
 void reverse_list(ref node xs, ref node ys)
 
 	requires xs::ll<L1> * ys::ll<L2> 
-	ensures ys'::ll<L> & append(L, Lr, L2) & reverse(L1, Lr) & xs' = null;
+	ensures ys'::ll<L> & append(L, Lr, L2) & reverse(Lr, L1) & xs' = null;
 
 {
 	if (xs != null) {
