@@ -1070,7 +1070,9 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
           let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
           let rdels = prog.C.prog_rel_decls in
           (* Add update relation during XPure *)
-          let update_rel = List.filter (fun r -> if r.rel_name = "update" then true else false) rdels in
+          let update_rel = List.filter (fun r -> if r.rel_name = "update"
+                                                 || r.rel_name = "cons"
+            then true else false) rdels in
           let rec last = function
             | [] -> failwith "No Last Element in list"
             | [x] -> x
@@ -1100,9 +1102,12 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
                    else CP.fresh_spec_var (last rel_vars) in
                  (*let r_sv2 = CP.fresh_spec_var (last rel_vars) in*)
                  let pfrsv = CP.mkEqVar r_sv r_sv2 no_pos in
-                 let non_zero = CP.mkAnd non_zero pfrsv no_pos in
-                 let sbargs = [r_sv]@p::args@[r_sv2] in
-                 (*let () = print_endline ("RelVargs : "^string_of_spec_var_list rel_vars)in
+                 let non_zero = if rel.rel_name = "cons"  then non_zero else
+                     CP.mkAnd non_zero pfrsv no_pos in
+                 let sbargs = if rel.rel_name = "cons" 
+                   then [r_sv]@((List.hd args)::[r_sv2])
+                   else [r_sv]@p::args@[r_sv2] in
+                 (*let () = print_endline ("RelVargs : "^string_of_spec_var_list rel_vars) in
                  let () = print_endline ("SBArgs : " ^string_of_spec_var_list sbargs) in*)
                  let st = List.combine rel_vars sbargs in
                  let rel_exps = List.map CP.conv_var_to_exp rel_vars in

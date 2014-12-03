@@ -16,6 +16,8 @@ relation isempty(abstract L).
 
 axiom cons(L,v,Lp) ==> !(isempty(L)).
 
+axiom isempty(L1) & isempty(L2) & cons(L,v,L1) ==> cons(L,v,L2).
+
 axiom isempty(L) ==> append(L1,L,L1). 
 
 axiom isempty(L) ==> reverse(L,L).
@@ -23,12 +25,26 @@ axiom isempty(L) ==> reverse(L,L).
 /* view for a singly linked list */
 pred ll<L> == self=null & isempty(L)
       or self::node<v, p> * p::ll<Lp> & cons(L,v,Lp)
-      inv (self=null & isempty(L) | self!=null & !(isempty(L))).
+  inv (self=null & isempty(L) | self!=null & !(isempty(L))).
 
-checkentail
-xs_1018!=null & p_1034=ys_1017 & tmp_38'=xs' & ys=ys_1017 & xs=xs_1018 & 
-p_1010=tmp_38' & next_38_1016=p_1010 & xs_1018=ys' & (((ys=null & 
-isempty(L2)) | (ys!=null & !(isempty(L2))))) & (((p_1010=null & 
-isempty(Lp_1011)) | (p_1010!=null & !(isempty(Lp_1011))))) & 
-cons(L1,v_1009,Lp_1011) & v_1009=v_1033 & L2=Lp_1035
-|- cons(L2_1038,v_1033,Lp_1035).
+pred lln<n> == self=null & n=0
+      or self::node<v, p> * p::lln<n-1>
+  inv  n>=0.
+
+checkentail cons(L1,v_1016,Lp_1018) & ys=ys_1024 & xs=xs_1025 & xs_1025!=null & 
+  v_bool_37_967' & xs_1025!=null & v_bool_37_967' & p_1017=tmp_39' & 
+  next_40_1023=p_1017 & xs_1025=ys' & tmp_39'=xs' & L1_1026=Lp_1018 & 
+  v_1016=v_1032 & p_1033=ys_1024 & L2=Lp_1034 & cons(_,v_1016,L2)
+|-  exists L2_1027 : cons(L2_1027,v_1032,Lp_1034).
+
+
+
+/*
+checkentail p::ll<Lp> * ys1::ll<L2> * xs1::node<v,ys1> & tmp'=xs' & xs=ys' & next=p & 
+p=tmp' & xs!=null & xs=xs1 & ys=ys1 & cons(L1,v,Lp)
+ |-  xs'::ll<Lp> * ys'::ll<L1>.
+
+checkentail p::lln<np> * ys1::lln<n2> * xs1::node<v,ys1> & tmp'=xs' & xs=ys' & next=p & 
+p=tmp' & xs!=null & xs=xs1 & ys=ys1 & n1=np+1
+ |-  xs'::lln<np> * ys'::lln<n2+1>.
+*/
