@@ -431,6 +431,7 @@ let process_source_full source =
              "  Parameter star : formula -> formula -> formula.\n"^
              "  Parameter and : formula -> formula -> formula.\n"^
              "  Parameter imp : formula -> formula -> formula.\n"^
+             "  Parameter not : formula -> formula.\n"^
              "  Parameter eq : node -> node -> formula.\n"^
                (if !Globals.allow_ramify then 
                    "  Parameter mwand : formula -> formula -> formula.\n"^
@@ -468,6 +469,7 @@ let process_source_full source =
              )
              | CP.And(f1,f2,_) -> "(and "^(convert_cp_formula f1) ^" "^
                  (convert_cp_formula f2)^")"
+             | CP.Not(f,_,_) -> "(not "^(convert_cp_formula f)^")"
              | _ -> "" in
            let axioms_list = List.map (fun axd -> 
              let var_list = CP.remove_dups_svl (List.filter (fun sv -> 

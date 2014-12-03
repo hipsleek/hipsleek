@@ -20,7 +20,7 @@ axiom isempty(L) ==> append(L1,L,L1).
 
 axiom isempty(L) ==> reverse(L,L).
 
-axiom cons(L,v,Lt) & reverse(Ltr,Lt) ==> append(Lr,Ltr,Lv) & reverse(Lr,L) & cons(Lv,v,Le) & isempty(Le).
+axiom cons(L,v,Lt) & reverse(Tr,Lt) ==> append(Lr,Tr,Lv) & reverse(Lr,L) & cons(Lv,v,Le) & isempty(Le).
 
 axiom cons(L,v,Lt) & append(Lt,L1,L2) & cons(La,v,L1) ==> cons(La,v,Lt) & append(L,La,L2).
 
