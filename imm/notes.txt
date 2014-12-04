@@ -36,3 +36,9 @@ an annotation list and a parameter list:
 ================================================================
 using imm view params as variables is not yet stable. For now, we !!assume!! the view params
 of annot type are constants which are propagated as constants inside the view def when needed. 
+
+==============================================================
+NORM
+----
+
+x::node<q>@A*q::node<z>*x::node<y>*y::node<t> |- z=t

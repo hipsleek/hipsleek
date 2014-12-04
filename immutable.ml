@@ -2006,11 +2006,12 @@ let partition_eqs_subs lst1 lst2 quantif =
       if Gen.BList.mem_eq CP.eq_spec_var a quantif then (a,b)
       else if Gen.BList.mem_eq CP.eq_spec_var b quantif then (b,a)
       else (a,b) ) eqs_lst in
+  let eqs_lst = List.fold_left (fun acc (a,b) -> if CP.eq_spec_var a b then acc else acc@[(a,b)]) [] eqs_lst in
   let subs, eqs_lst = List.partition (fun (a,b) ->
       Gen.BList.mem_eq CP.eq_spec_var a quantif ||  Gen.BList.mem_eq CP.eq_spec_var b quantif 
   ) eqs_lst in 
-  let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in
-  (eqs, subs)
+  (* let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in *)
+  (eqs_lst, subs)
 
 let norm_abs_node h p xpure =
   if (isAccs (get_imm h)) then
@@ -2095,44 +2096,60 @@ let merge_list_w_node node lst emap prog quantif =
   (new_h, disj, eqs, subs)
 
 let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure =
-  let rec helper lst = 
+  let rec helper lst emap = 
     match lst with 
-      | []   -> ([], [], [])
+      | []   -> ([], [], [], true)
       (* | [h]  -> let new_h, pure = norm_abs_node h p xpure in  *)
       (*   ([new_h], (opt_to_list pure)) *)  (* andreeac: uncomment this 2 lines if you wnat to replace @A node with HEmp & xpure*)
       | h::t ->
             let updated_head, updated_tail, eqs_lst, subs_lst = merge_list_w_node h t emap prog quantif in
-            let merged_tail, eqs_lst_tail, subs_lst_tail = helper updated_tail in
-            (updated_head@merged_tail, eqs_lst@eqs_lst_tail, subs_lst@subs_lst_tail)  in
-  helper lst
+            let (fixpoint, emap) = List.fold_left 
+              ( fun (fixpoint,emap) (a,b) -> 
+                  if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+                  else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+              ) (true, emap) eqs_lst in
+            let fixpoint = fixpoint && (is_empty subs_lst) in
+            let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail = helper updated_tail emap  in
+            (updated_head@merged_tail, eqs_lst@eqs_lst_tail, subs_lst@subs_lst_tail, fixpoint&&fixpoint_tail) in
+  helper lst emap
 
 (* merge aliased nodes 
  * return merged node and resulted qualities. *)
 let merge_alias_nodes_h_formula prog f p emap quantif xpure = (* f *)
-   match f with
+  match f with
     | Star _ ->
           let node_lst = split_star_h f in
-          let node_lst, eqs, subs = merge_alias_nodes_h_formula_helper prog p node_lst emap quantif xpure in
+          let node_lst, eqs, subs, fixpoint = merge_alias_nodes_h_formula_helper prog p node_lst emap quantif xpure in
           let updated_f = combine_star_h node_lst in
+          let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs in
           let aux_pure  = CP.join_conjunctions eqs in
           (* substitute non-global variables in conseq *)
           let fr, t = List.split subs in
           let updated_f = subst_avoid_capture_h fr t updated_f in
           let new_pure = MCP.memoise_add_pure p aux_pure in
           let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
-          (updated_f, new_pure)
-    (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
-    | _ -> (f, p)
+          (updated_f, new_pure, fixpoint)
+              (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+    | _ -> (f, p, true)
+
+let merge_alias_nodes_h_formula prog f p emap quantif xpure = 
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.no_2 "merge_alias_nodes_h_formula"  pr1 pr2 (pr_triple (add_str "heap" pr1) (add_str "pure" pr2) string_of_bool) (fun _ _ -> merge_alias_nodes_h_formula prog f p emap quantif xpure) f p
 
 let merge_alias_nodes_formula_helper prog heapf puref quantif xpure =
-  let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
-  let emap = CP.EMapSV.build_eset subs in
-  let new_f, new_p = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure in
-  (* let new_p = *)
-  (*   match new_p with *)
-  (*     | Some p -> MCP.memoise_add_pure puref p *)
-  (*     | None   -> puref in *)
-  (new_f, new_p)
+  let rec helper heapf puref = 
+    let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
+    let emap = CP.EMapSV.build_eset subs in
+    let new_f, new_p, fixpoint = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure in
+    (* let new_p = *)
+    (*   match new_p with *)
+    (*     | Some p -> MCP.memoise_add_pure puref p *)
+    (*     | None   -> puref in *)
+    if not fixpoint then helper new_f new_p
+    else (new_f, new_p)
+  in helper heapf puref
+      
 
 let merge_alias_nodes_formula prog f quantif xpure =
   let rec helper f =

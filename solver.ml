@@ -3568,10 +3568,13 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
           (* let _ = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
     	  let conseq = if(!Globals.allow_field_ann)
           then Mem.compact_nodes_with_same_name_in_struc conseq else conseq in
+          let conseq = Norm.imm_abs_norm_struc_formula conseq true prog in
     	  let cl = if(!Globals.allow_field_ann)
           then List.map (fun c -> CF.transform_context (fun es ->
     	      (* let _ = print_string("\nFormula :"^(Cprinter.string_of_formula es.CF.es_formula)^"\n") in *)
-	      CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c) cl
+              let es = {es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula; } in
+              CF.Ctx{es with CF.es_formula = Norm.imm_abs_norm_formula es.CF.es_formula prog; }
+          ) c) cl
 	  else cl
 	  in
           (* let _ = print_string("\ncl2:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)

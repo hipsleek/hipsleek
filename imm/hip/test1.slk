@@ -1,0 +1,27 @@
+data node{
+ int val;
+ node next;
+}.
+
+/*
+pred ls<p> == self=p or
+  self::node<_,q>*q::ls<p> & self!=p
+  inv true.
+*/
+
+pred ls<n,p> == self=p & n=0 or
+  self::node<_,q>*q::ls<n-1,p> & self!=p
+  inv n>=0.
+
+/*
+checkentail x'::node<Anon_1552,q_1553> * q_1553::ls<p_1551> * q::node<Anon_14,flted_25_1554> * y::ls<p>&flted_25_1554=null & y'=y & x'=x & p_1551=q & x'!=q & q_1553!=null & !(v_bool_28_1430') & q_1553!=null & !(v_bool_28_1430') |- q_1553::ls<q> * q::node<_,null> * y::ls<p>.
+print residue.
+*/
+
+checkentail x::ls<n,p>@L&x'!=null & x'=x & !(v_bool_35_1426') & x'!=null & !(v_bool_35_1426') |-  x'::node<val_38_1421',next_38_1422'>@L.
+
+checkentail x!=null |- x::node<_,_>.
+
+infer [x] x!=null |- x::node<_,_>.
+print residue.
+

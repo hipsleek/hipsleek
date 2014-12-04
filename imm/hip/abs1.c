@@ -3,11 +3,15 @@ struct node{
  struct node* next;
 };
 
-
 /*@
-ll<> == self=null or
-  self::node<_,q>*q::ll<>
-  inv true;
+
+ll<> == self::node<_,null> or
+  self::node<_,q> * q::ll<>
+  inv self!=null;
+
+sll<m> == self::node<v,null> & m = v or
+  self::node<v,q> * q::sll<min_tail> & m = min(v, min_tail)
+  inv self!=null;
 */
 
 void foo(struct node* x) __attribute__ ((noreturn))
@@ -21,5 +25,6 @@ void test(struct node* x)
 */
 {
   int a;
+  foo(x);
 }
 
