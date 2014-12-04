@@ -470,6 +470,7 @@ let process_source_full source =
              | CP.And(f1,f2,_) -> "(and "^(convert_cp_formula f1) ^" "^
                  (convert_cp_formula f2)^")"
              | CP.Not(f,_,_) -> "(not "^(convert_cp_formula f)^")"
+             | CP.Exists(_,f,_,_) -> convert_cp_formula f
              | _ -> "" in
            let axioms_list = List.map (fun axd -> 
              let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
@@ -477,12 +478,18 @@ let process_source_full source =
                ((CP.fv axd.C.axiom_hypothesis)@(CP.fv axd.C.axiom_conclusion)))
              in let var_list_string = String.concat " " (List.map 
                   (fun sv -> CP.name_of_spec_var sv) var_list) in
+                let (_,exists_list) = CP.split_ex_quantifiers_rec axd.C.axiom_conclusion in
+                let var_exlst = String.concat " " (List.map
+                  (fun sv -> CP.name_of_spec_var sv) exists_list) in
               "  Axiom axiom_"^(string_of_int (Globals.fresh_int2()))
-                ^" : forall "^var_list_string^
-                (if(CP.isConstTrue axd.C.axiom_hypothesis)
-                then ", valid "^(convert_cp_formula axd.C.axiom_conclusion)^".\n"
+                ^" : forall "^var_list_string^","^
+                (if (String.length var_exlst) > 0 
+                 then " exists "^var_exlst^","
+                 else "")^
+                (if (CP.isConstTrue axd.C.axiom_hypothesis)
+                then " valid "^(convert_cp_formula axd.C.axiom_conclusion)^".\n"
                 else
-                ", valid (imp "^(convert_cp_formula axd.C.axiom_hypothesis)
+                " valid (imp "^(convert_cp_formula axd.C.axiom_hypothesis)
                 ^" "^(convert_cp_formula axd.C.axiom_conclusion)^").\n")
            ) (List.filter (fun a -> 
              if List.length (CP.fv a.C.axiom_hypothesis) > 0 then 
