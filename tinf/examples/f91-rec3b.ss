@@ -2,6 +2,7 @@
 //f(n,k) = if k <= n then n else f(f(n+1,k),k)
 // 90 -> 91
 int f91(int n)
+
   infer [
          @post_n
          //,
@@ -10,11 +11,19 @@ int f91(int n)
   requires true
   ensures true;
 /*
+ requires true
+ ensures n=res & res>=91 | n<91 & res=91;
+*/
+/*
  case {
   //  n>91 -> requires Term[] ensures res=n;
   n>=91 -> requires Term[] ensures res=n;
   n<91 -> requires Term[91-n] ensures res=91;
  }
+
+ requires true
+ ensures n=res & res>=91 | n<91 & res=91;
+
 */
 {
   if (91<=n) return n;
