@@ -1191,7 +1191,9 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   in bag_res @ num_res
 
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  if !Globals.split_fixcalc then
+  if List.length input_pairs <= 2 then
+    compute_fixpoint_x input_pairs ante_vars specs bottom_up
+  else if !Globals.split_fixcalc then
     let pr = !CP.print_formula in
     let _ = DD.ninfo_hprint (add_str "input_pairs" (pr_list (pr_pair pr pr))) input_pairs no_pos in
     let constrs = List.fold_left (fun acc (pf,_) ->
