@@ -1,0 +1,3 @@
+post_1320:={[x] -> [res] -> []: (((x=res && res<=0) || (x=res && 2223<=res)) || (( (exists (v_int_10_1344:(v_int_10_1344+1=x && post_1320(v_int_10_1344,res))))  && 1<=x) && x<=2222))
+};
+bottomupgen([post_1320], [3], SimHeur);
