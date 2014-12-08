@@ -1333,6 +1333,7 @@ type infer_type =
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
+  | INF_CLASSIC (* For infer[@classic] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1353,6 +1354,7 @@ let string_of_inf_const x =
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
+  | INF_CLASSIC -> "@classic"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1448,6 +1450,7 @@ object (self)
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
       helper "@flow" INF_FLOW;
+      helper "@classic" INF_CLASSIC;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1470,6 +1473,7 @@ object (self)
   method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_classic  = self # get INF_CLASSIC
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
   method is_infer_type t  = self # get t

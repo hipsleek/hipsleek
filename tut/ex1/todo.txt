@@ -16,10 +16,61 @@ Checking procedure foo$... Proving binding in method foo$ for spec  EAssume
 ex1-null.ss_15:9_15:14
 
 ==========================================================
+# ex2-null-safe.ss --classic
+
+We obtained a post-cond failure:
+
+Procedure foo$ FAIL.(2)
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+I wonder if we can change it to a:
+
+  "memory leak failure : residue forbiddne"
+
+Checking procedure foo$... 
+Post condition cannot be derived:
+  (must) cause:  x_1361::cell<v_int_14_1358>&v_int_14_1358=5 & 
+v_int_15_1342'=v_int_14_1358 & res=v_int_15_1342'&{FLOW,(4,5)=__norm#E}[]: residue is forbidden.(2)
 ==========================================================
+# ex3-double-free.ss
+
+Why did we have a List.hd exception?
+Why not a Cell not found error?
+
+Exception Failure("hd") Occurred!
 ==========================================================
+# ex3.slk
+
+Should below be a must error?
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : x::cell<n>@L
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
 ==========================================================
+# ex5-acyclic.ss
+
+Why is there such a message? I think norm should be assumed to
+be in throw list?
+
+WARNING: ex5-acyclic.ss_12:10_12:17:the result type __norm#E is not covered by the throw list[]
+
 ==========================================================
+# ex2-leak.ss -dre "check_pre"
+
+Why is the check_pre_post method not traced?
+Isn't it called by check_proc?
+
+int foo()
+  infer [@classic]
+  requires true
+  ensures true;
+{
+  cell x;
+  x=new cell(5);
+  return x.val;
+}
 ==========================================================
 ==========================================================
 ==========================================================

@@ -7,6 +7,7 @@ bool rand()
   ensures !res or res;
 
 int foo()
+  infer [@classic]
   requires true
   ensures true;
 {
