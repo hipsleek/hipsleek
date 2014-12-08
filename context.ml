@@ -646,7 +646,9 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
 and imm_split_lhs_node estate l_node r_node =
   let pr_node = Cprinter.string_of_h_formula in
   let pr_es = Cprinter.string_of_entail_state in
-  let pr_out = pr_pair pr_es pr_none in
+  let pr_lst str =  add_str str Cprinter.string_of_pure_formula_list in
+  let pr_second = (pr_pair (pr_triple (pr_lst "to_lhs") (pr_lst "to_rhs") (pr_lst "to_rhs_ex")) (add_str "subst" string_of_subst)) in
+  let pr_out = pr_pair pr_es pr_second in
   Debug.no_3 "imm_split_lhs_node" pr_es pr_node pr_node pr_out imm_split_lhs_node_x estate l_node r_node
 
 (*  *)

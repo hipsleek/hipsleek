@@ -7,6 +7,11 @@ pred ls<p,a,b> == self=p or
   self::node<_@a,q@b>*q::ls<p,a,b> //& self!=p
   inv true.
 
+pred ll<p> == self=p or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+
 
 /*
  checkentail (exists flted_54_43,flted_54_44,
@@ -16,5 +21,21 @@ flted_54_44=@M & flted_54_45=null & s'=s & z'=z & y'=y & x'=x)
 flted_13_53=@A & flted_13_52=@A). 
 */
 
+/*
  checkentail s::ls<null,@A,@M> * w::ls<null,@M,@A> & w=s & s!=null |- s::ls<null,@M,@M>.
 print residue.
+
+checkentail x::node<a,y> |- x::node<b,z>.
+print residue.
+
+checkentail x::node<a,y> |- x::node<b,z@L>.
+print residue.
+*/
+
+checkentail x::node<a,y>@M |- x::node<b,z>@M.
+print residue.
+
+/*
+checkentail x::ll<a>@M |- x::ll<b>@M.
+print residue.
+*/
