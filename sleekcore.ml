@@ -122,7 +122,7 @@ let sleek_entail prog ante_ctx conseq pos=
   rs, prf
 
 (* WN : why isn't itype added to estate? *)
-let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq =
+let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:CF.formula) (conseq:CF.struc_formula) =
   let _ = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
@@ -156,7 +156,9 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   ^"\n\n")) no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
+  let _ = print_endline "sleek_entail_check_x_1" in
   let ctx0 = Solver.elim_exists_ctx ctx in
+  let _ = print_endline "sleek_entail_check_x_2" in
   let ctx = CF.add_proof_traces_ctx ctx0 proof_traces in
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in

@@ -1062,6 +1062,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
+  (*let _ = print_endline "run_infer_one_pass" in*)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   let fv_idents =
     if !Globals.dis_impl_var then
@@ -1085,6 +1086,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       with _ ->  sst0
   ) [] fvs
   in
+  (*let _ = print_endline "run_infer_one_pass" in*)
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
@@ -1100,7 +1102,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
+  let _ = print_endline "run_infer_one_pass_1" in
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
+  let _ = print_endline "run_infer_one_pass_2" in
   (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 
@@ -1903,6 +1907,7 @@ let process_shape_extract sel_vnames=
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass_set_states [] [] iante0 conseq in
+      (*let _ = print_endline "run_entail_check_2" in*)
       let res, _, _ = r in
       let _ = if !Globals.gen_smt then
          let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
@@ -1916,6 +1921,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
     (false, fctx,[]) in
+  (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 

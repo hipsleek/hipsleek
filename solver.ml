@@ -8617,8 +8617,8 @@ type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
   (* let _ = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^ *)
-  (* "ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^ *)
-  (* "CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n" ^ *)
+  (*let _ = print_endline ("ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n") in*)
+  (*let _ = print_endline ("CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n") in*)
   (* "memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n\n") in  *)
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in

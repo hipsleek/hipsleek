@@ -17490,3 +17490,38 @@ and collect_important_vars_in_spec deep_flag (spec : struc_formula) : (CP.spec_v
   helper spec
 
 (** An Hoa : end collect_important_vars_in_spec **)
+
+
+(* (\* Translate out array access, input is a formula, an index and a new variable *\) *)
+(* type array_transform_info = (CP.exp * CP.exp * CP.exp);; *)
+
+(* let rec cpure_formula_translate_out_array *)
+(*       (f:CP.formula) (infolst:array_transform_info list):(CP.formula)= *)
+(*   match f with *)
+(*     | CP.Bform (b,fl)-> *)
+(*           array_transformer b infolst *)
+(*     | CP.And (f1,f2,l)-> *)
+(*           And (cpure_formula_translate_out_array f1 infolst,cpure_formula_translate_out_array f2 infolst,l) *)
+(*     | CP.AndList lst-> *)
+(*           AndList (List.map (fun (t,f)->(t,cpure_formula_translate_out_array f infolst)) lst) *)
+(*     | CP.Or (f1,f2,fl,l)-> *)
+(*           Or (cpure_formula_translate_out_array f1,cpure_formula_translate_out_array f2 infolst,fl,l) *)
+(*     | CP.Not (f,fl,l)-> *)
+(*           Not (cpure_formula_translate_out_array f infolst,fl,l) *)
+(*     | CP.Forall (sv,f,fl,l)-> *)
+(*           Forall (sv,cpure_formula_translate_out_array f infolst,fl,l) *)
+(*     | CP.Exists (sv,f,fl,l)-> *)
+(*           Exists (sv,cpure_formula_translate_out_array f infolst,fl,l) *)
+
+(* let rec cf_formula_translate_out_array_helper *)
+(*       (f:formula) (infolst : array_transform_info list):(formula)= *)
+(*   match f with *)
+(*     | Base fb-> *)
+(*           let new_mix_formula = mcp_mix_formula_translate_out_array_helper fb.formula_base_pure infolst in *)
+(*           Base ({fb with formula_base_pure = new_mix_formula}) *)
+(*     | Or fo -> *)
+(*           let new_f1 = cf_formula_translate_out_array_helper fo.formula_or_f1 infolst in *)
+(*           let new_f2 = cf_formula_translate_out_array_helper fo.formula_or_f2 infolst in *)
+(*           Or ({fo with formula_or_f1 = new_f1;formula_or_f2 = new_f2}) *)
+(*     | Exists fe -> *)
+(*           failwith "cf_formula_translate_out_array_helper: TO BE IMPLEMENTED" *)
