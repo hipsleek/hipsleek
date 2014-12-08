@@ -633,6 +633,8 @@ class counter x_init =
      method add (i:int) = ctr <- ctr + i
      method reset = ctr <- 0x0
      method string_of : string= (string_of_int ctr)
+     method str_get_next : string 
+     = ctr <- ctr + 1; string_of_int ctr
    end;;
 
 (* class ['a] stack2 xinit = *)
