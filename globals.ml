@@ -760,7 +760,7 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
-let split_fixcalc = ref true
+let split_fixcalc = ref false (* present split is unsound *)
 
 let ptr_to_int_exact = ref false
 
@@ -1140,7 +1140,7 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
