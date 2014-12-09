@@ -1576,7 +1576,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           ) (prog.I.prog_proc_decls) in
           let old_i_hp_decls = prog.I.prog_hp_decls in
           let _ = ihp_decl:= [] in
-	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+          let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
           let iloop_hp_decls = !ihp_decl in
           (* List.filter (fun hpdecl -> *)
           (*     not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0) *)
@@ -1864,8 +1864,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 | None -> None
                 | Some lst ->
                   if List.length lst == 1 then
-	                let unf_baga = Cvutil.xpure_symbolic_baga prog body in
-                        Some (Expure.simplify unf_baga)
+                    let unf_baga = Cvutil.xpure_symbolic_baga prog body in
+                    Some (Expure.simplify unf_baga)
                   else Some (Expure.simplify lst) (* baga_over *)
           in
           if do_not_compute_flag then
@@ -10163,7 +10163,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in
-  (*detect prdicates for graph optimization*)
+  (*detect predicates for graph optimization*)
   let cprog2 =
      if !Globals.norm_cont_analysis then
      let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.Cast.prog_view_decls in

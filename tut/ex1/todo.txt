@@ -91,7 +91,7 @@ Checking procedure length$node~node...  Timeout after 10. secs
 [omega.ml]Timeout when checking sat for 
 10. Restarting Omega after ... 74 invocations Stop Omega... 74 invocations Starting Omega.../usr/local/bin/oc
 ==========================================================
-# ex16-ll-set.ss
+# ex16-ll-set.ss: FIXED
 
 Why am I getting this mona error in default branch?
 Was it expecting mona to be in curent directory for svcomp14?

@@ -11,6 +11,11 @@ open Gen.Basic
 open Cpure
 (* open Cprinter *)
 
+
+let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
+let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
+
+
 let simplify_conj simp f =
   match f with
   | AndList ls -> AndList (List.map (fun (l,f) -> (l,simp f)) ls)
@@ -21,11 +26,13 @@ let simplify_with_label simp (f:formula) =
   let ls = List.map (simplify_conj simp) ls in
   join_disjunctions ls
   
-let simplify_with_label_omega (f:formula) = 
-  let simp = Omega.simplify in
-  simplify_with_label simp f
+let simplify_with_label_omega (f:formula) =
+  (* if is_bag_constraint f then *)
+  (*   f *)
+  (* else *)
+    let simp = (* Omega.simplify *) !simplify_raw in
+    simplify_with_label simp f
 
-let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 
 (* let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized") *)
 let print_h_formula = ref (fun (c:Cformula.h_formula) -> "cpure printer has not been initialized")

@@ -2011,13 +2011,14 @@ let rec simplify_raw (f: CP.formula) =
   else
     let is_bag_cnt = is_bag_constraint f in
     if is_bag_cnt then
-      let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in
+      (* let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in *)
       let _,new_f = trans_dnf f in
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 
           let rels = CP.get_RelForm disj in
           let disj = CP.drop_rel_formula disj in
           let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+          (* let _ = Debug.info_hprint (add_str " xxxx others: " (pr_list_ln (!CP.print_formula))) others no_pos in *)
           let others = simplify_raw (conj_of_list others no_pos) in
           conj_of_list ([others]@bag_cnts@rels) no_pos
       ) disjs in
@@ -2165,7 +2166,7 @@ let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
-let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   if not !tp_batch_mode then Omega.start ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2182,6 +2183,11 @@ let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   let res = Timelog.log_wrapper "pairwise2" logger fn f in
   if not !tp_batch_mode then Omega.stop ();
   res
+
+let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "tp_pairwisecheck2" pr pr pr tp_pairwisecheck2_x f1 f2
+  
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -3793,4 +3799,5 @@ let check_diff xp0 xp1 =
 let _ = 
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
-  Excore.is_sat_raw := is_sat_raw
+  Excore.is_sat_raw := is_sat_raw;
+  Excore.simplify_raw := simplify_raw
