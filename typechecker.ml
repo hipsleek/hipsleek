@@ -306,7 +306,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   (* let pr4 = Cprinter.string_of_spec_var_list in *)
   (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
-  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a prog proc ctx e0 do_infer) in
+  let f = wrap_proving_kind PK_Check_Specs (check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
 
 
@@ -386,8 +386,18 @@ and check_bounded_term prog ctx post_pos =
   let f = wrap_proving_kind PK_Term_Bnd (check_bounded_term_x prog ctx) in
   Debug.no_1 "check_bounded_term" pr pr1 (fun _ -> f post_pos) ctx
 
-(*and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (sp:CF.struc_formula) e0 do_infer:
-  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
+and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) e0 do_infer (sp:CF.struc_formula):
+CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
+  let pr1 = Cprinter.string_of_struc_formula in
+  let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in
+  let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
+  let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
+  let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
+  let pr4 = Cprinter.string_of_spec_var_list in
+  let pr5 = pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var (pr_list string_of_int)) Cprinter.string_of_xpure_view) in
+  let pr3 = pr_octa pr1 pr2a  pr2 pr2b pr4 pr4 pr5 string_of_bool in
+  Debug.no_1 "check_specs_infer" pr1 pr3
+      (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer sp) sp
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
