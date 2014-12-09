@@ -51,6 +51,10 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
             (* omega doesn't allow variable name starting with underscore *)
             let v = if ((String.get v 0) == '_') then "v" ^ v 
                     else v in
+            let v =
+              let reg = Str.regexp "\." in
+              Str.global_replace reg "" v
+            in
             let ln = (String.length v) in  
             let r_c = if (ln<20) then v
                       else "v" ^ (String.sub v (ln-20)  20) in

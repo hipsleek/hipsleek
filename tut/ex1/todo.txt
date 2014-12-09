@@ -83,7 +83,7 @@ Termination checking result: SUCCESS
 
 Why isn't the same message printed for ex10-len-dll.ss?
 ==========================================================
-# bug-ex10.ss  
+# bug-ex10.ss: FIXED
 
 why is this going into a loop with Omega timeout?
 
