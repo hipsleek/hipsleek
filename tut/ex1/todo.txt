@@ -135,7 +135,7 @@ Parsing file "ex17-ins-sort.ss" by default parser...
 !!! processing primitives "["prelude.ss"]
 Starting Omega.../usr/local/bin/oc
 ==========================================================
-# ex21-ins-sort-inf.ss --en-inf
+# ex21-ins-sort-inf.ss --en-inf (* FIXED with --dsd *)
 
 lsortI<m> == self=null & m=\inf
   or self::node<m,q>*q::lsortI<m2> & m<=m2 
@@ -156,7 +156,23 @@ Post condition cannot be derived:
  xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
            self!=null)))
 ==========================================================
+# sim5-tail.ss
+
+  Can we omit this message since __norm is allowable.
+
+  WARNING: sim4-while.ss_14:13_14:47:the result type __norm#E is not 
+  covered by the throw list[__Brk_top#E]
 ==========================================================
+# ex26-bubble-lemma.ss
+
+Any idea why mona has "cycle-limit reached"?
+Can we increase it? Is it during SAT checking?
+
+Checking procedure bubble$node... 
+Mona is restarting ... cycle limit reached
+
+Mona is restarting ... cycle limit reached
+Procedure bubble$node SUCCESS.
 ==========================================================
 ==========================================================
 ==========================================================
