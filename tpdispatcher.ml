@@ -27,6 +27,8 @@ let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
+
+(* WN : why do we have pure_tp and tp??? *)
 let pure_tp = ref OM
 (* let pure_tp = ref Z3 *)
 let tp = ref Redlog
@@ -450,16 +452,19 @@ let set_tp tp_str =
 	();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
+let set_tp tp_str =
+    Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
+
 let init_tp () =
+  let _ = print_endline ("Hello..") in
   let _ = (if !Globals.is_solver_local then
-  let _ = Smtsolver.is_local_solver := true in
-  let _ = Smtsolver.smtsolver_name := "z3" in
-  let _ = Omega.is_local_solver := true in
-  let _ = Omega.omegacalc := "./oc" in
-  ()
-  else ())
-  in
-  let _ = print_endline_quiet ("!!! Using Z3 by default") in 
+      let _ = Smtsolver.is_local_solver := true in
+      let _ = Smtsolver.smtsolver_name := "z3" in
+      let _ = Omega.is_local_solver := true in
+      let _ = Omega.omegacalc := "./oc" in
+      ()
+      else ()) in
+  let _ = print_endline ("!!! Using Z3 by default") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 

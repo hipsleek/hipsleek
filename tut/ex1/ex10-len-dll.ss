@@ -18,7 +18,8 @@ int length(node x,node prlnk)
 {
   if (x==null) return 0;
   else {
-     assert x.prev = prlnk;
+     node tmp = x.prev;
+     assert tmp' = prlnk;
      return 1+length(x.next,x);
   }
 }
