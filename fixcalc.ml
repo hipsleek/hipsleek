@@ -11,6 +11,8 @@ module CP = Cpure
 module MCP = Mcpure
 module TP = Tpdispatcher
 
+let fix_num = new counter 0
+
 (******************************************************************************)
 
 (* Operators *)
@@ -299,7 +301,7 @@ let syscall cmd =
 let compute_inv name vars fml pf =
   if not !Globals.do_infer_inv then pf
   else
-    let output_of_sleek = "fixcalc.inp" in
+    let output_of_sleek = "fixcalc"^(fix_num # str_get_next)^".inp" in
     let oc = open_out output_of_sleek in
     let input_fixcalc = 
       name ^ ":=" ^ "{" ^ "[" ^ self ^ "," ^ 
@@ -354,7 +356,8 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inp" in
+  let output_of_sleek = "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -418,7 +421,8 @@ let compute_invs_fixcalc input_fixcalc=
     with _ ->
         (res)
   in
-  let output_of_sleek =  (* Globals.fresh_any_name *) "fixcalc.inp" in
+  let output_of_sleek =  (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -621,7 +625,8 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = (* Globals.fresh_any_name *) "fixcalc.inp" in
+  let output_of_sleek = (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -759,19 +764,20 @@ let compute_def (rel_fml, pf, no) ante_vars =
     in input_fixcalc
   with _ -> report_error no_pos "Error in translating the input for fixcalc"
 
-let compute_cmd rel_defs bottom_up = 
+let compute_cmd rel_defs bottom_up =
   let nos = List.map (fun (_,_,a) -> a) rel_defs in
   (* let nos = string_of_elems nos string_of_int "," in *)
-  let nos = string_of_elems nos (fun _ -> 
+  let nos = string_of_elems nos (fun _ ->
       string_of_int !Globals.fixcalc_disj) "," in
-  let nos = string_of_int ((int_of_string nos) + 1) in
   let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
   let rels = List.map (fun (a,_,_) ->
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
+    let _ = DD.binfo_pprint "bottom up" no_pos in
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
   else
+    let _ = DD.binfo_pprint "top down" no_pos in
     "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
@@ -779,8 +785,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
-  DD.binfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.binfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+  DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
+  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
   (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
@@ -791,7 +797,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
   in
 
-  let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
+  let output_of_sleek = if bottom_up then ("fixcalc"^(fix_num #str_get_next)^".inf") else "fixcalc.td" in
+  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -1191,13 +1198,68 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
     else compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up
   in bag_res @ num_res
 
+let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
+  if List.length input_pairs <= 2 then
+    compute_fixpoint_x input_pairs ante_vars specs bottom_up
+  else if !Globals.split_fixcalc then
+    let pr = !CP.print_formula in
+    let _ = DD.ninfo_hprint (add_str "input_pairs" (pr_list (pr_pair pr pr))) input_pairs no_pos in
+    let constrs = List.fold_left (fun acc (pf,_) ->
+        let _ = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
+        let p_aset = CP.pure_ptr_equations pf in
+        let _ = DD.ninfo_hprint (add_str "p_aset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) p_aset no_pos in
+        let pf = CP.wrap_exists_svl pf (Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) ante_vars) in
+        let pf = Omega.simplify pf in
+        let pfs = CP.split_conjunctions pf in
+        let _ = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
+        acc@pfs
+    ) [] input_pairs in
+    let constrs = Gen.BList.remove_dups_eq CP.equalFormula constrs in
+    let _ = DD.ninfo_hprint (add_str "constrs" (pr_list pr)) constrs no_pos in
+    let res = List.fold_left (fun acc constr ->
+        let input_pairs1, input_pairs2 = List.partition (fun (pf,_) -> TP.imply_raw pf constr) input_pairs  in
+        let _ = DD.ninfo_hprint (add_str "constr" pr) constr no_pos in
+        let _ = DD.ninfo_hprint (add_str "input_pairs1" (pr_list (pr_pair pr pr))) input_pairs1 no_pos in
+        let _ = DD.ninfo_hprint (add_str "input_pairs2" (pr_list (pr_pair pr pr))) input_pairs2 no_pos in
+        let res1 = compute_fixpoint_x input_pairs1 ante_vars specs bottom_up in
+        let _ = DD.ninfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
+        let res1 = List.map (fun (pf1,pf2) -> (pf1,CP.mkAnd pf2 constr no_pos)) res1 in
+        let _ = DD.ninfo_hprint (add_str "res1" (pr_list (pr_pair pr pr))) res1 no_pos in
+        let res2 = compute_fixpoint_x input_pairs2 ante_vars specs bottom_up in
+        let _ = DD.ninfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
+        let res2 = List.map (fun (pf1,pf2) -> (pf1,CP.mkAnd pf2 (CP.mkNot constr None no_pos) no_pos)) res2 in
+        let _ = DD.ninfo_hprint (add_str "res2" (pr_list (pr_pair pr pr))) res2 no_pos in
+        let rec helper acc (pf1,pf2) =
+          match acc with
+            | [] -> [(pf1,pf2)]
+            | (pf3,pf4)::tl ->
+                  if (CP.equalFormula pf1 pf3)
+                  then
+                    let pf5 = Omega.simplify (CP.mkOr pf2 pf4 None no_pos) in
+                    let _ = DD.ninfo_hprint (add_str "pf2" pr) pf2 no_pos in
+                    let _ = DD.ninfo_hprint (add_str "pf4" pr) pf4 no_pos in
+                    let _ = DD.ninfo_hprint (add_str "pf5" pr) pf5 no_pos in
+                    (pf1,pf5)::tl
+                  else (pf3,pf4)::(helper tl (pf1,pf2))
+        in
+        let acc = List.fold_left (fun acc pf ->
+            helper acc pf
+        ) acc (res1@res2) in
+        let _ = DD.ninfo_hprint (add_str "acc" (pr_list (pr_pair pr pr))) acc no_pos in
+        acc
+    ) [] constrs in
+    let _ = DD.ninfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
+    res
+  else
+    compute_fixpoint_x input_pairs ante_vars specs bottom_up
+
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
   DD.no_2_num i "compute_fixpoint" pr1 pr2 pr_res
-    (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs true) 
+    (fun _ _ -> compute_fixpoint_x2 input_pairs ante_vars specs true)
       input_pairs ante_vars
 
 let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
@@ -1205,7 +1267,7 @@ let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
   let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
-  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res 
+  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res
     (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs false)
       input_pairs ante_vars
 

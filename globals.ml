@@ -687,6 +687,12 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
+(*use error type in the error msg*)
+type error_type=
+  | Mem of int
+  | Heap
+  | Pure
+
 let sl_error = "separation entailment" (* sl_error is a may error *)
 let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
@@ -694,6 +700,7 @@ let mem_leak_error = "mem leak detection"
 let mem_deref_error = "mem deref detection"
 let mem_dfree_error = "mem double free detection"
 let lemma_error = "lemma" (* may error *)
+let mem_leak = "memory leak"
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -762,6 +769,8 @@ let lib_files = ref ([] : string list)
  * moved here from iparser.mly *)
 
 (* command line options *)
+
+let split_fixcalc = ref false (* present split is unsound *)
 
 let ptr_to_int_exact = ref false
 
@@ -1143,12 +1152,12 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
-(* Lvl 0 - add conjunctive pre to residue only *) 
-(* Lvl 1 - add all pre to residue *) 
-(* Lvl -1 - never add any pre to residue *) 
+(* Lvl 0 - add conjunctive pre to residue only *)
+(* Lvl 1 - add all pre to residue *)
+(* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
 let dump_lemmas = ref false
@@ -1337,6 +1346,7 @@ type infer_type =
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
+  | INF_CLASSIC (* For infer[@classic] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1358,6 +1368,7 @@ let string_of_inf_const x =
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
+  | INF_CLASSIC -> "@classic"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1454,6 +1465,7 @@ object (self)
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
       helper "@flow" INF_FLOW;
+      helper "@classic" INF_CLASSIC;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1477,6 +1489,7 @@ object (self)
   method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_classic  = self # get INF_CLASSIC
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
   method is_infer_type t  = self # get t

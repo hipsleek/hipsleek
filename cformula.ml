@@ -10065,44 +10065,50 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
-let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
+let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
     (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
-  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc")
+  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc", [Heap])
   else
-    let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
+    let (los, fk, ls_ets)= split3 (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
-    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk)
+    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk, List.concat ls_ets)
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
      (* let spt = !print_path_trace pt in *)
+     let et = match ft with
+       | Basic_Reason (fc,_,_) -> if string_compare fc.fc_message mem_leak then (Mem 1) else (Heap)
+       | _ -> Heap
+     in
       match  (get_failure_ft ft) with
-        | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m)
-        | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m)
-        | Failure_Valid -> (None, Failure_Valid)
-        | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m)
+        | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m, et)
+        | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m, et)
+        | Failure_Valid -> (None, Failure_Valid, et)
+        | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m, et)
     in
     match bfl with
-      | [] -> (None, Failure_Valid)
-      | fl -> let los, fks= List.split (List.map helper fl) in
+      | [] -> (None, Failure_Valid,[])
+      | fl -> let los, fks, ets= split3 (List.map helper fl) in
               ( match (combine_helper "OrR\n" los "") with
-                | "" -> None, Failure_Valid
-                | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks)
+                | "" -> None, Failure_Valid, []
+                | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks), ets
               )
 
-and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind)=
+and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind*error_type list)=
    get_failure_branch bfl
 
-let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
+let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind*error_type list)=
     (*may use rand to combine the list first*)
-    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
+  if ls==[] then ("Empty list_failesc_context", Failure_Must "empty loc",[])
+  else
+    let los, fks, ets= split3 (List.map get_failure_failesc_context ls(* [(List.hd ls)] *)) in
     (*los contains path traces*)
     (*combine_helper "UNION\n" los ""*)
      (*return failure of 1 lemma is enough*)
-   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks)
+   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks, List.concat ets)
 
-and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
+and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind*error_type list)=
   get_failure_branch bfl
 
 let get_bot_status (ft:list_context) =
@@ -14430,7 +14436,8 @@ let rec simp_ann_x heap pures = match heap with
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
-          else (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
+          else
+            (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
         | _ -> (heap,pures)
       end
   | ViewNode view ->
@@ -14487,7 +14494,7 @@ let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
     | EInfer b -> 
         (* report_error no_pos "Do not expect EInfer at this level" *)
         EInfer { b with formula_inf_continuation = simplify_ann b.formula_inf_continuation; }
-	| EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
+    | EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
 
 let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->

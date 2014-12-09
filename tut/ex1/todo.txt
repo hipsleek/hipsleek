@@ -1,0 +1,171 @@
+# ex1-null.ss: FIXED
+
+Why did we have:
+
+  Exception Failure("Proving precond failed") Occurred!
+
+when there was an earlier prove bind failure?
+Can we change to a "bind failure exception" rather than
+a  "pre-cond failure"?
+
+Checking procedure foo$... Proving binding in method foo$ for spec  EAssume 
+   emp&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( [(,1 ); (,2 )]) bind: node  x_29'::cell<val_15_1342'>@L cannot be derived from context
+ex1-null.ss_15:9_15:14
+
+==========================================================
+# ex2-null-safe.ss --classic: FIXED (temp)
+
+We obtained a post-cond failure:
+
+Procedure foo$ FAIL.(2)
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+I wonder if we can change it to a:
+
+  "memory leak failure : residue forbiddne"
+
+Checking procedure foo$... 
+Post condition cannot be derived:
+  (must) cause:  x_1361::cell<v_int_14_1358>&v_int_14_1358=5 & 
+v_int_15_1342'=v_int_14_1358 & res=v_int_15_1342'&{FLOW,(4,5)=__norm#E}[]: residue is forbidden.(2)
+==========================================================
+# ex3-double-free.ss
+
+Why did we have a List.hd exception?
+Why not a Cell not found error?
+
+Exception Failure("hd") Occurred!
+==========================================================
+# ex3.slk
+
+Should below be a must error?
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : x::cell<n>@L
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+==========================================================
+# ex5-acyclic.ss
+
+Why is there such a message? I think norm should be assumed to
+be in throw list?
+
+WARNING: ex5-acyclic.ss_12:10_12:17:the result type __norm#E is not covered by the throw list[]
+
+==========================================================
+# ex2-leak.ss -dre "check_pre"
+
+Why is the check_pre_post method not traced?
+Isn't it called by check_proc?
+
+int foo()
+  infer [@classic]
+  requires true
+  ensures true;
+{
+  cell x;
+  x=new cell(5);
+  return x.val;
+}
+==========================================================
+# bugs-ex9a.ss
+
+There is no Term nor MayLoop proven for 
+this length method. Can we omit this message?
+Can this message be highlighted when we have
+at least one Term/Loop proven.
+
+Termination checking result: SUCCESS
+
+Why isn't the same message printed for ex10-len-dll.ss?
+==========================================================
+# bug-ex10.ss: FIXED
+
+why is this going into a loop with Omega timeout?
+
+Checking procedure length$node~node...  Timeout after 10. secs
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 74 invocations Stop Omega... 74 invocations Starting Omega.../usr/local/bin/oc
+==========================================================
+# ex16-ll-set.ss: FIXED
+
+Why am I getting this mona error in default branch?
+Was it expecting mona to be in curent directory for svcomp14?
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss -tp om
+WARNING : Command for starting the prover (mona) not found
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss -tp mona
+WARNING : Command for starting the prover (mona) not found
+pls2nus@loris-laptop:~/code/default/tut/ex1$ which mona
+pls2nus@loris-laptop:~/code/default/tut/ex1$ which mona_inter
+/usr/local/bin/mona_inter
+
+
+Is the default tp auto? Did it try Omega
+before mona? but which version of mona?
+
+ls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss 
+
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},S1)")
+ Formula: exists(S1:exists(v:S=union({v},S1)))
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+==========================================================
+# ex17-ins-sort.ss
+
+Which prover are we using? mona, z3 or oc?
+ init_tp not executed?
+
+It seems that pure_tp="om" by default in tpdispatcher.ml.
+However, when we use -tp om, there is a error message 
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex17-ins-sort.ss -tp om
+WARNING : Command for starting the prover (mona) not found
+
+!!!Full processing file "ex17-ins-sort.ss"
+Parsing file "ex17-ins-sort.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+==========================================================
+# ex21-ins-sort-inf.ss --en-inf
+
+lsortI<m> == self=null & m=\inf
+  or self::node<m,q>*q::lsortI<m2> & m<=m2 
+  inv true;
+
+node insert(node x, node y)
+  requires x::node<v,null> * y::lsortI<mm> 
+  ensures res::lsortI<r> & r=min(v,mm);
+
+
+Checking procedure insert$node~node... 
+Post condition cannot be derived:
+  (may) cause:  (((x=1 & null=2) | (x=1 & null=null & mm=\inf))) 
+      & v<=(\inf) |-  v=min(v,mm). LOCS:[23;17;21;0;13;12;19] (may-bug)
+
+ Is this lsortI xpure correct
+
+ xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
+           self!=null)))
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================

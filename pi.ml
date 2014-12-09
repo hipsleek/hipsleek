@@ -594,7 +594,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               ) ([],[]) scc
             in
             let post_inv = CP.join_disjunctions post_invs in
+            let pr = Cprinter.string_of_pure_formula in
+            let _ = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
+            let _ = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
             let bottom_up_fp = List.map (fun (r,p) ->
                 let p1 = Tpdispatcher.om_gist p post_inv in
@@ -602,9 +605,15 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 (r,p2)
             ) bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
-            Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
+            let _ = DD.binfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
+            let _ = DD.ninfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
+            let _ = DD.ninfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
+            let res = Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
+            in
+            let _ = DD.binfo_hprint (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            res
           in
           Infer.fixcalc_rel_stk # push_list tuples;
           if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then

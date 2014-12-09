@@ -7,10 +7,10 @@ int main(int x)
       requires true
       ensures true;
     {
-      if (x > 2222) {
+      if (x > 2000) {
         break;
       } else {
-        x = x - 1;
+        x = x + 1;
       }
     }
   return 0;
@@ -20,7 +20,7 @@ int main(int x)
 
 With --en-split-fixcalc:
 
-((x'=0 & 1<=x & x<=2222) | (x=x' & 2223<=x') | (x=x' & x'<=0))
+((x'=2001 & 1<=x & x<=2000) | (x=x' & 2001<=x') | (x=x' & x'<=0))
 
 
 Without --en-split-fixcalc:

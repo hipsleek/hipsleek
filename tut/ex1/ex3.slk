@@ -1,0 +1,33 @@
+data cell {
+  int val;
+}.
+
+checkentail x::cell<5> |- x::cell<n>@L.
+print residue.
+
+checkentail emp |- x::cell<n>@L.
+print residue.
+/*
+# ex3.slk
+
+Should below be a must error?
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : x::cell<n>@L
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+checkentail true |- x::cell<n>@L.
+print residue.
+
+/*
+# ex3.slk
+
+Why did we have a List.hd exception?
+Why not a Cell not found error?
+
+Exception Failure("hd") Occurred!
+
+*/

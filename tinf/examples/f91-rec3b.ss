@@ -2,6 +2,7 @@
 //f(n,k) = if k <= n then n else f(f(n+1,k),k)
 // 90 -> 91
 int f91(int n)
+
   infer [
          @post_n
          //,
@@ -10,17 +11,52 @@ int f91(int n)
   requires true
   ensures true;
 /*
+ requires true
+ ensures n=res & res>=91 | n<91 & res=91;
+*/
+/*
  case {
   //  n>91 -> requires Term[] ensures res=n;
   n>=91 -> requires Term[] ensures res=n;
   n<91 -> requires Term[91-n] ensures res=91;
  }
+
+ requires true
+ ensures n=res & res>=91 | n<91 & res=91;
+
 */
 {
   if (91<=n) return n;
   else return f91(f91(n+1));
 }
 /*
+# f91-rec3b.ss
+
+The post-condition generated here is unsound.
+It seems some base-case is missing..
+
+RELDEFN post_1319: ( n=res & 91<=res) -->  post_1319(n,res),
+RELDEFN post_1319: ( post_1319(v_int_21_1339,res) & n<=90 & post_1319(1+n,v_int_21_1339)) -->  post_1319(n,res)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1319(n,res), n=res & 91<=res, true, true)]
+*************************************
+
+!!! REL POST :  post_1319(n,res)
+!!! POST:  n=res & 91<=res
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+f91$int
+ EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&n=res & 91<=res&{FLOW,(4,5)=__norm#E}[]
+
+
+
 # f91-rec3.ss
 
 Qn : Is result below correct? 
