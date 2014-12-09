@@ -687,10 +687,17 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
+(*use error type in the error msg*)
+type error_type=
+  | Mem of int
+  | Heap
+  | Pure
+
 let sl_error = "separation entailment" (* sl_error is a may error *)
 let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
 let lemma_error = "lemma" (* may error *)
+let mem_leak = "memory leak"
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 

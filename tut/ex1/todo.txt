@@ -16,7 +16,7 @@ Checking procedure foo$... Proving binding in method foo$ for spec  EAssume
 ex1-null.ss_15:9_15:14
 
 ==========================================================
-# ex2-null-safe.ss --classic
+# ex2-null-safe.ss --classic: FIXED (temp)
 
 We obtained a post-cond failure:
 

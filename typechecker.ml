@@ -2233,7 +2233,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (
                      if (!Globals.web_compile_flag) then
                        let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
-                       let s,_= CF.get_failure_list_failesc_context res in
+                       let s,_,_= CF.get_failure_list_failesc_context res in
                        let _ = print_string_quiet (to_print ^s^"\n") in
                        res
                      else
@@ -2241,7 +2241,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
                     let _ =
                       if not !Globals.disable_failure_explaining then
-                        let s,fk= CF.get_failure_list_failesc_context res
+                        let s,fk,_= CF.get_failure_list_failesc_context res
                           (*match CF.get_must_failure_list_partial_context rs with
                             | Some s -> "(must) cause:\n"^s
                             | None -> (match CF.get_may_failure_list_partial_context rs with
@@ -2614,7 +2614,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let s,fk= CF.get_failure_list_partial_context rs
+          let s,fk,ets= CF.get_failure_list_partial_context rs
             (*match CF.get_must_failure_list_partial_context rs with
               | Some s -> "(must) cause:\n"^s
               | None -> (match CF.get_may_failure_list_partial_context rs with
@@ -2623,15 +2623,21 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
               ) *)
             (*should check bot with is_bot_status*)
           in
-          let _ = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in
+          let failure_str = if List.exists (fun et -> et = Mem 1) ets then
+            "memory leak failure" else
+              "Post condition cannot be derived"
+          in
+          (* let _ = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in *)
+          let _ = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
           Err.report_error {
               Err.error_loc = pos;
-              Err.error_text = ("Post condition cannot be derived.")
+              Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^".")
           }
         else
           begin
             Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
-                ("Postcondition cannot be derived from context\n") pos;
+                ("Postcondition cannot be derived from context\n")
+                pos;
 	    Debug.print_info ("(Cause of PostCond Failure)")
                 (Cprinter.string_of_failure_list_partial_context rs) pos;
             Err.report_error {
