@@ -706,6 +706,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 		      ;print_string_quiet ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
 		    else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
+                    (* let _ = Debug.info_hprint (add_str "EAssume xxxxxxxxxxx" pr_id) "2" no_pos in  *)
                     (* let _ = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
                     (*Clear es_pure before check_post*)
 	            let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
@@ -907,7 +908,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 if CF.is_error_flow post_cond  then
                                   (spec, [],[],[],[],[], [], true) else
                                     let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                                    (Err.report_error1 e "Proving precond failed")
+                                    (Err.report_error1 e "bind failure exception")
                           | 3 ->
                                 if CF.is_top_flow post_cond then
                                   (spec, [],[],[],[],[],[], true) else
@@ -2184,17 +2185,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                     end else false in
 
+                   (* let _ = print_endline "locle6" in *)
                   let res = if (CF.isFailListFailescCtx_new ctx) then
-		    let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
-                    (*  let _ = print_endline "locle7" in*)
+                    let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
+                     (* let _ = print_endline "locle7" in *)
                     ctx
                   else
                     (* let _ = print_endline "locle8" in *)
                     (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
                     let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
+                    (* let _ = print_endline "locle8a" in *)
                     check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
                   in
-		  let _ = if !print_proof then Prooftracer.add_pre e0 in
+                  let _ = if !print_proof then Prooftracer.add_pre e0 in
                   let _ = if !print_proof && scall_pre_cond_pushed then
                     begin
                       Prooftracer.pop_div ();

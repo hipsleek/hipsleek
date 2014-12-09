@@ -10090,7 +10090,9 @@ and get_failure_partial_context ((bfl:branch_fail list), _): (string option*fail
 
 let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
     (*may use rand to combine the list first*)
-    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
+  if ls==[] then ("Empty list_failesc_context", Failure_Must "empty loc")
+  else
+    let los, fks= List.split (List.map get_failure_failesc_context ls(* [(List.hd ls)] *)) in
     (*los contains path traces*)
     (*combine_helper "UNION\n" los ""*)
      (*return failure of 1 lemma is enough*)
@@ -14424,7 +14426,8 @@ let rec simp_ann_x heap pures = match heap with
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
-          else (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
+          else
+            (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
         | _ -> (heap,pures)
       end
   | ViewNode view ->
@@ -14481,7 +14484,7 @@ let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
     | EInfer b -> 
         (* report_error no_pos "Do not expect EInfer at this level" *)
         EInfer { b with formula_inf_continuation = simplify_ann b.formula_inf_continuation; }
-	| EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
+    | EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
 
 let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->

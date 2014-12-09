@@ -1,4 +1,4 @@
-# ex1-null.ss
+# ex1-null.ss: FIXED
 
 Why did we have:
 
