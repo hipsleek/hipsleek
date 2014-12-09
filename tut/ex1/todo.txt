@@ -72,7 +72,24 @@ int foo()
   return x.val;
 }
 ==========================================================
+# bugs-ex9a.ss
+
+There is no Term nor MayLoop proven for 
+this length method. Can we omit this message?
+Can this message be highlighted when we have
+at least one Term/Loop proven.
+
+Termination checking result: SUCCESS
+
+Why isn't the same message printed for ex10-len-dll.ss?
 ==========================================================
+# bug-ex10.ss  
+
+why is this going into a loop with Omega timeout?
+
+Checking procedure length$node~node...  Timeout after 10. secs
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 74 invocations Stop Omega... 74 invocations Starting Omega.../usr/local/bin/oc
 ==========================================================
 ==========================================================
 ==========================================================
