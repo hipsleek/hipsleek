@@ -135,6 +135,26 @@ Parsing file "ex17-ins-sort.ss" by default parser...
 !!! processing primitives "["prelude.ss"]
 Starting Omega.../usr/local/bin/oc
 ==========================================================
+# ex21-ins-sort-inf.ss --en-inf
+
+lsortI<m> == self=null & m=\inf
+  or self::node<m,q>*q::lsortI<m2> & m<=m2 
+  inv true;
+
+node insert(node x, node y)
+  requires x::node<v,null> * y::lsortI<mm> 
+  ensures res::lsortI<r> & r=min(v,mm);
+
+
+Checking procedure insert$node~node... 
+Post condition cannot be derived:
+  (may) cause:  (((x=1 & null=2) | (x=1 & null=null & mm=\inf))) 
+      & v<=(\inf) |-  v=min(v,mm). LOCS:[23;17;21;0;13;12;19] (may-bug)
+
+ Is this lsortI xpure correct
+
+ xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
+           self!=null)))
 ==========================================================
 ==========================================================
 ==========================================================
