@@ -1,0 +1,29 @@
+data node {
+  int val;
+  node next;
+}.
+
+checkentail x=null |- x::node<_,_>.
+// must-fail
+
+checkentail x::node<_,_> |- x=null.
+// must-fail
+
+checkentail true |- x::node<_,_>.
+// may-fail
+
+checkentail emp |- x::node<_,_>.
+// must-fail
+
+/*
+# ex30-node.slk (urgent)
+
+  must/may failures
+
+below give may failure which is incorrect.
+
+checkentail emp |- x::node<_,_>.
+// must-fail
+
+
+*/

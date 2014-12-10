@@ -188,6 +188,16 @@ Procedure bubble$node SUCCESS.
 Could we have a warning to indicate that p::dll<self> is
 unreachable?
 ==========================================================
+# bugs-ex31-match.slk (urgent)
+
+Why is explicit instantiation not working?
+
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
+
+Residue:
+ <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
 ==========================================================
 ==========================================================
 ==========================================================
