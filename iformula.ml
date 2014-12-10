@@ -255,7 +255,11 @@ and formula_of_pure_1 p pos = mkBase HEmp p top_flow [] pos                (* pu
 and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
 
 and formula_of_pure_with_flow p f a pos = mkBase HEmp p f a pos            (* pure formula has Empty heap *)
-and formula_of_pure_with_flow_htrue p f a pos = mkBase HTrue p f a pos            (* pure formula has HTRUE heap *)
+
+and formula_of_pure_with_flow_htrue p f a pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p f a pos            (* pure formula has HTRUE heap *)
+
 
 and one_formula_of_formula f =
   match f with
