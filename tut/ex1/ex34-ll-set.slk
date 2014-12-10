@@ -1,0 +1,67 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+//(1)
+checkentail x=null |- x::llSet<S>.
+print residue.
+
+
+//(4)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S>.
+print residue.
+// n=3
+
+//(4)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S> & S={b,a}.
+print residue.
+// n=3
+
+//(1)
+checkentail x=null |- x::llSet<S>.
+print residue.
+
+/*
+
+//(7)
+checkentail x::node<_,q>*q::ll<m> |- x::ll<n>.
+// what is the instantiation?
+print residue.
+
+//(8)
+checkentail x::ll<n> |- x::node<a,b>.
+// will this hold?
+
+//(9)
+checkentail x::ll<n> & n>4 |- x::node<a,b>.
+print residue.
+// will this hold? what is the residue?
+
+//(10)
+checkentail x::ll<n> |- n>=0.
+// will this hold?
+
+//(11)
+checkentail x::ll<n> |- n<0.
+// will this hold?
+
+//(12)
+checkentail x::ll<n> & x=null|- x=null.
+// will this hold?
+
+//(13)
+checkentail x::ll<n> & n<1|- x=null.
+// will this hold?
+
+//(14)
+checkentail x::ll<n> & n>1|- x=null.
+// will this hold?
+
+*/

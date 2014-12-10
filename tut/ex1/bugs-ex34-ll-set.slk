@@ -1,0 +1,25 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+
+/*
+# bugs-ex34-ll-set.slk -tp mona
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+Why did we get this error even when mona is being invoked?
+
+!!! init_tp : Using Z3 by default
+Starting z3... 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},S1)")
+ Formula: exists(S1:exists(v:S=union({v},S1)))
+
+*/
