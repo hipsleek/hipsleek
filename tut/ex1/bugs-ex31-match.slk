@@ -11,9 +11,10 @@ inv true.
 checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
 print residue.
 
+/*
 checkentail x::pair<1,2> |- [n] x::P<n>.
 print residue.
-
+*/
 /*
 # bugs-ex31-match.slk (urgent)
 

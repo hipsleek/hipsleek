@@ -2407,7 +2407,7 @@ let_decl:
 
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
-    (* | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f)) *)
+    | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
     | f = extended_l2   ->  MetaEForm (F.subst_stub_flow_struc n_flow f)
     | f=  disjunctive_constr     -> MetaEForm (F.formula_to_struc_formula (F.subst_stub_flow n_flow f))
     | f=  spec         -> MetaEForm f
