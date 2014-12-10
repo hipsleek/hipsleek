@@ -332,9 +332,10 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
+          (* let _ = print_endline ("prover:" ^ prover) in *)
           let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
-            if String.compare prover "mona" = 0 then "mona_inter"
-            else prover
+            if String.compare prover "mona" = 0 then "mona_inter" else
+             prover
           in
           let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
           if exit_code > 0 then
@@ -370,6 +371,7 @@ let set_tp tp_str =
   prover_arg := tp_str;
   (******we allow normalization/simplification that may not hold
   in the presence of floating point constraints*)
+  (* let _ = print_endline ("solver:" ^ tp_str) in *)
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in

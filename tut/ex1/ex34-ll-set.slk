@@ -12,56 +12,30 @@ checkentail x=null |- x::llSet<S>.
 print residue.
 
 
-//(4)
+//(2)
 checkentail x::node<a,q>*q::node<b,null> 
      |- x::llSet<S>.
 print residue.
-// n=3
 
-//(4)
+//(3)
 checkentail x::node<a,q>*q::node<b,null> 
      |- x::llSet<S> & S={b,a}.
 print residue.
-// n=3
 
-//(1)
-checkentail x=null |- x::llSet<S>.
+//(4)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S> & S={b}.
 print residue.
 
-/*
+//(5)
+checkentail x::llSet<S> & S!={} |- x::node<_,q>.
+print residue.
+
+//(6)
+checkentail x::llSet<S> & S={a} |- x::node<_,q1>*q1::node<_,q2>.
 
 //(7)
-checkentail x::node<_,q>*q::ll<m> |- x::ll<n>.
-// what is the instantiation?
-print residue.
+checkentail x::llSet<S> & S={a,b} |- x::node<_,q1>*q1::node<_,q2>.
 
 //(8)
-checkentail x::ll<n> |- x::node<a,b>.
-// will this hold?
-
-//(9)
-checkentail x::ll<n> & n>4 |- x::node<a,b>.
-print residue.
-// will this hold? what is the residue?
-
-//(10)
-checkentail x::ll<n> |- n>=0.
-// will this hold?
-
-//(11)
-checkentail x::ll<n> |- n<0.
-// will this hold?
-
-//(12)
-checkentail x::ll<n> & x=null|- x=null.
-// will this hold?
-
-//(13)
-checkentail x::ll<n> & n<1|- x=null.
-// will this hold?
-
-//(14)
-checkentail x::ll<n> & n>1|- x=null.
-// will this hold?
-
-*/
+checkentail x::llSet<S> & S={a,b} & a!=b |- x::node<_,q1>*q1::node<_,q2>.
