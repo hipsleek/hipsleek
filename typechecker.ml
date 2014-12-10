@@ -913,13 +913,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
 	              (spec_and_inferred_post,inferred_pre,inferred_rel,inferred_hp_rel, sel_hps, sel_post_hps, unk_map, r)
 	        with
-                  | Err.Ppf (e, ifk) ->
+                  | Err.Ppf (e, ifk, error_type) ->
                         (match ifk with
                           | 1 -> (* let _ = DD.info_hprint (add_str "must excp" (pr_id)) "xxx" no_pos in *)
                                 if CF.is_error_flow post_cond  then
                                   (spec, [],[],[],[],[], [], true) else
                                     let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
-                                    (Err.report_error1 e "bind failure exception")
+                                    (Err.report_error1 e (Err.get_error_type_str error_type) (*"bind failure exception"*))
                           | 3 ->
                                 if CF.is_top_flow post_cond then
                                   (spec, [],[],[],[],[],[], true) else
@@ -1720,7 +1720,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           raise (Err.Ppf ({
                               Err.error_loc = pos;
                               Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
-                          }, (*Failure_Must*) 1))
+                          }, (*Failure_Must*) 1, 0))
                         end
                       else
                         begin
@@ -2297,11 +2297,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           raise (Err.Ppf ({
                               Err.error_loc = pos;
                               Err.error_text = (to_print ^s (* ^ "\n" ^ (pr hprel_assumptions) *))
-                          }, match fk with
+                          }, (match fk with
                             | CF.Failure_Bot _ -> 0
                             | CF.Failure_Must _ -> 1
                             | CF.Failure_Valid -> 2
-                            | CF.Failure_May _ -> 3))
+                            | CF.Failure_May _ -> 3), 1))
                         else ()
                       else
                         begin
