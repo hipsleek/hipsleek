@@ -51,7 +51,7 @@ Why not a Cell not found error?
 
 Exception Failure("hd") Occurred!
 ==========================================================
-# ex3.slk
+# bugs-ex3.slk
 
 checkentail emp |- x::cell<n>@L.
 print residue.

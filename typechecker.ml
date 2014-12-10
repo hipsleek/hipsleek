@@ -396,8 +396,9 @@ CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) l
   let pr4 = Cprinter.string_of_spec_var_list in
   let pr5 = pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var (pr_list string_of_int)) Cprinter.string_of_xpure_view) in
   let pr3 = pr_octa pr1 pr2a  pr2 pr2b pr4 pr4 pr5 string_of_bool in
-  Debug.no_1 "check_specs_infer" pr1 pr3
-      (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer sp) sp
+  let pr_exp = Cprinter.string_of_exp in
+  Debug.no_2 "check_specs_infer" pr1 pr_exp pr3
+      (fun _ _ -> check_specs_infer_a prog proc ctx e0 do_infer sp) sp e0
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
