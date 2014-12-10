@@ -2658,7 +2658,10 @@ and elim_exists_ctx (ctx0:context) =
   Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
 and elim_ante_evars (es:entail_state) : context = 
-  let f = push_exists es.es_ante_evars es.es_formula in
+  let _ = Debug.binfo_hprint (add_str "elim ante_evars" Cprinter.string_of_spec_var_list) es.es_ante_evars no_pos in
+  let _ = Debug.binfo_hprint (add_str "elim gen_expl_vars" Cprinter.string_of_spec_var_list) es.es_gen_expl_vars no_pos in
+  let _ = Debug.binfo_hprint (add_str "elim evars" Cprinter.string_of_spec_var_list) es.es_evars no_pos in
+  let f = push_exists es.es_evars es.es_formula in
   let ef = elim_exists f in
   Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
