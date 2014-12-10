@@ -72,10 +72,10 @@ be in throw list?
 WARNING: ex5-acyclic.ss_12:10_12:17:the result type __norm#E is not covered by the throw list[]
 
 ==========================================================
-# ex2-leak.ss -dre "check_pre"
+# ex2-leak.ss -dre "check_specs_infer"
 
-Why is the check_pre_post method not traced?
-Isn't it called by check_proc?
+If @classic present, can we perform a "wrap_classic"
+for this check_specs_infer method?
 
 int foo()
   infer [@classic]
@@ -86,8 +86,17 @@ int foo()
   x=new cell(5);
   return x.val;
 }
+
+check_specs_infer@1
+check_specs_infer inp1 : EInfer @classic[]
+   EBase emp&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     emp&{FLOW,(4,5)=__norm#E}[]
+                     
+
 ==========================================================
-# bugs-ex9a.ss
+# bugs-ex9a.ss (FIXED by Chanh)
 
 There is no Term nor MayLoop proven for 
 this length method. Can we omit this message?
@@ -180,12 +189,14 @@ Post condition cannot be derived:
  xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
            self!=null)))
 ==========================================================
-# sim5-tail.ss
+# sim4-tail.ss (FIXED)
 
+  __norm should always be allowed to escape.
   Can we omit this message since __norm is allowable.
 
   WARNING: sim4-while.ss_14:13_14:47:the result type __norm#E is not 
   covered by the throw list[__Brk_top#E]
+
 ==========================================================
 # ex26-bubble-lemma.ss (not urgent)
 
