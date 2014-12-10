@@ -427,7 +427,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 
           (* Do boundedness check at recursive calls *)
           let estate =
-            if !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
+            if not !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
             then estate
             else
               let m = List.filter (fun e -> not (is_nat e) && 

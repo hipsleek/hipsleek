@@ -359,10 +359,10 @@ and check_bounded_term_x prog ctx post_pos =
   in 
 
   (* need to perform boundedness check at recursive call *)
-  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk 
-      || not (!Globals.term_bnd_pre_flag)) then (ctx, [])
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk || !Globals.term_bnd_pre_flag) 
+  then (ctx, [])
   else 
-    (* let ctx = Term.strip_lexvar_lhs ctx in *)
+    let ctx = TermUtils.strip_lexvar_lhs ctx in
     match ctx with
       | CF.Ctx es ->  
             let m = match es.CF.es_var_measures with
