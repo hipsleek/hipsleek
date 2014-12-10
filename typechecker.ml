@@ -3759,6 +3759,11 @@ let rec check_prog iprog (prog : prog_decl) =
             r
           end
       ) in
+      
+      let should_print_term_res = List.fold_left (fun acc proc ->
+        if not acc then CF.has_known_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top)
+        else acc) false scc in
+      let _ = if should_print_term_res then Term.term_check_output_scc () else () in
 
       let scc = if is_all_verified2 || not !Globals.sa_ex then scc
       else
@@ -3860,6 +3865,7 @@ let rec check_prog iprog (prog : prog_decl) =
             r@[proc]
           with _ -> r
       ) [] scc_ids in
+      let _ = Term.term_res_stk # reset in
       let n_verified_sccs = verified_sccs@[updated_scc] in
       (prog,n_verified_sccs)
   in
@@ -3984,7 +3990,7 @@ let rec check_prog iprog (prog : prog_decl) =
     else ()
   in
 
-  let _ = Term.term_check_output () in
+  (* let _ = Term.term_check_output () in *)
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)

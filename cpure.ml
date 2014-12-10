@@ -10039,6 +10039,19 @@ let has_unknown_pre_lexvar (f: formula) =
      List.exists idf has_unknown)
   in fold_formula f (nonef, f_b, nonef) f_comb
   
+let has_known_pre_lexvar (f: formula) =
+  let f_b bf =
+    let (pf, _) = bf in 
+    match pf with
+    | LexVar tinfo -> begin match tinfo.lex_ann with
+        | Term
+        | Loop _ -> Some true
+        | _ -> Some false end
+    | _ -> None
+  in
+  let f_comb = List.exists idf in
+  fold_formula f (nonef, f_b, nonef) f_comb
+  
 let collect_term_ann (f: formula) =
   let f_b bf =
     let (pf, _) = bf in 
