@@ -18,6 +18,7 @@ int foo()
   x=new cell(5);
   int r=x.val;
   free(x);
+  //dprint;
   free(x);
   return r;
 }
@@ -25,9 +26,16 @@ int foo()
 /*
 # ex3-double-free.ss
 
-Why did we have a List.hd exception?
-Why not a Cell not found error?
+Why is this called a bind-failure?
+I guess we should only call it a bind failure for
+field access x.field failure.
 
-Exception Failure("hd") Occurred!
+For pre-condition, maybe just use "pre-cond failure
+or unmatched node failure?
+
+Procedure foo$ FAIL.(2)
+Exception Failure("bind failure exception") Occurred!
+
+
 
 */

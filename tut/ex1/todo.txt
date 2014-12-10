@@ -32,7 +32,19 @@ Post condition cannot be derived:
   (must) cause:  x_1361::cell<v_int_14_1358>&v_int_14_1358=5 & 
 v_int_15_1342'=v_int_14_1358 & res=v_int_15_1342'&{FLOW,(4,5)=__norm#E}[]: residue is forbidden.(2)
 ==========================================================
-# ex3-double-free.ss
+# ex3-double-free.ss (FIXED)
+
+int foo()
+  requires true
+  ensures true;
+{
+  cell x;
+  x=new cell(5);
+  int r=x.val;
+  free(x);
+  free(x);
+  return r;
+}
 
 Why did we have a List.hd exception?
 Why not a Cell not found error?
@@ -40,6 +52,9 @@ Why not a Cell not found error?
 Exception Failure("hd") Occurred!
 ==========================================================
 # ex3.slk
+
+checkentail emp |- x::cell<n>@L.
+print residue.
 
 Should below be a must error?
 
@@ -199,6 +214,18 @@ Residue:
  <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
 [[ SEARCH ==>  Match(x,x) ==> ]]
 ==========================================================
+# ex3-double-free.ss
+
+Why is this called a bind-failure?
+I guess we should only call it a bind failure for
+field access x.field failure.
+
+For pre-condition, maybe just use "pre-cond failure
+or unmatched node failure?
+
+Procedure foo$ FAIL.(2)
+Exception Failure("bind failure exception") Occurred!
+
 ==========================================================
 ==========================================================
 ==========================================================
