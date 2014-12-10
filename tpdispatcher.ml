@@ -456,7 +456,7 @@ let set_tp tp_str =
     Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
 
 let init_tp () =
-  let _ = print_endline ("Hello..") in
+  (* WN : this seems to be invoked by sleek only *)
   let _ = (if !Globals.is_solver_local then
       let _ = Smtsolver.is_local_solver := true in
       let _ = Smtsolver.smtsolver_name := "z3" in
@@ -464,7 +464,7 @@ let init_tp () =
       let _ = Omega.omegacalc := "./oc" in
       ()
       else ()) in
-  let _ = print_endline ("!!! Using Z3 by default") in 
+  let _ = print_endline ("!!! init_tp : Using Z3 by default") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 

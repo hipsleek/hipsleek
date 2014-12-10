@@ -120,11 +120,20 @@ Procedure length$node SUCCESS.
 ==========================================================
 # ex17-ins-sort.ss
 
+Are they the same?
+
+chinwn@loris-7:~$ ls -l /usr/bin/mona
+-rwxr-xr-x 1 root root 460K Apr 23  2014 /usr/bin/mona
+chinwn@loris-7:~$ ls -l /usr/local/bin/mona*
+-rwxr-xr-x 1 root root 460K Sep  8 10:08 /usr/local/bin/mona_inter
+
+Also, init_tp is called by SLEEK but not HIP at the moment. Why?
+
 Which prover are we using? mona, z3 or oc?
  init_tp not executed?
 
 It seems that pure_tp="om" by default in tpdispatcher.ml.
-However, when we use -tp om, there is a error message 
+However, when we use -tp om, there is an error message 
 
 pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex17-ins-sort.ss -tp om
 WARNING : Command for starting the prover (mona) not found
@@ -163,7 +172,7 @@ Post condition cannot be derived:
   WARNING: sim4-while.ss_14:13_14:47:the result type __norm#E is not 
   covered by the throw list[__Brk_top#E]
 ==========================================================
-# ex26-bubble-lemma.ss
+# ex26-bubble-lemma.ss (not urgent)
 
 Any idea why mona has "cycle-limit reached"?
 Can we increase it? Is it during SAT checking?
@@ -174,6 +183,10 @@ Mona is restarting ... cycle limit reached
 Mona is restarting ... cycle limit reached
 Procedure bubble$node SUCCESS.
 ==========================================================
+# bugs-ex13.slk (not urgent)
+
+Could we have a warning to indicate that p::dll<self> is
+unreachable?
 ==========================================================
 ==========================================================
 ==========================================================
