@@ -16,7 +16,6 @@ node append(node x, node y)
   requires x::dll<a> * y::dll<b> 
   ensures res::dll<_>;
 
-
 node flatten(node x)
      requires x::tree<> 
      ensures  res::dll<null> & res=x;

@@ -37,8 +37,6 @@ checkentail x::pair<1,2> * x::pair<3,4> |- false.
 
 // Will this hold?
 checkentail x::pair<1,2> * y::pair<1,2> |- x!=y.
-print residue.
 
 // Will this hold?
 checkentail x::pair<1,2> * y::pair<1,2> |- x=y.
-print residue.
