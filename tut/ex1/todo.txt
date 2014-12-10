@@ -321,6 +321,24 @@ Why I am getting this?
 Two days ago, we have just:
   <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
 ==========================================================
+# bugs-ex33-ll-size.slk
+
+Why explicit instantiation not working for predicate!
+Can trace why gen_expl_vars is empty?
+
+!!! elim ante_evars:[n]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+
+Entail 1: Valid. 
+Residue:
+ <1>emp&x=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+Good to trace with -dd gave:
+ es_gen_expl_vars: [n]
+ es_gen_impl_vars: [n]
+
 ==========================================================
 ==========================================================
 ==========================================================
