@@ -51,7 +51,7 @@ Why not a Cell not found error?
 
 Exception Failure("hd") Occurred!
 ==========================================================
-# bugs-ex3.slk
+# bugs-ex3.slk (FIXED)
 
 checkentail emp |- x::cell<n>@L.
 print residue.
@@ -64,7 +64,7 @@ Residue:
  <1>emp&{FLOW,(4,8)=__MayError#E}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 ==========================================================
-# ex5-acyclic.ss
+# ex5-acyclic.ss (FIXED)
 
 Why is there such a message? I think norm should be assumed to
 be in throw list?
@@ -142,7 +142,7 @@ Checking procedure length$node...
 Procedure length$node SUCCESS.
 
 ==========================================================
-# ex17-ins-sort.ss
+# ex17-ins-sort.ss (FIXED)
 
 Are they the same?
 
@@ -238,7 +238,46 @@ Procedure foo$ FAIL.(2)
 Exception Failure("bind failure exception") Occurred!
 
 ==========================================================
+# bugs-ex34-ll-set.slk -tp mona (FIXED)
+
+pred llSet<S> # bugs-ex34-ll-set.slk -tp mona (not urgent)
+
+checkentail x::node<a,q>*q::node<b,null> |- x::llSet<S>.
+
+Why are the formulae duplicated?
+
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+
+== emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+Why did we get this error even when mona is being invoked?
+I dont think hip has this problem.
+
+!!! init_tp : Using Z3 by default
+Starting z3... 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},S1)")
+ Formula: exists(S1:exists(v:S=union({v},S1)))
 ==========================================================
+# bugs-ex34-ll-set.slk -tp mona (not urgent)
+
+checkentail x::node<a,q>*q::node<b,null> |- x::llSet<S>.
+
+Why are the formulae duplicated?
+
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_16_43=null & v_54=a & q_55=q & v_59=b & q_60=flted_16_43 
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+& S=union({v_54},S1_56)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_55) ==>  COND ==>  BaseCaseFold ==> ]]
 ==========================================================
 ==========================================================
 ==========================================================
