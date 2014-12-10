@@ -224,6 +224,11 @@ print residue.
 Residue:
  <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
 [[ SEARCH ==>  Match(x,x) ==> ]]
+
+//LOC
+line 253 of sleekcore.ml eliminates evars formulas
+let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+
 ==========================================================
 # ex3-double-free.ss: FIXED
 

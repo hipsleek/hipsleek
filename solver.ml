@@ -9090,7 +9090,11 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         List.combine r_args l_args
       with _ -> [] (*matching with cyclic proof is not the same predicate*)
       in (* without branch label *)
-      (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+      let to_ante = List.fold_left (fun acc_p p -> CP.mkAnd acc_p p no_pos) (CP.mkTrue no_pos)
+        (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0)
+        (* CP.mkTrue no_pos *)
+      in
+      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),CP.mkTrue no_pos)
 
   end
 
@@ -9633,7 +9637,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in*)
               let rho = try
                 List.combine rho_0 label_list
-              with _ -> [] (*matching with cyclic proof is not the same predicate*)
+              with _ ->
+                  [] (*matching with cyclic proof is not the same predicate*)
               in (* with branch label *)
               let evars,ivars,impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in
               (*impl_tvars are impl_vars that are replaced by ivars in rho. 
