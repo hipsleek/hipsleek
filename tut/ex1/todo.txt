@@ -225,7 +225,7 @@ Residue:
  <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
 [[ SEARCH ==>  Match(x,x) ==> ]]
 ==========================================================
-# ex3-double-free.ss
+# ex3-double-free.ss: FIXED
 
 Why is this called a bind-failure?
 I guess we should only call it a bind failure for
