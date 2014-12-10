@@ -11840,7 +11840,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
                                   (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
                                   let root = Cformula.get_ptr_from_data rhs in
-                                  if CP.mem_svl root lhs_null_ptrs then
+                                  if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
                                     let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
                                     CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
