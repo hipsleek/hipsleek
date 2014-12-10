@@ -7,7 +7,7 @@ bool rand()
   ensures !res or res;
 
 int foo()
-  infer [@classic]
+  //infer [@classic]
   requires emp  ensures emp;
 {
   cell x;
@@ -16,16 +16,7 @@ int foo()
 }
 
 /*
-# ex2-leak.ss 
-
-We obtain:
-
-Procedure foo$ FAIL.(2)
-Exception Failure("bind failure exception") Occurred!
-
-EXPECT:
-  memory leak error.
-
+# ex2-leak.ss --classic
 
 We obtained a post-cond failure:
 

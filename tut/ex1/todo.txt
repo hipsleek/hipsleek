@@ -72,7 +72,7 @@ be in throw list?
 WARNING: ex5-acyclic.ss_12:10_12:17:the result type __norm#E is not covered by the throw list[]
 
 ==========================================================
-# ex2-leak.ss -dre "check_specs_infer"
+# ex2-leak.ss -dre "check_specs_infer"  (DONE)
 
 If @classic present, can we perform a "wrap_classic"
 for this check_specs_infer method?
@@ -292,6 +292,22 @@ Residue:
 
   <1>x::ll{}<n>@L&2<n & m=n & m=n&{FLOW,(4,5)=__norm#E}[]
 ==========================================================
+# ex2-leak.ss 
+
+We obtain:
+
+Procedure foo$ FAIL.(2)
+Exception Failure("bind failure exception") Occurred!
+
+EXPECT:
+  memory leak error.
+
+In contrast:
+  hig bugs-ex2-leak.ss --classic
+gave the correct error message:
+
+Exception Failure("memory leak failure.") Occurred!
+
 ==========================================================
 ==========================================================
 ==========================================================
