@@ -214,7 +214,7 @@ Procedure bubble$node SUCCESS.
 Could we have a warning to indicate that p::dll<self> is
 unreachable?
 ==========================================================
-# bugs-ex31-match.slk (urgent)
+# bugs-ex31-match.slk (urgent): FIXED
 
 Why is explicit instantiation not working?
 

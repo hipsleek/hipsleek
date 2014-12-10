@@ -249,9 +249,10 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
           Solver.heap_entail_struc_init cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
       in
-      let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in
-      let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-      let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in
+      (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
+      (* tut/ex1/bugs-ex31-match.slk *)
+      let rs = (* CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) *) rs1 in
+      (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
       (* flush stdout; *)
       let res =
         if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
