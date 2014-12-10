@@ -3,17 +3,22 @@ data pair {
   int snd;
 }.
 
+/*
 // implicit instantiation
 checkentail x::pair<1,2> |- x::pair<a,b>.
 print residue.
+*/
+
 /*
   <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
 */
 
 
+/*
 // existential instantiation
 checkentail x::pair<1,2> |- (exists a,b: x::pair<a,b>).
 print residue.
+*/
 /*
  <1>emp&flted_11_30=1 & flted_11_29=2&{FLOW,(4,5)=__norm#E}[]
 [[ SEARCH ==>  Match(x,x) ==> ]]
@@ -35,7 +40,8 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==> ]]
 
 */
-
+/*
 // explicit instantiation (prove, then instantiate)
 checkentail x::pair<1,2> |- [a,b] x::pair<a,b> & a>0.
 print residue.
+*/

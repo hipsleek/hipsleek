@@ -332,7 +332,10 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
-          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else prover in
+          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
+            if String.compare prover "mona" = 0 then "mona_inter"
+            else prover
+          in
           let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
           if exit_code > 0 then
             if  (Sys.file_exists prover) then
