@@ -3,13 +3,30 @@ data node {
   node next;
 }.
 
+/*
 pred lseg<n,p> == emp & self=p & n=0
   or self::node<_,q>*q::lseg<n-1,p>
   inv n>=0.
+*/
 
+pred lseg<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_, q> * q::lseg<n - 1, p>;
+ } inv n >= 0.
+
+/*
 pred ls_nt<n,p> == emp & self=p & n=0
   or self::node<_,q>*q::ls_nt<n-1,p> & self!=p
   inv n>=0.
+*/
+
+pred ls_nt<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_, q> * q::ls_nt<n - 1, p> & self!=p;
+ } inv n >= 0.
+// why cannot use self=p; self!=p in case-spec?
 
 lemma_safe "lseg-combine" self::lseg<n,p> <- 
          self::lseg<a,q>*q::lseg<b,p> & n=a+b.
