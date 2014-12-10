@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == emp & self=null
+  or self::node<_,q>*q::ll<>
+  inv true;
+
+checkentail x=null |- x::ll<>.
+
+// folding
+checkentail x::node<1,qq>*q::ll<> |- x::ll<>.
+
+checkentail x::node<1,qq> |- x::ll<>.
+
+checkentail x::node<1,null> |- x::ll<>.
+
+checkentail x::node<1,q>*q::node<2,null> |- x::ll<>.
+
+checkentail x::ll<> |- x::node<a,b>.
+
+checkentail x::ll<> & x=null |- x::node<a,b>.
+
+// unfolding
+checkentail x::ll<> & x!=null |- x::node<a,b>.
+print residue.
+
+
+
+
