@@ -9093,9 +9093,9 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         List.combine r_args l_args
       with _ -> [] (*matching with cyclic proof is not the same predicate*)
       in (* without branch label *)
-      let to_ante = List.fold_left (fun acc_p p -> CP.mkAnd acc_p p no_pos) (CP.mkTrue no_pos)
-        (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0)
-        (* CP.mkTrue no_pos *)
+      let to_ante =(*  List.fold_left (fun acc_p p -> CP.mkAnd acc_p p no_pos) (CP.mkTrue no_pos) *)
+        (* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *)
+        CP.mkTrue no_pos
       in
       (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),CP.mkTrue no_pos)
 
