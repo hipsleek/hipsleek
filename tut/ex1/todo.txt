@@ -292,7 +292,7 @@ Residue:
 
   <1>x::ll{}<n>@L&2<n & m=n & m=n&{FLOW,(4,5)=__norm#E}[]
 ==========================================================
-# ex2-leak.ss 
+# ex2-leak.ss : FIXED
 
 We obtain:
 
