@@ -339,6 +339,15 @@ Good to trace with -dd gave:
  es_gen_expl_vars: [n]
  es_gen_impl_vars: [n]
 
+bugs-ex33-ll-size.slk --pcp
+
+The translation places explicit nnn as both explicit
+and implicit. I think this is incorrect.
+
+ ### ante =  emp&x=null&{FLOW,(4,5)=__norm#E}[]
+ ### conseq =  EBase exists (Expl)[nnn](Impl)[nnn](ex)[]x::ll{}<nnn>&
+       {FLOW,(4,5)=__norm#E}[]
+
 ==========================================================
 ==========================================================
 ==========================================================
