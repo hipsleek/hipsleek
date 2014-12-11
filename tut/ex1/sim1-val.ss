@@ -18,11 +18,3 @@ int main()
   assert xx'=10;
   return xx;
 }
-
-/*
-# ex1-null.ss
-
-
-
-
-*/

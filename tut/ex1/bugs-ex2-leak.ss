@@ -7,7 +7,7 @@ bool rand()
   ensures !res or res;
 
 int foo()
-  //infer [@classic]
+  //infer [@leak]
   requires emp  ensures emp;
 {
   cell x;

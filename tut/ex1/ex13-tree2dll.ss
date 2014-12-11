@@ -1,26 +1,26 @@
-data node {
+data node2 {
   int val;
-  node left;
-  node right;
+  node2 left;
+  node2 right;
 }
 
 tree<> == emp & self=null 
-  or self::node<_,p,q>*p::tree<>*q::tree<> 
+  or self::node2<_,p,q>*p::tree<>*q::tree<> 
   inv true;
 
 dll<pr> == emp & self=null 
-  or self::node<_,pr,q>*q::dll<self> 
+  or self::node2<_,pr,q>*q::dll<self> 
   inv true;
 
-node append(node x, node y)
+node2 append(node2 x, node2 y)
   requires x::dll<a> * y::dll<b> 
   ensures res::dll<_>;
 
-node flatten(node x)
+node2 flatten(node2 x)
      requires x::tree<> 
      ensures  res::dll<null> & res=x;
 {
-	node tmp;
+	node2 tmp;
         if (x==null) return x;
         tmp = append(flatten(x.left),flatten(x.right));
 	x.left = null;

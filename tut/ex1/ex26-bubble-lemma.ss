@@ -57,14 +57,6 @@ void bsort(node xs)
 /*
 # ex26-bubble-lemma.ss
 
-Any idea why mona has "cycle-limit reached"?
-Can we increase it? Is it during SAT checking?
-
-Checking procedure bubble$node... 
-Mona is restarting ... cycle limit reached
-
-Mona is restarting ... cycle limit reached
-Procedure bubble$node SUCCESS.
 */
 
 

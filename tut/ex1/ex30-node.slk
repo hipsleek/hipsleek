@@ -14,16 +14,3 @@ checkentail true |- x::node<_,_>.
 
 checkentail emp |- x::node<_,_>.
 // must-fail
-
-/*
-# ex30-node.slk (urgent)
-
-  must/may failures
-
-below give may failure which is incorrect.
-
-checkentail emp |- x::node<_,_>.
-// must-fail
-
-
-*/

@@ -8,7 +8,7 @@ ll<> == emp & self=null
   inv true;
 
 int length(node x)
-  infer[@classic]
+  infer[@leak]
   requires x::ll<>
   ensures emp;
 {
@@ -16,9 +16,4 @@ int length(node x)
   else return 1+length(x.next);
 }
 
-/*
-# ex6-acyclic-leak.ss
 
-@classic option?
-
- */

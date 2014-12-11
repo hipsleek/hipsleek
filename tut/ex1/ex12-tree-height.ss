@@ -1,11 +1,11 @@
-data node {
+data node2 {
   int val;
-  node left;
-  node right;
+  node2 left;
+  node2 right;
 }
 
 tree<h> == emp & self=null & h=0
-  or self::node<_,p,q>*p::tree<h1>*q::tree<h2> & h=1+max(h1,h2)
+  or self::node2<_,p,q>*p::tree<h1>*q::tree<h2> & h=1+max(h1,h2)
   inv h>=0;
 
 
@@ -13,7 +13,7 @@ int max2(int x,int y)
   requires true
   ensures res=max(x,y);
 
-int height(node x)
+int height(node2 x)
   requires x::tree<h>
   ensures x::tree<h> & res=h;
 {
@@ -24,7 +24,7 @@ int height(node x)
 }
 
 avl<h> == emp & self=null & h=0
-  or self::node<_,p,q>*p::avl<h1>*q::avl<h2> & h=1+max(h1,h2)
+  or self::node2<_,p,q>*p::avl<h1>*q::avl<h2> & h=1+max(h1,h2)
   & -1<=h1-h2<=1 // near balanced property..
   inv h>=0;
 

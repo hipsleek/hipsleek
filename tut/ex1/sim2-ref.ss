@@ -19,10 +19,3 @@ int main()
   return xx;
 }
 
-/*
-# sim2-ref.ss
-
-
-
-
-*/

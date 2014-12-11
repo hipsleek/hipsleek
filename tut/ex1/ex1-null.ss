@@ -24,6 +24,4 @@ int foo()
 # ex1-null.ss
 
 
-
-
 */

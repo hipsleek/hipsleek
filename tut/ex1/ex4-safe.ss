@@ -14,11 +14,3 @@ int foo()
   x=new cell(5);
   return x.val;
 }
-
-/*
-# ex1-null.ss
-
-
-
-
-*/

@@ -19,11 +19,4 @@ int foo(int x)
   return r;
 }
 
-/*
-# sim4-while.ss
 
-  Can we omit this message since __norm is allowable.
-
-  WARNING: sim4-while.ss_14:13_14:47:the result type __norm#E is not 
-  covered by the throw list[__Brk_top#E]
-*/

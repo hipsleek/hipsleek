@@ -18,27 +18,5 @@ int foo()
 /*
 # ex2-leak.ss 
 
-We obtain:
-
-Procedure foo$ FAIL.(2)
-Exception Failure("bind failure exception") Occurred!
-
-EXPECT:
-  memory leak error.
-
-
-We obtained a post-cond failure:
-
-Procedure foo$ FAIL.(2)
-Exception Failure("Post condition cannot be derived.") Occurred!
-
-I wonder if we can change it to a:
-
-  "memory leak failure : residue forbiddne"
-
-Checking procedure foo$... 
-Post condition cannot be derived:
-  (must) cause:  x_1361::cell<v_int_14_1358>&v_int_14_1358=5 & 
-v_int_15_1342'=v_int_14_1358 & res=v_int_15_1342'&{FLOW,(4,5)=__norm#E}[]: residue is forbidden.(2)
 
 */

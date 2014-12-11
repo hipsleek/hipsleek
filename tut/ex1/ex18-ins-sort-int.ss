@@ -31,10 +31,3 @@ node insert(node x, node y)
       return y;
     }
 }
-
-/*
-# ex18-ins-sort-int.ss
-
-Can we handle arbitrary null case?
-
-*/
