@@ -529,18 +529,3 @@ int rand_int ()
 bool rand_bool ()
   requires true
   ensures res or !res;
-
-void_star __builtin_alloca(int size)
-  case {
-    size <= 0 -> requires true ensures res = null;
-    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
-  }
-
-/**************************/
-/*** Pointer Arithmetic ***/
-/**************************/
-int lt___(int_star p, int_star q)
-  requires p::int_star<vp, op> * q::int_star<vq, oq>
-  case {
-    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res > 0;
-    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res <= 0; }
