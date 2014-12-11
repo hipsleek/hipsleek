@@ -178,7 +178,7 @@ module Token = struct
     | INFER_AT_TERM -> "@term"
     | INFER_AT_PRE -> "@pre"
     | INFER_AT_POST -> "@post"
-    | INFER_AT_CLASSIC -> "@classic"
+    | INFER_AT_CLASSIC -> "@leak"
     | INFER_AT_IMM -> "@imm"
     | INFER_AT_SHAPE -> "@shape"
     | INFER_AT_FLOW -> "@flow"
