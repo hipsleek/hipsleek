@@ -14,7 +14,7 @@ ls_nt<p> == emp & self=p
 
 /* possibly touching list segment */
 ls<p> == emp & self=p
-  or self::node<_,q>*q::ls<p> & self!=p
+  or self::node<_,q>*q::ls<p>
   inv true;
 
 int length(node x)

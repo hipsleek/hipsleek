@@ -8346,8 +8346,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           (* Debug.info_hprint (add_str "impl" !print_svl) estate.es_gen_impl_vars no_pos; *)
           (* Debug.info_hprint (add_str "expl" !print_svl) estate.es_gen_expl_vars no_pos; *)
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
-          Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos;
-          Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos;
+          (* Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
+          (* Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos; *)
 	      let res_es = {estate with es_formula = res_delta;
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
