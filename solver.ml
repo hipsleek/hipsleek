@@ -3614,12 +3614,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let rec get_pure_conseq_from_formula f =
       match f with
         | Or fo ->
-              let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
               let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
               let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
               CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
         | _  ->
-              let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
               let _,p,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
     in
     let flatten_struc sf = CF.flatten_struc_formula sf in
@@ -7984,7 +7984,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
-      let _ = Debug.info_hprint (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
+      let _ = Debug.tinfo_hprint (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let (split_ante1_sym, _) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
@@ -8346,8 +8346,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           (* Debug.info_hprint (add_str "impl" !print_svl) estate.es_gen_impl_vars no_pos; *)
           (* Debug.info_hprint (add_str "expl" !print_svl) estate.es_gen_expl_vars no_pos; *)
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
-          Debug.info_hprint (add_str "to_remove" !print_svl) to_remove no_pos;
-          Debug.info_hprint (add_str "to_keep" !print_svl) to_keep no_pos;
+          Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos;
+          Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos;
 	      let res_es = {estate with es_formula = res_delta;
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

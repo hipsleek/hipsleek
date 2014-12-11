@@ -30,10 +30,4 @@ checkentail x::ll<n>@L & n>2 |- x::ll<m>@M & m>1.
 checkentail x::ll<n>@L & n>2 |- x::ll<m>@L & m>1.
 // any residue?
 print residue.
-/*
-# ex37-ll-imm.slk
 
-  duplicated formula m=n..
-
-  <1>x::ll{}<n>@L&2<n & m=n & m=n&{FLOW,(4,5)=__norm#E}[]
-*/
