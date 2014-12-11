@@ -658,7 +658,7 @@ let process_source_list source_files =
       let parser = 
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
-        else "default"
+        else (* "default" *) !Parser.parser_name
       in 
       let _ = Parser.parser_name := parser in
       List.map process_source_full source_files
