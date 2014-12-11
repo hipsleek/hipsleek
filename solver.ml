@@ -7748,8 +7748,8 @@ and subst_rel_by_def_mix rel_w_defs mf =
 
 and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs
+  Debug.no_4_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula string_of_bool pr
+      (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
@@ -7860,6 +7860,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
   (* Collect relational definitions *)
   let rel_args = CP.get_rel_args (MCP.pure_of_mix rhs_p) in
+  (* let _ = Debug.info_hprint (add_str "estate_orig.CF.es_evars" Cprinter.string_of_spec_var_list) estate_orig.CF.es_evars no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "estate_orig.CF.es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate_orig.CF.es_gen_expl_vars no_pos in *)
   let lhs_p2 = if CP.intersect_svl rel_args estate_orig.CF.es_evars <> [] then
         let eqs = MCP.ptr_equations_without_null rhs_p in
         let eq_p = CP.get_eqs_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args no_pos in
@@ -7982,6 +7984,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+      let _ = Debug.info_hprint (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let (split_ante1_sym, _) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
@@ -8343,7 +8346,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           (* Debug.info_hprint (add_str "impl" !print_svl) estate.es_gen_impl_vars no_pos; *)
           (* Debug.info_hprint (add_str "expl" !print_svl) estate.es_gen_expl_vars no_pos; *)
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
-          (* Debug.info_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
+          Debug.info_hprint (add_str "to_remove" !print_svl) to_remove no_pos;
+          Debug.info_hprint (add_str "to_keep" !print_svl) to_keep no_pos;
 	      let res_es = {estate with es_formula = res_delta;
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

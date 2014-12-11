@@ -13,6 +13,7 @@ print residue.
 
 // (2)
 //checkentail x::node<_,q>*q::node<_,null> |- [n] x::ll<n>.
+//print residue.
 
 /*
 # bugs-ex33-ll-size.slk

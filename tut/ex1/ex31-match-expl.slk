@@ -18,6 +18,9 @@ print residue.
 [[ SEARCH ==>  Match(x,x) ==> ]]
 */
 
+// (3) explicit instantiation
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
 
 // instantiate, then prove
 checkentail x::pair<1,2> |- x::pair<a,b> & a>5.
