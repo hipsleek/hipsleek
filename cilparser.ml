@@ -2263,20 +2263,8 @@ let process_one_file (cil: Cil.file) : unit =
   let _ = print_endline (Iprinter.string_of_program prog) in 
   ()
 
-
-let parse_hip (filename: string) : Iast.prog_decl =
-  (* do the preprocess by GCC first *)
-  let prep_filename = filename ^ ".prep" in
-  let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
-  if not !Globals.compete_mode then (
-    print_endline ("GCC Preprocessing...");
-    print_endline cmd;
-  );
-  let exit_code = Sys.command cmd in
-  if (exit_code != 0) then
-    report_error no_pos "GCC Preprocessing failed!";
-  (* then use CIL to parse the preprocessed file *)
-  let cil = parse_one_file prep_filename in
+let parse_prep (filename: string): Iast.prog_decl = 
+  let cil = parse_one_file filename in
   if !Cilutil.doCheck then (
     ignore (Errormsg.log "First CIL check\n");
     if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (
@@ -2295,6 +2283,40 @@ let parse_hip (filename: string) : Iast.prog_decl =
   );
   (* finally, translate cil to iast *)
   let prog = translate_file cil in
+  prog
+
+let parse_hip (filename: string) : Iast.prog_decl =
+  (* do the preprocess by GCC first *)
+  let prep_filename = filename ^ ".prep" in
+  let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
+  if not !Globals.compete_mode then (
+    print_endline ("GCC Preprocessing...");
+    print_endline cmd;
+  );
+  let exit_code = Sys.command cmd in
+  if (exit_code != 0) then
+    report_error no_pos "GCC Preprocessing failed!";
+  (* then use CIL to parse the preprocessed file *)
+  (* let cil = parse_one_file prep_filename in                            *)
+  (* if !Cilutil.doCheck then (                                           *)
+  (*   ignore (Errormsg.log "First CIL check\n");                         *)
+  (*   if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (  *)
+  (*     Errormsg.bug ("CIL's internal data structures are inconsistent " *)
+  (*                   ^^ "(see the warnings above).  This may be a bug " *)
+  (*                   ^^ "in CIL.\n")                                    *)
+  (*   )                                                                  *)
+  (* );                                                                   *)
+  (* if (!Globals.print_cil_input) then (                                 *)
+  (*   print_endline "";                                                  *)
+  (*   print_endline ("***********************************");             *)
+  (*   print_endline ("********* input cil file **********");             *)
+  (*   print_endline (string_of_cil_file cil);                            *)
+  (*   print_endline ("******** end of cil file **********");             *)
+  (*   print_endline "";                                                  *)
+  (* );                                                                   *)
+  (* (* finally, translate cil to iast *)                                 *)
+  (* let prog = translate_file cil in                                     *)
+  let prog = parse_prep prep_filename in
   (* and clean temp files *)
   let cmd = ("rm " ^ prep_filename) in
   let _ = Sys.command cmd in

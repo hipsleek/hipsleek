@@ -40,26 +40,29 @@ let parse_file_full file_name (primitive: bool) =
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
-      if primitive or (!Parser.parser_name = "default") then
-        (* always parse primitive files by default parser *)
-        "default" 
-      else if (!Parser.parser_name = "default") then
-        (* default parser is indicated in command line parameter *)
-        "default"
-      else if (!Parser.parser_name = "cil") then
-        (* cil parser is indicated in command line parameter *)
-        "cil"
-      else (
-        (* no parser is indicated, decide to use which ones by file name extension  *)
-        (* let index = try String.rindex file_name '.' with _ -> 0 in              *)
-        (* let length = (String.length file_name) - index in                       *)
-        (* let ext = String.lowercase(String.sub file_name index length) in        *)
-        (* if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then *)
-        (*   "cil"                                                                 *)
-        (* else if(ext = ".java") then "joust"                                     *)
-        (* else "default"                                                          *)
-        "default"
-      )
+      (* if primitive or (!Parser.parser_name = "default") then                           *)
+      (*   (* always parse primitive files by default parser *)                           *)
+      (*   "default"                                                                      *)
+      (* else if (!Parser.parser_name = "default") then                                   *)
+      (*   (* default parser is indicated in command line parameter *)                    *)
+      (*   "default"                                                                      *)
+      (* else if (!Parser.parser_name = "cil") then                                       *)
+      (*   (* cil parser is indicated in command line parameter *)                        *)
+      (*   "cil"                                                                          *)
+      (* else (                                                                           *)
+      (*   (* no parser is indicated, decide to use which ones by file name extension  *) *)
+      (*   (* The below code has been moved to process_source_list                    *)  *)
+      (*   (* let index = try String.rindex file_name '.' with _ -> 0 in              *)  *)
+      (*   (* let length = (String.length file_name) - index in                       *)  *)
+      (*   (* let ext = String.lowercase(String.sub file_name index length) in        *)  *)
+      (*   (* if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then *)  *)
+      (*   (*   "cil"                                                                 *)  *)
+      (*   (* else if(ext = ".java") then "joust"                                     *)  *)
+      (*   (* else "default"                                                          *)  *)
+      (*   "default"                                                                      *)
+      (* )                                                                                *)
+      if primitive then "default"
+      else !Parser.parser_name
     ) in
     (* start parsing *)
     if not primitive then
@@ -70,6 +73,9 @@ let parse_file_full file_name (primitive: bool) =
     let prog = (
       if parser_to_use = "cil" then
         let cil_prog = Cilparser.parse_hip file_name in
+        cil_prog
+      else if parser_to_use = "cil-i" then
+        let cil_prog = Cilparser.parse_prep file_name in
         cil_prog
       else
         (* if parser_to_use = "joust" then                                                        *)
@@ -658,6 +664,7 @@ let process_source_list source_files =
       let parser = 
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
+        else if (ext = ".i") then "cil-i"
         else "default"
       in 
       let _ = Parser.parser_name := parser in
