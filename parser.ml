@@ -25,7 +25,7 @@ module LO2 = Label_only.Lab2_List
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
 (* some variables and functions decide which parser will be used *)
-let parser_name = ref "unknown"
+let parser_name = (* ref "unknown" *) ref "default"
 
 let set_parser name =
   parser_name := name
