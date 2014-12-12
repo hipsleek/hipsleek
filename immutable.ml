@@ -2246,7 +2246,7 @@ let rec merge_alias_nodes_struc_formula prog f xpure conseq unfold_fun =
     match f with
       | EBase f ->
             let (ee, ei) = (f.formula_struc_exists, f.formula_struc_explicit_inst) in
-            let quantif = if conseq then ee@ei(* @f.formula_struc_implicit_inst *) else [] in
+            let quantif = if conseq then ee@ei@f.formula_struc_implicit_inst else [] in
             EBase {f with
                 formula_struc_base =  merge_alias_nodes_formula prog f.formula_struc_base quantif xpure unfold_fun}
       | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) l)

@@ -1901,7 +1901,7 @@ my $inv = '--inv-test';
                       ["imm-field/sleek05.slk", " --field-imm --etcsu1 ", (), "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["imm/norm/norm1.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["imm/norm/norm2.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid."],
-                      ["imm/norm/norm3.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid."],
+                      ["imm/norm/norm3.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid."],
                       ["imm/norm/norm4.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Fail.Fail."],
                       ["imm/norm/norm5.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
                       ["imm/norm/norm6.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],

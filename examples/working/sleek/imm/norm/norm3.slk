@@ -54,7 +54,7 @@ expect Valid.
 //9
 checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<m+1>.
 print residue.
-expect Fail.
+expect Valid.
 
 //10
 checkentail x::ll<n> * y::lle<>@A &x=y |- x::lle<>.

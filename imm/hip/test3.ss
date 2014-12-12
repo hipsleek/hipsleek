@@ -53,7 +53,7 @@ void goo_lend(int x, int y, int z, node s)
 {
   assume s::ls<null,@M,@M>;
   node i1, i2, tmp;
-  // dprint;
+   dprint;
   s = push(s,x);
   i1 = iterator(s);
   s = push(s,y);
