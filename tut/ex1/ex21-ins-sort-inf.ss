@@ -35,16 +35,4 @@ node insert(node x, node y)
 /*
 # ex21-ins-sort-inf.ss --en-inf
 
-Can we handle arbitrary null case?
-
-Checking procedure insert$node~node... 
-Post condition cannot be derived:
-  (may) cause:  (((x=1 & null=2) | (x=1 & null=null & mm=\inf))) 
-      & v<=(\inf) |-  v=min(v,mm). LOCS:[23;17;21;0;13;12;19] (may-bug)
-
- Is this lsortI xpure correct
-
- xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
-           self!=null)))
- 
 */

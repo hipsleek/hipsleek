@@ -22,12 +22,4 @@ int foo()
   return r;
 }
 
-/*
-# ex3-double-free.ss
 
-Why did we have a List.hd exception?
-Why not a Cell not found error?
-
-Exception Failure("hd") Occurred!
-
-*/

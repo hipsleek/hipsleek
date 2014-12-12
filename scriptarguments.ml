@@ -277,7 +277,10 @@ let common_arguments = [
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
-  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
+  ("--en-inf", Arg.Unit (fun _ ->
+               Globals.allow_inf:=true;
+               Globals.deep_split_disjuncts:=true
+               ),"enable support for infinity (tgt with --dsd) ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");

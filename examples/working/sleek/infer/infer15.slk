@@ -43,9 +43,14 @@ print residue.
 */
 
 // (7)
+/*
 infer [n] x::ll<n> |- case {
            x=null -> ensures true;
            x!=null -> ensures x::node<_,q>*q::node<_,null>; }.
+*/
+infer [n] x::ll<n> |- case {
+           x=null -> [] true;
+           x!=null -> [] x::node<_,q>*q::node<_,null>; }.
 print residue.
 
 

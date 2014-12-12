@@ -372,6 +372,7 @@ let main () =
     | _ -> 
           begin
             dummy_exception();
+            let _ = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
             print_endline "SLEEK FAILURE (END)";
             Log.last_cmd # dumping "sleek_dumEND)";
           end
@@ -418,14 +419,14 @@ let sleek_proof_log_Z3 src_files =
 
 let _ =
   wrap_exists_implicit_explicit := false ;
-  process_cmd_line ();
   Tpdispatcher.init_tp();
+  process_cmd_line ();
   let _ = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
-    (* let _ = record_backtrace_quite () in *)
+    let _ = record_backtrace_quite () in
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)

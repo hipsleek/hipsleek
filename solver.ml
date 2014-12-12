@@ -2658,9 +2658,14 @@ and elim_exists_ctx (ctx0:context) =
   Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
 and elim_ante_evars (es:entail_state) : context = 
-  let f = push_exists es.es_ante_evars es.es_formula in
-  let ef = elim_exists f in
-  Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
+  let _ = Debug.tinfo_hprint (add_str "elim ante_evars" Cprinter.string_of_spec_var_list) es.es_ante_evars no_pos in
+  let _ = Debug.tinfo_hprint (add_str "elim gen_expl_vars" Cprinter.string_of_spec_var_list) es.es_gen_expl_vars no_pos in
+  let _ = Debug.tinfo_hprint (add_str "elim evars" Cprinter.string_of_spec_var_list) es.es_evars no_pos in
+  if es.es_evars==[] then Ctx es
+  else 
+    let f = push_exists es.es_evars es.es_formula in
+    let ef = elim_exists f in
+    Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 (*used for finding the unsat in the original pred defs formulas*)
 and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =  
@@ -3609,12 +3614,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let rec get_pure_conseq_from_formula f =
       match f with
         | Or fo ->
-              let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
               let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
               let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
               CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
         | _  ->
-              let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
               let _,p,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
     in
     let flatten_struc sf = CF.flatten_struc_formula sf in
@@ -7743,8 +7748,8 @@ and subst_rel_by_def_mix rel_w_defs mf =
 
 and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs
+  Debug.no_4_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula string_of_bool pr
+      (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
@@ -7855,6 +7860,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
   (* Collect relational definitions *)
   let rel_args = CP.get_rel_args (MCP.pure_of_mix rhs_p) in
+  (* let _ = Debug.info_hprint (add_str "estate_orig.CF.es_evars" Cprinter.string_of_spec_var_list) estate_orig.CF.es_evars no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "estate_orig.CF.es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate_orig.CF.es_gen_expl_vars no_pos in *)
   let lhs_p2 = if CP.intersect_svl rel_args estate_orig.CF.es_evars <> [] then
         let eqs = MCP.ptr_equations_without_null rhs_p in
         let eq_p = CP.get_eqs_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args no_pos in
@@ -7977,6 +7984,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+      let _ = Debug.tinfo_hprint (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let (split_ante1_sym, _) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
@@ -8338,7 +8346,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           (* Debug.info_hprint (add_str "impl" !print_svl) estate.es_gen_impl_vars no_pos; *)
           (* Debug.info_hprint (add_str "expl" !print_svl) estate.es_gen_expl_vars no_pos; *)
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
-          (* Debug.info_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
+          (* Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
+          (* Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos; *)
 	      let res_es = {estate with es_formula = res_delta;
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
@@ -9090,7 +9099,11 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
         List.combine r_args l_args
       with _ -> [] (*matching with cyclic proof is not the same predicate*)
       in (* without branch label *)
-      (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+      let to_ante =(*  List.fold_left (fun acc_p p -> CP.mkAnd acc_p p no_pos) (CP.mkTrue no_pos) *)
+        (* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *)
+        CP.mkTrue no_pos
+      in
+      (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),CP.mkTrue no_pos)
 
   end
 
@@ -9633,7 +9646,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in*)
               let rho = try
                 List.combine rho_0 label_list
-              with _ -> [] (*matching with cyclic proof is not the same predicate*)
+              with _ ->
+                  [] (*matching with cyclic proof is not the same predicate*)
               in (* with branch label *)
               let evars,ivars,impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in
               (*impl_tvars are impl_vars that are replaced by ivars in rho. 
@@ -11840,7 +11854,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
                                   (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
                                   let root = Cformula.get_ptr_from_data rhs in
-                                  if CP.mem_svl root lhs_null_ptrs then
+                                  if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
                                     let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
                                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
                                     CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)

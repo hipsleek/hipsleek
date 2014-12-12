@@ -14,7 +14,7 @@ ls_nt<p> == emp & self=p
 
 /* possibly touching list segment */
 ls<p> == emp & self=p
-  or self::node<_,q>*q::ls<p> & self!=p
+  or self::node<_,q>*q::ls<p>
   inv true;
 
 int length(node x)
@@ -29,8 +29,4 @@ int length(node x)
   else return 1+length(x.next);
 }
 
-/*
-( [(,1 ); (,2 )]) bind: node  x'::node<val_29_1420',next_29_1421'>@L cannot be derived from context
-ex8-lseg-fail.ss_29:23_29:29
-*/
 

@@ -3345,8 +3345,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       else ()) ;
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula static_specs_list) in *)
-      let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
-      let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
+      (* only check procs from user-supplied *)
+      let _ = if proc.I.proc_is_main then
+        let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
+        let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
+        ()
+      else ()
+      in
       (* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
       (* let _ = print_endline "WN : removing result here" in *)
       (* let n_tl = List.remove_assoc res_name n_tl in *)

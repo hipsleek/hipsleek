@@ -1,0 +1,37 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::lseg<n-1,p>
+  inv n>=0.
+
+pred ls_nt<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls_nt<n-1,p> & self!=p
+  inv n>=0.
+
+lemma_safe "lseg-combine" self::lseg<n,p> <- 
+         self::lseg<a,q>*q::lseg<b,p> & n=a+b.
+
+lemma_safe "ls_nt_combine" self::ls_nt<n,p> <- 
+         self::ls_nt<a,q>*q::ls_nt<b,p> * p::node<_,_>@L & n=a+b.
+
+lemma_safe "lseg-split" self::lseg<n,p> & n=a+b & a,b>=0 -> 
+         self::lseg<a,q>*q::lseg<b,p>.
+
+lemma_safe "ls_nt-split" self::ls_nt<n,p> & n=a+b & a,b>=0 -> 
+         self::ls_nt<a,q>*q::ls_nt<b,p>.
+
+
+// (1) Can we split lseg?
+checkentail x::lseg<n,y> & n=5 |- x::lseg<a,q>*q::lseg<b,y> & b>3.
+print residue.
+
+// (2) Can we combine lseg?
+checkentail x::lseg<a,q> * q::lseg<b,y> & b>2 |- x::lseg<n,y>.
+print residue.
+
+// (3) Can we combine lseg?
+checkentail x::lseg<a,q> * q::lseg<b,y> & b>2 |- x::lseg<n,z>.
+print residue.
