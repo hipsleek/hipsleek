@@ -20,8 +20,3 @@ int foo()
   return x.val;
 }
 
-/*
-# ex1-null.ss
-
-
-*/

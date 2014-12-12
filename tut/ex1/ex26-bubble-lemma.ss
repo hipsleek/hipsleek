@@ -54,9 +54,5 @@ void bsort(node xs)
 	}
 }
 
-/*
-# ex26-bubble-lemma.ss
-
-*/
 
 

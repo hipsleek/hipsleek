@@ -15,8 +15,3 @@ int foo()
   return x.val;
 }
 
-/*
-# ex2-leak.ss 
-
-
-*/
