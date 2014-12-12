@@ -640,6 +640,9 @@ external format_float: string -> float -> string = "caml_format_float"
     
 let gprintf (finish : doc -> 'b)  
             (format : ('a, unit, doc, 'b) format4) : 'a =
+  (* Trung: "Obj.magic" is unsafe and causes segmentation fault 
+            replace by "string_of_format" *)
+  (* let format = (Obj.magic format : string) in *)
   let format = string_of_format format in
 
   (* Record the starting align depth *)

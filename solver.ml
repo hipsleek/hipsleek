@@ -3568,12 +3568,13 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
           (* let _ = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
     	  let conseq = if(!Globals.allow_field_ann)
           then Mem.compact_nodes_with_same_name_in_struc conseq else conseq in
-          let conseq = Norm.imm_abs_norm_struc_formula conseq true prog in
+          let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+          let conseq = Norm.imm_abs_norm_struc_formula conseq true prog unfold_fun in
     	  let cl = if(!Globals.allow_field_ann)
           then List.map (fun c -> CF.transform_context (fun es ->
     	      (* let _ = print_string("\nFormula :"^(Cprinter.string_of_formula es.CF.es_formula)^"\n") in *)
               let es = {es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula; } in
-              CF.Ctx{es with CF.es_formula = Norm.imm_abs_norm_formula es.CF.es_formula prog; }
+              CF.Ctx{es with CF.es_formula = Norm.imm_abs_norm_formula es.CF.es_formula prog unfold_fun; }
           ) c) cl
 	  else cl
 	  in
@@ -9546,10 +9547,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	        let new_l_holes = CF.compute_holes_list new_l_args in
 	        let new_r_holes = CF.compute_holes_list new_r_args in
 	        (* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
-                Debug.info_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
-                Debug.info_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
-                Debug.info_hprint (add_str "new_l_holes" (pr_list string_of_int)) new_l_holes pos;
-                Debug.info_hprint (add_str "new_r_holes" (pr_list string_of_int)) new_r_holes pos;
+                Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
+                Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
+                Debug.tinfo_hprint (add_str "new_l_holes" (pr_list string_of_int)) new_l_holes pos;
+                Debug.tinfo_hprint (add_str "new_r_holes" (pr_list string_of_int)) new_r_holes pos;
 	        let rem_l_node = if (CF.all_hole_vars new_l_args) then HEmp
 	        else DataNode { dnl with
 		    h_formula_data_arguments = new_l_args;
@@ -9572,10 +9573,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          let lst1,lst2 = List.split new_lst in
 	          let new_l_args, new_l_param_ann = List.split lst1 in
 	          let new_r_args, new_r_param_ann = List.split lst2 in 
-                  Debug.info_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
-                  Debug.info_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
-                  Debug.info_hprint (add_str "l_param_ann" (pr_list Cprinter.string_of_imm)) l_param_ann pos;
-                  Debug.info_hprint (add_str "r_param_ann" (pr_list Cprinter.string_of_imm)) r_param_ann pos;
+                  Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
+                  Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
+                  Debug.tinfo_hprint (add_str "l_param_ann" (pr_list Cprinter.string_of_imm)) l_param_ann pos;
+                  Debug.tinfo_hprint (add_str "r_param_ann" (pr_list Cprinter.string_of_imm)) r_param_ann pos;
 	          (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
                 else (rem_l_node,rem_r_node,l_args,r_args,l_param_ann,r_param_ann)
 	          (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
@@ -9710,9 +9711,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
               let to_rhs = CP.mkAnd to_rhs rp_rels no_pos in
               let _ = Debug.tinfo_hprint (add_str "ext_subst(bef filter out ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
-              let _ = Debug.info_hprint (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
-              let _ = Debug.info_hprint (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
-              let _ = Debug.info_hprint (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
+              let _ = Debug.tinfo_hprint (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
+              let _ = Debug.tinfo_hprint (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
+              let _ = Debug.tinfo_hprint (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
               (* adding annotation constraints matched *)
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
@@ -9772,6 +9773,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : fix new_ante *)
               let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl r_a pos  in
               let _ = Debug.tinfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
+              let _ = Debug.tinfo_hprint (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
               let lhs_vars = CP.fv to_lhs in
               (* apply the new bindings to the consequent *)
               let e_subs = ivar_subs_to_conseq@ext_subst in
@@ -9836,7 +9838,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ = DD.info_zprint  (lazy  ("  rhs: " ^ (Cprinter.string_of_formula rhs))) pos in *)
               (* let _ = DD.info_zprint  (lazy  ("  estate.es_formula: " ^ (Cprinter.string_of_formula estate.es_formula))) pos in *)
               (*  let _ = DD.info_zprint  (lazy  ("  new_ante: " ^ (Cprinter.string_of_formula new_ante))) pos in *)
-                  Debug.info_hprint (add_str "new_ante 0 " (Cprinter.string_of_formula)) new_ante pos;
+                  Debug.tinfo_hprint (add_str "new_ante 0 " (Cprinter.string_of_formula)) new_ante pos;
                 (*=====================================================*)
                 (***********Handle high-order argument: BEGIN**********)
                 let fail_res, new_ante, new_conseq,new_exist_vars, new_maps =
@@ -9975,10 +9977,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (***********Handle high-order argument: END**********)
                 (*=====================================================*)
 
-              Debug.info_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
-              Debug.info_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
-              Debug.info_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
-              Debug.info_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
+              Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
+              Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
+              Debug.tinfo_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
+              Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
 
               let new_es = {estate with es_formula = new_ante;
                   (* add the new vars to be explicitly instantiated *)

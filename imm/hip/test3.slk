@@ -25,17 +25,26 @@ flted_13_53=@A & flted_13_52=@A).
  checkentail s::ls<null,@A,@M> * w::ls<null,@M,@A> & w=s & s!=null |- s::ls<null,@M,@M>.
 print residue.
 
+
 checkentail x::node<a,y> |- x::node<b,z>.
 print residue.
 
+
 checkentail x::node<a,y> |- x::node<b,z@L>.
 print residue.
-*/
+
+
 
 checkentail x::node<a,y>@M |- x::node<b,z>@M.
 print residue.
 
-/*
+checkentail x::node<a,y>@M |- x::node<b,z>@L.
+print residue.
+
 checkentail x::ll<a>@M |- x::ll<b>@M.
 print residue.
 */
+
+checkentail x::ls<a,@M,@M> |- x::ls<b,@A,@M>.
+print residue.
+

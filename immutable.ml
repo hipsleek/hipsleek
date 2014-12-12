@@ -1994,11 +1994,65 @@ let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_
 
 (* ===============================  below is for merging aliased nodes ================================= *)
 
-(* return (compatible_flag, to_keep_node, to_remove_node) *)
-let compatible_at_node_lvl imm1 imm2 h1 h2 =
-  if (isAccs imm2) then (true, h1, h2)
-  else  if (isAccs imm1) then (true, h2, h1)
-  else (false, h1, h2)
+(* return (compatible_flag, to_keep_node) *)
+let compatible_at_field_lvl imm1 imm2 h1 h2 = 
+  let comp, ret_h =
+    match h1, h2 with
+      | DataNode dn1, DataNode dn2 ->
+            let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
+            let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
+            let imm = List.combine p1 p2 in
+            let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
+                match i1, i2 with
+                  | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
+                  | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
+                  | _, _ ->
+                        Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+                        (false && comp, lst)
+            ) (true,[]) imm in
+            let args, pimm = List.split updated_elements in
+            (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
+            let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
+            (comp, dn)
+      | ViewNode vn1, ViewNode vn2 -> Debug.print_info "Warning: " "combining two views not yet implemented" no_pos;
+            (true, h1)
+      | _, _ -> Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos;
+            (true, h1)
+  in (comp, ret_h)
+
+(* return (compatible_flag, to_keep_node) *)
+let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars =
+  let comp, ret_h =
+    if (isAccs imm2) then (true, h1)
+    else  if (isAccs imm1) then (true, h2)
+    else (false, h1) in
+  let compatible, keep_h, struc =
+    (match h1, h2 with
+      | DataNode _, DataNode _
+      | ViewNode _, ViewNode _ -> (comp, ret_h, None)
+      | ((DataNode dn) as dh), ((ViewNode vn) as vh)
+      | ((ViewNode vn) as vh), ((DataNode dn) as dh) ->
+            if comp then
+              let v =  vn.h_formula_view_node in
+              let aset = [v] in            (* why should this be non-empty?  *)
+              let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
+              let unfolded_f = unfold_fun vh aset v uf in
+              let ret_f = push_exists qvars unfolded_f in
+              (comp, dh, Some ret_f)
+              (* (comp, dh, None) *)
+            else (comp, ret_h, None)
+      | _, _ -> (comp, ret_h, None)) in
+  (compatible, keep_h, struc)
+
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars  = 
+  if (!Globals.allow_field_ann) then 
+    let comp, keep_h = compatible_at_field_lvl imm1 imm2 h1 h2 in
+    (comp,  keep_h, None)
+  else compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars
+
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars  =
+  let pr = Cprinter.string_of_h_formula in
+  Debug.no_2 "compatible_nodes" pr pr (pr_triple string_of_bool pr pr_none) (fun _ _ ->  compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars ) h1 h2
 
 let partition_eqs_subs lst1 lst2 quantif =
   let eqs_lst = List.combine lst1 lst2 in
@@ -2021,56 +2075,58 @@ let norm_abs_node h p xpure =
     (h, None)  
 
 (* assume nodes are aliased *)
-let merge_two_view_nodes vn1 vn2 h1 h2 prog quantif =
-  let comp, ret_h, rem_h = compatible_at_node_lvl vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 in
+let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars =
+  let comp, ret_h, _ = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
   if comp  && comp_view then
     let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
-    ([ret_h], eqs, subs)                      (* should I also add the pure of merged (@A) node? *)
+    ([ret_h], eqs, subs, [])                      (* should I also add the pure of merged (@A) node? *)
     (* ([], []) *)
   else
     (* let xpure1 =  *)
     (* remove node annotated with @A if it's not compatible for merging *)
-    if (isAccs vn1.h_formula_view_imm) then  ([h2], [], [])
-    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [])
-    else ([h1;h2], [], [])
+    if (isAccs vn1.h_formula_view_imm) then  ([h2], [], [], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
 
 (* assume nodes are aliased *)
-let merge_data_node_w_view_node dn1 vn2 h1 h2 quantif =
-  let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 in
+let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars =
+  let comp, ret_h, struc = compatible_nodes prog dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars in
   (* if comp then *)
-  if false then
-    let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in
+  if comp then
+    (* let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in *)
     (* add here merge code *)
-    ([ret_h], eqs, subs)  
+    match struc with
+      | None   -> ([ret_h], [], [],[])  
+      | Some s -> ([ret_h], [], [],[s])  
   else
-    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [])
-    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [])
-    else ([h1;h2], [], [])
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
 
 (* assume nodes are aliased *)
-let merge_two_data_nodes dn1 dn2 h1 h2 quantif =
-  let comp, ret_h, rem_h = compatible_at_node_lvl dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 in
+let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars =
+  let comp, ret_h, _ = compatible_nodes prog dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 unfold_fun qvars in
   let comp_data = comp && (String.compare dn1.h_formula_data_name dn2.h_formula_data_name = 0) in
   if comp_data then
     let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
-    ([ret_h], eqs, subs)
+    ([ret_h], eqs, subs, [])
   else
-    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [])
-    else if (isAccs dn2.h_formula_data_imm) then  ([h1], [], [])
-    else ([h1;h2], [], [])
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
+    else if (isAccs dn2.h_formula_data_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
 
 (* merged two nodes and return merged node and resulted equalities. *)
-let merge_two_nodes h1 h2 prog quantif =
+let merge_two_nodes h1 h2 prog quantif unfold_fun qvars =
   match h1, h2 with
-    | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes dn1 dn2 h1 h2 quantif
+    | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars 
     | [(ViewNode vn) as h2], ((DataNode dn) as h1)
-    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node dn vn h1 h2 quantif (* ([h1;h2], []) *)
-    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes vn1 vn2 h1 h2 prog quantif
+    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node prog dn vn h1 h2 quantif unfold_fun qvars (* ([h1;h2], []) *)
+    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars
 (* ([h1;h2], []) *)
-    | _, _ -> (h1@[h2], [], [])
+    | _, _ -> (h1@[h2], [], [], [])
 
 (* let get_node_var h =  *)
 
@@ -2087,39 +2143,39 @@ let aliased_nodes h1 h2 emap =
   else
     false                               (* assume that if node is undefined, it does not have an aliased *)
 
-let merge_list_w_node node lst emap prog quantif = 
+let merge_list_w_node node lst emap prog quantif unfold_fun qvars = 
   let aliases, disj = List.partition (fun n -> aliased_nodes node n emap) lst in 
-  let new_h, eqs, subs = List.fold_left (fun (a, e, s) n -> 
-      let merged, eqs, subs =  merge_two_nodes a n prog quantif in
-      (merged, e@eqs, subs@s)
-  ) ([node],[], []) aliases in (* here!! *)
-  (new_h, disj, eqs, subs)
+  let new_h, eqs, subs, structs = List.fold_left (fun (a, e, s, structs) n -> 
+      let merged, eqs, subs, struc =  merge_two_nodes a n prog quantif unfold_fun qvars in
+      (merged, e@eqs, subs@s, struc@structs)
+  ) ([node],[], [], []) aliases in (* here!! *)
+  (new_h, disj, eqs, subs, structs)
 
-let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure =
+let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun qvars =
   let rec helper lst emap = 
     match lst with 
-      | []   -> ([], [], [], true)
+      | []   -> ([], [], [], true, [])
       (* | [h]  -> let new_h, pure = norm_abs_node h p xpure in  *)
       (*   ([new_h], (opt_to_list pure)) *)  (* andreeac: uncomment this 2 lines if you wnat to replace @A node with HEmp & xpure*)
       | h::t ->
-            let updated_head, updated_tail, eqs_lst, subs_lst = merge_list_w_node h t emap prog quantif in
+            let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
             let (fixpoint, emap) = List.fold_left 
               ( fun (fixpoint,emap) (a,b) -> 
                   if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
                   else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
               ) (true, emap) eqs_lst in
             let fixpoint = fixpoint && (is_empty subs_lst) in
-            let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail = helper updated_tail emap  in
-            (updated_head@merged_tail, eqs_lst@eqs_lst_tail, subs_lst@subs_lst_tail, fixpoint&&fixpoint_tail) in
+            let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail = helper updated_tail emap  in
+            (updated_head@merged_tail, eqs_lst@eqs_lst_tail, subs_lst@subs_lst_tail, fixpoint&&fixpoint_tail, struc_lst@struc_tail) in
   helper lst emap
 
 (* merge aliased nodes 
  * return merged node and resulted qualities. *)
-let merge_alias_nodes_h_formula prog f p emap quantif xpure = (* f *)
+let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = (* f *)
   match f with
     | Star _ ->
           let node_lst = split_star_h f in
-          let node_lst, eqs, subs, fixpoint = merge_alias_nodes_h_formula_helper prog p node_lst emap quantif xpure in
+          let node_lst, eqs, subs, fixpoint, struc = merge_alias_nodes_h_formula_helper prog p node_lst emap quantif xpure unfold_fun qvars in
           let updated_f = combine_star_h node_lst in
           let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs in
           let aux_pure  = CP.join_conjunctions eqs in
@@ -2128,68 +2184,83 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure = (* f *)
           let updated_f = subst_avoid_capture_h fr t updated_f in
           let new_pure = MCP.memoise_add_pure p aux_pure in
           let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
-          (updated_f, new_pure, fixpoint)
+          (updated_f, new_pure, fixpoint, struc)
               (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
-    | _ -> (f, p, true)
+    | _ -> (f, p, true, [])
 
-let merge_alias_nodes_h_formula prog f p emap quantif xpure = 
+let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = 
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_mix_formula in
-  Debug.no_2 "merge_alias_nodes_h_formula"  pr1 pr2 (pr_triple (add_str "heap" pr1) (add_str "pure" pr2) string_of_bool) (fun _ _ -> merge_alias_nodes_h_formula prog f p emap quantif xpure) f p
+  Debug.no_2 "merge_alias_nodes_h_formula"  pr1 pr2 (pr_quad (add_str "heap" pr1) (add_str "pure" pr2) string_of_bool pr_none) (fun _ _ -> merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars) f p
 
-let merge_alias_nodes_formula_helper prog heapf puref quantif xpure =
+let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun qvars =
   let rec helper heapf puref = 
     let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
     let emap = CP.EMapSV.build_eset subs in
-    let new_f, new_p, fixpoint = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure in
+    let new_f, new_p, fixpoint, struc = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
     (* let new_p = *)
     (*   match new_p with *)
     (*     | Some p -> MCP.memoise_add_pure puref p *)
     (*     | None   -> puref in *)
     if not fixpoint then helper new_f new_p
-    else (new_f, new_p)
+    else (new_f, new_p, struc)
   in helper heapf puref
       
+let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
+  let fl  = flow_formula_of_formula f in 
+  let pos = pos_of_formula f in
+  let new_f, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_f =  mk_new_f new_f new_p in
+  let ret_f = match unfold_f_lst with
+    | [] -> new_f
+    | _  ->
+          let f = List.fold_left (fun acc f-> normalize_combine_star acc f pos) new_f unfold_f_lst in
+          rec_fun f
+  in ret_f 
+  
 
-let merge_alias_nodes_formula prog f quantif xpure =
+let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
   let rec helper f =
+    let fl  = flow_formula_of_formula f in 
+    let pos = pos_of_formula f in
     match f with
       | Base bf ->
-            let new_f, new_p = merge_alias_nodes_formula_helper prog bf.formula_base_heap bf.formula_base_pure quantif  xpure in
-            Base { bf with formula_base_heap = new_f;  formula_base_pure = new_p; }
-      | Exists(ef) ->
-            let new_f, new_p = merge_alias_nodes_formula_helper prog ef.formula_exists_heap ef.formula_exists_pure quantif xpure in
-            Exists{ef with formula_exists_heap = new_f;  formula_exists_pure = new_p; }
-      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;  formula_or_f2 = helper orf.formula_or_f2;}
+            let mk_base f p = Base { bf with formula_base_heap = f;  formula_base_pure = p; } in
+            merge_and_combine prog f bf.formula_base_heap bf.formula_base_pure quantif xpure unfold_fun [] mk_base helper
+      | Exists ef ->
+            let qvars = ef.formula_exists_qvars in
+            let mk_exists f p =  Exists{ef with formula_exists_heap = f;  formula_exists_pure = p; } in
+            merge_and_combine prog f ef.formula_exists_heap ef.formula_exists_pure quantif xpure unfold_fun qvars mk_exists helper
+      | Or orf -> 
+            Or {orf with formula_or_f1 = helper orf.formula_or_f1;  formula_or_f2 = helper orf.formula_or_f2;}
   in
   if not (!Globals.imm_merge) then f
   else helper f
 
-let merge_alias_nodes_formula prog f quantif xpure  =
+let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
   let pr = Cprinter.string_of_formula in
-  Debug.no_1 "merge_alias_nodes_formula" pr pr (fun _ -> merge_alias_nodes_formula prog f quantif xpure) f
+  Debug.no_1 "merge_alias_nodes_formula" pr pr (fun _ -> merge_alias_nodes_formula prog f quantif xpure unfold_fun) f
 
-let rec merge_alias_nodes_struc_formula prog f xpure conseq =
+let rec merge_alias_nodes_struc_formula prog f xpure conseq unfold_fun =
   let res =
     match f with
-      | EBase f   -> 
-            let quantif = if conseq then f.formula_struc_exists@f.formula_struc_implicit_inst@f.formula_struc_explicit_inst else [] in
+      | EBase f ->
+            let (ee, ei) = (f.formula_struc_exists, f.formula_struc_explicit_inst) in
+            let quantif = if conseq then ee@ei(* @f.formula_struc_implicit_inst *) else [] in
             EBase {f with
-            formula_struc_base =  merge_alias_nodes_formula prog f.formula_struc_base quantif xpure  }
-      | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq) l)
-      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq) f.formula_case_branches;}
+                formula_struc_base =  merge_alias_nodes_formula prog f.formula_struc_base quantif xpure unfold_fun}
+      | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) f.formula_case_branches;}
       | EAssume f -> 
-            let fs = f.formula_assume_struc in
-            let quantif = if conseq then [] (* fs.formula_struc_exists@fs.formula_struc_implicit_inst@fs.formula_struc_explicit_inst *) else [] in
             EAssume {f with
-	    formula_assume_simpl = merge_alias_nodes_formula prog f.formula_assume_simpl quantif xpure ;
-	    formula_assume_struc = merge_alias_nodes_struc_formula prog fs xpure conseq;}
-      | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula prog f.formula_inf_continuation xpure conseq }
+	    formula_assume_simpl = merge_alias_nodes_formula prog f.formula_assume_simpl [] xpure unfold_fun;
+	    formula_assume_struc = merge_alias_nodes_struc_formula prog f.formula_assume_struc xpure conseq unfold_fun;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula prog f.formula_inf_continuation xpure conseq unfold_fun }
   in if not (!Globals.imm_merge) then f
   else res
 
-let merge_alias_nodes_struc_formula prog f xpure conseq =
+let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "merge_alias_nodes_struc_formula" pr pr (fun _ -> merge_alias_nodes_struc_formula prog f xpure conseq) f
+  Debug.no_1 "merge_alias_nodes_struc_formula" pr pr (fun _ -> merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun) f
 
 (* ===============================  end - merging aliased nodes ================================= *)
