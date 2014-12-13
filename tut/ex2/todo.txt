@@ -224,6 +224,8 @@ Why did we have a problem with fixcalc?
 It is not-recursive and should thus be trivial.
 Check fixcalc first?
 
+> It seems no fixcalc.inp file created..
+
 !!!  Q(n,m,res) = ( res=1 & n!=0) \/ ( n=0 & res=0)
 !!! bottom_up_fp:[( Q(n,m,res), ((n!=0 & res=1) | (n=0 & res=0)))]
 !!! PROBLEM with fix-point calculation

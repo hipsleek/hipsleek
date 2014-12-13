@@ -20,6 +20,7 @@ int zip(int n,int m)
   }
   else {
        is_pos(m);
+       is_pos(n);
        return 1+zip(n-1,m-1);
   }
 }
