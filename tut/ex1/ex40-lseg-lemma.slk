@@ -31,11 +31,11 @@ lemma_safe "ls_nt-split" self::ls_nt<n,p> & n=a+b & a,b>=0 ->
 
 
 // (1) Can we split lseg?
-checkentail x::lseg<n,y> & n=5 |- x::lseg<a,q>*q::lseg<b,y> & b>3.
+checkentail x::lseg<n,y> & n=5 |- x::lseg<a,q>*q::lseg<b,y> & b>3 & a>2.
 print residue.
 
 // (2) Can we combine lseg?
-checkentail x::lseg<a,q> * q::lseg<b,y> & b>2 |- x::lseg<n,y>.
+checkentail x::lseg<a,q> * q::lseg<b,y> & b>2 |- x::lseg<n,y> & n>3.
 print residue.
 
 // (3) Can we combine lseg?

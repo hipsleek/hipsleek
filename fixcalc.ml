@@ -1199,10 +1199,8 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   in bag_res @ num_res
 
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
-  if List.length input_pairs <= 2 then
-    compute_fixpoint_x input_pairs ante_vars specs bottom_up
-  else if !Globals.split_fixcalc then
-    let pr = !CP.print_formula in
+  let pr = !CP.print_formula in
+  if !Globals.split_fixcalc then
     let _ = DD.ninfo_hprint (add_str "input_pairs" (pr_list (pr_pair pr pr))) input_pairs no_pos in
     let constrs = List.fold_left (fun acc (pf,_) ->
         let _ = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
@@ -1251,7 +1249,16 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
     let _ = DD.ninfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
     res
   else
-    compute_fixpoint_x input_pairs ante_vars specs bottom_up
+    (* compute_fixpoint_x input_pairs ante_vars specs bottom_up *)
+    let n_base = List.fold_left (fun acc (pf1,pf2) ->
+        let new_acc = match pf2 with
+          | CP.BForm((CP.RelForm (sv,_,_), _), _) ->
+            let svl = CP.fv pf1 in
+            if Gen.BList.mem_eq CP.eq_spec_var sv svl then acc else acc+1
+          | _ -> acc
+        in new_acc
+    ) 1 input_pairs in
+    Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in

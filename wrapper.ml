@@ -1,6 +1,17 @@
 open Globals
 open Gen.Basic
 
+let wrap_num_disj f n a b c d =
+  let old_disj = !fixcalc_disj in
+  fixcalc_disj := n;
+  try
+    let res = f a b c d in
+    fixcalc_disj := old_disj;
+    res
+  with _ as e ->
+      (fixcalc_disj := old_disj;
+      raise e)
+
 let wrap_under_baga f a =
   let flag = !do_under_baga_approx in
   do_under_baga_approx := true;

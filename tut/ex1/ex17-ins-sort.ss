@@ -9,10 +9,10 @@ lsort<S> == emp & self=null & S={}
   inv true;
 
 node insert(node x, node y)
-  requires x::node<v,null> * y::lsort<S>
+  requires x::node<v,_> * y::lsort<S>
   ensures res::lsort<S2> & S2=union({v},S);
 {
-  if (y==null) return x;
+  if (y==null) {x.next=null; return x;}
   else 
     if (x.val<=y.val) {
       x.next=y; return x;

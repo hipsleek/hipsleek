@@ -24,6 +24,7 @@ checkentail x::pair<1,2> |- x::pair<a,b> & a>5.
 
 // (4) instantiate, then prove
 checkentail x::pair<1,2> |- x::pair<a,b> & a>0.
+print residue.
 
 // (5) What is the residue?
 checkentail x::pair<1,2> * y::pair<3,4> |- x::pair<a,b> .
