@@ -1,6 +1,11 @@
 open Globals
 open Gen.Basic
 
+let wrap_exception f e dval =
+  try 
+    f e 
+  with _ -> dval
+
 let wrap_num_disj f n a b c d =
   let old_disj = !fixcalc_disj in
   fixcalc_disj := n;

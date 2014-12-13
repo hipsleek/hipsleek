@@ -8147,6 +8147,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
                                     let new_pf = MCP.mix_of_pure pf in
                                     let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                     let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
+                                    let _ = Debug.tinfo_hprint (add_str "new_pf "!print_mix_formula) new_pf no_pos in
+                                    let _ = Debug.tinfo_hprint (add_str "split_ante0" !print_mix_formula) split_ante0 no_pos in
                                     let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
                                     fst (imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
                                 | _ ->
@@ -8186,9 +8188,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       (res1, res2@succs,i_res3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list))))
     end (* end of fold_fun_impt *)
   in
+(*
+type: bool * 
+  (Globals.formula_label option * Globals.formula_label option) list 
+  * Globals.formula_label option *
+  (Musterr.CF.failure_kind *
+   ((Musterr.CP.formula * CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list)) ->
+  string
+*)
   let fold_fun_impt x (rhs_p:MCP.mix_formula) =
     let pr = Cprinter.string_of_mix_formula in
-    let pr1 (r, _, _, _) = string_of_bool r in
+    let pr_lp = pr_list (pr_pair !CF.print_pure_f  !CF.print_pure_f) in
+    let pr1 (r, _, _, (_,(lp,_,_))) = pr_pair string_of_bool pr_lp (r,lp) in
     Debug.no_1 "fold_fun_impt" pr pr1 (fun _ -> fold_fun_impt x rhs_p) rhs_p
   in
   let _ = DD.tinfo_hprint (add_str "estate" Cprinter.string_of_entail_state) estate no_pos in
@@ -8655,6 +8668,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
             let f a0 = 
+              (* WN : what if Omega cannot handle?  *)
+              let a0 = Wrapper.wrap_exception TP.simplify_omega a0 a0 in
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
               then 
                 let a0 = CP.drop_exists a0 in 
@@ -8685,6 +8700,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
               (* then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[])  *)
               else None in
             let pr = Cprinter.string_of_pure_formula in 
+            DD.tinfo_hprint (add_str "a0" pr) a0 no_pos;
             DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
             DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
