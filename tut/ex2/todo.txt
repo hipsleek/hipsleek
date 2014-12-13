@@ -120,7 +120,7 @@ as dangling ptr, so that we get something like:
  Q(x_1367,res_1368) ::=  HP_1361(val_14_1359) * x_1367::node<val_14_1369,res_1368>&
 res_1368=DP_DP_HP_1362]
 ===================================================================
-# sim1-pre.ss --esl
+# sim1-pre.ss --esl (FIXED)
 
 void posint(int n)
   requires n>0  ensures true;
@@ -156,7 +156,7 @@ res:  1[
    es_infer_rel: [RELASS [P]: ( P(n)) -->  1<=n]
    ]
 ===================================================================
-# sim2-pre.ss 
+# sim2-post.ss  (OK)
 
 Correct result, but we can remove some unnecessary printing
 
@@ -200,7 +200,7 @@ foo$int
          EAssume 
            emp&n=res-1&{FLOW,(4,5)=__norm#E}[]
 ===================================================================
-# sim3-id.ss
+# sim3-id.ss (FIXED)
 
 For below:
 
@@ -218,7 +218,17 @@ Maybe better to print:
 How did we get:
   P(n) = n>=0
 ===================================================================
-# bugs-sim5-zip.ss
+# bugs-sim5-zip.ss 
+
+Why did we have a problem with fixcalc?
+It is not-recursive and should thus be trivial.
+Check fixcalc first?
+
+!!!  Q(n,m,res) = ( res=1 & n!=0) \/ ( n=0 & res=0)
+!!! bottom_up_fp:[( Q(n,m,res), ((n!=0 & res=1) | (n=0 & res=0)))]
+!!! PROBLEM with fix-point calculation
+ExceptionEnd_of_fileOccurred!
+
 
 int zip(int n,int m)
   infer [P,Q]
@@ -234,12 +244,25 @@ int zip(int n,int m)
   }
 }
 
-How did we form such a fixpoint with In_1,in_2?
+*************************************
+******pure relation assumption*******
+*************************************
+[RELASS [P]: ( P(n,m)) -->  ((n!=0 & m!=0) | m=0),
+RELASS [P]: ( P(n,m)) -->  ((1<=m & n!=0) | n=0),
+RELDEFN Q: ( n=0 & res=0 & P(n,m)) -->  Q(n,m,res),
+RELDEFN Q: ( res=1 & n!=0 & P(n,m)) -->  Q(n,m,res)]
+*************************************
 
-!!! fixpoint:[( Q(n,m,res), ((n!=0 & res=1 & 1<=m) | (n=0 & m=0 & res=0)), P(n,m), ((In_1!=0 & n=In_1 & m=In_2 & 1<=In_2) | (In_1=0 & In_2=0 & n=0 & m=0)))]
+!!!  Q(n,m,res) = ( res=1 & n!=0) \/ ( n=0 & res=0)
+!!! bottom_up_fp:[( Q(n,m,res), ((n!=0 & res=1) | (n=0 & res=0)))]
+!!! PROBLEM with fix-point calculation
+ExceptionEnd_of_fileOccurred!
+
+Error1(s) detected at main 
+Stop Omega... 137 invocations caught
 
 ===================================================================
-# bus-sim5b.slk -debug infer.log
+# bus-sim5b.slk -debug infer.log (part FIXED)
 
 infer [n,m] n=0 |-  m=0.
 print residue.

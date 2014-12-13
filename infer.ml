@@ -1484,22 +1484,26 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
   bool)
   list
 *)
+
+(* removed as already track by an earlier method *)
 and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
-  let pr1 = !print_mix_formula in 
-  let pr2 = !print_entail_state_short in 
-  let pr_p = !CP.print_formula in
-  let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in
-  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
-  let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_5 "infer_pure_m_1" 
-      (add_str "estate " pr0) 
-      (add_str "lhs xpure " pr_p) 
-      (add_str "lhs xpure0 " pr1)
-      (add_str "rhs xpure " pr1)
-      (add_str "inf vars " !CP.print_svl)
-      (add_str "(new es,inf pure,rel_ass) " pr_res)
       (fun _ _ _ _ _ -> infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos) 
       estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
+  (* let pr1 = !print_mix_formula in  *)
+  (* let pr2 = !print_entail_state_short in  *)
+  (* let pr_p = !CP.print_formula in *)
+  (* let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in *)
+  (* let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in *)
+  (* let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in *)
+  (* Debug.no_5 "infer_pure_m_1"  *)
+  (*     (add_str "estate " pr0)  *)
+  (*     (add_str "lhs xpure " pr_p)  *)
+  (*     (add_str "lhs xpure0 " pr1) *)
+  (*     (add_str "rhs xpure " pr1) *)
+  (*     (add_str "inf vars " !CP.print_svl) *)
+  (*     (add_str "(new es,inf pure,rel_ass) " pr_res) *)
+  (*     (fun _ _ _ _ _ -> infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos)  *)
+  (*     estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig *)
 
 let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
   if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then 
@@ -1619,6 +1623,15 @@ let infer_pure_top_level estate unk_heaps
             | _,_ -> report_error pos "Length of relational assumption list > 1"
           )) split_mix1
       in res
+
+let infer_pure_top_level estate unk_heaps
+  ante1 ante0 m_lhs split_conseq pos = 
+  let pr = !print_mix_formula in
+  let pr1 = (pr_option !print_pure_f) in
+  let pr2 = pr_list (fun (a,b,_,d,e,f) -> pr_triple pr1 pr1 pr (a,b,f)) in
+  Debug.no_1 "infer_pure_top_level" pr pr2 
+      (fun _ -> infer_pure_top_level estate unk_heaps
+          ante1 ante0 m_lhs split_conseq pos) ante0
 
 (*let remove_contra_disjs f1s f2 =*)
 (*  let helper c1 c2 = *)

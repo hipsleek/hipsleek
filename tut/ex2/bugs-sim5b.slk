@@ -1,7 +1,7 @@
 
 relation P(int n,int m).
 
-infer [n,m] n=0 |-  m=0.
+infer [n,mmm] n=0 |-  mmm=0.
 print residue.
 
 /*
