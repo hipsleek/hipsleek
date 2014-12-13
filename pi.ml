@@ -509,7 +509,7 @@ let trans_res_struc_formula prog sf =
 
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
-  let _ = DD.binfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  let _ = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -612,14 +612,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             res
           in
           Infer.fixcalc_rel_stk # push_list tuples;
-          if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then
-            begin
-              print_endline_quiet "\n*************************************";
-              print_endline_quiet "*******fixcalc of pure relation *******";
-              print_endline_quiet "*************************************";
-              print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse);
-              print_endline_quiet "*************************************"
-            end;
+          (* if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then *)
+          (*   begin *)
+          (*     print_endline_quiet "\n*************************************"; *)
+          (*     print_endline_quiet "*******fixcalc of pure relation *******"; *)
+          (*     print_endline_quiet "*************************************"; *)
+          (*     print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse); *)
+          (*     print_endline_quiet "*************************************" *)
+          (*   end; *)
           Infer.fixcalc_rel_stk # reset;
           let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
               let pre_new = if CP.isConstTrue rel_pre then
