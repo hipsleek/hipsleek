@@ -292,7 +292,34 @@ n=m & m>=0.
 Please send this to Omega. simplifier
 
 ===================================================================
+# ex21-11-zip.ss
+
+Need to simplify pure part of pre/post..
+Expect:
+
+  {[n,m]: n <= m}
+
+Post Inference result:
+zip$node~node
+ EBase exists (Expl)[](Impl)[n; m](ex)[]x::ll{}<n> * y::ll{}<m>&((m!=0 | 
+       1>n)) & n<=m & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1397: res::ll{}<r_1397>&0<=n & 0<=m & n=r_1397 & 
+           r_1397<=m&{FLOW,(4,5)=__norm#E})[]
 ===================================================================
+# bugs-ex21-ll-zip.ss
+
+Why type error for Q relation not detected.
+Should result in a failure/exception.
+
+relation P(int n).
+relation Q(int n, int m).
+
+node zip(node x, node y)
+  infer [P,Q]
+  requires x::ll<n> * y::ll<m> & P(n,m)
+  ensures res::ll<n> & Q(n,m,res);
+
 ===================================================================
 ===================================================================
 ===================================================================
