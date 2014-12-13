@@ -51,7 +51,7 @@ type sleek_token =
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
   | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC
-  | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_FLOW
+  | INFER_AT_TERM | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
   | INFER_AT_SIZE
   | UTPRE | UTPOST
   | UNFOLD | UNION
@@ -181,6 +181,7 @@ module Token = struct
     | INFER_AT_CLASSIC -> "@leak"
     | INFER_AT_IMM -> "@imm"
     | INFER_AT_SHAPE -> "@shape"
+    | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
     | INFER_AT_SIZE -> "@size"
     | TREL_ASSUME -> "termAssume"

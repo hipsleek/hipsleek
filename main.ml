@@ -341,7 +341,8 @@ let reverify_with_hp_rel old_cprog iprog =
   in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps [] need_trans_hprels1 chprels_decl in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
+    [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 

@@ -1955,6 +1955,7 @@ let check_proper_return cret_type exc_list f =
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
                 let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
+                if exc_list!= [] then
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
 	      (* WN: exception and result type do not match ..
               else if not(overlap_flow_type fl_int res_t) then
@@ -1997,7 +1998,7 @@ let check_proper_return cret_type exc_list f =
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
 	in
-  helper f
+    helper f
 
  
 (* type: Globals.typ -> Globals.nflow list -> F.struc_formula -> unit *)

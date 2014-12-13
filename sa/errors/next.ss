@@ -7,9 +7,11 @@ HeapPred G(node a, node b).
 
 
 node get_next(node x)
-  infer [H,G]
-//  requires H(x)   ensures  G(x, res) or true & flow __Error ;
-requires H(x)   ensures  G(x, res) ;
+//  requires H(x)   ensures  G(x, res);
+//  infer [H,G] requires H(x)   ensures  G(x, res) ;
+  infer [@shape
+         //@error
+         ] requires true   ensures  true ;
 ///  requires x::node<null> ensures x::node<p> & res=p;
 {
   return x.next;

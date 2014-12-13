@@ -1211,7 +1211,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
   if extn_info = [] then
-    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
+    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)] None)
     in
     (*hp_defn*)
     (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
@@ -1221,7 +1221,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   else
     let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
     let r, others = Sautil.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
-    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
+    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] None in
     let _ = Cast.set_proot_hp_def_raw (Sautil.get_pos args 0 r) (!cprog).Cast.prog_hp_decls (CP.name_of_spec_var hp) in
     let pr_new_rel_defn =  (cond_path, exted_pred) in
     let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
@@ -1453,7 +1453,8 @@ let process_shape_rec sel_hps=
       | [(hp,args,f)] -> let def_cat = (CP.HPRelDefn (hp, List.hd args, List.tl args)) in
         {CF.def_cat = def_cat;
         CF.def_lhs = (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args, no_pos));
-        CF.def_rhs = List.map (fun f0 -> (f0,None)) (CF.list_of_disjs f)
+        CF.def_rhs = List.map (fun f0 -> (f0,None)) (CF.list_of_disjs f);
+        CF.def_flow = None;
         }
       | (hp,args0,f)::rest ->
             let fs = List.map (fun (_,args1, f1) ->
@@ -1462,7 +1463,8 @@ let process_shape_rec sel_hps=
             ) rest in
             {CF.def_cat= (CP.HPRelDefn (hp, List.hd args0, List.tl args0));
              CF.def_lhs= (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args0, no_pos));
-             CF.def_rhs = List.map (fun f0 -> (f0,None)) (f::fs)
+             CF.def_rhs = List.map (fun f0 -> (f0,None)) (f::fs);
+             CF.def_flow = None;
             }
   in
   (*******END INTERNAL ********)

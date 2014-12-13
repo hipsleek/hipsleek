@@ -1296,11 +1296,13 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
                 Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
               )
           | Globals.Named otyp_name, Globals.Int ->
-              let cast_proc = create_int_to_pointer_casting_proc otyp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                let cast_proc = create_int_to_pointer_casting_proc otyp_name in
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
           | Globals.Int, Globals.Named ityp_name ->
-              let cast_proc = create_pointer_to_int_casting_proc ityp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                (* let cast_proc = create_pointer_to_int_casting_proc ityp_name in *)
+                (* Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos *)
+                (*Loc: should have a systematic way to handle deep data structures (e.g cll) with arith *)
+                input_exp
           | _ ->
               report_error pos ("translate_exp: couldn't cast type 2: " 
                   ^ (Globals.string_of_typ input_typ) 
@@ -1341,8 +1343,8 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   match (t1, t2) with
   (* pointer arithmetic *)
   | Cil.TPtr _, Cil.TInt _
-  | Cil.TInt _, Cil.TPtr _
-  | Cil.TPtr _, Cil.TPtr _ ->
+  | Cil.TInt _, Cil.TPtr _ ->
+  (* | Cil.TPtr _, Cil.TPtr _ -> *)
       let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
       let proc_name = pointer_arith_proc.Iast.proc_name in
       Iast.mkCallNRecv proc_name None [e1; e2] None pos
@@ -1437,6 +1439,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                 | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
                 | _ -> translate_typ ty pos
               ) in
+              (* let _ =  Debug.info_hprint (add_str "If:new_ty" (string_of_typ)) (new_ty) no_pos in *)
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (
@@ -1445,11 +1448,11 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                   (* | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) *)
                   (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
                   | Cil.BinOp (op, exp1, exp2, ty, l) 
-                    when (is_arith_comparison_op op) ->
-                      let e1 = translate_exp exp1 in
-                      let e2 = translate_exp exp2 in
-                      let o = translate_binary_operator op pos in
-                      Iast.mkBinary o e1 e2 None pos
+                          when (is_arith_comparison_op op) ->
+                        let e1 = translate_exp exp1 in
+                        let e2 = translate_exp exp2 in
+                        let o = translate_binary_operator op pos in
+                        Iast.mkBinary o e1 e2 None pos
                   | _ ->
                       let cast_e e ty = 
                         let bool_of_proc = create_bool_casting_proc ty in
@@ -1466,8 +1469,10 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                         | Globals.Float -> 
                           let zero = Iast.mkFloatLit 0.0 pos in
                           Iast.mkBinary Iast.OpGt e zero None pos 
-                        | _ -> cast_e e new_ty
-                      else cast_e e new_ty
+                        | _ ->
+                          cast_e e new_ty
+                      else
+                        cast_e e new_ty
                   )
           ) in
           let e1 = translate_block blk1 in

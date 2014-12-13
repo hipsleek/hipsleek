@@ -4564,6 +4564,7 @@ and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
     def_rhs : ((* cond_path_type * *) formula_guard) list;
+    def_flow: nflow option;
 }
 
 
@@ -4651,14 +4652,16 @@ let check_neq_hrelnode id ls=
 let to_new_hp_rel_def (r,hf,g,f) = 
   { def_cat = r;
   def_lhs = hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_flow = None;
   }
 
 let from_new_hp_rel_def d : hp_rel_def_old =
   match d with
    { def_cat = r;
    def_lhs = hf;
-   def_rhs = rhs
+   def_rhs = rhs;
+   def_flow = fl;
    } -> (r,hf,None,fst (List.hd rhs))
 
 let flatten_hp_rel_def_wo_guard def=
@@ -4768,17 +4771,19 @@ let hpdef_cmp d1 d2 =
     with _ -> 1
   with _ -> -1
 
-let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
+let mk_hp_rel_def hp (args, r, paras) (g: formula option) f ofl pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
   { def_cat= (CP.HPRelDefn (hp, r, paras));
   def_lhs =hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_flow = ofl;
   }
 
-let mk_hp_rel_def1 c lhs rhs=
+let mk_hp_rel_def1 c lhs rhs ofl=
   { def_cat= c;
   def_lhs = lhs;
-  def_rhs = rhs
+  def_rhs = rhs;
+  def_flow = ofl;
   }
 
 let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
@@ -6525,15 +6530,16 @@ let do_unfold_view_hf cprog pr_views hf0 =
 (*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
 (*     | EList l -> EList (Gen.map_l_snd recf l) *)
 
-let rec struc_formula_trans_heap_node formula_fct f =
-  let fresh_data_v f=
+let fresh_data_v f=
    let quans, f0 = split_quantifiers f in
    let hds, hvs, hrs = get_hp_rel_formula f0 in
    let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in
    let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in
    let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
    fr_v_sps2
-  in
+
+
+let rec struc_formula_trans_heap_node formula_fct f =
  let recf = struc_formula_trans_heap_node formula_fct in
   match f with
     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}

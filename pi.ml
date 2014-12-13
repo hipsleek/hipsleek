@@ -166,6 +166,19 @@ let is_infer_shape sf =
 let is_infer_shape_scc scc =
   List.exists (fun proc -> is_infer_shape (proc.proc_stk_of_static_specs # top)) scc
 
+let rec is_infer_error sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_infer_error sf) el
+  | CF.EInfer ei ->
+        let inf_obj = ei.CF.formula_inf_obj in
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_error)
+  | _ -> false
+
+let is_infer_error_scc scc =
+  List.exists (fun proc -> is_infer_error (proc.proc_stk_of_static_specs # top)) scc
+
+
 let rec is_infer_post sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
         is_infer_post sf) el

@@ -15,7 +15,7 @@ HeapPred H(node a).
   node get_last(node x)
   
   infer[H,G]
-  requires H(x)   ensures G(x,res) or true & flow __Error;
+  requires H(x)   ensures G(x,res);
 
 {
   if (x.next == null) return x;

@@ -439,7 +439,8 @@ let solve no_verification_errors should_infer_tnt prog =
   if turels = [] && trrels = [] then 
     Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos
+    let _ = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
+    ()
   else if not should_infer_tnt then ()
   else
     let _ = print_endline_quiet "\n\n*****************************" in
