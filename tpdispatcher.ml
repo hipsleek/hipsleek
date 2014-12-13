@@ -27,6 +27,8 @@ let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
 (* let tp = ref OmegaCalc *)
+
+(* WN : why do we have pure_tp and tp??? *)
 let pure_tp = ref OM
 (* let pure_tp = ref Z3 *)
 let tp = ref Redlog
@@ -330,7 +332,11 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
-          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else prover in
+          (* let _ = print_endline ("prover:" ^ prover) in *)
+          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
+            if String.compare prover "mona" = 0 then "mona_inter" else
+             prover
+          in
           let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
           if exit_code > 0 then
             if  (Sys.file_exists prover) then
@@ -365,6 +371,7 @@ let set_tp tp_str =
   prover_arg := tp_str;
   (******we allow normalization/simplification that may not hold
   in the presence of floating point constraints*)
+  (* let _ = print_endline ("solver:" ^ tp_str) in *)
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -450,16 +457,19 @@ let set_tp tp_str =
 	();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
+let set_tp tp_str =
+    Debug.no_1 "set_tp" pr_id pr_none set_tp tp_str
+
 let init_tp () =
+  (* WN : this seems to be invoked by sleek only *)
   let _ = (if !Globals.is_solver_local then
-  let _ = Smtsolver.is_local_solver := true in
-  let _ = Smtsolver.smtsolver_name := "z3" in
-  let _ = Omega.is_local_solver := true in
-  let _ = Omega.omegacalc := "./oc" in
-  ()
-  else ())
-  in
-  let _ = print_endline_quiet ("!!! Using Z3 by default") in 
+      let _ = Smtsolver.is_local_solver := true in
+      let _ = Smtsolver.smtsolver_name := "z3" in
+      let _ = Omega.is_local_solver := true in
+      let _ = Omega.omegacalc := "./oc" in
+      ()
+      else ()) in
+  let _ = print_endline ("!!! init_tp : Using Z3 by default") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 
@@ -2006,13 +2016,14 @@ let rec simplify_raw (f: CP.formula) =
   else
     let is_bag_cnt = is_bag_constraint f in
     if is_bag_cnt then
-      let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in
+      (* let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in *)
       let _,new_f = trans_dnf f in
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 
           let rels = CP.get_RelForm disj in
           let disj = CP.drop_rel_formula disj in
           let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+          (* let _ = Debug.info_hprint (add_str " xxxx others: " (pr_list_ln (!CP.print_formula))) others no_pos in *)
           let others = simplify_raw (conj_of_list others no_pos) in
           conj_of_list ([others]@bag_cnts@rels) no_pos
       ) disjs in
@@ -2160,7 +2171,7 @@ let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
-let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   if not !tp_batch_mode then Omega.start ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2177,6 +2188,11 @@ let tp_pairwisecheck2 (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   let res = Timelog.log_wrapper "pairwise2" logger fn f in
   if not !tp_batch_mode then Omega.stop ();
   res
+
+let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "tp_pairwisecheck2" pr pr pr tp_pairwisecheck2_x f1 f2
+  
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -3788,4 +3804,5 @@ let check_diff xp0 xp1 =
 let _ = 
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
-  Excore.is_sat_raw := is_sat_raw
+  Excore.is_sat_raw := is_sat_raw;
+  Excore.simplify_raw := simplify_raw

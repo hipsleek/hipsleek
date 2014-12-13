@@ -10059,44 +10059,50 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
-let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
+let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
     (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
-  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc")
+  if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc", [Heap])
   else
-    let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
+    let (los, fk, ls_ets)= split3 (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
-    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk)
+    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk, List.concat ls_ets)
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
      (* let spt = !print_path_trace pt in *)
+     let et = match ft with
+       | Basic_Reason (fc,_,_) -> if string_compare fc.fc_message mem_leak then (Mem 1) else (Heap)
+       | _ -> Heap
+     in
       match  (get_failure_ft ft) with
-        | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m)
-        | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m)
-        | Failure_Valid -> (None, Failure_Valid)
-        | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m)
+        | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m, et)
+        | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m, et)
+        | Failure_Valid -> (None, Failure_Valid, et)
+        | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m, et)
     in
     match bfl with
-      | [] -> (None, Failure_Valid)
-      | fl -> let los, fks= List.split (List.map helper fl) in
+      | [] -> (None, Failure_Valid,[])
+      | fl -> let los, fks, ets= split3 (List.map helper fl) in
               ( match (combine_helper "OrR\n" los "") with
-                | "" -> None, Failure_Valid
-                | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks)
+                | "" -> None, Failure_Valid, []
+                | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks), ets
               )
 
-and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind)=
+and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind*error_type list)=
    get_failure_branch bfl
 
-let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
+let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind*error_type list)=
     (*may use rand to combine the list first*)
-    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
+  if ls==[] then ("Empty list_failesc_context", Failure_Must "empty loc",[])
+  else
+    let los, fks, ets= split3 (List.map get_failure_failesc_context ls(* [(List.hd ls)] *)) in
     (*los contains path traces*)
     (*combine_helper "UNION\n" los ""*)
      (*return failure of 1 lemma is enough*)
-   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks)
+   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks, List.concat ets)
 
-and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
+and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind*error_type list)=
   get_failure_branch bfl
 
 let get_bot_status (ft:list_context) =
@@ -14424,7 +14430,8 @@ let rec simp_ann_x heap pures = match heap with
         | [hd] -> 
           let is = CP.getAnn hd in
           if is = [] then (heap,pures)
-          else (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
+          else
+            (DataNode {data with h_formula_data_imm = CP.mkConstAnn (List.hd is)},res)
         | _ -> (heap,pures)
       end
   | ViewNode view ->
@@ -14481,7 +14488,7 @@ let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
     | EInfer b -> 
         (* report_error no_pos "Do not expect EInfer at this level" *)
         EInfer { b with formula_inf_continuation = simplify_ann b.formula_inf_continuation; }
-	| EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
+    | EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
 
 let rec get_vars_without_rel pre_vars f = match f with
   | Or {formula_or_f1 = f1; formula_or_f2 = f2} ->
@@ -14893,6 +14900,30 @@ let has_unknown_pre_lexvar_struc sf =
   let f_f _ f =
     let _, has_unknown_pre_lexvar = has_unknown_pre_lexvar_formula f in
     Some (f, has_unknown_pre_lexvar)
+  in 
+  snd (trans_struc_formula sf arg (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, id2, id2l, id2, id2)) 
+    (f_arg, f_arg, f_arg, (f_arg, f_arg, f_arg), f_arg) f_comb)
+    
+let rec has_known_pre_lexvar_formula f = 
+  match f with
+  | Base _
+  | Exists _ ->
+      let _, pure_f, _, _, _ = split_components f in 
+      CP.has_known_pre_lexvar (MCP.pure_of_mix pure_f) 
+  | Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+      let has_known_f1 = has_known_pre_lexvar_formula f1 in
+      let has_known_f2 = has_known_pre_lexvar_formula f2 in
+      has_known_f1 || has_known_f2
+    
+let has_known_pre_lexvar_struc sf =
+  let arg = () in
+  let f_arg a _ = a in
+  let f_comb bl = List.exists idf bl in
+  let id2 = fun a _-> (a, false) in
+  let id2l = fun _ a -> (a, []) in
+  let f_f _ f =
+    let has_known_pre_lexvar = has_known_pre_lexvar_formula f in
+    Some (f, has_known_pre_lexvar)
   in 
   snd (trans_struc_formula sf arg (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, id2, id2l, id2, id2)) 
     (f_arg, f_arg, f_arg, (f_arg, f_arg, f_arg), f_arg) f_comb)

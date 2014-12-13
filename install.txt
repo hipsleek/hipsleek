@@ -28,7 +28,7 @@ sudo apt-get install bison
 sudo apt-get install flex
 cd omega_modified
 make oc
-sudo cp omega_calc/obj/oc /usr/bin/
+sudo cp omega_calc/obj/oc /usr/local/bin/
 z3: z3-4.3.2 (doesnt work). cp  Z3 version 3.2
 sudo cp /media/hdd_os/usr/local/bin/z3 /usr/bin/
 

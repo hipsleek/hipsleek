@@ -427,7 +427,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 
           (* Do boundedness check at recursive calls *)
           let estate =
-            if !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
+            if not !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
             then estate
             else
               let m = List.filter (fun e -> not (is_nat e) && 
@@ -1265,7 +1265,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
   Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
-let term_check_output () =
+let term_check_output_scc () =
   if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && 
      not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
   begin
