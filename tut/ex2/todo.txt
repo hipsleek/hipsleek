@@ -239,6 +239,20 @@ How did we form such a fixpoint with In_1,in_2?
 !!! fixpoint:[( Q(n,m,res), ((n!=0 & res=1 & 1<=m) | (n=0 & m=0 & res=0)), P(n,m), ((In_1!=0 & n=In_1 & m=In_2 & 1<=In_2) | (In_1=0 & In_2=0 & n=0 & m=0)))]
 
 ===================================================================
+# bus-sim5b.slk -debug infer.log
+
+infer [n,m] n=0 |-  m=0.
+print residue.
+
+GOT:
+
+Residue:
+ <1>emp&n=0 & ((m=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(m=0 | n!=0)]
+
+Pre is OK, but maybe we can simplify the residue to n=0 & m=0?
+
+
 ===================================================================
 ===================================================================
 ===================================================================

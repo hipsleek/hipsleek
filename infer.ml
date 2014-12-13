@@ -615,6 +615,10 @@ let rec simplify_disjs pf lhs_rhs weaken_flag =
 
 let simplify_disjs pf lhs_rhs = simplify_disjs pf lhs_rhs false
 
+let simplify_disjs pf lhs_rhs = 
+  let pr = !print_pure_f in
+  Debug.no_2 "simplify_disjs" pr pr pr simplify_disjs pf lhs_rhs
+
 let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
   if ivars==[] then None 
   else 
@@ -959,9 +963,11 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
       let _ = DD.ninfo_hprint (add_str "lhs_xpure_orig" !CP.print_formula) lhs_xpure_orig pos in
       let _ = DD.ninfo_hprint (add_str "rhs_xpure" !CP.print_formula) rhs_xpure pos in
-      let lhs_xpure01 = CP.filter_ante lhs_xpure_orig rhs_xpure in
+      let _ = DD.trace_hprint (add_str "lhs_xpure_orig: " !CP.print_formula) lhs_xpure_orig pos in
+      (* this filtering caused stronger pre *)
+      (* let lhs_xpure01 = CP.filter_ante lhs_xpure_orig rhs_xpure in *)
+      let lhs_xpure01 = lhs_xpure_orig  in
       let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure01 pos in
-      let _ = DD.ninfo_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure01 pos in
       let lhs_xpure = (* if !Globals.en_slc_ps && CP.isConstTrue lhs_xpure01 then *)
       (*   CP.filter_var lhs_xpure (CP.remove_dups_svl ((CP.fv rhs_xpure)@iv)) *)
       (* else *) lhs_xpure01
@@ -1023,16 +1029,15 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
             let quan_var_new = CP.diff_svl args iv in 
             (TP.simplify_raw (CP.mkExists quan_var_new new_p None pos), mkFalse no_pos)
           else
+            let _ = DD.trace_hprint (add_str "lhs_xpure (b4 drop): " !CP.print_formula) lhs_xpure pos  in
             let lhs_xpure = CP.drop_rel_formula lhs_xpure in
             let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
-            let _ = DD.ninfo_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
             let vrs1 = CP.fv lhs_xpure in
             let vrs2 = CP.fv rhs_xpure in
             let vrs = CP.remove_dups_svl (vrs1@vrs2) in
             let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) (vrs) in 
             let lhs_xpure_ann = Cpure.add_ann_constraints imm_vrs lhs_xpure in
             let _ = DD.trace_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
-            let _ = DD.ninfo_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
             let _ = DD.ninfo_hprint (add_str "quan_var_new : " !CP.print_svl) quan_var_new  pos  in
             let new_p = TP.simplify_raw (CP.mkForall quan_var_new 
                 (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
@@ -1050,17 +1055,18 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
             let _ = DD.devel_hprint (add_str "quan_var: " !CP.print_svl) quan_var pos in
             let _ = DD.devel_hprint (add_str "quan_var_new: " !CP.print_svl) quan_var_new pos in
             let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
-            let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
+            let _ = DD.trace_hprint (add_str "new_p 1" !CP.print_formula) new_p pos in
             (* TODO Thai : Should fml be lhs_pure only *)
-            let _ = DD.ninfo_hprint (add_str "new_p 1" !CP.print_formula) new_p pos  in
-            let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
-            let _ = DD.ninfo_hprint (add_str "new_p 2" !CP.print_formula) new_p pos  in
-            let _ = DD.trace_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
+            (* let _ = DD.ninfo_hprint (add_str "new_p 1" !CP.print_formula) new_p pos  in *)
+            (* WN : fml = lhs & rhs; simplify_disj caused a stronger pre *)
+            (* let new_p = TP.simplify_raw (simplify_disjs new_p fml) in *)
+            let new_p = TP.simplify_raw new_p in 
+            let _ = DD.tinfo_hprint (add_str "new_p 2" !CP.print_formula) new_p pos  in
             (* TODO : simplify_raw seems to undo pairwisecheck *)
             let new_p = TP.pairwisecheck_raw new_p in
-            let _ = DD.trace_hprint (add_str "new_p (pairwisecheck): " !CP.print_formula) new_p pos in
-            let _ = DD.ninfo_hprint (add_str "new_p 3" !CP.print_formula) new_p pos  in
-            let _ = DD.ninfo_hprint (add_str "new_p_for_assume " !CP.print_formula) new_p_for_assume pos  in
+            let _ = DD.trace_hprint (add_str "new_p (pairwisecheck)" !CP.print_formula) new_p pos in
+            let _ = DD.tinfo_hprint (add_str "new_p 3" !CP.print_formula) new_p pos  in
+            let _ = DD.tinfo_hprint (add_str "new_p_for_assume " !CP.print_formula) new_p_for_assume pos  in
             (new_p,new_p_for_assume)
         in
         (* TODO WN : Is below really needed?? *)
@@ -1078,8 +1084,8 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
           (* else *)
           simplify new_p iv
         in
-        let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
-        let _ = DD.tinfo_hprint (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos in
+        let _ = DD.tinfo_hprint (add_str "new_p" !CP.print_formula) new_p pos in
+        let _ = DD.tinfo_hprint (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
         (* abstract common terms from disj into conjunctive form *)
         if (CP.isConstTrue new_p || CP.isConstFalse new_p) then 
           begin
@@ -2391,7 +2397,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
                 ([r1],r2, ass_guard1)
       in
       (* let closed_svl = CF.find_close svl leqs in *)
-       DD.ninfo_zprint (lazy  ("svl: " ^ ((pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv print_arg_kind)))) svl))) pos;
+       DD.ninfo_zprint (lazy  ("svl" ^ ((pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv print_arg_kind)))) svl))) pos;
       (*let unk_svl, unk_xpure, unk_map1 =*)
       (true (*TODO*), svl,[(rhs_hp, rhs_args)],selected_hpargs0,  ass_guard0)
     else
