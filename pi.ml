@@ -582,7 +582,16 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let post_inv = CP.join_disjunctions post_invs in
             let pr = Cprinter.string_of_pure_formula in
-            let _ = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
+            let (s1,s2) =
+              if List.length post_rel_df_new = 0 then ("","")
+              else
+                let pf1,pf2 = List.hd post_rel_df_new in
+                let tl = List.tl post_rel_df_new in
+                List.fold_left (fun (s1,s2) (pf1,_) ->
+                    (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
+                ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
+            let _ = DD.binfo_pprint (s2 ^ s1) no_pos in
+            (* let _ = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let _ = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
