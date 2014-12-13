@@ -104,6 +104,7 @@ static void l0_insert(struct L0 **list)
 static void l4_destroy(struct L4 *list)
 {
     do {
+      // not destroy down --> leak
         struct L4 *next = list->next;
         free(list);
         list = next;

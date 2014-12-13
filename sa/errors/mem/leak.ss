@@ -8,13 +8,13 @@ HeapPred G(node a).
 //  requires x::node<_> ensures true & flow __Error;
 //  requires x::node<_> ensures true ;
 //  requires x=null  ensures x=null;
-//  infer [H,G] requires H(x)   ensures  G(x) ;
+  infer [H,G] requires H(x)   ensures  G(x) ;
 /*  infer [@shape,
          @error
          ] requires true   ensures  true ;
 */
 {
   x=null;
-  // dprint;
+   dprint;
   return 1;
 }
