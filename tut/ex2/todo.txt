@@ -279,6 +279,18 @@ Pre is OK, but maybe we can simplify the residue to n=0 & m=0?
 
 
 ===================================================================
+# sim5-zip.ss
+
+We get pre-condition:
+ EBase emp&0<=n & (((1<=m & n!=0) | n=0)) & (((n!=0 & m!=0) | m=0)) & n=m 
+
+If we send it to Omega.simplifier (e.g. PairWiseCheck), we will get:
+n=m & m>=0.
+
+   { [n,n]: 0 <= n}
+
+Please send this to Omega. simplifier
+
 ===================================================================
 ===================================================================
 ===================================================================
