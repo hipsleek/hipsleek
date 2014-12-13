@@ -1,0 +1,11 @@
+A := {[n,m]: forall(np,mp: not(n=0 & np=n & mp=m) | m=0)};
+A;
+PairWiseCheck A;
+
+B := {[n,m]: not(n=0) | m=0};
+B;
+PairWiseCheck B;
+
+A subset B;
+
+B subset A;
