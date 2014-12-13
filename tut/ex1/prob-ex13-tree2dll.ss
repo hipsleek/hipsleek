@@ -46,6 +46,12 @@ node flatten(node x)
 
 
 /*
+Exercise:
+
+Write an implementation of flatten that would 
+traverse each node only once; and verify that the
+number of nodes is preserved in the dll.
+
 
 
 */

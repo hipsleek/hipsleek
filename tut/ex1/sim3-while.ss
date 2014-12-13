@@ -11,7 +11,7 @@ int foo(int x)
   int r=0;
   while (i<x) 
      requires true
-     ensures (i>=x & r'=r | i<x & r'=r+2*(x-i));
+     ensures (i>=x & r'=r &  i'=i| i<x & r'=r+2*(x-i) & i'=x+1);
   {
     i=i+1;
     r=r+2;

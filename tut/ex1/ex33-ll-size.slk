@@ -22,7 +22,7 @@ print residue.
 
 //(4)
 checkentail x::node<_,q>*q::node<_,q2>*q2::node<_,null> 
-     |- [n] x::ll<n>.
+     |- x::ll<n>.
 print residue.
 // n=3
 

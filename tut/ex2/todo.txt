@@ -1,0 +1,120 @@
+# ex1-get-tail.ss
+
+node tail_fn(node x)
+  infer [P,Q]
+  requires P(x) 
+  ensures Q(x,res);
+{ 
+  return x.next;
+}
+
+What is flow(4,5) - norm?
+Can we print the inferred pre/post spec?
+Currently the int value is not preserved.
+Is there a way to preserve it or do we need @L?
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1364) ::=  x_1364::node<val_15_1365,DP_DP_HP_1361>,
+ Q(x_1366,res_1367) ::=  x_1366::node<val_15_1368,res_1367>&res_1367=DP_DP_HP_1361]
+
+===================================================================
+# ex2-set-tail.ss
+
+void set_tail_fn(node x,node y)
+  infer [P,Q]  requires P(x,y) ensures Q(x,y);
+{ 
+  x.next=y;
+}
+
+Can we print simplified pre/post spec?
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ P(x_1365,y_1366) ::=  x_1365::node<val_14_1367,DP_DP_HP_1362>&y_1366=DP_DP_HP_1363,
+ Q(x_1368,y_1369) ::=  x_1368::node<val_14_1370,y_1369>&y_1369=DP_DP_HP_1363]
+*************************************
+===================================================================
+# ex2a-set-tail.ss
+
+void set_tail_fn(node x,node y)
+  infer [@shape]  requires true ensures true;
+{ 
+  x.next=y;
+}
+
+Why did inference failing? Should I be using emp/emp?
+
+******************************
+   ******* SPECIFICATION1 ********
+******************************
+ infer[@shape HP_12,GP_13]requires (htrue) * HP_12(x,y@NI)&
+truerequires emp
+ ensures (htrue) * GP_13(x,y)&true{,(4,5)=__norm#E};
+
+
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex2a-set-tail.ss",Line:9,Col:2
+
+ERROR: at _0:0_0:0
+Message: Expect a node or a hrel
+
+!!! WARNING logtime exception:0.000336
+Procedure set_tail_fn$node~node FAIL.(2)
+
+Exception Failure("Expect a node or a hrel") Occurred!
+
+===================================================================
+# ex2b-set-tail-emp.ss
+
+How do we trigger a re-verification?
+--reverify ?
+
+However, this triggered an exception!
+
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 66 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 
+
+-------
+
+void set_tail_fn(node x,node y)
+  infer [@shape]  requires emp ensures emp;
+
+Seems like emp/emp is better.
+
+!!! shape inference for flow:(4,5)
+*********************************************************
+*******relational definition (flow= (4,5))********
+*********************************************************
+[ HP_12(x_1366,y_1367) ::=  x_1366::node<val_9_1368,DP_DP_HP_1364>,
+ GP_13(x_1369,y_1370) ::=  x_1369::node<val_9_1371,y_1370>]
+
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+

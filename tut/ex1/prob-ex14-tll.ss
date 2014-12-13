@@ -40,3 +40,10 @@ node set_right (node p, node x, node t)
   	}
 }
 
+/*
+Add size property to show that the number of
+nodes is being preserved by this method.
+
+
+
+*/
