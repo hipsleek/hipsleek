@@ -26,6 +26,7 @@ let check_stricteq_h_fomula = SY_CEQ.check_stricteq_h_fomula
 let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
+let checkeq_formula_list_w_args = SY_CEQ.checkeq_formula_list_w_args
 
 (* let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool) *)
 (*   (fs1: CF.formula) (fs2: CF.formula) -> *)

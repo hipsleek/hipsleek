@@ -2750,7 +2750,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let defs1 = pre_preds@post_pred@rem in
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_hp_def defs1 else defs1 in
         print_endline_quiet "\n*********************************************************";
-        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        let _ = if !Globals.sae then print_endline_quiet ("*******relational definition (flow = " ^(!Cformula.print_flow flow_int) ^")********")
+        else print_endline_quiet ("*******relational definition ********")
+        in
         print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
@@ -2780,7 +2782,10 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let defs1 = pre_preds@post_pred@rem in
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
         print_endline_quiet "\n*********************************************************";
-        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        let _ = if !Globals.sae then print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********")
+        else
+          print_endline_quiet ("*******relational definition " ^"********")
+        in
         print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
@@ -2794,7 +2799,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       end;
     in
     let do_infer_one_flow hprels scc_sel_hps0 flow_int=
-      let _ = Debug.info_hprint (add_str "shape inference for flow" !Cformula.print_flow) flow_int  no_pos in
+      let _ = if !Globals.sae then Debug.info_hprint (add_str "shape inference for flow" !Cformula.print_flow) flow_int  no_pos
+      else ()
+      in
       let (a, hp_defs,c) =
           if not (!Globals.pred_syn_modular) then
             if not (!Globals.sa_dnc) then

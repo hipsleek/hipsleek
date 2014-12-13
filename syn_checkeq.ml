@@ -266,6 +266,19 @@ let rec check_relaxeq_formula_x args f10 f20=
     (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
     let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
     if r1 then
+      let r2 = if !Globals.pred_elim_dangling then
+        List.for_all (fun ((CP.SpecVar (_,id1,_)), (CP.SpecVar (_,id2,_))) ->
+            try
+              let pre1 = String.sub id1 0 5 in
+              let pre2 = String.sub id2 0 5 in
+              let b1 = string_compare pre1 dang_hp_default_prefix_name in
+              let b2 = string_compare pre2 dang_hp_default_prefix_name in
+              (b1 && b2) || (not b1 && not b2)
+            with _ -> true
+        ) ss
+      else true in
+      if not r2 then false
+      else
       (* let new_mf1 = xpure_for_hnodes hf1 in *)
       (* let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in *)
       (* let new_mf2 = xpure_for_hnodes hf2 in *)
@@ -330,6 +343,31 @@ and checkeq_formula_list fs1 fs2=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
+
+let rec checkeq_formula_list_w_args_x args fs1 fs2=
+  let rec look_up_f f fs fs1=
+    match fs with
+      | [] -> (false, fs1)
+      | f1::fss -> if (check_relaxeq_formula args f f1) then
+            (true,fs1@fss)
+          else look_up_f f fss (fs1@[f1])
+  in
+  if List.length fs1 = List.length fs2 then
+    match fs1 with
+      | [] -> true
+      | f1::fss1 ->
+          begin
+              let r,fss2 = look_up_f f1 fs2 [] in
+              if r then
+                checkeq_formula_list_w_args args fss1 fss2
+              else false
+          end
+  else false
+
+and checkeq_formula_list_w_args args fs1 fs2=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
+      (fun _ _ -> checkeq_formula_list_w_args_x args fs1 fs2) fs1 fs2
 
 
 let check_exists_cyclic_proofs_x es (ante,conseq)=
