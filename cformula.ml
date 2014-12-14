@@ -8955,13 +8955,14 @@ think it is used to instantiate when folding.
   es_infer_post : bool; 
   (*input vars where inference expected*)
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
+  (* WN : why so many diff type of infer vars, can we streamline?? *)
   es_infer_vars : CP.spec_var list;  (* for first-order object *)
   es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
-  (* input vars to denote vars already instantiated *)
+  (* input vars to denote vars already instantiated - WN: above or below?*)
   es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)

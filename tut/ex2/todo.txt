@@ -437,3 +437,28 @@ Procedure len_cll$node FAIL.(2)
 
 Exception Failure("Proving precond failed") Occurred!
 ===================================================================
+# bugs-ex11c.slk
+
+
+infer[HH] HH(xxxx) & xxxx=null |- xxxx::node<_,q>.
+print residue.
+
+Entail (1) : Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+Contra detected:
+
+!!! infer_vars:[]
+!!! infer_vars_rel:[]
+!!! infer_vars_sel_hp_rel:[]
+!!! infer_vars_sel_post_hp_rel:[]
+!!! orig_inf_vars:[]
+!!! real_contra:false
+!!! infer pure?: xxxx!=null
+!!! WARNING : Inferred pure not added: xxxx!=null
+
+
+But real_contra is false. However, we are not
+adding HH(xxxx) --> xxxx!=null. How come?
+===================================================================
