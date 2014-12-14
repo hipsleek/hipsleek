@@ -6538,6 +6538,7 @@ let fresh_data_v f=
    let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
    fr_v_sps2
 
+let fresh_data_v_no_change f= []
 
 let rec struc_formula_trans_heap_node formula_fct f =
  let recf = struc_formula_trans_heap_node formula_fct in

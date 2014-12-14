@@ -10,7 +10,7 @@ ll<n> == emp & self=null & n=0
 relation P(int n).
   relation Q(int n, int m, int r).
 
-HeapPred PP(node x, node y).
+HeapPred PP(node x, node@NI y).
 PostPred QQ(node x, node y).
 
 void append(node x, node y)

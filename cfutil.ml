@@ -157,6 +157,8 @@ let fresh_data_v f0=
   Debug.no_1 "fresh_data_v" pr1 pr1
       (fun _ -> fresh_data_v_x f0) f0
 
+let fresh_data_v_no_change f0= f0
+
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=
   (*********INTERNAL***************)

@@ -630,7 +630,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
     let recf = gen_case_spec in
     let rec_pre parts1 fl b f1 = CF.EBase {b with
 	CF.formula_struc_continuation = Gen.map_opt (recf parts1 fl) b.CF.formula_struc_continuation;
-        CF.formula_struc_implicit_inst =  CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@(CF.fresh_data_v  b.CF.formula_struc_base));
+        CF.formula_struc_implicit_inst =  CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@(CF.fresh_data_v_no_change  b.CF.formula_struc_base));
 	CF.formula_struc_base = f1;
     }
     in
@@ -672,7 +672,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                        let sf4 = if CF.isConstTrueFormula f1 then n_sf
                        else CF.EBase {b with
                            CF.formula_struc_continuation = Some n_sf;
-                           CF.formula_struc_implicit_inst =  CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@(CF.fresh_data_v  f1));
+                           CF.formula_struc_implicit_inst =  CP.remove_dups_svl (b.CF.formula_struc_implicit_inst@(CF.fresh_data_v_no_change  f1));
                            CF.formula_struc_base = f1;}
                        in
                        sf4
@@ -692,7 +692,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
           ) [] parts in
           let f1 = formula_subst_dangling_pred_post dang_hps to_unfold_hps post_hps l_hpdefs ifl ea.CF.formula_assume_simpl in
           let _ =  Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
-          let quans = CF.fresh_data_v f1 in
+          let quans = CF.fresh_data_v_no_change f1 in
           CF.EAssume {ea with CF.formula_assume_simpl = CF.add_quantifiers quans f1;
               CF.formula_assume_struc = (recf parts ifl) ea.CF.formula_assume_struc}
     | CF.EInfer b -> CF.EInfer {b with CF.formula_inf_continuation = (recf parts ifl) b.CF.formula_inf_continuation}
