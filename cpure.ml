@@ -10749,7 +10749,7 @@ let rec tpd_drop_all_perm f = match f with
   | Exists (v,f,l,p) -> 
 		if (type_of_spec_var v)=Tree_sh then tpd_drop_all_perm f
 		else Exists (v, tpd_drop_all_perm f, l,p)
-		
+
 
 let rec tpd_drop_perm f = match f with 
   | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f

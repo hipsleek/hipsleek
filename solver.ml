@@ -5051,8 +5051,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
           let rs1, prf1 = heap_entail_after_sat prog is_folding c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in
           let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
 	  ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
-    | Ctx es -> 
-	  let exec ()= 
+    | Ctx es ->
+	  let exec ()=
 	    begin
               let pr = Cprinter.string_of_entail_state_short in
               Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
@@ -5524,7 +5524,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             (*if !Globals.allow_mem && !Globals.allow_field_ann then
               begin
               Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs")) pos;
-	      heap_entail_split_rhs prog is_folding ctx conseq pos     
+	      heap_entail_split_rhs prog is_folding ctx conseq pos
               end
               else*)
             (* WN : check lhs_contra if infer_vars present *)
@@ -5538,7 +5538,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 begin
                   Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
                   (* TO CHECK: ignore this --imm at the moment*)
-               	  heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
+               	  heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos
                 end
 	      else
                 (* let _, rhs_pure, _, _, _  = CF.split_components conseq in *)
@@ -5560,11 +5560,11 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             let _ = Debug.ninfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
             let _ = Debug.ninfo_hprint (add_str "real_c" string_of_bool) real_c no_pos in
             let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
-            if not(contra) then 
+            if not(contra) then
               if real_c then (* real_c = false denotes contradiction *)
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
-                let _ = Debug.tinfo_pprint "Early lhs-rhs contra detected" no_pos in
+                let _ = Debug.ninfo_pprint "Early lhs-rhs contra detected" no_pos in
                 let pr = Cprinter.string_of_formula in
                 let pr2 = Cprinter.string_of_context in
                 let cex = (mk_cex true) in
@@ -5592,7 +5592,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 (* let _ = Globals. smt_return_must_on_error () in *)
                 let lc = Musterr.build_and_failures 5 "early contra detect: "
                   Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
-                let _ = Debug.tinfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
+                let _ = Debug.ninfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
                 (lc,prf)
                 (* let ls_ctx,prf = heap_entail() in *)
                 (* let _ = Debug.info_zprint  (lazy  ("ls_ctx:" ^ (Cprinter.string_of_list_context ls_ctx) )) no_pos  in *)
@@ -5600,7 +5600,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             else
               match (r1,prf) with
                 | Some r1, Some prf -> let _ = log_contra_detect 1 conseq r1 pos in (r1,prf)
-                | _ ->  
+                | _ ->
                         let _ = Debug.info_pprint "Andreea : why contra detected but not estate?" no_pos  in
                         let _ = Debug.info_pprint "should we fail instead?" no_pos  in
                         heap_entail()
