@@ -3995,7 +3995,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     (iii) add back removed stuff
     (iv) extend to disj form
 *)
-and simplify_aux f =
+and simplify_aux_x f =
   let disjs = CP.split_disjunctions f in
   List.fold_left (fun acc disj ->
       let conjs = CP.split_conjunctions disj in
@@ -4006,14 +4006,18 @@ and simplify_aux f =
       CP.mkOr acc new_disj None no_pos
   ) (CP.mkFalse no_pos) disjs
 
+and simplify_aux f =
+  let pr = !print_pure_f in
+  Debug.no_1 "simplify_aux" pr pr simplify_aux_x f
+
 (* WN : can simplify ignore other type of pure ctrs? *)
 and simplify_pure_f_x (f0:formula) =
   let simp f =
     let r1 = CP.remove_redundant f in
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
-    let _ = Debug.binfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
-    let _ = Debug.binfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
-    let _ = Debug.binfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
+    let _ = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
       | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
