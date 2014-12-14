@@ -5182,7 +5182,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let lhs_xpure,_,_ = xpure prog estate.CF.es_formula in
                 let lhs_p = MCP.pure_of_mix lhs_xpure in
                 let rhs_xpure,_,_ = xpure prog conseq in
-                let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+                let p_rhs_xpure0 = MCP.pure_of_mix rhs_xpure in
+                let p_rhs_xpure = Cputil.hloc_enum_to_symb p_rhs_xpure0 in
                 (*check the contra is in LHS or between LHS and RHS*)
                 let _ = pr_hdebug (add_str "pf : " ( (!CP.print_formula))) pf pos in
                 let _ = pr_hdebug (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
@@ -5220,11 +5221,19 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let res_ctx_opt = 
                   (* if CP.is_neq_null_exp pf then None else *)
                   let p_contr_lhs = (CP.join_conjunctions ([lhs_p;pf])) in
+                  let _ = Debug.ninfo_hprint (add_str "p_contr_lhs"  (!CP.print_formula)) p_contr_lhs pos in
+                  let _ = Debug.ninfo_hprint (add_str "rele_p_rhs_xpure"  (!CP.print_formula)) rele_p_rhs_xpure pos in
+                  let _ = Debug.ninfo_hprint (add_str "hinf_args_map"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map pos in
                   let _ = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
                   let hinf_args_map0 =  List.filter (fun (_,args) ->
-                      let rele_p = CP.filter_var p_contr_lhs args in
+                      let rele_p0 = CP.filter_var p_contr_lhs args in
+                       let _ = Debug.ninfo_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
+                       let rele_ps0 = CP.list_of_conjs rele_p0 in
+                       let rele_ps1 = List.filter (fun p -> not (CP.equalFormula p rele_p_rhs_xpure)) rele_ps0 in
+                       let rele_p = CP.conj_of_list rele_ps1 (CP.pos_of_formula rele_p0) in
                       TP.is_sat_raw (MCP.mix_of_pure rele_p)
                   ) hinf_args_map in
+                  let _ = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
                   Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
                 let _ = Debug.tinfo_hprint (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
 	        let _ = pr_hdebug (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
@@ -5324,7 +5333,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
             let _ = Debug.tinfo_hprint (add_str "ctx1"  Cprinter.string_of_context) ctx1 pos in
 	    let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
-            let _ = Debug.ninfo_pprint ("*********2********") no_pos in
+            let _ = Debug.info_pprint ("*********2********") no_pos in
             let slk_no = Log.last_cmd # start_sleek 1 in
             let rhs_xpure,_,_ = xpure prog conseq in
             let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in

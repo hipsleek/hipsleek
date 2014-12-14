@@ -1,0 +1,17 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+
+pred ls_nt<p> == emp & self=p
+  or self::node<_,q>*q::ls_nt<p> & self!=p
+  inv true.
+
+pred PP<p> == emp & self=p
+  or self::node<_,q>*q::PP<p> & self!=p
+  inv true.
+
+
+lemma_safe "1" self::ls_nt<p> <-> self::PP<p>.

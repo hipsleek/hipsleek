@@ -810,8 +810,8 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
     if proc.C.proc_hpdefs = [] then proc else
       let formula_fnc= (formula_subst_dangling_pred unk_hps to_unfold_hps (CP.remove_dups_svl (proc.C.proc_sel_post_hps@post_hps)) hpdefs) in
       let trans_struc_formula_fn = if !Globals.sae then
-        (case_struc_formula_trans cprog unk_hps to_unfold_hps pre_hps (CP.remove_dups_svl (proc.C.proc_sel_post_hps@post_hps)) hpdefs (CF.struc_formula_trans_heap_node formula_fnc)) formula_fnc
-      else CF.struc_formula_trans_heap_node formula_fnc
+        (case_struc_formula_trans cprog unk_hps to_unfold_hps pre_hps (CP.remove_dups_svl (proc.C.proc_sel_post_hps@post_hps)) hpdefs (CF.struc_formula_trans_heap_node [] formula_fnc)) formula_fnc
+      else CF.struc_formula_trans_heap_node [] formula_fnc
       in
       let name = C.unmingle_name proc.C.proc_name in
       (* let _ = print_endline ("proc_name: "^name) in *)
@@ -825,12 +825,12 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       in
       let _ =  Debug.ninfo_hprint (add_str "s_spec2" (Cprinter.string_of_struc_formula)) s_spec2 no_pos in
       let s_spec3 = if sst_hps = [] then s_spec2 else
-        CF.struc_formula_trans_heap_node (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec2
+        CF.struc_formula_trans_heap_node [] (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec2
       in
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
-      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula s_spec3 in
+      let n_static_spec = CF.struc_formula_trans_heap_node [] hn_trans_formula s_spec3 in
       let _ =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos in
-      let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
+      let n_dynamic_spec = CF.struc_formula_trans_heap_node [] hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
       let n_static_spec = match proc.C.proc_static_specs with
         | CF.EInfer ei ->
               let inf_obj = ei.CF.formula_inf_obj in
