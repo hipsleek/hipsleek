@@ -4000,12 +4000,14 @@ and simplify_aux_x f =
   List.fold_left (fun acc disj ->
       let conjs = CP.split_conjunctions disj in
       let lvs, non_lvs = List.partition CP.is_lexvar conjs in
-      let rels, non_rels = List.partition CP.is_RelForm non_lvs in
+      let vps, non_vps = List.partition CP.is_varperm non_lvs in
+      let rels, non_rels = List.partition CP.is_RelForm non_vps in
       let lins, non_lins = List.partition CP.is_linear_formula non_rels in
       let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
       let lin_f = !simplify_omega lin_f in
       let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) lin_f non_lins in
       let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
+      let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
       let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
       CP.mkOr acc new_disj None no_pos
   ) (CP.mkFalse no_pos) disjs
