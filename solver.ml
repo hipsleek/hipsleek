@@ -2817,8 +2817,12 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
    let _ = reset_int2 () in
   let b = unsat_base_nth 1 prog sat_subno temp_f in
   let f = es.es_formula in
+  Debug.tinfo_hprint (add_str "es_formula" Cprinter.string_of_formula) f no_pos;
   (* Slicing: Set the flag memo_group_unsat to false *)
+  let f = (* Wrapper.wrap_exception f *) CF.simplify_pure_f f in
+  Debug.tinfo_hprint (add_str "es_formula" Cprinter.string_of_formula) f no_pos;
   let f = reset_unsat_flag_formula f in
+  Debug.tinfo_hprint (add_str "es_formula(2)" Cprinter.string_of_formula) f no_pos;
   let es = { es with es_formula = f; es_unsat_flag = true } in
   if not b then Ctx es else
     false_ctx_with_orig_ante es f no_pos
@@ -8389,6 +8393,7 @@ type: bool *
 		          | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
                 (* TODO-WN why is there another elim_unsat_ctx? *)
                 let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+                Debug.tinfo_hprint (add_str "res_ctx" Cprinter.string_of_context) res_ctx no_pos;
 	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
 	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	        (SuccCtx[res_ctx], prf)
@@ -8669,7 +8674,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
             let f a0 = 
               (* WN : what if Omega cannot handle?  *)
-              let a0 = Wrapper.wrap_exception TP.simplify_omega a0 a0 in
+              let a0 = Wrapper.wrap_exception a0 TP.simplify_omega a0 in
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
               then 
                 let a0 = CP.drop_exists a0 in 

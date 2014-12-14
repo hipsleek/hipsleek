@@ -312,7 +312,8 @@ approx_disj_or_d2 : approx_disj }
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
-
+(* this will be set to TPdispatcher.simplify_omega later *)
+let simplify_omega = ref(fun (c:Cpure.formula) -> c)
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
 let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
@@ -3795,7 +3796,7 @@ and split_components_x (f : formula) =
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
     | Or ({formula_or_pos = pos}) ->
-          let _ = DD.binfo_hprint (add_str "f" !print_formula) f no_pos in
+          let _ = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 
 and get_rel_args f0=
@@ -3987,11 +3988,28 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+(* 
+    WN : do the following
+    (i) temp remove all non-linear stuff
+    (ii) call simplify_omega
+    (iii) add back removed stuff
+    (iv) extend to disj form
+*)
+and simplify_aux f =
+  !simplify_omega f
+
+(* WN : can simplify ignore other type of pure ctrs? *)
 and simplify_pure_f_x (f0:formula) =
+  let simp f = 
+    let r1 = CP.remove_redundant f in
+    let r2 = Wrapper.wrap_exception f simplify_aux r1 in
+    let _ = Debug.binfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r1 in
   let rec helper f=
     match f with
-      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
-      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix e.formula_exists_pure));}
       | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}
   in

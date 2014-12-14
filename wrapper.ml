@@ -1,7 +1,7 @@
 open Globals
 open Gen.Basic
 
-let wrap_exception f e dval =
+let wrap_exception dval f e =
   try 
     f e 
   with _ -> dval

@@ -264,7 +264,7 @@ Error1(s) detected at main
 Stop Omega... 137 invocations caught
 
 ===================================================================
-# bus-sim5b.slk -debug infer.log (part FIXED)
+# bus-sim5b.slk -debug infer.log (FIXED)
 
 infer [n,m] n=0 |-  m=0.
 print residue.
@@ -276,6 +276,12 @@ Residue:
  inferred pure: [(m=0 | n!=0)]
 
 Pre is OK, but maybe we can simplify the residue to n=0 & m=0?
+
+New simplified form :)
+
+Residue:
+ <1>emp&mmm=0 & n=0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(mmm=0 | n!=0)]
 
 
 ===================================================================
@@ -307,7 +313,7 @@ zip$node~node
            (exists r_1397: res::ll{}<r_1397>&0<=n & 0<=m & n=r_1397 & 
            r_1397<=m&{FLOW,(4,5)=__norm#E})[]
 ===================================================================
-# bugs-ex21-ll-zip.ss
+# bugs-ex21-ll-zip.ss (FIXED)
 
 Why type error for Q relation not detected.
 Should result in a failure/exception.
@@ -321,6 +327,57 @@ node zip(node x, node y)
   ensures res::ll<n> & Q(n,m,res);
 
 ===================================================================
+# sim5-zip.ss
+
+Need to fix simplify_aux in cformula.ml
+
+(* 
+    WN : do the following
+    (i) temp remove all non-linear stuff
+    (ii) call simplify_omega
+    (iii) add back removed stuff
+    (iv) extend to disj form
+*)
+and simplify_aux f =
+  !simplify_omega f
+
+(* WN : can simplify ignore other type of pure ctrs? *)
+and simplify_pure_f_x (f0:formula) =
+  let simp f = 
+    let r1 = CP.remove_redundant f in
+    let r2 = Wrapper.wrap_exception f simplify_aux r1 in
+    let _ = Debug.binfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.binfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r1 in
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: LexVar 3")
+ Formula: n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(f): n'=n & m'=m & P(n,m) & MayLoop[] & v_int_17_1313'=0 & n'=v_int_17_1313'
+!!! simp(syn): n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(oc): n'=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+WN : can we preserve LexVar ?
+
+!!! simp(f): n'=n & m'=m & P(n,m) & v_int_17_1313'=0 & n'=v_int_17_1313'
+!!! simp(syn): n'=v_int_17_1313' & v_int_17_1313'=0 & P(n,m) & m'=m & n'=n
+!!! simp(oc): v_int_17_1313'=0 & m=m' & n'=0 & n=0
+WN : where is P(n,m)?
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: LexVar 3")
+ Formula: n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(f): n'=n & m'=m & P(n,m) & MayLoop[] & v_int_17_1313'=0 & n'!=v_int_17_1313'
+!!! simp(syn): n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+!!! simp(oc): n'!=v_int_17_1313' & v_int_17_1313'=0 & MayLoop[] & P(n,m) & m'=m & n'=n
+
+!!! simp(f): n'=n & m'=m & P(n,m) & v_int_17_1313'=0 & n'!=v_int_17_1313'
+!!! simp(syn): n'!=v_int_17_1313' & v_int_17_1313'=0 & P(n,m) & m'=m & n'=n
+!!! simp(oc): v_int_17_1313'=0 & m=m' & n=n' & n'!=0
+WN : where is P(n,m)?
+
+!!! simp(f): n'!=0 & P(n,m) & m'=m & n'=n & !(v_bool_17_1322') & n'!=0 & v_bool_17_1322'
+!!! simp(syn): v_bool_17_1322' & n'!=0 & !(v_bool_17_1322') & n'=n & m'=m & P(n,m)
+!!! simp(oc): false
+
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -3805,4 +3805,5 @@ let _ =
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
   Excore.is_sat_raw := is_sat_raw;
-  Excore.simplify_raw := simplify_raw
+  Excore.simplify_raw := simplify_raw;
+  Cformula.simplify_omega := simplify_omega;
