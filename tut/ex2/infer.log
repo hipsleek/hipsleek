@@ -2,5 +2,7 @@
 #infer_pure_m_1,Trace
 #simplify_disjs
 #imply_mix_formula
+#heap_entail_empty_rhs_heap,Trace
+elim_unsat_es_now,Trace
 #process_action,Loop
 early_hp_contra_detection,Trace.

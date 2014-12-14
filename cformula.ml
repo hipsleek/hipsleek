@@ -312,7 +312,8 @@ approx_disj_or_d2 : approx_disj }
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
-
+(* this will be set to TPdispatcher.simplify_omega later *)
+let simplify_omega = ref(fun (c:Cpure.formula) -> c)
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
 let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
@@ -3795,7 +3796,7 @@ and split_components_x (f : formula) =
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
     | Or ({formula_or_pos = pos}) ->
-          let _ = DD.binfo_hprint (add_str "f" !print_formula) f no_pos in
+          let _ = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 
 and get_rel_args f0=
@@ -3987,11 +3988,46 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+(* 
+    WN : do the following
+    (i) temp remove all non-linear stuff
+    (ii) call simplify_omega
+    (iii) add back removed stuff
+    (iv) extend to disj form
+*)
+and simplify_aux_x f =
+  let disjs = CP.split_disjunctions f in
+  List.fold_left (fun acc disj ->
+      let conjs = CP.split_conjunctions disj in
+      let lvs, non_lvs = List.partition CP.is_lexvar conjs in
+      let vps, non_vps = List.partition CP.is_varperm non_lvs in
+      let rels, non_rels = List.partition CP.is_RelForm non_vps in
+      let lins, non_lins = List.partition CP.is_linear_formula non_rels in
+      let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
+      let lin_f = !simplify_omega lin_f in
+      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) lin_f non_lins in
+      let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
+      let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
+      let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
+      CP.mkOr acc new_disj None no_pos
+  ) (CP.mkFalse no_pos) disjs
+
+and simplify_aux f =
+  let pr = !print_pure_f in
+  Debug.no_1 "simplify_aux" pr pr simplify_aux_x f
+
+(* WN : can simplify ignore other type of pure ctrs? *)
 and simplify_pure_f_x (f0:formula) =
+  let simp f =
+    let r1 = CP.remove_redundant f in
+    let r2 = Wrapper.wrap_exception f simplify_aux r1 in
+    let _ = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
-      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
-      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix e.formula_exists_pure));}
       | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}
   in
@@ -11040,14 +11076,18 @@ let list_context_union c1 c2 =
       pr pr pr
       list_context_union_x c1 c2
 
-let rec union_context_left c_l: list_context = (* match (List.length c_l) with *) match c_l with
+let rec union_context_left_x c_l: list_context = (* match (List.length c_l) with *) match c_l with
   | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
            (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
         (SuccCtx []: list_context)
   | [a] -> a (* (List.hd c_l) *)
   | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
         List.fold_left list_context_union a rest
- 
+
+and union_context_left c_l =
+  let pr = !print_list_context in
+  Debug.no_1 "union_context_left" (pr_list pr) pr union_context_left_x c_l
+
 (*should use union_context_left directly*)
 and fold_context_left_x c_l = union_context_left c_l 
 
@@ -12342,8 +12382,8 @@ let rec replace_struc_formula_label1 nl f =  match f with
 		formula_assume_struc = replace_struc_formula_label1 nl b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = replace_struc_formula_label1 nl b.formula_inf_continuation}
 	| EList b -> EList (map_l_snd (replace_struc_formula_label1 nl) b)
-	
- 	
+
+
 and replace_struc_formula_label nl f = replace_struc_formula_label1 (fun c -> nl) f
 and replace_struc_formula_label_fresh f = replace_struc_formula_label1 (fun c -> (fresh_branch_point_id "")) f
 and replace_formula_label nl f = replace_formula_label1 (fun c -> nl) f

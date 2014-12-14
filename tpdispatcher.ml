@@ -1848,7 +1848,7 @@ let norm_pure_input f =
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input norm_pure_result
-      Omega.simplify f 
+      Omega.simplify f
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
   (* cnv_int_to_ptr r *)
@@ -1857,14 +1857,14 @@ let om_simplify f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "simplify_omega" pr pr om_simplify f
 
-let simplify_omega (f:CP.formula): CP.formula = 
+let simplify_omega (f:CP.formula): CP.formula =
   if is_bag_constraint f then f
-  else om_simplify f   
+  else om_simplify f
 
 (* let simplify_omega (f:CP.formula): CP.formula =  *)
 (*   if is_bag_constraint f then f *)
 (*   else Omega.simplify f    *)
-            
+
 (* let simplify_omega f = *)
 (*   Debug.no_1 "simplify_omega" *)
 (* 	Cprinter.string_of_pure_formula *)
@@ -2192,7 +2192,7 @@ let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
 let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_2 "tp_pairwisecheck2" pr pr pr tp_pairwisecheck2_x f1 f2
-  
+
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -3805,4 +3805,5 @@ let _ =
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
   Excore.is_sat_raw := is_sat_raw;
-  Excore.simplify_raw := simplify_raw
+  Excore.simplify_raw := simplify_raw;
+  Cformula.simplify_omega := simplify_omega;

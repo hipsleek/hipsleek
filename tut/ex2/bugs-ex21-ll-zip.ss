@@ -7,7 +7,7 @@ ll<n> == emp & self=null & n=0
   or self::node<_,q>*q::ll<n-1>
   inv n>=0;
 
-relation P(int n).
+relation P(int n,int m).
 relation Q(int n, int m).
 
 node zip(node x, node y)
