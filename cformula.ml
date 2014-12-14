@@ -3996,11 +3996,19 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     (iv) extend to disj form
 *)
 and simplify_aux f =
-  !simplify_omega f
+  let disjs = CP.split_disjunctions f in
+  List.fold_left (fun acc disj ->
+      let conjs = CP.split_conjunctions disj in
+      let lins, non_lins = List.partition CP.is_linear_formula conjs in
+      let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
+      let lin_f = !simplify_omega lin_f in
+      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) lin_f non_lins in
+      CP.mkOr acc new_disj None no_pos
+  ) (CP.mkFalse no_pos) disjs
 
 (* WN : can simplify ignore other type of pure ctrs? *)
 and simplify_pure_f_x (f0:formula) =
-  let simp f = 
+  let simp f =
     let r1 = CP.remove_redundant f in
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
     let _ = Debug.binfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
@@ -11047,14 +11055,18 @@ let list_context_union c1 c2 =
       pr pr pr
       list_context_union_x c1 c2
 
-let rec union_context_left c_l: list_context = (* match (List.length c_l) with *) match c_l with
+let rec union_context_left_x c_l: list_context = (* match (List.length c_l) with *) match c_l with
   | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
            (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
         (SuccCtx []: list_context)
   | [a] -> a (* (List.hd c_l) *)
   | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
         List.fold_left list_context_union a rest
- 
+
+and union_context_left c_l =
+  let pr = !print_list_context in
+  Debug.no_1 "union_context_left" (pr_list pr) pr union_context_left_x c_l
+
 (*should use union_context_left directly*)
 and fold_context_left_x c_l = union_context_left c_l 
 
@@ -12349,8 +12361,8 @@ let rec replace_struc_formula_label1 nl f =  match f with
 		formula_assume_struc = replace_struc_formula_label1 nl b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = replace_struc_formula_label1 nl b.formula_inf_continuation}
 	| EList b -> EList (map_l_snd (replace_struc_formula_label1 nl) b)
-	
- 	
+
+
 and replace_struc_formula_label nl f = replace_struc_formula_label1 (fun c -> nl) f
 and replace_struc_formula_label_fresh f = replace_struc_formula_label1 (fun c -> (fresh_branch_point_id "")) f
 and replace_formula_label nl f = replace_formula_label1 (fun c -> nl) f

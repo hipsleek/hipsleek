@@ -3697,9 +3697,11 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
         (*   if isAnyFalseCtx ctx then *)
         (*   ([false_ctx pos], UnsatAnte) *)
         (*   else *)
+        let _ = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
         let result, prf = heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
         let result = subs_crt_holes_list_ctx result in
         let result = if !Globals.en_norm_ctx then Norm.merge_contexts result else result in
+        let _ = Debug.ninfo_hprint (add_str "result" Cprinter.string_of_list_context) result no_pos in
         (result, prf)
 
 and need_unfold_rhs prog vn=
@@ -4293,12 +4295,13 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             if not is_requires then (n_ctx_list, prf) else (SuccCtx [], prf)
                                             (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
 	                              | SuccCtx _ ->
+                                            let _ = DD.ninfo_hprint (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
 				            let res_ctx, res_prf = match formula_cont with
 					      | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
 				              | None -> (n_ctx_list, prf) in
-                                            (* DD.info_zprint  (lazy  ("  after pre 0: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
+                                            DD.ninfo_hprint (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
-                                            (* DD.info_zprint  (lazy  ("  after pre 1: " ^ (Cprinter.string_of_list_context res_ctx))) pos; *)
+                                            DD.ninfo_hprint (add_str "after pre 1: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             (* let _ = Debug.info_hprint (add_str "conseq:EBASE rel_ass_stk end" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in *)
                                             (res_ctx,res_prf)
                                                 (*  let _ = print_endline ("###: 3") in*)
@@ -4584,11 +4587,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			          else (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error, es.es_trace)) (mk_cex true) , UnsatConseq)
 			            (* TODO : can do a stronger falsity check on LHS *)
                   ) (* END match join_id with *)
-                end 
+                end
               in wrap_trace es.es_path_label exec () (*exec ()*)
     end	in
-  helper_inner 8 ctx_00 conseq 
-      
+  helper_inner 8 ctx_00 conseq
+
 (*and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos 
   : (list_context * proof) =
   match ctx0 with
