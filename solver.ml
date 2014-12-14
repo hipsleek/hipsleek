@@ -7318,7 +7318,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                 )  c)) cl in
                                       SuccCtx(new_cl) in
                                     (* let _ = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in *)
-                                                      Debug.tinfo_hprint (add_str "new_ctx" (Cprinter.string_of_list_context)) new_ctx no_pos;
+                                Debug.tinfo_hprint (add_str "new_ctx" (Cprinter.string_of_list_context)) new_ctx no_pos;
                                 (new_ctx, proof)
                               )
                             )
@@ -8268,6 +8268,7 @@ type: bool *
       let to_add = MCP.mix_of_pure (CP.join_conjunctions (inf_p@to_add_rel_ass)) in
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
+      let res_delta = CF.simplify_pure_f res_delta in
 
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
@@ -8289,7 +8290,7 @@ type: bool *
       let rhs_full, rhs_vrest3 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) rhs_vrest in
       (* let _ = print_endline ("\n LDK: " ^ (pr_list Cprinter.string_of_pure_formula rhs_vrest3)) in *)
       let _ = if (rhs_vrest3!=[]) then
-        print_endline ("[Warning] heap_entail_empty_rhs_heap: the conseq should not include variable permissions other than " ^ (string_of_vp_ann VP_Value) ^ " and " ^ (string_of_vp_ann VP_Full)) 
+        print_endline ("[Warning] heap_entail_empty_rhs_heap: the conseq should not include variable permissions other than " ^ (string_of_vp_ann VP_Value) ^ " and " ^ (string_of_vp_ann VP_Full))
             (*ignore those var perms in rhs_vrest3*)
       in
       let rhs_val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) rhs_val) in
@@ -8328,7 +8329,7 @@ type: bool *
           (* picking original conseq since not found here *)
           let conseq = (formula_of_mix_formula rhs_p pos) in
           let rhs_b = extr_rhs_b conseq in
-            let err_o = mkFailCtx_vperm (msg1 ^ "\n" ^ msg2 ^ "\n" ^ msg3) rhs_b estate conseq (mk_cex true) pos in
+          let err_o = mkFailCtx_vperm (msg1 ^ "\n" ^ msg2 ^ "\n" ^ msg3) rhs_b estate conseq (mk_cex true) pos in
           (err_o,Failure)
         end
       else
@@ -8352,11 +8353,11 @@ type: bool *
         (*if there exist VarPerm, they will be automatically 
           dropped during the proving process*)
 
-	    if is_folding then begin
+	if is_folding then begin
           (*LDK: the rhs_p is considered a part of residue and 
             is added to es_pure only when folding.
             Rule F-EMP in Mr Hai thesis, p86*)
-        (*filter out vperm which has been proven in rhs_p*)
+          (*filter out vperm which has been proven in rhs_p*)
           let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
           let to_keep = estate.es_gen_impl_vars @ estate.es_gen_expl_vars in
           let to_remove =  Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv rhs_p)to_keep in
@@ -8368,39 +8369,38 @@ type: bool *
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
           (* Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
           (* Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos; *)
-	      let res_es = {estate with es_formula = res_delta;
-	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
-	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
-		        | Some s1,Some s2 -> (s1,s2)::a
-		        | _ -> a) [] r_succ_match)@estate.es_success_pts;
+	  let res_es = {estate with es_formula = res_delta;
+	      es_pure = MCP.merge_mems rhs_p estate.es_pure true;
+	      es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
+		| Some s1,Some s2 -> (s1,s2)::a
+		| _ -> a) [] r_succ_match)@estate.es_success_pts;
               es_unsat_flag = false; (*the new context could be unsat*)
-	          (* es_unsat_flag = estate.es_unsat_flag && (Infer.no_infer_rel estate); *)
-                       } in
-	      let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
-              (* TODO-WN why are there two elim_unsat_ctx? *)
-              let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
-	      (SuccCtx[res_ctx], prf)
-	    end
-	    else 
-              begin
-	        let res_ctx = Ctx {estate with es_formula = res_delta;
-                    es_unsat_flag = false; (*the new context could be unsat*)
-                    (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above 
-		      Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
-                    (*TO CHECK: important to instantiate ivars*)
-	            es_success_pts = (List.fold_left (fun a (c1,c2)-> 
-                        match (c1,c2) with
-		          | Some s1,Some s2 -> (s1,s2)::a
-		          | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
-                (* TODO-WN why is there another elim_unsat_ctx? *)
-                let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
-                Debug.tinfo_hprint (add_str "res_ctx" Cprinter.string_of_context) res_ctx no_pos;
-	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
-	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
-	        (SuccCtx[res_ctx], prf)
-	    end
+	      (* es_unsat_flag = estate.es_unsat_flag && (Infer.no_infer_rel estate); *)
+          } in
+	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
+          (* TODO-WN why are there two elim_unsat_ctx? *)
+          let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
+	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+	  (SuccCtx[res_ctx], prf)
+	end
+	else
+          begin
+	    let res_ctx = Ctx {estate with es_formula = res_delta;
+                es_unsat_flag = false; (*the new context could be unsat*)
+                (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
+		  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
+                (*TO CHECK: important to instantiate ivars*)
+	        es_success_pts = (List.fold_left (fun a (c1,c2)->
+                    match (c1,c2) with
+		      | Some s1,Some s2 -> (s1,s2)::a
+		      | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
+            (* TODO-WN why is there another elim_unsat_ctx? *)
+            let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+	    (SuccCtx[res_ctx], prf)
+	  end
   end
   else
     (*** CODE TO INFER PRECOND ***)

@@ -4023,7 +4023,7 @@ and simplify_pure_f_x (f0:formula) =
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
     let _ = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
     let _ = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
-    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r1 in
+    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
       | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
