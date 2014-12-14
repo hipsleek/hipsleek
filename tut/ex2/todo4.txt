@@ -53,6 +53,17 @@ Good Context: length= 1 [es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
                          es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
 [[empty]]
 ==================================================================
+# ex32a-11-app.ss  --en-syn-mode
+
+Expecting  QQ to be == ls_nt
+This still obtains:
+
+!!! INFERRED SHAPE SPEC: EBase exists (Expl)[](Impl)[val_42_1399](ex)[]x::node<val_42_1399,next_42_1400> * 
+       next_42_1400::ll{}<>&x!=null&{FLOW,(1,28)=__flow#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   x::QQ{}<y>&{FLOW,(4,5)=__norm#E}[]
+                   Stop Omega... 129 invocations 
 ==================================================================
 ==================================================================
 ==================================================================
