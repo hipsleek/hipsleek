@@ -3,15 +3,21 @@ data node {
   node next;
 }
 
+/*
 ll<n> == emp & self=null & n=0
   or self::node<_,q>*q::ll<n-1>
   inv n>=0;
+*/
 
 relation P(int n).
   relation Q(int n, int m, int r).
 
 HeapPred PP(node x, node@NI y).
 PostPred QQ(node x, node y).
+
+ll<> == emp & self=null 
+  or self::node<_,q>*q::ll<>
+  inv true;
 
 void append(node x, node y)
 /*
