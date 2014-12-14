@@ -17,7 +17,7 @@ pred lseg_rev<n, p> ==
 
 lemma_safe "lseg-rev-transformation"
     self::node<_,q>*q::lseg_rev<n,p>
-        <-> self::lseg_rev<n,r> & r::node<_,p>.
+        <-> self::lseg_rev<n,r> * r::node<_,p>.
 
 //lemma_safe "lseg-lseg-rev" self::lseg<n,p> <-> self::lseg_rev<n,p>. 
 

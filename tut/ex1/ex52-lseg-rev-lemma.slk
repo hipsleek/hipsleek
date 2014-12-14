@@ -29,6 +29,7 @@ lemma_safe "lseg-rev-transformation"
     self::node<_,q>*q::lseg_rev<n,p>
         -> self::lseg_rev<n,r> & r::node<_,p>.
 
+
 Why is there an error-at failure?
 
 Starting z3... 
