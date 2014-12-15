@@ -12,10 +12,12 @@ pred ll<n> == emp & self=null & n=0
 //(1)
 infer[n] x::ll<n> |- x=null.
 print residue.
+// n=0
 
 //(2)
 infer[n] x::ll<n> |- x!=null.
 print residue.
+// n>=1
 
 slk_simplify ((x:node)=null | (x!=null & n<=0)) & (x=null & n=0 | x!=null & n>0).
 
