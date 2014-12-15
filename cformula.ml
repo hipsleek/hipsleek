@@ -6574,30 +6574,40 @@ let fresh_data_v f=
    let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
    fr_v_sps2
 
+let fresh_data_v_no_change f= []
 
-let rec struc_formula_trans_heap_node formula_fct f =
- let recf = struc_formula_trans_heap_node formula_fct in
+let rec struc_formula_trans_heap_node pre_quans formula_fct f=
+ let recf pre_quans1 = struc_formula_trans_heap_node pre_quans1 formula_fct in
   match f with
-    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
     | EBase b ->
           let f1= formula_fct b.formula_struc_base in
+          let _ =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+          let new_pre_quans = fresh_data_v  b.formula_struc_base in
+          let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
+          let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
+          let _ =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
           EBase {b with
-	      formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
-              formula_struc_implicit_inst =  CP.remove_dups_svl (b.formula_struc_implicit_inst@(fresh_data_v  b.formula_struc_base));
+	      formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
+              formula_struc_implicit_inst =  pre_cur_quans ;
 	      formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
     | EAssume ea->
           let f1 = formula_fct ea.formula_assume_simpl in
-          let quans = fresh_data_v f1 in
-          EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1;
-          formula_assume_struc = recf ea.formula_assume_struc}
+          let _ =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
+          let _ =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+          let cur_quans, f1_bare = split_quantifiers f1 in
+          let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in
+          EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1_bare;
+          formula_assume_struc = (recf pre_quans) ea.formula_assume_struc}
           (* (formula_trans_heap_node fct f, fl, et) *)
-    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
-    | EList l -> EList (Gen.map_l_snd recf l)
+    | EInfer b -> EInfer {b with formula_inf_continuation = (recf pre_quans) b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd (recf pre_quans) l)
 
-let struc_formula_trans_heap_node fct f =
+let struc_formula_trans_heap_node pre_quans fct f =
   let pr = !print_struc_formula in
-  Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+  Debug.no_1 "struc_formula_trans_heap_node" pr pr
+      (struc_formula_trans_heap_node pre_quans fct) f
 
 let do_unfold_view_x cprog pr_views (f0: formula) =
   let rec helper f=
@@ -8990,13 +9000,14 @@ think it is used to instantiate when folding.
   es_infer_post : bool; 
   (*input vars where inference expected*)
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
+  (* WN : why so many diff type of infer vars, can we streamline?? *)
   es_infer_vars : CP.spec_var list;  (* for first-order object *)
   es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
-  (* input vars to denote vars already instantiated *)
+  (* input vars to denote vars already instantiated - WN: above or below?*)
   es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)

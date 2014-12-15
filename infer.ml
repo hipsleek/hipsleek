@@ -3835,7 +3835,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
         (* let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in *)
         (* let _ = Debug.info_hprint (add_str "new_hd"  pr1) new_hd no_pos in *)
         match new_hd with
-          | [] -> let _ = Debug.tinfo_hprint (add_str "Not_found 0"  pr_none) () no_pos in
+          | [] -> let _ = Debug.ninfo_hprint (add_str "Not_found 0"  pr_none) () no_pos in
             raise Not_found
           | _ -> let pos = CP.pos_of_formula c in
             let rel_cands = List.fold_left ( fun r tuple ->

@@ -1087,7 +1087,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   in
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
-  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
+  let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
