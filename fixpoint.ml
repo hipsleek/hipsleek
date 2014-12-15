@@ -517,7 +517,10 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
 (*          let rels_fml = List.filter CP.is_RelForm (CP.list_of_conjs f1_orig) in*)
 (*          [(constTrue, List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]*)
 (*        else *)
-          let _,_,l = Infer.infer_pure_m 3 [] es f1 f1 f1 f2 no_pos in
+        (* TODO WN : need to use lhs_heap_xpure1 only *)
+        let lhs_heap_xpure1 = MCP.mkMTrue no_pos in
+        let _ = Debug.binfo_pprint "TODO : fix lhs_heap_xpure1" no_pos in
+          let _,_,l = Infer.infer_pure_m 3 [] es lhs_heap_xpure1 f1 f1 f1 f2 no_pos in
           List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) l)
       in lst
 (*      if lst=[] then*)

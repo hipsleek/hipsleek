@@ -1,5 +1,7 @@
 #compute_actions
-infer_pure_m_2,Trace
+#infer_pure_m_2,Trace
+#infer_pure_m_1,Trace
+infer_lhs_contra,Trace
 #simplify_disjs
 #imply_mix_formula
 #heap_entail_empty_rhs_heap,Trace

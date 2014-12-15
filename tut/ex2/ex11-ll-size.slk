@@ -11,6 +11,29 @@ pred ll<n> == emp & self=null & n=0
 infer[n] x::ll<n> |- x=null.
 print residue.
 
+//(1)
+infer[n] x::ll<n> |- x!=null.
+print residue.
+
+
+//(1)
+infer[x] x::ll<n> |- x=null.
+print residue.
+
+//(1)
+infer[x] x::ll<n> |- x!=null.
+print residue.
+
+
+//(1)
+infer[x,n] x::ll<n> |- x=null.
+print residue.
+
+//(1)
+infer[x,n] x::ll<n> |- x!=null.
+print residue.
+
+
 infer[n] x::ll<n> |- x::node<_,q>.
 print residue.
 

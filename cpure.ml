@@ -9481,6 +9481,19 @@ let get_neqs_new p=
   let ps = list_of_conjs p in
   List.fold_left get_neq [] ps
 
+let get_neqs_ptrs_form p=
+  let combine_neq acc p = match p with
+    | BForm (bf,_) -> (match bf with
+        | (Neq (Var (sv1,_), Var (sv2,_),pos),_) ->
+              if is_node_typ sv1 && is_node_typ sv2 then mkAnd acc p pos
+              else acc
+        | _ -> acc
+      )
+    | _ -> acc
+  in
+  let ps = list_of_conjs p in
+  List.fold_left combine_neq (mkTrue no_pos) ps
+
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
