@@ -8105,8 +8105,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
             then (true, [], None)
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
+              let _ = Debug.tinfo_hprint (add_str "xpure_lhs_h1_sym (b4 infer_pure)" Cprinter.string_of_mix_formula) xpure_lhs_h1_sym no_pos in
+              let lhs_heap_xpure1 = xpure_lhs_h1_sym in
               let res = 
-                Infer.infer_pure_top_level estate unk_heaps split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
+                Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
               in
               let or_option (o1,o2) = (match o1,o2 with
                 | None,_ -> o2
