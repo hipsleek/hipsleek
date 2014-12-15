@@ -15,11 +15,12 @@ int zip(int n,int m)
   requires P(n,m) ensures true;
 {
   if (n==0) {
-      is_zero(m);
+    //      is_zero(m);
       return 0;
   }
   else {
        is_pos(m);
+       is_pos(n);
        return 1;
   }
 }
