@@ -11,6 +11,7 @@ Module Type Mlinkedlist.
   Parameter star : formula -> formula -> formula.
   Parameter and : formula -> formula -> formula.
   Parameter imp : formula -> formula -> formula.
+  Parameter not : formula -> formula.
   Parameter eq : node -> node -> formula.
   Parameter isempty : A -> formula.
   Parameter append : A -> A -> A -> formula.
