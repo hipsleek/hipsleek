@@ -9,9 +9,6 @@ ll<n> == emp & self=null & n=0
   inv n>=0;
 */
 
-HeapPred PP(node x,node@NI y).
-PostPred QQ(node x, node y).
-
 ls_nt<p> == emp & self=p
   or self::node<_,q>*q::ls_nt<p> & self!=p
   inv true;
