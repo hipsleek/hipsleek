@@ -1059,13 +1059,13 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
             (*          let fml2 = TP.simplify_raw (CP.mkExists quan_var_new fml None no_pos) in*)
             let pr_svls = Cprinter.string_of_spec_var_list in
             let ex_vars = CP.diff_svl (CP.fv lhs_heap_xpure1_pure) iv in
-            let _ = DD.binfo_hprint (add_str "ex_vars" pr_svls) ex_vars pos in
-            let _ = DD.binfo_hprint (add_str "iv" pr_svls) iv pos in
-            let _ = DD.binfo_hprint (add_str "lhs_heap_xpure1" !CP.print_formula) lhs_heap_xpure1_pure pos in
-            let _ = DD.binfo_hprint (add_str "new_p 1" !CP.print_formula) new_p pos in
+            let _ = DD.tinfo_hprint (add_str "ex_vars" pr_svls) ex_vars pos in
+            let _ = DD.tinfo_hprint (add_str "iv" pr_svls) iv pos in
+            let _ = DD.tinfo_hprint (add_str "lhs_heap_xpure1" !CP.print_formula) lhs_heap_xpure1_pure pos in
+            let _ = DD.tinfo_hprint (add_str "new_p 1" !CP.print_formula) new_p pos in
             let new_p_better = TP.simplify_raw (CP.mkExists ex_vars
                   (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
-            let _ = DD.binfo_hprint (add_str "new_p_better" !CP.print_formula) new_p_better pos in
+            let _ = DD.tinfo_hprint (add_str "new_p_better" !CP.print_formula) new_p_better pos in
             let new_p = new_p_better in
             let new_p_for_assume = new_p in
             (*          let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in*)
