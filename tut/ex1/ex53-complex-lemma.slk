@@ -15,6 +15,7 @@ lemma_unsafe "lseg-rev-transformation"
         <- self::lseg_rev<n,r> * r::node<_,p>.
 
 
+
 checkentail x::lseg_rev<n,p> & n>0 |- x::node<_,q>.
 print residue.
 
