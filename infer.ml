@@ -1048,14 +1048,15 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
             let vrs = CP.remove_dups_svl (vrs1@vrs2) in
             let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) (vrs) in 
             let lhs_xpure_ann = Cpure.add_ann_constraints imm_vrs lhs_xpure in
-            let _ = DD.binfo_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
-            let _ = DD.binfo_hprint (add_str "quan_var_new : " !CP.print_svl) quan_var_new  pos  in
-            let _ = DD.binfo_hprint (add_str "quan_var : " !CP.print_svl) quan_var  pos  in
-            let new_p = TP.simplify_raw (CP.mkForall quan_var_new 
+            let _ = DD.tinfo_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
+            let _ = DD.tinfo_hprint (add_str "quan_var_new : " !CP.print_svl) quan_var_new  pos  in
+            let _ = DD.tinfo_hprint (add_str "quan_var : " !CP.print_svl) quan_var  pos  in
+            let new_p = TP.simplify_raw (CP.mkForall quan_var 
                 (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
+            let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos  in
             let ctr  = TP.simplify_raw (CP.mkAnd new_p lhs_xpure_ann no_pos) in
-            let _ = DD.binfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos  in
-            let _ = DD.binfo_hprint (add_str "ctr: " !CP.print_formula) ctr pos  in
+            let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos  in
+            let _ = DD.tinfo_hprint (add_str "ctr: " !CP.print_formula) ctr pos  in
             let new_p = if not(isConstFalse ctr) then new_p else ctr in
               (* Use quan_var instead *)
               (* TP.simplify_raw (CP.mkForall quan_var  *)
@@ -1069,7 +1070,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
             let _ = DD.tinfo_hprint (add_str "new_p 1" !CP.print_formula) new_p pos in
             let new_p_better = TP.simplify_raw (CP.mkExists ex_vars
                   (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
-            let _ = DD.binfo_hprint (add_str "new_p_better" !CP.print_formula) new_p_better pos in
+            let _ = DD.tinfo_hprint (add_str "new_p_better" !CP.print_formula) new_p_better pos in
             let new_p = new_p_better in
             let new_p_for_assume = new_p in
             (*          let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in*)

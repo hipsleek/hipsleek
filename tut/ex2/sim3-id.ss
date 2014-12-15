@@ -11,25 +11,19 @@ int id(int n)
   else return 1+id(n-1);
 }
 
-
-
 /*
 # sim3-id.ss
 
-For below:
+[RELDEFN P: ( P(n) & n=1+v_int_11_1313' & (v_int_11_1313'+1)!=0) 
+  -->  P(v_int_11_1313'),
+RELDEFN Q: ( n=0 & res=0 & P(n)) -->  Q(n,res),
+RELDEFN Q: ( res=1+v_int_11_1351 & n!=0 & Q(n-1,v_int_11_1351) & P(n)) 
+       -->  Q(n,res)]
 
-!!! constraints:[( Q(v_int_11_1349,v_int_11_1352) & (v_int_11_1349+1)!=0 & v_int_11_1352+
-1=res & n=1+v_int_11_1349, Q(n,res)),( n=0 & res=0, Q(n,res))]
-
-Maybe better to print:
-  Q(n,res) = base \/ rec_case
-
-!!! bottom up
-!!! fixcalc file name: fixcalc1.inf
-!!! bottom_up_fp:[( Q(n,res), n=res & 0<=res)]
-!!! fixpoint:[( Q(n,res), n=res & 0<=res, P(n), 0<=n)]
-
-How did we get:
-  P(n) = n>=0
+Post Inference result:
+id$int
+ EBase emp&0<=n & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&n=res & 0<=res&{FLOW,(4,5)=__norm#E}[]
 
 */
