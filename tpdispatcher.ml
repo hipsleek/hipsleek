@@ -334,7 +334,7 @@ let rec check_prover_existence prover_cmd_str =
         (*Do not display system info in the website*)
           (* let _ = print_endline ("prover:" ^ prover) in *)
           let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
-            if String.compare prover "mona" = 0 then "mona_inter" else
+            if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter" else
              prover
           in
           let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
@@ -1837,7 +1837,7 @@ let norm_pure_input f =
   let f = cnv_ptr_to_int f in
   let f = if !Globals.allow_inf 
     then let f = Infinity.convert_inf_to_var f
-           in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
+    in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
       let f = mkAnd add_inf_constr f no_pos in f
     else f in f
 
@@ -1859,7 +1859,10 @@ let om_simplify f =
 
 let simplify_omega (f:CP.formula): CP.formula =
   if is_bag_constraint f then f
-  else om_simplify f
+  else
+    let neqs = CP.get_neqs_ptrs_form f in
+    let simp_f = om_simplify f in
+    CP.mkAnd simp_f neqs (CP.pos_of_formula f)
 
 (* let simplify_omega (f:CP.formula): CP.formula =  *)
 (*   if is_bag_constraint f then f *)

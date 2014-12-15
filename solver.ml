@@ -8061,7 +8061,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
                   let _ = if flag2!=flag then
                     let pr = Cprinter.string_of_ef_pure_disj in
                     begin
-                    Debug.ninfo_hprint (add_str "rhs pf" Cprinter.string_of_pure_formula) (Mcpure.pure_of_mix rhs_p) no_pos;
+                    Debug.tinfo_hprint (add_str "rhs pf" Cprinter.string_of_pure_formula) (Mcpure.pure_of_mix rhs_p) no_pos;
                     Debug.tinfo_hprint (add_str "expected" string_of_bool) flag2 no_pos;
                     Debug.tinfo_hprint (add_str "lhs" pr) lhs no_pos;
                     Debug.tinfo_hprint (add_str "rhs" pr) rhs no_pos
@@ -8070,6 +8070,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
                     r
                   (* ((flag,[],None),None) *)
             | None ->
+                  let _ = Debug.ninfo_hprint (add_str "split_ante0 " Cprinter.string_of_mix_formula) split_ante0 no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "split_conseq " Cprinter.string_of_mix_formula) split_conseq no_pos in
                   (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       (* let _ = print_endline ("i_res1 = " ^ (string_of_bool i_res1)) in *)
@@ -8711,7 +8714,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
               then 
                 let a0 = CP.drop_exists a0 in 
-              	List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
+                List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
     	      else
                 if CP.no_andl a0  
                 then
@@ -8738,9 +8741,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
               (* then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[])  *)
               else None in
             let pr = Cprinter.string_of_pure_formula in 
-            DD.tinfo_hprint (add_str "a0" pr) a0 no_pos;
-            DD.tinfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
-            DD.tinfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
+            DD.ninfo_hprint (add_str "a0" pr) a0 no_pos;
+            DD.ninfo_hprint (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
+            DD.ninfo_hprint (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
             let _ = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
 	    (CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (TP.imply_one 29) imp_no, extra_step)
