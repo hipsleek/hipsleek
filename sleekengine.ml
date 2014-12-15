@@ -1102,9 +1102,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
-  let _ = print_endline "run_infer_one_pass_1" in
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
-  let _ = print_endline "run_infer_one_pass_2" in
   (* CF.residues := Some (rs, res); *)
   ((res, rs,v_hp_rel), (ante,conseq))
 

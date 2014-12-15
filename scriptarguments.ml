@@ -143,7 +143,8 @@ let common_arguments = [
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
    "No Splitting of RHS(conseq).");
-  ("--array-expansion", Arg.Set Globals.array_expansion, "Use expansion strategy to deal with array");
+  ("--array-expansion", Arg.Set Globals.array_expansion, "Use expansion strategy to deal with array, in code level");
+  ("--array-translate-out",Arg.Set Globals.array_translate, "Translate out array in formula");
   ("--dlp", Arg.Clear Globals.check_coercions,
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,

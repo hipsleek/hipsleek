@@ -12,7 +12,7 @@ open Mcpure_D
 open Log
 open Printf
 open Label_aggr
-
+open Translate_out_array_in_cpure_formula
 module CP = Cpure
 module MCP = Mcpure
 module NM = Auxnorm
@@ -1551,6 +1551,8 @@ let disj_cnt a c s =
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
+  (* Drop array formula *)
+  (*let f = drop_array_formula f in*)
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
@@ -2424,6 +2426,20 @@ let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option *
 
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  (* let _ = print_endline ("##Before process: ante: "^(Cprinter.string_of_pure_formula ante)^"\n conseq: "^(Cprinter.string_of_pure_formula conseq)) in *)
+  let ante = translate_array_relation ante in
+  let n_ante,n_conseq = translate_out_array_in_imply ante conseq in
+  (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
+  (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
+  (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
+  (*let _ = print_endline ("Before Drop ante: "^(Cprinter.string_of_pure_formula n_ante)^" conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in*)
+  let d_ante = drop_array_formula n_ante in
+  let d_conseq = drop_array_formula n_conseq in
+  (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
+  (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
+  (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
+  let ante = n_ante in
+  let conseq = n_conseq in 
   (**************************************)
   let res,ante,conseq = tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)
@@ -2438,7 +2454,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
   (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
-  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
+  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq
   else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();
@@ -2478,7 +2494,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no
           | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
       )
-    | Z3 -> z3_imply ante conseq
+    | Z3 -> 
+          (* let _ = print_endline ("z3 ante"^(Cprinter.string_of_pure_formula ante)) in *)
+          (* let _ = print_endline ("z3 conseq"^(Cprinter.string_of_pure_formula conseq)) in *)
+          z3_imply ante conseq
     | Z3N -> z3n_imply ante conseq
     | Isabelle -> Isabelle.imply ante_w conseq_s imp_no
     | Coq ->
@@ -2501,7 +2520,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           ((* called_prover :="omega "; *) omega_imply ante conseq)
     | Mona | MonaH -> mona_imply ante_w conseq_s 
     | CO -> (
-        let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
+          let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
         match result1 with
         | Some f -> f
         | None -> (* CVC Lite is not sure is this case, try Omega *)
@@ -2618,6 +2637,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     | MINISAT -> Minisat.imply ante conseq timeout
     | LOG -> find_bool_proof_res imp_no 
   ) in
+  
   if not !tp_batch_mode then stop_prover ();
   (* let tstop = Gen.Profiling.get_time () in *)
   Gen.Profiling.push_time "tp_is_sat"; 

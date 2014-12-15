@@ -2804,12 +2804,13 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
     CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos 
   else es.es_formula
   in
+  
   (* added consumed heap for unsat_now checking *)
    (* match es.es_orig_ante with *)
     (* | Some f -> f *)
     (* | None   ->  *)
     (* es.es_formula  *)
-   let _ = reset_int2 () in
+  let _ = reset_int2 () in
   let b = unsat_base_nth 1 prog sat_subno temp_f in
   let f = es.es_formula in
   (* Slicing: Set the flag memo_group_unsat to false *)

@@ -600,9 +600,9 @@ let parse_file_full file_name (primitive: bool):Iast.prog_decl =
     flush stdout;
     let _ = Gen.Profiling.push_time "Preprocessing" in
     let prog = parse_file_full source false in
-    let _ = print_endline ("prog with array\n"^(Iprinter.string_of_program prog)) in
+    
     let prog = if !Globals.array_expansion then translate_out_array prog else prog in
-    let _ = print_endline ("prog without array\n"^(Iprinter.string_of_program prog)) in
+    
     let _ = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
     let _ = Gen.Profiling.push_time "Process compare file" in
     let prog = if(!Globals.validate || !Globals.cp_prefile) then (
@@ -798,7 +798,7 @@ let parse_file_full file_name (primitive: bool):Iast.prog_decl =
 
     (* An Hoa : initialize html *)
     let _ = Prooftracer.initialize_html source in
-
+    
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
@@ -816,13 +816,13 @@ let parse_file_full file_name (primitive: bool):Iast.prog_decl =
           let _ =  Debug.info_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
-	
+        
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-
+    
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
