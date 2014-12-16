@@ -25,7 +25,8 @@ tll<p,ll,lr> == self::node4<p,D1,null,lr> & self = ll
 node4 set_right (node4 p, node4 x, node4 t)
   infer [H,G] 
   requires H(x,p,t) 
-  ensures G(x,p,res,t) ;
+  //  ensures G(x,p,res,t) ;
+       ensures G(x,res,t,p) ;
   // requires x::tree<> ensures x::tll<p,res,t>;
 {
   x.parent=p;
@@ -38,3 +39,20 @@ node4 set_right (node4 p, node4 x, node4 t)
     return set_right(x,x.left, l_most);
   }
 }
+
+/*
+# ex14a-tll.ss
+
+ //  ensures G(x,p,res,t) ;
+       ensures G(x,res,t,p) ;
+
+Equiv proving Fails when parameters are permuted..
+
+!!! INFERRED SHAPE SPEC: EBase x::tree{}<>&{FLOW,(1,28)=__flow#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   x::G{}<res,t,p>&{FLOW,(4,5)=__norm#E}[]
+                   Stop Omega... 333 invocations 
+
+
+*/
