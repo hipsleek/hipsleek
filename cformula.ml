@@ -3999,13 +3999,16 @@ and simplify_aux_x f =
   let disjs = CP.split_disjunctions f in
   List.fold_left (fun acc disj ->
       let conjs = CP.split_conjunctions disj in
+      (* let null_svl = CP.get_null_ptrs disj in *)
+      (* let eqs = List.filter (CP.is_eq_exp_ptrs null_svl) conjs in *)
+      let eqs = [] in
       let lvs, non_lvs = List.partition CP.is_lexvar conjs in
       let vps, non_vps = List.partition CP.is_varperm non_lvs in
       let rels, non_rels = List.partition CP.is_RelForm non_vps in
       let lins, non_lins = List.partition CP.is_linear_formula non_rels in
       let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
       let lin_f = !simplify_omega lin_f in
-      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) lin_f non_lins in
+      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) (lin_f) (eqs@non_lins) in
       let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
       let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
       let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
@@ -4028,6 +4031,9 @@ and simplify_pure_f_x (f0:formula) =
     match f with
       | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
       | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix e.formula_exists_pure));}
+            (* let quans, bare = split_quantifiers f in *)
+            (* let simpl_bare = helper bare in *)
+            (* add_quantifiers quans simpl_bare *)
       | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}
   in
@@ -4038,6 +4044,20 @@ and simplify_pure_f (f0:formula) =
   Debug.no_1 "simplify_pure_f" pr pr
       (fun _ -> simplify_pure_f_x f0) f0
 
+and simplify_pure_f_old_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+and simplify_pure_f_old (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 "simplify_pure_f_old" pr pr
+      (fun _ -> simplify_pure_f_old_x f0) f0
 
 and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc_formula =
   let find_close_f svl0 f=

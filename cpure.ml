@@ -9417,6 +9417,14 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_exp_ptrs svl (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (sv1,_), Var (sv2, _),_ ),_) -> is_node_typ sv1 && is_node_typ sv2 &&
+          (mem_svl sv1 svl || mem_svl sv2 svl)
+    | _ -> false)
+  | _ -> false
+
 let is_eq_null_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with

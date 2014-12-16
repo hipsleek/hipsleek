@@ -1895,7 +1895,7 @@ let lookup_equiv_hpdef hpdefs0 transform_fnc unk_hps eq_pairs hp args f=
             (* let ss = List.combine args1 args in *)
             (* let f10 = CF.subst ss f1 in *)
             let f10 = transform_fnc (hp1,args1) (hp,args) f1 in
-            if Sautil.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f10) then
+            if Sautil.checkeq_formula_list(* _w_args args *) (CF.list_of_disjs f) (CF.list_of_disjs f10) then
               if List.exists (fun (hp2,hp3) -> equiv_cmp1 (hp1,hp) (hp2,hp3)) eq_pairs then
                 let new_f = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) f10 (eq_pairs) in
                 (new_f,eq_pairs)
@@ -2989,7 +2989,7 @@ let elim_diverg_paras_x prog pdefs=
            | false,true -> r@[(sv2,sv1)]
            | _ -> r
         ) [] eqs in
-    (hp,args, CF.simplify_pure_f (CF.subst diver_eqs f))
+    (hp,args, CF.simplify_pure_f_old (CF.subst diver_eqs f))
   in
   (*******END INTERNAL*******)
   let diverg_pos = List.fold_left (fun acc pdef -> acc@(find_diverg_paras pdef)) [] pdefs in
