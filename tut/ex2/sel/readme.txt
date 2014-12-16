@@ -18,4 +18,5 @@ Pure nSpec Inference
 Incremental Spec Inference
   list append method    ex33-ll-app-size.ss
 
+Spec Inference (Loc to provide)
 
