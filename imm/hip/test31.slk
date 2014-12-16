@@ -21,6 +21,15 @@ print residue.
 checkentail x::node<a,y>@A * y::ll<null>@A * x::ll<null> |- x::node<a,y> * y::ll<null>.
 print residue.
 
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or
+  x::node<a,y>@A * y::ll<null>@A * x::node<_,q>*q::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or
+  x::node<a,y>@A * y::ll<null>@A * x::node<_,q>*q::ll<null> |- x::node<a,y> .
+print residue.
+
+
 /*
 checkentail x::node<a,y>@A * y::ll<null>@A & x=null or x::node<a,y>@A * y::ll<null>@A * x::node<a,z>*z::ll<null> |- x::node<a,y> * y::ll<null>.
 print residue.

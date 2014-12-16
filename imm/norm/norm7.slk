@@ -24,4 +24,12 @@ expect Valid.
 /* To fix the unfold to be triggered only for the branch which materializez the root */
 checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- x::ll<v>.
 print residue.
+expect Fail.
+
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- x::ll<u>.
+print residue.
+expect Valid.
+
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- q::ll<_>.
+print residue.
 expect Valid.

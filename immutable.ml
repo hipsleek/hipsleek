@@ -2020,8 +2020,31 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 =
             (true, h1)
   in (comp, ret_h)
 
+let crop_incompatible_disjuncts unfolded_f dn emap =
+  let rec helper f = 
+    match f with
+      | Base   ({formula_base_heap = h; formula_base_pure = p; })
+      | Exists ({formula_exists_heap = h; formula_exists_pure = p; }) ->
+            let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix p) in
+            let emap2 = CP.EMapSV.build_eset subs in
+            let emap  = CP.EMapSV.merge_eset emap emap2 in
+            let sv, ident = dn.h_formula_data_node, dn.h_formula_data_name in
+            let aset  = sv::(CP.EMapSV.find_equiv_all sv emap) in
+            if  h_formula_contains_node h aset ident then Some f
+            else None
+      | Or orf ->
+            let f1 = helper orf.formula_or_f1 in
+            let f2 = helper orf.formula_or_f2 in
+            match f1,f2 with
+              | Some f1, Some f2 -> Some (Or {orf with formula_or_f1 = f1; formula_or_f2 = f2})
+              | Some f, None
+              | None, Some f -> Some f
+              | None, None   -> None
+
+  in helper unfolded_f
+
 (* return (compatible_flag, to_keep_node) *)
-let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars =
+let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h =
     if (isAccs imm2) then (true, h1)
     else  if (isAccs imm1) then (true, h2)
@@ -2034,25 +2057,27 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars =
       | ((ViewNode vn) as vh), ((DataNode dn) as dh) ->
             if comp then
               let v =  vn.h_formula_view_node in
-              let aset = [v] in            (* why should this be non-empty?  *)
+              let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
               let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
               let unfolded_f = unfold_fun vh aset v uf in
               let ret_f = push_exists qvars unfolded_f in
-              (comp, dh, Some ret_f)
+              let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
+              (comp, dh, ret_f)
               (* (comp, dh, None) *)
             else (comp, ret_h, None)
       | _, _ -> (comp, ret_h, None)) in
   (compatible, keep_h, struc)
 
-let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars  = 
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap = 
   if (!Globals.allow_field_ann) then 
     let comp, keep_h = compatible_at_field_lvl imm1 imm2 h1 h2 in
     (comp,  keep_h, None)
-  else compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars
+  else compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap
 
-let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars  =
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let pr = Cprinter.string_of_h_formula in
-  Debug.no_2 "compatible_nodes" pr pr (pr_triple string_of_bool pr pr_none) (fun _ _ ->  compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars ) h1 h2
+  let pr_out3 = pr_opt Cprinter.string_of_formula in
+  Debug.no_2 "compatible_nodes" pr pr (pr_triple string_of_bool pr pr_out3) (fun _ _ ->  compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap ) h1 h2
 
 let partition_eqs_subs lst1 lst2 quantif =
   let eqs_lst = List.combine lst1 lst2 in
@@ -2075,8 +2100,8 @@ let norm_abs_node h p xpure =
     (h, None)  
 
 (* assume nodes are aliased *)
-let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars =
-  let comp, ret_h, _ = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars in
+let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
+  let comp, ret_h, _ = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
@@ -2092,8 +2117,8 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars =
     else ([h1;h2], [], [], [])
 
 (* assume nodes are aliased *)
-let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars =
-  let comp, ret_h, struc = compatible_nodes prog dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars in
+let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
+  let comp, ret_h, struc = compatible_nodes prog dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   (* if comp then *)
   if comp then
     (* let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in *)
@@ -2107,8 +2132,8 @@ let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars =
     else ([h1;h2], [], [], [])
 
 (* assume nodes are aliased *)
-let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars =
-  let comp, ret_h, _ = compatible_nodes prog dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 unfold_fun qvars in
+let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap =
+  let comp, ret_h, _ = compatible_nodes prog dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 unfold_fun qvars emap in
   let comp_data = comp && (String.compare dn1.h_formula_data_name dn2.h_formula_data_name = 0) in
   if comp_data then
     let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
@@ -2119,12 +2144,12 @@ let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars =
     else ([h1;h2], [], [], [])
 
 (* merged two nodes and return merged node and resulted equalities. *)
-let merge_two_nodes h1 h2 prog quantif unfold_fun qvars =
+let merge_two_nodes h1 h2 prog quantif unfold_fun qvars emap =
   match h1, h2 with
-    | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars 
+    | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap
     | [(ViewNode vn) as h2], ((DataNode dn) as h1)
-    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node prog dn vn h1 h2 quantif unfold_fun qvars (* ([h1;h2], []) *)
-    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars
+    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node prog dn vn h1 h2 quantif unfold_fun qvars emap (* ([h1;h2], []) *)
+    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap
 (* ([h1;h2], []) *)
     | _, _ -> (h1@[h2], [], [], [])
 
@@ -2146,7 +2171,7 @@ let aliased_nodes h1 h2 emap =
 let merge_list_w_node node lst emap prog quantif unfold_fun qvars = 
   let aliases, disj = List.partition (fun n -> aliased_nodes node n emap) lst in 
   let new_h, eqs, subs, structs = List.fold_left (fun (a, e, s, structs) n -> 
-      let merged, eqs, subs, struc =  merge_two_nodes a n prog quantif unfold_fun qvars in
+      let merged, eqs, subs, struc =  merge_two_nodes a n prog quantif unfold_fun qvars emap in
       (merged, e@eqs, subs@s, struc@structs)
   ) ([node],[], [], []) aliases in (* here!! *)
   (new_h, disj, eqs, subs, structs)
