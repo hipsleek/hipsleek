@@ -22,6 +22,25 @@ let string_of_array_transform_info
   "array_transform: { target_array = "^(ArithNormalizer.string_of_exp a.target_array)^"; new_name = "^(ArithNormalizer.string_of_exp a.new_name)^" }"
 ;;
 
+let get_array_name
+      (e:exp):(spec_var)=
+  match e with
+    | ArrayAt (sv,_,_) -> sv
+    | _ -> failwith "get_array_name: Invalid input"
+;;
+
+let get_array_at_index
+      (e:exp):exp=
+  match e with
+    | ArrayAt (sv,elst,_)->
+          begin
+            match elst with
+              | [index] -> index
+              | _ -> failwith "get_array_at_index: Fail to handle multi-dimension array"
+          end
+    | _ -> failwith "get_array_at_index: Invalid input"
+;;
+
 let is_same_sv
       (sv1:spec_var) (sv2:spec_var):bool=
   match sv1,sv2 with
@@ -881,11 +900,109 @@ let rec translate_array_formula_LHS
 (*   let n_ante = cpure_formula_translate_out_array ante info_lst in *)
 (*   let (_,n_conseq) = get_array_transform_info_lst conseq in *)
 (*   (n_ante,n_conseq) *)
+let mk_array_equal_formula
+      (ante:formula) (infolst:array_transform_info list):formula option=
+  let array_new_name_tbl = Hashtbl.create 10000 in
+  let rec create_array_new_name_tbl
+        (infolst:array_transform_info list)=
+    match infolst with
+      | h::rest ->
+            let new_name_list =
+              try
+                Hashtbl.find array_new_name_tbl (get_array_name h.target_array)
+              with
+                  Not_found-> []
+            in
+            let _ = Hashtbl.replace array_new_name_tbl (get_array_name h.target_array) (((get_array_index h.target_array),h.new_name)::new_name_list) in
+            create_array_new_name_tbl rest
+      | [] -> ()
+  in
+  let rec match_two_name_list
+        (namelst1:(exp * exp) list) (namelst2:(exp * exp) list):formula=
+    let rec helper
+          ((i1,n1):(exp * exp)) (namelst:(exp * exp) list):formula=
+      match namelst with
+        | [(i2,n2)] ->
+              let index_formula = BForm ((Eq (i1,i2,no_pos),None),None) in
+              let name_formula = BForm( (Eq (n1,n2,no_pos),None),None) in
+              mk_imply index_formula name_formula
+        | (i2,n2)::rest ->
+              let index_formula = BForm ((Eq (i1,i2,no_pos),None),None) in
+              let name_formula = BForm( (Eq (n1,n2,no_pos),None),None) in
+              let imply = mk_imply index_formula name_formula in
+              And (imply,helper (i1,n1) rest,no_pos)
+        | [] -> failwith "mk_array_equal_formula: Invalid input"
+    in
+    match namelst1 with
+      | [h] -> helper h namelst2
+      | h::rest ->
+            And (helper h namelst2,match_two_name_list rest namelst2,no_pos)
+      | [] -> failwith "mk_array_equal_formula: Invalid input"
+  in
+  let rec mk_array_equal_formula_list
+        (ante:formula):(formula list)=
+    let mk_array_equal_formula_list_b_formula
+          ((p,ba):b_formula):(formula list)=
+      match p with
+        | Eq (Var (sv1,_), Var (sv2,_), loc) ->
+              begin
+                try
+                  let namelst1 = Hashtbl.find array_new_name_tbl sv1 in
+                  let namelst2 = Hashtbl.find array_new_name_tbl sv2 in
+                  [(match_two_name_list namelst1 namelst2)]
+                with
+                    Not_found -> []
+              end
+        | _ -> []
+    in
+    match ante with
+      | BForm (b,fl)->
+            mk_array_equal_formula_list_b_formula b
+      | And (f1,f2,loc)->
+          (mk_array_equal_formula_list f1)@(mk_array_equal_formula_list f2)
+      | AndList lst->
+            List.fold_left (fun result (_,f) -> result@(mk_array_equal_formula_list f)) [] lst
+      | Or (f1,f2,fl,loc)->
+            (mk_array_equal_formula_list f1)@(mk_array_equal_formula_list f2)
+      | Not (f,fl,loc)->
+            mk_array_equal_formula_list f
+      | Forall (sv,f,fl,loc)->
+            mk_array_equal_formula_list f
+      | Exists (sv,f,fl,loc)->
+            mk_array_equal_formula_list f
+  in
+  let _ = create_array_new_name_tbl infolst in
+  let flst = mk_array_equal_formula_list ante in
+  match flst with
+    | [] -> None
+    | _ -> Some (mk_and_list flst)
+;;
+
+
+let mk_array_equal_formula
+      (ante:formula) (infolst:array_transform_info list):(formula option)=
+  let pinfolst=
+    function
+      | l-> List.fold_left (fun r i -> r^(string_of_array_transform_info i)^"\n") "\n" l
+  in
+  let pf = Cprinter.string_of_pure_formula in
+  let presult =
+    function
+      | Some f -> pf f
+      | None -> "None"
+  in
+  Debug.no_2 "mk_array_equal_formula" pf pinfolst presult (fun ante infolst-> mk_array_equal_formula ante infolst) ante infolst
+;;
 
 let translate_out_array_in_imply
       (ante:formula) (conseq:formula) : (formula * formula) = 
   let (info_lst,n_conseq) = get_array_transform_info_lst (And (conseq,ante,no_pos)) in
   let n_ante = translate_array_formula_LHS ante info_lst in
+  let n_ante =
+    match mk_array_equal_formula ante info_lst with
+      | Some f -> And (f,n_ante,no_pos)
+      | None -> n_ante
+  in
   let (_,n_conseq) = get_array_transform_info_lst conseq in
   (n_ante,n_conseq)
 ;;
@@ -972,14 +1089,25 @@ let rec drop_array_formula
           Exists (sv,drop_array_formula f,fl,loc)
 ;;
 
-let mk_array_equal_formula
-      (ante:formula) (infolst:array_transform_info list):formula=
-  let array_new_name_tbl = Hashtbl.create 10000 in
-  let create_array_new_name_tbl
-        (infolst:array_new_name_tbl list)=
-    match infolst with
-      | h::rest ->
-            
+(* let array_new_name_tbl size= *)
+(*   let tbl = Hashtbl.create size in *)
+(*   let find *)
+(*         (sv:specvar):exp list= *)
+(*     try *)
+(*       Hashtbl.find tbl sv *)
+(*     with *)
+(*       | Not_found->[] *)
+(*   in *)
+(*   let add *)
+(*         (sv:specvar) (e:exp)= *)
+(*     let r = find sv in *)
+(*     Hashtbl.replace sv (e::r) *)
+(*   in *)
+(*   let dispatch *)
+(*         (meth_name:string) *)
+
+
+
 
 
 let rec translate_array_relation

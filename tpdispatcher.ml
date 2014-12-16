@@ -1552,7 +1552,7 @@ let disj_cnt a c s =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   (* Drop array formula *)
-  (*let f = drop_array_formula f in*)
+  let f = drop_array_formula f in
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
@@ -2433,8 +2433,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (*let _ = print_endline ("Before Drop ante: "^(Cprinter.string_of_pure_formula n_ante)^" conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in*)
-  let d_ante = drop_array_formula n_ante in
-  let d_conseq = drop_array_formula n_conseq in
+  let n_ante = drop_array_formula n_ante in
+  let n_conseq = drop_array_formula n_conseq in
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
