@@ -25,7 +25,7 @@ module LO2 = Label_only.Lab2_List
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
 (* some variables and functions decide which parser will be used *)
-let parser_name = ref "unknown"
+let parser_name = (* ref "unknown" *) ref "default"
 
 let set_parser name =
   parser_name := name
@@ -3891,8 +3891,24 @@ let create_tnt_prim_proc id : Iast.proc_decl option =
     else None
   in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
   
+let create_tnt_stdlib_proc () : Iast.proc_decl list =
+  let alloca_proc =
+    "void_star __builtin_alloca(int size)\n" ^
+    "  case {\n" ^
+    "    size <= 0 -> requires true ensures res = null;\n" ^
+    "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" 
+  in
+  let lt_proc = 
+    "int lt___(int_star p, int_star q)\n" ^
+    "  requires p::int_star<vp, op> * q::int_star<vq, oq>\n" ^
+    "  case {\n" ^
+    "    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res > 0;\n" ^
+    "    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res <= 0; }\n"
+  in List.map (parse_c_aux_proc "tnt_stdlib_proc") [alloca_proc; lt_proc]  
+  
 let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
+
 
