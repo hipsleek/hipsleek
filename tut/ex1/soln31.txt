@@ -1,0 +1,99 @@
+!!! init_tp : Using Z3 by default
+Starting z3... 
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+!!! elim ante_evars:[a_43,b_44]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[a_43,b_44]
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_14_30=1 & flted_14_29=2&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+!!! elim ante_evars:[a,b]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&flted_22_50=1 & flted_22_49=2 & a=flted_22_50 & b=flted_22_49&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 4: Fail.(must) cause: a=1 |-  5<a. LOCS:[0;26] (must-bug)
+
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 5: Valid. 
+
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 6: Valid. 
+
+Residue:
+ <1>y::pair<flted_32_96,flted_32_95>&flted_32_98=1 & flted_32_97=2 & flted_32_96=3 & flted_32_95=4 & a=flted_32_98 & b=flted_32_97 & a=flted_32_98 & b=flted_32_97&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+[Warning] False ctx
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 7: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 8: Valid. 
+
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 9: Valid. 
+
+
+!!! elim ante_evars:[]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+Entail 10: Fail.(must) cause: x!=y & y!=null & x!=null |-  x=y. LOCS:[0;46] (must-bug)
+
+Stop z3... 15 invocations 
+SAT Count   : 30
+SAT % Hit   : 63.33%
+IMPLY Count : 6
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.003686 (seconds)
+
+!!! log(small):(0.047638,50)
+Total verification time: 0.085419 second(s)
+	Time spent in main process: 0.074919 second(s)
+	Time spent in child processes: 0.0105 second(s)
+

@@ -621,7 +621,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
             if Sautil.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f nf))]
+            [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f_old nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt hp args (* ss *) of1 of2=
@@ -950,7 +950,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
                   CF.mkFalse_nf no_pos
               in
               let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
-                (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] in
+                (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] None in
               ([(hp, def)],[])
         in
         (********PRINTING***********)
@@ -1385,7 +1385,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" pos in
               let _ = DD.ninfo_pprint ((let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr diff) ^ "::=" ^
                   (Cprinter.prtt_string_of_formula r) ) pos in
-              let ndef = {CF.def_cat=def_tit; CF.def_lhs=hf;CF.def_rhs=[(r,None)]} in
+              let ndef = {CF.def_cat=def_tit; CF.def_lhs=hf;CF.def_rhs=[(r,None)]; CF.def_flow=None;} in
                   ([],[(ndef)], hps)
             else
               ([constr],[], [])

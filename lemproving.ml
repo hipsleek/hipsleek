@@ -81,7 +81,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
   else
-     Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
+    Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;

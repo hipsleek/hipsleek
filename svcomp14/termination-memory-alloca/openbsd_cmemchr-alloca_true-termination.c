@@ -31,7 +31,7 @@ extern int __VERIFIER_nondet_int(void);
  * SUCH DAMAGE.
  */
 void *
-cmemchr(const void *s, int c, size_t n)
+cmemchr(const char *s, int c, size_t n)
 {
 	if (n != 0) {
 		const unsigned char *p = s;

@@ -279,7 +279,10 @@ let common_arguments = [
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
-  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
+  ("--en-inf", Arg.Unit (fun _ ->
+               Globals.allow_inf:=true;
+               Globals.deep_split_disjuncts:=true
+               ),"enable support for infinity (tgt with --dsd) ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -361,6 +364,9 @@ let common_arguments = [
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
+  ("--en-split-fixcalc", Arg.Set Globals.split_fixcalc, "Enable split fixcalc (for infer post)");
+  ("--dis-split-fixcalc", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
+  ("--dsf", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
    "Restart Omega Calculator after number of proof. Default = 0, not restart");
   ("--use-field", Arg.Set Globals.use_field,

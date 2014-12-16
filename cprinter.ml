@@ -2571,8 +2571,15 @@ let string_of_hp_rel_def hp_rel =
   (*           end *)
   (*    ) *)
   (* in *)
+  let pr_flow ofl=
+    if !Globals.sae then
+      match ofl with
+        | None -> ""
+        | Some fl -> (string_of_flow fl)
+    else ""
+  in
  let str_of_hp_rel (* (r,f1, g, f2) *) def =
-   ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs)) in
+   ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs) ^  "(" ^ (pr_flow def.def_flow) ^ ")") in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
@@ -2669,7 +2676,7 @@ let pr_hprel_short hpa=
   in
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
-  fmt_string (String.concat "," (List.map string_of_flow hpa.hprel_flow));
+  fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "" );
   fmt_close()
 
 let pr_hprel_short_inst cprog post_hps hpa=
@@ -2699,7 +2706,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
   in
   fmt_string " --> ";
   (* prtt_pr_formula_inst cprog *) print_formula hpa.hprel_rhs;
-  fmt_string (String.concat "," (List.map string_of_flow hpa.hprel_flow));
+  fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "") ;
   fmt_close()
 
 let pr_templ_assume (ante, cons) = 

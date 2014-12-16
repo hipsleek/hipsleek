@@ -687,10 +687,20 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
+(*use error type in the error msg*)
+type error_type=
+  | Mem of int
+  | Heap
+  | Pure
+
 let sl_error = "separation entailment" (* sl_error is a may error *)
 let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
+let mem_leak_error = "mem leak detection"
+let mem_deref_error = "mem deref detection"
+let mem_dfree_error = "mem double free detection"
 let lemma_error = "lemma" (* may error *)
+let mem_leak = "memory leak"
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -759,6 +769,8 @@ let lib_files = ref ([] : string list)
  * moved here from iparser.mly *)
 
 (* command line options *)
+
+let split_fixcalc = ref false (* present split is unsound *)
 
 let ptr_to_int_exact = ref false
 
@@ -855,6 +867,8 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let mem_leak_detect = ref false
+
 let print_relassume  = ref true
 
 let lemma_syn = ref false
@@ -930,7 +944,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_equiv_one = ref true
 
@@ -1138,12 +1152,12 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
-(* Lvl 0 - add conjunctive pre to residue only *) 
-(* Lvl 1 - add all pre to residue *) 
-(* Lvl -1 - never add any pre to residue *) 
+(* Lvl 0 - add conjunctive pre to residue only *)
+(* Lvl 1 - add all pre to residue *)
+(* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
 let dump_lemmas = ref false
@@ -1327,11 +1341,13 @@ type infer_type =
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
+  | INF_ERROR (* For infer[@error] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
+  | INF_CLASSIC (* For infer[@leak] *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1347,11 +1363,13 @@ let string_of_inf_const x =
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_ERROR -> "@error"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
+  | INF_CLASSIC -> "@leak"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1443,10 +1461,12 @@ object (self)
       helper "@post"  INF_POST;
       helper "@imm"   INF_IMM;
       helper "@shape" INF_SHAPE;
+      helper "@error" INF_ERROR;
       helper "@size" INF_SIZE;
       helper "@efa" INF_EFA;
       helper "@dfa" INF_DFA;
       helper "@flow" INF_FLOW;
+      helper "@leak" INF_CLASSIC;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1466,9 +1486,11 @@ object (self)
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_error  = self # get INF_ERROR
   method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_classic  = self # get INF_CLASSIC
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
   method is_infer_type t  = self # get t

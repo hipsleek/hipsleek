@@ -80,3 +80,4 @@ void foo2(ref int[] a)
   }
 }
 */
+

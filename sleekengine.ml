@@ -1089,7 +1089,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (*let _ = print_endline "run_infer_one_pass" in*)
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
-  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
+  let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
@@ -1113,8 +1113,8 @@ let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_form
   let nn = (sleek_proof_counter#get) in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass itype ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
-  
-let process_term_assume (iante: meta_formula) (iconseq: meta_formula) = 
+
+let process_term_assume (iante: meta_formula) (iconseq: meta_formula) =
   let stab = [] in
   let (stab, ante) = meta_to_formula iante false [] stab in
   let fvs = CF.fv ante in
@@ -1213,7 +1213,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
   if extn_info = [] then
-    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
+    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)] None)
     in
     (*hp_defn*)
     (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
@@ -1223,7 +1223,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   else
     let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
     let r, others = Sautil.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
-    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
+    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] None in
     let _ = Cast.set_proot_hp_def_raw (Sautil.get_pos args 0 r) (!cprog).Cast.prog_hp_decls (CP.name_of_spec_var hp) in
     let pr_new_rel_defn =  (cond_path, exted_pred) in
     let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
@@ -1455,7 +1455,8 @@ let process_shape_rec sel_hps=
       | [(hp,args,f)] -> let def_cat = (CP.HPRelDefn (hp, List.hd args, List.tl args)) in
         {CF.def_cat = def_cat;
         CF.def_lhs = (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args, no_pos));
-        CF.def_rhs = List.map (fun f0 -> (f0,None)) (CF.list_of_disjs f)
+        CF.def_rhs = List.map (fun f0 -> (f0,None)) (CF.list_of_disjs f);
+        CF.def_flow = None;
         }
       | (hp,args0,f)::rest ->
             let fs = List.map (fun (_,args1, f1) ->
@@ -1464,7 +1465,8 @@ let process_shape_rec sel_hps=
             ) rest in
             {CF.def_cat= (CP.HPRelDefn (hp, List.hd args0, List.tl args0));
              CF.def_lhs= (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args0, no_pos));
-             CF.def_rhs = List.map (fun f0 -> (f0,None)) (f::fs)
+             CF.def_rhs = List.map (fun f0 -> (f0,None)) (f::fs);
+             CF.def_flow = None;
             }
   in
   (*******END INTERNAL ********)
@@ -2276,27 +2278,27 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let _ = Globals.disable_failure_explaining := old_dfa in
   r
 
-let process_capture_residue (lvar : ident) = 
-	let flist = match !CF.residues with 
+let process_capture_residue (lvar : ident) =
+	let flist = match !CF.residues with
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print, _) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
-let process_print_command pcmd0 = 
+let process_print_command pcmd0 =
   match pcmd0 with
-  | PVar pvar ->	  
+  | PVar pvar ->
 	  let mf = try get_var pvar with Not_found->  Error.report_error {
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
-  | PCmd pcmd -> 
+  | PCmd pcmd ->
 	if pcmd = "lemmas" then
           Lem_store.all_lemma # dump
 	else if pcmd = "residue" then
           let _ = Debug.ninfo_pprint "inside residue" no_pos in
-          print_residue !CF.residues 
+          print_residue !CF.residues
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)
           (*         (\* | Some s -> print_string ((Cprinter.string_of_list_formula  *\) *)
@@ -2320,7 +2322,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
       	  if(List.length fl = 1) then (
       	    let f = List.hd fl in
       	    let cfs = CF.list_formula_of_list_context ls_ctx in
-      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
+      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
       	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
       	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
       	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in

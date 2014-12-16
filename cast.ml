@@ -1945,14 +1945,22 @@ let check_proper_return cret_type exc_list f =
 		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
-	      else if not (List.exists (fun c->
+	      else 
+                let _ = Debug.tinfo_hprint (add_str "fl_int" !print_dflow) fl_int no_pos in
+                let _ = Debug.tinfo_hprint (add_str "norm_flow_int" !print_dflow) !norm_flow_int no_pos in
+                let exc_list = !norm_flow_int::exc_list in
+                let  _ = Debug.tinfo_hprint (add_str "exc_list" (pr_list !print_dflow)) exc_list no_pos in
+                if not (List.exists (fun c->
                   (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
                 let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
+                if exc_list!= [] then
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
-	      else if not(overlap_flow_type fl_int res_t) then
-		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
+	      (* WN: exception and result type do not match ..
+              else if not(overlap_flow_type fl_int res_t) then
+		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type "^(!print_dflow res_t)^" does not correspond (overlap) with the flow type"^(!print_dflow fl_int);}
+              *)
 	      else
 (* else *)
 		(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
@@ -1990,7 +1998,7 @@ let check_proper_return cret_type exc_list f =
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
 	in
-  helper f
+    helper f
 
  
 (* type: Globals.typ -> Globals.nflow list -> F.struc_formula -> unit *)

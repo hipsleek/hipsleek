@@ -256,6 +256,11 @@ and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
 
 and formula_of_pure_with_flow p f a pos = mkBase HEmp p f a pos            (* pure formula has Empty heap *)
 
+and formula_of_pure_with_flow_htrue p f a pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p f a pos            (* pure formula has HTRUE heap *)
+
+
 and one_formula_of_formula f =
   match f with
     | Base b ->
@@ -2708,8 +2713,8 @@ let rec struc_formula_drop_infer f =
 let rec heap_trans_heap_node fct f =
  let recf = heap_trans_heap_node fct in
  match f with
-  | HRel b -> fct f
-  | HTrue  | HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
+  | HTrue | HRel _ -> fct f
+  |  HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
   | ThreadNode h -> ThreadNode {h with h_formula_thread_resource = formula_trans_heap_node fct h.h_formula_thread_resource}
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}

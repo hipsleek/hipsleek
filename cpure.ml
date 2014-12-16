@@ -9423,6 +9423,14 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_exp_ptrs svl (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (sv1,_), Var (sv2, _),_ ),_) -> is_node_typ sv1 && is_node_typ sv2 &&
+          (mem_svl sv1 svl || mem_svl sv2 svl)
+    | _ -> false)
+  | _ -> false
+
 let is_eq_null_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -9486,6 +9494,19 @@ let get_neqs_new p=
   in
   let ps = list_of_conjs p in
   List.fold_left get_neq [] ps
+
+let get_neqs_ptrs_form p=
+  let combine_neq acc p = match p with
+    | BForm (bf,_) -> (match bf with
+        | (Neq (Var (sv1,_), Var (sv2,_),pos),_) ->
+              if is_node_typ sv1 && is_node_typ sv2 then mkAnd acc p pos
+              else acc
+        | _ -> acc
+      )
+    | _ -> acc
+  in
+  let ps = list_of_conjs p in
+  List.fold_left combine_neq (mkTrue no_pos) ps
 
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
@@ -10044,6 +10065,19 @@ let has_unknown_pre_lexvar (f: formula) =
     (List.exists idf has_lexvar, 
      List.exists idf has_unknown)
   in fold_formula f (nonef, f_b, nonef) f_comb
+  
+let has_known_pre_lexvar (f: formula) =
+  let f_b bf =
+    let (pf, _) = bf in 
+    match pf with
+    | LexVar tinfo -> begin match tinfo.lex_ann with
+        | Term
+        | Loop _ -> Some true
+        | _ -> Some false end
+    | _ -> None
+  in
+  let f_comb = List.exists idf in
+  fold_formula f (nonef, f_b, nonef) f_comb
   
 let collect_term_ann (f: formula) =
   let f_b bf =
@@ -10742,7 +10776,7 @@ let rec tpd_drop_all_perm f = match f with
   | Exists (v,f,l,p) -> 
 		if (type_of_spec_var v)=Tree_sh then tpd_drop_all_perm f
 		else Exists (v, tpd_drop_all_perm f, l,p)
-		
+
 
 let rec tpd_drop_perm f = match f with 
   | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f
@@ -13749,7 +13783,81 @@ let transform_bexpr p=
   let pr1 = !print_formula in
   Debug.no_1 "CP.transform_bexpr" pr1 pr1
       (fun _ -> transform_bexpr_x p) p
-      
+
+let rec compare_term_ann a1 a2 =
+  match a1, a2 with 
+  | Term, Term -> 0
+  | Loop _, Loop _ -> 0
+  | MayLoop _, MayLoop _ -> 0
+  | Fail f1, Fail f2 -> compare_term_fail f1 f2
+  | TermU u1, TermU u2 -> compare_uid u1 u2
+  | TermR u1, TermR u2 -> compare_uid u1 u2
+  | _ -> 1
+
+and compare_uid u1 u2 = 
+  let cid = compare u1.tu_id u2.tu_id in
+  if cid != 0 then cid
+  else String.compare u1.tu_sid u2.tu_sid
+  
+and compare_term_fail f1 f2 = 
+  match f1, f2 with
+  | TermErr_May, TermErr_May -> 0
+  | TermErr_Must, TermErr_Must -> 0
+  | _ -> 1
+
+let eq_term_ann a1 a2 = 
+  compare_term_ann a1 a2 == 0
+  
+let eq_uid u1 u2 = 
+  compare_uid u1 u2 == 0
+  
+let rec is_MayLoop ann = 
+  match ann with
+  | MayLoop _ -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_MayLoop s
+    end
+  | _ -> false 
+    
+let rec is_Loop ann = 
+  match ann with
+  | Loop _ -> true
+  | TermU uid -> is_Loop_uid uid
+  | _ -> false
+
+and is_Loop_uid uid = 
+  match uid.tu_sol with
+  | None -> false
+  | Some (s, _) -> is_Loop s
+
+let rec is_Term ann = 
+  match ann with
+  | Term -> true
+  | TermU uid -> begin
+    match uid.tu_sol with
+    | None -> false
+    | Some (s, _) -> is_Term s
+    end
+  | _ -> false
+
+let is_TermU ann =
+  match ann with
+  | TermU _ -> true
+  | _ -> false
+
+let is_unknown_term_ann ann =
+  match ann with
+  | TermU uid 
+  | TermR uid -> begin
+    match uid.tu_sol with
+    | None -> true
+    | _ -> false
+    end
+  | _ -> false
+
+
 let id_of_term_ann ann = 
   match ann with
   | Term -> term_id

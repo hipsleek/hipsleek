@@ -1564,7 +1564,7 @@ core_constr:
   [
     [ pc= pure_constr ; fc= opt_flow_constraints; fb=opt_branches ->
        let pos = (get_pos_camlp4 _loc 1) in
-       F.formula_of_pure_with_flow (P.mkAnd pc fb pos) fc [] pos
+       F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
     | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
        let pos = (get_pos_camlp4 _loc 2) in 
        F.mkBase hc (P.mkAnd pc fb pos) fc [] pos
@@ -2341,8 +2341,10 @@ infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
    | `INFER_AT_PRE -> INF_PRE
    | `INFER_AT_POST -> INF_POST
+   | `INFER_AT_CLASSIC -> INF_CLASSIC
    | `INFER_AT_IMM -> INF_IMM
    | `INFER_AT_SHAPE -> INF_SHAPE
+   | `INFER_AT_ERROR -> INF_ERROR
    | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
@@ -2406,7 +2408,7 @@ let_decl:
 
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
-    (* | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f)) *)
+    | f=  formulas         -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
     | f = extended_l2   ->  MetaEForm (F.subst_stub_flow_struc n_flow f)
     | f=  disjunctive_constr     -> MetaEForm (F.formula_to_struc_formula (F.subst_stub_flow n_flow f))
     | f=  spec         -> MetaEForm f
