@@ -1,0 +1,85 @@
+ 
+id: 0; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&v_int_6_1164'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&v_int_6_1164'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 1; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&v_int_6_1164'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&v_int_6_1164'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 2; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & 
+v_int_6_1165'<v_int_6_1166'&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1165'<v_int_6_1166'&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 3; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & 
+v_int_6_1166'<=v_int_6_1165'&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&a'=a & v_int_6_1166'=a'[5] & v_int_6_1165'=0 & v_int_6_1166'<=v_int_6_1165'&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 4; caller: []; line: 8; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & 
+v_int_8_1168'=0 & v_int_8_1167'=5&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & v_int_8_1168'=0 & v_int_8_1167'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 5; caller: []; line: 8; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & 
+v_int_8_1168'=0 & v_int_8_1167'=5&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&a'=a & 0<(a'[5]) & v_bool_6_1169' & 0<(a'[5]) & v_bool_6_1169' & v_int_8_1168'=0 & v_int_8_1167'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 6; caller: []; line: 9; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a',0,5)&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & update_array_1d(a,a',0,5)&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 7; caller: []; line: 9; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a',0,5)&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & update_array_1d(a,a',0,5)&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 8; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists a_1211: emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & 
+update_array_1d(a,a_1211,0,5) & (((0<(a_1211[5]) & a'[5]=0) | 
+((a_1211[5])<=0 & a'[5]=a_1211[5])))&{FLOW,(4,5)=__norm#E})[]
+ |-  emp&((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))&
+{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&0<(a[5]) & v_bool_6_1169' & 0<(a[5]) & v_bool_6_1169' & update_array_1d(a,a_1212,0,5) & (((0<(a_1212[5]) & a'[5]=0) | ((a_1212[5])<=0 & a'[5]=a_1212[5])))&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 9; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a'=a & (a'[5])<=0 & !(v_bool_6_1169') & (a'[5])<=0 & !(v_bool_6_1169')&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))&
+{FLOW,(4,5)=__norm#E}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: use different strategies in proof searching (slicing)
+                   fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]false
