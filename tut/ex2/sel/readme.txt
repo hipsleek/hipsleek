@@ -3,6 +3,7 @@ Examples
 Entailment
   Selective Entailment  ex11-ll-size.slk
   Infer Heap Location   ex13-ll-node.slk
+  LHS Contra            ex14-lhs-contra.slk
   Avoid False           ex15-false.slk
   Second-Order          ex16-second-order.slk
  

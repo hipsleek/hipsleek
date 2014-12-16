@@ -1,0 +1,30 @@
+data node{
+  int val;
+  node next;
+}.
+
+// (1)
+infer[b] x=1 & b>0 |- x=2.
+print residue.
+// b<1
+
+// (2)
+infer[b] n=1 & b>0 |- b=0.
+print residue.
+// b<1
+
+// (3)
+infer[x] x=null |- x::node<_,_>.
+print residue.
+// x!=null
+
+// (4)
+infer[x] x::node<_,_> |- x=null.
+print residue.
+// x=null GOT x!=1
+
+// (5)
+infer[x] x::node<_,_> |- emp.
+print residue.
+
+

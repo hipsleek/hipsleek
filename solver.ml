@@ -2673,7 +2673,7 @@ and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =
   match f with
     | Base {formula_base_label = lbl} | Exists {formula_exists_label = lbl} ->
 	  let _ = reset_int2 () in
-	  let pf, _, m_set = xpure prog f in
+	  let pf, _, m_set = xpure 1 prog f in
 	  let m_set_f = List.fold_left (fun a (c1,c2)-> CP.mkAnd a (CP.mkPtrNeqEqn c1 c2 no_pos) no_pos) (CP.mkTrue no_pos)
 	    (generate_disj_pairs_from_memf m_set) in
 	  let n_pf = MCP.memoise_add_pure_N pf m_set_f in
@@ -5186,9 +5186,9 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
                 (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
                 (* andreeac: to construct a new method in infer.ml--> add_infer_hp_contr_to_estate maybe? *)
-                let lhs_xpure,_,_ = xpure prog estate.CF.es_formula in
+                let lhs_xpure,_,_ = xpure 2 prog estate.CF.es_formula in
                 let lhs_p = MCP.pure_of_mix lhs_xpure in
-                let rhs_xpure,_,_ = xpure prog conseq in
+                let rhs_xpure,_,_ = xpure 3 prog conseq in
                 let p_rhs_xpure0 = MCP.pure_of_mix rhs_xpure in
                 let p_rhs_xpure = Cputil.hloc_enum_to_symb p_rhs_xpure0 in
                 (*check the contra is in LHS or between LHS and RHS*)
@@ -5342,7 +5342,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
             let _ = Debug.info_pprint ("*********2********") no_pos in
             let slk_no = Log.last_cmd # start_sleek 1 in
-            let rhs_xpure,_,_ = xpure prog conseq in
+            let rhs_xpure,_,_ = xpure 4 prog conseq in
             let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
  	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 p_rhs_xpure in
 	    begin 
@@ -5606,7 +5606,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 (* let _ = Debug.info_hprint (add_str "ante (in ctx)" pr) ante no_pos in *)
                 (* let _ = Debug.info_hprint (add_str "conseq" pr) conseq no_pos in *)
                 (* let _ = Debug.info_pprint "Loc : please add suitable must-error message" no_pos  in *)
-                let extract_pure f= let (mf,_,_) = xpure prog f in Cputil.hloc_enum_to_symb (MCP.pure_of_mix mf)  in
+                let extract_pure f= let (mf,_,_) = xpure 5 prog f in Cputil.hloc_enum_to_symb (MCP.pure_of_mix mf)  in
                 let (fc, (contra_list, must_list, may_list)) = Musterr.check_maymust_failure (extract_pure ante)
                   (extract_pure conseq) in
                 let new_estate = {
@@ -10794,8 +10794,8 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_
     CF.mk_failure_may ("Disabled Infer heap and pure 2") sl_error, estate.es_trace)) (mk_cex false), NoAlias) 
   else
     (* TODO : this part is repeated in no_rhs_match; should optimize *)
-    let lhs_xpure,_,_ = xpure prog estate.es_formula in
-    let rhs_xpure,_,_ = xpure prog (formula_of_heap rhs no_pos) in
+    let lhs_xpure,_,_ = xpure 6 prog estate.es_formula in
+    let rhs_xpure,_,_ = xpure 7 prog (formula_of_heap rhs no_pos) in
     (*    let lhs_xpure = MCP.pure_of_mix lhs_xpure in*)
     (*    let rhs_xpure = MCP.pure_of_mix rhs_xpure in*)
     (*    let fml = CP.mkAnd lhs_xpure rhs_xpure pos in*)
@@ -10980,7 +10980,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     | Exists f ->  split_quantifiers estate.es_formula
     | _ ->  ([], estate.es_formula) in
   let temp_estate = {estate with es_formula = new_f } in
-  let lhs_xpure,_,_ = xpure prog temp_estate.es_formula in
+  let lhs_xpure,_,_ = xpure 8 prog temp_estate.es_formula in
   (* ======================================================= *)
   (* let lhs_xpure,_,_ = xpure prog estate.es_formula in *)
   (* let _ = DD.tinfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula ) lhs_xpure pos in *)
@@ -10990,7 +10990,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let old_imm_flag = !Globals.allow_imm in
     let _ = Globals.allow_imm := true in
     let _ = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
-    let rhs_xpure,_,_ = xpure prog conseq in
+    let rhs_xpure,_,_ = xpure 9 prog conseq in
     let _ = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
      let _ = Globals.allow_imm := old_imm_flag in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
@@ -11008,7 +11008,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
         (*sa/norm/zip-1e.slk: lhs_rhs_contra: xpure lhs should consider the rhs (pairwaisecheck + neg produces imprecise result) *)
-        let lhs_xpure0,_,_ = xpure prog temp_estate.es_formula in
+        let lhs_xpure0,_,_ = xpure_sym prog temp_estate.es_formula in
         let lhs_xpure = if (estate.CF.es_infer_vars_rel!=[] || estate.CF.es_infer_vars_hp_rel !=[]) (* && *)
           (* (CP.intersect_svl (CF.fv conseq)  estate.CF.es_infer_vars != []) *)
         then
@@ -11351,7 +11351,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   let exists_vars = Gen.BList.difference_eq (CP.eq_spec_var) exists_vars vars in
                   let rhs_frac = if (vars=[]) then MCP.mkMTrue no_pos
                       else MCP.find_rel_constraints (rhs_b.formula_base_pure) vars in
-		          let xpure_lhs, _, memset = xpure prog (Base lhs_b) in
+		          let xpure_lhs, _, memset = xpure 11 prog (Base lhs_b) in
                   let lhs_frac = MCP.memoise_add_pure_N  xpure_lhs perm_f in
                   let split_ante,split_conseq = heap_entail_build_mix_formula_check 4 exists_vars lhs_frac rhs_frac pos in
                   let flag_conseq_true = MCP.isConstMTrue split_conseq in
@@ -11855,7 +11855,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
             (*****************************************************************************)
             begin
-              let lhs_xpure,_,_ = xpure prog estate.es_formula in
+              let lhs_xpure,_,_ = xpure 12 prog estate.es_formula in
               (*                      let rhs_xpure,_,_,_ = xpure prog conseq in*)
               (* let r = Infer.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
               (* Thai: change back to Infer.infer_pure *)
@@ -11879,7 +11879,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               else if (!Globals.pa) then None,[]  
                 else 
                   let lhs_rhs_contra_flag = 
-		    let rhs_xpure,_,_ = xpure prog conseq in      
+		    let rhs_xpure,_,_ = xpure 13 prog conseq in      
 		    let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
 		    let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
 		    let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
@@ -12486,7 +12486,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		  (* let coer_rhs_new = add_origins_to_coer coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
 		  (* let coer_rhs_new = add_origins coer_rhs_new1 ((\* coer.coercion_name ::  *\)origs) in *)
 		  let _ = reset_int2 () in
-		  let xpure_lhs, _, memset = xpure prog f in
+		  let xpure_lhs, _, memset = xpure 14 prog f in
 		  let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
 		  (*******************************************************************************************************************************************************************************************)
 		  (* test the guard again in rewrite_coercion
@@ -14193,7 +14193,7 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 let rec verify_pre_is_sat prog fml = match fml with
   | Or _  (*report_error no_pos "Do not expect disjunction in precondition"*)
   | Base _ -> 
-        let fml,_,_ = xpure prog fml 
+        let fml,_,_ = xpure 15 prog fml 
     in TP.is_sat_raw fml
   | Exists e ->
     let fml = normalize_combine_heap 

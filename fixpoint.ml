@@ -245,7 +245,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
         let pre = CP.conj_of_list pres no_pos in
-        let xpure_base,_,_ = Cvutil.xpure prog b.CF.formula_struc_base in
+        let xpure_base,_,_ = Cvutil.xpure 16 prog b.CF.formula_struc_base in
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
           simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume

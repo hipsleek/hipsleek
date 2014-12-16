@@ -196,7 +196,7 @@ let get_case struc_formula prog args hprel_defs =
                 )
               | _ -> formula
             ) in
-            let (mix_formula, _, _) = Cvutil.xpure prog pre_cond in
+            let (mix_formula, _, _) = Cvutil.xpure 17 prog pre_cond in
             Mcpure.pure_of_mix mix_formula
       | Cformula.EList el -> let (_, sf) = List.hd el in helper sf prog
       | Cformula.ECase _ | Cformula.EInfer _ | Cformula.EAssume _ -> raise (Failure "fail get_case")

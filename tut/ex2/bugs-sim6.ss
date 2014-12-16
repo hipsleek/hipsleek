@@ -25,6 +25,12 @@ void loop(ref int n,ref int r)
 /*
 # bugs-sim6.ss
 
+void loop(ref int n,ref int r)
+  infer [P,Q]
+  requires P(n,r) ensures Q(n,n',r,r');
+{
+  if (n==0) {
+
 Why is there a fixcalc error?
 Is it due to -(1) ??
 
