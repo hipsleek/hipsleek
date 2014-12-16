@@ -39,3 +39,23 @@ node set_right (node p, node x, node t)
     return set_right(x,x.left, l_most);
   }
 }
+
+/*
+# ex14-tll.ss
+
+How come G no longer proved to be equiv to tll?
+Your engine is not using syn mode..
+
+[ H(x_1604,p_1605,t_1606) ::= x_1604::tree<>(4,5),
+ G(x_1608,p_1609,res_1610,t_1611) ::= 
+    x_1608::node<p_1609,left_32_1498,right_34_1539,t_1611> * 
+    left_32_1498::tree<>&right_34_1539=null & x_1608=res_1610
+ or x_1608::node<p_1609,DP_DP_DP_1541,right_34_1539,t_1611>&
+    right_34_1539=null & x_1608=res_1610
+ or x_1608::node<p_1609,left_32_1498,right_34_1539,DP_DP_HP_1504> * 
+    G(right_34_1539,x_1608,l_1540,t_1611) * 
+    G(left_32_1498,x_1608,res_1610,l_1540)&right_34_1539!=null
+ (4,5)]
+
+
+*/
