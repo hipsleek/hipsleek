@@ -8,19 +8,19 @@ data node {
 
 relation cons(abstract L, int v, abstract Lt).
 
-relation reverse(abstract L1, abstract L2).
+relation reverse(abstract L, abstract L1).
 
-relation append(abstract L1, abstract L2, abstract L3).
+relation append(abstract L, abstract L1, abstract L2).
 
 relation isempty(abstract L).
 
 axiom cons(L,v,Lp) ==> !(isempty(L)).
 
-axiom isempty(L1) & isempty(L2) & cons(L,v,L1) ==> cons(L,v,L2).
-
 axiom isempty(L) ==> append(L1,L,L1). 
 
 axiom isempty(L) ==> reverse(L,L).
+
+axiom cons(L,v,Lt) & reverse(Tr,Lt) ==> exists (Le: exists (Lv: exists (Lr: append(Lr,Tr,Lv) & reverse(Lr,L) & cons(Lv,v,Le) & isempty(Le)))).
 
 /* view for a singly linked list */
 pred ll<L> == self=null & isempty(L)
@@ -31,13 +31,9 @@ pred lln<n> == self=null & n=0
       or self::node<v, p> * p::lln<n-1>
   inv  n>=0.
 
-checkentail cons(L1,v_1016,Lp_1018) & ys=ys_1024 & xs=xs_1025 & xs_1025!=null & 
-  v_bool_37_967' & xs_1025!=null & v_bool_37_967' & p_1017=tmp_39' & 
-  next_40_1023=p_1017 & xs_1025=ys' & tmp_39'=xs' & L1_1026=Lp_1018 & 
-  v_1016=v_1032 & p_1033=ys_1024 & L2=Lp_1034 & cons(_,v_1016,L2)
-|-  exists L2_1027 : cons(L2_1027,v_1032,Lp_1034).
-
-
+checkentail xs!=null & reverse(Lr_1054,Lp_1004) & cons(L2_1014,v_1002,L2) & 
+exists(L2_1014:cons(L2_1014,v_1002,L2)) & append(L_1053,Lr_1054,L2_1014) & 
+cons(L,v_1002,L2) & cons(L1,v_1002,Lp_1004) |-  exists Lr_1055 : append(L_1053,Lr_1055,L2) & reverse(Lr_1055,L1).
 
 /*
 checkentail p::ll<Lp> * ys1::ll<L2> * xs1::node<v,ys1> & tmp'=xs' & xs=ys' & next=p & 
