@@ -3162,6 +3162,11 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
           | _ -> (rhs0, rhs_b0, es0, [])
         in
         (* DD.info_pprint "  hp_rel found" pos; *)
+        let eq_nulls = ( MCP.get_null_ptrs lhs_b0.CF.formula_base_pure) in
+        let cl_eq_null,_ = Cfutil.mkeq_from_null_ptrs eq_nulls in
+        let lhs_p = (MCP.pure_of_mix lhs_b0.CF.formula_base_pure) in
+        let new_lhs_p = CP.mkAnd lhs_p cl_eq_null (CP.pos_of_formula lhs_p) in
+        let lhs_b0 = {lhs_b0 with CF.formula_base_pure = MCP.mix_of_pure new_lhs_p} in
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b0) in
         let leqs = (MCP.ptr_equations_without_null mix_lf) in

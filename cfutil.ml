@@ -40,6 +40,19 @@ let rec retrieve_args_from_locs_helper args locs index res=
 let retrieve_args_from_locs args locs=
   retrieve_args_from_locs_helper args locs 0 []
 
+let mkeq_from_null_ptrs svl0=
+  let rec mk_eq (p0,eqs0) svl=
+    match svl with
+      | [] -> (p0,eqs0)
+      | sv::rest ->
+            let acc = List.fold_left (fun (p,eqs) sv1 ->
+                let p1 = CP.mkPtrEqn sv sv1 no_pos in
+                (CP.mkAnd p p1 no_pos, eqs@[(sv,sv1)])
+            ) (p0,eqs0) rest in
+            mk_eq acc rest
+  in
+  mk_eq (CP.mkTrue no_pos, []) svl0
+
 
 let rec is_empty_heap_f f0=
   let rec helper f=
