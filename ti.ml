@@ -176,11 +176,11 @@ let solve_trrel_list params trrels turels =
   let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
   let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
   
-  if (* (is_sat may_cond) && *) not !Globals.tnt_infer_lex then
+  (* if (* (is_sat may_cond) && *) not !Globals.tnt_infer_lex then *)
     conds @ 
     (if is_sat unk_cond then [Rec unk_cond] else []) @
-    (if is_sat may_cond then [MayTerm may_cond] else [])
-  else conds
+    (if is_sat may_cond then [Rec may_cond] else [])
+  (* else conds *)
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
