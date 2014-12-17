@@ -8,15 +8,19 @@ data node4{
 }
 
 /* predicate for a non-empty tree  */
+/*
 tree<> == self::node4<_,D1,null,_>
   or self::node4<_,l,r,D2> * l::tree<> * r::tree<> & r!=null
 	inv self!=null;
+*/
 
 /* predicate for a non-empty tree with chained leaf list */
 
+/*
 tll<p,ll,lr> == self::node4<p,D1,null,lr> & self = ll
     or self::node4<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null
 	inv self!=null;
+*/
 
 // initializes the linked list fields
   HeapPred H(node4 a, node4@NI p, node4@NI b).
