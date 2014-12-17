@@ -1993,32 +1993,7 @@ let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_
   normalize_field_ann_struc_formula res
 
 (* ===============================  below is for merging aliased nodes ================================= *)
-
-(* return (compatible_flag, to_keep_node) *)
-let compatible_at_field_lvl imm1 imm2 h1 h2 = 
-  let comp, ret_h =
-    match h1, h2 with
-      | DataNode dn1, DataNode dn2 ->
-            let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
-            let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
-            let imm = List.combine p1 p2 in
-            let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
-                match i1, i2 with
-                  | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
-                  | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
-                  | _, _ ->
-                        Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
-                        (false && comp, lst)
-            ) (true,[]) imm in
-            let args, pimm = List.split updated_elements in
-            (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
-            let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
-            (comp, dn)
-      | ViewNode vn1, ViewNode vn2 -> Debug.print_info "Warning: " "combining two views not yet implemented" no_pos;
-            (true, h1)
-      | _, _ -> Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos;
-            (true, h1)
-  in (comp, ret_h)
+(* ================== ex: x::node<a,y>@A * y::node<b,z> & x=y ----> y::node<b,z> & x=y ================= *)
 
 let crop_incompatible_disjuncts unfolded_f dn emap =
   let rec helper f = 
@@ -2043,6 +2018,61 @@ let crop_incompatible_disjuncts unfolded_f dn emap =
 
   in helper unfolded_f
 
+let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
+  let v =  vn.h_formula_view_node in
+  let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
+  let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
+  let unfolded_f = unfold_fun vh aset v uf in
+  let ret_f = push_exists qvars unfolded_f in
+  let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
+  ret_f
+
+(* return (compatible_flag, to_keep_node) *)
+let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap = 
+  let comp, ret_h, unfold_f =
+    match h1, h2 with
+      | DataNode dn1, DataNode dn2 ->
+            let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
+            let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
+            let imm = List.combine p1 p2 in
+            let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
+                match i1, i2 with
+                  | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
+                  | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
+                  | _, _ ->
+                        Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+                        (false && comp, lst)
+            ) (true,[]) imm in
+            let args, pimm = List.split updated_elements in
+            (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
+            let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
+            (comp, dn, None)
+      | ViewNode vn1, ViewNode vn2 -> Debug.print_info "Warning: " "combining two views not yet implemented" no_pos;
+            (true, h1, None)
+      | DataNode dn, ((ViewNode vn) as vh)
+      | ((ViewNode vn) as vh), DataNode dn ->
+            let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
+            let comp = 
+              if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
+                let imm = List.combine dn.h_formula_data_param_imm pimm in
+                let comp = List.fold_left (fun acc (i1,i2) -> 
+                    match i1, i2 with
+                      | CP.ConstAnn(Accs), a -> true && acc
+                      | a, CP.ConstAnn(Accs) -> true && acc
+                      | _, _ -> false
+                ) true imm in
+                comp
+              else false in
+            if comp then
+              let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
+              (comp, h1, ret_f)
+            (* incompatible for merging *)
+            else (comp, h1, None)
+      | _, _ -> 
+            Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 
+            (false, h1, None)
+  in (comp, ret_h, unfold_f)
+
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   let comp, ret_h =
@@ -2056,12 +2086,7 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
       | ((DataNode dn) as dh), ((ViewNode vn) as vh)
       | ((ViewNode vn) as vh), ((DataNode dn) as dh) ->
             if comp then
-              let v =  vn.h_formula_view_node in
-              let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
-              let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
-              let unfolded_f = unfold_fun vh aset v uf in
-              let ret_f = push_exists qvars unfolded_f in
-              let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
+              let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
               (comp, dh, ret_f)
               (* (comp, dh, None) *)
             else (comp, ret_h, None)
@@ -2069,9 +2094,7 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
   (compatible, keep_h, struc)
 
 let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap = 
-  if (!Globals.allow_field_ann) then 
-    let comp, keep_h = compatible_at_field_lvl imm1 imm2 h1 h2 in
-    (comp,  keep_h, None)
+  if (!Globals.allow_field_ann) then compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap
   else compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap
 
 let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap =
