@@ -14,7 +14,7 @@ int zip(int n,int m)
   infer [P,Q]
   requires P(n,m) ensures Q(n,m,res);
 {
-  if (n==0) {
+   if (n==0) {
       is_zero(m);
       return 0;
   }

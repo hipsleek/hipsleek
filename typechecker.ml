@@ -778,7 +778,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               let _ = Debug.ninfo_hprint (add_str "impl_vs" pr) impl_vs no_pos in
                               let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
                               let _ = Debug.ninfo_hprint (add_str "new_post" Cprinter.string_of_formula) new_post no_pos in
-                              let sst = List.combine impl_struc impl_vs in
+                              let sst = try List.combine impl_struc impl_vs
+                              with _ -> []
+                              in
                               let new_post_struc = CF.subst_struc sst new_post_struc in
                               let _ = Debug.ninfo_hprint (add_str "new_post_struc" Cprinter.string_of_struc_formula) new_post_struc no_pos in
                               (* print_string_quiet "check 1 fail\n"; *)
@@ -2128,6 +2130,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                     (* let _ = Debug.info_zprint (lazy (("  stripped_spec 1 " ^ (Cprinter.string_of_struc_formula stripped_spec)))) no_pos in *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
+                    (* let _ = print_endline ("pre_free_vars_fresh : "^(Cprinter.string_of_spec_var_list pre_free_vars_fresh)) in *)
                     (* let _ = print_string_quiet (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in *)
                     let renamed_spec =
                       if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
@@ -2750,7 +2753,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let defs1 = pre_preds@post_pred@rem in
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_hp_def defs1 else defs1 in
         print_endline_quiet "\n*********************************************************";
-        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        let _ = if !Globals.sae then print_endline_quiet ("*******relational definition (flow = " ^(!Cformula.print_flow flow_int) ^")********")
+        else print_endline_quiet ("*******relational definition ********")
+        in
         print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
@@ -2780,7 +2785,10 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let defs1 = pre_preds@post_pred@rem in
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
         print_endline_quiet "\n*********************************************************";
-        print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********");
+        let _ = if !Globals.sae then print_endline_quiet ("*******relational definition (flow= " ^(!Cformula.print_flow flow_int) ^")********")
+        else
+          print_endline_quiet ("*******relational definition " ^"********")
+        in
         print_endline_quiet "*********************************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
@@ -2794,7 +2802,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       end;
     in
     let do_infer_one_flow hprels scc_sel_hps0 flow_int=
-      let _ = Debug.info_hprint (add_str "shape inference for flow" !Cformula.print_flow) flow_int  no_pos in
+      let _ = if !Globals.sae then Debug.info_hprint (add_str "shape inference for flow" !Cformula.print_flow) flow_int  no_pos
+      else ()
+      in
       let (a, hp_defs,c) =
           if not (!Globals.pred_syn_modular) then
             if not (!Globals.sa_dnc) then

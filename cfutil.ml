@@ -96,7 +96,7 @@ let elim_null_vnodes_x prog sf=
   if not is_base then sf else
     let ( _,mix_f,_,_,_) = split_components f in
     let eq_nulls = ( MCP.get_null_ptrs mix_f) in
-    struc_formula_trans_heap_node (formula_trans_heap_node (null_detect_trans eq_nulls)) sf
+    struc_formula_trans_heap_node [] (formula_trans_heap_node (null_detect_trans eq_nulls)) sf
 
 let elim_null_vnodes prog sf=
   let pr1 = !print_struc_formula in
@@ -156,6 +156,8 @@ let fresh_data_v f0=
   let pr1= !print_formula in
   Debug.no_1 "fresh_data_v" pr1 pr1
       (fun _ -> fresh_data_v_x f0) f0
+
+let fresh_data_v_no_change f0= f0
 
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=

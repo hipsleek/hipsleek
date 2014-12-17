@@ -807,6 +807,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
         n_tlist             
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+        | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist       
       )
   | IP.XPure({IP.xpure_view_node = vn ;

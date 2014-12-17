@@ -2713,8 +2713,8 @@ let rec struc_formula_drop_infer f =
 let rec heap_trans_heap_node fct f =
  let recf = heap_trans_heap_node fct in
  match f with
-  | HRel b -> fct f
-  | HTrue  | HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
+  | HTrue | HRel _ -> fct f
+  |  HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
   | ThreadNode h -> ThreadNode {h with h_formula_thread_resource = formula_trans_heap_node fct h.h_formula_thread_resource}
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}

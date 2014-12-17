@@ -15,6 +15,11 @@ void set_tail_fn(node x,node y)
 /*
 # ex2-set-tail.ss
 
+This set-tail result is wrong. The previous one was correct.
+
+[ P(x_1365,y_1366) ::= x_1365::node<val_12_1360,next_12_1361>&y_1366=DP_DP_HP_1363(4,5),
+ Q(x_1367,y_1368) ::= P(x_1367,y_1368)(4,5)]
+
 void set_tail_fn(node x,node y)
   infer [P,Q]  requires P(x,y) ensures Q(x,y);
 { 

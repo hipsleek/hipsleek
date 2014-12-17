@@ -312,7 +312,8 @@ approx_disj_or_d2 : approx_disj }
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 approx_formula_and_a2 : approx_formula }
 
-
+(* this will be set to TPdispatcher.simplify_omega later *)
+let simplify_omega = ref(fun (c:Cpure.formula) -> c)
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
 let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
@@ -3795,7 +3796,7 @@ and split_components_x (f : formula) =
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
     | Or ({formula_or_pos = pos}) ->
-          let _ = DD.binfo_hprint (add_str "f" !print_formula) f no_pos in
+          let _ = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 
 and get_rel_args f0=
@@ -3987,11 +3988,52 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+(* 
+    WN : do the following
+    (i) temp remove all non-linear stuff
+    (ii) call simplify_omega
+    (iii) add back removed stuff
+    (iv) extend to disj form
+*)
+and simplify_aux_x f =
+  let disjs = CP.split_disjunctions f in
+  List.fold_left (fun acc disj ->
+      let conjs = CP.split_conjunctions disj in
+      (* let null_svl = CP.get_null_ptrs disj in *)
+      (* let eqs = List.filter (CP.is_eq_exp_ptrs null_svl) conjs in *)
+      let eqs = [] in
+      let lvs, non_lvs = List.partition CP.is_lexvar conjs in
+      let vps, non_vps = List.partition CP.is_varperm non_lvs in
+      let rels, non_rels = List.partition CP.is_RelForm non_vps in
+      let lins, non_lins = List.partition CP.is_linear_formula non_rels in
+      let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
+      let lin_f = !simplify_omega lin_f in
+      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) (lin_f) (eqs@non_lins) in
+      let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
+      let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
+      let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
+      CP.mkOr acc new_disj None no_pos
+  ) (CP.mkFalse no_pos) disjs
+
+and simplify_aux f =
+  let pr = !print_pure_f in
+  Debug.no_1 "simplify_aux" pr pr simplify_aux_x f
+
+(* WN : can simplify ignore other type of pure ctrs? *)
 and simplify_pure_f_x (f0:formula) =
+  let simp f =
+    let r1 = CP.remove_redundant f in
+    let r2 = Wrapper.wrap_exception f simplify_aux r1 in
+    let _ = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
-      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
-      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix e.formula_exists_pure));}
+            (* let quans, bare = split_quantifiers f in *)
+            (* let simpl_bare = helper bare in *)
+            (* add_quantifiers quans simpl_bare *)
       | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}
   in
@@ -4002,6 +4044,20 @@ and simplify_pure_f (f0:formula) =
   Debug.no_1 "simplify_pure_f" pr pr
       (fun _ -> simplify_pure_f_x f0) f0
 
+and simplify_pure_f_old_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+and simplify_pure_f_old (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 "simplify_pure_f_old" pr pr
+      (fun _ -> simplify_pure_f_old_x f0) f0
 
 and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc_formula =
   let find_close_f svl0 f=
@@ -6538,30 +6594,40 @@ let fresh_data_v f=
    let fr_v_sps2 = CP.diff_svl (CP.remove_dups_svl v_sps2) quans in
    fr_v_sps2
 
+let fresh_data_v_no_change f= []
 
-let rec struc_formula_trans_heap_node formula_fct f =
- let recf = struc_formula_trans_heap_node formula_fct in
+let rec struc_formula_trans_heap_node pre_quans formula_fct f=
+ let recf pre_quans1 = struc_formula_trans_heap_node pre_quans1 formula_fct in
   match f with
-    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
     | EBase b ->
           let f1= formula_fct b.formula_struc_base in
+          let _ =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+          let new_pre_quans = fresh_data_v  b.formula_struc_base in
+          let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
+          let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
+          let _ =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
           EBase {b with
-	      formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
-              formula_struc_implicit_inst =  CP.remove_dups_svl (b.formula_struc_implicit_inst@(fresh_data_v  b.formula_struc_base));
+	      formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
+              formula_struc_implicit_inst =  pre_cur_quans ;
 	      formula_struc_base=(* formula_trans_heap_node fct *)f1;
           }
     | EAssume ea->
           let f1 = formula_fct ea.formula_assume_simpl in
-          let quans = fresh_data_v f1 in
-          EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1;
-          formula_assume_struc = recf ea.formula_assume_struc}
+          let _ =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
+          let _ =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+          let cur_quans, f1_bare = split_quantifiers f1 in
+          let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in
+          EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1_bare;
+          formula_assume_struc = (recf pre_quans) ea.formula_assume_struc}
           (* (formula_trans_heap_node fct f, fl, et) *)
-    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
-    | EList l -> EList (Gen.map_l_snd recf l)
+    | EInfer b -> EInfer {b with formula_inf_continuation = (recf pre_quans) b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd (recf pre_quans) l)
 
-let struc_formula_trans_heap_node fct f =
+let struc_formula_trans_heap_node pre_quans fct f =
   let pr = !print_struc_formula in
-  Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+  Debug.no_1 "struc_formula_trans_heap_node" pr pr
+      (struc_formula_trans_heap_node pre_quans fct) f
 
 let do_unfold_view_x cprog pr_views (f0: formula) =
   let rec helper f=
@@ -8954,13 +9020,14 @@ think it is used to instantiate when folding.
   es_infer_post : bool; 
   (*input vars where inference expected*)
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
+  (* WN : why so many diff type of infer vars, can we streamline?? *)
   es_infer_vars : CP.spec_var list;  (* for first-order object *)
   es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
   es_infer_vars_hp_rel : CP.spec_var list;
-  (* input vars to denote vars already instantiated *)
+  (* input vars to denote vars already instantiated - WN: above or below?*)
   es_infer_vars_dead : CP.spec_var list; 
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
@@ -11029,14 +11096,18 @@ let list_context_union c1 c2 =
       pr pr pr
       list_context_union_x c1 c2
 
-let rec union_context_left c_l: list_context = (* match (List.length c_l) with *) match c_l with
+let rec union_context_left_x c_l: list_context = (* match (List.length c_l) with *) match c_l with
   | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
            (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
         (SuccCtx []: list_context)
   | [a] -> a (* (List.hd c_l) *)
   | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
         List.fold_left list_context_union a rest
- 
+
+and union_context_left c_l =
+  let pr = !print_list_context in
+  Debug.no_1 "union_context_left" (pr_list pr) pr union_context_left_x c_l
+
 (*should use union_context_left directly*)
 and fold_context_left_x c_l = union_context_left c_l 
 
@@ -12331,8 +12402,8 @@ let rec replace_struc_formula_label1 nl f =  match f with
 		formula_assume_struc = replace_struc_formula_label1 nl b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = replace_struc_formula_label1 nl b.formula_inf_continuation}
 	| EList b -> EList (map_l_snd (replace_struc_formula_label1 nl) b)
-	
- 	
+
+
 and replace_struc_formula_label nl f = replace_struc_formula_label1 (fun c -> nl) f
 and replace_struc_formula_label_fresh f = replace_struc_formula_label1 (fun c -> (fresh_branch_point_id "")) f
 and replace_formula_label nl f = replace_formula_label1 (fun c -> nl) f

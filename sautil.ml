@@ -26,6 +26,7 @@ let check_stricteq_h_fomula = SY_CEQ.check_stricteq_h_fomula
 let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
+let checkeq_formula_list_w_args = SY_CEQ.checkeq_formula_list_w_args
 
 (* let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool) *)
 (*   (fs1: CF.formula) (fs2: CF.formula) -> *)
@@ -2138,7 +2139,7 @@ let simp_matching_x prog lhs rhs=
               let lps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) leqs in
               let lnull_ps =  List.map (fun sv-> CP.mkNull sv no_pos) leqNulls in
               let p = CP.conj_of_list (lps@lnull_ps) no_pos in
-              let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f (CF.Base l)) (MCP.mix_of_pure p) no_pos in
+              let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f_old (CF.Base l)) (MCP.mix_of_pure p) no_pos in
               (true,new_lhs)
             else
               (false,lhs)
@@ -4901,7 +4902,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps ofl defs_wg=
       let rem_args = (CP.diff_svl other_args cont_args) in
       let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
           let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args fr_root (CF.subst sst base) in
-          let seg_f1 =  CF.simplify_pure_f (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
+          let seg_f1 =  CF.simplify_pure_f_old (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
           (segs@[((seg_f1,og))], cont_fs@[cont_f])
       ) ([],[]) base_fs_wg in
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
@@ -5073,7 +5074,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
    (*common pure process*)
    let common_pures = CP.conj_of_list eqPures no_pos in
    let orig_def2 = CF.mkAnd_pure orig_def1 (MCP.mix_of_pure common_pures) no_pos in
-   let orig_def3 = CF.simplify_pure_f orig_def2 in
+   let orig_def3 = CF.simplify_pure_f_old orig_def2 in
    (orig_def3, orig_defs_h)
 
 let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=

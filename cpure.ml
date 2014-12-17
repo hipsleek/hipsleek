@@ -9417,6 +9417,14 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_exp_ptrs svl (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (sv1,_), Var (sv2, _),_ ),_) -> is_node_typ sv1 && is_node_typ sv2 &&
+          (mem_svl sv1 svl || mem_svl sv2 svl)
+    | _ -> false)
+  | _ -> false
+
 let is_eq_null_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -9480,6 +9488,19 @@ let get_neqs_new p=
   in
   let ps = list_of_conjs p in
   List.fold_left get_neq [] ps
+
+let get_neqs_ptrs_form p=
+  let combine_neq acc p = match p with
+    | BForm (bf,_) -> (match bf with
+        | (Neq (Var (sv1,_), Var (sv2,_),pos),_) ->
+              if is_node_typ sv1 && is_node_typ sv2 then mkAnd acc p pos
+              else acc
+        | _ -> acc
+      )
+    | _ -> acc
+  in
+  let ps = list_of_conjs p in
+  List.fold_left combine_neq (mkTrue no_pos) ps
 
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
@@ -10749,7 +10770,7 @@ let rec tpd_drop_all_perm f = match f with
   | Exists (v,f,l,p) -> 
 		if (type_of_spec_var v)=Tree_sh then tpd_drop_all_perm f
 		else Exists (v, tpd_drop_all_perm f, l,p)
-		
+
 
 let rec tpd_drop_perm f = match f with 
   | BForm ((b,_),_) -> if has_b_tscons b = Can_split then mkTrue no_pos else f

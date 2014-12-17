@@ -1087,7 +1087,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   in
   let ante1 = CF.subst sst ante in
   let ante = Cfutil.transform_bexpr ante1 in
-  let conseq = CF.struc_formula_trans_heap_node Cfutil.transform_bexpr conseq in
+  let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
@@ -1111,8 +1111,8 @@ let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_form
   let nn = (sleek_proof_counter#get) in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass itype ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
-  
-let process_term_assume (iante: meta_formula) (iconseq: meta_formula) = 
+
+let process_term_assume (iante: meta_formula) (iconseq: meta_formula) =
   let stab = [] in
   let (stab, ante) = meta_to_formula iante false [] stab in
   let fvs = CF.fv ante in
@@ -2274,27 +2274,27 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let _ = Globals.disable_failure_explaining := old_dfa in
   r
 
-let process_capture_residue (lvar : ident) = 
-	let flist = match !CF.residues with 
+let process_capture_residue (lvar : ident) =
+	let flist = match !CF.residues with
       | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
       | Some (ls_ctx, print, _) -> CF.list_formula_of_list_context ls_ctx in
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
-let process_print_command pcmd0 = 
+let process_print_command pcmd0 =
   match pcmd0 with
-  | PVar pvar ->	  
+  | PVar pvar ->
 	  let mf = try get_var pvar with Not_found->  Error.report_error {
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
-  | PCmd pcmd -> 
+  | PCmd pcmd ->
 	if pcmd = "lemmas" then
           Lem_store.all_lemma # dump
 	else if pcmd = "residue" then
           let _ = Debug.ninfo_pprint "inside residue" no_pos in
-          print_residue !CF.residues 
+          print_residue !CF.residues
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)
           (*         (\* | Some s -> print_string ((Cprinter.string_of_list_formula  *\) *)
@@ -2318,7 +2318,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
       	  if(List.length fl = 1) then (
       	    let f = List.hd fl in
       	    let cfs = CF.list_formula_of_list_context ls_ctx in
-      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)	    
+      	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
       	    let (n_tl,cf2) = meta_to_formula_not_rename f false [] []  in
       	    let _ = Debug.info_zprint  (lazy  ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n")) no_pos in
       	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in

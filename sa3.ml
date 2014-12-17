@@ -718,7 +718,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             let n_cond = CP.remove_redundant cond in
             let nf = (Cformula.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (Cformula.pos_of_formula rhs)) in
             if not b_acc_unsat && Sautil.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, lhs, og, Some (Cformula.simplify_pure_f nf))]
+            [(hp,args,unk_svl, n_cond, lhs, og, Some (Cformula.simplify_pure_f_old nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt hp args (* ss *) of1 of2=
@@ -1007,7 +1007,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       else f2
     in
     (* fresh non-shape values *)
-    let f4 = Cfutil.fresh_data_v f3 in
+    let f4 = Cfutil.fresh_data_v_no_change f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)
