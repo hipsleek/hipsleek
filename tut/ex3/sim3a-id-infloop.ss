@@ -17,3 +17,15 @@ int id(int n)
   if (n==0) return 0;
   else return 2+id(n-1);
 }
+
+/*
+# sim3a
+
+This example does not work with @post_n
+because we derived:
+
+    ensures res=2*n & n>=0
+
+
+
+ */
