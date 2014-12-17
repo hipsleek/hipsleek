@@ -1562,7 +1562,9 @@ let disj_cnt a c s =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   (* Drop array formula *)
+  let f = translate_array_relation f in
   let f = drop_array_formula f in
+  
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
