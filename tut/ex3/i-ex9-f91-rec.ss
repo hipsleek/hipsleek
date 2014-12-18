@@ -1,5 +1,7 @@
 int mc91(int n)
-infer[@term] requires true ensures res>=91;
+infer[@term] 
+//requires true ensures res>=91;
+requires true ensures n>=101 & res=n-10 | n<101 & res=91;
 /*
 infer[@term] requires true ensures res>=91;
  case {
