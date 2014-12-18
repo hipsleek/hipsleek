@@ -55,17 +55,16 @@ void goo_lend(int x, int y, int z, node s)
   node i1, i2, tmp;
   // dprint;
   s = push(s,x);
-  /* 
   i1 = iterator(s);
   s = push(s,y);
   i2 = iterator(s);
-  s = push(s,z);*/
-  dprint;
+  s = push(s,z);
+  //  dprint;
   foo_lend(s);
+  //  dprint;
+  i2 = i2.next;
   dprint;
-  //i2 = i2.next;
-  /* dprint; */
-  //assert i1' = i2';
+  assert i1' = i2';
 }
 
 

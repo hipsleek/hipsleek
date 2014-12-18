@@ -1585,11 +1585,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
-	            let unfolded = if(!Globals.allow_field_ann) then
+	            let unfolded = 
                       let idf = (fun c -> c) in
 		      CF.transform_list_failesc_context (idf,idf,
-		      (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) unfolded
-		    else unfolded in
+		      (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;})) unfolded
+		    in
 	            let c = string_of_typ v_t in
                 let fresh_perm_exp,perm_vars = 
                   (match !Globals.perm with
@@ -1727,13 +1727,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           Debug.tinfo_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                           let tmp_res2 =
-                            if(!Globals.allow_field_ann) then
-
                               let idf = (fun c -> c) in
 		              CF.transform_list_failesc_context (idf,idf,
-		              (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}))
+		              (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;}))
 		                  tmp_res2
-		            else tmp_res2
 		          in
 		          let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
                           let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
@@ -2204,13 +2201,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let res = 
                      (* let _ = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
                      (* let _ = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
-                     let _ = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
-                      if(!Globals.allow_field_ann) then
-                        let idf = (fun c -> c) in
-		        CF.transform_list_failesc_context (idf,idf,
-		        (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
-		            res 
-		      else res
+                      let _ = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
+                      let idf = (fun c -> c) in
+		      CF.transform_list_failesc_context (idf,idf,
+		      (fun es -> CF.Ctx{es with CF.es_formula = 
+                              Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;})) res
 		    in
                     (*Exhausively apply normalization lemma after each SCall.
                       Need to devise a smart way since

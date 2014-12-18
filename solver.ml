@@ -3557,6 +3557,10 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
   Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
 
+and unfold_for_abs_merge prog pos = 
+  let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+  unfold_fun
+
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
 (* success. *)
@@ -3566,17 +3570,11 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     | SuccCtx cl ->
     	  (* Do compaction for field annotations *)
           (* let _ = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
-    	  let conseq = if(!Globals.allow_field_ann)
-          then Mem.compact_nodes_with_same_name_in_struc conseq else conseq in
+    	  let conseq = Norm.imm_norm_struc prog conseq true unfold_for_abs_merge  pos in
           let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
-          let conseq = Norm.imm_abs_norm_struc_formula conseq true prog unfold_fun in
-    	  let cl = if(!Globals.allow_field_ann)
-          then List.map (fun c -> CF.transform_context (fun es ->
-    	      (* let _ = print_string("\nFormula :"^(Cprinter.string_of_formula es.CF.es_formula)^"\n") in *)
-              let es = {es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula; } in
-              CF.Ctx{es with CF.es_formula = Norm.imm_abs_norm_formula es.CF.es_formula prog unfold_fun; }
+    	  let cl = List.map (fun c -> CF.transform_context (fun es ->
+              CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }
           ) c) cl
-	  else cl
 	  in
           (* let _ = print_string("\ncl2:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
 	  if !Globals.use_set || Gen.is_empty cl then
@@ -4856,10 +4854,9 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 			            (* first add the frame h2*[] *)
 			            let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
 		                    (* next add the frame h1/\[]*)
-		                    let cl = if (!Globals.allow_field_ann) then List.map
+		                    let cl = List.map
 				      (fun c -> CF.transform_context (fun es -> 
-				          CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-				      cl else cl
+				          CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos;}) c) cl 
 			                (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
 			               	  in*) in (SuccCtx(cl), with_h2_prf)
 		          in (with_h2_ctx, with_h2_prf)
@@ -5003,9 +5000,8 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
-    let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es ->
-	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx
-    else ctx
+    let ctx = CF.transform_context (fun es ->
+	CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
     in
     (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
     if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
@@ -6031,10 +6027,9 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
                         (* let _ = print_endline ("**********************************") in *)
 		                heap_entail_conjunct 3 prog is_folding  c new_conseq []  pos) cl 
 	                in
-	            let cl = if (!Globals.allow_field_ann) then List.map
-		      (fun c -> CF.transform_context (fun es -> 
-			  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-		      cl else cl
+	            let cl = List.map (fun c -> CF.transform_context (fun es -> 
+			  CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos;}) c)
+		      cl
 		    in
 	                let res_ctx, res_prf = List.split res in
 	                let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
