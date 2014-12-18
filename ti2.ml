@@ -1398,8 +1398,9 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
   let fn = rhs_uid.CP.tu_fname in
   let cond = rhs_uid.CP.tu_cond in 
   let ctx = trrel.ret_ctx in
-  (* let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in *)
-  (* let ctx = elim_irrel_formula irrel_vars_lst ctx in                                  *)
+  (* For tinf/paper/ex-2.ss vs Velroyen_false-termination.c *) 
+  let irrel_vars_lst = List.map (fun ann -> CP.fv_of_term_ann ann) trrel.termr_lhs in
+  let ctx = elim_irrel_formula irrel_vars_lst ctx in
   let eh_ctx = mkAnd ctx cond in
   if not (is_sat eh_ctx) then 
     NT_Yes (* Everything is satisfied by false *) 
