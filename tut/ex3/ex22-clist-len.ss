@@ -3,23 +3,23 @@ data node {
   node next;
 }
 
-ll<> == emp & self=null
-  or self::node<_,q>*q::ll<>
-  inv true;
+ll<n> == emp & self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0;
 
 /* non-touching list segment */
-ls_nt<p> == emp & self=p
-  or self::node<_,q>*q::ls_nt<p> & self!=p
-  inv true;
+ls_nt<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls_nt<n-1,p> & self!=p
+  inv n>=0;
 
 /* circular list */
-cll<> == self::node<_,q>*q::ls_nt<self> 
-  inv self!=null;
+cll<n> == self::node<_,q>*q::ls_nt<n-1,self> 
+  inv self!=null & n>0;
 
 
 int len_cll(node x)
-  requires x::cll<>
-  ensures x::cll<> & res>0;
+  requires x::cll<n> & Term
+  ensures x::cll<n> & res=n;
 {
   node n=x.next;
   return 1+length(n,x);
@@ -28,9 +28,9 @@ int len_cll(node x)
 
 int length(node x,node p)
  case {
-  x=p -> ensures emp & res=0;
-  x!=p -> requires x::ls_nt<p>
-          ensures x::ls_nt<p> & res>0;
+  x=p -> requires Term ensures emp & res=0;
+  x!=p -> requires x::ls_nt<n,p> & Term[n]
+          ensures x::ls_nt<n,p> & res=n;
   }
 {
   if (x==p) return 0;
