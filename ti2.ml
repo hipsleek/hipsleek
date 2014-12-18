@@ -62,9 +62,12 @@ let fp_imply f p =
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
   
-let f_is_sat f =
-  let _, pf, _, _, _ = CF.split_components f in
-  Tpdispatcher.is_sat_raw pf
+let unsat_base_nth = ref (fun _ _ _ _ -> true)
+  
+let f_is_sat prog f =
+  (* let _, pf, _, _, _ = CF.split_components f in *)
+  (* Tpdispatcher.is_sat_raw pf                    *)
+  not (!unsat_base_nth 1 prog (ref 0) f)
   
 let join_disjs f_lst = 
   if is_empty f_lst then CP.mkFalse no_pos
@@ -435,12 +438,12 @@ let rec collect_term_ann_in_tnt_case_spec spec =
        (Cpure.collect_term_ann f) @ (collect_term_ann_in_tnt_case_spec s)
       ) fsl)
 
-let rec merge_tnt_case_spec_into_struc_formula ctx spec sf = 
+let rec merge_tnt_case_spec_into_struc_formula prog ctx spec sf = 
   match sf with
   | CF.ECase ec -> CF.ECase { ec with 
       CF.formula_case_branches = List.map (fun (c, ef) ->
         let ctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
-        c, merge_tnt_case_spec_into_struc_formula ctx spec ef) ec.CF.formula_case_branches }
+        c, merge_tnt_case_spec_into_struc_formula prog ctx spec ef) ec.CF.formula_case_branches }
   | CF.EBase eb -> 
     let pos = eb.CF.formula_struc_pos in 
     let base = eb.CF.formula_struc_base in
@@ -450,13 +453,13 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
       if CF.isConstTrueFormula b then
         match cont with
         | None -> CF.EBase { eb with CF.formula_struc_base = b; }
-        | Some c -> merge_tnt_case_spec_into_struc_formula ctx spec c
+        | Some c -> merge_tnt_case_spec_into_struc_formula prog ctx spec c
       else
         let nctx = CF.normalize 16 ctx b pos in
         CF.EBase { eb with
           CF.formula_struc_base = b;
           CF.formula_struc_continuation = map_opt 
-            (merge_tnt_case_spec_into_struc_formula nctx spec) cont }
+            (merge_tnt_case_spec_into_struc_formula prog nctx spec) cont }
     in
    
     (* let has_lexvar, has_unknown_pre_lexvar = CF.has_unknown_pre_lexvar_formula base in *)
@@ -478,35 +481,35 @@ let rec merge_tnt_case_spec_into_struc_formula ctx spec sf =
       CF.EBase { eb with
         CF.formula_struc_continuation = map_opt
           (TermUtils.strip_lexvar_post has_loop) cont } 
-  | CF.EAssume af -> merge_tnt_case_spec_into_assume ctx spec af
+  | CF.EAssume af -> merge_tnt_case_spec_into_assume prog ctx spec af
   | CF.EInfer ei -> 
-    let cont = merge_tnt_case_spec_into_struc_formula ctx spec ei.CF.formula_inf_continuation in
+    let cont = merge_tnt_case_spec_into_struc_formula prog ctx spec ei.CF.formula_inf_continuation in
     if ei.CF.formula_inf_obj # is_term then cont
     else CF.EInfer { ei with CF.formula_inf_continuation = cont }
   | CF.EList el -> 
-    CF.mkEList_no_flatten (map_l_snd (merge_tnt_case_spec_into_struc_formula ctx spec) el)
+    CF.mkEList_no_flatten (map_l_snd (merge_tnt_case_spec_into_struc_formula prog ctx spec) el)
     
-and merge_tnt_case_spec_into_assume ctx spec af =
+and merge_tnt_case_spec_into_assume prog ctx spec af =
   match spec with
   | Sol s -> struc_formula_of_ann_w_assume af s
   | Unknown cex -> struc_formula_of_ann_w_assume af (CP.MayLoop cex, [])
   | Cases cases -> 
     try (* Sub-case of current context; all other cases are excluded *)
       let sub_case = List.find (fun (c, _) -> fp_imply ctx c) cases in
-      merge_tnt_case_spec_into_assume ctx (snd sub_case) af
+      merge_tnt_case_spec_into_assume prog ctx (snd sub_case) af
     with _ -> 
       CF.ECase {
         CF.formula_case_branches = List.map (fun (c, s) -> 
           let nctx, _ = CF.combine_and ctx (MCP.mix_of_pure c) in
-          if f_is_sat nctx then (c, merge_tnt_case_spec_into_assume ctx s af)
+          if f_is_sat prog nctx then (c, merge_tnt_case_spec_into_assume prog ctx s af)
           else (c, struc_formula_of_dead_path ())) cases;
         CF.formula_case_pos = no_pos; }
         
-let merge_tnt_case_spec_into_struc_formula ctx spec sf =
+let merge_tnt_case_spec_into_struc_formula prog ctx spec sf =
   let pr1 = print_tnt_case_spec in
   let pr2 = string_of_struc_formula_for_spec in
   Debug.no_2 "merge_tnt_case_spec_into_struc_formula" pr1 pr2 pr2
-    (fun _ _ -> merge_tnt_case_spec_into_struc_formula ctx spec sf) spec sf
+    (fun _ _ -> merge_tnt_case_spec_into_struc_formula prog ctx spec sf) spec sf
         
 let rec flatten_one_case_struc c f = 
   match f with
@@ -559,13 +562,13 @@ let rec norm_struc struc_f =
       norm_struc ei.CF.formula_inf_continuation }
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
 
-let tnt_spec_of_proc proc ispec =
+let tnt_spec_of_proc prog proc ispec =
   let ispec = merge_cases_tnt_case_spec
     (flatten_case_tnt_spec ispec) in
   let ispec = add_cex_tnt_case_spec ispec in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
-  let spec = merge_tnt_case_spec_into_struc_formula
+  let spec = merge_tnt_case_spec_into_struc_formula prog
     (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
   let spec = flatten_case_struc spec in
   let spec = norm_struc spec in
@@ -616,7 +619,7 @@ let pr_proc_case_specs prog =
   Hashtbl.iter (fun mn ispec ->
     try
       let proc = Cast.look_up_proc_def_no_mingling no_pos prog.Cast.new_proc_decls mn in
-      let nspec = tnt_spec_of_proc proc ispec in
+      let nspec = tnt_spec_of_proc prog proc ispec in
       print_endline_quiet (mn ^ ": " ^ (string_of_struc_formula_for_spec nspec));
       (* print result for svcomp 2015 *)
       if !Globals.svcomp_compete_mode && (eq_str (Cast.unmingle_name mn) "main") then (
@@ -640,11 +643,11 @@ let pr_im_case_specs iter_num =
       print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs end
   else ()
    
-let update_spec_proc proc =
+let update_spec_proc prog proc =
   let mn = Cast.unmingle_name (proc.Cast.proc_name) in
   try
     let ispec = Hashtbl.find proc_case_specs mn in
-    let nspec = tnt_spec_of_proc proc ispec in
+    let nspec = tnt_spec_of_proc prog proc ispec in
     let _ = proc.Cast.proc_stk_of_static_specs # push nspec in 
     let nproc = { proc with Cast.proc_static_specs = nspec; }  in
     (* let _ = Cprinter.string_of_proc_decl_no_body nproc in *)
@@ -653,7 +656,7 @@ let update_spec_proc proc =
     
 let update_specs_prog prog = 
   let n_tbl = Cast.proc_decls_map (fun proc ->
-    update_spec_proc proc) prog.Cast.new_proc_decls in
+    update_spec_proc prog proc) prog.Cast.new_proc_decls in
   { prog with Cast.new_proc_decls = n_tbl }
   
 (* TNT Graph *)
