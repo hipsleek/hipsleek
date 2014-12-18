@@ -9,7 +9,7 @@ ll<n> == emp & self=null & n=0
 
 int length(node x)
   infer[@term]
-  requires x::ll<n> & n>=0
+  requires x::ll<n> 
   ensures x::ll<n> & res=n;
 {
   if (x==null) return 0;
