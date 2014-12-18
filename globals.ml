@@ -1331,7 +1331,7 @@ let infer_const = ref ""
 (* TNT Inference *)
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
-let tnt_add_post = ref true
+let tnt_add_post = ref false (* manual control over @term *)
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 

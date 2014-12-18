@@ -29,3 +29,17 @@ int length(node x)
   else return 1+length(x.next);
 }
 
+/*
+# i-ex21-ls-len-loop.ss
+
+Base/Rec Case Splitting:
+[	length: [[2] 1<=n@R,[3] n<=0@R]
+]
+Termination Inference Result:
+length:  requires x::clist<n> & truecase {
+                             1<=n -> requires emp & Loop
+                             { 29:16}[]
+     ensures false & false; 
+                             n<=0 -> requires false & false
+     ensures false & false;
+*/
