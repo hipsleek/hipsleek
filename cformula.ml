@@ -9271,6 +9271,30 @@ let rec is_inf_term_struc f =
   | EAssume _ -> false
   | ECase ec -> List.exists (fun (_, c) -> is_inf_term_struc c) ec.formula_case_branches
   | EList el -> List.exists (fun (_, c) -> is_inf_term_struc c) el
+
+let rec is_inf_term_only_struc f =
+  match f with
+  | EInfer ei -> (ei.formula_inf_obj # is_term) && not (ei.formula_inf_obj # is_term_wo_post)
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_only_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_only_struc c) el
+
+let rec is_inf_term_wo_post_struc f =
+  match f with
+  | EInfer ei -> ei.formula_inf_obj # is_term_wo_post
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_wo_post_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) el
     
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with

@@ -62,7 +62,7 @@ let fp_imply f p =
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
   
-let unsat_base_nth = ref (fun _ _ _ _ -> true)
+let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
   
 let f_is_sat prog f =
   (* let _, pf, _, _, _ = CF.split_components f in *)

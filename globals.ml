@@ -1331,12 +1331,13 @@ let infer_const = ref ""
 (* TNT Inference *)
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
-let tnt_add_post = ref false (* manual control over @term *)
+let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
+  | INF_TERM_WO_POST (* For infer[@term_wo_post] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
@@ -1359,6 +1360,7 @@ type infer_type =
 let string_of_inf_const x =
   match x with
   | INF_TERM -> "@term"
+  | INF_TERM_WO_POST -> "@term_wo_post"
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
@@ -1455,17 +1457,18 @@ object (self)
       with Not_found -> ()
     in
     begin
-      helper "@term"  INF_TERM;
-      helper "@pre"   INF_PRE;
-      helper "@post"  INF_POST;
-      helper "@imm"   INF_IMM;
-      helper "@shape" INF_SHAPE;
-      helper "@error" INF_ERROR;
-      helper "@size" INF_SIZE;
-      helper "@efa" INF_EFA;
-      helper "@dfa" INF_DFA;
-      helper "@flow" INF_FLOW;
-      helper "@leak" INF_CLASSIC;
+      helper "@term"          INF_TERM;
+      helper "@term_wo_post"  INF_TERM_WO_POST;
+      helper "@pre"           INF_PRE;
+      helper "@post"          INF_POST;
+      helper "@imm"           INF_IMM;
+      helper "@shape"         INF_SHAPE;
+      helper "@error"         INF_ERROR;
+      helper "@size"          INF_SIZE;
+      helper "@efa"           INF_EFA;
+      helper "@dfa"           INF_DFA;
+      helper "@flow"          INF_FLOW;
+      helper "@leak"          INF_CLASSIC;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1480,7 +1483,8 @@ object (self)
   method string_of = "["^(self #string_of_raw)^"]"
   method get c  = List.mem c arr
   (* method get_int i  = Array.get arr i *)
-  method is_term  = self # get INF_TERM
+  method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+  method is_term_wo_post = self # get INF_TERM_WO_POST
   method is_pre  = self # get INF_PRE
   method is_post  = self # get INF_POST
   method is_imm  = self # get INF_IMM
