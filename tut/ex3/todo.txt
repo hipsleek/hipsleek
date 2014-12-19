@@ -33,6 +33,16 @@ loop:  requires true & truecase {
      ensures true & true;
 
 =========================================================
+# bugs-ex21a-clist-lemma.slk
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+This is going into an infinite loop too.
+Similarly, for bugs-ex21b, bugs-ex21c.
+This infinite loop is also with
+case-defn.
+
 =========================================================
 =========================================================
 =========================================================
