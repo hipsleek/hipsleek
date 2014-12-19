@@ -3,10 +3,13 @@ void loop(ref int[] a)
   ensures a'[5] = 0;
 {
   //foo2(a);
+  int i = 0;
   while(a[5]>0)
-    requires true
+    requires i=0
     ensures (a[5]>0 & a'[5]=0) | (a[5]<=0 & a'[5]=a[5]);
     {
-      a[5] = a[5] -1;
+      a[5] = a[i+5] -1;
+      dprint;
   }
+  dprint;
 }

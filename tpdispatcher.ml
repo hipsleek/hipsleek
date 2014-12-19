@@ -1562,8 +1562,8 @@ let disj_cnt a c s =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   (* Drop array formula *)
-  let f = translate_array_relation f in
-  let f = drop_array_formula f in
+  (* let f = translate_array_relation f in *)
+  (* let f = drop_array_formula f in *)
   
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
@@ -1805,6 +1805,10 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
+  let f = translate_out_array_in_one_formula f in
+  let f = drop_array_formula f in
+  (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
+
   let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;

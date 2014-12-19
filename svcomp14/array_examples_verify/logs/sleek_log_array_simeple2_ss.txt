@@ -1,141 +1,19 @@
  
 id: 0; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
+ checkentail htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
 res:  1[
-   emp&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
    ]
  
 id: 1; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+ checkentail htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
  |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
 res:  1[
-   emp&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
+   htrue&v_int_6_1175'=5 & a'=a&{FLOW,(4,5)=__norm#E}[]
    ]
  
 id: 2; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & v_int_6_1177'=a'[5] & v_int_6_1176'=0 & 
-v_int_6_1176'<v_int_6_1177'&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & v_int_6_1177'=a'[5] & v_int_6_1176'=0 & v_int_6_1176'<v_int_6_1177'&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 3; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & v_int_6_1177'=a'[5] & v_int_6_1176'=0 & 
-v_int_6_1177'<=v_int_6_1176'&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & v_int_6_1177'=a'[5] & v_int_6_1176'=0 & v_int_6_1177'<=v_int_6_1176'&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 4; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1178'=5&{FLOW,(4,5)=__norm#E}[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1178'=5&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 5; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1178'=5&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1178'=5&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 6; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1180'=a'[5] & v_int_10_1179'=1&{FLOW,(4,5)=__norm#E}[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1180'=a'[5] & v_int_10_1179'=1&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 7; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1180'=a'[5] & v_int_10_1179'=1&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1180'=a'[5] & v_int_10_1179'=1&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 8; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1182'+1=a'[5] & v_int_10_1181'=5&{FLOW,(4,5)=__norm#E}[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1182'+1=a'[5] & v_int_10_1181'=5&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 9; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & 
-v_int_10_1182'+1=a'[5] & v_int_10_1181'=5&{FLOW,(4,5)=__norm#E}[]
- |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&a'=a & 0<(a'[5]) & v_bool_6_1183' & 0<(a'[5]) & v_bool_6_1183' & v_int_10_1182'+1=a'[5] & v_int_10_1181'=5&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 10; caller: []; line: 6; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail (exists v_int_10_1182': emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & 
-v_bool_6_1183' & v_int_10_1182'+1=a[5] & 
-update_array_1d(a,a',v_int_10_1182',5)&{FLOW,(4,5)=__norm#E})[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & v_bool_6_1183' & v_int_10_1236+1=a[5] & update_array_1d(a,a',v_int_10_1236,5)&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 11; caller: []; line: 6; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & v_bool_6_1183' & v_int_10_1236+
-1=a[5] & update_array_1d(a,a',v_int_10_1236,5)&{FLOW,(4,5)=__norm#E}[]
- |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & v_bool_6_1183' & v_int_10_1236+1=a[5] & update_array_1d(a,a',v_int_10_1236,5)&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 12; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail (exists a_1237: emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & v_bool_6_1183' & 
-v_int_10_1236+1=a[5] & update_array_1d(a,a_1237,v_int_10_1236,5) & 
-(((0<(a_1237[5]) & a'[5]=0) | ((a_1237[5])<=0 & a'[5]=a_1237[5])))&
-{FLOW,(4,5)=__norm#E})[]
- |-  emp&((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))&
-{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & v_bool_6_1183' & 0<(a[5]) & v_bool_6_1183' & v_int_10_1236+1=a[5] & update_array_1d(a,a_1238,v_int_10_1236,5) & (((0<(a_1238[5]) & a'[5]=0) | ((a_1238[5])<=0 & a'[5]=a_1238[5])))&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 13; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&a'=a & (a'[5])<=0 & !(v_bool_6_1183') & (a'[5])<=0 & !(v_bool_6_1183')&
-{FLOW,(4,5)=__norm#E}[]
- |-  emp&((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5]))&
-{FLOW,(4,5)=__norm#E}[]. 
-res:  failctx
-         fe_kind: MAY
-         fe_name: logical bug
-         fe_locs: {
-                   fc_message: use different strategies in proof searching (slicing)
-                   fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
-[[empty]]false
- 
-id: 14; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
  checkentail emp&0<(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
- |-  emp&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 15; caller: []; line: 6; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&0<(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
- |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
-   ]
- 
-id: 16; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail emp&0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))&
-{FLOW,(4,5)=__norm#E}[]
- |-  emp&a'[5]=0&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&0<(a[5]) & (((0<(a[5]) & a'[5]=0) | ((a[5])<=0 & a'[5]=a[5])))&{FLOW,(4,5)=__norm#E}[]
-   ]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res : EXCEPTION

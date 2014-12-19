@@ -78,3 +78,7 @@ checkentail
   a[i]=a[i-1]
   & i=5
   |- a[5]=a[4].
+
+/* */
+checkentail
+   i=5 & j=0 & a[i] = a[j+5] + 1 |- a[5] = 1.

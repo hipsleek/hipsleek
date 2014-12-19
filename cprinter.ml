@@ -5169,7 +5169,7 @@ Mcpure_D.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
-Mcpure.print_sv_f := string_of_spec_var ;; 
+Mcpure.print_sv_f := string_of_spec_var ;;
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
@@ -5278,3 +5278,4 @@ Perm.print_exp := string_of_formula_exp;;
 Lem_store.lem_pr:= string_of_coerc_long;;
 Lem_store.lem_pr_med:= string_of_coerc_med;;
 
+Translate_out_array_in_cpure_formula.print_pure := string_of_pure_formula;;

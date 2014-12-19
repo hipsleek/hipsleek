@@ -1,5 +1,6 @@
 // !!!! This function need to use -prelude "prelude_aux.ss" 
 int foo(int x)
+  infer[@term]
   requires true
   ensures res=x+1;
 {

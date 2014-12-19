@@ -484,6 +484,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
   (* print_string ("going omega-> "^(!print_formula pe)^"\n"); *)
+  let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
@@ -817,6 +818,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* let _ = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   begin
+    
+    (* let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in *)
     let pe0 = drop_varperm_formula pe in
     let svl0 = Cpure.fv pe0 in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
@@ -1046,6 +1049,10 @@ let pairwisecheck (pe : formula) : formula =
   begin
     omega_subst_lst := [];
     let pe = drop_varperm_formula pe in
+
+    (* translate out and drop array *)
+    let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in
+
     match (omega_of_formula_old 21 pe) with
       | None -> pe
       | Some fstr ->

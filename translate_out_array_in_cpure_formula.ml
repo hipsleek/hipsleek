@@ -1,8 +1,6 @@
 open Cpure
-open Cprinter
 open Globals
 open Debug
-open Globals
 (* Translate out array in cpure formula  *)
 type array_transform_info =
     {
@@ -16,7 +14,7 @@ type array_transform_return =
         array_to_var: b_formula;
     };;
 
-
+let print_pure = ref (fun (c:formula) -> "printing not initialized");;
 let string_of_array_transform_info
       (a:array_transform_info):string=
   "array_transform: { target_array = "^(ArithNormalizer.string_of_exp a.target_array)^"; new_name = "^(ArithNormalizer.string_of_exp a.new_name)^" }"
@@ -125,6 +123,214 @@ let rec mk_and_list
     | h::rest -> And (h,mk_and_list rest,no_pos)
     | [] -> failwith "mk_and_list: Invalid input"
 ;;
+
+let rec standarize_array_formula
+      (f:formula):formula=
+  let mk_new_name ()=
+    Var (mk_typed_spec_var Int "t_index",no_pos)
+  in
+  let rec standarize_exp
+        (e:exp):(exp * ((exp * exp) list))=
+    match e with
+      | ArrayAt (sv,elst,loc) ->
+            begin
+              match elst with
+                | [h] ->
+                      begin
+                        match h with
+                          | Var _
+                          | IConst _ ->
+                                (e,[])
+                          | Add (e1,e2,loc)
+                          | Subtract (e1,e2,loc)
+                          | Mult (e1,e2,loc)
+                          | Div (e1,e2,loc)->
+                                let nname = mk_new_name () in
+                                let (ne1,eelst1) = standarize_exp e1 in
+                                let (ne2,eelst2) = standarize_exp e2 in
+                                let neelst =
+                                  begin
+                                    match h with
+                                      | Add _ ->(nname,Add (ne1,ne2,no_pos))::(eelst1@eelst2)
+                                      | Subtract _ ->(nname,Subtract (ne1,ne2,no_pos))::(eelst1@eelst2)
+                                      | Mult _ -> (nname,Mult (ne1,ne2,no_pos))::(eelst1@eelst2)
+                                      | Div _ ->(nname,Div (ne1,ne2,no_pos))::(eelst1@eelst2)
+                                      | _ -> failwith "standarize_exp: Invalid Input"
+                                  end
+                                in
+                                (nname, neelst)
+                          | _ -> failwith "standarize_exp: Invalid case for index"
+                      end
+                | _ -> failwith "standarize_exp: Fail to handle multi-dimension array"
+            end
+      | Tup2 ((e1,e2),loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Tup2 ((ne1,ne2),loc),eelst1@eelst2)
+      | Add (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Add (ne1,ne2,loc),eelst1@eelst2)
+      | Subtract (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Subtract (ne1,ne2,loc),eelst1@eelst2)
+      | Mult (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Mult (ne1,ne2,loc),eelst1@eelst2)
+      | Div (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Div (ne1,ne2,loc),eelst1@eelst2)
+      | Max (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Max (ne1,ne2,loc),eelst1@eelst2)
+      | Min (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Min (ne1,ne2,loc),eelst1@eelst2)
+      | BagDiff (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (BagDiff (ne1,ne2,loc),eelst1@eelst2)
+      | ListCons (e1,e2,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (ListCons (ne1,ne2,loc),eelst1@eelst2)
+      | TypeCast (typ,e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (TypeCast (typ,ne1,loc),eelst1)
+      | ListHead (e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (ListHead (ne1,loc),eelst1)
+      | ListTail (e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (ListTail (ne1,loc),eelst1)
+      | ListLength (e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (ListLength (ne1,loc),eelst1)
+      | ListReverse (e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (ListReverse (ne1,loc),eelst1)
+      | Func _ -> failwith "standarize_exp: Func To Be Implemented"
+      | List _ -> failwith "standarize_exp: List To Be Implemented"
+      | Bag _ -> failwith "standarize_exp: Bag To Be Implemented"
+      | BagUnion _ -> failwith "standarize_exp: BagUnion To Be Implemented"
+      | BagIntersect _ -> failwith "standarize_exp: BagIntersect To Be Implemented"
+      | _ -> (e,[])
+  in
+  let standarize_p_formula
+        (p:p_formula):(p_formula list)=
+    let rec mk_p_formula_from_eelst
+          (eelst: ( (exp * exp) list)):(p_formula list)=
+      match eelst with
+        | (e1,e2)::rest ->
+              (Eq (e1,e2,no_pos))::(mk_p_formula_from_eelst rest)
+        | [] -> []
+    in
+    match p with
+      | Lt (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Lt (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | Lte (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Lte (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | Gt (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Gt (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | Gte (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Gte (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | SubAnn (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (SubAnn (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | Eq (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Eq (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | Neq (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (Neq (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | BagSub (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (BagSub (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | ListIn (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (ListIn (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | ListNotIn (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (ListNotIn (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | ListAllN (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (ListAllN (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | ListPerm (e1, e2, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            (ListPerm (ne1,ne2,loc))::(mk_p_formula_from_eelst (eelst1@eelst2))
+      | EqMax (e1, e2, e3, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            let (ne3,eelst3) = standarize_exp e3 in
+            (EqMax (ne1,ne2,ne3,loc))::(mk_p_formula_from_eelst ((eelst1@eelst2)@eelst3))
+      | EqMin (e1, e2, e3, loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            let (ne2,eelst2) = standarize_exp e2 in
+            let (ne3,eelst3) = standarize_exp e3 in
+            (EqMax (ne1,ne2,ne3,loc))::(mk_p_formula_from_eelst ((eelst1@eelst2)@eelst3))
+      | BagIn (sv,e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (BagIn (sv,ne1,loc))::(mk_p_formula_from_eelst eelst1)
+      | BagNotIn (sv,e1,loc)->
+            let (ne1,eelst1) = standarize_exp e1 in
+            (BagNotIn (sv,ne1,loc))::(mk_p_formula_from_eelst eelst1)
+      | Frm _
+      | XPure _
+      | LexVar _
+      | BConst _
+      | BVar _
+      | BagMin _
+      | BagMax _
+      | VarPerm _
+      | RelForm _ ->
+            [p]
+  in
+  match f with
+    | BForm ((p,_),fl)->
+          let plst = standarize_p_formula p in
+          mk_and_list (List.map (fun p -> BForm ((p,None),None)) plst)
+    | And (f1,f2,l)->
+          And (standarize_array_formula f1,standarize_array_formula f2,l)
+    | AndList lst->
+          AndList (List.map (fun (t,f)->(t,standarize_array_formula f)) lst)
+    | Or (f1,f2,fl,l)->
+          Or (standarize_array_formula f1,standarize_array_formula f2,fl,l)
+    | Not (f,fl,l)->
+          Not (standarize_array_formula f,fl,l)
+    | Forall (sv,f,fl,l)->
+          Forall (sv,standarize_array_formula f,fl,l)
+    | Exists (sv,f,fl,l)->
+          Exists (sv,standarize_array_formula f,fl,l)
+;;
+
+let standarize_array_formula
+      (f:formula):formula=
+  let pf = !print_pure in
+  Debug.no_1 "standarize_array_formula" pf pf (fun f-> standarize_array_formula f) f
+;;
+
+
 
 (* Get array transform information from cpure formula *)
 let get_array_transform_info_lst
@@ -979,13 +1185,15 @@ let mk_array_equal_formula
 ;;
 
 
+
+
 let mk_array_equal_formula
       (ante:formula) (infolst:array_transform_info list):(formula option)=
   let pinfolst=
     function
       | l-> List.fold_left (fun r i -> r^(string_of_array_transform_info i)^"\n") "\n" l
   in
-  let pf = Cprinter.string_of_pure_formula in
+  let pf = !print_pure in
   let presult =
     function
       | Some f -> pf f
@@ -1150,6 +1358,18 @@ let rec translate_array_relation
           Exists (sv,translate_array_relation f,fl,loc)
 
 
+let translate_out_array_in_one_formula
+      (f:formula):formula=
+  let (info_lst,_) = get_array_transform_info_lst f in
+  let nf = translate_array_formula_LHS f info_lst in
+  let nf =
+    match mk_array_equal_formula f info_lst with
+      | Some f -> And (f,nf,no_pos)
+      | None -> nf
+  in
+  nf
+;;
+
 (* Controlled by Globals.array_translate *)
 let translate_out_array_in_imply
       (ante:formula)(conseq:formula):(formula*formula)=
@@ -1170,16 +1390,37 @@ let translate_array_relation
 
 let drop_array_formula
       (f:formula):formula=
-  let pr = Cprinter.string_of_pure_formula in
+  let pr = !print_pure in
   Debug.no_1 "drop_array_formula" pr pr (fun fo->drop_array_formula fo) f
 
 let translate_out_array_in_imply
       (ante:formula)(conseq:formula):(formula*formula)=
-  let p1 = Cprinter.string_of_pure_formula in
-  let p2 (f1,f2) = "new ante: "^(Cprinter.string_of_pure_formula f1)^"\nnew conseq: "^(Cprinter.string_of_pure_formula f2) in
+  let p1 = !print_pure in
+  let p2 (f1,f2) = "new ante: "^(p1 f1)^"\nnew conseq: "^(p1 f2) in
   Debug.no_2 "translate_out_array_in_imply" p1 p1 p2 (fun f1 f2-> translate_out_array_in_imply f1 f2) ante conseq
 
- let translate_array_relation
+let translate_array_relation
       (f:formula):formula=
-  let pf = Cprinter.string_of_pure_formula in
+  let pf = !print_pure in
   Debug.no_1 "translate_array_relation" pf pf (fun f-> translate_array_relation f) f
+;;
+
+let translate_out_array_in_one_formula_full
+      (f:formula):formula=
+  let f = translate_array_relation f in
+  let nf = translate_out_array_in_one_formula f in
+  let dnf = drop_array_formula nf in
+  dnf
+;;
+
+let translate_out_array_in_one_formula_full
+      (f:formula):formula=
+  if !Globals.array_translate then translate_out_array_in_one_formula_full f
+  else f
+;;
+
+let translate_out_array_in_one_formula_full
+      (f:formula):formula=
+  let pf = !print_pure in
+  Debug.no_1 "translate_out_array_in_one_formula_full" pf pf (fun f -> translate_out_array_in_one_formula_full f) f
+;;
