@@ -40,7 +40,7 @@ let parse_file_full file_name (primitive: bool) =
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
-      if primitive or (!Parser.parser_name = "default") then
+      if primitive || (!Parser.parser_name = "default") then
         (* always parse primitive files by default parser *)
         "default" 
       else if (!Parser.parser_name = "default") then
@@ -911,8 +911,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Log.last_cmd # dumping "finalize on hip";
-  Log.process_proof_logging !Globals.source_files;
+  let _ = Log.last_cmd # dumping "finalize on hip" in
+  let _ = Log.process_proof_logging !Globals.source_files in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

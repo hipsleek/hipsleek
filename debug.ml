@@ -92,18 +92,18 @@ let dinfo_pprint m p = devel_pprint m p
 
 let binfo_pprint (msg:string) (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^m) msg
 
 
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun x -> s^(pr x)) m
 
 let binfo_zprint msg (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^(Lazy.force m)) msg
 
 
@@ -506,7 +506,7 @@ let debug_file ()=
 
 let read_from_debug_file chn : string list =
   let line = ref [] in
-  let quitloop = ref false in
+  (* let quitloop = ref false in *)
   (try
     while true do
       let xs = (input_line chn) in

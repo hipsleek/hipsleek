@@ -802,7 +802,7 @@ let rec exp_contains_spec_var (e : exp) : bool =
 let eq_spec_var1 (sv1: spec_var) (sv2: spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
         let reg = Str.regexp "_.*" in
-	(Str.global_replace reg "" v1) = (Str.global_replace reg "" v2) & p1 = p2
+	(Str.global_replace reg "" v1) = (Str.global_replace reg "" v2) && p1 = p2
 
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -2968,8 +2968,8 @@ and build_relation_x relop alist10 alist20 lbl pos =
     (* print_endline "inside helper1"; *)
     let a = List.hd alist in
     let rest = List.tl alist in
-    let check_upper r e ub pos = if ub>1 then r else  Eq (e,(Null no_pos),pos) in
-    let check_lower r e lb pos = if lb>0 then Neq (e,(Null no_pos),pos) else r in
+    (* let check_upper r e ub pos = if ub>1 then r else  Eq (e,(Null no_pos),pos) in *)
+    (* let check_lower r e lb pos = if lb>0 then Neq (e,(Null no_pos),pos) else r in *)
     let rec tt relop ae a pos = 
       let r = (relop ae a pos) in
       r in
@@ -13570,7 +13570,7 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
     let new_annot_args = List.map (fun (a, (_,p)) -> (a, p)) lst in new_annot_args
   with Invalid_argument s -> 
       begin
-        let def_aa_pos = List.map (fun a -> (a,0)) aa in
+        (* let def_aa_pos = List.map (fun a -> (a,0)) aa in *)
         Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_view_params" no_pos;
         old_lst
       end

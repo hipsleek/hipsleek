@@ -341,7 +341,7 @@ let process_entail_new cprog iprog start_pred_abs_num
           Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
-  let spl = spl1@spl2 in
+  (* let spl = spl1@spl2 in *)
   let all_svl0 = CP.remove_dups_svl ((Cformula.fv cante)@(Cformula.struc_fv cconseq)) in
   let data_name =
     let used_data = List.fold_left (fun r sv ->
