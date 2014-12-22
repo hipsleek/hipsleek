@@ -2911,12 +2911,15 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       scc_inferred_hps
     *)
     let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs)) in
+    (* get pure props need to be inferred *)
+    let inf_pure_props = Iincr.extract_inf_props prog (List.map (fun proc -> proc.Cast.proc_static_specs) scc_procs) in
+    let prog, scc_procs, n_scc_inferred_defs,scc_sel_hps, scc_sel_post_hps = (Iincr.extend_pure_props iprog prog inf_pure_props scc_procs scc_inferred_hps scc_sel_hps scc_sel_post_hps) in
     let new_scc_procs = if !Globals.pred_trans_view then
       let nprog,is_print_inferred_spec = match scc_procs with
         | [] -> prog,false
         | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
             let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
-              scc_inferred_hps
+              n_scc_inferred_defs
             in
             let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
             (* let _ = List.iter (fun proc -> *)
@@ -2927,7 +2930,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           (* ) new_scc_procs in *)
             nprog,true
           else prog,false
-        | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
+        | _ -> let nprog = Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
+            n_scc_inferred_defs
+          in
           let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
           (* let _ = List.iter (fun proc -> *)
           (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)

@@ -13,9 +13,9 @@ pred_extn size[R]<k> ==
   inv k>=0;
 
 /* view for a singly linked list */
-ll<> == self = null
-	or self::node<_, q> * q::ll<>
-  ;
+/* ll<> == self = null */
+/* 	or self::node<_, q> * q::ll<> */
+/*   ; */
 
 
 lln<n> == self = null & n = 0
@@ -38,9 +38,9 @@ int size_helper(node x)
 
 //infer[@shape]  requires true ensures true;
 //  infer [P,Q]  requires x::lln<n> & P(n)  ensures x::lln<n> & Q(n,res);
-  infer [@size]  requires x::ll<>  ensures x::ll<> ;
-//  infer [@pre_n,@post_n]  requires x::lln<n>  ensures x::lln<n> ;
-//  infer[@shape,@size]  requires true ensures true;
+//  infer [@size]  requires x::ll<>  ensures x::ll<> ;
+//  infer [@post_n]  requires x::lln<n>  ensures x::lln<m> ;
+  infer[@shape,@size]  requires true ensures true;
 
 {
   if (x==null)

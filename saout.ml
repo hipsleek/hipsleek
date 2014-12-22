@@ -917,6 +917,7 @@ let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_
     ) ([],[],[]) hp_defs in
   let unk_hps = CP.remove_dups_svl (dang_hps@unk_hps) in
   let _ = Debug.ninfo_hprint (add_str "    unk_hps" (!CP.print_svl))  unk_hps no_pos in
+  let _ = Debug.info_hprint (add_str " need_trans_hprels0" (pr_list_ln Cprinter.string_of_hp_rel_def_short)) need_trans_hprels0 no_pos in
   let plug_proc need_trans_hprels1 chprels_decl cprog proc_name=
     let cprog = trans_specs_hprel_2_cview iprog cprog proc_name unk_hps simpl_hps
       pre_hps post_hps need_trans_hprels1 chprels_decl in
