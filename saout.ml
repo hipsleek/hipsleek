@@ -807,7 +807,9 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
   (*****************END INTERNAL*****************)
   let sst_hps = get_sst_hp hpdefs [] in
   let plug_views_proc proc =
-    if proc.C.proc_hpdefs = [] then proc else
+    if proc.C.proc_hpdefs = [] then
+      proc
+    else
       let formula_fnc= (formula_subst_dangling_pred unk_hps to_unfold_hps (CP.remove_dups_svl (proc.C.proc_sel_post_hps@post_hps)) hpdefs) in
       let trans_struc_formula_fn = if !Globals.sae then
         (case_struc_formula_trans cprog unk_hps to_unfold_hps pre_hps (CP.remove_dups_svl (proc.C.proc_sel_post_hps@post_hps)) hpdefs (CF.struc_formula_trans_heap_node [] formula_fnc)) formula_fnc
@@ -834,9 +836,11 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       let n_static_spec = match proc.C.proc_static_specs with
         | CF.EInfer ei ->
               let inf_obj = ei.CF.formula_inf_obj in
-              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term then
+              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term
+              then
                 let new_inf_obj = inf_obj # clone in
                 let _ = new_inf_obj # reset INF_SHAPE in
+                let _ = new_inf_obj # reset INF_SIZE in
                 let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
                 CF.EInfer {ei with
                     CF.formula_inf_obj = new_inf_obj;
@@ -849,9 +853,11 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       let n_dynamic_spec = match proc.C.proc_dynamic_specs with
         | CF.EInfer ei ->
               let inf_obj = ei.CF.formula_inf_obj in
-              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term then
+              if inf_obj # is_pre || inf_obj # is_post || inf_obj # is_term
+              then
                 let new_inf_obj = inf_obj # clone in
                 let _ = new_inf_obj # reset INF_SHAPE in
+                let _ = new_inf_obj # reset INF_SIZE in
                 let new_inf_vars = List.filter (fun sv -> not (Cpure.is_hprel_typ sv)) ei.CF.formula_inf_vars in
                 CF.EInfer {ei with
                     CF.formula_inf_obj = new_inf_obj;
@@ -875,10 +881,12 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       Astsimp.add_pre_to_cprog_one cprog proc1
   in
   (* let _ = print_endline ("unk_hps: "^ (!CP.print_svl unk_hps)) in *)
+   let _ =  Debug.ninfo_hprint (add_str " proc_name 1" (pr_id)) proc_name no_pos in
   let old_procs = cprog.C.new_proc_decls in
   let proc_decls = Hashtbl.fold (fun i p acc ->
       let np = if String.compare p.C.proc_name proc_name == 0 then
-      plug_views_proc p
+         let _ =  Debug.ninfo_hprint (add_str " proc_name 2" (pr_id)) p.C.proc_name no_pos in
+        plug_views_proc p
       else p
       in
       acc@[(i,np)]

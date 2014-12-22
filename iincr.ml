@@ -113,10 +113,12 @@ let extend_pure_props_x iprog cprog props sccs hp_rel_defs
       end
     | _ -> hn
    in
-   let subst_hps sst_hps proc=
+   let subst_hps sst_hps defs proc=
      let s_spec =  proc.Cast.proc_static_specs in
      let n_sspec = struc_formula_trans_heap_node [] (formula_map (hn_hprel_subst_trans sst_hps)) s_spec in
-   {proc with Cast.proc_static_specs = n_sspec}
+   {proc with Cast.proc_static_specs = n_sspec;
+       Cast.proc_hpdefs = defs;
+   }
    in
   (* *********************************)
   let view_equivs = cprog.Cast.prog_view_equiv in
@@ -131,6 +133,7 @@ let extend_pure_props_x iprog cprog props sccs hp_rel_defs
   ) rem_defs in
   let _ =  Debug.ninfo_hprint (add_str "  rem_defs1: " (pr_list_ln Cprinter.string_of_hp_rel_def_short)) (rem_defs1) no_pos in
   let exted_defs,equivs = do_extend props [] rem_defs1 in
+  let out_defs = matched_defs@exted_defs@equiv_defs in
   let n_sccs,nscc_sel_hps, nscc_sel_post_hps = if equivs = [] then
     sccs,scc_sel_hps, scc_sel_post_hps
   else
@@ -148,7 +151,7 @@ let extend_pure_props_x iprog cprog props sccs hp_rel_defs
         r1@[((hp1,args1),(hp2,args1@ex_args))], r2@[(hp1,hp2)]
     ) ([],[]) (equivs@ex_equivs) in
     let n_sccs = List.map (fun spec ->
-        subst_hps equivs_hps spec
+        subst_hps equivs_hps (matched_defs@exted_defs) spec
     ) sccs in
     let nscc_sel_hps = CP.subst_var_list sst0 scc_sel_hps in
     let nscc_sel_post_hps = CP.subst_var_list sst0 scc_sel_post_hps in
@@ -167,10 +170,9 @@ let extend_pure_props_x iprog cprog props sccs hp_rel_defs
   ) old_procs [] in
   let _ = Hashtbl.reset old_procs in
   let _ = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in
-  let nproc = if props = [] || equivs = [] then cprog else
-    {cprog with Cast.new_proc_decls = old_procs} in
+  let nproc = {cprog with Cast.new_proc_decls = old_procs} in
   (************END update**************)
-  nproc,n_sccs,matched_defs@exted_defs@equiv_defs,nscc_sel_hps,nscc_sel_post_hps
+  nproc,n_sccs,out_defs,nscc_sel_hps,nscc_sel_post_hps
 
 let extend_pure_props iprog cprog props sccs hp_rel_defs scc_sel_hps scc_sel_post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in

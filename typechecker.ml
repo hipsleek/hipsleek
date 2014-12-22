@@ -2723,7 +2723,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
-  if not(!Globals.pred_infer_flag) then ()
+  if not(!Globals.pred_infer_flag) then prog
   else
     (*solve the set of assumptions for scc*)
     (* let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in *)
@@ -2914,7 +2914,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (* get pure props need to be inferred *)
     let inf_pure_props = Iincr.extract_inf_props prog (List.map (fun proc -> proc.Cast.proc_static_specs) scc_procs) in
     let prog, scc_procs, n_scc_inferred_defs,scc_sel_hps, scc_sel_post_hps = (Iincr.extend_pure_props iprog prog inf_pure_props scc_procs scc_inferred_hps scc_sel_hps scc_sel_post_hps) in
-    let new_scc_procs = if !Globals.pred_trans_view then
+    let new_scc_procs,nprog = if !Globals.pred_trans_view then
       let nprog,is_print_inferred_spec = match scc_procs with
         | [] -> prog,false
         | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
@@ -2950,8 +2950,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           ()
           else ()
       ) new_scc_procs in
-      new_scc_procs
-    else scc_procs
+      new_scc_procs,nprog
+    else scc_procs,prog
     in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
@@ -2963,7 +2963,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (* let _ = if(!Globals.gen_cpfile) then *)
     (*   CEQ.gen_cpfile prog proc scc_hprel_ass scc_inferred_hps scc_dropped_hps old_hpdecls sel_hp_rels cout_option in *)
     (**************end cp_test _ gen_cpfile******************)
-    ()
+    nprog
 
 (* checking procedure: (PROC p61) *)
 and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
@@ -3850,7 +3850,7 @@ let rec check_prog iprog (prog : prog_decl) =
         n_scc
       in
       let _ = Debug.ninfo_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in
-      let _ = if (* is_all_verified1 && *) is_all_verified2 then
+      let prog = if (* is_all_verified1 && *) is_all_verified2 then
         let _ = Infer.scc_rel_ass_stk # reverse in
         let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) ini_hpdefs in
 	let ini_hp_defs = List.map (fun def ->
@@ -3863,13 +3863,13 @@ let rec check_prog iprog (prog : prog_decl) =
 	CF.def_rhs = [(CF.disj_of_list fs no_pos, None)];
         CF.def_flow = def.CF.hprel_def_flow;
 	}) ini_hpdefs in
-        let _ = proc_mutual_scc_shape_infer iprog prog (has_infer_pre_proc || has_infer_post_proc) ini_hp_defs scc in
+        let nprog = proc_mutual_scc_shape_infer iprog prog (has_infer_pre_proc || has_infer_post_proc) ini_hp_defs scc in
         let _ = Infer.rel_ass_stk # reset in
         let _ = Infer.scc_rel_ass_stk # reset in
         let _ = scc_proc_sel_hps := [] in
         let _ = scc_proc_sel_post_hps := [] in
-        ()
-      else ()
+        nprog
+      else prog
       in
 
       (* Pure inference *)

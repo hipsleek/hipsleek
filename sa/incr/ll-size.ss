@@ -19,7 +19,7 @@ pred_extn size[R]<k> ==
 
 
 lln<n> == self = null & n = 0
-	or self::node<_, q> * q::lln<n-1>
+	or self::node<_, q> * q::lln<n1> & n=n1+1 & n1>=0
   inv n >= 0;
 
 HeapPred H(node a).
@@ -40,7 +40,7 @@ int size_helper(node x)
 //  infer [P,Q]  requires x::lln<n> & P(n)  ensures x::lln<n> & Q(n,res);
 //  infer [@size]  requires x::ll<>  ensures x::ll<> ;
 //  infer [@post_n]  requires x::lln<n>  ensures x::lln<m> ;
-  infer[@shape,@size]  requires true ensures true;
+  infer[@shape,@size,@post_n]  requires true ensures true;
 
 {
   if (x==null)
