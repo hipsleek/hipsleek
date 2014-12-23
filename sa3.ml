@@ -363,27 +363,24 @@ let subst_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs c
 
 let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
   let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Ante (UNFOLD IN LHS)<<<<<<" pr_id) "" no_pos else () in
-  (* let pr_hp_defs = List.fold_left (fun r def -> match def.CF.def_cat with *)
-  (*   | CP.HPRelDefn (hp, root, args) -> r@[(hp, def, root::args, Sautil.is_top_guard_hp_def link_hps def)] *)
-  (*   | _ -> r *)
-  (* ) [] hp_defs in *)
-  let unfold_lhs_one (b, r) cs=
-    let lhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_lhs in
-    let rhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_rhs in
-    let l_inter = CP.intersect_svl lhps to_unfold_hps in
-    let r_inter = CP.intersect_svl rhps to_unfold_hps in
-    if l_inter == [] && r_inter == [] then (b, r@[cs]) else
-      (* let pr_hp_defs0, rhs_pr_hp_defs0 = List.fold_left (fun (r1,r2) (hp,def,args,is_top) -> *)
-      (*     let nr1 = if CP.mem_svl hp l_inter then (r1@[(hp,def,args)]) else r1 in *)
-      (*     let nr2 = if CP.mem_svl hp r_inter && not is_top then r2@[(hp,def,args)] else r2 in *)
-      (*     (nr1,nr2) *)
-      (* ) ([],[]) pr_hp_defs in *)
-      (*tll does not allow do unfold*)
-      let nlhs = (* Cformula.do_unfold_hp_def prog pr_hp_defs0 *) cs.Cformula.hprel_lhs in
-      let nrhs = (* Cformula.do_unfold_hp_def prog rhs_pr_hp_defs0 *) cs.Cformula.hprel_rhs in
-      (true, r@[{cs with Cformula.hprel_lhs = nlhs; Cformula.hprel_rhs = nrhs;
-      }])
-  in
+   (*****temporal remove it*****)
+  (* let unfold_lhs_one (b, r) cs= *)
+  (*   let lhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_lhs in *)
+  (*   let rhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_rhs in *)
+  (*   let l_inter = CP.intersect_svl lhps to_unfold_hps in *)
+  (*   let r_inter = CP.intersect_svl rhps to_unfold_hps in *)
+  (*   if l_inter == [] && r_inter == [] then (b, r@[cs]) else *)
+  (*     (\* let pr_hp_defs0, rhs_pr_hp_defs0 = List.fold_left (fun (r1,r2) (hp,def,args,is_top) -> *\) *)
+  (*     (\*     let nr1 = if CP.mem_svl hp l_inter then (r1@[(hp,def,args)]) else r1 in *\) *)
+  (*     (\*     let nr2 = if CP.mem_svl hp r_inter && not is_top then r2@[(hp,def,args)] else r2 in *\) *)
+  (*     (\*     (nr1,nr2) *\) *)
+  (*     (\* ) ([],[]) pr_hp_defs in *\) *)
+  (*     (\*tll does not allow do unfold*\) *)
+  (*     let nlhs = (\* Cformula.do_unfold_hp_def prog pr_hp_defs0 *\) cs.Cformula.hprel_lhs in *)
+  (*     let nrhs = (\* Cformula.do_unfold_hp_def prog rhs_pr_hp_defs0 *\) cs.Cformula.hprel_rhs in *)
+  (*     (true, r@[{cs with Cformula.hprel_lhs = nlhs; Cformula.hprel_rhs = nrhs; *)
+  (*     }]) *)
+  (* in *)
   (*****temporal remove it*****)
   (* let b,n_constrs = List.fold_left unfold_lhs_one (false,[]) constrs in *)
   (* b,n_constrs *)
@@ -2686,7 +2683,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
       def_subst_fix prog is_post2a.CF.is_post_hps dang_hps is_post2a.CF.is_prefix_hps (hp_defs2)
     else (hp_defs2)
     in
-    let hp_defs4 = List.map (fun def ->
+    let _ (* hp_defs4 *) = List.map (fun def ->
         let hp0,args0 = CF.extract_HRel def.CF.def_lhs in
         if CP.mem_svl hp0 is_post2a.CF.is_sel_hps then
           let n_rhs = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> Sautil.check_relaxeq_formula args0 f1 f2) def.CF.def_rhs in
@@ -2818,7 +2815,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
       in
       let is2=
         if !pred_norm_overr then
-          let n_hp_defs = Sacore.norm_overr is2a.is_hp_defs in
+          let n_hp_defs = Sacore.norm_overr is2a.Cformula.is_hp_defs in
           {is2a with CF.is_hp_defs = n_hp_defs}
         else is2a
       in
@@ -2843,7 +2840,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
       let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in
       let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in
       let hp_defs4 = List.map (fun def ->
-          let n_def = match def.CF.def_cat with
+          let _ (* n_def *) = match def.CF.def_cat with
               | CP.HPRelDefn (hp, r, args) ->
                     if CP.mem_svl hp post_hps then
                     let n_rhs = List.map (fun (f, og) ->
@@ -2937,8 +2934,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
     in
     (* let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in *)
     let _ = Debug.ninfo_hprint (add_str "    link_hpargs" (pr_list (pr_pair !CP.print_sv !CP.print_svl)))  link_hpargs no_pos in
-    let hp_defs1,tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
-    let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
+    let _ (* hp_defs1 *), _ (* tupled_defs  *)= Sautil.partition_tupled is.CF.is_hp_defs in
+    let _ (* dang_hpargs *) = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_link_hpargs in
     let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_dang_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_dang_hpargs no_pos in
     let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.Cformula.is_link_hpargs no_pos in

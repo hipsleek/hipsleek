@@ -474,7 +474,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let _ (* res *) = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
@@ -607,7 +607,7 @@ let process_list_lemma ldef_lst =
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
-    let tmp = iprog.I.prog_data_decls in
+    let _ (* tmp *) = iprog.I.prog_data_decls in
     iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
   else begin
     dummy_exception() ;
@@ -1168,7 +1168,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       Some guard1
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in
-  let orig_vars = CF.fv lhs @ CF.fv rhs in
+  let _ (* orig_vars *) = CF.fv lhs @ CF.fv rhs in
   let lhps = CF.get_hp_rel_name_formula lhs in
   let rhps = CF.get_hp_rel_name_formula rhs in
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
@@ -1290,7 +1290,7 @@ let process_shape_infer pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps,_ =
+  let _ (* ls_hprel *), _ (* ls_inferred_hps *),_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
         Sa2.infer_shapes
@@ -1383,7 +1383,7 @@ let process_rel_infer pre_rels post_rels =
   (*   () *)
   (* in *)
   (*************END INTERNAL*****************)
-  let hp_lst_assume = !sleek_hprel_assumes in
+  let _ (* hp_lst_assume *) = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
   (* let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels = relation_pre_process hp_lst_assume pre_rels post_rels in *)
   let rels = Infer.infer_rel_stk # get_stk in
@@ -1407,13 +1407,13 @@ let process_rel_infer pre_rels post_rels =
 
 let process_shape_lfp sel_hps=
   (**********INTERNAL**********)
-  let transfrom_assumption hp0 ls_pdefs cs=
-    try
-      let hp,args = CF.extract_HRel_f cs.CF.hprel_lhs in
-      if CP.eq_spec_var hp0 hp then ls_pdefs@[(hp, args, cs.CF.hprel_rhs)]
-      else ls_pdefs
-    with _ -> ls_pdefs
-  in
+  (* let transfrom_assumption hp0 ls_pdefs cs= *)
+  (*   try *)
+  (*     let hp,args = CF.extract_HRel_f cs.CF.hprel_lhs in *)
+  (*     if CP.eq_spec_var hp0 hp then ls_pdefs@[(hp, args, cs.CF.hprel_rhs)] *)
+  (*     else ls_pdefs *)
+  (*   with _ -> ls_pdefs *)
+  (* in *)
   (*******END INTERNAL ********)
   let ls_pdefs, defs = List.fold_left (fun (r1,r2) (_,hp_def) ->
       match hp_def.CF.def_cat with
@@ -1476,7 +1476,7 @@ let process_shape_rec sel_hps=
   let ls_pdefs = List.map (fun hp ->
       List.fold_left (transfrom_assumption hp) [] constrs2
   ) sel_hps in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
+  let _ (* unk_hps *) = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
   (* let defs = List.map snd !sleek_hprel_defns in *)
   let hp_defs = List.map (transform_to_hpdef) ls_pdefs in
   let _ = sleek_hprel_defns := !sleek_hprel_defns@(List.map (fun a -> ([],a)) hp_defs) in
@@ -1518,7 +1518,7 @@ let process_validate exp_res ils_es =
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   let res_str = ref "" in
   (*get current residue -> FAIL? VALID*)
-  let rs = !CF.residues in
+  let _ (* rs *) = !CF.residues in
   (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
@@ -1602,7 +1602,7 @@ let process_validate exp_res ils_es =
           let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
           (*for each succ context: validate residue + inferred results*)
           let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
-          let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
+          let _ (* b *), _ (* es_opt *), _ (* ls_fail_ass *) = Sleekcore.validate ls_expect_es ls_a_es in
           (* let _ = if b then *)
           (*   print_endline (validate_id ^ "SUCCast.") *)
           (* else *)
@@ -1785,9 +1785,9 @@ let process_pred_split ids=
 let process_norm_seg ids=
   let _ = Debug.info_hprint (add_str "process_pred_norm_seg" pr_id) "\n" no_pos in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  let _ (* unk_hps *) = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
   (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+  let _ (* sel_hp_defs *) = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
         | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
           if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
@@ -1806,7 +1806,7 @@ let process_pred_norm_disj ids=
   (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
   (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+  let _ (* sel_hp_defs *) = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
         | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
           if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
@@ -1821,7 +1821,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, (* ls_inferred_hps *) _ ,_=
+  let _ (* ls_hprel *), (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)

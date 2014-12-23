@@ -473,14 +473,14 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
             in
             flow_partition rest1 (res@[(nf,def::part)])
   in
-  let rec partition_nf part_defs don=
-    match part_defs with
-      | [] -> raise Not_found
-      | (fl,defs)::rest ->
-            if CF.equal_flow_interval fl !norm_flow_int then
-              ((fl,defs),don@rest)
-            else partition_nf rest (don@[(fl,defs)])
-  in
+  (* let rec partition_nf part_defs don= *)
+  (*   match part_defs with *)
+  (*     | [] -> raise Not_found *)
+  (*     | (fl,defs)::rest -> *)
+  (*           if CF.equal_flow_interval fl !norm_flow_int then *)
+  (*             ((fl,defs),don@rest) *)
+  (*           else partition_nf rest (don@[(fl,defs)]) *)
+  (* in *)
   let rec look_up_defs hp0 args basef1 parts (is_found,res)=
     let look_up (fl:Exc.GTable.nflow) def=
       match def.CF.def_cat with
@@ -524,7 +524,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
     match ls_hpargs with
       | [] -> [(parts,iflow,f0)]
       |  [(hp,args)] -> begin
-            let pos = (CF.pos_of_formula f0) in
+            let _ (* pos *) = (CF.pos_of_formula f0) in
             if CP.mem_svl hp dang_hps then
               (* let f1 = CF.formula_of_pure_N  p (\* CF.mkTrue_nf *\) pos in *)
               [(parts,iflow,f1)]
@@ -597,7 +597,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                 f2
     with _ -> f0
   in
-  let elim_dup_with_guard_x g sf=
+  let elim_dup_with_guard_x g (sf:CF.struc_formula)=
     match sf with
       | CF.EBase b -> begin
           match b.CF.formula_struc_base with
@@ -678,7 +678,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
                        sf4
              end
           | [] ->
-                let f2 = formula_fct b.formula_struc_base in
+                let f2 = formula_fct b.Cformula.formula_struc_base in
                 rec_pre parts ifl b f2
           | _ -> struc_fnc sf
       end

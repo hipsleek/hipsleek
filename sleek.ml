@@ -98,7 +98,7 @@ let proc_gen_cmd cmd =
     | UtDef utdef -> process_ut_def utdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
-    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
+    | EntailCheck (iante, iconseq, etype) -> (let _ = process_entail_check iante iconseq etype in ())
     | SatCheck f -> (process_sat_check f;())
     | NonDetCheck (v,f) -> (process_nondet_check v f)
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
@@ -124,7 +124,7 @@ let proc_gen_cmd cmd =
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | CheckNorm f -> process_check_norm f
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype; ())
+    | InferCmd (itype, ivars, iante, iconseq, etype) -> (let _ = process_infer itype ivars iante iconseq etype in ())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef -> process_list_lemma ldef 
     | PrintCmd pcmd -> process_print_command pcmd
@@ -193,7 +193,7 @@ let parse_file (parse) (source_file : string) =
       (* | CmpCmd _| Time _ | _ -> () in *)
   let proc_one_cmd c = 
     match c with
-      | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+      | EntailCheck (iante, iconseq, etype) -> (let _ = process_entail_check iante iconseq etype in ())
             (* let pr_op () = process_entail_check_common iante iconseq in  *)
             (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
       | SatCheck f -> (process_sat_check f; ())
@@ -224,9 +224,8 @@ let parse_file (parse) (source_file : string) =
       | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
       | CheckNorm f -> process_check_norm f
       | EqCheck (lv, if1, if2) ->
-            (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> (let _ = process_infer itype ivars iante iconseq etype in ())
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd ->
             let _ = Debug.ninfo_pprint "at print" no_pos in
@@ -394,7 +393,7 @@ let sleek_proof_log_Z3 src_files =
       Debug.info_hprint (add_str "src_files" (pr_list pr_id)) src_files no_pos;
       let tstartlog = Gen.Profiling.get_time ()in
       (* let _= Log.proof_log_to_file () in *)
-      let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+      let _ (* with_option *) = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
       let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
       (* let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in *)

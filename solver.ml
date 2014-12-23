@@ -5595,8 +5595,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                 heap_entail()
               else (* early failure due to real lhs-rhs contra detected *)
                 let _ = Debug.ninfo_pprint "Early lhs-rhs contra detected" no_pos in
-                let pr = Cprinter.string_of_formula in
-                let pr2 = Cprinter.string_of_context in
+                let _  (* pr *) = Cprinter.string_of_formula in
+                let _ (* pr2 *) = Cprinter.string_of_context in
                 let cex = (mk_cex true) in
                 let ante, prf, estate = match ctx with 
                   | Ctx es -> es.es_formula,mkPure es (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None, es
@@ -5707,7 +5707,7 @@ and handle_disjunctive_conseq (ctx:context) (conseq:CF.formula) : context * CF.f
 and log_contra_detect hec_num conseq result pos =
   let new_slk_log result es =
     let avoid = CF.is_emp_term conseq in
-    let avoid = avoid || (not (hec_stack # is_empty)) in
+    let _ (* avoid *) = avoid || (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
     let slk_no = (* if avoid then 0 else *) Log.(last_cmd # start_sleek 2) in
     (* let _ = hec_stack # push slk_no in *)
@@ -13448,7 +13448,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   let fn = wrap_proving_kind  PK_Lemma_Norm (normalize_formula_w_coers_x  prog estate f) in
     let pr = Cprinter.string_of_formula in
-    let pr_c = Cprinter.string_of_coerc_decl_list in
+    let _ (* pr_c *) = Cprinter.string_of_coerc_decl_list in
     let pr3 l = string_of_int (List.length l) in
     Debug.no_2_num i "normalize_formula_w_coers" pr pr3 pr 
         (fun _ _ -> fn coers) f coers

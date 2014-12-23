@@ -200,7 +200,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   (*add ihpdecl*)
   let iprog = Iast.get_iprog () in
   let hpdclr = C.look_up_hp_def_raw prog.C.prog_hp_decls (CP.name_of_spec_var n_hp) in
-  let nihp = add_ihprel iprog [hpdclr] in
+  let _ (* nihp *) = add_ihprel iprog [hpdclr] in
   (*lemma infer*)
   let rhs = Cformula.mkStarH rhs h_dnode1 no_pos in
   let lf1 = Cformula.formula_of_heap (Cformula.h_subst ss0 h_vnode1) no_pos in
@@ -218,11 +218,11 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   let r1,hp_defs0,r3 = manage_infer_pred_lemmas_fnc [l_coer] iprog prog xpure_heap in
   (*transform inferred def*)
   let hp_defs = (* Cformula.rel_def_stk # get_stk *) hp_defs0 in
-  let lem_name = if (hp_defs != []) then
+  let _ (* lem_name *) = if (hp_defs != []) then
     (*from unknown pred into view*)
     let proc_name = "lem_infer" in
     let n_cviews,chprels_decl = trans_hprel_2_cview_fnc iprog prog proc_name hp_defs in
-    let in_hp_names = [n_hp] in
+    let _ (* in_hp_names *) = [n_hp] in
     (*transform formula*)
     let rf3 = trans_formula_hp_2_view_fnc iprog prog proc_name
        chprels_decl hp_defs [] rf1 in
@@ -230,7 +230,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     let lem_name = fresh_any_name lemma_name in
     let l_coer = Iast.mk_lemma (lem_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf4 in
     (*add lemma*)
-    let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
+    let _ (* res *) = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ = print_endline "\n*******relational definition ********" in
     let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def (Cformula.rel_def_stk # get_stk) else
       (Cformula.rel_def_stk # get_stk) in
