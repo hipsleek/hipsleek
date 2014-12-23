@@ -3996,7 +3996,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     (iv) extend to disj form
 *)
 and simplify_aux_x f =
-  if not(!Globals.oc_simplify) then f
+  if not(!Globals.oc_adv_simplify) then f
   else
     let disjs = CP.split_disjunctions f in
     List.fold_left (fun acc disj ->

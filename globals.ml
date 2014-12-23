@@ -1013,6 +1013,8 @@ let graph_norm = ref false
 
 let oc_simplify = ref true
 
+let oc_adv_simplify = ref true
+
 let graph_norm_instance_threshold = 1
 
 let graph_norm_decl_threshold = ref 1
