@@ -3996,24 +3996,26 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     (iv) extend to disj form
 *)
 and simplify_aux_x f =
-  let disjs = CP.split_disjunctions f in
-  List.fold_left (fun acc disj ->
-      let conjs = CP.split_conjunctions disj in
-      (* let null_svl = CP.get_null_ptrs disj in *)
-      (* let eqs = List.filter (CP.is_eq_exp_ptrs null_svl) conjs in *)
-      let eqs = [] in
-      let lvs, non_lvs = List.partition CP.is_lexvar conjs in
-      let vps, non_vps = List.partition CP.is_varperm non_lvs in
-      let rels, non_rels = List.partition CP.is_RelForm non_vps in
-      let lins, non_lins = List.partition CP.is_linear_formula non_rels in
-      let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
-      let lin_f = !simplify_omega lin_f in
-      let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) (lin_f) (eqs@non_lins) in
-      let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
-      let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
-      let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
-      CP.mkOr acc new_disj None no_pos
-  ) (CP.mkFalse no_pos) disjs
+  if not(!Globals.oc_adv_simplify) then f
+  else
+    let disjs = CP.split_disjunctions f in
+    List.fold_left (fun acc disj ->
+        let conjs = CP.split_conjunctions disj in
+        (* let null_svl = CP.get_null_ptrs disj in *)
+        (* let eqs = List.filter (CP.is_eq_exp_ptrs null_svl) conjs in *)
+        let eqs = [] in
+        let lvs, non_lvs = List.partition CP.is_lexvar conjs in
+        let vps, non_vps = List.partition CP.is_varperm non_lvs in
+        let rels, non_rels = List.partition CP.is_RelForm non_vps in
+        let lins, non_lins = List.partition CP.is_linear_formula non_rels in
+        let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
+        let lin_f = !simplify_omega lin_f in
+        let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) (lin_f) (eqs@non_lins) in
+        let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
+        let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
+        let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
+        CP.mkOr acc new_disj None no_pos
+    ) (CP.mkFalse no_pos) disjs
 
 and simplify_aux f =
   let pr = !print_pure_f in
@@ -9271,6 +9273,30 @@ let rec is_inf_term_struc f =
   | EAssume _ -> false
   | ECase ec -> List.exists (fun (_, c) -> is_inf_term_struc c) ec.formula_case_branches
   | EList el -> List.exists (fun (_, c) -> is_inf_term_struc c) el
+
+let rec is_inf_term_only_struc f =
+  match f with
+  | EInfer ei -> (ei.formula_inf_obj # is_term) && not (ei.formula_inf_obj # is_term_wo_post)
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_only_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_only_struc c) el
+
+let rec is_inf_term_wo_post_struc f =
+  match f with
+  | EInfer ei -> ei.formula_inf_obj # is_term_wo_post
+  | EBase eb -> begin
+    match eb.formula_struc_continuation with
+    | None -> false
+    | Some c -> is_inf_term_wo_post_struc c
+    end 
+  | EAssume _ -> false
+  | ECase ec -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) ec.formula_case_branches
+  | EList el -> List.exists (fun (_, c) -> is_inf_term_wo_post_struc c) el
     
 let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
   match ctx with

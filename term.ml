@@ -1244,8 +1244,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                     if all_zero then
                       Debug.trace_hprint (add_str ("Phase to remove") !print_svl) rp no_pos
                     else begin
-                      Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-                      Debug.info_hprint (add_str "Phase Numbering"
+                      Debug.tinfo_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      Debug.tinfo_hprint (add_str "Phase Numbering"
                           (pr_list (pr_pair !print_sv string_of_int))) subst no_pos
                     end;
                     let n_tbl = Cast.proc_decls_map (fun proc ->

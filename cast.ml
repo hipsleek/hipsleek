@@ -1939,8 +1939,8 @@ let check_proper_return cret_type exc_list f =
 	| F.Base b->
               let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
-                & not(F.equal_flow_interval !top_flow_int fl_int) &&
+	      if b_rez && not(F.equal_flow_interval !error_flow_int fl_int)
+                && not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
 		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
@@ -3624,13 +3624,13 @@ let add_inf_post_proc proc =
 let add_post_for_tnt_prog prog =
   let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
     let spec = proc.proc_static_specs in
-    if not (Cformula.is_inf_term_struc spec) then acc
-    else acc @ [proc]) prog.new_proc_decls [] in
+    if not (Cformula.is_inf_term_only_struc spec) then acc
+    else acc @ [proc]) prog.new_proc_decls [] in (* @term only, no @term_wo_post *)
   let inf_post_procs = List.fold_left (fun acc proc ->
     let dprocs = dependence_procs_of_proc prog proc in
     let _ = 
       if is_empty dprocs then ()
-      else print_endline_quiet("\n !!! @post is added into " ^ 
+      else print_endline_quiet ("\n !!! @post is added into " ^ 
         (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
     in
     acc @ dprocs) [] inf_term_procs in

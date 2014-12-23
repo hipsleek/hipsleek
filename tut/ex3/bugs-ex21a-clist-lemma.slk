@@ -1,0 +1,42 @@
+data node {
+  int val;
+  node next;
+}.
+
+/*
+pred ls<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_,q>*q::ls<n-1,p>;
+} inv n >= 0.
+*/
+
+pred ls<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls<n-1,p> 
+  inv n>=0.
+
+pred clist<n> == self::node<_,q>*q::ls<n-1,self>
+  inv n>0.
+
+//lemma_safe self::clist<n> <- self::ls<n-1,q> * q::node<_,self>.
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+/*
+# bugs-ex21a-clist-lemma.slk
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+Above is going into an infinite loop..
+Can we limit unfolding?
+
+pls2nus@loris-laptop:~/code/default/tut/ex3$ ../../sleek bugs-ex21-clist-lemma.slk
+!!! init_tp : Using Z3 by default
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+^C
+
+
+*/
