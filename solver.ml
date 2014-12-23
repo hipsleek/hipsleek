@@ -8717,7 +8717,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
             let f a0 = 
               (* WN : what if Omega cannot handle?  *)
-              let a0 = Wrapper.wrap_exception a0 TP.simplify_omega a0 in
+              (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
+              let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
               then 
                 let a0 = CP.drop_exists a0 in 
