@@ -53,3 +53,53 @@ summary:     to fix bugs-sim5b
               (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
               let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
+
+without:
+ let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
+
+Starting hip-sleek tests:
+Total number of errors: 4 in files: (loris)
+  infer/infer10.slk({E15#Valid}) 
+  infer/infer12.slk({E5#Valid}) 
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 81.19 second
+
+@lenovo (no redlog)
+
+Total number of errors: 9 in files:
+  infer/infer10.slk({E15#Valid}) 
+  infer/infer12.slk({E5#Valid}) 
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+fracperm/split_simple.slk(no result  for {E}) 
+fracperm/split-combine.slk(no result  for {E}) 
+veribsync/bperm-split-combine.slk(no result  for {E}) 
+veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 57.57 second
+	Time spent in main process: 35.03 second
+	Time spent in child processes: 22.55 second
+	Number of false contexts: 0
+pls2nus@loris-laptop:~/code/default/examples/working$ 
+
+
+with:
+ let a0 = Wrapper.wrap_exception a0 TP.simplify_omega a0 in
+
+Total number of errors: 10 in files:
+  infer/infer10.slk({E15#Valid}) 
+  infer/infer12.slk({E5#Valid}) 
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  infinity.slk({E66#Valid}) 
+fracperm/split_simple.slk(no result  for {E}) 
+fracperm/split-combine.slk(no result  for {E}) 
+veribsync/bperm-split-combine.slk(no result  for {E}) 
+veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 340.98 second
+	Time spent in main process: 194.73 second
+	Time spent in child processes: 146.24 second
+	Number of false contexts: 0
