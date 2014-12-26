@@ -40,7 +40,8 @@ extern int __VERIFIER_nondet_int(void)
 int main()
 /*@
   requires true
-  ensures res=0 & flow __norm or res=1 & flow __norm; // __Error;
+  //ensures res=0 & flow __norm or res=1 & flow __norm; // __Error;
+  ensures res=0 & flow __norm or true & flow __Error;
 */
 {
     int x = 9;
@@ -50,23 +51,25 @@ int main()
       // dprint;
       return 0;
     } else {
-      return 1;
+      //return 1;
+      throw_err();
       //ERROR: __VERIFIER_error();
     }
 }
 
 /*
-# svcomp14/recursive/fail/ex21-Fib02.c
+# svcomp14/recursive/fail/ex21a-Fib02-error.c
 
-Are we able to parse external proc of C properly?
+I added the following into prelude.ss
 
-globals.ml:let nondet_int_proc_name = "__VERIFIER_nondet_int"
-Binary file hip matches
-iast.ml:  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
-parser.ml:(* int __VERIFIER_nondet_int() *)
-parser.ml:(* int __VERIFIER_error()      *)
-parser.ml:    else if String.compare id "__VERIFIER_error" == 0 then Some (
-parser.ml:      "int __VERIFIER_error()\n" ^
+void throw_err()
+  requires true
+  ensures true & flow __Error;
 
+Why did I have a pre-cond failure?
+
+Checking procedure main$... 
+Proving precondition in method throw_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [50;47;48;-1;55]
 
 */

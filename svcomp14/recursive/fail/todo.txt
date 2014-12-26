@@ -57,6 +57,17 @@ comparison.
 
 http://rise4fun.com/Z3/tutorialcontent/fixedpoints
 ==================================================================
+# svcomp14/recursive/fail/ex21-Fib02.c
+
+Are we able to parse external proc of C properly?
+
+globals.ml:let nondet_int_proc_name = "__VERIFIER_nondet_int"
+Binary file hip matches
+iast.ml:  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
+parser.ml:(* int __VERIFIER_nondet_int() *)
+parser.ml:(* int __VERIFIER_error()      *)
+parser.ml:    else if String.compare id "__VERIFIER_error" == 0 then Some (
+parser.ml:      "int __VERIFIER_error()\n" ^
 ==================================================================
 ==================================================================
 ==================================================================
