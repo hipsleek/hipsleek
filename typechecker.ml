@@ -2655,15 +2655,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let s,fk,ets= CF.get_failure_list_partial_context rs
-            (*match CF.get_must_failure_list_partial_context rs with
-              | Some s -> "(must) cause:\n"^s
-              | None -> (match CF.get_may_failure_list_partial_context rs with
-              | Some s -> "(may) cause:\n"^s
-              | None -> "INCONSISTENCY : expected failure but success instead"
-              ) *)
-            (*should check bot with is_bot_status*)
-          in
+          let s,fk,ets= CF.get_failure_list_partial_context rs in
+          (* let s = match CF.get_must_failure_list_partial_context rs with *)
+          (*     | Some s -> "(must) cause:\n"^s *)
+          (*     | None -> "( may) cause:\n"^s *)
+                    (* (match  CF.get_may_failure_list_partial_context rs with *)
+                (*   | Some s -> "( may) cause:\n"^s *)
+                (*   | None -> "INCONSISTENCY : expected failure but success instead" *)
+                (* ) *)
+                    (*should check bot with is_bot_status*)
+          (* in *)
           let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
               "Post condition cannot be derived"

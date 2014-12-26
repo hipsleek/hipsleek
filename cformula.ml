@@ -9154,6 +9154,7 @@ let print_context = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 let print_entail_state_short = ref(fun (c:entail_state) -> "printer not initialized")
 let print_list_partial_context = ref(fun (c:list_partial_context) -> "printer not initialized")
+let print_partial_context = ref(fun (c:partial_context) -> "printer not initialized")
 let print_list_failesc_context = ref(fun (c:list_failesc_context) -> "printer not initialized")
 (* let print_flow = ref(fun (c:nflow) -> "printer not initialized") *)
 let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
@@ -9745,7 +9746,7 @@ let gen_lor_ctx (m1,n1, (e1:context option)) (m2,n2,(e2: context option)) : (fai
   | Failure_Valid, x  -> (m2,n2,  ctx)
 
 
-let cmb_lor m1 m2: failure_kind = match m1,m2 with
+let cmb_lor_x m1 m2: failure_kind = match m1,m2 with
   | Failure_Bot m1,  Failure_Bot m2 ->  Failure_Bot ("lor["^m1^","^m2^"]")
   | Failure_Bot _, _ ->  m2
   | _, Failure_Bot _ -> m1
@@ -9757,6 +9758,10 @@ let cmb_lor m1 m2: failure_kind = match m1,m2 with
   | Failure_Must m, Failure_Valid -> (Failure_May ("lor["^m^",valid]"))
   | Failure_Valid, Failure_Must m -> (Failure_May ("lor["^m^",valid]"))
   | Failure_Valid, x  -> m2
+
+let cmb_lor m1 m2=
+  let pr1 = !print_failure_kind_full in
+  Debug.no_2 "cmb_lor" pr1 pr1 pr1 (fun m1 m2 -> cmb_lor_x m1 m2) m1 m2
 
 (*gen_ror*)
 (*
@@ -9781,9 +9786,9 @@ let gen_ror_x (m1, n1, e1) (m2, n2, e2) = match m1,m2 with
 let gen_ror (m1,n1,e1) (m2,n2,e2)=
   let pr (m, n , e) = (!print_failure_kind_full m) ^ ", name: " ^ n in
   let pr1 (m, n, e) = let tmp = (!print_failure_kind_full m) ^ ", name: " ^ n in
-                       match e with
-                         | None -> tmp
-                         | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
+  match e with
+    | None -> tmp
+    | Some f -> tmp ^ "\n" ^ (!print_entail_state f)
   in
   Debug.no_2 "gen_ror" pr pr pr1 (fun x y -> gen_ror_x x y) (m1,n1,e1) (m2,n2,e2)
 
@@ -10123,15 +10128,15 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
       | s -> Some s
     )
 
-  and combine_helper op los rs=
-    match los with
-      | [] -> rs
-      | [os] -> let tmp=
-            ( match os with
-              | None -> rs
-              | Some s -> rs ^ s
-            ) in tmp
-      | os::ss ->
+and combine_helper op los rs=
+  match los with
+    | [] -> rs
+    | [os] -> let tmp=
+        ( match os with
+          | None -> rs
+          | Some s -> rs ^ s
+        ) in tmp
+    | os::ss ->
           (*os contains all failed of 1 path trace*)
           let tmp=
             ( match os with
@@ -10140,25 +10145,25 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
             ) in
           combine_helper op ss tmp
 
-  and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
-    let helper (pt, ft)=
-      let os = get_must_failure_ft ft in
-      match os with
-        | None -> None
-        | Some (s) ->  (* let spt = !print_path_trace pt in *)
-                    Some ((*"  path trace: " ^spt ^ "\nlocs: " ^ (!print_list_int ll) ^*) "cause: " ^s)
-    in
-    match bfl with
-      | [] -> None
-      | fl -> let los= List.map helper fl in
-              ( match (combine_helper "OrR\n" los "") with
-                | "" -> None
-                | s -> Some s
-              )
+and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
+  let helper (pt, ft)=
+    let os = get_must_failure_ft ft in
+    match os with
+      | None -> None
+      | Some (s) ->  (* let spt = !print_path_trace pt in *)
+            Some ((*"  path trace: " ^spt ^ "\nlocs: " ^ (!print_list_int ll) ^*) "cause: " ^s)
+  in
+  match bfl with
+    | [] -> None
+    | fl -> let los= List.map helper fl in
+      ( match (combine_helper "OrR\n" los "") with
+        | "" -> None
+        | s -> Some s
+      )
 
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
-let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
+let rec get_failure_list_partial_context_x (ls:list_partial_context): (string*failure_kind*error_type list)=
     (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
   if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc", [Heap])
@@ -10166,6 +10171,12 @@ let rec get_failure_list_partial_context (ls:list_partial_context): (string*fail
     let (los, fk, ls_ets)= split3 (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
     (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk, List.concat ls_ets)
+
+and get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
+  let pr1 = !print_list_partial_context in
+  let pr2 (a,_,_) = a in
+  Debug.no_1 "get_failure_list_partial_context" pr1 pr2
+      (fun _ -> get_failure_list_partial_context_x (ls:list_partial_context)) ls
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
@@ -10183,13 +10194,28 @@ and get_failure_branch bfl=
     match bfl with
       | [] -> (None, Failure_Valid,[])
       | fl -> let los, fks, ets= split3 (List.map helper fl) in
-              ( match (combine_helper "OrR\n" los "") with
+              ( match (combine_helper "OrL\n" los "") with
                 | "" -> None, Failure_Valid, []
                 | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks), ets
               )
 
-and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind*error_type list)=
-   get_failure_branch bfl
+and get_failure_partial_context_x ((bfl:branch_fail list), succs): (string option*failure_kind*error_type list)=
+  let ((s_opt, ft, e) as r) = get_failure_branch bfl in
+  if !bug_detect then r else
+    match s_opt with
+      | None -> r
+      | Some s -> begin
+          match ft with
+            | Failure_Must s1 -> if succs = [] then r else
+                (Some ("(may) cause: [" ^s^",valid]"), Failure_May ("[" ^ s1^",valid]" ), e)
+            |  _ -> r
+        end
+
+and get_failure_partial_context a: (string option*failure_kind*error_type list)=
+  let pr1 = !print_partial_context in
+  let pr2 (a,_,_) = match a  with | None -> "" | Some s -> s in
+  Debug.no_1 "get_failure_partial_context" pr1 ( pr2)
+      (fun _ -> get_failure_partial_context_x a) a
 
 let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind*error_type list)=
     (*may use rand to combine the list first*)

@@ -1229,6 +1229,8 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
+let bug_detect = ref false
+
 let simplify_error = ref false
 
 let prune_cnt_limit = ref 2

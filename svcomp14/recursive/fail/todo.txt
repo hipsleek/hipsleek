@@ -1,4 +1,4 @@
-# svcomp14/recursive/fail/ex10-Fib02-true.c
+# svcomp14/recursive/fail/ex10-Fib02-true.c: FIXED
 
 Loc to investigate ..
 

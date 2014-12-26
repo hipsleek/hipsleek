@@ -5205,6 +5205,7 @@ Cformula.print_list_context_short := string_of_list_context_short;;
 Cformula.print_cex := string_of_failure_cex;;
 Cformula.print_list_context := string_of_list_context;;
 Cformula.print_list_partial_context := string_of_list_partial_context;;
+Cformula.print_partial_context := string_of_partial_context;;
 Cformula.print_list_failesc_context := string_of_list_failesc_context;;
 Cformula.print_failure_kind_full := string_of_failure_kind_full;;
 Cformula.print_fail_type := string_of_fail_type;;

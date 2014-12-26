@@ -38,8 +38,10 @@ int main()
 {
     int x = 9;
     int result = fibonacci(x);
+    // dprint;
     if (result == 34) {
-        return 0;
+      // dprint;
+      return 0;
     } else {
       return 1;
       //ERROR: __VERIFIER_error();
