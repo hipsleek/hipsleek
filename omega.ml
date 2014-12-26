@@ -768,12 +768,12 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
   Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
-  
+
 let trans_bool (f: formula): formula =
   let get_bool_val is_lt e1 e2 pos = (* e1 < e2 *)
     let bv = get_boolean_var e1 in
     match bv with
-    | Some v -> 
+    | Some v ->
       let i = get_num_int_opt e2 in
       begin match i with
       | Some i -> 

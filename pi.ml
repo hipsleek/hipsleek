@@ -608,11 +608,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let _ = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
-            let bottom_up_fp = List.map (fun (r,p) ->
-                let p1 = Tpdispatcher.om_gist p post_inv in
-                let p2 = Tpdispatcher.pairwisecheck_raw p1 in
-                (r,p2)
-            ) bottom_up_fp0 in
+            (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
+            (* let bottom_up_fp = List.map (fun (r,p) -> *)
+            (*     let p1 = Tpdispatcher.om_gist p post_inv in *)
+            (*     let p2 = Tpdispatcher.pairwisecheck_raw p1 in *)
+            (*     (r,p2) *)
+            (* ) bottom_up_fp0 in *)
+            let bottom_up_fp = bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
             let _ = DD.binfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
             let _ = DD.ninfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
