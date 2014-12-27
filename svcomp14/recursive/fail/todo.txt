@@ -69,7 +69,33 @@ parser.ml:(* int __VERIFIER_error()      *)
 parser.ml:    else if String.compare id "__VERIFIER_error" == 0 then Some (
 parser.ml:      "int __VERIFIER_error()\n" ^
 ==================================================================
+# svcomp14/recursive/fail/ex21a-Fib02-error.c
+
+I added the following into prelude.ss
+
+void throw_err()
+  requires true
+  ensures true & flow __Error;
+
+Why did I have a pre-cond failure?
+
+Checking procedure main$... 
+Proving precondition in method throw_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [50;47;48;-1;55]
+
 ==================================================================
+#ex21b-fib02.ss
+
+--esl did not give any failure.
+It seems that __Error spec is not handled properly
+by hip.
+
+Can we rectify warning?
+WARNING: ex21b-fib02.ss_42:33_42:52:the result type __Error#E is not covered by the throw list[__norm#E]
+
+Checking procedure main$... 
+Proving precondition in method throw_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [47;44;45;52]
 ==================================================================
 ==================================================================
 ==================================================================
