@@ -97,7 +97,37 @@ Checking procedure main$...
 Proving precondition in method throw_err$ Failed.
   (must) cause: must_err (__Error#E) LOCS: [47;44;45;52]
 ==================================================================
+# ex22c-null-err.ss
+
+Expecting failure but why is main
+verified successfully? Unsound here.
+
+Why is dprint not printed?
+Please fix dprint first.
+
+Checking procedure null_err$... 
+Procedure null_err$ SUCCESS.
+
+Checking procedure main$... 
+Procedure main$ SUCCESS.
+Stop Omega... 39 invocations 
 ==================================================================
+# ex22d-null-err.ss
+
+Expect success but why is there pre-cond failure?
+Same as ex22b example. Why dprint not printed?
+
+Checking procedure main$... 
+Proving precondition in method null_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [22;23]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex22d-null-err.ss",Line:23,Col:16
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
 ==================================================================
 ==================================================================
 ==================================================================
