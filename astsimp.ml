@@ -1983,7 +1983,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let _ = vdef.C.view_baga_under_inv <- Some new_under in
       let under_f = vdef.C.view_baga_under_inv in
       let baga_under_formula = match under_f with
-        | None -> CP.mkFalse pos
+        | None -> let _ = print_endline "ell" in CP.mkFalse pos
         | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
       in
       (* let baga_under_formula = match under_f with *)
