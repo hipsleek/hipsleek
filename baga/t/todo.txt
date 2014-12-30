@@ -463,6 +463,16 @@ for ll-3e.ss but fails for ll-3.ss.
 
 This works!
 ==============================================
+# ex10-11-under.slk
+
+
+Can we distinguish something that is
+definitely UNSAT such as ([],false)  or  ([self],n=0)
+
+from over-approx such as ([self],n>=0)
+or unknown such as ([self],n>=10)
+
+?
 ==============================================
 ==============================================
 ==============================================
