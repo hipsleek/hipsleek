@@ -850,9 +850,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let i_pre =
                             if infer_pre_flag then (
                                 prepost_ctr # inc;
-                                DD.info_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
-                                DD.info_zprint (lazy (("Inferred Heap: "^(pr_list Cprinter.string_of_h_formula lh)))) pos;
-                                DD.info_zprint (lazy (("Inferred Pure: "^(pr_list Cprinter.string_of_pure_formula lp)))) pos;
+                                DD.tinfo_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
+                                DD.tinfo_zprint (lazy (("Inferred Heap: "^(pr_list Cprinter.string_of_h_formula lh)))) pos;
+                                DD.tinfo_zprint (lazy (("Inferred Pure: "^(pr_list Cprinter.string_of_pure_formula lp)))) pos;
                                 (* print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
                                 (* print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)); *)
                                 (*let vars = (List.concat (List.map CF.h_fv lh)) @ (List.concat (List.map CP.fv lp)) in*) 
@@ -2654,15 +2654,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
-          let s,fk,ets= CF.get_failure_list_partial_context rs
-            (*match CF.get_must_failure_list_partial_context rs with
-              | Some s -> "(must) cause:\n"^s
-              | None -> (match CF.get_may_failure_list_partial_context rs with
-              | Some s -> "(may) cause:\n"^s
-              | None -> "INCONSISTENCY : expected failure but success instead"
-              ) *)
-            (*should check bot with is_bot_status*)
-          in
+          let s,fk,ets= CF.get_failure_list_partial_context rs in
+          (* let s = match CF.get_must_failure_list_partial_context rs with *)
+          (*     | Some s -> "(must) cause:\n"^s *)
+          (*     | None -> "( may) cause:\n"^s *)
+                    (* (match  CF.get_may_failure_list_partial_context rs with *)
+                (*   | Some s -> "( may) cause:\n"^s *)
+                (*   | None -> "INCONSISTENCY : expected failure but success instead" *)
+                (* ) *)
+                    (*should check bot with is_bot_status*)
+          (* in *)
           let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
               "Post condition cannot be derived"

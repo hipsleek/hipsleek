@@ -2339,6 +2339,7 @@ shapeExtract_cmd:
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
+   | `INFER_AT_TERM_WO_POST -> INF_TERM_WO_POST
    | `INFER_AT_PRE -> INF_PRE
    | `INFER_AT_POST -> INF_POST
    | `INFER_AT_CLASSIC -> INF_CLASSIC

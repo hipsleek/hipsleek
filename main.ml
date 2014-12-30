@@ -281,29 +281,26 @@ let parse_file_full file_name (primitive: bool) =
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
-      (* if primitive or (!Parser.parser_name = "default") then                           *)
-      (*   (* always parse primitive files by default parser *)                           *)
-      (*   "default"                                                                      *)
-      (* else if (!Parser.parser_name = "default") then                                   *)
-      (*   (* default parser is indicated in command line parameter *)                    *)
-      (*   "default"                                                                      *)
-      (* else if (!Parser.parser_name = "cil") then                                       *)
-      (*   (* cil parser is indicated in command line parameter *)                        *)
-      (*   "cil"                                                                          *)
-      (* else (                                                                           *)
-      (*   (* no parser is indicated, decide to use which ones by file name extension  *) *)
-      (*   (* The below code has been moved to process_source_list                    *)  *)
-      (*   (* let index = try String.rindex file_name '.' with _ -> 0 in              *)  *)
-      (*   (* let length = (String.length file_name) - index in                       *)  *)
-      (*   (* let ext = String.lowercase(String.sub file_name index length) in        *)  *)
-      (*   (* if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then *)  *)
-      (*   (*   "cil"                                                                 *)  *)
-      (*   (* else if(ext = ".java") then "joust"                                     *)  *)
-      (*   (* else "default"                                                          *)  *)
-      (*   "default"                                                                      *)
-      (* )                                                                                *)
-      if primitive then "default"
-      else !Parser.parser_name
+      if primitive || (!Parser.parser_name = "default") then
+        (* always parse primitive files by default parser *)
+        "default" 
+      else if (!Parser.parser_name = "default") then
+        (* default parser is indicated in command line parameter *)
+        "default"
+      else if (!Parser.parser_name = "cil") then
+        (* cil parser is indicated in command line parameter *)
+        "cil"
+      else (
+        (* no parser is indicated, decide to use which ones by file name extension  *)
+        (* let index = try String.rindex file_name '.' with _ -> 0 in              *)
+        (* let length = (String.length file_name) - index in                       *)
+        (* let ext = String.lowercase(String.sub file_name index length) in        *)
+        (* if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then *)
+        (*   "cil"                                                                 *)
+        (* else if(ext = ".java") then "joust"                                     *)
+        (* else "default"                                                          *)
+        "default"
+      )
     ) in
     (* start parsing *)
     if not primitive then
@@ -1160,8 +1157,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Log.last_cmd # dumping "finalize on hip";
-  Log.process_proof_logging !Globals.source_files;
+  let _ = Log.last_cmd # dumping "finalize on hip" in
+  let _ = Log.process_proof_logging !Globals.source_files in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

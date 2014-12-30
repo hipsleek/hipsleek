@@ -675,7 +675,8 @@ let substitute_args_x a_rel = match a_rel with
         | CP.Var _ -> (e, [])
         | _ -> 
           (try 
-            let arb = List.hd (CP.afv e) in 
+            let fvs = CP.afv e in
+            let arb = if List.length fvs > 0 then List.hd (CP.afv e) else (CP.mk_typed_spec_var Int "c") in 
             let var = CP.fresh_spec_var_prefix "fc" arb in
             let var = CP.mkVar var no_pos in
             (var, [CP.mkEqExp var e no_pos])
@@ -845,9 +846,9 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 let extract_inv_helper_x (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
   Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;
-  let pfs = List.map (fun p -> 
+  let pfs = List.map (fun p ->
       let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in
-      if bag_vars == [] then p else 
+      if bag_vars == [] then p else
         let p = TP.simplify_raw p in
         CP.remove_cnts bag_vars p
       ) pfs
@@ -859,10 +860,10 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
 
   (* Make existence *)
   let pfs = List.concat (List.map (fun p ->
-    let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
-    let res = CP.mkExists exists_vars p None no_pos in
-    if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
-    else [res]) pfs)
+      let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
+      let res = CP.mkExists exists_vars p None no_pos in
+      if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
+      else [res]) pfs)
   in
 
   Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;

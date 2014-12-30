@@ -1346,7 +1346,26 @@ Message: Can not find flow of __false
 Exception occurred: Failure("Can not find flow of __false")
 Error3(s) detected at main 
 ===================================================================
+# infer13.slk
+
+GOT
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&q=z & z=inf_z_54&{FLOW,(4,5)=__norm#E}[]
+ inferred heap: [z::lseg{}<inf_z_54>]
+ inferred pure: [z=inf_z_54]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==>  Match(z,q) ==> ]]
+
+Why did we infer z::lseg<inf_z_54>? where did inf_z_54 came from?
+
 ===================================================================
+# infer13a.slk
+
+infer [z@NI] x::node<z>   |- x::node<q>*q::lseg<z> .
+
+Can we support @NI or non-instantiating selective variable?
+
 ===================================================================
 ===================================================================
 ===================================================================
