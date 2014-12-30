@@ -1167,8 +1167,7 @@ let dump_lem_proc = ref false
 
 let num_self_fold_search = ref 0
 let array_expansion = ref false;;
-(* let array_translate = ref false;; *)
-let array_translate = ref true;;
+let array_translate = ref false;;
 let self_fold_search_flag = ref false
 
 let show_gist = ref false
