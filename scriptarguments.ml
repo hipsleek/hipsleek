@@ -145,6 +145,8 @@ let common_arguments = [
    "No Splitting of RHS(conseq).");
   ("--array-expansion", Arg.Set Globals.array_expansion, "Use expansion strategy to deal with array, in code level");
   ("--array-translate-out",Arg.Set Globals.array_translate, "Translate out array in formula");
+  ("--dis-array-translate-out",Arg.Clear Globals.array_translate, "Disable Translate out array in formula");
+  ("--ato",Arg.Set Globals.array_translate, "shorthand for --array-translate-out");
   ("--dlp", Arg.Clear Globals.check_coercions,
    "Disable Lemma Proving");
   ("--dis-auto-num", Arg.Clear Globals.auto_number,

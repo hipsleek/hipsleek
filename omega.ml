@@ -484,7 +484,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
   (* print_string ("going omega-> "^(!print_formula pe)^"\n"); *)
-  let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in
+  (*let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in*)
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
@@ -909,6 +909,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   let pf = !print_pure in
+  (*let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in*)
   Debug.no_1 "Omega.simplify_ops" pf pf 
   (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 

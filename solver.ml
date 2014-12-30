@@ -8715,20 +8715,25 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           end
     | MCP.OnePF a0, MCP.OnePF c ->
           begin
+            let (a0,c) =
+              (function
+                | (n_a,n_c) -> (Translate_out_array_in_cpure_formula.drop_array_formula n_a, Translate_out_array_in_cpure_formula.drop_array_formula n_c))
+                  (Translate_out_array_in_cpure_formula.translate_out_array_in_imply a0 c)
+            in
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-            let f a0 = 
+            let f a0 =
               (* WN : what if Omega cannot handle?  *)
-              let a0 = Wrapper.wrap_exception a0 TP.simplify_omega a0 in
+              (*let a0 = Wrapper.wrap_exception a0 TP.simplify_omega a0 in*)
               if CP.no_andl a0 && !Globals.deep_split_disjuncts
-              then 
-                let a0 = CP.drop_exists a0 in 
+              then
+                let a0 = CP.drop_exists a0 in
                 List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
     	      else
-                if CP.no_andl a0  
+                if CP.no_andl a0
                 then
                   (* let _ = print_endline "no deep split" in *)
                   (* infer_deep_ante_issues : WN : why not we handle deep? *)
-                  CP.split_disjunctions a0 
+                  CP.split_disjunctions a0
                 else
                   (* why andl need to be handled in a special way *)
 	          let r = ref (-999) in

@@ -79,6 +79,18 @@ checkentail
   & i=5
   |- a[5]=a[4].
 
-/* */
+/* 14: Valid */
 checkentail
-   i=5 & j=0 & a[i] = a[j+5] + 1 |- a[5] = 1.
+   i=5 & j=0 & a[i] = a[j+5]
+   |- a[5] = a[i].
+
+/* 15: Valid */
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]+0]=6.
+
+/* 16: Invalid */
+checkentail
+   a[5]=3 & a[2+6]=8
+   |- a[7+1]=5.
+

@@ -5,11 +5,10 @@ void loop(ref int[] a)
   //foo2(a);
   int i = 0;
   while(a[5]>0)
-    requires i=0
+    requires true
     ensures (a[5]>0 & a'[5]=0) | (a[5]<=0 & a'[5]=a[5]);
     {
-      a[5] = a[i+5] -1;
-      dprint;
+      a[5] = a[5] -1;
   }
-  dprint;
+
 }
