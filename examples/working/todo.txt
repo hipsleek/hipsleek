@@ -973,9 +973,39 @@ Checking fracperm/split-combine.slk (runs with extra options: --en-para -perm fp
 Total number of errors: 2 in files:
   label-dll.slk({E1#Fail}) fracperm/split-combine.slk({E6#Valid},{E7#Valid},{E8#Valid}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
-
-
 ====================================================================
+
+Long's fix:
+===========
+The first bad revision is:
+changeset:   13939:6b0965ce8783
+parent:      13935:728c8c5e49f9
+user:        longph
+date:        Tue Dec 30 15:24:07 2014 +0800
+summary:     m
+
+Why did under affected so many examples? Did it affect
+unsat checking?
+
+Total number of errors: 19 in files:
+  label-dll.slk({E4#Valid}) sleek10.slk({E1#Valid}) sleek9.slk({E3#Valid},{E4#Valid}) baga-test-eps.slk({E10#Valid},{E6#Valid},{E7#Valid}) baga-test.slk({E10#Valid},{E15#Valid},{E6#Valid},{E7#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid},{E7#Valid}) baga-test-2.slk({E10#Valid},{E15#Valid},{E6#Valid},{E7#Valid}) infer/app-inv.slk({E2#Valid},{E4#Valid},{E5#Valid},{E6#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid},{E8#Valid}) infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid},{E9#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm-field/sleek05.slk({E1#Valid}) infinity.slk({E75#Valid},{E76#Valid}) lemmas/app-tail.slk({E1#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 52.55 second
+	Time spent in main process: 39.23 second
+	Time spent in child processes: 13.32 second
+	Number of false contexts: 0
+
+=====================
+undoing Long's fix:
+
+        | _ -> if (CP.is_False baga_under_formula) then false (* true *) else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+
+Total number of errors: 2 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 80.89 second
+	Time spent in main process: 53.71 second
+	Time spent in child processes: 27.18 second
 ====================================================================
 ====================================================================
 ====================================================================

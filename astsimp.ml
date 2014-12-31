@@ -2033,7 +2033,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let under_fail = match under_f with
         | None -> false
-        | _ -> if (CP.is_False baga_under_formula) then true else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+        | _ -> if (CP.is_False baga_under_formula) then false (* true *) else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
       in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
