@@ -1977,11 +1977,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let under_f = vdef.C.view_baga_under_inv in
       (* WN : this is an update on under-approx to false if absent*)
-      let new_under = match under_f with
-        | None -> Excore.EPureI.mk_false_disj
-        | Some f -> f in
-      let _ = vdef.C.view_baga_under_inv <- Some new_under in
-      let under_f = vdef.C.view_baga_under_inv in
+      (* let new_under = match under_f with *)
+      (*   | None -> Excore.EPureI.mk_false_disj *)
+      (*   | Some f -> f in *)
+      (* let _ = vdef.C.view_baga_under_inv <- Some new_under in *)
+      (* let under_f = vdef.C.view_baga_under_inv in *)
       let baga_under_formula = match under_f with
         | None -> CP.mkFalse pos
         | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
@@ -2033,7 +2033,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let under_fail = match under_f with
         | None -> false
-        | _ -> if (CP.is_False baga_under_formula) then false (* true *) else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+        | _ -> if (CP.is_False baga_under_formula) then (* false *) true else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
       in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
