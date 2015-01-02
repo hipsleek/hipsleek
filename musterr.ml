@@ -22,6 +22,7 @@ open Perm
 open Mcpure_D
 open Mcpure
 open Stat_global
+open Cformula
 
 (* module Inf = Infer *)
 module CP = Cpure
@@ -196,3 +197,46 @@ let build_and_failures i (failure_code:string) (failure_name:string) ((contra_li
       (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template cex ft)
       (contra_list, must_list, may_list)
 
+(******************************************************)
+(******************************************************)
+(******************************************************)
+(*
+  Succ -> Succ
+  Fail ->
+    Basic -> Ctx
+    Trivial -> ??
+    Or_Reason () -> OCtx ()
+    And_Reason (ctx1, _) -> recf ctx1
+    Union -> [Ctx1; ctx2]
+    ContinuationErr -> 
+    Or_Continuation
+*)
+let convert_list_context prog ctxs=
+  let rec convert_failure ft cex=
+    match ft with
+      | Basic_Reason (fc, fe, _) -> begin
+            let es = match fe.fe_kind with
+              | Failure_Must msg -> {fc.fc_current_lhs with es_must_error = Some (msg, ft, cex)}
+              | Failure_May msg -> {fc.fc_current_lhs with es_may_error = Some (msg, ft, cex)}
+              | _ -> fc.fc_current_lhs
+            in
+            Ctx es
+        end
+      | Or_Reason (ft1, ft2) -> OCtx (convert_failure ft1 cex, convert_failure ft2 cex)
+      | _ -> report_error no_pos "xxx"
+      (* | Trivial_Reason of (fail_explaining * formula_trace) *)
+      (* | And_Reason of (fail_type * fail_type) *)
+      (* | Union_Reason of (fail_type * fail_type) *)
+      (* | ContinuationErr of (fail_context * formula_trace) *)
+      (* | Or_Continuation of (fail_type * fail_type) *)
+  in
+  match ctxs with
+    | SuccCtx _ -> ctxs
+    | FailCtx (ft, cex) -> SuccCtx [(convert_failure ft cex)]
+
+
+
+
+(******************************************************)
+(******************************************************)
+(******************************************************)

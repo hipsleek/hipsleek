@@ -1,0 +1,25 @@
+
+//1
+checkentail x=0 & flow __norm |- x=0 & flow __flow.
+print residue.
+
+//2
+checkentail x=0 & flow __norm |- x=0 & flow __MayError.
+print residue.
+
+//3
+checkentail x=0 & flow __norm |- x=0 & flow __Error.
+print residue.
+
+//3
+checkentail x=0 & flow __flow |- x=0 & flow __norm.
+print residue.
+
+
+//3
+checkentail x=0 & flow __flow |- x=0 & flow __MayError.
+print residue.
+
+//3
+checkentail x=0 & flow __MayError |- x=0 & flow __MayError.
+print residue.

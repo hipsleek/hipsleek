@@ -909,6 +909,31 @@ $output_file = "log";
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
 	],
+        "sa" =>[
+            ["ll-trav.c",1,  "-validate infer/output/sa/ll-trav.cp", "foo","SUCCESS"],
+            ["ll-trav-1.c",1,  "-validate infer/output/sa/ll-trav-1.cp", "foo","SUCCESS"],
+            ["ll-delete.ss",1,  "-validate infer/output/sa/ll-delete.cp", "whiledel","SUCCESS"],
+            ["zip_paper_eq.c",1,  "-validate infer/output/sa/zip_paper_eq.cp", "zip","SUCCESS"],
+            ["check-sll-head.c",1,  "-validate infer/output/sa/check-sll-head.cp --pred-dis-seg", "foo","SUCCESS"],
+            ["skip2-list.c",2,  "-validate infer/output/sa/skip2-list.cp --pred-en-equiv -tp z3", "skip0","SUCCESS", "skip1","SUCCESS"],
+            ["skip3-list.c",3,  "-validate infer/output/sa/skip3-list.cp --pred-en-equiv -tp z3", "skip0","SUCCESS", "skip1","SUCCESS", "skip2","SUCCESS"],
+            ["check-sorted.c",1,  "-validate infer/output/sa/check-sorted.cp --sa-en-pure-field -tp z3", "check_sorted","SUCCESS"],
+            ["sll-insertsort.c",1,  "-validate infer/output/sa/sll-insertsort.cp -tp z3", "insert","SUCCESS"],
+            ["cll.c",1,  "-validate infer/output/sa/cll.cp -tp z3  --pred-en-dangling", "count_rest","SUCCESS"],
+            ["check-cll.c",1,  "-validate infer/output/sa/check-cll.cp -tp z3  --pred-en-dangling", "check_csll","SUCCESS"],
+            ["sll-01-slls.c",1,  "-validate infer/output/sa/sll-01-slls.cp -tp z3  --pred-en-dangling", "helper","SUCCESS"],
+            ["sll-dll.c",1,  "-validate infer/output/sa/sll-dll.cp -tp z3  --pred-en-equiv", "paper_fix","SUCCESS"],
+            ["check-dll.c",1,  "-validate infer/output/sa/check-dll.cp -tp z3 ", "check_dll","SUCCESS"],
+            ["check-cllclls.c",2,  "-validate infer/output/sa/check-cllclls.cp -tp z3 --pred-en-equiv", "check_csll","SUCCESS", "check_csll_outer","SUCCESS"],
+            ["check-cdll5clls.c",2,  "-validate infer/output/sa/check-cdll5clls.cp -tp z3 --pred-en-equiv", "check_csll","SUCCESS", "check_cdll_out1","SUCCESS"],
+            ["check-cdllcllsx2.c",3,  "-validate infer/output/sa/check-cdllcllsx2.cp -tp z3 --pred-en-equiv", "check_csll","SUCCESS", "check_csll_outer1","SUCCESS", "check_cdll_outer2","SUCCESS"],
+            ["dll-append_paper.c",1,  "-validate infer/output/sa/dll-append_paper.cp -tp z3 ", "dll_append","SUCCESS"],
+            ["bt-search-2.c",1,  "-validate infer/output/sa/bt-search-2.cp -tp z3 --pred-unify-post", "search","SUCCESS"],
+            ["tll.c",1,  "-validate infer/output/sa/tll.cp -tp z3 --pred-en-equiv", "set_right","SUCCESS"],
+            ["rose-tree-1.c",1,  "-validate infer/output/sa/rose-tree-1.cp -tp z3 --pred-en-equiv","check_tree","SUCCESS"],
+            ["check-mcf.c",1,  "-validate infer/output/sa/check-mcf.cp -tp z3 ", "check_child","SUCCESS"],
+            ["tll-parent.c",1,  "-validate infer/output/sa/tll-parent.cp -tp z3 --pred-en-equiv", "set_right","SUCCESS"],
+        ],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 
                                 "increment","SUCCESS",
@@ -1808,6 +1833,7 @@ my $inv = '--inv-test';
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Fail.Valid.Valid.Valid."],
                       ["sleek1.slk", "", (), "Fail."],
+                      #["sleek10.slk", "", (), "Valid.Valid."],
                       ["sleek10.slk", "", (), "Valid.Fail."],
                       ["sleek2.slk", "", (), "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
                       # why did not detect missing Valid
@@ -1835,7 +1861,8 @@ my $inv = '--inv-test';
               ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
                       ["baga-test-eps.slk", "--eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
+                      ["baga-test-2.slk", "--baga-xpure", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["symb-diff.slk", "", (), "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","",(),"Valid.Valid."],
                       ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
@@ -1900,7 +1927,7 @@ my $inv = '--inv-test';
         ["lemmas/nlseg3.slk", "", (), "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # below loops with --imm
-        ["lemmas/nlseg4e1.slk", "--dis-imm", ([]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        ["lemmas/nlseg4e1.slk", "--dis-imm", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/nlseg4e1.slk", "--dis-imm", ([$lem,"Valid.Valid"]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
@@ -2108,7 +2135,7 @@ sub sum_of_timings {
 sub hip_process_file {
     foreach $param (@param_list)
     {
-        my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
+        my $procedure = "Procedure"; # assume the lemma checking is disabled by default;
         if ("$param" =~ "lemmas") { $procedure = "Entailing lemma"; }
         if ("$param" =~ "hip_baga") {
             $exempl_path_full = "$exempl_path/hip_baga";
@@ -2116,25 +2143,29 @@ sub hip_process_file {
         } elsif ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
+        } else { if ("$param" =~ "sa") {
+            $exempl_path_full = "$exempl_path/infer/sa";
+            $procedure = "Validate";
+            print "Starting sa tests:\n";
         } else {
             $exempl_path_full = "$exempl_path/hip/$param";
             print "Starting hip-$param tests:\n";
-        }
-		$t_list = $hip_files{$param};
-		foreach $test (@{$t_list})
-		{
+        }}
+        $t_list = $hip_files{$param};
+        foreach $test (@{$t_list})
+        {
             $extra_options = $test->[2];
             if ("$extra_options" eq "") {
                 print "Checking $test->[0]\n";
             } else {
                 print "Checking $test->[0] (runs with extra options: $extra_options)\n";
             }
-			#print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
-			$output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
-			print LOGFILE "\n======================================\n";
-			print LOGFILE "$output";
-			$limit = $test->[1]*2+2;
-			#print "\nbegin"."$output"."end\n";
+            #print "$hip $script_arguments $extra_options $exempl_path_full/$test->[0] \n";
+            $output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
+            print LOGFILE "\n======================================\n";
+            print LOGFILE "$output";
+            $limit = $test->[1]*2+2;
+            #print "\nbegin"."$output"."end\n";
 #            my @lines = split /\n/, $output;
 #            @results = [];
 #            foreach my $line (@lines) {
@@ -2155,29 +2186,29 @@ sub hip_process_file {
 #                #print $test->[$i+1] ."\n";
 #                if(@results[$i] ne $test->[$i+1])
 
-			for($i = 3; $i<$limit;$i+=2)
-			{
-                            #print "\n$output";
-				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]\./)
-				{
-			 		$error_count++;
-					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-					print "error at: $test->[0] $test->[$i]\n";
-				}
-			}
-			#Termination checking result
-      if ($output !~ "ERR:") {}
-			else {
-				$error_count++;
-				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
-				print "term error at: $test->[0] $test->[$i]\n";
-			}
-      if($timings) {
-        log_one_line_of_timings ($test->[0],$output);
-      }
-      sum_of_timings ($output);
+            for($i = 3; $i<$limit;$i+=2)
+            {
+                #print "\n$output";
+                if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]\./)
+                {
+                    $error_count++;
+                    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+                    print "error at: $test->[0] $test->[$i]\n";
+                }
+            }
+            #Termination checking result
+            if ($output !~ "ERR:") {}
+            else {
+                $error_count++;
+                $error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+                print "term error at: $test->[0] $test->[$i]\n";
+            }
+            if($timings) {
+                log_one_line_of_timings ($test->[0],$output);
+            }
+            sum_of_timings ($output);
+        }
     }
-  }
 }
 
 
@@ -2301,7 +2332,8 @@ sub sleek_process_file  {
               if (!$entail_results) { @failures = ('no result  for {E}'), @failures;
                                       $no_result_err = 1;
               }
-              else  { @failures = grep_failures($entail_results, $test->[3],"E"), @failures;}
+              else  { 
+                  @failures = grep_failures($entail_results, $test->[$ent_res_idx],"E"), @failures;}
           }
           if ($#failures >= 0 ){
               local $" = ',';

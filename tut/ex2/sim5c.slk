@@ -1,0 +1,30 @@
+relation P(int x, int y).
+
+infer[n,m] n=0 & P(n,m) |- m=0.
+print residue.
+
+infer[n,m] n!=0 & P(n,m) |- m>0.
+print residue.
+
+infer[n,m] n!=0 & P(n,m) |- n>0.
+print residue.
+
+/*
+Residue:
+ <1>emp&n=0 & P(n,m) & ((m=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(m=0 | n!=0)]
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&n!=0 & P(n,m) & ((1<=m | n=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(1<=m | n=0)]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp&n!=0 & P(n,m) & 0<=n&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=n]
+*/

@@ -5,7 +5,7 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
-let _ = if !smt_compete_mode then
+let _ = if !compete_mode then
   begin
     trace_on := false;
   end
@@ -32,9 +32,11 @@ let pprint msg (pos:loc) =
 	print tmp
 
 (* system development debugging *)
-let ho_print flag (pr:'a->string) (m:'a) : unit = 
+let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
-  if flag (* !devel_debug_on *)  || not(d==None) then 
+  (* WN : should we use && or || *)
+  if !Globals.compete_mode then ()
+  else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
     let s = (pr m) in
     let msg = match d with 
       | None -> ("\n!!!" ^ s)
@@ -90,18 +92,18 @@ let dinfo_pprint m p = devel_pprint m p
 
 let binfo_pprint (msg:string) (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^m) msg
 
 
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun x -> s^(pr x)) m
 
 let binfo_zprint msg (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^(Lazy.force m)) msg
 
 
@@ -209,20 +211,20 @@ let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
 let info_pprint (msg:string) (pos:loc) : unit =
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
   else ()
 
 let info_zprint m (pos:loc) = 
-  let flag = not(!Globals.smt_compete_mode) in
+  let flag = not(!Globals.compete_mode) in
   ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
@@ -504,7 +506,7 @@ let debug_file ()=
 
 let read_from_debug_file chn : string list =
   let line = ref [] in
-  let quitloop = ref false in
+  (* let quitloop = ref false in *)
   (try
     while true do
       let xs = (input_line chn) in

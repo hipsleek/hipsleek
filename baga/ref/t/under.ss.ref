@@ -1,0 +1,19 @@
+
+!!!Full processing file "t/under.ss"
+Parsing file "t/under.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: t/under.ss_5:9_5:24:view defn for ll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & n=0),
+([self], n=1),
+([self], n=2),
+([self], n=4)])
+
+
+Checking procedure foo$... 
+Procedure foo$ SUCCESS.
+
+0 false contexts at: ()

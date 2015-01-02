@@ -1,0 +1,15 @@
+Starting Omega...oc
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x) ::= emp(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.053304 second(s)
+	Time spent in main process: 0.039101 second(s)
+	Time spent in child processes: 0.014203 second(s)
+

@@ -1,0 +1,16 @@
+
+!!!Full processing file "hip/ll-sum-s3.ss"
+Parsing file "hip/ll-sum-s3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure sum_dec$node... 
+Procedure sum_dec$node SUCCESS.
+
+Checking procedure sum_dec$node... 
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

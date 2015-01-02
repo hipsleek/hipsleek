@@ -1,0 +1,26 @@
+Starting Omega...oc
+zip is defined.
+zipN is defined.
+zipNM is defined.
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! extn pred:
+: zipNM(a,b,n,m) ::=  [
+  EXISTS(m_60: a::node<_,p> * b::node<_,q> * zipNM(p,q,n1,m_60)&n=1+n1 & 
+  0<=n1 & m=1+m_60 & 0<=m_60)[]
+  or emp&a=null & b=null & n=0 & m=0
+  ]Stop Omega... 8 invocations 
+SAT Count   : 18
+SAT % Hit   : 55.55%
+IMPLY Count : 5
+IMPLY % Hit : 40.%
+Time(cache overhead) : 0.001125 (seconds)
+
+!!! log(small):(0.012035,32)
+Total verification time: 0.07335 second(s)
+	Time spent in main process: 0.056552 second(s)
+	Time spent in child processes: 0.016798 second(s)
+

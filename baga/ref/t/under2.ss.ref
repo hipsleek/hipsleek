@@ -1,0 +1,12 @@
+
+!!!Full processing file "t/under2.ss"
+Parsing file "t/under2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$... 
+Procedure foo$ SUCCESS.
+
+0 false contexts at: ()

@@ -1,0 +1,29 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_22(b)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<a,b> * HP_22(b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Fail.(may) cause: true |-  0<a. LOCS:[0;14] (may-bug)
+
+ <1>HP_36(b1)&{FLOW,(3,7)=__MayError}[]
+ inferred hprel: [H(x)&true --> x::node<a1,b1> * HP_36(b1)&true(3,4)]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 24 invocations 
+SAT Count   : 32
+SAT % Hit   : 75.%
+IMPLY Count : 16
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.001569 (seconds)
+
+!!! log(small):(0.035248,77)
+Total verification time: 0.074292 second(s)
+	Time spent in main process: 0.054503 second(s)
+	Time spent in child processes: 0.019789 second(s)
+

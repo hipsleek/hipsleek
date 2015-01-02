@@ -1,0 +1,28 @@
+  if (..)                 (1) FIX{rec /\ base -> norm}
+    loop(nxt(x))
+  else
+    return
+
+  if (..)
+    raise Exc             (2) base -> norm /\ base->exc
+    loop(nxt(x))
+  else
+    return
+
+  if (..)
+    if * raise Exc        (3) FIX{base -> norm /\ base->exc /\ rec}
+    loop(nxt(x))
+  else
+    return
+
+  if (..)                 (4) base -> norm /\ FIX{base->exc /\ rec)}
+  loop(nxt(x))          currently using:
+    raise Exc                 FIX{base -> norm /\ base->exc /\ rec)}
+  else
+    return
+
+  if (..)                 (5) FIX{base -> norm /\ base->exc /\ rec}
+    loop(nxt(x))
+    if * raise Exc
+  else
+    return

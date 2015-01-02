@@ -1,0 +1,29 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_25(Anon)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<_,_> * HP_25(Anon)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_35(Anon3) * x::node<_,_>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<_,_> * HP_35(Anon3)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 8
+SAT % Hit   : 62.5%
+IMPLY Count : 4
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.000338 (seconds)
+
+!!! log(small):(0.008914,16)
+Total verification time: 0.056918 second(s)
+	Time spent in main process: 0.043351 second(s)
+	Time spent in child processes: 0.013567 second(s)
+

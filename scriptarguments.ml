@@ -1,6 +1,5 @@
 open GlobProver
 
-
 let parse_only = ref false
 
 let dump_ss = ref false
@@ -135,6 +134,10 @@ let common_arguments = [
    "No eliminate existential quantifiers before calling TP.");
   ("--no-filter", Arg.Clear Globals.filtering_flag,
   "No assumption filtering.");
+  ("--filter-false", Arg.Set Globals.filtering_false_flag,
+   "Enable false in assumption filtering.");
+  ("--dis-filter-false", Arg.Clear Globals.filtering_false_flag,
+   "Disable false in assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");
@@ -202,7 +205,7 @@ let common_arguments = [
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-failure", Arg.Set Globals.trace_failure,
-   "Enable trace all failure (and exception)");
+   "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
@@ -240,11 +243,16 @@ let common_arguments = [
 	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--dis-change-flow", Arg.Clear Globals.change_flow,"disable change spec flow");
+  ("--en-change-flow", Arg.Set Globals.change_flow,"enable change spec flow");
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
+  ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
+  ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
@@ -272,7 +280,10 @@ let common_arguments = [
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
-  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
+  ("--en-inf", Arg.Unit (fun _ ->
+               Globals.allow_inf:=true;
+               Globals.deep_split_disjuncts:=true
+               ),"enable support for infinity (tgt with --dsd) ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -354,15 +365,23 @@ let common_arguments = [
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
+  ("--en-split-fixcalc", Arg.Set Globals.split_fixcalc, "Enable split fixcalc (for infer post)");
+  ("--dis-split-fixcalc", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
+  ("--dsf", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
    "Restart Omega Calculator after number of proof. Default = 0, not restart");
   ("--use-field", Arg.Set Globals.use_field,
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
+  ("-infer", Arg.String (fun s ->
+      Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
       Debug.z_debug_file:=s; Debug.z_debug_flag:=true),
    "Read from a debug log file");
+  ("-prelude", Arg.String (fun s ->
+      Globals.prelude_file:=Some s),
+   "Read from a specified prelude file");
   ("-debug-regexp", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
@@ -499,12 +518,21 @@ let common_arguments = [
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
+  ("--post-eres", Arg.Set Globals.post_add_eres, "add res=eres.val for post-condition proving");
+  ("--post-flow", Arg.Set Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
+  ("--dis-post-flow", Arg.Clear Globals.post_infer_flow, "add exception flow as a post-cond parameter for inference");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* TermInf: Options for Termination Inference *)
   ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
   ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
+  ("--tnt-verbose", Arg.Set_int Globals.tnt_verbosity,
+      "level of detail in termination inference printing 0-verbose 1-standard (default)");
+  ("--infer-lex", Arg.Set Globals.tnt_infer_lex,
+      "enable lexicographic ranking function inference");
+  ("--term-add-post", Arg.Set Globals.tnt_add_post, "Automatically infer necessary postcondition");
+  ("--dis-term-add-post", Arg.Clear Globals.tnt_add_post, "Automatically infer necessary postcondition");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
@@ -581,8 +609,6 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-  ("--inv-under", Arg.Set Globals.do_infer_inv_under, "Enable under invariant inference");
-  ("--dis-inv-under", Arg.Clear Globals.do_infer_inv_under, "Disable under invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
@@ -627,7 +653,12 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
+  (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-error", Arg.Set Globals.sae, "infer error spec");
+  ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
+  ("--sa-case", Arg.Set Globals.sac, "combine case spec");
+  ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
@@ -734,9 +765,78 @@ let common_arguments = [
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
   ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--print-min",
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=false;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_syn := true; *)
+          (* Globals.acc_fold := true; *)
+          Globals.smart_lem_search := true;
+          Globals.print_min := true;
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          (* Globals.is_solver_local := true; *)
+          Globals.disable_failure_explaining := false;
+          (* Globals.smt_compete_mode:=true; *)
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+   "Minimal printing only");
+  ("--svcomp-compete",
+     Arg.Unit
+      (fun _ ->
+          (* print_endline "inside svcomp-compete setting"; *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.svcomp_compete_mode:=true; (* main flag *)
+          (* Globals.show_unexpected_ents := false; *)
+          (* diable printing *)
+          Globals.trace_failure := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          
+          (* Globals.lemma_gen_unsafe:=true;    *)
+          (* Globals.lemma_syn := true;         *)
+          (* Globals.acc_fold := true;          *)
+          (* Globals.smart_lem_search := true;  *)
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          
+          Globals.is_solver_local := true;
+          (* Omega.omegacalc:=  *)
+          (*   if (Sys.file_exists "./oc") then "./oc" *)
+          (*   else "oc"; *)
+          (* Fixcalc.fixcalc_exe := *)
+          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+          (*   else "fixcalc"; *)
+          (* Smtsolver.smtsolver_path := *)
+          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+          (*   else "z3-4.3.2"; *)
+          Globals.disable_failure_explaining := false;
+          Globals.return_must_on_pure_failure := true;
+          (* Globals.dis_impl_var := true *)
+      ),
+   "SVCOMP14 competition mode - essential printing only");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode:=true;
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
@@ -755,7 +855,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode:=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
@@ -764,6 +863,8 @@ let common_arguments = [
       (fun _ ->
           (* Globals.show_unexpected_ents := true;  *)
           (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.compete_mode:=true; (* main flag *)
+          Globals.smt_compete_mode :=true;
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
@@ -780,7 +881,6 @@ let common_arguments = [
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
-          Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
   "SMT competition mode - essential printing only + show unexpected ents");

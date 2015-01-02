@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "derive/err-2-der-2.slk", line 2, characters 5-8
+ error: Stream.Error("SEMICOLON then CBRACE expected after [field_list2] (in [data_body])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.050129 second(s)
+	Time spent in main process: 0.036526 second(s)
+	Time spent in child processes: 0.013603 second(s)
+

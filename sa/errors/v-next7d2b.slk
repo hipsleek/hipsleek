@@ -1,0 +1,23 @@
+
+//1
+checkentail x=0 & flow __norm
+   or x>1 & flow __Error |- x>=0 & flow __flow.
+print residue.
+
+//2
+checkentail x=0 & flow __norm
+   or x>1 & flow __Error |- 
+      x>=0 & flow __norm
+   or x>1 & flow __Error.
+print residue.
+
+//3
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow XXX.
+print residue.
+
+/*
+
+case specs?
+
+*/

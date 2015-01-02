@@ -1,0 +1,24 @@
+Starting Omega...oc
+HP is defined.
+G is defined.
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&e=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [x::node<_,e>&e=null --> G(x,b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+!!!Final MTL: [[(x, x0), (H, H)]]
+Checkeq (2) : Valid.Stop Omega... 0 invocations 
+SAT Count   : 5
+SAT % Hit   : 40.%
+Time(cache overhead) : 0.000247 (seconds)
+
+!!! log(small):(0.007419,7)
+Total verification time: 0.058229 second(s)
+	Time spent in main process: 0.044918 second(s)
+	Time spent in child processes: 0.013311 second(s)
+

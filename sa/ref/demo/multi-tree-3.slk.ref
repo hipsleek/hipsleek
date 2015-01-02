@@ -1,0 +1,38 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+H2 is defined.
+G2 is defined.
+H_7 is defined.
+H_8 is defined.
+H_9 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(t) ::= 
+ t::tree<children> * G2(children)&children!=null
+ or t::tree<children> * G2(children1)&children=null
+ (3,4),
+ G2(l) ::= 
+ l::node<child,sibling> * child::tree<children> * G2(sibling) * 
+ G2(children1)&children=null
+ or l::node<child,sibling> * child::tree<children> * G2(sibling) * 
+    G2(children)&children!=null
+ or emp&l=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 3
+SAT % Hit   : 0.%
+IMPLY Count : 4
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.000331 (seconds)
+
+!!! log(small):(0.00547,7)
+Total verification time: 0.06712 second(s)
+	Time spent in main process: 0.052932 second(s)
+	Time spent in child processes: 0.014188 second(s)
+

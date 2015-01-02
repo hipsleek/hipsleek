@@ -1,0 +1,47 @@
+Starting Omega...oc
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail (1) : Valid. 
+
+ <1>HP_91(q)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::lseg<q> * HP_91(q)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_98(q1)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::ls<q1> * HP_98(q1)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_105(q2)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(r)&true --> r::dll<q2> * HP_105(q2)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 19 invocations 
+SAT Count   : 95
+SAT % Hit   : 84.21%
+IMPLY Count : 9
+IMPLY % Hit : 44.44%
+Time(cache overhead) : 0.003631 (seconds)
+
+!!! log(small):(0.026654,124)
+Total verification time: 0.093735 second(s)
+	Time spent in main process: 0.070014 second(s)
+	Time spent in child processes: 0.023721 second(s)
+

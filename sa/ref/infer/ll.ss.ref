@@ -1,0 +1,13 @@
+
+!!!Full processing file "infer/ll.ss"
+Parsing file "infer/ll.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_12
+!!! generate unknown predicate for Post synthesis of : :GP_13File "infer/ll.ss", line 16, characters 0-1
+ --error: Stream.Error("EOF expected after [hprogn] (in [hprog])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("EOF expected after [hprogn] (in [hprog])")
+Error3(s) detected at main 

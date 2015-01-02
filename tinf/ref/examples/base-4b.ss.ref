@@ -1,0 +1,34 @@
+
+!!!Full processing file "examples/base-4b.ss"
+Parsing file "examples/base-4b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_11_1160=1+x' & !(v_bool_10_1126') & x'=x & 
+0<x & fpost_1123(v_int_11_1160) --> fpost_1123(x).
+
+ termAssume 0<x & x'=x & v_bool_10_1126' --> fpost_1123(x).
+
+ termAssume 0<x & x'=x & !(v_bool_10_1126') & v_int_11_1125'=1+
+x' & fpre_0(x) --> fpre_0(v_int_11_1125').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] 1<=x@ML]
+]
+Termination Inference Result:
+f:  requires emp & 0<xrequires emp & MayLoop[]
+ ensures emp & true;
+
+0 false contexts at: ()

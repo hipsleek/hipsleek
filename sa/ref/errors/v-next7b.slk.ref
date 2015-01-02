@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "errors/v-next7b.slk", line 13, characters 19-20
+ error: Stream.Error("[spec_list_only] expected after OSQUARE (in [spec_list_grp])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.051394 second(s)
+	Time spent in main process: 0.037784 second(s)
+	Time spent in child processes: 0.01361 second(s)
+

@@ -1,0 +1,11 @@
+Starting Omega...oc
+
+ERROR: at _0:0_0:0 
+Message: not handle checkeq 2 pure formula that have OR yet
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.058261 second(s)
+	Time spent in main process: 0.044182 second(s)
+	Time spent in child processes: 0.014079 second(s)
+

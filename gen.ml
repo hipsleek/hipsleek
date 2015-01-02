@@ -23,6 +23,8 @@ struct
   exception Bad_string
   exception Bail
 
+  let silenced_print f s = if !Globals.silence_output then () else f s 
+
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
@@ -37,13 +39,15 @@ struct
   let pr_id x = x
   let pr_string x = "\""^x^"\""
   
-  let print_endline_quiet s = 
-    if !Globals.smt_compete_mode then () 
+  let print_endline_quiet s =
+    let flag = !Globals.compete_mode in
+    (* print_endline ("compete mode : "^(string_of_bool flag)); *)
+    if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !Globals.smt_compete_mode then () 
+    if !Globals.compete_mode then () 
     else print_string s 
 
   let pr_var_prime (id,p) = match p with
@@ -74,6 +78,8 @@ struct
   let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^")"
 
   let pr_hepta f1 f2 f3 f4 f5 f6 f7 (x,y,z,z2,z3,z4,z5) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"
+
+let pr_octa f1 f2 f3 f4 f5 f6 f7 f8 (x,y,z,z2,z3,z4,z5,z6) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"^",8:"^(f8 z6)^")"
 
   let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
   let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
@@ -210,7 +216,7 @@ struct
      { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
-    if !Globals.smt_compete_mode then ()
+    if !Globals.compete_mode then ()
     else 
       Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
@@ -253,9 +259,9 @@ struct
 
   (* List-handling stuff *)
 
-  let string_of_f (f:'a->string) (ls:'a list) : string = 
+  let string_of_f (f:'a->string) (ls:'a list) : string =
     ("["^(String.concat "," (List.map f ls))^"]")
-    
+
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
@@ -265,11 +271,11 @@ struct
           let (fs,l) = firsts_last xs1 in
           (x::fs,l)
 
-  let rec take n l  = if n<=0 then [] else 
+  let rec take n l  = if n<=0 then [] else
     match l with
       | h::t -> h::(take (n-1) t)
       | [] -> []
-            
+
   let rec drop n l  = if n<=0 then l else
     match l with
       | h::t -> (drop (n-1) t)
@@ -365,7 +371,7 @@ struct
 	if (l2 == []) then false
 	else List.exists (fun x -> (mem_eq eq x l2)) l1
 
-  let rec find_dups_eq eq n = 
+  let rec find_dups_eq eq n =
     match n with
       | [] -> []
       | q::qs -> if (List.exists (eq q) qs) then q::(find_dups_eq eq qs) else find_dups_eq eq qs
@@ -379,14 +385,14 @@ struct
     List.exists (fun e -> eq x e) ls
 
   let intersect_eq eq l1 l2 =
-    List.filter (fun x -> List.exists (eq x) l2) l1  
+    List.filter (fun x -> List.exists (eq x) l2) l1
 
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-  let diff_split_eq eq l1 l2 = 
+  let diff_split_eq eq l1 l2 =
     List.partition (fun x -> not (List.exists (eq x) l2)) l1
-    
+
   let list_subset_eq eq l1 l2 = 
     let l = (List.length (difference_eq eq l1 l2)) in
     l==0
@@ -629,6 +635,8 @@ class counter x_init =
      method add (i:int) = ctr <- ctr + i
      method reset = ctr <- 0x0
      method string_of : string= (string_of_int ctr)
+     method str_get_next : string 
+     = ctr <- ctr + 1; string_of_int ctr
    end;;
 
 (* class ['a] stack2 xinit = *)

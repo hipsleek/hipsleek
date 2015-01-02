@@ -1,0 +1,43 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=y | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=y)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entailing lemma lem_14: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+ <1>
+    emp&self1=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&q1=null --> P1(q1)&true(3,4); 
+                  q::node<_,p> * p::ll<>&true --> P1(q)&true(3,4)]
+[[ Fold ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  BaseCaseFold ==>  COND ==>  InferHeap ==> ]]
+<2>
+   emp&self1=null&{FLOW,(3,4)=__norm}[]
+   or emp&{FLOW,(3,4)=__norm}[]
+   
+inferred hprel: [emp&q1=null --> P1(q1)&true(3,4); 
+                 P1(q)&true --> P1(q)&true(3,4)]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_14,self_lem_14) ==>  SEARCH ==>  (Lemma ==> lem_14(p_57,p_60)) ==> (left: lem_14) ==>  COND ==>  Match(p_57,p_60) ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  BaseCaseFold ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 11 invocations 
+SAT Count   : 168
+SAT % Hit   : 87.5%
+IMPLY Count : 17
+IMPLY % Hit : 41.17%
+Time(cache overhead) : 0.006793 (seconds)
+
+!!! log(small):(0.067591,208)
+Total verification time: 0.099476 second(s)
+	Time spent in main process: 0.078817 second(s)
+	Time spent in child processes: 0.020659 second(s)
+

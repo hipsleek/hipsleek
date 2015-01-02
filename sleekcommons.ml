@@ -44,8 +44,9 @@ type command =
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | EntailCheck of (meta_formula list * meta_formula * entail_type)
   | SatCheck of (meta_formula)
+  | NonDetCheck of (ident * meta_formula)
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
@@ -66,13 +67,14 @@ type command =
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | PredSplit of (ident list)
+  | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
   | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | CheckNorm of meta_formula
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | InferCmd of (infer_type option * ident list * meta_formula * meta_formula * entail_type)
+  | InferCmd of (infer_type list * ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
@@ -125,6 +127,7 @@ let string_of_command c = match c with
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
   | SatCheck _ -> "SatCheck"
+  | NonDetCheck _ -> "NonDetCheck"
   | Simplify _ -> "Simplify"
   | Slk_Hull _ -> "Slk_Hull"
   | Slk_PairWise _ -> "Slk_PairWise"
@@ -146,6 +149,7 @@ let string_of_command c = match c with
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
   | PredSplit _ -> "PredSplit"
+  | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"
   | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"

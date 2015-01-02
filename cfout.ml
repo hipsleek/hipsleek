@@ -153,8 +153,7 @@ let rearrange_formula args0 f0=
 let rearrange_def def=
   let new_body1 =
     match def.hprel_def_body_lib with
-      | Some _ -> def.hprel_def_body
-      | None -> begin
+      | [] -> begin
           try
             let args = match def.hprel_def_hrel with
               | HRel (sv, exp_list, pos) ->
@@ -163,21 +162,22 @@ let rearrange_def def=
                       | _ -> raise Not_found) exp_list
               | _ -> raise Not_found
             in
-            List.map (fun ((p, f_opt) as o) ->
+            List.map (fun ((p, f_opt,c) as o) ->
                 match f_opt with
                   | Some f ->
-                      (p, Some (rearrange_formula args f))
+                      (p, Some (rearrange_formula args f),c)
                   | None -> o
           ) def.hprel_def_body
           with _ -> def.hprel_def_body
         end
+      | _ -> def.hprel_def_body
   in
   (*to shorten variable names here*)
   let args = match def.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> []
   in
-  let svll = List.map (fun (p, f_opt) ->
+  let svll = List.map (fun (p, f_opt,_) ->
                match f_opt with
                  | Some f -> fv f
                  | None -> []
@@ -190,26 +190,70 @@ let rearrange_def def=
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
-  let n_tbl = Hashtbl.create 1 in
-  let new_svl = shorten_svl svl_rp in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  let new_svl = shorten_svl svl_rp in 
   let new_body2 =
-    List.map (fun ((p, f_opt) as o) ->
+    List.map (fun ((p, f_opt,c) as o) ->
         match f_opt with
-          | Some f -> (p, Some (subst_avoid_capture svl_rp new_svl f))
+          | Some f -> (p, Some (subst_avoid_capture svl_rp new_svl f), c)
           | None -> o
   ) new_body1
   in
   let new_hrel = subst_avoid_capture_h svl_rp new_svl def.hprel_def_hrel in
   let n_lib = match def.hprel_def_body_lib with
-    | None -> None
-    | Some f -> Some (subst_avoid_capture svl_rp new_svl f)
+    | [] -> []
+    | ls -> List.map (fun (f, flow) -> (subst_avoid_capture svl_rp new_svl f, flow)) ls
   in
   {def with hprel_def_body = new_body2;
       hprel_def_body_lib = n_lib;
       hprel_def_hrel = new_hrel;}
 
-(* let rearrange_def def= *)
-(*   let pr1 =  *)
+let rearrange_hp_def def=
+  let new_body1 =
+    begin
+      try
+        let args = match def.def_lhs with
+          | HRel (sv, exp_list, pos) ->
+                List.map (fun exp -> match exp with
+                  | CP.Var(sv, pos) -> sv
+                  | _ -> raise Not_found) exp_list
+          | _ -> raise Not_found
+        in
+        List.map (fun (f, og) ->
+            (rearrange_formula args f, og)
+        ) def.def_rhs
+      with _ -> def.def_rhs
+    end
+  in
+  (*to shorten variable names here*)
+  let args = match def.def_cat with
+    | CP.HPRelDefn (_,r,args) -> r::args
+    | _ -> []
+  in
+  let svll = List.map (fun (f,_) ->
+      fv f
+  ) new_body1 in
+  let svl = List.flatten svll in
+  (* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *)
+  let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in
+  (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
+  (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
+  let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  (* let reg = Str.regexp "_.*" in *)
+  (* let n_tbl = Hashtbl.create 1 in *)
+  let new_svl = shorten_svl svl_rp in 
+  let new_body2 =
+    List.map (fun (f, f_opt) ->
+        ((subst_avoid_capture svl_rp new_svl f), f_opt)
+  ) new_body1
+  in
+  let new_hrel = subst_avoid_capture_h svl_rp new_svl def.def_lhs in
+  {def with def_rhs = new_body2;
+      def_lhs = new_hrel;}
+
+
+
 
 let rearrange_rel (rel: hprel) =
   let lfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_lhs)) in
@@ -220,7 +264,7 @@ let rearrange_rel (rel: hprel) =
   let fv = CP.remove_dups_svl (lfv@gfv@rfv) in
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
-  let n_tbl = Hashtbl.create 1 in
+  (* let n_tbl = Hashtbl.create 1 in *)
   let new_svl = shorten_svl fv in
   {rel with hprel_lhs = subst_avoid_capture fv new_svl (rearrange_formula lfv rel.hprel_lhs);
       hprel_guard = (match rel.hprel_guard with
@@ -233,8 +277,8 @@ let rearrange_rel (rel: hprel) =
 print_tidy for verification condition + entailment
 *)
 let rearrange_entailment_x prog lhs0 rhs0=
-  let lhs = simplify_pure_f lhs0 in
-  let rhs = simplify_pure_f rhs0 in
+  let lhs = simplify_pure_f_old lhs0 in
+  let rhs = simplify_pure_f_old rhs0 in
   let l_quans, l_bare =  split_quantifiers lhs in
   let r_quans, r_bare =  split_quantifiers rhs in
   let l_svl = (CP.remove_dups_svl (fv l_bare)) in
@@ -271,31 +315,13 @@ let elim_imm_vars_pf f =
     | _ -> f
 
 let rec elim_imm_vars_f f =
-  let is_immediate_var sv = match sv with
-    | CP.SpecVar (_, id, _) ->
-          let reg1 = Str.regexp "flted_" in
-          let reg2 = Str.regexp "_[0-9]*" in
-          try
-            let i = Str.search_forward reg1 id 0 in
-            i >=0
-          with Not_found -> try
-            let i = Str.search_forward reg2 id 0 in
-            i >=0
-          with Not_found -> false
-  in
   let get_subs_list pf =
     let fl = CP.split_conjunctions pf in
     let subs_list = List.fold_left (fun acc f ->
         match f with
           | CP.BForm ((p_f, _), _) -> (
                 match p_f with
-                  | CP.Eq (CP.Var (sv1, _), CP.Var (sv2, _), _) ->
-                        if (is_immediate_var sv1) && not(is_immediate_var sv2) then
-                          acc@[(sv1,sv2)]
-                        else if not(is_immediate_var sv1) && (is_immediate_var sv2) then
-                          acc@[(sv2,sv1)]
-                        else
-                          acc
+                  | CP.Eq (CP.Var (sv1, _), CP.Var (sv2, _), _) -> acc@[(sv1,sv2)]
                   | _ -> acc
             )
           | _ -> acc
@@ -305,6 +331,7 @@ let rec elim_imm_vars_f f =
   match f with
     | Base b ->
           let sst_list = get_subs_list (MCP.pure_of_mix b.formula_base_pure) in
+          (* Long: cause problem of string_of_formula *)
           let f = List.fold_left (fun f (sv1,sv2) ->
               subst_avoid_capture [sv1] [sv2] f
           ) f sst_list in
@@ -322,7 +349,7 @@ let rec elim_imm_vars_f f =
 
 let rec shorten_formula f =
   let helper f =
-    let f0 = simplify_pure_f f in
+    let f0 = simplify_pure_f_old f in
     let f0 = elim_imm_vars_f f0 in
     let fvars = fv f0 in
     let qvars,_ = split_quantifiers f0 in
@@ -376,9 +403,11 @@ let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e
     else e
 
-let tidy_print e =
-  let new_e =
-    if (!Globals.print_en_tidy) then shorten_formula (inline_print e)
+let tidy_print_x e =
+    if (!Globals.print_en_tidy) then inline_print (shorten_formula e)
     else e
-  in
-  (* Hashtbl.reset n_tbl; Hashtbl.reset id_tbl; *) new_e
+
+let tidy_print e =
+  let pr1 = !print_formula in
+  Debug.no_1 "tidy_print" pr1 pr1
+      (fun _ -> tidy_print_x e) e

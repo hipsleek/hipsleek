@@ -639,12 +639,14 @@ and  string_of_struc_formula c = match c with
 	  let l2 = if !print_assume_struc then "\n struc: "^(string_of_struc_formula s) else "" in
 	  l1^l2
 	| F.EInfer{F.formula_inf_vars = lvars;
-         F.formula_inf_tnt = itnt;
-			   F.formula_inf_post = postf;
-			   F.formula_inf_xpost = postxf;
-			   F.formula_inf_continuation = continuation;} ->
+          (* F.formula_inf_tnt = itnt; *)
+          F.formula_inf_obj = inf_o;
+	  F.formula_inf_post = postf;
+	  F.formula_inf_xpost = postxf;
+	  F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
-        let ps = ps ^ (if itnt then "@term " else "") in
+        let ps = ps ^ (inf_o # string_of_raw) in
+        (* let ps = ps ^ (if itnt then "@term " else "") in *)
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
@@ -745,8 +747,12 @@ let rec string_of_exp = function
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v}) -> v
-  | Member ({exp_member_base = e;
-			 exp_member_fields = idl})-> (* An Hoa *) "member access " ^ (string_of_exp e) ^ "~~>" ^ (concatenate_string_list idl "~~>")
+  | Member ({exp_member_base = e; exp_member_fields = idl})->
+      let base_str = (
+        if (need_parenthesis2 e) then ("(" ^ (string_of_exp e) ^ ")")
+        else (string_of_exp e)
+      ) in
+      "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
   | Assign ({exp_assign_op = op;
 			 exp_assign_lhs = e1;
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)

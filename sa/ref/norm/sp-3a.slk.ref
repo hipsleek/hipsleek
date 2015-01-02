@@ -1,0 +1,31 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & y=null)])
+Entail (1) : Valid. 
+
+ <1>
+    emp&y=null & self=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&self=null --> P1(self)&true(3,4); 
+                  emp&y=null --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 7 invocations 
+SAT Count   : 59
+SAT % Hit   : 86.44%
+IMPLY Count : 3
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.002488 (seconds)
+
+!!! log(small):(0.023472,76)
+Total verification time: 0.076437 second(s)
+	Time spent in main process: 0.057728 second(s)
+	Time spent in child processes: 0.018709 second(s)
+

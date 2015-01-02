@@ -1,0 +1,31 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])WARNING : the view body for zip contains unsat branch(es) :
+    (* lbl: *){2}->(exists y1,_,_,q,p: self::node<_,p> * y::node<_,q> * 
+p::zip{}<y1>&y1=y&{FLOW,(1,25)=__flow})[]
+
+Entail (1) : Valid. 
+
+ <1>emp&y=null & x=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&x=null --> P1(x)&true(3,4); 
+                  emp&y=null --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 9 invocations 
+SAT Count   : 35
+SAT % Hit   : 68.57%
+IMPLY Count : 3
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.002407 (seconds)
+
+!!! log(small):(0.022345,49)
+Total verification time: 0.085277 second(s)
+	Time spent in main process: 0.059611 second(s)
+	Time spent in child processes: 0.025666 second(s)
+

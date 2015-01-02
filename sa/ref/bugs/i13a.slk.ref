@@ -1,0 +1,35 @@
+Starting Omega...oc
+H1 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+Entail (1) : Valid. 
+
+ <1>HP_34(p1)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::lseg<p1> * HP_34(p1)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_51(flted)&flted=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::lseg<p2> * HP_49(p2)&true(3,4); 
+                  HP_49(p)&true --> p::node<flted> * HP_51(flted)&true(3,4); 
+                  HP_51(flted)&true --> emp&flted=0(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 22 invocations 
+SAT Count   : 54
+SAT % Hit   : 68.51%
+IMPLY Count : 16
+IMPLY % Hit : 62.5%
+Time(cache overhead) : 0.004617 (seconds)
+
+!!! log(small):(0.051078,96)
+Total verification time: 0.095882 second(s)
+	Time spent in main process: 0.068189 second(s)
+	Time spent in child processes: 0.027693 second(s)
+

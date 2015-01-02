@@ -1,0 +1,35 @@
+
+!!!Full processing file "hip/s2l-v2-i.ss"
+Parsing file "hip/s2l-v2-i.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Checking procedure s2l$node... **** TEMPLATE ASSUMPTION(S) ****
+[ 0<=v_1298 & n=1+n1_1300 & s=v_1298+s1_1301 & v_1298<=0 & v_1298<=0 & 
+  n_1332=n1_1300 & s_1333=s1_1301 --> (g( n, s))>(g( n_1332, s_1333))
+, 0<=v_1298 & n=1+n1_1300 & s=v_1298+s1_1301 & 0<v_1298 & 0<v_1298 & 
+  v_1298<=1 & v_1298<=1 & n_1391=n1_1300 & 
+  s_1392=s1_1301 --> (g( n, s))>(g( n_1391, s_1392))
+, 0<=v_1298 & n=1+n1_1300 & s=v_1298+s1_1301 & 0<v_1298 & 0<v_1298 & 
+  1<v_1298 & 1<v_1298 & v_int_30_1446+1=v_1298 & val_30_1441=v_1298 & 
+  v_int_31_1453=1 & v_1471=v_int_30_1446 & v_1488=v_int_31_1453 & 
+  n1_1490=n1_1300 & s1_1491=s1_1301 & 0<=v_1488 & n1_1473=1+n1_1490 & 
+  s1_1474=v_1488+s1_1491 & s1_1474=v_1488+s1_1491 & n1_1473=1+n1_1490 & 
+  0<=v_1471 & n_1456=1+n1_1473 & s_1457=v_1471+
+  s1_1474 --> (g( n, s))>(g( n_1456, s_1457))
+]
+TEMPLATE INFERENCE: Unsat.
+Trying to infer lexicographic termination arguments ...
+**** LEXICOGRAPHIC RANK INFERENCE RESULT ****
+Cannot find a potential ranking function
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

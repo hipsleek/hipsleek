@@ -1,0 +1,27 @@
+Starting Omega...oc
+H is defined.
+HP_903 is defined.
+HP_902 is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&prev7=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_903(next,cur8@NI,sent6@NI)&
+                   prev7=null --> HP_902(next,prev7@NI,sent6@NI)&true(3,4); 
+                  emp&prev7=null --> HP_903(prev7,cur8@NI,sent6@NI)&true(3,4)]
+[[ SEARCH ==>  Match(cur8,cur8) ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 4
+SAT % Hit   : 25.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.00022 (seconds)
+
+!!! log(small):(0.010963,9)
+Total verification time: 0.061303 second(s)
+	Time spent in main process: 0.046605 second(s)
+	Time spent in child processes: 0.014698 second(s)
+

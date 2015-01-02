@@ -210,7 +210,7 @@ let rec smt_of_b_formula b =
   (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
+  let _ = Debug.devel_hprint (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
@@ -578,7 +578,19 @@ let prover_process = ref {
 }
 
 
-let smtsolver_path = "z3-4.3.2" (* "z3" *)
+let smtsolver_path = if !Globals.compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
+
+
+let local_oc = "./z3-4.3.2"
+let global_oc = "/usr/bin/z3-4.3.2"
+
+let smtsolver_path = 
+  if (Sys.file_exists local_oc) then ref local_oc
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else 
+    begin
+      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
+    end
 
 (***********)
 let test_number = ref 0
@@ -594,7 +606,7 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> (smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
+  | "z3" -> (!smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "z3-4.2" -> ("z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
@@ -620,8 +632,8 @@ let run st prover input timeout =
       Procutils.PrvComms.maybe_raise_timeout fnc () timeout
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
-          Printexc.print_backtrace stdout;
-          print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
+          print_backtrace_quiet ();
+          print_endline_quiet ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted; }
@@ -636,20 +648,29 @@ let rec prelude () = ()
 
 (* start z3 system in a separated process and load redlog package *)
 and start() =
-  if not !is_z3_running then (
-    print_string_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
-    last_test_number := !test_number;
-    let _ = (
-      if !smtsolver_name = "z3-2.19" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
-      else if !smtsolver_name = "z3-4.2" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else if !smtsolver_name = "z3-4.3.1" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path; "-smt2"; "-in"|]) set_process prelude
-    ) in
-    is_z3_running := true;
+  try (
+    if not !is_z3_running then (
+      print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
+      last_test_number := !test_number;
+      let _ = (
+        if !smtsolver_name = "z3-2.19" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
+        else if !smtsolver_name = "z3-4.2" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else if !smtsolver_name = "z3-4.3.1" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+      ) in
+      is_z3_running := true;
+    )
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Z3!";
+      print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
+    );
+    raise e
   )
 
 (* stop Z3 system *)
@@ -694,7 +715,7 @@ let check_formula f timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+      let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
     { original_output_text = []; sat_result = Unknown; } 
   ) in
@@ -1187,6 +1208,7 @@ let simplify (pe : CP.formula) : CP.formula =
   Debug.no_1 "simplify" pr pr simplify pe 
 
 let hull (f: CP.formula) : CP.formula = f
+
 let pairwisecheck (f: CP.formula): CP.formula = f
 
 (* Template Solving by Z3 *)
@@ -1232,6 +1254,8 @@ let get_model is_linear vars assertions =
     (* "(check-sat)\n" ^ *)
     "(get-model)\n"
   in
+  
+  (* let _ = print_endline ("smt_inp: \n" ^ smt_inp) in *)
 
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))

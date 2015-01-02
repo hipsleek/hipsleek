@@ -1,0 +1,57 @@
+
+!!!Full processing file "demo/loop-4.ss"
+Parsing file "demo/loop-4.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure loop$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ P,G]requires P(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)P(x)&true --> x::node<next1> * HP_1223(next1)&
+true(3,4),
+ // PRE_REC
+(0)HP_1223(next1)&true --> P(next1)&
+true(3,4),
+ // POST
+(0)x::node<next1> * G(next1)&true --> G(x)&
+true(3,4)]
+
+Procedure loop$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ P(x1) ::=  [x1::node<next2> * P(next2)],
+ G(x2) ::=  [x2::node<next> * G(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ P(x1) ::= x1::node<next2> * P(next2)(3,4),
+ G(x2) ::= x2::node<next> * G(next)(3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.027915,218)
+Total verification time: 0.291737 second(s)
+	Time spent in main process: 0.275726 second(s)
+	Time spent in child processes: 0.016011 second(s)
+

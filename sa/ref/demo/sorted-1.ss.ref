@@ -1,0 +1,40 @@
+
+!!!Full processing file "demo/sorted-1.ss"
+Parsing file "demo/sorted-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure check_sorted$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,v@NI)&x!=null
+ ensures G(x,v@NI)&
+x=null{,(3,4)=__norm};
+
+dprint: demo/sorted-1.ss:14: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:H(x,v)&x!=null & MayLoop[]&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []H(x,v)&MayLoop[] & x!=null
+
+ ]
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ x=null]
+Procedure check_sorted$node~int SUCCESS.
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.015888,178)
+Total verification time: 0.277313 second(s)
+	Time spent in main process: 0.26352 second(s)
+	Time spent in child processes: 0.013793 second(s)
+

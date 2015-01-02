@@ -1,0 +1,58 @@
+
+!!!Full processing file "examples/fact-case.ss"
+Parsing file "examples/fact-case.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/fact-case.ss_3:1_6:1:WARNING : case construct has missing scenario
+Found : : 0<=x
+Added : : x<=(0-1)
+
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_9_1230<=(0-1) & v_int_9_1230<=(0-1) & v_int_9_1230+1=x' & 
+!(v_bool_8_1135') & x'!=0 & !(v_bool_8_1135') & x'=x & x<=(0-1) & x'!=0 & 
+v_int_9_1134'=v_int_9_1236+1 & 
+res=v_int_9_1134' & factpost_1127(v_int_9_1230) --> factpost_1127(x).
+
+ termAssume 0<=v_int_9_1189 & 1<=v_int_9_1195 & 0<=v_int_9_1189 & 
+v_int_9_1189+1=x' & !(v_bool_8_1135') & x'!=0 & !(v_bool_8_1135') & x'=x & 
+0<=x & x'!=0 & v_int_9_1134'=v_int_9_1195+1 & 
+res=v_int_9_1134' & factpost_1126(v_int_9_1189) --> factpost_1126(x).
+
+ termAssume x'=0 & 0<=x & x'=x & v_bool_8_1135' & x'=x' & v_bool_8_1135' & 
+v_int_8_1129'=1 & res=v_int_8_1129' --> factpost_1126(x).
+
+ termAssume x'!=0 & x<=(0-1) & x'=x & !(v_bool_8_1135') & x'!=0 & 
+!(v_bool_8_1135') & v_int_9_1133'=1 & v_int_9_1131'+1=x' & v_int_9_1131'<=(0-
+1) & factpre_0(x) --> factpre_0(v_int_9_1131').
+
+ termAssume x'!=0 & 0<=x & x'=x & !(v_bool_8_1135') & x'!=0 & 
+!(v_bool_8_1135') & v_int_9_1133'=1 & v_int_9_1131'+1=x' & 
+0<=v_int_9_1131' & factpre_0(x) --> factpre_0(v_int_9_1131').
+
+
+Base/Rec Case Splitting:
+[	fact: [[3] x=0@B,[4] x<=(0-1)@R,[5] 1<=x@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29,1]
+ ensures emp & 0<=x & 1<=res; 
+  1<=x -> requires emp & Term[29,2,0+(1*x)]
+ ensures emp & 0<=x & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+2 false contexts at: ( (8,12)  (8,19) )

@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node left;
+  node right;
+}.
+
+pred dll<pr> == emp & self=null 
+  or self::node<_,pr,q>*p::dll<self> 
+  inv true.
+
+/*
+# bugs-ex13.slk (not urgent)
+
+Could we have a warning to indicate that p::dll<self> is
+unreachable?
+
+*/
+

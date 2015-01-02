@@ -51,6 +51,10 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
             (* omega doesn't allow variable name starting with underscore *)
             let v = if ((String.get v 0) == '_') then "v" ^ v 
                     else v in
+            let v =
+              let reg = Str.regexp "\." in
+              Str.global_replace reg "" v
+            in
             let ln = (String.length v) in  
             let r_c = if (ln<20) then v
                       else "v" ^ (String.sub v (ln-20)  20) in
@@ -75,7 +79,10 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+            | _ -> 
+                  let _ = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+                  "0=0"
+                  (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
                 (* Error.report_error { *)
                 (*   Error.error_loc = l; *)
                 (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
@@ -168,7 +175,7 @@ and omega_of_b_formula b =
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 		
+  | BForm ((b,_) as bf,_) ->
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
@@ -189,7 +196,7 @@ and omega_of_formula_x pr_w pr_s f  =
 	helper f
   with _ as e -> 
       let s = Printexc.to_string e in
-      let _ = print_string ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      let _ = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
       (* let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
@@ -214,8 +221,21 @@ let omega_of_formula_old i f  =
        pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 let is_local_solver = ref (false: bool)
 
-let omegacalc = if !Globals.smt_compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+
+let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
+
+let local_oc = "./oc"
+let global_oc = "/usr/local/bin/oc"
+
+let omegacalc = 
+  if (Sys.file_exists local_oc) then ref local_oc
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else 
+    begin
+      print_endline "ERROR : oc cannot be found!!"; ref ("oc_cannot be found":string)
+    end
+
 (* let omegacalc = ref ("oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
@@ -235,19 +255,29 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag && (not !Globals.smt_compete_mode) then
+	(if !log_all_flag && (not !Globals.compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done
 
   (* start omega system in a separated process and load redlog package *)
 let start() =
-  if not !is_omega_running then begin
-      if (not !Globals.web_compile_flag) then print_endline_if (not !Globals.smt_compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
-      last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
-      is_omega_running := true;
-  end
+  try (
+    if not !is_omega_running then begin
+        if (not !Globals.web_compile_flag) then 
+          print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+        last_test_number := !test_number;
+        let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
+        is_omega_running := true;
+    end
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Omega!";
+      print_endline "Please make sure its executable file (oc) is installed";
+    );
+    raise e
+  )
 
 (* stop Omega system *)
 let stop () =
@@ -402,7 +432,7 @@ let rec send_and_receive f timeout=
         flush (!process.outchannel);
         (* try *)
 	    let str = read_from_in_channel (!process.inchannel) in
-	    (* let _ = print_endline ("string from omega: " ^ str) in *)
+            (* let _ = print_endline ("string from omega: " ^ str) in *)
             let _ = set_proof_result str in
             let lex_buf = Lexing.from_string str in
 	    (*print_string (line^"\n"); flush stdout;*)
@@ -413,7 +443,6 @@ let rec send_and_receive f timeout=
       in
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
       answ
-          
   end
 
 let send_and_receive f timeout =
@@ -662,7 +691,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let pr = !print_formula in
-  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  Debug.no_2 "omega.imply_ops_1" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
@@ -739,12 +768,12 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
   Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
-  
+
 let trans_bool (f: formula): formula =
   let get_bool_val is_lt e1 e2 pos = (* e1 < e2 *)
     let bv = get_boolean_var e1 in
     match bv with
-    | Some v -> 
+    | Some v ->
       let i = get_num_int_opt e2 in
       begin match i with
       | Some i -> 
@@ -807,13 +836,17 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
       | Some fstr ->
             (* Debug.info_pprint "here2" no_pos;*) 
           omega_subst_lst := [];
-            let vars_list = get_vars_formula pe1 in
+            (* let vars_list = get_vars_formula pe1 in *)
             (*todo: should fix in code of OC: done*)
             (*if not safe then pe else*)
             begin
               try
-                  let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+                let sv_list = Gen.BList.remove_dups_eq Cpure.eq_spec_var (fv pe1) in
+                (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
+                  let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+                  (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
+                  (* Debug.binfo_hprint (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)
@@ -835,7 +868,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
                             let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    let r = Cpure.subst ss2 (match_vars (fv pe1) rel) in
+	                    let r = Cpure.subst ss2 (match_vars sv_list rel) in
                       trans_bool r
 	                  end
 	                with
@@ -972,7 +1005,7 @@ let simplify (pe : formula) : formula = if not !Globals.oc_simplify then
   pe
 else
   match (do_with_check "" simplify pe)
-  with 
+  with
     | None -> pe
     | Some f -> f
 
@@ -1055,7 +1088,7 @@ let hull (pe : formula) : formula =
 
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
-	        
+
             if !log_all_flag then begin
               output_string log_all ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str);
               output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -1068,20 +1101,21 @@ let hull (pe : formula) : formula =
 let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
-	omega_subst_lst := [];
+    omega_subst_lst := [];
     let pe1 = drop_varperm_formula pe1 in
-	let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
+    let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
     let fstr1 = omega_of_formula_old 23 pe1 in
     let fstr2 = omega_of_formula_old 24 pe2 in
     match fstr1,fstr2 with
       | Some fstr1, Some fstr2 ->
             begin
               let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in
-			  let l1 = List.map omega_of_spec_var vars_list  in
+	      let l1 = List.map omega_of_spec_var vars_list  in
               let vstr = String.concat "," l1  in
               let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                 ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
-                (* gist not properly logged *)
+              (* gist not properly logged *)
+              let _ = Debug.ninfo_pprint ("fomega = " ^ fomega) no_pos in
               let _ = set_proof_string ("GIST(not properly logged yet):"^fomega) in
               if !log_all_flag then begin
                 output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -1089,10 +1123,10 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
                 flush log_all;
               end;
               let rel = send_and_receive fomega !in_timeout (* 0.  *)in
-	          match_vars vars_list rel
+	      match_vars vars_list rel
             end
       | _, _ -> pe1
-            end
+  end
 
 let gist (pe1 : formula) (pe2 : formula) : formula =
   Debug.no_2 "gist" !print_formula !print_formula !print_formula gist_x pe1 pe2

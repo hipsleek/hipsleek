@@ -6429,7 +6429,7 @@ and doStatement (s : A.statement) : chunk =
         currentLoc := loc';
         let hspec = (
           match hs with
-          | None -> Iformula.mkETrueTrueF ();
+          | None -> (* Iformula.mkETrueTrueF ();   *)Iformula.EList [];
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6437,7 +6437,7 @@ and doStatement (s : A.statement) : chunk =
               let fname = hsloc.A.start_pos.A.filename in
               try
                 Parser.parse_c_function_spec fname s base_loc
-              with _ -> 
+              with _ ->
                 let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
                 raise (HipSpecsError ("Loop specs error: " ^ error_loc))
         ) in
@@ -6455,7 +6455,7 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         let hspec = (
           match hs with
-          | None -> Iformula.mkETrueTrueF ();
+          | None -> (* Iformula.mkETrueTrueF (); *) Iformula.EList [];
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;
@@ -6487,7 +6487,7 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         let hspec = (
           match hs with
-          | None -> Iformula.mkETrueTrueF ();
+          | None -> (* Iformula.mkETrueTrueF (); *) Iformula.EList [];
           | Some (s, hsloc) ->
               let base_loc = {Parser.line_num = hsloc.A.start_pos.A.lineno;
                               Parser.line_start = hsloc.A.start_pos.A.linestart;

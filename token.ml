@@ -18,13 +18,15 @@ type sleek_token =
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
-  | CASE | CHECKNORM | CHECKEQ | SIMPLIFY | CHECKENTAIL | CHECKSAT | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
+  | CASE | SIMPLIFY | CAPTURERESIDUE | CLASS | COMPOSE | CONST | CONTINUE
+  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET 
+  | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
   | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
   | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
-  | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC
+  | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -45,7 +47,13 @@ type sleek_token =
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *) 
-  | TERM_INFER | TREL_INFER | TREL_ASSUME
+  | TERM_INFER 
+  (* | TREL_INFER  change to  INFER_AT_TERM *)
+  | TREL_ASSUME
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC
+  | INFER_AT_TERM | INFER_AT_TERM_WO_POST 
+  | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
+  | INFER_AT_SIZE
   | UTPRE | UTPOST
   | UNFOLD | UNION
   | VOID 
@@ -102,6 +110,7 @@ module Token = struct
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
+    | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
     |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
@@ -109,7 +118,7 @@ module Token = struct
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
     | SHAPE_WEAKEN_ANTE -> "shape_weaken_ante"
-    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec"
+    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
@@ -164,7 +173,19 @@ module Token = struct
     (* | TERMR -> "TermR" *)
     | UTPRE -> "UTPre"
     | UTPOST -> "UTPost"
-    | TREL_INFER -> "@term"
+    (* | TREL_INFER -> "@term" *)
+    | INFER_AT_EFA -> "@efa"
+    | INFER_AT_DFA -> "@dfa"
+    | INFER_AT_TERM -> "@term"
+    | INFER_AT_TERM_WO_POST -> "@term_wo_post"
+    | INFER_AT_PRE -> "@pre"
+    | INFER_AT_POST -> "@post"
+    | INFER_AT_CLASSIC -> "@leak"
+    | INFER_AT_IMM -> "@imm"
+    | INFER_AT_SHAPE -> "@shape"
+    | INFER_AT_ERROR -> "@error"
+    | INFER_AT_FLOW -> "@flow"
+    | INFER_AT_SIZE -> "@size"
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"

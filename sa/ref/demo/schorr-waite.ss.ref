@@ -1,0 +1,44 @@
+
+!!!Full processing file "demo/schorr-waite.ss"
+Parsing file "demo/schorr-waite.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & s!=self) | (s!=self & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&s!=self & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (self<s | s<self)),
+([], self=null & s!=self)])
+!!! formula1: emp&(self=p | (self!=p & self!=null) | (self!=p & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (self<p | p<self)),
+([], self=p)])
+!!! formula1: emp&((self=null & M={}) | (exists(Mr:exists(Ml:M=union(Ml,Mr,{self}))) & 
+self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&M={} & self=null&{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(Ml,Mr,{self})")
+ Formula: exists(Mr:exists(Ml:M=union(Ml,Mr,{self})))
+
+!!! baga_over(unfolded):Some([([self], exists(Mr:exists(Ml:M=union(Ml,Mr,{self})))),
+([], self=null & M={})])
+Checking procedure lscan$node~node~node... 
+Procedure lscan$node~node~node SUCCESS.
+
+Checking procedure traverse$node~node... 
+Mona is restarting ... cycle limit reached
+
+Procedure traverse$node~node SUCCESS.
+
+Checking procedure trav$node... 
+Procedure trav$node SUCCESS.
+Stop Omega... 71 invocations 
+1 false contexts at: ( (36,23) )
+
+!!! log(small):(9.334873,8662)
+!!! log(big)(>0.5s)(3):(2.400327,[(imply,0.716413);(imply,0.73937);(imply,0.944544)])
+Total verification time: 7.106479 second(s)
+	Time spent in main process: 4.370731 second(s)
+	Time spent in child processes: 2.735748 second(s)
+

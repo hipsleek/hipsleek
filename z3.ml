@@ -210,7 +210,7 @@ let rec smt_of_b_formula b =
   (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
+  let _ = Debug.devel_hprint (add_str "f(z3)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
@@ -605,8 +605,8 @@ let run st prover input timeout =
       Procutils.PrvComms.maybe_raise_timeout fnc () timeout
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
-          Printexc.print_backtrace stdout;
-          print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
+          print_backtrace_quiet ();
+          print_endline_quiet ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted;
@@ -625,7 +625,7 @@ let rec prelude () = ()
 (* start z3 system in a separated process and load redlog package *)
 and start() =
   if not !is_z3_running then (
-    print_string_if (not !Globals.smt_compete_mode) "Starting z3... \n"; flush stdout;
+    print_string_quiet "Starting z3... \n"; flush stdout;
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then
@@ -682,7 +682,7 @@ let check_formula f bget_cex timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+      let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
     { original_output_text = []; sat_result = Unknown; cex=None;} 
   ) in

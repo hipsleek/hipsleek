@@ -1,0 +1,63 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [rr_98; ss_99]
+                          es_rhs_eqset: [rr_98:rr; ss_99:ss; rr_98:rr; 
+                                         ss_99:ss; rr_98:ss_99]
+                          es_must_error: Some(AndR[ k+1=k+1 |-  1+k=rr. LOCS:[14;7];  n2+1=n2+1 |-  rr=ss. LOCS:[7;14];  n2+1=n2+1 |-  1+n2=rr. LOCS:[14;7] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            n2=k:xs::lls{}<rr,ss>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&k!=n2&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [k_141; flted_6_142; rr_132; ss_133]
+                          es_rhs_eqset: [rr_132:rr; ss_133:ss; k:ss_133; 
+                                         k:ss_133]
+                          es_must_error: Some(UnionR[ k!=n2 |-  (1+n2)!=k. LOCS:[22;6] (must-bug), k!=n2 |-  n2+1=rr_132 & k+1=ss_133 & rr_132=ss_133 & rr_132=rr & ss_133=ss. LOCS:[0;7;22] (RHS: contradiction)]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            k!=n2:xs::lls{}<rr1,ss1>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&k!=n2&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [rr_163; ss_164]
+                          es_rhs_eqset: [rr_163:rr; ss_164:ss; rr_163:rr; 
+                                         ss_164:ss; rr_163:ss_164]
+                          es_must_error: Some(AndR[ k+1=k+1 |-  1+k=rr. LOCS:[28;10];  n2+1=n2+1 |-  rr=ss. LOCS:[10;28];  n2+1=n2+1 |-  1+n2=rr. LOCS:[28;10] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            n2=k:xs::lls2{}<rr2,ss2>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&n2!=k&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [rr_197; ss_198]
+                          es_rhs_eqset: [rr_197:rr; ss_198:ss; rr_197:rr; 
+                                         ss_198:ss; n2:rr_197; k:ss_198]
+                          es_must_error: Some(AndR[ n2!=k |-  k=ss. LOCS:[9];  n2!=k |-  rr!=ss. LOCS:[9];  n2!=k |-  n2=rr. LOCS:[9] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            k!=n2:xs::lls2{}<rr3,ss3>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&n2!=k&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+

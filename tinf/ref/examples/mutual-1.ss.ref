@@ -1,0 +1,60 @@
+
+!!!Full processing file "examples/mutual-1.ss"
+Parsing file "examples/mutual-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure g$int... 
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_7_1135' & !(v_bool_6_1136') & 0<x' & 
+!(v_bool_6_1136') & x'=x & 0<x' & gpost_1122(x') --> fpost_1132(x).
+
+ termAssume x'<=0 & x'=x & v_bool_6_1136' & x'<=0 & v_bool_6_1136' & 
+v_int_6_1134'=0 & res=v_int_6_1134' --> fpost_1132(x).
+
+ termAssume res=v_int_16_1127' & v_int_16_1178=1+x' & !(v_bool_15_1128') & 
+0<x' & !(v_bool_15_1128') & x'=x & 
+0<x' & fpost_1132(v_int_16_1178) --> gpost_1122(x).
+
+ termAssume x'<=0 & x'=x & v_bool_15_1128' & x'<=0 & v_bool_15_1128' & 
+v_int_15_1124'=0 & res=v_int_15_1124' --> gpost_1122(x).
+
+ termAssume 0<x' & x'=x & !(v_bool_6_1136') & 0<x' & 
+!(v_bool_6_1136') & fpre_0(x) --> gpre_0(x').
+
+ termAssume 0<x' & x'=x & !(v_bool_15_1128') & 0<x' & !(v_bool_15_1128') & 
+v_int_16_1126'=1+x' & gpre_0(x) --> fpre_0(v_int_16_1126').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=0@B,[4] 1<=x@R]
+,	g: [[5] x<=0@B,[6] 1<=x@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[29,2]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[29,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+0 false contexts at: ()

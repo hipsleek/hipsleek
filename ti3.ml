@@ -3,8 +3,11 @@ module CF = Cformula
 module MCP = Mcpure
 
 open Globals
+open Cast
 open Cprinter
 open Gen
+
+let eq_str s1 s2 = (String.compare s1 s2) = 0
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -28,7 +31,10 @@ type ret_trel = {
   termr_lhs: CP.term_ann list;
   termr_rhs: CP.term_ann;
   termr_rhs_params: CP.spec_var list; (* For simplification on condition *)
+  termr_pos: loc;
 }
+
+let ret_trel_stk: ret_trel Gen.stack = new Gen.stack
 
 let print_ret_trel rel = 
   string_of_trrel_assume (rel.ret_ctx, rel.termr_lhs, rel.termr_rhs)
@@ -40,8 +46,15 @@ type call_trel = {
   termu_fname: ident; (* Collect from LHS *)
   termu_lhs: CP.term_ann;
   termu_rhs: CP.term_ann;
+  (* For TermU/TermR *)
   termu_rhs_params: CP.spec_var list; (* For substitution on condition *)
+  (* For other term_ann *)
+  termu_cle: ident; (* callee *)
+  termu_rhs_args: CP.exp list;
+  termu_pos: loc;
 }
+
+let call_trel_stk: call_trel Gen.stack = new Gen.stack
 
 let print_call_trel_debug rel = 
   string_of_turel_debug (rel.call_ctx, rel.termu_lhs, rel.termu_rhs)
@@ -57,9 +70,12 @@ let dummy_trel = {
   trel_id = -1;
   call_ctx = CP.mkTrue no_pos;
   termu_fname = "";
-  termu_lhs = MayLoop;
-  termu_rhs = MayLoop; 
-  termu_rhs_params = []; }
+  termu_lhs = CP.MayLoop None;
+  termu_rhs = CP.MayLoop None; 
+  termu_rhs_params = []; 
+  termu_cle = "";
+  termu_rhs_args = [];
+  termu_pos = no_pos; }
   
 let update_call_trel rel ilhs irhs = 
   { rel with
@@ -85,7 +101,7 @@ let subst_cond_with_ann params ann cond =
 (* TNT Case Spec *)
 type tnt_case_spec = 
   | Sol of (CP.term_ann * CP.exp list)
-  | Unknown
+  | Unknown of CP.term_cex option
   | Cases of (CP.formula * tnt_case_spec) list
 
 let rec pr_tnt_case_spec (spec: tnt_case_spec) = 
@@ -97,16 +113,55 @@ let rec pr_tnt_case_spec (spec: tnt_case_spec) =
         (fun () -> pr_pure_formula c) " -> " )
         (fun () -> pr_tnt_case_spec s; fmt_string ";")
     ) cl 
-  | Unknown -> (* fmt_string "Unk" *) fmt_string "requires MayLoop ensures true"
+  | Unknown cex -> 
+    (* fmt_string "Unk" *) 
+    (* fmt_string "requires MayLoop ensures true" *)
+    fmt_string "requires ";
+    pr_var_measures (MayLoop cex, [], []);
+    fmt_string " ensures true"
   | Sol (ann, rnk) ->
     match ann with
-    | CP.Loop -> fmt_string "requires Loop ensures false"
+    | CP.Loop _ -> 
+      (* fmt_string "requires Loop ensures false" *)
+      fmt_string "requires ";
+      pr_var_measures (ann, [], []);
+      fmt_string " ensures false"
     | _ -> 
       fmt_string "requires ";
       pr_var_measures (ann, rnk, []);
       fmt_string " ensures true"
 
 let print_tnt_case_spec = poly_string_of_pr pr_tnt_case_spec
+
+let is_base_rank rnk =
+  match rnk with
+  | [] -> true
+  | c::[] -> CP.is_nat c
+  | c::p::[] -> (CP.is_nat c) && (CP.is_nat p)
+  | _ -> false
+
+let eq_base_rank rnk1 rnk2 =
+  match rnk1, rnk2 with
+  | [], [] -> true
+  | c1::[], c2::[] -> CP.eq_num_exp c1 c2
+  | c1::_::[], c2::_::[] -> CP.eq_num_exp c1 c2
+  | _ -> false
+
+let eq_tnt_case_spec sp1 sp2 =
+  match sp1, sp2 with
+  | Unknown _, Unknown _ -> true
+  | Unknown _, Sol (CP.MayLoop _, _) -> true
+  | Sol (CP.MayLoop _, _), Unknown _ -> true
+  | Sol (ann1, rnk1), Sol (ann2, rnk2) ->
+    begin match ann1, ann2 with
+    | CP.Loop _, CP.Loop _ -> true
+    | CP.MayLoop _, CP.MayLoop _ -> true
+    (* | CP.Term, CP.Term ->                          *)
+    (*   (* is_base_rank rnk1 && is_base_rank rnk2 *) *)
+    (*   eq_base_rank rnk1 rnk2                       *)
+    | _ -> false
+    end
+  | _ -> false
 
 (* Utilities for Path Traces *)
 type path_trace = (CP.spec_var * bool) list
@@ -180,4 +235,66 @@ let and_or_tree_of_path_traces path_traces =
   let sorted_path_traces = List.sort (fun p1 p2 -> 
     compare (List.length p1) (List.length p2)) path_traces in
   and_or_tree_of_path_traces sorted_path_traces
+
+(* Specification-related stuffs *)  
+let rec is_infer_term sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl, sf) -> is_infer_term sf) el
+  | CF.EInfer ei -> ei.CF.formula_inf_obj # is_term
+  | _ -> false
+
+let is_infer_term sf =
+  let pr = string_of_struc_formula in
+  Debug.no_1 "is_infer_term" pr string_of_bool is_infer_term sf
+
+let is_infer_term_scc scc =
+  List.exists (fun proc -> is_infer_term (proc.proc_stk_of_static_specs # top)) scc
+  
+let add_term_relation_proc prog proc spec = 
+  let is_primitive = not (proc.proc_is_main) in
+  if is_primitive then spec
+  else
+    let fname = unmingle_name proc.proc_name in
+    let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
+    let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
+    let params = imp_spec_vars @ params  in
+    let params = List.filter (fun sv -> 
+      match sv with
+      | CP.SpecVar(t, _, _) -> (match t with
+        | Int | Bool -> true
+        | _ -> false)) params in
+    let pos = proc.proc_loc in
+  
+    let utpre_name = fname ^ "pre" in
+    let utpost_name = fname ^ "post" in
+  
+    let utpre_decl = {
+      ut_name = utpre_name;
+      ut_params = params;
+      ut_is_pre = true;
+      ut_pos = pos } in
+    let utpost_decl = { utpre_decl with
+      ut_name = utpost_name;
+      ut_is_pre = false; } in
+  
+    let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
+    (* let _ = ut_decls # push_list [utpre_decl; utpost_decl] in *)
+    let _ = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
+  
+    let uid = {
+      CP.tu_id = 0;
+      CP.tu_sid = fname;
+      CP.tu_fname = fname;
+      CP.tu_call_num = proc.proc_call_order;
+      CP.tu_args = List.map (fun v -> CP.mkVar v pos) params;
+      CP.tu_cond = CP.mkTrue pos;
+      CP.tu_icond = CP.mkTrue pos;
+      CP.tu_sol = None;
+      CP.tu_pos = pos; } in
+    CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
+  
+let add_term_relation_scc prog scc =
+  List.iter (fun proc ->
+    let spec = proc.proc_stk_of_static_specs # top in
+    let new_spec = add_term_relation_proc prog proc spec in
+    proc.proc_stk_of_static_specs # push new_spec) scc
   

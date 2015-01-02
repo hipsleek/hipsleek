@@ -318,7 +318,7 @@ let find_lexvar_es (es: entail_state) :
   
 let is_Loop_es (es: entail_state): bool =
   match es.es_var_measures with
-  | Some (Loop, _, _) -> true
+  | Some (Loop _, _, _) -> true
   | _ -> false
 
 let zero_exp = [mkIConst 0 no_pos]
@@ -427,7 +427,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 
           (* Do boundedness check at recursive calls *)
           let estate =
-            if !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
+            if not !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
             then estate
             else
               let m = List.filter (fun e -> not (is_nat e) && 
@@ -519,14 +519,16 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     begin
       let _ = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
+      let dst_tinfo = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_d, dst_lv, dst_il, l_pos = (dst_tinfo.lex_ann, dst_tinfo.lex_exp, dst_tinfo.lex_tmp, dst_tinfo.lex_loc) in
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in 
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
-      let term_pos = (p_pos, proving_loc # get) in
+      let c_pos = proving_loc # get in
+      let term_pos = (p_pos, c_pos) in
       
       let get_call_order lv =
         match lv with
@@ -536,12 +538,12 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       
       let process_turel is_ret es =
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let es = if es.es_infer_tnt then
+        let es = if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
             if is_ret then 
-              let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d in
+              let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
               { es with es_term_res_rhs = Some t_ann_d }
             else
-              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d in
+              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
               { es with es_term_call_rhs =  Some t_ann_d; }
           else es 
         in es
@@ -551,10 +553,11 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (_, TermR _) ->
         let estate = process_turel true estate in
         (estate, lhs_p, rhs_p, None)
-      | (TermU _, _) -> begin
+      | (TermU uid, _) -> begin
         match t_ann_d with
         | Term -> (* Only add Call Relation of methods in the same scc *) 
-          let termu_src_order = get_call_order src_lv in
+          (* let termu_src_order = get_call_order src_lv in *)
+          let termu_src_order = uid.tu_call_num in
           let term_dst_order = get_call_order dst_lv in
           if termu_src_order > term_dst_order then
             (estate, lhs_p, rhs_p, None)
@@ -580,9 +583,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             TermErr (Invalid_Status_Trans t_ann_trans)) in
           add_term_res_stk term_res;
           let term_measures = match t_ann_d with
-            | Loop 
+            | Loop _
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
-            | MayLoop 
+            | MayLoop _
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
             | _ -> failwith "unexpected Term/TermU in check_term_rhs"
           in 
@@ -592,16 +595,16 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
-      | (Loop, Loop) ->
-          let term_measures = Some (MayLoop, [], []) in 
+      | (Loop _, Loop _) ->
+          let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
-      | (Loop, _) ->
-          let term_measures = Some (Loop, [], []) in 
+      | (Loop _, _) ->
+          let term_measures = Some (Loop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
-      | (MayLoop, _) ->
-          let term_measures = Some (MayLoop, [], []) in 
+      | (MayLoop _, _) ->
+          let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Fail TermErr_Must, _) ->
@@ -644,18 +647,20 @@ let check_term_assume prog lhs rhs =
   match rhs_lex with
   | [] -> ()
   | rlex::[] ->
-    let t_ann_d, _, _, _ = find_lexvar_formula rlex in
+    let dst_tinfo = find_lexvar_formula rlex in
+    let t_ann_d, dst_il = (dst_tinfo.lex_ann, dst_tinfo.lex_tmp) in
+      
     begin match t_ann_d with
-    | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d
+    | TermR _ -> Ti.add_ret_trel_stk prog lhs_p lhs_termr t_ann_d pos
     | _ -> 
       let t_ann_s, _, _ = match lhs_lex with 
         | Some (t_ann, el, il) -> (t_ann, el, il)
         | None -> raise LexVar_Not_found in
       begin match t_ann_s with
-      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
+      | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
       | Term -> 
         begin match t_ann_d with
-        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d
+        | TermU _ -> Ti.add_call_trel_stk prog lhs_p t_ann_s t_ann_d dst_tinfo.lex_fid dst_il pos
         | _ -> () 
         end
       | _ -> () 
@@ -1239,8 +1244,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                     if all_zero then
                       Debug.trace_hprint (add_str ("Phase to remove") !print_svl) rp no_pos
                     else begin
-                      Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-                      Debug.info_hprint (add_str "Phase Numbering"
+                      Debug.tinfo_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      Debug.tinfo_hprint (add_str "Phase Numbering"
                           (pr_list (pr_pair !print_sv string_of_int))) subst no_pos
                     end;
                     let n_tbl = Cast.proc_decls_map (fun proc ->
@@ -1260,13 +1265,15 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
   Debug.no_1 "phase_num_infer_whole_scc" pr pr_no (phase_num_infer_whole_scc prog) proc_lst 
 
 (* Main function of the termination checker *)
-let term_check_output () =
+let term_check_output_scc () =
   if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && 
      not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
   begin
-    fmt_string "\nTermination checking result: ";
-    pr_term_res_stk (term_res_stk # get_stk);
-    fmt_print_newline ()
+    if not !Globals.svcomp_compete_mode then (
+      print_string_quiet "\nTermination checking result: ";
+      pr_term_res_stk (term_res_stk # get_stk);
+      fmt_print_newline ()
+    );
     (* if (!Globals.term_verbosity == 0) then          *)
     (* begin                                           *)
     (*   fmt_string "\n";                              *)
@@ -1285,7 +1292,7 @@ let rec get_loop_ctx c =
   match c with
     | Ctx es -> (match es.es_var_measures with
         | None -> []
-        | Some (a,_,_) -> if a==Loop then [es] else []
+        | Some (a,_,_) -> if (CP.is_Loop a) then [es] else []
       )
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 

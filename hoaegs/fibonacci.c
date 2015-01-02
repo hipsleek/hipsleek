@@ -1,3 +1,4 @@
+
 /*@
 relation fib(int n, int f) == 
 	(n = 0 & f = 1 |
