@@ -83,17 +83,18 @@ let rec add_index_to_formula (cf : Cformula.formula) : Cformula.formula =
           let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
           let bh = bf.Cformula.formula_base_heap in
           let (new_bp, new_bh) =
-          if Cformula.is_empty_heap bh then
-            (add_index_to_pure_formula bp, bh)
-          else
-            let sv1 = mk_typed_spec_var Int "idx" in
-            let sv2 = mk_typed_spec_var Int "idx1" in
-            let v1 = mkVar sv1 no_pos in
-            let v2 = mkVar sv2 no_pos in
-            let one = mkIConst 1 no_pos in
-            let pf0 = mkEqExp v1 (mkAdd v2 one no_pos) no_pos in
-            let new_bp = mkAnd bp pf0 no_pos in
-            (new_bp, add_index_to_heap_formula bh)
+            if not(Cformula.is_inductive cf) then
+              (* if Cformula.is_empty_heap bh then *)
+              (add_index_to_pure_formula bp, bh)
+            else
+              let sv1 = mk_typed_spec_var Int "idx" in
+              let sv2 = mk_typed_spec_var Int "idx1" in
+              let v1 = mkVar sv1 no_pos in
+              let v2 = mkVar sv2 no_pos in
+              let one = mkIConst 1 no_pos in
+              let pf0 = mkEqExp v1 (mkAdd v2 one no_pos) no_pos in
+              let new_bp = mkAnd bp pf0 no_pos in
+              (new_bp, add_index_to_heap_formula bh)
           in
           Cformula.Base {bf with
               Cformula.formula_base_pure = Mcpure.mix_of_pure new_bp;
@@ -112,17 +113,18 @@ let rec add_index_to_formula (cf : Cformula.formula) : Cformula.formula =
           (* let sv = mk_typed_spec_var Int "idx" in *)
           let svl0 = ef.Cformula.formula_exists_qvars in
           let (new_svl, new_ep, new_eh) =
-          if Cformula.is_empty_heap eh then
-            (svl0, add_index_to_pure_formula ep, eh)
-          else
-            let sv1 = mk_typed_spec_var Int "idx" in
-            let sv2 = mk_typed_spec_var Int "idx1" in
-            let v1 = mkVar sv1 no_pos in
-            let v2 = mkVar sv2 no_pos in
-            let one = mkIConst 1 no_pos in
-            let pf0 = mkEqExp v1 (mkAdd v2 one no_pos) no_pos in
-            let new_ep = mkAnd ep pf0 no_pos in
-            (svl0@[sv2], new_ep, add_index_to_heap_formula eh)
+            if not(Cformula.is_inductive cf) then
+              (* if Cformula.is_empty_heap eh then *)
+              (svl0, add_index_to_pure_formula ep, eh)
+            else
+              let sv1 = mk_typed_spec_var Int "idx" in
+              let sv2 = mk_typed_spec_var Int "idx1" in
+              let v1 = mkVar sv1 no_pos in
+              let v2 = mkVar sv2 no_pos in
+              let one = mkIConst 1 no_pos in
+              let pf0 = mkEqExp v1 (mkAdd v2 one no_pos) no_pos in
+              let new_ep = mkAnd ep pf0 no_pos in
+              (svl0@[sv2], new_ep, add_index_to_heap_formula eh)
           in
           Cformula.Exists {ef with
               Cformula.formula_exists_qvars = new_svl;
@@ -344,7 +346,7 @@ let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
 let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
-  let _ = List.iter (fun view -> Debug.ninfo_hprint (add_str "view" Cprinter.string_of_view_decl) view no_pos) view_list in
+  let _ = Debug.ninfo_hprint (add_str "view_list" (pr_list Cprinter.string_of_view_decl)) view_list no_pos in
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
   let rec helper num view_list inv_list =
