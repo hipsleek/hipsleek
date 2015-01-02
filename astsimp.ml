@@ -2480,6 +2480,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
+      let cviews0_with_index = Expure.add_index_to_views cviews0 in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
@@ -2489,15 +2490,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ls@[mut_rec_views]
           else
             ls@[[cv.C.view_name]]
-      ) [] cviews0 in
+      ) [] cviews0_with_index in
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           (* if !Globals.gen_baga_inv then *)
             let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
-            ) cviews0 in
-            let _ = Expure.fix_ef view_list cviews0 in ()
+            ) cviews0_with_index in
+            let _ = Expure.fix_ef view_list cviews0_with_index in ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
             (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
