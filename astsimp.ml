@@ -2012,14 +2012,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let bfs = bfs@(helper_unfold no bfs ifs) in
         let rs1 = List.exists (fun f ->
             let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
-            let _ = Debug.binfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
+            let _ = Debug.ninfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw uf pf
         ) bfs in
         if rs1 then true
         else
           let rs2 = List.exists (fun f ->
               let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
-              let _ = Debug.binfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
+              let _ = Debug.ninfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
               TP.imply_raw uf pf
           ) ifs in
           if rs2 then false
@@ -2028,7 +2028,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
                 CP.mkOr acc pf None no_pos
             ) (CP.mkFalse no_pos) (bfs@ifs) in
-            let _ = Debug.binfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
+            let _ = Debug.ninfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw uf pf
       in
       let under_fail = match under_f with

@@ -350,9 +350,8 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
   let rec helper num view_list inv_list =
-    let _ = List.iter (fun (vc,inv) ->
-        Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos
-    ) (List.combine view_list inv_list) in
+    let _ = Debug.ninfo_hprint (add_str "baga inv" (pr_list (pr_pair pr_id EPureI.string_of_disj)))
+      (List.combine (List.map (fun vc -> vc.Cast.view_name) view_list) inv_list) no_pos in
     let (inv_list, fixed) = fix_test num view_list inv_list in
     if fixed
     then
