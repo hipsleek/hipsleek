@@ -1405,6 +1405,17 @@ and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_f
   Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula
       (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
 
+and xpure_symbolic_baga2 (prog : prog_decl) (vn : string) uf (h0 : formula) : Excore.EPureI.epure_disj =
+  let view_decls = prog.Cast.prog_view_decls in
+  let view_decls = List.map (fun view_decl ->
+      if view_decl.Cast.view_name = vn then
+        {view_decl with Cast.view_baga_under_inv = Some [uf]}
+      else
+        view_decl
+  ) view_decls in
+  let new_baga = Expure.build_ef_formula h0 view_decls in
+  new_baga
+
 and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) : Excore.EPureI.epure_disj =
   let new_baga = Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
   new_baga

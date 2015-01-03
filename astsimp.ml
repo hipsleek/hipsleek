@@ -1994,7 +1994,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in *)
       let over_fail = (CF.isFailCtx baga_over_rs) in
       (* let under_fail = (CF.isFailCtx baga_under_rs) in *)
-      let check_under no uf fl =
+      let check_under no uf fl vn =
         (* unfold helper, now unfold 3 times *)
         let rec helper_unfold no bfs ifs =
           if no = 0 then []
@@ -2007,33 +2007,42 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             in
             new_bfs@(helper_unfold (no - 1) new_bfs ifs)
         in
-        let _ = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) uf no_pos in
+        let upf = Excore.EPureI.ef_conv_enum_disj [uf] in
+        let _ = Debug.ninfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) upf no_pos in
         let (ifs,bfs) = List.partition CF.is_inductive fl in
         let bfs = bfs@(helper_unfold no bfs ifs) in
         let rs1 = List.exists (fun f ->
             let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
             let _ = Debug.ninfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
-            TP.imply_raw uf pf
+            TP.imply_raw upf pf
         ) bfs in
         if rs1 then true
         else
           let rs2 = List.exists (fun f ->
-              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
               let _ = Debug.ninfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
-              TP.imply_raw uf pf
+              TP.imply_raw upf pf
           ) ifs in
           if rs2 then false
           else
             let pf = List.fold_left (fun acc f ->
-                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
+                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
                 CP.mkOr acc pf None no_pos
             ) (CP.mkFalse no_pos) (bfs@ifs) in
             let _ = Debug.ninfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
-            TP.imply_raw uf pf
+            TP.imply_raw upf pf
       in
       let under_fail = match under_f with
         | None -> false
-        | _ -> if (CP.is_False baga_under_formula) then (* false *) true else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+        | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
+            List.exists (fun uf ->
+                not(check_under 3 uf (fst (List.split vdef.view_un_struc_formula)) vdef.view_name)
+            ) ufl
+            (* let baga_under_formula_list = CP.split_disjunctions baga_under_formula in *)
+            (* List.exists (fun baga_under_formula -> *)
+            (*     let _ = Debug.binfo_hprint (add_str "baga_under_formula" Cprinter.string_of_pure_formula) baga_under_formula no_pos in *)
+            (*     not(check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)) vdef.view_name under_f) *)
+            (* ) baga_under_formula_list *)
       in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
