@@ -2446,7 +2446,7 @@ let look_up_first_field prog lsctx0 dname=
   let rec look_up_ctxs br_ctxs=
     match br_ctxs with
       | []-> raise Not_found
-      | (_,ctx)::rest -> begin
+      | (_,ctx,_)::rest -> begin
           try
             look_up_ctx ctx
           with _ -> look_up_ctxs rest

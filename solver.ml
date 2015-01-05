@@ -1159,10 +1159,10 @@ and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> mkOCtx (prune_ctx prog c1) (prune_ctx prog c2) no_pos
   | Ctx es -> Ctx {es with es_formula = prune_preds prog false es.es_formula}
 
-and prune_branch_ctx prog (pt,bctx) = 
+and prune_branch_ctx prog (pt,bctx,oft) = 
   let r = prune_ctx prog bctx in
   let _ = count_br_specialized prog r in
-  (pt,r)   
+  (pt,r, oft)   
 
 and prune_list_ctx prog ctx = match ctx with
   | SuccCtx c -> SuccCtx (List.map (prune_ctx prog) c)
@@ -3228,12 +3228,12 @@ and check_barrier_inconsistency_context_svl prog ctx (svl : CP.spec_var list) po
 
 and check_barrier_inconsistency_failesc_context prog cl (sv:CP.spec_var) pos  =
   let fail_branches, esc_branches, succ_branches  = cl in
-  let res = List.map (fun (lbl,c2)-> 
+  let res = List.map (fun (lbl,c2,oft)-> 
       let list_context_res,prf = check_barrier_inconsistency_context prog c2 sv pos in
       let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
       let res = match list_context_res with
 	| FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])]
-	| SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
+	| SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c,oft)])) ls in
       (res, prf)) succ_branches in
   let res_l,prf_l =List.split res in
   let res = List.fold_left (list_failesc_context_or Cprinter.string_of_esc_stack) [(fail_branches,esc_branches,[])] res_l in
@@ -3417,7 +3417,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
   ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
   ^ "\nconseq:\n" ^ (to_string conseq))) pos;
-    let heap_entail_one_branch unk_map (lbl,c2)=
+    let heap_entail_one_branch unk_map (lbl,c2,oft)=
       (* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
       (* print_string ("\nConseq ==> :"^(to_string conseq)); *)
       let c20 = CF.update_hp_unk_map c2 unk_map in
@@ -3425,7 +3425,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
       let res,new_unk_map = match list_context_res with
 	| FailCtx (t,_) -> ([([(lbl,t)],[])],[])
-	| SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c)])) ls,
+	| SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c,oft)])) ls,
           List.concat (List.map CF.collect_hp_unk_map ls) )
       in
       (res, prf, new_unk_map)
@@ -3483,7 +3483,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
   ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
   ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)^ "\nconseq:\n" ^ (to_string conseq))) pos;
     let fail_branches, esc_branches, succ_branches = cl in
-    let res = List.map (fun (lbl,c2)->
+    let res = List.map (fun (lbl,c2,oft)->
 	(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
 	(* print_string ("\nConseq ==> :"^(to_string conseq)); *)
 	let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c2 conseq tid delayed_f join_id pos pid in
@@ -3492,7 +3492,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
         let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
 	let res = match list_context_res with
 	  | FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])]
-	  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
+	  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, oft)])) ls in
 	(res, prf)) succ_branches in
     let res_l,prf_l = List.split res in
     (*print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)

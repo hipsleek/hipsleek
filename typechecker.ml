@@ -1513,18 +1513,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      
 	      let barr_failesc_context (f,e,n) =  
 		let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in
-		let res = List.map (fun (lbl,c2)-> 
+		let res = List.map (fun (lbl,c2, oft)-> 
 		    let list_context_res,prf =process_ctx c2 in					
 		    match list_context_res with
 		      | CF.FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])],prf
-		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls,prf) n in
+		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, oft)])) ls,prf) n in
 		let res_l,prf_l =List.split res in
 		let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in
 		(res, mkprf prf_l)  in
 	      
 	      let barr_failesc_context (f,e,n) =
-		let pr1 (_,_,n) = pr_list (fun (_,c)-> Cprinter.string_of_context c) n in   
-		let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun c-> Cprinter.string_of_context (snd c)) c) l) in
+		let pr1 (_,_,n) = pr_list (fun (_,c,_)-> Cprinter.string_of_context c) n in   
+		let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun (_,ctx,_)-> Cprinter.string_of_context (* (snd c) *) ctx) c) l) in
 		Debug.no_1(* _loop *) "barrier_failesc_context" pr1 pr2 barr_failesc_context (f,e,n) in
 	      
               let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^"\nBarrier call \n") in

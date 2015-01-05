@@ -9125,7 +9125,7 @@ and list_context =
 
 and branch_fail = path_trace * fail_type
 
-and branch_ctx =  path_trace * context (* * fail_type option *)
+and branch_ctx =  path_trace * context  * fail_type option
 
 (* disjunction of state with failures and partial success *)
 (* a state is successful if it has empty branch_fail *)
@@ -9231,10 +9231,10 @@ let get_infer_vars_sel_post_hp_ctx ctx0=
   in
   helper ctx0
 
-let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
+let get_infer_vars_sel_hp_branch_ctx (_,ctx,_)=
   get_infer_vars_sel_hp_ctx ctx
 
-let get_infer_vars_sel_post_hp_branch_ctx (_,ctx)=
+let get_infer_vars_sel_post_hp_branch_ctx (_,ctx,_)=
   get_infer_vars_sel_post_hp_ctx ctx
 
 let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
@@ -10320,7 +10320,7 @@ let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branc
   (* Loc: to implement cex for hip. cex should be got from branch_fail *)
   let cex = mk_cex true in
   match (convert_must_failure_4_fail_type s ft cex) with
-    | Some b -> Some (pt,b)
+    | Some b -> Some (pt,b, None)
     | None -> None
 
 let convert_must_failure_4_branch_fail_list  (s:string) (fl:branch_fail list) : (branch_ctx list * branch_fail list) =
@@ -10365,7 +10365,7 @@ let must_consistent_context (s:string) l : unit =
 	Gen.Profiling.do_1 "must_consistent_context"
 	(must_consistent_context s) l
 
-let consistent_branch_ctx ((_,c):branch_ctx) : bool = consistent_context c
+let consistent_branch_ctx ((_,c,_):branch_ctx) : bool = consistent_context c
 
 let consistent_esc_stack (ls:esc_stack) : bool = 
   List.for_all (fun (_,b_ls) -> List.for_all consistent_branch_ctx b_ls) ls
@@ -10405,7 +10405,7 @@ let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
 
 let isAnyFalseFailescCtx (fc,ec,sc) = (fc=[]) &&
-  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
+  List.for_all (fun ((_,s,_):branch_ctx) -> isAnyFalseCtx s) sc
 
 let isAnyFalseListCtx ctx = match ctx with
   | SuccCtx lc ->List.exists isAnyFalseCtx lc
@@ -10424,7 +10424,7 @@ let rec allFalseCtx ctx = match ctx with
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
 
 let isFalseBranchCtxL (ss:branch_ctx list) = 
-   (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
+   (ss!=[]) && (List.for_all (fun (_,c,_) -> isAnyFalseCtx c) ss )
 
 let is_inferred_pre estate = 
   not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
@@ -10442,9 +10442,9 @@ let is_inferred_pre_ctx ctx =
   Debug.no_1 "is_inferred_pre_ctx" pr pr2 is_inferred_pre_ctx ctx
 
 let remove_dupl_false (sl:branch_ctx list) = 
-  let (fl,nl) = (List.partition (fun (_,oc) -> 
+  let (fl,nl) = (List.partition (fun (_,oc,_) -> 
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
-  let pr = pr_list (fun (_,oc) -> !print_context_short oc) in
+  let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
     Debug.tinfo_hprint (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
@@ -10487,7 +10487,7 @@ let rec collect_term_err ctx =
   | OCtx (ctx1, ctx2) -> (collect_term_err ctx1) @ (collect_term_err ctx2)
 
 let collect_term_err_list_partial_context (ctx:list_partial_context) =
-  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) ->
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c,_) ->
     collect_term_err c) cl)) ctx in
   List.concat r
 
@@ -10824,22 +10824,22 @@ let invert_fail_branch_must_fail (pt, ft):(branch_fail list * branch_ctx list)=
      | Failure_Must _ ->
          begin
              match eso with
-               | Some es -> ([],[(pt, Ctx es)])
+               | Some es -> ([],[(pt, Ctx es, None)])
                | None -> failwith "Cformula.invert_branch_must_fail: something is wrong"
          end
      | _ -> ([(pt,ft)], [])
 
-let invert_ctx_branch_must_fail (pt, ctx):(branch_fail)=
+let invert_ctx_branch_must_fail (pt, ctx, oft):(branch_fail)=
   let foo es =
     let fc_template = {
-		fc_message = "INCONSISTENCY : expected failure but success instead";
-		fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
-		fc_prior_steps = [];
-		fc_orig_conseq  = es.es_orig_conseq;
-		fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
-		fc_failure_pts =  []} in
+	fc_message = "INCONSISTENCY : expected failure but success instead";
+	fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
+	fc_prior_steps = [];
+	fc_orig_conseq  = es.es_orig_conseq;
+	fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
+	fc_failure_pts =  []} in
     (Basic_Reason (fc_template,
-                   mk_failure_must "INCONSISTENCY : expected failure but success instead" "", es.es_trace)) in
+    mk_failure_must "INCONSISTENCY : expected failure but success instead" "", es.es_trace)) in
   match ctx with
     | Ctx es -> (pt, foo es)
     | _ -> report_error no_pos "not sure how to invert_outcome"
@@ -10917,8 +10917,8 @@ let context_of_branch_ctx_list ls =
     | [] -> (* report_error no_pos "Current Successful context should not be empty []" *)
         (* Not sure it's right or not *)
         false_ctx_with_orig_ante (false_es mkFalseFlow (None, []) no_pos) (mkFalse mkFalseFlow no_pos) no_pos
-    | [(_,c)] -> c
-    | (_,c)::ts -> OCtx (c,helper ts) 
+    | [(_,c,_)] -> c
+    | (_,c,_)::ts -> OCtx (c,helper ts) 
   in helper ls
  
 let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
@@ -10983,8 +10983,8 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
-let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
-let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c) ] ) 
+let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c, None) ] ) 
+let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c, None) ] ) 
 
 (* WN : this seems weird *)
 (* let rec is_empty_esc_stack (e:esc_stack) : bool = match e with *)
@@ -11020,18 +11020,25 @@ type: ((('a * 'b) * 'c) list * context) list ->
   ((('a * 'b) * 'c) list * context) list
 *)
 
+let or_fail_type_opt oft1 oft2=
+  match oft1, oft2 with
+    |Some ft1, Some ft2 -> Some (Or_Reason (ft1,ft2))
+    | Some _ , None -> oft1
+    | None, Some _ -> oft2
+    | _ -> None
+
 let rec merge_success s1 s2 = match s1,s2 with
     | [],xs | xs,[] -> xs   
         (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
-    | (l1,b1)::z1,(l2,b2)::z2 -> 
+    | (l1,b1,ft1)::z1,(l2,b2,ft2)::z2 -> 
 	if path_trace_eq l1 l2 then 
 	  let res = merge_success z1 z2 in
-	    ((l1,or_context b1 b2)::res)
+	    ((l1,or_context b1 b2, or_fail_type_opt ft1 ft2)::res)
 	else if path_trace_lt l1 l2 then 
 	  let res = merge_success z1 s2 in
-	    (l1,b1)::res
+	    (l1,b1,ft1)::res
 	else let res = merge_success s1 z2 in
-	  (l2,b2)::res
+	  (l2,b2,ft2)::res
        
 let pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context = 
   List.map (fun (fl,el,sl)-> 
@@ -11055,7 +11062,7 @@ let mk_list_partial_context (c:list_context) : (list_partial_context) =
 
 
 let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
-    = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
+    = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c, oft) -> (lab,c, oft)) sl)) cl
 
 
 
@@ -11334,7 +11341,7 @@ let isNonFalseListPartialCtx cl =
 let isNonFalseListFailescCtx cl = 
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
-  ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
+  ((List.length ess) >0) && not (List.for_all (fun (_,c,_) -> isAnyFalseCtx c) ess )) cl
 
 let keep_failure_failesc_context ((c,es,sc): failesc_context) : failesc_context =
   (c,[],[])
@@ -11539,11 +11546,11 @@ let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context
       (fun _ _ -> list_failesc_context_or f l1 l2) l1 l2
 
 let add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
-  let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
+  let sl_1 = List.map (fun (pt,ctx, oft) -> (((c_pid,c_opt)::pt),ctx, oft) ) sl in
     (fl,sl_1)
 
 let add_cond_label_failesc_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,esc,sl):failesc_context) =
-  let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
+  let sl_1 = List.map (fun (pt,ctx, oft) -> (((c_pid,c_opt)::pt),ctx, oft) ) sl in
     (fl,esc,sl_1)
 
 
@@ -11877,11 +11884,11 @@ and formula_of_list_failesc_context (ls : list_failesc_context) : formula =
 
 (* below ignored the escaping state! *)
 and formula_of_failesc_context ((_,_,sl) : failesc_context) : formula =  
-  List.fold_left (fun a (_,c)-> mkOr (formula_of_context c) a no_pos)
+  List.fold_left (fun a (_,c, _)-> mkOr (formula_of_context c) a no_pos)
           (mkFalse (mkTrueFlow ()) no_pos) sl
           
 and formula_of_partial_context ((fl,sl) : partial_context) : formula =  
-  List.fold_left (fun a (_,c)-> mkOr (formula_of_context c) a no_pos)
+  List.fold_left (fun a (_,c,_)-> mkOr (formula_of_context c) a no_pos)
           (mkFalse (mkTrueFlow ()) no_pos) sl
 
 and disj_count_ctx (ctx0 : context) = match ctx0 with
@@ -12397,7 +12404,9 @@ let get_start_partial_label (ctx:list_partial_context) =
   let pc = List.hd ctx in
     if (rank pc) < 1. then ""
     else let (_,ls) = pc in
-      helper (snd (List.hd ls))
+      (* helper (snd (List.hd ls)) *)
+    let _,ctx, _ = (List.hd ls) in
+    helper (ctx)
 
 	
 let rec replace_heap_formula_label nl f = match f with
@@ -13053,9 +13062,9 @@ let trans_list_context (c: list_context) (arg: 'a) f_c f_c_arg f_comb: (list_con
       (SuccCtx sc, f_comb acc)
 
 let trans_branch_ctx (c: branch_ctx) (arg: 'a) f_c f_c_arg f_comb : (branch_ctx * 'b) = 
-  let trace, ctx = c in
+  let trace, ctx, oft = c in
   let n_ctx, acc = trans_context ctx arg f_c f_c_arg f_comb in
-  ((trace, n_ctx), acc)
+  ((trace, n_ctx, oft), acc)
 
 let trans_failesc_context (c: failesc_context) (arg: 'a) f_c f_c_arg f_comb : (failesc_context * 'b) =
   let bf, es, bc = c in
@@ -13096,11 +13105,11 @@ let transform_list_context f (c:list_context):list_context =
 let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
   let f_c,f_f = f in
   let f_res = List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_f f_t )) fail_c in
-  let s_res = List.map (fun (lbl, ctx) -> (lbl, transform_context f_c ctx) ) succ_c in
+  let s_res = List.map (fun (lbl, ctx, oft) -> (lbl, transform_context f_c ctx, oft) ) succ_c in
     (f_res,s_res)
 
 let transform_branch_ctx f_es (ls:branch_ctx list): branch_ctx list = 
-  let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context f_es ctx) ) ls in
+  let rs = List.map (fun (lbl, ctx, oft) -> (lbl, transform_context f_es ctx, oft) ) ls in
   rs
 
 let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
@@ -13672,24 +13681,27 @@ let rec splitter (c:context)
 	      (r1,r2) in
   helper c
 
-let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
-	let r_caught,r_esc = splitter c nf cvar elim_ex_fn in
-	match (r_esc,r_caught) with
-	| None, None -> Err.report_error {Err.error_loc = no_pos;
-								Err.error_text = "Split can not return both empty contexts\n"}
-    | Some cl,None -> ([(p,fn_esc cl)],[])
-	| None, Some c -> ([],[(p,c)])
-	| Some cl,Some c ->  ([(p,fn_esc cl)],[(p,c)])
+let splitter_wrapper p c nf cvar elim_ex_fn fn_esc oft =
+  let r_caught,r_esc = splitter c nf cvar elim_ex_fn in
+  match (r_esc,r_caught) with
+    | None, None -> Err.report_error {Err.error_loc = no_pos;
+      Err.error_text = "Split can not return both empty contexts\n"}
+    | Some cl,None -> ([(p,fn_esc cl,oft)],[])
+    | None, Some c -> ([],[(p,c,oft)])
+    | Some cl,Some c ->  ([(p,fn_esc cl,oft)],[(p,c,oft)])
 
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
 let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)
-	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context =
-   List.map (fun (fl,el,sl)->
-						let r = List.map (fun (p,c)-> splitter_wrapper p c nf cvar elim_ex_fn fn_esc ) sl in
-						let re,rs = List.split r in
-						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl
+      (elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context =
+  List.map (fun (fl,el,sl)->
+      let r = List.map (fun (p,c, oft)->
+          let npt, nctx = splitter_wrapper p c nf cvar elim_ex_fn fn_esc oft in
+          (npt, nctx)
+      ) sl in
+      let re,rs = List.split r in
+      (fl,push_esc_elem el (List.concat re),(List.concat rs))) pl
 
 let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)
 	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context =
@@ -13715,7 +13727,7 @@ let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context)
 	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context =
 
-  let r = List.map (fun (l,c)->
+  let r = List.map (fun (l,c, oft)->
 	let r1,r2 = splitter c nf cvar elim_ex_fn in
 	let r1 = match r1 with
 	  | Some c-> Some (fn l c )  (* CF.SuccCtx[(CF.simplify_context c)] *)
@@ -14214,18 +14226,18 @@ and simplify_failesc_context (ctx : failesc_context) (bv : CP.spec_var list) =
 				(brfaillist,escstk,newbrctxlist)
 
 and simplify_branch_context (brctx : branch_ctx) (bv : CP.spec_var list) =
-	match brctx with
-		| (pathtrc, ctx) ->
-			let newctx = simplify_context ctx bv in
-				(pathtrc, newctx)
+  match brctx with
+    | (pathtrc, ctx, oft) ->
+	  let newctx = simplify_context ctx bv in
+	  (pathtrc, newctx, oft)
 
 and simplify_context (ctx : context) (bv : CP.spec_var list) = 
-	match ctx with
-		| Ctx ({ es_formula = esformula} as es) -> 
-						let sesfml = simplify_formula esformula bv in
-							Ctx { es with es_formula = sesfml }
-		| OCtx (ctx1, ctx2) -> 
-					OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
+  match ctx with
+    | Ctx ({ es_formula = esformula} as es) -> 
+	  let sesfml = simplify_formula esformula bv in
+	  Ctx { es with es_formula = sesfml }
+    | OCtx (ctx1, ctx2) -> 
+	  OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
 
 and simplify_formula (f : formula) (bv : CP.spec_var list) =
   Debug.no_2 "simplify_formula " !print_formula !print_svl !print_formula simplify_formula_x f bv
@@ -16399,7 +16411,7 @@ let collect_heap_args_context ctx (sv:CP.spec_var) : (CP.spec_var list * ident) 
       collect_heap_args_context_x ctx sv
 
 let collect_heap_args_failesc_context ((fail_c,esc_c, succ_c):failesc_context) (sv:CP.spec_var) : (CP.spec_var list * ident) =
-  let args_list = List.map (fun (lbl,ctx) -> collect_heap_args_context ctx sv) succ_c in
+  let args_list = List.map (fun (lbl,ctx,_) -> collect_heap_args_context ctx sv) succ_c in
   (*check consistency in each context*)
   if args_list=[] then ([],"") else
     (try

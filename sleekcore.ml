@@ -117,7 +117,7 @@ let sleek_unsat_check isvl cprog ante=
 
 let sleek_entail prog ante_ctx conseq pos=
   let pid = None in
-  let ante_failesc_ctx = [([],[],[([], ante_ctx)])] in
+  let ante_failesc_ctx = [([],[],[([], ante_ctx, None)])] in
   let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
   rs, prf
 
