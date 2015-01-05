@@ -9,14 +9,20 @@ pred lseg<p> ==  emp & self = p
 
 HeapPred H1(node y).
 
+
 //infer13-(E5)
 infer [z] x::node<z>  |- x::lseg<z>  .
 print residue.
+
+
 
 //infer13-(E5)
 infer [H1] H1(y) |-  y::lseg<null> .
 print residue.
 
+
+
 //infer13-(E5)
 infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 print residue.
+
