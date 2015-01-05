@@ -587,14 +587,17 @@ let compute_inv_mutrec_x mutrec_vnames views =
       let new_pf = lookup_inv invs pos fr_vars rev_sst in
       let pf =  MCP.pure_of_mix view.Cast.view_user_inv in
       let check_imply = TP.imply_raw new_pf pf in
-      if check_imply then 
-        let _ = DD.info_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
+      if check_imply then
+        let _ = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
         let _ = print_endline "" in
+        let idx = CP.mk_typed_spec_var Int "idx" in
+        let new_pf_svl = CP.fv new_pf in
+        let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl new_pf [idx] else new_pf in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.binfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          Debug.ninfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_x_formula <- memo_pf_P;
           view
         end
@@ -602,7 +605,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
     with _ -> view
   in
   (**************************************************)
-  if  not !Globals.do_infer_inv then
+  if (not !Globals.do_infer_inv) && (not !Globals.gen_baga_inv) then
     views
   else
     (*get all views of the loop*)
@@ -623,10 +626,11 @@ let compute_inv_mutrec_x mutrec_vnames views =
     let input_fixcalc  =  fixc_bodys ^ fixc_header in
     let _ = DD.ninfo_hprint (add_str "Input of fixcalc " pr_id) input_fixcalc no_pos in
     let _ =
-    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+      if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
     in
     (* Call the fixpoint calculation *)
     let invs = (compute_invs_fixcalc input_fixcalc) in
+    let _ = DD.ninfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in

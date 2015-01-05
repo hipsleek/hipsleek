@@ -2507,7 +2507,13 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
             ) cviews0_with_index in
-            let _ = Expure.fix_ef view_list cviews0_with_index in ()
+            let _ = Debug.ninfo_hprint (add_str "view_list" (pr_list Cprinter.string_of_view_decl)) view_list no_pos in
+            let new_view_list = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list) view_list in
+            let _ = Debug.ninfo_hprint (add_str "new_view_list" (pr_list Cprinter.string_of_view_decl)) new_view_list no_pos in
+            let new_invs = List.map (fun vd -> vd.Cast.view_x_formula) new_view_list in
+            let _ = Debug.binfo_hprint (add_str "new_invs" (pr_list Cprinter.string_of_mix_formula)) new_invs no_pos in
+            let _ = Expure.fix_ef view_list cviews0_with_index in
+            ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
             (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
