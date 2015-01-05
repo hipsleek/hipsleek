@@ -25,7 +25,7 @@ int main()
   ensures true & flow __Error;
 {
   int r = 1;
-  dprint;
+  //dprint;
   if (rand()) r=null_err();
   dprint;
   return r;

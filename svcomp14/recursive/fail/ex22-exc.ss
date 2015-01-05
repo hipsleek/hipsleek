@@ -17,7 +17,7 @@ int main()
 {
   int r = 1;
   if (rand()) r=exc();
-  dprint;
+  // dprint;
   return r;
 }
 

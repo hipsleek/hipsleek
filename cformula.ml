@@ -9125,7 +9125,7 @@ and list_context =
 
 and branch_fail = path_trace * fail_type
 
-and branch_ctx =  path_trace * context
+and branch_ctx =  path_trace * context (* * fail_type option *)
 
 (* disjunction of state with failures and partial success *)
 (* a state is successful if it has empty branch_fail *)
@@ -10200,17 +10200,16 @@ and get_failure_branch bfl=
               )
 
 and get_failure_partial_context_x ((bfl:branch_fail list), succs): (string option*failure_kind*error_type list)=
-  let (* ((s_opt, ft, e) as r) *)r = get_failure_branch bfl in
-  r
-  (* if !bug_detect then r else *)
-  (*   match s_opt with *)
-  (*     | None -> r *)
-  (*     | Some s -> begin *)
-  (*         match ft with *)
-  (*           | Failure_Must s1 -> if succs = [] then r else *)
-  (*               (Some ("(may) cause: [" ^s^",valid]"), Failure_May ("[" ^ s1^",valid]" ), e) *)
-  (*           |  _ -> r *)
-  (*       end *)
+  let ((s_opt, ft, e) as r) = get_failure_branch bfl in
+  if !bug_detect then r else
+    match s_opt with
+      | None -> r
+      | Some s -> begin
+          match ft with
+            | Failure_Must s1 -> if succs = [] then r else
+                (Some ("(may) cause: [" ^s^",valid]"), Failure_May ("[" ^ s1^",valid]" ), e)
+            |  _ -> r
+        end
 
 and get_failure_partial_context a: (string option*failure_kind*error_type list)=
   let pr1 = !print_partial_context in
