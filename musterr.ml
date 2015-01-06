@@ -175,15 +175,17 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       let _ = print_endline ("locle may:" ^ (pr may_fail_type)) in
     *)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
+    let es = {fail_ctx_template.fc_current_lhs  with es_formula = CF.substitute_flow_into_f !error_flow_int fail_ctx_template.fc_current_lhs.es_formula} in
     match oft with
-      | Some ft -> FailCtx (ft, cex)
+      | Some ft -> FailCtx (ft, (Ctx es) ,cex)
       | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
             let msg =  "use different strategies in proof searching (slicing)" in
             let fe =  mk_failure_may msg failure_name in
-            FailCtx ((Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft)), cex)
+            FailCtx ((Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft)),(Ctx es), cex)
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
-    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name, ft)) cex
+    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name, ft))
+        (Ctx (CF.convert_to_may_es fail_ctx_template.fc_current_lhs)) cex
 
 
 let build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
@@ -232,7 +234,7 @@ let convert_list_context prog ctxs=
   in
   match ctxs with
     | SuccCtx _ -> ctxs
-    | FailCtx (ft, cex) -> SuccCtx [(convert_failure ft cex)]
+    | FailCtx (ft, _, cex) -> SuccCtx [(convert_failure ft cex)]
 
 
 
