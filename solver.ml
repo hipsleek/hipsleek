@@ -3491,7 +3491,10 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
         (*WN :fixing incorrect handling of esc_stack by adding a skeletal structure*)
         let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
 	let res = match list_context_res with
-	  | FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])]
+	  | FailCtx (t,_) -> begin if !Globals.enable_error_as_exc then
+              ([([],esc_skeletal, [((lbl, c2 ,Some t))])])
+            else [([(lbl,t)],esc_skeletal,[])]
+            end
 	  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, oft)])) ls in
 	(res, prf)) succ_branches in
     let res_l,prf_l = List.split res in
@@ -4311,7 +4314,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;
 				  formula_assume_lbl = (i,y);} ->
-                                  DD.tinfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
+                                  DD.ninfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
+                                  DD.info_pprint ("EAssune post: " ^ (Cprinter.string_of_formula post)) pos; 
                                   if not has_post then report_error pos ("malfunction: this formula "^ y ^" does not have a post condition!")
 	                          else
                                     (match tid with

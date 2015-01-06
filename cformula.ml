@@ -9120,7 +9120,7 @@ and steps = string list
 
 (* Fail | List of Successes *)
 and list_context =
-  | FailCtx of (fail_type * failure_cex)
+  | FailCtx of (fail_type (* * context *) * failure_cex)
   | SuccCtx of context list
 
 and branch_fail = path_trace * fail_type

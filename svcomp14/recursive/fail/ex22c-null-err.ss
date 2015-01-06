@@ -5,11 +5,11 @@ data cell {
 int null_err()
   requires true
   ensures true & flow __Error;
-{
-  cell x;
-  x =null;
-  return x.val;
-}
+/* { */
+/*   cell x; */
+/*   x =null; */
+/*   return x.val; */
+/* } */
 
 int exc_only()
   requires true

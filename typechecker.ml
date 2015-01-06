@@ -2246,7 +2246,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
                   (*Loc: error as exception *)
                   (* move must, may flow into esc_stack *)
-                  if (CF.isSuccessListFailescCtx_new res) then
+                  if (!Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
                     (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                     let res = 
                      (* let _ = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
