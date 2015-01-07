@@ -3431,7 +3431,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
           else
             ([([(lbl,t)],[])],[])
           end
-	| SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c,oft)])) ls,
+	| SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c,None)])) ls,
           List.concat (List.map CF.collect_hp_unk_map ls) )
       in
       (res, prf, new_unk_map)
@@ -3501,7 +3501,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
               ([([],esc_skeletal, [((lbl, c ,Some t))])])
             else [([(lbl,t)],esc_skeletal,[])]
             end
-	  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, oft)])) ls in
+	  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, None)])) ls in
 	(res, prf)) succ_branches in
     let res_l,prf_l = List.split res in
     (*print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)

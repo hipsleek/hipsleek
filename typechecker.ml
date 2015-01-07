@@ -2618,7 +2618,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
      (* let _ = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
-      if f1 then
+      if not !Globals.enable_error_as_exc && f1 then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
 		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in 
@@ -2664,6 +2664,17 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
+          let rs = if !Globals.enable_error_as_exc then
+            (* convert brs with error flow -> Fail *)
+            List.fold_left (fun acc (fs, brs) ->
+                let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
+                    match oft with
+                      | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
+                      | None -> (acc_fs, acc_rest@[br])
+                ) ([],[]) brs in
+                acc@[(fs@ex_fs, rest)]
+            ) [] rs
+          else rs in
           let s,fk,ets= CF.get_failure_list_partial_context rs in
           (* let s = match CF.get_must_failure_list_partial_context rs with *)
           (*     | Some s -> "(must) cause:\n"^s *)

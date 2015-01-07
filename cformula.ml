@@ -11307,8 +11307,11 @@ let isSuccessBranchFail (_,ft) =
      | Failure_Valid -> true
      | Failure_Bot _ -> true
 
-let isSuccessPartialCtx_new (fs,_) =
- List.for_all isSuccessBranchFail fs
+let isSuccessPartialCtx_new (fs,succ_brs) =
+  let is_succ = List.for_all isSuccessBranchFail fs in
+  if not !Globals.enable_error_as_exc || not is_succ then is_succ else
+    (* all succ branch should not subsume must, may flows *)
+    List.for_all (fun (_,_, oft) -> oft = None) succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
 if (Gen.is_empty fs) then true else false
