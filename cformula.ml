@@ -10323,7 +10323,7 @@ let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branc
   (* Loc: to implement cex for hip. cex should be got from branch_fail *)
   let cex = mk_cex true in
   match (convert_must_failure_4_fail_type s ft cex) with
-    | Some b -> Some (pt,b, None)
+    | Some b -> Some (pt,b, Some ft)
     | None -> None
 
 let convert_must_failure_4_branch_fail_list  (s:string) (fl:branch_fail list) : (branch_ctx list * branch_fail list) =
@@ -11279,8 +11279,11 @@ let isFailBranchFail (_,ft) =
         | Failure_Valid -> false
         | Failure_Bot _ -> false
 
-let isFailFailescCtx_new (fs,_,_) =
-  List.exists isFailBranchFail fs
+let isFailFailescCtx_new (fs,_,brs) =
+  let is_fail = List.exists isFailBranchFail fs in
+  if not !Globals.enable_error_as_exc then is_fail else
+    if is_fail then is_fail else
+      List.exists (fun (_,_,oft) -> oft != None) brs
 
 let isFailPartialCtx_new (fs,ss) =
   List.exists isFailBranchFail fs

@@ -6819,7 +6819,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 	          (**************************************)
               let rec process_one rs1  =
 	            Debug.devel_pprint ("process_thread_one_match: process_one: rs1:\n"^ (Cprinter.string_of_context rs1)) pos;
-	            match rs1 with
+                match rs1 with
 	              | OCtx (c1, c2) ->
                         (*Won't expect this case to happen*)
                         let _ = print_endline ("[WARNING] process_thread_one_match: process_one: unexpected disjunctive ctx \n") in
@@ -14201,7 +14201,13 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
                               ^ "after normalizing"
                               ^"\n")) pos;
     let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
-    (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
+    let lfc1 = if !Globals.enable_error_as_exc then
+      (* List.map (fun ((lbl, ft), esc, brok) -> *)
+      (* ) *)
+      lfc
+    else CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc
+    in
+    (lfc1,prf)
   end
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)

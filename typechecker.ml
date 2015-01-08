@@ -247,17 +247,19 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
 (*checking whether the current state has full permissions of a list of spec vars *)
 (*check at | Var | Bind | Assign | Sharp_var*)
 let check_full_varperm_x prog ctx ( xs:CP.spec_var list) pos =
-  if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then (true,ctx) (*propagate fail contexts*)
+  if (not  (CF.isSuccessListFailescCtx_new ctx)) || (Gen.is_empty ctx)  then (true,ctx) (*propagate fail contexts*)
   else
     let _ = Debug.devel_pprint ("check_full_varperm for var " ^ (Cprinter.string_of_spec_var_list xs)^ "\n") pos in
     let full_p = CP.mk_varperm_full xs pos in
     let full_f = CF.formula_of_pure_formula full_p pos in
     let rs,prf = heap_entail_list_failesc_context_init prog false ctx full_f None None None pos None in
-    (if (CF.isFailListFailescCtx rs) then
+    let _ = print_endline ("rs xxxxx" ^ (Cprinter.string_of_list_failesc_context rs)) in
+    (* let check_fail_fnc = if !Globals.enable_error_as_exc then CF.isFailListFailescCtx_exc else CF.isFailListFailescCtx_new in *)
+    (if (CF.isFailListFailescCtx_new rs) then
           let _ = Debug.print_info "VarPerm Failure" ("check_full_varperm: var " ^ (Cprinter.string_of_spec_var_list xs)^ " MUST have full permission" ^ "\n") pos in
           (false,rs)
-     else
-          (true,ctx))
+    else
+      (true,ctx))
 
 let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
   let pr_out = pr_pair string_of_bool Cprinter.string_of_list_failesc_context in
