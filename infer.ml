@@ -1105,7 +1105,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
           (*   let quan_var = CP.diff_svl args iv in *)
           (*   TP.simplify_raw (CP.mkExists quan_var new_p None pos) *)
           (* else *)
-          simplify new_p iv
+          new_p
+        (*simplify new_p iv*)
         in
         let _ = DD.tinfo_hprint (add_str "new_p" !CP.print_formula) new_p pos in
         let _ = DD.tinfo_hprint (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in
@@ -1528,6 +1529,15 @@ and infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_x
       (fun _ _ _ _ _ -> infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos)
       estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
+let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
+  let (nes,nc,nlst) = infer_pure_m  unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos in
+  match nc with
+    | Some f ->
+          let nf = Translate_out_array_in_cpure_formula.translate_back_array_in_one_formula f in
+          (nes,Some nf,nlst)
+    | None -> (nes,nc,nlst)
+;;
+
 let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
   if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then 
     (None,None,[])
@@ -1571,6 +1581,8 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
     Debug.tinfo_hprint (add_str "infer_vars_hp_rel" !CP.print_svl) estate.es_infer_vars_hp_rel  no_pos;
     let infer_vars = estate.es_infer_vars@estate.es_infer_vars_hp_rel in 
     infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
+
+
 
 let infer_pure_m i unk_heaps estate  lhs_heap_xpure1 lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 

@@ -1884,6 +1884,9 @@ let simplify_omega (f:CP.formula): CP.formula =
 
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
+
+  let f = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full f in
+
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   if !Globals.no_simpl then f else
@@ -2010,12 +2013,130 @@ let simplify (f : CP.formula) : CP.formula =
                 (0.0) (PR_exception) in
               f
         end
+
+let om_pairwisecheck f =
+  wrap_pre_post norm_pure_input norm_pure_result
+  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
+      Omega.pairwisecheck f 
+
+let om_pairwisecheck f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
+
+let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  if not !tp_batch_mode then Omega.start ();
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let f = CP.mkOr f1 f2 None no_pos in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  let fn f = Omega.pairwisecheck2 f1 f2 in
+  let logger fr tt timeout =
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise2" logger fn f in
+  if not !tp_batch_mode then Omega.stop ();
+  res
+
+let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "tp_pairwisecheck2" pr pr pr tp_pairwisecheck2_x f1 f2
+
+
+let tp_pairwisecheck (f : CP.formula) : CP.formula =
+  if not !tp_batch_mode then start_prover ();
+  let simpl_num = next_proof_no () in
+  let simpl_no = (string_of_int simpl_num) in
+  let cmd = PT_PAIRWISE f in
+  let _ = Log.last_proof_command # set cmd in
+  (*if !Globals.allow_inf && Infinity.contains_inf f then f
+  else *)
+  let fn f = match !pure_tp with
+    | DP -> Dp.pairwisecheck f
+    | Isabelle -> Isabelle.pairwisecheck f
+    | Coq -> 
+        if (is_list_constraint f) then (Coq.pairwisecheck f)
+        else (Smtsolver.pairwisecheck f)
+    | Mona 
+    | OM ->
+        if (is_bag_constraint f) then (Mona.pairwisecheck f)
+        else (om_pairwisecheck f)
+    | OI ->
+        if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
+        else (om_pairwisecheck f)
+    | SetMONA -> Mona.pairwisecheck f
+    | CM ->
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else om_pairwisecheck f
+    | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
+    | Z3N -> Z3.pairwisecheck f
+    | Redlog -> Redlog.pairwisecheck f
+    | OCRed -> Redlog.pairwisecheck f
+    | Mathematica -> Mathematica.pairwisecheck f
+    | RM ->
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Redlog.pairwisecheck f
+    | ZM ->
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Smtsolver.pairwisecheck f
+    | PARAHIP -> (*TOCHECK: what is it for? *)
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Redlog.pairwisecheck f
+    | _ -> (om_pairwisecheck f) in
+  let logger fr tt timeout = 
+    let tp = (string_of_prover !pure_tp) in
+    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
+      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
+    (tp,simpl_no)
+  in
+  let res = Timelog.log_wrapper "pairwise" logger fn f in
+  if not !tp_batch_mode then stop_prover ();
+  res
+  
+let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
+  if no_andl f then  tp_pairwisecheck f 
+  else
+    let rec helper f =  match f with 
+      | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
+      | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
+      | _ ->  tp_pairwisecheck f in
+    helper f
+
+let pairwisecheck (f : CP.formula) : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "pairwisecheck" pr pr pairwisecheck_x f
+  
+
+
+let pairwisecheck_raw (f : CP.formula) : CP.formula =
+  let rels = CP.get_RelForm f in
+  let ids = List.concat (List.map get_rel_id_list rels) in
+  (* let pr = Cprinter.string_of_pure_formula in *)
+  (* Debug.info_hprint (add_str "f" pr) f no_pos; *)
+  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+  (* Debug.info_hprint (add_str "f_memo" pr) f_memo no_pos; *)
+  (* Debug.info_hprint (add_str "bvars" !CP.print_svl) bvars no_pos; *)
+  (* Debug.info_hprint (add_str "subs" (pr_list_ln (pr_pair !CP.print_sv pr))) subs no_pos; *)
+  if CP.has_template_formula f_memo then f
+  else
+    let res_memo = pairwisecheck f_memo in
+    (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
+    CP.restore_memo_formula subs bvars res_memo
+
+let pairwisecheck_raw (f : CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
+
+
 (*for AndList it simplifies one batch at a time*)
 let simplify (f:CP.formula):CP.formula =
   let rec helper f = match f with 
-   | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos
-   | AndList b -> mkAndList (map_l_snd simplify b)
-   | _ -> simplify f in
+   (* | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos *)
+   (* | AndList b -> mkAndList (map_l_snd simplify b) *)
+   | _ -> Translate_out_array_in_cpure_formula.translate_back_array_in_one_formula (tp_pairwisecheck (simplify f)) in
   helper f
 
 let simplify_tp (f:CP.formula):CP.formula =
@@ -2171,123 +2292,6 @@ let clever_hull f =
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "hull" pr pr clever_hull f
-
-
-let om_pairwisecheck f =
-  wrap_pre_post norm_pure_input norm_pure_result
-  (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
-      Omega.pairwisecheck f 
-
-let om_pairwisecheck f =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
-
-let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
-  if not !tp_batch_mode then Omega.start ();
-  let simpl_num = next_proof_no () in
-  let simpl_no = (string_of_int simpl_num) in
-  let f = CP.mkOr f1 f2 None no_pos in
-  let cmd = PT_PAIRWISE f in
-  let _ = Log.last_proof_command # set cmd in
-  let fn f = Omega.pairwisecheck2 f1 f2 in
-  let logger fr tt timeout =
-    let tp = (string_of_prover !pure_tp) in
-    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt
-      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
-    (tp,simpl_no)
-  in
-  let res = Timelog.log_wrapper "pairwise2" logger fn f in
-  if not !tp_batch_mode then Omega.stop ();
-  res
-
-let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula = 
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "tp_pairwisecheck2" pr pr pr tp_pairwisecheck2_x f1 f2
-
-
-let tp_pairwisecheck (f : CP.formula) : CP.formula =
-  if not !tp_batch_mode then start_prover ();
-  let simpl_num = next_proof_no () in
-  let simpl_no = (string_of_int simpl_num) in
-  let cmd = PT_PAIRWISE f in
-  let _ = Log.last_proof_command # set cmd in
-  (*if !Globals.allow_inf && Infinity.contains_inf f then f
-  else *)
-  let fn f = match !pure_tp with
-    | DP -> Dp.pairwisecheck f
-    | Isabelle -> Isabelle.pairwisecheck f
-    | Coq -> 
-        if (is_list_constraint f) then (Coq.pairwisecheck f)
-        else (Smtsolver.pairwisecheck f)
-    | Mona 
-    | OM ->
-        if (is_bag_constraint f) then (Mona.pairwisecheck f)
-        else (om_pairwisecheck f)
-    | OI ->
-        if (is_bag_constraint f) then (Isabelle.pairwisecheck f)
-        else (om_pairwisecheck f)
-    | SetMONA -> Mona.pairwisecheck f
-    | CM ->
-        if is_bag_constraint f then Mona.pairwisecheck f
-        else om_pairwisecheck f
-    | Z3 -> (* Smtsolver.pairwisecheck f *) om_pairwisecheck f
-    | Z3N -> Z3.pairwisecheck f
-    | Redlog -> Redlog.pairwisecheck f
-    | OCRed -> Redlog.pairwisecheck f
-    | Mathematica -> Mathematica.pairwisecheck f
-    | RM ->
-        if is_bag_constraint f then Mona.pairwisecheck f
-        else Redlog.pairwisecheck f
-    | ZM ->
-        if is_bag_constraint f then Mona.pairwisecheck f
-        else Smtsolver.pairwisecheck f
-    | PARAHIP -> (*TOCHECK: what is it for? *)
-        if is_bag_constraint f then Mona.pairwisecheck f
-        else Redlog.pairwisecheck f
-    | _ -> (om_pairwisecheck f) in
-  let logger fr tt timeout = 
-    let tp = (string_of_prover !pure_tp) in
-    let _ = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
-      (match fr with Some res -> PR_FORMULA res | None -> PR_exception) in
-    (tp,simpl_no)
-  in
-  let res = Timelog.log_wrapper "pairwise" logger fn f in
-  if not !tp_batch_mode then stop_prover ();
-  res
-  
-let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
-  if no_andl f then  tp_pairwisecheck f 
-  else
-    let rec helper f =  match f with 
-      | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
-      | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
-      | _ ->  tp_pairwisecheck f in
-    helper f
-
-let pairwisecheck (f : CP.formula) : CP.formula = 
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "pairwisecheck" pr pr pairwisecheck_x f
-  
-
-
-let pairwisecheck_raw (f : CP.formula) : CP.formula =
-  let rels = CP.get_RelForm f in
-  let ids = List.concat (List.map get_rel_id_list rels) in
-  (* let pr = Cprinter.string_of_pure_formula in *)
-  (* Debug.info_hprint (add_str "f" pr) f no_pos; *)
-  let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-  (* Debug.info_hprint (add_str "f_memo" pr) f_memo no_pos; *)
-  (* Debug.info_hprint (add_str "bvars" !CP.print_svl) bvars no_pos; *)
-  (* Debug.info_hprint (add_str "subs" (pr_list_ln (pr_pair !CP.print_sv pr))) subs no_pos; *)
-  if CP.has_template_formula f_memo then f
-  else
-    let res_memo = pairwisecheck f_memo in
-    (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
-    CP.restore_memo_formula subs bvars res_memo
-
-let pairwisecheck_raw (f : CP.formula) : CP.formula =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
 
 
 let simplify_with_pairwise (f : CP.formula) : CP.formula =

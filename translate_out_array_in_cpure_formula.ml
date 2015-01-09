@@ -129,7 +129,7 @@ let rec standarize_array_formula
   let name_counter = ref 0 in
   let mk_new_name ()=
     let _ = name_counter:= !name_counter + 1 in
-    Var (mk_typed_spec_var Int ("t_arr_var_"^(string_of_int (!name_counter))),no_pos)
+    Var (mk_typed_spec_var Int ("tarrvar"^(string_of_int (!name_counter))),no_pos)
   in
   let rec standarize_exp
         (e:exp):(exp * ((exp * exp) list))=
@@ -396,8 +396,9 @@ let get_array_transform_info_lst
                         begin
                           match primed with
                             | Primed ->
-                                  Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)
-                            | _ -> Var( SpecVar (atyp,(id)^"_"^(ArithNormalizer.string_of_exp e),primed),no_pos)
+                                  (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(ArithNormalizer.string_of_exp e),primed),no_pos)*)
+                                  Var( SpecVar (atyp,(id)^"___"^(ArithNormalizer.string_of_exp e)^"___",primed),no_pos)
+                            | _ -> Var( SpecVar (atyp,(id)^"___"^(ArithNormalizer.string_of_exp e)^"___",primed),no_pos)
                         end
                   | _ -> failwith "get_array_transform_info_lst: Not array type"
               end
@@ -1432,6 +1433,7 @@ let rec translate_array_relation
 
 let translate_out_array_in_one_formula
       (f:formula):formula=
+  let f = standarize_one_formula f in
   let (info_lst,_) = get_array_transform_info_lst f in
   let nf = translate_array_formula_LHS f info_lst in
   let nf =
@@ -1440,6 +1442,119 @@ let translate_out_array_in_one_formula
       | None -> nf
   in
   nf
+;;
+
+
+let rec translate_back_array_in_one_formula
+      (f:formula):formula=
+  let rec translate_back_array_in_exp
+        (e:exp):exp =
+    match e with
+      | Var (sv,_)->
+            begin
+              match sv with
+                | SpecVar (t,i,p)->
+                      let arr_var_regexp = Str.regexp ".*___.*___" in
+                      if (Str.string_match arr_var_regexp i 0)
+                      then
+                        (*let i = String.sub i 8 ((String.length i) - 9) in*)
+                        let splitter = Str.regexp "___" in
+                        let name_list = Str.split splitter i in
+                        let arr_name = List.nth name_list 0 in
+                        let index = List.nth name_list 1 in
+                        let n_sv = SpecVar (Array (t,1),arr_name,p) in
+                        let n_exp =
+                          try
+                            let const = int_of_string index in
+                            IConst (const,no_pos)
+                          with
+                              Failure "int_of_string" ->
+                                  Var (SpecVar (Int,index,Unprimed),no_pos)
+                        in
+                        ArrayAt (n_sv,[n_exp],no_pos)
+                      else
+                        e
+            end
+      | Add (e1,e2,loc)->
+            Add (translate_back_array_in_exp e1, translate_back_array_in_exp e2, loc)
+      | Subtract (e1,e2,loc)->
+            Subtract (translate_back_array_in_exp e1, translate_back_array_in_exp e2, loc)
+      | Mult (e1,e2,loc)->
+            Mult (translate_back_array_in_exp e1, translate_back_array_in_exp e2, loc)
+      | Div (e1,e2,loc)->
+            Div (translate_back_array_in_exp e1, translate_back_array_in_exp e2, loc)
+      | _ -> e
+  in
+  let translate_back_array_in_b_formula
+        ((p,ba):b_formula):b_formula =
+    let helper
+          (p:p_formula):p_formula =
+      match p with
+        | Frm _
+        | XPure _
+        | LexVar _
+        | BConst _
+        | BVar _
+        | BagMin _
+        | BagMax _
+        | VarPerm _
+        | RelForm _ ->
+              p
+        | BagIn (sv,e1,loc)->
+              p
+        | BagNotIn (sv,e1,loc)->
+              p
+        | Lt (e1,e2,loc) ->
+              Lt (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | Lte (e1,e2,loc) ->
+              Lte (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | Gt (e1,e2,loc) ->
+              Gt (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | Gte (e1,e2,loc) ->
+              Gte (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | SubAnn (e1,e2,loc) ->
+              SubAnn (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | Eq (e1,e2,loc) ->
+              Eq (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | Neq (e1,e2,loc) ->
+              Neq (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | ListIn (e1,e2,loc) ->
+              ListIn (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | ListNotIn (e1,e2,loc) ->
+              ListNotIn (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | ListAllN (e1,e2,loc) ->
+              ListAllN (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | ListPerm (e1,e2,loc)->
+              ListPerm (translate_back_array_in_exp e1, translate_back_array_in_exp e2,loc)
+        | EqMax (e1,e2,e3,loc)->
+              EqMax (translate_back_array_in_exp e1, translate_back_array_in_exp e2, translate_back_array_in_exp e3, loc)
+        | EqMin (e1,e2,e3,loc)->
+              EqMin (translate_back_array_in_exp e1, translate_back_array_in_exp e2,translate_back_array_in_exp e3,loc)
+        | _ -> p
+    in
+    (helper p,ba)
+  in
+  match f with
+    | BForm (b,fl)->
+          BForm (translate_back_array_in_b_formula b,fl)
+    | And (f1,f2,loc)->
+          And (translate_back_array_in_one_formula f1,translate_back_array_in_one_formula f2,loc)
+    | AndList lst->
+          AndList (List.map (fun (t,f)-> (t,translate_back_array_in_one_formula f)) lst)
+    | Or (f1,f2,fl,loc)->
+          Or (translate_back_array_in_one_formula f1,translate_back_array_in_one_formula f2,fl,loc)
+    | Not (f,fl,loc)->
+          Not (translate_back_array_in_one_formula f,fl,loc)
+    | Forall (sv,f,fl,loc)->
+          Forall (sv,translate_back_array_in_one_formula f,fl,loc)
+    | Exists (sv,f,fl,loc)->
+          Exists (sv,translate_back_array_in_one_formula f,fl,loc)
+;;
+
+let translate_back_array_in_one_formula
+      (f:formula):formula =
+  let pf = !print_pure in
+  Debug.no_1 "translate_back_array_in_one_formula" pf pf (fun f -> translate_back_array_in_one_formula f) f
 ;;
 
 (* Controlled by Globals.array_translate *)

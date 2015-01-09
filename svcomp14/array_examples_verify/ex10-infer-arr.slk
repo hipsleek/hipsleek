@@ -2,12 +2,16 @@
 /* 1: Valid */
 infer [a]
    true
-  |-  emp& a[5]>0.
+  |-  emp & a[5]>0.
+print residue.
 
+
+/*
 infer [x]
    true
   |-  emp& x>0.
 print residue.
+*/
 
 /*
 infer [x]   x<0 |-  emp& x>0.
@@ -19,6 +23,7 @@ infer [x]
   |-  emp& x>0.
 print residue.
 */
+
 
 slk_simplify x=1 | x=2. // 1<=x<=2
 
