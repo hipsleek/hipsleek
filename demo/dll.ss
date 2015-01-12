@@ -12,17 +12,13 @@ dll<p,n> == self = null & n = 0
   or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 
 	inv n >= 0;
 
-
-
 void insert(node2 x, int a)
-  requires x::dll<p, n> & n>0 //&  x!=null  
-  ensures x::dll<p, m> & m>n; 
+  requires x::dll<p, n> & x!=null //& n>0 //&  x!=null  
+  ensures x::dll<p, m> & m=n+1; 
 {
   bool l = x.next == null;
-  if (l)
-			x.next = new node2(a, x, null);
-		else 
-      insert(x.next, a);
+  if (l) x.next = new node2(a, x, null);
+  else insert(x.next, a);
 }
 
 

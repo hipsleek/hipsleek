@@ -2,15 +2,6 @@ data cell {
   int val;
 }
 
-int null_err()
-  requires true
-  ensures true & flow __Error;
-{
-  cell x;
-  x =null;
-  return x.val;
-}
-
 int exc_only()
   requires true
   ensures true & flow __Exc;
@@ -22,11 +13,11 @@ bool rand()
 
 int main()
   requires true
-  ensures true & flow __Error;
+  ensures true & flow __Exc or true & flow __norm;
 {
   int r = 1;
   //dprint;
-  if (rand()) r=null_err();
+  if (rand()) r=exc_only();
   dprint;
   return r;
 }

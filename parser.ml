@@ -380,7 +380,7 @@ let cexp_to_pure2 fct f01 f02 =
                     )
                 | _ -> (
                     match typ2 with
-                    | Array (t,_) -> if t== UNK then true else false
+                    | Array (t,_) -> if t== UNK || t==typ1 then true else false
                     | _ -> false
                   )
               ) in

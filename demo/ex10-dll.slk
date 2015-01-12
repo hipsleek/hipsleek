@@ -1,0 +1,27 @@
+data node2 {
+	int val; 
+	node2 prev;
+	node2 next;	
+}.
+
+pred dll<p,n> == self = null & n = 0 
+  or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 
+	inv n >= 0.
+
+checkentail x=null |- x::dll<p,n>.
+print residue.
+
+checkentail x::dll<p,n> |- x=null.
+print residue.
+
+
+checkentail x::node2<_,p,q>*q::dll<x,n> |- x::dll<r,m>.
+print residue.
+
+/*
+infer [n] x::dll<p,n> |- x=null.
+print residue.
+
+infer [n] x::dll<p,n> |- x::node2<_,p,q>.
+print residue.
+*/

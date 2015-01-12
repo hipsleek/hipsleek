@@ -1887,6 +1887,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             Gen.Profiling.push_time "[check_exp] Cond";
               let res = wrap_proving_kind PK_If_Stmt cond_op () in
             Gen.Profiling.pop_time "[check_exp] Cond";
+              (* let _ = print_endline ("cond res :" ^ (Cprinter.string_of_list_failesc_context res)) in *)
             res
             ;
         | Dprint ({exp_dprint_string = str;
@@ -2242,6 +2243,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = Debug.info_zprint (lazy ( (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)))) no_pos in *)
 		  Gen.Profiling.pop_time "[check_exp] SCall";
                   (* let _ = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
+                  (*Loc: error as exception *)
+                  (* move must, may flow into esc_stack *)
                   if (CF.isSuccessListFailescCtx_new res) then
                     (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                     let res = 
