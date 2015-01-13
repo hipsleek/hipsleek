@@ -62,7 +62,10 @@ let is_same_var
   match v1, v2 with
     | Var (sv1,_), Var (sv2,_)->
           is_same_sv sv1 sv2
-    | _ -> failwith "is_same_var: Invalid input"
+    | Var _, IConst _
+    | IConst _, Var _ ->
+          false
+    | _ -> failwith ("is_same_var:"^(ArithNormalizer.string_of_exp v1)^" "^(ArithNormalizer.string_of_exp v2)^" Invalid input")
 ;;
 
 let rec is_same_exp
@@ -309,16 +312,17 @@ let rec standarize_array_formula
       | BagNotIn (sv,e1,loc)->
             let (ne1,eelst1) = standarize_exp e1 in
             (BagNotIn (sv,ne1,loc),mk_p_formula_from_eelst eelst1)
+      | BConst _->
+            (p,[])
       | Frm _
       | XPure _
       | LexVar _
-      | BConst _
       | BVar _
       | BagMin _
       | BagMax _
       | VarPerm _
       | RelForm _ ->
-            failwith "standarize_array_formula: To Be Implemented"
+            failwith ("standarize_array_formula: To Be Implemented")
   in
   match f with
     | BForm ((p,_),fl)->
@@ -396,12 +400,15 @@ let standarize_array_imply
 (* Given a formula, replace all the occurance of a variable in the formula with another variable *)
 (* index is the variable to be replaced, with new_index *)
 let rec produce_new_index_predicate
-      (f:formula) (index:exp) (new_index:exp):formula =
+      (fo:formula) (index:exp) (new_index:exp):formula =
   let rec helper_exp
         (e:exp) (index:exp) (new_index:exp):exp =
     match e with
       | Var (sv,loc)->
             if is_same_var e index then new_index else e
+      | IConst _
+      | ArrayAt _ ->
+            e
       | Add (e1,e2,loc) ->
             Add (helper_exp e1 index new_index, helper_exp e2 index new_index, loc)
       | Subtract (e1,e2,loc)->
@@ -463,7 +470,7 @@ let rec produce_new_index_predicate
     in
     (helper_p_formula p index new_index, None)
   in
-  match f with
+  match fo with
     | BForm (b,fl)->
           let n_b = helper_b_formula b index new_index in
           BForm (n_b,fl)
@@ -488,9 +495,16 @@ let produce_new_index_predicate
   Debug.no_3 "produce_new_index_predicate" pf pe pe pf (fun f i n -> produce_new_index_predicate f i n) f index new_index
 ;;
 
+let produce_new_index_predicate_wrapper
+      (fo:formula option) (index:exp) (new_index:exp):formula =
+  match fo with
+    | Some f -> produce_new_index_predicate f index new_index
+    | None -> BForm ((Eq (index,new_index,no_pos),None),None)
+;;
+
 (* Given a formula, extract all the subformulas that is related to some variable *)
 let rec extract_index_predicate
-      (f:formula) (index:exp):formula =
+      (f:formula) (index:exp):(formula option) =
   let rec is_involved_exp
         (e:exp) (index:exp):bool =
     match e with
@@ -501,8 +515,11 @@ let rec extract_index_predicate
       | Mult (e1,e2,loc)
       | Div (e1,e2,loc)->
             (is_involved_exp e1 index)||(is_involved_exp e2 index)
+      | ArrayAt _
+      | IConst _ ->
+            false
       | _ ->
-            failwith "Translate_out_array_in_cpure_formula.extract_index_predicate: To Be Implemented"
+            failwith ("Translate_out_array_in_cpure_formula.extract_index_predicate: "^(ArithNormalizer.string_of_exp e)^" To Be Implemented")
   in
   let helper_b_formula
         ((p,ba):b_formula) (index:exp):(b_formula option) =
@@ -581,13 +598,59 @@ let rec extract_index_predicate
       | Exists (sv,f,fl,l)->
             helper f index
   in
-  mk_and_list (helper f index)
+  let helper
+        (f:formula) (index:exp) : (formula list)=
+    let _ = print_endline (!print_pure f) in
+    helper f index
+  in
+  match f with
+    | BForm _
+    | And _
+    | AndList _->
+          begin
+            match (helper f index) with
+              | [] ->
+                    None
+              | lst ->
+                    Some (mk_and_list lst)
+          end
+    | Or (f1,f2,fl,l)->
+          begin
+            match helper f1 index, helper f2 index with
+              | [],[]-> None
+              | lst,[]
+              | [],lst -> Some (mk_and_list lst)
+              | lst1,lst2 ->
+                    Some (Or (mk_and_list lst1,mk_and_list lst2,fl,l))
+          end
+    | Not (f,fl,l)->
+          begin
+            match helper f index with
+              | [] -> None
+              | lst -> Some (Not (mk_and_list lst,fl,l))
+          end
+    | Forall (sv,f,fl,l)->
+          begin
+            match helper f index with
+              | [] -> None
+              | lst -> Some (Forall (sv,mk_and_list lst,fl,l))
+          end
+    | Exists (sv,f,fl,l)->
+          begin
+            match helper f index with
+              | [] -> None
+              | lst -> Some (Exists (sv,mk_and_list lst,fl,l))
+          end
 ;;
 
 let extract_index_predicate
-      (f:formula) (index:exp):formula =
+      (f:formula) (index:exp):(formula option) =
   let pf = !print_pure in
-  Debug.no_2 "extract_index_predicate" pf ArithNormalizer.string_of_exp pf (fun f i -> extract_index_predicate f i) f index
+  let pfo = function
+    | Some f -> pf f
+    | None -> "Constant index"
+  in
+  Debug.no_2 "extract_index_predicate" pf ArithNormalizer.string_of_exp pfo (fun f i -> extract_index_predicate f i) f index
 ;;
 
 (* Get array transform information from cpure formula *)
@@ -1109,7 +1172,7 @@ let translate_array_formula_LHS_b_formula
 ;;
 
 let rec translate_array_formula_LHS
-      (f:formula) (infolst:array_transform_info list):formula=
+      (f:formula) (infolst:array_transform_info list) (f_whole:formula):formula=
   match f with
     | BForm (b,fl)->
           let rec helper
@@ -1118,7 +1181,7 @@ let rec translate_array_formula_LHS
             match lhslst with
               | [] -> f
               | (eelst,bformula)::rest ->
-                    let ante = mk_and_list (List.map (fun (i, ni) -> produce_new_index_predicate (extract_index_predicate f i) i ni) eelst) in
+                    let ante = mk_and_list (List.map (fun (i, ni) -> produce_new_index_predicate_wrapper (extract_index_predicate f_whole i) i ni) eelst) in
                     (* let ante = mk_and_list (List.map (fun p -> BForm ((p,None),None)) plst) in *)
                     let imply = mk_imply ante (BForm (bformula,None)) in
                     And (imply,helper rest,no_pos)
@@ -1126,17 +1189,22 @@ let rec translate_array_formula_LHS
           let lhslst = translate_array_formula_LHS_b_formula b infolst in
           helper lhslst
     | And (f1,f2,l)->
-          And (translate_array_formula_LHS f1 infolst,translate_array_formula_LHS f2 infolst,l)
+          And (translate_array_formula_LHS f1 infolst f_whole,translate_array_formula_LHS f2 infolst f_whole,l)
     | AndList lst->
-          AndList (List.map (fun (t,f)->(t,translate_array_formula_LHS f infolst)) lst)
+          AndList (List.map (fun (t,f)->(t,translate_array_formula_LHS f infolst f_whole)) lst)
     | Or (f1,f2,fl,l)->
-          Or (translate_array_formula_LHS f1 infolst,translate_array_formula_LHS f2 infolst,fl,l)
+          Or (translate_array_formula_LHS f1 infolst f_whole,translate_array_formula_LHS f2 infolst f_whole,fl,l)
     | Not (f,fl,l)->
-          Not (translate_array_formula_LHS f infolst,fl,l)
+          Not (translate_array_formula_LHS f infolst f_whole,fl,l)
     | Forall (sv,f,fl,l)->
-          Forall (sv,translate_array_formula_LHS f infolst,fl,l)
+          Forall (sv,translate_array_formula_LHS f infolst f_whole,fl,l)
     | Exists (sv,f,fl,l)->
-          Exists (sv,translate_array_formula_LHS f infolst,fl,l)
+          Exists (sv,translate_array_formula_LHS f infolst f_whole,fl,l)
+;;
+
+let translate_array_formula_LHS
+      (f:formula) (infolst:array_transform_info list):formula=
+  translate_array_formula_LHS f infolst f
 ;;
 
 (* translating array equation *)
