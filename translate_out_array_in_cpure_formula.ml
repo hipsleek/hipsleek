@@ -485,7 +485,7 @@ let produce_new_index_predicate
       (f:formula) (index:exp) (new_index:exp):formula =
   let pf = !print_pure in
   let pe = ArithNormalizer.string_of_exp in
-  Debug.no_3 "extract_index_predicate" pf pe pe pf (fun f i n -> produce_new_index_predicate f i n) f index new_index
+  Debug.no_3 "produce_new_index_predicate" pf pe pe pf (fun f i n -> produce_new_index_predicate f i n) f index new_index
 ;;
 
 (* Given a formula, extract all the subformulas that is related to some variable *)
@@ -934,7 +934,7 @@ let find_replace
 (* END of find_replace *)
 
 let translate_array_formula_LHS_b_formula
-      ((p,ba):b_formula) (infolst:array_transform_info list):((p_formula list) * b_formula) list=
+      ((p,ba):b_formula) (infolst:array_transform_info list):(((exp * exp) list) * b_formula) list=
   let translate_base = extract_translate_base p in
   (* translate_base is a list of exp, denoting all the ArrayAt in a p_formula *)
   let translate_infolstlst = constraint_generator translate_base infolst in
@@ -1093,14 +1093,15 @@ let translate_array_formula_LHS_b_formula
       | _ ->  p
   in
   let rec mk_array_free_formula_lst
-        (p:p_formula) (infolstlst:(((array_transform_info list) * ((exp * exp) list)) list)):(((p_formula list) * b_formula) list)=
+        (* (p:p_formula) (infolstlst:(((array_transform_info list) * ((exp * exp) list)) list)):(((p_formula list) * b_formula) list)= *)
+        (p:p_formula) (infolstlst:(((array_transform_info list) * ((exp * exp) list)) list)):((((exp * exp) list) * b_formula) list)=
     match infolstlst with
       | (alst,eelst)::rest ->
-            let plst = List.map (fun (e1,e2) -> Eq (e1,e2,no_pos)) eelst in
+            (* let plst = List.map (fun (e1,e2) -> Eq (e1,e2,no_pos)) eelst in *)
             begin
-              match plst with
+              match eelst with
                 | [] -> mk_array_free_formula_lst p rest
-                | _ -> (plst,(mk_array_free_formula p alst,None))::(mk_array_free_formula_lst p rest)
+                | _ -> (eelst,(mk_array_free_formula p alst,None))::(mk_array_free_formula_lst p rest)
             end
       | [] -> []
   in
@@ -1112,11 +1113,13 @@ let rec translate_array_formula_LHS
   match f with
     | BForm (b,fl)->
           let rec helper
-                (lhslst:((p_formula list) * b_formula) list):formula=
+                (* (lhslst:((p_formula list) * b_formula) list):formula=*)
+                (lhslst:((((exp * exp) list) * b_formula) list)) : formula =
             match lhslst with
               | [] -> f
-              | (plst,bformula)::rest ->
-                    let ante = mk_and_list (List.map (fun p -> BForm ((p,None),None)) plst) in
+              | (eelst,bformula)::rest ->
+                    let ante = mk_and_list (List.map (fun (i, ni) -> produce_new_index_predicate (extract_index_predicate f i) i ni) eelst) in
+                    (* let ante = mk_and_list (List.map (fun p -> BForm ((p,None),None)) plst) in *)
                     let imply = mk_imply ante (BForm (bformula,None)) in
                     And (imply,helper rest,no_pos)
           in
