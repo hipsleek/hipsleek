@@ -2,17 +2,22 @@ open Cpure
 open Globals
 open Debug
 (* Translate out array in cpure formula  *)
+
+(* array_transform_info contains 2 fields. *target_array* denotes the array element expression to be translated, while *new_name* denoting the new expression *)
 type array_transform_info =
     {
         target_array:exp;
         new_name:exp
-    };;
+    }
+;;
+
 type array_transform_return =
     {
         imply_ante: b_formula;
         imply_conseq: b_formula;
         array_to_var: b_formula;
-    };;
+    }
+;;
 
 let print_pure = ref (fun (c:formula) -> "printing not initialized");;
 let string_of_array_transform_info
@@ -117,7 +122,6 @@ let is_same_array_at
           if (is_same_sv sv1 sv2) && (is_same_exp_list elst1 elst2) then true else false
     | _,_ -> failwith "is_same_array_at: Invalid Input"
 ;;
-
 
 let mk_imply
       (ante:formula) (conseq:formula):formula=
@@ -314,7 +318,7 @@ let rec standarize_array_formula
       | BagMax _
       | VarPerm _
       | RelForm _ ->
-            (p,[])
+            failwith "standarize_array_formula: To Be Implemented"
   in
   match f with
     | BForm ((p,_),fl)->
@@ -389,7 +393,8 @@ let standarize_array_imply
   Debug.no_2 "standarize_array_imply" pf pf pr (fun ante conseq -> standarize_array_imply ante conseq) ante conseq
 ;;
 
-
+(* Given a formula, replace all the occurance of a variable in the formula with another variable *)
+(* index is the variable to be replaced, with new_index *)
 let rec produce_new_index_predicate
       (f:formula) (index:exp) (new_index:exp):formula =
   let rec helper_exp
@@ -454,7 +459,7 @@ let rec produce_new_index_predicate
         | BagMax _
         | VarPerm _
         | RelForm _ ->
-              p
+              failwith "produce_new_index_predicate: To Be Implemented"
     in
     (helper_p_formula p index new_index, None)
   in
@@ -476,12 +481,119 @@ let rec produce_new_index_predicate
           Exists (sv,produce_new_index_predicate f index new_index,fl,l)
 ;;
 
-let extract_index_predicate
-      (f:formula) (index:exp):formula =
+let produce_new_index_predicate
+      (f:formula) (index:exp) (new_index:exp):formula =
+  let pf = !print_pure in
+  let pe = ArithNormalizer.string_of_exp in
+  Debug.no_3 "extract_index_predicate" pf pe pe pf (fun f i n -> produce_new_index_predicate f i n) f index new_index
 ;;
 
+(* Given a formula, extract all the subformulas that is related to some variable *)
+let rec extract_index_predicate
+      (f:formula) (index:exp):formula =
+  let rec is_involved_exp
+        (e:exp) (index:exp):bool =
+    match e with
+      | Var (sv,loc)->
+            is_same_var e index
+      | Add (e1,e2,loc)
+      | Subtract (e1,e2,loc)
+      | Mult (e1,e2,loc)
+      | Div (e1,e2,loc)->
+            (is_involved_exp e1 index)||(is_involved_exp e2 index)
+      | _ ->
+            failwith "Translate_out_array_in_cpure_formula.extract_index_predicate: To Be Implemented"
+  in
+  let helper_b_formula
+        ((p,ba):b_formula) (index:exp):(b_formula option) =
+    let helper_p_formula
+          (p:p_formula) (index:exp):(p_formula option) =
+      match p with
+        | Lt (e1, e2, loc)
+        | Lte (e1, e2, loc)
+        | Gt (e1, e2, loc)
+        | Gte (e1, e2, loc)
+        | SubAnn (e1, e2, loc)
+        | Eq (e1, e2, loc)
+        | Neq (e1, e2, loc)
+        | BagSub (e1, e2, loc)
+        | ListIn (e1, e2, loc)
+        | ListNotIn (e1, e2, loc)
+        | ListAllN (e1, e2, loc)
+        | ListPerm (e1, e2, loc)->
+              if (is_involved_exp e1 index) || (is_involved_exp e2 index)
+              then
+                Some p
+              else
+                None
+        | EqMax (e1, e2, e3, loc)
+        | EqMin (e1, e2, e3, loc)->
+              if (is_involved_exp e1 index) || (is_involved_exp e2 index) || (is_involved_exp e3 index)
+              then
+                Some p
+              else
+                None
+        | BagIn (sv,e1,loc)
+        | BagNotIn (sv,e1,loc)->
+              if (is_involved_exp e1 index)
+              then
+                Some p
+              else
+                None
+        | Frm _
+        | XPure _
+        | LexVar _
+        | BConst _
+        | BVar _
+        | BagMin _
+        | BagMax _
+        | VarPerm _
+        | RelForm _ ->
+              failwith "extract_index_predicate: To Be Implemented"
+    in
+    match helper_p_formula p index with
+      | Some pf ->
+            Some (pf,None)
+      | None ->
+            None
+  in
+  let rec helper
+        (f:formula) (index:exp): (formula list) =
+    match f with
+      | BForm (b,fl)->
+            begin
+              match (helper_b_formula b index) with
+                | Some bp ->
+                      [BForm (bp,fl)]
+                | None ->
+                      []
+            end
+      | And (f1,f2,l)->
+            (helper f1 index)@(helper f2 index)
+      | AndList lst->
+            List.fold_left (fun l (t,f) -> l@(helper f index)) [] lst
+      | Or (f1,f2,fl,l)->
+            (helper f1 index)@(helper f2 index)
+      | Not (f,fl,l)->
+            helper f index
+      | Forall (sv,f,fl,l)->
+            helper f index
+      | Exists (sv,f,fl,l)->
+            helper f index
+  in
+  mk_and_list (helper f index)
+;;
+
+let extract_index_predicate
+      (f:formula) (index:exp):formula =
+  let pf = !print_pure in
+  Debug.no_2 "extract_index_predicate" pf ArithNormalizer.string_of_exp pf (fun f i -> extract_index_predicate f i) f index
+;;
 
 (* Get array transform information from cpure formula *)
+(* Actually I don't have to translate the array out here. But due to some historical reason, the implementation is like this. *)
+(* In later usage of this method, I only use the array_transform_info list. *)
+
 let get_array_transform_info_lst
       (f:formula):((array_transform_info list) * formula)=
   let rec get_array_transform_info_lst_helper
@@ -503,7 +615,7 @@ let get_array_transform_info_lst
                   | _ -> failwith "get_array_transform_info_lst: Not array type"
               end
     in
-
+    (* return a list of array_transform_info and an array-free expression *)
     let rec get_array_transform_info_lst_from_exp
           (e:exp):((array_transform_info list) * exp)=
       match e with
@@ -735,8 +847,6 @@ let constraint_generator
   iterate baselst infolst infolst []
 ;;
 
-
-
 (* return a list of exp, indicating what ArrayAt is contained in a p_formula*)
 let extract_translate_base
       (p:p_formula):(exp list)=
@@ -788,6 +898,8 @@ let extract_translate_base
   helper p
 ;;
 
+(* find_replace: find a new name for an array expression, return the new expression and the new transform information *)
+(* The array expressions and the new variable expressions are mapped one to one *)
 let find_replace
       (e:exp) (infolst:array_transform_info list):(exp * (array_transform_info list))=
   let rec helper
@@ -819,6 +931,7 @@ let find_replace
   let p_e = ArithNormalizer.string_of_exp in
   Debug.no_2 "find_replace" p_e p_infolst p_result (fun e i -> find_replace e i) e infolst
 ;;
+(* END of find_replace *)
 
 let translate_array_formula_LHS_b_formula
       ((p,ba):b_formula) (infolst:array_transform_info list):((p_formula list) * b_formula) list=
@@ -994,8 +1107,6 @@ let translate_array_formula_LHS_b_formula
   mk_array_free_formula_lst p translate_infolstlst
 ;;
 
-
-
 let rec translate_array_formula_LHS
       (f:formula) (infolst:array_transform_info list):formula=
   match f with
@@ -1025,6 +1136,7 @@ let rec translate_array_formula_LHS
           Exists (sv,translate_array_formula_LHS f infolst,fl,l)
 ;;
 
+(* translating array equation *)
 let mk_array_equal_formula
       (ante:formula) (infolst:array_transform_info list):formula option=
   let array_new_name_tbl = Hashtbl.create 10000 in
@@ -1104,8 +1216,6 @@ let mk_array_equal_formula
 ;;
 
 
-
-
 let mk_array_equal_formula
       (ante:formula) (infolst:array_transform_info list):(formula option)=
   let pinfolst=
@@ -1120,6 +1230,7 @@ let mk_array_equal_formula
   in
   Debug.no_2 "mk_array_equal_formula" pf pinfolst presult (fun ante infolst-> mk_array_equal_formula ante infolst) ante infolst
 ;;
+(* END of translating array equation *)
 
 let translate_out_array_in_imply
       (ante:formula) (conseq:formula) : (formula * formula) =
@@ -1234,10 +1345,7 @@ let rec drop_array_formula
 (*   let dispatch *)
 (*         (meth_name:string) *)
 
-
-
-
-
+(* For update_array_1d *)
 let rec translate_array_relation
       (f:formula):formula=
   let translate_array_relation_in_b_formula
@@ -1291,7 +1399,7 @@ let translate_out_array_in_one_formula
   nf
 ;;
 
-
+(* translate the array back to the formula *)
 let rec translate_back_array_in_one_formula
       (f:formula):formula=
   let rec translate_back_array_in_exp
@@ -1403,6 +1511,8 @@ let translate_back_array_in_one_formula
   let pf = !print_pure in
   Debug.no_1 "translate_back_array_in_one_formula" pf pf (fun f -> translate_back_array_in_one_formula f) f
 ;;
+(* END of translating back the array to a formula *)
+
 
 (* Controlled by Globals.array_translate *)
 let translate_out_array_in_imply

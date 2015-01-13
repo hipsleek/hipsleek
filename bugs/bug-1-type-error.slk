@@ -1,10 +1,33 @@
 
-/*
+
 /* 15: Valid */
+
+//1
 checkentail
    a[5]=3 & a[3]=6
    |- a[a[5]]=6.
-*/
+
+//2
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]]>5.
+
+//3
+checkentail
+   a[5]=3 & a[3]=6 & a[6]=3
+   |- a[a[5]] = a[a[6]].
+
+
+//4
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]]=6.
+
+//5
+checkentail
+   a[5]=3 & a[3]=6
+   |- 5 < a[a[5]].
+
 
 
 /*

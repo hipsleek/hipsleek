@@ -369,18 +369,30 @@ let cexp_to_pure2 fct f01 f02 =
           | _ -> (
               let typ1 = P.typ_of_exp f1 in 
               let typ2 = P.typ_of_exp f2 in
-              let arr_typ_check typ1 typ2 = (
+              let rec arr_typ_check typ1 typ2 = (
                 match typ1 with
-                | Array (t1,_) ->
-                    if t1== UNK || t1 == typ2 then true
-                    else (
-                      match typ2 with
-                      | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
-                      | _ -> false
+                | Array (t1,_) -> begin
+                    match t1 with
+                      | Array _ -> arr_typ_check t1 typ2
+                      | _ ->
+                            if t1== UNK || t1 == typ2 then true
+                            else (
+                                match typ2 with
+                                  | Array (t2,_) -> begin
+                                      match t2 with
+                                        | Array _ -> arr_typ_check typ1 t2
+                                        | _ -> if t2== UNK || t1==t2 then true else false
+                                    end
+                                  | _ -> false
                     )
+                  end
                 | _ -> (
                     match typ2 with
-                    | Array (t,_) -> if t== UNK || t==typ1 then true else false
+                    | Array (t,_) -> begin
+                        match t with
+                          | Array _ -> arr_typ_check typ1 t
+                          | _ -> if t== UNK || t==typ1 then true else false
+                      end
                     | _ -> false
                   )
               ) in
