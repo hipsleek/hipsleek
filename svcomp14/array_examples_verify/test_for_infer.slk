@@ -69,30 +69,12 @@ infer [a,i]
   |- a[i+5]>0.
 print residue.
 
-
-/* Something wrong with this one */
-/*
+// 14
 infer [a]
   true
   |- 6 + a[3] > 1.
 
-// The same case in a[a[5]]
-
-*/
-/*
+// 15
 infer [a]
   true
   |- 6 + (a[3]) > 1.
-*/
-
-checkentail
-  a[i]=5 & i=3
-  |- a[3]=5.
-
-checkentail
-  a[i]=5 & i>2
-  |- a[3]=5.
-
-checkentail
-   a[i]=5 & (i=2 | i=3)
-   |- a[3]=5.

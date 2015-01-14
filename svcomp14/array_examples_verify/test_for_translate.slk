@@ -94,3 +94,45 @@ checkentail
    a[5]=3 & a[2+6]=8
    |- a[7+1]=5.
 
+/* 17: Valid */
+checkentail
+  a[i]=5 & i=3
+  |- a[3]=5.
+
+/* 18: Invalid */
+checkentail
+  a[i]=5 & i=3
+  |- a[5]=5.
+
+/* 19: Valid */
+checkentail
+  a[i]=5 & i>2
+  |- a[3]=5.
+
+/* 20: Invalid */
+checkentail
+  a[i]=5 & i>2
+  |- a[1]=5.
+
+/* 21: Valid */
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[3]=5.
+
+/* 22: Invalid */
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[5]=5.
+
+/* 23: Test for existential quantifier */
+checkentail
+   a[2+5]=5
+   |-a[1+6]=5.
+
+/* 24: Test for existential quantifier */
+/* To Be Implemented */
+/*
+checkentail
+   a[a[1]]=5 & a[1]=5
+   |- a[5]=5.
+*/

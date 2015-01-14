@@ -140,14 +140,14 @@ let rec mk_and_list
 ;;
 
 let rec standarize_array_formula
-      (f:formula):(formula*(formula list))=
+      (f:formula):(formula * (formula list) * (spec_var list))=
   let name_counter = ref 0 in
-  let mk_new_name ()=
+  let mk_new_name ():spec_var =
     let _ = name_counter:= !name_counter + 1 in
-    Var (mk_typed_spec_var Int ("tarrvar"^(string_of_int (!name_counter))),no_pos)
+    mk_typed_spec_var Int ("tarrvar"^(string_of_int (!name_counter)))
   in
   let rec standarize_exp
-        (e:exp):(exp * ((exp * exp) list))=
+        (e:exp):(exp * ((exp * exp) list) * (spec_var list))=
     match e with
       | ArrayAt (sv,elst,loc) ->
             begin
@@ -157,14 +157,15 @@ let rec standarize_array_formula
                         match h with
                           | Var _
                           | IConst _ ->
-                                (e,[])
+                                (e,[],[])
                           | Add (e1,e2,loc)
                           | Subtract (e1,e2,loc)
                           | Mult (e1,e2,loc)
                           | Div (e1,e2,loc)->
-                                let nname = mk_new_name () in
-                                let (ne1,eelst1) = standarize_exp e1 in
-                                let (ne2,eelst2) = standarize_exp e2 in
+                                let nsv = mk_new_name () in
+                                let nname = Var (nsv,no_pos) in
+                                let (ne1,eelst1,svlst1) = standarize_exp e1 in
+                                let (ne2,eelst2,svlst2) = standarize_exp e2 in
                                 let neelst =
                                   begin
                                     match h with
@@ -175,71 +176,40 @@ let rec standarize_array_formula
                                       | _ -> failwith "standarize_exp: Invalid Input"
                                   end
                                 in
-                                (ArrayAt (sv,[nname],loc), neelst)
+                                (ArrayAt (sv,[nname],loc), neelst, (nsv::(svlst1@svlst2)))
                           | _ -> failwith "standarize_exp: Invalid case for index"
                       end
                 | _ -> failwith "standarize_exp: Fail to handle multi-dimension array"
             end
-      | Tup2 ((e1,e2),loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Tup2 ((ne1,ne2),loc),eelst1@eelst2)
       | Add (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Add (ne1,ne2,loc),eelst1@eelst2)
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Add (ne1,ne2,loc),eelst1@eelst2,svlst1@svlst2)
       | Subtract (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Subtract (ne1,ne2,loc),eelst1@eelst2)
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Subtract (ne1,ne2,loc),eelst1@eelst2,svlst1@svlst2)
       | Mult (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Mult (ne1,ne2,loc),eelst1@eelst2)
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Mult (ne1,ne2,loc),eelst1@eelst2,svlst1@svlst2)
       | Div (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Div (ne1,ne2,loc),eelst1@eelst2)
-      | Max (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Max (ne1,ne2,loc),eelst1@eelst2)
-      | Min (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Min (ne1,ne2,loc),eelst1@eelst2)
-      | BagDiff (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (BagDiff (ne1,ne2,loc),eelst1@eelst2)
-      | ListCons (e1,e2,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (ListCons (ne1,ne2,loc),eelst1@eelst2)
-      | TypeCast (typ,e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (TypeCast (typ,ne1,loc),eelst1)
-      | ListHead (e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (ListHead (ne1,loc),eelst1)
-      | ListTail (e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (ListTail (ne1,loc),eelst1)
-      | ListLength (e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (ListLength (ne1,loc),eelst1)
-      | ListReverse (e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (ListReverse (ne1,loc),eelst1)
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Div (ne1,ne2,loc),eelst1@eelst2,svlst1@svlst2)
+      | IConst _ ->
+            (e,[],[])
+      | Var _ ->
+            (e,[],[])
       | Func _ -> failwith "standarize_exp: Func To Be Implemented"
       | List _ -> failwith "standarize_exp: List To Be Implemented"
       | Bag _ -> failwith "standarize_exp: Bag To Be Implemented"
       | BagUnion _ -> failwith "standarize_exp: BagUnion To Be Implemented"
       | BagIntersect _ -> failwith "standarize_exp: BagIntersect To Be Implemented"
-      | _ -> (e,[])
+      | _ -> failwith "standarzie_exp: To Be Implemented"
   in
   let standarize_p_formula
-        (p:p_formula):(p_formula * (p_formula list))=
+        (p:p_formula):(p_formula * (p_formula list) * (spec_var list))=
     let rec mk_p_formula_from_eelst
           (eelst: ( (exp * exp) list)):(p_formula list)=
       match eelst with
@@ -249,71 +219,44 @@ let rec standarize_array_formula
     in
     match p with
       | Lt (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Lt (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Lt (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | Lte (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Lte (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+           let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Lte (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | Gt (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Gt (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+           let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Gt (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | Gte (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Gte (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+           let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Gte (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | SubAnn (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (SubAnn (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+           let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (SubAnn (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | Eq (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Eq (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
+           let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Eq (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | Neq (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (Neq (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | BagSub (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (BagSub (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | ListIn (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (ListIn (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | ListNotIn (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (ListNotIn (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | ListAllN (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (ListAllN (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | ListPerm (e1, e2, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            (ListPerm (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2))
-      | EqMax (e1, e2, e3, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            let (ne3,eelst3) = standarize_exp e3 in
-            (EqMax (ne1,ne2,ne3,loc),mk_p_formula_from_eelst ((eelst1@eelst2)@eelst3))
-      | EqMin (e1, e2, e3, loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            let (ne2,eelst2) = standarize_exp e2 in
-            let (ne3,eelst3) = standarize_exp e3 in
-            (EqMin (ne1,ne2,ne3,loc),mk_p_formula_from_eelst ((eelst1@eelst2)@eelst3))
-      | BagIn (sv,e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (BagIn (sv,ne1,loc),mk_p_formula_from_eelst eelst1)
-      | BagNotIn (sv,e1,loc)->
-            let (ne1,eelst1) = standarize_exp e1 in
-            (BagNotIn (sv,ne1,loc),mk_p_formula_from_eelst eelst1)
+            let (ne1,eelst1,svlst1) = standarize_exp e1 in
+            let (ne2,eelst2,svlst2) = standarize_exp e2 in
+            (Neq (ne1,ne2,loc),mk_p_formula_from_eelst (eelst1@eelst2),svlst1@svlst2)
       | BConst _->
-            (p,[])
+            (p,[],[])
+      | BagSub _
+      | ListIn _
+      | ListNotIn _
+      | ListAllN _
+      | ListPerm _
+      | EqMax _
+      | EqMin _
+      | BagIn _
+      | BagNotIn _
       | Frm _
       | XPure _
       | LexVar _
@@ -326,39 +269,45 @@ let rec standarize_array_formula
   in
   match f with
     | BForm ((p,_),fl)->
-          let (np,plst) = standarize_p_formula p in
+          let (np,plst,svlst) = standarize_p_formula p in
           let flst = List.map (fun p -> BForm((p,None),None)) plst in
-          (BForm ((np,None),None),flst)
+          (BForm ((np,None),None),flst,svlst)
     | And (f1,f2,l)->
-          let (nf1,flst1) = standarize_array_formula f1 in
-          let (nf2,flst2) = standarize_array_formula f2 in
-          (And (nf1,nf2,l),flst1@flst2)
+          let (nf1,flst1,svlst1) = standarize_array_formula f1 in
+          let (nf2,flst2,svlst2) = standarize_array_formula f2 in
+          (And (nf1,nf2,l),flst1@flst2,svlst1@svlst2)
     | AndList lst->
-          let (flst,flstlst) =
-            (List.split (List.map (fun (t,f) -> let (nf,nflst) = (standarize_array_formula f) in ((t,nf),nflst)) lst)) in
-          let nflst = List.fold_left (fun result l -> result@l) [] flstlst in
-          (AndList flst,nflst)
+          (* let (flst,flstlst) = *)
+          (*   (List.split (List.map (fun (t,f) -> let (nf,nflst) = (standarize_array_formula f) in ((t,nf),nflst)) lst)) in *)
+          (* let nflst = List.fold_left (fun result l -> result@l) [] flstlst in *)
+          (* (AndList flst,nflst) *)
+          failwith "standarize_array_formula: AndList To Be Implemented"
     | Or (f1,f2,fl,l)->
-          let (nf1,flst1) = standarize_array_formula f1 in
-          let (nf2,flst2) = standarize_array_formula f2 in
-          (Or (nf1,nf2,fl,l),flst1@flst2)
+          let (nf1,flst1,svlst1) = standarize_array_formula f1 in
+          let (nf2,flst2,svlst2) = standarize_array_formula f2 in
+          (Or (nf1,nf2,fl,l),flst1@flst2,svlst1@svlst2)
     | Not (f,fl,l)->
-          let (nf1,flst1) = standarize_array_formula f in
-          (Not (nf1,fl,l),flst1)
+          let (nf1,flst1,svlst) = standarize_array_formula f in
+          (Not (nf1,fl,l),flst1,svlst)
     | Forall (sv,f,fl,l)->
-          let (nf1,flst1) = standarize_array_formula f in
-          (Forall (sv,nf1,fl,l),flst1)
+          let (nf1,flst1,svlst) = standarize_array_formula f in
+          (Forall (sv,nf1,fl,l),flst1,svlst)
     | Exists (sv,f,fl,l)->
-          let (nf1,flst1) = standarize_array_formula f in
-          (Exists (sv,nf1,fl,l),flst1)
+          let (nf1,flst1,svlst) = standarize_array_formula f in
+          (Exists (sv,nf1,fl,l),flst1,svlst)
 ;;
 
 let rec standarize_one_formula
       (f:formula):formula=
   match f with
     | BForm (b,fl)->
-          let (nf,flst) = standarize_array_formula f in
-          mk_and_list (nf::flst)
+          let (nf,flst,svlst) = standarize_array_formula f in
+          let fbody = mk_and_list (nf::flst) in
+          if List.length svlst = 0
+          then fbody
+          else
+            let fbase = Exists (List.hd svlst,fbody,None,no_pos) in
+            List.fold_left (fun nf sv -> Exists (sv,nf,None,no_pos)) fbase (List.tl svlst)
     | And (f1,f2,l)->
           And (standarize_one_formula f1,standarize_one_formula f2,l)
     | AndList lst->
@@ -381,7 +330,7 @@ let standarize_one_formula
 
 let standarize_array_imply
       (ante:formula) (conseq:formula):(formula * formula)=
-  let (n_conseq,flst) = standarize_array_formula conseq in
+  let (n_conseq,flst,svlst) = standarize_array_formula conseq in
   let ante = mk_and_list (ante::flst) in
   let n_ante = standarize_one_formula ante in
   (n_ante,n_conseq)
@@ -575,72 +524,63 @@ let rec extract_index_predicate
             None
   in
   let rec helper
-        (f:formula) (index:exp): (formula list) =
+        (f:formula) (index:exp): (formula option) =
     match f with
       | BForm (b,fl)->
             begin
               match (helper_b_formula b index) with
                 | Some bp ->
-                      [BForm (bp,fl)]
+                      Some (BForm (bp,fl))
                 | None ->
-                      []
+                      None
             end
       | And (f1,f2,l)->
-            (helper f1 index)@(helper f2 index)
+            begin
+              match helper f1 index, helper f2 index with
+                | None,None -> None
+                | Some nf,None
+                | None, Some nf -> Some nf
+                | Some nf1, Some nf2 -> Some (And (nf1,nf2,l))
+            end
       | AndList lst->
-            List.fold_left (fun l (t,f) -> l@(helper f index)) [] lst
+            let flst = List.fold_left
+              (fun result (t,inputf) ->
+                  match helper inputf index with
+                    | Some nf -> nf::result
+                    | None -> result
+              ) [] lst
+            in
+            if List.length flst = 0
+            then None
+            else Some (mk_and_list flst)
       | Or (f1,f2,fl,l)->
-            (helper f1 index)@(helper f2 index)
+            begin
+              match helper f1 index, helper f2 index with
+                | None, None -> None
+                | Some nf, None
+                | None, Some nf -> Some nf
+                | Some nf1, Some nf2 -> Some (Or (nf1,nf2,fl,l))
+            end
       | Not (f,fl,l)->
-            helper f index
+            begin
+              match helper f index with
+                | Some nf -> Some (Not (nf,fl,l))
+                | None -> None
+            end
       | Forall (sv,f,fl,l)->
-            helper f index
+            begin
+              match helper f index with
+                | Some nf -> Some (Forall (sv,nf,fl,l))
+                | None -> None
+            end
       | Exists (sv,f,fl,l)->
-            helper f index
+            begin
+              match helper f index with
+                | Some nf -> Some (Exists (sv,nf,fl,l))
+                | None -> None
+            end
   in
-  let helper
-        (f:formula) (index:exp) : (formula list)=
-    let _ = print_endline (!print_pure f) in
-    helper f index
-  in
-  match f with
-    | BForm _
-    | And _
-    | AndList _->
-          begin
-            match (helper f index) with
-              | [] ->
-                    None
-              | lst ->
-                    Some (mk_and_list lst)
-          end
-    | Or (f1,f2,fl,l)->
-          begin
-            match helper f1 index, helper f2 index with
-              | [],[]-> None
-              | lst,[]
-              | [],lst -> Some (mk_and_list lst)
-              | lst1,lst2 ->
-                    Some (Or (mk_and_list lst1,mk_and_list lst2,fl,l))
-          end
-    | Not (f,fl,l)->
-          begin
-            match helper f index with
-              | [] -> None
-              | lst -> Some (Not (mk_and_list lst,fl,l))
-          end
-    | Forall (sv,f,fl,l)->
-          begin
-            match helper f index with
-              | [] -> None
-              | lst -> Some (Forall (sv,mk_and_list lst,fl,l))
-          end
-    | Exists (sv,f,fl,l)->
-          begin
-            match helper f index with
-              | [] -> None
-              | lst -> Some (Exists (sv,mk_and_list lst,fl,l))
-          end
+  helper f index
 ;;
 
 let extract_index_predicate
