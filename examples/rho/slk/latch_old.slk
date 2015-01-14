@@ -1,23 +1,19 @@
 //CountDownLatch
 data cell{ int v; }.
 
-pred_prim Latch<(-)P, (+)P>.
+pred_prim LatchIn{(-)P, (+)P}<x:cell>.
+
+pred_prim LatchOut{(+)P}<x:cell>.
 
 pred_prim CNT<n:int>.
 
-lemma "NORM-1" self::CNT<n> * self::CNT<-1> & n<=0 -> self::CNT<-1>.
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
 
-lemma "NORM-2" self::CNT<n1> * self::CNT<n2> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n>.
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
 
-lemma "SPLIT-1" self::Latch<(+)(P * Q)> -> self::Latch<(+)P> * self::Latch<(+)Q>.
+lemma "norm" self::LatchOut{%P}<y> * self::CNT<n> & n<0 -> %P.
 
-lemma "SPLIT-2" self::Latch<(-)(P * Q)> -> self::Latch<(-)P> * self::Latch<(-)Q>.
-
-lemma "SPLIT-3" self::CNT<n> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n1> * self::CNT<n2>.
-
-lemma "ERR-1" self::Latch<(-)P> * self::CNT<-1> -> emp & flow __Fail.
-
-lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+lemma "deadlock" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
 // (1)
 checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
