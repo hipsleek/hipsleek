@@ -1,0 +1,31 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 & fpost(x') |- fpost(x).
+
+infer [@term] x<0 & fpre(x) |- fpost(x).
+
+term_infer.
+
+/*
+f:  case {
+  0<=x -> requires emp & Term[0+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[]
+ ensures emp & true; 
+  }
+Stop Ome
+*/
+
+ termAssume x'=v_int_16_907+1 & !(v_bool_15_874') & 0<=x' & 
+!(v_bool_15_874') & x=x' & 0<=x' & fpost(v_int_16_873') --> fpost(x).
+
+ termAssume x'<0 & x=x' & v_bool_15_874' & x'<0 & 
+v_bool_15_874' --> fpost(x).
+
+ termAssume 0<=x' & x=x' & !(v_bool_15_874') & 0<=x' & !(v_bool_15_874') & 
+x'=v_int_16_873'+1 & fpre(x) --> fpre(v_int_16_873').
+
+term_infer.

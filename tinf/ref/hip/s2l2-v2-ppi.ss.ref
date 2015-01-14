@@ -1,0 +1,38 @@
+
+!!!Full processing file "hip/s2l2-v2-ppi.ss"
+Parsing file "hip/s2l2-v2-ppi.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[g] pre_post_vars:[r,x]
+
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_1675 & 0<=r1_1675 & v_1673<=0 & 0<=v_1673 & r=g( v_1673, r1_1675) |-  0<=r. LOCS:[22;20;11;12] (may-bug)
+OrR
+  (may) cause:  0<=r1_1675 & 0<=r1_1675 & 0<1 & 0<=1 & r=g( 1, r1_1675) |-  0<=r. LOCS:[25;23;20;11;12] (may-bug)
+OrR
+  (must) cause:  0<=1 & 0<=(g( v_int_29_1837, g( 1, r1_1675))) & 0<=r1_1675 & 
+0<=v_int_29_1837 & g( 1, r1_1675)=g( 1, r1_1675) & (v_int_29_1837+1)!=1 & 
+0<(v_int_29_1837+1) & 0<=(v_int_29_1837+1) & r=g( v_int_29_1837+1, r1_1675) |-  0<=r. LOCS:[33;30;29;23;20;11;12] (must-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l2-v2-ppi.ss",Line:33,Col:9
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

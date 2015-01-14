@@ -1,0 +1,74 @@
+
+!!!Full processing file "validate/sll-dll.ss"
+Parsing file "validate/sll-dll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure paper_fix$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x,p@NI)&true
+ ensures G1(x,p)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H1(x,p@NI)&x!=null --> x::node<prev1,next1> * HP_1267(prev1,p@NI) * 
+HP_1268(next1,p@NI)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1268(next1,p@NI)&true |#| x'::node<p,next1>&true --> H1(next1,x'@NI)&
+true(3,4),
+ // POST
+(1;0)x::node<p,next1> * G1(next1,x)&true --> G1(x,p)&
+true(3,4),
+ // POST
+(2;0)H1(x,p@NI)&x=null --> G1(x,p)&
+true(3,4)]
+
+Procedure paper_fix$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1,p1) ::=  [HP_1331(x1)],
+ G1(x2,p2) ::=  [emp&x2=null; x2::node<p2,next> * G1(next,x2)],
+ HP_1331(x1) ::=  [emp&x1=null; x1::node<DP,next2> * HP_1331(next2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1,p1) ::= HP_1331(x1)(3,4),
+ G1(x2,p2) ::= 
+ x2::node<p2,next> * G1(next,x2)
+ or emp&x2=null
+ (3,4),
+ HP_1331(x1) ::= 
+ x1::node<DP,next2> * HP_1331(next2)
+ or emp&x1=null
+ (3,4)]
+*************************************
+Stop Omega... 10 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.043148,281)
+Total verification time: 0.329441 second(s)
+	Time spent in main process: 0.310902 second(s)
+	Time spent in child processes: 0.018539 second(s)
+

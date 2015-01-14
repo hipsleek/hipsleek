@@ -1,0 +1,28 @@
+
+!!!Full processing file "demo/rose-sll.ss"
+Parsing file "demo/rose-sll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_tree$tree... 
+Procedure check_tree$tree SUCCESS.
+
+Checking procedure check_child$node~tree... 
+Procedure check_child$node~tree SUCCESS.
+Stop Omega... 13 invocations 
+2 false contexts at: ( (37,6)  (37,13) )
+
+!!! log(small):(0.138479,728)
+Total verification time: 0.471631 second(s)
+	Time spent in main process: 0.433155 second(s)
+	Time spent in child processes: 0.038476 second(s)
+

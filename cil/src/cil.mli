@@ -2182,6 +2182,8 @@ class type cilPrinter = object
   method pBlock: unit -> block -> Pretty.doc
     (** Print a block. *)
 
+  method pFunDecl: unit -> fundec -> Pretty.doc
+
   method pGlobal: unit -> global -> Pretty.doc
     (** Global (vars, types, etc.). This can be slow and is used only by 
      * {!Cil.printGlobal} but not by {!Cil.dumpGlobal}. *)
@@ -2372,6 +2374,8 @@ val d_stmt: unit -> stmt -> Pretty.doc
  * extremely slow (or even overflow the stack) for huge blocks. Use 
  * {!Cil.dumpBlock} instead. *)
 val d_block: unit -> block -> Pretty.doc
+
+val d_fundec: unit -> fundec -> Pretty.doc
 
 (** Pretty-print the internal representation of a global using 
  * {!Cil.defaultCilPrinter}. This can be extremely slow (or even overflow the 

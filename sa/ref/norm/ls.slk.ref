@@ -1,0 +1,52 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=last | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=last)])
+!!! 
+Entailing lemma one: Fail. Details below:
+	 "==>" implication: : Fail. INCONSISTENCY : expected failure but success instead
+	 "<==" implication: : Valid.
+
+Failed to prove one:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+!!! WARNING : split equiv lemma into two -> lemmas ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  self2::HP{}<>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  self2::HP{}<>&{FLOW,(3,4)=__norm}[]
+
+!!! 
+Entailing lemma oneb: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "==>" implication: : Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to prove oneb:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entailing lemma two: Valid.
+
+Valid Lemmas : [two:<==>] added to lemma store.
+Stop Omega... 20 invocations 
+SAT Count   : 602
+SAT % Hit   : 88.87%
+IMPLY Count : 49
+IMPLY % Hit : 61.22%
+Time(cache overhead) : 0.029534 (seconds)
+
+!!! log(small):(0.388368,769)
+Total verification time: 0.219019 second(s)
+	Time spent in main process: 0.195334 second(s)
+	Time spent in child processes: 0.023685 second(s)
+

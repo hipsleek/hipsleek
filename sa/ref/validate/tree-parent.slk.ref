@@ -1,0 +1,47 @@
+Starting Omega...oc
+H is defined.
+H6 is defined.
+H7 is defined.
+H8 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(p1,x) |#| 
+             emp&p_135=p_135 & r5=r5
+             or emp&p_135=p_135 & lf4=lf4
+             or emp&p_135=p_135 & r5=r5
+              ::= 
+ x::node<p,lf4,r5> * H(x,r5)&r5!=null & lf4=null & x!=null
+ or x::node<p,lf4,r5> * H(x,lf4)&r5=null & lf4!=null & x!=null
+ or x::node<p,lf4,r5> * H(x,lf4) * H(x,r5)&r5!=null & lf4!=null & x!=null
+ or x::node<p,lf4,r5>&r5=null & lf4=null & p1=p & x!=null
+ (3,4),
+ H6(p2,p3) ::= emp&p3=p2(3,4),
+ H7(lf,p4) ::= HP_139(lf)(3,4),
+ H8(r,p5) ::= HP_144(r)(3,4),
+ HP_139(lf) |#| emp&p_112=p_112 & 
+  lf4_111=lf4_111 ::= 
+ lf::node<p,lf4,r5> * HP_139(lf4) * HP_144(r5)&x1=p
+ or emp&lf=null
+ (3,4),
+ HP_144(r) |#| emp&p_114=p_114 & 
+  r5_113=r5_113 ::= 
+ r::node<p,lf4,r5> * HP_139(lf4) * HP_144(r5)&x1=p
+ or emp&r=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 28
+SAT % Hit   : 53.57%
+IMPLY Count : 6
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.001837 (seconds)
+
+!!! log(small):(0.008423,34)
+Total verification time: 0.08436 second(s)
+	Time spent in main process: 0.070912 second(s)
+	Time spent in child processes: 0.013448 second(s)
+

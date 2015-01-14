@@ -42,6 +42,8 @@ and struc_formula =
 
 and struc_infer_formula =
   {
+    (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
+    formula_inf_obj: Globals.inf_obj; (* local infer object *)
     formula_inf_post : bool; (* true if post to be inferred *)
     formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
     formula_inf_transpec : (ident * ident) option;
@@ -62,6 +64,7 @@ and struc_base_formula =
 		 formula_struc_implicit_inst : (ident * primed) list;
 		 formula_struc_exists :  (ident * primed) list;
 		 formula_struc_base : formula;
+                 formula_struc_is_requires: bool;
 		 formula_struc_continuation : struc_formula option ;
 		 formula_struc_pos : loc
 	}
@@ -253,6 +256,11 @@ and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) f [] pos
 
 and formula_of_pure_with_flow p f a pos = mkBase HEmp p f a pos            (* pure formula has Empty heap *)
 
+and formula_of_pure_with_flow_htrue p f a pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p f a pos            (* pure formula has HTRUE heap *)
+
+
 and one_formula_of_formula f =
   match f with
     | Base b ->
@@ -312,6 +320,28 @@ and isEConstTrue f0 = match f0 with
   | EList b -> List.exists (fun (_,c)-> isEConstTrue c) b
   | _ -> false
 
+and get_pre_post f0=
+  let btrue =  mkTrue_nf no_pos in
+  match f0 with
+    | EBase b -> begin
+        (* if isConstTrue b.formula_struc_base then *)
+        match b.formula_struc_continuation with
+          | Some post -> begin
+              match post with
+                | EAssume pb -> begin
+                      match pb.formula_assume_struc with
+                        | EBase p -> true,b.formula_struc_base,p.formula_struc_base
+                        | _ -> false,  b.formula_struc_base, btrue
+                  end
+                | _ -> false,  b.formula_struc_base, btrue
+            end
+          | None -> false,  b.formula_struc_base, btrue
+      (* else false,b.formula_struc_base, btrue *)
+      end
+    | _ -> false, btrue, btrue
+
+and mkTrue_nf p =  mkTrue n_flow p
+
 (* TRUNG TODO: should change name to mkEmp ? *)
 and mkTrue flow pos = Base { formula_base_heap = HEmp;
 						formula_base_pure = P.mkTrue pos;
@@ -337,6 +367,7 @@ and mkETrueTrue flow flow2 pos = EBase {
 		 formula_struc_implicit_inst = [];
 		 formula_struc_exists = [];
 		 formula_struc_base = mkTrue flow pos;
+                 formula_struc_is_requires = true;
 		 formula_struc_continuation = Some (mkTrivAssume flow2 pos) ;
 		 formula_struc_pos = pos	}
 
@@ -346,25 +377,27 @@ and mkEAssume simp struc lbl ens = EAssume{
 		formula_assume_lbl = lbl;
 		formula_assume_ensures_type = ens;
 	}
-		 
+
 and mkETrue flow pos = EBase {
-		 formula_struc_explicit_inst = [];
-		 formula_struc_implicit_inst = [];
-		 formula_struc_exists = [];
-		 formula_struc_base = mkTrue flow pos;
-		 formula_struc_continuation = None;
-		 formula_struc_pos = pos	}
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkTrue flow pos;
+    formula_struc_is_requires = false;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos	}
 
 and mkEFalse flow pos = EBase {
-		 formula_struc_explicit_inst = [];
-		 formula_struc_implicit_inst = [];
-		 formula_struc_exists = [];
-		 formula_struc_base = mkFalse flow pos;
-		 formula_struc_continuation = None;
-		 formula_struc_pos = pos	}
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
+    formula_struc_exists = [];
+    formula_struc_base = mkFalse flow pos;
+    formula_struc_is_requires = false;
+    formula_struc_continuation = None;
+    formula_struc_pos = pos	}
 
-and mkEFalseF () = mkEFalse false_flow no_pos			
-and mkETrueF () = mkETrue n_flow no_pos			
+and mkEFalseF () = mkEFalse false_flow no_pos
+and mkETrueF () = mkETrue n_flow no_pos
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
 
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
@@ -374,12 +407,13 @@ and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
   else EOr { formula_struc_or_f1 = f1; formula_struc_or_f2 = f2; formula_struc_or_pos = pos}*)
 
 and mkEBase ei ii e b (c:struc_formula option) l= EBase {
-						 	formula_struc_explicit_inst = ei;
-						 	formula_struc_implicit_inst = ii;
-							formula_struc_exists = e;
-						 	formula_struc_base = b;				
-						 	formula_struc_continuation = c;
-						 	formula_struc_pos = l;}
+    formula_struc_explicit_inst = ei;
+    formula_struc_implicit_inst = ii;
+    formula_struc_exists = e;
+    formula_struc_base = b;
+    formula_struc_is_requires = c!=None;
+    formula_struc_continuation = c;
+    formula_struc_pos = l;}
   
 and mkOr f1 f2 pos =
   let raw =  Or { formula_or_f1 = f1;
@@ -764,7 +798,7 @@ and struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
 	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
 	| EAssume b-> heap_fv b.formula_assume_simpl
-    | EInfer b -> struc_hp_fv b.formula_inf_continuation
+        | EInfer b -> struc_hp_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
 
 and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
@@ -773,11 +807,10 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 	| ECase b-> List.fold_left (fun a (c1,c2)-> (P.fv c1)@(struc_case_fv c2)@a)
 					[] b.formula_case_branches
 	| EAssume b-> []
-    | EInfer b -> struc_case_fv b.formula_inf_continuation
+        | EInfer b -> struc_case_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_case_fv b)
 
-	
-(*TO CHECK: how about formula_and*)	
+(*TO CHECK: how about formula_and*)
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
@@ -877,6 +910,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 	  formula_struc_implicit_inst = [];
 	  formula_struc_exists = [];
 	  formula_struc_base = f;
+          formula_struc_is_requires = false;
 	  formula_struc_continuation = None;
 	  formula_struc_pos = b.formula_base_pos}
     | Exists b-> EBase {
@@ -884,6 +918,7 @@ and formula_to_struc_formula (f:formula):struc_formula =
 	  formula_struc_implicit_inst = [];
 	  formula_struc_exists = [];
 	  formula_struc_base = f;
+          formula_struc_is_requires = false;
 	  formula_struc_continuation = None;
 	  formula_struc_pos = b.formula_exists_pos}
     | Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
@@ -1328,7 +1363,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			formula_assume_simpl = subst sst b.formula_assume_simpl; 
 			formula_assume_struc = subst_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase { b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1350,7 +1385,7 @@ and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_form
 			formula_assume_simpl = subst_all sst b.formula_assume_simpl; 
 			formula_assume_struc = subst_all_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase { b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1379,17 +1414,17 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
 	| EBase b->
         (*Preconditions do not contain primed notations*)
         let uvars = List.map (fun (v,_) -> (v,Unprimed)) vars in
-        EBase {
-			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
-			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
-			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
-			  formula_struc_base = subst_pointer sst b.formula_struc_base (uvars);
-			  formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
-			  formula_struc_pos = b.formula_struc_pos}
-  | EInfer b -> EInfer {b with
-      formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
-      formula_inf_continuation = helper b.formula_inf_continuation;}
-  | EList b -> EList (Gen.map_l_snd (helper) b)
+        EBase { b with
+	    formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
+	    formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
+	    formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
+	    formula_struc_base = subst_pointer sst b.formula_struc_base (uvars);
+	    formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
+	    formula_struc_pos = b.formula_struc_pos}
+        | EInfer b -> EInfer {b with
+              formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
+              formula_inf_continuation = helper b.formula_inf_continuation;}
+        | EList b -> EList (Gen.map_l_snd (helper) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
 
@@ -1641,7 +1676,7 @@ and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:st
 		formula_case_branches = 
 			List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_w_data_name_struc sst c2)))
 				b.formula_case_branches}
-	| EBase b->  EBase {
+	| EBase b->  EBase {b with
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
 			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
@@ -1903,7 +1938,7 @@ and float_out_exps_from_heap_struc lbl_getter annot_getter (f:struc_formula):str
 			formula_assume_simpl = float_out_exps_from_heap 8 lbl_getter annot_getter b.formula_assume_simpl; 
 			formula_assume_struc = float_out_exps_from_heap_struc lbl_getter annot_getter b.formula_assume_struc;}
     | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc lbl_getter annot_getter x) b.formula_case_branches}
-    | EBase b -> EBase {
+    | EBase b -> EBase { b with
 				 formula_struc_explicit_inst = b.formula_struc_explicit_inst;
 				 formula_struc_implicit_inst = b.formula_struc_implicit_inst;
 				 formula_struc_exists = b.formula_struc_exists ;
@@ -2231,22 +2266,30 @@ and view_node_types (f:formula):ident list =
     | Base b -> helper b.formula_base_heap
     | Exists b -> helper b.formula_exists_heap
 
-and has_top_flow_struc (f:struc_formula) = 
-	let rec has_top_flow (f:formula) = match f with
-		| Base b-> if (String.compare b.formula_base_flow top_flow)<>0 then Error.report_error {
-						Error.error_loc = b.formula_base_pos;
-						Error.error_text = ("view formula can not have a non top flow( "^b.formula_base_flow^")")} else ()
-		| Exists b-> if (String.compare b.formula_exists_flow top_flow)<>0 then Error.report_error {
-						Error.error_loc = b.formula_exists_pos;
-						Error.error_text = ("view formula can not have a non top flow("^b.formula_exists_flow^")")} else ()
-		| Or b -> (has_top_flow b.formula_or_f1);(has_top_flow b.formula_or_f2) in
-	let rec helper f0 = match f0 with
-		| EBase b->   has_top_flow b.formula_struc_base; (match  b.formula_struc_continuation with | None -> () | Some l-> helper l)
-		| ECase b->   List.iter (fun (_,b1)-> (helper b1)) b.formula_case_branches
-		| EAssume b-> has_top_flow b.formula_assume_simpl
-		| EInfer b-> helper b.formula_inf_continuation
-		| EList b-> List.iter (fun c-> helper (snd c)) b  in
-	helper f
+and has_top_flow_struc (f:struc_formula) =
+  let compare_top_flow fl=
+    (String.compare fl (top_flow))<>0 &&
+        (String.compare fl (top_flow^"#E"))<>0
+  in
+  let rec has_top_flow (f:formula) = match f with
+    | Base b-> if (* (String.compare b.formula_base_flow top_flow)<>0 *)
+        compare_top_flow b.formula_base_flow
+      then Error.report_error {
+	  Error.error_loc = b.formula_base_pos;
+	  Error.error_text = ("view formula can not have a non top flow( "^b.formula_base_flow^")")} else ()
+    | Exists b-> if (* (String.compare b.formula_exists_flow top_flow)<>0 *)
+        compare_top_flow b.formula_exists_flow
+      then Error.report_error {
+	  Error.error_loc = b.formula_exists_pos;
+	  Error.error_text = ("view formula can not have a non top flow("^b.formula_exists_flow^")")} else ()
+    | Or b -> (has_top_flow b.formula_or_f1);(has_top_flow b.formula_or_f2) in
+  let rec helper f0 = match f0 with
+    | EBase b->   has_top_flow b.formula_struc_base; (match  b.formula_struc_continuation with | None -> () | Some l-> helper l)
+    | ECase b->   List.iter (fun (_,b1)-> (helper b1)) b.formula_case_branches
+    | EAssume b-> has_top_flow b.formula_assume_simpl
+    | EInfer b-> helper b.formula_inf_continuation
+    | EList b-> List.iter (fun c-> helper (snd c)) b  in
+  helper f
 
 
 and subst_flow_of_formula fr t (f:formula):formula = match f with
@@ -2535,6 +2578,8 @@ let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
       add_formula_to_post_x (f,ex_vars) f0
 
 let mkEInfer xpost transpec pos = EInfer { 
+    (* formula_inf_tnt = false; *)
+    formula_inf_obj = new Globals.inf_obj; (* Globals.infer_const_obj # clone; *)
     formula_inf_post = true;
     formula_inf_xpost = xpost;
     formula_inf_transpec = transpec;
@@ -2668,8 +2713,8 @@ let rec struc_formula_drop_infer f =
 let rec heap_trans_heap_node fct f =
  let recf = heap_trans_heap_node fct in
  match f with
-  | HRel b -> fct f
-  | HTrue  | HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
+  | HTrue | HRel _ -> fct f
+  |  HFalse | HEmp | HVar _ | HeapNode _ | HeapNode2 _ -> f
   | ThreadNode h -> ThreadNode {h with h_formula_thread_resource = formula_trans_heap_node fct h.h_formula_thread_resource}
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}

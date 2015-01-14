@@ -58,6 +58,13 @@ let rec rev_trans_exp e = match e with
   | CP.ListReverse (e,p)  -> IP.ListReverse (rev_trans_exp e, p)
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
+  | CP.Template t         -> 
+      IP.Template {
+        IP.templ_id = sv_n t.CP.templ_id;
+        IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
+        IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
+        IP.templ_body = map_opt rev_trans_exp t.CP.templ_body;
+        IP.templ_pos = t.CP.templ_pos; }
   | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
 
 let rec rev_trans_pf f = match f with
@@ -145,24 +152,29 @@ let rec rev_trans_heap f = match f with
   | CF.Star  b  -> IF.mkStar  (rev_trans_heap b.CF.h_formula_star_h1) (rev_trans_heap b.CF.h_formula_star_h2) b.CF.h_formula_star_pos
   | CF.StarMinus _| CF.ConjStar _|CF.ConjConj _ -> report_error no_pos "AS.rev_trans_heap: not handle yet"
  
-and rev_trans_formula f = match f with 
-	| CF.Base b-> IF.Base  { 
-					 IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
-                     IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
-                     IF.formula_base_flow = (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
-                     IF.formula_base_and = [];
-                     IF.formula_base_pos = b.CF.formula_base_pos }
-	| CF.Exists b-> IF.Exists{
-					   IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
-                       IF.formula_exists_heap = rev_trans_heap b.CF.formula_exists_heap;
-                       IF.formula_exists_pure = rev_trans_mix b.CF.formula_exists_pure;
-                       IF.formula_exists_flow = (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
-                       IF.formula_exists_and = [];
-                       IF.formula_exists_pos =b.CF.formula_exists_pos}
-	| CF.Or b-> IF.Or {
-					IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 
-					IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
-					IF.formula_or_pos = b.CF.formula_or_pos;}
+and rev_trans_formula f =
+  let remove_s s=
+    let is = String.index s '#' in
+    String.sub s 0 is
+  in
+  match f with 
+    | CF.Base b-> IF.Base  { 
+	  IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
+          IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
+          IF.formula_base_flow = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
+          IF.formula_base_and = [];
+          IF.formula_base_pos = b.CF.formula_base_pos }
+    | CF.Exists b-> IF.Exists{
+	  IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
+          IF.formula_exists_heap = rev_trans_heap b.CF.formula_exists_heap;
+          IF.formula_exists_pure = rev_trans_mix b.CF.formula_exists_pure;
+          IF.formula_exists_flow = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
+          IF.formula_exists_and = [];
+          IF.formula_exists_pos =b.CF.formula_exists_pos}
+    | CF.Or b-> IF.Or {
+	  IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 
+	  IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
+	  IF.formula_or_pos = b.CF.formula_or_pos;}
 
 let rev_trans_formula f=
   let pr1 = Cprinter.prtt_string_of_formula in

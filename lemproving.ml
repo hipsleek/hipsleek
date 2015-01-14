@@ -32,18 +32,19 @@ let string_of_lem_formula lf = match lf with
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
 let split_infer_vars vrs =
-  let p,rl,hp = List.fold_left (fun (p,rl,hp) var -> 
+  let p,rl,tl,hp = List.fold_left (fun (p,rl,tl,hp) var -> 
       match var with
-        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,hp)
-        | CP.SpecVar(HpT, _, _ ) -> (p,rl,var::hp)
-        | _      -> (var::p,rl,hp)
-  ) ([],[],[]) vrs in
-  (p,rl,hp)
+        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,tl,hp)
+        | CP.SpecVar(FuncT _,_,_) -> (p,rl,var::tl,hp)
+        | CP.SpecVar(HpT, _, _ ) -> (p,rl,tl,var::hp)
+        | _      -> (var::p,rl,tl,hp)
+  ) ([],[],[],[]) vrs in
+  (p,rl,tl,hp)
 
 let add_infer_vars_to_ctx ivs ctx =
-  let (p,rl,hp) = split_infer_vars ivs in
+  let (p,rl,tl,hp) = split_infer_vars ivs in
   let _ = Debug.ninfo_hprint (add_str  "rl " !Cpure.print_svl) rl no_pos in
-  let ctx = Infer.init_vars ctx p rl hp [] in 
+  let ctx = Infer.init_vars ctx p rl tl hp [] in 
   ctx
    
 
@@ -78,7 +79,7 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false ctx conseq no_pos None
   else
-     Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
+    Solver.heap_entail_struc_init cprog false false ctx conseq no_pos None
   in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   flush stdout;
@@ -114,9 +115,9 @@ let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula)
       ctx iante iconseq inf_vars exact
 
 let print_exc (check_id: string) =
-  Printexc.print_backtrace stdout;
+  print_backtrace_quiet ();
   dummy_exception() ; 
-  print_string ("exception in " ^ check_id ^ " check\n")
+  print_string_quiet ("exception in " ^ check_id ^ " check\n")
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =

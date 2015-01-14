@@ -1,0 +1,35 @@
+
+!!!Full processing file "examples/loop-4b.ss"
+Parsing file "examples/loop-4b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'=x & fpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[]
+Termination Inference Result:
+f:  requires emp & Loop[]
+ ensures false & false;
+
+Termination checking result: SUCCESS
+
+Stop Omega... 0 invocations 
+3 false contexts at: ( (11,4)  (11,8)  (11,6) )
+
+!!! log(small):(0.016541,152)
+Total verification time: 0.263492 second(s)
+	Time spent in main process: 0.249906 second(s)
+	Time spent in child processes: 0.013586 second(s)
+

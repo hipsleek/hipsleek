@@ -1,0 +1,140 @@
+
+!!!Full processing file "nov2013/lldel.ss"
+Parsing file "nov2013/lldel.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! formula1: emp&((self=null & n=0) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & n=0)])
+!!! formula1: emp&((self=p & n=0) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p & n=0)])
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])
+Checking procedure create_list$int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ G2]requires emp&true
+ ensures G2(res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(1;0)emp&res=null --> G2(res)&
+true(3,4),
+ // POST
+(2;0)res::node<v2,tmp1> * G2(tmp1)&true --> G2(res)&
+true(3,4)]
+
+Procedure create_list$int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ G2(res1) ::=  [emp&res1=null; res1::node<v,tmp> * G2(tmp)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ G2(res1) ::= 
+ res1::node<v,tmp> * G2(tmp)
+ or emp&res1=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! neqs:[]
+Checking procedure delete$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G3]requires H1(x)&true
+ ensures G3(res@NI)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(x)&x!=null --> x::node<val1,next1> * HP_1426(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1426(next1)&true --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)emp&true --> G3(res@NI)&
+true(3,4),
+ // POST
+(1;0)H1(x)&x=null --> emp&
+true(3,4),
+ // POST
+(2;0)G3(res@NI)&true --> G3(res@NI)&
+true(3,4)]
+
+Procedure delete$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H1(next2)],
+ G3(res2) ::=  [emp; hfalse]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= 
+ x1::node<val2,next2> * H1(next2)
+ or emp&x1=null
+ (3,4),
+ G3(res2) ::= emp(3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+Checking procedure foo$int... 
+Context of Verification Failure: 1 File "nov2013/lldel.ss",Line:63,Col:10
+Last Proving Location: 1 File "nov2013/lldel.ss",Line:68,Col:2
+
+ERROR: at nov2013/lldel.ss_68:2_68:12 
+Message: heap_entail_failesc_prefix_init : encountered an empty list_partial_context 
+
+ 
+Procedure foo$int FAIL.(2)
+
+Exception Failure("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure foo$int
+
+!!! proc.proc_name:foo$intStop Omega... 55 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.102836,556)
+Total verification time: 0.448917 second(s)
+	Time spent in main process: 0.408726 second(s)
+	Time spent in child processes: 0.040191 second(s)
+

@@ -1,0 +1,24 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: r::llw{}<f,k,sm2>&v<=sm2&{FLOW,(21,22)=__norm}[]
+                          es_heap: xs::node<v,r>
+                          es_evars: [sm_223; flted_12_224; f1_196; s1_197; 
+                                     flted_18_198]
+                          es_gen_impl_vars: [q_207; sm1_208]
+                          es_rhs_eqset: [f1_196:f1; s1_197:s1; v:s1_197; 
+                                         f1_196:flted_18_198; v:s1_197; 
+                                         f1_196:flted_18_198]
+                          es_must_error: Some(UnionR[UnionR[ v<=sm2 & r=1 & 0<=k & ((0-f)+2)<=k & k<=f |-  r=null & flted_18_198=1 & f1_196=1 & v=s1_197 & f1_196=flted_18_198 & 
+flted_18_198=1+k & f1_196=f1 & s1_197=s1. LOCS:[17;0;1;12;18] (RHS: contradiction), k<=f & ((0-f)+2)<=k & 0<=k |-  1+k=1+f. LOCS:[1;13] (must-bug)], v_214<=sm2 & 0<=k & ((0-f)+2)<=k & k<=f |-  f+1=f1_196 & flted_18_198<f1_196 & v_214<=s1_197 & k=flted_18_198 & 
+sm2=s1_197 & f1_196!=flted_18_198 & flted_18_198=1+k & f1_196=f1 & s1_197=s1. LOCS:[17;0;1;14;18] (RHS: contradiction)]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,r> * r::llw<f,k,sm2>&
+                                            v<=sm2:xs::llw{}<f1,flted,s>&
+                                            flted=1+k&
+                                            {FLOW,(21,22)=__norm}[]]] <1>r::llw{}<f,k,sm2>&v<=sm2&{FLOW,(21,22)=__norm}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+

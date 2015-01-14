@@ -35,7 +35,7 @@ let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1
 let smt_cmds = ref ([] : command list)
 
 let smt_ent_cmds = ref ([]: 
-  (meta_formula * meta_formula * entail_type * Cformula.formula * Cformula.struc_formula * bool) list)
+  (meta_formula list * meta_formula * entail_type * Cformula.formula * Cformula.struc_formula * bool) list)
 
 let find_typ spl name =
   let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
@@ -329,7 +329,8 @@ let process_entail (iante, iconseq, etype) iprog cprog =
   "\n" ^ s0 ^ "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
 let process_entail_new cprog iprog start_pred_abs_num 
-  (iante, iconseq, etype, cante, cconseq, res) header data_decl =
+  (iantes, iconseq, etype, cante, cconseq, res) header data_decl =
+  let iante = List.hd iantes in
   let spl1 = match iante with
     | MetaForm f ->
           Typeinfer.gather_type_info_formula iprog f [] true
@@ -340,7 +341,7 @@ let process_entail_new cprog iprog start_pred_abs_num
           Typeinfer.gather_type_info_formula iprog f [] true
     | _ -> []
   in
-  let spl = spl1@spl2 in
+  (* let spl = spl1@spl2 in *)
   let all_svl0 = CP.remove_dups_svl ((Cformula.fv cante)@(Cformula.struc_fv cconseq)) in
   let data_name =
     let used_data = List.fold_left (fun r sv ->
@@ -387,7 +388,12 @@ let process_cmd cmd iprog cprog=
   match cmd with
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def (!subst_pred_self) pdef iprog
-    | EntailCheck eche -> process_entail eche iprog cprog
+    | EntailCheck (a,q,c) -> begin
+        match a with
+          | [x] ->
+                process_entail (x,q,c) iprog cprog
+          | _ -> "\n" (*";other entailcheck command\n"*)
+      end
     | _ -> "\n" (*";other command\n"*)
 
 let save_smt file_name s=

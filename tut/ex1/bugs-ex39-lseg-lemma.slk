@@ -1,0 +1,49 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::lseg<n-1,p>
+  inv n>=0.
+
+pred ls_nt<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls_nt<n-1,p> & self!=p
+  inv n>=0.
+
+lemma_safe "lseg-split" self::lseg<n,p> & n=a+b & a,b>=0 -> 
+         self::lseg<a,q>*q::lseg<b,p>.
+
+lemma_safe "ls_nt-split" self::ls_nt<n,p> & n=a+b & a,b>=0 -> 
+         self::ls_nt<a,q>*q::ls_nt<b,p>.
+
+/*
+# bugs-ex39-lseg-lemma.slk
+
+Both the combine lemmas are working but not the universal
+split lemma. Not sure why?
+
+lemma_safe "lseg-split" self::lseg<n,p> & n=a+b & a,b>=0 -> 
+         self::lseg<a,q>*q::lseg<b,p>.
+
+lemma_safe "ls_nt-split" self::ls_nt<n,p> & n=a+b & a,b>=0 -> 
+         self::ls_nt<a,q>*q::ls_nt<b,p>.
+
+Entailing lemma lseg-split: Fail. (no cex)(must) cause:  emp&flted_7_214+1=n & n=b+a & 0<=a & 0<=b & exists(a_134:a_134=0) & 
+exists(q_137:self_lseg-split=q_137) & Anon_191=Anon_191 & q_192=q_192 & 
+p_213=p & exists(p_136:p=p_136) & exists(b_135:flted_7_214+1=b_135)&
+{FLOW,(4,8)=__MayError#E}[]
+
+Failed to prove lseg-split:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entailing lemma ls_nt-split: Fail. (no cex)(must) cause:  emp&flted_11_408+1=n & self_ls_nt-split!=p & n=b+a & 0<=a & 0<=b & 
+exists(a_328:a_328=0) & exists(q_331:self_ls_nt-split=q_331) & 
+Anon_385=Anon_385 & q_386=q_386 & p_407=p & 
+exists(p_330:exists(q_331:q_331!=p_330) & p=p_330) & 
+exists(b_329:flted_11_408+1=b_329)&{FLOW,(4,8)=__MayError#E}[]
+
+Failed to prove ls_nt-split:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+*/

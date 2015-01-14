@@ -1,0 +1,23 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+K is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&a=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(c)&true --> K(c)&true(3,4); 
+                  G(b)&b!=null --> emp&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 2
+SAT % Hit   : 0.%
+Time(cache overhead) : 8.7e-05 (seconds)
+
+!!! log(small):(0.006134,4)
+Total verification time: 0.055132 second(s)
+	Time spent in main process: 0.040967 second(s)
+	Time spent in child processes: 0.014165 second(s)
+

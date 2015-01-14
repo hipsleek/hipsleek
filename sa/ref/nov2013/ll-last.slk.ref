@@ -1,0 +1,34 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+!!! formula1: emp&((r=self & self!=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&r>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entailing lemma lem_14: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+ <1>
+    (exists flted: emp&flted=null&{FLOW,(3,4)=__norm})[]
+    or (exists flted1: emp&r!=null & flted1=null&{FLOW,(3,4)=__norm})[]
+    or (exists q,q1,flted2: emp&q!=null & q1!=null & flted2=null&
+       {FLOW,(3,4)=__norm})[]
+    
+ inferred hprel: [emp&true --> H(self1,r)&true(3,4); 
+                  self1::node<v,q>&q!=null --> H(self1,q)&true(3,4); 
+                  H(q1,r) * self1::node<v,q> * q::node<v1,q1>&
+                   q1!=null --> H(self1,r)&true(3,4)]
+[[ SEARCH ==>  COND ==>  COND ==>  Unfold 1 ==>  SEARCH ==>  COND ==>  COND ==>  (Lemma ==> lem_14(q_116,r)) ==> (left: lem_14) ==>  SEARCH ==>  Match(r_114,r) ==>  COND ==>  InferHeap ==> ||OR|| ==>  SEARCH ==>  COND ==>  COND ==>  Unfold 1 ==>  SEARCH ==>  Match(q_89,r) ==>  COND ==>  InferHeap ==> ||OR|| ==>  SEARCH ==>  Match(self_lem_14,r) ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 10 invocations 
+SAT Count   : 71
+SAT % Hit   : 67.6%
+IMPLY Count : 17
+IMPLY % Hit : 41.17%
+Time(cache overhead) : 0.004388 (seconds)
+
+!!! log(small):(0.061197,106)
+Total verification time: 0.095977 second(s)
+	Time spent in main process: 0.078875 second(s)
+	Time spent in child processes: 0.017102 second(s)
+

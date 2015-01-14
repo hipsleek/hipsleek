@@ -886,8 +886,8 @@ let formula_2_mem (f : formula) prog : CF.mem_formula =
       (fun _ -> formula_2_mem_x f prog) f
 
 
-let rec xpure_mem_enum (prog : prog_decl) (* is_conseq:bool *) (f0 : formula) : (mix_formula * CF.mem_formula) = 
-  Debug.no_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,a2)->(Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2))
+let rec xpure_mem_enum i (prog : prog_decl) (* is_conseq:bool *) (f0 : formula) : (mix_formula * CF.mem_formula) = 
+  Debug.no_1_num i "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,a2)->(Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2))
       (fun f0 -> xpure_mem_enum_x prog f0) f0
 
 (* xpure approximation with memory enumeration *)
@@ -905,13 +905,13 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
       | Base ({ formula_base_heap = h;
 	formula_base_pure = p;
 	formula_base_pos = pos}) ->
-            let (ph,_) = xpure_heap_mem_enum prog h p 1 in
+            let (ph,_) = xpure_heap_mem_enum 2 prog h p 1 in
 	    MCP.merge_mems p ph true
       | Exists ({ formula_exists_qvars = qvars;
 	formula_exists_heap = qh;
 	formula_exists_pure = qp;
 	formula_exists_pos = pos}) ->
-            let (pqh,_) = xpure_heap_mem_enum prog qh qp 1 in
+            let (pqh,_) = xpure_heap_mem_enum 3 prog qh qp 1 in
             let tmp1 = MCP.merge_mems qp pqh true in
             MCP.memo_pure_push_exists qvars tmp1
   in
@@ -978,9 +978,9 @@ and xpure_heap_mem_enum_new
     (* else *)
       xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
 
-and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
+and xpure_heap_mem_enum(*_debug*) i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in
-  Debug.no_3 "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
+  Debug.no_3_num i "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_mem_enum_new prog h0 p0 which_xpure) h0 p0 which_xpure
 
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
@@ -1014,7 +1014,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
               )
       | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
             (*Thread resource may be used for xpure*)
-            let mf,_ =  xpure_mem_enum prog rsr in
+            let mf,_ =  xpure_mem_enum 1 prog rsr in
             mf
       | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
@@ -1189,10 +1189,12 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
     let f = MCP.pure_of_mix p in
     let heaps = split_star_conjunctions h in
     (*remove HTrue nodes*)
+    (* WN : how about holes, Conj, HVar, HRel? *)
     let heaps = List.filter (fun h ->
         match h with
           | HEmp
-          | HTrue -> false
+          | HTrue 
+          | Hole _-> false
           | _ -> true) heaps
     in
     (*group nodes with equal names into a partition*)
@@ -1201,6 +1203,8 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
         | [] -> []
         | hx::hxs ->
               let res = fct hxs p in
+              let _ = Debug.tinfo_hprint (add_str "hx_here" Cprinter.string_of_h_formula) hx no_pos in
+              (* WN : why pre of get_node_var not met? *)
               let hx_var = CF.get_node_var hx in
               (*partition res into those with equal names and others*)
               let res_eq,res_others = List.partition (fun part ->
@@ -1599,7 +1603,7 @@ let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_x
   if (!Globals.allow_imm) || (!Globals.allow_field_ann) || sym_flag then
     xpure_heap_symbolic 1 prog h0 p0 which_xpure
   else
-    let a, c = xpure_heap_mem_enum prog h0 p0 which_xpure in
+    let a, c = xpure_heap_mem_enum 6 prog h0 p0 which_xpure in
     (a, [], c)
 
 let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) (sym_flag:bool) : (mix_formula * CP.spec_var list * CF.mem_formula) =
@@ -1634,14 +1638,18 @@ let xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list 
   if (!Globals.allow_imm)||(!Globals.allow_field_ann) then
     xpure_symbolic 4 prog f0
   else
-    let a, c = xpure_mem_enum prog f0 in
+    let a, c = xpure_mem_enum 2 prog f0 in
     (a, [], c)
 
-let xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
-  Debug.no_1 "xpure"
+let xpure i (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+  Debug.no_1_num i "xpure"
       Cprinter.string_of_formula
       (fun (r1, _, r4) -> (Cprinter.string_of_mix_formula r1) ^ "#" ^ (Cprinter.string_of_mem_formula r4))
       (fun f0 -> xpure_x prog f0) f0
+
+let xpure_sym (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+  (* print_string "calling xpure"; *)
+    xpure_symbolic 48 prog f0
 
 (**************************************)
 (****************END XPURE ***********)
@@ -1876,7 +1884,10 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
     | HTrue
     | HFalse 
     | HEmp | HVar _ -> (hp, old_mem, false)
-    | ThreadNode _ -> (hp, old_mem, false)  (*TOCHECK*)
+    | ThreadNode d ->
+          let new_rsr = prune_preds prog true d.h_formula_thread_resource in
+          let d = {d with h_formula_thread_resource = new_rsr; } in
+          (ThreadNode d , old_mem, false)
     | DataNode d -> 
 	  (try 
 	    let bd = List.find (fun c-> (String.compare c.barrier_name d.h_formula_data_name) = 0) prog.prog_barrier_decls in
@@ -1898,6 +1909,8 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
           let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
           let zip = List.combine fr_vars to_vars in
+          let new_ho_agrs = List.map (fun arg -> prune_preds prog true arg) v.h_formula_view_ho_arguments in
+          let v = {v with h_formula_view_ho_arguments = new_ho_agrs;} in
           let (rem_br, prun_cond, first_prune, chg) =  
             match v.h_formula_view_remaining_branches with
               | Some l -> 
@@ -1962,20 +1975,20 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
             (r_hp,r_memo,r_b)
 
 
-let heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)= 
+and heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)= 
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_memo_pure_formula in
   let pr2 (h,o,r) = pr_triple Cprinter.string_of_h_formula pr1 string_of_bool (h,o,r) in
   Debug.no_2 "heap_prune_preds" pr pr1 pr2 (fun _ _ -> heap_prune_preds_x prog hp old_mem ba_crt) hp old_mem
 
 
-let heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
+and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
         let r1,r2,r3 = heap_prune_preds prog hp f [] in
         (r1, MCP.MemoF r2, r3)
   | MCP.OnePF _ -> (hp,old_mem,false)
 
-let prune_preds_x prog (simp_b:bool) (f:formula):formula =
+and prune_preds_x prog (simp_b:bool) (f:formula):formula =
   let simp_b = simp_b && !Globals.enable_redundant_elim in 
   let imply_w f1 f2 = let r,_,_ = TP.imply_one 26 f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
@@ -2025,7 +2038,7 @@ let prune_preds_x prog (simp_b:bool) (f:formula):formula =
         nf
     )
 
-let prune_preds prog (simp_b:bool) (f:formula):formula =   
+and prune_preds prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
   Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
@@ -2122,7 +2135,7 @@ let remove_imm_from_formula_x prog f imml = (* f *)
     not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) in
   let fun_helper p h = 
     (* decide below the value for which_xpure (1 or 0) ? *)
-    let disj = if not (CP.isAccs imml) then snd (xpure_heap_mem_enum prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
+    let disj = if not (CP.isAccs imml) then snd (xpure_heap_mem_enum 4 prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
     let fh, x, removed_vars = remove_imm_from_heap_formula prog p 1 imml h in (* remove @L and retrieve xpure of removed nodes *)    
     let pure = match x with
       | Some pr -> MCP.merge_mems pr p true

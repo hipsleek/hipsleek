@@ -1,0 +1,10 @@
+Starting Omega...oc
+Starting z3... 
+ <1>emp&0<=x & x'+1=x & TermErr_Must[f( x)]&{FLOW,(21,22)=__norm}[]
+ [ (5) (ERR: invalid transition)  Term[f( x)] ->  Loop[]]
+[[empty]]
+
+ <1>emp&0<=x & y<0 & x'=y+x & Loop[]&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+

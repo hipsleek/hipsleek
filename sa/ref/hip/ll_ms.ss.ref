@@ -1,0 +1,653 @@
+
+!!!Full processing file "hip/ll_ms.ss"
+Parsing file "hip/ll_ms.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+gather_type_info_b_formula: relation SIZEH
+gather_type_info_b_formula: relation SIZEH
+gather_type_info_b_formula: relation SIZEH
+
+WARNING: hip/ll_ms.ss_26:10_26:17:the result type __norm is not covered by the throw list[]
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure create_list$int~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN CL: ( n=0 & m=0) -->  CL(m,n),
+RELDEFN CL: ( 0<=m_1827 & CL(m_1827,n') & n'=n-1 & m=m_1827+1 & 1<=n) -->  CL(m,n),
+RELDEFN CL: ( 0<=m_1827 & CL(m_1827,n') & n'=n-1 & m=m_1827+1 & n<=(0-1)) -->  CL(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( CL(n,m), n=m, true, true)]
+*************************************
+
+!!!REL POST :  CL(n,m)
+!!!POST:  n=m
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure create_list$int~int SUCCESS.
+
+Checking procedure delete$node~int... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (a!=1 | n!=1), (n!=0 | a!=1), (n!=0 | a<=1), (n!=0 | 1<=a)]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN DEL: ( a=1 & m=n-1 & 2<=n) -->  DEL(m,n,a),
+RELDEFN DEL: ( 0<=m_1973 & DEL(m_1973,n_1938,v_int_316_1974) & n_1938=n-1 & 
+v_int_316_1974=a-1 & m=m_1973+1 & 1<=n & 2<=a) -->  DEL(m,n,a),
+RELDEFN DEL: ( 0<=m_1973 & DEL(m_1973,n_1938,v_int_316_1974) & n_1938=n-1 & 
+v_int_316_1974=a-1 & m=m_1973+1 & a<=0 & 1<=n) -->  DEL(m,n,a)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( DEL(n,a,m), n=m+1 & 1<=a & a<=m, true, true)]
+*************************************
+
+!!!REL POST :  DEL(n,a,m)
+!!!POST:  n=m+1 & 1<=a & a<=m
+!!!REL PRE :  true
+!!!PRE :  1<=a & a<n
+Procedure delete$node~int SUCCESS.
+
+Checking procedure delete2$node~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN DEL2: ( n=0 & m=0) -->  DEL2(m,n),
+RELDEFN DEL2: ( m=n-1 & 1<=n) -->  DEL2(m,n),
+RELDEFN DEL2: ( DEL2(m_2111,n_2073) & 0<=m_2111 & n_2073=n-1 & m=m_2111+1 & 1<=n) -->  DEL2(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( DEL2(n,m), (n-1)<=m & m<=n, true, true)]
+*************************************
+
+!!!REL POST :  DEL2(n,m)
+!!!POST:  (n-1)<=m & m<=n
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure delete2$node~int SUCCESS.
+
+Checking procedure delete_list$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(x)&x!=null --> x::node<val1,next1> * HP_2146(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_2146(next1)&true --> H(next1)&
+true(3,4),
+ // POST
+(1;0)emp&x'=null & x!=null --> G(x,x')&
+true(3,4),
+ // POST
+(2;0)H(x)&x=null & x=null --> G(x,x')&
+true(3,4)]
+
+Procedure delete_list$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H(next2)],
+ G(x3,x2) ::=  [emp&x3!=null & x2=null; emp&x3=null & x2=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<val2,next2> * H(next2)
+ or emp&x1=null
+ (3,4),
+ G(x3,x2) ::= 
+ emp&x3=null & x2=null
+ or emp&x3!=null & x2=null
+ (3,4)]
+*************************************
+
+Checking procedure find_ge$node~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN FGE: ( v<m) -->  FGE(m,v),
+RELDEFN FGE: ( FGE(m,v)) -->  FGE(m,v)]
+*************************************
+
+!!! PROBLEM with fix-point calculation
+Procedure find_ge$node~int FAIL.(2)
+
+Exception Failure("split_quantifiers: invalid argument (formula_or)") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure find_ge$node~int
+
+!!! proc.proc_name:find_ge$node~int
+Checking procedure get_next$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val3,next3> * HP_2318(next3)&
+true(3,4),
+ // POST
+(0)HP_2318(res) * x::node<val3,v5>&v5=null --> G(x,res)&
+true(3,4)]
+
+Procedure get_next$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x4) ::=  [x4::node<val3,DP>],
+ G(x5,res1) ::=  [x5::node<val3,v5>&v5=null & res1=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x4) ::= x4::node<val3,DP>(3,4),
+ G(x5,res1) ::= x5::node<val3,v5>&v5=null & res1=DP(3,4)]
+*************************************
+
+Checking procedure get_next_next$node... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ n!=1]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN GNN: ( m=n-2 & 2<=n) -->  GNN(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( GNN(n,m), n=m+2, true, true)]
+*************************************
+
+!!!REL POST :  GNN(n,m)
+!!!POST:  n=m+2
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure get_next_next$node SUCCESS.
+
+Checking procedure insert$node~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN INS: ( m=2 & n=1) -->  INS(m,n),
+RELDEFN INS: ( INS(m_2535,n_2467) & 0<=n_2467 & n=n_2467+1 & m_2535=m-1 & 2<=m) -->  INS(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( INS(n,m), n=m-1 & 2<=m, true, true)]
+*************************************
+
+!!!REL POST :  INS(n,m)
+!!!POST:  n=m-1 & 2<=m
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure insert$node~int SUCCESS.
+
+Checking procedure list_copy$node... check 1 fail
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN CPY: ( 1<=m_2606 & CPY(m_2606,n_2586) & n_2586=n-1 & m=m_2606+1 & 1<=n) -->  CPY(m,n),
+RELDEFN CPY: ( m_2606=0 & CPY(m_2606,n_2586) & n_2586=n-1 & m=1 & 2<=n) -->  CPY(m,n),
+RELDEFN CPY: ( n=1 & m=1) -->  CPY(m,n),
+RELDEFN CPY: ( n=0 & m=0) -->  CPY(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( CPY(n,m), n_56=m, true, true)]
+*************************************
+
+!!!REL POST :  CPY(n,m)
+!!!POST:  n_56=m
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure list_copy$node SUCCESS.
+
+Checking procedure list_filter2$node~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN FIL: ( FIL(m,n_2766) & n_2766=n-1 & 1<=n & 0<=m) -->  FIL(m,n),
+RELDEFN FIL: ( FIL(m_2833,n_2806) & 0<=m_2833 & n_2806=n-1 & m=m_2833+1 & 1<=n) -->  FIL(m,n),
+RELDEFN FIL: ( n=0 & m=0) -->  FIL(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( FIL(n,m), m<=n, true, true)]
+*************************************
+
+!!!REL POST :  FIL(n,m)
+!!!POST:  m<=n
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure list_filter2$node~int SUCCESS.
+
+Checking procedure list_remove$node~int... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ x!=0]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN RMV: ( m=n-1 & 2<=n) -->  RMV(m,n),
+RELDEFN RMV: ( RMV(m_3084,n_3026) & n_3026=n-1 & m_3084=m-1 & 2<=m & 2<=n) -->  RMV(m,n),
+RELDEFN RMV: ( m=1 & n=1) -->  RMV(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( RMV(n,m), 1<=m & (n-1)<=m & m<=n, true, true)]
+*************************************
+
+!!!REL POST :  RMV(n,m)
+!!!POST:  1<=m & (n-1)<=m & m<=n
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure list_remove$node~int SUCCESS.
+
+Checking procedure list_remove2$node~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN RMV2: ( m=n-1 & 1<=n) -->  RMV2(m,n),
+RELDEFN RMV2: ( RMV2(m_3262,n_3236) & 0<=m_3262 & n_3236=n-1 & m=m_3262+1 & 1<=n) -->  RMV2(m,n),
+RELDEFN RMV2: ( n=0 & m=0) -->  RMV2(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( RMV2(n,m), (n-1)<=m & m<=n, true, true)]
+*************************************
+
+!!!REL POST :  RMV2(n,m)
+!!!POST:  (n-1)<=m & m<=n
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure list_remove2$node~int SUCCESS.
+
+Checking procedure list_traverse$node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN TRAV: ( TRAV(m_3338,n_3322) & 0<=m_3338 & n_3322=n-1 & m=m_3338+1 & 1<=n) -->  TRAV(m,n),
+RELDEFN TRAV: ( n=0 & m=0) -->  TRAV(m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( TRAV(n,m), n=m, true, true)]
+*************************************
+
+!!!REL POST :  TRAV(n,m)
+!!!POST:  n=m
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure list_traverse$node SUCCESS.
+
+Checking procedure pop_front$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val4,next4> * HP_3367(next4)&
+true(3,4),
+ // POST
+(0)HP_3367(x') * x::node<val4,v7>&v7=null --> G(x,x')&
+true(3,4)]
+
+Procedure pop_front$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x7) ::=  [x7::node<val4,DP1>],
+ G(x9,x8) ::=  [x9::node<val4,v7>&v7=null & x8=DP1]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x7) ::= x7::node<val4,DP1>(3,4),
+ G(x9,x8) ::= x9::node<val4,v7>&v7=null & x8=DP1(3,4)]
+*************************************
+
+Checking procedure push_front$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(0)x'::node<v17',x> * H(x)&true --> G(x,x')&
+true(3,4)]
+
+Procedure push_front$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(a) ::=  [htrue],
+ G(x10,x11) ::=  [x11::node<v17',x10>&x10=DP2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(a) ::= NONE,
+ G(x10,x11) ::= x11::node<v17',x10>&x10=DP2(3,4)]
+*************************************
+
+Checking procedure reverse$node~node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN REV: ( 1<=m_3496 & n_3495=n-1 & m=m_3496-1 & 1<=n & 0<=k & REV(xs',k,m_3496,n_3495)) -->  REV(xs',k,m,n),
+RELDEFN REV: ( xs'=0 & n=0 & m=k & 0<=k) -->  REV(xs',k,m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( REV(m,n,xs',k), NODPRIxs=0 & n=k-m & 0<=m & m<=k, true, true)]
+*************************************
+
+!!!REL POST :  REV(m,n,xs',k)
+!!!POST:  NODPRIxs=0 & n=k-m & 0<=m & m<=k
+!!!REL PRE :  true
+!!!PRE :  NODPRIxs=0
+Procedure reverse$node~node SUCCESS.
+
+Checking procedure set_next$node~node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN SN: ( k=j+1 & 0<=j) -->  SN(k,j)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( SN(j,k), j=k-1 & 1<=k, true, true)]
+*************************************
+
+!!!REL POST :  SN(j,k)
+!!!POST:  j=k-1 & 1<=k
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure set_next$node~node SUCCESS.
+
+Checking procedure set_null$node... 
+Procedure set_null$node SUCCESS.
+
+Checking procedure set_null2$node... 
+Procedure set_null2$node SUCCESS.
+
+!!! neqs:[]
+Checking procedure size_helper$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SIZEH,H,H1]requires H(x)&true
+ ensures H1(x)&
+SIZEH(res,n){,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x)&x!=null --> x::node<val5,next5> * HP_3685(next5)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_3685(next5)&true --> H(next5)&
+true(3,4),
+ // POST
+(1;0)H(x)&x=null --> H1(x)&
+true(3,4),
+ // POST
+(2;0)x::node<val5,next5> * H1(next5)&true --> H1(x)&
+true(3,4)]
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN SIZEH: ( n=res) -->  SIZEH(res,n),
+RELDEFN SIZEH: ( SIZEH(res,1+n)) -->  SIZEH(res,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( SIZEH(n,res), n<=res, true, true)]
+*************************************
+
+!!!REL POST :  SIZEH(n,res)
+!!!POST:  n<=res
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure size_helper$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x12) ::=  [emp&x12=null; x12::node<val6,next6> * H(next6)],
+ H1(x13) ::=  [emp&x13=null; x13::node<val5,next5> * H1(next5)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x12) ::= 
+ x12::node<val6,next6> * H(next6)
+ or emp&x12=null
+ (3,4),
+ H1(x13) ::= 
+ x13::node<val5,next5> * H1(next5)
+ or emp&x13=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+Checking procedure size$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SIZE,T1,T2]requires T1(x)&true
+ ensures EXISTS(n: T2(x)&SIZE(res,n)&
+{,(3,4)=__norm}[];
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE
+(0)T1(x)&true --> x::H<>&
+true(3,4),
+ // POST
+(0)x::H1<>&true --> T2(x)&
+true(3,4)]
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN SIZE: ( true) -->  SIZE(res,n_3797)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( SIZE(res,n_3797), false, true, true)]
+*************************************
+
+!!!REL POST :  SIZE(res,n_3797)
+!!!POST:  false
+!!!REL PRE :  true
+!!!PRE :  false
+Procedure size$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ T1(x14) ::=  [x14::H<>],
+ T2(x15) ::=  [x15::H1<>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ T1(x14) ::= x14::H<>(3,4),
+ T2(x15) ::= x15::H1<>(3,4)]
+*************************************
+
+Checking procedure splice$node~node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN SPLICE: ( n=0 & m=t & 0<=t) -->  SPLICE(t,m,n),
+RELDEFN SPLICE: ( SPLICE(t_3928,m_3890,n_3889) & 0<=t_3928 & n_3889=n-1 & m_3890=m-1 & 
+t=t_3928+2 & 1<=n & 1<=m) -->  SPLICE(t,m,n),
+RELDEFN SPLICE: ( t=n & m=0 & 1<=n) -->  SPLICE(t,m,n)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( SPLICE(m,n,t), n=t-m & 0<=m & m<=t, true, true)]
+*************************************
+
+!!!REL POST :  SPLICE(m,n,t)
+!!!POST:  n=t-m & 0<=m & m<=t
+!!!REL PRE :  true
+!!!PRE :  true
+Procedure splice$node~node SUCCESS.
+
+Checking procedure split1$node~int... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (n!=0 | a!=1), (n!=0 | a<=1), (n!=0 | 1<=a)]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN SPLIT: ( n1=1 & a=1 & n2=n-1 & 1<=n) -->  SPLIT(n,a,n1,n2),
+RELDEFN SPLIT: ( 1<=n1_4093 & SPLIT(n_4040,a',n1_4093,n2) & n_4040=n-1 & a'=a-1 & n1=n1_4093+
+1 & 0<=n2 & 1<=n & 2<=a) -->  SPLIT(n,a,n1,n2),
+RELDEFN SPLIT: ( n1_4093=0 & SPLIT(n_4040,a',n1_4093,n2) & n_4040=n-1 & a'=a-1 & n1=1 & 
+0<=n2 & 1<=n & 2<=a) -->  SPLIT(n,a,n1,n2),
+RELDEFN SPLIT: ( 1<=n1_4093 & SPLIT(n_4040,a',n1_4093,n2) & n_4040=n-1 & a'=a-1 & n1=n1_4093+
+1 & a<=0 & 0<=n2 & 1<=n) -->  SPLIT(n,a,n1,n2),
+RELDEFN SPLIT: ( n1_4093=0 & SPLIT(n_4040,a',n1_4093,n2) & n_4040=n-1 & a'=a-1 & n1=1 & 
+a<=0 & 0<=n2 & 1<=n) -->  SPLIT(n,a,n1,n2)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( SPLIT(n,a,n1,n2), n=n1+n2 & a=n1 & 1<=n1, true, true)]
+*************************************
+
+!!!REL POST :  SPLIT(n,a,n1,n2)
+!!!POST:  n=n1+n2 & a=n1 & 1<=n1
+!!!REL PRE :  true
+!!!PRE :  1<=a
+Procedure split1$node~int SUCCESS.
+
+Checking procedure swap$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+
+Procedure swap$node~node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure swap$node~node
+
+!!! proc.proc_name:swap$node~nodeStop Omega... 490 invocations 
+2 false contexts at: ( (269,13)  (269,4) )
+
+!!! log(small):(7.156537,7482)
+Total verification time: 5.394681 second(s)
+	Time spent in main process: 4.256454 second(s)
+	Time spent in child processes: 1.138227 second(s)
+

@@ -1,0 +1,28 @@
+Starting Omega...oc
+H is defined.
+H1 is defined.
+HP_535 is defined.
+G_556 is defined.
+G is defined.
+
+Checkeq (1) : Fail.
+
+!!!Final MTL: [[(x0, x0), (H, H)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(x, x)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(x, x), (G_556, G_556)]]
+Checkeq (4) : Valid.
+!!!Final MTL: [[(x, x), (H, H)]]
+Checkeq (5) : Valid.
+Checkeq (6) : Fail.
+
+!!!Final MTL: [[(H, H), (b, b), (Anon_14, Anon_15), (x, x)]]
+Checkeq (7) : Valid.
+!!!Final MTL: [[(H, H), (H1, H1), (p2, p2), (Anon_17, Anon_19), (b, b), (Anon_16, Anon_18), (x, x)]]
+Checkeq (8) : Valid.Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.064015 second(s)
+	Time spent in main process: 0.049826 second(s)
+	Time spent in child processes: 0.014189 second(s)
+

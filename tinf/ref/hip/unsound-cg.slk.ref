@@ -1,0 +1,39 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [rr_63; ss_64]
+                          es_rhs_eqset: [rr_63:rr; ss_64:ss; rr_63:rr; 
+                                         ss_64:ss; rr_63:ss_64]
+                          es_must_error: Some(AndR[ k+1=k+1 |-  1+k=rr. LOCS:[16;14];  n2+1=n2+1 |-  rr=ss. LOCS:[14;16];  n2+1=n2+1 |-  1+n2=rr. LOCS:[16;14] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            n2=k:xs::lls{}<rr,ss>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: emp&(n2+1)!=k & k<n2&{FLOW,(3,4)=__Error}[]
+                          es_heap: xs::node2<n2,k>
+                          es_evars: [rr_96; ss_97]
+                          es_rhs_eqset: [rr_96:rr; ss_97:ss; rr_96:rr; 
+                                         ss_97:ss; k:ss_97]
+                          es_must_error: Some(AndR[ (n2+1)!=k & k<n2 |-  k=ss. LOCS:[19;13];  (n2+1)!=k & k<n2 |-  rr!=ss. LOCS:[19;13];  (n2+1)!=k & k<n2 |-  1+n2=rr. LOCS:[19;13] (must-bug).]; true)
+                          es_trace:  Fold ==>  SEARCH ==>  Match(xs,xs) ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node2<n2,k>&
+                                            k<n2:xs::lls{}<rr1,ss1>&
+                                            {FLOW,(21,22)=__norm}[]]] <1>emp&(n2+1)!=k & k<n2&{FLOW,(3,4)=__Error}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+
+ <1>emp&(n2+1)!=k & k<n2&{FLOW,(21,22)=__norm}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+ <1>emp&(n2+1)!=k & a=1+n2 & k<n2&{FLOW,(21,22)=__norm}[]
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==> ]]
+
+

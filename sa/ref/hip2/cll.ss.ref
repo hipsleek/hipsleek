@@ -1,0 +1,39 @@
+
+!!!Full processing file "hip2/cll.ss"
+Parsing file "hip2/cll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=p & n=0) | (1<=n & self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((p<self & 1<=n) | (self<p & 1<=n))),
+([], self=p & n=0)])
+!!! formula1: emp&((self=null & n=0) | (((2<=n | n=1)) & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure count_rest$node~node... 
+Procedure count_rest$node~node SUCCESS.
+
+Checking procedure count$node... 
+Procedure count$node SUCCESS.
+
+Checking procedure delete$node... 
+Procedure delete$node SUCCESS.
+
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS.
+
+Checking procedure test$... 
+Procedure test$ SUCCESS.
+Stop Omega... 16 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.871516,1120)
+Total verification time: 0.829559 second(s)
+	Time spent in main process: 0.788233 second(s)
+	Time spent in child processes: 0.041326 second(s)
+

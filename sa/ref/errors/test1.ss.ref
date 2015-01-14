@@ -1,0 +1,63 @@
+
+!!!Full processing file "errors/test1.ss"
+Parsing file "errors/test1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_last$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val1,next1> * HP_1232(next1)&
+true(3,4),
+ // POST
+(1;0)x::node<v2,next1> * HP_1232(next1)&next1!=null --> G(x)&
+true(3,4),
+ // POST
+(2;0)x::node<v1,next1> * HP_1232(next1)&next1=null --> G(x)&
+true(3,4)]
+
+Procedure get_last$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<val2,DP>|#|emp&next_20_1294!=null; x1::node<val2,next2>&
+next2=null],
+ G(x2) ::=  [x2::node<v,next>&next=null; x2::node<v,DP>|#|emp&next_20_1231!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) |#| emp&
+  next_20_1294!=null ::= 
+ x1::node<val2,next2>&next2=null
+ or x1::node<val2,DP>
+ (3,4),
+ G(x2) |#| emp&
+  next_20_1231!=null ::= 
+ x2::node<v,DP>
+ or x2::node<v,next>&next=null
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.048491,258)
+Total verification time: 0.318424 second(s)
+	Time spent in main process: 0.304255 second(s)
+	Time spent in child processes: 0.014169 second(s)
+

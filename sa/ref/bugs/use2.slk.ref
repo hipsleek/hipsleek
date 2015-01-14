@@ -1,0 +1,179 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&self!=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!!  ELIMINATE parameters:[y] of view H2
+
+!!!  ELIMINATE parameters:[y] of view H1
+
+!!!views after ELIM: 
+[ view H2{}[]<y:TVar[40]>= 
+  view_domains: view H2<y:TVar[40]>= 
+  EBase self::H2_48{}<>&{FLOW,(1,25)=__flow}[]
+  view vars: y
+  ann vars (0 - not a posn): (,0),(,0),(,0)
+  cont vars: y
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),
+([], self=null)]
+  inv_lock: None
+  unstructured formula: self::H2_48{}<>&{FLOW,(1,25)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: false
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: node
+  self preds: [H2_48]
+  materialized vars: [(self,partial,[])]
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[],
+ view H2_48{}[]<>= 
+  view_domains: view H2_48<y:TVar[40]>= 
+  EList :EBase (* lbl: *){1}->emp&self=null&{FLOW,(1,25)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[_; p; n](ex)[]self::node<_,p,n> * 
+            n::H2_48{}<y_16>&{FLOW,(1,25)=__flow}[]
+  view vars: 
+  ann vars (0 - not a posn): (,0),(,0),(,0)
+  cont vars: y
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),
+([], self=null)]
+  inv_lock: None
+  unstructured formula: 
+   (* lbl: *){1}->emp&self=null&{FLOW,(1,25)=__flow}[]
+   || (exists n,p,_: self::node<_,p,n> * n::H2_48{}<y_16>&
+      {FLOW,(1,25)=__flow})[]
+  xform: true
+  is_recursive?: true
+  is_primitive?: false
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: node
+  self preds: []
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  uni_vars: []
+  bag of addr: 
+  raw base case: (* lbl: *){1}->emp&self=null&{FLOW,(1,25)=__flow}[]
+  base case: self=null->self=null
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[],
+ view H1{}[]<y:TVar[47]>= 
+  view_domains: view H1<y:TVar[47]>= 
+  EBase self::H1_49{}<>&{FLOW,(1,25)=__flow}[]
+  view vars: y
+  ann vars (0 - not a posn): (,0),(,0),(,0)
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true)]
+  inv_lock: None
+  unstructured formula: self::H1_49{}<>&{FLOW,(1,25)=__flow}[]
+  xform: (self<=(0-1) | 1<=self)
+  is_recursive?: false
+  is_primitive?: false
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: node
+  self preds: [H1_49]
+  materialized vars: [(self,full,[])]
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[],
+ view H1_49{}[]<>= 
+  view_domains: view H1_49<y:TVar[47]>= 
+  EBase exists (Expl)[](Impl)[_; p; t](ex)[]self::node<_,p,t> * 
+        t::H2_48{}<y_17>&{FLOW,(1,25)=__flow}[]
+  view vars: 
+  ann vars (0 - not a posn): (,0),(,0),(,0)
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true)]
+  inv_lock: None
+  unstructured formula: 
+   (exists _,p,t: self::node<_,p,t> * t::H2_48{}<y_17>&
+   {FLOW,(1,25)=__flow})[]
+  xform: (self<=(0-1) | 1<=self)
+  is_recursive?: false
+  is_primitive?: false
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: NO
+  view_data_name: node
+  self preds: []
+  materialized vars: [(self,full,[])]
+  addr vars: self
+  uni_vars: []
+  bag of addr: self
+  base case: self!=null->self!=null
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]]Stop Omega... 8 invocations 
+SAT Count   : 45
+SAT % Hit   : 80.%
+IMPLY Count : 3
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001671 (seconds)
+
+!!! log(small):(0.01165,53)
+Total verification time: 0.075706 second(s)
+	Time spent in main process: 0.056912 second(s)
+	Time spent in child processes: 0.018794 second(s)
+

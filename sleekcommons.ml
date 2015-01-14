@@ -38,12 +38,15 @@ type command =
   | PredDef of I.view_decl
   | FuncDef of I.func_decl
   | RelDef of I.rel_decl (* An Hoa *)
+  | TemplDef of I.templ_decl
+  | UtDef of I.ut_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | EntailCheck of (meta_formula list * meta_formula * entail_type)
   | SatCheck of (meta_formula)
+  | NonDetCheck of (ident * meta_formula)
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
@@ -64,17 +67,21 @@ type command =
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | PredSplit of (ident list)
+  | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
   | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | CheckNorm of meta_formula
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
-  | InferCmd of (ident list * meta_formula * meta_formula * entail_type)
+  | InferCmd of (infer_type list * ident list * meta_formula * meta_formula * entail_type)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
+  | TemplSolv of ident list
+  | TermInfer
+  | TermAssume of (meta_formula * meta_formula)
   | EmptyCmd
 
 and print_cmd =
@@ -111,13 +118,16 @@ let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
-  | RelDef  _ -> "RelDef"  
+  | RelDef  _ -> "RelDef" 
+  | TemplDef _ -> "TemplDef"
+  | UtDef _ -> "UtDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
   | SatCheck _ -> "SatCheck"
+  | NonDetCheck _ -> "NonDetCheck"
   | Simplify _ -> "Simplify"
   | Slk_Hull _ -> "Slk_Hull"
   | Slk_PairWise _ -> "Slk_PairWise"
@@ -139,6 +149,7 @@ let string_of_command c = match c with
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
   | PredSplit _ -> "PredSplit"
+  | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"
   | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"
@@ -149,6 +160,9 @@ let string_of_command c = match c with
   | PrintCmd _ -> "PrintCmd"  
   | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
+  | TemplSolv _ -> "TemplSolv"
+  | TermInfer -> "TermInfer"
+  | TermAssume _ -> "TermAssume"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

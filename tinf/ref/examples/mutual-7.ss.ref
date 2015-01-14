@@ -1,0 +1,84 @@
+
+!!!Full processing file "examples/mutual-7.ss"
+Parsing file "examples/mutual-7.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int~int... 
+Procedure g$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure g$int~int... 
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_7_1235=1+y' & v_int_7_1234=y'+x' & !(v_bool_6_1137') & 
+0<=x' & !(v_bool_6_1137') & x'=x & y'=y & 
+0<=x' & gpost_1123(v_int_7_1234,v_int_7_1235) --> fpost_1132(x,y).
+
+ termAssume x'<0 & y'=y & x'=x & v_bool_6_1137' & x'<0 & 
+v_bool_6_1137' --> fpost_1132(x,y).
+
+ termAssume v_int_16_1187+2=y' & !(v_bool_15_1127') & 0<=x' & 
+!(v_bool_15_1127') & x'=x & y'=y & 
+0<=x' & fpost_1132(x',v_int_16_1187) --> gpost_1123(x,y).
+
+ termAssume x'<0 & y'=y & x'=x & v_bool_15_1127' & x'<0 & 
+v_bool_15_1127' --> gpost_1123(x,y).
+
+ termAssume 0<=x' & y'=y & x'=x & !(v_bool_6_1137') & 0<=x' & 
+!(v_bool_6_1137') & v_int_7_1136'=y'+x' & v_int_7_1135'=1+
+y' & fpre_0(x,y) --> gpre_0(v_int_7_1136',v_int_7_1135').
+
+ termAssume 0<=x' & y'=y & x'=x & !(v_bool_15_1127') & 0<=x' & 
+!(v_bool_15_1127') & v_int_16_1126'+
+2=y' & gpre_0(x,y) --> fpre_0(x',v_int_16_1126').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] 0<=x@R]
+,	g: [[5] x<=(0-1)@B,[6] 0<=x@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=(0-1) -> requires emp & Term[30,2]
+ ensures emp & true; 
+  0<=x -> case {
+           y<=0 -> requires emp & Term[30,4,1+(2*x)+(0*
+           y)]
+ ensures emp & true; 
+           1<=y -> requires emp & Term[30,5,0+(0*x)+(2*
+           y)]
+ ensures emp & true; 
+           }
+  
+  }
+f:  case {
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & Term[30,5,3+(0*x)+(2*
+           y)]
+ ensures emp & true; 
+           y<=(0-
+           1) -> case {
+                  (0-x)<=y & y<=(0-1) -> requires emp & Term[30,4,0+(2*x)+(0*
+                  y)]
+ ensures emp & true; 
+                  x<=((0-y)-
+                  1) -> requires emp & Term[30,3]
+ ensures emp & true; 
+                  }
+           
+           }
+  
+  }
+
+0 false contexts at: ()

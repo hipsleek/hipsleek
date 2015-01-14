@@ -1,4 +1,5 @@
 <{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
+"joust": include
 <xml/*.*>: not_hygienic
 <omega_modified/omega_lib/obj/*.*>: not_hygienic
 <omega_modified/code_gen/obj/*.*>: not_hygienic
@@ -7,7 +8,10 @@
 <z3iw/z3/lib/*.*>: not_hygienic
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
+<smt2slk_src/*.*>: not_hygienic
 <mona-1.4/comp/lib/*.*>: not_hygienic
+<mona-1.4/comp/Lib/*.*>: not_hygienic
+<mona-1.4/comp/BDD/*.*>: not_hygienic
 <mona-1.4/GTA/.libs/*.*>: not_hygienic
 <mona-1.4/Mem/.libs/*.*>: not_hygienic
 <mona-1.4/BDD/.libs/*.*>: not_hygienic

@@ -1,0 +1,79 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & y=null & n=0 & m=0) | (self!=null & y!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&m=0 & n=0 & y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null & n=0 & m=0)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entailing lemma one3: Fail. INCONSISTENCY : expected failure but success instead
+
+!!! fixpoint:[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y1>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y2>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y3>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y4>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y5>&{FLOW,(3,4)=__norm}[]
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  p1::zip{}<y6>&{FLOW,(3,4)=__norm}[]
+
+Entailing lemma lem_19: Fail. (no cex)(must) cause: OrL[ (exists n2,p1,_: self2::node<_,p1> * p1::zipM{}<n2> * y::zipM{}<n>&n=1+n2&
+{FLOW,(5,6)=__Error})[],valid]
+
+Failed to prove lem_19:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+ <1>
+    y::zipM{}<n>&n=0 & self2=null&{FLOW,(3,4)=__norm}[]
+    or (exists n2,p1,_: self2::node<_,p1> * p1::zipM{}<n2> * y::zipM{}<n>&
+       n=1+n2&{FLOW,(5,6)=__Error})[]
+    
+[[ Fold ==> ||OR|| ==>  COND ==>  BaseCaseFold ==> ]]
+
+ <1>
+    y::zipM{}<n>&n=0 & self2=null&{FLOW,(3,4)=__norm}[]
+    or (exists n2,p1,_: self2::node<_,p1> * p1::zipM{}<n2> * y::zipM{}<n>&
+       n=1+n2&{FLOW,(5,6)=__Error})[]
+    
+[[ Fold ==> ||OR|| ==>  COND ==>  BaseCaseFold ==> ]]
+
+Stop Omega... 43 invocations 
+SAT Count   : 996
+SAT % Hit   : 85.94%
+IMPLY Count : 151
+IMPLY % Hit : 60.26%
+Time(cache overhead) : 0.108335 (seconds)
+
+!!! log(small):(1.172558,1252)
+Total verification time: 0.548911 second(s)
+	Time spent in main process: 0.489229 second(s)
+	Time spent in child processes: 0.059682 second(s)
+

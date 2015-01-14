@@ -1,0 +1,38 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=y | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=y)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [P1(y)&true --> P1(y)&true(3,4)]
+[[ COND ==>  Match(p,p) ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [P1(y)&true --> P1(y)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 11 invocations 
+SAT Count   : 59
+SAT % Hit   : 81.35%
+IMPLY Count : 7
+IMPLY % Hit : 28.57%
+Time(cache overhead) : 0.002191 (seconds)
+
+!!! log(small):(0.021247,80)
+Total verification time: 0.082445 second(s)
+	Time spent in main process: 0.062312 second(s)
+	Time spent in child processes: 0.020133 second(s)
+

@@ -71,7 +71,7 @@ let rec compute f n b =
 let rec smt_of_typ t =
   match t with
   | Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
-  | Float -> "Int" (* Currently, do not support real arithmetic! *)
+  | Float -> "Real" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
   | AnnT -> "Int"
@@ -84,16 +84,17 @@ let rec smt_of_typ t =
   | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+  | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
   (* TODO *)
   | RelT _ -> "Int"
+  | UtT -> "Int"
   | HpT -> "Int"
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
-    | Bptyp -> "int-triple"
+  | Bptyp -> "int-triple"
 
 let smt_of_typ t =
-  Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
-  smt_of_typ t
+  Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
 
 let smt_of_spec_var sv =
   (CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -115,8 +116,8 @@ let rec smt_of_exp a =
   | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-  | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
   | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
@@ -139,6 +140,7 @@ let rec smt_of_exp a =
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
 let rec smt_of_b_formula b =
   let (pf,_) = b in
@@ -208,7 +210,7 @@ let rec smt_of_b_formula b =
   (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
+  let _ = Debug.devel_hprint (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
@@ -229,7 +231,7 @@ let rec smt_of_formula pr_w pr_s f =
 
 let smt_of_formula pr_w pr_s f =
   let _ = set_prover_type () in
-  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
+  Debug.no_1 "smt_of_formula"  !CP.print_formula idf
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
 
@@ -446,28 +448,54 @@ let rec icollect_output chn accumulated_output : string list =
       if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
         icollect_output chn (accumulated_output @ [line])
       else accumulated_output @ [line]
-    with
-      | End_of_file -> accumulated_output in
+    with | End_of_file -> accumulated_output in
   output
 
+(* let count_paren str =                                *)
+(*   let len = String.length str in                     *)
+(*   let rec helper i =                                 *)
+(*     if i == len then (0, 0)                          *)
+(*     else                                             *)
+(*       let o, c = helper (i + 1) in                   *)
+(*       if str.[i] == '(' then (o + 1, c)              *)
+(*       else if str.[i] == ')' then (o, c + 1)         *)
+(*       else (o, c)                                    *)
+(*   in helper 0                                        *)
+
+(* let icollect_model chn: string list =                *)
+(*   let rec helper cnt accumulated_output =            *)
+(*     try                                              *)
+(*       let line = input_line chn in                   *)
+(*       (* let _ = print_endline line in *)            *)
+(*       let cnt_open, cnt_close = count_paren line in  *)
+(*       let cnt = cnt + cnt_open - cnt_close in        *)
+(*       if (cnt == 0) then accumulated_output @ [line] *)
+(*       else helper cnt (accumulated_output @ [line])  *)
+(*     with _ -> accumulated_output                     *)
+(*   in                                                 *)
+(*   let first_line = input_line chn in                 *)
+(*   (* let _ = print_endline first_line in *)          *)
+(*   helper 0 [first_line]                              *)
+  
 let rec collect_output chn accumulated_output : string list =
   let output =
     try
       let line = input_line chn in
       (* let _ = print_endline ("locle: " ^ line) in *)
       collect_output chn (accumulated_output @ [line])
-    with
-      | End_of_file -> accumulated_output in
+    with | End_of_file -> accumulated_output in
   output
 
-let sat_type_from_string r input=
+let sat_type_from_string r input =
   if (r = "sat") then Sat
   else if (r = "unsat") then UnSat
   else
     try
       let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
       (print_string "Z3 translation failure!";
-      Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
+      Error.report_error { 
+        Error.error_loc = no_pos; 
+        Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
     with
       | Not_found -> Unknown
 
@@ -511,23 +539,21 @@ let iget_answer2 chn input =
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
-let iget_answer chn input=
+let iget_answer chn input =
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
-let get_answer chn input=
+let get_answer chn input =
   let output = collect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
 let remove_file filename =
-  try
-    Sys.remove filename;
-  with
-    | e -> ignore e
+  try Sys.remove filename;
+  with | e -> ignore e
 
 type smtprover = Z3
 
@@ -551,6 +577,21 @@ let prover_process = ref {
   errchannel = stdin 
 }
 
+
+let smtsolver_path = if !Globals.compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
+
+
+let local_oc = "./z3-4.3.2"
+let global_oc = "/usr/bin/z3-4.3.2"
+
+let smtsolver_path = 
+  if (Sys.file_exists local_oc) then ref local_oc
+  else if (Sys.file_exists global_oc)  then ref global_oc
+  else 
+    begin
+      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
+    end
+
 (***********)
 let test_number = ref 0
 let last_test_number = ref 0
@@ -565,9 +606,9 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3" -> (!smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-  | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "z3-4.2" -> ("z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-4.3.1" -> ("./z3-4.3.1", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
@@ -591,8 +632,8 @@ let run st prover input timeout =
       Procutils.PrvComms.maybe_raise_timeout fnc () timeout
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
-          Printexc.print_backtrace stdout;
-          print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
+          print_backtrace_quiet ();
+          print_endline_quiet ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted; }
@@ -605,23 +646,31 @@ let run st prover input timeout =
 (*for z3-3.2*)
 let rec prelude () = ()
 
-
 (* start z3 system in a separated process and load redlog package *)
 and start() =
-  if not !is_z3_running then (
-    print_string_if (not !Globals.smt_compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
-    last_test_number := !test_number;
-    let _ = (
-      if !smtsolver_name = "z3-2.19" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
-      else if !smtsolver_name = "z3-4.2" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else if !smtsolver_name = "z3-4.3.1" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
-      else
-           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
-    ) in
-    is_z3_running := true;
+  try (
+    if not !is_z3_running then (
+      print_string_if (not !Globals.compete_mode && not !Globals.web_compile_flag) "Starting z3... \n"; flush stdout;
+      last_test_number := !test_number;
+      let _ = (
+        if !smtsolver_name = "z3-2.19" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
+        else if !smtsolver_name = "z3-4.2" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else if !smtsolver_name = "z3-4.3.1" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+        else
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+      ) in
+      is_z3_running := true;
+    )
+  )
+  with e -> (
+    if (!Globals.compete_mode) then (
+      print_endline "Unable to run the prover Z3!";
+      print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
+    );
+    raise e
   )
 
 (* stop Z3 system *)
@@ -666,7 +715,7 @@ let check_formula f timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+      let to_msg = if !compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
     restart (to_msg);
     { original_output_text = []; sat_result = Unknown; } 
   ) in
@@ -676,8 +725,8 @@ let check_formula f timeout =
   res
 
 let check_formula f timeout =
-  Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
-             check_formula f timeout
+  Debug.no_2 "Z3:check_formula" idf string_of_float string_of_smt_output
+    check_formula f timeout
 
 let check_formula f timeout =
   Gen.Profiling.no_2 "smt_check_formula" check_formula f timeout
@@ -710,7 +759,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   let smt_var_decls = List.map (fun v ->
     let tp = (CP.type_of_spec_var v)in
     let t = smt_of_typ tp in
-    "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+    match tp with
+    | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
   ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
@@ -977,7 +1028,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
    * We also consider unknown is the same as sat
 *)
 
-and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
+and smt_imply pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
   Debug.no_2(* _loop *) "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
@@ -1052,7 +1103,6 @@ let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_stron
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   Gen.Profiling.do_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
 
-
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
@@ -1115,7 +1165,9 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     res
 
 (*let default_is_sat_timeout = 2.0*)
-let is_sat_ops pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+let is_sat_ops pr_weak pr_strong f sat_no = 
+  smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+
 (* see imply *)
 let is_sat f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
@@ -1156,5 +1208,84 @@ let simplify (pe : CP.formula) : CP.formula =
   Debug.no_1 "simplify" pr pr simplify pe 
 
 let hull (f: CP.formula) : CP.formula = f
+
 let pairwisecheck (f: CP.formula): CP.formula = f
 
+(* Template Solving by Z3 *)
+open Z3m
+
+let smt_timeout = ref 5.0
+
+let push_smt_input inp timeout f_timeout = 
+  let tstartlog = Gen.Profiling.get_time () in 
+  if not !is_z3_running then start ()
+  else if (!z3_call_count = !z3_restart_interval) then (
+    restart("Regularly restart: 1 ");
+    z3_call_count := 0;
+  );
+  let fnc f = (
+    let _ = incr z3_call_count in
+    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let _ = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
+    output_string (!prover_process.outchannel) new_f;
+    flush (!prover_process.outchannel)) in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc inp timeout f_timeout in
+  let tstoplog = Gen.Profiling.get_time () in
+  let _ = Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
+  res
+
+let get_model is_linear vars assertions =
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+    let typ = (CP.type_of_spec_var v)in
+    let t = smt_of_typ typ in
+    "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+  ) vars in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let smt_asserts = List.map (fun a ->
+    "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+  let smt_asserts = String.concat "" smt_asserts in
+  let smt_inp = 
+    ";Variables Declarations\n" ^ smt_var_decls ^
+    ";Assertion Declations\n" ^ smt_asserts ^
+    (if is_linear then "(check-sat)" else "(check-sat-using qfnra-nlsat)") ^ "\n" ^
+    (* "(check-sat)\n" ^ *)
+    "(get-model)\n"
+  in
+  
+  (* let _ = print_endline ("smt_inp: \n" ^ smt_inp) in *)
+
+  let fail_with_timeout _ = (
+    restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+  ) in
+  let _ = push_smt_input smt_inp !smt_timeout fail_with_timeout in
+
+  let r =
+    try
+      let lexbuf = Lexing.from_channel !prover_process.inchannel in
+      Z3mparser.output Z3mlexer.tokenizer lexbuf
+    with _ -> Sat_or_Unk []
+  in r
+
+let get_model is_linear vars assertions =
+  let pr1 = pr_list !CP.print_formula in
+  let pr2 = string_of_z3m_res in
+  Debug.no_1 "z3_get_model" pr1 pr2
+  (fun _ -> get_model is_linear vars assertions) assertions
+
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let vl, il = List.split m in
+  let il = z3m_val_to_int il in
+  let m = List.combine vl il in
+  m
+  (* let mi = List.map (fun (_, i) -> i) m in   *)
+  (* let gcd_mi = abs (gcd_l mi) in             *)
+  (* List.map (fun (v, i) -> (v, i / gcd_mi)) m *)
+
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let pr1 = pr_list (pr_pair idf string_of_z3m_val) in
+  let pr2 = pr_list (pr_pair idf string_of_int) in
+  Debug.no_1 "z3_norm_model" pr1 pr2
+  norm_model m

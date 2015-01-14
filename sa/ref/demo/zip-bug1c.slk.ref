@@ -1,0 +1,23 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+
+Entail 2: Valid. 
+
+
+Entail 3: Fail.(must) cause: x=null |-  x!=null. LOCS:[14;15] (must-bug)
+
+Stop Omega... 0 invocations 
+SAT Count   : 8
+SAT % Hit   : 50.%
+IMPLY Count : 4
+IMPLY % Hit : 25.%
+Time(cache overhead) : 0.000666 (seconds)
+
+!!! log(small):(0.008903,15)
+Total verification time: 0.057978 second(s)
+	Time spent in main process: 0.044401 second(s)
+	Time spent in child processes: 0.013577 second(s)
+

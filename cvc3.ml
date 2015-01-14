@@ -81,6 +81,7 @@ and cvc3_of_exp a = match a with
   | CP.Bptriple _ -> failwith ("cvc3.cvc3_of_exp: Bptriple should not appear here")
   | CP.Tup2 _ -> failwith ("cvc3.cvc3_of_exp: Tup2 should not appear here")
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> cvc3_of_exp (CP.exp_of_template t)
   
 and cvc3_of_b_formula b =
   let (pf,_) = b in
@@ -129,9 +130,9 @@ and cvc3_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
-	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
-    | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
-     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+  | CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
+  | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
+  | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
   | CP.XPure _  -> Error.report_no_pattern ()
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

@@ -1,12 +1,12 @@
 /**
- Problem 4 in VSComp 2010: N-Queens
- @author Vu An Hoa
- @date 24/06/2011
- **/
+ * Problem 4 in VSComp 2010: N-Queens
+ * @author Vu An Hoa
+ * @date 24/06/2011
+ */
 
 /** RELATIONS **/
 
-relation dom(int[] a, int l, int h) == true.
+//relation dom(int[] a, int l, int h) == true.
 
 relation IdenticalRange(int[] a, int[] b, int i, int j) ==
 	forall(k : (k < i | k > j | a[k] = b[k])).
@@ -34,6 +34,11 @@ relation NoSolutionPrefix(int[] b, int n, int i, int k) ==
 	// no solution with prefix b[1..i+1]
 	| forall(j: (j < 1 | j > k | b[i+1] != j | NoSolutionPrefix(b,n,i+1,n)))).
 
+// Axiom saying that if b[1..i] is already inconsistent, it cannot be
+// extend to a solution of the n-queens problem (if i <= n of course).
+// This axiom requires a proof by induction.
+axiom !(IsConsistent(b,1,i)) & i <= n ==> NoSolutionPrefix(b,n,i,n).
+
 relation Bounded(int[] a, int i, int j, int l, int h) ==
 	(forall(k : (k < i | k > j | l <= a[k] & a[k] <= h))).
 
@@ -54,8 +59,9 @@ bool nQueens(ref int[] b, int n)
 // @param i The current stage, b[1..i-1] is a partial solution
 bool nQueensHelper(ref int[] b, int n, int i)
 	requires dom(b,1,n) & 1 <= i <= n+1 & IsConsistent(b,1,i-1) & Bounded(b',1,i-1,1,n) 
-	ensures (res & IsConsistent(b',1,n) & Bounded(b',1,n,1,n) | !res & NoSolutionPrefix(b',n,i-1,n)) 
-				& IdenticalRange(b',b,1,i-1);
+	ensures dom(b',1,n) & 
+			(res & IsConsistent(b',1,n) & Bounded(b',1,n,1,n) | !res & NoSolutionPrefix(b',n,i-1,n)) & 
+			IdenticalRange(b',b,1,i-1);
 {
 	if (i == n + 1) // nothing more to search!
 		return true;
@@ -77,8 +83,9 @@ bool nQueensHelperHelper(ref int[] b, int n, int i, int j)
 	requires dom(b,1,n) & 1 <= i <= n & 1 <= j <= n + 1 
 				& IsConsistent(b,1,i-1) & NoSolutionPrefix(b,n,i-1,j-1)
 				& Bounded(b',1,i-1,1,n) 
-	ensures (res & IsConsistent(b',1,n) & Bounded(b',1,n,1,n) | !res & NoSolutionPrefix(b',n,i-1,n))
-				& IdenticalRange(b',b,1,i-1);
+	ensures dom(b',1,n) & 
+			(res & IsConsistent(b',1,n) & Bounded(b',1,n,1,n) | !res & NoSolutionPrefix(b',n,i-1,n)) & 
+			IdenticalRange(b',b,1,i-1);
 {
 	if (j <= n) {
 		b[i] = j; // try putting a queen at (i,j)

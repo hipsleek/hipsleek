@@ -2,12 +2,12 @@ open Globals
 open Gen
 open Cformula
 
-module DD = Debug
+(* module DD = Debug *)
 (* module CF = Cformula *)
 module CP = Cpure
 module MCP = Mcpure
-module C = Cast
-module I = Iast
+(* module C = Cast *)
+(* module I = Iast *)
 module TP = Tpdispatcher
 
 
@@ -96,7 +96,7 @@ let elim_null_vnodes_x prog sf=
   if not is_base then sf else
     let ( _,mix_f,_,_,_) = split_components f in
     let eq_nulls = ( MCP.get_null_ptrs mix_f) in
-    struc_formula_trans_heap_node (formula_trans_heap_node (null_detect_trans eq_nulls)) sf
+    struc_formula_trans_heap_node [] (formula_trans_heap_node (null_detect_trans eq_nulls)) sf
 
 let elim_null_vnodes prog sf=
   let pr1 = !print_struc_formula in
@@ -126,6 +126,38 @@ let elim_eqnull hn_elim_heap to_elim_null_svl f0=
   let pr1 = !print_formula in
   Debug.no_2 "elim_eqnull" pr1!CP.print_svl  pr1
       (fun _ _ -> elim_eqnull_x hn_elim_heap to_elim_null_svl f0) f0 to_elim_null_svl
+
+let fresh_data_v_x f0=
+  let fresh_hf hf= match hf with
+    | DataNode dn ->
+          let args = List.filter (fun sv -> not (CP.is_node_typ sv)) dn.h_formula_data_arguments in
+          if args = [] then hf else
+            let fr_args = CP.fresh_spec_vars args in
+            h_subst (List.combine args fr_args) hf
+    | ViewNode vn ->
+          let args = List.filter (fun sv -> not (CP.is_node_typ sv)) vn.h_formula_view_arguments in
+          if args = [] then hf else
+            let fr_args = CP.fresh_spec_vars args in
+            h_subst (List.combine args fr_args) hf
+    | _ -> hf
+  in
+  (* let hds, hvs, hrs = get_hp_rel_formula f0 in *)
+  (* let v_sps1 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_data_arguments)) [] hds in *)
+  (* let v_sps2 = List.fold_left (fun r hd -> r@(List.filter (fun sv -> not (CP.is_node_typ sv)) hd.h_formula_view_arguments)) v_sps1 hvs in *)
+  (* let v_sps3 = ((\* CP.remove_dups_svl *\) v_sps2) in *)
+  (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
+  (* let sst = List.combine v_sps3 fr_v_sps2 in *)
+  (* subst sst f0 *)
+  if not !Globals.sa_pure_field then
+    formula_trans_heap_node fresh_hf f0
+  else f0
+
+let fresh_data_v f0=
+  let pr1= !print_formula in
+  Debug.no_1 "fresh_data_v" pr1 pr1
+      (fun _ -> fresh_data_v_x f0) f0
+
+let fresh_data_v_no_change f0= f0
 
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=
@@ -298,14 +330,14 @@ and collect_consit_models_x prog f0=
           let h_models0 = collect_baga_models_heap prog h in
           let eqs = (MCP.ptr_equations_without_null p) in
           let h_models = List.map (fun svl -> find_close svl eqs) h_models0 in
-          let _ = DD.ninfo_hprint (add_str " h_models" (pr_list !CP.print_svl))  h_models no_pos in
+          let _ = Debug.ninfo_hprint (add_str " h_models" (pr_list !CP.print_svl))  h_models no_pos in
           (*collect must info: bag of null and bag of non-null*)
           let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs p) in
           let eqNulls_cl = CP.remove_dups_svl (find_close eqNulls eqs) in
           let neqNulls = CP.get_neq_null_svl (MCP.pure_of_mix p) in
           let neqNulls_cl= CP.remove_dups_svl (find_close neqNulls eqs) in
-          let _ = DD.ninfo_hprint (add_str "eqNulls_cl" !CP.print_svl) eqNulls_cl no_pos in
-          let _ = DD.ninfo_hprint (add_str "neqNulls_cl" !CP.print_svl) neqNulls_cl no_pos in
+          let _ = Debug.ninfo_hprint (add_str "eqNulls_cl" !CP.print_svl) eqNulls_cl no_pos in
+          let _ = Debug.ninfo_hprint (add_str "neqNulls_cl" !CP.print_svl) neqNulls_cl no_pos in
           if eqNulls_cl != [] && neqNulls_cl!= [] &&
             CP.intersect_svl eqNulls_cl neqNulls_cl != [] then [] (*inconsistency*)
           else
@@ -493,7 +525,7 @@ let hp_defs_topo_sort_x hp_defs=
       let succ_hps = List.fold_left (fun r (f,_) -> r@(get_hp_rel_name_formula f)) [] def.def_rhs in
       (*remove dups*)
       let succ_hps1 = Gen.BList.remove_dups_eq CP.eq_spec_var succ_hps in
-      (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
+      (* Debug.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
       (*remove itself hp and unk_hps*)
       let succ_hps2 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp))  succ_hps1 in
       List.map (update_order_from_def succ_hps2 1) topo
@@ -531,7 +563,7 @@ let classify_equiv_hp_defs_x defs=
                   let equiv_opt = extract_hrel_head f in
                   match equiv_opt with
                     | None -> (equiv_defs, non_equiv_defs@[def], equiv)
-                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+                    | Some (hp1) -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
               end
             | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
         end
@@ -1037,7 +1069,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
                 let views = Cformula.get_views f in
                 if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
                   let f1 = (subst sst (elim_exists f)) in
-                  let _ = DD.ninfo_hprint (add_str "f1" !print_formula) f1 no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "f1" !print_formula) f1 no_pos in
                   let hfs = heaps_of_formula [rvn.h_formula_view_node] f1 in
                   let pure = get_pure f1 in
                   r@[(pure, hfs)]
@@ -1104,11 +1136,11 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
     (*check root has unfold information??*)
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
-    let _ = DD.ninfo_hprint (add_str "rhs0" !print_formula) rhs0 no_pos in
+    let _ = Debug.ninfo_hprint (add_str "rhs0" !print_formula) rhs0 no_pos in
     let rhs1 = subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_) = split_components rhs1 in
     let reqs = (MCP.ptr_equations_without_null mix_f) in
-    let _ = DD.ninfo_hprint (add_str "reqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) reqs no_pos in
+    let _ = Debug.ninfo_hprint (add_str "reqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) reqs no_pos in
     let rhs = subst (reqs) rhs1 in
     let ( _,lmf,_,_,_) = split_components lhs0 in
     let leqs = (MCP.ptr_equations_without_null lmf) in
@@ -1139,7 +1171,7 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
                 if lem_type = gen_lemma_action_invalid then 0 else lem_type
               else 0
             else
-              let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
+              let _ = Debug.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
               if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
                 1
               else
@@ -1289,9 +1321,9 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
   else
     let lhds, lhvs,_ = get_hp_rel_formula lhs in
     let l_reach_ptrs0, l_reach_hds,l_reach_hvs = look_up_reachable_ptrs_w_alias prog lhs [lroot] 3 in
-    let _ = DD.ninfo_hprint (add_str " l_reach_ptrs0" !CP.print_svl) l_reach_ptrs0  no_pos in
+    let _ = Debug.ninfo_hprint (add_str " l_reach_ptrs0" !CP.print_svl) l_reach_ptrs0  no_pos in
     let l_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) lhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) lhvs)) l_reach_ptrs0 in
-    let _ = DD.ninfo_hprint (add_str " l_reach_ptrs" !CP.print_svl) l_reach_ptrs no_pos in
+    let _ = Debug.ninfo_hprint (add_str " l_reach_ptrs" !CP.print_svl) l_reach_ptrs no_pos in
     let rhds, rhvs,_ = get_hp_rel_formula rhs in
     let r_reach_ptrs0,r_reach_hds,r_reach_hvs = (* look_up_reachable_ptr_args *) look_up_reachable_ptrs_w_alias prog rhs [rroot] 3 in
     let r_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) rhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) rhvs)) r_reach_ptrs0 in
@@ -1301,8 +1333,8 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
     (* let r_cyc_svl = List.filter (is_cycle r_reach_hds r_reach_hvs) r_reach_ptrs0 in *)
     let cl_rargs = find_close rargs (Gen.BList.remove_dups_eq CP.eq_pair_spec_var (eqs@remap)) in
     (* let cl_largs = find_close largs (leqs) in *)
-    (* let _ = DD.info_hprint (add_str " l_cyc_svl" !CP.print_svl) l_cyc_svl  no_pos in *)
-    let _ = DD.ninfo_hprint (add_str " cl_rargs" !CP.print_svl) cl_rargs  no_pos in
+    (* let _ = Debug.info_hprint (add_str " l_cyc_svl" !CP.print_svl) l_cyc_svl  no_pos in *)
+    let _ = Debug.ninfo_hprint (add_str " cl_rargs" !CP.print_svl) cl_rargs  no_pos in
      (* teminate by null *)
     if (reqnull != [] && leqnull != []) ||
       (* todo: next pt is pto *)
@@ -1721,8 +1753,8 @@ let norm_seg_split prog vname r other_args unk_hps defs=
 
 
 let check_seg_split_pred_x prog es_formula vdef vnode dnode=
-  let ss0 = List.combine vdef.C.view_vars vnode.h_formula_view_arguments in
-  let cont_args = CP.subst_var_list ss0 vdef.C.view_cont_vars in
+  let ss0 = List.combine vdef.Cast.view_vars vnode.h_formula_view_arguments in
+  let cont_args = CP.subst_var_list ss0 vdef.Cast.view_cont_vars in
   let ( _,mix_f,_,_,_) = split_components es_formula in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let deqset = find_close [dnode.h_formula_data_node] eqs in
@@ -2267,8 +2299,6 @@ let norm_rename_clash_args_node_x init_args0 f0=
 (*******************************************************************)
 (************************END GRAPH*****************************************)
 (*******************************************************************)
-
-
  let find_view_match hf rhs_node=
    let elim_vn vn hf=
      match hf with
@@ -2303,3 +2333,142 @@ let transform_bexpr f0=
   let pr1 = !print_formula in
   Debug.no_1 "CF.transform_bexpr" pr1 pr1
       (fun _ -> transform_bexpr_x f0) f0
+
+ let partition_error_es_x es=
+   let rec recf f= match f with
+     | Base fb -> if subsume_flow_f !Exc.GTable.error_flow_int fb.formula_base_flow then
+         [f], None
+       else [], Some f
+     | Exists fe -> if subsume_flow_f !Exc.GTable.error_flow_int fe.formula_exists_flow then
+         [f], None
+       else [], Some f
+     | Or orf -> begin
+           let err_f1, of1 = recf orf.formula_or_f1 in
+           let err_f2, of2 = recf orf.formula_or_f2 in
+           let new_f = match of1, of2 with
+             | Some f1,Some f2 -> Some (Or{orf with formula_or_f1 = f1;
+                   formula_or_f2 = f2
+               })
+             | None, Some _ -> of2
+             | Some _, None -> of1
+             | _ -> None
+           in
+           (err_f1@err_f2, new_f)
+       end
+   in
+   let err_fs, opt_f = recf es.es_formula in
+   let pos = pos_of_formula es.es_formula in
+   let err_es = match err_fs with
+     | [] -> None
+     | a::rest -> let err_f = List.fold_left (fun f1 f2 -> mkOr f1 f2 pos)  a rest in
+       Some ({es with es_formula = err_f})
+   in
+   let safe_es = match opt_f with
+     | Some f -> Some ({es with es_formula = f})
+     | None -> None
+   in
+   (err_es, safe_es)
+
+ let partition_error_es es=
+   let pr1 = Cprinter.string_of_entail_state in
+   let pr2 = pr_option pr1 in
+   Debug.no_1 "partition_error_es" pr1 (pr_pair pr2 pr2)
+       (fun _ -> partition_error_es_x es) es
+
+
+let obtain_subsume_es_x es conseq=
+  let conseq_flow = flow_formula_of_formula conseq in
+   let rec recf f= match f with
+     | Base fb -> if subsume_flow_ff conseq_flow fb.formula_base_flow then
+         [f], None
+       else [], Some f
+     | Exists fe -> if subsume_flow_ff conseq_flow fe.formula_exists_flow then
+         [f], None
+       else [], Some f
+     | Or orf -> begin
+           let err_f1, of1 = recf orf.formula_or_f1 in
+           let err_f2, of2 = recf orf.formula_or_f2 in
+           let new_f = match of1, of2 with
+             | Some f1,Some f2 -> Some (Or{orf with formula_or_f1 = f1;
+                   formula_or_f2 = f2
+               })
+             | None, Some _ -> of2
+             | Some _, None -> of1
+             | _ -> None
+           in
+           (err_f1@err_f2, new_f)
+       end
+   in
+   let sub_fs, opt_f = recf es.es_formula in
+   let pos = pos_of_formula es.es_formula in
+   let sub_es = match sub_fs with
+     | [] -> None
+     | a::rest -> let sub_f = List.fold_left (fun f1 f2 -> mkOr f1 f2 pos)  a rest in
+       Some ({es with es_formula = sub_f})
+   in
+   let other_es = match opt_f with
+     | Some f -> Some ({es with es_formula = f})
+     | None -> None
+   in
+   (sub_es, other_es)
+
+(*
+filter es that <= conseq flow
+*)
+ let obtain_subsume_es es conseq=
+   let pr1 = Cprinter.string_of_entail_state in
+   let pr2 = pr_option pr1 in
+   let pr3 = !print_formula in
+   Debug.no_2 "obtain_subsume_es" pr1 pr3 (pr_pair pr2 pr2)
+       (fun _ _ -> obtain_subsume_es_x es conseq) es conseq
+
+
+let update_hprel_flow hprels conseq=
+  let flow = (flow_formula_of_formula conseq) in
+  let flow_int = flow.formula_flow_interval in
+  let update_hprel hprel=
+    {hprel with hprel_flow = (* if hprel.hprel_flow=[] then *) [flow_int] (* else  hprel.hprel_flow *);}
+  in
+  List.map update_hprel hprels
+
+let look_up_first_field prog lsctx0 dname=
+  let rec look_up_ctx ctx=
+    match ctx with
+      | Ctx es ->
+            List.find (fun dn -> string_compare dname dn.h_formula_data_name)
+                (get_datas es.es_formula)
+      | OCtx (c1,c2) -> begin
+          try
+            look_up_ctx c1
+          with _ -> look_up_ctx c2
+        end
+  in
+  let rec look_up_ctxs br_ctxs=
+    match br_ctxs with
+      | []-> raise Not_found
+      | (_,ctx)::rest -> begin
+          try
+            look_up_ctx ctx
+          with _ -> look_up_ctxs rest
+        end
+  in
+  let rec look_up_esc_ctx esc_ctxs=
+    match esc_ctxs with
+      | []-> raise Not_found
+      | (_,br_ctxs)::rest -> begin
+          try
+            look_up_ctxs br_ctxs
+          with _ -> look_up_esc_ctx rest
+        end
+  in
+  let rec process_failesc_contexts lsctx=
+    match lsctx with
+      | [] -> raise Not_found
+      | (_,(* esc_ctxs *)_ ,br_ctxs)::rest -> begin
+          try
+            let d = look_up_ctxs br_ctxs in d
+          with _ -> process_failesc_contexts rest
+        end
+  in
+  process_failesc_contexts lsctx0
+

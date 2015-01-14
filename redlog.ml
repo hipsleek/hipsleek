@@ -131,7 +131,7 @@ let start () =
       let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
       (* let rl_bin = "redcsl" in *)
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
-      (* print_endline "Starting Reduce... "; *)
+      print_endline "Starting Reduce... ";
       flush stdout
   end
 
@@ -152,6 +152,7 @@ let stop () =
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
       let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      print_endline "Stopping Reduce... ";
       is_reduce_running := false
   end
 
@@ -293,6 +294,7 @@ let rec rl_of_exp e0 =
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
   | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
+  | CP.Template t -> rl_of_exp (CP.exp_of_template t)
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
   | CP.TypeCast (t, e1, _) -> (
@@ -1284,14 +1286,17 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
     elim_exist_quantifier f
   else 
     let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
-    let _ = send_cmd "rlset pasf" in
-    let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in 
-    let _ = send_cmd "rlset ofsf" in
+    (* pasf only works with Presburger arithmetic, which is already handled by Omega *)
+    (* let _ = send_cmd "rlset pasf" in *) 
+    (* let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in *)
+    let redlog_result = send_and_receive ("rlqe " ^ rlf) in 
+    (* let _ = print_endline ("RL: " ^ redlog_result) in *)
+    (* let _ = send_cmd "rlset ofsf" in *)
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
-    (* simpler_f *)
+    simpler_f
     (*LDK: currently temporarily do not use simpler_f*)
-    f
+    (* f *)
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)

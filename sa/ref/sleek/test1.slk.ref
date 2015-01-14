@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "sleek/test1.slk", line 15, characters 13-14
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.0527 second(s)
+	Time spent in main process: 0.039237 second(s)
+	Time spent in child processes: 0.013463 second(s)
+

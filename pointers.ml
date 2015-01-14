@@ -93,6 +93,8 @@ let default_value (t :typ) pos : exp =
     | Pointer ptr -> Null pos
 	| Array (t, d) ->
        failwith "default_value: Array not supported"
+	| FuncT _ -> failwith "default_value: FuncT not supported"
+  | UtT -> failwith "default_value: UtT not supported"
 	| HpT | Tree_sh ->
        failwith "default_value: (HpT|Tree_sh) not supported"
 	| INFInt -> Error.report_no_pattern ()
@@ -143,143 +145,180 @@ let subst_var (v:ident) (subst:(ident*ident) list) : ident =
   @return list of NEW bound variables bvars * list of free vars
 
   ASSUME: no name clashes among scopes
+
+  WN : Can we improve this method to return a list
+   of vars that have been modified as suggested by method name?
+  --> (bound_var, free_vars, free_modified_vars)
 *)
-and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
-  let rec helper e bvars =
+
+let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (ident list) =
+  let rec accumulate (el:exp list) (bvars:ident list) : (ident list) * (ident list) * (ident list) =
+    List.fold_right (fun (a,b,c) (aa,bb,cc) -> (a@aa,b@bb,c@cc)) (List.map (fun e -> helper e bvars) el) ([],[],[])
+  and helper e bvars =
     match e with
-      | Var v -> 
-          let id = v.exp_var_name in
-          if (List.mem id bvars) then
-            (bvars,[]) (*access to variables*)
-          else
-            (bvars,[id])
+      | Var v ->
+            let id = v.exp_var_name in
+            if (List.mem id bvars) then
+              (bvars,[],[]) (*access to variables*)
+            else
+              (bvars,[id],[])
       | VarDecl v ->
-          let vars = List.map (fun (id,e0,pos) -> id) v.exp_var_decl_decls in
-          let new_bvars = vars@bvars in
-          (* let _ = print_endline ("new_bvars = " ^ (string_of_ident_list new_bvars)) in *)
-          (new_bvars,[])
+            let vars = List.map (fun (id,e0,pos) -> id) v.exp_var_decl_decls in
+            let new_bvars = vars@bvars in
+            (* let _ = print_endline ("new_bvars = " ^ (string_of_ident_list new_bvars)) in *)
+            (new_bvars,[],[])
       | ConstDecl c ->
-          let vars = List.map (fun (id,e0,pos) -> id) c.exp_const_decl_decls in
-          let new_bvars = vars@bvars in
-          (new_bvars,[])
+            let vars = List.map (fun (id,e0,pos) -> id) c.exp_const_decl_decls in
+            let new_bvars = vars@bvars in
+            (new_bvars,[],[])
       | Unary u ->
-          let _,fvars = helper u.exp_unary_exp bvars in
-          (bvars,fvars)
-	  | ArrayAt b ->
-          let _,fvars1 =  helper b.exp_arrayat_array_base bvars in
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) b.exp_arrayat_index) in
-          let fvars2 = List.concat fvars_l in
-          (bvars,fvars1@fvars2)
-	  | ArrayAlloc a ->
-          let _, fvars_l = List.split (List.map (fun e -> helper e bvars) a.exp_aalloc_dimensions) in
-          let fvars = List.concat fvars_l in
-          let a = a.exp_aalloc_etype_name in
-          (bvars,a::fvars)
-      | Assert _ -> (bvars,[])
+            let _,fvars,fw = helper u.exp_unary_exp bvars in
+            let _ = Debug.binfo_hprint (add_str "Unary" string_of_exp) e no_pos in
+            ( match u.exp_unary_op with
+              | OpPreInc
+              | OpPreDec
+              | OpPostInc
+              | OpPostDec -> if (is_var u.exp_unary_exp) then (bvars,fvars,fvars@fw) else (bvars,fvars,fw)
+              | _ -> (bvars,fvars,fw) (* more *) )
+      | ArrayAt b ->
+            let _,fvars1,fw1 =  helper b.exp_arrayat_array_base bvars in
+            (* let _,fvars2,fw2 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) b.exp_arrayat_index) ([],[],[]) in *)
+            let _,fvars2,fw2 = accumulate b.exp_arrayat_index bvars in
+            (* let fvars2 = List.concat fvars_l in *)
+            (bvars,fvars1@fvars2,fw1@fw2)
+      | ArrayAlloc a ->
+            (* let _, fvars_l = List.split (List.map (fun e -> helper e bvars) a.exp_aalloc_dimensions) in *)
+            (* let _,fvars2,fw2 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) a.exp_aalloc_dimensions) ([],[],[]) in *)
+            let _,fvars2,fw2 = accumulate a.exp_aalloc_dimensions bvars in
+            (* let fvars = List.concat fvars_l in *)
+            let a = a.exp_aalloc_etype_name in
+            (bvars,a::fvars2,fw2)
+      | Assert _ -> (bvars,[],[])
       | Assign a ->
-          let _,fvars1 = helper a.exp_assign_lhs bvars in
-          let _,fvars2 = helper a.exp_assign_rhs bvars in
-          (bvars,fvars1@fvars2)
+            let _,fvars1,fw1 = helper a.exp_assign_lhs bvars in
+            let _,fvars2,fw2 = helper a.exp_assign_rhs bvars in
+            let _ = Debug.ninfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
+            if (is_var a.exp_assign_lhs) then
+              (bvars,fvars1@fvars2,fvars1@fw1@fw2)
+            else (bvars,fvars1@fvars2,fw1@fw2)
       | Binary b ->
-          let _,fvars1 = helper b.exp_binary_oper1 bvars in
-          let _,fvars2 = helper b.exp_binary_oper2 bvars in
-          (bvars,fvars1@fvars2)
+            let _,fvars1,fw1 = helper b.exp_binary_oper1 bvars in
+            let _,fvars2,fw2 = helper b.exp_binary_oper2 bvars in
+            (bvars,fvars1@fvars2,fw1@fw2)
       | Bind b ->
-          let fvar = b.exp_bind_bound_var in
-          let fvars1 = if (List.mem fvar bvars) then [] else [fvar] in
-          let new_bvars = bvars@b.exp_bind_fields in
-          let _,fvars = helper b.exp_bind_body new_bvars in
-          (bvars,fvars1@fvars)
+            let fvar = b.exp_bind_bound_var in
+            let fvars1 = if (List.mem fvar bvars) then [] else [fvar] in
+            let new_bvars = bvars@b.exp_bind_fields in
+            let _,fvars,fw1 = helper b.exp_bind_body new_bvars in
+            (bvars,fvars1@fvars,fw1)
       | Block b ->
-          (*Note: no more Block after case_normalize_program*)
-          let bvars1,fvars = helper b.exp_block_body bvars in
-          (bvars1,fvars)
-      | BoolLit _ -> (bvars,[])
-      | Break _ -> (bvars,[])
+            (*Note: no more Block after case_normalize_program*)
+            let bvars1,fvars,fw = helper b.exp_block_body bvars in
+            (bvars1,fvars,fw)
+      | BoolLit _ -> (bvars,[],[])
+      | Break _ -> (bvars,[],[])
       | CallRecv c ->
-          (*ignore exp_call_recv_method*)
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in
-          let fvars1 = List.concat fvars_l in
-          let _,fvars2 = helper c.exp_call_recv_receiver bvars in
-          (bvars,fvars1@fvars2)
+            (*ignore exp_call_recv_method*)
+            (* let _,fvars1,fw1 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) ([],[],[]) in *)
+            let _,fvars1,fw1 = accumulate c.exp_call_recv_arguments bvars in
+            let _ = Debug.ninfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
+            (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in *)
+            (* let fvars1 = List.concat fvars_l in *)
+            let _,fvars2,fw2 = helper c.exp_call_recv_receiver bvars in
+            (bvars,fvars1@fvars2,fw1@fw2)
       | CallNRecv c ->
-          (*ignore exp_call_nrecv_method*)
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in
-          let fvars = List.concat fvars_l in
-          (bvars,fvars)
+            (*ignore exp_call_nrecv_method*)
+            (* let _,fvars2,fw2 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) ([],[],[]) in *)
+            let _,fvars,fw1 = accumulate c.exp_call_nrecv_arguments bvars in
+            let proc = look_up_proc_def_raw prog.prog_proc_decls c.exp_call_nrecv_method in
+            let args = List.combine proc.proc_args c.exp_call_nrecv_arguments in
+            let fw2 = List.map (fun (_,arg) -> 
+                match get_ident arg with
+                  | Some v -> v
+                  | None -> failwith "Impossible") (List.filter (fun (para,arg) ->
+                (para.param_mod = RefMod) && (is_var arg)
+            ) args) in
+            let _ = Debug.ninfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
+            let _ = Debug.ninfo_hprint (add_str "ref args" (pr_list pr_id)) fw2 no_pos in
+            (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in *)
+            (* let fvars = List.concat fvars_l in *)
+            (bvars,fvars,fw1@fw2)
       | Cast c ->
-          let _,fvars = helper c.exp_cast_body bvars in
-          (bvars,fvars)
+            let _,fvars,fw = helper c.exp_cast_body bvars in
+            (bvars,fvars,fw)
       | Cond c ->
-          let _,fvars1 = helper c.exp_cond_condition bvars in
-          let _,fvars2 = helper c.exp_cond_then_arm bvars in
-          let _,fvars3 = helper c.exp_cond_else_arm bvars in
-          (bvars,fvars1@fvars2@fvars3)
+            let _,fvars1,fw1 = helper c.exp_cond_condition bvars in
+            let _,fvars2,fw2 = helper c.exp_cond_then_arm bvars in
+            let _,fvars3,fw3 = helper c.exp_cond_else_arm bvars in
+            (bvars,fvars1@fvars2@fvars3,fw1@fw2@fw3)
       | Finally f ->
-          let _,fvars = helper f.exp_finally_body bvars in
-          (bvars,fvars)
+            let _,fvars,fw = helper f.exp_finally_body bvars in
+            (bvars,fvars,fw)
       | Label ((pid,plbl),e0) ->
-          let bvars1,fvars = helper e0 bvars in
-          (bvars1,fvars)
+            let bvars1,fvars,fw = helper e0 bvars in
+            (bvars1,fvars,fw)
       | Member m ->
-          let _,fvars = helper m.exp_member_base bvars in
-          (bvars,fvars)
+            let _,fvars,fw = helper m.exp_member_base bvars in
+            (bvars,fvars,fw)
       | New n ->
-          let _,fvars_l = List.split (List.map (fun e -> helper e bvars) n.exp_new_arguments) in
-          let fvars = List.concat fvars_l in
-          (bvars,fvars)
+            let _,fvars,fw = accumulate n.exp_new_arguments bvars in
+            (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) n.exp_new_arguments) in *)
+            (* let fvars = List.concat fvars_l in *)
+            (bvars,fvars,fw)
       | Try t ->
-          let bvars1,fvars1 = helper t.exp_try_block bvars in
-          (*vars in try_block are still in scopes of catch_clauses
-            and finally clause*)
-          let _,fvars2_l = List.split (List.map (fun e -> helper e bvars1) t.exp_catch_clauses) in
-          let _,fvars3_l = List.split (List.map (fun e -> helper e bvars1) t.exp_finally_clause) in
-          let fvars2 = List.concat fvars2_l in
-          let fvars3 = List.concat fvars3_l in
-          (bvars1,fvars1@fvars2@fvars3)
+            let bvars1,fvars1,fw1 = helper t.exp_try_block bvars in
+            (*vars in try_block are still in scopes of catch_clauses
+              and finally clause*)
+            let _,fvars2,fw2 = accumulate t.exp_catch_clauses bvars1 in
+            let _,fvars3,fw3 = accumulate t.exp_finally_clause bvars1 in
+            (* let _,fvars2_l = List.split (List.map (fun e -> helper e bvars1) t.exp_catch_clauses) in *)
+            (* let _,fvars3_l = List.split (List.map (fun e -> helper e bvars1) t.exp_finally_clause) in *)
+            (* let fvars2 = List.concat fvars2_l in *)
+            (* let fvars3 = List.concat fvars3_l in *)
+            (bvars1,fvars1@fvars2@fvars3,fw1@fw2@fw3)
       | Raise r -> (*Assume no pointers*)
-          let _,fvars = match r.exp_raise_val with
-            | None -> (bvars,[])
-            | Some e ->
-                helper e bvars
-          in
-          (bvars,fvars)
+            let _,fvars,fw = match r.exp_raise_val with
+              | None -> (bvars,[],[])
+              | Some e ->
+                    helper e bvars
+            in
+            (bvars,fvars,fw)
       | Catch c -> (*assume no pointer*)
-          let fvars = match c.exp_catch_var with
-            | None -> []
-            | Some v ->
-                if List.mem v bvars then [] else [v]
-          in
-          (bvars,fvars)
+            let fvars,fw = match c.exp_catch_var with
+              | None -> ([],[])
+              | Some v ->
+                    if List.mem v bvars then ([],[]) else ([v],[])
+            in
+            (bvars,fvars,fw)
       | Return r ->
-          let fvars = 
-            (match r.exp_return_val with
-              | None -> []
-              | Some e0 ->
-                  let _,vs = helper e0 bvars in
-                  vs
-            )
-          in
-          (bvars,fvars)
+            let fvars,fw =
+              (match r.exp_return_val with
+                | None -> ([],[])
+                | Some e0 ->
+                      let _,vs,fw = helper e0 bvars in
+                      (vs,fw)
+              )
+            in
+            (bvars,fvars,fw)
       | Seq s ->
-          let bvars1,fvars1 = helper s.exp_seq_exp1 bvars in
-          let bvars2,fvars2 = helper s.exp_seq_exp2 bvars1 in
-          (bvars2,fvars1@fvars2)
+            let bvars1,fvars1,fw1 = helper s.exp_seq_exp1 bvars in
+            let bvars2,fvars2,fw2 = helper s.exp_seq_exp2 bvars1 in
+            (bvars2,fvars1@fvars2,fw1@fw2)
       | This _ -> (*assume no pointer *)
-          (bvars,[])
+            (bvars,[],[])
       | While w ->
-          let _,fvars1 = helper w.exp_while_condition bvars in
-          let _,fvars2 = helper w.exp_while_body bvars in
-          (*TO CHECK: not sure what exp_while_wrappings is for? *)
-          let fvars3 =
-            (match w.exp_while_wrappings with
-              | None -> []
-              | Some (e0,id) -> (*TO CHECK: what is id ??? *)
-                  let _,vs =  (helper e0 bvars) in
-                  vs
-            )
-          in
-          (bvars,fvars1@fvars2@fvars3)
+            let _,fvars1,fw1 = helper w.exp_while_condition bvars in
+            let _,fvars2,fw2 = helper w.exp_while_body bvars in
+            (*TO CHECK: not sure what exp_while_wrappings is for? *)
+            let fvars3,fw3 =
+              (match w.exp_while_wrappings with
+                | None -> ([],[])
+                | Some (e0,id) -> (*TO CHECK: what is id ??? *)
+                      let _,vs,fw =  (helper e0 bvars) in
+                      vs,fw
+              )
+            in
+            (bvars,fvars1@fvars2@fvars3,fw1@fw2@fw3)
       | Debug _
       | Dprint _
       | Empty _
@@ -290,8 +329,14 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
       | Time _
       | Unfold _
       | Barrier _ (*TO CHECK*)
-      | Continue _ -> (bvars,[])
+      | Continue _ -> (bvars,[],[])
   in helper e bvars
+
+let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (ident list) =
+  let pr_ids = pr_list pr_id in
+  let pr_exp = string_of_exp in
+  Debug.no_2 "modifies" pr_exp pr_ids (pr_triple pr_ids pr_ids pr_ids)
+      (fun _ _ -> modifies e bvars prog) e bvars
 
 (*substitute variables [from,to] *)
 let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =

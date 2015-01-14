@@ -1,0 +1,46 @@
+Starting Omega...oc
+H_1 is defined.
+H1 is defined.
+G1 is defined.
+H_0 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [forall(l:((l!=1 | prev28<=prv)) & ((l!=1 | prv<=prev28)))]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [l!=1]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [prev28=prv]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [l!=1]
+[[empty]]
+
+Stop Omega... 4 invocations 
+SAT Count   : 64
+SAT % Hit   : 76.56%
+IMPLY Count : 4
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.007567 (seconds)
+
+!!! log(small):(0.018777,72)
+Total verification time: 0.100962 second(s)
+	Time spent in main process: 0.084087 second(s)
+	Time spent in child processes: 0.016875 second(s)
+

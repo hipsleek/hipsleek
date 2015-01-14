@@ -1,0 +1,79 @@
+
+!!!Full processing file "hip/ll_all1.ss"
+Parsing file "hip/ll_all1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[]
+!!! neqs:[(x,y)]
+Checking procedure append2$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1235,HP_1236,G2]requires HP_1235(x) * HP_1236(y)&
+true
+ ensures G2(x,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1235(x)&true --> x::node<val1,next1> * HP_1241(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1241(next1)&next1!=null --> HP_1235(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1236(y)&true --> HP_1236(y)&
+true(3,4),
+ // POST
+(1;0)x::node<val1,y> * HP_1236(y) * HP_1241(next1)&next1=null --> G2(x,y)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * G2(next1,y)&next1!=null --> G2(x,y)&
+true(3,4)]
+
+Procedure append2$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1235(x1) ::=  [x1::node<val,next> * HP_1241(next)&x1!=null],
+ HP_1236(y) ::=  [htrue],
+ G2(x3,y1) ::=  [GP_1327(x3,x2) * x2::node<val,y1>&y1=DP],
+ GP_1327(x3,x2) ::=  [
+  x3::node<val,next> * GP_1327(next,x2)&next!=null
+  or emp&x3=x2
+  ],
+ HP_1241(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1241(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1235(x1) ::= x1::node<val,next> * HP_1241(next)&x1!=null(3,4),
+ HP_1236(y) ::= NONE,
+ G2(x3,y1) ::= GP_1327(x3,x2) * x2::node<val,y1>&y1=DP(3,4),
+ GP_1327(x3,x2) ::= 
+ x3::node<val,next> * GP_1327(next,x2)&next!=null
+ or emp&x3=x2
+ (3,4),
+ H2(x,y) ::= HP_1235(x) * HP_1236(y),
+ HP_1241(next2) ::= 
+ next2::node<val,next> * HP_1241(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.04541,254)
+Total verification time: 0.318162 second(s)
+	Time spent in main process: 0.304859 second(s)
+	Time spent in child processes: 0.013303 second(s)
+

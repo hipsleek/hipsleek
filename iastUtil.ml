@@ -1129,7 +1129,7 @@ let ht_of_gvdef gvdefs =
 let param_of_v ht md lc nm =
   try
   (* let _ = print_endline ("== ht length = " ^ (string_of_int (Hashtbl.length ht))) in *)
-  Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht;
+  (* Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht; *)
   let t = H.find ht nm in
   match t with 
   | Bool | Float | Int | Void | List _  ->
@@ -1286,12 +1286,12 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
-											prog_view_decls = iprims.prog_view_decls @ prog.prog_view_decls;
-											prog_coercion_decls = iprims.prog_coercion_decls @ prog.prog_coercion_decls;
-											prog_global_var_decls = iprims.prog_global_var_decls @ prog.prog_global_var_decls;
-						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
-					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
-					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
+		      prog_view_decls = iprims.prog_view_decls @ prog.prog_view_decls;
+		      prog_coercion_decls = iprims.prog_coercion_decls @ prog.prog_coercion_decls;
+		      prog_global_var_decls = iprims.prog_global_var_decls @ prog.prog_global_var_decls;
+		      (* An Hoa : MISSING PRIMITIVE RELATIONS! *)
+		      prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
+		      prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
   (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)

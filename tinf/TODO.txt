@@ -1,0 +1,12 @@
+1. Proving termination/non-termination of heap-manipulating programs:
+	- Using template for ranking function synthesis
+	- Inferring execution capacity
+	- Inferring lex ranking function (s2l example)
+
+2. Proving termination/non-termination of disjunct-behavior programs:
+	- Piecewise ranking functions
+	- Lexicographic ranking functions
+
+3. To check:
+	- Z3 vs Omega on discharging template entailment
+	- Z3: is_sat with template

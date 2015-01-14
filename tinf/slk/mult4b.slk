@@ -1,0 +1,26 @@
+UTPre@f fpre(int x, int y).
+UTPost@f fpost(int x, int y).
+
+termAssume x < 0 --> fpost(x, y).
+
+termAssume x >= 0 & x1 = x - y & x2 = x + y & fpost(x1, y) & fpost(x2, y) --> fpost(x, y).
+
+termAssume x >= 0 & x1 = x - y & fpre(x, y) --> fpre(x1, y).
+
+termAssume x >= 0 & x2 = x + y & fpre(x, y) --> fpre(x2, y).
+
+term_infer.
+
+/*
+void f(int x, int y)
+  infer [@term]
+  requires true
+  ensures true;
+{
+  if (x < 0) return;
+  else {
+    f(x - y, y);
+    f(x + y, y);
+  }
+}
+*/

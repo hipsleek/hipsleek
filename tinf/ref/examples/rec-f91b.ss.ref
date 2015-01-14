@@ -1,0 +1,44 @@
+
+!!!Full processing file "examples/rec-f91b.ss"
+Parsing file "examples/rec-f91b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+Checking procedure f91$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_38_1130' & 91<=v_int_38_1130' & n'<91 & n'=n & 
+!(v_bool_37_1131') & n'<91 & !(v_bool_37_1131') & v_int_38_1174=1+n' & 
+91<=v_int_38_1178 & f91post_1125(v_int_38_1174) & f91post_1125(v_int_38_1178) --> f91post_1125(n).
+
+ termAssume 91<=n' & n'=n & v_bool_37_1131' & 91<=n' & v_bool_37_1131' & 
+res=n' --> f91post_1125(n).
+
+ termAssume 91<=v_int_38_1129' & v_int_38_1174=1+n' & !(v_bool_37_1131') & 
+n'<91 & !(v_bool_37_1131') & n'=n & 
+n'<91 & f91pre_0(n) --> f91pre_0(v_int_38_1129').
+
+ termAssume n'<91 & n'=n & !(v_bool_37_1131') & n'<91 & !(v_bool_37_1131') & 
+v_int_38_1128'=1+n' & f91pre_0(n) --> f91pre_0(v_int_38_1128').
+
+
+Base/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=90@R]
+]
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & 91<=res; 
+  n<=90 -> requires emp & Term[29,2,90+(-1*n)]
+ ensures emp & 91<=res; 
+  }
+
+0 false contexts at: ()

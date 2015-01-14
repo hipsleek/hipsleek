@@ -1,0 +1,224 @@
+# ll.ss
+
+int length (node x)
+	infer[@term]
+	requires x::ll<n> 
+	ensures true;
+
+I guess we need to express in terms of integer vars..
+
+Why did we get x=1 and x=0 for node type?
+
+Base/Rec Case Splitting:
+[	length: [[2] x=1@R,[3] x=0@B]
+]
+Termination Inference Result:
+length:  requires x::ll<n> & truecase {
+                          x=1 -> requires emp & Term[62,3]
+ ensures emp & true;
+                          
+                          x=0 -> requires emp & Term[62,1]
+ ensures emp & true;
+                          
+                          }
+
+Temporal Assumptions:
+ termAssume 0<=n1_1223 & n_1225=n1_1223 & !(v_bool_13_1184') & x'!=null & 
+!(v_bool_13_1184') & x'=x & x'!=null & n=1+n1_1223 & 
+v_int_14_1183'=v_int_14_1254+1 & res=v_int_14_1183' & 
+x'=1 & lengthpost_1176(p_1222) --> lengthpost_1176(x).
+
+ termAssume x'=null & x'=x & v_bool_13_1184' & x'=null & v_bool_13_1184' & 
+v_int_13_1177'=0 & res=v_int_13_1177' & (((x=1 & 1<=n) | (x=null & 
+n=0))) --> lengthpost_1176(x).
+
+ termAssume n=1+n1_1223 & x'!=null & x'=x & !(v_bool_13_1184') & x'!=null & 
+!(v_bool_13_1184') & v_int_14_1182'=1 & v_node_14_1180'=p_1222 & 
+n_1225=n1_1223 & (((p_1222=1 & x'=2 & 1<=n1_1223) | (x'=1 & p_1222=null & 
+n1_1223=0))) & lengthpre_0(x) --> lengthpre_0(v_node_14_1180').
+
+====================================================================
+# clist2.ss
+
+  infer [@term]
+  requires x::lseg<n,null>
+  ensures x::lseg<n,null> & res=n;
+
+Why only one relational assumption inferred?
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x=flted_32_1370 & flted_32_1370=null & x'=x & x'=null & 
+v_bool_35_1251' & v_int_36_1244'=0 & res=v_int_36_1244' & n=0 & 
+exists(n_62:n_62=0) & x=flted_33_60 --> lengthpost_1243(n).
+
+
+Base/Rec Case Splitting:
+[	length: [[1] n=0@B]
+]
+Termination Inference Result:
+length:  requires x::lseg<n,flted_32_61> & flted_32_61=nullcase {
+                                                    n=0 -> requires emp & Term[62,1]
+ ensures 
+                                                    x::lseg<n_62,flted_33_60> & n_62=n & 
+                                                    res=n & flted_33_60=null; 
+                                                    }
+
+Termination checking result: SUCCESS
+
+
+====================================================================
+# ll3.ss --pcp
+
+	infer[@term]
+	requires x::ll<n>@L 
+	ensures true;
+
+   EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>@L&{FLOW,(24,25)=__norm}[]
+           EBase emp&lengthpre_0(n)[62]&{FLOW,(24,25)=__norm}[]
+                   EAssume 
+                     emp&lengthpost_1176(n)[]&{FLOW,(24,25)=__norm}[]
+
+Why @L not printed for inferred spec?
+
+Why did we get x=1 and x=0 for node type?
+
+Termination Inference Result:
+length:  requires x::ll<n> & truecase {
+                          1<=n -> requires emp & Term[62,3,-1+(1*
+                          n)]
+ ensures emp & true; 
+                          n=0 -> requires emp & Term[62,1]
+ ensures emp & true;
+
+                          
+                          x=0 -> requires emp & Term[62,1]
+ ensures emp & true;
+
+
+====================================================================
+# ll4.ss --pcp (OK)
+
+Post present in inferred specs..
+
+	infer[@term]
+	requires x::ll<n>@L 
+	ensures res=n;
+
+length:  requires x::ll<n> & truecase {
+                          1<=n -> requires emp & Term[62,3,-1+(1*
+                          n)]
+ ensures emp & res=n; 
+                          n=0 -> requires emp & Term[62,1]
+ ensures emp & res=n;
+                          
+
+====================================================================
+# zip.ss
+
+====================================================================
+# length 
+
+  on infinite list?
+
+====================================================================
+# tinf/data/ll1.ss (FIXED)
+
+Why is there a "check 1 fail" message in the post branch? 
+What does it signify?
+
+Checking procedure length$node... check 1 fail
+Procedure length$node SUCCESS.
+
+Note that in the ti3 branch, we got the following instead:
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+====================================================================
+# ll-app2.ss
+
+How can be handle multiple pre/post?
+
+Procedure append2$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+!!! proc.proc_name:append2$node~node
+
+!!! Termination Inference is not performed due to errors in verification process
+Procedure append2$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append2$node~node
+
+!!! proc.proc_name:append2$node~node
+
+!!! Termination Inference is not performed due to errors in verification process
+
+====================================================================
+# ll-app1.ss
+
+What happen to the circular list spec?
+
+Termination Inference Result:
+append2:  requires x::lseg<n,flted_34_62> & flted_34_62=null & 
+0<ncase {
+    n=1 -> requires emp & Term[7,1]
+ ensures x::lseg<n_1283,y_1284> & 0<=n & 
+    y_1284=y & n_1283=n; 
+    2<=n -> requires emp & Term[7,2,0+(1*n)+(0*
+    n)]
+ ensures x::lseg<n_1283,y_1284> & 0<=n & y_1284=y & n_1283=n; 
+    }
+
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================

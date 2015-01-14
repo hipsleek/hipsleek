@@ -1,0 +1,107 @@
+
+!!!Full processing file "paper/check-tll-2.ss"
+Parsing file "paper/check-tll-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&((self=ll & self!=null) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! neqs:[]
+Checking procedure check_tll$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1342,G]requires HP_1342(x,t@NI)&true
+ ensures G(x,t@NI)&
+res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ forall(right_29_1346:((right_29_1346!=0 | t<=1 | left_29_1345<=0)) & 
+((right_29_1346!=0 | 1<=t | left_29_1345<=0)) & ((right_29_1346!=0 | 
+0<=left_29_1345 | t<=1)) & ((right_29_1346!=0 | 0<=left_29_1345 | 1<=t))), forall(right_29_1346:((left_29_1345!=0 | right_29_1346!=0 | t<=1)) & 
+((left_29_1345!=0 | right_29_1346!=0 | 1<=t))), forall(right_29_1346:((t!=1 | right_29_1346!=0 | left_29_1345<=0)) & 
+((t!=1 | right_29_1346!=0 | 0<=left_29_1345))), forall(right_29_1346:((left_29_1345!=0 | right_29_1346<=0)) & 
+((left_29_1345!=0 | 0<=right_29_1346)))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1342(x,t@NI)&true --> x::node<left1,right1,next1> * 
+HP_1348(left1,t@NI) * HP_1349(right1,t@NI) * HP_1350(next1,t@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1348(left1,t@NI)&left1!=null --> HP_1342(left1,t@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1349(right1,t@NI)&right1!=null |#| x::node<left1,right1,next1>&
+left1!=null --> HP_1342(right1,r1'@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1350(next1,t@NI) * t::node<left1,right1,next1>&left1=null & 
+right1=null --> G(x,t@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1349(right1,x@NI)&right1=null --> emp&
+true(3,4),
+ // POST
+(1;0)HP_1348(left1,x@NI)&left1=null --> emp&
+true(3,4),
+ // POST
+(2;2;0)x::node<left1,right1,next1> * G(left1,t@NI) * G(right1,r1@NI) * 
+HP_1350(next1,t@NI)&left1!=null & right1!=null --> G(x,t@NI)&
+true(3,4)]
+
+Procedure check_tll$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1342(x1,t1) ::=  [x1::node<left,right,DP> * HP_1875(left)&right=null; 
+x1::node<left,right,DP> * HP_1875(left) * HP_1342(right,r')&
+right!=null|#|emp&left_29_1345!=null],
+ G(x2,t2) ::=  [x2::node<left,right,DP>&x2=t2 & right=null & left=null; 
+x2::node<left,right,DP> * G(left,t2) * G(right,r)&right!=null & left!=null],
+ HP_1875(left2) ::=  [emp&left2=null; left2::node<left,right,DP> * HP_1875(left)&right=null; 
+left2::node<left,right,DP> * HP_1875(left) * HP_1342(right,r')&
+right!=null|#|emp&left_29_1345!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1342(x1,t1) |#| emp&
+  left_29_1345!=null ::= 
+ x1::node<left,right,DP> * HP_1875(left) * HP_1342(right,r')&right!=null
+ or x1::node<left,right,DP> * HP_1875(left)&right=null
+ (3,4),
+ G(x2,t2) ::= 
+ x2::node<left,right,DP> * G(left,t2) * G(right,r)&right!=null & left!=null
+ or x2::node<left,right,DP>&x2=t2 & right=null & left=null
+ (3,4),
+ H(x,t) ::= HP_1342(x,t),
+ HP_1875(left2) |#| emp&
+  left_29_1345!=null ::= 
+ left2::node<left,right,DP> * HP_1875(left)&right=null
+ or left2::node<left,right,DP> * HP_1875(left) * HP_1342(right,r')&
+    right!=null
+ or emp&left2=null
+ (3,4)]
+*************************************
+Stop Omega... 40 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.163794,680)
+Total verification time: 0.631978 second(s)
+	Time spent in main process: 0.595298 second(s)
+	Time spent in child processes: 0.03668 second(s)
+

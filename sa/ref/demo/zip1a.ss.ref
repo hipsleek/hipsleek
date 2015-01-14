@@ -1,0 +1,22 @@
+
+!!!Full processing file "demo/zip1a.ss"
+Parsing file "demo/zip1a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], self=null)])
+Checking procedure zip$node~node... 
+Procedure zip$node~node SUCCESS.
+Stop Omega... 13 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.217964,531)
+Total verification time: 0.423698 second(s)
+	Time spent in main process: 0.399876 second(s)
+	Time spent in child processes: 0.023822 second(s)
+

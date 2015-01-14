@@ -72,6 +72,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
+  | Cpure.Template _      -> illegal_format "SPASS don't support Template expresion"
   | Cpure.InfConst _ -> Error.report_no_pattern()
                            
 (* return b_formula in string * list of functions in string * list of predicates in string *)
@@ -217,6 +218,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
+  | Cpure.Template _       -> illegal_format "SPASS don't support Template expresion"
   | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern()
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
@@ -299,6 +301,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ListReverse _  -> false
   (* array expressions *)
   | Cpure.ArrayAt _      -> false
+  | Cpure.Template _ -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
   | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern();
   | Cpure.Tup2 _      -> Error.report_no_pattern();
@@ -497,9 +500,9 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
-    with _ -> ((* exception : return the safe result to ensure soundness *)
-      Printexc.print_backtrace stdout;
-      print_endline ("WARNING: Restarting prover due to timeout");
+    with _ -> (
+      print_backtrace_quiet ();
+      print_endline_quiet ("WARNING: Restarting prover due to timeout");
       Unix.kill !spass_process.pid 9;
       ignore (Unix.waitpid [] !spass_process.pid);
       { original_output_text = []; validity_result = Aborted; }
@@ -549,12 +552,13 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
         let res = Procutils.PrvComms.maybe_raise_timeout fnc input timeout in
         res
       with 
-      | _ -> ((* exception : return the safe result to ensure soundness *)
-        Printexc.print_backtrace stdout;
+      | _ -> (
+        print_backtrace_quiet ();
         print_endline ("WARNING: Restarting prover due to timeout");
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
-        { original_output_text = []; validity_result = Aborted; }) 
+        { original_output_text = []; validity_result = Aborted; }
+      ) 
     else 
       try fnc input
       with

@@ -418,11 +418,11 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
     if (List.length new_cs > 1) then
       begin
         step_change # inc;
-        (* Debug.ninfo_start "split_base"; *)
-        (* Debug.ninfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
-        (* Debug.ninfo_pprint "=============>>>>" no_pos; *)
-        (* Debug.ninfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
-        (* Debug.ninfo_end "split_base"; *)
+        (* Debug.binfo_start "split_base"; *)
+        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
+        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
+        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* Debug.binfo_end "split_base"; *)
         res
       end
     else res
@@ -621,7 +621,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
             if Sautil.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f nf))]
+            [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f_old nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt hp args (* ss *) of1 of2=
@@ -950,7 +950,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
                   CF.mkFalse_nf no_pos
               in
               let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
-                (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] in
+                (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] None in
               ([(hp, def)],[])
         in
         (********PRINTING***********)
@@ -1385,7 +1385,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" pos in
               let _ = DD.ninfo_pprint ((let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr diff) ^ "::=" ^
                   (Cprinter.prtt_string_of_formula r) ) pos in
-              let ndef = {CF.def_cat=def_tit; CF.def_lhs=hf;CF.def_rhs=[(r,None)]} in
+              let ndef = {CF.def_cat=def_tit; CF.def_lhs=hf;CF.def_rhs=[(r,None)]; CF.def_flow=None;} in
                   ([],[(ndef)], hps)
             else
               ([constr],[], [])
@@ -1452,12 +1452,17 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
           else look_up_lib hp ss
   in
   let mk_hprel_def kind hprel og opf opflib=
+    let libs = match opflib with
+      | None -> []
+      | Some f -> [(f, None)]
+    in
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
         CF.hprel_def_guard = og;
-        CF.hprel_def_body = [(cond_path,opf)];
-        CF.hprel_def_body_lib = opflib;
+        CF.hprel_def_body = [(cond_path,opf,None)];
+        CF.hprel_def_body_lib = libs;
+        CF.hprel_def_flow = None;
     }
   in
   let compute_def_w_lib (hp,d)=
@@ -1574,7 +1579,7 @@ let partition_constrs_x constrs post_hps0=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp new_post_hps)
+          | Some (hp) -> (CP.mem_svl hp new_post_hps)
           | None -> false
       with _ -> false
     in
@@ -1911,10 +1916,10 @@ and infer_shapes_proper iprog prog proc_name cond_path (constrs2: CF.hprel list)
     sel_post_hps1 unk_map6 unify_equiv_map3 in
   let defs3,link_hpargs3 = if !Globals.pred_elim_dangling then
     (* Sautil.transform_unk_hps_to_pure (defs3b) unk_hp_frargs *)
-    let defs3a = Sacore.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
+    let defs3a,remain_links = Sacore.transform_xpure_to_pure prog defs2 unk_map4 (link_hpargs2@htrue_hpargs) in
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
-    (defs3a, [])
+    (defs3a, remain_links)
   else (defs2,link_hpargs2@htrue_hpargs)
   in
   (constrs2, defs3, unk_hpargs4, link_hpargs3,(pre_equivs@unify_equiv_map2@unk_equivs))
@@ -1996,7 +2001,7 @@ and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
   ls_res
 
 
-and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
+and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps iflow=
   let process_path_defs_setting (cond_path, hp_defs, unk_hpargs0, link_hpargs0, equivs)=
     let hp_defs1,tupled_defs = Sautil.partition_tupled hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
@@ -2012,8 +2017,9 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
             CF.hprel_def_kind = d.CF.def_cat;
             CF.hprel_def_hrel = d.CF.def_lhs;
             CF.hprel_def_guard = CF.combine_guard ogs;
-            CF.hprel_def_body = [(cond_path, Some f)];
-            CF.hprel_def_body_lib = Some f;
+            CF.hprel_def_body = [(cond_path, Some f,Some iflow)];
+            CF.hprel_def_body_lib = [(f, Some iflow)];
+            CF.hprel_def_flow = Some iflow;
         }
         ) tupled_defs
         in
@@ -2026,8 +2032,10 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
         let fs,ogs = List.split d.CF.def_rhs in
         let og = CF.combine_guard ogs in
         let f = CF.disj_of_list fs no_pos in
-        CF.mk_hprel_def d.CF.def_cat d.CF.def_lhs og [(cond_path, Some f)] (Some f)) defs in
-    let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs0 in
+        CF.mk_hprel_def d.CF.def_cat d.CF.def_lhs og [(cond_path, Some f)] (Some f) (Some iflow)
+    ) defs
+    in
+    let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog iflow cond_path equivs link_hpargs0 in
     (cl_sel_hps@(List.map fst link_hpargs0), hpdefs@link_hp_defs, tupled_defs2)
   in
   let cl_sel_hps, path_defs, tupled_defs = List.fold_left (fun (ls1, ls2,ls3) path_setting ->
@@ -2036,12 +2044,12 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
   ) ([],[],[]) ls_path_defs_setting
   in
   let cl_sel_hps1 = CP.remove_dups_svl cl_sel_hps in
-  let cmb_defs = Sautil.combine_path_defs cl_sel_hps1 path_defs in
+  let cmb_defs = Sautil.combine_path_defs cl_sel_hps1 path_defs iflow in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (cmb_defs@tupled_defs) in
   cmb_defs
 
 and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps sel_post_hps hp_rel_unkmap unk_hpargs
-      link_hpargs_w_path need_preprocess detect_dang=
+      link_hpargs_w_path need_preprocess detect_dang iflow=
       (* (CF.cond_path_type * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) = *)
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -2062,7 +2070,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
     match ls_path_res with
       |[] -> ([])
       | (* (cond_path, hp_defs, c, unk_hpargs2, link_hpargs2, equivs)::_ *) _ -> (*conquer HERE*)
-            infer_shapes_conquer iprog prog proc_name ls_path_res sel_hps
+            infer_shapes_conquer iprog prog proc_name ls_path_res sel_hps iflow
                 (* let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs2 in *)
                 (* let hp_defs1,tupled_defs = Sautil.partition_tupled hp_defs in *)
                 (* (\*decide what to show: DO NOT SHOW hps relating to tupled defs*\) *)
@@ -2086,7 +2094,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   in
   r
 
-and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
+and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang flow_int:
       (CF.hprel list * CF.hp_rel_def list * CP.spec_var list) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -2115,7 +2123,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs0
     callee_hps sel_hps
     all_post_hps hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang in
-  let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs2 in
+  let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog flow_int cond_path equivs link_hpargs2 in
   let hp_defs1,tupled_defs = Sautil.partition_tupled hp_defs in
   (* decide what to show: DO NOT SHOW hps relating to tupled defs *)
   let m = match_hps_views iprog prog hp_defs1 prog.CA.prog_view_decls in
@@ -2131,8 +2139,9 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
           CF.hprel_def_kind = d.CF.def_cat;
           CF.hprel_def_hrel = d.CF.def_lhs;
           CF.hprel_def_guard = og;
-          CF.hprel_def_body = [(cond_path, Some f)];
-          CF.hprel_def_body_lib = Some f;
+          CF.hprel_def_body = [(cond_path, Some f, None)];
+          CF.hprel_def_body_lib = [(f, None)];
+          CF.hprel_def_flow = None;
       }
   ) tupled_defs in
   let shown_defs = if !Globals.pred_elim_unused_preds then sel_hp_defs@link_hp_defs else
@@ -2143,7 +2152,7 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
 
 
 let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
-      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
+      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang flow_int:
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (CF.hprel list * CF.hp_rel_def list * CP.spec_var list) =
   (* let pr0 = pr_list !CP.print_exp in *)
@@ -2174,11 +2183,11 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
   Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 !CP.print_svl)
       (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
-          need_preprocess detect_dang)
+          need_preprocess detect_dang flow_int)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
 
 let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
-      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang: CF.hprel_def list=
+      hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang iflow: CF.hprel_def list=
       (* (CF.cond_path_type * CF.hp_reldef list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (* (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (* let pr0 = pr_list !CP.print_exp in *)
@@ -2200,5 +2209,5 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
   Debug.no_6 "infer_shapes_new" pr_id pr1 !CP.print_svl pr4 pr5 pr_none pr2
       (fun _ _ _ _ _ _ -> infer_shapes_new_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
-          need_preprocess detect_dang)
+          need_preprocess detect_dang iflow)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs

@@ -1,0 +1,22 @@
+Starting Omega...oc
+HP_7 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+Stop Omega... 1 invocations 
+SAT Count   : 8
+SAT % Hit   : 50.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.00031 (seconds)
+
+!!! log(small):(0.006093,10)
+Total verification time: 0.055926 second(s)
+	Time spent in main process: 0.04158 second(s)
+	Time spent in child processes: 0.014346 second(s)
+
