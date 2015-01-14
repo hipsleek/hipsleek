@@ -1,0 +1,7 @@
+
+/* 21: Fail */
+checkentail
+  a[i]=5 & i=3 |- a[3]=5.
+
+checkentail
+  a[i]=5 & (i=3|i=2) |- a[3]=5.
