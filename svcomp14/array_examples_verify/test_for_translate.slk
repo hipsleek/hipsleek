@@ -98,6 +98,7 @@ checkentail
 checkentail
   a[i]=5 & i=3
   |- a[3]=5.
+print residue.
 
 /* 18: Invalid */
 checkentail

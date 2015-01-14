@@ -1,2 +1,0 @@
-checkentail
-  a[i] = b[i] & i=5 |- a[5]=b[5].
