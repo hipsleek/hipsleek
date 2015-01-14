@@ -263,7 +263,7 @@ let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p (
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
-	  | P.AndList b -> f
+          | P.AndList b -> f
           | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
           | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
           | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
@@ -1342,22 +1342,30 @@ view_header:
 
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
-form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]];
+(* form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]]; *)
+
+rflow_form_list_opt: [[ t = LIST0 rflow_form SEP `COMMA -> t ]];
+
+rflow_form: 
+  [[ `MINUS; cc = core_constr -> cc
+   | `PLUS; cc = core_constr -> cc
+   |  cc = core_constr -> cc
+  ]];
 
 formula_ann: [[ `SPLITANN -> HO_SPLIT]];
 
 id_ann:
-  [[ `IDENTIFIER id ; t= OPT formula_ann -> (NEUTRAL,id,(un_option t HO_NONE))
-    | `OPAREN; `PLUS; `CPAREN; `IDENTIFIER id ; t= OPT formula_ann -> (OUTFLOW,id,(un_option t HO_NONE))
-    | `OPAREN; `MINUS; `CPAREN; `IDENTIFIER id ; t= OPT formula_ann -> (INFLOW,id,(un_option t HO_NONE))
+  [[ `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (NEUTRAL, id, (un_option t HO_NONE))
+   | `PLUS; `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (OUTFLOW, id, (un_option t HO_NONE))
+   | `MINUS; `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (INFLOW, id, (un_option t HO_NONE))
   ]];
 
 id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 
-opt_brace_vars : [[ `OBRACE;sl= id_ann_list_opt ;`CBRACE -> sl   ]];
+opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
-brace_form_args : [[ `OBRACE;sl= form_list_opt (*id_list*) ;`CBRACE -> 
-    List.map (F.subst_stub_flow n_flow) sl   ]];
+rflow_form_list : [[ `OBRACE; sl = rflow_form_list_opt; `CBRACE -> 
+    List.map (F.subst_stub_flow n_flow) sl ]];
 
 
 view_header_ext:
@@ -1671,7 +1679,7 @@ heap_id:
 (*LDK: frac for fractional permission*)   
 (* TODO:HO *)
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; split= opt_split; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; split= opt_split; ofl= opt_formula_label ->
        let imm_opt = get_heap_ann annl in
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let (c, hid, deref) = get_heap_id_info c hid in
@@ -1690,11 +1698,11 @@ simple_heap_constr_imm:
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT brace_form_args ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
      (*For threads as resource*)
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
@@ -1707,7 +1715,7 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
@@ -1724,7 +1732,7 @@ simple_heap_constr:
             let t1, t2 = List.split t in  
             F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        match hal with
@@ -1742,7 +1750,7 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT brace_form_args (* simple2*) ; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
@@ -1750,7 +1758,7 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT brace_form_args  (*simple2*); frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let ho_args = un_option opt1 [] in
        match hal with
        | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
@@ -1767,6 +1775,9 @@ simple_heap_constr:
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
+  
+(* (* HO Resource variables' annotation *)  *)
+(* rflow_ann: [[ `IN_RFLOW | `OUT_RFLOW ]]; *)
 
 (*LDK: parse optional fractional permission, default = 1.0*)
 opt_perm: [[t = OPT perm -> t ]];

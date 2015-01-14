@@ -87,6 +87,7 @@ type sleek_token =
   | FAIL_MUST
   | FAIL_MAY
   | XPURE
+  (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
@@ -191,6 +192,7 @@ module Token = struct
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 
 
   let print ppf x = pp_print_string ppf (to_string x)

@@ -1332,9 +1332,7 @@ let rec pr_h_formula h =
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
-          let ho_arg_str = match ho_svs with 
-            (* | [] -> "" *)
-            | hs -> "{"^String.concat "," (List.map string_of_formula hs)^"}" in
+          let ho_arg_str = "{" ^ (String.concat "," (List.map string_of_formula ho_svs)) ^ "}" in
           let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then

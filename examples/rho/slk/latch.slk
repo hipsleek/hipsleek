@@ -1,52 +1,24 @@
 //CountDownLatch
 data cell{ int v; }.
 
-pred_prim Latch<(-)P, (+)P>.
+pred_prim LatchIn{-%P}<>.
+
+pred_prim LatchOut{+%P}<>.
+
+pred_prim Latch{%P}<>.
 
 pred_prim CNT<n:int>.
 
-lemma "NORM-1" self::CNT<n> * self::CNT<-1> & n<=0 -> self::CNT<-1>.
+lemma "NORM-1" self::CNT<n> * self::CNT<a> & n<=0 & a < 0 -> self::CNT<a>.
 
 lemma "NORM-2" self::CNT<n1> * self::CNT<n2> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n>.
 
-lemma "SPLIT-1" self::Latch<(+)(P * Q)> -> self::Latch<(+)P> * self::Latch<(+)Q>.
+//lemma "SPLIT-1" self::LatchOut{+ %P * %Q}<> -> self::LatchOut{+%P}<> * self::LatchOut{+%Q}<>.
 
-lemma "SPLIT-2" self::Latch<(-)(P * Q)> -> self::Latch<(-)P> * self::Latch<(-)Q>.
+//lemma "SPLIT-2" self::LatchIn{- %P * %Q}<> -> self::LatchIn{-%P}<> * self::LatchIn{-%Q}<>.
 
 lemma "SPLIT-3" self::CNT<n> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n1> * self::CNT<n2>.
 
-lemma "ERR-1" self::Latch<(-)P> * self::CNT<-1> -> emp & flow __Fail.
+lemma "ERR-1" self::LatchIn{+ %P * %Q}<> * self::CNT<a> & a<0 -> emp & flow __Fail.
 
 lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
-
-// (1)
-checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
-print residue.
-
-// (2)
-checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
-print residue.
-
-// (3)
-checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
-print residue.
-
-// (4)
-checkentail c::CNT<1> |- (exists n: c::CNT<n> & n>0).
-print residue.
-
-// (5)
-checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<(-1)> |- z::cell<10>.
-print residue.
-
-// (6) FAIL, since c::CMT<0> is resource-ambiguous
-checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
-print residue.
-
-// (7) VALID
-checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
-print residue.
-
-// (8) FAIL
-checkentail c::CNT<1> * c::CNT<(-1)> |- true.
-print residue.

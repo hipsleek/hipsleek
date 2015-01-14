@@ -440,6 +440,8 @@ rule tokenizer file_name = parse
   | "-->" { CONSTR }
   | "<#" { TOPAREN }
   | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* | "-%" { IN_RFLOW }  *)
+  (* | "+%" { OUT_RFLOW } *)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }
