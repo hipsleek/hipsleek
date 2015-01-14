@@ -19,6 +19,8 @@ lemma "NORM-2" self::CNT<n1> * self::CNT<n2> & n=n1+n2 & n1>=0 & n2>=0 -> self::
 
 lemma "SPLIT-3" self::CNT<n> & n=n1+n2 & n1>=0 & n2>=0 -> self::CNT<n1> * self::CNT<n2>.
 
-lemma "ERR-1" self::LatchIn{+ %P * %Q}<> * self::CNT<a> & a<0 -> emp & flow __Fail.
+lemma "ERR-1" self::LatchIn{- %P * %Q}<> * self::CNT<a> & a<0 -> emp & flow __Fail.
 
 lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+checkentail c::LatchIn{- x::cell<n>}<> * x::cell<n> |- true.
