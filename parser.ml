@@ -1346,18 +1346,28 @@ id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 rflow_form_list_opt: [[ t = LIST0 rflow_form SEP `COMMA -> t ]];
 
+rflow_kind:
+  [[ `MINUS -> INFLOW 
+   | `PLUS -> OUTFLOW
+  ]];
+
 rflow_form: 
-  [[ `MINUS; cc = core_constr -> cc
-   | `PLUS; cc = core_constr -> cc
-   |  cc = core_constr -> cc
+  [[ k = OPT rflow_kind; cc = core_constr -> 
+      match cc with
+      | F.Base f -> {
+        F.rflow_kind = un_option k NEUTRAL;
+        F.rflow_base = cc; }
+      | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow")
   ]];
 
 formula_ann: [[ `SPLITANN -> HO_SPLIT]];
 
+ho_id: [[ `PERCENT; `IDENTIFIER id -> id ]];
+
 id_ann:
-  [[ `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (NEUTRAL, id, (un_option t HO_NONE))
-   | `PLUS; `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (OUTFLOW, id, (un_option t HO_NONE))
-   | `MINUS; `PERCENT; `IDENTIFIER id; t = OPT formula_ann -> (INFLOW, id, (un_option t HO_NONE))
+  [[ hid = ho_id; t = OPT formula_ann -> (NEUTRAL, hid, (un_option t HO_NONE))
+   | `PLUS; hid = ho_id; t = OPT formula_ann -> (OUTFLOW, hid, (un_option t HO_NONE))
+   | `MINUS; hid = ho_id; t = OPT formula_ann -> (INFLOW,  hid, (un_option t HO_NONE))
   ]];
 
 id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
@@ -1365,8 +1375,7 @@ id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
 rflow_form_list : [[ `OBRACE; sl = rflow_form_list_opt; `CBRACE -> 
-    List.map (F.subst_stub_flow n_flow) sl ]];
-
+    List.map (fun ff -> {ff with F.rflow_base = F.subst_stub_flow n_flow ff.F.rflow_base}) sl ]];
 
 view_header_ext:
     [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
@@ -1484,9 +1493,9 @@ opt_ann_list: [[t=LIST0 ann -> t]];
 
 p_vp_ann:
   [[ `PZERO -> VP_Zero
-    | `PFULL -> VP_Full
-    | `PVALUE -> VP_Value
-    (* | `PREF -> VP_Ref *)
+   | `PFULL -> VP_Full
+   | `PVALUE -> VP_Value
+   (* | `PREF -> VP_Ref *)
   ]];
 
 ann:
@@ -1506,6 +1515,7 @@ extended_l:
   [[ peek_extended; `OSQUARE; h=extended_constr_grp ; `ORWORD; t=LIST1 extended_constr_grp SEP `ORWORD; `CSQUARE -> 
      label_struc_groups (h::t)
    | h=extended_constr_grp -> label_struc_groups [h]]];
+
 extended_l2:
   [[ peek_extended; `OSQUARE; h=extended_constr_grp2 ; `ORWORD; t=LIST1 extended_constr_grp2 SEP `ORWORD; `CSQUARE -> 
      label_struc_groups (h::t)
@@ -1765,9 +1775,8 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | `PERCENT; `IDENTIFIER id ->
-         (* High-order variables, e.g. %P*)
-         F.HVar id
+     (* High-order variables, e.g. %P*)
+   | `PERCENT; `IDENTIFIER id -> F.HVar id
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
          (* if hp_names # mem id then *)
            F.HRel(id, cl, (get_pos_camlp4 _loc 2))

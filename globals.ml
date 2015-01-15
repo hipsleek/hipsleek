@@ -364,9 +364,9 @@ let string_of_vp_ann a =
 
 let string_of_ho_flow_kind (k:ho_flow_kind) =
   match k with
-    | INFLOW -> "(-)"
-    | OUTFLOW -> "(+)"
-    | NEUTRAL -> "(.)" (* or "" *)
+    | INFLOW -> "-"
+    | OUTFLOW -> "+"
+    | NEUTRAL -> "."
 
 let string_of_ho_split_kind (k:ho_split_kind) =
   match k with

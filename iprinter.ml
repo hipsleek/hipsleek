@@ -514,7 +514,9 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_pl))^"}" in
+      let ho_str = "{" ^ (String.concat "," (List.map 
+        (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
+                   (string_of_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
       let deref_str = ref "" in
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
@@ -531,7 +533,9 @@ let rec string_of_h_formula = function
                   F.h_formula_heap2_arguments = args;
                   F.h_formula_heap2_ho_arguments = ho_args
     }) ->
-      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_args))^"}" in
+      let ho_str = "{" ^ (String.concat "," (List.map 
+        (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
+                   (string_of_formula ff.F.rflow_base)) ho_args)) ^ "}" in
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
