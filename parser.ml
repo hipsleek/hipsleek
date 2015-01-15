@@ -1352,7 +1352,7 @@ rflow_kind:
   ]];
 
 rflow_form: 
-  [[ k = OPT rflow_kind; cc = core_constr -> 
+  [[ k = OPT rflow_kind; cc = disjunctive_constr (* core_constr *) -> 
       match cc with
       | F.Base f -> {
         F.rflow_kind = un_option k NEUTRAL;
@@ -1360,7 +1360,7 @@ rflow_form:
       | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow")
   ]];
 
-formula_ann: [[ `SPLITANN -> HO_SPLIT]];
+formula_ann: [[ `SPLITANN -> HO_SPLIT ]];
 
 ho_id: [[ `PERCENT; `IDENTIFIER id -> id ]];
 
