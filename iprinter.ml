@@ -533,9 +533,7 @@ let rec string_of_h_formula = function
                   F.h_formula_heap2_arguments = args;
                   F.h_formula_heap2_ho_arguments = ho_args
     }) ->
-      let ho_str = "{" ^ (String.concat "," (List.map 
-        (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
-                   (string_of_formula ff.F.rflow_base)) ho_args)) ^ "}" in
+      let ho_str = "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_args)) ^ "}" in
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
@@ -580,6 +578,10 @@ and string_of_one_formula (f:F.one_formula) =
 
 and string_of_one_formula_list (f:F.one_formula list) =
   String.concat "\n AND" (List.map string_of_one_formula f)
+  
+and string_of_rflow_formula ff =
+  (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^
+  (string_of_formula ff.F.rflow_base)
 
 (* pretty printing for formulae *) 
 and string_of_formula = function 
@@ -1147,6 +1149,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
+Iformula.print_rflow_formula :=string_of_rflow_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_param_list := string_of_param_list;;
 Iast.print_hp_decl := string_of_hp_decl;;

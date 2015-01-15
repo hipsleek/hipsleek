@@ -26,9 +26,11 @@ lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- %P}<>.
 print residue.
 
-checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<x> |- c::LatchIn{+ %P}<>.
+checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<x> |- c::LatchIn{+ x::cell<n> * %P}<>.
 print residue.
 
+checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<x> |- c::LatchIn{+ x::cell<n>}<>.
+print residue.
 
 checkentail c::LatchIn{- %P}<> |- c::LatchIn{- x::cell<n>}<>.
 print residue.

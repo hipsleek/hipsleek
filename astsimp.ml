@@ -6733,7 +6733,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_label = pi;} ->
           (* expand the dereference heap node first *)
             let trans_f f tl = trans_formula prog false [] false f tl false in
-            let (tl,ho_args) = List.fold_left (fun (t,r) a -> let (nt,a1) = trans_f a.IF.rflow_base t in (nt,a1::r))  (tl,[]) ho_exps in
+            let (tl, ho_args) = List.fold_left (fun (t, r) a -> 
+              let (nt, b) = trans_f a.IF.rflow_base t in 
+              (nt, r @ [{ CF.rflow_kind = a.IF.rflow_kind; CF.rflow_base = b; }])) 
+              (tl, []) ho_exps in
             let ho_args = List.rev ho_args in
             if (deref > 0) then (
                 let (f1, newvars1) = expand_dereference_node f pos in
@@ -7642,7 +7645,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let ho_args = b.IF.h_formula_heap_ho_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
             Debug.tinfo_hprint (add_str "heap args" (pr_list (Iprinter.string_of_formula_exp))) args pos;
-            Debug.dinfo_hprint (add_str "ho_args" (pr_list (Iprinter.string_of_formula))) ho_args pos;
+            Debug.dinfo_hprint (add_str "ho_args" (pr_list (Iprinter.string_of_rflow_formula))) ho_args pos;
             (* add a flag to indicate if it is a relational parameter or higher-order predicate
                to disable renaming under these two scenarios *)
             let new_args = 
@@ -7668,9 +7671,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                           (Some (List.hd hvars), List.tl hvars))
               | None -> (None,hvars)
             in
-            let ho_hvars = List.map (fun f ->
-                let n_f, _ , _  = case_normalize_renamed_formula prog new_used_names posib_expl f ann_vars (*TOCHECH: how about two other return values*)
-                in n_f) b.IF.h_formula_heap_ho_arguments
+            let ho_hvars = List.map (fun ff ->
+                let n_base, _ , _  = case_normalize_renamed_formula prog new_used_names posib_expl ff.IF.rflow_base ann_vars (*TOCHECH: how about two other return values*)
+                in { ff with IF.rflow_base = n_base; }) b.IF.h_formula_heap_ho_arguments
             in
             let new_h = IF.HeapNode{ b with 
                 IF.h_formula_heap_arguments = hvars;

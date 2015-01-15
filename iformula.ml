@@ -76,7 +76,7 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: formula;
+  rflow_base: formula; (* Restricted to Base formula only *)
 }
 
 and formula_base = { formula_base_heap : h_formula;

@@ -1332,7 +1332,7 @@ let rec pr_h_formula h =
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
-          let ho_arg_str = "{" ^ (String.concat "," (List.map string_of_formula ho_svs)) ^ "}" in
+          let ho_arg_str = "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
           let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then
@@ -2306,6 +2306,10 @@ and pr_formula e =
     (* if (!Globals.print_en_tidy) then (Cfout.shorten_formula e) *)
     (* else e in *)
   pr_formula_1 e
+  
+and pr_rflow_formula f = 
+  fmt_string (string_of_ho_flow_kind f.rflow_kind);
+  pr_formula f.rflow_base
 
 and slk_formula e =
   let f_b e =  pr_bracket formula_wo_paren slk_formula e in
@@ -2459,6 +2463,8 @@ and pr_formula_guard_list (es0: formula_guard list)=
   recf es0
 
 and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
+
+and string_of_rflow_formula f = poly_string_of_pr pr_rflow_formula f
 
 and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 

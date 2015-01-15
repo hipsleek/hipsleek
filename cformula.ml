@@ -139,6 +139,10 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
+and rflow_formula = {
+  rflow_kind: ho_flow_kind;
+  rflow_base: formula;
+}
 
 and list_formula = formula list
 
@@ -276,7 +280,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
-                        h_formula_view_ho_arguments : formula list;
+                        h_formula_view_ho_arguments : rflow_formula list;
                         h_formula_view_annot_arg : (CP.annot_arg * int) list;
                         h_formula_view_args_orig : (CP.view_arg  * int) list; (* serves as a map for view_arguments and view_annot_arg (their initial position) *)
                         h_formula_view_modes : mode list;
@@ -338,6 +342,10 @@ let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
+
+let trans_rflow_formula f ff = { ff with rflow_base = f ff.rflow_base; }
+
+let apply_rflow_formula f ff = f ff.rflow_base
 
 let mkThreadNode c n derv split perm origins original rsr dl lbl pos = 
   ThreadNode { h_formula_thread_node = c;
@@ -2786,7 +2794,7 @@ and remove_absent ann vs =
     List.split res_ls
   else (ann,vs)
 
-and h_fv_node v perm ann param_ann vs ho_vs=
+and h_fv_node v perm ann param_ann vs ho_vs =
   let (param_ann,vs) = remove_absent param_ann vs in
   Debug.no_2 "h_fv_node" string_of_ann_list !print_svl !print_svl
       (fun _ _ -> h_fv_node_x v perm ann param_ann vs ho_vs) param_ann vs
@@ -2802,9 +2810,11 @@ and h_fv_node_x v perm ann param_ann vs ho_vs =
       let var = List.hd pvars in
       if (List.mem var vs) then [] else pvars
   in
-  let hvars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map fv ho_vs)) in
+  let hvars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map rf_fv ho_vs)) in
   let vs=avars@pvars@vs@hvars in
   if List.mem v vs then vs else v :: vs
+  
+and rf_fv (f: rflow_formula) = fv f.rflow_base 
 
 and f_h_fv (f : formula) : CP.spec_var list =
 	(* let rec helper h = match h with *)
@@ -3181,6 +3191,9 @@ and vn_subst sst vn=
     | ViewNode vn -> vn
     | _ -> report_error no_pos "CF.vn_subst"
 
+and rf_subst sst (f: rflow_formula) = 
+  { f with rflow_base = subst sst f.rflow_base; }
+
 and h_subst sst (f : h_formula) = 
 	match f with
   | Star ({h_formula_star_h1 = f1; 
@@ -3226,7 +3239,7 @@ and h_subst sst (f : h_formula) =
     h_formula_view_imm = imm; 
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
-							h_formula_view_ho_arguments = ho_svs; 
+    h_formula_view_ho_arguments = ho_svs; 
     h_formula_view_annot_arg = anns; 
     h_formula_view_modes = modes;
     h_formula_view_coercible = coble;
@@ -3242,7 +3255,7 @@ and h_subst sst (f : h_formula) =
 	    h_formula_view_node = CP.subst_var_par sst x; 
 	    h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
 	    h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
-							h_formula_view_ho_arguments = List.map (subst sst) ho_svs;
+	    h_formula_view_ho_arguments = List.map (rf_subst sst) ho_svs;
 
 	    h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 	}
@@ -3414,7 +3427,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		formula_exists_flow = fl;
         formula_exists_label = lbl;
 		formula_exists_pos = pos})
-
+    
 (*Only substitute pure formula*)
 and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
@@ -3508,7 +3521,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         ViewNode {g with h_formula_view_node = subst_var s x; 
         h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
         h_formula_view_imm = apply_one_imm s imm;  
-	h_formula_view_ho_arguments = List.map (apply_one s) ho_svs;
+	h_formula_view_ho_arguments = List.map (trans_rflow_formula (apply_one s)) ho_svs;
 	h_formula_view_arguments = List.map (subst_var s) svs;
         h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
         }
@@ -5466,7 +5479,7 @@ and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
   | ViewNode {h_formula_view_node = c;
              h_formula_view_ho_arguments = ho_args;
              h_formula_view_arguments = args} ->
-        let hovars = List.concat (List.map get_ptrs_w_args_f ho_args) in
+        let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_f) ho_args) in
         [c]@(List.filter CP.is_node_typ args)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
@@ -5822,7 +5835,7 @@ let rec get_ptrs_group_hf hf0=
          (helper hf1)@(helper hf2)
       | DataNode hd -> [hd.h_formula_data_node::hd.h_formula_data_arguments]
       | ViewNode hv ->
-            let ho = List.concat (List.map get_ptrs_group hv.h_formula_view_ho_arguments) in
+            let ho = List.concat (List.map (apply_rflow_formula get_ptrs_group) hv.h_formula_view_ho_arguments) in
             [hv.h_formula_view_node::hv.h_formula_view_arguments]@ho
       | ThreadNode ht -> [[ht.h_formula_thread_node]] (*TOCHECK*)
       | HRel _
@@ -12629,7 +12642,8 @@ let drop_hvar e vars =
 let rec subst_one_hvar_hf_x (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
   let func hf = match hf with
     | ViewNode vn ->
-          let ho_args = List.map (fun arg -> subst_one_hvar arg (f,t)) vn.h_formula_view_ho_arguments in
+          let ho_args = List.map (trans_rflow_formula (fun f_base -> subst_one_hvar f_base (f,t))) 
+            vn.h_formula_view_ho_arguments in
           Some (ViewNode {vn with h_formula_view_ho_arguments = ho_args;})
     | _ -> None
   in
