@@ -1153,13 +1153,13 @@ and fill_view_param_types (vdef : I.view_decl) =
     (* report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty") *)
   else ()
 
-and try_unify_view_type_args prog c vdef v deref ies tlist pos =
+and try_unify_view_type_args prog c vdef v deref ies hoa tlist pos =
   let pr1 = add_str "is_prim_pred" string_of_bool in
   let pr2 = add_str "name,var" (pr_pair pr_id pr_id) in
   let pr3 = string_of_tlist in
   let pr4 = pr_list Iprinter.string_of_formula_exp in
   Debug.no_4 "try_unify_view_type_args" pr1 pr2 pr3 pr4 pr3
-      (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies tlist pos)
+      (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos)
       vdef.I.view_is_prim (c,v) tlist ies
 (*
 type: I.prog_decl ->
@@ -1171,7 +1171,7 @@ type: I.prog_decl ->
   spec_var_type_list -> Globals.loc -> spec_var_type_list
 *)
 (* ident, args, table *)
-and try_unify_view_type_args_x prog c vdef v deref ies tlist pos =
+and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
     if (String.compare dname "" = 0) then tlist
@@ -1191,10 +1191,24 @@ and try_unify_view_type_args_x prog c vdef v deref ies tlist pos =
           done;
           dname ^ !s
       ) in
-      let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
+      let (n_tl,_) = gather_type_info_var v tlist ((Named expect_dname)) pos in
       n_tl
   ) in
   let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
+  (* Check type consistency for rho *)
+  let ho_flow_kinds_view = List.map (fun (k, _, _) -> k) vdef.I.view_ho_vars in
+  let ho_flow_kinds_args = List.map (fun ff -> ff.IF.rflow_kind) hoa in
+  let rec ho_helper hov hoa =
+    match hov, hoa with
+    | [], [] -> ()
+    | v::vr, a::ar ->
+      if eq_ho_flow_kind v a then ho_helper vr ar
+      else report_error pos ("Higher-order flow kinds do not match")
+    | _ -> report_error pos ("Number of higher-order arguments for the view " 
+                             ^ c ^ " does not match") 
+  in
+  let _ = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
+  (**********************************)
   let vt = vdef.I.view_typed_vars in
   let rec helper exps tvars =
     match (exps, tvars) with
@@ -1336,6 +1350,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       n_tl
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
+                  IF.h_formula_heap_ho_arguments = hoa; (* rho arguments *)
                   IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
                   IF.h_formula_heap_name = v_name; (* data/pred name *)
@@ -1430,10 +1445,10 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
           (* let _ = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
           (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
-            let _ = if not (IF.is_param_ann_list_empty ann_param) then
-          (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
+          let _ = if not (IF.is_param_ann_list_empty ann_param) then
+            (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog v_name vdef v deref ies n_tl pos 
+          try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
         with
         | Not_found ->
           (try

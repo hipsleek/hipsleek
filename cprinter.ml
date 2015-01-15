@@ -2308,7 +2308,7 @@ and pr_formula e =
   pr_formula_1 e
   
 and pr_rflow_formula f = 
-  fmt_string (string_of_ho_flow_kind f.rflow_kind);
+  fmt_string ((string_of_ho_flow_kind f.rflow_kind) ^ " ");
   pr_formula f.rflow_base
 
 and slk_formula e =

@@ -7621,8 +7621,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             with
               | Not_found -> (false,List.map (fun _ -> LO.unlabelled) b.IF.h_formula_heap_arguments,[])
             in
+            (* Redundant checking: Already done in typeinfer.ml? *)
             let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
-                  report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
+              report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
             in
             if (isInv) then
               (*TO CHECK: if heap node is a LOCK invariant => do nothing*)
@@ -7769,7 +7770,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     let pr0 (vs:((ident*primed) list))= 
       let idents, _ = List.split vs in
       (string_of_ident_list idents) in
-    Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f  in
+    Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let _ = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
