@@ -12710,7 +12710,8 @@ and find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =
       !print_svl
       find_closure_x v vv
 
-and find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = find_closure v (pure_ptr_equations f)
+and find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = 
+  find_closure v (pure_ptr_equations f)
 
 and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list = 
   Debug.no_2 "find_closure_pure_formula" 

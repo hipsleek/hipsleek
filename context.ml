@@ -214,7 +214,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_cyclic (e,_,_,_,_) -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
-  fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
+  fmt_string ("Prio:"^(string_of_int w)^" "); (pr_action_res pr_mr a)
 
 let string_of_action_name (e:action) = poly_string_of_pr pr_action_name e
 

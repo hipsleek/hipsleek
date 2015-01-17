@@ -11989,12 +11989,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                             | HVar v -> (* Do the instatiation for the HVar v *)
                               let succ_estate =
                                 if (Gen.BList.mem_eq CP.eq_spec_var v estate.CF.es_gen_impl_vars) && (CF.is_emp_heap rhs_rest) then
-                                  match estate.CF.es_formula with
-                                  | CF.Base esf ->
-                                    let lhs_rest = CF.Base { esf with CF.formula_base_heap = CF.HEmp; } in
+                                  let bind_f = estate.CF.es_formula in
+                                  match bind_f with
+                                  | CF.Base base_f ->
+                                    let lhs_rest = CF.Base { base_f with CF.formula_base_heap = CF.HEmp; } in
+                                    let heap_args = CF.collect_all_heap_vars_formula bind_f in
+                                    let pure_f = base_f.CF.formula_base_pure in
+                                    let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
+                                    let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in 
                                     let succ_es = { estate with
                                       CF.es_formula = lhs_rest;
-                                      CF.es_ho_vars_map = [(v, estate.CF.es_formula)]; } in
+                                      CF.es_ho_vars_map = [(v, rel_bind_f)]; } in
                                     Some succ_es
                                   | _ -> None
                                 else None
@@ -12128,7 +12133,8 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (add_str "conseq" Cprinter.string_of_formula) 
       (add_str "lhs_b" pr3) 
       (add_str "rhs_b" pr3) pr2
-      (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) a estate conseq (Base lhs_b) (Base rhs_b) 
+      (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) 
+      a estate conseq (Base lhs_b) (Base rhs_b) 
 
 (* lhs <==> rhs: instantiate any high-order variables in rhs
    Currently assume that only HVar is in the rhs

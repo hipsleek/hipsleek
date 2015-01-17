@@ -1,6 +1,12 @@
 data cell{ int v; }.
 
-checkentail_exact x::cell<1>*y::cell<2> |- x::cell<_>*%P.
+checkentail_exact x::cell<1>*y::cell<2> |- x::cell<_> * %P.
+print residue.
+
+checkentail_exact x::cell<1>*y::cell<2> & z = y & t = x |- x::cell<_> * %P.
+print residue.
+
+checkentail_exact x::cell<c>*y::cell<a> & a = b + 1 & b = 1 & c = 1 |- x::cell<_> * %P.
 print residue.
 
 /*

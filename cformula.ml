@@ -16346,7 +16346,7 @@ and drop_svl (f : formula) (svl:CP.spec_var list): formula  =
   in helper f
 
 (*collect arguments of a heap node var sv, and its node name*)
-let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list* ident) =
+let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list * ident) =
   let rec helper f =
   match f with
   | Base ({formula_base_heap = h;
@@ -16367,15 +16367,15 @@ let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list
           if (b) then [(get_node_args h, get_node_name h)] else []
       ) heaps in
       let args_list = List.concat args_list in
-      if args_list=[] then ([],"")
+      if args_list = [] then ([], "")
       else
         (*If there are multiple nodes with the same node_name 
           (due to fractional permission).
         JUST PICKUP the first one*)
         List.hd args_list
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-      let args1,id1 = helper f1 in
-      let args2,id2 = helper f2 in
+      let args1, id1 = helper f1 in
+      let args2, id2 = helper f2 in
       if (args1=[] && args2!=[]) || (args1=[] && args2!=[]) || (id1!=id2) then
         report_error pos ("collect_heap_args_formula: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
       else
@@ -16388,6 +16388,25 @@ let collect_heap_args_formula (f:formula) (sv:CP.spec_var) : (CP.spec_var list *
   Debug.no_2 "collect_heap_args_formula"
       !print_formula !print_sv (pr_pair !print_svl (fun v -> v))
       collect_heap_args_formula_x f sv
+
+let collect_all_heap_vars_formula (f: formula): CP.spec_var list =
+  let rec helper f =
+    match f with
+    | Base ({ formula_base_heap = h; formula_base_pure = p; })
+    | Exists ({ formula_exists_heap = h; formula_exists_pure = p; }) ->
+      let heaps = split_star_conjunctions h in
+      let heaps = List.filter (fun h ->
+        match h with | HEmp | HTrue -> false | _ -> true) heaps
+      in
+      let heap_vars_list = List.map (fun h ->
+        let sv = get_node_var h in
+        let alias_sv = MCP.find_closure_mix_formula sv p in
+        let args_sv = get_node_args h in
+        [sv] @ alias_sv @ args_sv) heaps 
+      in List.concat heap_vars_list
+    | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
+      (helper f1) @ (helper f2)
+  in helper f
 
 (*collect arguments of a heap node var sv, and its node name*)
 let collect_heap_args_context_x ctx (sv:CP.spec_var) : (CP.spec_var list * ident) =
