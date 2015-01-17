@@ -2005,6 +2005,7 @@ and get_node_var_x (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_node = c})
   | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
+  | HVar v -> v
   | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
