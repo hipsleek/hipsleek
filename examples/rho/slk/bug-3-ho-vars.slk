@@ -1,8 +1,8 @@
 data cell{ int v; }.
 
 
-checkentail_exact x::cell<1> |- x::cell<2>.
-print residue.
+//checkentail_exact x::cell<1> |- x::cell<2>.
+//print residue.
 /*
 Entail 1: Fail.(must) cause: flted_4_13=1 |-  flted_4_13=2. LOCS:[4] (must-bug)
 
@@ -11,8 +11,15 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==> ]]
 */
 
-checkentail_exact x::cell<1>*y::cell<2> |- x::cell<3>*%P.
+checkentail x::cell<1> * y::cell<2> |- x::cell<3>.
 print residue.
+
+checkentail x::cell<1> * y::cell<2> |- x::cell<3> * %P.
+print residue.
+
+checkentail x::cell<1> * y::cell<2> |- x::cell<1> * %P.
+print residue.
+
 /*
 
  why did this succeed?

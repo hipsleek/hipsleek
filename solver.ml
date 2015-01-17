@@ -7786,7 +7786,7 @@ and subst_rel_by_def_mix rel_w_defs mf =
 and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_4_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula string_of_bool pr
-      (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
+    (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
@@ -9186,7 +9186,8 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
       string_of_spec_var_list
       string_of_spec_var_list
       pr_out
-      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars l_args r_args
+      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) 
+      l_perm r_perm evars ivars l_args r_args
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
@@ -9481,41 +9482,54 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   Debug.devel_zprint (lazy ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs))) pos; 
   (* Debug.tinfo_hprint (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* Debug.tinfo_hprint (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
-    let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = match l_node with
-      | ThreadNode {h_formula_thread_name = l_node_name;
-        h_formula_thread_perm = perm;} -> ([], [], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
-      | DataNode {h_formula_data_name = l_node_name;
-        h_formula_data_perm = perm;
-        h_formula_data_imm = ann;
-        h_formula_data_param_imm = param_ann;
-        h_formula_data_arguments = l_args} -> ([], l_args, l_node_name, "data", perm, ann, param_ann)
-      | ViewNode {h_formula_view_name = l_node_name;
-        h_formula_view_perm = perm;
-        h_formula_view_imm = ann;
-        h_formula_view_arguments = l_args;
-        h_formula_view_ho_arguments = l_ho_args;
-        h_formula_view_annot_arg = l_annot
-        } -> (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
-      | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
+    let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = 
+      match l_node with
+      | ThreadNode {
+          h_formula_thread_name = l_node_name;
+          h_formula_thread_perm = perm; } -> 
+        ([], [], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
+      | DataNode {
+          h_formula_data_name = l_node_name;
+          h_formula_data_perm = perm;
+          h_formula_data_imm = ann;
+          h_formula_data_param_imm = param_ann;
+          h_formula_data_arguments = l_args } -> 
+        ([], l_args, l_node_name, "data", perm, ann, param_ann)
+      | ViewNode {
+          h_formula_view_name = l_node_name;
+          h_formula_view_perm = perm;
+          h_formula_view_imm = ann;
+          h_formula_view_arguments = l_args;
+          h_formula_view_ho_arguments = l_ho_args;
+          h_formula_view_annot_arg = l_annot } -> 
+        (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
+      | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel", None, CP.ConstAnn Mutable, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
-    let r_ho_args, r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
-      | ThreadNode {h_formula_thread_name = r_node_name;
-                    h_formula_thread_node = r_var;
-        h_formula_thread_perm = perm;} -> ([], [], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
-      | DataNode {h_formula_data_name = r_node_name;
-        h_formula_data_perm = perm;
-        h_formula_data_imm = ann;
-        h_formula_data_param_imm = param_ann;
-        h_formula_data_arguments = r_args;
-        h_formula_data_node = r_var} -> ([], r_args, r_node_name, r_var, perm, ann, param_ann)
-      | ViewNode {h_formula_view_name = r_node_name;
-        h_formula_view_perm = perm;
-        h_formula_view_imm = ann;
-        h_formula_view_arguments = r_args;
-        h_formula_view_ho_arguments = r_ho_args;
-        h_formula_view_annot_arg = r_annot;
-        h_formula_view_node = r_var} -> (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
-      | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable,[])
+    let r_ho_args, r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = 
+      match r_node with
+      | ThreadNode {
+          h_formula_thread_name = r_node_name;
+          h_formula_thread_node = r_var;
+          h_formula_thread_perm = perm; } -> 
+        ([], [], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
+      | DataNode {
+          h_formula_data_name = r_node_name;
+          h_formula_data_perm = perm;
+          h_formula_data_imm = ann;
+          h_formula_data_param_imm = param_ann;
+          h_formula_data_arguments = r_args;
+          h_formula_data_node = r_var } -> 
+        ([], r_args, r_node_name, r_var, perm, ann, param_ann)
+      | ViewNode {
+          h_formula_view_name = r_node_name;
+          h_formula_view_perm = perm;
+          h_formula_view_imm = ann;
+          h_formula_view_arguments = r_args;
+          h_formula_view_ho_arguments = r_ho_args;
+          h_formula_view_annot_arg = r_annot;
+          h_formula_view_node = r_var } -> 
+        (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
+      | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
     (* An Hoa : found out that the current design of do_match 
@@ -9665,7 +9679,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
             Debug.tinfo_hprint (add_str "l_param_ann" (pr_list Cprinter.string_of_imm)) l_param_ann pos;
             Debug.tinfo_hprint (add_str "r_param_ann" (pr_list Cprinter.string_of_imm)) r_param_ann pos;
-            (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
+            (rem_l_node, rem_r_node, new_l_args, new_r_args, new_l_param_ann, new_r_param_ann)
           else (rem_l_node, rem_r_node, l_args, r_args, l_param_ann, r_param_ann)
             (* (rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann) *)
         | _ -> (HEmp, HEmp, l_args, r_args, l_param_ann, r_param_ann)
@@ -9717,15 +9731,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let rho_0, label_list, p_ante, p_conseq =
             do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars 
           in
-                (* let rho_0, label_list =                                                                                  *)
-                (*   if (Perm.allow_perm ()) then                                                                           *)
-                (*   match l_perm, r_perm with                                                                              *)
-                (*   | Some f1, Some f2 -> (List.combine (f2::r_args) (f1::l_args), (LO.unlabelled::label_list))            *)
-                (*   | None, Some f2 ->    (List.combine (f2::r_args) (full_perm_var::l_args), (LO.unlabelled::label_list)) *)
-                (*   | Some f1, None ->	  (List.combine (full_perm_var::r_args) (f1::l_args), (LO.unlabelled::label_list))  *)
-                (*   | _ -> 				  (List.combine r_args l_args, label_list)                                              *)
-                (*   else   (List.combine r_args l_args, label_list)                                                        *)
-                (*   in                                                                                                     *)
+          (* let rho_0, label_list =                                                                                  *)
+          (*   if (Perm.allow_perm ()) then                                                                           *)
+          (*   match l_perm, r_perm with                                                                              *)
+          (*   | Some f1, Some f2 -> (List.combine (f2::r_args) (f1::l_args), (LO.unlabelled::label_list))            *)
+          (*   | None, Some f2 ->    (List.combine (f2::r_args) (full_perm_var::l_args), (LO.unlabelled::label_list)) *)
+          (*   | Some f1, None ->	  (List.combine (full_perm_var::r_args) (f1::l_args), (LO.unlabelled::label_list))  *)
+          (*   | _ -> 				  (List.combine r_args l_args, label_list)                                              *)
+          (*   else   (List.combine r_args l_args, label_list)                                                        *)
+          (* in                                                                                                       *)
           let rho = 
             try
               List.combine rho_0 label_list
@@ -9854,8 +9868,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             (********************************************************************)
             let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
             let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
-            (* let _ = print_string("cris: new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p) ^ "\n") in *)
-            (* let _ = print_string("cris: new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p) ^ "\n") in *)
+            (* let _ = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
+            (* let _ = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
             (* Add instantiation for perm vars *)
             let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante) in
             let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq) in
@@ -10122,7 +10136,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
               let res_es1, prf1 = 
                 if (!Globals.allow_mem) then heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos
-                else heap_entail_conjunct 11 prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
+                else heap_entail_conjunct 11 prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
               let res_es1 = Cformula.add_to_subst res_es1 r_subs l_subs in  
               let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos 
               in (res_es1, prf1) 
@@ -11300,7 +11314,7 @@ and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_
     (* let _ = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
 
-and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
+and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
     : (Cformula.list_context * Prooftracer.proof) =
   Debug.ninfo_hprint (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b pos;
   Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
@@ -11986,11 +12000,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 else None
                               in
                               (match succ_estate with
-                              | Some es -> (CF.SuccCtx [CF.Ctx es], NoAlias) 
-                              | None ->
-                                let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                                (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                                 CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias))
+                                | Some es -> 
+                                  let new_ctx = CF.Ctx (CF.add_to_estate es "binding of ho var") in
+                                  let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; } in
+                                  heap_entail_conjunct 18 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
+                                | None ->
+                                  let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                                   CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias))
                             | _ -> 
                               let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                               (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
