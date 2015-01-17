@@ -1,6 +1,6 @@
 data cell{ int v; }.
 
-checkentail_exact x::cell<_> * %P |- %P * %Q.
+checkentail_exact x::cell<3> * %P |- %P * %Q.
 print residue.
 
 
@@ -29,3 +29,13 @@ Residue:
 [[ COND ==>  UnmatchedRHSData ==> ]]
 
 */
+
+checkentail_exact  %P * %Q |- %Q * %P .
+print residue.
+
+
+checkentail_exact  %P * x::cell<3+2> |- %Q * %P .
+print residue.
+
+checkentail_exact  %P * x::cell<3+2> |- %Q * %P & x!=null.
+print residue.
