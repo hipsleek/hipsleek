@@ -22,6 +22,9 @@ print residue.
 checkentail_exact x::cell<_> * y::cell<_> |- x::cell<_> * %P.
 print residue.
 
+checkentail_exact x::cell<_> * %P |- x::cell<_> * y::cell<_>.
+print residue.
+
 /*
 
 Residue:
