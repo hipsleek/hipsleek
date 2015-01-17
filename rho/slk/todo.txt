@@ -35,7 +35,7 @@ Residue:
    always keeps the last result.
 
 =================================================================
-# bugs-4
+# bugs-4 (DONE)
 
 checkentail_exact x::cell<_> * %P |- %P * %Q.
 

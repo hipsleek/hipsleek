@@ -355,60 +355,62 @@ let filter_match_res_list lst rhs_node =
  *   - In acc-fold: choose_context must allow rhs_node is a general heap formula
  *     (or a chain of heap nodes and views )
  *)
-let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos
-    : match_res list =
+let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
     | HRel _  
     | ThreadNode _ 
     | DataNode _ 
+    | HVar _
     | ViewNode _ ->
-          let imm,pimm,p= match rhs_node with
-            | DataNode{h_formula_data_node=p;h_formula_data_imm=imm; h_formula_data_param_imm = pimm;} -> ( imm, pimm, p)
-            | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm, [], p)
-            | ThreadNode{h_formula_thread_node=p;} -> (CP.ConstAnn(Mutable), [], p)
-            | HRel (hp,e,_) ->
-                  let args = CP.diff_svl (get_all_sv  rhs_node) [hp] in
-                  let root, _  = Sautil.find_root prog [hp] args  [] in
-                  let _ = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
-                  (CP.ConstAnn(Mutable), [], root)
-            | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
-          in
-          let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-          let eqns' = MCP.ptr_equations_without_null lhs_p in
-          (* let emap = CP.EMapSV.build_eset eqns' in *)
-          let r_eqns =
-            let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
-            let r_asets = Csvutil.alias_nth 2 eqns in
-            let a_vars = lhs_fv @ posib_r_aliases in
-            let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
-            let colaps l = List.fold_left (fun a c -> match a with
-              | [] -> [(c,c)]
-              | h::_-> (c,(fst h))::a) [] l in
-            List.concat (List.map colaps fltr) in
-          let eqns = (p, p) :: eqns' in
-          let emap = CP.EMapSV.build_eset eqns' in
-          (* let emap = CP.EMapSV.build_eset eqns in *)
-          (* let paset = CP.EMapSV.find_equiv_all p emap in *)
-          (* let paset = p::paset in *)
-          let asets = Csvutil.alias_nth 3 (eqns@r_eqns) in
-          let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
-          if Gen.is_empty paset then
-            failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
-          else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
-            (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
-          else 
-            (* (* TRUNG TODO: to insert acc_fold context here *)                  *)
-            (* let accfold_res = (                                                *)
-            (*   if !Globals.acc_fold then                                        *)
-            (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
-            (*   else []                                                          *)
-            (* ) in                                                               *)
-            let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
-            let mt_res = filter_match_res_list mt_res rhs_node in
-            (* (accfold_res @ mt_res) *)
-            mt_res
-    | HVar _ -> [] (*TODO:HO*)
+      let imm, pimm, p = match rhs_node with
+        | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (imm, pimm, p)
+        | ViewNode { h_formula_view_node=p; h_formula_view_imm=imm } -> (imm, [], p)
+        | HVar v -> (CP.ConstAnn(Mutable), [], v)
+        | ThreadNode { h_formula_thread_node=p; } -> (CP.ConstAnn(Mutable), [], p)
+        | HRel (hp, e, _) ->
+          let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
+          let root, _ = Sautil.find_root prog [hp] args [] in
+          let _ = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
+          (CP.ConstAnn(Mutable), [], root)
+        | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
+      in
+      let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
+      let eqns' = MCP.ptr_equations_without_null lhs_p in
+      (* let emap = CP.EMapSV.build_eset eqns' in *)
+      let r_eqns =
+        let eqns = (MCP.ptr_equations_without_null rhs_p) @ rhs_es in
+        let r_asets = Csvutil.alias_nth 2 eqns in
+        let a_vars = lhs_fv @ posib_r_aliases in
+        let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
+        let colaps l = List.fold_left (fun a c -> match a with
+          | [] -> [(c,c)]
+          | h::_-> (c,(fst h))::a) [] l 
+        in
+        List.concat (List.map colaps fltr) 
+      in
+      let eqns = (p, p) :: eqns' in
+      let emap = CP.EMapSV.build_eset eqns' in
+      (* let emap = CP.EMapSV.build_eset eqns in *)
+      (* let paset = CP.EMapSV.find_equiv_all p emap in *)
+      (* let paset = p::paset in *)
+      let asets = Csvutil.alias_nth 3 (eqns@r_eqns) in
+      let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
+      if Gen.is_empty paset then
+        failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
+      else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
+        (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
+      else 
+        (* (* TRUNG TODO: to insert acc_fold context here *)                  *)
+        (* let accfold_res = (                                                *)
+        (*   if !Globals.acc_fold then                                        *)
+        (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
+        (*   else []                                                          *)
+        (* ) in                                                               *)
+        let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
+        let mt_res = filter_match_res_list mt_res rhs_node in
+        (* (accfold_res @ mt_res) *)
+        mt_res
     | HTrue -> (
           if (rhs_rest = HEmp) then (
               (* if entire RHS is HTrue then it matches with the entire LHS*)
@@ -441,7 +443,8 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
       (add_str "RHS pure" pr3)
       (add_str "right aliase" pr0)
       pr2 
-      (fun _ _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p es
+      (fun _ _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) 
+      lhs_h rhs_node lhs_p rhs_p es
 
 (* type: Cast.prog_decl ->
    Globals.ident ->
@@ -788,7 +791,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
-    | HVar _ -> []
+    | HVar v -> 
+      (match rhs_node with
+        | HVar vr -> if CP.eq_spec_var v vr then [(HEmp, f, [], Root)] else []
+        | _ -> [])
     | ThreadNode ({h_formula_thread_node = p1;}) -> (
         match rhs_node with
         | HRel _ -> []
@@ -1320,7 +1326,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   let r = match m_res.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
-          (match lhs_node,rhs_node with
+          (match lhs_node, rhs_node with
             | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                          CF.h_formula_thread_origins = dl_origins;
                          CF.h_formula_thread_derv = dl_derv;
@@ -1392,6 +1398,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   else [] in
                   let src = (-1,Search_action (l2@l3)) in
                   src
+            | HVar _, HVar _ -> (1, M_match m_res)
             | ViewNode vl, ViewNode vr -> 
                 pr_debug "VIEW vs VIEW\n";
                 (* let l1 = [(1,M_base_case_unfold m_res)] in *)
@@ -1942,6 +1949,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0) 
                   then (0,M_match m_res)
                   else  (1,M_Nothing_to_do (string_of_match_res m_res))
+            | HVar _, HVar _ -> (0, M_match m_res)
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res m_res))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res m_res))
             | _, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res m_res))
@@ -2061,7 +2069,7 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
       (add_str "rhs_node" pr) 
       (add_str "rhs_rest" pr) pr3 
       (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
-      lhs_h l  rhs_node rhs_rest
+      lhs_h l rhs_node rhs_rest
 
 and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
   let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in

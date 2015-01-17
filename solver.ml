@@ -133,6 +133,7 @@ let helper prog h_node = match h_node with
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) option)= match lhs_node,rhs_node with
   | ThreadNode dn1, ThreadNode dn2-> (true, None) (*No branches for ThreadNode*)
+  | HVar _, HVar _ -> (true, None)
   | HRel h1, HRel h2->  (true, None)    (* what decision should be taken abt unk pred? *)
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
@@ -9503,6 +9504,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           h_formula_view_ho_arguments = l_ho_args;
           h_formula_view_annot_arg = l_annot } -> 
         (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
+      | HVar v -> ([], [], CP.name_of_spec_var v, "ho_var", None, CP.ConstAnn Mutable, [])
       | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel", None, CP.ConstAnn Mutable, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_ho_args, r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = 
@@ -9529,6 +9531,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           h_formula_view_annot_arg = r_annot;
           h_formula_view_node = r_var } -> 
         (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
+      | HVar v -> ([], [], CP.name_of_spec_var v, v, None, CP.ConstAnn Mutable, [])
       | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable, [])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
@@ -11296,7 +11299,9 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
 and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
       lhs_node lhs_rest rhs_node rhs_rest holes=
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches 1" sl_error, estate.es_trace)) (mk_cex true), NoAlias)
+  if not subsumes then 
+    (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, 
+     CF.mk_failure_must "mismatch in branches 1" sl_error, estate.es_trace)) (mk_cex true), NoAlias)
   else
     let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
     (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
