@@ -9982,63 +9982,80 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
                   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
                   (* lhs <==> rhs: instantiate any high-order variables in rhs *)
-                  (* Currently assume that only HVar is in the rhs             *)
                   (* We use flow_ann to decide                     *)
                   (* contravariant (-) or covariant (+) entailment *)
                   let flow_ann = lhs.CF.rflow_kind in
                   let lhs = lhs.CF.rflow_base in
                   let rhs = rhs.CF.rflow_base in
                   let hvars = CF.extract_hvar_f rhs in
-                  if ((List.length hvars) == 0) then
-                    (* renaming before entailment *)
-                    (* let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in *)
-                    (* TOCHECK: current ivars&evars are considered evars *)
-                    let evars = subtract (new_exist_vars@new_expl_vars@new_impl_vars) (CP.fv to_ho_lhs)in
+                  match hvars with
+                  | [] -> [(None, None, None)]
+                  | hv::[] ->
+                    let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs)in
                     let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv rhs) in
-                    let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) lhs else lhs in
-                    let new_estate = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-                    let new_estate = {new_estate with es_formula = es_f; es_evars = evars; es_unsat_flag = false;} in
-                    let new_ctx = elim_unsat_es_now 13 prog (ref 1) new_estate in
-                    (* let new_ctx = Ctx (CF.add_to_estate new_estate "matching of ho_args") in *)
-                    (* let _ = print_endline ("Attempt semantic entailment of ho_args") in *)
+                    let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+                    let new_es = { new_es with 
+                      es_formula = lhs; 
+                      es_evars = evars;
+                      es_gen_impl_vars = [hv];
+                      es_unsat_flag = false;} in
+                    let new_ctx = elim_unsat_es_now 13 prog (ref 1) new_es in
                     let res_ctx, res_prf =
-                      match k with
-                      | HO_NONE -> Wrapper.wrap_classic (Some true) (fun v -> heap_entail_conjunct 11 prog false new_ctx rhs [] pos) true (* exact *)
-                      | HO_SPLIT -> Wrapper.wrap_classic (Some false) (fun v -> heap_entail_conjunct 11 prog false new_ctx rhs [] pos) false (* inexact *)
-                    in
-                    (match res_ctx with
-                      | SuccCtx(cl) -> (match k with
-                        | HO_NONE -> [None, None, None]
-                        | HO_SPLIT ->
-                          let formulas = List.map (fun c -> 
-                            match c with
-                            | Ctx es ->
-                              let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in
-                              let f = CF.push_exists evars es.es_formula in
-                              (* Simplify the remained resources *)
-                              let f = CF.elim_exists f in
-                              CF.simplify_pure_f f
-                            | OCtx _ -> report_error no_pos "[solver.ml] do_match: unexpected Octx!"
-                            ) cl (* End List.map *)
-                          in
-                          (* Temporarily pickup first formula *)
-                          [None, Some (List.hd formulas), None])
-                      | FailCtx _ ->
-                        let err_str = "matching of ho_args failed" in
-                        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos, CF.mk_failure_must ("105" ^ err_str) Globals.sl_error, new_estate.es_trace)) (mk_cex true), NoAlias) in
-                        [Some rs, None, None])
-                  else if ((List.length hvars) == 1) then
-                    (* One hvar in rhs => bind hvar with lhs *)
-                    (* let vs1 = CF.fv lhs in *)
-                    (* let vs2 = CP.fv to_ho_lhs in *)
-                    (* INPORTANT: Assumes lhs does not have global var *)
-                    let pr = Cprinter.string_of_spec_var_list in
-                    (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)
-                    (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)
-                    Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;
-                    let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in
-                    [None, None, Some (List.hd hvars, lhs)] (* Bindings hvar in RHS => LHS *)
-                  else report_error no_pos ("do_match: unexpected multiple hvars in rhs")
+                      Wrapper.wrap_classic (Some true) (fun v -> heap_entail_conjunct 20 prog false new_ctx rhs [] pos) true (* exact *)
+                    in [(None, None, None)]
+                  | _ -> report_error no_pos ("do_match: unexpected multiple ho vars in rhs")
+                  
+                  (* if ((List.length hvars) == 0) then                                                                                                       *)
+                  (*   (* renaming before entailment *)                                                                                                       *)
+                  (*   (* let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in *)                                                                        *)
+                  (*   (* TOCHECK: current ivars&evars are considered evars *)                                                                                *)
+                  (*   let evars = subtract (new_exist_vars@new_expl_vars@new_impl_vars) (CP.fv to_ho_lhs)in                                                  *)
+                  (*   let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv rhs) in                                                                 *)
+                  (*   let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) lhs else lhs in                   *)
+                  (*   let new_estate = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in                                                                    *)
+                  (*   let new_estate = {new_estate with es_formula = es_f; es_evars = evars; es_unsat_flag = false;} in                                      *)
+                  (*   let new_ctx = elim_unsat_es_now 13 prog (ref 1) new_estate in                                                                          *)
+                  (*   (* let new_ctx = Ctx (CF.add_to_estate new_estate "matching of ho_args") in *)                                                         *)
+                  (*   (* let _ = print_endline ("Attempt semantic entailment of ho_args") in *)                                                              *)
+                  (*   let res_ctx, res_prf =                                                                                                                 *)
+                  (*     match k with                                                                                                                         *)
+                  (*     | HO_NONE -> Wrapper.wrap_classic (Some true) (fun v -> heap_entail_conjunct 20 prog false new_ctx rhs [] pos) true (* exact *)      *)
+                  (*     | HO_SPLIT -> Wrapper.wrap_classic (Some false) (fun v -> heap_entail_conjunct 21 prog false new_ctx rhs [] pos) false (* inexact *) *)
+                  (*   in                                                                                                                                     *)
+                  (*   (match res_ctx with                                                                                                                    *)
+                  (*     | SuccCtx(cl) -> (match k with                                                                                                       *)
+                  (*       | HO_NONE -> [None, None, None]                                                                                                    *)
+                  (*       | HO_SPLIT ->                                                                                                                      *)
+                  (*         let formulas = List.map (fun c ->                                                                                                *)
+                  (*           match c with                                                                                                                   *)
+                  (*           | Ctx es ->                                                                                                                    *)
+                  (*             let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in                                             *)
+                  (*             let f = CF.push_exists evars es.es_formula in                                                                                *)
+                  (*             (* Simplify the remained resources *)                                                                                        *)
+                  (*             let f = CF.elim_exists f in                                                                                                  *)
+                  (*             CF.simplify_pure_f f                                                                                                         *)
+                  (*           | OCtx _ -> report_error no_pos "[solver.ml] do_match: unexpected Octx!"                                                       *)
+                  (*           ) cl (* End List.map *)                                                                                                        *)
+                  (*         in                                                                                                                               *)
+                  (*         (* Temporarily pickup first formula *)                                                                                           *)
+                  (*         [None, Some (List.hd formulas), None])                                                                                           *)
+                  (*     | FailCtx _ ->                                                                                                                       *)
+                  (*       let err_str = "matching of ho_args failed" in                                                                                      *)
+                  (*       let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos,                                     *)
+                  (*                 CF.mk_failure_must ("105" ^ err_str) Globals.sl_error, new_estate.es_trace)) (mk_cex true), NoAlias) in                  *)
+                  (*       [Some rs, None, None])                                                                                                             *)
+                  (* else if ((List.length hvars) == 1) then                                                                                                  *)
+                  (*   (* One hvar in rhs => bind hvar with lhs *)                                                                                            *)
+                  (*   (* let vs1 = CF.fv lhs in *)                                                                                                           *)
+                  (*   (* let vs2 = CP.fv to_ho_lhs in *)                                                                                                     *)
+                  (*   (* INPORTANT: Assumes lhs does not have global var *)                                                                                  *)
+                  (*   let pr = Cprinter.string_of_spec_var_list in                                                                                           *)
+                  (*   (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)                                                                            *)
+                  (*   (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)                                                                        *)
+                  (*   Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;                                                                            *)
+                  (*   let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in                                                       *)
+                  (*   [None, None, Some (List.hd hvars, lhs)] (* Bindings hvar in RHS => LHS *)                                                              *)
+                  (* else report_error no_pos ("do_match: unexpected multiple hvars in rhs")                                                                  *)
                 in 
                 (* End of match_one_ho_arg *)
                 

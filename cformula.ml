@@ -8966,8 +8966,8 @@ think it is used to instantiate when folding.
   es_ante_evars : CP.spec_var list;
   (* es_must_match : bool; *)
   (*used by late instantiation*)
-  es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var*)
-  es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var*)
+  es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var *)
+  es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var *)
 
   (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
@@ -12587,7 +12587,7 @@ let keep_hrel e=
   Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
       (fun _ -> keep_hrel_x e) e
 
-let extract_hvar (hf:h_formula) : CP.spec_var list =
+let extract_hvar (hf: h_formula) : CP.spec_var list =
   let f hf = match hf with
     | HVar v -> Some [v]
     | _ -> None
@@ -12597,20 +12597,16 @@ let extract_hvar (hf:h_formula) : CP.spec_var list =
 let extract_hvar_f_x (f0:formula) : CP.spec_var list =
   let rec helper f=
   match f with
-    | Base ({ formula_base_heap = h1;})
-    | Exists ({formula_exists_heap = h1;}) ->
-        (
-            extract_hvar h1
-        )
+    | Base ({ formula_base_heap = h1; })
+    | Exists ({formula_exists_heap = h1; }) -> extract_hvar h1
     | _ -> report_error no_pos "extract_hvar: OR unexpected, expect HVar only"
-  in
-  helper f0
+  in helper f0
 
 let extract_hvar_f (f0:formula) : CP.spec_var list =
   let pr1 = !print_formula in
   let pr2 = !CP.print_svl in
   Debug.no_1 "extract_hvar_f" pr1 pr2
-      (fun _ ->  extract_hvar_f_x f0) f0
+    (fun _ ->  extract_hvar_f_x f0) f0
 
 (*get hvars whose spec_var belong to vars*)
 let get_hvar_x e vars =
