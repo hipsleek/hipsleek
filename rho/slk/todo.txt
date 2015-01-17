@@ -55,7 +55,7 @@ Residue:
  <1>HVar P&{FLOW,(4,8)=__MayError#E}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 =================================================================
-# bug-4a
+# bug-4a (DONE)
 
 checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & x!=null.
 print residue.
@@ -107,7 +107,7 @@ Residue:
 
 # why is there a positive residue?
 =================================================================
-# bug-4a
+# bug-4a (DONE)
 
 checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & y!=null.
 print residue.

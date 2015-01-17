@@ -11997,6 +11997,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   let bind_f = estate.CF.es_formula in
                                   match bind_f with
                                   | CF.Base base_f ->
+                                    let lhs_xpure, _, _ = xpure_symbolic 20 prog estate.es_formula in
                                     let lhs_rest = CF.Base { base_f with 
                                       CF.formula_base_heap = CF.HEmp; 
                                       CF.formula_base_pure = lhs_xpure; } 
