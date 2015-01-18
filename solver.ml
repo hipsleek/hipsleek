@@ -10120,6 +10120,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (* TODO: Check consistency in mappings *)
                 let new_maps = List.concat (List.map (fun (_, _, m) -> m) res) in
                 let residues = List.map (fun (_, m, _) -> m) res in
+                let new_ante = CF.subst_hvar new_ante new_maps in
                 (* Update conseq and evars *)
                 let new_conseq = CF.subst_hvar new_conseq new_maps in
                 let qvars, new_conseq = CF.split_quantifiers new_conseq in
