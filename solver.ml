@@ -7281,6 +7281,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
                                   let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                                   if not r then
+                                    let _ = DD.binfo_hprint (add_str "WN :LHS may be inst to emp: " !CF.print_h_formula) prep_h1 no_pos in
+                                    let _ = DD.binfo_hprint (add_str "WN :RHS is emp: " !CF.print_h_formula) h2 no_pos in
                                     let fail_ctx = mkFailContext mem_leak estate conseq None pos in
                                     let es_string = Cprinter.string_of_formula estate.es_formula in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (es_string^ ":
@@ -10055,11 +10057,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     (fun v -> heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
                 in
                 begin match res_ctx with
-                | FailCtx _ ->
-                  let err_str = "matching of ho_args failed" in
-                  let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
-                             CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
-                  in (Some rs, None, [])
+                | FailCtx (ft,_) ->
+                      let final_error_opt = CF.get_final_error res_ctx in
+                      let prev_msg = match final_error_opt with Some (s,_) -> s | None -> "no prior error?" in
+                      let err_str = "matching of ho_args failed ("^prev_msg^")" in
+                      let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
+                        CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
+                      in (Some rs, None, [])
                 | SuccCtx cl ->
                   begin match cl with
                   | [] -> (None, None, [])
@@ -12122,7 +12126,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                       let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
                                       let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
                                       let _ = Debug.binfo_hprint (add_str "old ho_vars_map (1)" (pr_list pr)) estate.es_ho_vars_map no_pos in
-                                      let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v,rel_bind_f) no_pos in
+                                      let _ = Debug.binfo_hprint (add_str "new ho_var to added (1)" pr) (v,rel_bind_f) no_pos in
                                       let succ_es = { estate with
                                         CF.es_formula = lhs_rest;
                                         CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; } in
