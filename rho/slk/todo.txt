@@ -195,6 +195,19 @@ check_normalize c1::CNT<1> * c2::CNT<(-1)> .
 CheckNorm (2) :  c1::CNT{}<flted_7_72>&flted_11_59=a_67 & c2=c1 & flted_11_58=flted_6_15 & 
 flted_11_59=1 & flted_11_58+1=0 & flted_7_72+1=0&{FLOW,(4,5)=__norm#E}[]
 =================================================================
+# bug-6e4 --esl (LatchIN)
+
+- why did this example fail?
+- We should allow %PPP = emp as solution.
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<>
+            |- c::LatchIn{- x::cell<n> * %PPP & n>5}<>.
+print residue.
+
+Entail 1: Fail.(must) cause:matching of ho_args failed
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
 =================================================================
 =================================================================
 =================================================================
