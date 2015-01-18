@@ -10046,6 +10046,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | INFLOW -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
                   | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
+                let pr = Cprinter.string_of_formula in
+                let _ = Debug.binfo_hprint (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
+                let _ = Debug.binfo_hprint (add_str "new_ho_rhs" pr) f_rhs no_pos in
                 let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                 let res_ctx, res_prf =
                   Wrapper.wrap_classic (Some true) (* exact *)
@@ -12118,7 +12121,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                       let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
                                       let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
                                       let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
-                                      let _ = Debug.binfo_hprint (add_str "old ho_vars_map" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                                      let _ = Debug.binfo_hprint (add_str "old ho_vars_map (1)" (pr_list pr)) estate.es_ho_vars_map no_pos in
                                       let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v,rel_bind_f) no_pos in
                                       let succ_es = { estate with
                                         CF.es_formula = lhs_rest;
@@ -12148,8 +12151,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                               (fun m -> Gen.BList.overlap_eq CP.eq_spec_var m.Mcpure_D.memo_group_fv heap_args) in
                             let rel_bind_f = CF.mkBase r_h rel_r_p r_t r_fl r_a pos in
                             let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
-                            let _ = Debug.binfo_hprint (add_str "old ho_vars_map" (pr_list pr)) estate.es_ho_vars_map no_pos in
-                            let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v, rel_bind_f) no_pos in
+                            let _ = Debug.binfo_hprint (add_str "old ho_vars_map (2)" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                            let _ = Debug.binfo_hprint (add_str "new ho_var to added (2)" pr) (v, rel_bind_f) no_pos in
                             let succ_estate = { estate with
                                 CF.es_formula = CF.mkBase HEmp l_p l_t l_fl l_a pos;
                                 CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; }
