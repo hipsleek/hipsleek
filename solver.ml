@@ -5322,7 +5322,7 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
     (* let _ = hec_stack # push slk_no in *)
     (* let r = hec a b c in *)
     (* let _ = hec_stack # pop in *)
-    let _ = Log.add_sleek_logging false 0. it esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no 
+    let _ = Log.add_sleek_logging (Some es) false 0. it esv !Globals.do_classic_frame_rule caller (* avoid *) false hec_num slk_no 
       estate.es_formula conseq es.es_heap es.es_evars (Some result) pos in
     () in
 
@@ -5718,7 +5718,7 @@ and log_contra_detect hec_num conseq result pos =
       | Some f -> f
       | None   -> es.es_formula in
     let it = CF.infer_type_of_entail_state es in
-    let _ = Log.add_sleek_logging false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller 
+    let _ = Log.add_sleek_logging (Some es) false 0. it es.es_infer_vars !Globals.do_classic_frame_rule caller 
       (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars (Some result) pos in
     () in
   let f = wrap_proving_kind PK_Unknown (* Early_Contra_Detect *) (new_slk_log result) in
@@ -6940,6 +6940,9 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
   (*         Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) -> CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22) *)
   (*             (es.es_rhs_eqset@eqns) *)
   (*     ;}) ctx0 in *)
+  let es_opt = match ctx0 with
+    | Ctx es -> Some es
+    | _ -> None in (* WN : info seems before entailment *)
   let hec a b c =
     let (ante,consumed_heap,evars,infer_type,infer_vars) =
       match ctx0 with
@@ -6972,7 +6975,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let _ = hec_stack # push slk_no in
     let logger fr tt timeout =
       let _ =
-        Log.add_sleek_logging timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
+        Log.add_sleek_logging es_opt timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
             caller avoid hec_num slk_no ante conseq consumed_heap evars
             (match fr with Some (lc,_) -> Some lc | None -> None) pos in
       ("sleek",(string_of_int slk_no))
