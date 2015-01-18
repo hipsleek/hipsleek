@@ -10042,8 +10042,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | _ -> None, new_es, ho_rhs
                 in
                 let f_es, f_rhs =
-                  match flow_ann with
-                  | INFLOW -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+                  match flow_ann, tmp_ho_var with
+                  | INFLOW, None -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
                   | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
                 let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
