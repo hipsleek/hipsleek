@@ -121,7 +121,38 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
 
 =================================================================
+# bug-6b1 
+
+Why isn't binding in the residue?
+What about name clashes?
+
+!!! old ho_vars_mao:[]
+!!! new ho_var to added:(PPP, x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[])
+
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> 
+            |- c::LatchOut{+%PPP}<>.
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
 =================================================================
+# bug-6b2
+
+!!! old ho_vars_mao:[]
+!!! new ho_var to added:(PPP, x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[])
+
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * %PPP
+            |- c::LatchOut{+ %PPP}<>.
+
+Why isn't instantiated PPP substituted?
+
+Entail 1: Valid. 
+
+Residue:
+ <1>HVar PPP&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
 =================================================================
 =================================================================
 =================================================================

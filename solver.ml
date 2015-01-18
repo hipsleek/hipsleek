@@ -12025,10 +12025,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                     let heap_args = CF.collect_all_heap_vars_formula bind_f in
                                     let pure_f = base_f.CF.formula_base_pure in
                                     let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
-                                    let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in 
+                                    let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
+                                    let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
+                                    let _ = Debug.binfo_hprint (add_str "old ho_vars_mao" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                                    let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v,rel_bind_f) no_pos in
                                     let succ_es = { estate with
                                       CF.es_formula = lhs_rest;
-                                      CF.es_ho_vars_map = [(v, rel_bind_f)]; } in
+                                      CF.es_ho_vars_map = [(v, rel_bind_f)]@estate.es_ho_vars_map; } in
                                     Some succ_es
                                   | _ -> None
                                 else None

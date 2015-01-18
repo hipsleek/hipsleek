@@ -12705,7 +12705,7 @@ and subst_hvar_es_x es subst : context =
             let res = (mkOCtx c1 c2 pos ) in
 	    res
       | _ ->
-            Ctx {es with es_formula = f; es_ho_vars_map = [];}
+            Ctx {es with es_formula = f; (* WN : es_ho_vars_map = []; *)}
   in helper new_es_f
 
 and subst_hvar_es es subst : context =
