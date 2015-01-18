@@ -15,16 +15,32 @@ checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
 print residue.
 
 /*
-bug-6b3 --esl
 
-why did this not have another entailment logged,
-when the -dd trace captured it?
+# bug-6e3 --esl (LatchIN)
 
-id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail c::LatchOut{ + x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&
-{FLOW,(4,5)=__norm#E}[]
- |-  c::LatchOut{ + HVar PPP&{FLOW,(4,5)=__norm#E}[]}<>&{FLOW,(4,5)=__norm#E}[]. 
-res:  1[
-   emp&{FLOW,(4,5)=__norm#E}[]
-   ]
+- should be contravariant but is presently co-variant
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>0}<>.
+
+Entail 1: Valid. 
+// should fail
+
+Residue:
+ <1>c::LatchIn{ - y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>5}<>.
+
+// should succeed
+
+Entail 2: Fail.(must) cause:matching of ho_args failed
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+
 */

@@ -121,7 +121,7 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
 
 =================================================================
-# bug-6b1 
+# bug-6b1  (OK)
 
 Why isn't binding in the residue?
 What about name clashes?
@@ -138,7 +138,7 @@ Residue:
  <1>emp&{FLOW,(4,5)=__norm#E}[]
 [[ COND ==>  Match(c,c) ==> ]]
 =================================================================
-# bug-6b2
+# bug-6b2 (OK)
 
 !!! old ho_vars_mao:[]
 !!! new ho_var to added:(PPP, x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[])
@@ -154,7 +154,46 @@ Residue:
  <1>HVar PPP&{FLOW,(4,5)=__norm#E}[]
 [[ COND ==>  Match(c,c) ==> ]]
 =================================================================
+# bug-6e3 --esl (LatchIN)
+
+- should be contravariant but is presently co-variant
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>0}<>.
+
+Entail 1: Valid. 
+// should fail
+
+Residue:
+ <1>c::LatchIn{ - y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>5}<>.
+
+// should succeed
+
+Entail 2: Fail.(must) cause:matching of ho_args failed
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
 =================================================================
+# bug-8a-lemma
+
+left:
+ Lemma "wait-for":  (exists flted_6_15: c2::CNT{}<a> * c2::CNT{}<flted_6_15>&flted_6_15+1=0&
+{FLOW,(4,5)=__norm#E})[]==> (exists flted_6_17: c2::CNT{}<flted_6_17>&flted_6_17+1=0&
+{FLOW,(4,5)=__norm#E})[]
+
+# need to check nodes equality, such as c1=c2..
+
+lemma_prop "wait-for" c2::CNT<a> * c2::CNT<(-1)>  ->  c2::CNT<(-1)>.
+
+check_normalize c1::CNT<1> * c2::CNT<(-1)> .
+
+CheckNorm (2) :  c1::CNT{}<flted_7_72>&flted_11_59=a_67 & c2=c1 & flted_11_58=flted_6_15 & 
+flted_11_59=1 & flted_11_58+1=0 & flted_7_72+1=0&{FLOW,(4,5)=__norm#E}[]
 =================================================================
 =================================================================
 =================================================================

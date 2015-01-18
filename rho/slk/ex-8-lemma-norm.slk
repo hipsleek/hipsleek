@@ -1,0 +1,18 @@
+//CountDownLatch
+
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c2::CNT<a> * c2::CNT<(-1)> 
+ ->  c2::CNT<(-1)>.
+
+check_normalize c1::CNT<1> * c2::CNT<(-1)> .
+
+
+check_normalize c1::CNT<_> * c2::CNT<(-1)> .
+
+
+check_normalize c1::CNT<a> * c2::CNT<(-1)> & a>3.
+
+
+check_normalize c1::CNT<a> * c2::CNT<(-1)>  & a>3.
