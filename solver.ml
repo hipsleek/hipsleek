@@ -10021,23 +10021,30 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_unsat_flag = false; } 
                 in
                 (* tmp_ho_var is used to capture residue after matching *)
-                let tmp_ho_var, new_es =
+                let tmp_ho_var, new_es, new_ho_rhs =
                   match hvars with
                   | [] -> 
                     begin match k with
                     | HO_SPLIT -> 
                       let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
+                      let new_ho_rhs =
+                        match ho_rhs with
+                        | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar v) pos }
+                        | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar v) pos }
+                        | _ -> ho_rhs
+                      in
                       Some v, 
                       { new_es with 
-                        es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; }
-                    | HO_NONE -> None, new_es
+                        es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; },
+                      new_ho_rhs
+                    | HO_NONE -> None, new_es, ho_rhs
                     end
-                  | _ -> None, new_es 
+                  | _ -> None, new_es, ho_rhs
                 in
                 let f_es, f_rhs =
                   match flow_ann with
-                  | INFLOW -> { new_es with es_formula = ho_rhs; }, ho_lhs
-                  | _ -> { new_es with es_formula = ho_lhs; }, ho_rhs 
+                  | INFLOW -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+                  | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
                 let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                 let res_ctx, res_prf =
