@@ -5,8 +5,13 @@ pred_prim LatchOut{+%P@Split}<>.
 
 // (4) [P --> y::cell<m>]
 checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> 
-            |- c::LatchOut{+%PPP}<>.
+            |- c::LatchOut{+ x::cell<n> * %PPP}<>.
 print residue.
+
+checkentail c::LatchOut{+ %PPP * y::cell<m>}<> 
+            |- c::LatchOut{+ %QQQ * %PPP}<>.
+print residue.
+
 /*
 bug-6b1 
 

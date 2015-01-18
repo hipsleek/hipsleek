@@ -9095,15 +9095,15 @@ and steps = string list
 
         BOT
 *)
- and failure_kind =
-       | Failure_May of string
-       | Failure_Must of string
-       | Failure_Bot of string
-       | Failure_Valid
+and failure_kind =
+      | Failure_May of string
+      | Failure_Must of string
+      | Failure_Bot of string
+      | Failure_Valid
 
- and failure_cex = {
-     cex_sat: bool;
- }
+and failure_cex = {
+    cex_sat: bool;
+}
 
   and fail_explaining = {
      fe_kind: failure_kind; (*may/must*)
@@ -9112,25 +9112,25 @@ and steps = string list
 (* fe_explain: string;  *)
 (* string explaining must failure *)
 (*  fe_sugg = struc_formula *)
- }
-
-  and fail_context = {
-      fc_prior_steps : steps; (* prior steps in reverse order *)
-      fc_message : string;          (* error message *)
-      fc_current_lhs : entail_state;     (* LHS context with success points *)
-      fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
-      fc_failure_pts : Globals.formula_label list;     (* failure points in conseq *)
-      fc_current_conseq : formula;
   }
 
-  and fail_type =
-        | Basic_Reason of (fail_context * fail_explaining * formula_trace)
-        | Trivial_Reason of (fail_explaining * formula_trace)
-        | Or_Reason of (fail_type * fail_type)
-        | And_Reason of (fail_type * fail_type)
-        | Union_Reason of (fail_type * fail_type)
-        | ContinuationErr of (fail_context * formula_trace)
-        | Or_Continuation of (fail_type * fail_type)
+and fail_context = {
+    fc_prior_steps : steps; (* prior steps in reverse order *)
+    fc_message : string;          (* error message *)
+    fc_current_lhs : entail_state;     (* LHS context with success points *)
+    fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
+    fc_failure_pts : Globals.formula_label list;     (* failure points in conseq *)
+    fc_current_conseq : formula;
+}
+
+and fail_type =
+      | Basic_Reason of (fail_context * fail_explaining * formula_trace)
+      | Trivial_Reason of (fail_explaining * formula_trace)
+      | Or_Reason of (fail_type * fail_type)
+      | And_Reason of (fail_type * fail_type)
+      | Union_Reason of (fail_type * fail_type)
+      | ContinuationErr of (fail_context * formula_trace)
+      | Or_Continuation of (fail_type * fail_type)
 
 (* Fail | List of Successes *)
 and list_context =
