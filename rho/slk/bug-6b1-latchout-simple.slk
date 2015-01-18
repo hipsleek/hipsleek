@@ -12,6 +12,10 @@ checkentail c::LatchOut{+ %PPP * y::cell<m>}<>
             |- c::LatchOut{+ %QQQ * %PPP}<>.
 print residue.
 
+checkentail c::LatchOut{+ x::cell<n>}<> 
+            |- c::LatchOut{+ %QQQ * %PPP}<>.
+print residue.
+
 /*
 bug-6b1 
 
