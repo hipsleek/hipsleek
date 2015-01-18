@@ -7024,7 +7024,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HTrue ->  (CF.HTrue, CF.TypeTrue, [], tl)
       | IF.HFalse -> (CF.HFalse, CF.TypeFalse, [], tl) 
       | IF.HEmp -> (CF.HEmp, CF.TypeTrue, [], tl)
-      | IF.HVar v -> (CF.HVar (CP.SpecVar (FORM,v,Unprimed)), CF.TypeTrue, [], tl)
+      | IF.HVar v -> (CF.HVar (CP.SpecVar (FORM, v, Unprimed)), CF.TypeTrue, [], tl)
     ) in 
     res
   ) in

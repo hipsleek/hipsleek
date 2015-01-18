@@ -10012,37 +10012,62 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let ho_lhs = lhs.CF.rflow_base in
                 let ho_rhs = rhs.CF.rflow_base in
                 let hvars = CF.extract_hvar_f ho_rhs in
-                match hvars with
-                | [] -> (None, None, [])
-                | _ ->
-                  let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
-                  let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
-                  let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
-                  let new_es = { new_es with 
-                    es_formula = ho_lhs; 
-                    es_evars = evars;
-                    es_gen_impl_vars = new_impl_vars @ hvars;
-                    es_unsat_flag = false; } in
-                  let new_ctx = elim_unsat_es_now 13 prog (ref 1) new_es in
-                  let res_ctx, res_prf =
-                    Wrapper.wrap_classic (Some true) (* exact *)
-                      (fun v -> heap_entail_conjunct 20 prog false new_ctx ho_rhs [] pos) true 
-                  in
-                  begin match res_ctx with
-                  | FailCtx _ ->
-                    let err_str = "matching of ho_args failed" in
-                    let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
-                               CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
-                    in (Some rs, None, [])
-                  | SuccCtx cl ->
-                    begin match cl with
-                    | [] -> (None, None, [])
-                    | c::_ -> 
-                      match c with
-                      | Ctx es -> (None, None, es.es_ho_vars_map)
-                      | _ -> (None, None, [])
+                let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
+                let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
+                let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
+                let new_es = { new_es with 
+                  es_evars = evars;
+                  es_gen_impl_vars = new_impl_vars @ hvars;
+                  es_unsat_flag = false; } 
+                in
+                (* tmp_ho_var is used to capture residue after matching *)
+                let tmp_ho_var, new_es =
+                  match hvars with
+                  | [] -> 
+                    begin match k with
+                    | HO_SPLIT -> 
+                      let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
+                      Some v, 
+                      { new_es with 
+                        es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; }
+                    | HO_NONE -> None, new_es
                     end
-                  end 
+                  | _ -> None, new_es 
+                in
+                let f_es, f_rhs =
+                  match flow_ann with
+                  | INFLOW -> { new_es with es_formula = ho_rhs; }, ho_lhs
+                  | _ -> { new_es with es_formula = ho_lhs; }, ho_rhs 
+                in
+                let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
+                let res_ctx, res_prf =
+                  Wrapper.wrap_classic (Some true) (* exact *)
+                    (fun v -> heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
+                in
+                begin match res_ctx with
+                | FailCtx _ ->
+                  let err_str = "matching of ho_args failed" in
+                  let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
+                             CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
+                  in (Some rs, None, [])
+                | SuccCtx cl ->
+                  begin match cl with
+                  | [] -> (None, None, [])
+                  | c::_ -> 
+                    match c with
+                    | Ctx es -> 
+                      begin match tmp_ho_var with
+                      | None -> (None, None, es.es_ho_vars_map)
+                      | Some v -> 
+                        try
+                          let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                          let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
+                          (None, Some v_binding, other_bindings) 
+                        with _ -> (None, None, es.es_ho_vars_map)
+                      end
+                    | _ -> (None, None, [])
+                  end
+                end 
                   
                 (* if ((List.length hvars) == 0) then                                                                                                       *)
                 (*   (* renaming before entailment *)                                                                                                       *)
