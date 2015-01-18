@@ -10042,8 +10042,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | _ -> None, new_es, ho_rhs
                 in
                 let f_es, f_rhs =
-                  match flow_ann, tmp_ho_var with
-                  | INFLOW, None -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+                  match flow_ann with
+                  | INFLOW -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
                   | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
                 let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
@@ -11402,6 +11402,25 @@ and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_
     let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let _ = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
+    
+and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos 
+    : (Cformula.list_context * Prooftracer.proof) =
+  let pr1 = Context.string_of_action_res_simpl in
+  let length_ctx ctx = match ctx with
+    | CF.FailCtx _ -> 0
+    | CF.SuccCtx ctx0 -> List.length ctx0 in
+  let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context(* _short *) (fst x) in
+  let pr3 = Cprinter.string_of_formula in
+  let filter _ = match a with
+    | Context.M_Nothing_to_do _ -> false
+    | _ -> true in 
+  Debug.no_5_all i "process_action" (Some filter) None [] pr1 
+      (add_str "estate" Cprinter.string_of_entail_state(* _short *))
+      (add_str "conseq" Cprinter.string_of_formula) 
+      (add_str "lhs_b" pr3) 
+      (add_str "rhs_b" pr3) pr2
+      (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) 
+      a estate conseq (Base lhs_b) (Base rhs_b) 
 
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
     : (Cformula.list_context * Prooftracer.proof) =
@@ -12061,58 +12080,83 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     match relass with
                       | [] -> (
                         if Infer.no_infer_all_all estate then
-                          match rhs with
-                            | DataNode _ | ViewNode _ ->
-                                  let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
-                                  (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
-                                  let root = Cformula.get_ptr_from_data rhs in
-                                  if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
-                                    let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
-                                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
-                                    CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
-                                  else
-                                    (*/sa/error/ex2.slk: unmatch rhs: may failure *)
-                                    let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                                    CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
-                            | HVar v -> (* Do the instatiation for the HVar v *)
-                              let succ_estate =
-                                if (Gen.BList.mem_eq CP.eq_spec_var v estate.CF.es_gen_impl_vars) && (CF.is_emp_heap rhs_rest) then
-                                  let bind_f = estate.CF.es_formula in
-                                  match bind_f with
-                                  | CF.Base base_f ->
-                                    let lhs_xpure, _, _ = xpure_symbolic 20 prog estate.es_formula in
-                                    let lhs_rest = CF.Base { base_f with 
-                                      CF.formula_base_heap = CF.HEmp; 
-                                      CF.formula_base_pure = lhs_xpure; } 
-                                    in
-                                    let heap_args = CF.collect_all_heap_vars_formula bind_f in
-                                    let pure_f = base_f.CF.formula_base_pure in
-                                    let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
-                                    let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
-                                    let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
-                                    let _ = Debug.binfo_hprint (add_str "old ho_vars_mao" (pr_list pr)) estate.es_ho_vars_map no_pos in
-                                    let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v,rel_bind_f) no_pos in
-                                    let succ_es = { estate with
-                                      CF.es_formula = lhs_rest;
-                                      CF.es_ho_vars_map = [(v, rel_bind_f)]@estate.es_ho_vars_map; } in
-                                    Some succ_es
-                                  | _ -> None
-                                else None
-                              in
-                              (match succ_estate with
-                                | Some es -> 
-                                  let new_ctx = CF.Ctx (CF.add_to_estate es "binding of ho var") in
-                                  let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; } in
-                                  heap_entail_conjunct 18 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
-                                | None ->
-                                  let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                          let l_h, l_p, l_fl, l_t, l_a = CF.split_components estate.es_formula in
+                          let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
+                          let hv = match l_h with
+                            | HVar v -> if is_mem v estate.es_gen_impl_vars then Some v else None
+                            | _ -> None
+                          in
+                          match hv with
+                          | None -> 
+                            begin match rhs with
+                              | DataNode _ | ViewNode _ ->
+                                let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
+                                (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
+                                let root = Cformula.get_ptr_from_data rhs in
+                                if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
+                                  let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
+                                  (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg must_estate (Base rhs_b) None pos,
+                                  CF.mk_failure_must (msg) sl_error, estate.es_trace)) (mk_cex true), NoAlias)
+                                else
+                                  (*/sa/error/ex2.slk: unmatch rhs: may failure *)
+                                  let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                                   CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias))
-                            | _ -> 
-                              let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
-                              (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
-                              CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                                  CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                              | HVar v -> (* Do the instatiation for the HVar v *)
+                                let succ_estate =
+                                  if (is_mem v estate.CF.es_gen_impl_vars) && (CF.is_emp_heap rhs_rest) then
+                                    let bind_f = estate.CF.es_formula in
+                                    match bind_f with
+                                    | CF.Base base_f ->
+                                      let lhs_xpure, _, _ = xpure_symbolic 20 prog estate.es_formula in
+                                      let lhs_rest = CF.Base { base_f with 
+                                        CF.formula_base_heap = CF.HEmp; 
+                                        CF.formula_base_pure = lhs_xpure; } 
+                                      in
+                                      let heap_args = CF.collect_all_heap_vars_formula bind_f in
+                                      let pure_f = base_f.CF.formula_base_pure in
+                                      let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
+                                      let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
+                                      let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
+                                      let _ = Debug.binfo_hprint (add_str "old ho_vars_map" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                                      let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v,rel_bind_f) no_pos in
+                                      let succ_es = { estate with
+                                        CF.es_formula = lhs_rest;
+                                        CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; } in
+                                      Some succ_es
+                                    | _ -> None
+                                  else None
+                                in
+                                (match succ_estate with
+                                  | Some es -> 
+                                    let new_ctx = CF.Ctx (CF.add_to_estate es "binding of ho var") in
+                                    let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; } in
+                                    heap_entail_conjunct 18 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
+                                  | None ->
+                                    let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                                    (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                                     CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias))
+                              | _ -> 
+                                let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
+                                (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
+                                CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
+                            end
+                          | Some v ->
+                            let r_h, r_p, r_fl, r_t, r_a = CF.split_components conseq in
+                            let heap_args = CF.collect_all_heap_vars_formula conseq in
+                            let rel_r_p, irrel_r_p = MCP.partition_mix_formula r_p 
+                              (fun m -> Gen.BList.overlap_eq CP.eq_spec_var m.Mcpure_D.memo_group_fv heap_args) in
+                            let rel_bind_f = CF.mkBase r_h rel_r_p r_t r_fl r_a pos in
+                            let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
+                            let _ = Debug.binfo_hprint (add_str "old ho_vars_map" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                            let _ = Debug.binfo_hprint (add_str "new ho_var to added" pr) (v, rel_bind_f) no_pos in
+                            let succ_estate = { estate with
+                                CF.es_formula = CF.mkBase HEmp l_p l_t l_fl l_a pos;
+                                CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; }
+                            in
+                            let new_ctx = CF.Ctx (CF.add_to_estate succ_estate "binding of ho var") in
+                            let new_rhs_base = CF.mkBase HEmp irrel_r_p r_t r_fl r_a pos in
+                            heap_entail_conjunct 19 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
                         else
                             let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
@@ -12211,26 +12255,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     else begin
       Debug.ninfo_pprint ("pushing_hole_action") no_pos; (push_hole_action a r1,r2)
     end
-
-
-and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos 
-    : (Cformula.list_context * Prooftracer.proof) =
-  let pr1 = Context.string_of_action_res_simpl in
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
-  let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context(* _short *) (fst x) in
-  let pr3 = Cprinter.string_of_formula in
-  let filter _ = match a with
-    | Context.M_Nothing_to_do _ -> false
-    | _ -> true in 
-  Debug.no_5_all i "process_action" (Some filter) None [] pr1 
-      (add_str "estate" Cprinter.string_of_entail_state(* _short *))
-      (add_str "conseq" Cprinter.string_of_formula) 
-      (add_str "lhs_b" pr3) 
-      (add_str "rhs_b" pr3) pr2
-      (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) 
-      a estate conseq (Base lhs_b) (Base rhs_b) 
 
 (* lhs <==> rhs: instantiate any high-order variables in rhs
    Currently assume that only HVar is in the rhs

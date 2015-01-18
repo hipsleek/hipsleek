@@ -14,6 +14,14 @@ checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
             |- c::LatchIn{- x::cell<n> & n>5}<>.
 print residue.
 
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
+         |- c::LatchIn{- x::cell<n> * %PPP & n > 1}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
+         |- c::LatchIn{- x::cell<n> & n > 1}<>.
+print residue.
+
 /*
 
 # bug-6e3 --esl (LatchIN)

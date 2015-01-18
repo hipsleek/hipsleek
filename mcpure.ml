@@ -2931,3 +2931,13 @@ let get_rel_ctr (mf: mix_formula) (vl: spec_var list) : mix_formula =
       let simp_mf = List.filter (fun m -> 
         Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) mf in
       OnePF (pure_of_mix (MemoF simp_mf))
+
+let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
+  match mf with
+  | MemoF f -> 
+    let fm, om = List.partition (fun m -> ff m) f in
+    MemoF fm, MemoF om
+  | OnePF f -> 
+    let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
+    let fmf, omf = List.partition (fun m -> ff m) mf in
+    OnePF (pure_of_mix (MemoF fmf)), OnePF (pure_of_mix (MemoF omf))
