@@ -2513,7 +2513,7 @@ and mkNot_x f lbl1 pos0 :formula=
             
 and mkNot f lbl1 pos0 = Debug.no_1 "mkNot" !print_formula !print_formula (fun _-> mkNot_x f lbl1 pos0) f
   
-and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
+and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos =
   if eq_spec_var sv1 sv2 then
     mkTrue pos
   else
@@ -2537,7 +2537,7 @@ and mkLteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm (((Lte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
-and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
+and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos =
   if eq_spec_var sv1 sv2 then
     mkFalse pos
   else

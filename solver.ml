@@ -13766,8 +13766,8 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
   (* pairs: (c1::CNT<>, cx::CNT), (c2::CNT<>, cy::CNT)                                        *)
   (* to_lhs: c1=cx, c2=cy                                                                     *)
   (* prove: c1::CNT<> * c2::CNT<> * A & c1=cx, c2=cy |- cx::CNT<> * cy::CNT<> * B --> residue *)
-  let rec process_one_prop_w_coer_x pairs (lhs_h: h_formula) lhs_p (lhs_fl: flow_formula) 
-    (rhs: formula) (guard: mix_formula): 
+  let rec process_one_prop_w_coer_x pairs (lhs_h: h_formula) (lhs_h_rest: h_formula) lhs_p (lhs_fl: flow_formula) 
+    (rhs: formula) (coer_guard: mix_formula): 
     (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
     let to_lhs = List.fold_left (fun pf (h1, h2) -> 
       (* TOCHECK: perm & ho_args *)
@@ -13782,38 +13782,67 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
         CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) eqns
       in CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) pairs
     in
-    (* inst_vars to bind the LHS and RHS of coer *)
-    let inst_vars = List.map (fun (_, h2) -> get_node_var h2) pairs in
-    let evars = Gen.BList.difference_eq CP.eq_spec_var (CF.fv rhs) inst_vars in
-    let e_lhs_p = CF.add_mix_formula_to_mix_formula lhs_p (MCP.mix_of_pure to_lhs) in
-    let lhs_new = mkBase lhs_h e_lhs_p TypeTrue lhs_fl [] no_pos in
-    let trace = ["(propagating)"] in
-    let es = { estate with
-      es_formula = lhs_new;
-      es_evars = evars;
-      es_trace = trace;
-      es_is_normalizing = true; }
+    let rec mkNeq vs =
+      match vs with
+      | [] -> CP.mkTrue no_pos
+      | v::vs -> 
+        let neq_vs = mkNeq vs in
+        let neq = List.fold_left (fun neq_a v1 -> 
+          if CP.eq_spec_var v v1 then neq_a
+          else 
+            let neq = CP.mkNeqVar v v1 no_pos in
+            CP.mkAnd neq_a neq no_pos) neq_vs vs 
+        in neq
     in
-    let new_ctx =  Ctx es in
-    let new_ctx = SuccCtx [(new_ctx)] in
-    let check_res, check_prf = heap_entail prog false new_ctx rhs no_pos in
-    (* PROCCESS RESULT *)
-    begin match check_res with
-    | FailCtx _ ->
-      Debug.tinfo_zprint (lazy ("process_one_prop_w_coer: propagation lemma failed")) no_pos;
-      None
-    | SuccCtx res -> match List.hd res with (* we expect only one result *)
-      | OCtx (c1, c2) ->
-        let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in
-        None
-      | Ctx es ->
-        let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in
-        let h1, p1, fl1, _, _ = split_components new_ante in
-        Some (inst_vars, h1, p1, fl1)
-    end
+    let neq = mkNeq (List.map (fun (h1, _) -> get_node_var h1) pairs) in
+    let e_lhs_p = CF.add_mix_formula_to_mix_formula lhs_p (MCP.mix_of_pure to_lhs) in
+    let e_lhs_p = CF.add_mix_formula_to_mix_formula e_lhs_p (MCP.mix_of_pure neq) in
+    if not (TP.is_sat_raw e_lhs_p) then None
+    else
+      let inst_vars = List.concat (List.map (fun (_, h2) ->
+        [(get_node_var h2)] @ (get_node_args h2)) pairs) in
+      let diff = Gen.BList.difference_eq CP.eq_spec_var in
+      let evars = diff (CF.fv rhs) inst_vars in
+      let rhs_p = MCP.memo_pure_push_exists evars coer_guard in
+      let r = TP.imply_raw_mix e_lhs_p rhs_p in
+      if r then Some (inst_vars, lhs_h_rest, e_lhs_p, lhs_fl)
+      else None
+    (* let lhs_new = mkBase lhs_h e_lhs_p TypeTrue lhs_fl [] no_pos in                           *)
+    (* (* inst_vars to bind the LHS and RHS of coer *)                                           *)
+    (* let inst_vars = List.concat (List.map (fun (_, h2) ->                                     *)
+    (*   [(get_node_var h2)] @ (get_node_args h2)) pairs) in                                     *)
+    (* let diff = Gen.BList.difference_eq CP.eq_spec_var in                                      *)
+    (* let evars = diff (CF.fv rhs) inst_vars in                                                 *)
+    (* let trace = ["(propagating)"] in                                                          *)
+    (* let es = { estate with                                                                    *)
+    (*   es_formula = lhs_new;                                                                   *)
+    (*   es_evars = evars;                                                                       *)
+    (*   es_trace = trace;                                                                       *)
+    (*   es_is_normalizing = true; }                                                             *)
+    (* in                                                                                        *)
+    (* let new_ctx = Ctx es in                                                                   *)
+    (* let new_ctx = SuccCtx [(new_ctx)] in                                                      *)
+    (* let check_res, check_prf = heap_entail prog false new_ctx rhs no_pos in                   *)
+    (* (* PROCCESS RESULT *)                                                                     *)
+    (* begin match check_res with                                                                *)
+    (* | FailCtx _ ->                                                                            *)
+    (*   Debug.tinfo_zprint (lazy ("process_one_prop_w_coer: propagation lemma failed")) no_pos; *)
+    (*   None                                                                                    *)
+    (* | SuccCtx res -> match List.hd res with (* we expect only one result *)                   *)
+    (*   | OCtx (c1, c2) ->                                                                      *)
+    (*     let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in       *)
+    (*     None                                                                                  *)
+    (*   | Ctx es ->                                                                             *)
+    (*     (* if CF.isAnyConstFalse es.es_formula then None *)                                   *)
+    (*     (* else                                          *)                                   *)
+    (*     (* Wrong matching always returns false *)                                             *)
+    (*       let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in                      *)
+    (*       let h1, p1, fl1, _, _ = split_components new_ante in                                *)
+    (*       Some (inst_vars, h1, p1, fl1)                                                       *)
+    (* end                                                                                       *)
   
-  and process_one_prop_w_coer pairs (lhs_h: h_formula) lhs_p (lhs_fl: flow_formula) 
-    (rhs: formula) (guard: mix_formula): 
+  and process_one_prop_w_coer pairs (lhs_h: h_formula) (lhs_h_rest: h_formula) lhs_p (lhs_fl: flow_formula) 
+    (rhs: formula) (coer_guard: mix_formula): 
     (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
     let prf = Cprinter.string_of_formula in
     let prm = Cprinter.string_of_mix_formula in
@@ -13822,9 +13851,9 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
     let prsvl = Cprinter.string_of_spec_var_list in
     let pr_out = pr_option (pr_quad prsvl prh prm prfl) in
     let pr1 = pr_list (pr_pair prh prh) in
-    Debug.no_6 "process_one_prop_w_coer" pr1 prh prm prfl prf prm pr_out
-      process_one_prop_w_coer_x pairs lhs_h lhs_p lhs_fl rhs guard
-  in (* process_one_prop_w_coer_x: END *)
+    Debug.no_7 "process_one_prop_w_coer" pr1 prh prh prm prfl prf prm pr_out
+      process_one_prop_w_coer_x pairs lhs_h lhs_h_rest lhs_p lhs_fl rhs coer_guard
+  in (* process_one_prop_w_coer: END *)
   
   (* process a list of pairs (anode * rest) *)
   let rec process_coers coers h p fl : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
@@ -13867,8 +13896,8 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
         match matches with
         | [] -> None
         | (pairs, rest)::matches_rest ->
-          let lhs_h_rest = join_star_conjunctions rest in
-          let r = process_one_prop_w_coer pairs h p fl coer_lhs coer_guard in
+          let h_rest = join_star_conjunctions rest in
+          let r = process_one_prop_w_coer pairs h h_rest p fl coer_lhs coer_guard in
           match r with
           | None -> iter_coer matches_rest (* not applicable -> move on to next *)
           | Some r -> Some r (* find one -> stop *)
