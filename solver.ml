@@ -7280,19 +7280,32 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 else
                                   (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
                                   let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
-                                  if not r then
-                                    let _ = DD.binfo_hprint (add_str "WN :LHS may be inst to emp: " !CF.print_h_formula) prep_h1 no_pos in
-                                    let _ = DD.binfo_hprint (add_str "WN :RHS is emp: " !CF.print_h_formula) h2 no_pos in
+                                  let l_h, l_p, l_fl, l_t, l_a = CF.split_components new_es.es_formula in
+                                  let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
+                                  let hv = match l_h with
+                                    | HVar v -> if is_mem v new_es.es_gen_impl_vars then Some v else None
+                                    | _ -> None
+                                  in
+                                  if (not r) && (is_None hv) then
+                                    (* let _ = DD.binfo_hprint (add_str "%PPP can be emp : " !CF.print_h_formula) prep_h1 no_pos in *)
                                     let fail_ctx = mkFailContext mem_leak estate conseq None pos in
                                     let es_string = Cprinter.string_of_formula estate.es_formula in
-                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (es_string^ ":
- memory leak failure : residue is forbidden.") "", new_es.es_trace)) (mk_cex true) in
+                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must 
+                                      (es_string ^ ": memory leak failure : residue is forbidden.") "", new_es.es_trace)) (mk_cex true) in
                                     Debug.ninfo_hprint (add_str " ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos;
                                     let proof = mkClassicSepLogic ctx0 conseq in
                                     (ls_ctx, proof)
                                   else
-                                    (*let n_ctx = SuccCtx [(Ctx new_es)] in*)
-                                    let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
+                                    (* let n_ctx = SuccCtx [(Ctx new_es)] in *)
+                                    let new_es = match hv with
+                                      | None -> new_es 
+                                      | Some v -> 
+                                        let bind_f = CF.mkTrue l_fl pos in
+                                        { new_es with
+                                          CF.es_formula = CF.mkBase HEmp l_p l_t l_fl l_a pos;
+                                          CF.es_ho_vars_map = [(v, bind_f)] @ estate.es_ho_vars_map; }
+                                    in 
+                                    let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding (Ctx new_es) conseq rhs_h_matched_set pos in
                                     (ctx, proof)
                               )
                               else (
@@ -10058,9 +10071,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 in
                 begin match res_ctx with
                 | FailCtx (ft,_) ->
-                      let final_error_opt = CF.get_final_error res_ctx in
-                      let prev_msg = match final_error_opt with Some (s,_) -> s | None -> "no prior error?" in
-                      let err_str = "matching of ho_args failed ("^prev_msg^")" in
+                      let ex_msg = match get_final_error res_ctx with Some (s,_) -> s | None -> "None??"in
+                      let err_str = "matching of ho_args failed ("^ex_msg^")" in
                       let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
                         CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
                       in (Some rs, None, [])
