@@ -4980,36 +4980,37 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
 	  let conseq_new = conseq in
 	  heap_entail prog is_folding cl_new conseq_new pos
 
-and heap_entail p is_folding  cl conseq pos : (list_context * proof) =
+and heap_entail p is_folding cl conseq pos : (list_context * proof) =
   let pr = Cprinter.string_of_list_context in
   let pr_r (r, _) = pr r in
   let pr_f = Cprinter.string_of_formula in
   Debug.no_2 "heap_entail" pr pr_f pr_r
-      (fun cl conseq -> heap_entail_x p is_folding  cl conseq pos) cl conseq
+      (fun cl conseq -> heap_entail_x p is_folding cl conseq pos) cl conseq
 
-and heap_entail_x (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_x (prog : prog_decl) (is_folding : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with
     | FailCtx _ -> (cl, Failure)
     | SuccCtx cl ->
-          if !Globals.use_set || Gen.is_empty cl then
-            let tmp1 = List.map (fun c -> heap_entail_one_context 3 prog is_folding  c conseq None None None pos) cl in
-            let tmp2, tmp_prfs = List.split tmp1 in
-            let prf = mkContextList cl (Cformula.formula_to_struc_formula conseq) tmp_prfs in
-            ((fold_context_left 4 tmp2), prf)
-          else (heap_entail_one_context 4 prog is_folding  (List.hd cl) conseq None None None pos)
+      if !Globals.use_set || Gen.is_empty cl then
+        let tmp1 = List.map (fun c -> heap_entail_one_context 3 prog is_folding c conseq None None None pos) cl in
+        let tmp2, tmp_prfs = List.split tmp1 in
+        let prf = mkContextList cl (Cformula.formula_to_struc_formula conseq) tmp_prfs in
+        ((fold_context_left 4 tmp2), prf)
+      else (heap_entail_one_context 4 prog is_folding (List.hd cl) conseq None None None pos)
 
 (*conseq should be a struc_formula in order to have some thread id*)
-and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos =
+and heap_entail_one_context i prog is_folding ctx conseq (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos =
   let pr1 = Cprinter.string_of_context in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = fun (l,p) -> Cprinter.string_of_list_context l in
   (* let pr1 = fun _-> "" in  *)
   (* let pr2 = fun _-> "" in *)
   (* let pr3 = fun _-> "" in *)
-  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 (fun ctx conseq -> heap_entail_one_context_a i prog is_folding  ctx conseq pos) ctx conseq
+  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 
+    (fun ctx conseq -> heap_entail_one_context_a i prog is_folding ctx conseq pos) ctx conseq
 
 (*only struc_formula can have some thread id*)
-and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
     let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es ->
 	CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx
@@ -5377,7 +5378,8 @@ and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos :
   let pr4 = Cprinter.string_of_formula in
   let pr5 = string_of_loc in
   let pr_res (ctx,_) = ("\n ctx = "^(Cprinter.string_of_list_context ctx)) in
-  Debug.no_5_num hec_num "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res (fun _ _ _ _ _ -> heap_entail_conjunct_lhs_x hec_num prog is_folding ctx conseq pos) prog is_folding ctx conseq pos
+  Debug.no_5_num hec_num "heap_entail_conjunct_lhs" pr1 pr2 pr3 pr4 pr5 pr_res 
+    (fun _ _ _ _ _ -> heap_entail_conjunct_lhs_x hec_num prog is_folding ctx conseq pos) prog is_folding ctx conseq pos
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
@@ -5981,7 +5983,8 @@ and check_one_node (sv : CP.spec_var) (top_level_rhs : CP.spec_var list) (lhs_he
 and fv_rhs (lhs : CF.formula) (rhs : CF.formula) : CP.spec_var list =
   let lhs_fv = (CF.fv lhs) in
   let rhs_fv = (CF.fv rhs) in
-  (List.filter (fun x -> not(List.mem x lhs_fv)) rhs_fv)
+  (* (List.filter (fun x -> not(List.mem x lhs_fv)) rhs_fv) *)
+  Gen.BList.difference_eq CP.eq_spec_var rhs_fv lhs_fv
 
 and heap_entail_split_rhs_phases
       p is_folding  ctx0 conseq d
@@ -13700,38 +13703,35 @@ and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_
   hs2: list of formula to be matched
   return: matches * remained_hs1
 *)
-and find_possible_matches_x (hs1 : h_formula list) (hs2 : h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
+and find_possible_matches_x (hs1: h_formula list) (hs2: h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
   if (List.length hs1 < List.length hs2 || List.length hs1 < 1) then []
   else
-    let rec find_one_x (h:h_formula) (hs:h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
+    let rec find_one_x (h: h_formula) (hs: h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
       let h_name = get_node_name h in
       (match hs with
         | [] -> []
         | x::xs ->
-              let res = find_one_x h xs in
-              let m2 = List.map (fun (ls,rest) -> (ls,x::rest)) res in
-              let x_name = get_node_name x in
-              if (h_name = x_name) then
-                (* A possible match (h,x) *)
-                let m1 = ([(x,h)],xs) in
-                m1::m2
-              else
-                m2
-      )
+          let res = find_one_x h xs in
+          let m2 = List.map (fun (ls, rest) -> (ls, x::rest)) res in
+          let x_name = get_node_name x in
+          if (h_name = x_name) then
+            (* A possible match (h,x) *)
+            let m1 = ([(x,h)],xs) in
+            m1::m2
+          else m2)
     in
-    let find_one (h:h_formula) (hs:h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
+    let find_one (h: h_formula) (hs: h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
       let prh = Cprinter.string_of_h_formula in
       let prhl = pr_list prh in
       let pr_out = pr_list (pr_pair (pr_list (pr_pair prh prh)) prhl) in
-      Debug.no_2 "find_one" prh prhl pr_out
-          find_one_x h hs
+      Debug.no_2 "find_one" prh prhl pr_out find_one_x h hs
     in
-    let helper (ls : ((h_formula * h_formula) list * h_formula list) list) (h:h_formula) : ((h_formula * h_formula) list * h_formula list) list =
+    let helper (ls: ((h_formula * h_formula) list * h_formula list) list) (h: h_formula) : 
+      ((h_formula * h_formula) list * h_formula list) list =
       let res = List.map (fun (m,rest) ->
-          let res = find_one h rest in
-          let res = List.map (fun (ls,rest) -> (m@ls,rest)) res in
-          res
-      ) ls
+        let res = find_one h rest in
+        let res = List.map (fun (ls,rest) -> (m@ls,rest)) res in
+        res) ls
       in List.concat res
     in
     let res = List.fold_left helper (find_one (List.hd hs2) hs1) (List.tl hs2) in
@@ -13743,134 +13743,12 @@ and find_possible_matches (hs1 : h_formula list) (hs2 : h_formula list) : ((h_fo
   let pr2 = pr_list (pr_pair prh prh) in
   let pr_out = pr_list (pr_pair pr2 pr1) in
   Debug.no_2 "find_possible_matches" pr1 pr1 pr_out
-      find_possible_matches_x hs1 hs2
-
-and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list) 
-  (h: h_formula) (p: MCP.mix_formula) (fl:flow_formula) : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
-  (*
-    pairs: (c1::CNT<>,cx::CNT),(c2::CNT<>,cy::CNT)
-    to_lhs: c1=cx, c2=cy
-    prove: c1::CNT<> * c2::CNT<> * A & c1=cx, c2=cy |- cx::CNT<> * cy::CNT<> * B --> residue
-  *)
-  let rec process_one_prop_w_coer_x pairs (lhs_h : h_formula) lhs_p (lhs_fl : flow_formula) (rhs : formula) : ( CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
-    let to_lhs = List.fold_left (fun pf (h1,h2) -> 
-        (* TOCGHECK: perm & ho_args *)
-        let n1 = (get_node_var h1) in
-        let n2 = (get_node_var h2) in
-        let args1 = get_node_args h1 in
-        let args2 = get_node_args h2 in
-        let perm_vars1, perm_vars2 = Perm.get_perm_var_lists (get_node_perm h1) (get_node_perm h2) in
-        let eqns = List.combine (n1::args1@perm_vars1) (n2::args2@perm_vars2) in
-        let eq = List.fold_left (fun pf (v1,v2) ->
-                let eq = CP.mkEqVar v1 v2 no_pos in
-                CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) eqns
-        in
-        CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) pairs
-    in
-    (* inst_vars to bind the LHS and RHS of coer *)
-    let inst_vars = List.map (fun (_,h2) -> get_node_var h2) pairs in
-    let evars = CF.fv rhs in
-    let evars = Gen.BList.difference_eq CP.eq_spec_var evars inst_vars in
-    let lhs = mkBase lhs_h lhs_p TypeTrue lhs_fl [] no_pos in
-    let lhs_new = CF.add_pure_formula_to_formula to_lhs lhs in
-    let trace = ["(propagating)"] in
-    let es = {estate with
-        es_formula = lhs_new;
-        es_evars = evars;
-        es_trace = trace;
-        es_is_normalizing = true;}
-    in
-    let new_ctx =  Ctx es in
-    let new_ctx = SuccCtx[(new_ctx)] in
-    let check_res, check_prf = heap_entail prog false new_ctx rhs no_pos in
-    (* PROCCESS RESULT *)
-    (match check_res with
-      | FailCtx _ ->
-            Debug.tinfo_zprint (lazy ("process_one_prop_w_coer: propagation lemma failed")) no_pos;
-            None
-      | SuccCtx res -> match List.hd res with(*we expect only one result*)
-          | OCtx (c1, c2) ->
-                let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in
-                None
-          | Ctx es ->
-                let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in
-                let h1,p1,fl1,_,_ = split_components new_ante in
-                Some (inst_vars,h1,p1,fl1))
-  and process_one_prop_w_coer pairs (lhs_h : h_formula) lhs_p (lhs_fl : flow_formula) (rhs : formula) : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
-    let prf = Cprinter.string_of_formula in
-    let prm = Cprinter.string_of_mix_formula in
-    let prh = Cprinter.string_of_h_formula in
-    let prfl = Cprinter.string_of_flow_formula "" in
-    let prsvl = Cprinter.string_of_spec_var_list in
-    let pr_out = pr_option (pr_quad prsvl prh prm prfl) in
-    let pr1 = pr_list (pr_pair prh prh) in
-    Debug.no_5 "process_one_prop_w_coer" pr1 prh prm prfl prf pr_out
-        process_one_prop_w_coer_x pairs lhs_h lhs_p lhs_fl rhs
-  in
-  (*process a list of pairs (anode * rest) *)
-  let rec process_coers coers h p fl : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
-    match coers with
-      | [] -> [],h,p,fl
-      | coer::xs ->
-            let coer_lhs = coer.coercion_head in
-            let coer_rhs = coer.coercion_body in
-            (*********** Rename coer *****)
-            (* compute free vars in extra heap and guard *)
-            let extra_vars =
-              let vars = CF.fv coer_lhs in
-              let vars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name )) vars in (*ignore cyclic & acyclic rels *)
-              Gen.BList.remove_dups_eq CP.eq_spec_var vars 
-            in
-            (* rename the bound vars *)
-            let tmp_rho = List.combine extra_vars (CP.fresh_spec_vars extra_vars) in
-            let coer_lhs = CF.subst tmp_rho coer_lhs in
-            let coer_rhs = CF.subst tmp_rho coer_rhs in
-            (************************************************************************)
-            (* also rename the free vars from the rhs that do not appear in the lhs *)
-            let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
-            let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
-            let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-            let coer_lhs = CF.subst tmp_rho coer_lhs in
-            let coer_rhs = CF.subst tmp_rho coer_rhs in
-            (************************************************************************)
-            let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
-            let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
-            (************************************************************************)
-            let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-            let hs = CF.split_star_conjunctions h in
-            (* Find all possible ways to match with the LHS of coer *)
-            let matches = find_possible_matches hs lhs_hs in
-            (*Apply all possible matches of this coer, one by one, until find one*)
-            let rec iter_coer matches =
-              match matches with
-                | [] -> None
-                | (pairs,rest)::matches_rest ->
-                      let lhs_h_rest = join_star_conjunctions rest in
-                      let r = process_one_prop_w_coer pairs h p fl coer_lhs in
-                      match r with 
-                        | None -> iter_coer matches_rest (*not applicable -> move on to next *)
-                        | Some r -> Some r (* find one -> stop *)
-            in
-            let res = iter_coer matches in
-            (match res with
-              | None -> process_coers xs h p fl (*Use the next coer *)
-              | Some (nvars,nh,np,nfl) ->
-                    let b = mkBase nh np TypeTrue nfl [] no_pos in
-                    let new_f = normalize_replace b coer_rhs no_pos in
-                    let new_f = add_quantifiers nvars new_f in
-                    let new_f = elim_exists new_f in
-                    let _ , new_f = split_quantifiers new_f in
-                    let nh,np,nfl,_,_ = split_components new_f in
-                    let (nvars2,h2,p2,fl2) = process_coers coers nh np nfl in
-                    (nvars2,h2,p2,fl2))
-
-  in
-  let res = process_coers coers h p fl in
-  res
-
-(* normalize a formula using propagation lemma                   *)
+    find_possible_matches_x hs1 hs2
+      
+(* normalize a formula using propagation lemma *)
 and prop_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list) 
-  (h: h_formula) (p: MCP.mix_formula) (fl:flow_formula) : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
+  (h: h_formula) (p: MCP.mix_formula) (fl: flow_formula) : 
+  (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
   let pr_h = Cprinter.string_of_h_formula in
   let pr_p = Cprinter.string_of_mix_formula in
   let pr_fl = Cprinter.string_of_flow_formula "" in
@@ -13878,36 +13756,171 @@ and prop_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list)
   let pr_r = (pr_quad pr_svl pr_h pr_p pr_fl) in
   let pr_cl = Cprinter.string_of_coerc_decl_list in
   Debug.no_4 "prop_w_coers" pr_cl pr_h pr_p pr_fl pr_r
-  (fun _ _ _ _ -> prop_w_coers_x prog estate coers h p fl) coers h p fl
+    (fun _ _ _ _ -> prop_w_coers_x prog estate coers h p fl) coers h p fl
 
-and prop_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl list): formula =
-  if (isAnyConstFalse f ) then f
-  else if coers==[] then f
-  else
-    let coers = List.filter (fun c -> c.coercion_kind = LEM_PROP) coers
+and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list) 
+  (h: h_formula) (p: MCP.mix_formula) (fl: flow_formula) : 
+  (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
+  
+  
+  (* pairs: (c1::CNT<>, cx::CNT), (c2::CNT<>, cy::CNT)                                        *)
+  (* to_lhs: c1=cx, c2=cy                                                                     *)
+  (* prove: c1::CNT<> * c2::CNT<> * A & c1=cx, c2=cy |- cx::CNT<> * cy::CNT<> * B --> residue *)
+  let rec process_one_prop_w_coer_x pairs (lhs_h: h_formula) lhs_p (lhs_fl: flow_formula) 
+    (rhs: formula) (guard: mix_formula): 
+    (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
+    let to_lhs = List.fold_left (fun pf (h1, h2) -> 
+      (* TOCHECK: perm & ho_args *)
+      let n1 = (get_node_var h1) in
+      let n2 = (get_node_var h2) in
+      let args1 = get_node_args h1 in
+      let args2 = get_node_args h2 in
+      let perm_vars1, perm_vars2 = Perm.get_perm_var_lists (get_node_perm h1) (get_node_perm h2) in
+      let eqns = List.combine ([n1] @ args1 @ perm_vars1) ([n2] @ args2 @ perm_vars2) in
+      let eq = List.fold_left (fun pf (v1, v2) ->
+        let eq = CP.mkEqVar v1 v2 no_pos in
+        CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) eqns
+      in CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) pairs
     in
+    (* inst_vars to bind the LHS and RHS of coer *)
+    let inst_vars = List.map (fun (_, h2) -> get_node_var h2) pairs in
+    let evars = Gen.BList.difference_eq CP.eq_spec_var (CF.fv rhs) inst_vars in
+    let e_lhs_p = CF.add_mix_formula_to_mix_formula lhs_p (MCP.mix_of_pure to_lhs) in
+    let lhs_new = mkBase lhs_h e_lhs_p TypeTrue lhs_fl [] no_pos in
+    let trace = ["(propagating)"] in
+    let es = { estate with
+      es_formula = lhs_new;
+      es_evars = evars;
+      es_trace = trace;
+      es_is_normalizing = true; }
+    in
+    let new_ctx =  Ctx es in
+    let new_ctx = SuccCtx [(new_ctx)] in
+    let check_res, check_prf = heap_entail prog false new_ctx rhs no_pos in
+    (* PROCCESS RESULT *)
+    begin match check_res with
+    | FailCtx _ ->
+      Debug.tinfo_zprint (lazy ("process_one_prop_w_coer: propagation lemma failed")) no_pos;
+      None
+    | SuccCtx res -> match List.hd res with (* we expect only one result *)
+      | OCtx (c1, c2) ->
+        let _ = print_string ("process_one_prop_w_coer: expect only one context \n") in
+        None
+      | Ctx es ->
+        let new_ante = CF.remove_dupl_conj_eq_formula es.es_formula in
+        let h1, p1, fl1, _, _ = split_components new_ante in
+        Some (inst_vars, h1, p1, fl1)
+    end
+  
+  and process_one_prop_w_coer pairs (lhs_h: h_formula) lhs_p (lhs_fl: flow_formula) 
+    (rhs: formula) (guard: mix_formula): 
+    (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) option =
+    let prf = Cprinter.string_of_formula in
+    let prm = Cprinter.string_of_mix_formula in
+    let prh = Cprinter.string_of_h_formula in
+    let prfl = Cprinter.string_of_flow_formula "" in
+    let prsvl = Cprinter.string_of_spec_var_list in
+    let pr_out = pr_option (pr_quad prsvl prh prm prfl) in
+    let pr1 = pr_list (pr_pair prh prh) in
+    Debug.no_6 "process_one_prop_w_coer" pr1 prh prm prfl prf prm pr_out
+      process_one_prop_w_coer_x pairs lhs_h lhs_p lhs_fl rhs guard
+  in (* process_one_prop_w_coer_x: END *)
+  
+  (* process a list of pairs (anode * rest) *)
+  let rec process_coers coers h p fl : (CP.spec_var list * h_formula * MCP.mix_formula * flow_formula) =
+    match coers with
+    | [] -> [], h, p, fl
+    | coer::xs ->
+      let coer_lhs = coer.coercion_head in
+      let coer_rhs = coer.coercion_body in
+      (* rename coer *)
+      (* compute free vars in extra heap and guard *)
+      let extra_vars =
+        let vars = CF.fv coer_lhs in
+        let vars = List.filter (fun (CP.SpecVar (_, id, _)) -> 
+          not (id = Globals.cyclic_name || 
+               id = Globals.acyclic_name || 
+               id = Globals.concrete_name || 
+               id = Globals.set_comp_name )) vars in (* ignore cyclic & acyclic rels *)
+        Gen.BList.remove_dups_eq CP.eq_spec_var vars 
+      in
+      (* rename the bound vars *)
+      let tmp_rho = List.combine extra_vars (CP.fresh_spec_vars extra_vars) in
+      let coer_lhs = CF.subst tmp_rho coer_lhs in
+      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      (* rename the free vars from the rhs that do not appear in the lhs *)
+      let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
+      let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
+      let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
+      let coer_lhs = CF.subst tmp_rho coer_lhs in
+      let coer_rhs = CF.subst tmp_rho coer_rhs in
+      (************************************************************************)
+      let coer_heap, coer_guard, coer_flow, _, coer_a = split_components coer_lhs in
+      let lhs_qvars, _ = CF.split_quantifiers coer_lhs in
+      (************************************************************************)
+      let coer_lhs_hs = CF.split_star_conjunctions coer_heap in (* |lhs_hs|>1 *)
+      let hs = CF.split_star_conjunctions h in
+      (* Find all possible ways to match with the LHS of coer *)
+      let matches = find_possible_matches hs coer_lhs_hs in
+      (* Apply all possible matches of this coer, one by one, until find one *)
+      let rec iter_coer matches =
+        match matches with
+        | [] -> None
+        | (pairs, rest)::matches_rest ->
+          let lhs_h_rest = join_star_conjunctions rest in
+          let r = process_one_prop_w_coer pairs h p fl coer_lhs coer_guard in
+          match r with
+          | None -> iter_coer matches_rest (* not applicable -> move on to next *)
+          | Some r -> Some r (* find one -> stop *)
+      in
+      let res = iter_coer matches in
+      (match res with
+      | None -> process_coers xs h p fl (* Use the next coer *)
+      | Some (nvars, nh, np, nfl) ->
+        let b = mkBase nh np TypeTrue nfl [] no_pos in
+        let new_f = normalize_replace b coer_rhs no_pos in
+        let new_f = add_quantifiers nvars new_f in
+        let new_f = elim_exists new_f in
+        let _ , new_f = split_quantifiers new_f in
+        let nh, np, nfl, _, _ = split_components new_f in
+        let (nvars2, h2, p2, fl2) = process_coers coers nh np nfl in
+        (nvars2, h2, p2, fl2))
+  in
+  let res = process_coers coers h p fl in
+  res
+
+and prop_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
+  if (isAnyConstFalse f) then f
+  else if coers == [] then f
+  else
+    let coers = List.filter (fun c -> c.coercion_kind = LEM_PROP) coers in
     let rec helper f =
       match f with
         | Base b ->
-              let h = b.formula_base_heap in
-              let p = b.formula_base_pure in
-              let fl = b.formula_base_flow in
-              let (vars,nh,np,nfl) = prop_w_coers prog estate coers h p (* t *) fl (* br *) in
-              let np = remove_dupl_conj_mix_formula np in
-              let b = Base {b with formula_base_heap=nh;formula_base_pure=np;formula_base_flow=nfl} in
-              let nf = add_quantifiers vars b in
-              let nf = elim_exists nf in
-              nf
+          let h = b.formula_base_heap in
+          let p = b.formula_base_pure in
+          let fl = b.formula_base_flow in
+          let (vars, nh, np, nfl) = prop_w_coers prog estate coers h p (* t *) fl (* br *) in
+          let np = remove_dupl_conj_mix_formula np in
+          let b = Base { b with 
+            formula_base_heap = nh;
+            formula_base_pure = np;
+            formula_base_flow = nfl; } 
+          in
+          let nf = add_quantifiers vars b in
+          let nf = elim_exists nf in
+          nf
         | Exists e ->
-              let qvars,nf = split_quantifiers f in
-              let nf = helper nf in
-              let nf = add_quantifiers qvars nf in
-              let nf = elim_exists nf in
-              nf
-        | Or o ->
-              Or {o with formula_or_f1 = helper o.formula_or_f1; formula_or_f2 = helper o.formula_or_f2}
+          let qvars,nf = split_quantifiers f in
+          let nf = helper nf in
+          let nf = add_quantifiers qvars nf in
+          let nf = elim_exists nf in
+          nf
+        | Or o -> Or { o with 
+            formula_or_f1 = helper o.formula_or_f1; 
+            formula_or_f2 = helper o.formula_or_f2; }
     in 
-    if coers ==[] then 
+    if coers == [] then 
       begin
         (* let _ = print_endline ("No combine lemma in left coercion?") in *)
         Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
@@ -13915,21 +13928,20 @@ and prop_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl list): f
       end
     else 
       begin
-        Debug.ninfo_zprint (lazy ("prop_formula_w_coers: "  
-        ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
-        ^ "\n\n")) no_pos;
+        Debug.ninfo_zprint (lazy ("prop_formula_w_coers: " ^ " ### coers = " ^ 
+            (Cprinter.string_of_coerc_list coers) ^ "\n\n")) no_pos;
         helper f
       end
 
 (* Apply propagation lemmas (lemma_prop) to formula *)
-and prop_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
-  let fn = wrap_proving_kind  PK_Lemma_Prop (prop_formula_w_coers_x prog estate f) in
+and prop_formula_w_coers i prog estate (f: formula) (coers: coercion_decl list): formula =
+  let fn = wrap_proving_kind PK_Lemma_Prop (prop_formula_w_coers_x prog estate f) in
   let pr_f = Cprinter.string_of_formula in
   let pr_out = pr_f in
   let pr_c = Cprinter.string_of_coerc_decl_list in
   let pr3 l = string_of_int (List.length l) in
   Debug.no_2_num i "prop_formula_w_coers" pr_f pr_c pr_out
-      (fun _ _ -> fn coers) f coers
+    (fun _ _ -> fn coers) f coers
 
 and normalize_perm_prog prog = prog
   

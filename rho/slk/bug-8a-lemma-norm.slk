@@ -1,4 +1,5 @@
 //CountDownLatch
+data cell{ int v; }.
 
 pred_prim CNT<n:int>.
 
@@ -9,7 +10,15 @@ lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb
 
 //check_normalize c1::CNT<1> * c2::CNT<(-1)> .
 
-check_normalize  c2::CNT<(-1)> * c1::CNT<1> .
+//check_normalize  c2::CNT<(-1)> * c1::CNT<1> * x::cell<n> & n > 0.
+
+check_normalize  c1::CNT<(-1)> * c1::CNT<1> * x::cell<n> & n > 0.
+
+/*
+checkentail c1::CNT<flted_15_34> * c1::CNT<flted_15_33> * x::cell<n> &
+flted_15_34+1=0 & flted_15_33=1 & 0<n & c1=ddd_46 & flted_15_34=aaa_45 & 
+c1=ddd_46 & flted_15_33=bbb_47 |- ddd_46::CNT{}<aaa_45> * ddd_46::CNT{}<bbb_47>&bbb_47+1=0.
+*/
 
 // should not normalize since c1/c2 maybe distinct!
 
