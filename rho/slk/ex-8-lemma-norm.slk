@@ -23,6 +23,7 @@ check_normalize c1::CNT<a> * c2::CNT<(-1)>  & a>3.
 check_normalize c2::CNT<2> * c2::CNT<4>.
 
 check_normalize c1::CNT<2> * c2::CNT<4>.
-// wrong
 
 check_normalize c2::CNT<2> * c2::CNT<_>.
+
+check_normalize c2::CNT<a> * c2::CNT<b> & a+b>10 & a>0 & a<3.
