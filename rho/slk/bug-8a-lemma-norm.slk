@@ -3,28 +3,48 @@
 pred_prim CNT<n:int>.
 
 //synchronization lemma
-lemma_prop "wait-for" c2::CNT<a> * c2::CNT<(-1)>  ->  c2::CNT<(-1)>.
+lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb>.
 
-check_normalize c2::CNT<1> * c2::CNT<(-1)> .
+//check_normalize c2::CNT<1> * c2::CNT<(-1)> .
 
-check_normalize c1::CNT<1> * c2::CNT<(-1)> .
+//check_normalize c1::CNT<1> * c2::CNT<(-1)> .
+
+check_normalize  c2::CNT<(-1)> * c1::CNT<1> .
+
 // should not normalize since c1/c2 maybe distinct!
 
 /*
 # bug-8a
 
-left:
- Lemma "wait-for":  (exists flted_6_15: c2::CNT{}<a> * c2::CNT{}<flted_6_15>&flted_6_15+1=0&
-{FLOW,(4,5)=__norm#E})[]==> (exists flted_6_17: c2::CNT{}<flted_6_17>&flted_6_17+1=0&
-{FLOW,(4,5)=__norm#E})[]
+Two methods used by check_normalize .. in sleek
 
-# need to check nodes equality, such as c1=c2..
+prop_formula_w_coers#1@2@1
+prop_formula_w_coers#1 inp1 : c2::CNT{}<flted_11_33> * c1::CNT{}<flted_11_32>&flted_11_33+1=0 & 
+flted_11_32=1&{FLOW,(4,5)=__norm#E}[]
+prop_formula_w_coers#1 inp2 :Lemma "wait-for":  ddd::CNT{}<aaa> * ddd::CNT{}<bbb>&bbb+1=0&{FLOW,(4,5)=__norm#E}[]==> ddd::CNT{}<bbb>&{FLOW,(4,5)=__norm#E}[]
+ head match:
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head_norm:  (exists bbb_23,aaa: ddd::CNT{}<aaa> * ddd::CNT{}<bbb_23>&bbb+1=0 & 
+bbb_23=bbb&{FLOW,(4,5)=__norm#E})[]
+ body_norm:  EBase (exists bbb_19: ddd::CNT{}<bbb_19>&bbb_19=bbb&{FLOW,(4,5)=__norm#E})[]
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_kind: LEM_PROP
 
-lemma_prop "wait-for" c2::CNT<a> * c2::CNT<(-1)>  ->  c2::CNT<(-1)>.
+prop_formula_w_coers#1@2 EXIT: c2::CNT{}<bbb_43>&flted_11_33=aaa_41 & c1=c2 & flted_11_32=bbb_43 & 
+flted_11_33+1=0 & flted_11_32=1&{FLOW,(4,5)=__norm#E}[]
 
-check_normalize c1::CNT<1> * c2::CNT<(-1)> .
+CheckNorm (1) :  c2::CNT{}<bbb_43>&flted_11_33=aaa_41 & c1=c2 & flted_11_32=bbb_43 & 
+flted_11_33+1=0 & flted_11_32=1&{FLOW,(4,5)=__norm#E}[]
 
-CheckNorm (2) :  c1::CNT{}<flted_7_72>&flted_11_59=a_67 & c2=c1 & flted_11_58=flted_6_15 & 
-flted_11_59=1 & flted_11_58+1=0 & flted_7_72+1=0&{FLOW,(4,5)=__norm#E}[]
+
+process_check_norm@1
+process_check_norm inp1 :IFORM:(emp ; (emp ; ((c2::CNT{}<0-1>@M[HeapNode1]) * (c1::CNT{}<1>@M[HeapNode1]))))*(true)( FLOW __norm)
+process_check_norm@1 EXIT:?
+
 
 */
