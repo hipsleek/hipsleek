@@ -10056,10 +10056,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 in
                 begin match res_ctx with
                 | FailCtx _ ->
-                  let err_str = "matching of ho_args failed" in
-                  let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
-                             CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
-                  in (Some rs, None, [])
+                      let ex_msg = match get_final_error res_ctx with Some (s,_) -> s | None -> "None??"in
+                      let err_str = "matching of ho_args failed ("^ex_msg^")" in
+                      let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
+                        CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
+                      in (Some rs, None, [])
                 | SuccCtx cl ->
                   begin match cl with
                   | [] -> (None, None, [])
