@@ -13782,13 +13782,23 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
         CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) eqns
       in CP.mkAnd pf eq no_pos) (CP.mkTrue no_pos) pairs
     in
+    let is_eq mp v1 v2 =
+      if CP.eq_spec_var v1 v2 then true
+      else 
+        try
+          let mg = List.find (fun m -> Gen.BList.subset_eq CP.eq_spec_var [v1; v2] m.memo_group_fv) mp in
+          let eset = mg.memo_group_aset in
+          CP.EMapSV.is_equiv eset v1 v2
+        with _ -> false
+    in
+    let m_lhs_p = MCP.memo_of_mix lhs_p in 
     let rec mkNeq vs =
       match vs with
       | [] -> CP.mkTrue no_pos
       | v::vs -> 
         let neq_vs = mkNeq vs in
         let neq = List.fold_left (fun neq_a v1 -> 
-          if CP.eq_spec_var v v1 then neq_a
+          if is_eq m_lhs_p v v1 then neq_a
           else 
             let neq = CP.mkNeqVar v v1 no_pos in
             CP.mkAnd neq_a neq no_pos) neq_vs vs 
