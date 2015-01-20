@@ -9,6 +9,8 @@ lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb
 
 check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1=c2 & n > 0.
 
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1=c3 & c2=c3 & n > 0.
+
 check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & n > 0.
 
 /*
