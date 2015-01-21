@@ -13928,8 +13928,19 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
   in
   let res = process_coers coers h p fl in
   res
+  
+(* Apply propagation lemmas (lemma_prop) to formula *)
+and prop_formula_w_coers i prog estate (f: formula) (coers: coercion_decl list): formula =
+  let fn = wrap_proving_kind PK_Lemma_Prop (prop_formula_w_coers_x prog estate f) in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_out = pr_f in
+  let pr_c = Cprinter.string_of_coerc_decl_list in
+  let pr3 l = string_of_int (List.length l) in
+  Debug.no_2_num i "prop_formula_w_coers" pr_f pr_c pr_out
+    (fun _ _ -> fn coers) f coers
 
 and prop_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
+  let f = elim_unsat_all prog f in
   if (isAnyConstFalse f) then f
   else if coers == [] then f
   else
@@ -13972,16 +13983,6 @@ and prop_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list):
             (Cprinter.string_of_coerc_list coers) ^ "\n\n")) no_pos;
         helper f
       end
-
-(* Apply propagation lemmas (lemma_prop) to formula *)
-and prop_formula_w_coers i prog estate (f: formula) (coers: coercion_decl list): formula =
-  let fn = wrap_proving_kind PK_Lemma_Prop (prop_formula_w_coers_x prog estate f) in
-  let pr_f = Cprinter.string_of_formula in
-  let pr_out = pr_f in
-  let pr_c = Cprinter.string_of_coerc_decl_list in
-  let pr3 l = string_of_int (List.length l) in
-  Debug.no_2_num i "prop_formula_w_coers" pr_f pr_c pr_out
-    (fun _ _ -> fn coers) f coers
 
 and normalize_perm_prog prog = prog
   
