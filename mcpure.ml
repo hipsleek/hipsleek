@@ -2149,6 +2149,10 @@ let pure_of_mix f = match f with
 let memo_of_mix f = match f with
   | OnePF pf -> memoise_add_pure_N (mkMTrue no_pos) pf
   | MemoF mf -> mf
+
+let mix_of_memo f = 
+  if !Globals.en_slc_ps then MemoF f
+  else OnePF (fold_mem_lst_with_complex (mkTrue no_pos) false true f)
   
 let mkMFalse_no_mix = mkMFalse
 

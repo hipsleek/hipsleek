@@ -13788,7 +13788,8 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
         try
           let mg = List.find (fun m -> Gen.BList.subset_eq CP.eq_spec_var [v1; v2] m.memo_group_fv) mp in
           let eset = mg.memo_group_aset in
-          CP.EMapSV.is_equiv eset v1 v2
+          if (CP.EMapSV.is_equiv eset v1 v2) then true
+          else TP.imply_raw_mix (MCP.mix_of_memo [mg]) (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
         with _ -> false
     in
     let m_lhs_p = MCP.memo_of_mix lhs_p in 

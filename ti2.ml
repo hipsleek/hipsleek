@@ -1275,6 +1275,7 @@ let is_nt_partial_yes = function
 let is_nt_nondet_may = function
   | NT_Nondet_May _ -> true
   | _ -> false
+
 let cond_of_nt_res = function
   | NT_No ic -> ic
   | _ -> []
@@ -1468,6 +1469,7 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
     (pr_list pr) pr print_ret_trel print_nt_res
     (fun _ _ _ -> proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel)
     lhs_uids rhs_uid trrel
+
 let is_nondet_rec rec_trrel base_trrels = 
   let base_ctx = List.map (fun btr ->
     simplify 10 btr.ret_ctx btr.termr_rhs_params) base_trrels in
