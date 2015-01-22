@@ -25,3 +25,6 @@ lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 CDL create_latch(int n) with %P
   requires n>0
   ensures res::LatchIn{-%P}<> * res::LatchOut{+%P}<> * res::CNT<n>;
+  
+  requires n=0
+  ensures res::CNT<(-1)>;

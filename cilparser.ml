@@ -2075,6 +2075,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_hp_decls = hp_decls;
         Iast.proc_constructor = false;
         Iast.proc_args = funargs;
+        Iast.proc_ho_arg = None;
         Iast.proc_args_wi = args_wi;
         Iast.proc_source = ""; (* WN : need to change *)
         Iast.proc_return = return_typ;

@@ -166,6 +166,7 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+  | SLTyp (* type of ho formula *)
 
 let is_node_typ t =
   match t with
@@ -539,6 +540,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
+  | SLTyp -> "SLTyp"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -584,6 +586,7 @@ let rec string_of_typ_alpha = function
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | UtT -> "UtT"
   | HpT        -> "HpT"
+  | SLTyp -> "SLTyp"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in

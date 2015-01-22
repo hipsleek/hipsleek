@@ -79,6 +79,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
+  | SLTyp -> "SLTyp"
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -5280,6 +5281,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.proc_constructor = false;
                 I.proc_args = w_formal_args;
                 I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) w_formal_args;
+                I.proc_ho_arg = None;
                 I.proc_return = I.void_type;
                 (* I.proc_important_vars= [];*)
                 I.proc_static_specs = prepost;
@@ -5629,7 +5631,7 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: UtT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
-    | Named c -> C.Null pos
+    | Named _ | SLTyp -> C.Null pos
     | Pointer ptr -> C.Null pos
     | Tree_sh ->  failwith
           "default_value: tree_sh in variable declaration should have been rejected"

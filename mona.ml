@@ -63,7 +63,7 @@ let rec mona_of_typ t = match t with
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = ("unexpected type for mona: "^(string_of_typ t))}
   | List t        -> "("^(mona_of_typ t)^") list"	(* lists are not supported *)
-  | NUM | Named _ | Array _ ->
+  | NUM | Named _ | Array _ | SLTyp ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "array and named type not supported for mona"}
   | Pointer _ ->

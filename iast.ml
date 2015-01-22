@@ -150,14 +150,15 @@ hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
 
-and hopred_decl = { hopred_name : ident;
-hopred_mode : ho_branch_label;
-hopred_mode_headers : ident list;
-hopred_typed_vars: (typ * ident) list;
-mutable hopred_typed_args : (typ * ident) list;
-hopred_fct_args : ident list;
-hopred_shape    : Iformula.struc_formula list;
-hopred_invariant :P.formula }
+and hopred_decl = { 
+  hopred_name : ident;
+  hopred_mode : ho_branch_label;
+  hopred_mode_headers : ident list;
+  hopred_typed_vars: (typ * ident) list;
+  mutable hopred_typed_args : (typ * ident) list;
+  hopred_fct_args : ident list;
+  hopred_shape    : Iformula.struc_formula list;
+  hopred_invariant :P.formula }
 
 and barrier_decl = {
     barrier_thc : int;
@@ -230,6 +231,7 @@ and proc_decl = {
   proc_source : ident;
   proc_constructor : bool;
   proc_args : param list;
+  proc_ho_arg : param option;
   mutable proc_args_wi : (ident *hp_arg_kind) list;
   proc_return : typ;
   (*   mutable proc_important_vars : CP.spec_var list;*)
@@ -1271,7 +1273,7 @@ let genESpec_wNI body_header body_opt args ret pos=
         proc_args_wi = args_wi;
     }
   
-let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
   (*   | None -> [] *)
@@ -1297,6 +1299,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_constructor = c;
   proc_exceptions = ot;
   proc_args = ags;
+  proc_ho_arg = ho_param;
   proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
   proc_return = r;
   (*  proc_important_vars = [];*)
@@ -2867,6 +2870,7 @@ let add_bar_inits prog =
         proc_hp_decls = [];
         proc_constructor = false;
         proc_args = ags;
+        proc_ho_arg = None;
         proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
         proc_return = Void;
         proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
