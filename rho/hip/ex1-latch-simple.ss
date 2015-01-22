@@ -53,3 +53,31 @@ void main()
   await(c);
   dprint;
 }
+
+/*
+# ex1-latch-simple.ss
+
+[
+ Label: []
+ State:
+(exists flted_39_1602: c_42'::CNT{}<flted_39_1602> * x_41'::cell<Anon_11>
+&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
+& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
+& n=v_int_48_1587 & Anon_11=v_int_46_1576 
+& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
+& 0<=(n+1)&{FLOW,(4,5
+)=__norm#E})[]
+       es_ho_vars_map: [Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]; 
+                        Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+
+# print (P,x'_41...)
+# what is below? why is it a repeat of above?
+ 
+EXISTS(flted_39_1602: c_42'::CNT<flted_39_1602> * x_41'::cell<Anon_11>
+&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
+& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
+& n=v_int_48_1587 & Anon_11=v_int_46_1576 
+& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
+& 0<=(n+1))[]
+
+ */
