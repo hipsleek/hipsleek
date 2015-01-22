@@ -227,9 +227,10 @@ let rec find_read_write_global_var
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         find_read_write_global_var global_vars local_vars new_e
         with _ ->
                 Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
@@ -683,9 +684,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         let new_e1 = extend_body temp_procs new_e in
         (* ================== *)
         match new_e1 with
@@ -696,9 +698,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
               let new_fork_exp = I.CallNRecv {
                   I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
                   I.exp_call_nrecv_method = e.I.exp_call_nrecv_method; (*fork_name*)
-		          I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
-		          I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
-		          I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
+                  I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
+                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
+                  I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
               in
               new_fork_exp
           | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a I.CallNRecv")}

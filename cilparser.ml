@@ -1244,7 +1244,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | Cil.LNot ->
               let not_proc = create_logical_not_proc new_t in
               let proc_name = not_proc.Iast.proc_name in
-              Iast.mkCallNRecv proc_name None [e] None pos
+              Iast.mkCallNRecv proc_name None [e] None None pos
           | _ -> Iast.mkUnary o e None pos
         ) in
         let target_typ = translate_typ ty pos in
@@ -1289,15 +1289,15 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | Globals.Named otyp_name, Globals.Named ityp_name ->
               if (ityp_name = "void_star") then (
                 let cast_proc = create_void_pointer_casting_proc otyp_name in
-                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
               )
               else (
                 let cast_proc = create_pointer_casting_proc ityp_name otyp_name in
-                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
               )
           | Globals.Named otyp_name, Globals.Int ->
                 let cast_proc = create_int_to_pointer_casting_proc otyp_name in
-                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
           | Globals.Int, Globals.Named ityp_name ->
                 (* let cast_proc = create_pointer_to_int_casting_proc ityp_name in *)
                 (* Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos *)
@@ -1347,7 +1347,7 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   (* | Cil.TPtr _, Cil.TPtr _ -> *)
       let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
       let proc_name = pointer_arith_proc.Iast.proc_name in
-      Iast.mkCallNRecv proc_name None [e1; e2] None pos
+      Iast.mkCallNRecv proc_name None [e1; e2] None None pos
   (* not pointer arithmetic *)
   | _, _ ->
       let o = translate_binary_operator op pos in
@@ -1382,7 +1382,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
               Hashtbl.add Iast.tnt_prim_proc_tbl fname fname
             else ()
           in
-          let func_call = Iast.mkCallNRecv fname None args None pos in (
+          let func_call = Iast.mkCallNRecv fname None args None None pos in (
               match lv_opt with
                 | None -> func_call
                 | Some lv ->
@@ -1457,7 +1457,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                       let cast_e e ty = 
                         let bool_of_proc = create_bool_casting_proc ty in
                         let proc_name = bool_of_proc.Iast.proc_name in
-                        Iast.mkCallNRecv proc_name None [e] None pos
+                        Iast.mkCallNRecv proc_name None [e] None None pos
                       in
                       let e = translate_exp exp in
                       let e_vars = get_vars_exp e in

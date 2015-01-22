@@ -3118,7 +3118,7 @@ opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 resource_param: [[ `WITH; `PERCENT; `IDENTIFIER hid -> 
   { param_mod = NoMod;
-    param_type = SLTyp;
+    param_type = FORM;
     param_loc = get_pos_camlp4 _loc 3;
     param_name = hid } ]];
 
@@ -3640,6 +3640,10 @@ cast_expression:
       Cast { exp_cast_target_type = Float;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
+            
+ho_arg: [[ `WITH; dc = disjunctive_constr -> dc ]];
+
+opt_ho_arg: [[ oha = OPT ho_arg -> oha ]];
 
 invocation_expression:
  [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
@@ -3648,7 +3652,7 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
     let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 
@@ -3657,6 +3661,7 @@ invocation_expression:
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
+                exp_call_nrecv_ho_arg = oha;
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
   ]];

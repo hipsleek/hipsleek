@@ -79,7 +79,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
-  | SLTyp -> "SLTyp"
+  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -3470,6 +3470,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
         (**************************)
         let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+        let ffv = List.filter (fun v -> not (CP.is_form_typ v)) ffv in
         let str = Cprinter.string_of_spec_var_list ffv in
         if (ffv!=[]) then 
           Debug.info_zprint (lazy (("WARNING : uninterpreted free variables "^str^" in specification."))) no_pos
@@ -4000,6 +4001,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                 I.exp_call_nrecv_lock = None;
                 I.exp_call_nrecv_arguments = a :: index;
+                I.exp_call_nrecv_ho_arg = None;
                 I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
                 I.exp_call_nrecv_pos = pos;} in 
             helper new_e
@@ -4160,6 +4162,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                                   (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                                   I.exp_call_nrecv_lock = None;
                                   I.exp_call_nrecv_arguments = rhs :: a :: index;
+                                  I.exp_call_nrecv_ho_arg = None;
                                   I.exp_call_nrecv_path_id = pid;
                                   I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
                               let new_e = I.Assign {
@@ -4272,6 +4275,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = b_call;
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1_prim ];
+                  I.exp_call_nrecv_ho_arg = None;
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
@@ -4280,6 +4284,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = "mults___";
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
+                  I.exp_call_nrecv_ho_arg = None;
                   I.exp_call_nrecv_path_id = pid;
                   I.exp_call_nrecv_pos = pos; } in 
               helper new_e
@@ -4303,6 +4308,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = b_call;
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
+                  I.exp_call_nrecv_ho_arg = None;
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                   I.exp_call_nrecv_pos = pos; } in 
               helper new_e)
@@ -4785,6 +4791,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_call_nrecv_method = array_allocate_call;
                 I.exp_call_nrecv_lock = None;
                 I.exp_call_nrecv_arguments = [List.hd dims];
+                I.exp_call_nrecv_ho_arg = None;
                 I.exp_call_nrecv_path_id = None;
                 I.exp_call_nrecv_pos = pos; }
             in helper newie
@@ -4984,6 +4991,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         I.exp_call_nrecv_method = u_call;
                         I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = [ e ];
+                        I.exp_call_nrecv_ho_arg = None;
                         I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
@@ -5236,11 +5244,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_block_body = I.Seq{
                 I.exp_seq_exp1 = w_body_1;
                 I.exp_seq_exp2 = I.CallNRecv {
-                I.exp_call_nrecv_method = w_name;
-                I.exp_call_nrecv_lock = None;
-                I.exp_call_nrecv_arguments = w_args;
-                I.exp_call_nrecv_pos = pos;
-                I.exp_call_nrecv_path_id = pi; };
+                  I.exp_call_nrecv_method = w_name;
+                  I.exp_call_nrecv_lock = None;
+                  I.exp_call_nrecv_arguments = w_args;
+                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_pos = pos;
+                  I.exp_call_nrecv_path_id = pi; };
                 I.exp_seq_pos = pos; };
                 I.exp_block_local_vars = [];
                 I.exp_block_pos = pos;} in
@@ -5354,6 +5363,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = w_name;
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = w_args;
+                  I.exp_call_nrecv_ho_arg = None;
                   I.exp_call_nrecv_pos = pos;
                   I.exp_call_nrecv_path_id = pi; } in
               let w_call = temp_call (*match wrap with
@@ -5631,7 +5641,7 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: UtT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
-    | Named _ | SLTyp -> C.Null pos
+    | Named _ (* | SLTyp *) -> C.Null pos
     | Pointer ptr -> C.Null pos
     | Tree_sh ->  failwith
           "default_value: tree_sh in variable declaration should have been rejected"

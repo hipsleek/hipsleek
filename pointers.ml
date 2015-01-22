@@ -89,7 +89,7 @@ let default_value (t :typ) pos : exp =
           failwith "default_value: list can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
-    | Named _ | SLTyp -> Null pos
+    | Named _ (* | SLTyp *) -> Null pos
     | Pointer ptr -> Null pos
 	| Array (t, d) ->
        failwith "default_value: Array not supported"
@@ -1026,6 +1026,7 @@ and mkDelete (var:ident) pos =
       exp_call_nrecv_method = ptr_delete;
       exp_call_nrecv_lock = None;
       exp_call_nrecv_arguments = args;
+      exp_call_nrecv_ho_arg = None;
       exp_call_nrecv_path_id = None;
       exp_call_nrecv_pos = pos;}
 
@@ -1346,9 +1347,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                 let new_e = CallNRecv {
                     exp_call_nrecv_lock = c.exp_call_nrecv_lock;
                     exp_call_nrecv_method = fn;
-		            exp_call_nrecv_arguments = args;
-		            exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
-		            exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
+                    exp_call_nrecv_arguments = args;
+                    exp_call_nrecv_ho_arg = None;
+                    exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
+                    exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
                 (*trans_exp_addr that asyn call*)
                 let new_e1 = helper new_e vars in
                 (*then get back the fork call*)
@@ -1361,9 +1363,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       let new_fork_exp = CallNRecv {
                           exp_call_nrecv_lock = c.exp_call_nrecv_lock;
                           exp_call_nrecv_method = c.exp_call_nrecv_method; (*fork_name*)
-		                  exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
-		                  exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
-		                  exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
+                          exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
+                          exp_call_nrecv_ho_arg = None;
+                          exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
+                          exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
                       in
                       new_fork_exp
                   | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a CallNRecv")}

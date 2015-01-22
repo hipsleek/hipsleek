@@ -384,11 +384,13 @@ exp_bool_lit_pos : loc }
     
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
-and exp_call_nrecv = { exp_call_nrecv_method : ident;
-exp_call_nrecv_lock : ident option;
-exp_call_nrecv_arguments : exp list;
-exp_call_nrecv_path_id : control_path_id;
-exp_call_nrecv_pos : loc }
+and exp_call_nrecv = { 
+  exp_call_nrecv_method : ident;
+  exp_call_nrecv_lock : ident option;
+  exp_call_nrecv_arguments : exp list;
+  exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_path_id : control_path_id;
+  exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
 exp_call_recv_method : ident;
@@ -2190,10 +2192,11 @@ and mkMember base fields path_id pos =
            exp_member_path_id = path_id;
            exp_member_pos = pos }
 
-and mkCallNRecv method_name lock args path_id pos =
+and mkCallNRecv method_name lock args ho_arg path_id pos =
   CallNRecv { exp_call_nrecv_method = method_name;
               exp_call_nrecv_lock = lock;
               exp_call_nrecv_arguments = args;
+              exp_call_nrecv_ho_arg = ho_arg;
               exp_call_nrecv_path_id = path_id;
               exp_call_nrecv_pos = pos }
 

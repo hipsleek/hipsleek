@@ -126,7 +126,7 @@ and aug_class_name (t : typ) = match t with
   | Tup2 _ -> "Tup2"
   | Bptyp -> "Bperm"
   | HpT -> "HeapP"
-  | SLTyp -> "SLAug"
+  (* | SLTyp -> "SLAug" *)
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
@@ -1150,21 +1150,24 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
   | CP.Max (e1, e2, pos) -> begin
       let ce1, p1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
-      let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.max";
-      exp_call_nrecv_arguments = [ce1; ce2];
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+      let ce = CallNRecv ({
+        exp_call_nrecv_method = "IntAug.max";
+        exp_call_nrecv_arguments = [ce1; ce2];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
     end
   | CP.Min (e1, e2, pos) -> begin
       let ce1, p1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
       let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.min";
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [ce1; ce2];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [ce1; ce2];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
     end
   | CP.Var (sv, pos) -> begin
@@ -1439,11 +1442,13 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	let cem, pbcem = gen_pure_exp emax vmap unbound_vars in
 	let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
-	let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
-        exp_call_nrecv_lock = None;
-	exp_call_nrecv_arguments = [ce1; ce2];
-	exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-	exp_call_nrecv_pos = pos}) in
+	let maxe = CallNRecv ({
+    exp_call_nrecv_method = "Math.max";
+    exp_call_nrecv_lock = None;
+    exp_call_nrecv_arguments = [ce1; ce2];
+    exp_call_nrecv_ho_arg = None;
+    exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+    exp_call_nrecv_pos = pos}) in
 	let ce = Binary ({exp_binary_op = OpEq;
 	exp_binary_oper1 = cem;
 	exp_binary_oper2 = maxe;
@@ -1455,11 +1460,13 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	let cem, pbcem = gen_pure_exp emin vmap unbound_vars in
 	let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
-	let mine = CallNRecv ({exp_call_nrecv_method = "Math.min";
-        exp_call_nrecv_lock = None;
-	exp_call_nrecv_arguments = [ce1; ce2];
-	exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-	exp_call_nrecv_pos = pos}) in
+	let mine = CallNRecv ({
+    exp_call_nrecv_method = "Math.min";
+    exp_call_nrecv_lock = None;
+    exp_call_nrecv_arguments = [ce1; ce2];
+    exp_call_nrecv_ho_arg = None;
+    exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+    exp_call_nrecv_pos = pos}) in
 	let ce = Binary ({exp_binary_op = OpEq;
 	exp_binary_oper1 = cem;
 	exp_binary_oper2 = mine;
@@ -1757,16 +1764,20 @@ and combine_disj_results disj_results pos : exp = match disj_results with
       let bvar_name = fresh_var_name "xxx" pos.start_pos.Lexing.pos_lnum in
       let disj_res = Var ({exp_var_name = bvar_name;
       exp_var_pos = pos}) in
-      let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
-      let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+      let call = CallNRecv ({
+        exp_call_nrecv_method = disj_proc.proc_name;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
+      let undo_call' = CallNRecv ({
+        exp_call_nrecv_method = disj_proc.proc_name;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       let undo_call = VarDecl {exp_var_decl_type = Bool;
       exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
       exp_var_decl_pos = pos } in

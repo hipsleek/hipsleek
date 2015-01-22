@@ -89,7 +89,7 @@ let rec smt_of_typ t =
   | RelT _ -> "Int"
   | UtT -> "Int"
   | HpT -> "Int"
-  | SLTyp
+  (* | SLTyp *)
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
   | Bptyp -> "int-triple"

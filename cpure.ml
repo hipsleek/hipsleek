@@ -90,6 +90,14 @@ let is_hprel_typ sv = match sv with
   | SpecVar (HpT,_,_) -> true
   | _ -> false
 
+(* let is_sl_typ sv = match sv with  *)
+(*   | SpecVar (SLTyp, _, _) -> true *)
+(*   | _ -> false                    *)
+
+let is_form_typ sv = match sv with
+  | SpecVar (FORM, _, _) -> true
+  | _ -> false
+
 let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
