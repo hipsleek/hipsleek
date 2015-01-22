@@ -189,6 +189,7 @@ and axiom_decl = {
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
+    proc_ho_arg : typed_ident option;
     proc_args_wi: (ident*hp_arg_kind) list;
     proc_imm_args : (ident * bool) list;
     proc_source : ident; (* source file *)

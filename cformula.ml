@@ -3000,6 +3000,7 @@ and subst_struc_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f 
   let f1 = subst_struc st1 f in
   let f2 = subst_struc st2 f1 in
   f2
+  
 and subst_struc sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc rest (apply_one_struc s f)
   | [] -> f
@@ -17686,3 +17687,14 @@ and collect_important_vars_in_spec deep_flag (spec : struc_formula) : (CP.spec_v
   helper spec
 
 (** An Hoa : end collect_important_vars_in_spec **)
+
+let subst_hvar_struc f subst =
+  let f_f e = Some (subst_hvar e subst) in
+  transform_struc_formula 
+    (nonef, f_f, somef, 
+    (somef, somef, somef, somef, somef)) f
+    
+let subst_hvar_struc f subst =
+  let pr = !print_struc_formula in
+  Debug.no_1 "subst_hvar_struc" pr pr 
+  (fun _ -> subst_hvar_struc f subst) f

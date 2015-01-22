@@ -2049,13 +2049,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      res
 	| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
         | SCall ({
-	      exp_scall_type = ret_t;
-	      exp_scall_method_name = mn; (* mn is mingled name of the method *)
-	      exp_scall_lock = lock;
-	      exp_scall_arguments = vs;
-	      exp_scall_is_rec = is_rec_flag;
-	      exp_scall_path_id = pid;
-	      exp_scall_pos = pos}) ->
+          exp_scall_type = ret_t;
+          exp_scall_method_name = mn; (* mn is mingled name of the method *)
+          exp_scall_lock = lock;
+          exp_scall_arguments = vs;
+          exp_scall_ho_arg = ha;
+          exp_scall_is_rec = is_rec_flag;
+          exp_scall_path_id = pid;
+          exp_scall_pos = pos}) ->
 	      begin
 		Gen.Profiling.push_time "[check_exp] SCall";
                 let _ = proving_loc#set pos in
@@ -2085,18 +2086,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*=========================*)
                   (*=== NORMAL METHOD CALL ==*)
                   (*=========================*)
-	          let proc = look_up_proc_def pos prog.new_proc_decls mn in
+                  let proc = look_up_proc_def pos prog.new_proc_decls mn in
                   let _ = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
                   let _ = Debug.ninfo_zprint (lazy (("   spec: " ^(Cprinter.string_of_struc_formula proc.Cast.proc_static_specs)))) no_pos in
-	          let farg_types, farg_names = List.split proc.proc_args in
-	          let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
-	          let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+                  let farg_types, farg_names = List.split proc.proc_args in
+                  let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
+                  let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+            
                   (***************************************************************************)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)
 
                   (* Internal function to check pre/post condition of the function call. *)
-	          let check_pre_post_orig org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
+                  let check_pre_post_orig org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
                     (* Termination: Stripping the "variance" feature from
                      * org_spec if the call is not a recursive call *)
                     (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
@@ -2113,7 +2115,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else org_spec in
                     let stripped_spec = org_spec2 in
                     (* org_spec -> stripped_spec *)
-	            (* free vars = linking vars that appear both in pre and are not formal arguments *)
+                    (* free vars = linking vars that appear both in pre and are not formal arguments *)
                     (* Termination: The logical vars should not be renamed *)
                     let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                       (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
@@ -2148,6 +2150,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = Debug.info_zprint (lazy (("  renamed spec 1 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
                     let renamed_spec = CF.subst_struc st1 renamed_spec in
                     let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+
+                    let renamed_spec =
+                      match proc.proc_ho_arg, ha with
+                      | Some hv, Some ha ->
+                        let ht, hn = hv in
+                        let hsv = CP.SpecVar (ht, hn, Unprimed) in
+                        let ha = CF.subst_avoid_capture fr_vars to_vars ha in
+                        CF.subst_hvar_struc renamed_spec [(hsv, ha)]
+                      | _ -> renamed_spec
+                    in
+                    
                     (* let _ = Debug.info_zprint (lazy (("  renamed spec 2 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
                     (* let _ = Debug.info_zprint (lazy (("  renamed spec 3:" ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
                     let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in

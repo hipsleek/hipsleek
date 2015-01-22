@@ -45,6 +45,10 @@ void main()
 {
   cell x = new cell(10);
   //assume x::cell<_>;
-  CDL c = create_latch(1) with x::cell<_>;
+  CDL c = create_latch(1) with x'::cell<_>;
+  //cell x = new cell(10);
   dprint;
+  countDown(c);
+  dprint;
+  await(c);
 }

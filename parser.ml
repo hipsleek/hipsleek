@@ -1352,12 +1352,14 @@ rflow_kind:
   ]];
 
 rflow_form: 
-  [[ k = OPT rflow_kind; cc = disjunctive_constr (* core_constr *) -> 
-      match cc with
-      | F.Base f -> {
-        F.rflow_kind = un_option k NEUTRAL;
-        F.rflow_base = cc; }
-      | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow")
+  [[ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
+     { F.rflow_kind = un_option k NEUTRAL;
+       F.rflow_base = F.subst_stub_flow n_flow dc; }
+      (* match cc with                                                                                  *)
+      (* | F.Base f -> {                                                                                *)
+      (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
+      (*   F.rflow_base = cc; }                                                                         *)
+      (* | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow") *)
   ]];
 
 formula_ann: [[ `SPLITANN -> HO_SPLIT ]];

@@ -3191,7 +3191,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }
     else
       (E.push_scope ();
-      (let all_args =
+      (
+      let ho_arg = match proc.I.proc_ho_arg with
+        | None -> [] 
+        | Some ha -> [ha]  
+      in
+      let all_args =
         if Gen.is_some proc.I.proc_data_decl then
           (let cdef = Gen.unsome proc.I.proc_data_decl in
           let this_arg ={
@@ -3214,8 +3219,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               I.param_name = waitlevel_name;
               I.param_mod = I.NoMod;
               I.param_loc = proc.I.proc_loc;} in
-          waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args)
-        else proc.I.proc_args in
+          waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args @ ho_arg)
+        else proc.I.proc_args @ ho_arg in
       let p2v (p : I.param) = {
           E.var_name = p.I.param_name;
           E.var_alpha = p.I.param_name;
@@ -3279,6 +3284,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        * or TermR and TermU if @term *)
       let args = List.map (fun p ->
         ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      let ho_arg = map_opt (fun ha -> 
+        ((trans_type prog ha.I.param_type ha.I.param_loc), (ha.I.param_name))) proc.I.proc_ho_arg in
       (* let fname = proc.I.proc_name in                                                                                        *)
       (* let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in                                              *)
       (* let rec find_vars sp = match sp with                                                                                   *)
@@ -3486,6 +3493,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_source = proc.I.proc_source;
           C.proc_flags = proc.I.proc_flags;
           C.proc_args = args;
+          C.proc_ho_arg = ho_arg;
           C.proc_args_wi = args_wi;
           C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
@@ -7900,7 +7908,8 @@ and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed)
   let pr0 = pr_list (fun (i,p) -> i) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
-  Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
+  Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 
+  (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
 
 	  
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) 
@@ -8634,9 +8643,10 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl = 
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
   let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
-  let gl_proc_args = gl_v@ f.Iast.proc_args in
-  let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
-  let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
+  let gl_proc_args = gl_v @ f.Iast.proc_args in
+  let gl_proc_args = gl_proc_args @ (match f.Iast.proc_ho_arg with | None -> [] | Some ha -> [ha]) in
+  let h = (List.map (fun c1 -> (c1.Iast.param_name, Unprimed)) gl_proc_args) in
+  let h_prm = (List.map (fun c1 -> (c1.Iast.param_name, Primed)) gl_proc_args) in
   (*LOCKSET variable*********)
   let ls_pvar = (ls_name,Primed) in
   let ls_uvar = (ls_name,Unprimed) in

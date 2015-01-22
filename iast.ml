@@ -2615,10 +2615,11 @@ let label_proc keep proc = {proc with
 			| None -> None 
 			| Some s -> Some (label_exp s);}
 
-let label_procs_prog prog keep = {prog with
-	prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
-	prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls;
-	}
+let label_procs_prog prog keep = 
+  { prog with
+    prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
+    prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls; }
+    
 (************************************************************************************
  * Use to support pragma declaration in system
  *   - Remove duplicated Obj/Class, such as Object and String which are
