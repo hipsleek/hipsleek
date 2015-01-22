@@ -1076,7 +1076,7 @@ view_decl:
           view_kind = Iast.View_NORM; (* TODO : *)
               view_inv_lock = li;
               try_case_inference = (snd vb) }
-    |  vh= view_header;`EQEQ; `EXTENDS;orig_v = derv_view; `WITH ; extn = prop_extn->
+    |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
            { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
                view_kind = Iast.View_DERV;
@@ -3116,6 +3116,10 @@ flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
+resource_param: [[ `WITH; `PERCENT; `IDENTIFIER hid -> hid ]];
+
+opt_resource_param: [[ hid = OPT resource_param -> hid ]];
+
 proc_decl:
   [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
       let n_h = genESpec_wNI h (Some b) h.proc_args h.proc_return h.proc_loc in
@@ -3123,7 +3127,7 @@ proc_decl:
    | h=proc_header; _=opt_flag_list-> h]];
 
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
      mkProc "source_file" id [] "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
