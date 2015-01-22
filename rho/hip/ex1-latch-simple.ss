@@ -44,6 +44,7 @@ void main()
   requires emp ensures emp;
 {
   cell x = new cell(10);
+  //assume x::cell<_>;
   CDL c = create_latch(1) with x::cell<_>;
   dprint;
 }

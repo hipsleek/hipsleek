@@ -3641,7 +3641,7 @@ cast_expression:
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
             
-ho_arg: [[ `WITH; dc = disjunctive_constr -> dc ]];
+ho_arg: [[ `WITH; dc = disjunctive_constr -> F.subst_stub_flow n_flow dc ]];
 
 opt_ho_arg: [[ oha = OPT ho_arg -> oha ]];
 

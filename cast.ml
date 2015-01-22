@@ -385,14 +385,16 @@ exp_return_val : ident option;
 exp_return_pos : loc }
 
 (* static call *)
-and exp_scall = { exp_scall_type : typ;
-exp_scall_method_name : ident;
-exp_scall_lock : ident option;
-exp_scall_arguments : ident list;
-exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
-(*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-exp_scall_path_id : control_path_id;
-exp_scall_pos : loc }
+and exp_scall = { 
+  exp_scall_type : typ;
+  exp_scall_method_name : ident;
+  exp_scall_lock : ident option;
+  exp_scall_arguments : ident list;
+  exp_scall_ho_arg : F.formula option;
+  exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
+  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+  exp_scall_path_id : control_path_id;
+  exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : typ;
 exp_seq_exp1 : exp;

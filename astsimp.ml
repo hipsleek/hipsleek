@@ -4022,11 +4022,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
                   with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
                 (* An Hoa END *)
-      | I.Assert { I.exp_assert_asserted_formula = assert_f_o;
-        I.exp_assert_assumed_formula = assume_f_o;
-        I.exp_assert_path_id = pi;
-        I.exp_assert_type = atype;
-        I.exp_assert_pos = pos } ->
+      | I.Assert { 
+          I.exp_assert_asserted_formula = assert_f_o;
+          I.exp_assert_assumed_formula = assume_f_o;
+          I.exp_assert_path_id = pi;
+          I.exp_assert_type = atype;
+          I.exp_assert_pos = pos } ->
             let tmp_names = E.visible_names () in
             let all_names = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
             let free_vars = List.map snd all_names in
@@ -4442,6 +4443,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_method = mn;
             I.exp_call_nrecv_lock = lock;
             I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = ho_arg;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
             (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
@@ -4516,6 +4518,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             C.exp_scall_method_name = mingled_mn;
                             C.exp_scall_lock = lock;
                             C.exp_scall_arguments = mingled_forked_mn::arg_vars;
+                            C.exp_scall_ho_arg = None;
                             C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                             C.exp_scall_pos = pos;
                             C.exp_scall_path_id = pi; } in
@@ -4563,6 +4566,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         C.exp_scall_method_name = mingled_mn;
                         C.exp_scall_lock = lock;
                         C.exp_scall_arguments = arg_vars;
+                        C.exp_scall_ho_arg = None;
                         C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                         C.exp_scall_pos = pos;
                         C.exp_scall_path_id = pi; } in
@@ -4595,6 +4599,16 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             in [param]
                         else pdef.I.proc_args
                     in
+                    let tmp_names = E.visible_names () in
+                    let all_names = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
+                    let free_vars = List.map snd all_names in
+                    let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
+                    let c_ho_arg = match ho_arg with
+                      | None -> None
+                      | Some f ->
+                        let (_, cf) = trans_formula prog false free_vars true f n_tl false in
+                        Some cf 
+                    in
                     if ( != ) (List.length args) (List.length proc_args) then
                       Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
                     else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
@@ -4614,6 +4628,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             C.exp_scall_method_name = mingled_mn;
                             C.exp_scall_lock = lock;
                             C.exp_scall_arguments = arg_vars;
+                            C.exp_scall_ho_arg = c_ho_arg;
                             (* Termination: Default value - 
                              * it will be set later in trans_prog
                              * by mark_rec_and_call_order *)
@@ -8204,7 +8219,15 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.CallRecv b -> Iast.CallRecv{b with
           Iast.exp_call_recv_receiver = helper ren b.Iast.exp_call_recv_receiver;
           Iast.exp_call_recv_arguments = List.map (helper ren) b.Iast.exp_call_recv_arguments}
-    | Iast.CallNRecv b -> Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments}
+    | Iast.CallNRecv b -> 
+      let subst_list = List.fold_left (fun a (c1, c2) -> 
+        ((c1, Unprimed), (c2, Unprimed))::((c1, Primed), (c2, Primed))::a) [] ren in
+      let ho_arg = match b.Iast.exp_call_nrecv_ho_arg with
+        | None -> None
+        | Some f -> Some (IF.subst subst_list f) 
+     in Iast.CallNRecv{ b with 
+        Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments;
+        Iast.exp_call_nrecv_ho_arg = ho_arg; }
     | Iast.Catch b-> Iast.Catch {b with
           Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
           Iast.exp_catch_var = (match b.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
@@ -8469,8 +8492,18 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
         | Iast.Break _
         | Iast.Barrier _ -> (f,h,p)
         | Iast.CallNRecv b ->
-              let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
-              (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },h,p) 
+          let nl = List.map (fun c-> let r1, _, _ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
+          let ho_arg = match b.Iast.exp_call_nrecv_ho_arg with
+            | None -> None
+            | Some f ->
+              let r = case_normalize_formula prog h f in
+              let _ = check_eprim_in_formula " is not a valid program variable " r in
+              Some r 
+          in 
+          let nc = Iast.CallNRecv { b with 
+              Iast.exp_call_nrecv_ho_arg = ho_arg;
+              Iast.exp_call_nrecv_arguments = nl }
+          in (nc, h, p) 
         | Iast.CallRecv b->
               let a1,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in
               let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_recv_arguments in
