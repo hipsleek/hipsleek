@@ -2156,7 +2156,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | Some hv, Some ha ->
                         let ht, hn = hv in
                         let hsv = CP.SpecVar (ht, hn, Unprimed) in
-                        let ha = CF.subst_avoid_capture fr_vars to_vars ha in
                         CF.subst_hvar_struc renamed_spec [(hsv, ha)]
                       | _ -> renamed_spec
                     in
