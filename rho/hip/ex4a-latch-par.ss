@@ -64,7 +64,7 @@ void main()
       r1 = x.val; 
   || 
      // exists r1',x',y'
-     else [r2] -> await(c); r2 = y.val;
+    else [r2] -> await(c); r2 = y.val;
   }
   dprint;
 }
