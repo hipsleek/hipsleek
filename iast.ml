@@ -2493,7 +2493,13 @@ let rec label_e e =
 			  exp_while_condition = label_e e.exp_while_condition;
 			  exp_while_body = label_e e.exp_while_body;
 			  exp_while_path_id = nl;
-			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
+			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}
+    | Par e ->
+      let nl = fresh_branch_point_id "" in
+      let _ = iast_label_table := (nl, "par", [], e.exp_par_pos) :: !iast_label_table in
+      let cl = List.map (fun c -> 
+        { c with exp_par_case_body = label_e c.exp_par_case_body; }) e.exp_par_cases 
+      in Par { e with exp_par_cases = cl; }
     | _ -> Error.report_error   
       {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
   in map_exp e helper

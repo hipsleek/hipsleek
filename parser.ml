@@ -869,7 +869,20 @@ and get_heap_ann_list annl : P.ann list  =
     | (Some a) :: r -> a :: get_heap_ann_list r
     |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
     | [] -> []
-				   
+
+let stmt_list_to_block t pos = 
+  match t with
+  | Empty _ -> Block { 
+      exp_block_body = Empty pos;
+      exp_block_jump_label = NoJumpLabel;
+      exp_block_local_vars = [];
+      exp_block_pos = pos; }
+  | _ -> Block { 
+      exp_block_body = t;
+      exp_block_jump_label = NoJumpLabel;
+      exp_block_local_vars = [];
+      exp_block_pos = pos; }
+
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let hproc = SHGram.Entry.mk "hproc"
@@ -3349,18 +3362,26 @@ if_statement:
 			   exp_cond_pos = get_pos_camlp4 _loc 1 }]];
 
 par_statement: 
-  [[ `PAR; `OBRACE; pl = par_case_list; `CBRACE -> Empty (get_pos_camlp4 _loc 1) ]];
+  [[ `PAR; `OBRACE; pl = par_case_list; `CBRACE ->
+      Par { exp_par_cases = pl; exp_par_pos = (get_pos_camlp4 _loc 1); } 
+  ]];
   
-excl_var_list: [[ `OPAREN; il = opt_cid_list; `CPAREN -> il ]];
+excl_var_list: [[ `OBRACE; il = opt_cid_list; `CBRACE -> il ]];
 
 excl_var_list_opt: [[ evl = OPT excl_var_list -> un_option evl [] ]];
-  
+
 par_case:
   [[ 
      `CASE; evl = excl_var_list_opt; dc = disjunctive_constr; `LEFTARROW; sl = statement_list -> 
-      Empty (get_pos_camlp4 _loc 1)
+      { exp_par_case_cond = Some (F.subst_stub_flow n_flow dc);
+        exp_par_case_excl_vars = evl;
+        exp_par_case_body = stmt_list_to_block sl (get_pos_camlp4 _loc 5);
+        exp_par_case_pos = (get_pos_camlp4 _loc 1); }
    | `ELSE_TT; evl = excl_var_list_opt; `LEFTARROW; sl = statement_list -> 
-      Empty (get_pos_camlp4 _loc 1)
+      { exp_par_case_cond = None;
+        exp_par_case_excl_vars = evl;
+        exp_par_case_body = stmt_list_to_block sl (get_pos_camlp4 _loc 5);
+        exp_par_case_pos = (get_pos_camlp4 _loc 1); }
   ]];
   
 par_case_list: [[ cl = LIST1 par_case SEP `OROR -> cl ]];
