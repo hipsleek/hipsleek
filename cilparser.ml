@@ -159,6 +159,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.Var e -> e.Iast.exp_var_pos
   | Iast.VarDecl e -> e.Iast.exp_var_decl_pos
   | Iast.While e -> e.Iast.exp_while_pos
+  | Iast.Par e -> e.Iast.exp_par_pos
 
 let loc_of_cil_exp (exp: Cil.exp) : Cil.location =
   match exp with

@@ -468,6 +468,18 @@ and exp_label = {
     exp_label_path_id : (control_path_id * path_label);
     exp_label_exp: exp;}
     
+and exp_par = {
+  exp_par_cases: exp_par_case list;
+  exp_par_pos: loc;
+}
+
+and exp_par_case = {
+  exp_par_case_cond: F.formula option;
+  exp_par_case_excl_vars: P.spec_var list;
+  exp_par_case_body: exp;
+  exp_par_case_pos: loc;
+}
+    
 and exp = (* expressions keep their types *)
     (* for runtime checking *)
   | Label of exp_label
@@ -513,6 +525,7 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+  | Par of exp_par
 
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
@@ -799,7 +812,14 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
                     let e1,r1 = helper n_arg b.exp_try_body in 
                     let e2,r2 = helper n_arg b.exp_catch_clause in
 		            (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
-
+            | Par b ->
+              let trans_par_case c =
+                let ce, cr = helper n_arg c.exp_par_case_body in
+                ({ c with exp_par_case_body = ce }, cr)
+              in 
+              let cl, rl = List.split (List.map trans_par_case b.exp_par_cases) in
+              let r = comb_f rl in
+              (Par { b with exp_par_cases = cl }, r)
   in helper init_arg e
 
 
@@ -973,6 +993,7 @@ let rec type_of_exp (e : exp) = match e with
   | Try _ -> Some void_type
   | Time _ -> None
   | Sharp b -> Some b.exp_sharp_type
+  | Par _ -> Some void_type
 
 and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
@@ -1638,6 +1659,10 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
     exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
   | Try b -> Gen.BList.remove_dups_eq (=) ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
+  | Par b ->
+    let callees = List.concat (List.map (fun c -> 
+        callees_of_exp c.exp_par_case_body) b.exp_par_cases) in
+    Gen.BList.remove_dups_eq (=) callees 
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
   let tmp1 = List.map (callees_of_proc prog) names in
@@ -1870,6 +1895,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Time _ 
   | Java _ -> false
   
+  | Par _
   | Barrier _ 
   | BConst _
 	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
@@ -1925,6 +1951,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
   | Label b -> pos_of_exp b.exp_label_exp
+  | Par b -> b.exp_par_pos
 	  
 let get_catch_of_exp e = match e with
 	| Catch e -> e

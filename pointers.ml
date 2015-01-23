@@ -330,6 +330,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       | Unfold _
       | Barrier _ (*TO CHECK*)
       | Continue _ -> (bvars,[],[])
+      | Par _ -> (bvars, [], []) (* TODO: Par *)
   in helper e bvars
 
 let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (ident list) =
@@ -516,6 +517,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
               exp_while_wrappings = wrap}
           in
           (new_e)
+      | Par _ -> e (* TODO: Par *) 
       | Debug _
       | Dprint _
       | Empty _
@@ -784,6 +786,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
       | Unfold _
       | Barrier _ (*TO CHECK*)
       | Continue _ -> (e,vars)
+      | Par _ -> (e, vars) (* TODO: Par *)
   in helper e vars
 
 (*STEP 1: Translate pointers: 
@@ -1593,6 +1596,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               exp_while_wrappings = wrap}
           in
           (new_e)
+      | Par _ -> e (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _
@@ -1729,6 +1733,7 @@ and find_addr (e:exp) : ident list =
             )
           in
           (vs1@vs2@vs3)
+      | Par _ -> [] (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _
@@ -2327,6 +2332,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
             )
           in
           (vs1@vs2@vs3)
+      | Par _ -> [] (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _

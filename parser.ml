@@ -3351,13 +3351,19 @@ if_statement:
 par_statement: 
   [[ `PAR; `OBRACE; pl = par_case_list; `CBRACE -> Empty (get_pos_camlp4 _loc 1) ]];
   
+excl_var_list: [[ `OPAREN; il = opt_cid_list; `CPAREN -> il ]];
+
+excl_var_list_opt: [[ evl = OPT excl_var_list -> un_option evl [] ]];
+  
 par_case:
   [[ 
-     `CASE; dc = disjunctive_constr; `LEFTARROW; sl = statement_list -> Empty (get_pos_camlp4 _loc 1)
-   | `ELSE_TT; `LEFTARROW; sl = statement_list -> Empty (get_pos_camlp4 _loc 1)
+     `CASE; evl = excl_var_list_opt; dc = disjunctive_constr; `LEFTARROW; sl = statement_list -> 
+      Empty (get_pos_camlp4 _loc 1)
+   | `ELSE_TT; evl = excl_var_list_opt; `LEFTARROW; sl = statement_list -> 
+      Empty (get_pos_camlp4 _loc 1)
   ]];
   
-par_case_list: [[cl = LIST1 par_case SEP `OROR -> cl ]];
+par_case_list: [[ cl = LIST1 par_case SEP `OROR -> cl ]];
 
 iteration_statement: [[t=while_statement -> t]];
 

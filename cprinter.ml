@@ -4442,6 +4442,20 @@ let rec string_of_exp = function
         string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
+  | Par ({ exp_par_cases = cl }) ->
+    let string_of_par_case c =
+      let cond = c.exp_par_case_cond in
+      let excl_vars = c.exp_par_case_excl_vars in
+      let excl_vars_str = "[" ^ (String.concat "," 
+        (List.map (fun sv -> string_of_spec_var sv) excl_vars)) ^ "]" in
+      let cond_str = match cond with
+      | None -> "else " ^ excl_vars_str ^ " -> "
+      | Some f -> "case " ^ excl_vars_str ^ " " ^ (string_of_formula f) ^ " -> "
+      in
+      cond_str ^ (string_of_exp c.exp_par_case_body)
+    in
+    "par {\n" ^
+    (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 ;;
 
 let string_of_field_ann ann =

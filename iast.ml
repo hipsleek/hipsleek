@@ -507,6 +507,18 @@ exp_dprint_pos : loc }
 and exp_unfold = { exp_unfold_var : (string * primed);
 exp_unfold_pos : loc } 
 
+and exp_par = {
+  exp_par_cases: exp_par_case list;
+  exp_par_pos: loc;
+}
+
+and exp_par_case = {
+  exp_par_case_cond: F.formula option;
+  exp_par_case_excl_vars: (ident * primed) list;
+  exp_par_case_body: exp;
+  exp_par_case_pos: loc;
+}
+
 and exp =
   | ArrayAt of exp_arrayat (* An Hoa *)
   | ArrayAlloc of exp_aalloc (* An Hoa *)
@@ -547,6 +559,7 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
+  | Par of exp_par
 
 (* utility functions *)
 
@@ -645,148 +658,156 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
-	  | Some e1 -> e1
-	  | None  ->
-		let n_arg = f_args in_arg e in 
-                let comb_f = comb_f e in
-                let zero = comb_f [] in  
-		match e with	
-                  | Assert _ 
-                  | BoolLit _ 
-                  | Break _
-                  | Continue _ 
-                  | Debug _ 
-                  | Dprint _ 
-                  | Empty _ 
-                  | FloatLit _ 
-                  | IntLit _
-                  | Java _ 
-                  | Null _ 
-                  | This _ 
-                  | Time _ 
-                  | Unfold _ 
-                  | Var _ -> (e,zero)
-	          | ArrayAt b -> (* An Hoa *)
-		        let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
-		        (ArrayAt {b with exp_arrayat_index = el},comb_f rl)
-                  | Assign b ->
-                        let e1,r1 = helper n_arg b.exp_assign_lhs  in
-                        let e2,r2 = helper n_arg b.exp_assign_rhs  in
-                        (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
-                  | Binary b -> 
-                        let e1,r1 = helper n_arg b.exp_binary_oper1  in
-                        let e2,r2 = helper n_arg b.exp_binary_oper2  in
-                        (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
-                  | Bind b -> 
-                        let e1,r1 = helper n_arg b.exp_bind_body  in
-                        (Bind {b with exp_bind_body = e1; },r1)
-		  | Barrier _ -> (e,zero)
-			(*let e,r = helper n_arg b.exp_barrier_recv  in     
-                          (Barrier {b with exp_barrier_recv = e},r)*)
-                  | Block b -> 
-                        let e1,r1 = helper n_arg b.exp_block_body  in     
-                        (Block {b with exp_block_body = e1;},r1)
-                  | CallRecv b -> 
-                        let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
-                        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
-                        let e2l,r2l = List.split ler in
-                        let r = comb_f (r1::r2l) in
-                        (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
-                  | CallNRecv b -> 
-                        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
-                        let e2l,r2l = List.split ler in
-                        let r = comb_f r2l in
-                        (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
-                  | Cast b -> 
-                        let e1,r1 = helper n_arg b.exp_cast_body  in  
-                        (Cast {b with exp_cast_body = e1},r1)
-	          | Catch b -> 
-		        let e1,r1 = helper n_arg b.exp_catch_body in
-		        (Catch {b with exp_catch_body = e1},r1)
-                  | Cond b -> 
-                        let e1,r1 = helper n_arg b.exp_cond_condition in
-                        let e2,r2 = helper n_arg b.exp_cond_then_arm in
-                        let e3,r3 = helper n_arg b.exp_cond_else_arm in
-                        let r = comb_f [r1;r2;r3] in
-                        (Cond {b with
-                            exp_cond_condition = e1;
-                            exp_cond_then_arm = e2;
-                            exp_cond_else_arm = e3;},r)
-	          | Finally b ->
-		        let e1,r1 = helper n_arg b.exp_finally_body in
-		        (Finally {b with exp_finally_body=e1},r1)
-                  | Label (l,b) -> 
-                        let e1,r1 = helper n_arg b in
-                        (Label (l,e1),r1)
-                  | Member b -> 
-                        let e1,r1 = helper n_arg b.exp_member_base in
-                        (Member {b with exp_member_base = e1;},r1)
-			    (* An Hoa *)
-		  | ArrayAlloc b -> 
-                        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
-                        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
-                  | New b -> 
-                        let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
-                        (New {b with exp_new_arguments = el},(comb_f rl))
-                  | Raise b -> (match b.exp_raise_val with
-                      | None -> (e,zero)
-                      | Some body -> 
-                            let e1,r1 = helper n_arg body in
-                            (Raise {b with exp_raise_val = Some e1},r1))
-                  | Return b->(match b.exp_return_val with
-                      | None -> (e,zero)
-                      | Some body -> 
-                            let e1,r1 = helper n_arg body in
-                            (Return {b with exp_return_val = Some e1},r1))
-                  | Seq b -> 
-                        let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
-                        let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
-                        let r = comb_f [r1;r2] in
-                        (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
-                  | Try b -> 
-                        let ecl = List.map (helper n_arg) b.exp_catch_clauses in
-                        let fcl = List.map (helper n_arg) b.exp_finally_clause in
-                        let tb,r1 = helper n_arg b.exp_try_block in
-                        let catc, rc = List.split ecl in
-                        let fin, rf = List.split fcl in
-                        let r = comb_f (r1::(rc@rf)) in
-                        (Try {b with
-                            exp_try_block = tb;
-                            exp_catch_clauses = catc;
-                            exp_finally_clause = fin;},r)
-                  | Unary b -> 
-                        let e1,r1 = helper n_arg b.exp_unary_exp in
-                        (Unary {b with exp_unary_exp = e1},r1)
-                  | ConstDecl b -> 
-                        let l = List.map (fun (c1,c2,c3)-> 
-                            let e1,r1 = helper n_arg c2 in
-                            ((c1,e1,c3),r1))b.exp_const_decl_decls in
-                        let el,rl = List.split l in
-                        let r = comb_f rl in
-                        (ConstDecl {b with exp_const_decl_decls=el},r) 
-                  | VarDecl b -> 
-                        let ll = List.map (fun (c1,c2,c3)-> match c2 with
-                          | None -> ((c1,None,c3),zero)
-                          | Some s -> 
-                                let e1,r1 = helper n_arg s in
-                                ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
-                        let dl,rl =List.split ll in
-                        let r = comb_f rl in
-                        (VarDecl {b with exp_var_decl_decls = dl},r)
-                  | While b -> 
-                        let wrp,r = match b.exp_while_wrappings with
-                          | None -> (None,zero)
-                          | Some (s,l) -> 
-                                let wrp,r = helper n_arg s in
-                                (Some (wrp,l),r) in
-                        let ce,cr = helper n_arg b.exp_while_condition in
-                        let be,br = helper n_arg b.exp_while_body in
-                        let r = comb_f [r;cr;br] in
-                        (While {b with
-                            exp_while_condition = ce;
-                            exp_while_body = be;
-                            exp_while_wrappings = wrp},r) in
-  helper init_arg e
+    | Some e1 -> e1
+    | None  ->
+      let n_arg = f_args in_arg e in 
+      let comb_f = comb_f e in
+      let zero = comb_f [] in
+      match e with
+      | Assert _ 
+      | BoolLit _ 
+      | Break _
+      | Continue _ 
+      | Debug _ 
+      | Dprint _ 
+      | Empty _ 
+      | FloatLit _ 
+      | IntLit _
+      | Java _ 
+      | Null _ 
+      | This _ 
+      | Time _ 
+      | Unfold _ 
+      | Var _ -> (e, zero)
+      | ArrayAt b -> (* An Hoa *)
+          let el, rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+          (ArrayAt {b with exp_arrayat_index = el}, comb_f rl)
+      | Assign b ->
+          let e1, r1 = helper n_arg b.exp_assign_lhs  in
+          let e2, r2 = helper n_arg b.exp_assign_rhs  in
+          (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;}, (comb_f [r1;r2]))
+      | Binary b ->
+          let e1,r1 = helper n_arg b.exp_binary_oper1  in
+          let e2,r2 = helper n_arg b.exp_binary_oper2  in
+          (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
+      | Bind b ->
+          let e1,r1 = helper n_arg b.exp_bind_body  in
+          (Bind {b with exp_bind_body = e1; }, r1)
+      | Barrier _ -> (e, zero)
+          (*let e,r = helper n_arg b.exp_barrier_recv  in     
+          (Barrier {b with exp_barrier_recv = e},r)*)
+      | Block b ->
+          let e1,r1 = helper n_arg b.exp_block_body  in     
+          (Block {b with exp_block_body = e1;},r1)
+      | CallRecv b ->
+          let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
+          let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
+          let e2l,r2l = List.split ler in
+          let r = comb_f (r1::r2l) in
+          (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
+      | CallNRecv b -> 
+          let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
+          let e2l,r2l = List.split ler in
+          let r = comb_f r2l in
+          (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
+      | Cast b -> 
+          let e1,r1 = helper n_arg b.exp_cast_body  in  
+          (Cast {b with exp_cast_body = e1},r1)
+      | Catch b -> 
+          let e1,r1 = helper n_arg b.exp_catch_body in
+          (Catch {b with exp_catch_body = e1},r1)
+      | Cond b -> 
+          let e1,r1 = helper n_arg b.exp_cond_condition in
+          let e2,r2 = helper n_arg b.exp_cond_then_arm in
+          let e3,r3 = helper n_arg b.exp_cond_else_arm in
+          let r = comb_f [r1;r2;r3] in
+          (Cond {b with
+            exp_cond_condition = e1;
+            exp_cond_then_arm = e2;
+            exp_cond_else_arm = e3;},r)
+      | Finally b ->
+          let e1,r1 = helper n_arg b.exp_finally_body in
+          (Finally {b with exp_finally_body=e1},r1)
+      | Label (l,b) -> 
+          let e1,r1 = helper n_arg b in
+          (Label (l,e1),r1)
+      | Member b -> 
+          let e1,r1 = helper n_arg b.exp_member_base in
+          (Member {b with exp_member_base = e1;},r1)
+      (* An Hoa *)
+      | ArrayAlloc b -> 
+          let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+          (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
+      | New b -> 
+          let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
+          (New {b with exp_new_arguments = el},(comb_f rl))
+      | Raise b -> (match b.exp_raise_val with
+          | None -> (e,zero)
+          | Some body -> 
+              let e1,r1 = helper n_arg body in
+              (Raise {b with exp_raise_val = Some e1},r1))
+      | Return b->(match b.exp_return_val with
+          | None -> (e,zero)
+          | Some body -> 
+              let e1,r1 = helper n_arg body in
+              (Return {b with exp_return_val = Some e1},r1))
+      | Seq b -> 
+          let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
+          let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
+          let r = comb_f [r1;r2] in
+          (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+      | Try b -> 
+          let ecl = List.map (helper n_arg) b.exp_catch_clauses in
+          let fcl = List.map (helper n_arg) b.exp_finally_clause in
+          let tb,r1 = helper n_arg b.exp_try_block in
+          let catc, rc = List.split ecl in
+          let fin, rf = List.split fcl in
+          let r = comb_f (r1::(rc@rf)) in
+          (Try {b with
+            exp_try_block = tb;
+            exp_catch_clauses = catc;
+            exp_finally_clause = fin;},r)
+      | Unary b -> 
+          let e1,r1 = helper n_arg b.exp_unary_exp in
+          (Unary {b with exp_unary_exp = e1},r1)
+      | ConstDecl b -> 
+          let l = List.map (fun (c1,c2,c3) -> 
+            let e1,r1 = helper n_arg c2 in
+            ((c1,e1,c3),r1))b.exp_const_decl_decls in
+          let el,rl = List.split l in
+          let r = comb_f rl in
+          (ConstDecl {b with exp_const_decl_decls=el},r) 
+      | VarDecl b -> 
+          let ll = List.map (fun (c1,c2,c3)-> match c2 with
+            | None -> ((c1,None,c3),zero)
+            | Some s -> 
+                let e1,r1 = helper n_arg s in
+                ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
+          let dl,rl =List.split ll in
+          let r = comb_f rl in
+          (VarDecl {b with exp_var_decl_decls = dl},r)
+      | While b -> 
+          let wrp,r = match b.exp_while_wrappings with
+            | None -> (None,zero)
+            | Some (s,l) -> 
+                let wrp,r = helper n_arg s in
+                (Some (wrp,l),r) in
+          let ce,cr = helper n_arg b.exp_while_condition in
+          let be,br = helper n_arg b.exp_while_body in
+          let r = comb_f [r;cr;br] in
+          (While {b with
+            exp_while_condition = ce;
+            exp_while_body = be;
+            exp_while_wrappings = wrp}, r)
+      | Par b ->
+          let trans_par_case c =
+            let ce, cr = helper n_arg c.exp_par_case_body in
+            ({ c with exp_par_case_body = ce }, cr)
+          in 
+          let cl, rl = List.split (List.map trans_par_case b.exp_par_cases) in
+          let r = comb_f rl in
+          (Par { b with exp_par_cases = cl }, r)
+  in helper init_arg e
 
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let f_c e lst = match lst with
@@ -903,6 +924,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
+  | Par e -> e.exp_par_pos
 
 let get_catch_of_exp e = match e with
 	| Catch e -> e

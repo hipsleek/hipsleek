@@ -605,6 +605,9 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Var _ -> e
   | C.VarDecl _ -> e
   | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
+  | C.Par b -> C.Par { b with
+      C.exp_par_cases = List.map (fun c -> { c with 
+        C.exp_par_case_body = seq_elim c.C.exp_par_case_body }) b.C.exp_par_cases }
 
 
 let conv_exp_to_var e = 
@@ -3066,6 +3069,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.VarDecl _ -> false
     | I.While _ -> false
     | I.Unfold _ -> false
+    | I.Par _ -> false
     | I.Raise _ -> true
     | I.Try e -> (all_paths_return e.I.exp_try_block) || (List.fold_left (fun a b-> a && (all_paths_return b)) true e.I.exp_catch_clauses)
           || match e.I.exp_finally_clause with 
@@ -5635,6 +5639,27 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       end
                   (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
                   *)
+      | I.Par p ->
+        let pos = p.I.exp_par_pos in
+        let tmp_names = E.visible_names () in
+        let all_names = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
+        let free_vars = List.map snd all_names in
+        let n_tl = List.map (fun (t, n) -> (n, { sv_info_kind = t; id = fresh_int () })) all_names in
+        
+        let trans_par_case c = 
+          let cond = map_opt (fun f -> 
+            snd (trans_formula prog false free_vars true f n_tl false)) c.I.exp_par_case_cond 
+          in
+          let body, _ = helper c.I.exp_par_case_body in
+          let excl_vars = List.map (fun (v, p) -> CP.SpecVar (Globals.null_type, v, p)) c.I.exp_par_case_excl_vars in
+          { C.exp_par_case_cond = cond;
+            C.exp_par_case_excl_vars = excl_vars;
+            C.exp_par_case_body = body;
+            C.exp_par_case_pos = c.I.exp_par_case_pos; }
+        in
+        (C.Par {
+          C.exp_par_cases = List.map trans_par_case p.I.exp_par_cases;
+          C.exp_par_pos = pos; }, C.void_type)
   in helper ie
 
 and default_value (t :typ) pos : C.exp =
@@ -8294,8 +8319,22 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                 | Some e -> Some (rename_exp ren e));
               Iast.exp_raise_type = (match b.Iast.exp_raise_type with
                 | Iast.Const_flow _ -> b.Iast.exp_raise_type
-                | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))} in
-  helper ren f 
+                | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))}
+    | I.Par p ->
+      let sst = List.fold_left (fun a (c1, c2) ->
+        ((c1, Unprimed), (c2, Unprimed))::((c1, Primed), (c2, Primed))::a) [] ren 
+      in
+      let rename_par_case c = 
+        let body = rename_exp ren c.I.exp_par_case_body in
+        let cond = map_opt (fun f -> IF.subst sst f) c.I.exp_par_case_cond in
+        let excl_vars = List.map (fun (v, p) -> (subid ren v, p)) c.I.exp_par_case_excl_vars in
+        { c with
+          I.exp_par_case_cond = cond;
+          I.exp_par_case_excl_vars = excl_vars;
+          I.exp_par_case_body = body; }
+      in
+      I.Par { p with I.exp_par_cases = List.map rename_par_case p.I.exp_par_cases; }
+  in helper ren f 
 
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
@@ -8409,6 +8448,11 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
         Iast.exp_raise_val = match b.Iast.exp_raise_val with
           | None -> None
           | Some e -> Some (fst (case_rename_var_decls e))},[])
+  | I.Par p ->
+    (I.Par { p with
+      I.exp_par_cases = List.map (fun c -> { c with 
+          I.exp_par_case_body = fst (case_rename_var_decls c.I.exp_par_case_body); }) 
+        p.I.exp_par_cases; }, [])
 
 
 and err_prim_l_vars s l pos= 
@@ -8630,6 +8674,17 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
                 | None -> None
                 | Some e -> let nc,_,_ = (case_normalize_exp prog h p e) in
                   Some nc)},h,p)
+        | I.Par b ->
+          let case_normalize_par_case c =
+            let cond = map_opt (fun f -> 
+              let r = case_normalize_formula prog h f in
+              let _ = check_eprim_in_formula " is not a valid program variable " r in
+              r) c.I.exp_par_case_cond in
+            let body, _, _ = case_normalize_exp prog h p c.I.exp_par_case_body in
+            { c with I.exp_par_case_cond = cond; I.exp_par_case_body = body; } 
+          in
+          (I.Par { b with I.exp_par_cases = List.map (fun c -> case_normalize_par_case c) b.I.exp_par_cases; },
+          h, p)
 
 and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
   let h = List.map (fun f -> (I.get_field_name f,Unprimed) ) f.Iast.data_fields in  
@@ -9427,6 +9482,12 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
     | C.SCall e -> 
           (C.SCall {e with C.exp_scall_is_rec = (is_found cp e.C.exp_scall_method_name scc)},
           [e.C.exp_scall_method_name])
+    | C.Par e ->
+      let cl, ill = List.split (List.map (fun c ->  
+        let ce, il = irf_traverse_exp cp c.C.exp_par_case_body scc in
+        { c with C.exp_par_case_body = ce }, il) e.C.exp_par_cases)
+      in
+      (C.Par { e with C.exp_par_cases = cl }, List.concat ill)
               
 
 and slicing_label_inference_program (prog: I.prog_decl) : I.prog_decl =
