@@ -132,7 +132,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
               IF.h_formula_heap_arguments = hargs;
-              IF.h_formula_heap_ho_arguments = [];
+              IF.h_formula_heap_ho_arguments = h0.IF.h_formula_heap2_ho_arguments;
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
               IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
@@ -155,7 +155,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
                   IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
                   IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
                   IF.h_formula_heap_arguments = hargs;
-                  IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
+                  IF.h_formula_heap_ho_arguments = h0.IF.h_formula_heap2_ho_arguments;
                   IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
                   IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
                   IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
@@ -1359,6 +1359,10 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_pos = pos } ->
       Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
       let ft = cperm_typ () in
+      let gather_type_info_ho_args hoa tlist =
+        List.fold_left (fun tl a ->
+          gather_type_info_formula prog a.IF.rflow_base tl false) tlist hoa
+      in
       let gather_type_info_ann c tlist = (
         match c with
         | IP.ConstAnn _ -> tlist
@@ -1381,6 +1385,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let n_tl = gather_type_info_perm perm tlist in
       let n_tl = gather_type_info_ann ann n_tl in
       let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
+      let n_tl = gather_type_info_ho_args hoa n_tl in
       (*Deal with the generic pointer! *)
       if (v_name = Parser.generic_pointer_type_name) then 
         (* Assumptions:

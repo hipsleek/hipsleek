@@ -5642,6 +5642,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       | I.Par p ->
         let pos = p.I.exp_par_pos in
         let tmp_names = E.visible_names () in
+        (* let _ = print_endline ("PAR: tmp_names: " ^ (Iprinter.string_of_typed_var_list tmp_names)) in *)
         let all_names = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
         let free_vars = List.map snd all_names in
         let n_tl = List.map (fun (t, n) -> (n, { sv_info_kind = t; id = fresh_int () })) all_names in
@@ -5651,7 +5652,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             snd (trans_formula prog false free_vars true f n_tl false)) c.I.exp_par_case_cond 
           in
           let body, _ = helper c.I.exp_par_case_body in
-          let excl_vars = List.map (fun (v, p) -> CP.SpecVar (Globals.null_type, v, p)) c.I.exp_par_case_excl_vars in
+          let excl_vars = List.map (fun (v, p) -> 
+            let t =
+              try fst (List.find (fun (_, n) -> String.compare n v = 0) tmp_names) 
+              with _ -> UNK 
+            in CP.SpecVar (t, v, p)) c.I.exp_par_case_excl_vars in
           { C.exp_par_case_cond = cond;
             C.exp_par_case_excl_vars = excl_vars;
             C.exp_par_case_body = body;
