@@ -67,7 +67,7 @@ void main()
 }
 
 /*
-# ex4c2.ss
+# ex4c2.ss --ann-vp
 
   Here varperm @full[x] is transferred
   into the latch.

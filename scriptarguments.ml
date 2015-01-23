@@ -232,7 +232,7 @@ let common_arguments = [
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
-  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
   ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
   ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");

@@ -66,8 +66,9 @@ void main()
   dprint;
 }
 
+
 /*
-# ex4c1.ss
+# ex4c1.ss --ann-vp
 
   Note that varperm @full[x] is not transferred
   into the latch.
