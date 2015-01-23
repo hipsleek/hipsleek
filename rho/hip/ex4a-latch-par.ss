@@ -47,6 +47,7 @@ void main()
   CDL c = create_latch(1) with x'::cell<1> * y'::cell<2>;
   int r1,r2;
   r1=0; r2=0;
+  dprint;
   par
   {  
    // exists r1',r2'
