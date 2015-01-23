@@ -107,23 +107,23 @@ module Make (Token : SleekTokenS)
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
-	[("assert", ASSERT);
+  [("assert", ASSERT);
    ("assert_exact", ASSERT_EXACT);
    ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
-	 ("assume", ASSUME);
-	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
+   ("assume", ASSUME);
+   ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
    ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
-	 ("bagmin", BAGMIN);
+   ("bagmin", BAGMIN);
    ("bag", BAG);
-     ("Barrier", BARRIER);
-	 ("bind", BIND);
-	 ("bool", BOOL);
-	 ("break", BREAK);
-	 ("case",CASE);
+   ("Barrier", BARRIER);
+   ("bind", BIND);
+   ("bool", BOOL);
+   ("break", BREAK);
+   ("case",CASE);
    ("catch", CATCH);
    ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
@@ -155,30 +155,30 @@ module Make (Token : SleekTokenS)
    ("infer_inexact", INFER_INEXACT);
    ("relation_infer", REL_INFER);
    ("capture_residue", CAPTURERESIDUE);
-	 ("class", CLASS);
-	 (* ("coercion", COERCION); *)
-	 ("compose", COMPOSE);
+   ("class", CLASS);
+   (* ("coercion", COERCION); *)
+   ("compose", COMPOSE);
    ("combine", COMBINE);
-	 ("const", CONST);
-	 ("continue", CONTINUE);
-	 ("data", DATA);
-	 ("debug", DDEBUG);
-	 ("diff", DIFF);
-	 ("dynamic", DYNAMIC);
-	 ("else", ELSE_TT);
+   ("const", CONST);
+   ("continue", CONTINUE);
+   ("data", DATA);
+   ("debug", DDEBUG);
+   ("diff", DIFF);
+   ("dynamic", DYNAMIC);
+   ("else", ELSE_TT);
    ("emp", EMPTY);
-	 ("ensures", ENSURES);
+   ("ensures", ENSURES);
    ("ensures_exact", ENSURES_EXACT);
    ("ensures_inexact", ENSURES_INEXACT);
-	 ("enum", ENUM);
-	 (* ("ex", EXISTS); *)
-	 ("exists", EXISTS);
-	 ("extends", EXTENDS);
-	 ("false", FALSE);
+   ("enum", ENUM);
+   (* ("ex", EXISTS); *)
+   ("exists", EXISTS);
+   ("extends", EXTENDS);
+   ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
-	 ("float", FLOAT);
-	 ("forall", FORALL);
+   ("float", FLOAT);
+   ("forall", FORALL);
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
@@ -188,70 +188,70 @@ module Make (Token : SleekTokenS)
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
-	 ("in", IN_T);
+   ("in", IN_T);
    ("infer", INFER);
-	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
+   ("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
-	 ("int", INT);
-         ("char",INT);
-	 ("INFint", INFINT_TYPE);
-	 ("intersect", INTERSECT);
-	 ("inv", INV);
-         ("inv_exact", INV_EXACT);
-         ("inv_sat", INV_SAT);
-         ("BG", BG);
-	 ("inv_lock", INVLOCK);
+   ("int", INT);
+   ("char", INT);
+   ("INFint", INFINT_TYPE);
+   ("intersect", INTERSECT);
+   ("inv", INV);
+   ("inv_exact", INV_EXACT);
+   ("inv_sat", INV_SAT);
+   ("BG", BG);
+   ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA TLEM);
-	 ("lemma_prop", LEMMA TLEM_PROP);
-	 ("lemma_split", LEMMA TLEM_SPLIT);
-	 ("lemma_test", LEMMA TLEM_TEST);
-	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
-	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
-         ("lemma_safe", LEMMA TLEM_SAFE);
-	 ("lemma_infer", LEMMA TLEM_INFER);
-         ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
-	 (* ("lemma_exact", LEMMA (\* true *\)); *)
+   ("lemma", LEMMA TLEM);
+   ("lemma_prop", LEMMA TLEM_PROP);
+   ("lemma_split", LEMMA TLEM_SPLIT);
+   ("lemma_test", LEMMA TLEM_TEST);
+   ("lemma_test_new", LEMMA TLEM_TEST_NEW);
+   ("lemma_unsafe", LEMMA TLEM_UNSAFE);
+   ("lemma_safe", LEMMA TLEM_SAFE);
+   ("lemma_infer", LEMMA TLEM_INFER);
+   ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
+   (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
-	 ("let", LET);
-	 ("max", MAX);
-	 ("min", MIN);
-	 ("new", NEW);
-	 ("notin", NOTIN);
+   ("let", LET);
+   ("max", MAX);
+   ("min", MIN);
+   ("new", NEW);
+   ("notin", NOTIN);
    ("notinlist", NOTINLIST);
-	 ("null", NULL);
-	 ("off", OFF);
-	 ("on", ON);
-	 ("or", ORWORD);
-	 ("and", ANDWORD);
-	 ("macro",PMACRO);
-     ("perm",PERM);
-     ("pred", PRED);
-     ("spec", SPEC);
-     ("pred_prim", PRED_PRIM);
-     ("pred_extn", PRED_EXT);
-     ("hip_include", HIP_INCLUDE);
-     ("pred_split", PRED_SPLIT);
-     ("pred_norm_disj", PRED_NORM_DISJ);
-     ("pred_spec", PRED_SPEC);
-     ("pred_norm_seg", PRED_NORM_SEG);
-     ("print", PRINT);
-     ("print_lemmas", PRINT_LEMMAS);
-     ("mem", MEM);
-     ("memE", MEME);
-	 ("dprint", DPRINT);
-	 ("sleek_compare", CMP);
+   ("null", NULL);
+   ("off", OFF);
+   ("on", ON);
+   ("or", ORWORD);
+   ("and", ANDWORD);
+   ("macro",PMACRO);
+   ("perm",PERM);
+   ("pred", PRED);
+   ("spec", SPEC);
+   ("pred_prim", PRED_PRIM);
+   ("pred_extn", PRED_EXT);
+   ("hip_include", HIP_INCLUDE);
+   ("pred_split", PRED_SPLIT);
+   ("pred_norm_disj", PRED_NORM_DISJ);
+   ("pred_spec", PRED_SPEC);
+   ("pred_norm_seg", PRED_NORM_SEG);
+   ("print", PRINT);
+   ("print_lemmas", PRINT_LEMMAS);
+   ("mem", MEM);
+   ("memE", MEME);
+   ("dprint", DPRINT);
+   ("sleek_compare", CMP);
    ("raise", RAISE);
-("relation", REL);
-	 ("requires", REQUIRES);
+   ("relation", REL);
+   ("requires", REQUIRES);
    ("refines", REFINES);
-	 ("res", RES "res");
+   ("res", RES "res");
    ("rev",REVERSE);
-	 ("return", RETURN);
-	 ("self", SELFT "self");
+   ("return", RETURN);
+   ("self", SELFT "self");
    ("set",SET);
-	 ("split", SPLIT);
-	 ("LexVar", LEXVAR);
+   ("split", SPLIT);
+   ("LexVar", LEXVAR);
    ("template", TEMPL);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
@@ -260,32 +260,34 @@ module Make (Token : SleekTokenS)
    ("MayLoop", MAYLOOP);
    (* ("TermU", TERMU); *)
    (* ("TermR", TERMR); *)
-	 ("subset", SUBSET);
-	 ("static", STATIC);
+   ("subset", SUBSET);
+   ("static", STATIC);
    ("tail",TAIL);
-	 ("then", THEN);
-	 ("this", THIS "this");
+   ("then", THEN);
+   ("this", THIS "this");
    ("time", DTIME);
    ("throws", THROWS);
-	 ("to", TO);
-	 ("true", TRUE);
+   ("to", TO);
+   ("true", TRUE);
    ("try", TRY);
-	 ("unfold", UNFOLD);
-	 ("union", UNION);
+   ("unfold", UNFOLD);
+   ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
-	 ("void", VOID);
+   ("void", VOID);
    (*("variance", VARIANCE);*)
-	 ("while", WHILE);
+   ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
    (* Template *)
    ("template", TEMPLATE);
    ("template_solve", TEMPL_SOLVE);
-	 (flow, FLOW flow);]
+   (flow, FLOW flow);
+   ("par", PAR)
+  ]
 }
   
   

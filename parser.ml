@@ -3242,20 +3242,21 @@ labeled_valid_declaration_statement:
 
 valid_declaration_statement:
   [[ t=block -> t
-  | t=expression_statement;`SEMICOLON ->t
-  | t=selection_statement -> t
-  | t=iteration_statement -> t
-  | t=try_statement; `SEMICOLON -> t
-  | t=java_statement -> t
-  | t=jump_statement;`SEMICOLON  -> t
-  | t= assert_statement;`SEMICOLON -> t
-  | t=dprint_statement;`SEMICOLON  -> t
-  | t=debug_statement -> t
-  | t=time_statement -> t
-  | t=bind_statement -> t
-  | t=barr_statement -> t
-  | t=unfold_statement -> t]
-  | [t= empty_statement -> t]
+   | t=expression_statement;`SEMICOLON ->t
+   | t=selection_statement -> t
+   | t=iteration_statement -> t
+   | t=try_statement; `SEMICOLON -> t
+   | t=java_statement -> t
+   | t=jump_statement;`SEMICOLON  -> t
+   | t= assert_statement;`SEMICOLON -> t
+   | t=dprint_statement;`SEMICOLON  -> t
+   | t=debug_statement -> t
+   | t=time_statement -> t
+   | t=bind_statement -> t
+   | t=barr_statement -> t
+   | t=par_statement -> t
+   | t=unfold_statement -> t]
+   | [t= empty_statement -> t]
 ];
 
 empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
@@ -3347,9 +3348,18 @@ if_statement:
 			   exp_cond_path_id = None; 
 			   exp_cond_pos = get_pos_camlp4 _loc 1 }]];
 
+par_statement: 
+  [[ `PAR; `OBRACE; pl = par_case_list; `CBRACE -> Empty (get_pos_camlp4 _loc 1) ]];
+  
+par_case:
+  [[ 
+     `CASE; dc = disjunctive_constr; `LEFTARROW; sl = statement_list -> Empty (get_pos_camlp4 _loc 1)
+   | `ELSE_TT; `LEFTARROW; sl = statement_list -> Empty (get_pos_camlp4 _loc 1)
+  ]];
+  
+par_case_list: [[cl = LIST1 par_case SEP `OROR -> cl ]];
+
 iteration_statement: [[t=while_statement -> t]];
-
-
 
 while_statement:
   [[ `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
