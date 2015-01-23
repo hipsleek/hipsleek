@@ -45,18 +45,26 @@ void main()
 {
   cell x, y;
   CDL c = create_latch(1) with x'::cell<1> * y'::cell<2>;
-  par {  
-     case c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
+  int r1,r2;
+  r1=0; r2=0;
+  par
+  {  
+   // exists r1',r2'
+   case [x,y] c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
       x = new cell(1); 
       y = new cell(2); 
       dprint;
       countDown(c);
       dprint;
-      int k = x.val;
-  || case c'::LatchOut{-x'::cell<1>}<> * c'::CNT<0> ->
+      //int k = x.val;
+  || 
+    // exists x',y',r2'
+    case [r1] c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> ->
       await(c); 
-      int r1 = x.val; 
-  || else -> await(c); int r2 = y.val;
+      r1 = x.val; 
+  || 
+     // exists r1',x',y'
+     else [r2] -> await(c); r2 = y.val;
   }
   dprint;
 }
