@@ -6796,11 +6796,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_full = full;
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
-          (* expand the dereference heap node first *)
+            (* expand the dereference heap node first *)
             let trans_f f tl = trans_formula prog false [] false f tl false in
-            let (tl, ho_args) = List.fold_left (fun (t, r) a -> 
-              let (nt, b) = trans_f a.IF.rflow_base t in 
-              (nt, r @ [{ CF.rflow_kind = a.IF.rflow_kind; CF.rflow_base = b; }])) 
+            let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
+              let (ntl, b) = trans_f a.IF.rflow_base tl in 
+              (ntl, r @ [{ CF.rflow_kind = a.IF.rflow_kind; 
+                           CF.rflow_base = b; }])) 
               (tl, []) ho_exps in
             let ho_args = List.rev ho_args in
             if (deref > 0) then (

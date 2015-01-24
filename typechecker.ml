@@ -2551,7 +2551,10 @@ and check_par_case (prog: prog_decl) (proc: proc_decl) (par_case: exp_par_case) 
   let ctx =
     match par_case.exp_par_case_cond with
     | None -> init_ctx
-    | Some pre -> CF.build_context init_ctx pre pos
+    | Some pre ->
+      let ml = CP.mkPure (CP.mkLexVar (MayLoop None) [] [] pos) in
+      let pre = CF.add_pure_formula_to_formula ml pre in 
+      CF.build_context init_ctx pre pos
   in
   let ctx = CF.add_path_id ctx (None, 0) 0 in
   let ctx = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 10 prog (ref 1)) ctx in

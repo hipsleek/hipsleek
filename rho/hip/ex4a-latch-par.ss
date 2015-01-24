@@ -52,7 +52,6 @@ void main()
   {  
    // exists r1',r2'
    case {x,y} c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
-        r1 = r1 + r2;
         dprint;
         x = new cell(1); 
         dprint;
@@ -68,7 +67,9 @@ void main()
       r1 = x.val; 
   || 
      // exists r1',x',y'
-     else {r2} -> await(c); r2 = y.val;
+     else {r2} -> 
+     //case {r2} c'::LatchOut{+y'::cell<2>}<> * c'::CNT<0> ->
+       await(c); r2 = y.val;
   }
   dprint;
 }
