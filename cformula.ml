@@ -10357,7 +10357,11 @@ let convert_must_failure_4_failesc_context (s:string) ((fl,e,bl):failesc_context
 
 let convert_must_failure_4_list_failesc_context (s:string) (l:list_failesc_context) : list_failesc_context =
   List.map (convert_must_failure_4_failesc_context s) l
-
+  
+let convert_must_failure_4_list_failesc_context (s:string) (l:list_failesc_context) : list_failesc_context =
+  let pr = !print_list_failesc_context in
+  Debug.no_1 "convert_must_failure_4_list_failesc_context" pr pr
+  (fun _ -> convert_must_failure_4_list_failesc_context s l) l
 
 let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
   let rec helper a c = match c with

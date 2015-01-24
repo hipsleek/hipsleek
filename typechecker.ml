@@ -2548,7 +2548,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     ((check_exp1_x failesc) @ fl)
 
 (* PAR: Check pre-state and compute post-state of a par_case *)
-and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
+and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
   let rem_ctx, pre_ctx = 
@@ -2569,7 +2569,7 @@ and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_con
       in
       
       let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
-      let ml = CP.mkPure (CP.mkLexVar (MayLoop None) [] [] pos) in
+      let ml = CP.mkPure (CP.mkLexVar (CP.MayLoop None) [] [] pos) in
       let pre = CF.add_pure_formula_to_formula ml pre in 
       let pre_ctx = CF.build_context init_ctx pre pos in
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
@@ -2587,6 +2587,16 @@ and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_con
   let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
   (rem_ctx, post_ctx)
+
+  
+and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
+  (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
+  let pr1 = Cprinter.string_of_list_failesc_context in
+  let pr2 = pr_pair (fun c -> "REM: " ^ (pr1 c))
+                    (fun c -> "POST: " ^ (pr1 c)) in
+  let pr3 = string_of_full_loc in
+  Debug.no_2 "check_par_case" pr1 pr3 pr2 
+  (fun _ _ -> check_par_case_x prog proc ctx par_case par_label) ctx (par_case.exp_par_case_pos)
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in

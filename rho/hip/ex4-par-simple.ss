@@ -50,6 +50,7 @@ void main()
   par
   {  
     case {x} c'::LatchIn{- x'::cell<1>}<> * c'::CNT<(1)> -> 
+      dprint;
       x = new cell(1); 
       countDown(c);
   || 
