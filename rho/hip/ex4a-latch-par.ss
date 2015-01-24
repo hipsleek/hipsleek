@@ -21,7 +21,7 @@ inv n>=(-1);
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
-//lemma "zero" self::CNT<a> -> self::CNT<a> * self::CNT<b> & b = 0;
+lemma "zero" self::CNT<a> -> self::CNT<a> * self::CNT<b> & b = 0;
 
 /********************************************/
 CDL create_latch(int n) with %P
