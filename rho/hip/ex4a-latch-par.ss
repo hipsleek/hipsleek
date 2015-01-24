@@ -21,7 +21,7 @@ inv n>=(-1);
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
-lemma "zero" self::CNT<a> -> self::CNT<a> * self::CNT<b> & b = 0;
+//lemma "zero" self::CNT<a> -> self::CNT<a> * self::CNT<b> & b = 0;
 
 /********************************************/
 CDL create_latch(int n) with %P
@@ -64,7 +64,7 @@ void main()
       //int k = x.val;
   || 
     // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> //TODO
+    case {r1} c'::LatchOut{+x'::cell<2>}<> * c'::CNT<0> -> //TODO
       dprint;
       await(c); 
       r1 = x.val; 
