@@ -64,7 +64,7 @@ void main()
       //int k = x.val;
   || 
     // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<2>}<> * c'::CNT<0> -> //TODO
+    case {r1} c'::LatchOut{+x'::cell<2>}<> * c'::CNT<0> -> // TODO: Should return error here
       dprint;
       await(c); 
       r1 = x.val; 
