@@ -460,7 +460,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
 	    (* Termination: Move lexvar to es_var_measures *)
 	    (* let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in *)
-            let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[],[], [], [],true) | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) in            stk_vars # pop_list vs;
+            let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match b.CF.formula_struc_continuation with 
+            | None -> (None,[],[],[],[], [], [],true) 
+            | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) 
+            in stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
               | [] -> b.CF.formula_struc_base
@@ -2511,7 +2514,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
-  | Par { exp_par_cases = cl; exp_par_pos = pos; } -> ctx
+  | Par { exp_par_cases = cl; exp_par_pos = pos; } -> 
+    let par_label = (1, "par") in
+    let post_ctx_list = List.map (fun c -> check_par_case prog proc c par_label) cl in
+    ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
@@ -2538,6 +2544,28 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* Debug.info_hprint (add_str "check_exp1:CURRENT:"Cprinter.string_of_list_failesc_context) cl no_pos; *)
     (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
     ((check_exp1_x failesc) @ fl)
+    
+and check_par_case (prog: prog_decl) (proc: proc_decl) (par_case: exp_par_case) par_label: CF.list_failesc_context =
+  let pos = par_case.exp_par_case_pos in
+  let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
+  let ctx =
+    match par_case.exp_par_case_cond with
+    | None -> init_ctx
+    | Some pre -> CF.build_context init_ctx pre pos
+  in
+  let ctx = CF.add_path_id ctx (None, 0) 0 in
+  let ctx = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 10 prog (ref 1)) ctx in
+  let _ = flow_store := [] in
+  let ctx = CF.set_flow_in_context_override
+    { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } ctx in
+  (* Add initial esc_stack *)
+  let init_esc = [((0, ""), [])] in
+  let fctx = [CF.mk_failesc_context ctx [] init_esc] in
+  let _ = Debug.ninfo_hprint (add_str "check_par_case: ctx:" !CF.print_list_failesc_context) fctx pos in
+  if (CF.isAnyFalseCtx ctx) then fctx
+  else
+    let post_ctx = check_exp prog proc fctx par_case.exp_par_case_body par_label in
+    post_ctx
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in

@@ -52,7 +52,10 @@ void main()
   {  
    // exists r1',r2'
    case {x,y} c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
+        r1 = r1 + r2;
+        dprint;
         x = new cell(1); 
+        dprint;
         y = new cell(2); 
       dprint;
       countDown(c);

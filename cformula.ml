@@ -142,6 +142,7 @@ and formula =
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: formula;
+  (* rflow_global_vars: CP.spec_var list; *)
 }
 
 and list_formula = formula list

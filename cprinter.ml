@@ -3739,7 +3739,7 @@ let pr_context_short (ctx : context) =
 (*         pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
 (* end *)
 (*   else begin *)
-     prtt_pr_formula_wrap f1 ;
+     (* prtt_pr_formula_wrap f1 ; *)
        (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es_infer_hp_rel; *)
   (* end *)
     fmt_string "\n";
