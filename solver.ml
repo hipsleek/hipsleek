@@ -14461,8 +14461,8 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
                               ^ "after normalizing"
                               ^"\n")) pos;
     let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
-    (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
-    (* (lfc, prf) *)
+    (* (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf) *)
+    (lfc, prf)
   end
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
