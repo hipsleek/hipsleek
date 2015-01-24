@@ -599,6 +599,13 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
+let norm_par_case_list pl pos = 
+  let pl, else_pl = List.partition (fun c -> not (is_None c.exp_par_case_cond)) pl in
+  if (List.length else_pl > 1) then 
+    (Err.report_error {
+      Err.error_loc = pos;
+      Err.error_text = Printf.sprintf "Par statement has more than one else branches." })
+  else pl @ else_pl
 
 let find_empty_static_specs iprog = 
   let er = List.filter (fun c-> F.isEConstTrue c.proc_static_specs) iprog.prog_proc_decls in

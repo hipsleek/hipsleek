@@ -3363,7 +3363,9 @@ if_statement:
 
 par_statement: 
   [[ `PAR; `OBRACE; pl = par_case_list; `CBRACE ->
-      Par { exp_par_cases = pl; exp_par_pos = (get_pos_camlp4 _loc 1); } 
+      let pos = get_pos_camlp4 _loc 1 in
+      let pl = Iast.norm_par_case_list pl pos in
+      Par { exp_par_cases = pl; exp_par_pos = pos; } 
   ]];
   
 excl_var_list: [[ `OBRACE; il = opt_cid_list; `CBRACE -> il ]];

@@ -11006,6 +11006,7 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
+
 let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c) ] ) 
 
 (* WN : this seems weird *)
@@ -17699,3 +17700,14 @@ let subst_hvar_struc f subst =
   let pr = !print_struc_formula in
   Debug.no_1 "subst_hvar_struc" pr pr 
   (fun _ -> subst_hvar_struc f subst) f
+  
+let mkEmp_list_failesc_context pos = 
+  let ctx = empty_ctx (mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos in
+  let ctx = build_context ctx (mkTrue_nf pos) pos in
+  let ctx = add_path_id ctx (None, 0) 0 in
+  let ctx = set_flow_in_context_override
+    { formula_flow_interval = !norm_flow_int; formula_flow_link = None } ctx in
+  (* Add initial esc_stack *)
+  let init_esc = [((0, ""), [])] in
+  let fctx = [mk_failesc_context ctx [] init_esc] in
+  fctx

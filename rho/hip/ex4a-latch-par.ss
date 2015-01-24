@@ -62,13 +62,13 @@ void main()
       //int k = x.val;
   || 
     // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> ->
+    case {r1} c'::LatchOut{+x'::cell<2>}<> * c'::CNT<0> ->
         await(c); 
       r1 = x.val; 
   || 
      // exists r1',x',y'
-     else {r2} -> 
-     //case {r2} c'::LatchOut{+y'::cell<2>}<> * c'::CNT<0> ->
+     //else {r2} -> 
+     case {r2} c'::LatchOut{+y'::cell<2>}<> * c'::CNT<0> ->
        await(c); r2 = y.val;
   }
   dprint;

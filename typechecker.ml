@@ -2516,8 +2516,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.pop_esc_level_list ctx5 pid
   | Par { exp_par_cases = cl; exp_par_pos = pos; } -> 
     let par_label = (1, "par") in
-    let post_ctx_list = List.map (fun c -> check_par_case prog proc c par_label) cl in
-    ctx
+    let rem_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
+      let rem_ctx, post_ctx = check_par_case prog proc rem_ctx c par_label in
+      (rem_ctx, post_ctx_acc @ post_ctx)) (ctx, []) cl in
+    rem_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
@@ -2533,7 +2535,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
     else ctx in
     (* fl denote all failed states *)
-    let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
+    let (fl,cl) = List.partition (fun (_,s,c) -> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
     (*let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
     (*let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
     (* if (Gen.is_empty cl) then fl
@@ -2544,31 +2546,47 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* Debug.info_hprint (add_str "check_exp1:CURRENT:"Cprinter.string_of_list_failesc_context) cl no_pos; *)
     (* Debug.info_hprint (add_str "check_exp1:into:"Cprinter.string_of_list_failesc_context) failesc no_pos; *)
     ((check_exp1_x failesc) @ fl)
-    
-and check_par_case (prog: prog_decl) (proc: proc_decl) (par_case: exp_par_case) par_label: CF.list_failesc_context =
+
+(* PAR: Check pre-state and compute post-state of a par_case *)
+and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
+  (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
-  let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
-  let ctx =
+  let rem_ctx, pre_ctx = 
     match par_case.exp_par_case_cond with
-    | None -> init_ctx
+    | None -> CF.mkEmp_list_failesc_context pos, ctx
     | Some pre ->
+      let rem_ctx =
+        let res, _ = heap_entail_list_failesc_context_init prog false ctx pre None None None pos None in
+        if (CF.isSuccessListFailescCtx_new res) then res
+        else
+          (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context res) ^ ") ") 
+            ("Proving condition of a par's element failed.") pos;
+          Debug.print_info ("(Cause of ParCond Failure)")
+            (Cprinter.string_of_failure_list_failesc_context res) pos;
+          Err.report_error {
+            Err.error_loc = pos;
+            Err.error_text = Printf.sprintf "Proving condition of a par's element failed." })
+      in
+      
+      let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
       let ml = CP.mkPure (CP.mkLexVar (MayLoop None) [] [] pos) in
       let pre = CF.add_pure_formula_to_formula ml pre in 
-      CF.build_context init_ctx pre pos
+      let pre_ctx = CF.build_context init_ctx pre pos in
+      let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
+      let pre_ctx = 
+        if !Globals.disable_pre_sat then pre_ctx 
+        else CF.transform_context (elim_unsat_es 10 prog (ref 1)) pre_ctx 
+      in
+      let _ = flow_store := [] in
+      let pre_ctx = CF.set_flow_in_context_override
+        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } pre_ctx in
+      (* Add initial esc_stack *)
+      let init_esc = [((0, ""), [])] in
+      (rem_ctx, [CF.mk_failesc_context pre_ctx [] init_esc])
   in
-  let ctx = CF.add_path_id ctx (None, 0) 0 in
-  let ctx = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 10 prog (ref 1)) ctx in
-  let _ = flow_store := [] in
-  let ctx = CF.set_flow_in_context_override
-    { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } ctx in
-  (* Add initial esc_stack *)
-  let init_esc = [((0, ""), [])] in
-  let fctx = [CF.mk_failesc_context ctx [] init_esc] in
-  let _ = Debug.ninfo_hprint (add_str "check_par_case: ctx:" !CF.print_list_failesc_context) fctx pos in
-  if (CF.isAnyFalseCtx ctx) then fctx
-  else
-    let post_ctx = check_exp prog proc fctx par_case.exp_par_case_body par_label in
-    post_ctx
+  let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
+  let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
+  (rem_ctx, post_ctx)
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
