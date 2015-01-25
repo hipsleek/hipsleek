@@ -17,7 +17,7 @@ pred_prim LatchOut{+%P@Split}<>;
 pred_prim CNT<n:int>
 inv n>=(-1);
 
-//lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
@@ -64,7 +64,7 @@ void main()
       //int k = x.val;
   || 
     // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<2>}<> * c'::CNT<0> -> // TODO: Should return error here
+    case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
       dprint;
       await(c); 
       r1 = x.val; 
