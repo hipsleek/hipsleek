@@ -2592,8 +2592,8 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_c
 and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pr1 = Cprinter.string_of_list_failesc_context in
-  let pr2 = pr_pair (fun c -> "REM: " ^ (pr1 c))
-                    (fun c -> "POST: " ^ (pr1 c)) in
+  let pr2 = pr_pair (fun c -> "\nREM: " ^ (pr1 c))
+                    (fun c -> "\nPOST: " ^ (pr1 c)) in
   let pr3 = string_of_full_loc in
   Debug.no_2 "check_par_case" pr1 pr3 pr2 
   (fun _ _ -> check_par_case_x prog proc ctx par_case par_label) ctx (par_case.exp_par_case_pos)
@@ -2601,7 +2601,7 @@ and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_con
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = pr_pair Cprinter.string_of_formula Cprinter.string_of_struc_formula in
-  (*  let pr2 = Cprinter.string_of_list_partial_context in*)
+  (* let pr2 = Cprinter.string_of_list_partial_context in*)
   (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)

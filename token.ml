@@ -6,6 +6,7 @@ type sleek_token =
   | IDENTIFIER    of string
   | INT_LITER     of int * string
   | FLOAT_LIT     of float * string
+  | FRAC_LIT of Frac.frac * string
   | CHAR_LIT      of char * string
   | STRING        of string * string
         (*| COMMENT       of string*)
@@ -70,7 +71,7 @@ type sleek_token =
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
   | TOPAREN | TCPAREN
   | PERCENT | PMACRO 
-  | PZERO | PFULL | PVALUE (* | PREF *)
+  | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac (* | PREF *)
   | SPLITANN
   | TUP2
   | PLUS | PRIME 
@@ -102,7 +103,7 @@ module Token = struct
   let sf = Printf.sprintf
 
   let to_string k = match k with 
-    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s | FRAC_LIT (_, s) -> s
           (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
@@ -156,7 +157,7 @@ module Token = struct
     | MEM -> "mem" | MEME -> "memE"
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
-    (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
+    (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero" | PLEND -> "@lend" | PCONST f -> "@" ^ (Frac.string_of_frac f)
     | SPLITANN -> "@Split"
     | TUP2 -> "tup2"
     | INVLOCK->"inv_lock"
@@ -203,8 +204,9 @@ module Token = struct
   let match_keyword kwd _ = false 
     
   let extract_string t = match t with
-     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
-     | _ -> ""
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s) | FRAC_LIT (_, s) 
+    | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
+    | _ -> ""
      
     
   module Error = struct

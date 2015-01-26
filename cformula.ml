@@ -14895,6 +14895,9 @@ let get_varperm_formula_x (f:formula) typ : CP.spec_var list =
             | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
             | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+            (* TODO: Get VarPerm for @lend and @frac *)
+            | VP_Lend -> []
+            | VP_Const _ -> []
           )
   in
   helper f
@@ -14940,6 +14943,9 @@ let get_varperm_formula_all_x (f:formula) typ : CP.spec_var list =
             | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
             | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
+            (* TODO: Get VarPerm for @lend and @frac *)
+            | VP_Lend -> []
+            | VP_Const _ -> []
           )
   in
   helper f

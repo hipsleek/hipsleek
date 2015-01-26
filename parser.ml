@@ -1510,6 +1510,8 @@ p_vp_ann:
   [[ `PZERO -> VP_Zero
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
+   | `PLEND -> VP_Lend
+   | `AT; `FRAC_LIT (f, _) -> VP_Const f
    (* | `PREF -> VP_Ref *)
   ]];
 

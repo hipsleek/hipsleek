@@ -1966,6 +1966,8 @@ and get_varperm_pure (f : formula) typ : spec_var list=
             | VP_Zero -> (res1@res2) (*TO CHECK: merge or AND ???*)
             | VP_Full -> (res1@res2)
             | VP_Value -> (res1@res2)
+            | VP_Lend -> (res1@res2)
+            | VP_Const _ -> (res1@res2)
           )
     | Or (f1,f2,_,_) ->
           let res1 = get_varperm_pure f1 typ in
@@ -1975,6 +1977,8 @@ and get_varperm_pure (f : formula) typ : spec_var list=
             | VP_Zero -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2)
             | VP_Full -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
             | VP_Value -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
+            | VP_Lend -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2)
+            | VP_Const _ -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
           )
     | _ -> []
   )
@@ -9830,6 +9834,9 @@ let normalize_varperm_x (f:formula) : formula =
                             ls1,(remove_dups_svl (xs@ls2)),ls3
                         | VP_Value ->
                             ls1,ls2,(remove_dups_svl (xs@ls3))
+                        (* TODO: Norm VarPerm for @lend and @frac *)
+                        | VP_Lend -> [], [], []
+                        | VP_Const _ -> [], [], []
                       )
                   | _ -> Error.report_error {Error.error_loc = no_pos;
                                              Error.error_text = "normalize_varperm: VarPerm not found";}

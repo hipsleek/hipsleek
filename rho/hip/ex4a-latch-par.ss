@@ -49,12 +49,12 @@ void main()
   CDL c = create_latch(1) with x'::cell<1> * y'::cell<2>;
   int r1,r2;
   r1=0; r2=0;
-  dprint;
+  //dprint;
   par
   {  
    // exists r1',r2'
    case {x,y} c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
-        dprint;
+        //dprint;
         x = new cell(1); 
         //dprint;
         y = new cell(2); 
@@ -65,14 +65,14 @@ void main()
   || 
     // exists x',y',r2'
     case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
-      dprint;
+      //dprint;
       await(c); 
       r1 = x.val; 
   || 
      // exists r1',x',y'
      else {r2} -> 
      //case {r2} c'::LatchOut{+y'::cell<2>}<> * c'::CNT<0> ->
-       dprint;
+       //dprint;
        await(c); r2 = y.val;
   }
   dprint;

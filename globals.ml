@@ -117,8 +117,10 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann =  VP_Zero | VP_Full | VP_Value 
-        (* | VP_Lend | VP_Const of int * int *) (* | VP_Ref * *)
+and vp_ann = 
+  | VP_Zero | VP_Full | VP_Value
+  | VP_Lend | VP_Const of Frac.frac 
+  (* | VP_Ref * *)
 
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
@@ -366,6 +368,8 @@ let string_of_vp_ann a =
     | VP_Zero -> "@zero"
     | VP_Full -> "@full"
     | VP_Value -> "@value"
+    | VP_Lend -> "@lend"
+    | VP_Const f -> "@" ^ (Frac.string_of_frac f) 
     (* | VP_Ref-> "@p_ref" *)
   )
 
