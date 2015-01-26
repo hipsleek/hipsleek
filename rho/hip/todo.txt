@@ -94,6 +94,31 @@ y_41'::cell<flted_47_1583>&flted_47_1584=1 & flted_47_1583=2&
 
  ]
 ================================================================
+# ex13.slk
+
+//(2)
+infer [@par] @full[x]  |- @lend[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(4)
+infer [@par] @lend[x]  |- @lend[x].
+// WRONG: expect @lend[x]
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(5)
+infer [@par] @lend[x]  |- @full[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
+
+//(6)
+infer [@par] @zero[x]  |- @lend[x].
+// WRONG :expect ERROR
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
 ================================================================
 ================================================================
 ================================================================

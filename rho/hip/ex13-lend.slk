@@ -1,28 +1,38 @@
   
+//(1)
 checkentail @full[x]  |- @lend[x].
 // expect @full[x]
 print residue.
 
+//(2)
 infer [@par] @full[x]  |- @lend[x].
-// expect ERROR
+// WRONG : expect ERROR
 print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
 
 infer [@par] @full[x]  |- @full[x].
 // expect @zero[x]
 print residue.
 
+//(4)
 infer [@par] @lend[x]  |- @lend[x].
-// expect @lend[x]
+// WRONG: expect @lend[x]
 print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
 
+//(5)
 infer [@par] @lend[x]  |- @full[x].
-// expect ERROR
+// WRONG : expect ERROR
 print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
 
+//(6)
 infer [@par] @zero[x]  |- @lend[x].
-// expect ERROR
+// WRONG :expect ERROR
 print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
 
+//(7)
 infer [@par] @zero[x]  |- @full[x].
 // expect ERROR
 print residue.
