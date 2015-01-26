@@ -8,6 +8,9 @@ open Cprinter
 open Cpure
 open Cformula
 
+let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
+let diff = Gen.BList.difference_eq eq_spec_var
+
 let rec merge_vperm_sets vps_list = 
   match vps_list with
   | [] -> empty_vperm_sets
@@ -129,3 +132,17 @@ let strip_vperm_formula (f: formula) : vperm_sets * formula =
   let f_b _ = None in
   let f_e _ = None in
   (vps, transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) f) 
+
+let norm_vperm_sets vps = 
+  let zero_vars = remove_dups vps.vperm_zero_vars in
+  let lend_vars = remove_dups vps.vperm_lend_vars in
+  let full_vars = remove_dups vps.vperm_full_vars in
+  { vps with
+    vperm_full_vars = full_vars;
+    vperm_lend_vars = diff lend_vars full_vars;
+    vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); }
+
+let norm_vperm_sets vps = 
+  let pr = string_of_vperm_sets in
+  Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
+  

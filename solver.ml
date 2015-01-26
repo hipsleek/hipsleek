@@ -5080,7 +5080,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
                 (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *)
                 (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *)
                 let vps, es_f = VPU.strip_vperm_formula es.es_formula in
-                { es with es_formula = es_f; es_vperm_sets = VPU.merge_vperm_sets [es.es_vperm_sets; vps] }
+                let vps = VPU.norm_vperm_sets (VPU.merge_vperm_sets [es.es_vperm_sets; vps]) in
+                { es with es_formula = es_f; es_vperm_sets = vps }
               else es in
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
               (* treat err states as unreachable states *)
