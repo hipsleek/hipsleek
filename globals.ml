@@ -117,7 +117,8 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Lend | VP_Ref *)
+and vp_ann =  VP_Zero | VP_Full | VP_Value 
+        (* | VP_Lend | VP_Const of int * int *) (* | VP_Ref * *)
 
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
