@@ -28,6 +28,7 @@ module CF = Cformula
 module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
+module VPU = VpermUtils
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
@@ -5061,20 +5062,25 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               let es = (CF.add_to_estate_with_steps es ss) in
               let _ = Debug.ninfo_hprint (add_str "es (before vperm)" pr) es no_pos in
               let es = if (!Globals.ann_vp) then
-                (*FILTER OUR VarPerm formula*)
-                let es_f = es.es_formula in
-                let es_f = normalize_varperm_formula es_f in
-                (* let vperm_fs, _ = filter_varperm_formula es_f in *)
-                (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)
-                let vars = CF.get_varperm_formula es_f VP_Zero in
-                let vars_val = CF.get_varperm_formula es_f VP_Value in
-                let vars_full = CF.get_varperm_formula es_f VP_Full in
-                let new_f = drop_varperm_formula es_f in
-                let _ = if ((vars_val@vars_full)!=[]) then
-                  print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.") in
-                (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *)
-                let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in
-                {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}
+                (* FILTER OUT VarPerm formula *)
+                (* let es_f = es.es_formula in                                                                      *)
+                (* let es_f = normalize_varperm_formula es_f in                                                     *)
+                (* (* let vperm_fs, _ = filter_varperm_formula es_f in *)                                           *)
+                (* (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)         *)
+                (* let vars = CF.get_varperm_formula es_f VP_Zero in                                                *)
+                (* let vars_val = CF.get_varperm_formula es_f VP_Value in                                           *)
+                (* let vars_full = CF.get_varperm_formula es_f VP_Full in                                           *)
+                (* let new_f = drop_varperm_formula es_f in                                                         *)
+                (* let _ = if ((vars_val@vars_full)!=[]) then                                                       *)
+                (*   print_endline ("\n[Warning] heap_entail_conjunct_lhs:                                          *)
+                (*                   the entail state should not include variable                                   *)
+                (*                   permissions other than " ^ (string_of_vp_ann VP_Zero) ^                        *)
+                (*                   ". They will be filtered out automatically.") in                               *)
+                (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *)
+                (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *)
+                (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *)
+                let vps, es_f = VPU.strip_vperm_formula es.es_formula in
+                { es with es_formula = es_f; es_vperm_sets = VPU.merge_vperm_sets [es.es_vperm_sets; vps] }
               else es in
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
               (* treat err states as unreachable states *)

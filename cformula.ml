@@ -9029,9 +9029,11 @@ think it is used to instantiate when folding.
   (* WN : isn't above the same as prior steps? *)
   es_is_normalizing : bool; (*normalizing process*)
 
-  (* to support permission of variables *)
+  (* VPERM: to support permission of variables *)
   (* denotes stack variables with possibly zero permission *)
+  (* TODO: To be removed *)
   es_var_zero_perm : CP.spec_var list;
+  es_vperm_sets: CP.vperm_sets;
 
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
@@ -9409,6 +9411,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_hp_rel = [] ;
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_var_zero_perm = [];
+  es_vperm_sets = CP.empty_vperm_sets;
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)

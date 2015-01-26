@@ -4,6 +4,7 @@ open Cpure
 open Mcpure
 
 module CP = Cpure
+module MCP = Mcpure
 
 type vperm_res = 
   | Fail of list_context

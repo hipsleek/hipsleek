@@ -43,7 +43,6 @@ type annot_arg = ImmAnn of ann
 (* initial arg map: view arg or annot arg *)
 type view_arg = SVArg of spec_var | AnnotArg of annot_arg
 
-
 let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
   else -1
@@ -14056,3 +14055,26 @@ let has_nondet_cond f =
   in
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
+
+(* To store vperm of variables *)
+type vperm_sets = {
+  vperm_zero_vars: spec_var list;
+  vperm_lend_vars: spec_var list;
+  vperm_value_vars: spec_var list;
+  vperm_full_vars: spec_var list;
+  vperm_frac_vars: (Frac.frac * spec_var list) list;
+}
+
+let empty_vperm_sets = {
+  vperm_zero_vars = [];
+  vperm_lend_vars = [];
+  vperm_value_vars = [];
+  vperm_full_vars = [];
+  vperm_frac_vars = [];
+}
+
+let string_of_vperm_sets vps = 
+  "@zero" ^ (!print_svl vps.vperm_zero_vars) ^
+  "@lend" ^ (!print_svl vps.vperm_lend_vars) ^
+  "@value" ^ (!print_svl vps.vperm_value_vars) ^
+  "@full" ^ (!print_svl vps.vperm_full_vars)
