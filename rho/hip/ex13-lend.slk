@@ -1,0 +1,17 @@
+  
+checkentail @full[x]  |- @lend[x].
+// expect @full[x]
+print residue.
+
+infer [@par] @full[x]  |- @value[x].
+// expect error
+print residue.
+
+/*
+# ex13.slk
+
+@value can be written ..
+@lend cannot be written ..
+
+
+*/

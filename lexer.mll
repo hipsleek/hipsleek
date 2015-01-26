@@ -375,6 +375,7 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@leak" { INFER_AT_CLASSIC }
+  | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
