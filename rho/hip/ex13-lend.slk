@@ -3,9 +3,102 @@ checkentail @full[x]  |- @lend[x].
 // expect @full[x]
 print residue.
 
-infer [@par] @full[x]  |- @value[x].
-// expect error
+infer [@par] @full[x]  |- @lend[x].
+// expect ERROR
 print residue.
+
+infer [@par] @full[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+
+infer [@par] @lend[x]  |- @lend[x].
+// expect @lend[x]
+print residue.
+
+infer [@par] @lend[x]  |- @full[x].
+// expect ERROR
+print residue.
+
+
+infer [@par] @zero[x]  |- @lend[x].
+// expect ERROR
+print residue.
+
+infer [@par] @zero[x]  |- @full[x].
+// expect ERROR
+print residue.
+
+infer [@par] @frac(c1,c2)[x]  |- @frac(c3,c4)[x].
+// c5/c6 = c1/c2 - c3/c4 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+infer [@par] @frac(c1,c2)[x]  |- @full[x].
+// c5/c6 = c1/c2 - 1/1 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+checkentail @frac(c1,c2)[x]  |- @lend[x].
+// c1>0
+// expect @frac(c1,c2)
+print residue.
+
+infer [@par] @frac(c1,c2)[x]  |- @lend[x].  ???
+// c1>0
+// expect ERROR
+print residue.
+
+
+infer [@par] @full(x) |- frac(c3,c4)[x]  
+// c5/c6 = 1/1 - 1/1 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+infer [@par] @lend(x) |- frac(c3,c4)[x]  @1/2[x,y,z]
+// expect ERROR
+print residue.
+
+
+@frac(0,c)(x) <--> @zero[x]
+
+==============================================
+
+infer [@par] @full[x]  |- @value[x].
+// expect @full[x]
+print residue.
+
+infer [@par] @lend[x]  |- @value[x].
+// expect @lend
+print residue.
+
+infer [@par] @zero[x]  |- @value[x].
+// expect @lend[x]
+print residue.
+
+checkentail @full[x]  |- @value[x].
+// expect @full[x]
+print residue.
+
+
+infer [@par] @value[x]  |- @value[x].
+// expect @value[x]
+print residue.cn
+
+infer [@par] @value[x]  |- @value[x].
+// expect @value[x]
+print residue.
+
+infer [@par] @value[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+
+infer [@par] @value[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+
 
 /*
 # ex13.slk
