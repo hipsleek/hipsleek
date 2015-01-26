@@ -1,0 +1,3 @@
+checkentail @lend[x] |- @lend[x].
+
+checkentail @1/2[x] |- @1/4[x].
