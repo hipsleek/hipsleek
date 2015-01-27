@@ -829,7 +829,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
       Some (omega_of_formula 8 pr_weak pr_strong pe1)
-    with | Illegal_Prover_Format s -> 
+    with | Illegal_Prover_Format s ->
         (* Debug.info_pprint "here1a" no_pos; *)
         None
     in
@@ -1050,7 +1050,7 @@ let pairwisecheck (pe : formula) : formula =
     let pe = drop_varperm_formula pe in
 
     (* translate out and drop array *)
-    let pe = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full pe in
+    let pe = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_full pe in
 
     match (omega_of_formula_old 21 pe) with
       | None -> pe

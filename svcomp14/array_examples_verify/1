@@ -2,60 +2,114 @@
 Starting z3... 
 
 translate_out_array_in_imply@1
-translate_out_array_in_imply inp1 : i=3 & a[i]=5
-translate_out_array_in_imply inp2 : a[3]=5
-translate_out_array_in_imply@1 EXIT:new ante:  i=3 & ((!(3=3) | a___3___=5)) & ((!(i=3) | a___i___=5)) & a[i]=5
-new conseq:  a___3___=5
+translate_out_array_in_imply inp1 : true
+translate_out_array_in_imply inp2 : a[i]=0
+translate_out_array_in_imply@1 EXIT:new ante:  true
+new conseq:  a[i]=0
 
 translate_out_array_in_imply@2
-translate_out_array_in_imply inp1 : (3!=3 | a___3___=5)
-translate_out_array_in_imply inp2 : a___3___=5
-translate_out_array_in_imply@2 EXIT:new ante:  (3!=3 | a___3___=5)
-new conseq:  a___3___=5
+translate_out_array_in_imply inp1 : true
+translate_out_array_in_imply inp2 : a___i___=0
+translate_out_array_in_imply@2 EXIT:new ante:  true
+new conseq:  a___i___=0
+Starting Omega.../usr/local/bin/oc
 
-Entail 1: Valid. 
+translate_back_array_in_one_formula@7@6@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@7 EXIT: a[i]=0
 
+simplify_raw@6@5@4@3
+simplify_raw inp1 : forall(i:a[i]=0)
+simplify_raw@6 EXIT: a[i]=0
 
-translate_out_array_in_imply@3
-translate_out_array_in_imply inp1 : i<=3 & 3<=i & a[i]=5
-translate_out_array_in_imply inp2 : a[3]=5
-translate_out_array_in_imply@3 EXIT:new ante:  i<=3 & 3<=i & ((!((3<=3 & 3<=3)) | a___3___=5)) & ((!((i<=3 & 3<=i)) | 
-a___i___=5)) & a[i]=5
-new conseq:  a___3___=5
+translate_back_array_in_one_formula@9@8@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@9 EXIT: a[i]=0
 
-translate_out_array_in_imply@4
-translate_out_array_in_imply inp1 : (!((3<=3 & 3<=3)) | a___3___=5)
-translate_out_array_in_imply inp2 : a___3___=5
-translate_out_array_in_imply@4 EXIT:new ante:  (!((3<=3 & 3<=3)) | a___3___=5)
-new conseq:  a___3___=5
+simplify_raw@8@5@4@3
+simplify_raw inp1 : a[i]=0
+simplify_raw@8 EXIT: a[i]=0
 
-Entail 2: Valid. 
+translate_back_array_in_one_formula@11@10@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@11 EXIT: a[i]=0
 
+simplify_raw@10@5@4@3
+simplify_raw inp1 : a[i]=0
+simplify_raw@10 EXIT: a[i]=0
 
-translate_out_array_in_imply@5
-translate_out_array_in_imply inp1 : ((i=3 | i=2)) & a[i]=5
-translate_out_array_in_imply inp2 : a[3]=5
-translate_out_array_in_imply@5 EXIT:new ante:  ((i=3 | i=2)) & ((!(((3=3 | 3=2))) | a___3___=5)) & ((!(((i=3 | i=2))) | 
-a___i___=5)) & a[i]=5
-new conseq:  a___3___=5
+translate_back_array_in_one_formula@13@12@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@13 EXIT: a[i]=0
 
-translate_out_array_in_imply@6
-translate_out_array_in_imply inp1 : (!(((3=3 | 3=2))) | a___3___=5)
-translate_out_array_in_imply inp2 : a___3___=5
-translate_out_array_in_imply@6 EXIT:new ante:  (!(((3=3 | 3=2))) | a___3___=5)
-new conseq:  a___3___=5
+simplify_raw@12@5@4@3
+simplify_raw inp1 : a[i]=0
+simplify_raw@12 EXIT: a[i]=0
 
-Entail 3: Valid. 
+translate_back_array_in_one_formula@15@14@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@15 EXIT: a[i]=0
 
-Stop z3... 6 invocations 
-SAT Count   : 6
-SAT % Hit   : 50.%
-IMPLY Count : 3
-IMPLY % Hit : 0.%
-Time(cache overhead) : 0.001316 (seconds)
+simplify_raw@14@5@4@3
+simplify_raw inp1 : a___i___=0
+simplify_raw@14 EXIT: a[i]=0
 
-!!! log(small):(0.014939,12)
-Total verification time: 0.074174 second(s)
-	Time spent in main process: 0.063617 second(s)
-	Time spent in child processes: 0.010557 second(s)
+translate_back_array_in_one_formula@17@16@5@4@3
+translate_back_array_in_one_formula inp1 : a___i___=0
+translate_back_array_in_one_formula@17 EXIT: a[i]=0
+
+simplify_raw@16@5@4@3
+simplify_raw inp1 : a[i]=0
+simplify_raw@16 EXIT: a[i]=0
+
+infer_pure_m_1@5@4@3
+infer_pure_m_1 inp1 :estate :( htrue&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [a],[a])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : true
+infer_pure_m_1 inp4 :rhs xpure : a[i]=0
+infer_pure_m_1 inp5 :inf vars :[a]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,Some( a[i]=0),[])
+
+translate_back_array_in_one_formula@18@4@3
+translate_back_array_in_one_formula inp1 : a[i]=0
+translate_back_array_in_one_formula@18 EXIT: a[i]=0
+
+infer_pure_m_2#1@4@3
+infer_pure_m_2#1 inp1 :estate :( es_formula: htrue&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars: [a]
+ es_infer_vars_rel: [],[a])
+infer_pure_m_2#1 inp2 :lhs xpure : true
+infer_pure_m_2#1 inp3 :lhs xpure0 : true
+infer_pure_m_2#1 inp4 :rhs xpure : a[i]=0
+infer_pure_m_2#1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( a[i]=0),[])
+
+infer_pure_top_level@3
+infer_pure_top_level inp1 : true
+infer_pure_top_level@3 EXIT:[(None,Some( a[i]=0), true)]
+
+translate_out_array_in_imply@19
+translate_out_array_in_imply inp1 : a___i___=0
+translate_out_array_in_imply inp2 : a___i___=0
+translate_out_array_in_imply@19 EXIT:new ante:  a___i___=0
+new conseq:  a___i___=0
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>htrue&a[i]=0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [a[i]=0]
+
+Stop z3... 4 invocations Stop Omega... 13 invocations 
+SAT Count   : 5
+SAT % Hit   : 80.%
+IMPLY Count : 5
+IMPLY % Hit : 40.%
+Time(cache overhead) : 7.1e-05 (seconds)
+
+!!! log(small):(0.048724,24)
+Total verification time: 0.104865 second(s)
+	Time spent in main process: 0.07937 second(s)
+	Time spent in child processes: 0.025495 second(s)
 

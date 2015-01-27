@@ -8718,7 +8718,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
             let (a0,c) =
               (function
                 | (n_a,n_c) -> (Translate_out_array_in_cpure_formula.drop_array_formula n_a, Translate_out_array_in_cpure_formula.drop_array_formula n_c))
-                  (Translate_out_array_in_cpure_formula.translate_out_array_in_imply a0 c)
+                  (Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_full a0 c)
             in
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
             let f a0 =

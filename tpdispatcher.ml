@@ -1805,8 +1805,8 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  let f = translate_out_array_in_one_formula f in
-  let f = drop_array_formula f in
+  let f = new_translate_out_array_in_one_formula_full f in
+  (*let f = drop_array_formula f in*)
   (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
   let sat_num = next_proof_no () in
@@ -1885,7 +1885,7 @@ let simplify_omega (f:CP.formula): CP.formula =
 let simplify (f : CP.formula) : CP.formula =
   (* proof_no := !proof_no + 1; *)
 
-  let f = Translate_out_array_in_cpure_formula.translate_out_array_in_one_formula_full f in
+  let f = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_full f in
 
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
@@ -2457,13 +2457,14 @@ let tp_imply_preprocess (ante: CP.formula) (conseq: CP.formula) : (bool option *
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_endline ("##Before process: ante: "^(Cprinter.string_of_pure_formula ante)^"\n conseq: "^(Cprinter.string_of_pure_formula conseq)) in *)
   let ante = translate_array_relation ante in
-  let n_ante,n_conseq = translate_out_array_in_imply ante conseq in
+  
+  let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (*let _ = print_endline ("Before Drop ante: "^(Cprinter.string_of_pure_formula n_ante)^" conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in*)
-  let n_ante = drop_array_formula n_ante in
-  let n_conseq = drop_array_formula n_conseq in
+  (* let n_ante = drop_array_formula n_ante in *)
+  (* let n_conseq = drop_array_formula n_conseq in *)
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)

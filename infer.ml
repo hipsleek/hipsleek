@@ -922,7 +922,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       CP.diff_svl hps iv_orig = []
   ) unk_heaps in
   if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
-  then 
+  then
     (* let _ = Debug.info_pprint "exit" no_pos in *)
     (None,None,[])
   else
@@ -934,8 +934,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
     else
       let _ = Debug.ninfo_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig no_pos in
       let iv = iv_orig(* @iv_lhs_rel *) in
-      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
-      let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
+      let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in
+      let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in
       let split_rhs = CP.split_conjunctions rhs_xpure in
       let rem_rhs = List.filter (fun c -> not(TP.imply_raw lhs_xpure c)) split_rhs in
       let rhs_xpure = CP.join_conjunctions rem_rhs in
@@ -1105,8 +1105,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
           (*   let quan_var = CP.diff_svl args iv in *)
           (*   TP.simplify_raw (CP.mkExists quan_var new_p None pos) *)
           (* else *)
-          new_p
-        (*simplify new_p iv*)
+          simplify new_p iv
         in
         let _ = DD.tinfo_hprint (add_str "new_p" !CP.print_formula) new_p pos in
         let _ = DD.tinfo_hprint (add_str "new_p_ass" !CP.print_formula) new_p_ass pos in

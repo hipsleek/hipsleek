@@ -19,6 +19,7 @@ infer [a]
    |- a[5]<0.
 print residue.
 
+
 // 6
 infer [a,i]
    true
@@ -73,8 +74,12 @@ print residue.
 infer [a]
   true
   |- 6 + a[3] > 1.
+print residue.
+
 
 // 15
 infer [a]
   true
   |- 6 + (a[3]) > 1.
+print residue.
+
