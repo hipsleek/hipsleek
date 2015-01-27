@@ -14073,8 +14073,19 @@ let empty_vperm_sets = {
   vperm_frac_vars = [];
 }
 
-let string_of_vperm_sets vps = 
-  "@zero" ^ (!print_svl vps.vperm_zero_vars) ^
-  "@lend" ^ (!print_svl vps.vperm_lend_vars) ^
-  "@value" ^ (!print_svl vps.vperm_value_vars) ^
-  "@full" ^ (!print_svl vps.vperm_full_vars)
+let string_of_vperm_sets vps =
+  let pr_set str set =
+    if Gen.is_empty set then ""
+    else str ^ (!print_svl set) 
+  in 
+  let full_vars = vps.vperm_full_vars in
+  let lend_vars = vps.vperm_lend_vars in
+  let value_vars = vps.vperm_value_vars in
+  let zero_vars = vps.vperm_zero_vars in
+  (pr_set "@full" full_vars) ^
+  (pr_set "@lend" lend_vars) ^
+  (pr_set "@value" value_vars) ^
+  (pr_set "@zero" zero_vars)
+
+
+

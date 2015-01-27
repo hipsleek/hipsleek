@@ -11,6 +11,11 @@ open Cformula
 let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
 let diff = Gen.BList.difference_eq eq_spec_var
 
+let is_Zero ann = 
+  match ann with
+  | VP_Zero -> true
+  | _ -> false
+
 let rec merge_vperm_sets vps_list = 
   match vps_list with
   | [] -> empty_vperm_sets

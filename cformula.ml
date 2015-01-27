@@ -10535,6 +10535,11 @@ let rec collect_pre_ho_vars ctx =
   | Ctx estate -> estate.es_ho_vars_map
   | OCtx (ctx1, ctx2) -> (collect_pre_ho_vars ctx1) @ (collect_pre_ho_vars ctx2) 
 
+let rec collect_pre_vperm_sets ctx = 
+  match ctx with
+  | Ctx estate -> [estate.es_vperm_sets]
+  | OCtx (ctx1, ctx2) -> (collect_pre_vperm_sets ctx1) @ (collect_pre_vperm_sets ctx2) 
+
 let rec collect_pre_heap ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_heap 

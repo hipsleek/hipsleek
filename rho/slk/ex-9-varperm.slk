@@ -1,3 +1,21 @@
-checkentail @lend[x,y] & @full[y, z] & @zero[x] |- @lend[x].
+checkentail true |- @zero[x, y].
 
-checkentail @1/2[x] |- @1/4[x].
+checkentail true |- @full[x] & @lend[y] & @zero[x, z].
+
+checkentail @full[x] |- true.
+print residue.
+
+checkentail @full[x] |- @full[x].
+print residue.
+
+checkentail @full[x] |- @lend[x].
+print residue.
+
+infer [@par] @full[x] |- @lend[x].
+print residue.
+
+checkentail @full[x] |- @value[x].
+print residue.
+
+checkentail @full[x] |- @zero[x].
+print residue.

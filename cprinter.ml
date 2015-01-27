@@ -3042,6 +3042,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           let trrel = collect_tr_rel ctx in
           let turel = collect_tu_rel ctx in
           let term_err = collect_term_err ctx in
+          let vperm_sets = collect_pre_vperm_sets ctx in
           fmt_open_vbox 0;
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
@@ -3051,6 +3052,8 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog [])) (hprel); 
           pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_spec_var pr_formula)) (lho);
+          pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) 
+            (pr_seq "" (fun vps -> fmt_string (CP.string_of_vperm_sets vps))) vperm_sets; 
           pr_wrap_test "inferred UTPost rel: " 
             (fun trrel -> Gen.is_empty trrel)  (pr_seq "" pr_trrel) trrel; 
           pr_wrap_test "inferred UTPre rel: " 
@@ -3502,7 +3505,8 @@ let pr_estate (es : entail_state) =
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_wrap_test "es_heap: " is_empty_heap pr_h_formula es.es_heap;
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
-  pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map); 
+  pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
+  pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> fmt_string (CP.string_of_vperm_sets vps)) es.es_vperm_sets; 
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   (* pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars; *)
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
@@ -3558,6 +3562,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
    if (es.es_var_zero_perm!=[]) then
      pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
+  pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> fmt_string (CP.string_of_vperm_sets vps)) es.es_vperm_sets;
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun x-> x) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   pr_wrap_test "es_proof_traces: " Gen.is_empty  (pr_seq "" (pr_pair_aux prtt_pr_formula pr_formula)) es.es_proof_traces;
@@ -3713,10 +3718,10 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+    | Ctx e -> [(e.es_vperm_sets,e.es_ho_vars_map,e.es_formula,e.es_heap,e.es_pure,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (vps,ho_map,f,eh,ep,(* ac, *)iv,ta,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
   begin
     fmt_open_vbox 0;
     let f1 = Cfout.tidy_print f in
@@ -3731,7 +3736,8 @@ let pr_context_short (ctx : context) =
 (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
 (*     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;   *)
     (* pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map; *)
-    pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map; 
+    pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map;
+    pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> fmt_string (CP.string_of_vperm_sets vps)) vps; 
 (*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
   
         (* pr_vwrap "es_trace: " pr_es_trace trace; *)
@@ -3763,12 +3769,13 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_templ_assume,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm,e.es_vperm_sets)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms) =
+  let pr (f,(* ac, *)iv,ta,ih,ip,ir,vperms,vps) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
+    pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> fmt_string (CP.string_of_vperm_sets vps)) vps; 
     pr_wrap_test "es_infer_vars/rel/templ: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
@@ -3793,7 +3800,8 @@ let pr_entail_state_short e =
   fmt_open_vbox 1;
   pr_formula_wrap e.es_formula;
   pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
-  pr_wrap_test "@zero:" Gen.is_empty  (pr_seq "" pr_spec_var) e.es_var_zero_perm;
+  pr_wrap_test "@zero:" Gen.is_empty (pr_seq "" pr_spec_var) e.es_var_zero_perm;
+  pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> fmt_string (CP.string_of_vperm_sets vps)) e.es_vperm_sets;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
   pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_templ;

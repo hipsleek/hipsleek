@@ -1492,7 +1492,7 @@ object (self)
       helper "@dfa"           INF_DFA;
       helper "@flow"          INF_FLOW;
       helper "@leak"          INF_CLASSIC;
-      helper "@par"          INF_PAR;
+      helper "@par"           INF_PAR;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
