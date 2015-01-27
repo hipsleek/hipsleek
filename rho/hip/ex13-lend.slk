@@ -38,6 +38,11 @@ infer [@par] @zero[x]  |- @full[x].
 // expect ERROR
 print residue.
 
+//(8)
+infer [@par] @full[x]  |- true.
+// expect ERROR
+print residue.
+
 /*
 infer [@par] @frac(c1,c2)[x]  |- @frac(c3,c4)[x].
 // c5/c6 = c1/c2 - c3/c4 

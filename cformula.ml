@@ -148,6 +148,7 @@ and rflow_formula = {
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
+                      (* formula_base_vperm : ? option *)
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
                       formula_base_and : one_formula list; (*to capture concurrent flows*)

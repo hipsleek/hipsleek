@@ -5,14 +5,14 @@ void main()
   int x,y;
   x=4; y=40;
   dprint;
-  par
+  par {x,y}
   {  
    // exists r1',r2'
-   case @full[x] ->
+  case {x} true ->
      x = x+1;
     dprint;
   || 
-   case @full[y] ->
+    else  ->
      y = y+22;
    dprint;
   }
