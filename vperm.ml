@@ -4,15 +4,120 @@ open Cpure
 open Mcpure
 open Gen
 
-module CP = Cpure
+(* module CP = Cpure *)
+module CF = Cformula
 module MCP = Mcpure
-module VPU = VpermUtils
+module MCD = Mcpure_D
+module CVP = CvpermUtils
+
+(******************************************************************************)
+
+let extract_vperm_b_formula bf = 
+  let (pf, _) = bf in
+  match pf with
+  | VarPerm vp -> Some vp
+  | _ -> None
+
+let extract_vperm_formula f = 
+  match f with
+  | BForm (bf, _) -> extract_vperm_b_formula bf
+  | _ -> None
+
+let strip_vperm_pure_only f =
+  let mf_ls = split_conjunctions f in
+  let (vps, other_p) = List.fold_left (fun (av, ap) f ->
+    let vp = extract_vperm_formula f in
+    match vp with
+    | Some vp -> (av @ [vp], ap)
+    | None -> (av, ap @ [f])) ([], []) mf_ls 
+  in
+  (CVP.merge_vperm_anns vps, join_conjunctions other_p)
+
+let def_lbl l = LO.is_common l
+
+let def_lbl l =
+  Debug.no_1 "def_lbl" (LO.string_of) string_of_bool def_lbl l
+
+let strip_vperm_list ls =
+  let rec aux xs =
+    match xs with
+    | [] -> ([], [])
+    | ((l, f) as ff)::xs ->
+      let (l0, r0) = aux xs in
+      let (l1, r1) =
+        if def_lbl l then
+          let (l2, f2) = strip_vperm_pure_only f in
+          ([l2], (l, f2))
+        else ([], ff)
+      in (l1 @ l0, r1::r0)
+  in aux ls
+
+let strip_vperm_pure_andlist ls =
+  List.fold_left (fun (av, af) f ->
+    match f with
+    | AndList ls -> 
+      let (vps, nls) = strip_vperm_list ls in
+      (av @ vps, (AndList nls)::af)
+    | _ ->
+      let vp, rf = strip_vperm_pure_only f in
+      (av @ [vp], af @ [rf])) ([], []) ls
+
+let strip_vperm_pure f =
+  let mf_ls = split_conjunctions f in
+  let (vps, fs) = strip_vperm_pure_andlist mf_ls in
+  (CVP.merge_vperm_sets vps, join_conjunctions fs)
+
+let strip_vperm_memo_grp mg =
+  let b_vperm, memo_grp_cons = List.fold_left (fun (av, am) mc ->
+    let vp = extract_vperm_b_formula mc.MCD.memo_formula in
+    match vp with
+    | Some vp -> (av @ [vp], am)
+    | None -> (av, am @ [mc])) ([], []) mg.MCD.memo_group_cons
+  in
+  let b_vps = CVP.merge_vperm_anns b_vperm in
+  let vps, memo_grp_slice = List.split (List.map 
+    (fun f -> strip_vperm_pure f) mg.MCD.memo_group_slice) in
+  let vps = CVP.merge_vperm_sets (b_vps::vps) in
+  (vps, { mg with
+    MCD.memo_group_cons = memo_grp_cons;
+    MCD.memo_group_slice = memo_grp_slice; })
+
+let strip_vperm_mix_formula (mf: MCP.mix_formula) =
+  match mf with
+  | MCP.OnePF f ->
+    let vps, f = strip_vperm_pure f in
+    (vps, MCP.OnePF f)
+  | MCP.MemoF mp -> 
+    let vps_list, mp = List.split (List.map strip_vperm_memo_grp mp) in
+    (CVP.merge_vperm_sets vps_list, MCP.MemoF mp)
+
+let strip_vperm_mix_formula mf =
+  let pr1 = string_of_vperm_sets in
+  let pr2 = !MCP.print_mix_formula in
+  Debug.no_1 "strip_vperm_mix_formula" pr2 (pr_pair pr1 pr2) 
+  strip_vperm_mix_formula mf
+
+let strip_vperm_formula (f: CF.formula) : vperm_sets * CF.formula =
+  let _, pure_f, _, _, _ = CF.split_components f in
+  let (vps, other_p) = strip_vperm_mix_formula pure_f in
+  (* Using transform_formula to update the pure part of f *)
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_h_f e = Some e in
+  let f_m mp = Some (MCP.memo_of_mix other_p) in
+  let f_a _ = None in
+  let f_p_f pf = Some (MCP.pure_of_mix other_p) in
+  let f_b _ = None in
+  let f_e _ = None in
+  (vps, CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) f) 
+
+(******************************************************************************)
 
 exception Vperm_Entail_Fail of (spec_var * vp_ann * vp_ann)
 
 type vperm_res = 
-  | Fail of list_context
-  | Succ of entail_state
+  | Fail of CF.list_context
+  | Succ of CF.entail_state
 
 let ann_set_of_vperm_sets vps = 
   let full_vars = List.map (fun v -> (v, VP_Full)) vps.vperm_full_vars in
@@ -38,7 +143,7 @@ let vperm_sets_of_ann_set ans =
         let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in
         { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] }
       end
-  in VPU.norm_vperm_sets (helper ans)
+  in CVP.norm_vperm_sets (helper ans)
 
 (* Pair LHS and RHS vp_ann sets        *)
 (* Return: pair sets, rem lhs, rem rhs *)
@@ -59,7 +164,7 @@ let vperm_entail_var es sv lhs_ann rhs_ann =
   | VP_Full ->
     begin match rhs_ann with
     | VP_Full -> VP_Zero
-    | VP_Lend -> if es.es_infer_obj # is_par then raise err else VP_Full 
+    | VP_Lend -> if es.CF.es_infer_obj # is_par then raise err else VP_Full 
     | VP_Value -> VP_Full
     | VP_Zero -> VP_Full
     | _ -> lhs_ann
@@ -89,7 +194,7 @@ let vperm_entail_var es sv lhs_ann rhs_ann =
 
 let mkFailCtx_vp msg estate rhs_p pos = 
   (* let msg = "Error in VPerm entailment: " ^ msg in *)
-  let rhs = (formula_of_mix_formula rhs_p pos) in
+  let rhs = CF.formula_of_mix_formula rhs_p pos in
   let rhs_b = extr_rhs_b rhs in
   let estate = { estate with es_formula = substitute_flow_into_f !Exc.GTable.top_flow_int estate.es_formula } in
   mkFailCtx_in (
@@ -101,14 +206,14 @@ let vperm_entail_rhs estate lhs_p rhs_p pos =
   else
     let pr_vp = pr_pair !print_sv string_of_vp_ann in
     let lhs_vperm_sets = estate.es_vperm_sets in
-    let rhs_vperm_sets, _ = VPU.strip_vperm_mix_formula rhs_p in
-    let rhs_vperm_sets = VPU.norm_vperm_sets rhs_vperm_sets in
+    let rhs_vperm_sets, _ = strip_vperm_mix_formula rhs_p in
+    let rhs_vperm_sets = CVP.norm_vperm_sets rhs_vperm_sets in
 
     let las = ann_set_of_vperm_sets lhs_vperm_sets in
     let ras = ann_set_of_vperm_sets rhs_vperm_sets in
     let pas, rem_las, rem_ras = pair_ann_sets las ras in
 
-    let non_zero_vps = List.find_all (fun (_, ann) -> not (VPU.is_Zero ann)) rem_ras in
+    let non_zero_vps = List.find_all (fun (_, ann) -> not (CVP.is_Zero ann)) rem_ras in
     if (non_zero_vps != []) then
       let msg = 
         "Mismatch non-zero variable permission in consequent " ^

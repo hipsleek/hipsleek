@@ -28,7 +28,8 @@ module CF = Cformula
 module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
-module VPU = VpermUtils
+module VP = Vperm
+module CVP = CvpermUtils
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
@@ -5079,8 +5080,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
                 (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *)
                 (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *)
                 (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *)
-                let vps, es_f = VPU.strip_vperm_formula es.es_formula in
-                let vps = VPU.norm_vperm_sets (VPU.merge_vperm_sets [es.es_vperm_sets; vps]) in
+                let vps, es_f = VP.strip_vperm_formula es.es_formula in
+                let vps = CVP.norm_vperm_sets (CVP.merge_vperm_sets [es.es_vperm_sets; vps]) in
                 { es with es_formula = es_f; es_vperm_sets = vps }
               else es in
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
