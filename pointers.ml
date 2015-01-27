@@ -909,7 +909,7 @@ let rec trans_specs_x specs new_params flags pos =
       else (h,p,ex_vars)
   ) (Iformula.HTrue,Ipure.mkTrue pos,[]) tmp
   in
-  let post = Iformula.mkBase_wo_flow post_h post_p [] pos in
+  let post = Iformula.mkBase_wo_flow post_h post_p IvpermUtils.empty_vperm_sets [] pos in
   (* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
   (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in

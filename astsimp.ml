@@ -31,6 +31,7 @@ module Chk = Checks
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
 
+module IVP = IvpermUtils
 
 type trans_exp_type =
   (C.exp * typ)
@@ -326,6 +327,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
       {
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
+        IF.formula_base_vperm = vp;
         IF.formula_base_flow = fl0;
         IF.formula_base_and = a0;
         IF.formula_base_pos = l0
@@ -343,6 +345,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_heap = h0;
               IF.formula_exists_qvars = tmp1;
               IF.formula_exists_pure = p0;
+              IF.formula_exists_vperm = vp;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_and = a1;
               IF.formula_exists_pos = l0;
@@ -3756,10 +3759,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
-  let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
+  let c_hd0, c_guard0, vp0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
-  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure  c_fl0 [] no_pos in
+  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
@@ -3776,7 +3779,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (n_tl,c_head_norm) = trans_head new_head fnames quant n_tl in
   let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
-    let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos)  c_fl0 [] no_pos in
+    let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
     snd (trans_head new_head (Gen.BList.remove_dups_eq (=)  rhs_fnames) quant n_tl)
   else c_head_norm in
   (* free vars in RHS but not LHS *)
@@ -6562,6 +6565,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_qvars = qvars;
             IF.formula_exists_heap = h;
             IF.formula_exists_pure = p;
+            IF.formula_exists_vperm = vp;
             IF.formula_exists_flow = fl;
             IF.formula_exists_and = a;
             IF.formula_exists_pos = pos} -> (
@@ -6576,6 +6580,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let f1 = IF.Base ( {
                 IF.formula_base_heap = h;
                 IF.formula_base_pure = p;
+                IF.formula_base_vperm = vp;
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
                 IF.formula_base_pos = pos; }) in
@@ -7189,12 +7194,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       (n_tl, CF.mkBase nh np nt nfl na pos, newvars)
   | IF.Exists {IF.formula_exists_heap = h; 
                IF.formula_exists_pure = p;
+               IF.formula_exists_vperm = vp;
                IF.formula_exists_flow = fl;
                IF.formula_exists_qvars = qvars;
                IF.formula_exists_and = a;
                IF.formula_exists_pos = pos} ->
       let base ={IF.formula_base_heap = h;
                  IF.formula_base_pure = p;
+                 IF.formula_base_vperm = vp;
                  IF.formula_base_flow = fl;
                  IF.formula_base_and = a;
                  IF.formula_base_pos = pos;} in 
@@ -7838,7 +7845,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       (string_of_ident_list idents) in
     Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
-  let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
+  let rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let _ = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
     let heap = (*if !Globals.allow_mem then heap else*) Immutable.normalize_h_formula heap false in 
     (*let _ = print_string("After Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
@@ -7846,7 +7853,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (*let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in*)
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)
-    let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap  f.IF.formula_pure top_flow [] evars f.IF.formula_pos in
+    let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap f.IF.formula_pure IVP.empty_vperm_sets top_flow [] evars f.IF.formula_pos in
     let tmp_a = List.map (func h_evars) a in
     let rec split3 ls = match ls with
       | [] -> [],[],[]
@@ -7879,7 +7886,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
       let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
       (to_evars,to_expl))in
-    let result = IF.mkExists tmp_evars new_h new_p fl new_a pos in
+    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a pos in
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then 
       Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
@@ -7892,8 +7899,12 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
           let f2,l2,expl2 = (helper b.IF.formula_or_f2) in
           (IF.Or {b with IF.formula_or_f1 = f1; IF.formula_or_f2 = f2}, 
           Gen.BList.remove_dups_eq (=) (l1@l2),(Gen.BList.remove_dups_eq (=) (expl1@expl2)))
-    | IF.Base b -> normalize_base  b.IF.formula_base_heap b.IF.formula_base_pure  b.IF.formula_base_flow  b.IF.formula_base_and [] b.IF.formula_base_pos
-    | IF.Exists b-> normalize_base b.IF.formula_exists_heap  b.IF.formula_exists_pure b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_qvars b.IF.formula_exists_pos in
+    | IF.Base b -> normalize_base 
+        b.IF.formula_base_heap b.IF.formula_base_pure b.IF.formula_base_vperm 
+        b.IF.formula_base_flow b.IF.formula_base_and [] b.IF.formula_base_pos
+    | IF.Exists b -> normalize_base 
+        b.IF.formula_exists_heap b.IF.formula_exists_pure b.IF.formula_exists_vperm
+        b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_qvars b.IF.formula_exists_pos in
   helper f    
 
 (* AN HOA : TODO CECK *)

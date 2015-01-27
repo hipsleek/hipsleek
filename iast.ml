@@ -15,6 +15,7 @@ module P = Ipure
 module Err = Error
 module CP = Cpure
 module LO = Label_only.LOne
+module VP = IvpermUtils
 
 type typed_ident = (typ * ident)
 
@@ -1152,7 +1153,7 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst po
         hp_part_vars = [];
         hp_root_pos = 0;
         hp_is_pre = true;
-        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
     }
     in
     let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
@@ -1180,7 +1181,7 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst po
         hp_part_vars = [];
         hp_root_pos = 0;
         hp_is_pre = false;
-        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
     in
     let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
@@ -2956,7 +2957,7 @@ let gen_normalize_lemma_comb ddef =
   coercion_exact = false;
   coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
-  coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
+  coercion_body = F. mkBase (gennode perm3 args1) pure VP.empty_vperm_sets top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE; (*default. should improve*)
@@ -2975,7 +2976,7 @@ let gen_normalize_lemma_comb ddef =
   coercion_name = lem_name;
   coercion_exact = false;
   coercion_infer_vars = [];
-  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
+  coercion_head = F.mkBase (gennode perm3 args) pure VP.empty_vperm_sets top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
 
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };

@@ -13,6 +13,7 @@ open Perm
 
 module F = Iformula
 module P = Ipure
+module VP = IvpermUtils
 module E1 = Error
 module I = Iast
 module Ts = Tree_shares.Ts
@@ -701,8 +702,12 @@ let peek_star =
    SHGram.Entry.of_parser "peek_star"
        (fun strm ->
            match Stream.npeek 3 strm with
-             |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> raise Stream.Failure
-             |[STAR,_;OPAREN,_;_] -> raise Stream.Failure
+             | [AND,_;IDENTIFIER id,_; COLONCOLON,_] -> raise Stream.Failure
+             | [STAR,_;OPAREN,_;_] -> raise Stream.Failure
+             | [STAR,_;PFULL,_;_] -> raise Stream.Failure
+             | [STAR,_;PLEND,_;_] -> raise Stream.Failure
+             | [STAR,_;PVALUE,_;_] -> raise Stream.Failure
+             | [STAR,_;PZERO,_;_] -> raise Stream.Failure
              | _ -> ())                   
              
 let peek_heap_and = 
@@ -1569,21 +1574,22 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 (* seem _loc 2 is empty *)
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]
-  |  [ dc=SELF; `ANDWORD; oc=SELF   -> dc]
-  |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
+    [ dc=SELF; `ORWORD; oc=SELF -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]
+  | [ dc=SELF; `ANDWORD; oc=SELF -> dc]
+  | [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
-   [ cc=core_constr_and             -> cc
-   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and   -> 
+    [ cc=core_constr_and -> cc
+    | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and -> 
 	  (match cc with
-      | F.Base ({F.formula_base_heap = h;
-               F.formula_base_pure = p;
-               F.formula_base_flow = fl;
-			   F.formula_base_and = a;
-                }) -> F.mkExists ocl h p fl a (get_pos_camlp4 _loc 1)
+      | F.Base ({
+          F.formula_base_heap = h;
+          F.formula_base_pure = p;
+          F.formula_base_vperm = vp;
+          F.formula_base_flow = fl;
+          F.formula_base_and = a; }) -> 
+        F.mkExists ocl h p vp fl a (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
-  
-   ]
+    ]
   ];
 
 core_constr_and : [[ 
@@ -1601,22 +1607,47 @@ core_constr_conjunctions: [ "core_constr_and" LEFTA
 and_core_constr:
   [
     [ dl = pure_constr; `CONSTR; f = core_constr  ->
-       let h,p,fl,_ = F.split_components f in
-       let pos = (get_pos_camlp4 _loc 2) in 
-       F.mkOneFormula h p dl None pos
+      let h,p,_,fl,_ = F.split_components f in
+      let pos = (get_pos_camlp4 _loc 2) in 
+      F.mkOneFormula h p dl None pos
     ]
   ];
 
 core_constr:
   [
-    [ pc= pure_constr ; fc= opt_flow_constraints; fb=opt_branches ->
-       let pos = (get_pos_camlp4 _loc 1) in
-       F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
-    | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
-       let pos = (get_pos_camlp4 _loc 2) in 
-       F.mkBase hc (P.mkAnd pc fb pos) fc [] pos
+    [ pc= pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
+      let pos = (get_pos_camlp4 _loc 1) in
+      F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
+    | vp= vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
+      let pos = (get_pos_camlp4 _loc 1) in
+      F.formula_of_vperm_pure_with_flow_htrue (P.mkAnd pc fb pos) vp fc [] pos
+    | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
+      let pos = (get_pos_camlp4 _loc 1) in 
+      F.mkBase hc (P.mkAnd pc fb pos) vp fc [] pos
     ]
   ];
+
+opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];
+
+star_vperm_constr: [[ `STAR; vp = vperm_constr -> vp ]];
+
+vperm_constr:
+  [[ vp = SELF; `STAR; vc = single_vperm_constr -> 
+      VP.merge_vperm_sets [vp; vc] 
+   | vc = single_vperm_constr -> vc
+  ]];
+
+single_vperm_constr: 
+  [[ ann = p_vp_ann ; `OSQUARE; ls = id_list; `CSQUARE ->
+      let trans_primed t =
+      if  String.contains t '\'' then
+        (* Remove the primed in the identifier *)
+        (Str.global_replace (Str.regexp "[']") "" t, Primed)
+      else (t, Unprimed)
+      in
+      let ls = List.map trans_primed ls in
+      VP.create_vperm_sets ann ls
+  ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
@@ -1670,7 +1701,7 @@ heap_rw:
 
 heap_wr:
   [[   
-     shc=SELF; peek_star; `STAR;  hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
+     shc=SELF; peek_star; `STAR; hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
@@ -1992,16 +2023,16 @@ cexp_w:
     | lc=SELF; `NOTINLIST; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false
-    | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE ->
-        let func t =
-          if  String.contains t '\'' then 
-            (* Remove the primed in the identifier *)
-            (Str.global_replace (Str.regexp "[']") "" t,Primed)
-          else (t,Unprimed)
-        in
-        let ls = List.map func ls in
-        let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in
-        set_slicing_utils_pure_double f false
+    (* | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE ->                                       *)
+    (*     let func t =                                                                         *)
+    (*       if  String.contains t '\'' then                                                    *)
+    (*         (* Remove the primed in the identifier *)                                        *)
+    (*         (Str.global_replace (Str.regexp "[']") "" t,Primed)                              *)
+    (*       else (t,Unprimed)                                                                  *)
+    (*     in                                                                                   *)
+    (*     let ls = List.map func ls in                                                         *)
+    (*     let f = cexp_list_to_pure (fun ls -> P.VarPerm(ct,ls,(get_pos_camlp4 _loc 1))) ls in *)
+    (*     set_slicing_utils_pure_double f false                                                *)
     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
         set_slicing_utils_pure_double f false
@@ -2798,7 +2829,7 @@ hp_decl:[[
         hp_root_pos = root_pos;
         hp_part_vars = parts;
         hp_is_pre = true;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
     }
   | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
@@ -2811,7 +2842,7 @@ hp_decl:[[
         hp_part_vars = parts;
         hp_root_pos = root_pos;
         hp_is_pre = false;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
     }
 ]];
 

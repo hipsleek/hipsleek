@@ -145,7 +145,7 @@ let add_ihprel iprog chp_dclrs=
                     Iast.hp_part_vars = chp.C.hp_part_vars;
                     Iast.hp_root_pos = chp.C.hp_root_pos;
                     Iast.hp_is_pre = chp.C.hp_is_pre;
-                    Iast.hp_formula = Iformula.mkBase Iformula.HEmp (Ipure.mkTrue no_pos) top_flow [] no_pos;
+                    Iast.hp_formula = Iformula.mkBase Iformula.HEmp (Ipure.mkTrue no_pos) IvpermUtils.empty_vperm_sets top_flow [] no_pos;
                 }
                 in
                 process_one rest (res@[n_ihp])

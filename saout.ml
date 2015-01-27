@@ -119,7 +119,7 @@ let syn_hprel_x crem_hprels irem_hprels=
                     I.hp_part_vars = chp.C.hp_part_vars;
                     I.hp_root_pos = chp.C.hp_root_pos;
                     I.hp_is_pre = chp.C.hp_is_pre;
-                    I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) top_flow [] no_pos;
+                    I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) IvpermUtils.empty_vperm_sets top_flow [] no_pos;
                 }
                 in
                 process_one rest (res@[n_ihp])

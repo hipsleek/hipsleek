@@ -2317,36 +2317,44 @@ match hf with
   | _ ->  IP.Bag([],no_pos),[],[]
 
 let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp): 
-IF.formula * (IP.formula list) * ((ident * (IP.ann list)) list) * ((ident * (IP.exp list)) list) = 
-match f with
-  | IF.Base ({IF.formula_base_heap = h;
-             IF.formula_base_pure = p;
-             IF.formula_base_flow = fl;
-             IF.formula_base_and = a;
-             IF.formula_base_pos = pos;})-> let new_exp,fieldl,fieldv = infer_mem_from_heap h prog in
-                                            let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
-                                           let and_p = IP.And(p,new_p,pos) in
-                                           IF.Base{IF.formula_base_heap = h;
-                                                   IF.formula_base_pure = and_p;
-                                                   IF.formula_base_flow = fl;
-                                                   IF.formula_base_and = a;
-                                                   IF.formula_base_pos = pos;
-                                                  },[p],fieldl,fieldv
-  | IF.Exists ({IF.formula_exists_qvars = qvars;
-                IF.formula_exists_heap = h;
-                IF.formula_exists_pure = p;
-                IF.formula_exists_flow = fl;
-                IF.formula_exists_and = a;
-                IF.formula_exists_pos = pos;})-> let new_exp,fieldl,fieldv = infer_mem_from_heap h prog in
-                                            let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
-                                           let and_p = IP.And(p,new_p,pos) in
-                                           IF.Exists{IF.formula_exists_qvars = qvars;
-                                                     IF.formula_exists_heap = h;   
-                                                     IF.formula_exists_pure = and_p;
-                                                     IF.formula_exists_flow = fl;
-                                                     IF.formula_exists_and = a;
-                                                     IF.formula_exists_pos = pos;
-                                                    },[p],fieldl,fieldv
+  IF.formula * (IP.formula list) * ((ident * (IP.ann list)) list) * ((ident * (IP.exp list)) list) = 
+  match f with
+  | IF.Base ({
+      IF.formula_base_heap = h;
+      IF.formula_base_pure = p;
+      IF.formula_base_vperm = vp;
+      IF.formula_base_flow = fl;
+      IF.formula_base_and = a;
+      IF.formula_base_pos = pos;}) -> 
+    let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
+    let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
+    let and_p = IP.And(p,new_p,pos) in
+    IF.Base {
+      IF.formula_base_heap = h;
+      IF.formula_base_pure = and_p;
+      IF.formula_base_vperm = vp;
+      IF.formula_base_flow = fl;
+      IF.formula_base_and = a;
+      IF.formula_base_pos = pos; }, [p], fieldl, fieldv
+  | IF.Exists ({
+      IF.formula_exists_qvars = qvars;
+      IF.formula_exists_heap = h;
+      IF.formula_exists_pure = p;
+      IF.formula_exists_vperm = vp;
+      IF.formula_exists_flow = fl;
+      IF.formula_exists_and = a;
+      IF.formula_exists_pos = pos;}) -> 
+    let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
+    let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
+    let and_p = IP.And(p,new_p,pos) in
+    IF.Exists {
+      IF.formula_exists_qvars = qvars;
+      IF.formula_exists_heap = h;
+      IF.formula_exists_pure = and_p;
+      IF.formula_exists_vperm = vp;
+      IF.formula_exists_flow = fl;
+      IF.formula_exists_and = a;
+      IF.formula_exists_pos = pos; }, [p], fieldl, fieldv
   | IF.Or ({IF.formula_or_f1 = f1;
             IF.formula_or_f2 = f2;
            IF.formula_or_pos = pos;}) ->  
