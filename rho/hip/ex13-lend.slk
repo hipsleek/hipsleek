@@ -10,6 +10,7 @@ infer [@par] @full[x]  |- @lend[x].
 print residue.
 // <1>emp&{FLOW,(4,5)=__norm#E}[]
 
+//(3)
 infer [@par] @full[x]  |- @full[x].
 // expect @zero[x]
 print residue.

@@ -53,13 +53,13 @@ let rec pair_ann_sets lhs_as rhs_as =
       (vl, lhs_ann, rhs_ann)::ps, ls, rem_rs
     with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
-let vperm_entail_var sv lhs_ann rhs_ann = 
+let vperm_entail_var es sv lhs_ann rhs_ann = 
   let err = Vperm_Entail_Fail (sv, lhs_ann, rhs_ann) in
   match lhs_ann with
   | VP_Full ->
     begin match rhs_ann with
     | VP_Full -> VP_Zero
-    | VP_Lend -> if Globals.infer_const_obj # is_par then raise err else VP_Full 
+    | VP_Lend -> if es.es_infer_obj # is_par then raise err else VP_Full 
     | VP_Value -> VP_Full
     | VP_Zero -> VP_Full
     | _ -> lhs_ann
@@ -117,7 +117,7 @@ let vperm_entail_rhs estate lhs_p rhs_p pos =
       Fail fctx
     else
       try
-        let res_vps = List.map (fun (v, la, ra) -> (v, vperm_entail_var v la ra)) pas in
+        let res_vps = List.map (fun (v, la, ra) -> (v, vperm_entail_var estate v la ra)) pas in
         let estate = { estate with es_vperm_sets = vperm_sets_of_ann_set (rem_las @ res_vps) }
         in Succ estate
       with (Vperm_Entail_Fail (sv, lhs_ann, rhs_ann)) ->
