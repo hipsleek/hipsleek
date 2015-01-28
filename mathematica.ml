@@ -388,7 +388,7 @@ let rec math_of_b_formula b : string =
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _
-  | CP.VarPerm _
+  (* | CP.VarPerm _ *)
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

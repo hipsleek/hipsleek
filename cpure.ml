@@ -245,7 +245,7 @@ and p_formula =
         (* do not substitute or rename here!!!! *)
         (* NOTE: currently work with Redlog only*)
         (* TO DO: filter out VarPerm before discharge*)
-  | VarPerm of (vp_ann * (spec_var list) * loc) (*list of (primed) variables*)
+  (* | VarPerm of (vp_ann * (spec_var list) * loc) (*list of (primed) variables*) *)
   (* list formulas *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
@@ -1254,34 +1254,34 @@ and all_vars (f : formula) : spec_var list =
 (*typ=None => choose all perm vars
   typ = Some ct => choose certain type
 *)
-and varperm_of_formula (f : formula) typ : spec_var list =
-  let rec helper f typ =
-    (match f with
-      | BForm (b,_) -> varperm_of_b_formula b typ
-      | And (p1, p2,_) -> (helper p1 typ)@(helper p2 typ)
-      | AndList b-> fold_l_snd (fun c-> helper c typ) b
-      | Or (p1, p2, _,_) -> 
-            (*TO CHECK: may use approximation*)
-            let ls1 = helper p1 typ in
-            let ls2 = helper p2 typ in
-            ls1@ls2
-      | Not (nf, _,_) -> helper nf typ
-      | Forall (qid, qf, _,_) -> helper qf typ
-      | Exists (qid, qf, _,_) -> helper qf typ)
-  in helper f typ
+(* and varperm_of_formula (f : formula) typ : spec_var list = *)
+(*   let rec helper f typ =                                   *)
+(*     (match f with                                          *)
+(*       | BForm (b,_) -> varperm_of_b_formula b typ          *)
+(*       | And (p1, p2,_) -> (helper p1 typ)@(helper p2 typ)  *)
+(*       | AndList b-> fold_l_snd (fun c-> helper c typ) b    *)
+(*       | Or (p1, p2, _,_) ->                                *)
+(*             (*TO CHECK: may use approximation*)            *)
+(*             let ls1 = helper p1 typ in                     *)
+(*             let ls2 = helper p2 typ in                     *)
+(*             ls1@ls2                                        *)
+(*       | Not (nf, _,_) -> helper nf typ                     *)
+(*       | Forall (qid, qf, _,_) -> helper qf typ             *)
+(*       | Exists (qid, qf, _,_) -> helper qf typ)            *)
+(*   in helper f typ                                          *)
 
 (*typ=None => choose all perm vars
   typ = Some ct => choose certain type
 *)
-and varperm_of_b_formula (bf : b_formula) typ : spec_var list =
-  let (pf,_) = bf in
-  (match pf with
-    | VarPerm (t,ls,_) -> 
-          (match typ with
-            | None -> ls
-            | Some ct ->
-                  if (ct==t) then ls else [])
-    | _ -> [])
+(* and varperm_of_b_formula (bf : b_formula) typ : spec_var list = *)
+(*   let (pf,_) = bf in                                            *)
+(*   (match pf with                                                *)
+(*     | VarPerm (t,ls,_) ->                                       *)
+(*           (match typ with                                       *)
+(*             | None -> ls                                        *)
+(*             | Some ct ->                                        *)
+(*                   if (ct==t) then ls else [])                   *)
+(*     | _ -> [])                                                  *)
 
 
 and remove_qvar qid qf =
@@ -1345,7 +1345,7 @@ and bfv (bf : b_formula) =
           let vid = r in
 	  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 	      (* An Hoa *)
-    | VarPerm (t,ls,_) -> ls
+    (* | VarPerm (t,ls,_) -> ls *)
     | LexVar l_info ->
           List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
 
@@ -1941,68 +1941,68 @@ and is_eq_linking_bform (b : b_formula) : bool =
 	    | _ -> false)
     | _ -> false
 
-and is_varperm (f : formula) : bool=
-  (match f with
-    | BForm (b,_) -> is_varperm_b b
-    | _ -> false
-  )
+(* and is_varperm (f : formula) : bool= *)
+(*   (match f with                      *)
+(*     | BForm (b,_) -> is_varperm_b b  *)
+(*     | _ -> false                     *)
+(*   )                                  *)
 
-and is_varperm_of_typ (f : formula) typ : bool=
-  (match f with
-    | BForm (b,_) -> is_varperm_of_typ_b b typ
-    | _ -> false
-  )
+(* and is_varperm_of_typ (f : formula) typ : bool= *)
+(*   (match f with                                 *)
+(*     | BForm (b,_) -> is_varperm_of_typ_b b typ  *)
+(*     | _ -> false                                *)
+(*   )                                             *)
 
-and get_varperm_pure (f : formula) typ : spec_var list=
-  (match f with
-    | BForm (b,_) -> get_varperm_b b typ
-    | AndList ls ->
-        List.concat (List.map (fun (_,fi) -> get_varperm_pure fi typ) ls)
-    | And (f1,f2,_) ->
-          let res1 = get_varperm_pure f1 typ in
-          let res2 = get_varperm_pure f2 typ in
-          (match typ with
-            | VP_Zero -> (res1@res2) (*TO CHECK: merge or AND ???*)
-            | VP_Full -> (res1@res2)
-            | VP_Value -> (res1@res2)
-            | VP_Lend -> (res1@res2)
-            | VP_Const _ -> (res1@res2)
-          )
-    | Or (f1,f2,_,_) ->
-          let res1 = get_varperm_pure f1 typ in
-          let res2 = get_varperm_pure f2 typ in
-          (*approximation*)
-          (match typ with
-            | VP_Zero -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2)
-            | VP_Full -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
-            | VP_Value -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
-            | VP_Lend -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2)
-            | VP_Const _ -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2
-          )
-    | _ -> []
-  )
+(* and get_varperm_pure (f : formula) typ : spec_var list=                         *)
+(*   (match f with                                                                 *)
+(*     | BForm (b,_) -> get_varperm_b b typ                                        *)
+(*     | AndList ls ->                                                             *)
+(*         List.concat (List.map (fun (_,fi) -> get_varperm_pure fi typ) ls)       *)
+(*     | And (f1,f2,_) ->                                                          *)
+(*           let res1 = get_varperm_pure f1 typ in                                 *)
+(*           let res2 = get_varperm_pure f2 typ in                                 *)
+(*           (match typ with                                                       *)
+(*             | VP_Zero -> (res1@res2) (*TO CHECK: merge or AND ???*)             *)
+(*             | VP_Full -> (res1@res2)                                            *)
+(*             | VP_Value -> (res1@res2)                                           *)
+(*             | VP_Lend -> (res1@res2)                                            *)
+(*             | VP_Const _ -> (res1@res2)                                         *)
+(*           )                                                                     *)
+(*     | Or (f1,f2,_,_) ->                                                         *)
+(*           let res1 = get_varperm_pure f1 typ in                                 *)
+(*           let res2 = get_varperm_pure f2 typ in                                 *)
+(*           (*approximation*)                                                     *)
+(*           (match typ with                                                       *)
+(*             | VP_Zero -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2) *)
+(*             | VP_Full -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2     *)
+(*             | VP_Value -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2    *)
+(*             | VP_Lend -> Gen.BList.remove_dups_eq eq_spec_var_ident (res1@res2) *)
+(*             | VP_Const _ -> Gen.BList.intersect_eq eq_spec_var_ident res1 res2  *)
+(*           )                                                                     *)
+(*     | _ -> []                                                                   *)
+(*   )                                                                             *)
 
-and get_varperm_b (b : b_formula) typ: spec_var list =
-  let (pf, il) = b in
-  match pf with
-    | VarPerm (ct,ls,_) -> 
-          if (ct==typ) then ls
-          else []
-    | _ -> []
+(* and get_varperm_b (b : b_formula) typ: spec_var list =                          *)
+(*   let (pf, il) = b in                                                           *)
+(*   match pf with                                                                 *)
+(*     | VarPerm (ct,ls,_) ->                                                      *)
+(*           if (ct==typ) then ls                                                  *)
+(*           else []                                                               *)
+(*     | _ -> []                                                                   *)
 
-and is_varperm_b (b : b_formula) : bool =
-  let (pf, il) = b in
-  match pf with
-    | VarPerm _ -> true
-    | _ -> false
+(* and is_varperm_b (b : b_formula) : bool =                                       *)
+(*   let (pf, il) = b in                                                           *)
+(*   match pf with                                                                 *)
+(*     | VarPerm _ -> true                                                         *)
+(*     | _ -> false                                                                *)
 
-and is_varperm_of_typ_b (b : b_formula) typ: bool =
-  let (pf, il) = b in
-  match pf with
-    | VarPerm (ct,_,_) -> 
-          if (ct==typ) then true
-          else false
-    | _ -> false
+(* and is_varperm_of_typ_b (b : b_formula) typ: bool =                             *)
+(*   let (pf, il) = b in                                                           *)
+(*   match pf with                                                                 *)
+(*     | VarPerm (ct,_,_) ->                                                       *)
+(*           if (ct==typ) then true                                                *)
+(*           else false                                                            *)
+(*     | _ -> false                                                                *)
 
 and trans_eq_bform_x (b : b_formula) : b_formula =
   let (pf, il) = b in
@@ -2070,7 +2070,7 @@ match pf with
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
         (* bag formulas *)
   | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
-  | VarPerm _
+  (* | VarPerm _ *)
           (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
   | RelForm _ -> false (* An Hoa *)
@@ -3152,7 +3152,7 @@ and pos_of_b_formula (b: b_formula) =
     | ListAllN (_, _, p) -> p
     | ListPerm (_, _, p) -> p
     | RelForm (_, _, p) -> p
-    | VarPerm (_,_,p) -> p
+    (* | VarPerm (_,_,p) -> p *)
 
 and pos_of_formula (f: formula) =
   match f with
@@ -3201,7 +3201,7 @@ and subst_pos_pformula p pf= match pf with
   | ListAllN (e1, e2, _) -> ListAllN (e1, e2, p)
   | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
   | RelForm (id, el, _) -> RelForm (id, el, p)
-  | VarPerm (t,ls,_) -> VarPerm (t,ls,p)
+  (* | VarPerm (t,ls,_) -> VarPerm (t,ls,p) *)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
@@ -3479,9 +3479,9 @@ and b_apply_subs_x sst bf =
     | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-    | VarPerm (ct,ls,pos) ->
-        let ls1 = List.map (subs_one sst) ls in
-        VarPerm (ct,ls1,pos)
+    (* | VarPerm (ct,ls,pos) ->                    *)
+    (*     let ls1 = List.map (subs_one sst) ls in *)
+    (*     VarPerm (ct,ls1,pos)                    *)
     | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -3748,7 +3748,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-    | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*)
+    (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*) *)
     | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -3870,7 +3870,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-    | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do not substitute, is is the list of variable names*)
+    (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do not substitute, is is the list of variable names*) *)
     | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -5171,21 +5171,21 @@ and drop_float_b_formula (bf : b_formula) : b_formula =
 (*
   Drop VarPerm constraints for satisfiability checking.
 *)
-let rec drop_varperm_formula (f0 : formula) : formula = match f0 with
-  | BForm (bf,lbl) -> BForm (drop_varperm_b_formula bf, lbl)
-  | And (f1, f2, pos) -> mkAnd (drop_varperm_formula f1) (drop_varperm_formula f2) pos 
-  | AndList b -> AndList (map_l_snd drop_varperm_formula b)
-  | Or (f1, f2, lbl, pos) ->mkOr (drop_varperm_formula f1) (drop_varperm_formula f2) lbl pos 
-  | Not (f1, lbl, pos) -> mkNot (drop_varperm_formula f1) lbl pos 
-  | Forall (qvar, qf,lbl, pos) -> mkForall [qvar] (drop_varperm_formula qf) lbl pos 
-  | Exists (qvar, qf,lbl, pos) -> mkExists [qvar] (drop_varperm_formula qf) lbl pos 
+(* let rec drop_varperm_formula (f0 : formula) : formula = match f0 with                         *)
+(*   | BForm (bf,lbl) -> BForm (drop_varperm_b_formula bf, lbl)                                  *)
+(*   | And (f1, f2, pos) -> mkAnd (drop_varperm_formula f1) (drop_varperm_formula f2) pos        *)
+(*   | AndList b -> AndList (map_l_snd drop_varperm_formula b)                                   *)
+(*   | Or (f1, f2, lbl, pos) ->mkOr (drop_varperm_formula f1) (drop_varperm_formula f2) lbl pos  *)
+(*   | Not (f1, lbl, pos) -> mkNot (drop_varperm_formula f1) lbl pos                             *)
+(*   | Forall (qvar, qf,lbl, pos) -> mkForall [qvar] (drop_varperm_formula qf) lbl pos           *)
+(*   | Exists (qvar, qf,lbl, pos) -> mkExists [qvar] (drop_varperm_formula qf) lbl pos           *)
 
-and drop_varperm_b_formula (bf : b_formula) : b_formula =
-  let (pf,il) = bf in
-  let npf = match pf with
-    | VarPerm _ ->  BConst (true, no_pos)
-    | _ -> pf
-  in (npf,il)
+(* and drop_varperm_b_formula (bf : b_formula) : b_formula =                                     *)
+(*   let (pf,il) = bf in                                                                         *)
+(*   let npf = match pf with                                                                     *)
+(*     | VarPerm _ ->  BConst (true, no_pos)                                                     *)
+(*     | _ -> pf                                                                                 *)
+(*   in (npf,il)                                                                                 *)
 
 
 (**************************************************************)
@@ -5256,7 +5256,7 @@ and b_apply_one_exp (fr, t) bf =
   | BagSub (a1, a2, pos) -> BagSub (a1, e_apply_one_exp (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> pf
   | BagMin (v1, v2, pos) -> pf
-  | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls is the list of variable names*)
+  (* | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls is the list of variable names*) *)
   | ListIn (a1, a2, pos) -> pf
   | ListNotIn (a1, a2, pos) -> pf
   | ListAllN (a1, a2, pos) -> pf
@@ -6142,7 +6142,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
            BagSub (simp_mult e1, simp_mult e2, l)
     |  BagMin _ -> pf
     |  BagMax _ -> pf
-    |  VarPerm _ -> pf
+    (* |  VarPerm _ -> pf *)
 	|  RelForm (v,exs,p) ->  
            let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
            RelForm (v,new_exs,p)
@@ -6399,7 +6399,7 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 	  | XPure _ 
 	  | BagMin _ 
 	  | SubAnn _ 
-          | VarPerm _ (*TO CHECK*)
+          (* | VarPerm _ (*TO CHECK*) *)
 	      | BagMax _ -> (pf,f_comb [])
 	      | Lt (e1,e2,l) ->
 		        let (ne1,r1) = helper new_arg e1 in
@@ -6509,7 +6509,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
 	    | BVar _ 
 	    | BagMin _ 
             | SubAnn _
-            | VarPerm _(*TO CHECK*)
+            (* | VarPerm _(*TO CHECK*) *)
 	    | BagMax _ -> pf
 	    | Lt (e1,e2,l) ->
 		  let ne1 = transform_exp f_exp e1 in
@@ -6935,7 +6935,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | Frm _ | BConst _ | BVar _ | EqMax _  | XPure _ 
         | EqMin _ |  BagSub _ | BagMin _ 
         | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
-        | VarPerm _ -> pf
+        (* | VarPerm _ -> pf *)
 	    | RelForm (id,exs,l) -> 
               let exs = List.map norm_exp exs in
               RelForm (id,exs,l)
@@ -7938,7 +7938,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
 		    lex_exp = List.map norm_exp t_info.lex_exp; 
 				lex_tmp = List.map norm_exp t_info.lex_tmp; }
     | SubAnn _
-    | VarPerm _
+    (* | VarPerm _ *)
     | Frm _ | XPure _ | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
@@ -9779,7 +9779,7 @@ let get_rel_id_list (f:formula) = match f with
           let la = li.lex_ann in
           let id = sid_of_term_ann la in
           [mk_spec_var id]
-    | (VarPerm (_),_) -> failwith "VarPerm"
+    (* | (VarPerm (_),_) -> failwith "VarPerm" *)
     | _ -> [])
   | _ -> []
 
@@ -9792,84 +9792,84 @@ let get_rel_id (f:formula)
 let get_rel_id (f:formula) =
       Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f 
 
-let mk_varperm_p typ ls pos =
-  if (ls==[]) then (mkTrue_p pos)
-  else
-  (VarPerm (typ,ls,pos))
+(* let mk_varperm_p typ ls pos =     *)
+(*   if (ls==[]) then (mkTrue_p pos) *)
+(*   else                            *)
+(*   (VarPerm (typ,ls,pos))          *)
 
-let mk_varperm typ ls pos =
-  let pf = mk_varperm_p typ ls pos in
-  (BForm ((pf,None),None))
+(* let mk_varperm typ ls pos =           *)
+(*   let pf = mk_varperm_p typ ls pos in *)
+(*   (BForm ((pf,None),None))            *)
 
-let mk_varperm_zero ls pos =
-  mk_varperm VP_Zero ls pos
+(* let mk_varperm_zero ls pos =          *)
+(*   mk_varperm VP_Zero ls pos           *)
 
-let mk_varperm_full ls pos =
-  mk_varperm VP_Full ls pos
+(* let mk_varperm_full ls pos =          *)
+(*   mk_varperm VP_Full ls pos           *)
 
 (* formula -> formula_w_varperm * formula_wo_varperm*)
 (* combine VarPerm formulas into 4 types*)
-let normalize_varperm_x (f:formula) : formula =
-  let ls = split_conjunctions f in
-  let lsf1,lsf2 = List.partition (is_varperm) ls in
-  (* let _ = print_endline ("normalize_varperm:"  *)
-  (*                        ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1)) *)
-  (*                        ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in *)
-  (*zero, full , value *)
-  let rec helper ls =
-    match ls with
-      | [] -> [],[],[] (*list of vars*)
-      | x::xs ->
-          let ls1,ls2,ls3 = helper xs in
-          (match x with
-            | BForm ((pf,_),_) ->
-               ( match pf with
-                  | VarPerm (ct,xs,_) ->
-                      (match ct with
-                        | VP_Zero ->
-                            (remove_dups_svl (xs@ls1)),ls2,ls3
-                        | VP_Full ->
-                            ls1,(remove_dups_svl (xs@ls2)),ls3
-                        | VP_Value ->
-                            ls1,ls2,(remove_dups_svl (xs@ls3))
-                        (* TODO: Norm VarPerm for @lend and @frac *)
-                        | VP_Lend -> [], [], []
-                        | VP_Const _ -> [], [], []
-                      )
-                  | _ -> Error.report_error {Error.error_loc = no_pos;
-                                             Error.error_text = "normalize_varperm: VarPerm not found";}
-               )
-            | _ -> Error.report_error {Error.error_loc = no_pos;
-                                             Error.error_text = "normalize_varperm: BForm of VarPerm not found";}
-          )
-  in
-  let ls1,ls2,ls3 = helper lsf1 in (*find out 4 types of var permission*)
-  let func typ ls =
-    (match ls with
-      | [] -> mkTrue no_pos
-      | _ -> mk_varperm typ ls no_pos)
-  in
-  let f1 = func VP_Zero ls1 in
-  let f2 = func VP_Full ls2 in
-  let f3 = func VP_Value ls3 in
-  let lsf1 = [f1;f2;f3] in
-  let new_f = join_conjunctions (lsf1@lsf2) in
-  new_f
+(* let normalize_varperm_x (f:formula) : formula =                                                                   *)
+(*   let ls = split_conjunctions f in                                                                                *)
+(*   let lsf1,lsf2 = List.partition (is_varperm) ls in                                                               *)
+(*   (* let _ = print_endline ("normalize_varperm:"  *)                                                              *)
+(*   (*                        ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1)) *)                          *)
+(*   (*                        ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in *)                      *)
+(*   (*zero, full , value *)                                                                                         *)
+(*   let rec helper ls =                                                                                             *)
+(*     match ls with                                                                                                 *)
+(*       | [] -> [],[],[] (*list of vars*)                                                                           *)
+(*       | x::xs ->                                                                                                  *)
+(*           let ls1,ls2,ls3 = helper xs in                                                                          *)
+(*           (match x with                                                                                           *)
+(*             | BForm ((pf,_),_) ->                                                                                 *)
+(*                ( match pf with                                                                                    *)
+(*                   | VarPerm (ct,xs,_) ->                                                                          *)
+(*                       (match ct with                                                                              *)
+(*                         | VP_Zero ->                                                                              *)
+(*                             (remove_dups_svl (xs@ls1)),ls2,ls3                                                    *)
+(*                         | VP_Full ->                                                                              *)
+(*                             ls1,(remove_dups_svl (xs@ls2)),ls3                                                    *)
+(*                         | VP_Value ->                                                                             *)
+(*                             ls1,ls2,(remove_dups_svl (xs@ls3))                                                    *)
+(*                         (* TODO: Norm VarPerm for @lend and @frac *)                                              *)
+(*                         | VP_Lend -> [], [], []                                                                   *)
+(*                         | VP_Const _ -> [], [], []                                                                *)
+(*                       )                                                                                           *)
+(*                   | _ -> Error.report_error {Error.error_loc = no_pos;                                            *)
+(*                                              Error.error_text = "normalize_varperm: VarPerm not found";}          *)
+(*                )                                                                                                  *)
+(*             | _ -> Error.report_error {Error.error_loc = no_pos;                                                  *)
+(*                                              Error.error_text = "normalize_varperm: BForm of VarPerm not found";} *)
+(*           )                                                                                                       *)
+(*   in                                                                                                              *)
+(*   let ls1,ls2,ls3 = helper lsf1 in (*find out 4 types of var permission*)                                         *)
+(*   let func typ ls =                                                                                               *)
+(*     (match ls with                                                                                                *)
+(*       | [] -> mkTrue no_pos                                                                                       *)
+(*       | _ -> mk_varperm typ ls no_pos)                                                                            *)
+(*   in                                                                                                              *)
+(*   let f1 = func VP_Zero ls1 in                                                                                    *)
+(*   let f2 = func VP_Full ls2 in                                                                                    *)
+(*   let f3 = func VP_Value ls3 in                                                                                   *)
+(*   let lsf1 = [f1;f2;f3] in                                                                                        *)
+(*   let new_f = join_conjunctions (lsf1@lsf2) in                                                                    *)
+(*   new_f                                                                                                           *)
 
-let normalize_varperm (f:formula) : formula =
-  Debug.no_1 "normalize_varperm" 
-      !print_formula !print_formula
-      normalize_varperm_x f
+(* let normalize_varperm (f:formula) : formula =                                                                     *)
+(*   Debug.no_1 "normalize_varperm"                                                                                  *)
+(*       !print_formula !print_formula                                                                               *)
+(*       normalize_varperm_x f                                                                                       *)
 (* let filter_varperm (f:formula) : formula * formula =  *)
 (*   let ls = split_conjunctions f in *)
 (*   let ls1,ls2 = List.partition (is_varperm) ls in *)
 (*   let f1 = join_conjunctions ls1 in *)
 (*   let f2 = join_conjunctions ls2 in *)
 
-let filter_varperm (f:formula) : (formula list * formula) =
-  let ls = split_conjunctions f in
-  let lsf1,lsf2 = List.partition (is_varperm) ls in
-  (lsf1, join_conjunctions lsf2)
+(* let filter_varperm (f:formula) : (formula list * formula) = *)
+(*   let ls = split_conjunctions f in                          *)
+(*   let lsf1,lsf2 = List.partition (is_varperm) ls in         *)
+(*   (lsf1, join_conjunctions lsf2)                            *)
 
 let is_hole_spec_var (x:spec_var) =
   (match x with
@@ -11132,10 +11132,10 @@ let removeLS_b_formula (bf : b_formula) : b_formula =
         let vars2 = afv e2 in
         let b = List.exists (fun v -> (name_of_spec_var v) = ls_name || (name_of_spec_var v) = lsmu_name) (vars1@vars2) in
         if b then mkTrue_b no_pos else  bf
-    | VarPerm (vp_ann,svl,pos) ->
-        let nsvl =  List.filter (fun v -> name_of_spec_var v <> Globals.ls_name && name_of_spec_var v <> Globals.lsmu_name && name_of_spec_var v <> Globals.waitlevel_name) svl in
-        if (nsvl=[]) then mkTrue_b no_pos else
-        (VarPerm (vp_ann,nsvl,pos),st)
+    (* | VarPerm (vp_ann,svl,pos) ->                                                                                                                                                  *)
+    (*     let nsvl =  List.filter (fun v -> name_of_spec_var v <> Globals.ls_name && name_of_spec_var v <> Globals.lsmu_name && name_of_spec_var v <> Globals.waitlevel_name) svl in *)
+    (*     if (nsvl=[]) then mkTrue_b no_pos else                                                                                                                                     *)
+    (*     (VarPerm (vp_ann,nsvl,pos),st)                                                                                                                                             *)
     | BagSub (e1,e2,pos) -> bf (*TO CHECK there 3 cases*)
     | BagMin (sv1,sv2,pos) -> bf
     | BagMax (sv1,sv2,pos) -> bf
@@ -11204,10 +11204,10 @@ let remove_svl_b_formula (bf : b_formula) (svl:spec_var list) : b_formula =
         let vars2 = afv e2 in
         let b = List.exists (fun v -> existSV v svl) (vars1@vars2) in
         if b then mkTrue_b no_pos else  bf
-    | VarPerm (vp_ann,svl,pos) ->
-        let nsvl =  List.filter (fun v -> existSV v svl) svl in
-        if (nsvl=[]) then mkTrue_b no_pos else
-        (VarPerm (vp_ann,nsvl,pos),st)
+    (* | VarPerm (vp_ann,svl,pos) ->                               *)
+    (*     let nsvl =  List.filter (fun v -> existSV v svl) svl in *)
+    (*     if (nsvl=[]) then mkTrue_b no_pos else                  *)
+    (*     (VarPerm (vp_ann,nsvl,pos),st)                          *)
     | _ -> bf (*assume the rest does not contain constraints on svl*)
   )
 
@@ -11445,7 +11445,7 @@ let level_vars_b_formula bf =
         | SubAnn _
 	| EqMax _
 	| EqMin _
-    | VarPerm _
+    (* | VarPerm _ *)
     | XPure _
 	| BagMax _ -> []
   )
@@ -11974,7 +11974,7 @@ and contain_level_b_formula bf =
     | SubAnn _
 	| EqMax _
 	| EqMin _
-    | VarPerm _
+    (* | VarPerm _ *)
     | XPure _
 	| BagMax _ -> false
   )

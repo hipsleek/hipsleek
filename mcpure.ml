@@ -1644,12 +1644,12 @@ let elim_redundant_cons_fast_x impl aset asetf pn =
 let elim_redundant_slice_x (impl, simpl) (f:memoised_group): memoised_group * memoised_group = 
   let asetf = fold_aset f.memo_group_aset in
   (*do not elim VarPerm formula*)
-  let vperm_set, rest = List.partition (fun m_constr -> is_varperm_b m_constr.memo_formula) f.memo_group_cons in
-  let old_r_set , np_set  = List.partition isImpl_dupl rest in
+  (* let vperm_set, rest = List.partition (fun m_constr -> is_varperm_b m_constr.memo_formula) f.memo_group_cons in *)
+  let old_r_set , np_set  = List.partition isImpl_dupl f.memo_group_cons in
   let n_set, p_set  = List.partition isImplT np_set in
   let s_set,r_set, e_set =  elim_redundant_cons impl f.memo_group_aset asetf (n_set@p_set) in
-  let r2 = { (List.hd (mkMFalse no_pos)) with memo_group_cons = e_set@r_set@vperm_set} in (*TO CHECK: should vperm_set in r2 ??? *)
-  ({f with memo_group_cons = s_set @r_set @ old_r_set@vperm_set;
+  let r2 = { (List.hd (mkMFalse no_pos)) with memo_group_cons = e_set@r_set (* @vperm_set *) } in (*TO CHECK: should vperm_set in r2 ??? *)
+  ({f with memo_group_cons = s_set @ r_set @ old_r_set (* @vperm_set *);
            memo_group_slice = List.concat (List.map (fun c -> list_of_conjs (simpl c)) f.memo_group_slice)},r2)
 
 let elim_redundant_slice (impl, simpl) (f:memoised_group): memoised_group * memoised_group =
@@ -2613,73 +2613,73 @@ let simplify_mix_formula mf =
 			let nf = remove_redundant_constraints nf in
 				OnePF nf
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let normalize_varperm_mix_formula_x (mix_f:mix_formula) : mix_formula =
-  match mix_f with
-    | OnePF f -> OnePF (normalize_varperm f)
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        (* let f = fold_mem_lst (mkTrue no_pos) false true mix_f in *)
-        let new_f = normalize_varperm f in
-        (mix_of_pure new_f)
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let normalize_varperm_mix_formula_x (mix_f:mix_formula) : mix_formula =               *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f -> OnePF (normalize_varperm f)                                          *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         (* let f = fold_mem_lst (mkTrue no_pos) false true mix_f in *)                *)
+(*         let new_f = normalize_varperm f in                                            *)
+(*         (mix_of_pure new_f)                                                           *)
 
-(* combine VarPerm formulas into 4 types*)
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let normalize_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
-  Debug.no_1 "normalize_varperm_mix_formula"
-      !print_mix_f !print_mix_f
-      normalize_varperm_mix_formula_x mix_f
+(* (* combine VarPerm formulas into 4 types*)                                            *)
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let normalize_varperm_mix_formula (mix_f:mix_formula) : mix_formula =                 *)
+(*   Debug.no_1 "normalize_varperm_mix_formula"                                          *)
+(*       !print_mix_f !print_mix_f                                                       *)
+(*       normalize_varperm_mix_formula_x mix_f                                           *)
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-let filter_varperm_mix_formula_x (mix_f:mix_formula) : (formula list * mix_formula) =
-  match mix_f with
-    | OnePF f -> 
-        let ls,f1 = filter_varperm f in
-        (ls,OnePF f1)
-    | MemoF mp -> 
-        let f = fold_mem_lst (mkTrue no_pos) false true mix_f in
-        let ls,new_f = filter_varperm f in
-        (ls, (mix_of_pure new_f))
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* let filter_varperm_mix_formula_x (mix_f:mix_formula) : (formula list * mix_formula) = *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let ls,f1 = filter_varperm f in                                               *)
+(*         (ls,OnePF f1)                                                                 *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = fold_mem_lst (mkTrue no_pos) false true mix_f in                      *)
+(*         let ls,new_f = filter_varperm f in                                            *)
+(*         (ls, (mix_of_pure new_f))                                                     *)
 
-(*NOTE: do not reuse the returned mix_f when --eps*)
-(* pure_of_mix may discard some info when --eps *)
-let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula) =
-  let pr_out (ls,f) =
-    "\n ### ls = " ^ (pr_list !print_formula ls)
-    ^ "\n ### f = " ^ (!print_mix_f f)
-  in
-  Debug.no_1 "filter_varperm_mix_formula"
-      !print_mix_f pr_out
-      filter_varperm_mix_formula_x mix_f
+(* (*NOTE: do not reuse the returned mix_f when --eps*)                                  *)
+(* (* pure_of_mix may discard some info when --eps *)                                    *)
+(* let filter_varperm_mix_formula (mix_f:mix_formula) : (formula list * mix_formula) =   *)
+(*   let pr_out (ls,f) =                                                                 *)
+(*     "\n ### ls = " ^ (pr_list !print_formula ls)                                      *)
+(*     ^ "\n ### f = " ^ (!print_mix_f f)                                                *)
+(*   in                                                                                  *)
+(*   Debug.no_1 "filter_varperm_mix_formula"                                             *)
+(*       !print_mix_f pr_out                                                             *)
+(*       filter_varperm_mix_formula_x mix_f                                              *)
 
-let get_varperm_mix_formula_x (mix_f:mix_formula) typ : spec_var list =
-  match mix_f with
-    | OnePF f -> 
-        let res = Cpure.get_varperm_pure f typ in
-        res
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        let res = Cpure.get_varperm_pure f typ in
-        res
+(* let get_varperm_mix_formula_x (mix_f:mix_formula) typ : spec_var list =               *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let res = Cpure.get_varperm_pure f typ in                                     *)
+(*         res                                                                           *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         let res = Cpure.get_varperm_pure f typ in                                     *)
+(*         res                                                                           *)
 
-let get_varperm_mix_formula (mix_f:mix_formula) typ : spec_var list =
-  Debug.no_2 "get_varperm_mix_formula"
-      !print_mix_f string_of_vp_ann !print_svl
-      get_varperm_mix_formula_x mix_f typ
+(* let get_varperm_mix_formula (mix_f:mix_formula) typ : spec_var list =                 *)
+(*   Debug.no_2 "get_varperm_mix_formula"                                                *)
+(*       !print_mix_f string_of_vp_ann !print_svl                                        *)
+(*       get_varperm_mix_formula_x mix_f typ                                             *)
 
-(*Note: use this method with care.
-The conversion between pure_of_mix and mix_of_pure
-may affect --eps*)
-let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
-  match mix_f with
-    | OnePF f -> 
-        let f1 = Cpure.drop_varperm_formula f in
-        (OnePF f1)
-    | MemoF mp -> 
-        let f = pure_of_mix mix_f in
-        let f1 = Cpure.drop_varperm_formula f in
-        let f2 = mix_of_pure f1 in
-        f2
+(* (*Note: use this method with care.                                                    *)
+(* The conversion between pure_of_mix and mix_of_pure                                    *)
+(* may affect --eps*)                                                                    *)
+(* let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =                      *)
+(*   match mix_f with                                                                    *)
+(*     | OnePF f ->                                                                      *)
+(*         let f1 = Cpure.drop_varperm_formula f in                                      *)
+(*         (OnePF f1)                                                                    *)
+(*     | MemoF mp ->                                                                     *)
+(*         let f = pure_of_mix mix_f in                                                  *)
+(*         let f1 = Cpure.drop_varperm_formula f in                                      *)
+(*         let f2 = mix_of_pure f1 in                                                    *)
+(*         f2                                                                            *)
 
 (*Eq, Lt, Lte, Gt, Gte*)
 let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula =
@@ -2755,7 +2755,7 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
 	  | BVar _ 
 	  | BagMin _ 
           | SubAnn _
-          | VarPerm _
+          (* | VarPerm _ *)
 	  | BagMax _ -> pf
 	  | Lt (e1,e2,l)
 	  | Lte (e1,e2,l)

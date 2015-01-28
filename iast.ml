@@ -1861,7 +1861,7 @@ and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_
   | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
-  | P.VarPerm _ | P.RelForm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
 
 and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)

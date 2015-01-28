@@ -1061,7 +1061,7 @@ and mona_of_b_formula_x b f vs =
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
-      | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
+      (* | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona") *)
       | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
@@ -1164,7 +1164,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
-  | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
+  (* | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona") *)
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
 
@@ -1537,8 +1537,8 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
-  let ante = CP.drop_varperm_formula ante in
-  let conseq = CP.drop_varperm_formula conseq in
+  (* let ante = CP.drop_varperm_formula ante in     *)
+  (* let conseq = CP.drop_varperm_formula conseq in *)
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
@@ -1568,7 +1568,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   incr test_number;
-  let f = CP.drop_varperm_formula f in
+  (* let f = CP.drop_varperm_formula f in *)
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   (* let vs = Hashtbl.create 10 in *)
   (* let _ = find_order f vs in (\* deprecated *\) *)

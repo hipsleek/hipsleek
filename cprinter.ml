@@ -1001,9 +1001,9 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
     | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
     | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
-    | P.VarPerm (t,ls,l) ->
-        fmt_string (string_of_vp_ann t); fmt_string ("[");
-        fmt_string (string_of_spec_var_list ls); fmt_string ("]")
+    (* | P.VarPerm (t,ls,l) ->                                       *)
+    (*     fmt_string (string_of_vp_ann t); fmt_string ("[");        *)
+    (*     fmt_string (string_of_spec_var_list ls); fmt_string ("]") *)
     | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
@@ -4953,7 +4953,7 @@ let rec html_of_pure_b_formula f = match f with
     | P.BagSub (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subset ^ (html_of_formula_exp e2)
     | P.BagMin (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_min ^ (string_of_spec_var v2) 
     | P.BagMax (v1, v2, l) -> (html_of_spec_var v1) ^ html_op_eq ^ html_op_max ^ (string_of_spec_var v2)
-    | CP.VarPerm (ann,ls,l) -> (string_of_vp_ann ann) ^ (html_of_spec_var_list ls)
+    (* | CP.VarPerm (ann,ls,l) -> (string_of_vp_ann ann) ^ (html_of_spec_var_list ls) *)
     | P.ListIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lin> " ^ (html_of_formula_exp e2)
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)

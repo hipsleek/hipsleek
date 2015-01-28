@@ -1528,16 +1528,20 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
     (*VarPerm: to keep track of es_var_zero_perm, when rename_bound_vars, also rename zero_perm*)
     if (es.es_var_zero_perm!=[]) then
       (*add in, rename, then filter out*)
-      let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in
-      let new_f = add_pure_formula_to_formula zero_f es.es_formula in
+      (* TODO: VPerm *)
+      (* let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in      *)
+      (* let new_f = add_pure_formula_to_formula zero_f es.es_formula in *)
+      let new_f = es.es_formula in
       let unfolded_f,_ = unfold_nth 7 prog new_f v already_unsat 0 pos in
       (* let vp_list, _ = filter_varperm_formula unfolded_f in *)
       (* let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in *)
       (* let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in *)
-      let new_zero_vars = CF.get_varperm_formula unfolded_f VP_Zero in
-      let unfolded_f2 = drop_varperm_formula unfolded_f in
-      let new_es = {es with es_var_zero_perm = new_zero_vars;} in
-      let res = build_context (Ctx new_es) unfolded_f2 pos in
+      (* TODO: VPerm *)
+      (* let new_zero_vars = CF.get_varperm_formula unfolded_f VP_Zero in *)
+      (* let unfolded_f2 = drop_varperm_formula unfolded_f in             *)
+      (* let new_es = {es with es_var_zero_perm = new_zero_vars;} in      *)
+      let new_es = es in
+      let res = build_context (Ctx new_es) unfolded_f (* unfolded_f2 *) pos in
       if already_unsat then set_unsat_flag res true
       else res
     else
@@ -4002,9 +4006,13 @@ and compose_thread_post_condition_x prog es new_es_f post res2 pos =
   (**********Compose variable permissions >>> *******)
   (* let ps,new_post = CF.filter_varperm_formula post in *)
   (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
-  let full_vars = CF.get_varperm_formula post VP_Full in
-  let new_post = CF.drop_varperm_formula post in
-  let zero_vars = es.CF.es_var_zero_perm in
+  (* TODO: VPerm *)
+  (* let full_vars = CF.get_varperm_formula post VP_Full in *)
+  (* let new_post = CF.drop_varperm_formula post in         *)
+  (* let zero_vars = es.CF.es_var_zero_perm in              *)
+  let full_vars = [] in
+  let new_post = post in
+  let zero_vars = [] in
   let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
   if (tmp!=[]) then
     begin
@@ -4392,15 +4400,19 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               (*************Compose variable permissions >>> ******************)
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_struc_formula f)^"\n")) pos;
-                                              let full_vars = get_varperm_formula post VP_Full in
-                                              let new_post = drop_varperm_formula post in
+                                              (* TODO: VPerm *)
+                                              (* let full_vars = get_varperm_formula post VP_Full in *)
+                                              (* let new_post = drop_varperm_formula post in         *)
+                                              let full_vars = [] in
+                                              let new_post = post in
                                               let add_vperm_full es =
                                                 let zero_vars = es.es_var_zero_perm in
                                                 let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
                                                 (*TO CHECK: reuse es_pure with care*)
                                                 (*currently, only extract constraints that
                                                   are not related to LS,waitlevel,float,varperm*)
-                                                let es_p = MCP.drop_varperm_mix_formula es.es_pure in
+                                                (* let es_p = MCP.drop_varperm_mix_formula es.es_pure in *)
+                                                let es_p = es.es_pure in
                                                 (* let es_p = MCP.removeLS_mix_formula es_p in *)
                                                 let es_p = MCP.drop_float_formula_mix_formula es_p in
                                                 let es_p = MCP.drop_svl_mix_formula es_p [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
@@ -6792,12 +6804,17 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
             (* CONVENTION: *)
             (*  @zero for the main thread *)
             (*  @full for the concurrent threads *)
+            (* TODO: VPerm *)
             let f1_p = f1.formula_pure in
-            let f1_vperms, new_f1_p = MCP.filter_varperm_mix_formula f1_p in
-            let f1_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f1_vperms) in (*only pickup @full*)
+            (* let f1_vperms, new_f1_p = MCP.filter_varperm_mix_formula f1_p in                                                               *)
+            (* let f1_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f1_vperms) in (*only pickup @full*) *)
             let f2_p = f2.formula_pure in
-            let f2_vperms, new_f2_p = MCP.filter_varperm_mix_formula f2_p in
-            let f2_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f2_vperms) in (*only pickup @full*)
+            (* let f2_vperms, new_f2_p = MCP.filter_varperm_mix_formula f2_p in                                                               *)
+            (* let f2_full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) f2_vperms) in (*only pickup @full*) *)
+            let f1_vperms, new_f1_p = [], f1_p in
+            let f1_full_vars = [] in
+            let f2_vperms, new_f2_p = [], f2_p in
+            let f2_full_vars = [] in
             (*DO NOT CHECK permission for exists vars*)
             let f2_full_vars = 
               if f1_full_vars=[] then f2_full_vars
@@ -7375,7 +7392,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 let _ = DD.ninfo_hprint (add_str "conseq" pr_no) conseq no_pos in 
                                 let ctx, proof = heap_entail_empty_rhs_heap 1 prog conseq is_folding  estate b1 p2 rhs_h_matched_set pos in
                                 (* let _ = DD.binfo_hprint (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
-                                let p2 = MCP.drop_varperm_mix_formula p2 in
+                                (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                                 let new_ctx =
                                   match ctx with
                                   | FailCtx _ -> ctx
@@ -8390,7 +8407,7 @@ type: bool *
             is added to es_pure only when folding.
             Rule F-EMP in Mr Hai thesis, p86*)
           (*filter out vperm which has been proven in rhs_p*)
-          let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
+          (* let rhs_p = MCP.drop_varperm_mix_formula rhs_p in *)
           let to_keep = estate.es_gen_impl_vars @ estate.es_gen_expl_vars in
           let to_remove =  Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv rhs_p)to_keep in
           (* Debug.info_hprint (add_str "es_formula" !CF.print_formula) estate.es_formula no_pos; *)

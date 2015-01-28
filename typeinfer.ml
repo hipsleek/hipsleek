@@ -781,7 +781,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let (n_tl,t) = must_unify t1 NUM n_tl pos  in
       let (n_tl,_) = gather_type_info_var v2 n_tl (BagT t) pos in
       n_tl
-  | IP.VarPerm _ -> tlist (*TO CHECK: no type info*)
+  (* | IP.VarPerm _ -> tlist (*TO CHECK: no type info*) *)
   | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
       let (n_tl,t1) = gather_type_info_exp prog e2 n_tl (List new_et) in

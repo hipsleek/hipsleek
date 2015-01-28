@@ -185,7 +185,7 @@ let rec smt_of_b_formula b =
   | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> 
       illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
+  (* | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n") *)
   | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
       illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.LexVar _ ->
@@ -787,14 +787,14 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
     | None -> CP.mkFalse no_pos
     | Some f -> f
   in
-  (*drop VarPerm beforehand*)
-  let ante,conseq = 
-    if (!Globals.ann_vp) then
-      let conseq = CP.drop_varperm_formula conseq in
-      let ante = CP.drop_varperm_formula ante in
-      (ante,conseq)
-    else (ante,conseq)
-  in
+  (* (*drop VarPerm beforehand*)                        *)
+  (* let ante,conseq =                                  *)
+  (*   if (!Globals.ann_vp) then                        *)
+  (*     let conseq = CP.drop_varperm_formula conseq in *)
+  (*     let ante = CP.drop_varperm_formula ante in     *)
+  (*     (ante,conseq)                                  *)
+  (*   else (ante,conseq)                               *)
+  (* in                                                 *)
   (*-----------------------------*)
   let conseq_info = collect_formula_info conseq in
   (* remove occurences of dom in ante if conseq has nothing to do with dom *)
@@ -1001,15 +1001,15 @@ and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula)
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) bget_cex timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
-  (*drop VarPerm beforehand*)
-  let ante,conseq = (
-    if (!Globals.ann_vp) then
-      let conseq = CP.drop_varperm_formula conseq in
-      let ante = CP.drop_varperm_formula ante in
-      (ante,conseq)
-    else 
-      (ante,conseq)
-  ) in
+  (* (*drop VarPerm beforehand*)                        *)
+  (* let ante,conseq = (                                *)
+  (*   if (!Globals.ann_vp) then                        *)
+  (*     let conseq = CP.drop_varperm_formula conseq in *)
+  (*     let ante = CP.drop_varperm_formula ante in     *)
+  (*     (ante,conseq)                                  *)
+  (*   else                                             *)
+  (*     (ante,conseq)                                  *)
+  (* ) in                                               *)
   (*--------------------------------------*)
   (* let _ = print_endline ("#### [smt_imply] ante = " ^ (!CP.print_formula ante)) in *)
   (* let _ = print_endline ("#### [smt_imply] conseq = " ^ (!CP.print_formula conseq)) in *)
@@ -1096,11 +1096,11 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) bget_cex timeout : bool =
   (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
-  (*drop VarPerm beforehand*)
-  let f =
-    if (!Globals.ann_vp) then CP.drop_varperm_formula f
-    else f
-  in
+  (* (*drop VarPerm beforehand*)                           *)
+  (* let f =                                               *)
+  (*   if (!Globals.ann_vp) then CP.drop_varperm_formula f *)
+  (*   else f                                              *)
+  (* in                                                    *)
   (*--------------------------------------*)
   (* let _ = print_endline ("#### [smt_is_sat] f = " ^ (!CP.print_formula f)) in *)
   let res, should_run_smt = (

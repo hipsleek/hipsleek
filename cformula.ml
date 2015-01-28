@@ -4129,14 +4129,14 @@ and simplify_aux_x f =
         (* let eqs = List.filter (CP.is_eq_exp_ptrs null_svl) conjs in *)
         let eqs = [] in
         let lvs, non_lvs = List.partition CP.is_lexvar conjs in
-        let vps, non_vps = List.partition CP.is_varperm non_lvs in
-        let rels, non_rels = List.partition CP.is_RelForm non_vps in
+        (* let vps, non_vps = List.partition CP.is_varperm non_lvs in *)
+        let rels, non_rels = List.partition CP.is_RelForm non_lvs in
         let lins, non_lins = List.partition CP.is_linear_formula non_rels in
         let lin_f = List.fold_left (fun acc lin -> CP.mkAnd acc lin no_pos) (CP.mkTrue no_pos) lins in
         let lin_f = !simplify_omega lin_f in
         let new_disj = List.fold_left (fun acc non_lin -> CP.mkAnd acc non_lin no_pos) (lin_f) (eqs@non_lins) in
         let new_disj = List.fold_left (fun acc rel -> CP.mkAnd acc rel no_pos) new_disj rels in
-        let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in
+        (* let new_disj = List.fold_left (fun acc vp -> CP.mkAnd acc vp no_pos) new_disj vps in *)
         let new_disj = List.fold_left (fun acc lv -> CP.mkAnd acc lv no_pos) new_disj lvs in
         CP.mkOr acc new_disj None no_pos
     ) (CP.mkFalse no_pos) disjs
@@ -11948,8 +11948,10 @@ and formula_of_context_x ctx0 = match ctx0 with
 	  let f1 = formula_of_context_x c1 in
 	  let f2 = formula_of_context_x c2 in
 		mkOr f1 f2 no_pos
-  | Ctx es -> let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in
-      let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in
+  | Ctx es -> 
+      (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)
+      (* let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
+      let mix_f = es.es_pure in
       add_mix_formula_to_formula mix_f es.es_formula
 	  	
 and formula_of_context ctx0 = 
@@ -11967,8 +11969,9 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
   | Ctx es -> 
       let orig_f = es.es_formula in
       let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
-	  let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in
-	  let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in
+	  (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)
+	  (* let mix_f = MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
+      let mix_f = es.es_pure in
       let mix_f = match esvm with
         | None -> mix_f
         | Some (ta,l1,l2) ->
@@ -14789,24 +14792,24 @@ let rec get_vars_without_rel pre_vars f = match f with
     let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
     CP.diff_svl res evars_to_del
     
-let normalize_varperm_formula_x (f:formula) : formula = 
-  let rec helper f = match f with
-    | Base b ->
-        let mf = MCP.normalize_varperm_mix_formula b.formula_base_pure in
-        Base {b with formula_base_pure = mf}
-    | Exists b ->
-        let mf = MCP.normalize_varperm_mix_formula b.formula_exists_pure in
-        Exists {b with formula_exists_pure = mf}
-    | Or o -> 
-        let f1 = helper o.formula_or_f1 in
-        let f2 = helper o.formula_or_f2 in
-        Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
-  in helper f
+(* let normalize_varperm_formula_x (f:formula) : formula =                     *)
+(*   let rec helper f = match f with                                           *)
+(*     | Base b ->                                                             *)
+(*         let mf = MCP.normalize_varperm_mix_formula b.formula_base_pure in   *)
+(*         Base {b with formula_base_pure = mf}                                *)
+(*     | Exists b ->                                                           *)
+(*         let mf = MCP.normalize_varperm_mix_formula b.formula_exists_pure in *)
+(*         Exists {b with formula_exists_pure = mf}                            *)
+(*     | Or o ->                                                               *)
+(*         let f1 = helper o.formula_or_f1 in                                  *)
+(*         let f2 = helper o.formula_or_f2 in                                  *)
+(*         Or {o with formula_or_f1 = f1; formula_or_f2 = f2}                  *)
+(*   in helper f                                                               *)
 
-let normalize_varperm_formula (f:formula) : formula = 
-  Debug.no_1 "normalize_varperm_formula"
-      !print_formula !print_formula
-      normalize_varperm_formula_x f
+(* let normalize_varperm_formula (f:formula) : formula =                       *)
+(*   Debug.no_1 "normalize_varperm_formula"                                    *)
+(*       !print_formula !print_formula                                         *)
+(*       normalize_varperm_formula_x f                                         *)
 
 let merge_flag flag1 flag2 = match flag1,flag2 with
   | _,2 -> 2
@@ -14982,121 +14985,121 @@ let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula):
     let l = List.map (fun (_,c)-> get_pre_post_vars_simp pre_vars c) b in
     fold_left_2 l
 
-let drop_varperm_formula (f:formula) = 
-  let rec helper f =
-    match f with
-      | Base b-> Base {b with formula_base_pure = MCP.drop_varperm_mix_formula b.formula_base_pure}
-      | Exists b-> Exists {b with formula_exists_pure = MCP.drop_varperm_mix_formula b.formula_exists_pure}
-      | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;
-	      formula_or_f2 = helper b.formula_or_f2}
-  in
-  helper f
+(* let drop_varperm_formula (f:formula) =                                                                      *)
+(*   let rec helper f =                                                                                        *)
+(*     match f with                                                                                            *)
+(*       | Base b-> Base {b with formula_base_pure = MCP.drop_varperm_mix_formula b.formula_base_pure}         *)
+(*       | Exists b-> Exists {b with formula_exists_pure = MCP.drop_varperm_mix_formula b.formula_exists_pure} *)
+(*       | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;                                           *)
+(* 	      formula_or_f2 = helper b.formula_or_f2}                                                             *)
+(*   in                                                                                                        *)
+(*   helper f                                                                                                  *)
 
-let drop_varperm_struc_formula f = 
-	let rec helper f = match f with 
-	  | EBase b -> EBase {b with
-		formula_struc_base = drop_varperm_formula b.formula_struc_base;
-		formula_struc_continuation = map_opt helper b.formula_struc_continuation;}
-      | ECase b -> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}
-	  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
-	  | EList b -> EList (map_l_snd helper b) 	  
-	  | EAssume b -> EAssume {b with 
-		formula_assume_simpl = drop_varperm_formula b.formula_assume_simpl;
-		formula_assume_struc = helper b.formula_assume_struc;} in
-	helper f 
+(* let drop_varperm_struc_formula f =                                                                          *)
+(* 	let rec helper f = match f with                                                                           *)
+(* 	  | EBase b -> EBase {b with                                                                              *)
+(* 		formula_struc_base = drop_varperm_formula b.formula_struc_base;                                         *)
+(* 		formula_struc_continuation = map_opt helper b.formula_struc_continuation;}                              *)
+(*       | ECase b -> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}          *)
+(* 	  | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}              *)
+(* 	  | EList b -> EList (map_l_snd helper b) 	                                                              *)
+(* 	  | EAssume b -> EAssume {b with                                                                          *)
+(* 		formula_assume_simpl = drop_varperm_formula b.formula_assume_simpl;                                     *)
+(* 		formula_assume_struc = helper b.formula_assume_struc;} in                                               *)
+(* 	helper f                                                                                                  *)
 	  
   
-let get_varperm_formula_x (f:formula) typ : CP.spec_var list =
-  let rec helper f =
-    match f with
-      | Base b-> 
-          let p = b.formula_base_pure in
-          let res = MCP.get_varperm_mix_formula p typ in
-          res
-      | Exists b-> 
-          let p = b.formula_exists_pure in
-          let res = MCP.get_varperm_mix_formula p typ in
-          res
-      | Or b-> 
-          let res1 = helper b.formula_or_f1 in
-          let res2 = helper b.formula_or_f1 in
-          (*approximation*)
-          (match typ with
-            | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
-            | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
-            | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
-            (* TODO: Get VarPerm for @lend and @frac *)
-            | VP_Lend -> []
-            | VP_Const _ -> []
-          )
-  in
-  helper f
+(* let get_varperm_formula_x (f:formula) typ : CP.spec_var list =                                              *)
+(*   let rec helper f =                                                                                        *)
+(*     match f with                                                                                            *)
+(*       | Base b->                                                                                            *)
+(*           let p = b.formula_base_pure in                                                                    *)
+(*           let res = MCP.get_varperm_mix_formula p typ in                                                    *)
+(*           res                                                                                               *)
+(*       | Exists b->                                                                                          *)
+(*           let p = b.formula_exists_pure in                                                                  *)
+(*           let res = MCP.get_varperm_mix_formula p typ in                                                    *)
+(*           res                                                                                               *)
+(*       | Or b->                                                                                              *)
+(*           let res1 = helper b.formula_or_f1 in                                                              *)
+(*           let res2 = helper b.formula_or_f1 in                                                              *)
+(*           (*approximation*)                                                                                 *)
+(*           (match typ with                                                                                   *)
+(*             | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)                          *)
+(*             | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                              *)
+(*             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                             *)
+(*             (* TODO: Get VarPerm for @lend and @frac *)                                                     *)
+(*             | VP_Lend -> []                                                                                 *)
+(*             | VP_Const _ -> []                                                                              *)
+(*           )                                                                                                 *)
+(*   in                                                                                                        *)
+(*   helper f                                                                                                  *)
 
-let get_varperm_formula (f:formula) typ : CP.spec_var list =
-  Debug.no_2 "get_varperm_formula" 
-      !print_formula string_of_vp_ann !print_svl
-      get_varperm_formula_x f typ
+(* let get_varperm_formula (f:formula) typ : CP.spec_var list =                                                *)
+(*   Debug.no_2 "get_varperm_formula"                                                                          *)
+(*       !print_formula string_of_vp_ann !print_svl                                                            *)
+(*       get_varperm_formula_x f typ                                                                           *)
 
-(*get varperm of all concurrent threads*)
-let get_varperm_formula_all_x (f:formula) typ : CP.spec_var list =
-  let rec helper f =
-    match f with
-      | Base b-> 
-          let p = b.formula_base_pure in
-          let a = b.formula_base_and in
-          let func (a: one_formula) = 
-            let a_base = formula_of_one_formula a in
-            (helper a_base)
-          in
-          (*get varperm from child threads*)
-          let c_vars = List.concat (List.map func a) in
-          (*get varperm from main thread*)
-          let m_vars = MCP.get_varperm_mix_formula p typ in
-          (m_vars@c_vars)
-      | Exists b-> 
-          let p = b.formula_exists_pure in
-          let a = b.formula_exists_and in
-          let func (a: one_formula) = 
-            let a_base = formula_of_one_formula a in
-            (helper a_base)
-          in
-          (*get varperm from child threads*)
-          let c_vars = List.concat (List.map func a) in
-          (*get varperm from main thread*)
-          let m_vars = MCP.get_varperm_mix_formula p typ in
-          (m_vars@c_vars)
-      | Or b-> 
-          let res1 = helper b.formula_or_f1 in
-          let res2 = helper b.formula_or_f1 in
-          (*approximation*)
-          (match typ with
-            | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)
-            | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
-            | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2
-            (* TODO: Get VarPerm for @lend and @frac *)
-            | VP_Lend -> []
-            | VP_Const _ -> []
-          )
-  in
-  helper f
+(* (*get varperm of all concurrent threads*)                                                                   *)
+(* let get_varperm_formula_all_x (f:formula) typ : CP.spec_var list =                                          *)
+(*   let rec helper f =                                                                                        *)
+(*     match f with                                                                                            *)
+(*       | Base b->                                                                                            *)
+(*           let p = b.formula_base_pure in                                                                    *)
+(*           let a = b.formula_base_and in                                                                     *)
+(*           let func (a: one_formula) =                                                                       *)
+(*             let a_base = formula_of_one_formula a in                                                        *)
+(*             (helper a_base)                                                                                 *)
+(*           in                                                                                                *)
+(*           (*get varperm from child threads*)                                                                *)
+(*           let c_vars = List.concat (List.map func a) in                                                     *)
+(*           (*get varperm from main thread*)                                                                  *)
+(*           let m_vars = MCP.get_varperm_mix_formula p typ in                                                 *)
+(*           (m_vars@c_vars)                                                                                   *)
+(*       | Exists b->                                                                                          *)
+(*           let p = b.formula_exists_pure in                                                                  *)
+(*           let a = b.formula_exists_and in                                                                   *)
+(*           let func (a: one_formula) =                                                                       *)
+(*             let a_base = formula_of_one_formula a in                                                        *)
+(*             (helper a_base)                                                                                 *)
+(*           in                                                                                                *)
+(*           (*get varperm from child threads*)                                                                *)
+(*           let c_vars = List.concat (List.map func a) in                                                     *)
+(*           (*get varperm from main thread*)                                                                  *)
+(*           let m_vars = MCP.get_varperm_mix_formula p typ in                                                 *)
+(*           (m_vars@c_vars)                                                                                   *)
+(*       | Or b->                                                                                              *)
+(*           let res1 = helper b.formula_or_f1 in                                                              *)
+(*           let res2 = helper b.formula_or_f1 in                                                              *)
+(*           (*approximation*)                                                                                 *)
+(*           (match typ with                                                                                   *)
+(*             | VP_Zero -> Gen.BList.remove_dups_eq CP.eq_spec_var_ident (res1@res2)                          *)
+(*             | VP_Full -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                              *)
+(*             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                             *)
+(*             (* TODO: Get VarPerm for @lend and @frac *)                                                     *)
+(*             | VP_Lend -> []                                                                                 *)
+(*             | VP_Const _ -> []                                                                              *)
+(*           )                                                                                                 *)
+(*   in                                                                                                        *)
+(*   helper f                                                                                                  *)
 
-(*get varperm of all concurrent threads*)
-let get_varperm_formula_all (f:formula) typ : CP.spec_var list =
-  Debug.no_2 "get_varperm_formula_all"
-      !print_formula string_of_vp_ann !print_svl
-      get_varperm_formula_x f typ
+(* (*get varperm of all concurrent threads*)                                                                   *)
+(* let get_varperm_formula_all (f:formula) typ : CP.spec_var list =                                            *)
+(*   Debug.no_2 "get_varperm_formula_all"                                                                      *)
+(*       !print_formula string_of_vp_ann !print_svl                                                            *)
+(*       get_varperm_formula_x f typ                                                                           *)
 
 let rec get_or_post_x rel_id (sp:struc_formula): formula list =  match sp with
   | ECase b -> fold_l_snd (get_or_post_x rel_id) b.formula_case_branches
   | EBase b -> fold_opt (get_or_post_x rel_id) b.formula_struc_continuation
-  | EAssume {formula_assume_vars = svl;formula_assume_simpl = f} -> 
+  | EAssume {formula_assume_vars = svl;formula_assume_simpl = f} ->
 	(match f with
     | Or _ -> if CP.intersect (fv f) rel_id = [] then [] else [f]
     | _ -> [])
-  | EInfer b -> get_or_post_x rel_id b.formula_inf_continuation 
+  | EInfer b -> get_or_post_x rel_id b.formula_inf_continuation
   | EList b -> fold_l_snd (get_or_post_x rel_id) b
 
-  and get_or_post sp rel_id =
+and get_or_post sp rel_id =
   let pr1 = !print_struc_formula in
   let pr2 = !print_svl in
   let pr3 = pr_list !print_formula in
@@ -15962,7 +15965,9 @@ let compose_context_formula_and (ctx : context) (phi : formula) (delayed_f: MCP.
 		    | _ -> 
                 (*collect @var for later use *)
                 (*NOTE THAT es.pure might not INCLUDE VARPERM INFO*)
-                let val_vars = MCP.get_varperm_mix_formula es.es_pure  VP_Value in
+                (* let val_vars = MCP.get_varperm_mix_formula es.es_pure VP_Value in *)
+                let _, _, vps, _, _, _ = split_components es.es_formula in
+                let val_vars = vps.CVP.vperm_value_vars in
                 (*then clear entail_*)
                 let es = clear_entailment_history_es_es es in
                 let f = es.es_formula in
@@ -16003,7 +16008,8 @@ and norm_one_formula_vperm_x one_f ref_vars :(one_formula * CP.spec_var list) =
   let p = one_f.formula_pure in
   let pos = one_f.formula_pos in
   (*note that for each child formula x, only @full is allowed*)
-  let r_vars = MCP.get_varperm_mix_formula p VP_Full in
+  (* let r_vars = MCP.get_varperm_mix_formula p VP_Full in *)
+  let r_vars = [] in (* TODO *)
   let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
   if (diff_r_vars!=[]) then
     let msg = "@val permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
@@ -16014,9 +16020,10 @@ and norm_one_formula_vperm_x one_f ref_vars :(one_formula * CP.spec_var list) =
     let child_r_vars = Gen.BList.intersect_eq CP.eq_spec_var_ident child_fv ref_vars in
     let child_r_vars = Gen.BList.remove_dups_eq CP.eq_spec_var_ident child_r_vars in
     let child_r_vars = List.map CP.to_primed child_r_vars in
-    let new_p = MCP.drop_varperm_mix_formula p in
-    let ref_f = CP.mk_varperm VP_Full child_r_vars pos in
-    let new_p = MCP.memoise_add_pure_N new_p ref_f in
+    (* let new_p = MCP.drop_varperm_mix_formula p in         *)
+    (* let ref_f = CP.mk_varperm VP_Full child_r_vars pos in *)
+    (* let new_p = MCP.memoise_add_pure_N new_p ref_f in     *)
+    let new_p = p in
     (*remaining ref vars*)
     let new_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident ref_vars child_r_vars in
     ({one_f with formula_pure = new_p},new_ref_vars)
@@ -16045,34 +16052,39 @@ and norm_formula_vperm_x f ref_vars val_vars =
   let rec helper f = match f with
     | Base ({formula_base_heap =h;
             formula_base_pure = p;
+            formula_base_vperm = vp;
             formula_base_and =a;
             formula_base_pos =pos} as b)->
         (*infer VPERM for the main thread*)
         (*First, @value*)
-        let v_vars = MCP.get_varperm_mix_formula p VP_Value in
+        (* let v_vars = MCP.get_varperm_mix_formula p VP_Value in *)
+        let v_vars = vp.CVP.vperm_value_vars in
         let diff_v_vars = Gen.BList.difference_eq CP.eq_spec_var_ident v_vars val_vars in
         (*The specification of VPERM @value[] is not correct*)
         if (diff_v_vars!=[]) then
           let msg = "@val permissions not matched. Variables " ^ (!print_svl diff_v_vars) ^ " are not passed by value" in
           Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
         else
-          let new_p = MCP.drop_varperm_mix_formula p in
-          let val_f = CP.mk_varperm VP_Value val_vars pos in
-          let new_p = MCP.memoise_add_pure_N new_p val_f in
+          (* let new_p = MCP.drop_varperm_mix_formula p in      *)
+          (* let val_f = CP.mk_varperm VP_Value val_vars pos in *)
+          (* let new_p = MCP.memoise_add_pure_N new_p val_f in  *)
+          let new_p = p in
           (*Second, @full[...]*)
           (*INFER @full for child threads first*)
           (* child threads first, remaining ref vars in ref_vars1*)
           let new_a, new_ref_vars = norm_formula_and_vperm a ref_vars in
           (*Then, main thread*)
-          let r_vars = MCP.get_varperm_mix_formula p VP_Full in
+          (* let r_vars = MCP.get_varperm_mix_formula p VP_Full in *)
+          let r_vars = vp.CVP.vperm_full_vars in
           let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars new_ref_vars in
           if (diff_r_vars!=[]) then
             let msg = "@full[...] permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
             Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
           else
             (*The remaining ref vars belong to the main thread*)
-            let ref_f = CP.mk_varperm VP_Full new_ref_vars pos in
-            let new_p = MCP.memoise_add_pure_N new_p ref_f in
+            (* let ref_f = CP.mk_varperm VP_Full new_ref_vars pos in *)
+            (* let new_p = MCP.memoise_add_pure_N new_p ref_f in     *)
+            (* TODO: VPerm *)
             Base {b with formula_base_pure = new_p; formula_base_and = new_a}
     | Exists e ->
         let b = Base  {  
@@ -16117,8 +16129,12 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
       if not (has_formula_and b) then
         (*sequential pre-condition*)
         (*INDEED, we can also use "norm_formula_vperm" in this case*)
-        let r_vars = get_varperm_formula b VP_Full in
-        let v_vars = get_varperm_formula b VP_Value in
+        (* let r_vars = get_varperm_formula b VP_Full in  *)
+        (* let v_vars = get_varperm_formula b VP_Value in *)
+        (* TODO: VPerm *)
+        let vps = CVP.empty_vperm_sets in
+        let r_vars = vps.CVP.vperm_full_vars in
+        let v_vars = vps.CVP.vperm_value_vars in
         let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
         let diff_v_vars = Gen.BList.difference_eq CP.eq_spec_var_ident v_vars val_vars in
         (*The specification of VPERM is not correct*)
@@ -16127,11 +16143,12 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
           let m2 = if diff_v_vars!=[] then "@val permissions not matched." else "" in
           Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ m1 ^ m2 ^ "\n" ^ (!print_struc_formula struc_f)}
         else
-          let new_b = drop_varperm_formula b in
-          let ref_f = CP.mk_varperm VP_Full ref_vars pos in
-          let val_f = CP.mk_varperm VP_Value val_vars pos in
-          let new_b = add_pure_formula_to_formula ref_f new_b in
-          let new_b = add_pure_formula_to_formula val_f new_b in
+          (* let new_b = drop_varperm_formula b in                  *)
+          (* let ref_f = CP.mk_varperm VP_Full ref_vars pos in      *)
+          (* let val_f = CP.mk_varperm VP_Value val_vars pos in     *)
+          (* let new_b = add_pure_formula_to_formula ref_f new_b in *)
+          (* let new_b = add_pure_formula_to_formula val_f new_b in *)
+          let new_b = b in (* TODO: VPerm *)
           let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
           EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont}
       else
@@ -16149,22 +16166,30 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
       let pvars = List.map CP.to_primed vars in
       if not (has_formula_and post_si) then
         (*sequential post-condition*)
-        let r_vars = get_varperm_formula post_si VP_Full in
+        (* TODO: VPerm *)
+        (* let r_vars = get_varperm_formula post_si VP_Full in *)
+        let r_vars = [] in
         let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars vars in
         if (diff_r_vars!=[]) then
           Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. @full permissions not matched.\n" ^ (!print_struc_formula struc_f)}
         else
-          let new_post_si = drop_varperm_formula post_si in
-		  let new_post_st = drop_varperm_struc_formula post_st in
-          let ref_f = CP.mk_varperm VP_Full pvars pos in
-          let new_post_si = add_pure_formula_to_formula ref_f new_post_si in
-		  let new_post_st = add_pure_formula_to_struc_formula ref_f new_post_st in
+          (* let new_post_si = drop_varperm_formula post_si in                        *)
+          (* let new_post_st = drop_varperm_struc_formula post_st in                  *)
+          (* let ref_f = CP.mk_varperm VP_Full pvars pos in                           *)
+          (* let new_post_si = add_pure_formula_to_formula ref_f new_post_si in       *)
+          (* let new_post_st = add_pure_formula_to_struc_formula ref_f new_post_st in *)
+          (* TODO: VPerm *)
+          let new_post_si = post_si in
+          let new_post_st = post_st in
           EAssume {b with 
 			formula_assume_simpl = new_post_si;
 			formula_assume_struc = new_post_st;}
       else
-        let new_post_si = norm_formula_vperm post_si pvars [] in
-		let new_post_st = norm_struc_vperm_x post_st pvars [] in
+        (* let new_post_si = norm_formula_vperm post_si pvars [] in *)
+        (* let new_post_st = norm_struc_vperm_x post_st pvars [] in *)
+        (* TODO: VPerm *)
+        let new_post_si = post_si in
+        let new_post_st = post_st in
         mkEAssume_simp vars new_post_si new_post_st b.formula_assume_lbl
         (*concurrency spec. USERS specify this*)
   | EInfer ({ formula_inf_continuation = cont }) ->struc_f (*Not handle this at the moment*)
@@ -16191,7 +16216,7 @@ and extractLS (evars : CP.spec_var list) (f : formula) : MCP.mix_formula =
 and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
   let rec helper f =
     match f with
-      | Base{formula_base_pure = p} ->
+      | Base{ formula_base_pure = p; formula_base_vperm = vp; } ->
           let p_delayed = MCP.simplify_mix_formula (MCP.extractLS_mix_formula p) in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
@@ -16200,9 +16225,10 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* get variables with full permission*)
-          let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in
+          (* let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in *)
+          let full_vars = vp.CVP.vperm_full_vars in
           (* remove formulae related to varperm *)
-          let p_pure = MCP.drop_varperm_mix_formula p_pure in
+          (* let p_pure = MCP.drop_varperm_mix_formula p_pure in *)
           (* remove formulae related to floating point: may be unsound *)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
           (*excl_vars are those who should not be delayed-checked*)
@@ -16210,6 +16236,7 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           let p_pure = MCP.drop_svl_mix_formula p_pure excl_vars in
           MCP.merge_mems p_delayed p_pure true
       | Exists{formula_exists_pure = p;
+               formula_exists_vperm = vp;
                formula_exists_qvars =qvars} ->
           let p_delayed = MCP.simplify_mix_formula (MCP.extractLS_mix_formula p) in
           (* remove formulae related to LS *)
@@ -16219,9 +16246,10 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* get variables with full permission*)
-          let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in
+          (* let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in *)
+          let full_vars = vp.CVP.vperm_full_vars in
           (* remove formulae related to varperm *)
-          let p_pure = MCP.drop_varperm_mix_formula p_pure in
+          (* let p_pure = MCP.drop_varperm_mix_formula p_pure in *)
           (* remove formulae related to floating point: may be unsound TOCHECK*)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
           (* conservatively drop formula related to exist vars: may be unsound TOCHECK *)

@@ -1789,8 +1789,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               p (* TODO *)
         | Ipure.BagMax _ -> 
               p (* TODO *)
-        | Ipure.VarPerm (va, ipl, pos) ->
-              p (* TODO *)
+        (* | Ipure.VarPerm (va, ipl, pos) -> *)
+        (*       p (* TODO *)                *)
         | Ipure.ListIn (e1, e2, pos) ->
               Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
         | Ipure.ListNotIn (e1, e2, pos) ->

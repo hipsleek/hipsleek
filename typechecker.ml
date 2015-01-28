@@ -204,12 +204,17 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   (* in *)
   (* let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in *)
   (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in *)
-  let zero_vars = CF.get_varperm_formula_all pre_f VP_Zero in
+  (* TODO: VPerm *)
+  (* let zero_vars = CF.get_varperm_formula_all pre_f VP_Zero in *)
+  let zero_vars = [] in
   let _ = if (zero_vars!=[]) then
         report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition")
   in
-  let val_vars = CF.get_varperm_formula_all pre_f VP_Value in
-  let full_vars = CF.get_varperm_formula_all pre_f VP_Full in
+  (* TODO: VPerm *)
+  (* let val_vars = CF.get_varperm_formula_all pre_f VP_Value in *)
+  (* let full_vars = CF.get_varperm_formula_all pre_f VP_Full in *)
+  let val_vars = [] in
+  let full_vars = [] in
   let tmp = Gen.BList.intersect_eq CP.eq_spec_var_ident val_vars full_vars in
   let _ = if (tmp!=[]) then
         report_error pos ("\ncheck_specs: EBase: duplicated VarPerm: " ^ (Cprinter.string_of_spec_var_list tmp))
@@ -231,14 +236,18 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   (* let full_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list2) in *)
   (* let val_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list2) in *)
 
-  let val_vars2 = CF.get_varperm_formula pre_f VP_Value in
-  let full_vars2 = CF.get_varperm_formula pre_f VP_Full in
+  (* TODO: VPerm *)
+  (* let val_vars2 = CF.get_varperm_formula pre_f VP_Value in *)
+  (* let full_vars2 = CF.get_varperm_formula pre_f VP_Full in *)
+  let val_vars2 = [] in
+  let full_vars2 = [] in
   let all_vars2 = full_vars2@val_vars2 in
   (*@zero of the main thread*)
   let zero_vars = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars2 in
   let ctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_zero_perm = zero_vars}) ctx in
   (*drop VarPerm in the main thread*)
-  let ext_base = CF.drop_varperm_formula pre_f in
+  (* let ext_base = CF.drop_varperm_formula pre_f in *)
+  let ext_base = pre_f in
   Debug.devel_zprint (lazy ("\n check_specs: EBase: checking VarPerm in the precondition: Done. " ^ "\n ### zero_vars = " ^ (Cprinter.string_of_spec_var_list zero_vars) ^ "\n")) pos;
   (ctx,ext_base)
 (*************************************************************)
@@ -251,7 +260,9 @@ let check_full_varperm_x prog ctx ( xs:CP.spec_var list) pos =
   if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then (true,ctx) (*propagate fail contexts*)
   else
     let _ = Debug.devel_pprint ("check_full_varperm for var " ^ (Cprinter.string_of_spec_var_list xs)^ "\n") pos in
-    let full_p = CP.mk_varperm_full xs pos in
+    (* TODO: VPerm *)
+    (* let full_p = CP.mk_varperm_full xs pos in *)
+    let full_p = CP.mkTrue pos in
     let full_f = CF.formula_of_pure_formula full_p pos in
     let rs,prf = heap_entail_list_failesc_context_init prog false ctx full_f None None None pos None in
     (if (CF.isFailListFailescCtx rs) then
@@ -1256,7 +1267,9 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
         else if (mn_str=Globals.release_name) then
           (*release: Those variables whose @full[] have been captured in the variant
             won't exist in pure constraint after release*)
-          let full_vars = CF.get_varperm_formula renamed_inv VP_Full in
+          (* TODO: VPerm *)
+          (* let full_vars = CF.get_varperm_formula renamed_inv VP_Full in *)
+          let full_vars = [] in
           let fresh_vars = CP.fresh_spec_vars full_vars in
           let fct (es:CF.entail_state) =
             let new_f = CF.subst_avoid_capture_pure full_vars fresh_vars es.CF.es_formula in
