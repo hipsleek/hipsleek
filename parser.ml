@@ -3424,11 +3424,13 @@ par_case:
       { exp_par_case_cond = Some (F.subst_stub_flow n_flow dc);
         exp_par_case_vperm = vps;
         exp_par_case_body = stmt_list_to_block sl (get_pos_camlp4 _loc 5);
+        exp_par_case_else = false;
         exp_par_case_pos = (get_pos_camlp4 _loc 1); }
-   | `ELSE_TT; vps = vperm_var_list_opt; `LEFTARROW; sl = statement_list -> 
+   | `ELSE_TT; (* vps = vperm_var_list_opt; *) `LEFTARROW; sl = statement_list -> 
       { exp_par_case_cond = None;
-        exp_par_case_vperm = vps;
+        exp_par_case_vperm = VP.empty_vperm_sets;
         exp_par_case_body = stmt_list_to_block sl (get_pos_camlp4 _loc 5);
+        exp_par_case_else = true;
         exp_par_case_pos = (get_pos_camlp4 _loc 1); }
   ]];
   

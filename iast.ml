@@ -518,6 +518,7 @@ and exp_par_case = {
   exp_par_case_vperm: VP.vperm_sets;
   exp_par_case_cond: F.formula option;
   exp_par_case_body: exp;
+  exp_par_case_else: bool;
   exp_par_case_pos: loc;
 }
 
@@ -602,7 +603,7 @@ let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 let norm_par_case_list pl pos = 
-  let pl, else_pl = List.partition (fun c -> not (is_None c.exp_par_case_cond)) pl in
+  let pl, else_pl = List.partition (fun c -> not c.exp_par_case_else) pl in
   if (List.length else_pl > 1) then 
     (Err.report_error {
       Err.error_loc = pos;

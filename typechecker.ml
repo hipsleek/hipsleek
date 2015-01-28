@@ -2601,7 +2601,6 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_c
   let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
   (rem_ctx, post_ctx)
-
   
 and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =

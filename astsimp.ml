@@ -5661,6 +5661,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           { C.exp_par_case_cond = cond;
             C.exp_par_case_vperm = vp;
             C.exp_par_case_body = body;
+            C.exp_par_case_else = c.I.exp_par_case_else;
             C.exp_par_case_pos = cpos; }
         in
         (C.Par {

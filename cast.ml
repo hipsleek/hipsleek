@@ -479,6 +479,7 @@ and exp_par_case = {
   exp_par_case_cond: F.formula option;
   exp_par_case_vperm: CVP.vperm_sets;
   exp_par_case_body: exp;
+  exp_par_case_else: bool;
   exp_par_case_pos: loc;
 }
     
