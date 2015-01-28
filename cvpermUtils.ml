@@ -30,6 +30,14 @@ let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
 let diff = Gen.BList.difference_eq eq_spec_var
 let check_dups = Gen.BList.check_dups_eq eq_spec_var
 
+let rec partition_by_key key_of key_eq ls = 
+  match ls with
+  | [] -> []
+  | e::es ->
+    let ke = key_of e in 
+    let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
+    (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
+
 let is_Zero ann = 
   match ann with
   | VP_Zero -> true
@@ -39,10 +47,15 @@ let norm_vperm_sets vps =
   let zero_vars = remove_dups vps.vperm_zero_vars in (* @zero[x] * @zero[x] -> @zero[x] *)
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   let full_vars = (* remove_dups *) vps.vperm_full_vars in (* @full[x] * @full[x] -> false *)
+  let group_frac_vars_sets = partition_by_key fst Frac.eq_frac vps.vperm_frac_vars in
+  let frac_vars_set = List.map (fun (frac, group) -> 
+    let m_group = List.concat (List.map snd group) in
+    (frac, m_group)) group_frac_vars_sets in
   { vps with
     vperm_full_vars = full_vars;
     vperm_lend_vars = diff lend_vars full_vars;
-    vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); }
+    vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); 
+    vperm_frac_vars = frac_vars_set; }
 
 let norm_vperm_sets vps = 
   let pr = !print_vperm_sets in
