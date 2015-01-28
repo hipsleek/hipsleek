@@ -465,12 +465,18 @@ let mkETrue_ensures_False flowt pos = EBase({
    formula_struc_pos = pos})
 
 let isAnyConstFalse f = match f with
-  | Exists ({formula_exists_heap = h;
-    formula_exists_pure = p;
-    formula_exists_flow = fl;})
-  | Base ({formula_base_heap = h;
-    formula_base_pure = p;
-    formula_base_flow = fl;}) -> h = HFalse || MCP.isConstMFalse p||is_false_flow fl.formula_flow_interval
+  | Exists ({
+      formula_exists_heap = h;
+      formula_exists_vperm = vp;
+      formula_exists_pure = p;
+      formula_exists_flow = fl; })
+  | Base ({
+      formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_flow = fl; }) -> 
+    h = HFalse || MCP.isConstMFalse p || 
+    is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
 
 let isAnyConstFalse f=
@@ -1729,7 +1735,7 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let p, _ = combine_and_pure f1 p1 p2 in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
   let t = mkAndType t1 t2 in
-  let fl =  mkAndFlow fl1 fl2 flow_tr in
+  let fl = mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (*combine a1 and a2: assuming merging a1 and a2*)
   mkBase h p vp t fl a pos (*TO CHECK: how about a1,a2: DONE*)
 

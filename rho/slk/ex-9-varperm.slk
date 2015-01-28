@@ -5,6 +5,9 @@ checkentail true |- @full[x] * @lend[y] * @zero[x, z].
 checkentail @full[x] |- true.
 print residue.
 
+checkentail @full[x] * @full[x] |- false.
+print residue.
+
 checkentail @full[x] |- @full[x].
 print residue.
 

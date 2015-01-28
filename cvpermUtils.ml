@@ -28,6 +28,7 @@ let is_empty_vperm_sets vps =
 
 let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
 let diff = Gen.BList.difference_eq eq_spec_var
+let check_dups = Gen.BList.check_dups_eq eq_spec_var
 
 let is_Zero ann = 
   match ann with
@@ -35,13 +36,17 @@ let is_Zero ann =
   | _ -> false
 
 let norm_vperm_sets vps = 
-  let zero_vars = remove_dups vps.vperm_zero_vars in
-  let lend_vars = remove_dups vps.vperm_lend_vars in
-  let full_vars = remove_dups vps.vperm_full_vars in
+  let zero_vars = remove_dups vps.vperm_zero_vars in (* @zero[x] * @zero[x] -> @zero[x] *)
+  let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
+  let full_vars = (* remove_dups *) vps.vperm_full_vars in (* @full[x] * @full[x] -> false *)
   { vps with
     vperm_full_vars = full_vars;
     vperm_lend_vars = diff lend_vars full_vars;
     vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); }
+
+let norm_vperm_sets vps = 
+  let pr = !print_vperm_sets in
+  Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
 
 let rec merge_vperm_sets vps_list = 
   match vps_list with
@@ -68,10 +73,6 @@ let rec merge_vperm_anns ann_list =
     | VP_Lend -> { mvs with vperm_lend_vars = mvs.vperm_lend_vars @ svl; } 
     | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
 
-let norm_vperm_sets vps = 
-  let pr = !print_vperm_sets in
-  Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
-
 let fv vps = remove_dups 
   (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
    vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
@@ -94,3 +95,7 @@ let subst_one sst vps =
 let subst_avoid_capture f t vps = 
   let sst = List.combine f t in
   subst_f subs_one sst vps
+
+let is_false_vperm_sets vps = 
+  let full_vars = vps.vperm_full_vars in
+  check_dups full_vars

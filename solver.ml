@@ -5055,11 +5055,11 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     else 
       (* UNSAT check *)
       let ctx =
-    	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
-    	else
-          if !Globals.delay_proving_sat 
-          then ctx
-          else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
+        if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
+        else
+            if !Globals.delay_proving_sat 
+            then ctx
+            else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
       in
       (* WN : this has been checked earlier! *)
       if isAnyFalseCtx ctx then
