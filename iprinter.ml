@@ -846,18 +846,18 @@ let rec string_of_exp = function
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
-  | Par ({ exp_par_cases = cl }) ->
+  | Par ({ exp_par_vperm = vps; exp_par_cases = cl }) ->
     let string_of_par_case c =
       let cond = c.exp_par_case_cond in
-      let excl_vars = c.exp_par_case_excl_vars in
-      let excl_vars_str = "[" ^ (String.concat "," (List.map (fun (v, p) -> v) excl_vars)) ^ "]" in
+      let vps = c.exp_par_case_vperm in
+      let vps_str = string_of_vperm_sets vps in
       let cond_str = match cond with
-      | None -> "else " ^ excl_vars_str ^ " -> "
-      | Some f -> "case " ^ excl_vars_str ^ " " ^ (string_of_formula f) ^ " -> "
+      | None -> "else " ^ vps_str ^ " -> "
+      | Some f -> "case " ^ vps_str ^ " " ^ (string_of_formula f) ^ " -> "
       in
       cond_str ^ (string_of_exp c.exp_par_case_body)
     in
-    "par {\n" ^
+    "par " ^ (string_of_vperm_sets vps) ^ "{\n" ^
     (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 
 (* (* pretty printing for expressions *)                                                                       *)

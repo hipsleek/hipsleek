@@ -509,13 +509,14 @@ and exp_unfold = { exp_unfold_var : (string * primed);
 exp_unfold_pos : loc } 
 
 and exp_par = {
+  exp_par_vperm: VP.vperm_sets;
   exp_par_cases: exp_par_case list;
   exp_par_pos: loc;
 }
 
 and exp_par_case = {
+  exp_par_case_vperm: VP.vperm_sets;
   exp_par_case_cond: F.formula option;
-  exp_par_case_excl_vars: (ident * primed) list;
   exp_par_case_body: exp;
   exp_par_case_pos: loc;
 }

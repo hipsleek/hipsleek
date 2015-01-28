@@ -76,7 +76,7 @@ let fv vps = remove_dups
   (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
    vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
 
-let subst_f sst f vps = 
+let subst_f f sst vps = 
   let f_list vl = List.map (fun v -> f sst v) vl in
   { vps with
     vperm_zero_vars = f_list vps.vperm_zero_vars;
@@ -86,11 +86,11 @@ let subst_f sst f vps =
     vperm_frac_vars = List.map (fun (frac, vl) -> (frac, f_list vl)) vps.vperm_frac_vars; } 
 
 let subst_par sst vps = 
-  subst_f sst subst_var_par vps
+  subst_f subst_var_par sst vps
 
 let subst_one sst vps = 
-  subst_f sst subst_var vps
+  subst_f subst_var sst vps
 
 let subst_avoid_capture f t vps = 
   let sst = List.combine f t in
-  subst_f sst subs_one vps
+  subst_f subs_one sst vps

@@ -470,13 +470,14 @@ and exp_label = {
     exp_label_exp: exp;}
     
 and exp_par = {
+  exp_par_vperm: CVP.vperm_sets;
   exp_par_cases: exp_par_case list;
   exp_par_pos: loc;
 }
 
 and exp_par_case = {
   exp_par_case_cond: F.formula option;
-  exp_par_case_excl_vars: P.spec_var list;
+  exp_par_case_vperm: CVP.vperm_sets;
   exp_par_case_body: exp;
   exp_par_case_pos: loc;
 }

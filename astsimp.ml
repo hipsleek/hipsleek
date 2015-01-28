@@ -5651,22 +5651,20 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         let free_vars = List.map snd all_names in
         let n_tl = List.map (fun (t, n) -> (n, { sv_info_kind = t; id = fresh_int () })) all_names in
         
-        let trans_par_case c = 
+        let trans_par_case c =
+          let cpos = c.I.exp_par_case_pos in 
           let cond = map_opt (fun f -> 
             snd (trans_formula prog false free_vars true f n_tl false)) c.I.exp_par_case_cond 
           in
           let body, _ = helper c.I.exp_par_case_body in
-          let excl_vars = List.map (fun (v, p) -> 
-            let t =
-              try fst (List.find (fun (_, n) -> String.compare n v = 0) tmp_names) 
-              with _ -> UNK 
-            in CP.SpecVar (t, v, p)) c.I.exp_par_case_excl_vars in
+          let vp = trans_vperm_sets c.I.exp_par_case_vperm n_tl cpos in
           { C.exp_par_case_cond = cond;
-            C.exp_par_case_excl_vars = excl_vars;
+            C.exp_par_case_vperm = vp;
             C.exp_par_case_body = body;
-            C.exp_par_case_pos = c.I.exp_par_case_pos; }
+            C.exp_par_case_pos = cpos; }
         in
         (C.Par {
+          C.exp_par_vperm = trans_vperm_sets p.I.exp_par_vperm n_tl pos;
           C.exp_par_cases = List.map trans_par_case p.I.exp_par_cases;
           C.exp_par_pos = pos; }, C.void_type)
   in helper ie
@@ -8359,16 +8357,19 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
       let sst = List.fold_left (fun a (c1, c2) ->
         ((c1, Unprimed), (c2, Unprimed))::((c1, Primed), (c2, Primed))::a) [] ren 
       in
+      let subst_ren ren (id, primed) = (subid ren id, primed) in
       let rename_par_case c = 
         let body = rename_exp ren c.I.exp_par_case_body in
         let cond = map_opt (fun f -> IF.subst sst f) c.I.exp_par_case_cond in
-        let excl_vars = List.map (fun (v, p) -> (subid ren v, p)) c.I.exp_par_case_excl_vars in
+        let vp = IVP.subst_f subst_ren ren c.I.exp_par_case_vperm in
         { c with
           I.exp_par_case_cond = cond;
-          I.exp_par_case_excl_vars = excl_vars;
+          I.exp_par_case_vperm = vp;
           I.exp_par_case_body = body; }
       in
-      I.Par { p with I.exp_par_cases = List.map rename_par_case p.I.exp_par_cases; }
+      I.Par { p with
+        I.exp_par_vperm = IVP.subst_f subst_ren ren p.I.exp_par_vperm; 
+        I.exp_par_cases = List.map rename_par_case p.I.exp_par_cases; }
   in helper ren f 
 
 

@@ -122,6 +122,15 @@ and vp_ann =
   | VP_Lend | VP_Const of Frac.frac 
   (* | VP_Ref * *)
 
+let eq_vp_ann a1 a2 = 
+  match a1, a2 with
+  | VP_Zero, VP_Zero -> true
+  | VP_Full, VP_Full -> true
+  | VP_Lend, VP_Lend -> true
+  | VP_Value, VP_Value -> true
+  | VP_Const f1, VP_Const f2 -> Frac.eq_frac f1 f2
+  | _ -> false
+  
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
