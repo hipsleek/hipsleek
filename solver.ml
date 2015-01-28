@@ -5079,28 +5079,28 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
               let es = (CF.add_to_estate_with_steps es ss) in
               let _ = Debug.ninfo_hprint (add_str "es (before vperm)" pr) es no_pos in
-              let es = if (!Globals.ann_vp) then
-                (* FILTER OUT VarPerm formula *)
-                (* let es_f = es.es_formula in                                                                      *)
-                (* let es_f = normalize_varperm_formula es_f in                                                     *)
-                (* (* let vperm_fs, _ = filter_varperm_formula es_f in *)                                           *)
-                (* (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)         *)
-                (* let vars = CF.get_varperm_formula es_f VP_Zero in                                                *)
-                (* let vars_val = CF.get_varperm_formula es_f VP_Value in                                           *)
-                (* let vars_full = CF.get_varperm_formula es_f VP_Full in                                           *)
-                (* let new_f = drop_varperm_formula es_f in                                                         *)
-                (* let _ = if ((vars_val@vars_full)!=[]) then                                                       *)
-                (*   print_endline ("\n[Warning] heap_entail_conjunct_lhs:                                          *)
-                (*                   the entail state should not include variable                                   *)
-                (*                   permissions other than " ^ (string_of_vp_ann VP_Zero) ^                        *)
-                (*                   ". They will be filtered out automatically.") in                               *)
-                (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *)
-                (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *)
-                (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *)
-                let vps, es_f = VP.strip_vperm_formula es.es_formula in
-                let vps = CVP.norm_vperm_sets (CVP.merge_vperm_sets [es.es_vperm_sets; vps]) in
-                { es with es_formula = es_f; es_vperm_sets = vps }
-              else es in
+              (* let es = if (!Globals.ann_vp) then                                                                       *)
+              (*   (* FILTER OUT VarPerm formula *)                                                                       *)
+              (*   (* let es_f = es.es_formula in                                                                      *) *)
+              (*   (* let es_f = normalize_varperm_formula es_f in                                                     *) *)
+              (*   (* (* let vperm_fs, _ = filter_varperm_formula es_f in *)                                           *) *)
+              (*   (* (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)         *) *)
+              (*   (* let vars = CF.get_varperm_formula es_f VP_Zero in                                                *) *)
+              (*   (* let vars_val = CF.get_varperm_formula es_f VP_Value in                                           *) *)
+              (*   (* let vars_full = CF.get_varperm_formula es_f VP_Full in                                           *) *)
+              (*   (* let new_f = drop_varperm_formula es_f in                                                         *) *)
+              (*   (* let _ = if ((vars_val@vars_full)!=[]) then                                                       *) *)
+              (*   (*   print_endline ("\n[Warning] heap_entail_conjunct_lhs:                                          *) *)
+              (*   (*                   the entail state should not include variable                                   *) *)
+              (*   (*                   permissions other than " ^ (string_of_vp_ann VP_Zero) ^                        *) *)
+              (*   (*                   ". They will be filtered out automatically.") in                               *) *)
+              (*   (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *) *)
+              (*   (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *) *)
+              (*   (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *) *)
+              (*   let vps, es_f = VP.strip_vperm_formula es.es_formula in                                                *)
+              (*   let vps = CVP.norm_vperm_sets (CVP.merge_vperm_sets [es.es_vperm_sets; vps]) in                        *)
+              (*   { es with es_formula = es_f; es_vperm_sets = vps }                                                     *)
+              (* else es in                                                                                               *)
               let _ = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
               (* treat err states as unreachable states *)
               (* let osubsumed_es, non_subsume_es = Cfutil.partition_error_es es in *)
@@ -8370,11 +8370,12 @@ type: bool *
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
       let res_delta = CF.simplify_pure_f_old res_delta in
+      let estate = { estate with es_formula = res_delta; } in
 
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)
       (*************************************************************************)
-      let vperm_res = Vperm.vperm_entail_rhs estate lhs_p rhs_p pos in
+      let vperm_res = Vperm.vperm_entail_rhs estate conseq pos in
       match vperm_res with
       | Vperm.Fail rctx -> (rctx, Failure)
       | Vperm.Succ estate ->
@@ -8400,7 +8401,7 @@ type: bool *
           (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
           (* Debug.tinfo_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
           (* Debug.tinfo_hprint (add_str "to_keep" !print_svl) to_keep no_pos; *)
-	  let res_es = {estate with es_formula = res_delta;
+	  let res_es = {estate with (* es_formula = res_delta; *)
 	      es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	      es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		| Some s1,Some s2 -> (s1,s2)::a
@@ -8417,7 +8418,7 @@ type: bool *
 	end
 	else
           begin
-	    let res_ctx = Ctx {estate with es_formula = res_delta;
+	    let res_ctx = Ctx {estate with (* es_formula = res_delta; *)
                 es_unsat_flag = false; (*the new context could be unsat*)
                 (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above
 		  Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
