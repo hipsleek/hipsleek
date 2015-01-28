@@ -29,7 +29,7 @@ print residue.
 
 //(6)
 infer [@par] @zero[x]  |- @lend[x].
-// WRONG :expect ERROR
+// WRONG :expect ERROR 
 print residue.
 // <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
 
@@ -43,12 +43,12 @@ infer [@par] @full[x]  |- true.
 // expect ERROR
 print residue.
 
-//(9)
+ //(9)
 infer [@par] emp*@full[x]*@zero[y,k]*@full[z]*@lend[a,b]&y'>0  |- true.
 // expect ERROR
 print residue.
 
-//(10)
+//(10)q
 checkentail_exact  @full[x]  |- @lend[x].
 // expect fail
 print residue.
@@ -61,6 +61,11 @@ print residue.
 //(12)
 checkentail_exact  @full[x,y]  |- @full[x].
 // expect fail
+print residue.
+
+//(13)
+checkentail_exact  @full[x]*@full[x]  |- false.
+// expect succeeed
 print residue.
 
 /*

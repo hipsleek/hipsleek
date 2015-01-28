@@ -120,7 +120,35 @@ infer [@par] @zero[x]  |- @lend[x].
 print residue.
 // <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
 ================================================================
+// # ex13a.slk (2)
+checkentail @full[x] * @full[x]  |- true.
+// expect @full[x]
+print residue.
+//<1>htrue*@full[x]&{FLOW,(4,5)=__norm#E}[]
+// should be false
 ================================================================
+# ex12c1.ss
+
+  par 
+    {x,y@L,v@L}
+  {  
+   // exists r1',r2'
+  case {x,v@L} true ->
+     x = v+1;
+    //dprint;
+    || // {y@L,v@L}
+  else // {y@L,v@L} 
+      ->
+      y = y+22+v; // cannot update y
+     //dprint;
+  }
+Why parser error?
+
+File "ex12c1-varperm-simple.ss", line 9, characters 4-5
+ --error: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
+ at:caught
+
+Exception occurred: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
 ================================================================
 ================================================================
 ================================================================
