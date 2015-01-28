@@ -3,12 +3,13 @@ open Cformula
 open Cpure
 open Mcpure
 open Gen
+open CvpermUtils
 
 (* module CP = Cpure *)
 module CF = Cformula
 module MCP = Mcpure
 module MCD = Mcpure_D
-module CVP = CvpermUtils
+(* module CVP = CvpermUtils *)
 
 (******************************************************************************)
 
@@ -92,13 +93,13 @@ let strip_vperm_mix_formula (mf: MCP.mix_formula) =
     (CVP.merge_vperm_sets vps_list, MCP.MemoF mp)
 
 let strip_vperm_mix_formula mf =
-  let pr1 = string_of_vperm_sets in
+  let pr1 = !CVP.print_vperm_sets in
   let pr2 = !MCP.print_mix_formula in
   Debug.no_1 "strip_vperm_mix_formula" pr2 (pr_pair pr1 pr2) 
   strip_vperm_mix_formula mf
 
 let strip_vperm_formula (f: CF.formula) : vperm_sets * CF.formula =
-  let _, pure_f, _, _, _ = CF.split_components f in
+  let _, pure_f, _, _, _, _ = CF.split_components f in
   let (vps, other_p) = strip_vperm_mix_formula pure_f in
   (* Using transform_formula to update the pure part of f *)
   let f_e_f _ = None in

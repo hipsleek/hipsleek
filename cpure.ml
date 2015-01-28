@@ -3386,8 +3386,7 @@ and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_sub
 
 (*LDK ???*) 
 and subst_var (fr, t) (o : spec_var) = 
-  if eq_spec_var fr o then
-    t
+  if eq_spec_var fr o then t
   else o
 
 (* should not use = since type of spec_var may have been different *)
@@ -14055,37 +14054,5 @@ let has_nondet_cond f =
   in
   let or_list = List.fold_left (||) false in
   fold_formula f (nonef, f_b, nonef) or_list  
-
-(* To store vperm of variables *)
-type vperm_sets = {
-  vperm_zero_vars: spec_var list;
-  vperm_lend_vars: spec_var list;
-  vperm_value_vars: spec_var list;
-  vperm_full_vars: spec_var list;
-  vperm_frac_vars: (Frac.frac * spec_var list) list;
-}
-
-let empty_vperm_sets = {
-  vperm_zero_vars = [];
-  vperm_lend_vars = [];
-  vperm_value_vars = [];
-  vperm_full_vars = [];
-  vperm_frac_vars = [];
-}
-
-let string_of_vperm_sets vps =
-  let pr_set str set =
-    if Gen.is_empty set then ""
-    else str ^ (!print_svl set) 
-  in 
-  let full_vars = vps.vperm_full_vars in
-  let lend_vars = vps.vperm_lend_vars in
-  let value_vars = vps.vperm_value_vars in
-  let zero_vars = vps.vperm_zero_vars in
-  (pr_set "@full" full_vars) ^
-  (pr_set "@lend" lend_vars) ^
-  (pr_set "@value" value_vars) ^
-  (pr_set "@zero" zero_vars)
-
 
 

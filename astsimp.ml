@@ -32,6 +32,7 @@ module LO = Label_only.LOne
 module LP = CP.Label_Pure
 
 module IVP = IvpermUtils
+module CVP = CvpermUtils
 
 type trans_exp_type =
   (C.exp * typ)
@@ -3666,7 +3667,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = Debug.tinfo_hprint (add_str "c_lhs 3 " Cprinter.string_of_formula) c_lhs no_pos in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
-    let h, p, _, _,_ = CF.split_components c_lhs in
+    let h, p, vp, _, _,_ = CF.split_components c_lhs in
     let pvars =mfv p in
     let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name)) pvars in (*ignore cyclic & acyclic rels *)
     let hvars = CF.h_fv h in
@@ -3680,7 +3681,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let c_rhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int c_rhs in *)
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
-  let lhs_heap ,_,_, _,_  = CF.split_components c_lhs in
+  let lhs_heap ,_,_,_, _,_  = CF.split_components c_lhs in
   let lhs_view_name = match lhs_heap with
     | CF.ViewNode vn -> vn.CF.h_formula_view_name
     | CF.DataNode dn -> dn.CF.h_formula_data_name
@@ -3717,7 +3718,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 match f with
                   | CF.Base _
                   | CF.Exists _ ->
-                        let h, p, _, _,_ = CF.split_components f in
+                        let h, p, vp, _, _,_ = CF.split_components f in
                         let heaps = CF.split_star_conjunctions h in
                         let heaps = List.filter (fun h ->
                             match h with
@@ -3826,7 +3827,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
           | v -> 
-                let c_hd, c_guard ,c_fl ,c_t, c_a = CF.split_components c.C.coercion_head in
+                let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
@@ -3843,7 +3844,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
                 {c with
                     C.coercion_type = Iast.Right;
-                    C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_t c_fl c_a no_pos;
+                    C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a no_pos;
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
@@ -6529,6 +6530,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
       | IF.Base ( {
             IF.formula_base_heap = h;
             IF.formula_base_pure = p;
+            IF.formula_base_vperm = vp;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
             IF.formula_base_pos = pos} as fb) ->(
@@ -7154,12 +7156,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
   let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
+    let vp = base.IF.formula_base_vperm in
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = linearize_heap h pos tl in
     let new_h, new_constr, new_vars = Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars1@new_vars in
+    let new_vp = trans_vperm_sets vp n_tl pos in
     let new_p = trans_pure_formula p n_tl in
     (* let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = CP.join_disjunctions (new_p::new_constr) in
@@ -7177,7 +7181,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       newvars2 := !newvars2 @ nvs;
     ) a;
     (* let _ = print_string("\new_p: "^(Cprinter.string_of_pure_formula new_p)) in *)
-    (new_h, new_p, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl)
+    (new_h, new_p, new_vp, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl)
   ) in
   match f0 with
   | IF.Or {IF.formula_or_f1 = f1;
@@ -7189,9 +7193,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       (n_tl,result, newvars1 @ newvars2)
   | IF.Base base ->
       let pos = base.IF.formula_base_pos in
-      let nh,np,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
+      let nh,np,nvp,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
       let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-      (n_tl, CF.mkBase nh np nt nfl na pos, newvars)
+      (n_tl, CF.mkBase nh np nvp nt nfl na pos, newvars)
   | IF.Exists {IF.formula_exists_heap = h; 
                IF.formula_exists_pure = p;
                IF.formula_exists_vperm = vp;
@@ -7205,10 +7209,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                  IF.formula_base_flow = fl;
                  IF.formula_base_and = a;
                  IF.formula_base_pos = pos;} in 
-      let nh,np,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
+      let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
       let np = memoise_add_pure_N (mkMTrue pos) np in
       let qvars = qvars @ newvars in
-      (n_tl, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nt nfl na pos, [])
+      (n_tl, CF.mkExists (List.map (fun c-> trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na pos, [])
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
   { CF.formula_flow_interval = exlist #  get_hash f0;
@@ -7230,6 +7234,20 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
             | _,_ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1)))
     | _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
 else ()
+
+and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.vperm_sets =
+  let trans_v (v, p) = 
+    let v_type = CP.type_of_spec_var (trans_var (v, Unprimed) tlist pos) in
+    let sv = CP.SpecVar (v_type, v, p) in
+    sv
+  in
+  let trans_vl vl = List.map trans_v vl in
+  { CVP.vperm_zero_vars = trans_vl vps.IVP.vperm_zero_vars;
+    CVP.vperm_lend_vars = trans_vl vps.IVP.vperm_lend_vars;
+    CVP.vperm_value_vars = trans_vl vps.IVP.vperm_value_vars;
+    CVP.vperm_full_vars = trans_vl vps.IVP.vperm_full_vars;
+    CVP.vperm_frac_vars = List.map (fun (frac, vl) -> (frac, trans_vl vl)) vps.IVP.vperm_frac_vars; }
+  
   
 and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
@@ -9026,7 +9044,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (* TODO : obtain propagated constraints & keep only stronger constraint *)
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label)) 
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
-    let h,p,_,_,_ = CF.split_components b0 in
+    let h,p,_,_,_,_ = CF.split_components b0 in
     let cm,ba = Cvutil.xpure_heap_symbolic_i cp h 0 in
     let ms = Cvutil.formula_2_mem b0 cp in
     let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
@@ -9671,7 +9689,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-    CF.mkExists [v;st_v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
   let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
   let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
   let f_gen_tot st = 

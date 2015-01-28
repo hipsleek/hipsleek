@@ -14,6 +14,7 @@ open Perm
 open Label
 module CF = Cformula
 module CP = Cpure
+module CVP = CvpermUtils
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 module I = Iast
@@ -1683,10 +1684,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         if (read_only)
                         then
                           let read_f = mkPermInv () fresh_perm_exp in
-                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                         else
                           let write_f = mkPermWrite () fresh_perm_exp in
-                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                       else
                         vheap
                     in
@@ -2035,9 +2036,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*If this is not a lock, level_f = true*)
         let aux_f = MCP.memoise_add_pure_N level_f perm_f in
 	        let heap_form = if (perm_vars!=[]) then
-                  CF.mkExists perm_vars heap_node aux_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                 else
-                  CF.mkBase heap_node aux_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                  CF.mkBase heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
             in
             (* let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
             let heap_form = Cvutil.prune_preds prog false heap_form in

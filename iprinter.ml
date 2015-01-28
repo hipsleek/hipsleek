@@ -9,6 +9,7 @@ open Gen.Basic
 
 module F = Iformula
 module P = Ipure
+module VP = IvpermUtils
 (* module LO=Label_only.Lab_List *)
 module LO=Label_only.LOne
 module LO2=Label_only.Lab2_List
@@ -329,6 +330,17 @@ match pf with
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
 
+and string_of_vperm_sets vps = 
+  let pr_elem vpa svl = 
+    if Gen.is_empty svl then "" 
+    else (string_of_vp_ann vpa) ^ (pr_list string_of_id svl)
+  in
+  (pr_elem VP_Full vps.VP.vperm_full_vars) ^ 
+  (pr_elem VP_Lend vps.VP.vperm_lend_vars) ^
+  (pr_elem VP_Value vps.VP.vperm_value_vars) ^
+  (pr_elem VP_Zero vps.VP.vperm_zero_vars) ^
+  (pr_list (fun (frac, svl) -> pr_elem (VP_Const frac) svl) vps.VP.vperm_frac_vars) 
+
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
   | []                         -> ""
@@ -587,6 +599,7 @@ and string_of_rflow_formula ff =
 and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
+                  F.formula_base_vperm = vp;
                   F.formula_base_flow = fl;
                   F.formula_base_and = a;
                   F.formula_base_pos = l}) ->
@@ -594,8 +607,10 @@ and string_of_formula = function
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
         let s = string_of_pure_formula pf in
+        let svp = string_of_vperm_sets vp in
+        let s = if svp = "" then s else svp ^ " & " ^ s in
         (if s = "" then  (string_of_h_formula hf)
-         else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+         else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")( FLOW "^fl^")")
       in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
@@ -603,6 +618,7 @@ and string_of_formula = function
       (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
                     F.formula_exists_heap = hf;
+                    F.formula_exists_vperm = vp;
                     F.formula_exists_flow = fl;
                     F.formula_exists_and = a;
                     F.formula_exists_pure = pf}) ->
@@ -610,6 +626,8 @@ and string_of_formula = function
       let sa = sa ^ string_of_one_formula_list a in
       let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
               ^ (let s = string_of_pure_formula pf in
+                 let svp = string_of_vperm_sets vp in
+                 let s = if svp = "" then s else svp ^ " & " ^ s in
                  if s = "" then  (string_of_h_formula hf)
                  else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
               ^ ")"

@@ -1353,7 +1353,7 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
   let helper mp1 mp2 mt hf =
     let _ = Debug.ninfo_zprint (lazy  ("Need to add hf: " ^ (Cprinter.string_of_h_formula hf))) no_pos in 
     let (b,nmtl) = checkeq_mix_formulas_one mp1 mp2 [mt] in
-    let mkF hf pf = CF.mkBase hf (MCP.OnePF (pf)) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
+    let mkF hf pf = CF.mkBase hf (* (MCP.OnePF (pf)) *) (MCP.mix_of_pure pf) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in 
     let mix_mtl1 = List.map (fun (mt1, pf) -> (mt1,mkF hf pf)) nmtl in
     (b,mix_mtl1)
   in 

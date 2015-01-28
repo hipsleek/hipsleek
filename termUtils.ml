@@ -103,7 +103,7 @@ let strip_lexvar_mix_formula mf =
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
   
 let strip_lexvar_formula_for_termAssume (f: formula) =
-  let _, fp, _, _, _ = split_components f in
+  let _, fp, _, _, _, _ = split_components f in
   let (lexvar, other_p) = strip_lexvar_mix_formula fp in
   let termr, lexvar = List.partition is_TermR_formula lexvar in
   let termr_lex = List.map (fun f ->
@@ -119,7 +119,7 @@ let strip_lexvar_formula_for_termAssume (f: formula) =
   | _ -> report_error no_pos "[term.ml][strip_lexvar_formula]: More than one LexVar to be stripped." 
 
 let strip_lexvar_formula (f: formula) =
-  let _, pure_f, _, _, _ = split_components f in
+  let _, pure_f, _, _, _, _ = split_components f in
   let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
   (* Using transform_formula to update the pure part of f *)
   let f_e_f _ = None in

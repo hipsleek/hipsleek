@@ -68,7 +68,7 @@ let final_inst_analysis_view_x cprog vdef=
           CP.is_self_spec_var hd.CF.h_formula_data_node
       ) hds in
       if self_hds = [] then
-        let ( _,mix_f,_,_,_) = CF.split_components f in
+        let ( _,mix_f,_,_,_,_) = CF.split_components f in
         let eqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_f) ) in
         let self_eqNulls = List.filter (CP.is_self_spec_var) eqNulls in
         ([], self_eqNulls)
@@ -117,8 +117,9 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
     (* let n = IP.Null no_pos in *)
     let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
     let cp = CP.mkNull cont pos in
+    let emp_vps = CvpermUtils.empty_vperm_sets in
     (subst_helper ss f, IF.mkBase ihf ip IvpermUtils.empty_vperm_sets IF.top_flow [] pos,
-    CF.mkBase chf (MCP.mix_of_pure cp) CF.TypeTrue (CF.mkNormalFlow()) [] pos)
+    CF.mkBase chf (MCP.mix_of_pure cp) emp_vps CF.TypeTrue (CF.mkNormalFlow()) [] pos)
   else if self_hns <> [] then
     let _ = report_warning no_pos ("Lemma.subst_cont: to handle") in
     (f, IF.formula_of_heap_1 ihf pos, CF.formula_of_heap chf pos)
@@ -1303,7 +1304,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (new_f, lbl)
   ) vd.C.view_un_struc_formula in
   let base_branches, inductive_branches = List.partition(fun (f, _) ->
-    let (hf,_,_,_,_) = CF.split_components f in
+    let (hf,_,_,_,_,_) = CF.split_components f in
     let views = collect_inductive_view_nodes hf vd in
     (List.length views = 0)
   ) processed_branches in
@@ -1322,7 +1323,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     let forward_ptr = List.hd vd.C.view_forward_ptrs in
     let base_f, base_lbl = List.hd base_branches in
     let induct_f, induct_lbl = List.hd inductive_branches in
-    let (induct_hf, _, _, _, _) = CF.split_components induct_f in
+    let (induct_hf, _, _, _, _, _) = CF.split_components induct_f in
     let view_nodes = collect_inductive_view_nodes induct_hf vd in
     let induct_vnodes = List.filter (fun vn ->
       String.compare vn.CF.h_formula_view_name vname = 0

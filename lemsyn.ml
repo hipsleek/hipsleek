@@ -57,9 +57,9 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (* let lf1 = Cformula.subst lss (Cformula.formula_of_heap lhs_node no_pos) in *)
     (* let rf1 = Cformula.subst rss (Cformula.formula_of_heap rhs_node no_pos) in *)
     (*NORM lhs-rhs*)
-    let ( _,mix_lf,_,_,_) = Cformula.split_components (Cformula.Base lhs_b0) in
+    let ( _,mix_lf,_,_,_,_) = Cformula.split_components (Cformula.Base lhs_b0) in
     let l_emap0 = get_eqset (Mcpure.pure_of_mix mix_lf) in
-    let (_,mix_rf0,_,_,_) = Cformula.split_components (Cformula.Base rhs_b0) in
+    let (_,mix_rf0,_,_,_,_) = Cformula.split_components (Cformula.Base rhs_b0) in
     let r_emap0 = get_eqset (Mcpure.pure_of_mix mix_rf0) in
     let r_eqsetmap0 = CP.EMapSV.build_eset es.Cformula.es_rhs_eqset in
     let lhs_b1, rhs_b1, _ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
@@ -168,7 +168,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
   (*for subst*)
-  let ( _,mf,_,_,_) = Cformula.split_components es.Cformula.es_formula in
+  let ( _,mf,_,_,_,_) = Cformula.split_components es.Cformula.es_formula in
   let eqs = (Mcpure.ptr_equations_without_null mf) in
   let cl_dns = Cformula.find_close [dnode0.Cformula.h_formula_data_node] eqs in
   let inter_vargs = CP.intersect_svl cl_dns vnode0.Cformula.h_formula_view_arguments in

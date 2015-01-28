@@ -1647,7 +1647,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0,_, _,_ = split_components base in
+  let h, pure0,_,_, _,_ = split_components base in
   let pos = pos_of_formula disj in
   (* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
