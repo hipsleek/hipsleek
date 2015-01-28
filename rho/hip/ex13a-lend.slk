@@ -16,3 +16,10 @@ checkentail @full[x] * @lend[x]  |- true.
 print residue.
 // should be false
 
+checkentail @full[x] or @lend[x]  |- @full[x].
+print residue.
+// expect fail
+
+checkentail @full[x] or @lend[x]  |- @lend[x].
+print residue.
+// expect valid

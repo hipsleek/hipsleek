@@ -11,12 +11,12 @@ void main()
    // exists r1',r2'
   case {x,v@L} true ->
      x = v+1;
-    //dprint;
+     dprint;
     || // {y@L,v@L}
   else // {y@L,v@L} 
       ->
       y = y+22+v; // cannot update y
-     //dprint;
+      dprint;
   }
   dprint;
   assert x'=6 & y'=40+22+5;
@@ -33,17 +33,33 @@ void main()
      x = v+1;
     //dprint;
     || // {y@L,v@L}
-  else // {y@L,v@L} 
+  else // {y@L,v@L}   end?
       ->
       y = y+22+v; // cannot update y
      //dprint;
   }
-Why parser error?
 
-File "ex12c1-varperm-simple.ss", line 9, characters 4-5
- --error: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
- at:caught
+Problems:
+ (i) What happen to varperm?
+ (ii) Why did we not have a *-combine at the end
 
-Exception occurred: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
+ State:htrue&x_36'=1+v_38'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: ex12c1-varperm-simple.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1
+  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp&y_37'=v_38'+22+y_1373 & v_38'=5 & y_1373=40 & x_36'=4&{FLOW,(4,5)=__n
+orm#E}[]
+
+# There seems to be a combine error below..
+
+ State:emp&{FLOW,(4,5)=__norm#E}[]
+
+
 
 */
