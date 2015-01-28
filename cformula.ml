@@ -9150,7 +9150,6 @@ think it is used to instantiate when folding.
   (* denotes stack variables with possibly zero permission *)
   (* TODO: To be removed *)
   es_var_zero_perm : CP.spec_var list;
-  es_vperm_sets: CVP.vperm_sets;
 
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
@@ -9528,7 +9527,6 @@ let empty_es flowt grp_lbl pos =
   es_infer_hp_rel = [] ;
   es_infer_pure_thus = CP.mkTrue no_pos ;
   es_var_zero_perm = [];
-  es_vperm_sets = CVP.empty_vperm_sets;
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
@@ -10651,11 +10649,6 @@ let rec collect_pre_ho_vars ctx =
   match ctx with
   | Ctx estate -> estate.es_ho_vars_map
   | OCtx (ctx1, ctx2) -> (collect_pre_ho_vars ctx1) @ (collect_pre_ho_vars ctx2) 
-
-let rec collect_pre_vperm_sets ctx = 
-  match ctx with
-  | Ctx estate -> [estate.es_vperm_sets]
-  | OCtx (ctx1, ctx2) -> (collect_pre_vperm_sets ctx1) @ (collect_pre_vperm_sets ctx2) 
 
 let rec collect_pre_heap ctx = 
   match ctx with
