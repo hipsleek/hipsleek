@@ -10,13 +10,15 @@ void main()
   {  
    // exists r1',r2'
   case {x,v@L} true ->
+     //dprint;
      x = v+1;
      //dprint;
     || // {y@L,v@L}
   else // {y@L,v@L} 
       ->
-      y = y+22+v; // cannot update y
-      //dprint;
+      //int y;
+      //y = y+22+v; // cannot update y
+      dprint;
   }
   //dprint;
   assert x'=6 & y'=40+22+5;
