@@ -2440,7 +2440,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*     check_full_varperm prog ctx [var] pos    *)
             (*   else (true, ctx))                          *)
             (* in                                           *)
+            
+            (*********************************************)
             (* VPerm: Check @full/@lend permission for v *)
+            (*********************************************)
             let sv = (CP.SpecVar (t, v, Unprimed)) in
             let lend_f = CF.formula_of_vperm_anns [(VP_Lend, [sv])] in
             let lend_f = CF.set_flow_in_formula_override
@@ -2465,7 +2468,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | VarDecl {
             exp_var_decl_type = t;
             exp_var_decl_name = v; } ->
-          (* VPerm: Set @full permission for v *) 
+          (*************************************)
+          (* VPerm: Set @full permission for v *)
+          (*************************************) 
           let sv = CP.SpecVar (t, v, Unprimed) in
           let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
           CF.add_vperm_sets_to_list_failesc_ctx vp ctx
