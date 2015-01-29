@@ -27,8 +27,9 @@ let is_empty_vperm_sets vps =
   (is_empty vps.vperm_frac_vars)
 
 let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
-let diff = Gen.BList.difference_eq eq_spec_var
 let check_dups = Gen.BList.check_dups_eq eq_spec_var
+let diff = Gen.BList.difference_eq eq_spec_var
+let intersect = Gen.BList.intersect_eq eq_spec_var
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -88,9 +89,9 @@ let vperm_sets_of_anns ann_list =
       | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
   in norm_vperm_sets (helper ann_list)
 
-let fv vps = remove_dups 
-  (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
-   vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
+let fv vps =
+  remove_dups (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
+    vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
 
 let subst_f f sst vps = 
   let f_list vl = List.map (fun v -> f sst v) vl in

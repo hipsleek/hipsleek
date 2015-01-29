@@ -2309,15 +2309,24 @@ and pr_formula_1 e =
 	  formula_exists_pos = pos}) ->
           (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
-          pr_h_formula h;
-          (if not(MP.isConstMTrue p) then
-            (pr_cut_after "&" ; pr_mix_formula p))
-          ; pr_cut_after  "&" ;
-          fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")")
-          (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
-          ;if (a==[]) then ()
-          else
-            fmt_string ("\nAND "); pr_one_formula_list a
+          pr_formula_base ({
+            formula_base_heap = h;
+            formula_base_vperm = vp;
+            formula_base_pure = p;
+            formula_base_type = t;
+            formula_base_flow = fl;
+            formula_base_and = a;
+            formula_base_label = lbl;
+            formula_base_pos = pos; })
+          (* pr_h_formula h;                                        *)
+          (* (if not(MP.isConstMTrue p) then                        *)
+          (*   (pr_cut_after "&" ; pr_mix_formula p))               *)
+          (* ; pr_cut_after  "&" ;                                  *)
+          (* fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") *)
+          (* (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)       *)
+          (* ;if (a==[]) then ()                                    *)
+          (* else                                                   *)
+          (*   fmt_string ("\nAND "); pr_one_formula_list a         *)
 
 and pr_formula e =
   let e = Cfout.tidy_print e  in

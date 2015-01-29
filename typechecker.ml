@@ -15,6 +15,7 @@ open Label
 module CF = Cformula
 module CP = Cpure
 module CVP = CvpermUtils
+module VP = Vperm
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 module I = Iast
@@ -1447,7 +1448,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* VPerm: Check @full for LHS var *)
               let tv = Gen.unsome (type_of_exp rhs) in
               let sv = (CP.SpecVar (tv, v, Unprimed)) in
-              let full_f = CF.formula_of_vperm_anns [(VP_Full, [sv])] in
+              let full_f = VP.formula_of_vperm_anns [(VP_Full, [sv])] in
               let full_f = CF.set_flow_in_formula_override 
                 { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } full_f in
               let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx full_f None None None pos None in
@@ -2133,7 +2134,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
                   let ref_args = CP.subst_var_list pairs_sst ref_params in
                   let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
-                  let vperm_f = CF.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
+                  let vperm_f = VP.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
                   let vperm_f = CF.set_flow_in_formula_override
                     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
                   in
@@ -2445,7 +2446,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* VPerm: Check @full/@lend permission for v *)
             (*********************************************)
             let sv = (CP.SpecVar (t, v, Unprimed)) in
-            let lend_f = CF.formula_of_vperm_anns [(VP_Lend, [sv])] in
+            let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in
             let lend_f = CF.set_flow_in_formula_override
               { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
             in
@@ -2473,7 +2474,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*************************************) 
           let sv = CP.SpecVar (t, v, Unprimed) in
           let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
-          CF.add_vperm_sets_to_list_failesc_ctx vp ctx
+          VP.add_vperm_sets_list_failesc_ctx vp ctx
         | Unit pos -> ctx
         | Sharp ({exp_sharp_type =t;
           exp_sharp_flow_type = ft;(*P.flow_typ*)
@@ -2590,9 +2591,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.pop_esc_level_list ctx5 pid
   | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
     let par_label = (1, "par") in
-    let par_ctx = CF.prepare_list_failesc_ctx_for_par vp ctx in
+    let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
     let rem_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
-      let rem_ctx, post_ctx = check_par_case prog proc rem_ctx c par_label in
+      let rem_ctx, post_ctx = check_par_case prog proc par_ctx rem_ctx c par_label in
       (rem_ctx, post_ctx_acc @ post_ctx)) (par_ctx, []) cl in
     rem_ctx
 	| _ -> 
@@ -2623,12 +2624,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     ((check_exp1_x failesc) @ fl)
 
 (* PAR: Check pre-state and compute post-state of a par_case *)
-and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
+and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
   let rem_ctx, pre_ctx = 
     if par_case.exp_par_case_else then
-      let ctx = CF.clear_inf_par_list_failesc_ctx ctx in
+      let ctx = VP.clear_inf_par_list_failesc_ctx ctx in
       CF.mkEmp_list_failesc_context pos, ctx
     else
       (* Construct pre-condition of the current par's case *)
@@ -2638,7 +2639,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_c
         | None -> 
           let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
           CF.Base { b with CF.formula_base_vperm = vp; }
-        | Some f -> CF.add_vperm_sets_to_formula vp f 
+        | Some f -> VP.add_vperm_sets_formula vp f 
       in
       (* Remaining context for the other cases *)
       let rem_ctx =
@@ -2666,20 +2667,21 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_c
         { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } pre_ctx in
       (* Add initial esc_stack *)
       let init_esc = [((0, ""), [])] in
-      (rem_ctx, [CF.mk_failesc_context pre_ctx [] init_esc])
+      rem_ctx, ([CF.mk_failesc_context pre_ctx [] init_esc])
   in
   let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
+  let post_ctx = VP.compose_list_failesc_contexts_for_par post_ctx par_ctx pos in  
   (rem_ctx, post_ctx)
   
-and check_par_case (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_context) 
+and check_par_case (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pr1 = Cprinter.string_of_list_failesc_context in
   let pr2 = pr_pair (fun c -> "\nREM: " ^ (pr1 c))
                     (fun c -> "\nPOST: " ^ (pr1 c)) in
   let pr3 = string_of_full_loc in
   Debug.no_2 "check_par_case" pr1 pr3 pr2 
-  (fun _ _ -> check_par_case_x prog proc ctx par_case par_label) ctx (par_case.exp_par_case_pos)
+  (fun _ _ -> check_par_case_x prog proc par_ctx ctx par_case par_label) ctx (par_case.exp_par_case_pos)
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in

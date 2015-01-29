@@ -2819,7 +2819,7 @@ and fv (f : formula) : CP.spec_var list = match f with
       formula_base_and = a;
       formula_base_type = t }) ->
     let vars = CP.remove_dups_svl (List.concat (List.map one_formula_fv a)) in
-    CP.remove_dups_svl (h_fv h @ MCP.mfv p @ (CVP.fv vp) @ vars)
+    CP.remove_dups_svl (h_fv h @ MCP.mfv p (* @ (CVP.fv vp) *) @ vars)
   | Exists ({
       formula_exists_qvars = qvars;
       formula_exists_heap = h;
@@ -11839,7 +11839,9 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
         end
 (*23.10.2008*)
 
-and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = match ctx with
+and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) 
+  (force_sat:bool) flow_tr (pos : loc) : context = 
+  match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
@@ -14788,11 +14790,11 @@ let rec get_vars_without_rel pre_vars f = match f with
   | Base _ -> 
     let h, p, vp, fl, t, a = split_components f in
     let vars = CP.remove_dups_svl (List.concat (List.map one_formula_fv a)) in
-    (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) @ (CVP.fv vp) @ vars
+    (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) (* @ (CVP.fv vp) *) @ vars
   | Exists e ->
     let h, p, vp, fl, t, a = split_components f in
     let vars = List.concat (List.map one_formula_fv a) in
-    let res = (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) @ (CVP.fv vp) @ vars in
+    let res = (h_fv h) @ (CP.fv (CP.drop_rel_formula (MCP.pure_of_mix p))) (* @ (CVP.fv vp) *) @ vars in
     let alias = MCP.ptr_equations_without_null p in
     let aset = CP.EMapSV.build_eset alias in
     let evars_to_del = List.concat (List.map (fun a -> if CP.intersect (CP.EMapSV.find_equiv_all a aset) pre_vars = [] then [] else [a]) e.formula_exists_qvars) in
@@ -17877,7 +17879,7 @@ let subst_hvar_struc f subst =
   (fun _ -> subst_hvar_struc f subst) f
 
 (* Utils for Vperm reasoning *)
-  
+
 let mkEmp_list_failesc_context pos = 
   let ctx = empty_ctx (mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos in
   let ctx = build_context ctx (mkTrue_nf pos) pos in
@@ -17889,67 +17891,37 @@ let mkEmp_list_failesc_context pos =
   let fctx = [mk_failesc_context ctx [] init_esc] in
   fctx
 
-let map_list_failesc_context f ctx =
-  let f_ctx _ ctx = Some (f ctx, ()) in
-  let arg = () in
-  let f_comb _ = () in
-  fst (trans_list_failesc_context ctx arg f_ctx voidf2 f_comb)
+(* let map_list_failesc_context f ctx =                           *)
+(*   let f_ctx _ ctx = Some (f ctx, ()) in                        *)
+(*   let arg = () in                                              *)
+(*   let f_comb _ = () in                                         *)
+(*   fst (trans_list_failesc_context ctx arg f_ctx voidf2 f_comb) *)
 
-let rec add_vperm_sets_to_formula (vp: CVP.vperm_sets) (f: formula) : formula = 
-  match f with
-  | Or ({
-      formula_or_f1 = f1; 
-      formula_or_f2 = f2; } as o) ->
-    Or ({ o with 
-      formula_or_f1 = add_vperm_sets_to_formula vp f1; 
-      formula_or_f2 = add_vperm_sets_to_formula vp f2; })
-  | Base b -> Base { b with formula_base_vperm = CVP.merge_vperm_sets [b.formula_base_vperm; vp]; }
-  | Exists e -> Exists { e with formula_exists_vperm = CVP.merge_vperm_sets [e.formula_exists_vperm; vp]; }
+(* let add_vperm_sets_context (vp: CVP.vperm_sets) ctx =                 *)
+(*   let add_vperm_sets_es vp es =                                       *)
+(*     { es with es_formula = add_vperm_sets_formula vp es.es_formula; } *)
+(*   in map_context (add_vperm_sets_es vp) ctx                           *)
 
-let add_vperm_sets_to_context (vp: CVP.vperm_sets) ctx = 
-  let add_vperm_sets_to_es vp es =
-    { es with es_formula = add_vperm_sets_to_formula vp es.es_formula; } 
-  in map_context (add_vperm_sets_to_es vp) ctx
+(* let add_vperm_sets_list_failesc_ctx (vp: CVP.vperm_sets) ctx =        *)
+(*   map_list_failesc_context (add_vperm_sets_context vp) ctx            *)
 
-let add_vperm_sets_to_list_failesc_ctx (vp: CVP.vperm_sets) ctx =
-  map_list_failesc_context (add_vperm_sets_to_context vp) ctx
+(* let prepare_ctx_for_par (vp: CVP.vperm_sets) ctx =                     *)
+(*   let prepare_es_for_par vp es =                                       *)
+(*     es.es_infer_obj # set INF_PAR;                                     *)
+(*     { es with es_formula = set_vperm_sets_formula vp es.es_formula; }  *)
+(*   in                                                                   *)
+(*   map_context (prepare_es_for_par vp) ctx                              *)
 
-let rec set_vperm_sets_formula (vp: CVP.vperm_sets) (f: formula) : formula = 
-  match f with
-  | Or ({
-      formula_or_f1 = f1; 
-      formula_or_f2 = f2; } as o) ->
-    Or ({ o with 
-      formula_or_f1 = set_vperm_sets_formula vp f1; 
-      formula_or_f2 = set_vperm_sets_formula vp f2; })
-  | Base b -> Base { b with formula_base_vperm = vp; }
-  | Exists e -> Exists { e with formula_exists_vperm = vp; }
+(* let prepare_list_failesc_ctx_for_par (vp: CVP.vperm_sets) ctx =        *)
+(*   map_list_failesc_context (prepare_ctx_for_par vp) ctx                *)
 
-let formula_of_vperm_sets vps = 
-  let b = mkTrue_b (mkTrueFlow ()) no_pos in
-  Base { b with formula_base_vperm = vps; }
+(* let clear_inf_par_ctx ctx =                      *)
+(*   let clear_inf_par_es es =                      *)
+(*     es.es_infer_obj # reset INF_PAR; es          *)
+(*   in                                             *)
+(*   map_context clear_inf_par_es ctx               *)
 
-let formula_of_vperm_anns ann_list = 
-  let vps = CVP.vperm_sets_of_anns ann_list in
-  formula_of_vperm_sets vps
-
-let prepare_ctx_for_par (vp: CVP.vperm_sets) ctx =
-  let prepare_es_for_par vp es =
-    es.es_infer_obj # set INF_PAR;
-    { es with es_formula = set_vperm_sets_formula vp es.es_formula; } 
-  in 
-  map_context (prepare_es_for_par vp) ctx
-
-let prepare_list_failesc_ctx_for_par (vp: CVP.vperm_sets) ctx =
-  map_list_failesc_context (prepare_ctx_for_par vp) ctx
-
-let clear_inf_par_ctx ctx = 
-  let clear_inf_par_es es =
-    es.es_infer_obj # reset INF_PAR; es 
-  in
-  map_context clear_inf_par_es ctx
-
-let clear_inf_par_list_failesc_ctx ctx =
-  map_list_failesc_context clear_inf_par_ctx ctx
+(* let clear_inf_par_list_failesc_ctx ctx =         *)
+(*   map_list_failesc_context clear_inf_par_ctx ctx *)
 
 (* End of Utils for Vperm reasoning *)
