@@ -1050,8 +1050,8 @@ let pairwisecheck (pe : formula) : formula =
     let pe = drop_varperm_formula pe in
 
     (* translate out and drop array *)
-    let pe = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_full pe in
-
+    (* let pe = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split pe in *)
+    
     match (omega_of_formula_old 21 pe) with
       | None -> pe
       | Some fstr ->
@@ -1069,6 +1069,12 @@ let pairwisecheck (pe : formula) : formula =
             let rel = send_and_receive fomega !in_timeout (* 0. *) in
 	        match_vars (fv pe) rel 
   end
+;;
+
+(* ZH *)
+let pairwisecheck (pe:formula) : formula =
+  Translate_out_array_in_cpure_formula.split_and_combine pairwisecheck Translate_out_array_in_cpure_formula.can_be_simplify pe
+;;
 
 let pairwisecheck (pe : formula) : formula =
   let r = pairwisecheck pe in

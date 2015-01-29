@@ -5280,3 +5280,4 @@ Lem_store.lem_pr:= string_of_coerc_long;;
 Lem_store.lem_pr_med:= string_of_coerc_med;;
 
 Translate_out_array_in_cpure_formula.print_pure := string_of_pure_formula;;
+Translate_out_array_in_cpure_formula.print_p_formula := string_of_p_formula;;
