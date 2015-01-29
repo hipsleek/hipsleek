@@ -22,3 +22,6 @@ print residue.
 
 checkentail @full[x] |- @zero[x].
 print residue.
+
+checkentail @full[x] or @lend[x] |- @full[x].
+print residue.

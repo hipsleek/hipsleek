@@ -7,8 +7,8 @@ open CvpermUtils
 
 (* module CP = Cpure *)
 module CF = Cformula
-module MCP = Mcpure
-module MCD = Mcpure_D
+(* module MCP = Mcpure   *)
+(* module MCD = Mcpure_D *)
 (* module CVP = CvpermUtils *)
 
 (******************************************************************************)
@@ -116,11 +116,11 @@ let collect_vperm_sets f =
   let _, _, vp, _, _, _ = split_components f in
   vp
 
-let update_vperm_sets f vps = 
-  match f with
-  | Base b -> Base { b with formula_base_vperm = vps; }
-  | Exists e -> Exists { e with formula_exists_vperm = vps; }
-  | Or _ -> report_error no_pos "Unexpected OR formula when update_vperm_sets"
+(* let update_vperm_sets f vps =                                                  *)
+(*   match f with                                                                 *)
+(*   | Base b -> Base { b with formula_base_vperm = vps; }                        *)
+(*   | Exists e -> Exists { e with formula_exists_vperm = vps; }                  *)
+(*   | Or _ -> report_error no_pos "Unexpected OR formula when update_vperm_sets" *)
 
 (******************************************************************************)
 
@@ -235,13 +235,24 @@ let vperm_entail_rhs estate conseq pos =
       try
         let res_vas = List.map (fun (v, la, ra) -> (v, vperm_entail_var estate v la ra)) pas in
         let res_vps = vperm_sets_of_ann_set (rem_las @ res_vas) in
-        let res_f = update_vperm_sets estate.es_formula res_vps in
+        let res_f = set_vperm_sets_formula res_vps estate.es_formula in
         let estate = { estate with es_formula = res_f; }
         in Succ estate
       with (Vperm_Entail_Fail (sv, lhs_ann, rhs_ann)) ->
         let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy " ^ (pr_vp (sv, rhs_ann)) in
         let fctx = mkFailCtx_vp msg estate conseq pos in
         Fail fctx
+
+let vperm_entail_rhs estate conseq pos =
+  let pr1 = !CF.print_entail_state in
+  let pr2 = !CF.print_formula in
+  let pr3 = !CF.print_list_context in
+  let pr res = match res with
+    | Fail ctx -> pr3 ctx
+    | Succ es -> pr1 es 
+  in 
+  Debug.no_2 "vperm_entail_rhs" pr1 pr2 pr 
+  (fun _ _ -> vperm_entail_rhs estate conseq pos) estate conseq
 
 (* let vperm_entail_rhs estate lhs_p rhs_p pos =                                                                       *)
 (*   let old_lhs_zero_vars = estate.es_var_zero_perm in                                                                *)

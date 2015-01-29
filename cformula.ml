@@ -479,7 +479,7 @@ let isAnyConstFalse f = match f with
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
 
-let isAnyConstFalse f=
+let isAnyConstFalse f =
   let pr1 = !print_formula in
   Debug.no_1 "isAnyConstFalse" pr1 string_of_bool
       (fun _ -> isAnyConstFalse f) f
@@ -17875,6 +17875,8 @@ let subst_hvar_struc f subst =
   let pr = !print_struc_formula in
   Debug.no_1 "subst_hvar_struc" pr pr 
   (fun _ -> subst_hvar_struc f subst) f
+
+(* Utils for Vperm reasoning *)
   
 let mkEmp_list_failesc_context pos = 
   let ctx = empty_ctx (mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos in
@@ -17886,3 +17888,68 @@ let mkEmp_list_failesc_context pos =
   let init_esc = [((0, ""), [])] in
   let fctx = [mk_failesc_context ctx [] init_esc] in
   fctx
+
+let map_list_failesc_context f ctx =
+  let f_ctx _ ctx = Some (f ctx, ()) in
+  let arg = () in
+  let f_comb _ = () in
+  fst (trans_list_failesc_context ctx arg f_ctx voidf2 f_comb)
+
+let rec add_vperm_sets_to_formula (vp: CVP.vperm_sets) (f: formula) : formula = 
+  match f with
+  | Or ({
+      formula_or_f1 = f1; 
+      formula_or_f2 = f2; } as o) ->
+    Or ({ o with 
+      formula_or_f1 = add_vperm_sets_to_formula vp f1; 
+      formula_or_f2 = add_vperm_sets_to_formula vp f2; })
+  | Base b -> Base { b with formula_base_vperm = CVP.merge_vperm_sets [b.formula_base_vperm; vp]; }
+  | Exists e -> Exists { e with formula_exists_vperm = CVP.merge_vperm_sets [e.formula_exists_vperm; vp]; }
+
+let add_vperm_sets_to_context (vp: CVP.vperm_sets) ctx = 
+  let add_vperm_sets_to_es vp es =
+    { es with es_formula = add_vperm_sets_to_formula vp es.es_formula; } 
+  in map_context (add_vperm_sets_to_es vp) ctx
+
+let add_vperm_sets_to_list_failesc_ctx (vp: CVP.vperm_sets) ctx =
+  map_list_failesc_context (add_vperm_sets_to_context vp) ctx
+
+let rec set_vperm_sets_formula (vp: CVP.vperm_sets) (f: formula) : formula = 
+  match f with
+  | Or ({
+      formula_or_f1 = f1; 
+      formula_or_f2 = f2; } as o) ->
+    Or ({ o with 
+      formula_or_f1 = set_vperm_sets_formula vp f1; 
+      formula_or_f2 = set_vperm_sets_formula vp f2; })
+  | Base b -> Base { b with formula_base_vperm = vp; }
+  | Exists e -> Exists { e with formula_exists_vperm = vp; }
+
+let formula_of_vperm_sets vps = 
+  let b = mkTrue_b (mkTrueFlow ()) no_pos in
+  Base { b with formula_base_vperm = vps; }
+
+let formula_of_vperm_anns ann_list = 
+  let vps = CVP.vperm_sets_of_anns ann_list in
+  formula_of_vperm_sets vps
+
+let prepare_ctx_for_par (vp: CVP.vperm_sets) ctx =
+  let prepare_es_for_par vp es =
+    es.es_infer_obj # set INF_PAR;
+    { es with es_formula = set_vperm_sets_formula vp es.es_formula; } 
+  in 
+  map_context (prepare_es_for_par vp) ctx
+
+let prepare_list_failesc_ctx_for_par (vp: CVP.vperm_sets) ctx =
+  map_list_failesc_context (prepare_ctx_for_par vp) ctx
+
+let clear_inf_par_ctx ctx = 
+  let clear_inf_par_es es =
+    es.es_infer_obj # reset INF_PAR; es 
+  in
+  map_context clear_inf_par_es ctx
+
+let clear_inf_par_list_failesc_ctx ctx =
+  map_list_failesc_context clear_inf_par_ctx ctx
+
+(* End of Utils for Vperm reasoning *)

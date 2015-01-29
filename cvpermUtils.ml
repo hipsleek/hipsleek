@@ -61,30 +61,32 @@ let norm_vperm_sets vps =
   let pr = !print_vperm_sets in
   Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
 
-let rec merge_vperm_sets vps_list = 
-  match vps_list with
-  | [] -> empty_vperm_sets
-  | v::vs ->
-    let mvs = merge_vperm_sets vs in
-    let mvs = 
+let merge_vperm_sets vps_list = 
+  let rec helper vps_list =  
+    match vps_list with
+    | [] -> empty_vperm_sets
+    | v::vs ->
+      let mvs = helper vs in
       { vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
         vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
         vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
         vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
         vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
-    in norm_vperm_sets mvs
+  in norm_vperm_sets (helper vps_list)
 
-let rec merge_vperm_anns ann_list = 
-  match ann_list with
-  | [] -> empty_vperm_sets
-  | (ann, svl, _)::vs ->
-    let mvs = merge_vperm_anns vs in
-    match ann with
-    | VP_Zero -> { mvs with vperm_zero_vars = mvs.vperm_zero_vars @ svl; } 
-    | VP_Full -> { mvs with vperm_full_vars = mvs.vperm_full_vars @ svl; } 
-    | VP_Value -> { mvs with vperm_value_vars = mvs.vperm_value_vars @ svl; } 
-    | VP_Lend -> { mvs with vperm_lend_vars = mvs.vperm_lend_vars @ svl; } 
-    | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
+let vperm_sets_of_anns ann_list =
+  let rec helper ann_list =  
+    match ann_list with
+    | [] -> empty_vperm_sets
+    | (ann, svl)::vs ->
+      let mvs = helper vs in
+      match ann with
+      | VP_Zero -> { mvs with vperm_zero_vars = mvs.vperm_zero_vars @ svl; } 
+      | VP_Full -> { mvs with vperm_full_vars = mvs.vperm_full_vars @ svl; } 
+      | VP_Value -> { mvs with vperm_value_vars = mvs.vperm_value_vars @ svl; } 
+      | VP_Lend -> { mvs with vperm_lend_vars = mvs.vperm_lend_vars @ svl; } 
+      | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
+  in norm_vperm_sets (helper ann_list)
 
 let fv vps = remove_dups 
   (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @

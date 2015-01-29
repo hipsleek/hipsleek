@@ -1423,82 +1423,98 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (wrap_proving_kind 
                   (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
                   (wrap_classic atype assert_op)) ()
-        | Assign ({ exp_assign_lhs = v;
-          exp_assign_rhs = rhs;
-          exp_assign_pos = pos}) ->
-              let pr = Cprinter.string_of_exp in
-              let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void") 
-                (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs in
-              let assign_op () =
-                begin
-                  let _ = proving_loc#set pos in
-                  let b,res = (if !Globals.ann_vp then
-                    (*check for access permissions*)
-                    let t = Gen.unsome (type_of_exp rhs) in
-                    let var = (CP.SpecVar (t, v, Primed)) in
-                    check_full_varperm prog ctx [var] pos
-                  else true,ctx)
-                  in
-                  if (not b) then res (*do not have permission for variable v*)
-                  else
-                    (* let _ = Gen.Profiling.push_time "[check_rhs_exp] Assign" in *)
-                    let ctx1 = check_rhs_exp rhs in
-                    (* let _ = Gen.Profiling.pop_time "[check_rhs_exp] Assign" in *)
-                    (* let _ = print_endline ("RHS: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
-                    (* let _ = Gen.Profiling.push_time "[check_exp] Assign: other" in *)
-                    (* let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
-                    let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
-                    let fct c1 =
-                      (* let _ = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
-                      let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
-                        let t0 = Gen.unsome (type_of_exp rhs) in
-                        (* let t = t0 in *)
-                        (* Loc: find an appropriate type of v instead of null_type (swl example).
-                           it is better for shape inference *)
-                        let t = if is_null_type t0 then
-                          let svl = CF.fv c1.CF.es_formula in
-                          try
-                            let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in
-                            CP.type_of_spec_var orig_sv
-                          with _ -> t0
-                        else t0
-                        in
-                        let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
-                        let tmp_vsv = CP.fresh_spec_var vsv in
-                        let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
-                        let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
-                        (* let _ = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                        (* let _ = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
-                        (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
-                        (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
-                        (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
-                        compose_ctx
-                            
-                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
-                      (* let ctx1 = (CF.Ctx c1) in                                                                      *)
-                      (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
-                      (* (* TODO : eps bug below *)                                                                     *)
-                      (* let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in  -> add perm normalization  if uncomment     *)
-                      (* let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in                                     *)
-                      (* let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in                                 *)
-                      (* let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in                                     *)
-                      (* let resctx = if !Globals.elim_exists_ff then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in            *)
-                      (* let _ = CF.must_consistent_context "assign 4" resctx  in                                       *)
-                      (* resctx                                                                                         *)
-                      else (CF.Ctx c1) in
-                      (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: fct" in *)
-                      res 
+        | Assign ({ 
+            exp_assign_lhs = v;
+            exp_assign_rhs = rhs;
+            exp_assign_pos = pos }) ->
+          let pr = Cprinter.string_of_exp in
+          let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
+            (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs 
+          in
+          let assign_op () =
+            begin
+              let _ = proving_loc # set pos in
+              (* let b,res = (if !Globals.ann_vp then                          *)
+              (*   (*check for access permissions*)                            *)
+              (*   let t = Gen.unsome (type_of_exp rhs) in                     *)
+              (*   let var = (CP.SpecVar (t, v, Primed)) in                    *)
+              (*   check_full_varperm prog ctx [var] pos                       *)
+              (* else true,ctx)                                                *)
+              (* in                                                            *)
+              (* if (not b) then res (*do not have permission for variable v*) *)
+              (* else                                                          *)
+
+              (* VPerm: Check @full for LHS var and @lend for RHS vars *)
+              let tv = Gen.unsome (type_of_exp rhs) in
+              let sv = (CP.SpecVar (tv, v, Unprimed)) in
+              let full_f = CF.formula_of_vperm_anns [(VP_Full, [sv])] in
+              let full_f = CF.set_flow_in_formula_override 
+                { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } full_f in
+              let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx full_f None None None pos None in
+              if not (CF.isSuccessListFailescCtx_new vperm_res) then
+                let msg = (v ^ " does not have @full permission to write.") in
+                (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
+                Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
+                Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+              else
+                (* let _ = Gen.Profiling.push_time "[check_rhs_exp] Assign" in *)
+                let ctx1 = check_rhs_exp rhs in
+                (* let _ = Gen.Profiling.pop_time "[check_rhs_exp] Assign" in *)
+                (* let _ = print_endline ("RHS: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+                (* let _ = Gen.Profiling.push_time "[check_exp] Assign: other" in *)
+                (* let _ = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
+                let _ = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
+                let fct c1 =
+                  (* let _ = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
+                  let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
+                    let t0 = Gen.unsome (type_of_exp rhs) in
+                    (* let t = t0 in *)
+                    (* Loc: find an appropriate type of v instead of null_type (swl example).
+                       it is better for shape inference *)
+                    let t = if is_null_type t0 then
+                      let svl = CF.fv c1.CF.es_formula in
+                      try
+                        let orig_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) v = 0) svl in
+                        CP.type_of_spec_var orig_sv
+                      with _ -> t0
+                    else t0
                     in
-                    (* let _ = Gen.Profiling.push_time "[check_exp] Assign: transform" in *)
-                    let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
-                    (* let _ = print_endline ("res after: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
-                    (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: transform" in *)
-                    (* let _ = Gen.Profiling.push_time "[check_exp] Assign: consistent" in *)
-                    let _ = CF.must_consistent_list_failesc_context "assign final" res  in
-                    (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: consistent" in *)
-                    (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: other" in *)
-                    res
-                end
+                    let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
+                    let tmp_vsv = CP.fresh_spec_var vsv in
+                    let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                    let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+                    (* let _ = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
+                    (* let _ = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
+                    (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
+                    (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
+                    (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
+                    compose_ctx
+                        
+                  (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
+                  (* let ctx1 = (CF.Ctx c1) in                                                                      *)
+                  (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
+                  (* (* TODO : eps bug below *)                                                                     *)
+                  (* let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in  -> add perm normalization  if uncomment     *)
+                  (* let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in                                     *)
+                  (* let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in                                 *)
+                  (* let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in                                     *)
+                  (* let resctx = if !Globals.elim_exists_ff then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in            *)
+                  (* let _ = CF.must_consistent_context "assign 4" resctx  in                                       *)
+                  (* resctx                                                                                         *)
+                  else (CF.Ctx c1) in
+                  (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: fct" in *)
+                  res 
+                in
+                (* let _ = Gen.Profiling.push_time "[check_exp] Assign: transform" in *)
+                let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
+                (* let _ = print_endline ("res after: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
+                (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: transform" in *)
+                (* let _ = Gen.Profiling.push_time "[check_exp] Assign: consistent" in *)
+                let _ = CF.must_consistent_list_failesc_context "assign final" res  in
+                (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: consistent" in *)
+                (* let _ = Gen.Profiling.pop_time "[check_exp] Assign: other" in *)
+                res
+            end
 	      in
 	      Gen.Profiling.push_time "[check_exp] Assign";  
 	      let res = wrap_proving_kind PK_Assign_Stmt assign_op () in
@@ -2413,7 +2429,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		Gen.Profiling.pop_time "[check_exp] Var";
 		res 
               end
-        | VarDecl _ -> ctx (* nothing to do *)
+        | VarDecl {
+            exp_var_decl_type = t;
+            exp_var_decl_name = v; } ->
+          (* VPerm: Set @full permission for v *) 
+          let sv = CP.SpecVar (t, v, Unprimed) in
+          let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
+          CF.add_vperm_sets_to_list_failesc_ctx vp ctx
         | Unit pos -> ctx
         | Sharp ({exp_sharp_type =t;
           exp_sharp_flow_type = ft;(*P.flow_typ*)
@@ -2528,11 +2550,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
-  | Par { exp_par_cases = cl; exp_par_pos = pos; } -> 
+  | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
     let par_label = (1, "par") in
+    let par_ctx = CF.prepare_list_failesc_ctx_for_par vp ctx in
     let rem_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
       let rem_ctx, post_ctx = check_par_case prog proc rem_ctx c par_label in
-      (rem_ctx, post_ctx_acc @ post_ctx)) (ctx, []) cl in
+      (rem_ctx, post_ctx_acc @ post_ctx)) (par_ctx, []) cl in
     rem_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
@@ -2566,20 +2589,29 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) (ctx: CF.list_failesc_c
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
   let rem_ctx, pre_ctx = 
-    match par_case.exp_par_case_cond with
-    | None -> CF.mkEmp_list_failesc_context pos, ctx
-    | Some pre ->
+    if par_case.exp_par_case_else then
+      let ctx = CF.clear_inf_par_list_failesc_ctx ctx in
+      CF.mkEmp_list_failesc_context pos, ctx
+    else
+      (* Construct pre-condition of the current par's case *)
+      let vp = par_case.exp_par_case_vperm in
+      let pre =
+        match par_case.exp_par_case_cond with
+        | None -> 
+          let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
+          CF.Base { b with CF.formula_base_vperm = vp; }
+        | Some f -> CF.add_vperm_sets_to_formula vp f 
+      in
+      (* Remaining context for the other cases *)
       let rem_ctx =
         let res, _ = heap_entail_list_failesc_context_init prog false ctx pre None None None pos None in
         if (CF.isSuccessListFailescCtx_new res) then res
         else
-          (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context res) ^ ") ") 
-            ("Proving condition of a par's element failed.") pos;
+          let msg = "Proving condition of a par's element failed." in
+          (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context res) ^ ") ") msg pos;
           Debug.print_info ("(Cause of ParCond Failure)")
             (Cprinter.string_of_failure_list_failesc_context res) pos;
-          Err.report_error {
-            Err.error_loc = pos;
-            Err.error_text = Printf.sprintf "Proving condition of a par's element failed." })
+          Err.report_error { Err.error_loc = pos; Err.error_text = msg })
       in
       
       let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in

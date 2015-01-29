@@ -1,6 +1,6 @@
   
 void main()
-  requires emp ensures emp;
+  requires true ensures true;
 {
   int x,y,v;
   x=4; y=40; v=5;
@@ -11,14 +11,14 @@ void main()
    // exists r1',r2'
   case {x,v@L} true ->
      x = v+1;
-     dprint;
+     //dprint;
     || // {y@L,v@L}
   else // {y@L,v@L} 
       ->
       y = y+22+v; // cannot update y
-      dprint;
+      //dprint;
   }
-  dprint;
+  //dprint;
   assert x'=6 & y'=40+22+5;
 }
 
