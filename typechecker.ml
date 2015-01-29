@@ -2604,9 +2604,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (* Set INF_PAR for proving pre-condition of each par's case *)
       let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
       let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
-      let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
-        let rem_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_ctx c par_label in
-        (rem_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
+      let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
+        let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
+        (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
       let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
         VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
         rem_ctx (rem_par_ctx::post_ctx_list)
