@@ -20,7 +20,7 @@ void main()
       //y = y+22+v; // cannot update y
       dprint;
   }
-  //dprint;
+  dprint;
   assert x'=6 & y'=40+22+5;
 }
 
