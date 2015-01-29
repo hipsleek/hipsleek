@@ -3177,7 +3177,7 @@ and subst_x sst (f : formula) =
   | Base b -> Base ({ b with 
       formula_base_heap = h_subst sst b.formula_base_heap;
       formula_base_pure = MCP.regroup_memo_group (MCP.m_apply_par sst b.formula_base_pure);
-      formula_base_vperm = CVP.subst_par sst b.formula_base_vperm;
+      (* formula_base_vperm = CVP.subst_par sst b.formula_base_vperm; *)
       formula_base_and = (List.map (fun f -> one_formula_subst sst f) b.formula_base_and);})
   | Exists ({
       formula_exists_qvars = qsv;
@@ -3197,7 +3197,7 @@ and subst_x sst (f : formula) =
     else Exists ({
       formula_exists_qvars = qsv;
       formula_exists_heap =  h_subst sst qh;
-      formula_exists_vperm = CVP.subst_par sst vp;
+      formula_exists_vperm = (* CVP.subst_par sst *) vp;
       formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
       formula_exists_type = tconstr;
       formula_exists_and = (List.map (fun f -> one_formula_subst sst f) a);
@@ -11865,7 +11865,8 @@ and compose_context_formula_d (ctx : context) (phi : formula) (x : CP.spec_var l
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x force_sat flow_tr pos) ctx phi x
+  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 
+  (fun _ _ _ -> compose_context_formula_x ctx phi x force_sat flow_tr pos) ctx phi x
 	
 and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
 	Gen.Profiling.do_1 "compose_context_formula" (compose_context_formula_d ctx phi x force_sat flow_tr) pos

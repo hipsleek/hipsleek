@@ -132,39 +132,43 @@ let strip_lexvar_formula (f: formula) =
   let f_e _ = None in
   (lexvar, transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_p_f, f_b, f_e)) f) 
 
-let strip_lexvar_lhs (ctx: context) : context =
-  let es_strip_lexvar_lhs (es: entail_state) : context =
-    if (es.es_var_measures = None) || (has_lexvar_formula es.es_formula) 
-    (* This is to ensure we strip Lexvar only once or when necessary *)
-    then
-      let lexvar, es_f = strip_lexvar_formula es.es_formula in
-      let termr, lexvar = List.partition is_TermR_formula lexvar in
-      let termr_lex = List.map (fun f ->
-        let tinfo = find_lexvar_formula f in tinfo.lex_ann) termr in
-      match lexvar with
-      | [] ->
-        if termr_lex = [] then Ctx es
-        else Ctx { es with
-          es_formula = es_f; 
+let strip_lexvar_es_lhs (es: entail_state) : context =
+  if (es.es_var_measures = None) || (has_lexvar_formula es.es_formula) 
+  (* This is to ensure we strip Lexvar only once or when necessary *)
+  then
+    let lexvar, es_f = strip_lexvar_formula es.es_formula in
+    let termr, lexvar = List.partition is_TermR_formula lexvar in
+    let termr_lex = List.map (fun f ->
+      let tinfo = find_lexvar_formula f in tinfo.lex_ann) termr in
+    match lexvar with
+    | [] ->
+      if termr_lex = [] then Ctx es
+      else Ctx { es with
+        es_formula = es_f; 
+        es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
+    | lv::[] ->
+      if (es.es_var_measures = None) then
+        let tinfo = find_lexvar_formula lv in
+        let t_ann, ml, il = tinfo.lex_ann, tinfo.lex_exp, tinfo.lex_tmp in 
+        let ml = tinfo.lex_exp in
+        let il = tinfo.lex_tmp in 
+        Ctx { es with
+          es_formula = es_f;
+          es_var_measures = Some (t_ann, ml, il);
           es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
-      | lv::[] ->
-        if (es.es_var_measures = None) then
-          let tinfo = find_lexvar_formula lv in
-          let t_ann, ml, il = tinfo.lex_ann, tinfo.lex_exp, tinfo.lex_tmp in 
-          let ml = tinfo.lex_exp in
-          let il = tinfo.lex_tmp in 
-          Ctx { es with
-            es_formula = es_f;
-            es_var_measures = Some (t_ann, ml, il);
-            es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
-        else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-      | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-    else Ctx es
-  in transform_context es_strip_lexvar_lhs ctx
+      else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+    | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+  else Ctx es
+
+let strip_lexvar_lhs (ctx: context) : context =
+  transform_context strip_lexvar_es_lhs ctx
 
 let strip_lexvar_lhs (ctx: context) : context =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
+
+let strip_lexvar_list_failesc_ctx ctx = 
+  transform_list_failesc_context (idf, idf, strip_lexvar_es_lhs) ctx
   
 let rec strip_lexvar_post for_loop sf =
   match sf with

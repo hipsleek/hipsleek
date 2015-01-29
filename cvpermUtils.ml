@@ -30,6 +30,7 @@ let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
 let check_dups = Gen.BList.check_dups_eq eq_spec_var
 let diff = Gen.BList.difference_eq eq_spec_var
 let intersect = Gen.BList.intersect_eq eq_spec_var
+let overlap = Gen.BList.overlap_eq eq_spec_var
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -74,6 +75,37 @@ let merge_vperm_sets vps_list =
         vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
         vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
   in norm_vperm_sets (helper vps_list)
+
+(* @full[x] * @full[x] -> ERR                     *)
+(* @full[x] * @lend[x] -> ERR                     *)
+(* @full[x] * @zero[x] -> @full[x]                *)
+(* @lend[x] * @lend[x] -> @lend[x] => remove_dups *)
+(* @lend[x] * @zero[x] -> @lend[x]                *)
+(* @zero[x] * @zero[x] -> @zero[x] => remove_dups *)
+let combine_vperm_sets vps_list = 
+  let rec helper vps_list =  
+    match vps_list with
+    | [] -> empty_vperm_sets
+    | v::vs ->
+      let mvs = helper vs in
+      { vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
+        vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
+        vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
+        vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
+        vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
+  in
+  let comb_vps = helper vps_list in
+  let full_vars = comb_vps.vperm_full_vars in
+  let lend_vars = comb_vps.vperm_lend_vars in
+  let zero_vars = comb_vps.vperm_zero_vars in
+  let msg = "Combination of vperm sets causes contradiction" in
+  let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
+  if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
+  then Error.report_error err
+  else
+    { comb_vps with
+      vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
+      vperm_lend_vars = remove_dups lend_vars; }
 
 let vperm_sets_of_anns ann_list =
   let rec helper ann_list =  

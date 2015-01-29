@@ -2590,12 +2590,28 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
   | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
-    let par_label = (1, "par") in
-    let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
-    let rem_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
-      let rem_ctx, post_ctx = check_par_case prog proc par_ctx rem_ctx c par_label in
-      (rem_ctx, post_ctx_acc @ post_ctx)) (par_ctx, []) cl in
-    rem_ctx
+    let par_vperm_f = VP.formula_of_vperm_sets vp in
+    let par_vperm_f = CF.set_flow_in_formula_override 
+      { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
+    let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
+    if not (CF.isSuccessListFailescCtx_new rem_ctx) then
+      let msg = ("Variable permission for par cannot be satisfied.") in
+      (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
+      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
+      Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+    else
+      let par_label = (1, "par") in
+      (* Set INF_PAR for proving pre-condition of each par's case *)
+      let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
+      let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
+      let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_ctx, post_ctx_acc) c -> 
+        let rem_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_ctx c par_label in
+        (rem_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
+      let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
+        VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
+        rem_ctx (rem_par_ctx::post_ctx_list)
+      in
+      VP.clear_inf_par_list_failesc_ctx res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
@@ -2671,7 +2687,8 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
   in
   let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
-  let post_ctx = VP.compose_list_failesc_contexts_for_par post_ctx par_ctx pos in  
+  let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_ctx pos in
+  let post_ctx = TermUtils.strip_lexvar_list_failesc_ctx post_ctx in  
   (rem_ctx, post_ctx)
   
 and check_par_case (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_failesc_context) 
