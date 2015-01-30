@@ -51,20 +51,20 @@ void main()
   int r1,r2;
   r1=0; r2=0;
   dprint;
-  par
+  par {r1,x@L,c@L}
   {  
    // exists r1',r2'
-   case {x} c'::LatchIn{- x'::cell<1> }<> * c'::CNT<(1)> -> 
+    // exists x',y',r2'
+  case {x@L,r1,c@L} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
+      dprint;
+      await(c); 
+      r1 = x.val; 
+   ||
+   case {x@L,c@L} c'::LatchIn{- x'::cell<1> }<> * c'::CNT<(1)> -> 
         dprint;
       countDown(c);
       //dprint;
       //int k = x.val;
-  || 
-    // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
-      dprint;
-      await(c); 
-      r1 = x.val; 
   }
   dprint;
 }
