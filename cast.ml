@@ -334,10 +334,11 @@ and exp_bind = {
     exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
-and exp_block = { exp_block_type : typ;
-exp_block_body : exp;
-exp_block_local_vars : typed_ident list;
-exp_block_pos : loc }
+and exp_block = { 
+  exp_block_type : typ;
+  exp_block_body : exp;
+  exp_block_local_vars : typed_ident list;
+  exp_block_pos : loc }
 
 and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
 
@@ -437,9 +438,10 @@ and exp_emparray = { exp_emparray_type : typ;
 exp_emparray_dim : int;
 exp_emparray_pos : loc }
 
-and exp_var_decl = { exp_var_decl_type : typ;
-exp_var_decl_name : ident;
-exp_var_decl_pos : loc }
+and exp_var_decl = { 
+  exp_var_decl_type : typ;
+  exp_var_decl_name : ident;
+  exp_var_decl_pos : loc }
 
 and exp_while = { 
     exp_while_condition : ident;

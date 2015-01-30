@@ -1821,28 +1821,32 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               in
               wrap_proving_kind PK_BIND bind_op ()
 
-        | Block ({exp_block_type = t;
-          exp_block_body = e;
-          exp_block_local_vars = local_vars;
-          exp_block_pos = pos}) -> begin
+        | Block ({
+            exp_block_type = t;
+            exp_block_body = e;
+            exp_block_local_vars = local_vars;
+            exp_block_pos = pos }) -> 
+          begin
             Gen.Profiling.push_time "[check_exp] Block";
             try
-            let vss = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) local_vars in
-            stk_vars # push_list vss;
-	    let ctx1 = check_exp prog proc ctx e post_start_label in
-            stk_vars # pop_list vss;
-	    let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
-	    let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
-	    (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in  *)
-	    (*  let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in  *)
-	        let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
-            (*       trans_level_eqn_list_failesc_context ctx2 *)
-            (*     else ctx2 *)
-            (* in *)
-            Gen.Profiling.pop_time "[check_exp] Block";
-            res
+              let vss = List.map (fun (t,i) -> CP.SpecVar (t, i, Unprimed)) local_vars in
+              stk_vars # push_list vss;
+              let ctx1 = check_exp prog proc ctx e post_start_label in
+              stk_vars # pop_list vss;
+              let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
+              let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
+              let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
+              (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
+              (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^            *)
+              (*   (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
+              let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
+              (*       trans_level_eqn_list_failesc_context ctx2 *)
+              (*     else ctx2 *)
+              (* in *)
+              Gen.Profiling.pop_time "[check_exp] Block";
+              res
             with ex -> Gen.Profiling.pop_time "[check_exp] Block"; raise ex
-	  end
+          end
         | Cast ({ exp_cast_target_type = target_typ;
                   exp_cast_body = org_exp;
                   exp_cast_pos = pos}) -> (
@@ -2589,29 +2593,29 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* let _ = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
-  | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
-    let par_vperm_f = VP.formula_of_vperm_sets vp in
-    let par_vperm_f = CF.set_flow_in_formula_override 
-      { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
-    let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
-    if not (CF.isSuccessListFailescCtx_new rem_ctx) then
-      let msg = ("Variable permission for par cannot be satisfied.") in
-      (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
-      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
-      Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-    else
-      let par_label = (1, "par") in
-      (* Set INF_PAR for proving pre-condition of each par's case *)
-      let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
-      let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
-      let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
-        let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
-        (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
-      let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
-        VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
-        rem_ctx (rem_par_ctx::post_ctx_list)
-      in
-      VP.clear_inf_par_list_failesc_ctx res_ctx
+        | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
+          let par_vperm_f = VP.formula_of_vperm_sets vp in
+          let par_vperm_f = CF.set_flow_in_formula_override 
+            { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
+          let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
+          if not (CF.isSuccessListFailescCtx_new rem_ctx) then
+            let msg = ("Variable permission for par cannot be satisfied.") in
+            (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
+            Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
+            Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+          else
+            let par_label = (1, "par") in
+            (* Set INF_PAR for proving pre-condition of each par's case *)
+            let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
+            let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
+            let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
+              let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
+              (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
+            let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
+              VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
+              rem_ctx (rem_par_ctx::post_ctx_list)
+            in
+            VP.clear_inf_par_list_failesc_ctx res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =

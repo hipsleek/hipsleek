@@ -43,6 +43,24 @@ let set_vperm_sets_list_failesc_ctx (vp: vperm_sets) ctx =
     Ctx { es with es_formula = set_vperm_sets_formula vp es.es_formula; }
   in transform_list_failesc_context (idf, idf, (set_vperm_sets_es vp)) ctx
 
+let rec clear_vperm_sets_formula ann_list (f: CF.formula): CF.formula = 
+  match f with
+  | CF.Or ({
+      formula_or_f1 = f1; 
+      formula_or_f2 = f2; } as o) ->
+    CF.Or ({ o with 
+      formula_or_f1 = clear_vperm_sets_formula ann_list f1; 
+      formula_or_f2 = clear_vperm_sets_formula ann_list f2; })
+  | CF.Base b -> CF.Base { b with 
+      formula_base_vperm = clear_vperm_sets ann_list b.formula_base_vperm; }
+  | CF.Exists e -> CF.Exists { e with 
+      formula_exists_vperm = clear_vperm_sets ann_list e.formula_exists_vperm; }
+
+let clear_vperm_sets_list_failesc_ctx ann_list ctx =
+  let clear_vperm_sets_es ann_list es =
+    Ctx { es with es_formula = clear_vperm_sets_formula ann_list es.es_formula; }
+  in transform_list_failesc_context (idf, idf, (clear_vperm_sets_es ann_list)) ctx
+
 let clear_inf_par_list_failesc_ctx ctx =
   let clear_inf_par_es es =
     es.es_infer_obj # reset INF_PAR; Ctx es 

@@ -32,6 +32,7 @@ void main()
     v = v +kk;
     dprint;
   }
+  kk = x;
   dprint;
 }
 

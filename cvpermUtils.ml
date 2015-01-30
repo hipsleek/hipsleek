@@ -121,6 +121,25 @@ let vperm_sets_of_anns ann_list =
       | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
   in norm_vperm_sets (helper ann_list)
 
+let clear_vperm_sets ann_list vps =
+  let rec helper ann_list =
+    match ann_list with
+    | [] -> vps
+    | (ann, svl)::vs ->
+      let cvs = helper vs in
+      match ann with
+      | VP_Zero -> { cvs with vperm_zero_vars = diff cvs.vperm_zero_vars svl; } 
+      | VP_Full -> { cvs with vperm_full_vars = diff cvs.vperm_full_vars svl; } 
+      | VP_Value -> { cvs with vperm_value_vars = diff cvs.vperm_value_vars svl; } 
+      | VP_Lend -> { cvs with vperm_lend_vars = diff cvs.vperm_lend_vars svl; } 
+      | VP_Const frac ->
+        let frac_sets, others = List.partition (fun (f, _) -> 
+          Frac.eq_frac f frac) cvs.vperm_frac_vars in
+        let frac_svl = List.concat (List.map snd frac_sets) in
+        let frac_svl = (frac, diff frac_svl svl) in
+        { cvs with vperm_frac_vars = (frac, svl)::others; }  
+  in helper ann_list
+
 let fv vps =
   remove_dups (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
     vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
