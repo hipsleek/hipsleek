@@ -2095,7 +2095,7 @@ and pr_vperm_sets vps =
   (pr_elem VP_Lend vps.CVP.vperm_lend_vars);
   (pr_elem VP_Value vps.CVP.vperm_value_vars);
   (pr_elem VP_Zero vps.CVP.vperm_zero_vars);
-  (List.iter (fun (frac, svl) -> pr_elem (VP_Const frac) svl) vps.CVP.vperm_frac_vars) 
+  (List.iter (fun (frac, svl) -> pr_elem (VP_Frac frac) svl) vps.CVP.vperm_frac_vars) 
 
 and string_of_vperm_sets vps = poly_string_of_pr pr_vperm_sets vps
 

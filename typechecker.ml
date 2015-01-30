@@ -1596,15 +1596,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
 	  end
 
-        | Bind ({ exp_bind_type = body_t;
-          exp_bind_bound_var = (v_t, v); (* node to bind *)
-          exp_bind_fields = lvars; (* fields of bound node *)
-          exp_bind_body = body;
-          exp_bind_imm = imm_node; (* imm annotation for the node *)
-          exp_bind_param_imm = pimm; (* imm annotation for each field *)
-          exp_bind_read_only = read_only;
-	  exp_bind_path_id = pid;
-          exp_bind_pos = pos}) -> 
+        | Bind ({ 
+            exp_bind_type = body_t;
+            exp_bind_bound_var = (v_t, v); (* node to bind *)
+            exp_bind_fields = lvars; (* fields of bound node *)
+            exp_bind_body = body;
+            exp_bind_imm = imm_node; (* imm annotation for the node *)
+            exp_bind_param_imm = pimm; (* imm annotation for each field *)
+            exp_bind_read_only = read_only;
+            exp_bind_path_id = pid;
+            exp_bind_pos = pos }) -> 
               (* this creates a new esc_level for the bind construct to capture all
                  exceptions from this construct *)
               let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
@@ -1625,7 +1626,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* in                                                            *)
                   (* if (not b) then res (*do not have permission for variable v*) *)
                   (* else                                                          *)
-                    (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
+
+                  (* VPerm: vperm of fields is inherited from the bound var *)
+                  let ctx = 
+                    if !ann_vp then
+                      let vp = VP.vperm_sets_list_failesc_context ctx in 
+                      let bound_var = CP.SpecVar (v_t, v, Unprimed) in
+                      let vperm_bound_var = CVP.get_vperm_spec_var bound_var vp in
+                      let vperm_fields = CVP.vperm_sets_of_anns [(
+                        vperm_bound_var, 
+                        List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)]
+                      in
+                      VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
+                    else ctx
+                  in
+                  (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
 	            let _ = proving_loc#set pos in
                     let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
 	            let field_types, vs = List.split lvars in
@@ -2662,6 +2677,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     ((check_exp1_x failesc) @ fl)
 
 (* PAR: Check pre-state and compute post-state of a par_case *)
+and norm_par_case_pre (vp: CVP.vperm_sets) (f: CF.formula) = 
+  let lend_vars = vp.CVP.vperm_lend_vars in
+  let imm_ann_list = List.map (fun v -> (CP.to_primed v, CP.ConstAnn Lend)) lend_vars in
+  let imm_f = CF.set_imm_ann_formula imm_ann_list f in
+  VP.add_vperm_sets_formula vp imm_f
+
 and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_failesc_context) 
   (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
@@ -2677,7 +2698,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
         | None -> 
           let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
           CF.Base { b with CF.formula_base_vperm = vp; }
-        | Some f -> VP.add_vperm_sets_formula vp f 
+        | Some f -> norm_par_case_pre vp f 
       in
       (* Remaining context for the other cases *)
       let rem_ctx =

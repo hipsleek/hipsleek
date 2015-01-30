@@ -15039,7 +15039,7 @@ let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula):
 (*             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                             *)
 (*             (* TODO: Get VarPerm for @lend and @frac *)                                                     *)
 (*             | VP_Lend -> []                                                                                 *)
-(*             | VP_Const _ -> []                                                                              *)
+(*             | VP_Frac _ -> []                                                                              *)
 (*           )                                                                                                 *)
 (*   in                                                                                                        *)
 (*   helper f                                                                                                  *)
@@ -15087,7 +15087,7 @@ let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula):
 (*             | VP_Value -> Gen.BList.intersect_eq CP.eq_spec_var_ident res1 res2                             *)
 (*             (* TODO: Get VarPerm for @lend and @frac *)                                                     *)
 (*             | VP_Lend -> []                                                                                 *)
-(*             | VP_Const _ -> []                                                                              *)
+(*             | VP_Frac _ -> []                                                                              *)
 (*           )                                                                                                 *)
 (*   in                                                                                                        *)
 (*   helper f                                                                                                  *)
@@ -17891,6 +17891,23 @@ let mkEmp_list_failesc_context pos =
   let init_esc = [((0, ""), [])] in
   let fctx = [mk_failesc_context ctx [] init_esc] in
   fctx
+
+let set_imm_ann_formula ann_list f = 
+  let h_f hf = 
+    match hf with
+    | DataNode ({ h_formula_data_node = sv; } as d) ->
+      (try
+        let _, imm = List.find (fun (v, _) -> CP.eq_spec_var v sv) ann_list in
+        Some (DataNode ({ d with h_formula_data_imm = imm; }))
+      with _ -> Some hf)
+    | ViewNode ({ h_formula_view_node = sv; } as v) ->
+      (try
+        let _, imm = List.find (fun (v, _) -> CP.eq_spec_var v sv) ann_list in
+        Some (ViewNode ({ v with h_formula_view_imm = imm; }))
+      with _ -> Some hf)
+    | _ -> None
+  in
+  transform_formula (nonef, nonef, h_f, (somef, somef, somef, somef, somef)) f
 
 (* let map_list_failesc_context f ctx =                           *)
 (*   let f_ctx _ ctx = Some (f ctx, ()) in                        *)

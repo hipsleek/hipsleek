@@ -119,7 +119,7 @@ and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann = 
   | VP_Zero | VP_Full | VP_Value
-  | VP_Lend | VP_Const of Frac.frac 
+  | VP_Lend | VP_Frac of Frac.frac 
   (* | VP_Ref * *)
 
 let eq_vp_ann a1 a2 = 
@@ -128,7 +128,7 @@ let eq_vp_ann a1 a2 =
   | VP_Full, VP_Full -> true
   | VP_Lend, VP_Lend -> true
   | VP_Value, VP_Value -> true
-  | VP_Const f1, VP_Const f2 -> Frac.eq_frac f1 f2
+  | VP_Frac f1, VP_Frac f2 -> Frac.eq_frac f1 f2
   | _ -> false
   
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
@@ -378,7 +378,7 @@ let string_of_vp_ann a =
     | VP_Full -> "@full"
     | VP_Value -> "@value"
     | VP_Lend -> "@lend"
-    | VP_Const f -> "@" ^ (Frac.string_of_frac f) 
+    | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
     (* | VP_Ref-> "@p_ref" *)
   )
 

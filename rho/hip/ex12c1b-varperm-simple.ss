@@ -13,13 +13,13 @@ void main()
      //dprint;
      x = v + 1; // cannot read v
      //dprint;
-  /*|| // {y,v@L}
+  || // {y,v@L}
   else // {y,v@L} 
       ->
       //int y;
       //dprint;
       y = y+22+v; // cannot update y
-      //dprint; */
+      //dprint; 
   }
   dprint;
   assert x'=6; //& y'=40+22+5;

@@ -1520,7 +1520,7 @@ p_vp_ann:
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
    | `PLEND -> VP_Lend
-   | `AT; `FRAC_LIT (f, _) -> VP_Const f
+   | `AT; `FRAC_LIT (f, _) -> VP_Frac f
    (* | `PREF -> VP_Ref *)
   ]];
 

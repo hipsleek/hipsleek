@@ -89,8 +89,12 @@ let rec vperm_sets_of_formula f =
   | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
     let vp1 = vperm_sets_of_formula f1 in
     let vp2 = vperm_sets_of_formula f2 in
-    vp1
+    combine_or_vperm_sets vp1 vp2
   | _ -> collect_vperm_sets f
+
+let vperm_sets_list_failesc_context ctx = 
+  let f = formula_of_list_failesc_context ctx in
+  vperm_sets_of_formula f
 
 let compose_list_failesc_context_formula_for_par case_post 
   (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =
@@ -148,7 +152,7 @@ let ann_set_of_vperm_sets vps =
   let value_vars = List.map (fun v -> (v, VP_Value)) vps.vperm_value_vars in
   let zero_vars = List.map (fun v -> (v, VP_Zero)) vps.vperm_zero_vars in
   let frac_vars = List.concat (List.map (fun (fperm, svl) -> 
-    List.map (fun v -> (v, VP_Const fperm)) svl) vps.vperm_frac_vars) in
+    List.map (fun v -> (v, VP_Frac fperm)) svl) vps.vperm_frac_vars) in
   full_vars @ lend_vars @ value_vars @ zero_vars @ frac_vars
 
 let vperm_sets_of_ann_set ans = 
@@ -161,7 +165,7 @@ let vperm_sets_of_ann_set ans =
       | VP_Lend -> { vps with vperm_lend_vars = vps.vperm_lend_vars @ [v] }
       | VP_Value -> { vps with vperm_value_vars = vps.vperm_value_vars @ [v] }
       | VP_Zero -> { vps with vperm_zero_vars = vps.vperm_zero_vars @ [v] }
-      | VP_Const fperm ->
+      | VP_Frac fperm ->
         let fperm_svl, others = List.partition (fun (vf, _) -> Frac.eq_frac fperm vf) vps.vperm_frac_vars in
         let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in
         { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] }

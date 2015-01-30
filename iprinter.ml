@@ -339,7 +339,7 @@ and string_of_vperm_sets vps =
   (pr_elem VP_Lend vps.VP.vperm_lend_vars) ^
   (pr_elem VP_Value vps.VP.vperm_value_vars) ^
   (pr_elem VP_Zero vps.VP.vperm_zero_vars) ^
-  (pr_list (fun (frac, svl) -> pr_elem (VP_Const frac) svl) vps.VP.vperm_frac_vars) 
+  (pr_list (fun (frac, svl) -> pr_elem (VP_Frac frac) svl) vps.VP.vperm_frac_vars) 
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 

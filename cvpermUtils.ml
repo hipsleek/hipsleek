@@ -2,6 +2,13 @@ open Gen
 open Globals
 open Cpure
 
+let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
+let check_dups = Gen.BList.check_dups_eq eq_spec_var
+let diff = Gen.BList.difference_eq eq_spec_var
+let intersect = Gen.BList.intersect_eq eq_spec_var
+let overlap = Gen.BList.overlap_eq eq_spec_var
+let mem = Gen.BList.mem_eq eq_spec_var
+
 (* To store vperm of variables *)
 type vperm_sets = {
   vperm_zero_vars: spec_var list;
@@ -25,12 +32,6 @@ let is_empty_vperm_sets vps =
   (is_empty vps.vperm_value_vars) &&
   (is_empty vps.vperm_zero_vars) &&
   (is_empty vps.vperm_frac_vars)
-
-let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
-let check_dups = Gen.BList.check_dups_eq eq_spec_var
-let diff = Gen.BList.difference_eq eq_spec_var
-let intersect = Gen.BList.intersect_eq eq_spec_var
-let overlap = Gen.BList.overlap_eq eq_spec_var
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -107,6 +108,27 @@ let combine_vperm_sets vps_list =
       vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
       vperm_lend_vars = remove_dups lend_vars; }
 
+(* @full[x] or @full[x] -> @full[x] *)
+(* @full[x] or @lend[x] -> @lend[x] *)
+(* @full[x] or @zero[x] -> @zero[x] *)
+(* @lend[x] or @lend[x] -> @lend[x] *)
+(* @lend[x] or @zero[x] -> @zero[x] *)
+(* @zero[x] or @zero[x] -> @zero[x] *)
+let combine_or_vperm_sets vps1 vps2 =
+  let f1, f2 = vps1.vperm_full_vars, vps2.vperm_full_vars in
+  let l1, l2 = vps1.vperm_lend_vars, vps2.vperm_lend_vars in
+  let z1, z2 = vps1.vperm_zero_vars, vps2.vperm_zero_vars in
+  let v1, v2 = f1 @ l1 @ z1, f2 @ l2 @ z2 in
+  let alone_vars = diff (v1 @ v2) (intersect v1 v2) in
+  let z = remove_dups (z1 @ z2 @ alone_vars) in
+  let l = remove_dups (diff (l1 @ l2) z) in
+  let f = remove_dups (diff (f1 @ f2) (l @ z)) in
+  { vperm_zero_vars = z;
+    vperm_lend_vars = l;
+    vperm_full_vars = f;
+    vperm_value_vars = vps1.vperm_value_vars @ vps2.vperm_value_vars; (* TODO *)
+    vperm_frac_vars = vps1.vperm_frac_vars @ vps2.vperm_frac_vars; (* TODO *) }
+
 let vperm_sets_of_anns ann_list =
   let rec helper ann_list =  
     match ann_list with
@@ -118,7 +140,7 @@ let vperm_sets_of_anns ann_list =
       | VP_Full -> { mvs with vperm_full_vars = mvs.vperm_full_vars @ svl; } 
       | VP_Value -> { mvs with vperm_value_vars = mvs.vperm_value_vars @ svl; } 
       | VP_Lend -> { mvs with vperm_lend_vars = mvs.vperm_lend_vars @ svl; } 
-      | VP_Const frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
+      | VP_Frac frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
   in norm_vperm_sets (helper ann_list)
 
 let clear_vperm_sets ann_list vps =
@@ -132,7 +154,7 @@ let clear_vperm_sets ann_list vps =
       | VP_Full -> { cvs with vperm_full_vars = diff cvs.vperm_full_vars svl; } 
       | VP_Value -> { cvs with vperm_value_vars = diff cvs.vperm_value_vars svl; } 
       | VP_Lend -> { cvs with vperm_lend_vars = diff cvs.vperm_lend_vars svl; } 
-      | VP_Const frac ->
+      | VP_Frac frac ->
         let frac_sets, others = List.partition (fun (f, _) -> 
           Frac.eq_frac f frac) cvs.vperm_frac_vars in
         let frac_svl = List.concat (List.map snd frac_sets) in
@@ -166,3 +188,13 @@ let subst_avoid_capture f t vps =
 let is_false_vperm_sets vps = 
   let full_vars = vps.vperm_full_vars in
   check_dups full_vars
+
+let get_vperm_spec_var sv vps = 
+  if mem sv vps.vperm_full_vars then VP_Full
+  else if mem sv vps.vperm_lend_vars then VP_Lend
+  else if mem sv vps.vperm_value_vars then VP_Value
+  else 
+    try
+      let frac_perm, _ = List.find (fun (_, svl) -> mem sv svl) vps.vperm_frac_vars in
+      VP_Frac frac_perm
+    with _ -> VP_Zero
