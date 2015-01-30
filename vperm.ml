@@ -122,8 +122,14 @@ let compose_list_failesc_context_formula_for_par case_post
   ctx post
 
 let compose_list_failesc_contexts_for_par case_post post_ctx ctx pos: list_failesc_context = 
-  let post = formula_of_list_failesc_context post_ctx in
-  compose_list_failesc_context_formula_for_par case_post ctx post pos
+  if case_post then
+    let post = formula_of_list_failesc_context post_ctx in
+    let non_heap_ctx = remove_heap_list_failesc_ctx ctx in
+    compose_list_failesc_context_formula_for_par case_post non_heap_ctx post pos
+  else
+    let non_lend_post_ctx = remove_lend_list_failesc_ctx post_ctx in
+    let non_lend_post = formula_of_list_failesc_context non_lend_post_ctx in
+    compose_list_failesc_context_formula_for_par case_post ctx non_lend_post pos
 
 let compose_list_failesc_contexts_for_par case_post post_ctx ctx pos: list_failesc_context = 
   let pr1 = !print_list_failesc_context in

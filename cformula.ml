@@ -17909,6 +17909,24 @@ let set_imm_ann_formula ann_list f =
   in
   transform_formula (nonef, nonef, h_f, (somef, somef, somef, somef, somef)) f
 
+let rec remove_heap_formula f = 
+  match f with
+  | Base b -> Base ({ b with formula_base_heap = HEmp; })
+  | Exists e -> Exists ({ e with formula_exists_heap = HEmp; })
+  | Or o -> Or { o with
+      formula_or_f1 = remove_heap_formula o.formula_or_f1;
+      formula_or_f2 = remove_heap_formula o.formula_or_f2; }
+
+let remove_heap_list_failesc_ctx ctx =
+  let remove_heap_es es =
+    Ctx { es with es_formula = remove_heap_formula es.es_formula; }
+  in transform_list_failesc_context (idf, idf, remove_heap_es) ctx
+
+let remove_lend_list_failesc_ctx ctx = 
+  let remove_lend_es es = 
+    Ctx { es with es_formula = remove_lend es.es_formula; }
+  in transform_list_failesc_context (idf, idf, remove_lend_es) ctx
+
 (* let map_list_failesc_context f ctx =                           *)
 (*   let f_ctx _ ctx = Some (f ctx, ()) in                        *)
 (*   let arg = () in                                              *)
