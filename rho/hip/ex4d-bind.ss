@@ -17,15 +17,15 @@ void main()
   cell x, y;
   x = new cell(1); 
   int r1,r2;
-  par {r1,x@L}
+  par {r1,r2,x@L}
   {  
-  case {x@L,r1} x'::cell<n> -> // TODO: Should return error here
-      dprint;
-      //r1 = x.val; 
-   ||
-  case {x@L} x'::cell<n> -> 
+  case {x@L,r2} x'::cell<n>@L -> 
+    r2 = x.val+1;
     dprint;
-      x.val = x.val+1;
+  ||
+  case {x@L,r1} x'::cell<n>@L -> // TODO: Should return error here
+      r1 = x.val; 
+      dprint;
   }
   dprint;
 }

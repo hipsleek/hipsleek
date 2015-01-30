@@ -140,6 +140,10 @@ let strip_lexvar_es_lhs (es: entail_state) : context =
     let termr, lexvar = List.partition is_TermR_formula lexvar in
     let termr_lex = List.map (fun f ->
       let tinfo = find_lexvar_formula f in tinfo.lex_ann) termr in
+    let err_msg = 
+      ("[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." ^ 
+      (!print_entail_state es))
+    in
     match lexvar with
     | [] ->
       if termr_lex = [] then Ctx es
@@ -156,8 +160,8 @@ let strip_lexvar_es_lhs (es: entail_state) : context =
           es_formula = es_f;
           es_var_measures = Some (t_ann, ml, il);
           es_term_res_lhs = es.es_term_res_lhs @ termr_lex; }
-      else report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
-    | _ -> report_error no_pos "[term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped." 
+      else report_error no_pos err_msg 
+    | _ -> report_error no_pos err_msg 
   else Ctx es
 
 let strip_lexvar_lhs (ctx: context) : context =

@@ -20,11 +20,11 @@ void main()
   dprint;
   par {r1,x@L}
   {  
-  case {x@L,r1} x'::cell<n> -> // Put @L for x'::cell<n>
+  case {x@L,r1} x'::cell<n>@L -> // Put @L for x'::cell<n>
       dprint;
       r1 = x.val; 
    ||
-  case {x@L} x'::cell<n> -> 
+  case {x@L} x'::cell<n>@L -> 
     dprint;
       //x.val = x.val+1;
       r2 = x.val+1;
