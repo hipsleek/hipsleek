@@ -2134,21 +2134,27 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*************************************************************)
                   (* VPerm: Check @lend for normal args and @full for ref args *)
                   (*************************************************************)
-                  let ref_params = proc.proc_by_name_params in
-                  let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
-                  let ref_args = CP.subst_var_list pairs_sst ref_params in
-                  let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
-                  let vperm_f = VP.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
-                  let vperm_f = CF.set_flow_in_formula_override
-                    { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
+                  let b = 
+                    if !ann_vp then
+                      let ref_params = proc.proc_by_name_params in
+                      let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
+                      let ref_args = CP.subst_var_list pairs_sst ref_params in
+                      let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
+                      let vperm_f = VP.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
+                      let vperm_f = CF.set_flow_in_formula_override
+                        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
+                      in
+                      let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in
+                      if not (CF.isSuccessListFailescCtx_new vperm_res) then
+                        let msg = ("Arguments do not have @lend/@full permission to read/write.") in
+                        (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
+                        Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
+                        Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+                      else true
+                    else true
                   in
-                  let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in
-                  if not (CF.isSuccessListFailescCtx_new vperm_res) then
-                    let msg = ("Arguments do not have @lend/@full permission to read/write.") in
-                    (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
-                    Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
-                    Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-                  else 
+                  if not b then ctx
+                  else
                   (***************************************************************************)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)
@@ -2449,26 +2455,32 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*********************************************)
             (* VPerm: Check @full/@lend permission for v *)
             (*********************************************)
-            let sv = (CP.SpecVar (t, v, Unprimed)) in
-            let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in
-            let lend_f = CF.set_flow_in_formula_override
-              { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
-            in
-            let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
-              if not (CF.isSuccessListFailescCtx_new vperm_res) then
-                let msg = (v ^ " does not have @lend/@full permission to read.") in
-                (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
-                Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
-                Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-              else 
-                let res = 
-                  (* if (not b) then res (*do not have permission for variable v*) *)
-                  (* else                                                          *)
-                    let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
-                    CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+            let b = 
+              if !ann_vp then
+                let sv = (CP.SpecVar (t, v, Unprimed)) in
+                let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in
+                let lend_f = CF.set_flow_in_formula_override
+                  { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
                 in
-                Gen.Profiling.pop_time "[check_exp] Var";
-                res 
+                let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
+                if not (CF.isSuccessListFailescCtx_new vperm_res) then
+                  let msg = (v ^ " does not have @lend/@full permission to read.") in
+                  (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
+                  Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
+                  Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+                else true
+              else true
+            in
+            let res = 
+              (* if (not b) then res (*do not have permission for variable v*) *)
+              (* else                                                          *)
+              if not b then ctx (* Unreachable branch *) 
+              else
+                let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
+                CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+            in
+            Gen.Profiling.pop_time "[check_exp] Var";
+            res 
           end
         | VarDecl {
             exp_var_decl_type = t;
@@ -2476,9 +2488,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*************************************)
           (* VPerm: Set @full permission for v *)
           (*************************************) 
-          let sv = CP.SpecVar (t, v, Unprimed) in
-          let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
-          VP.add_vperm_sets_list_failesc_ctx vp ctx
+          if !ann_vp then
+            let sv = CP.SpecVar (t, v, Unprimed) in
+            let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
+            VP.add_vperm_sets_list_failesc_ctx vp ctx
+          else ctx
         | Unit pos -> ctx
         | Sharp ({exp_sharp_type =t;
           exp_sharp_flow_type = ft;(*P.flow_typ*)
@@ -2594,28 +2608,32 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let ctx5 = check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
               CF.pop_esc_level_list ctx5 pid
         | Par { exp_par_vperm = vp; exp_par_cases = cl; exp_par_pos = pos; } -> 
-          let par_vperm_f = VP.formula_of_vperm_sets vp in
-          let par_vperm_f = CF.set_flow_in_formula_override 
-            { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
-          let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
-          if not (CF.isSuccessListFailescCtx_new rem_ctx) then
-            let msg = ("Variable permission for par cannot be satisfied.") in
-            (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
-            Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
-            Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+          if not !ann_vp then
+            (DD.info_pprint ("WARNING: Skip reasoning PAR construct because --ann-vp is not enabled.") pos;
+            ctx)
           else
-            let par_label = (1, "par") in
-            (* Set INF_PAR for proving pre-condition of each par's case *)
-            let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
-            let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
-            let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
-              let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
-              (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
-            let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
-              VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
-              rem_ctx (rem_par_ctx::post_ctx_list)
-            in
-            VP.clear_inf_par_list_failesc_ctx res_ctx
+            let par_vperm_f = VP.formula_of_vperm_sets vp in
+            let par_vperm_f = CF.set_flow_in_formula_override 
+              { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
+            let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
+            if not (CF.isSuccessListFailescCtx_new rem_ctx) then
+              let msg = ("Variable permission for par cannot be satisfied.") in
+              (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
+              Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
+              Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+            else
+              let par_label = (1, "par") in
+              (* Set INF_PAR for proving pre-condition of each par's case *)
+              let par_ctx = VP.prepare_list_failesc_ctx_for_par vp ctx in
+              let no_vperm_par_ctx = VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx in
+              let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
+                let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
+                (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
+              let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
+                VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
+                rem_ctx (rem_par_ctx::post_ctx_list)
+              in
+              VP.clear_inf_par_list_failesc_ctx res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
