@@ -4475,7 +4475,7 @@ let rec string_of_exp = function
         string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
-  | Par ({ exp_par_vperm = vps; exp_par_cases = cl }) ->
+  | Par ({ exp_par_vperm = vps; exp_par_lend_heap = lh; exp_par_cases = cl }) ->
     let string_of_par_case c =
       let cond = c.exp_par_case_cond in
       let vps = c.exp_par_case_vperm in
@@ -4486,8 +4486,8 @@ let rec string_of_exp = function
       in
       cond_str ^ (string_of_exp c.exp_par_case_body)
     in
-    "par " ^ (string_of_vperm_sets vps) ^ "{\n" ^
-    (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
+    "par " ^ (string_of_vperm_sets vps)  ^ " * " ^ (string_of_formula lh) ^ 
+    "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 ;;
 
 let string_of_field_ann ann =

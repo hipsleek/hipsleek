@@ -66,12 +66,6 @@ let clear_inf_par_list_failesc_ctx ctx =
     es.es_infer_obj # reset INF_PAR; Ctx es 
   in transform_list_failesc_context (idf, idf, clear_inf_par_es) ctx
 
-let prepare_list_failesc_ctx_for_par (vp: vperm_sets) ctx =
-  let prepare_es_for_par vp es =
-    es.es_infer_obj # set INF_PAR;
-    Ctx { es with es_formula = set_vperm_sets_formula vp es.es_formula; }
-  in transform_list_failesc_context (idf, idf, (prepare_es_for_par vp)) ctx
-
 let formula_of_vperm_sets vps = 
   let b = CF.mkTrue_b (mkTrueFlow ()) no_pos in
   Base { b with formula_base_vperm = vps; }
@@ -103,9 +97,9 @@ let compose_list_failesc_context_formula_for_par case_post
   let lend_vars = List.map to_primed vps.vperm_lend_vars in
   let compose_es_formula es =
     let compose_ctx = compose_context_formula (Ctx es) post out_vars false Flow_replace pos in
-    let ctx_fv = context_fv compose_ctx in
     if case_post then
       (* Do not push exists on @full and @lend vars to get their latest values *)
+      let ctx_fv = context_fv compose_ctx in
       let post_ctx = push_exists_context (diff ctx_fv (out_vars @ lend_vars)) compose_ctx in
       map_context (fun es -> { es with 
         es_formula = set_vperm_sets_formula vps es.es_formula; }) post_ctx
@@ -137,6 +131,28 @@ let compose_list_failesc_contexts_for_par case_post post_ctx ctx pos: list_faile
   Debug.no_3 "compose_list_failesc_contexts_for_par" pr2 pr1 pr1 pr1
   (fun _ _ _ -> compose_list_failesc_contexts_for_par case_post post_ctx ctx pos) 
   case_post post_ctx ctx
+
+let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx pos =
+  let non_lend_lh = CF.remove_lend_ann_formula lh in
+  let rem_ctx, _ = f_ent ctx non_lend_lh in
+  if not (CF.isSuccessListFailescCtx_new rem_ctx) then
+    let msg = ("Heap requirement of par cannot be satisfied.") in
+    (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
+     Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
+     Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+  else
+    (* Add back lend heap of par *)
+    let pre_par_ctx = compose_list_failesc_context_formula_for_par false rem_ctx lh pos in
+    let prepare_es_for_par vp es =
+      es.es_infer_obj # set INF_PAR;
+      Ctx { es with es_formula = set_vperm_sets_formula vp es.es_formula; }
+    in transform_list_failesc_context (idf, idf, (prepare_es_for_par vp)) pre_par_ctx
+
+let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx pos =
+  let pr1 = !print_list_failesc_context in
+  let pr2 = !CF.print_formula in
+  Debug.no_2 "prepare_list_failesc_ctx_for_par" pr1 pr2 pr1
+  (fun _ _ -> prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos) ctx lh
 
 (* let update_vperm_sets f vps =                                                  *)
 (*   match f with                                                                 *)

@@ -8364,14 +8364,17 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
         let body = rename_exp ren c.I.exp_par_case_body in
         let cond = map_opt (fun f -> IF.subst sst f) c.I.exp_par_case_cond in
         let vp = IVP.subst_f subst_ren ren c.I.exp_par_case_vperm in
-        { c with
-          I.exp_par_case_cond = cond;
+        { I.exp_par_case_cond = cond;
           I.exp_par_case_vperm = vp;
-          I.exp_par_case_body = body; }
+          I.exp_par_case_else = c.I.exp_par_case_else;
+          I.exp_par_case_body = body; 
+          I.exp_par_case_pos = c.I.exp_par_case_pos; }
       in
-      I.Par { p with
+      I.Par {
         I.exp_par_vperm = IVP.subst_f subst_ren ren p.I.exp_par_vperm; 
-        I.exp_par_cases = List.map rename_par_case p.I.exp_par_cases; }
+        I.exp_par_lend_heap = IF.subst sst p.I.exp_par_lend_heap;
+        I.exp_par_cases = List.map rename_par_case p.I.exp_par_cases; 
+        I.exp_par_pos = p.I.exp_par_pos; }
   in helper ren f 
 
 
@@ -8713,15 +8716,19 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
                 | Some e -> let nc,_,_ = (case_normalize_exp prog h p e) in
                   Some nc)},h,p)
         | I.Par b ->
+          let case_normalize_cond f =
+            let r = case_normalize_formula prog h f in
+            let _ = check_eprim_in_formula " is not a valid program variable " r in
+            r 
+          in
           let case_normalize_par_case c =
-            let cond = map_opt (fun f -> 
-              let r = case_normalize_formula prog h f in
-              let _ = check_eprim_in_formula " is not a valid program variable " r in
-              r) c.I.exp_par_case_cond in
+            let cond = map_opt case_normalize_cond c.I.exp_par_case_cond in
             let body, _, _ = case_normalize_exp prog h p c.I.exp_par_case_body in
             { c with I.exp_par_case_cond = cond; I.exp_par_case_body = body; } 
           in
-          (I.Par { b with I.exp_par_cases = List.map (fun c -> case_normalize_par_case c) b.I.exp_par_cases; },
+          (I.Par { b with 
+            I.exp_par_cases = List.map (fun c -> case_normalize_par_case c) b.I.exp_par_cases; 
+            I.exp_par_lend_heap = case_normalize_cond b.I.exp_par_lend_heap; },
           h, p)
 
 and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =

@@ -17893,7 +17893,7 @@ let mkEmp_list_failesc_context pos =
   fctx
 
 let set_imm_ann_formula ann_list f = 
-  let h_f hf = 
+  let f_h_f hf = 
     match hf with
     | DataNode ({ h_formula_data_node = sv; } as d) ->
       (try
@@ -17907,7 +17907,7 @@ let set_imm_ann_formula ann_list f =
       with _ -> Some hf)
     | _ -> None
   in
-  transform_formula (nonef, nonef, h_f, (somef, somef, somef, somef, somef)) f
+  transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f
 
 let rec remove_heap_formula f = 
   match f with
@@ -17921,6 +17921,26 @@ let remove_heap_list_failesc_ctx ctx =
   let remove_heap_es es =
     Ctx { es with es_formula = remove_heap_formula es.es_formula; }
   in transform_list_failesc_context (idf, idf, remove_heap_es) ctx
+
+let remove_lend_ann_formula f =
+  let f_h_f hf = 
+    match hf with
+    | DataNode ({ h_formula_data_imm = imm; } as d) ->
+      if CP.isLend imm then 
+        Some (DataNode ({ d with h_formula_data_imm = ConstAnn(Mutable)}))
+      else Some hf
+    | ViewNode ({ h_formula_view_imm = imm; } as v) ->
+      if CP.isLend imm then 
+        Some (ViewNode ({ v with h_formula_view_imm = ConstAnn(Mutable)}))
+      else Some hf
+    | _ -> None
+  in
+  transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f
+
+let remove_lend_ann_list_failesc_ctx ctx = 
+  let remove_lend_ann_es es = 
+    Ctx { es with es_formula = remove_lend_ann_formula es.es_formula; }
+  in transform_list_failesc_context (idf, idf, remove_lend_ann_es) ctx
 
 let remove_lend_list_failesc_ctx ctx = 
   let remove_lend_es es = 
