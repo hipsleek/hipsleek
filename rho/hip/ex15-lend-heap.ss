@@ -11,8 +11,10 @@ void main()
   {
      case {x@L,y} x'::cell<_>@L ->
        y = y + x.val;
-  || case {x@L,z} x'::cell<_>@L ->
+  || 
+     case {x@L,z} x'::cell<_>@L ->
        z = z + x.val;
   }
   dprint;
+  assert y'=2 & z'=3;
 }

@@ -2633,32 +2633,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (DD.info_pprint ("WARNING: Skip reasoning PAR construct because --ann-vp is not enabled.") pos;
             ctx)
           else
-            let par_vperm_f = VP.formula_of_vperm_sets vp in
-            let par_vperm_f = CF.set_flow_in_formula_override 
-              { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } par_vperm_f in
-            let rem_ctx, _ = heap_entail_list_failesc_context_init prog false ctx par_vperm_f None None None pos None in
-            if not (CF.isSuccessListFailescCtx_new rem_ctx) then
-              let msg = ("Variable permission for par cannot be satisfied.") in
-              (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
-               Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
-               Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-            else
-              let par_label = (1, "par") in
-              (* Set INF_PAR for proving pre-condition of each par's case *)
-              let f_ent ctx f = heap_entail_list_failesc_context_init prog false ctx f None None None pos None in
-              let par_ctx = VP.prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos in
-              let no_vperm_par_ctx =
-                let ctx = TermUtils.strip_lexvar_list_failesc_ctx ctx in
-                VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx 
-              in
-              let rem_par_ctx, post_ctx_list = List.fold_left (fun (rem_par_ctx, post_ctx_acc) c -> 
-                let rem_par_ctx, post_ctx = check_par_case prog proc no_vperm_par_ctx rem_par_ctx c par_label in
-                (rem_par_ctx, post_ctx_acc @ [post_ctx])) (par_ctx, []) cl in
-              let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
-                VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
-                rem_ctx (rem_par_ctx::post_ctx_list)
-              in
-              VP.clear_inf_par_list_failesc_ctx res_ctx
+            let f_ent ctx f = heap_entail_list_failesc_context_init prog false ctx f None None None pos None in
+            let par_pre_ctx, rem_ctx = VP.prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos in
+            let no_vp_par_pre_ctx =
+              let ctx = TermUtils.strip_lexvar_list_failesc_ctx ctx in
+              VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx
+            in
+            let par_label = (1, "par") in
+            let par_rem_ctx, case_post_ctx_list = List.fold_left (fun (par_rem_ctx, case_post_ctx_acc) c -> 
+              let par_rem_ctx, case_post_ctx = check_par_case prog proc no_vp_par_pre_ctx par_rem_ctx c par_label in
+              (par_rem_ctx, case_post_ctx_acc @ [case_post_ctx])) (par_pre_ctx, []) cl in
+            let res_ctx = List.fold_left (fun compose_ctx post_ctx -> 
+              VP.compose_list_failesc_contexts_for_par false post_ctx compose_ctx pos) 
+              rem_ctx (par_rem_ctx::case_post_ctx_list)
+              (* par_rem_ctx case_post_ctx_list *)
+            in
+            VP.clear_inf_par_list_failesc_ctx res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
@@ -2715,9 +2705,9 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
         let res, _ = heap_entail_list_failesc_context_init prog false ctx pre None None None pos None in
         if (CF.isSuccessListFailescCtx_new res) then res
         else
-          let msg = "Proving condition of a par's element failed." in
+          let msg = "Proving condition of a par's case failed." in
           (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context res) ^ ") ") msg pos;
-           Debug.print_info ("(Cause of ParCond Failure)")
+           Debug.print_info ("(Cause of ParCase Failure)")
             (Cprinter.string_of_failure_list_failesc_context res) pos;
            Err.report_error { Err.error_loc = pos; Err.error_text = msg })
       in
