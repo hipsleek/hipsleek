@@ -5666,6 +5666,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         in
         (C.Par {
           C.exp_par_vperm = trans_vperm_sets p.I.exp_par_vperm n_tl pos;
+          C.exp_par_lend_heap = snd (trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false);
           C.exp_par_cases = List.map trans_par_case p.I.exp_par_cases;
           C.exp_par_pos = pos; }, C.void_type)
   in helper ie

@@ -473,6 +473,7 @@ and exp_label = {
     
 and exp_par = {
   exp_par_vperm: CVP.vperm_sets;
+  exp_par_lend_heap: F.formula;
   exp_par_cases: exp_par_case list;
   exp_par_pos: loc;
 }

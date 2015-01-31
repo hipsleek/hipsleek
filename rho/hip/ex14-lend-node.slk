@@ -1,0 +1,23 @@
+data cell { int n; }.
+
+checkentail x::cell<_> * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+checkentail @full[x, y] |- @lend[x].
+print residue.
+
+infer [@par] x::cell<_> * y::cell<_> |- x::cell<_>@L.
+/* Expected: x::cell<_>@L * y::cell<_> */
+print residue.
+
+infer [@par] @full[x, y] |- @lend[x].
+print residue.
+
+checkentail x::cell<_>@L * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+infer [@par] x::cell<_>@L * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+infer [@par] x::cell<_>@L * y::cell<_> |- x::cell<_>.
+print residue.

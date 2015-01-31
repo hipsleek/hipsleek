@@ -3394,11 +3394,19 @@ if_statement:
 			   exp_cond_pos = get_pos_camlp4 _loc 1 }]];
 
 par_statement: 
-  [[ `PAR; vps = vperm_var_list_opt; `OBRACE; pl = par_case_list; `CBRACE ->
+  [[  `PAR; vps = vperm_var_list_opt; lh = OPT heap_constr;
+      `OBRACE; pl = par_case_list; `CBRACE ->
       let pos = get_pos_camlp4 _loc 1 in
       let pl = Iast.norm_par_case_list pl pos in
+      let lend_pos = get_pos_camlp4 _loc 3 in
+      let lend_heap = un_option lh F.HEmp in
+      let lend_form = 
+        F.mkBase lend_heap (P.mkAnd (P.mkTrue lend_pos) (P.mkTrue lend_pos) lend_pos)
+          VP.empty_vperm_sets n_flow [] lend_pos 
+      in
       Par {
         exp_par_vperm = vps;
+        exp_par_lend_heap = lend_form;
         exp_par_cases = pl; 
         exp_par_pos = pos; } 
   ]];
