@@ -1,0 +1,21 @@
+data cell { int val; }
+
+void main()
+  requires emp ensures emp;
+{
+  cell x = new cell(1);
+  int y = 1;
+  int z = 2;
+  dprint;
+  par {x,y,z}
+  {
+      case {x,z} x'::cell<_> ->
+        x.val = z + 1;
+        z = x.val + 2;
+  || 
+      case {x@L,y} x'::cell<_>@L ->
+       y = y + x.val;
+  }
+  dprint;
+  assert y'=2 & z'=5;
+}

@@ -2731,6 +2731,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
   let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
   let post_ctx = TermUtils.strip_lexvar_list_failesc_ctx post_ctx in
+  let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx rem_ctx pos in
   let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_ctx pos in
   (rem_ctx, post_ctx)
   
