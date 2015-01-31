@@ -90,47 +90,49 @@ let vperm_sets_list_failesc_context ctx =
   let f = formula_of_list_failesc_context ctx in
   vperm_sets_of_formula f
 
-let compose_list_failesc_context_formula_for_par case_post 
+let compose_list_failesc_context_formula_for_par case_pre 
   (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =
   let vps = vperm_sets_of_formula post in
   let out_vars = List.map to_primed vps.vperm_full_vars in
   let lend_vars = List.map to_primed vps.vperm_lend_vars in
   let compose_es_formula es =
-    let compose_ctx = compose_context_formula (Ctx es) post out_vars false Flow_replace pos in
-    if case_post then
+    if case_pre then
+      let compose_ctx = compose_context_formula (Ctx es) post [] false Flow_replace pos in
       (* Do not push exists on @full and @lend vars to get their latest values *)
       let ctx_fv = context_fv compose_ctx in
       let post_ctx = push_exists_context (diff ctx_fv (out_vars @ lend_vars)) compose_ctx in
       map_context (fun es -> { es with 
         es_formula = set_vperm_sets_formula vps es.es_formula; }) post_ctx
-    else compose_ctx
+    else
+      let compose_ctx = compose_context_formula (Ctx es) post out_vars false Flow_replace pos in 
+      compose_ctx
   in 
   transform_list_failesc_context (idf, idf, compose_es_formula) ctx
 
-let compose_list_failesc_context_formula_for_par case_post 
+let compose_list_failesc_context_formula_for_par case_pre 
   (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context = 
   let pr1 = !print_list_failesc_context in
   let pr2 = !CF.print_formula in
   Debug.no_2 "compose_list_failesc_context_formula_for_par" pr1 pr2 pr1
-  (fun _ _ -> compose_list_failesc_context_formula_for_par case_post ctx post pos)
+  (fun _ _ -> compose_list_failesc_context_formula_for_par case_pre ctx post pos)
   ctx post
 
-let compose_list_failesc_contexts_for_par case_post post_ctx ctx pos: list_failesc_context = 
-  if case_post then
+let compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos: list_failesc_context = 
+  if case_pre then
     let post = formula_of_list_failesc_context post_ctx in
     let non_heap_ctx = remove_heap_list_failesc_ctx ctx in
-    compose_list_failesc_context_formula_for_par case_post non_heap_ctx post pos
+    compose_list_failesc_context_formula_for_par case_pre non_heap_ctx post pos
   else
     let non_lend_post_ctx = remove_lend_list_failesc_ctx post_ctx in
     let non_lend_post = formula_of_list_failesc_context non_lend_post_ctx in
-    compose_list_failesc_context_formula_for_par case_post ctx non_lend_post pos
+    compose_list_failesc_context_formula_for_par case_pre ctx non_lend_post pos
 
-let compose_list_failesc_contexts_for_par case_post post_ctx ctx pos: list_failesc_context = 
+let compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos: list_failesc_context = 
   let pr1 = !print_list_failesc_context in
   let pr2 b = if b then "FOR CASE POST" else "FOR PAR POST" in  
   Debug.no_3 "compose_list_failesc_contexts_for_par" pr2 pr1 pr1 pr1
-  (fun _ _ _ -> compose_list_failesc_contexts_for_par case_post post_ctx ctx pos) 
-  case_post post_ctx ctx
+  (fun _ _ _ -> compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos) 
+  case_pre post_ctx ctx
 
 let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx pos =
   (* Calculate resiue heap and pure part to add back to par_pre_ctx  *)

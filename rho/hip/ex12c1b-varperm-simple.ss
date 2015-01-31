@@ -11,7 +11,7 @@ void main()
    // exists r1',r2'
   case {x,v@L} true ->
      //dprint;
-     x = v + 1; // cannot read v
+     x = x + v + 1; // cannot read v
      //dprint;
   || // {y,v@L}
   else // {y,v@L} 
@@ -22,9 +22,9 @@ void main()
       //dprint; 
   }
   dprint;
-  assert x'=6; //& y'=40+22+5;
+  assert x'=10; //& y'=40+22+5;
   v = v + 1;
   y = y + 33;
   dprint;
-  assert v'=6 & y' = 40+22+5+33;
+  assert v'=6 & y' = 40+22+5+32; //failed
 }

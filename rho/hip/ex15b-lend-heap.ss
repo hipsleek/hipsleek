@@ -18,4 +18,7 @@ void main()
   }
   dprint;
   assert x'::cell<2> & y'=1 & z'=3;
+  assert x'::cell<3> & y'=1 & z'=3;
+  assert x'::cell<3> & y'=1 & z'=4;
+  assert x'::cell<3> & y'=0 & z'=4;
 }

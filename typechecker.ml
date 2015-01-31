@@ -2636,8 +2636,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let f_ent ctx f = heap_entail_list_failesc_context_init prog false ctx f None None None pos None in
             let par_pre_ctx, rem_ctx = VP.prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos in
             let no_vp_par_pre_ctx =
-              let ctx = TermUtils.strip_lexvar_list_failesc_ctx ctx in
-              VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets ctx
+              let pre_ctx = TermUtils.strip_lexvar_list_failesc_ctx par_pre_ctx in
+              let pre_ctx = VP.clear_inf_par_list_failesc_ctx pre_ctx in
+              VP.set_vperm_sets_list_failesc_ctx CVP.empty_vperm_sets pre_ctx
             in
             let par_label = (1, "par") in
             let par_rem_ctx, case_post_ctx_list = List.fold_left (fun (par_rem_ctx, case_post_ctx_acc) c -> 
@@ -2713,8 +2714,8 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
       in
       
       let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
-      let ml = CP.mkPure (CP.mkLexVar (CP.MayLoop None) [] [] pos) in
-      let pre = CF.add_pure_formula_to_formula ml pre in 
+      (* let ml = CP.mkPure (CP.mkLexVar (CP.MayLoop None) [] [] pos) in *)
+      (* let pre = CF.add_pure_formula_to_formula ml pre in              *)
       let pre_ctx = CF.build_context init_ctx pre pos in
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
       let pre_ctx = 
@@ -2728,11 +2729,16 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_f
       let init_esc = [((0, ""), [])] in
       rem_ctx, ([CF.mk_failesc_context pre_ctx [] init_esc])
   in
-  let _ = Debug.ninfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in
+  let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx rem_ctx pos in
+  let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx par_ctx pos in
+  (* let _ = Debug.binfo_hprint (add_str "check_par_case: rem_ctx:" !CF.print_list_failesc_context) rem_ctx pos in *)
+  (* let _ = Debug.binfo_hprint (add_str "check_par_case: par_ctx:" !CF.print_list_failesc_context) par_ctx pos in *)
+  (* let _ = Debug.binfo_hprint (add_str "check_par_case: pre_ctx:" !CF.print_list_failesc_context) pre_ctx pos in *)
   let post_ctx = check_exp prog proc pre_ctx par_case.exp_par_case_body par_label in
+  (* let _ = Debug.binfo_hprint (add_str "check_par_case: post_ctx:" !CF.print_list_failesc_context) post_ctx pos in *)
   let post_ctx = TermUtils.strip_lexvar_list_failesc_ctx post_ctx in
-  let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx rem_ctx pos in
-  let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_ctx pos in
+  (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx rem_ctx pos in *)
+  (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_ctx pos in *)
   (rem_ctx, post_ctx)
   
 and check_par_case (prog: prog_decl) (proc: proc_decl) par_ctx (ctx: CF.list_failesc_context) 

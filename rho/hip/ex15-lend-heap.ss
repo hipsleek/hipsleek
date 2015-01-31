@@ -6,7 +6,7 @@ void main()
   cell x = new cell(1);
   int y = 1;
   int z = 2;
-  dprint;
+  //dprint;
   par {x@L,y,z} x'::cell<_>@L
   {
      case {x@L,y} x'::cell<_>@L ->
@@ -16,5 +16,8 @@ void main()
        z = z + x.val;
   }
   dprint;
-  assert y'=2 & z'=3;
+  assert x'::cell<1> & y'=2 & z'=3;
+  assert x'::cell<2> & y'=2 & z'=3;
+  assert x'::cell<1> & y'=3 & z'=3;
+  assert x'::cell<1> & y'=2 & z'=4;
 }
