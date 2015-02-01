@@ -17941,6 +17941,26 @@ let remove_lend_ann_formula f =
   let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
   trans_formula f () (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) f_arg List.concat
 
+let remove_lend_ann_formula f =
+  let f_h_f _ hf = 
+    match hf with
+    | DataNode ({ h_formula_data_imm = imm; } as d) ->
+      if CP.isLend imm then 
+        Some (DataNode ({ d with h_formula_data_imm = ConstAnn(Mutable)}), [d.h_formula_data_node])
+      else Some (hf, [])
+    | ViewNode ({ h_formula_view_imm = imm; } as v) ->
+      if CP.isLend imm then 
+        Some (ViewNode ({ v with h_formula_view_imm = ConstAnn(Mutable)}), [v.h_formula_view_node])
+      else Some (hf, [])
+    | _ -> None
+  in
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_trans = (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () f_trans f_arg List.concat
+
 (* let remove_lend_ann_list_failesc_ctx ctx =                              *)
 (*   let remove_lend_ann_es es =                                           *)
 (*     Ctx { es with es_formula = remove_lend_ann_formula es.es_formula; } *)
@@ -17950,6 +17970,25 @@ let remove_lend_list_failesc_ctx ctx =
   let remove_lend_es es =
     Ctx { es with es_formula = remove_lend es.es_formula; }
   in transform_list_failesc_context (idf, idf, remove_lend_es) ctx
+
+let isLend_h_formula hf =
+  let f_h_f _ hf =
+    match hf with
+    | DataNode ({ h_formula_data_imm = imm; })
+    | ViewNode ({ h_formula_view_imm = imm; }) ->
+      if CP.isLend imm then Some (hf, true)
+      else Some (hf, false)
+    | _ -> None
+  in
+  snd (trans_h_formula hf () f_h_f voidf2 and_list)
+
+let isLend_formula f = 
+  match f with
+  | Or _ -> false
+  | Base ({ formula_base_heap = h })
+  | Exists ({ formula_exists_heap = h }) -> 
+    isLend_h_formula h
+
 
 (* let map_list_failesc_context f ctx =                           *)
 (*   let f_ctx _ ctx = Some (f ctx, ()) in                        *)

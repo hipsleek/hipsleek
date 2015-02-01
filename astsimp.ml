@@ -5664,11 +5664,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             C.exp_par_case_else = c.I.exp_par_case_else;
             C.exp_par_case_pos = cpos; }
         in
-        (C.Par {
-          C.exp_par_vperm = trans_vperm_sets p.I.exp_par_vperm n_tl pos;
-          C.exp_par_lend_heap = snd (trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false);
-          C.exp_par_cases = List.map trans_par_case p.I.exp_par_cases;
-          C.exp_par_pos = pos; }, C.void_type)
+        let trans_lend_heap = snd (trans_formula prog false free_vars true p.I.exp_par_lend_heap n_tl false) in
+        if CF.isLend_formula trans_lend_heap then
+          (C.Par {
+            C.exp_par_vperm = trans_vperm_sets p.I.exp_par_vperm n_tl pos;
+            C.exp_par_lend_heap = trans_lend_heap;
+            C.exp_par_cases = List.map trans_par_case p.I.exp_par_cases;
+            C.exp_par_pos = pos; }, C.void_type)
+        else 
+          let err_pos = CF.pos_of_formula trans_lend_heap in
+          let msg = "Only @L heap data/view is allowed in par." in
+          (Debug.print_info ("(" ^ (Cprinter.string_of_formula trans_lend_heap) ^ ") ") msg err_pos;
+           Debug.print_info ("(Cause of Par Failure)") (Cprinter.string_of_formula trans_lend_heap) err_pos;
+           Err.report_error { Err.error_loc = err_pos; Err.error_text = msg })
   in helper ie
 
 and default_value (t :typ) pos : C.exp =

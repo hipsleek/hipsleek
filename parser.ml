@@ -773,6 +773,13 @@ let peek_pointer_type =
              |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
              | _ -> raise Stream.Failure)
 
+let peek_obrace_par = 
+  SHGram.Entry.of_parser "peek_obrace_par"
+    (fun strm ->
+      match Stream.npeek 2 strm with
+      | [OBRACE,_;CASE,_] -> raise Stream.Failure
+      | _ -> ())
+
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
