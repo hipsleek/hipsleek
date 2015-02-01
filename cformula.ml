@@ -11862,7 +11862,7 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
 		res
 
 and compose_context_formula_d (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
-  let pr1 = !print_context_short in
+  let pr1 = !print_context(*_short*) in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
   Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 
@@ -17923,27 +17923,31 @@ let remove_heap_list_failesc_ctx ctx =
   in transform_list_failesc_context (idf, idf, remove_heap_es) ctx
 
 let remove_lend_ann_formula f =
-  let f_h_f hf = 
+  let f_h_f _ hf = 
     match hf with
     | DataNode ({ h_formula_data_imm = imm; } as d) ->
       if CP.isLend imm then 
-        Some (DataNode ({ d with h_formula_data_imm = ConstAnn(Mutable)}))
-      else Some hf
+        Some (DataNode ({ d with h_formula_data_imm = ConstAnn(Mutable)}), [d.h_formula_data_node])
+      else Some (hf, [])
     | ViewNode ({ h_formula_view_imm = imm; } as v) ->
       if CP.isLend imm then 
-        Some (ViewNode ({ v with h_formula_view_imm = ConstAnn(Mutable)}))
-      else Some hf
+        Some (ViewNode ({ v with h_formula_view_imm = ConstAnn(Mutable)}), [v.h_formula_view_node])
+      else Some (hf, [])
     | _ -> None
   in
-  transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) f_arg List.concat
 
-let remove_lend_ann_list_failesc_ctx ctx = 
-  let remove_lend_ann_es es = 
-    Ctx { es with es_formula = remove_lend_ann_formula es.es_formula; }
-  in transform_list_failesc_context (idf, idf, remove_lend_ann_es) ctx
+(* let remove_lend_ann_list_failesc_ctx ctx =                              *)
+(*   let remove_lend_ann_es es =                                           *)
+(*     Ctx { es with es_formula = remove_lend_ann_formula es.es_formula; } *)
+(*   in transform_list_failesc_context (idf, idf, remove_lend_ann_es) ctx  *)
 
-let remove_lend_list_failesc_ctx ctx = 
-  let remove_lend_es es = 
+let remove_lend_list_failesc_ctx ctx =
+  let remove_lend_es es =
     Ctx { es with es_formula = remove_lend es.es_formula; }
   in transform_list_failesc_context (idf, idf, remove_lend_es) ctx
 

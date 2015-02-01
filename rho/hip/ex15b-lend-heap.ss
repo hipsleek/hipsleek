@@ -6,7 +6,7 @@ void main()
   cell x = new cell(1);
   int y = 1;
   int z = 2;
-  dprint;
+  //dprint;
   par {x,y@L,z}
   {
      case {x,y@L} x'::cell<_> ->

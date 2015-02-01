@@ -90,6 +90,24 @@ let vperm_sets_list_failesc_context ctx =
   let f = formula_of_list_failesc_context ctx in
   vperm_sets_of_formula f
 
+let clean_es_heap_h_formula_for_par vars hf =
+  let f_h_f hf =
+    match hf with
+    | DataNode d ->
+      if mem d.h_formula_data_node vars then Some HEmp
+      else Some hf
+    | ViewNode v ->
+      if mem v.h_formula_view_node vars then Some HEmp
+      else Some hf
+    | _ -> None 
+  in
+  transform_h_formula f_h_f hf
+
+let clean_es_heap_list_failesc_ctx_for_par vars ctx =
+  let clean_es_heap_es_for_par es =
+    Ctx { es with es_heap = clean_es_heap_h_formula_for_par vars es.es_heap; }
+  in transform_list_failesc_context (idf, idf, clean_es_heap_es_for_par) ctx 
+
 let compose_list_failesc_context_formula_for_par case_pre 
   (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =
   let vps = vperm_sets_of_formula post in
@@ -141,9 +159,10 @@ let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx
   (* Output:                                                         *)
   (*   par_pre_ctx: vpp * h1@L * h2 & pr                             *)
   (*   rem_ctx: vpr * h_1                                            *)
-  let non_lend_lh = CF.remove_lend_ann_formula lh in
+  let non_lend_lh, lh_vars = CF.remove_lend_ann_formula lh in
   let vp_non_lend_lh = set_vperm_sets_formula vp non_lend_lh in
   let rem_ctx, _ = f_ent ctx vp_non_lend_lh in
+  let rem_ctx = clean_es_heap_list_failesc_ctx_for_par lh_vars rem_ctx in
   if not (CF.isSuccessListFailescCtx_new rem_ctx) then
     let msg = ("Variable permission/Heap requirement of par cannot be satisfied.") in
     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
