@@ -7,13 +7,13 @@ void main()
   int y = 1;
   int z = 2;
   dprint;
-  par {x,y,z}
+  par {x@L,y,z}
   {
       case {x@L,y} x'::cell<_>@L ->
        y = y + x.val;
   ||
-      case {x,z} x'::cell<_> ->
-        x.val = z + 1;
+      case {x@L,z} x'::cell<_> ->
+        //x.val = z + 1;
         z = x.val + 2;
   }
   dprint;

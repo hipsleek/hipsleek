@@ -63,8 +63,13 @@ let clear_vperm_sets_list_failesc_ctx ann_list ctx =
 
 let clear_inf_par_list_failesc_ctx ctx =
   let clear_inf_par_es es =
-    es.es_infer_obj # reset INF_PAR; Ctx es 
+    (es.es_infer_obj # reset INF_PAR; Ctx es) 
   in transform_list_failesc_context (idf, idf, clear_inf_par_es) ctx
+
+let set_inf_par_list_failesc_ctx ctx =
+  let set_inf_par_es es =
+    (es.es_infer_obj # set INF_PAR; Ctx es) 
+  in transform_list_failesc_context (idf, idf, set_inf_par_es) ctx
 
 let formula_of_vperm_sets vps = 
   let b = CF.mkTrue_b (mkTrueFlow ()) no_pos in
@@ -172,14 +177,14 @@ let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx
     (* Add back lend heap for par and normal heap for rem *)
     let par_pre_ctx = compose_list_failesc_context_formula_for_par false rem_ctx lh pos in
     let rem_ctx = compose_list_failesc_context_formula_for_par false rem_ctx non_lend_lh pos in
-    (* let par_pre_ctx = set_vperm_sets_list_failesc_ctx vp par_pre_ctx in *)
-    let prepare_es_for_par vp es =
-      (* Set INF_PAR for proving pre-condition of each par's case *)
-      es.es_infer_obj # set INF_PAR;
-      Ctx { es with es_formula = set_vperm_sets_formula vp es.es_formula; }
-    in 
-    let par_pre_ctx = transform_list_failesc_context 
-      (idf, idf, (prepare_es_for_par vp)) par_pre_ctx in
+    let par_pre_ctx = set_vperm_sets_list_failesc_ctx vp par_pre_ctx in
+    (* let prepare_es_for_par vp es =                                                   *)
+    (*   (* Set INF_PAR for proving pre-condition of each par's case *)                 *)
+    (*   es.es_infer_obj # set INF_PAR; (* Setting INF_PAR here also affects rem_ctx *) *)
+    (*   Ctx { es with es_formula = set_vperm_sets_formula vp es.es_formula; }          *)
+    (* in                                                                               *)
+    (* let par_pre_ctx = transform_list_failesc_context                                 *)
+    (*   (idf, idf, (prepare_es_for_par vp)) par_pre_ctx in                             *)
     par_pre_ctx, rem_ctx
 
 let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx pos =

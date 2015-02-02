@@ -3909,7 +3909,7 @@ let pr_successful_states e = match e with
   | _ ->   
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context_short fs)) e
+		  pr_vwrap "State:" pr_context(*_short*) fs)) e
 
 let is_empty_esc_state e =
   List.for_all (fun (_,lst) -> lst==[]) e
