@@ -9563,12 +9563,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
   (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
   (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
-    
+  let es_at_par = estate.es_infer_obj # is_par in
   let (subtyp, add_to_lhs, add_to_rhs, add_to_rhs_ex) = 
     (* if ((\*not(!allow_field_ann) &&*\) (!allow_imm)) then *)
     (*   subtype_ann_gen es_impl_vars es_evars l_ann r_ann *)
     (* else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
-    subtype_ann_gen es_impl_vars es_evars l_ann r_ann 
+    if not es_at_par then
+      subtype_ann_gen es_impl_vars es_evars l_ann r_ann
+    else
+      match l_ann, r_ann with
+      | CP.ConstAnn Mutable, CP.ConstAnn Lend -> (false, [], [], [])
+      | _ -> subtype_ann_gen es_impl_vars es_evars l_ann r_ann
   in
   Debug.tinfo_hprint (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
   Debug.tinfo_hprint (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
@@ -9618,8 +9623,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   Debug.tinfo_hprint (add_str "Imm annotation mismatch" (string_of_bool)) (not(r)) pos;
   if r == false 
   then 
-    (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Imm annotation mismatches" estate (CF.formula_of_heap HFalse pos) None pos, 
-     CF.mk_failure_must ("mismatched imm annotation for " ^ node_kind ^ " " ^ l_node_name) Globals.sl_error, estate.es_trace)) (mk_cex true), 
+    let at_par = if es_at_par then " @par " else " " in
+    (CF.mkFailCtx_in (Basic_Reason (mkFailContext ("Imm annotation" ^ at_par ^ "mismatches") estate (CF.formula_of_heap HFalse pos) None pos, 
+     CF.mk_failure_must ("mismatched imm annotation" ^ at_par ^ "for " ^ node_kind ^ " " ^ l_node_name) Globals.sl_error, estate.es_trace)) (mk_cex true), 
      NoAlias)
   else 
     let l_h, l_p, l_vp, l_fl, l_t, l_a = split_components estate.es_formula in

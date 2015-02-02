@@ -7,3 +7,6 @@ pred ll<n> ==
 
 checkentail x::ll<n> & x != null |- x::node<_, _>@L.
 print residue.
+
+infer [@par] x::node<_, _> |- x::node<_, _>@L.
+print residue.

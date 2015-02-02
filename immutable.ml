@@ -50,14 +50,14 @@ let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * C
             | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | CP.ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           )
     | CP.ConstAnn k1 ->
           (match imm2 with
             | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           ) 
     | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
@@ -83,7 +83,8 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
     | None -> (f,[],[],[])
@@ -106,13 +107,15 @@ let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (
               | _ -> (f,[],[to_rhs], [])
           end
 
-let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
   let pr2a = pr_list !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 
+    subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
