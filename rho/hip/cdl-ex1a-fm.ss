@@ -43,17 +43,20 @@ void main()
   cell h, r;
   int v;
   CDL c = create_latch(2) with h'::cell<_> * r'::cell<_>;
+  dprint;
   par {h, r, v, c@L}
   {
     case {h, c@L} c'::LatchIn{- h'::cell<_>}<> * c'::CNT<(1)> ->
+      dprint;
       h = new cell(1);
+      dprint;
       countDown(c);
       dprint;
     ||
     case {r, c@L} c'::LatchIn{- r'::cell<_>}<> * c'::CNT<(1)> ->
       r = new cell(2);
       countDown(c);
-      dprint;
+      //dprint;
     ||
     //else ->
     case {v, c@L} c'::LatchOut{+ h'::cell<_> * r'::cell<_>}<> * c'::CNT<0> ->
@@ -62,5 +65,8 @@ void main()
       v = h.val + r.val;
   }
   //dprint;
-  assert h'::cell<1> * r'::cell<2> & v' = 3;
+  assert h'::cell<1> * r'::cell<2> & v' = 3; // ok
+  assert h'::cell<2> * r'::cell<2> & v' = 3; // failed
+  assert h'::cell<1> * r'::cell<3> & v' = 3; // failed
+  assert h'::cell<1> * r'::cell<2> & v' = 4; // failed
 }

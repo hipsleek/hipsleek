@@ -10010,13 +10010,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
               let args = List.combine args l_vdef_hvar_split_kinds in
-              (* For each lhs, rhs, and a kind k, possible situations:                             *)
-              (*  - A new mapping: rhs -> lhs                                                      *)
-              (*  - ho_arg split if k = HO_SPLIT                                                   *)
-              (*  - ho_arg match, otherwise                                                        *)
-              (*  Expected return value: A list of (fail_ctx option, residue option, mapping list) *)
+
+              (* For each lhs, rhs, and a kind k, possible situations:                  *)
+              (*  - A new mapping: rhs -> lhs                                           *)
+              (*  - ho_arg split if k = HO_SPLIT                                        *)
+              (*  - ho_arg match, otherwise                                             *)
+              (*  Expected return value: A list of                                      *)
+              (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
               let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
-                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * ((CP.spec_var * CF.formula) list)) =
+                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
+                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
                 (* lhs <==> rhs: instantiate any high-order variables in rhs *)
                 (* We use flow_ann to decide                     *)
                 (* contravariant (-) or covariant (+) entailment *)
@@ -10072,23 +10075,28 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       let err_str = "matching of ho_args failed ("^ex_msg^")" in
                       let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
                         CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) (mk_cex true), NoAlias) 
-                      in (Some rs, None, [])
+                      in (Some rs, None, None, [])
                 | SuccCtx cl ->
                   begin match cl with
-                  | [] -> (None, None, [])
+                  | [] -> (None, None, None, [])
                   | c::_ -> 
                     match c with
-                    | Ctx es -> 
+                    | Ctx es ->
+                      let _, p_res, _, _, _, _ = CF.split_components es.es_formula in
+                      let p_res_opt =
+                        if MCP.isConstMTrue p_res then None
+                        else Some p_res 
+                      in
                       begin match tmp_ho_var with
-                      | None -> (None, None, es.es_ho_vars_map)
+                      | None -> (None, None, p_res_opt, es.es_ho_vars_map)
                       | Some v -> 
                         try
                           let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
                           let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
-                          (None, Some v_binding, other_bindings) 
-                        with _ -> (None, None, es.es_ho_vars_map)
+                          (None, Some v_binding, p_res_opt, other_bindings) 
+                        with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
                       end
-                    | _ -> (None, None, [])
+                    | _ -> (None, None, None, [])
                   end
                 end 
                   
@@ -10147,28 +10155,34 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* End of match_one_ho_arg *)
                 
               let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
-                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) list)) =
+                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
+                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
                 let pr_rflow = Cprinter.string_of_rflow_formula in
                 let pr1 = pr_pair (pr_pair pr_rflow pr_rflow) string_of_ho_split_kind in
-                let pr3 = pr_option (fun _ -> "Something") in
+                let pr3 = pr_option !MCP.print_mix_formula in
                 let pr4 = pr_option Cprinter.string_of_formula in
                 let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
-                let pr2 = pr_triple pr3 pr4 pr5 in
-                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs,rhs),k)
+                let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
+                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
               in
                 
               let res = List.map match_one_ho_arg args in
-              let failures = List.filter (fun (r, _, _) -> r != None) res in
+              let failures = List.filter (fun (r, _, _, _) -> r != None) res in
               if (failures != []) then
                 (* Failure case *)
-                let failure, _, _ = (List.hd failures) in
+                let failure, _, _, _ = (List.hd failures) in
                 (failure, new_ante, new_conseq, new_exist_vars, [])
               else
                 (* Update new mappings *)
                 (* TODO: Check consistency in mappings *)
-                let new_maps = List.concat (List.map (fun (_, _, m) -> m) res) in
-                let residues = List.map (fun (_, m, _) -> m) res in
+                let new_maps = List.concat (List.map (fun (_, _, _, m) -> m) res) in
+                let residues = List.map (fun (_, m, _, _) -> m) res in
+                let pure_residues = List.map (fun (_, _, m, _) -> m) res in
                 let new_ante = CF.subst_hvar new_ante new_maps in
+                let new_ante = List.fold_left (fun ante pr ->
+                  match pr with
+                  | None -> ante
+                  | Some p -> CF.mkAnd_pure ante p pos) new_ante pure_residues in
                 (* Update conseq and evars *)
                 let new_conseq = CF.subst_hvar new_conseq new_maps in
                 let qvars, new_conseq = CF.split_quantifiers new_conseq in
