@@ -1636,11 +1636,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* VPerm: vperm of fields is inherited from the bound var *)
                   let ctx = 
                     if !ann_vp then
-                      let vp = VP.vperm_sets_list_failesc_context ctx in 
-                      let bound_var = CP.SpecVar (v_t, v, Unprimed) in
-                      let vperm_bound_var = CVP.get_vperm_spec_var bound_var vp in
+                      (* let vp = VP.vperm_sets_list_failesc_context ctx in             *)
+                      (* let bound_var = CP.SpecVar (v_t, v, Unprimed) in               *)
+                      (* (* VPerm: vperm of fields is inherited from the bound var *)   *)
+                      (* let vperm_bound_var = CVP.get_vperm_spec_var bound_var vp in   *)
+                      (* let vperm_fields = CVP.vperm_sets_of_anns [(                   *)
+                      (*   vperm_bound_var,                                             *)
+                      (*   List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)] *)
+                      (* in                                                             *)
+                      (* VPerm: fields have @full permission like local variables  *)
                       let vperm_fields = CVP.vperm_sets_of_anns [(
-                        vperm_bound_var, 
+                        VP_Full, 
                         List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)]
                       in
                       VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
