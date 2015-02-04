@@ -2057,8 +2057,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let _ = do_test_inv "Over" over_f over_fail in
       let _ = do_test_inv "Under" under_f under_fail in
+      (* let _ = print_endline (string_of_bool (not(CF.isFailCtx rs))) in *)
+      (* let _ = print_endline (string_of_bool (not(CF.isFailCtx baga_rs1))) in *)
+      (* let _ = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
       let _ =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) &&  not(CF.isFailCtx baga_rs2) &&
           not(over_fail) && not(under_fail) then
           begin
 	    let pf = pure_of_mix vdef.C.view_user_inv in
@@ -2083,8 +2086,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
           (* WN : this test is unsound *)
-          if !Globals.do_test_inv then report_warning pos msg
-          else report_warning pos msg
+          ()
+          (* if !Globals.do_test_inv then report_warning pos msg *)
+          (* else report_warning pos msg *)
       in ()
     else ()
   in
@@ -2511,8 +2515,20 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let new_view_list = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list) view_list in
             let _ = Debug.ninfo_hprint (add_str "new_view_list" (pr_list Cprinter.string_of_view_decl)) new_view_list no_pos in
             let new_invs = List.map (fun vd -> vd.Cast.view_x_formula) new_view_list in
-            let _ = Debug.binfo_hprint (add_str "new_invs" (pr_list Cprinter.string_of_mix_formula)) new_invs no_pos in
-            let _ = Expure.fix_ef view_list cviews0_with_index in
+            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Cprinter.string_of_mix_formula)) new_invs no_pos in
+            let new_baga_invs = List.map (fun vd ->
+                let new_baga_inv = Cvutil.xpure_symbolic_baga3 cviews0_with_index (Cast.formula_of_unstruc_view_f vd) in
+                let new_baga_inv = List.map (fun (svl,pf) ->
+                    let idx = CP.mk_typed_spec_var Int "idx" in
+                    let new_pf_svl = CP.fv pf in
+                    let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl pf [idx] else pf in
+                    (svl,new_pf)
+                ) new_baga_inv in
+                let _ = Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_baga_inv in
+                new_baga_inv
+            ) cviews0_with_index in
+            let _ = Debug.ninfo_hprint (add_str "invs" (pr_list Excore.EPureI.string_of_disj)) new_baga_invs no_pos in
+            (* let _ = Expure.fix_ef view_list cviews0 in *)
             ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
@@ -3824,7 +3840,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         } in
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
-          | v -> 
+          | v ->
                 let c_hd, c_guard ,c_fl ,c_t, c_a = CF.split_components c.C.coercion_head in
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in

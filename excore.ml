@@ -21,11 +21,11 @@ let simplify_conj simp f =
   | AndList ls -> AndList (List.map (fun (l,f) -> (l,simp f)) ls)
   | rest -> simp rest
 
-let simplify_with_label simp (f:formula) = 
+let simplify_with_label simp (f:formula) =
   let ls = split_disjunctions f in
   let ls = List.map (simplify_conj simp) ls in
   join_disjunctions ls
-  
+
 let simplify_with_label_omega (f:formula) =
   let simp = (* Omega.simplify *) !simplify_raw in
   simplify_with_label simp f
@@ -422,10 +422,10 @@ end;;
 module type FORM_TYPE =
 sig
   type t
-  val mk_false : t 
-  val mk_true : t 
-  val unsat : t -> bool 
-  val imply : t -> t -> bool 
+  val mk_false : t
+  val mk_true : t
+  val unsat : t -> bool
+  val imply : t -> t -> bool
 end;;
 
 
@@ -511,7 +511,7 @@ struct
     ef_conv_disj_ho ef_conv disj
 
   let ef_conv_disj disj : formula =
-    (* Debug.no_1 "ef_conv_disj" string_of_ef_pure_disj string_of_pure_formula *)
+    Debug.no_1 "ef_conv_disj" string_of_disj !Cpure.print_formula
     ef_conv_disj_x disj
 
   let ef_conv_enum_disj_x disj : formula =
@@ -652,7 +652,7 @@ struct
     let f = List.map (fun (b,f) -> (b,f)) in
     ef_imply_disj_0 (f ante) (f conseq)
 
-  let pair_cmp (x1,x2) (y1,y2) = 
+  let pair_cmp (x1,x2) (y1,y2) =
     let c = Elt.compare x1 y1 in
     if c==0 then Elt.compare x2 y2
     else c

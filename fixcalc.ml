@@ -400,7 +400,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc"^(fix_num # str_get_next)^".inp" in
-  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -465,7 +465,7 @@ let compute_invs_fixcalc input_fixcalc=
         (res)
   in
   let output_of_sleek =  (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
-  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -589,16 +589,18 @@ let compute_inv_mutrec_x mutrec_vnames views =
       let check_imply = TP.imply_raw new_pf pf in
       if check_imply then
         let _ = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
-        let _ = print_endline "" in
-        let idx = CP.mk_typed_spec_var Int "idx" in
-        let new_pf_svl = CP.fv new_pf in
-        let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl new_pf [idx] else new_pf in
+        (* let _ = print_endline "" in *)
+        (* let idx = CP.mk_typed_spec_var Int "idx" in *)
+        (* let new_pf_svl = CP.fv new_pf in *)
+        (* let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl new_pf [idx] else new_pf in *)
+        let _ = DD.ninfo_hprint (add_str "new_pf" !CP.print_formula) new_pf no_pos in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
           Debug.ninfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_x_formula <- memo_pf_P;
+          view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
           view
         end
       else view
@@ -673,7 +675,7 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
-  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -846,7 +848,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   in
 
   let output_of_sleek = if bottom_up then ("fixcalc"^(fix_num #str_get_next)^".inf") else "fixcalc.td" in
-  let _ = DD.binfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
