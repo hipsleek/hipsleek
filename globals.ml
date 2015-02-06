@@ -80,7 +80,8 @@ let eq_ho_flow_kind k1 k2 =
   | NEUTRAL, NEUTRAL -> true
   | _ -> false
 
-let ho_always_split = ref false
+(* let ho_always_split = ref false *)
+let ho_always_split = ref true
 
 let gen_lemma_action_invalid = -1
 
