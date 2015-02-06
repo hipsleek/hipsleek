@@ -1492,10 +1492,20 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                                (* (1,Cond_action [a21;a22]) *) a22
                            else
-                             if (vr_view_split=SPLIT1) || (!Globals.ho_always_split) then
-                               (* SPLIT only, no match *)
-                               (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
-                             else
+                            let split_act = 
+                              if (vr_view_split=SPLIT1) || (!Globals.ho_always_split) then
+                                (* SPLIT only, no match *)
+                                let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                                  (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
+                                  m_res estate.CF.es_formula rhs reqset 
+                                in
+                                if lem_split = [] then None
+                                else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                              else None
+                            in
+                            match split_act with
+                            | Some a -> a
+                            | None ->
                                (*allow matching*)
                                let m_act = (1,M_match m_res) in
                              (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
