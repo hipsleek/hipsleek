@@ -1821,12 +1821,15 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
   (* TODO : need to handle pure_branches in future ? *)
   (* if no_infer_rel estate (\* && no_infer_hp_rel estate *\) then (estate,lhs_mix,rhs_mix,None,[]) *)
   (* else *)
+
+  (*let _ = print_endline("input rhs_mix "^(Cprinter.string_of_mix_formula rhs_mix)) in*)
     let ivs = estate.es_infer_vars_rel(* @estate.es_infer_vars_hp_rel *)  in
     Debug.ninfo_hprint (add_str "ivs" Cprinter.string_of_spec_var_list) ivs no_pos;
     (*add instance of relational s0-pred*)
     (* let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in *)
     (* let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in *)
     let rhs_p = MCP.pure_of_mix rhs_mix in
+    (*let _ = print_endline("#### rhs_p "^(Cprinter.string_of_pure_formula rhs_p)) in*)
     (*    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)*)
     (*    (* Suppose rhs_p is in DNF *)*)
     (*    (* Need to assure that later *)*)
@@ -1863,6 +1866,9 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
     if rel_rhs==[] then (
         DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
         DD.tinfo_pprint "no relation in rhs" pos;
+        (* let _ = print_endline("if rhs_mix:"^(Cprinter.string_of_mix_formula rhs_mix)) in *)
+        (* let _ = print_endline("output 3 rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix)) in *)
+        (* let _ = print_endline("output  3 lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
         (estate,lhs_mix,rhs_mix,None,[])
     )
     else
@@ -1879,7 +1885,10 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       let _ = DD.ninfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos in
       let _ = DD.ninfo_hprint (add_str "rhs" Cprinter.string_of_mix_formula) rhs_mix no_pos in
       let _ = DD.ninfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
+
+      (* let _ = print_endline("!!!!! rhs_p_new:"^(Cprinter.string_of_pure_formula rhs_p_new)) in *)
       let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
+      (* let _ = print_endline("else rhs_mix:"^(Cprinter.string_of_mix_formula rhs_mix_new)) in *)
       if not(check_sat) && not(CP.is_False lhs_c) then
         begin
           let p, rel_ass = infer_lhs_contra_estate 3 estate lhs_mix pos "infer_collect_rel: ante contradict with conseq" in
@@ -1889,6 +1898,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
           DD.binfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs_p_new no_pos;
           DD.binfo_pprint "Skip collection of following RELDEFN:" pos;
           DD.binfo_hprint (add_str "rel defns" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos;
+          (* let _ = print_endline("output 2  rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix_new)) in *)
+          (* let _ = print_endline("output 2lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
           (estate,lhs_mix,rhs_mix_new,p,rel_ass)
         end
       else
@@ -2066,6 +2077,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         in
         (* End - Auxiliary function *)
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
+        let _ = print_endline (List.fold_left (fun s f -> s^" "^(Cprinter.string_of_pure_formula f)) "rel_rhs" rel_rhs) in
+        let _ = print_endline (List.fold_left (fun s (a,b) -> s^" ("^(Cprinter.string_of_pure_formula a)^" "^(Cprinter.string_of_pure_formula b)^")") "inf_rel_ls " inf_rel_ls) in
         DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
         let inf_rel_ls =
           if is_bag_cnt then
@@ -2090,6 +2103,9 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             DD.devel_hprint (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             DD.tinfo_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
           end;
+        let _ = print_endline("output 1 rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix_new)) in
+        let _ = print_endline("output 1 lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in
+        let _ = print_endline("output 1 estate "^(!print_entail_state estate)) in
         (estate,lhs_mix,rhs_mix_new,None,[])
 (*
 Given:

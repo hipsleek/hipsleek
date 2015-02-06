@@ -2024,6 +2024,11 @@ let om_pairwisecheck f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
       Omega.pairwisecheck f 
 
+(* ZH: Take out the array part *)
+let om_pairwisecheck f =
+  Translate_out_array_in_cpure_formula.split_and_combine om_pairwisecheck (fun f-> not (contain_array f)) f
+;;
+
 let om_pairwisecheck f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
@@ -2465,6 +2470,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
   let n_ante,n_conseq = new_translate_out_array_in_imply_split_full ante conseq in
+  let n_ante = drop_array_formula n_ante in
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)

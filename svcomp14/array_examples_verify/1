@@ -1,115 +1,58 @@
-!!! init_tp : Using Z3 by default
-Starting z3... 
 
-translate_out_array_in_imply@1
-translate_out_array_in_imply inp1 : true
-translate_out_array_in_imply inp2 : a[i]=0
-translate_out_array_in_imply@1 EXIT:new ante:  true
-new conseq:  a[i]=0
+!!!Full processing file "ex20b-array_exists.ss"
+Parsing file "ex20b-array_exists.ss" by default parser...
 
-translate_out_array_in_imply@2
-translate_out_array_in_imply inp1 : true
-translate_out_array_in_imply inp2 : a___i___=0
-translate_out_array_in_imply@2 EXIT:new ante:  true
-new conseq:  a___i___=0
+!!! processing primitives "["prelude.ss"]
 Starting Omega.../usr/local/bin/oc
 
-translate_back_array_in_one_formula@7@6@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@7 EXIT: a[i]=0
+Checking procedure foo$int... 
+dprint: ex20b-array_exists.ss:14: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
 
-simplify_raw@6@5@4@3
-simplify_raw inp1 : forall(i:a[i]=0)
-simplify_raw@6 EXIT: a[i]=0
+Successful States:
+[
+ Label: []
+ State:htrue&r_36'=a_37'[i_38'] & i_38'<=ahaub_1349 & ahalb_1348<=i_38' & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',i_38') & dom(a_37',ahalb,ahaub) & i_38'<=ahaub & ahalb<=i_38' & dom(a_1347,ahalb,ahaub) & x'=x & i_38'=5&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: []htrue&r_36'=a_37'[i_38'] & i_38'<=ahaub_1349 & ahalb_1348<=i_38' & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',i_38') & dom(a_37',ahalb,ahaub) & i_38'<=ahaub & ahalb<=i_38' & dom(a_1347,ahalb,ahaub) & x'=x & i_38'=5
 
-translate_back_array_in_one_formula@9@8@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@9 EXIT: a[i]=0
+ ]
 
-simplify_raw@8@5@4@3
-simplify_raw inp1 : a[i]=0
-simplify_raw@8 EXIT: a[i]=0
+dprint: ex20b-array_exists.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
 
-translate_back_array_in_one_formula@11@10@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@11 EXIT: a[i]=0
+Successful States:
+[
+ Label: []
+ State:(exists a_37': htrue&r_36'=a_37'[5] & 5<=ahaub_1349 & ahalb_1348<=5 & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',5) & dom(a_37',ahalb,ahaub) & 5<=ahaub & ahalb<=5 & dom(a_1347,ahalb,ahaub) & x'=x&{FLOW,(4,5)=__norm#E})[]
+       es_ho_vars_map: []EXISTS(a_37': htrue&r_36'=a_37'[5] & 5<=ahaub_1349 & ahalb_1348<=5 & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',5) & dom(a_37',ahalb,ahaub) & 5<=ahaub & ahalb<=5 & dom(a_1347,ahalb,ahaub) & x'=x)[]
 
-simplify_raw@10@5@4@3
-simplify_raw inp1 : a[i]=0
-simplify_raw@10 EXIT: a[i]=0
+ ]
 
-translate_back_array_in_one_formula@13@12@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@13 EXIT: a[i]=0
+Procedure foo$int SUCCESS.
 
-simplify_raw@12@5@4@3
-simplify_raw inp1 : a[i]=0
-simplify_raw@12 EXIT: a[i]=0
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1333: ( a_1355[5]=res & x=res-1) -->  post_1333(x,res)]
+*************************************
 
-translate_back_array_in_one_formula@15@14@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@15 EXIT: a[i]=0
+!!!  post_1333(x,res) = ( a_1355[5]=res & x=res-1)
+!!! bottom_up_fp:[( post_1333(x,res), exists(a_1355:a_1355[5]=res) & x=res-1)]
+!!! fixpoint:[( post_1333(x,res), exists(a_1355:a_1355[5]=res) & x=res-1, true, true)]
+!!! REL POST :  post_1333(x,res)
+!!! POST:  exists(a_1355:a_1355[5]=res) & x=res-1
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+foo$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&exists(a_1355:a_1355[5]=res) & x=res-1&
+           {FLOW,(4,5)=__norm#E}[]
+           
+Stop Omega... 77 invocations 
+0 false contexts at: ()
 
-simplify_raw@14@5@4@3
-simplify_raw inp1 : a___i___=0
-simplify_raw@14 EXIT: a[i]=0
-
-translate_back_array_in_one_formula@17@16@5@4@3
-translate_back_array_in_one_formula inp1 : a___i___=0
-translate_back_array_in_one_formula@17 EXIT: a[i]=0
-
-simplify_raw@16@5@4@3
-simplify_raw inp1 : a[i]=0
-simplify_raw@16 EXIT: a[i]=0
-
-infer_pure_m_1@5@4@3
-infer_pure_m_1 inp1 :estate :( htrue&{FLOW,(4,5)=__norm#E}[]
-  es_heap:emp
-  es_infer_vars: [a],[a])
-infer_pure_m_1 inp2 :lhs xpure : true
-infer_pure_m_1 inp3 :lhs xpure0 : true
-infer_pure_m_1 inp4 :rhs xpure : a[i]=0
-infer_pure_m_1 inp5 :inf vars :[a]
-infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,Some( a[i]=0),[])
-
-translate_back_array_in_one_formula@18@4@3
-translate_back_array_in_one_formula inp1 : a[i]=0
-translate_back_array_in_one_formula@18 EXIT: a[i]=0
-
-infer_pure_m_2#1@4@3
-infer_pure_m_2#1 inp1 :estate :( es_formula: htrue&{FLOW,(4,5)=__norm#E}[]
- es_infer_vars: [a]
- es_infer_vars_rel: [],[a])
-infer_pure_m_2#1 inp2 :lhs xpure : true
-infer_pure_m_2#1 inp3 :lhs xpure0 : true
-infer_pure_m_2#1 inp4 :rhs xpure : a[i]=0
-infer_pure_m_2#1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( a[i]=0),[])
-
-infer_pure_top_level@3
-infer_pure_top_level inp1 : true
-infer_pure_top_level@3 EXIT:[(None,Some( a[i]=0), true)]
-
-translate_out_array_in_imply@19
-translate_out_array_in_imply inp1 : a___i___=0
-translate_out_array_in_imply inp2 : a___i___=0
-translate_out_array_in_imply@19 EXIT:new ante:  a___i___=0
-new conseq:  a___i___=0
-
-Entail (1) : Valid. 
-
-Residue:
- <1>htrue&a[i]=0&{FLOW,(4,5)=__norm#E}[]
- inferred pure: [a[i]=0]
-
-Stop z3... 4 invocations Stop Omega... 13 invocations 
-SAT Count   : 5
-SAT % Hit   : 80.%
-IMPLY Count : 5
-IMPLY % Hit : 40.%
-Time(cache overhead) : 7.1e-05 (seconds)
-
-!!! log(small):(0.048724,24)
-Total verification time: 0.104865 second(s)
-	Time spent in main process: 0.07937 second(s)
-	Time spent in child processes: 0.025495 second(s)
+!!! log(small):(0.18176,230)
+Total verification time: 0.612368 second(s)
+	Time spent in main process: 0.552049 second(s)
+	Time spent in child processes: 0.060319 second(s)
 

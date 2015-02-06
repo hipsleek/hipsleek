@@ -135,6 +135,7 @@ module Make (Token : SleekTokenS)
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
+   (* ("slk_elim_exists", SLK_ELIM_EXISTS); (\* may weaken *\) *)
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );

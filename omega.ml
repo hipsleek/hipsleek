@@ -168,7 +168,8 @@ and omega_of_b_formula b =
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
-  | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
+  (* | RelForm _ -> "0=0" *)
+  | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
@@ -213,7 +214,8 @@ let omega_of_formula_old i f  =
   let (pr_w, pr_s) = no_drop_ops in
   try 
     Some (omega_of_formula i pr_w pr_s f)
-  with | _ -> None
+  with | _ ->
+      None
 
 let omega_of_formula_old i f  =
    let pr = !print_formula in
