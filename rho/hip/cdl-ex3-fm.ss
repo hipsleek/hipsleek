@@ -42,23 +42,26 @@ void main()
 {
   cell p, q;
   CDL c = create_latch(2) with p'::cell<1> * q'::cell<2>;
+  dprint;
   par {p, q, c@L}
   {
     case {p, c@L} c'::LatchIn{- p'::cell<1>}<> * c'::LatchOut{+ q'::cell<2>}<> * c'::CNT<(1)> ->
       p = new cell(1);
       countDown(c);
-      dprint;
       await(c);
       q.val = q.val + 1; 
+      //dprint;
+      assert q'::cell<3>;
     ||
     case {q, c@L} c'::LatchIn{- q'::cell<2>}<> *  c'::LatchOut{+ p'::cell<1>}<> * c'::CNT<(1)> ->
       q = new cell(2);
       countDown(c);
-      dprint;
       await(c);
       p.val = p.val + 1;
+      //dprint;
+      assert p'::cell<2>;
   }
-  //dprint;
+  dprint;
   assert p'::cell<2> * q'::cell<3>; // ok
   assert p'::cell<3> * q'::cell<3>; // failed
   assert p'::cell<2> * q'::cell<4>; // failed
