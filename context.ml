@@ -1315,11 +1315,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   *)
   let filter_norm_lemmas l = List.filter (fun c-> 
       match c.coercion_case with 
-        | Normalize b-> 
-            (* For fractional permission (e.g. in ParaHIP),
-               also filter out SPLIT formula.
-               Current heuristic is to decide SPLIT or MATCH when MATCH.*)
-            let b = if (!Globals.perm = Frac) || (!Globals.perm = Bperm) then not b else b in
+        | Normalize b -> 
+            (* For fractional permission (e.g. in ParaHIP),              *)
+            (* also filter out SPLIT formula.                            *)
+            (* Current heuristic is to decide SPLIT or MATCH when MATCH. *)
+            (* VPerm: Always apply lemma_split when ann_vp *)
+            let b = 
+              if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
+              then not b else b in
             if b || !use_split_match then false else true 
         | _ -> true) l
   in
