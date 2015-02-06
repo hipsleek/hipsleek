@@ -1,0 +1,32 @@
+pred_prim CNT<n:int>
+  inv n>=(-1).
+  
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+checkentail c::CNT<1> |- c::CNT<1>.
+print residue.
+
+infer [@par] c::CNT<1> |- c::CNT<1>.
+print residue.
+
+/*
+Successful States:
+[
+ Label: []
+ State:or[
+ (exists flted_47_1730,Anon_1731,Anon_1732,v_int_44_1733,b_1734,Anon_1735,Anon_1736,Anon_13,Anon_14,v_int_44_1710: 
+ c_48'::LatchIn{ - p_46'::cell<Anon_13> * q_47'::cell<Anon_14>&{FLOW,(4,5)=__norm#E}[]}<> * 
+ c_48'::CNT{}<flted_47_1730> * 
+ @full[p_46,q_47]@lend[c_48] & 
+ 0<v_int_44_1710 & v_int_44_1710=1 & 0<v_int_44_1733 & v_int_44_1733=1 & 
+ Anon_1735=Anon_1731 & Anon_1736=Anon_1732 & 0<=b_1734 & 0<=1 & v_int_44_1733=b_1734+1 & flted_47_1730=1&{FLOW,(4,5)=__norm#E}[]
+; 
+ (exists flted_47_1737,Anon_1738,Anon_1739,v_int_44_1740,Anon_1741,Anon_1742,Anon_13,Anon_14,v_int_44_1710: 
+ c_48'::LatchIn{ - p_46'::cell<Anon_13> * q_47'::cell<Anon_14>&{FLOW,(4,5)=__norm#E}[]}<> * 
+ c_48'::CNT{}<flted_47_1737> * 
+ @full[p_46,q_47]@lend[c_48] & 
+ 0<v_int_44_1710 & v_int_44_1710=1 &  0<v_int_44_1740 & v_int_44_1740=1 & 
+ Anon_1741=Anon_1738 & Anon_1742=Anon_1739 & flted_47_1737=1&{FLOW,(4,5)=__norm#E}[]
+]
+ ]
+*/

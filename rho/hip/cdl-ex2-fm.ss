@@ -45,6 +45,7 @@ void main()
   par {p, q, c@L}
   {
     case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_>}<> * c'::CNT<(1)> ->
+      dprint;
       p = new cell(1);
       q = new cell(2);
       countDown(c);
@@ -58,7 +59,7 @@ void main()
       await(c);
       q.val = q.val + 1;
   }
-  dprint;
+  //dprint;
   assert p'::cell<2> * q'::cell<3>; // ok
   assert p'::cell<3> * q'::cell<3>; // failed
   assert p'::cell<2> * q'::cell<4>; // failed
