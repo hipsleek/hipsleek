@@ -558,6 +558,9 @@ let common_arguments = [
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
   ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
+
+  (* HO predicate *)
+  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Always apply lemma_split when possible");
   
   (* Proof Logging *)
   ("--en-logging", Arg.Unit (fun _ ->

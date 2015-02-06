@@ -1146,7 +1146,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
 
 and filter_norm_lemmas l = 
   List.filter (fun c-> match c.coercion_case with 
-    | Normalize b-> if b || !use_split_match then false else true 
+    | Normalize b -> if b || !use_split_match then false else true 
     | _ -> true) l 
 
 and filter_lemmas_by_kind l k = 
@@ -1164,8 +1164,8 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
   if flag_lem then
     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name vr_name) in
     let left_ls =
-      if (vr_view_split = SPLIT0) then
-        (*do not split --> not apply lemma_split *)
+      if (vr_view_split = SPLIT0) && (not !Globals.ho_always_split) then
+        (* do not split --> not apply lemma_split *)
         List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_ls
       else left_ls
     in
@@ -1313,17 +1313,20 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   (*Normalize false --> split
     Normalize true --> combine/normalize
   *)
-  let filter_norm_lemmas l = List.filter (fun c-> 
+  let filter_norm_lemmas l = List.filter (fun c -> 
       match c.coercion_case with 
         | Normalize b -> 
             (* For fractional permission (e.g. in ParaHIP),              *)
             (* also filter out SPLIT formula.                            *)
             (* Current heuristic is to decide SPLIT or MATCH when MATCH. *)
             (* VPerm: Always apply lemma_split when ann_vp *)
-            let b = 
-              if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
-              then not b else b in
-            if b || !use_split_match then false else true 
+            if !ho_always_split && not b then true
+            else
+              let b = 
+                if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
+                then not b else b 
+              in
+              if b || !use_split_match then false else true 
         | _ -> true) l
   in
   let r = match m_res.match_res_type with 
@@ -1466,9 +1469,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                 let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
-                let seg_fold_type = if !Globals.seg_fold then (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) else -1
+                let seg_fold_type = 
+                  if !Globals.seg_fold then 
+                    (Cfutil.is_seg_view2_fold_form prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) 
+                  else -1
                 in
-                let l2,syn_lem_typ = (
+                let l2, syn_lem_typ = (
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                      let uf_i = if new_orig then 0 else 1 in
                      let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
@@ -1486,7 +1492,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                                (* (1,Cond_action [a21;a22]) *) a22
                            else
-                             if (vr_view_split=SPLIT1) then
+                             if (vr_view_split=SPLIT1) || (!Globals.ho_always_split) then
                                (* SPLIT only, no match *)
                                (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
                              else

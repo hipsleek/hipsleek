@@ -80,6 +80,8 @@ let eq_ho_flow_kind k1 k2 =
   | NEUTRAL, NEUTRAL -> true
   | _ -> false
 
+let ho_always_split = ref false
+
 let gen_lemma_action_invalid = -1
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
