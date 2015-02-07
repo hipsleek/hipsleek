@@ -50,21 +50,18 @@ void main()
   //ensures emp & flow __norm; // failed
   ensures emp & flow __Fail; // ok
 {
-  cell p, q;
-  CDL c = create_latch(1) with p'::cell<1> * q'::cell<2>;
-  par {p, q, c@L}
+  cell p;
+  CDL c = create_latch(2) with p'::cell<_>;
+  par {p, c@L}
   {
-    case {c@L} c'::LatchOut{+ p'::cell<1> * q'::cell<2>}<> * c'::CNT<(0)> ->
+    case {c@L} c'::LatchOut{+ p'::cell<_>}<> * c'::CNT<(0)> ->
       await(c);
-      p.val = p.val + 1;
-      q.val = q.val + 2; 
+      dprint;
     ||
-    case {p, c@L} c'::LatchIn{- p'::cell<1>}<> * c'::CNT<(1)> ->
+    case {p, c@L} c'::LatchIn{- p'::cell<_>}<> * c'::CNT<(2)> ->
       p = new cell(1);
       countDown(c);
-    ||
-    case {q, c@L} c'::LatchIn{- q'::cell<2>}<> * c'::CNT<(0)> ->
-      skip;
+      dprint;
   }
   dprint;
 }

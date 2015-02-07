@@ -9,23 +9,28 @@ pred_prim CNT<n:int>
   inv n>=(-1).
   
 // Normalization lemma
-lemma_prop "idemp-CNT" self::CNT<a> * self::CNT<(-1)> -> self::CNT<(-1)>.
+lemma_prop "idemp-CNT" self::CNT<a> * self::CNT<(-1)> & a<=0 -> self::CNT<(-1)>.
 
-lemma_prop "combine-CNT" self::CNT<a> * self::CNT<b> & a,b>=0 ->  self::CNT<a+b>.
+lemma_prop "combine-CNT" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>.
 
 // Lemma to trigger error
 lemma "ERR-1" self::LatchIn{- %P}<> * self::CNT<a> & a<0 -> emp & flow __Fail.
 
-lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 -> emp & flow __Fail.
 
 checkentail c::LatchIn{- x::cell<_>}<> * c::CNT<(-1)> & flow __norm |- emp & flow __Fail.
 print residue.
 
 //checkentail c::CNT<(-1)> |- emp & flow __Fail.
 
-/*
-checkentail (exists b_2498,flted_62_2497,flted_36_2496,v_int_56_2495: 
-p_40'::cell<v_int_55_2132> * q_41'::cell<v_int_56_2495> * 
-c_42'::LatchIn{ - (exists flted_62_54: q_41'::cell<flted_62_54>&flted_62_54=2 & flow __norm)}<> * c_42'::CNT{}<flted_20_2511> &
-b_1765=b_2302+1 & 0<=b_2302 & flted_58_2298=1 & 0<v_int_50_1740 & v_int_50_1740=1 & flted_50_1759=2 & flted_50_1760=1 & 0<=b_1765 & v_int_50_1740=b_1765+0 & flted_62_2462=2 & flted_50_2299=flted_62_2462 & 0<=b_2463 & b_2302=b_2463+0 & flted_41_1813=0 & 0<=flted_41_1813 & flted_53_1805=b_1816+flted_41_1813 & 0<v_int_50_1812 & v_int_50_1812=1 & 0<v_int_50_1808 & v_int_50_1808=1 & flted_50_1806=2 & flted_50_1807=1 & 0<=b_1809 & v_int_50_1808=b_1809+0 & flted_53_1805=0 & q_41'!=null & 0<=b_1816 & flted_53_1805=b_1816+0 & 0<=(a_1817+1) & flted_42_1930+1=0 & exists(flted_41_67:0<=(flted_41_67+1)) & 1=flted_53_1815 & 2=flted_53_1814 & flted_20_1829+1=0 & v_int_55_2132=1+flted_53_1815 & val_55_2072=flted_53_1815 & v_int_56_2495=2+flted_53_1814 & val_56_2274=flted_53_1814 & 1=flted_58_2393 & 0<=(b_2391+1) & b_2391+1+0=1 & 0<(b_2391+1+0) & 0<=b_2391 & flted_58_2392=1 & v_int_59_2390=1 & flted_58_2393=v_int_59_2390 & b_2394<flted_58_2392 & 0<n & 0<=n & 0<=b_2394 & flted_58_2392=b_2394+n & p_40'!=null & 0<=(a_2395+1) & flted_36_2496+1=n & 0<=(n+1) & flted_22_2409=flted_36_2496+b_2394 & 0<=1 & 0<=(b_2498+0) & 0<1 & 0<=(b_2498+0+1) & 1=b_2498+0+1+0 & 0<=b_2498 & 0<=0 & flted_62_2497=0 & flted_20_2502+1=0 & flted_20_2507+1=0 & c_42'=c_42' & flted_20_2511+1=0 & flow __norm) |- emp & flow __Fail.
-*/
+check_normalize c::CNT<(-1)> * c::CNT<1>.
+
+checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
+
+checkentail
+ (exists flted_38_1954,flted_44_1953: 
+  c_40'::CNT{}<flted_38_1954> * c_40'::CNT{}<flted_20_1958> & 
+  v_int_53_1698=b_1722+0 & 0<=b_1722 & v_int_53_1698=2 & 0<v_int_53_1698 & 0<=b_1852 & b_1722=b_1852+2 & flted_43_1763=0 & 0<=flted_43_1763 & flted_56_1759=b_1764+flted_43_1763 & 0<v_int_53_1762 & v_int_53_1762=2 & 0<v_int_53_1760 & v_int_53_1760=2 & 0<=b_1761 & v_int_53_1760=b_1761+0 & flted_56_1759=0 & 0<=b_1764 & flted_56_1759=b_1764+0 & 0<=(a_1765+1) & flted_44_1953+1=0 & exists(flted_43_53:0<=(flted_43_53+1)) & flted_20_1777+1=0 & 0<v_int_53_1898 & v_int_53_1898=2 & v_int_53_1895=b_1896+0 & 0<=b_1896 & v_int_53_1895=2 & 0<v_int_53_1895 & 0<=b_1897 & 0<=2 & b_1896=b_1897+2 & flted_59_1894=2 & 0<=(b_1899+1) & b_1899<flted_59_1894 & 0<n & 0<=n & 0<=b_1899 & flted_59_1894=b_1899+n & 0<=(a_1900+1) & flted_38_1954+1=n & 0<=(n+1) & c_40'=c_40' & flted_20_1958+1=0)
+ |- emp & flow __Fail.
+
+
