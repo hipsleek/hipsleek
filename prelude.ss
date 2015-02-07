@@ -5,6 +5,10 @@ class __ArrBoundErr extends __Error {}
 /* class ret_bool extends __RET { bool val } */
 class __RET extends __Exc {}
 
+void throw_err()
+  requires true
+  ensures true & flow __Error;
+
 int add___(int a, int b)
   requires true
   ensures res = a + b;

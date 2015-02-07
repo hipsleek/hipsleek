@@ -1,0 +1,46 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == emp & self=null & n=0
+  or (exists v,q: self::node<v,q>*q::ll<n-1>)
+  inv n>=0.
+
+
+
+//(1)
+infer[x] emp |- x::node<_,q>.
+print residue.
+
+//(2)
+infer[x] emp |- x::node<_,q>*q::node<_,r>.
+print residue.
+
+
+//(3)
+infer[x] emp |- x::node<_,q>*q::ll<n>.
+print residue.
+
+//(4)
+infer[x] emp |- x::node<_,q>*q::ll<n> & n>2.
+print residue.
+
+//(5)
+infer[x] emp |- y::ll<n>.
+print residue.
+
+//(6)
+infer[x] x=y|- y::ll<n>.
+print residue.
+
+//(7)
+infer[x] x=null |- x::ll<n>.
+print residue.
+
+//(8)
+//infer[x@NI] x=y|- y::ll<n>.
+
+//(8)
+infer[x] x=null|- x=y.
+print residue.

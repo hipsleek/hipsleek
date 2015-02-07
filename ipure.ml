@@ -1762,7 +1762,7 @@ let rec typ_of_exp (e: exp) : typ =
               | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
             )
       | _ -> ( match typ2 with
-            | Array (t,_) -> if t== UNK then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
+            | Array (t,_) -> if t== UNK || t=typ1 then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
             | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 4"
       )
     )

@@ -1296,8 +1296,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
                 Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
               )
           | Globals.Named otyp_name, Globals.Int ->
-              let cast_proc = create_int_to_pointer_casting_proc otyp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                let cast_proc = create_int_to_pointer_casting_proc otyp_name in
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
           | Globals.Int, Globals.Named ityp_name ->
               let cast_proc = create_pointer_to_int_casting_proc ityp_name in
               Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
@@ -1437,6 +1437,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                 | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
                 | _ -> translate_typ ty pos
               ) in
+              (* let _ =  Debug.info_hprint (add_str "If:new_ty" (string_of_typ)) (new_ty) no_pos in *)
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (

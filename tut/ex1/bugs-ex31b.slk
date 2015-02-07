@@ -1,0 +1,22 @@
+data pair {
+  int fst;
+  int snd;
+}.
+
+// (1) implicit instantiation
+checkentail x::pair<1,2> |- x::pair<a,b>.
+print residue.
+/*
+# bugs-ex31b.slk
+
+checkentail x::pair<1,2> |- x::pair<a,b>.
+
+Why I am getting this?
+
+ <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+Two days ago, we have just:
+  <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+*/
+

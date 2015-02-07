@@ -8,6 +8,16 @@ open Cformula
 module CP = Cpure
 
 
+let get_infer_type its0 inf0=
+  (* let rec look_up ifts inf rem= *)
+  (*   match ifts with *)
+  (*     | [] -> raise Not_found *)
+  (*     | it::rest -> if it == inf then it,rem@rest else *)
+  (*         look_up rest inf (rem@[it]) *)
+  (* in *)
+  (* look_up its0 inf0 [] *)
+  List.find (fun inf1 -> inf0==inf1) its0
+
 let extract_inf_props prog scc=
   [INF_SIZE]
 

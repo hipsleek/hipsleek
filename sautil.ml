@@ -26,6 +26,7 @@ let check_stricteq_h_fomula = SY_CEQ.check_stricteq_h_fomula
 let check_relaxeq_formula = SY_CEQ.check_relaxeq_formula
 let checkeq_pair_formula = SY_CEQ.checkeq_pair_formula
 let checkeq_formula_list = SY_CEQ.checkeq_formula_list
+let checkeq_formula_list_w_args = SY_CEQ.checkeq_formula_list_w_args
 
 (* let check_equiv = ref (fun (iprog: I.prog_decl) (prog: C.prog_decl) (svl: CP.spec_var list) (proof_traces: (CF.formula * CF.formula) list) (need_lemma:bool) *)
 (*   (fs1: CF.formula) (fs2: CF.formula) -> *)
@@ -2138,7 +2139,7 @@ let simp_matching_x prog lhs rhs=
               let lps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) leqs in
               let lnull_ps =  List.map (fun sv-> CP.mkNull sv no_pos) leqNulls in
               let p = CP.conj_of_list (lps@lnull_ps) no_pos in
-              let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f (CF.Base l)) (MCP.mix_of_pure p) no_pos in
+              let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f_old (CF.Base l)) (MCP.mix_of_pure p) no_pos in
               (true,new_lhs)
             else
               (false,lhs)
@@ -4818,7 +4819,7 @@ let norm_fold_seg prog hp_defs hp r other_args unk_hps defs_wg=
       (fun _ _ _ _ -> norm_fold_seg_x prog  hp_defs hp r other_args unk_hps defs_wg)
       hp r other_args defs_wg
 
-let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
+let norm_unfold_seg_x prog hp0 r other_args unk_hps ofl defs_wg=
   (**************INTERNAL**********)
   let look_up_continuous_para non_root_args (f,_)=
     let ls_hpargs = CF.get_HRels_f f in
@@ -4901,7 +4902,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
       let rem_args = (CP.diff_svl other_args cont_args) in
       let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
           let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args fr_root (CF.subst sst base) in
-          let seg_f1 =  CF.simplify_pure_f (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
+          let seg_f1 =  CF.simplify_pure_f_old (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
           (segs@[((seg_f1,og))], cont_fs@[cont_f])
       ) ([],[]) base_fs_wg in
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
@@ -4916,7 +4917,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
           let rec_fs_wg1 = List.map (fun (f,og) -> CF.subst sst1 (CF.subst hp_ss f), og) rec_fs_wg in
           let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
           ) ([],[]) (seg_fs_wg@rec_fs_wg1) in
-          let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
+          let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) ofl  in
           (*should generalize cont_fs*)
           let rhs1 = CF.disj_of_list cont_fs no_pos in
           let rhs2 = CF.mkAnd_f_hf rhs1 n_lhs no_pos in
@@ -4925,12 +4926,12 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
       else
         None
 
-let norm_unfold_seg prog hp r other_args unk_hps defs_wg=
+let norm_unfold_seg prog hp r other_args unk_hps ofl defs_wg=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
   let pr3 = Cprinter.string_of_hp_rel_def in
   Debug.no_4 "SAU.norm_unfold_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 (pr_option (pr_pair pr1 pr3))
-      (fun _ _ _ _ -> norm_unfold_seg_x prog hp r other_args unk_hps defs_wg)
+      (fun _ _ _ _ -> norm_unfold_seg_x prog hp r other_args unk_hps ofl defs_wg)
       hp r other_args defs_wg
 
 (**********************)
@@ -4961,7 +4962,7 @@ let mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list
           in
           let _ = DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")"))) pos in
           DD.ninfo_zprint (lazy ((" =: " ^ ((pr_list_ln Cprinter.prtt_string_of_formula) (List.map fst defs_wg)) ))) pos;
-          let def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras)) (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos))  defs_wg) in
+          let def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras)) (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos))  defs_wg None) in
           [def]
       end
 
@@ -4979,7 +4980,7 @@ let mk_unk_hprel_def hp args defs pos=
     (List.hd defs) (List.tl defs) in
   DD.ninfo_zprint (lazy ((" ==: " ^ (Cprinter.prtt_string_of_formula def) ))) pos;
   let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))
-    (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)) [(def, None)] in
+    (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)) [(def, None)] None in
   let pr_def = (hp, def) in
   [pr_def]
 
@@ -5073,7 +5074,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
    (*common pure process*)
    let common_pures = CP.conj_of_list eqPures no_pos in
    let orig_def2 = CF.mkAnd_pure orig_def1 (MCP.mix_of_pure common_pures) no_pos in
-   let orig_def3 = CF.simplify_pure_f orig_def2 in
+   let orig_def3 = CF.simplify_pure_f_old orig_def2 in
    (orig_def3, orig_defs_h)
 
 let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
@@ -5146,7 +5147,7 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
       let _ = C.set_proot_hp_def_raw (get_pos args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
-      let link_def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras))  old_hrel [(link_f,None)]) in
+      let link_def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras))  old_hrel [(link_f,None)] None) in
       (*end linking*)
       let subst = [(old_hrel,new_hrel)] in
       let new_fs_wg = List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) fs_wg in
@@ -6687,7 +6688,7 @@ let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs hp_defs post_hps gunk_rels=
                                     (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) pos
     in
     let new_hpdef = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))
-      (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)) [(def, None)] in
+      (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)) [(def, None)] None in
     let new_unkmap = (hp,fr_args) in
     (new_hpdef,new_unkmap)
   in
@@ -6842,7 +6843,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   let new_hpdefs1 = List.map (fun (a,b,g,f,_) -> (a,b,g, f)) new_hpdefs in
   let new_hpdefs2 = List.map (fun (a,b,g,_,pr_f) -> (a,b,g, pr_f)) new_hpdefs in
   (*subst XPURE*)
-  List.map (fun (a,b,g,pr_f) -> CF.mk_hp_rel_def1 a b [(subst_and_combine (*subst_xpure*) new_hpdefs1 pr_f,g)]) new_hpdefs2
+  List.map (fun (a,b,g,pr_f) -> CF.mk_hp_rel_def1 a b [(subst_and_combine (*subst_xpure*) new_hpdefs1 pr_f,g)] None) new_hpdefs2
 
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
@@ -6861,7 +6862,7 @@ let rel_helper post_hps unk_rels unk_map=
     let fs = List.map (generate_p_formual args no_pos) ls_fr_args in
     let def = CF.disj_of_list fs no_pos in
     (CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))
-        (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)) [(def,None)])
+        (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)) [(def,None)] None)
   in
   let rec list_lookup_map hp0 ls=
     match ls with
@@ -7615,7 +7616,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   ()
 
 (* combine all pred defs with the same name*)
-let combine_hpdef_flow_x hpdefs0=
+let combine_hpdef_flow_x pre_hps post_hps hpdefs0=
   let get_args hpdef= match hpdef.Cformula.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> report_error no_pos "sau.combine_hpdef_flow"
@@ -7649,8 +7650,8 @@ let combine_hpdef_flow_x hpdefs0=
   combine_helper hpdefs0 []
 
 
-let combine_hpdef_flow hpdefs=
+let combine_hpdef_flow pre_hps post_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-  Debug.no_1 "combine_hpdef_flow" pr1 pr1
-      (fun _ -> combine_hpdef_flow_x hpdefs)
-      hpdefs
+  Debug.no_3 "combine_hpdef_flow" !CP.print_svl !CP.print_svl pr1 pr1
+      (fun _ _ _ -> combine_hpdef_flow_x pre_hps post_hps hpdefs)
+      pre_hps post_hps hpdefs

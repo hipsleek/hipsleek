@@ -64,10 +64,10 @@ let shorten_svl_avoid_field prog fv =
       match sv with
           CP.SpecVar(t,id,pr) ->
               let cut_id0 = Str.global_replace reg "" (id ) in
-              let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then
-                cut_id0 ^ pad
-              else cut_id0
-              in
+              (* let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then *)
+              (*   cut_id0 ^ pad *)
+              (* else cut_id0 *)
+              (* in *)
               let new_id =
                 if Hashtbl.mem id_tbl (id,pr)
                 then
@@ -190,7 +190,7 @@ let rearrange_def def=
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
-  let n_tbl = Hashtbl.create 1 in
+  (* let n_tbl = Hashtbl.create 1 in *)
   let new_svl = shorten_svl svl_rp in 
   let new_body2 =
     List.map (fun ((p, f_opt,c) as o) ->
@@ -241,7 +241,7 @@ let rearrange_hp_def def=
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
-  let n_tbl = Hashtbl.create 1 in
+  (* let n_tbl = Hashtbl.create 1 in *)
   let new_svl = shorten_svl svl_rp in 
   let new_body2 =
     List.map (fun (f, f_opt) ->
@@ -264,7 +264,7 @@ let rearrange_rel (rel: hprel) =
   let fv = CP.remove_dups_svl (lfv@gfv@rfv) in
   (* let n_tbl = Hashtbl.create 1 in *)
   (* let reg = Str.regexp "_.*" in *)
-  let n_tbl = Hashtbl.create 1 in
+  (* let n_tbl = Hashtbl.create 1 in *)
   let new_svl = shorten_svl fv in
   {rel with hprel_lhs = subst_avoid_capture fv new_svl (rearrange_formula lfv rel.hprel_lhs);
       hprel_guard = (match rel.hprel_guard with
@@ -277,8 +277,8 @@ let rearrange_rel (rel: hprel) =
 print_tidy for verification condition + entailment
 *)
 let rearrange_entailment_x prog lhs0 rhs0=
-  let lhs = simplify_pure_f lhs0 in
-  let rhs = simplify_pure_f rhs0 in
+  let lhs = simplify_pure_f_old lhs0 in
+  let rhs = simplify_pure_f_old rhs0 in
   let l_quans, l_bare =  split_quantifiers lhs in
   let r_quans, r_bare =  split_quantifiers rhs in
   let l_svl = (CP.remove_dups_svl (fv l_bare)) in
@@ -349,7 +349,7 @@ let rec elim_imm_vars_f f =
 
 let rec shorten_formula f =
   let helper f =
-    let f0 = simplify_pure_f f in
+    let f0 = simplify_pure_f_old f in
     let f0 = elim_imm_vars_f f0 in
     let fvars = fv f0 in
     let qvars,_ = split_quantifiers f0 in

@@ -1,0 +1,72 @@
+
+relation P(int n,int m).
+
+infer [P]
+ n'=0 & P(n,m) & m'=m & n'=n  |-  m'=0.
+print residue.
+/*
+Residue:
+ <1>emp&n'=0 & P(n,m) & m'=m & n'=n & m=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELASS [P]: ( P(n,m)) -->  m=0]
+*/
+
+
+infer [P] n=0 & P(n,m) |-  m=0.
+print residue.
+/*
+Residue:
+ <1>emp&n=0 & P(n,m) & m=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELASS [P]: ( P(n,m)) -->  m=0]
+
+These pre-conditions are too strong.
+
+We need to use:
+    (n!=0 | m=0)
+*/
+
+
+infer [n,m] n=0 |-  m=0.
+print residue.
+
+/*
+# bus-sim5a.slk
+
+Got:
+ inferred pure: [m=0]
+
+ infer [n,m] n=0 & n'=n & m'=m |-  m=0.
+ print residue.
+
+But this is too strong:
+
+ Expecting:
+   not(n=0) | m=0
+
+
+ Given infer [vs] D1 |- D2
+
+ Let ws = vars(D1)-vs // {n',m'}
+ weakest pre = forall (n',m': not(n=0 & n'=n & m'=m) | m=0)
+
+However, PairWiseCheck does not give simplified results..
+ 
+A := {[n,m]: forall(np,mp: not(n=0 & np=n & mp=m) | m=0)};
+A;
+PairWiseCheck A;
+
+{[n,0]} union
+ {[n,m]: 1 <= m && 1 <= n} union
+ {[n,m]: n <= -1 && 1 <= m} union
+ {[n,m]: m <= -1 && 1 <= n} union
+ {[n,m]: n <= -1 && m <= -1}
+
+B := {[n,m]: not(n=0) | m=0};
+B;
+PairWiseCheck B;
+
+{[n,m]: n <= -1} union
+ {[n,m]: 1 <= n} union
+ {[n,0]}
+
+
+*/

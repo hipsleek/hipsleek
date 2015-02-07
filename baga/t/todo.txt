@@ -463,7 +463,41 @@ for ll-3e.ss but fails for ll-3.ss.
 
 This works!
 ==============================================
+# ex10-11-under.slk
+
+
+Can we distinguish something that is
+definitely UNSAT such as ([],false)  or  ([self],n=0)
+
+from over-approx such as ([self],n>=0)
+or unknown such as ([self],n>=10)
+
+?
 ==============================================
+# err-10.slk
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1>
+inv_sat BG([],self=null & n<1) 
+   // reported invalid, but this can be proven cylicly..
+.
+
+([],self=null & n<1) <<= self::ll<n>
+
+([],self=null & n<1) <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+([],self=null & n<1 & n=0) \/ ([],self=null & n<1 & n!=0) 
+  <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+split-lhs-\/
+
+([],self=null & n<1 & n=0)  <<= self=null & n=0
+([],self=null & n<1 & n=0)  <<= self=null & n=0 // valid
+
+([],self=null & n<1 & n!=0) <<= self::node<_,q>*q::ll<n-q> // empty
+
 ==============================================
 ==============================================
 ==============================================

@@ -1222,6 +1222,11 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
+  let trans_htrue2emp hf=
+    match hf with
+      | F.HTrue -> F.HEmp
+      | _ -> hf
+  in
   let has_shape_args = List.exists (fun p -> is_node_typ p.param_type) args in
   if not has_shape_args ||  not !Globals.sags then body_header
   else
@@ -1235,8 +1240,10 @@ let genESpec_wNI body_header body_opt args ret pos=
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
       | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
-          let is_simpl, pre,post = F.get_pre_post i_sf.F.formula_inf_continuation in
+          let is_simpl, pre0,post0 = F.get_pre_post i_sf.F.formula_inf_continuation in
           if is_simpl then
+            let pre = Iformula.formula_trans_heap_node trans_htrue2emp pre0 in
+            let post = Iformula.formula_trans_heap_node trans_htrue2emp post0 in
             let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in
             (* let _ = print_gen_spec ss hps in *)
             let ss = match ss with

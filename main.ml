@@ -40,7 +40,7 @@ let parse_file_full file_name (primitive: bool) =
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
-      if primitive or (!Parser.parser_name = "default") then
+      if primitive || (!Parser.parser_name = "default") then
         (* always parse primitive files by default parser *)
         "default" 
       else if (!Parser.parser_name = "default") then
@@ -345,7 +345,8 @@ let reverify_with_hp_rel old_cprog iprog =
   in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps [] need_trans_hprels1 chprels_decl in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
+    [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
@@ -915,8 +916,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Log.last_cmd # dumping "finalize on hip";
-  Log.process_proof_logging !Globals.source_files;
+  let _ = Log.last_cmd # dumping "finalize on hip" in
+  let _ = Log.process_proof_logging !Globals.source_files in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

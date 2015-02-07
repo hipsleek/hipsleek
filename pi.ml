@@ -166,6 +166,19 @@ let is_infer_shape sf =
 let is_infer_shape_scc scc =
   List.exists (fun proc -> is_infer_shape (proc.proc_stk_of_static_specs # top)) scc
 
+let rec is_infer_error sf = match sf with
+  | CF.EList el -> List.exists (fun (lbl,sf) ->
+        is_infer_error sf) el
+  | CF.EInfer ei ->
+        let inf_obj = ei.CF.formula_inf_obj in
+        let inf_vars = ei.CF.formula_inf_vars in
+        (inf_obj # is_error)
+  | _ -> false
+
+let is_infer_error_scc scc =
+  List.exists (fun proc -> is_infer_error (proc.proc_stk_of_static_specs # top)) scc
+
+
 let rec is_infer_post sf = match sf with
   | CF.EList el -> List.exists (fun (lbl,sf) ->
         is_infer_post sf) el
@@ -509,13 +522,13 @@ let trans_res_struc_formula prog sf =
 
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[CF.simplify_ann (proc.proc_stk_of_static_specs # top)]) [] scc in
-  let _ = DD.binfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
+  let _ = DD.ninfo_hprint (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels = Infer.infer_rel_stk # get_stk in
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
   let lst_assume = Gen.Basic.remove_dups lst_assume in
-  if rels = [] then ()
+  if rels = [] && lst_assume = [] then ()
   else
     let new_specs =
       let rels = Infer.infer_rel_stk # get_stk in
@@ -582,27 +595,47 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               ) ([],[]) scc
             in
             let post_inv = CP.join_disjunctions post_invs in
+            let pr = Cprinter.string_of_pure_formula in
+            let (s1,s2) =
+              if List.length post_rel_df_new = 0 then ("","")
+              else
+                let pf1,pf2 = List.hd post_rel_df_new in
+                let tl = List.tl post_rel_df_new in
+                List.fold_left (fun (s1,s2) (pf1,_) ->
+                    (s1 ^ " \/ (" ^ (pr pf1) ^ ")",s2)
+                ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
+            let _ = DD.binfo_pprint (s2 ^ s1) no_pos in
+            (* let _ = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
+            let _ = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
-            let bottom_up_fp = List.map (fun (r,p) ->
-                let p1 = Tpdispatcher.om_gist p post_inv in
-                let p2 = Tpdispatcher.pairwisecheck_raw p1 in
-                (r,p2)
-            ) bottom_up_fp0 in
+            (* temporarily remove gist because tut/ex2/bugs-ex20.ss example *)
+            (* let bottom_up_fp = List.map (fun (r,p) -> *)
+            (*     let p1 = Tpdispatcher.om_gist p post_inv in *)
+            (*     let p2 = Tpdispatcher.pairwisecheck_raw p1 in *)
+            (*     (r,p2) *)
+            (* ) bottom_up_fp0 in *)
+            let bottom_up_fp = bottom_up_fp0 in
             let proc_spec = List.hd proc_specs in
-            Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
+            let _ = DD.binfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
+            let _ = DD.ninfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
+            let _ = DD.ninfo_hprint (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in
+            let res = Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                 Fixcalc.compute_fixpoint_td
                 Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
+            in
+            let _ = DD.binfo_hprint (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
+            res
           in
           Infer.fixcalc_rel_stk # push_list tuples;
-          if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then
-            begin
-              print_endline_quiet "\n*************************************";
-              print_endline_quiet "*******fixcalc of pure relation *******";
-              print_endline_quiet "*************************************";
-              print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse);
-              print_endline_quiet "*************************************"
-            end;
+          (* if not(Infer.fixcalc_rel_stk # is_empty || !Globals.print_min) then *)
+          (*   begin *)
+          (*     print_endline_quiet "\n*************************************"; *)
+          (*     print_endline_quiet "*******fixcalc of pure relation *******"; *)
+          (*     print_endline_quiet "*************************************"; *)
+          (*     print_endline_quiet (Infer.fixcalc_rel_stk # string_of_reverse); *)
+          (*     print_endline_quiet "*************************************" *)
+          (*   end; *)
           Infer.fixcalc_rel_stk # reset;
           let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
               let pre_new = if CP.isConstTrue rel_pre then
