@@ -2658,11 +2658,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* par_rem_ctx case_post_ctx_list *)
             in
             (* VP.clear_inf_par_list_failesc_ctx res_ctx *)
-            let norm_f es f = 
-              Solver.prop_formula_w_coers 2 prog es f (Lem_store.all_lemma # get_left_coercion)
-            in
-            let res_ctx = VP.norm_list_failesc_context_for_par norm_f res_ctx in
-            res_ctx
+            let lem = Lem_store.all_lemma # get_left_coercion in
+            (* Norm CNT *)
+            let norm_prop_f es f = Solver.prop_formula_w_coers 20 prog es f lem in
+            (* let res_ctx = VP.norm_list_failesc_context_for_par norm_prop_f res_ctx in *)
+            (* Norm ERR *)
+            let norm_lem_f es f = Solver.normalize_formula_w_coers 20 prog es f lem in
+            VP.norm_list_failesc_context_for_par norm_lem_f res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
