@@ -1310,6 +1310,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
   let lhs_node = m_res.match_res_lhs_node in
+
   (*Normalize false --> split
     Normalize true --> combine/normalize
   *)
@@ -1320,7 +1321,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* also filter out SPLIT formula.                            *)
             (* Current heuristic is to decide SPLIT or MATCH when MATCH. *)
             (* VPerm: Always apply lemma_split when ann_vp *)
-            if !ho_always_split && not b then true
+            if !Globals.ho_always_split && not b then true
             else
               let b = 
                 if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
@@ -1493,9 +1494,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                (* (1,Cond_action [a21;a22]) *) a22
                            else
                             let split_act = 
-                              if (vr_view_split=SPLIT1) || (!Globals.ho_always_split) then
+                              if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
                                 (* SPLIT only, no match *)
-                                let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                                let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
                                   (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
                                   m_res estate.CF.es_formula rhs reqset 
                                 in
@@ -1568,7 +1569,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     ) in
                     let a7 =
                         if (!Globals.smart_lem_search ) then
-                          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+                          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                            (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
                           if lem_act = [] then a6 else
                             match a6 with
                               | Some a ->  Some (1, Cond_action ([a]@lem_act))
@@ -1623,7 +1625,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   else  [] *)
                 (* ) in *)
                 let l3 = if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset else [] in
+                  search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                    (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
@@ -2068,7 +2071,8 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (
           ) in
           let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
           let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+          let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+            (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
           if lem_act = [] then [] else
             [(1,norm_search_action lem_act)]
       with _ -> []

@@ -16,7 +16,10 @@ pred_prim CNT<n:int>
 
 lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
-lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
+// Normalization lemma
+lemma_prop "idemp-CNT" self::CNT<a> * self::CNT<(-1)> -> self::CNT<(-1)>;
+
+lemma_prop "combine-CNT" self::CNT<a> * self::CNT<b> & a,b>=0 ->  self::CNT<a+b>;
 
 /********************************************/
 CDL create_latch(int n) with %P
@@ -42,7 +45,7 @@ void main()
 {
   cell p, q;
   CDL c = create_latch(2) with p'::cell<1> * q'::cell<2>;
-  dprint;
+  //dprint;
   par {p, q, c@L}
   {
     case {p, c@L} c'::LatchIn{- p'::cell<1>}<> * c'::LatchOut{+ q'::cell<2>}<> * c'::CNT<(1)> ->
@@ -50,7 +53,7 @@ void main()
       countDown(c);
       await(c);
       q.val = q.val + 1; 
-      //dprint;
+      dprint;
       assert q'::cell<3>;
     ||
     case {q, c@L} c'::LatchIn{- q'::cell<2>}<> *  c'::LatchOut{+ p'::cell<1>}<> * c'::CNT<(1)> ->
@@ -58,11 +61,12 @@ void main()
       countDown(c);
       await(c);
       p.val = p.val + 1;
-      //dprint;
+      dprint;
       assert p'::cell<2>;
   }
   dprint;
-  assert p'::cell<2> * q'::cell<3>; // ok
+  assert p'::cell<2> * q'::cell<3> * c'::CNT<(-1)>; // ok
+  assert p'::cell<2> * q'::cell<3> * c'::CNT<a> & a >= 0; // failed
   assert p'::cell<3> * q'::cell<3>; // failed
   assert p'::cell<2> * q'::cell<4>; // failed
   assert p'::cell<3> * q'::cell<4>; // failed

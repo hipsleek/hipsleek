@@ -25,3 +25,6 @@ print residue.
 checkentail c::CNT<1> |- c::CNT<1>.
 print residue.
 
+checkentail c::CNT<(-1)> |- c::CNT<(-1)>.
+print residue.
+
