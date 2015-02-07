@@ -3963,7 +3963,7 @@ let rec check_prog iprog (prog : prog_decl) =
     else ()
   in
 
-  let _ = Term.term_check_output () in
+  (* let _ = Term.term_check_output () in *)
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)

@@ -168,10 +168,19 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let may_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
-  if (is_sat may_cond) && not !Globals.tnt_infer_lex then
-    conds @ [MayTerm may_cond]
-  else conds
+  
+  let rem_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
+  let pre_cond = CP.join_conjunctions (List.fold_left (fun acc tu ->
+    let cond = simplify 11 tu.call_ctx params in
+    acc @ [cond]) [] turels) in
+  let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
+  let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
+  
+  (* if (* (is_sat may_cond) && *) not !Globals.tnt_infer_lex then *)
+    conds @ 
+    (if is_sat unk_cond then [Rec unk_cond] else []) @
+    (if is_sat may_cond then [Rec may_cond] else [])
+  (* else conds *)
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
@@ -386,10 +395,10 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
     try
       let _ = pr_im_case_specs iter_num in
       let tg = sub_graph_of_scc_list tg scc_list in
-      (* let _ =                                                             *)
+      (* let _ =                                                       *)
       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
-      (* in                                                                  *)
+      (* in                                                            *)
       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()

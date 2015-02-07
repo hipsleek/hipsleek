@@ -3609,12 +3609,12 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let rec get_pure_conseq_from_formula f =
       match f with
         | Or fo ->
-              let _ = Debug.binfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula" Cprinter.string_of_formula) f in
               let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
               let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
               CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
         | _  ->
-              let _ = Debug.binfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
+              let _ = Debug.tinfo_hprint (add_str "formula1" Cprinter.string_of_formula) f in
               let _,p,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
     in
     let flatten_struc sf = CF.flatten_struc_formula sf in
@@ -5229,7 +5229,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 in
                 (real_c,true, Some es)
           | None ->  
-                let _ = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "..in None" pos in
+                let _ = Debug.tinfo_hprint (add_str "WARNING: early_hp_contra_detection : " pr_id) "..in None" pos in
                 match relass with
 		  | [(es,h,_)] -> 
                         let new_estate = { es with es_infer_vars = orig_inf_vars; es_orig_ante = Some orig_ante } in
@@ -14125,6 +14125,9 @@ let verify_pre_is_sat prog fml =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "verify_pre_is_sat" pr string_of_bool
       (fun _ -> verify_pre_is_sat prog fml) fml
+      
+let _ = Ti2.unsat_base_nth := unsat_base_nth
+
 (********************************************************************************************)
   (*********The following code is moved to fixpoint.ml*************************************)
 (********************************************************************************************)

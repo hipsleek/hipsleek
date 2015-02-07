@@ -31,7 +31,8 @@ let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
 let mona_pred_file_alternative_path = "/usr/local/lib/"
 
-let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter"
+(* let mona_prog = if !Globals.web_compile_flag then "/usr/local/bin/mona_inter" else "mona_inter" *)
+let mona_prog =  "/usr/local/bin/mona_inter"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -1167,15 +1168,19 @@ and print_b_formula b f = match b with
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
 
-let rec get_answer chn : string =
+let rec get_answer acc chn : string =
+  try
   let chr = input_char chn in
       match chr with
-        |'\n' ->  ""
-        | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
-        | _ -> "" ^ get_answer chn
+        |'\n' ->  acc (* "" *)
+        | 'a'..'z' | 'A'..'Z' | ' ' -> (* (Char.escaped chr) ^ get_answer chn *) (*save only alpha characters*)
+               get_answer (acc ^ (Char.escaped chr)) chn
+        | _ -> (* "" ^ get_answer chn *) get_answer acc chn
+  with _ -> acc
 
-let get_answer chn =
-  Debug.no_1 "get_answer" (fun _ -> "") (fun f -> f) get_answer chn
+(* let get_answer acc chn = *)
+(*   Debug.no_1 "get_answer" (fun _ -> "") (fun f -> f) *)
+(*       (fun _ -> get_answer acc chn) acc *)
 
 let send_cmd_with_answer str =
   if!log_all_flag==true then
@@ -1184,7 +1189,7 @@ let send_cmd_with_answer str =
     if (String.length str < max_BUF_SIZE) then
       let _ = (output_string !process.outchannel str;
       flush !process.outchannel) in
-      let str = get_answer !process.inchannel in
+      let str = get_answer "" !process.inchannel in
       str 
     else
       "Formula is too large"
@@ -1239,6 +1244,7 @@ let get_mona_predicates_file () : string =
 
 let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
+   (* let _ = print_endline  mona_pred_file_x in *)
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
 let set_process (proc: prover_process_t) = 
@@ -1253,8 +1259,10 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
+  (* let _ = print_endline mona_prog in *)
   if(check_prover_existence mona_prog)then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
+      (* let _ = print_endline (mona_prog ^ "end") in *)
       is_mona_running := true
   end
 
