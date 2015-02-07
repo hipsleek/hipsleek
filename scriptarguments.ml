@@ -560,8 +560,9 @@ let common_arguments = [
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
 
   (* HO predicate *)
-  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Always apply lemma_split when possible");
-  
+  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
+
   (* Proof Logging *)
   ("--en-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
