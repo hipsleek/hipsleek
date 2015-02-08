@@ -9156,6 +9156,7 @@ think it is used to instantiate when folding.
   (* denotes stack variables with possibly zero permission *)
   (* TODO: To be removed *)
   es_var_zero_perm : CP.spec_var list;
+  es_conc_err: (string * loc) list; (* To contain concurrencyc error msg *)
 
   (* FOR INFERENCE *)
   (* input flag to indicate if post-condition is to be inferred *)
@@ -9535,6 +9536,7 @@ let empty_es flowt grp_lbl pos =
   es_var_zero_perm = [];
   es_group_lbl = grp_lbl;
   es_term_err = None;
+  es_conc_err = [];
   (*es_infer_invs = [];*)
 }
 
@@ -10646,6 +10648,16 @@ let collect_term_err_list_partial_context (ctx:list_partial_context) =
   !print_list_partial_context (pr_list (fun x -> x))
   collect_term_err_list_partial_context ctx
 
+let rec collect_conc_err ctx =
+  match ctx with
+  | Ctx estate -> estate.es_conc_err
+  | OCtx (ctx1, ctx2) -> (collect_conc_err ctx1) @ (collect_conc_err ctx2)
+
+let collect_conc_err_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) ->
+    collect_conc_err c) cl)) ctx in
+  List.concat r
+
 let rec collect_pre_pure ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_pure 
@@ -11042,6 +11054,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_crt_holes = es.es_crt_holes;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
+        es_conc_err = es.es_conc_err;
     }
 
 let false_es_with_orig_ante es f pos =
@@ -13671,6 +13684,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_infer_hp_rel = es.es_infer_hp_rel;
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;
+          es_conc_err = es.es_conc_err;
           es_var_zero_perm = es.es_var_zero_perm;}
 
 (*
@@ -13725,6 +13739,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;
           es_var_zero_perm = es.es_var_zero_perm;
+          es_conc_err = es.es_conc_err;
   }
 
 let  clear_entailment_history_es xp (es :entail_state) :context =

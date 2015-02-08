@@ -2660,11 +2660,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* VP.clear_inf_par_list_failesc_ctx res_ctx *)
             let lem = Lem_store.all_lemma # get_left_coercion in
             (* Norm CNT *)
-            let norm_prop_f es f = Solver.prop_formula_w_coers 20 prog es f lem in
-            let res_ctx = VP.norm_list_failesc_context_for_par norm_prop_f res_ctx in
+            let norm_prop_es es = { es with 
+              CF.es_formula = Solver.prop_formula_w_coers 20 prog es es.CF.es_formula lem }
+            in
+            let res_ctx = VP.norm_list_failesc_context_for_par norm_prop_es res_ctx in
             (* Norm ERR *)
-            let norm_lem_f es f = Solver.normalize_formula_w_coers 20 prog es f lem in
-            VP.norm_list_failesc_context_for_par norm_lem_f res_ctx
+            let norm_lem_es es = Solver.normalize_estate_w_coers prog es lem pos in
+            VP.norm_list_failesc_context_for_par norm_lem_es res_ctx
 	| _ -> 
 	      failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
@@ -2764,10 +2766,10 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
   (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx rem_ctx pos in *)
   (* let post_ctx = VP.compose_list_failesc_contexts_for_par true post_ctx par_init_ctx pos in *)
   (* Norm post_ctx *)
-  let norm_f es f = 
-    Solver.prop_formula_w_coers 2 prog es f (Lem_store.all_lemma # get_left_coercion) 
+  let norm_prop_es es = { es with 
+    CF.es_formula = Solver.prop_formula_w_coers 21 prog es es.CF.es_formula (Lem_store.all_lemma # get_left_coercion) }
   in
-  let post_ctx = VP.norm_list_failesc_context_for_par norm_f post_ctx in
+  let post_ctx = VP.norm_list_failesc_context_for_par norm_prop_es post_ctx in
   (rem_ctx, post_ctx)
   
 and check_par_case (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.list_failesc_context) 
@@ -2899,6 +2901,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         Prooftracer.pop_div ();
 	(* print_endline "DONE!" *)
       end in
+    (* Rho: print conc err, if any *)
+    let _ =
+      let conc_errs = CF.collect_conc_err_list_partial_context rs in
+      if is_empty conc_errs then ()
+      else 
+        let str_conc_err = pr_list 
+          (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
+        print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
+    in
+    
     if (CF.isSuccessListPartialCtx_new rs) then
       rs
     else begin

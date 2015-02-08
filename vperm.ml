@@ -119,10 +119,11 @@ let clean_es_heap_list_failesc_ctx_for_par vars ctx =
   Debug.no_2 "clean_es_heap_list_failesc_ctx_for_par" pr1 pr2 pr2
   clean_es_heap_list_failesc_ctx_for_par vars ctx
 
-let norm_list_failesc_context_for_par norm_f ctx = 
-  let norm_es_for_par es = 
-    Ctx { es with es_formula = norm_f es es.es_formula }
-  in transform_list_failesc_context (idf, idf, norm_es_for_par) ctx 
+let norm_list_failesc_context_for_par norm_es ctx = 
+  let norm_es_for_par es = Ctx (norm_es es)
+    (* Ctx { es with es_formula = norm_f es es.es_formula } *)
+  in 
+  transform_list_failesc_context (idf, idf, norm_es_for_par) ctx 
 
 let compose_list_failesc_context_formula_for_par case_pre 
   (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =

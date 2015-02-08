@@ -2487,6 +2487,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
       	      es_imm_last_phase = fold_es.es_imm_last_phase;
               es_group_lbl = fold_es.es_group_lbl;
               es_term_err = fold_es.es_term_err;
+              es_conc_err = fold_es.es_conc_err;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	  let new_ctx = (Ctx new_es) in
           Debug.devel_zprint (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
@@ -13326,22 +13327,22 @@ and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formul
 (* while complex lemmas can be arbitary                            *)
 
 and normalize_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list) 
-  (h: h_formula) (p: MCP.mix_formula) (vp: CVP.vperm_sets) (fl:flow_formula) : 
-  (h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
+  (h: h_formula) (p: MCP.mix_formula) (vp: CVP.vperm_sets) (fl:flow_formula) pos: 
+  (CF.entail_state * h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
   (* let pr_es = Cprinter.string_of_entail_state in *)
   (* let pr_c = Cprinter.string_of_coerc_decl_list in *)
   let pr_h = Cprinter.string_of_h_formula in
   let pr_p = Cprinter.string_of_mix_formula in
   let pr_fl = Cprinter.string_of_flow_formula "" in
-  let pr_r (a, b, c, d) = pr_triple pr_h pr_p pr_fl (a, b, d) in
+  let pr_r (_, a, b, c, d) = pr_triple pr_h pr_p pr_fl (a, b, d) in
   Debug.no_3"normalize_w_coers" pr_h pr_p pr_fl pr_r
-  (fun _ _ _ -> normalize_w_coers_x prog estate coers h p vp fl) h p fl
+  (fun _ _ _ -> normalize_w_coers_x prog estate coers h p vp fl pos) h p fl
 
 and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list) 
-  (h:h_formula) (p:MCP.mix_formula) (vp: CVP.vperm_sets) (fl:flow_formula) : 
-  (h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
+  (h:h_formula) (p:MCP.mix_formula) (vp: CVP.vperm_sets) (fl:flow_formula) pos: 
+  (CF.entail_state * h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
   let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) (vp: CVP.vperm_sets) (fl:flow_formula): 
-    (h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
+    (CF.entail_state * h_formula * MCP.mix_formula * CVP.vperm_sets * flow_formula) =
     (* try to check whether the current estate with h=anode*rest and pure=p *)
     (* can entail the lhs of an coercion *)
     let process_one_x estate anode rest coer h p vp fl =
@@ -13448,7 +13449,11 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
       let new_es_heap = anode in (*consumed*)
       let old_trace = estate.es_trace in
-      let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(normalizing-" ^ coer.coercion_name ^")")::old_trace); es_is_normalizing = true} in
+      let new_estate = { estate with 
+        es_heap = new_es_heap; 
+        es_formula = f;
+        es_trace=(("(normalizing-" ^ coer.coercion_name ^")")::old_trace); 
+        es_is_normalizing = true } in
       let new_ctx1 = Ctx new_estate in
       let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
       (*prove extra heap + guard*)
@@ -13500,6 +13505,12 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                   let new_ante = Cformula.translate_set_comp_rel new_ante in
                   let h1,p1,vp1,fl1,_,_ = split_components new_ante in
                   let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
+                  let new_es =
+                    if (CF.formula_is_eq_flow coer_rhs !bfail_flow_int) then
+                      (* let _ = print_endline ("ERR: " ^ (coer.coercion_name) ^ (string_of_loc pos)) in *)
+                      { new_es with es_conc_err = new_es.es_conc_err @ [(coer.coercion_name, pos)]; }
+                    else new_es 
+                  in
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: new ctx: \n" ^ (Cprinter.string_of_entail_state new_es))) no_pos;
                   (true,new_es,h1,p1,vp1,fl1))
@@ -13522,7 +13533,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       match h_lst with
         | [] ->
           (* so far, could not find any entailment -> can not normalize *)
-          h,p,vp,fl
+          estate,h,p,vp,fl
         | (anode,rest)::xs ->
               (*for each pair (anode,rest), find a list of coercions*)
               let name = match anode with
@@ -13549,8 +13560,8 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                         then
                           (*restart and normalize the new estate*)
                           let res_es = CF.clear_entailment_history_es2 (fun x -> None) res_es in
-                          let res_h2,res_p2,res_vp2,res_fl2 = helper res_es res_h res_p res_vp res_fl in
-                          res_h2,res_p2,res_vp2,res_fl2 (*TOCHECK: why res_fl2 != res_fl*)
+                          let res_es,res_h2,res_p2,res_vp2,res_fl2 = helper res_es res_h res_p res_vp res_fl in
+                          res_es,res_h2,res_p2,res_vp2,res_fl2 (*TOCHECK: why res_fl2 != res_fl*)
                         else
                           (*otherwise, try the rest*)
                           process_one_coerc xs1
@@ -13644,17 +13655,17 @@ and normalize_formula_perm prog f = match f with
 and normalize_context_perm prog ctx = match ctx with
 	| OCtx (c1,c2)-> mkOCtx (normalize_context_perm prog c1) (normalize_context_perm prog c2) no_pos
 	| Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
-	  
-and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
-  if (!Globals.check_coercions) then f else
-  if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then f
-  else if !Globals.perm = Dperm then normalize_formula_perm prog f 
-  else if coers==[] then f
+
+and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl list) pos: CF.entail_state * formula =
+  if (!Globals.check_coercions) then (estate, f) else
+  if (isAnyConstFalse f ) (* || (!Globals.perm = NoPerm) *) then (estate, f)
+  else if !Globals.perm = Dperm then (estate, normalize_formula_perm prog f) 
+  else if coers==[] then (estate, f)
   else
     let coers = List.filter (fun c -> 
         match c.coercion_case with
           | Cast.Simple -> false
-          | Cast.Complex ->               if (c.coercion_type = Iast.Left) then true else false
+          | Cast.Complex -> if (c.coercion_type = Iast.Left) then true else false
           | Cast.Ramify -> false
           | Cast.Normalize false -> false
           | Cast.Normalize true -> true) coers
@@ -13668,13 +13679,14 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
               (* let t = b.formula_base_type in *)
               let fl = b.formula_base_flow in
               (* let br = b.formula_base_branches in *)
-              let nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) in
+              let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
               let np = remove_dupl_conj_mix_formula np in
-              Base {b with 
+              es, 
+              (Base { b with 
                 formula_base_heap=nh;
                 formula_base_pure=np;
                 formula_base_vperm=nvp;
-                formula_base_flow=nfl}
+                formula_base_flow=nfl })
         | Exists e ->
               let h = e.formula_exists_heap in
               let p = e.formula_exists_pure in
@@ -13682,23 +13694,25 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
               (* let t = e.formula_exists_type in *)
               let fl = e.formula_exists_flow in
               (* let br = e.formula_exists_branches in *)
-              let nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) in
+              let es,nh,np,nvp,nfl = normalize_w_coers prog estate coers h p vp (* t *) fl (* br *) pos in
               let np = remove_dupl_conj_mix_formula np in
+              es,
               Exists {e with 
                 formula_exists_heap=nh; 
                 formula_exists_pure=np;
                 formula_exists_vperm=nvp;
                 formula_exists_flow=nfl }
         | Or o ->
-	      let f1 = helper o.formula_or_f1 in
-	      let f2 = helper o.formula_or_f2 in
-              Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
+          let es1, f1 = helper o.formula_or_f1 in
+          let es2, f2 = helper o.formula_or_f2 in
+          let es = estate in
+          es, Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
     in 
     if coers ==[] then 
       begin
         (* let _ = print_endline ("No combine lemma in left coercion?") in *)
         Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
-        f
+        (estate, f)
       end
     else 
       begin
@@ -13710,6 +13724,13 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
         ^ "\n\n")) no_pos;
         helper f
       end
+
+and normalize_estate_w_coers prog estate (coers: coercion_decl list) pos: CF.entail_state =
+  let es, f = normalize_es_formula_w_coers prog estate estate.CF.es_formula coers pos in
+  { es with es_formula = f; }
+
+and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
+  snd (normalize_es_formula_w_coers prog estate f coers no_pos)
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   let fn = wrap_proving_kind  PK_Lemma_Norm (normalize_formula_w_coers_x  prog estate f) in
