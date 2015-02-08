@@ -2817,7 +2817,19 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
       end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-    else Term.check_loop_safety prog proc ctx (fst posts) pos pid in
+      else Term.check_loop_safety prog proc ctx (fst posts) pos pid 
+    in
+
+    (* Rho: print conc err, if any *)
+    let _ =
+      let conc_errs = CF.collect_conc_err_list_partial_context rs in
+      if is_empty conc_errs then ()
+      else 
+        let str_conc_err = pr_list 
+          (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
+        print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
+    in
+    
     (* let ctx = if (!Globals.allow_locklevel) then *)
     (*       (\*to maintain the information of locklevels on varables *)
     (*         whose scopes are within scope of this procedure only. *)
@@ -2901,16 +2913,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         Prooftracer.pop_div ();
 	(* print_endline "DONE!" *)
       end in
-    (* Rho: print conc err, if any *)
-    let _ =
-      let conc_errs = CF.collect_conc_err_list_partial_context rs in
-      if is_empty conc_errs then ()
-      else 
-        let str_conc_err = pr_list 
-          (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
-        print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
-    in
-    
+
     if (CF.isSuccessListPartialCtx_new rs) then
       rs
     else begin
