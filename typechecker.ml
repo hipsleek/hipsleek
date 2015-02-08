@@ -2822,7 +2822,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
 
     (* Rho: print conc err, if any *)
     let _ =
-      let conc_errs = CF.collect_conc_err_list_partial_context rs in
+      let conc_errs = CF.collect_conc_err_list_partial_context ctx in
       if is_empty conc_errs then ()
       else 
         let str_conc_err = pr_list 
