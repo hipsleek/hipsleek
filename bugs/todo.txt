@@ -1367,6 +1367,30 @@ infer [z@NI] x::node<z>   |- x::node<q>*q::lseg<z> .
 Can we support @NI or non-instantiating selective variable?
 
 ===================================================================
+# bugs/bug22b-infer5a.slk
+
+infer [x] true   |- x::node<3>.
+print residue.
+/*
+Expect : x::node<i1> & i1=3 
+
+Entail (1) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>htrue&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+# bugs/bug22-infer5a.slk
+
+infer [x] true   |- x::node<3,null>.
+print residue.
+
+Expect :: x::node<i1,i2> & i1=3 & i2=null
+
+Entail (4) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>htrue&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
 ===================================================================
 ===================================================================
 ===================================================================
