@@ -1021,8 +1021,23 @@ Total number of errors: 5 in files:
 
 Starting hip-sleek tests:
 Total number of errors: 9 in files:
-  infer/infer2.slk({E3#Valid},{E7#Valid},{E8#Valid}) infer/infer5a.slk({E2#Valid}) infer/infer8.slk({E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) fracperm/split_simple.slk(no result  for {E}) vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+  infer/infer2.slk({E3#Valid},{E7#Valid},{E8#Valid}) infer/infer5a.slk({E2#Valid}) infer/infer8.slk({E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+
+infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) 
+
+fracperm/split_simple.slk(no result  for {E}) vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+# errors at default
+
+Total number of errors: 6 in files:
+  infer/infer2.slk({E3#Valid},{E7#Valid},{E8#Valid}) infer/infer5a.slk({E2#Valid}) infer/infer8.slk({E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+
+infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+
 ====================================================================
 ====================================================================
 ====================================================================
