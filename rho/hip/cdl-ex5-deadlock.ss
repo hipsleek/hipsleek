@@ -47,8 +47,8 @@ void await(CDL c)
   
 void main()
   requires emp 
-  //ensures emp & flow __norm; // failed
-  ensures emp & flow __Fail; // ok
+  ensures emp & flow __norm; // failed
+//ensures emp & flow __Fail; // ok
 {
   cell p;
   CDL c = create_latch(2) with p'::cell<_>;
