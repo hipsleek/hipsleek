@@ -8,19 +8,23 @@ pred ll<n> == self = null & n = 0
   inv n >= 0.
 
 
-//(3)
+//(1)
 infer [x,y] b::node<2222,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 print residue.
 expect Fail.
+
+
 // TODO : "b" part of the inferred?
 // --baga-xpure (1) why is inf_b_91=1 inferred?
 //         this seems to be due to baga enuemration
 // --dis-baga-xpure (2) why this fail? (OK tro fail)
 
 
+//2
 infer [x,y,b] b::node<2222,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 print residue.
 expect Valid.
+
 
 /*
 # infer5.slk
@@ -37,10 +41,13 @@ Inferred Pure:[ inf_b_75=b & inf_flted_20_79=null]
 */
 
 
+//3
 infer [x] true   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
 print residue.
 expect Valid.
 
+
+//4
 infer [x] true   |- x::node<_,null>.
 print residue.
 /*
