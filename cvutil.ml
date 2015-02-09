@@ -1647,6 +1647,10 @@ let xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * 
       (fun (r1, _, r4) -> (Cprinter.string_of_mix_formula r1) ^ "#" ^ (Cprinter.string_of_mem_formula r4))
       (fun f0 -> xpure_x prog f0) f0
 
+let xpure_sym (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
+  (* print_string "calling xpure"; *)
+    xpure_symbolic 48 prog f0
+
 (**************************************)
 (****************END XPURE ***********)
 (**************************************)

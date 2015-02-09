@@ -215,7 +215,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
                     in
                     {pc with sp_rec_context = Some rec_ctx1}) path_conds
               in
-              let _ =  Debug.info_hprint (add_str "path_conds1" (pr_list print_sympath) ) path_conds1 no_pos in
+              let _ =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath) ) path_conds1 no_pos in
               path_conds1
   in
   (***************************************************************)
@@ -344,7 +344,7 @@ let find_rel_args_groups_x prog proc e0=
         exp_scall_method_name = mn;
         exp_scall_arguments = args;
         } ->
-            let _ =  Debug.info_hprint (add_str "SCall neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
+            let _ =  Debug.ninfo_hprint (add_str "SCall neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
             neqs
   in
   let rec split_args svl split non_split neqs=
@@ -388,7 +388,7 @@ let find_rel_args_groups_x prog proc e0=
           ) id_ni_args in
           (* analysize the source code to find x = y.next ==> x # y*)
           let neqs = find_must_neq_helper e0 [] in
-          let _ =  Debug.info_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
+          let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
             neqs no_pos in
           let args_split_conf = List.fold_left (fun r (hp,svl) ->
               if List.length svl <= 1 then r else

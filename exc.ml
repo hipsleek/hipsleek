@@ -150,7 +150,7 @@ let is_subset_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)
 
 (* is f1 an exact flow for subtype f2 *)
 let is_exact_flow_ne ((s1,b1):nflow) ((s2,b2):nflow) =
-       s1==s2 & b1==b2
+       s1==s2 && b1==b2
 
 (* let is_exact_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) = *)
 (*   if is_empty_flow f1 then *)
@@ -577,7 +577,7 @@ struct
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
   let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
-    if (is_empty_flow nf) or (is_false_flow nf) then (false_flow,1)
+    if (is_empty_flow nf) || (is_false_flow nf) then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow_ne nf n)) elist in
       match res with
@@ -925,7 +925,7 @@ struct
       else if s1<s2 then 2
       else -2
   let get_closest_new elist ((((min,max),lst):dflow) as nf):(string * int) =
-    if (is_empty_flow nf) or (is_false_flow nf) then (false_flow,1)
+    if (is_empty_flow nf) || (is_false_flow nf) then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow nf n)) elist in
       match res with

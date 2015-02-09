@@ -471,7 +471,7 @@ struct
     if (is_equal x y) then
       let (x_id,x_lst) =  x in
       let (_,y_lst) =  y in
-      let lst = x_lst@y_lst in
+      (* let lst = x_lst@y_lst in *)
       (x_id,x_lst@y_lst)
     else
       failwith ("cannot merge labels" ^ (string_of x) ^ " and " ^ (string_of y))

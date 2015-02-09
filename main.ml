@@ -918,8 +918,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Log.last_cmd # dumping "finalize on hip";
-  Log.process_proof_logging !Globals.source_files;
+  let _ = Log.last_cmd # dumping "finalize on hip" in
+  let _ = Log.process_proof_logging !Globals.source_files in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

@@ -760,6 +760,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let split_fixcalc = ref false (* present split is unsound *)
+
 let ptr_to_int_exact = ref false
 
 let is_sleek_running = ref false
@@ -930,7 +932,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_equiv_one = ref true
 
@@ -998,6 +1000,8 @@ let allow_frame = ref false
 let graph_norm = ref false
 
 let oc_simplify = ref true
+
+let oc_adv_simplify = ref true
 
 let graph_norm_instance_threshold = 1
 
@@ -1138,12 +1142,12 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
-(* Lvl 0 - add conjunctive pre to residue only *) 
-(* Lvl 1 - add all pre to residue *) 
-(* Lvl -1 - never add any pre to residue *) 
+(* Lvl 0 - add conjunctive pre to residue only *)
+(* Lvl 1 - add all pre to residue *)
+(* Lvl -1 - never add any pre to residue *)
 
 let check_coercions = ref false
 let dump_lemmas = ref false

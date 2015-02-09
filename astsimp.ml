@@ -1864,8 +1864,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 | None -> None
                 | Some lst ->
                   if List.length lst == 1 then
-	                let unf_baga = Cvutil.xpure_symbolic_baga prog body in
-                        Some (Expure.simplify unf_baga)
+                    let unf_baga = Cvutil.xpure_symbolic_baga prog body in
+                    Some (Expure.simplify unf_baga)
                   else Some (Expure.simplify lst) (* baga_over *)
           in
           if do_not_compute_flag then
@@ -1977,11 +1977,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (baga_over_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
       let under_f = vdef.C.view_baga_under_inv in
       (* WN : this is an update on under-approx to false if absent*)
-      let new_under = match under_f with
-        | None -> Excore.EPureI.mk_false_disj
-        | Some f -> f in
-      let _ = vdef.C.view_baga_under_inv <- Some new_under in
-      let under_f = vdef.C.view_baga_under_inv in
+      (* let new_under = match under_f with *)
+      (*   | None -> Excore.EPureI.mk_false_disj *)
+      (*   | Some f -> f in *)
+      (* let _ = vdef.C.view_baga_under_inv <- Some new_under in *)
+      (* let under_f = vdef.C.view_baga_under_inv in *)
       let baga_under_formula = match under_f with
         | None -> CP.mkFalse pos
         | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
@@ -2031,7 +2031,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             let _ = Debug.binfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw uf pf
       in
-      let under_fail = if (CP.is_False baga_under_formula) then false else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula))) in
+      let under_fail = match under_f with
+        | None -> false
+        | _ -> if (CP.is_False baga_under_formula) then (* false *) true else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+      in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
@@ -3345,8 +3348,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       else ()) ;
       (* let _ = print_endline ("Static spec list : " ^ proc.I.proc_name) in *)
       (* let _ = print_endline (Cprinter.string_of_struc_formula static_specs_list) in *)
-      let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
-      let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
+      (* only check procs from user-supplied *)
+      let _ = if proc.I.proc_is_main then
+        let _ = Cast.check_proper_return cret_type exc_list dynamic_specs_list in 
+        let _ = Cast.check_proper_return cret_type exc_list static_specs_list in 
+        ()
+      else ()
+      in
       (* let _ = print_string "trans_proc :: Cast.check_proper_return PASSED \n" in *)
       (* let _ = print_endline "WN : removing result here" in *)
       (* let n_tl = List.remove_assoc res_name n_tl in *)
@@ -10163,7 +10171,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let _ = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in
-  (*detect prdicates for graph optimization*)
+  (*detect predicates for graph optimization*)
   let cprog2 =
      if !Globals.norm_cont_analysis then
      let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.Cast.prog_view_decls in

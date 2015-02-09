@@ -1939,8 +1939,8 @@ let check_proper_return cret_type exc_list f =
 	| F.Base b->
               let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
-                & not(F.equal_flow_interval !top_flow_int fl_int) &&
+	      if b_rez && not(F.equal_flow_interval !error_flow_int fl_int)
+                && not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
 		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
