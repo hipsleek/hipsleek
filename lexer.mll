@@ -373,6 +373,7 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@term" { INFER_AT_TERM }
+  | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
   | "@imm" { INFER_AT_IMM }

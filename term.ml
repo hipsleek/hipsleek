@@ -427,7 +427,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
 
           (* Do boundedness check at recursive calls *)
           let estate =
-            if !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
+            if not !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
             then estate
             else
               let m = List.filter (fun e -> not (is_nat e) && 
@@ -1244,8 +1244,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                     if all_zero then
                       Debug.trace_hprint (add_str ("Phase to remove") !print_svl) rp no_pos
                     else begin
-                      Debug.info_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
-                      Debug.info_hprint (add_str "Phase Numbering"
+                      Debug.tinfo_hprint (add_str "Mutual Rec Group" (pr_list pr_id)) mutual_grp no_pos; 
+                      Debug.tinfo_hprint (add_str "Phase Numbering"
                           (pr_list (pr_pair !print_sv string_of_int))) subst no_pos
                     end;
                     let n_tbl = Cast.proc_decls_map (fun proc ->
