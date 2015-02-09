@@ -2507,28 +2507,84 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
-          (* if !Globals.gen_baga_inv then *)
-            let view_list = List.filter (fun vd ->
+            (* if !Globals.gen_baga_inv then *)
+            let view_list_baga0 = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
+            ) cviews0 in
+            let view_list_baga = List.map (fun vd ->
+                let new_un_struc_formula = List.map (fun (cf,lbl) ->
+                    let num_svl = List.filter CP.is_int_typ vd.Cast.view_vars in
+                    let new_cf = CF.wrap_exists num_svl cf in
+                    let _ = Debug.ninfo_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
+                    (new_cf,lbl)
+                ) vd.Cast.view_un_struc_formula in
+                {vd with Cast.view_un_struc_formula = new_un_struc_formula}
+            ) view_list_baga0 in
+            let view_list_num0 = List.filter (fun vd ->
+              List.mem vd.Cast.view_name idl
             ) cviews0_with_index in
-            let _ = Debug.ninfo_hprint (add_str "view_list" (pr_list Cprinter.string_of_view_decl)) view_list no_pos in
-            let new_view_list = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list) view_list in
-            let _ = Debug.ninfo_hprint (add_str "new_view_list" (pr_list Cprinter.string_of_view_decl)) new_view_list no_pos in
-            let new_invs = List.map (fun vd -> vd.Cast.view_x_formula) new_view_list in
-            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Cprinter.string_of_mix_formula)) new_invs no_pos in
-            let new_baga_invs = List.map (fun vd ->
-                let new_baga_inv = Cvutil.xpure_symbolic_baga3 cviews0_with_index (Cast.formula_of_unstruc_view_f vd) in
-                let new_baga_inv = List.map (fun (svl,pf) ->
-                    let idx = CP.mk_typed_spec_var Int "idx" in
-                    let new_pf_svl = CP.fv pf in
-                    let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl pf [idx] else pf in
-                    (svl,new_pf)
-                ) new_baga_inv in
-                let _ = Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_baga_inv in
-                new_baga_inv
-            ) cviews0_with_index in
-            let _ = Debug.ninfo_hprint (add_str "invs" (pr_list Excore.EPureI.string_of_disj)) new_baga_invs no_pos in
-            (* let _ = Expure.fix_ef view_list cviews0 in *)
+            let view_list_num = List.map (fun vd ->
+                let new_un_struc_formula = List.map (fun (cf,lbl) ->
+                    let baga_svl = List.filter (fun sv -> not (CP.is_int_typ sv)) vd.Cast.view_vars in
+                    let baga_svl = (* [CP.mk_spec_var "self"]@ *)baga_svl in (* btree not work when add self *)
+                    let new_cf = CF.wrap_exists baga_svl cf in
+                    (new_cf,lbl)
+                ) vd.Cast.view_un_struc_formula in
+                {vd with Cast.view_un_struc_formula = new_un_struc_formula}
+            ) view_list_num0 in
+            let _ = Expure.fix_ef view_list_baga cviews0 in
+            let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
+            let num_invs = List.map (fun vd -> vd.Cast.view_x_formula) view_list_num_with_inv in
+            let num_invs_wrap_index = List.map (fun mf ->
+                let pf = MCP.pure_of_mix mf in
+                let idx = CP.mk_typed_spec_var Int "idx" in
+                let root = CP.mk_spec_var "self" in (* because of btree *)
+                let pf_svl = CP.fv pf in
+                let exists_svl = List.filter (fun sv -> List.mem sv pf_svl) ([root]@[idx]) in
+                let new_pf = CP.wrap_exists_svl pf exists_svl in
+                Tpdispatcher.simplify new_pf
+            ) num_invs in
+            let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in
+            let _ = Debug.ninfo_hprint (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
+            let _ = Debug.ninfo_hprint (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
+            let baga_num_invs = List.combine baga_invs num_invs_wrap_index in
+            let combined_invs = List.map (fun (disj,pf) ->
+              let disj1 = List.hd (Excore.EPureI.mk_epure pf) in
+              let new_disj = List.map (fun disj2 -> Excore.EPureI.mk_star disj1 disj2) disj in
+              new_disj
+            ) baga_num_invs in
+            let _ = Debug.ninfo_hprint (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
+            let _ = List.iter (fun (vd,inv) ->
+                Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
+            ) (List.combine view_list_baga0 combined_invs) in
+            let rec unfold old_invs =
+              let new_invs = List.map (fun vd ->
+                  let new_inv = Cvutil.xpure_symbolic_baga3 cviews0 (Cast.formula_of_unstruc_view_f vd) in
+                  let new_inv = List.map (fun (svl,pf) ->
+                      let idx = CP.mk_typed_spec_var Int "idx" in
+                      let new_pf_svl = CP.fv pf in
+                      let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl pf [idx] else pf in
+                      (svl,new_pf)
+                  ) new_inv in
+                  let _ = Debug.ninfo_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
+                  new_inv
+              ) view_list_baga0 in
+              if List.length old_invs = 0 then
+                let _ = List.iter (fun (vd,new_inv) ->
+                    Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
+                ) (List.combine view_list_baga0 new_invs) in
+                unfold new_invs
+              else if List.for_all (fun (ante,cons) ->
+                  Excore.EPureI.imply_disj ante cons) (List.combine old_invs new_invs) then
+                old_invs
+              else
+                let _ = List.iter (fun (vd,new_inv) ->
+                    Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
+                ) (List.combine view_list_baga0 new_invs) in
+                unfold new_invs
+            in
+            let new_invs = unfold combined_invs in
+            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
             ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
@@ -5587,9 +5643,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       | { I.exp_catch_var = cv;
                       I.exp_catch_flow_type = cvt;
                       I.exp_catch_flow_var = cfv;
-                      I.exp_catch_body = cb;    
-                      I.exp_catch_pos = pos}->  
-                      if not (Exc.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+                      I.exp_catch_body = cb;
+                      I.exp_catch_pos = pos}->
+                      if not (Exc.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos;
                       Err.error_text = "can not catch a not raisable object" }
                       else begin
                       match cv with
@@ -5601,7 +5657,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       {C.exp_catch_flow_type = (Exc.get_hash_of_exc c_flow);
                       C.exp_catch_flow_var = cfv;
                       C.exp_catch_var = Some (Void,x);
-                      C.exp_catch_body = new_bd;                                                                                       
+                      C.exp_catch_body = new_bd;
                       C.exp_catch_pos = pos;} end
                       else begin
                       E.push_scope();
@@ -5617,17 +5673,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
                       C.exp_catch_flow_var = cfv;
                       C.exp_catch_var = Some (ct,alpha);
-                      C.exp_catch_body = new_bd;                                                                                       
+                      C.exp_catch_body = new_bd;
                       C.exp_catch_pos = pos;
                       } in r end
-                      | None ->  
+                      | None ->
                       E.push_scope();
                       let new_bd, ct2 = helper cb in
                       E.pop_scope();
                       { C.exp_catch_flow_type = Exc.get_hash_of_exc cvt;
                       C.exp_catch_flow_var = cfv;
                       C.exp_catch_var = None;
-                      C.exp_catch_body = new_bd;                                                                                       
+                      C.exp_catch_body = new_bd;
                       C.exp_catch_pos = pos;}
                       end
                   (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)

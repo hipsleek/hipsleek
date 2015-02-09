@@ -399,7 +399,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let output_of_sleek = "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
   let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
@@ -464,7 +464,7 @@ let compute_invs_fixcalc input_fixcalc=
     with _ ->
         (res)
   in
-  let output_of_sleek =  (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let output_of_sleek =  (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
   let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
@@ -674,7 +674,7 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = (* Globals.fresh_any_name *) "fixcalc"^(fix_num # str_get_next)^".inp" in
+  let output_of_sleek = (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
   let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
@@ -847,7 +847,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
   in
 
-  let output_of_sleek = if bottom_up then ("fixcalc"^(fix_num #str_get_next)^".inf") else "fixcalc.td" in
+  let output_of_sleek = if bottom_up then ("logs/fixcalc"^(* (fix_num #str_get_next)^ *)".inf") else "fixcalc.td" in
   let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;

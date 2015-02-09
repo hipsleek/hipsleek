@@ -13,12 +13,15 @@ open Excore
 open Cprinter
 
 let find_baga_inv view  =
-  match view.Cast.view_baga_inv with
-    | Some efpd -> efpd
-    | None ->
-          match view.Cast.view_baga_x_over_inv with
-            | Some efpd -> efpd
-            | None -> failwith "cannot find baga inv 2"
+  if !Globals.gen_baga_inv then
+    Hashtbl.find Excore.map_baga_invs view.Cast.view_name
+  else
+    match view.Cast.view_baga_inv with
+      | Some efpd -> efpd
+      | None ->
+            match view.Cast.view_baga_x_over_inv with
+              | Some efpd -> efpd
+              | None -> failwith "cannot find baga inv 2"
 
 let find_baga_under_inv view =
   match view.Cast.view_baga_under_inv with
@@ -136,14 +139,17 @@ let rec add_index_to_formula (cf : Cformula.formula) : Cformula.formula =
               Cformula.formula_exists_heap = new_eh;}
 
 let add_index_to_view view =
-  let sv = mk_typed_spec_var Int "idx" in
-  let svl0 = view.Cast.view_vars in
-  let new_un_sf = List.map (fun (cf,lbl) ->
-      (add_index_to_formula cf,lbl)
-  ) view.Cast.view_un_struc_formula in
-  {view with Cast.view_vars = svl0@[sv];
-      Cast.view_un_struc_formula = new_un_sf
-  }
+  if List.exists is_int_typ view.Cast.view_vars then
+    let sv = mk_typed_spec_var Int "idx" in
+    let svl0 = view.Cast.view_vars in
+    let new_un_sf = List.map (fun (cf,lbl) ->
+        (add_index_to_formula cf,lbl)
+    ) view.Cast.view_un_struc_formula in
+    {view with Cast.view_vars = svl0@[sv];
+        Cast.view_un_struc_formula = new_un_sf
+    }
+  else
+    view
 
 let add_index_to_views view_list =
   List.map (fun v -> add_index_to_view v) view_list
@@ -199,6 +205,8 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
           let view = List.find (fun vc -> vnf.Cformula.h_formula_view_name = vc.Cast.view_name) all_views in
           let self_var = Cpure.SpecVar (Named view.Cast.view_data_name, self, Unprimed) in
           let view_args = self_var::view.Cast.view_vars in
+          let _ = Debug.ninfo_hprint (add_str "view_args" (pr_list Cprinter.string_of_typed_spec_var)) view_args no_pos in
+          let _ = Debug.ninfo_hprint (add_str "svl" (pr_list Cprinter.string_of_typed_spec_var)) svl no_pos in
           let sst = List.combine view_args svl in
           (* TODO : below should be done using EPureI : DONE *)
           let efpd_h = EPureI.subst_epure_disj sst efpd in
@@ -277,6 +285,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           (* let efpd_h = build_ef_heap_formula bh all_views in *)
           (* let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in *)
           let efpd = build_ef_heap_formula_with_pure bh efpd_p all_views in
+          let _ = Debug.ninfo_hprint (add_str "efpd_n1" (EPureI.string_of_disj)) efpd no_pos in
           efpd
     | Cformula.Or orf ->
           let efpd1 = build_ef_formula orf.Cformula.formula_or_f1 all_views in
@@ -284,7 +293,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           let efpd = EPureI.mk_or_disj efpd1 efpd2 in
           let _ = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
           let efpd_n = EPureI.norm_disj efpd in
-          let _ = Debug.ninfo_hprint (add_str "efpd_n" (EPureI.string_of_disj)) efpd_n no_pos in
+          let _ = Debug.ninfo_hprint (add_str "efpd_n2" (EPureI.string_of_disj)) efpd_n no_pos in
           efpd_n
     | Cformula.Exists ef ->
           let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
@@ -299,7 +308,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           let efpd_e = EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd in
           let _ = Debug.ninfo_hprint (add_str "efpd_e" (EPureI.string_of_disj)) efpd_e no_pos in
           let efpd_n = EPureI.norm_disj efpd_e in
-          let _ = Debug.ninfo_hprint (add_str "efpd_n" (EPureI.string_of_disj)) efpd_n no_pos in
+          let _ = Debug.ninfo_hprint (add_str "efpd_n3" (EPureI.string_of_disj)) efpd_n no_pos in
           efpd_n
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
@@ -320,9 +329,9 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
   ) view_decl.Cast.view_un_struc_formula) in
   (* NOTE : should be already sorted/normalized! *)
   (* let disj = List.sort EPureI.epure_compare disj in *)
-  let _ = Debug.binfo_hprint (add_str "before norm" (EPureI.string_of_disj)) disj no_pos in
+  let _ = Debug.ninfo_hprint (add_str "before norm" (EPureI.string_of_disj)) disj no_pos in
   let disj_n = EPureI.norm_disj disj in
-  let _ = Debug.binfo_hprint (add_str "after norm" (EPureI.string_of_disj)) disj_n no_pos in
+  let _ = Debug.ninfo_hprint (add_str "after norm" (EPureI.string_of_disj)) disj_n no_pos in
   simplify disj_n
 
 let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list) : ef_pure_disj =
@@ -363,14 +372,10 @@ let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
 let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
-  let _ = print_endline "abcdef" in
   let _ = Debug.ninfo_hprint (add_str "view_list" (pr_list Cprinter.string_of_view_decl)) view_list no_pos in
   let inv_list = List.fold_left (fun inv_list vc ->
       inv_list@[(build_ef_view vc all_views)]) [] view_list in
-  let _ = print_endline "abcdef" in
   let rec helper num view_list inv_list =
-    let _ = print_endline (string_of_int (List.length view_list)) in
-    let _ = print_endline (string_of_int (List.length inv_list)) in
     let _ = Debug.ninfo_hprint (add_str "baga inv" (pr_list (pr_pair pr_id EPureI.string_of_disj)))
       (List.combine (List.map (fun vc -> vc.Cast.view_name) view_list) inv_list) no_pos in
     let (inv_list, fixed) = fix_test num view_list inv_list in
