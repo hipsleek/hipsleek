@@ -1014,8 +1014,15 @@ must fix loop when redlog absent error.
 # before merging with default
 
 Total number of errors: 5 in files:
-  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) fracperm/split_simple.slk(no result  for {E}) vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  fracperm/split_simple.slk(no result  for {E}) 
+  vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+     ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+     ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+     ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
 
 # after merging with default
 
