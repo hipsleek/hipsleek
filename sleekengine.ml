@@ -31,30 +31,42 @@ let string_of_vres t =
 (*       lhs rhs tl *)
 
 
-let proc_sleek_result_validate lc =
-  match lc with
-    | CF.FailCtx _ ->
-      if CF.is_must_failure lc then
-        if CF.is_sat_failure lc then
-          (* must fail + have cex*)
-          VR_Fail 1
-        else VR_Fail (-1)
-      else
-        if CF.is_may_failure lc then
-          (* may fail + have cex*)
-          VR_Fail 1
-        else VR_Fail (-1)
-    | CF.SuccCtx c -> 
-      match CF.get_must_error_from_ctx c with
-      | None -> VR_Valid
-      | (Some (_,cex)) -> if Cformula.is_sat_fail cex then VR_Fail 1 else (VR_Fail (-1))
+let proc_sleek_result_validate is_valid lc =
+  if not is_valid then
+  let final_error_opt = CF.get_final_error lc in
+  match final_error_opt with
+    | Some (_, fk) -> begin
+        match fk with
+          | CF.Failure_May _ -> VR_Fail 1
+          | CF.Failure_Must _ -> VR_Fail 1
+          | _ -> VR_Fail (-1) (* INCONSISTENCY *)
+      end
+    | None -> VR_Fail (-1) (* INCONSISTENCY *)
+  else VR_Valid
+  (* match lc with *)
+  (*   | CF.FailCtx _ -> *)
+  (*     if CF.is_must_failure lc then *)
+  (*       if CF.is_sat_failure lc then *)
+  (*         (\* must fail + have cex*\) *)
+  (*         VR_Fail 1 *)
+  (*       else VR_Fail (-1) *)
+  (*     else *)
+  (*       if CF.is_may_failure lc then *)
+  (*         (\* may fail + have cex*\) *)
+  (*         VR_Fail 1 *)
+  (*       else VR_Fail (-1) *)
+  (*   | CF.SuccCtx c ->  *)
+  (*     match CF.get_must_error_from_ctx c with *)
+  (*     | None -> VR_Valid *)
+  (*     | (Some (_,cex)) -> if Cformula.is_sat_fail cex then VR_Fail 1 else (VR_Fail (-1)) *)
+
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
-let proc_sleek_result_validate lc =
+let proc_sleek_result_validate b lc =
   Debug.no_1 "proc_sleek_result_validate" 
   Cprinter.string_of_list_context_short string_of_vres 
-  proc_sleek_result_validate lc
+  (fun _ -> proc_sleek_result_validate b lc) lc
 
 module H = Hashtbl
 module I = Iast
@@ -1519,7 +1531,6 @@ let process_validate exp_res ils_es =
   let res_str = ref "" in
   (*get current residue -> FAIL? VALID*)
   let rs = !CF.residues in
-  (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
           let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
@@ -1535,15 +1546,15 @@ let process_validate exp_res ils_es =
           false, [], []
     | Some (lc, res, ldfa) -> 
           begin (*res*)
-            let res = proc_sleek_result_validate lc in
+            let res = proc_sleek_result_validate res lc in
             let unexp =
               match res, exp_res with
                 | VR_Valid, VR_Valid -> None
                 | VR_Fail n1, VR_Fail n2 -> 
                       if n2==0 then None
                       else if n1==n2 then None
-                      else Some( "Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
-                | _,_ -> Some ("Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                      else Some( "Expecting"^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
               | None -> res_str := "OK"

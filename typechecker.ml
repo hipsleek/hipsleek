@@ -695,12 +695,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    CF.formula_assume_vars = var_ref;
 	    CF.formula_assume_simpl = post_cond;
 	    CF.formula_assume_lbl = post_label;
-	    CF.formula_assume_ensures_type = etype; (* duplicate??? *)
+	    CF.formula_assume_ensures_type = etype0; (* duplicate??? *)
 	    CF.formula_assume_struc = post_struc} ->
             (* let _ = cond_path # reset in *)
             (* let _ = cond_path # push 0 in *)
             let ctx = CF.add_path_id ctx (None,0) 0 in
-            let etype = if !Globals.do_classic_frame_rule then Some (!Globals.do_classic_frame_rule) else None in
+            let etype = if !Globals.do_classic_frame_rule then Some (!Globals.do_classic_frame_rule) else
+              (* run-fast-test: classic2, classic2a *)
+               etype0  (* None *)
+            in
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
