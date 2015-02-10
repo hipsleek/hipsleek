@@ -8,7 +8,7 @@ let wrap_exception dval f e =
 
 let wrap_num_disj f n a b c d =
   let old_disj = !fixcalc_disj in
-  fixcalc_disj := n;
+  fixcalc_disj := max n old_disj;
   try
     let res = f a b c d in
     fixcalc_disj := old_disj;
