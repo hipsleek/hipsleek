@@ -2531,7 +2531,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let view_list_num = List.map (fun vd ->
                 let new_un_struc_formula = List.map (fun (cf,lbl) ->
                     let baga_svl = List.filter (fun sv -> not (CP.is_int_typ sv)) vd.Cast.view_vars in
-                    let baga_svl = [CP.mk_spec_var "self"]@baga_svl in (* btree not work when add self *)
+                    let baga_svl = [CP.mk_spec_var "self"]@baga_svl in
                     let new_cf = CF.wrap_exists baga_svl cf in
                     (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
@@ -2543,10 +2543,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let num_invs_wrap_index = List.map (fun mf ->
                 let pf = MCP.pure_of_mix mf in
                 let idx = CP.mk_typed_spec_var Int "idx" in
-                let root = CP.mk_spec_var "self" in (* because of btree *)
                 let pf_svl = CP.fv pf in
-                let exists_svl = List.filter (fun sv -> List.mem sv pf_svl) ([root]@[idx]) in
-                let new_pf = CP.wrap_exists_svl pf exists_svl in
+                let new_pf = if List.mem idx pf_svl then CP.wrap_exists_svl pf [idx] else pf in
                 Tpdispatcher.simplify new_pf
             ) num_invs in
             let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in

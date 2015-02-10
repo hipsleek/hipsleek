@@ -143,7 +143,7 @@ let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
-    "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
+    "" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ "" (* baga/infer/btree.slk *)
   | CP.AndList b -> 
     (match b with 
     | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
@@ -457,6 +457,7 @@ let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=
   (input_fixcalc)
 
 let slk2fix_header disj_num vnames=
+  let _ = DD.ninfo_hprint (add_str "vnames" (pr_list pr_id)) vnames no_pos in
   let ls_vnames = String.concat "," vnames in
   let ls_disj_nums=  String.concat "," (List.map (fun _ -> string_of_int disj_num) vnames) in
   let _ = DD.ninfo_hprint (add_str "ls_vnames" pr_id) ls_vnames no_pos in
@@ -631,7 +632,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
           view.Cast.view_un_struc_formula view.Cast.view_name view.Cast.view_data_name view.Cast.view_vars in
         (r1 ^ "\n" ^ fixc_body, r2@[view.Cast.view_name], r3@[(view.Cast.view_name,fr_vars, rev_sst)])
     ) ("",[],[]) mutrec_views in
-    let fixc_header = slk2fix_header 1 vnames in
+    let fixc_header = slk2fix_header 3 vnames in
     let input_fixcalc  =  fixc_bodys ^ fixc_header in
     let _ = DD.ninfo_hprint (add_str "Input of fixcalc " pr_id) input_fixcalc no_pos in
     let _ =
