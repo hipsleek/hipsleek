@@ -1,0 +1,80 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node q).
+HeapPred H2(node q, int n).
+
+//(3)
+infer [q] q!=null |- q::ll<n> .
+print residue.
+
+/*
+Should it not be:
+ q::ll<n>?
+However, n is not an inferrable var.
+
+Entail (3) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>emp&q!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+//(7)
+infer [n,q] n=0 |- q::ll<n> .
+print residue.
+
+/*
+Should it not be:
+   q=null?
+
+Entail (7) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>emp&n=0&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+//(8)
+infer [q,n] n=0 |- q::ll<n> .
+print residue.
+/*
+// equiv to q=null
+Inferred Heap:[ q::ll<inf_n_101>[Orig][LHSCase]]
+Inferred Pure:[ inf_n_101=0]
+<1>true & n=0 & inf_n_101=0 &
+{FLOW,(17,18)=__norm}
+*/
+
+infer [q,n] true |- q::ll<n> .
+print residue.
+/*
+Why can't we handle the above?
+
+Entail (4) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>htrue&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+infer [H2] H2(q,n) |- q::ll<n> .
+print residue.
+/*
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(q,n@NI)&true --> q::ll<n>&true]
+[[ COND ==>  InferHeap ==> ]]
+*/
+
+infer [H1] H1(q) |- q::ll<n> .
+print residue.
+/*
+Is below correct?
+
+ <1>emp&n=n_88&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H1(q)&true --> q::ll<n_88>&true]
+*/
+

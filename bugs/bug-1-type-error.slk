@@ -1,0 +1,68 @@
+
+
+/* 15: Valid */
+
+//1
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]]=6.
+
+//2
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]]>5.
+
+//3
+checkentail
+   a[5]=3 & a[3]=6 & a[6]=3
+   |- a[a[5]] = a[a[6]].
+
+
+//4
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]]=6.
+
+//5
+checkentail
+   a[5]=3 & a[3]=6
+   |- 5 < a[a[5]].
+
+
+
+/*
+# bug-1.slk
+
+ type-error
+
+ERROR: at _0:-1_0:-1
+Message: with 2 convert expected the same cexp types, found different types
+File "bug-1-type-error.slk", line 6, characters 14-15
+ error: Failure("with 2 convert expected the same cexp types, found different types")
+ at:error at:
+SLEEK FAILURE (END)
+
+*/
+
+infer [a]
+  true
+  |- 1 < a[3] + 6.
+
+infer [a]
+  true
+  |- a[3] + 6> 1.
+
+
+infer [a]
+  true
+  |- 6 + a[3] > 1.
+
+
+/*
+ERROR: at bug-1-type-error.slk_26:5_26:13
+Message: Ununified type in 2 expressions 3
+File "bug-1-type-error.slk", line 26, characters 16-17
+ error: Failure("Ununified type in 2 expressions 3")
+ at:error at:
+SLEEK FAILURE (END)
+*/
