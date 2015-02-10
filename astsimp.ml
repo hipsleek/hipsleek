@@ -4276,7 +4276,24 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               helper new_e)
             else if not (I.is_num e1) && not (I.is_num e2) && (I.is_mult_op b_op) then
               let new_e = I.CallNRecv {
-                  I.exp_call_nrecv_method = "mults___";
+                  (* mults for linearizing non-linear mult *)
+                  (* sv-comp/termination-numeric/LogRecursive_true-termination *)
+                  I.exp_call_nrecv_method = "mults___"; 
+                  I.exp_call_nrecv_lock = None;
+                  I.exp_call_nrecv_arguments = [ e1; e2 ];
+                  I.exp_call_nrecv_path_id = pid;
+                  I.exp_call_nrecv_pos = pos; } in 
+              helper new_e
+            else if not (I.is_num e2) && (I.is_div_op b_op) then
+              let new_e = I.CallNRecv {
+                  (* mults for linearizing non-linear div *)
+                  (* sv-comp/termination-numeric/ex1_true-termination              *)
+                  (* sv-comp/termination-memory-alloca/ex1-alloca_true-termination *)
+                  (* sv-comp/termination-numeric/ex2_true-termination              *)
+                  (* sv-comp/termination-memory-alloca/ex2-alloca_true-termination *)
+                  (* sv-comp/termination-numeric/ex3a_true-termination             *)
+                  (* sv-comp/termination-numeric/ex3b_true-termination             *)
+                  I.exp_call_nrecv_method = "divs___"; 
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
                   I.exp_call_nrecv_path_id = pid;

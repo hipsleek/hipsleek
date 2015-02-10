@@ -1264,7 +1264,8 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
     ) 1 input_pairs in
-    Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up
+    (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
+    compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
