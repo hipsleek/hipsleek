@@ -38,7 +38,13 @@ struct
 
   let pr_id x = x
   let pr_string x = "\""^x^"\""
-  
+  let opt_map f v = match v with Some a -> Some (f a) | None -> None 
+  let concatMap f xs =
+    let rec aux xs = match xs with
+      | [] -> []
+      | (x::xs) -> (f x)@(aux xs)
+    in aux xs
+
   let print_endline_quiet s =
     let flag = !Globals.compete_mode in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
