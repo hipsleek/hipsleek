@@ -30,6 +30,7 @@ module Chk = Checks
 (* module PRED = Predicate *)
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
+open IastUtil
 
 
 type trans_exp_type =
@@ -3139,22 +3140,33 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
   let body = proc.I.proc_body in
   if new_vs==[] || body==None then proc
   else
-    (* TODO(WN): check if range(new_vs) clash with free_vars of body *)
+    (* DONE(WN): check if range(new_vs) clash with free_vars of body *)
+    let exp_vs = match body with 
+        Some body ->IastUtil.find_free_vars_only body 
+      | None -> IS.empty in 
+    (* let el = IS.elements exp_vs in *)
+    (* let _ = Debug.binfo_hprint (add_str "free vars body" (pr_list pr_id)) el no_pos in *)
     let vs2 = List.map (fun (v,n) -> (v,String.sub v 0 n)) new_vs in 
-    let new_body = opt_map (rename_exp vs2) proc.I.proc_body in
-    let sst = concatMap (fun (v1,v2) -> 
-        [((v1,Unprimed),(v2,Unprimed));((v1,Primed),(v2,Primed))]) vs2 in
-    let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
-    let new_vs = List.map (fun s ->
-        {s with I.param_name = rename_var vs2 s.I.param_name}) vs in
-    let _ = Debug.binfo_hprint (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
-    let _ = Debug.tinfo_hprint (add_str "renamed specs" Iprinter.string_of_struc_formula) new_static_specs no_pos in
-    let _ = Debug.tinfo_hprint (add_str "renamed body" (pr_opt Iprinter.string_of_exp)) new_body no_pos in
-    let _ = Debug.tinfo_hprint (add_str "renamed proc params" Iprinter.string_of_param_list) new_vs no_pos in
-    { proc with I.proc_static_specs = new_static_specs;
-        I.proc_body = new_body;
-        I.proc_args = new_vs;
-    }
+    let clash_flag = IS.exists (fun v -> List.exists (fun (_,n) -> v=n) vs2) exp_vs in
+    let _ = Debug.tinfo_hprint (add_str "clash_flag" (string_of_bool)) clash_flag no_pos in
+    if clash_flag then
+      (* do not rename if there is some name clash *)
+      proc
+    else
+      let new_body = opt_map (rename_exp vs2) proc.I.proc_body in
+      let sst = concatMap (fun (v1,v2) -> 
+          [((v1,Unprimed),(v2,Unprimed));((v1,Primed),(v2,Primed))]) vs2 in
+      let new_static_specs = Iformula.subst_struc sst proc.I.proc_static_specs in
+      let new_vs = List.map (fun s ->
+          {s with I.param_name = rename_var vs2 s.I.param_name}) vs in
+      let _ = Debug.binfo_hprint (add_str "renaming proc" (pr_list (pr_pair pr_id pr_id))) vs2 no_pos in
+      let _ = Debug.tinfo_hprint (add_str "renamed specs" Iprinter.string_of_struc_formula) new_static_specs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "renamed body" (pr_opt Iprinter.string_of_exp)) new_body no_pos in
+      let _ = Debug.tinfo_hprint (add_str "renamed proc params" Iprinter.string_of_param_list) new_vs no_pos in
+      { proc with I.proc_static_specs = new_static_specs;
+          I.proc_body = new_body;
+          I.proc_args = new_vs;
+      }
 
 (*
   This is for auxiliary procedures that represent loops.
