@@ -364,7 +364,7 @@ let solve_turel_one_scc prog trrels tg scc =
     (fun _ -> solve_turel_one_scc prog trrels tg scc) tg
   
 let finalize_turel_graph prog tg =
-  print_endline_quiet "Termination Inference Result:";
+  print_web_mode "Termination Inference Result:";
   (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   

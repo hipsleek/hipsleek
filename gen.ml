@@ -50,6 +50,14 @@ struct
     if !Globals.compete_mode then () 
     else print_string s 
 
+  let print_web_mode s = 
+    if !Globals.tnt_web_mode then print_endline s
+    else print_endline_quiet s 
+
+  let print_string_web_mode s = 
+    if !Globals.tnt_web_mode then print_string s
+    else print_string_quiet s 
+
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"
     | Globals.Unprimed -> id

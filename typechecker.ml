@@ -2943,7 +2943,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		    print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 		  if pr_flag then
                     begin
-                      print_string_quiet (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+                      print_string_web_mode (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
                       (* print_string_quiet ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
 		      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		      Debug.devel_zprint (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
@@ -3381,7 +3381,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                         if !Globals.web_compile_flag then
                           print_string_quiet ("\nProcedure <b>"^proc.proc_name^"</b> <font color=\"blue\">SUCCESS</font>.\n")
                         else
-                          print_string_quiet ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                          print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
 	              else
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                         if !Globals.web_compile_flag then
@@ -3393,7 +3393,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             else ())
                           end
                         else
-                          print_string_quiet ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
+                          print_web_mode ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
                     end;
 	      	  pp
 	        end
@@ -3524,8 +3524,8 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     if !Globals.check_all then begin
       (* dummy_exception(); *)
       let _ = Infer.rel_ass_stk # reset in
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
-      print_string_quiet ("\nException "^(Printexc.to_string e)^" Occurred!\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
+      print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       print_backtrace_quiet ();
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       Log.last_cmd # dumping (proc.proc_name^" FAIL2");
@@ -3610,7 +3610,7 @@ let check_proc_wrapper_map iprog prog (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(3)\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(3)\n");
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -3621,7 +3621,7 @@ let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(4)\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(4)\n");
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
