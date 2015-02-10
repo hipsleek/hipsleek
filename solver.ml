@@ -8469,7 +8469,7 @@ type: bool *
       let cex = Slsat.check_sat_empty_rhs_with_uo estate_orig lhs (MCP.pure_of_mix rhs_p) rhs_matched_set in
       let is_sat = CF.is_sat_fail cex in
       if not !disable_failure_explaining then
-        let new_estate = {
+        let new_estate = if !Globals.enable_error_as_exc then {
             estate with es_formula =
                 match fc_kind with
                   | CF.Failure_Must _ -> CF.substitute_flow_into_f !error_flow_int estate.es_formula
@@ -8479,7 +8479,7 @@ type: bool *
                         (* this denotes a maybe error *)
                   | CF.Failure_Bot _ -> estate.es_formula
                   | CF.Failure_Valid -> estate.es_formula
-        } in
+        } else estate in
         let fc_template = {
 	        fc_message = "??? 4785";
 	        fc_current_lhs  = new_estate;

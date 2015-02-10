@@ -86,35 +86,6 @@ let sleek_unsat_check isvl cprog ante=
   [])
 
 
-(* let check_unsat cprog ante init_ctx= *)
-(*   (\* let _ = print_endline ("1") in *\) *)
-(*   (\* let es = match init_ctx with *\) *)
-(*   (\*   | CF.Ctx es -> es *\) *)
-(*   (\*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *\) *)
-(*   (\* in *\) *)
-(*   let helper f= *)
-(*     (\* let f1 = Frame.norm_dups_pred cprog f in *\) *)
-(*     Solver.unsat_base_nth 1 cprog (ref 1) f *)
-(*   in *)
-(*   let fs = (\* (Frame.heap_normal_form cprog ante) *\)  [ ante] in *)
-(*   let rec loop_helper fs= *)
-(*     match fs with *)
-(*       | [] -> false, None *)
-(*       | f::rest -> *)
-(*             let res1 = helper f in *)
-(*             if res1 then (true,Some f) else *)
-(*             loop_helper rest *)
-(*   in *)
-(*   let r,fail_of = *)
-(*     match fs with *)
-(*       | [] -> report_error no_pos "sleekengine.check_unsat" *)
-(*       | _ -> loop_helper fs *)
-(*   in *)
-(*   if r then (true, CF.SuccCtx [init_ctx], []) *)
-(*   else (false, CF.FailCtx (CF.Trivial_Reason *)
-(*       ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])), *)
-(*   []) *)
-
 let sleek_entail prog ante_ctx conseq pos=
   let pid = None in
   let ante_failesc_ctx = [([],[],[([], ante_ctx, None)])] in
