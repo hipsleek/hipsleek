@@ -3809,4 +3809,5 @@ let _ =
   Cast.imply_raw := imply_raw;
   Excore.is_sat_raw := is_sat_raw;
   Excore.simplify_raw := simplify_raw;
+  Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := simplify_omega;

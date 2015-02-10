@@ -14,6 +14,7 @@ open Cpure
 
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
+let pairwisecheck = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
 
 
 let simplify_conj simp f =
@@ -675,6 +676,9 @@ struct
 
   let simplify_disj (disj : epure_disj) : epure_disj =
     List.map (fun (baga,pf) -> (baga,simplify_with_label_omega pf)) disj
+
+  let pairwisecheck_disj (disj : epure_disj) : epure_disj =
+    List.map (fun (baga,pf) -> (baga,!pairwisecheck pf)) disj
 
 (*
             List.map (fun (baga, eq, ineq) ->

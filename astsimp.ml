@@ -2651,7 +2651,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         List.map (fun cv ->
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) (Excore.EPureI.simplify_disj inv) no_pos in
+            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) (Excore.EPureI.pairwisecheck_disj inv) no_pos in
             let _ = print_string_quiet "\n" in
             if precise then
               match cv.Cast.view_baga_inv with
