@@ -673,6 +673,9 @@ struct
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
 
+  let simplify_disj (disj : epure_disj) : epure_disj =
+    List.map (fun (baga,pf) -> (baga,simplify_with_label_omega pf)) disj
+
 (*
             List.map (fun (baga, eq, ineq) ->
               let new_baga = subst_var_list sst baga in

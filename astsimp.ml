@@ -2539,7 +2539,12 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ) view_list_num0 in
             let _ = Expure.fix_ef view_list_baga cviews0 in
             let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
-            let num_invs = List.map (fun vd -> vd.Cast.view_x_formula) view_list_num_with_inv in
+            let num_invs = List.map (fun vd ->
+                if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then
+                  vd.Cast.view_user_inv
+                else
+                  vd.Cast.view_x_formula
+            ) view_list_num_with_inv in
             let num_invs_wrap_index = List.map (fun mf ->
                 let pf = MCP.pure_of_mix mf in
                 let idx = CP.mk_typed_spec_var Int "idx" in
@@ -2595,7 +2600,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             in
             let precise_list = List.map (fun (vd, num_inv) ->
                 let is_precise_num =
-                  if CP.isConstTrue num_inv then true
+                  if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then true
+                  else if CP.isConstTrue num_inv then true
                   else
                     let body = CF.project_body_num vd.Cast.view_un_struc_formula num_inv vd.Cast.view_vars in
                     let root = CP.mk_spec_var "self" in
@@ -2645,7 +2651,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         List.map (fun cv ->
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) (Excore.EPureI.simplify_disj inv) no_pos in
             let _ = print_string_quiet "\n" in
             if precise then
               match cv.Cast.view_baga_inv with
