@@ -3136,8 +3136,10 @@ and rename_proc (proc: I.proc_decl) : I.proc_decl =
   let new_vs = List.combine p_vs p_pos in
   let new_vs = List.filter (fun (_,n) -> n>0) new_vs in
   (* let _ = Debug.binfo_hprint (add_str "proc params" Iprinter.string_of_param_list) vs no_pos in *)
-  if new_vs==[] then proc
+  let body = proc.I.proc_body in
+  if new_vs==[] || body==None then proc
   else
+    (* TODO(WN): check if range(new_vs) clash with free_vars of body *)
     let vs2 = List.map (fun (v,n) -> (v,String.sub v 0 n)) new_vs in 
     let new_body = opt_map (rename_exp vs2) proc.I.proc_body in
     let sst = concatMap (fun (v1,v2) -> 
