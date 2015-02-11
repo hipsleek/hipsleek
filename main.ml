@@ -939,8 +939,12 @@ let old_main () =
     print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
     print_string_quiet ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)
-    if (!Globals.svcomp_compete_mode) then
-      print_endline "UNKNOWN"; (* UNKNOWN(5) *)
+    (
+    if !Globals.tnt_web_mode then
+      print_web_mode ("\nError: " ^ (Printexc.to_string e))
+    else if (!Globals.svcomp_compete_mode) then
+      print_endline "UNKNOWN" (* UNKNOWN(5) *)
+    )
   end
 
 let _ = 
@@ -969,8 +973,12 @@ let _ =
           print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
           print_string_quiet ("\nError4(s) detected at main \n");
           (* print result for svcomp 2015 *)
-          if (!Globals.svcomp_compete_mode) then
+          (
+          if !Globals.tnt_web_mode then
+            print_web_mode ("\nError: " ^ (Printexc.to_string e))
+          else if (!Globals.svcomp_compete_mode) then
             print_endline "UNKNOWN" (* UNKNOWN(7) *)
+          )
         end
     done;
     hip_epilogue ()

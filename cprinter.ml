@@ -3298,13 +3298,13 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
 let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" ""
+    pr_args (Some("V",2)) (Some "A") "case " "{" "}" ""
     (
       fun (c1,c2) -> wrap_box ("B", 0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
         (fun () ->
           fmt_cut (); 
           fmt_open_vbox 2;
-          wrap_box ("B",0) pr_struc_formula_for_spec c2);
+          wrap_box ("V",2) pr_struc_formula_for_spec c2);
           fmt_close ();
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;

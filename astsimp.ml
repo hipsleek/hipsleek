@@ -1404,8 +1404,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = if (!Globals.perm = Globals.Dperm)
-  then I.add_bar_inits prog4 
-  else prog4
+    then I.add_bar_inits prog4 
+    else prog4
   in
   (*let _ = print_string (Iprinter.string_of_program prog4) in*)
   let prog4 = if not (!do_infer_inc) then prog4 else
@@ -2495,37 +2495,37 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           (* if !Globals.gen_baga_inv then *)
-          let view_list = List.filter (fun vd ->
-              List.mem vd.Cast.view_name idl
-          ) cviews0 in
-          let _ = Expure.fix_ef view_list cviews0 in ()
-                                                         (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
-                                                         (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
-                                                         (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
-                                                         (*     Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in *)
-                                                         (* let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in *)
-                                                         (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
-                                                         (* let lst = List.combine view_list new_invs_list in *)
-                                                         (* let baga_stronger = List.for_all *)
-                                                         (*   (fun (vd,bi) -> *)
-                                                         (*       match vd.Cast.view_baga_inv with *)
-                                                         (*         | None -> true *)
-                                                         (*         | Some uv -> *)
-                                                         (*               let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in *)
-                                                         (*               Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv *)
-                                                         (*   ) lst in *)
-                                                         (* let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in *)
-                                                         (* Debug.binfo_hprint pr lst no_pos; *)
-                                                         (* if (not baga_stronger) then ( *)
-                                                         (*     () *)
-                                                         (* Debug.binfo_pprint "not baga_stronger\n" no_pos; *)
-                                                         (* Globals.dis_inv_baga () *)
-                                                         (* ) else *)
-                                                         (*   () *)
-                                                         (* update with stronger baga invariant *)
-                                                         (* () *)
-                                                         (* let new_map = List.combine views_list new_invs_list in *)
-                                                         (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)
+            let view_list = List.filter (fun vd ->
+                List.mem vd.Cast.view_name idl
+            ) cviews0 in
+            let _ = Expure.fix_ef view_list cviews0 in ()
+            (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
+            (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
+            (* let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> *)
+            (*     Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in *)
+            (* let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in *)
+            (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
+            (* let lst = List.combine view_list new_invs_list in *)
+            (* let baga_stronger = List.for_all *)
+            (*   (fun (vd,bi) -> *)
+            (*       match vd.Cast.view_baga_inv with *)
+            (*         | None -> true *)
+            (*         | Some uv -> *)
+            (*               let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in *)
+            (*               Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv *)
+            (*   ) lst in *)
+            (* let pr = pr_list (pr_pair (fun vd -> vd.Cast.view_name)  Cprinter.string_of_ef_pure_disj) in *)
+            (* Debug.binfo_hprint pr lst no_pos; *)
+            (* if (not baga_stronger) then ( *)
+            (*     () *)
+            (* Debug.binfo_pprint "not baga_stronger\n" no_pos; *)
+            (* Globals.dis_inv_baga () *)
+            (* ) else *)
+            (*   () *)
+            (* update with stronger baga invariant *)
+            (* () *)
+            (* let new_map = List.combine views_list new_invs_list in *)
+            (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)
       ) ls_mut_rec_views1 in
       let cviews1 = (* if !Globals.gen_baga_inv then *)
         List.map (fun cv ->
@@ -2596,42 +2596,42 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
   let pos = tdef.I.templ_pos in
   let c_ret_typ = trans_type prog tdef.I.templ_ret_typ pos in
   let c_params = List.map (fun (t, n) -> 
-      CP.SpecVar (trans_type prog t pos, n, Unprimed)) tdef.I.templ_typed_params in 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) tdef.I.templ_typed_params in 
   let n_tl = List.map (fun (t, n) -> 
-      (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
   let c_body = match tdef.I.templ_body with
-    | None -> 
-          let unk_coes = List.map 
-            (fun (t, n) -> CP.SpecVar (trans_type prog t pos, tdef.I.templ_name ^ "_" ^ n, Unprimed)) 
-            tdef.I.templ_typed_params in 
-          let unk_const = CP.SpecVar (Int, tdef.I.templ_name ^ "_" ^ (string_of_int 0), Unprimed) in
-          let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
-          let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
-            (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
-          Some body
-    | Some bd -> 
-          let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
-          Some (trans_pure_exp bd (fst n_tl))
+  | None -> 
+    let unk_coes = List.map 
+      (fun (t, n) -> CP.SpecVar (trans_type prog t pos, tdef.I.templ_name ^ "_" ^ n, Unprimed)) 
+      tdef.I.templ_typed_params in 
+    let unk_const = CP.SpecVar (Int, tdef.I.templ_name ^ "_" ^ (string_of_int 0), Unprimed) in
+    let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
+    let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
+      (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
+    Some body
+  | Some bd -> 
+    let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+    Some (trans_pure_exp bd (fst n_tl))
   in
   let c_templ = {
-      C.templ_name = tdef.I.templ_name;
-      C.templ_ret_typ = c_ret_typ;
-      C.templ_params = c_params;
-      C.templ_body = c_body;
-      C.templ_pos = pos; } in
+    C.templ_name = tdef.I.templ_name;
+    C.templ_ret_typ = c_ret_typ;
+    C.templ_params = c_params;
+    C.templ_body = c_body;
+    C.templ_pos = pos; } in
   C.templ_decls # push c_templ; c_templ
-      
+  
 and trans_ut (prog: I.prog_decl) (utdef: I.ut_decl): C.ut_decl =
   let pos = utdef.I.ut_pos in
   let c_params = List.map (fun (t, n) -> 
-      CP.SpecVar (trans_type prog t pos, n, Unprimed)) utdef.I.ut_typed_params in 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) utdef.I.ut_typed_params in 
   let n_tl = List.map (fun (t, n) -> 
-      (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) utdef.I.ut_typed_params in
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) utdef.I.ut_typed_params in
   let c_ut = {
-      C.ut_name = utdef.I.ut_name;
-      C.ut_params = c_params;
-      C.ut_is_pre = utdef.I.ut_is_pre;
-      C.ut_pos = pos; } in
+    C.ut_name = utdef.I.ut_name;
+    C.ut_params = c_params;
+    C.ut_is_pre = utdef.I.ut_is_pre;
+    C.ut_pos = pos; } in
   c_ut
 
 and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
@@ -3076,10 +3076,10 @@ and check_return (proc : I.proc_decl) : bool =
   match proc.I.proc_body with
     | None -> true
     | Some e ->
-          if (not (I.are_same_type I.void_type proc.I.proc_return)) && (not (all_paths_return e))
-	  then false
-	  else true
-            
+      if (not (I.are_same_type I.void_type proc.I.proc_return)) && (not (all_paths_return e))
+	    then false
+	    else true
+    
 and set_pre_flow f = 
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "set_pre_flow" pr pr set_pre_flow_x f
@@ -3189,7 +3189,8 @@ and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars:ident l
       (fun _ _ -> trans_loop_proc_x prog proc addr_vars) proc addr_vars
 
 and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: ident list): C.proc_decl =
-  let proc = rename_proc proc in
+  (* Loop parameters renaming: Temporarily disable due to some erros with sv-comp *)
+  (* let proc = rename_proc proc in *)
   (*variables that have been taken address-of*)
   if (addr_vars!=[]) then
     let pos = proc.I.proc_loc in
@@ -3416,27 +3417,27 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let body = match proc.I.proc_body with
         | None -> None
         | Some e -> (* Some (fst (trans_exp prog proc new_body_e)) in *)
-              (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
-              (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
-              if proc.I.proc_is_while || (not proc.I.proc_has_while_return) then Some (fst (trans_exp prog proc e))
-              else
-                let vn = fresh_name () in
-                let pos = I.get_exp_pos e in
-                let nl2 = fresh_branch_point_id "" in
-                let return_target = I.mkMember (I.mkVar vn pos) ["val"] None pos in
-                let return_exp  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
-                let return_name ret_type =
-                  match ret_type with
-                    | Int -> "ret_int"
-                    | Bool  -> "ret_bool"
-                    | _ -> "__RET"
-                in
-                let constant_flow = "ret_"^(new_string_of_typ proc.I.proc_return) in
-                let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
-                let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
-                let new_body = fst (trans_exp prog proc new_body_e) in
-                (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
-                Some new_body
+          (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *)
+          (* Wrap the body of the proc with "try and catch" or not, except for proc created from a while loop *)
+          if proc.I.proc_is_while || (not proc.I.proc_has_while_return) then Some (fst (trans_exp prog proc e))
+          else
+            let vn = fresh_name () in
+            let pos = I.get_exp_pos e in
+            let nl2 = fresh_branch_point_id "" in
+            let return_target = I.mkMember (I.mkVar vn pos) ["val"] None pos in
+            let return_exp  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
+            let return_name ret_type =
+              match ret_type with
+              | Int -> "ret_int"
+              | Bool  -> "ret_bool"
+              | _ -> "__RET"
+            in
+            let constant_flow = "ret_"^(new_string_of_typ proc.I.proc_return) in
+            let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
+            let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
+            let new_body = fst (trans_exp prog proc new_body_e) in
+            (*let _ = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
+            Some new_body
       in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
       (* let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in *)
@@ -3572,30 +3573,30 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 and ident_to_spec_var id n_tl p prog =
   let v = get_spec_var_ident n_tl id p (* Unprimed  *)in
   match v with
-    | CP.SpecVar(t,id,pr) ->
-          if t == UNK then
+  | CP.SpecVar(t,id,pr) ->
+    if t == UNK then
+      try
+        let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        CP.SpecVar(RelT[],id,pr)
+      with _ ->
+        try
+          let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+          CP.SpecVar(RelT[],id,pr)
+        with _ ->
+          try
+            let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+            CP.SpecVar(HpT,id,pr)
+          with _ -> 
             try
-              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-              CP.SpecVar(RelT[],id,pr)
-            with _ ->
-                try
-                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> 
-                        try
-                          let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
-                          let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
-                          CP.SpecVar (ftyp, id, pr)
-                        with _ -> 
-                            try
-                              let _ = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
-                              CP.SpecVar(UtT, id, pr)
-                            with _ -> v
-          else v
+              let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
+              let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
+              CP.SpecVar (ftyp, id, pr)
+            with _ -> 
+              try
+                let _ = I.look_up_ut_def_raw prog.I.prog_ut_decls id in
+                CP.SpecVar(UtT, id, pr)
+              with _ -> v
+    else v
 
 and ident_list_to_spec_var_list ivs n_tl prog =
   let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
