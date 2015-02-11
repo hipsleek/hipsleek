@@ -1402,7 +1402,7 @@ File "ex31b-split-fracperm.slk", line 10, characters 20-21
  error: Stream.Error("[cexp] expected after OPAREN (in [perm])")
  at:error at: 
 ===================================================================
-# ex31a.slk
+# ex31a.slk --en-para -perm fperm -tp redlog
 
 Why are there so many nested timer interrupt?
 
