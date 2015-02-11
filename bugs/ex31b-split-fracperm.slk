@@ -8,8 +8,12 @@ pred cellp<v> == self::cell<v>
 lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
 
 //(2)
-checkentail x::cellp(1/2)<v1> |-  x::cellp(1/4)<v1>.
-//print residue. //fail
+checkentail 
+   x::cellp
+   (
+    1 / 2)
+   <v1> |-  x::cellp(1 / 4)<v1>.
+print residue. //fail
 
 /*
 # ex31b.slk

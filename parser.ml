@@ -679,6 +679,14 @@ let peek_dc =
              | [OSQUARE,_;_;ORWORD,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_div_op = 
+   SHGram.Entry.of_parser "peek_div_op"
+       (fun strm ->
+           match Stream.npeek 3 strm with 
+             (* | [_;_;DIV,_] -> let _ = print_endline "peek_div_op1" in () *)
+             | [_;DIV,_;_] -> (* let _ = print_endline "peek_div_op2" *) in ()
+             | ls -> (* let _ = print_endline "peek_div_op3" in *) raise Stream.Failure)
+
  let peek_cexp_list = 
    SHGram.Entry.of_parser "peek_cexp_list"
        (fun strm ->
@@ -1079,7 +1087,7 @@ barrier_decl:
   
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
-b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
+b_trans : [[`OPAREN; fs= integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
 
 derv_view:
 [[
@@ -1844,8 +1852,20 @@ simple_heap_constr:
 (*LDK: parse optional fractional permission, default = 1.0*)
 opt_perm: [[t = OPT perm -> t ]];
 
+perm: [[ 
+    `OPAREN; t = perm_aux; `CPAREN -> t
+]];
+
 (*LDK: for fractionl permission, we expect cexp*)
-perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
+perm_aux: [[ 
+    peek_div_op;
+    t1 = integer_literal ; `DIV ; t2 = integer_literal ->
+     let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in
+       Ipure.Div (Ipure.IConst(t1,get_pos_camlp4 _loc 2),
+       Ipure.IConst(t2,get_pos_camlp4 _loc 4),get_pos_camlp4 _loc 3)
+  | peek_print;
+    t = LIST1 cexp SEP `COMMA ->
+          begin
           match !Globals.perm with
             | Bperm -> (*Bounded permissions have 3 parameters*)
                 if ((List.length t) ==3) then
@@ -1858,6 +1878,7 @@ perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
                   let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
                   Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
             | _ -> List.hd t (*other permission systems have one parameter*)
+          end
        ]];
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
@@ -1935,7 +1956,7 @@ ann_term:
       (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
     ]];
 
-cexp:
+cexp :
     [[t = cexp_data_p -> match t with
       | f, _ ->  f ]
     ];
