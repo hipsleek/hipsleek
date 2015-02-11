@@ -203,7 +203,7 @@ let pr_term_status_short = function
 let string_of_term_status = poly_string_of_pr pr_term_status
 
 let pr_term_ctx (ctx: formula) =
-  let h_f, p_f, _, _, _ = split_components ctx in
+  let h_f, p_f, _, _, _, _ = split_components ctx in
   begin
     fmt_string "Current context";
     fmt_print_newline ();
@@ -642,7 +642,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 let check_term_assume prog lhs rhs = 
   let pos = proving_loc # get in
   let lhs_p, lhs_lex, lhs_termr = strip_lexvar_formula_for_termAssume lhs in
-  let _, rhs_p, _, _, _ = split_components rhs in
+  let _, rhs_p, _, _, _, _ = split_components rhs in
   let rhs_lex, _ = strip_lexvar_mix_formula rhs_p in
   match rhs_lex with
   | [] -> ()

@@ -116,7 +116,7 @@ let close_def defs (v1,v2) =
 (*   loop_helper svl0 eqs0 *)
 
 let find_close_f svl0 f=
-  let ( _,mf,_,_,_) = CF.split_components f in
+  let ( _,mf,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf)in
   CF.find_close svl0 eqs
 
@@ -843,7 +843,7 @@ let rec lookup_undef_args args undef_args def_ptrs=
 (* todo: how about null? is it defined? *)
 let rec find_defined_pointers_raw prog f=
   let hds, hvs, hrs = CF.get_hp_rel_formula f in
-  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let ( _,mix_f,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
   (*defined vars=  + null + data + view*)
@@ -905,7 +905,7 @@ let get_defined_eqs_x f=
     (* else r *)
   in
   (****END*********)
-  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let ( _,mix_f,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let hpargs = CF.get_HRels_f f in
   let def_eqs = List.fold_left (fun r hp_args -> extract_defined_eq r hp_args eqs) [] hpargs in
@@ -1975,7 +1975,7 @@ let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,arg
           let n_orig_lhs_hf2 = CF.mkStarH n_orig_lhs_hf n_constr_rhs_hf pos in
           let n_orig_lhsb = {lhsb with CF.formula_base_heap = n_orig_lhs_hf2} in
           let n_constr_lhf = CF.HRel (hp, List.map (fun sv -> CP.mkVar sv pos) args, pos) in
-          let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CF.TypeTrue (CF.mkTrueFlow()) [] pos in
+          let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow()) [] pos in
            (Some (n_orig_lhsb, (hp, n_constr_lhs,  n_constr_rhs, None), new_hp))
   else
     let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@
@@ -2121,8 +2121,8 @@ let generate_hp_ass i unk_svl cond_p (hp,args,lfb,rf) =
 (************************************************)
 (**aux2.slk**)
 let simp_matching_x prog lhs rhs=
-  let ( _,mix_lf,_,_,_) = CF.split_components lhs in
-  let (_,mix_rf,_,_,_) = CF.split_components rhs in
+  let (_,mix_lf,_,_,_,_) = CF.split_components lhs in
+  let (_,mix_rf,_,_,_,_) = CF.split_components rhs in
   let leqs = (MCP.ptr_equations_without_null mix_lf) in
   let reqs = (MCP.ptr_equations_with_null mix_rf) in
   let leqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_lf) ) in
@@ -2648,8 +2648,8 @@ let remove_subsumed_pure_formula args fs=
 
 (*=============common prefix equal=========*)
 let check_com_pre_eq_formula_x f1 f2=
-  let hf1,mf1,_,_,_ = CF.split_components f1 in
-  let hf2,mf2,_,_,_ = CF.split_components f2 in
+  let hf1,mf1,_,_,_,_ = CF.split_components f1 in
+  let hf2,mf2,_,_,_,_ = CF.split_components f2 in
   DD.ninfo_zprint (lazy (("   mf1: " ^(Cprinter.string_of_mix_formula mf1)))) no_pos;
   DD.ninfo_zprint (lazy (("   mf2: " ^ (Cprinter.string_of_mix_formula mf2)))) no_pos;
   (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
@@ -3476,8 +3476,8 @@ let remove_subset_x fs0=
     (List.length s2) - (List.length s1)
   in
   let check_subset f1 f2=
-    let (hf1,mf1,_,_,_) = CF.split_components f1 in
-    let (hf2,mf2,_,_,_) = CF.split_components f2 in
+    let (hf1,mf1,_,_,_,_) = CF.split_components f1 in
+    let (hf2,mf2,_,_,_,_) = CF.split_components f2 in
     let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
     let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
     (* DD.info_zprint (lazy (("   p1: " ^(!CP.print_formula np1)))) no_pos; *)
@@ -3632,7 +3632,7 @@ let subst_equiv_hprel equivs constrs=
     List.map (subst_one parts) constrs
 
 let is_inconsistent_heap f =
-  let ( hf,mix_f,_,_,_) = CF.split_components f in
+  let ( hf,mix_f,_,_,_,_) = CF.split_components f in
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mix_f) in
   let neqNull_svl = CP.get_neq_null_svl (MCP.pure_of_mix mix_f) in
   let ptrs = CF.get_ptrs hf in
@@ -4089,7 +4089,7 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
   (* let _ =  DD.info_zprint (lazy (("       new args: " ^ (!CP.print_svl args)))) no_pos in *)
   (* let pr2 = pr_list Cprinter.string_of_h_formula in *)
   (* let _ = DD.info_zprint (lazy (("      sh_ldns:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))))) no_pos in *)
-  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let ( _,mix_f,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let (matcheds2, rest2, ss, last_ss0,_) = get_longest_common_hnodes_two org_args sh_ldns ldns eqs in
   (*drop all matcheds*)
@@ -4225,7 +4225,7 @@ let get_min_common_x prog args unk_hps ll_ldns_lvns=
   in
   (*todo: should check eqFormula*)
   let helper_pure_hprels f =
-    let ( hf,mix_f,_,_,_) = CF.split_components f in
+    let ( hf,mix_f,_,_,_,_) = CF.split_components f in
     let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mix_f) in
     let ps = CP.list_of_conjs (MCP.pure_of_mix mix_f) in
     let hprels = CF.get_hprel_h_formula hf in
@@ -4281,7 +4281,7 @@ let closer_ranking prog unk_hps fs root_cand args0=
   let build_conf f=
     let hds, hvs, hrs = CF.get_hp_rel_formula f in
     (* let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in *)
-    let (_ ,mix_lf,_,_,_) = CF.split_components f in
+    let (_ ,mix_lf,_,_,_,_) = CF.split_components f in
     let eqNulls = MCP.get_null_ptrs mix_lf in
     let eqs = (MCP.ptr_equations_without_null mix_lf) in
     let def_vs = eqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
@@ -4825,7 +4825,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps ofl defs_wg=
     let ls_hpargs = CF.get_HRels_f f in
     let rec_hpargs, other_hpargs = List.partition (fun (hp,_) -> CP.eq_spec_var hp hp0) ls_hpargs in
       if other_hpargs != [] then [] else
-        let ( _,mix_f,_,_,_) = CF.split_components f in
+        let ( _,mix_f,_,_,_,_) = CF.split_components f in
         let eqs = (MCP.ptr_equations_without_null mix_f) in
         (*cont paras are para not changed, just forwarded*)
         let cont_paras = List.fold_left (fun cur_cont_paras (hp,args1) ->
@@ -4864,7 +4864,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps ofl defs_wg=
     let _ = Debug.ninfo_hprint (add_str "n_root: " !CP.print_sv) n_root no_pos in
     let _ = Debug.ninfo_hprint (add_str "   f: " Cprinter.prtt_string_of_formula) f no_pos in
     let keep_svl = [n_root]@cont_args in
-    let ( _,mix_f,_,_,_) = CF.split_components f in
+    let ( _,mix_f,_,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
     let hds, hvs, hrs = CF.get_hp_rel_formula f in
     let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in
@@ -5364,7 +5364,7 @@ let get_longest_common_hnodes_list prog is_pre cdefs unk_hps unk_svl hp r non_r_
 
 
 let find_closure_eq_null_x hp args f=
-  let (_ ,mf,_,_,_) = CF.split_components f in
+  let (_ ,mf,_,_,_,_) = CF.split_components f in
   let eqNulls = MCP.get_null_ptrs mf in
   let eqNulls1 = CP.intersect_svl args (CP.remove_dups_svl eqNulls) in
   if List.length eqNulls1 < 2 then f else
@@ -5380,7 +5380,7 @@ let find_closure_eq_null hp args f=
 
 let find_closure_eq_wg_x hp args fs_wg=
   let extract_eq_pos f=
-    let (_ ,mf,_,_,_) = CF.split_components f in
+    let (_ ,mf,_,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let eqs1 = List.filter (fun (sv1,sv2) -> CP.diff_svl [sv1;sv2] args = []) eqs in
     if eqs1 = [] then raise Not_found else
@@ -5429,7 +5429,7 @@ let norm_conjH_f_x prog org_args args next_roots sh_ldns sh_lvns com_eqNulls com
   (* let _ =  DD.info_zprint (lazy (("       new args: " ^ (!CP.print_svl args)))) no_pos in *)
   (* let pr2 = pr_list Cprinter.string_of_h_formula in *)
   (* let _ = DD.info_zprint (lazy (("      sh_ldns:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))))) no_pos in *)
-  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let ( _,mix_f,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let (matcheds2, dn_rest2, vn_rest2, ss, last_ss0) =
     if sh_ldns <> [] then
@@ -5910,8 +5910,8 @@ let norm_formula_x prog hp args unk_hps unk_svl f1 f2 equivs=
         | [] -> None
         | [f] -> Some (f, equivs)
         | [nf1;nf2] -> begin
-            let (hf1 ,mf1,_,_,_) = CF.split_components nf1 in
-            let (hf2 ,mf2,_,_,_) = CF.split_components nf2 in
+            let (hf1 ,mf1,_,_,_,_) = CF.split_components nf1 in
+            let (hf2 ,mf2,_,_,_,_) = CF.split_components nf2 in
             if CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2) then
               let ores = norm_heap_consj hf1 hf2 equivs in
               match ores with
@@ -6972,8 +6972,8 @@ let split_rhs_x prog cs=
           let grps = partition_intersect_hpargs (List.map (fun hd -> hd.CF.h_formula_data_arguments) hns) rhs_hpargs [] in
           if List.length grps <= 1 then [cs] else
             let lhs_hpargs = List.map (fun (hp, eargs,_) -> (hp,(List.fold_left List.append [] (List.map CP.afv eargs)))) lhrels in
-            let ( _,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
-            let (_,mix_rf,_,_,_) = CF.split_components cs.CF.hprel_rhs in
+            let ( _,mix_lf,_,_,_,_) = CF.split_components cs.CF.hprel_lhs in
+            let (_,mix_rf,_,_,_,_) = CF.split_components cs.CF.hprel_rhs in
             let leqs = MCP.ptr_equations_without_null mix_lf in
             let reqs = MCP.ptr_equations_without_null mix_rf  in
             let eqs = leqs@reqs in

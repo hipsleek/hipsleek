@@ -1,0 +1,151 @@
+  
+//(1)
+checkentail @full[x]  |- @lend[x].
+// expect @full[x]
+print residue.
+
+//(2)
+infer [@par] @full[x]  |- @lend[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(3)
+infer [@par] @full[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+
+//(4)
+infer [@par] @lend[x]  |- @lend[x].
+// WRONG: expect @lend[x]
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(5)
+infer [@par] @lend[x]  |- @full[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
+
+//(6)
+infer [@par] @zero[x]  |- @lend[x].
+// WRONG :expect ERROR 
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
+
+//(7)
+infer [@par] @zero[x]  |- @full[x].
+// expect ERROR
+print residue.
+
+//(8)
+infer [@par] @full[x]  |- true.
+// expect ERROR
+print residue.
+
+ //(9)
+infer [@par] emp*@full[x]*@zero[y,k]*@full[z]*@lend[a,b]&y'>0  |- true.
+// expect ERROR
+print residue.
+
+//(10)q
+checkentail_exact  @full[x]  |- @lend[x].
+// expect fail
+print residue.
+
+//(11)
+checkentail_exact  @full[x]  |- @full[x].
+// expect succeeed
+print residue.
+
+//(12)
+checkentail_exact  @full[x,y]  |- @full[x].
+// expect fail
+print residue.
+
+//(13)
+checkentail_exact  @full[x]*@full[x]  |- false.
+// expect succeeed
+print residue.
+
+/*
+infer [@par] @frac(c1,c2)[x]  |- @frac(c3,c4)[x].
+// c5/c6 = c1/c2 - c3/c4 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+infer [@par] @frac(c1,c2)[x]  |- @full[x].
+// c5/c6 = c1/c2 - 1/1 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+checkentail @frac(c1,c2)[x]  |- @lend[x].
+// c1>0
+// expect @frac(c1,c2)
+print residue.
+
+infer [@par] @frac(c1,c2)[x]  |- @lend[x].  ???
+// c1>0
+// expect ERROR
+print residue.
+
+
+infer [@par] @full(x) |- frac(c3,c4)[x]  
+// c5/c6 = 1/1 - 1/1 
+// c5>=0
+// expect @frac(c5,c6)
+print residue.
+
+infer [@par] @lend(x) |- frac(c3,c4)[x]  @1/2[x,y,z]
+// expect ERROR
+print residue.
+
+
+@frac(0,c)(x) <--> @zero[x]
+
+==============================================
+
+infer [@par] @full[x]  |- @value[x].
+// expect @full[x]
+print residue.
+
+infer [@par] @lend[x]  |- @value[x].
+// expect @lend
+print residue.
+
+infer [@par] @zero[x]  |- @value[x].
+// expect @lend[x]
+print residue.
+
+checkentail @full[x]  |- @value[x].
+// expect @full[x]
+print residue.
+
+
+infer [@par] @value[x]  |- @value[x].
+// expect @value[x]
+print residue.cn
+
+infer [@par] @value[x]  |- @value[x].
+// expect @value[x]
+print residue.
+
+infer [@par] @value[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+
+infer [@par] @value[x]  |- @full[x].
+// expect @zero[x]
+print residue.
+*/
+
+/*
+# ex13.slk
+
+@value can be written ..
+@lend cannot be written ..
+
+
+*/

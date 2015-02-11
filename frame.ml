@@ -78,8 +78,8 @@ let find_close svl0 eqs0=
   loop_helper svl0 eqs0
 
 let get_frame ante conseq=
-  let (lh,lmf,_,_,_) = CF.split_components ante in
-  let (rh,rmf,_,_,_) = CF.split_components conseq in
+  let (lh,lmf,_,_,_,_) = CF.split_components ante in
+  let (rh,rmf,_,_,_,_) = CF.split_components conseq in
   let frm_svl1 = CPG.get_frame (MCP.pure_of_mix lmf) in
   let frm_svl2 = CPG.get_frame (MCP.pure_of_mix rmf) in
   let leqs = (MCP.ptr_equations_without_null lmf) in

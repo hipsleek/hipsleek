@@ -1,0 +1,59 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+
+/*
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<> 
+   |- c::LatchIn{- x::cell<n> & n>5}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<>
+            |- c::LatchIn{- x::cell<m> & m>5}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<_>& n>3}<>
+            |- c::LatchIn{- x::cell<m> * %PPP & m>5}<>.
+*/
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<>
+            |- c::LatchIn{- x::cell<m> * %PPP & m>5}<>.
+print residue.
+
+/*
+
+# bug-6e4 --esl (LatchIN)
+
+- why did this example fail?
+- We should allow %PPP = emp as solution 
+- just like bug-6b4 which is possible with LatchOut
+
+checkentail c::LatchIn{- x::cell<n> & n>3}<>
+            |- c::LatchIn{- x::cell<n> * %PPP & n>5}<>.
+print residue.
+
+Entail 1: Fail.(must) cause:matching of ho_args failed
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+heap_entail_conjunct_helper#3@8@7@6@5@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 : es_formula: HVar PPP&5<m & n=m&{FLOW,(4,5)=__norm#E}[]
+ es_heap: x::cell<m>
+ es_evars: [m; PPP]
+ es_gen_impl_vars: [PPP; PPP]
+ es_trace:  SEARCH ==>  Match(x,x) ==> 
+ es_infer_vars_rel: []
+heap_entail_conjunct_helper#3 inp2 : emp&3<n&{FLOW,(4,5)=__norm#E}[]
+heap_entail_conjunct_helper#3@8 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: 
+                   fe_locs: {
+                             fc_message: memory leak
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[ SEARCH ==>  Match(x,x) ==> ]]true
+
+*/

@@ -38,7 +38,7 @@ let transform_exp
       | This _ 
       | Time _ 
       | Unfold _
-	  | Barrier _ 	  
+      | Barrier _ 	  
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
 				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
@@ -155,8 +155,15 @@ let transform_exp
         (While {b with
           exp_while_condition = ce;
           exp_while_body = be;
-          exp_while_wrappings = wrp},r) in
-  helper init_arg e
+          exp_while_wrappings = wrp},r)
+      | Par b ->
+        let helper_par_case c =
+          let ce, cr = helper n_arg c.exp_par_case_body in 
+          { c with exp_par_case_body = ce}, cr
+        in
+        let cl, rl = List.split (List.map helper_par_case b.exp_par_cases) in
+        (Par { b with exp_par_cases = cl; }, comb_f rl) 
+  in helper init_arg e
 
   (*this maps an expression by passing an argument*)
 let map_exp_args (e:exp) (arg:'a) (f:'a -> exp -> exp option) (f_args: 'a -> exp -> 'a) : exp =
@@ -831,6 +838,13 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
                     exp_catch_body = ne;
                   })
     end
+    | CallNRecv b -> 
+      begin match b.exp_call_nrecv_ho_arg with
+      | None -> None
+      | Some f -> 
+        let nf = rename_formula subs f in
+        Some (CallNRecv { b with exp_call_nrecv_ho_arg = Some nf })
+      end
     | _ -> None
   in
   map_exp_args e (bvars, subs) f f_args

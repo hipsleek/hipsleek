@@ -79,7 +79,7 @@ and p_formula =
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)
 	  (* lists and list formulae *)
-  | VarPerm of (vp_ann * ((ident * primed) list) * loc)
+  (* | VarPerm of (vp_ann * ((ident * primed) list) * loc) *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)

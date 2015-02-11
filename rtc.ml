@@ -230,6 +230,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
       I.proc_constructor = false;
       I.proc_args = [cur_color pos; new_color pos];
       I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) [cur_color pos; new_color pos];
+      I.proc_ho_arg = None;
       I.proc_return = Bool;
       I.proc_static_specs = Iformula.mkETrueF ();
       I.proc_dynamic_specs = Iformula.mkEFalseF ();
@@ -312,6 +313,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
       I.proc_constructor = false;
       I.proc_args = [cur_color pos; new_color pos];
       I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) [cur_color pos; new_color pos];
+      I.proc_ho_arg = None;
       I.proc_return = Bool;
       I.proc_static_specs = Iformula.mkETrueF ();
       I.proc_dynamic_specs = Iformula.mkEFalseF ();

@@ -55,6 +55,17 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
     raise e)
 
+let wrap_par_case_check f c =
+  let flag = !ho_always_split in
+  ho_always_split := true;
+  try
+    let res = f c in
+    ho_always_split := flag;
+    res
+  with _ as e ->
+    (ho_always_split := flag;
+    raise e)
+
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
   let _ = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in

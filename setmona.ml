@@ -111,7 +111,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 						cont := r1 || r2
 				  | BagMin _
 				  | BagMax _ -> failwith ("compute_fo_b_formula: BagMin/BagMax not supported.")
-				  | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.")
+				  (* | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.") *)
 					(* Booleans *)
                                   | Frm (sv, _) ->
 					ignore (compute_fo_var sv SO var_map) (* make boolean var second order for now *)
@@ -373,7 +373,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
-	  | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here")
+	  (* | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here") *)
 	  | ListIn _
 	  | ListNotIn _
 	  | ListAllN _

@@ -41,8 +41,8 @@ let cleanUpFormulas_x (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.for
 		if (CF.is_or_formula ante || CF.is_or_formula conseq) then (ante,conseq)
 		else 
 			(*  H_lhs & p1 |- ex v . H_rhs & p2*)
-			let aev, ah, ap, _, _, _, _, pos = CF.all_components ante in
-			let cev, ch, cp, _, _, _, _, _ = CF.all_components conseq in
+			let aev, ah, ap, avp, _, _, _, _, pos = CF.all_components ante in
+			let cev, ch, cp, cvp, _, _, _, _, _ = CF.all_components conseq in
 			let a_fv = CF.fv ante in
 			let com_vars = Gen.BList.intersect_eq CP.eq_spec_var a_fv (CF.fv conseq) in
 			let a_h_fv = CF.h_fv ah in
@@ -50,7 +50,7 @@ let cleanUpFormulas_x (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.for
 			let a_alias,ap = Mcpure.get_all_vv_eqs_mix ap in
 			let keep,elim = get_substs v2elim a_alias in
 			let ap = List.fold_left (fun a (v1,v2)-> Mcpure.memoise_add_pure_N a (CP.mkEqVar v1 v2 pos)) ap keep in
-			let ante = CF.mkBase ah ap CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+			let ante = CF.mkBase ah ap avp CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
 			let ante = CF.subst elim ante in
 			(*let conseq = subst fr t conseq in*)
 			let svs = get_new_vars (CF.fv ante) (CF.fv conseq) in

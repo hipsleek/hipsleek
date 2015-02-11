@@ -410,7 +410,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, t, a) = split_components f in
+  let (h, p, _, fl, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -501,7 +501,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
-                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
+                let lhs_h,_,_,_,_,_ = CF.split_components es.es_formula in
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_hprint (add_str "unmatch RHS : " !print_h_formula) rhs pos;
                 DD.devel_hprint (add_str "orig inf vars : " !print_svl) iv pos;
@@ -2768,7 +2768,7 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
       if not( TP.is_sat_raw (MCP.mix_of_pure lhs_extra)) then None else
         (******************************************)
         let neg_prhs = MCP.mix_of_pure neg_prhs0 in
-        let ass_rhs = CF.mkBase HEmp neg_prhs TypeTrue (mkTrueFlow ()) [] pos in
+        let ass_rhs = CF.mkBase HEmp neg_prhs CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
         let knd = CP.RelAssume lhs_hps in
         let ehp_rel = CF.mkHprel_w_flow knd [] [] [] lhs None ass_rhs es_cond_path !error_flow_int in
         (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
@@ -3163,11 +3163,11 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
         in
         (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
-        let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b0) in
+        let ( _,mix_lf,_,_,_,_) = CF.split_components (CF.Base lhs_b0) in
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
 
         let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
-        let (_,mix_rf0,_,_,_) = CF.split_components (CF.Base rhs_b0) in
+        let (_,mix_rf0,_,_,_,_) = CF.split_components (CF.Base rhs_b0) in
         let reqs_orig = (MCP.ptr_equations_without_null mix_rf0) in
 
         let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf0) in
@@ -3180,7 +3180,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
         (* let rls1,rls2  = List.split es.CF.es_rhs_eqset in *)
         (* let n_rhs_eqset = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2) *)
           (* (MCP.ptr_equations_without_null mix_rf)  in *)
-        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
+        let (_,mix_rf,_,_,_,_) = CF.split_components (CF.Base rhs_b) in
         let r_emap = get_eqset (MCP.pure_of_mix mix_rf) in
         let r_eqsetmap = CP.EMapSV.build_eset es.CF.es_rhs_eqset in
 
@@ -3279,7 +3279,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
           (* let no_es_history = es.CF.es_history in *)
           (* let his_ptrs = List.concat (List.map Sautil.get_ptrs no_es_history) in *)
           (************** END HIS **************)
-          let ( _,mix_lf1,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+          let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
           let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
           let reqs1 = [] in
           (********** END BASIC INFO LHS, RHS **********)
@@ -3400,7 +3400,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
           | Base fb -> fb
           | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: imposs"
         in
-        let ( _,mix_lf,_,_,_) = CF.split_components lhs0 in
+        let ( _,mix_lf,_,_,_,_) = CF.split_components lhs0 in
         let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
         let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
         (* let _ = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
@@ -3418,8 +3418,8 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
         let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in
         let rhs_b1 = rhs_b0 in
         let lhs_h = lhs_b1.CF.formula_base_heap in
-        let ( _,mix_lf1,_,_,_) = CF.split_components (CF.Base lhs_b1) in
-        let ( _,mix_rf1,_,_,_) = CF.split_components (CF.Base rhs_b1) in
+        let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+        let ( _,mix_rf1,_,_,_,_) = CF.split_components (CF.Base rhs_b1) in
         let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
         let reqs1 = (MCP.ptr_equations_without_null mix_rf1) in
           (********** END BASIC INFO LHS, RHS **********)
@@ -3463,7 +3463,7 @@ let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) rhs_p pos =
 
 let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-  let (_ ,mix_lf,_,_,_) = CF.split_components (CF.Base lfb) in
+  let (_ ,mix_lf,_,_,_,_) = CF.split_components (CF.Base lfb) in
   let leqNulls = MCP.get_null_ptrs mix_lf in
   let leqs = (MCP.ptr_equations_without_null mix_lf) in
   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
@@ -3520,7 +3520,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
       (false,es)
     else begin
       (*which pointers are defined and which arguments of data nodes are pointer*)
-      let ( _,mix_lf,_,_,_) = CF.split_components lhs in
+      let ( _,mix_lf,_,_,_,_) = CF.split_components lhs in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let _ =
         DD.tinfo_pprint ">>>>>> infer_hp_rel_classic <<<<<<" pos;
@@ -3608,7 +3608,7 @@ let rec create_alias_tbl svl keep_vars aset = match svl with
 
 (* Supposed fml to be Base _ *)
 let filter_var_heap keep_vars fml =
-  let _,pure,_,_,_ = CF.split_components fml in
+  let _,pure,_,_,_,_ = CF.split_components fml in
   let als = MCP.ptr_equations_without_null pure in
 (*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
   let aset = CP.EMapSV.build_eset als in
@@ -3619,7 +3619,7 @@ let filter_var_heap keep_vars fml =
       List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
 (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   let fml = CF.subst subst_lst fml in
-  let heap,pure,_,_,_ = CF.split_components fml in
+  let heap,pure,_,_,_,_ = CF.split_components fml in
   let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
 (*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
   (heap, pure)
@@ -3803,7 +3803,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   (* let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []  (formula_of_heap hf pos) None (formula_of_pure_N p pos) es_cond_path *)
   (* in *)
   let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []
-    (CF.mkBase hf (MCP.mix_of_pure p) TypeTrue (mkNormalFlow ()) [] pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path
+    (CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path
   in
   let mkTupleRel ls_w_cans=
     let (hp0, hf0, _, p, _, pos) = List.hd ls_w_cans in
@@ -3870,7 +3870,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
                 let _ = Debug.ninfo_hprint (add_str "rhs_p : " ( (!CP.print_formula))) rhs_p pos in
                 if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
                   let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
-                    (CF.mkBase hf (MCP.mix_of_pure n_p) TypeTrue (mkNormalFlow ()) [] pos)
+                    (CF.mkBase hf (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos)
                     None (CF.mkFalse_nf pos ) es_cond_path in
                   r@[new_rel]
                 else r

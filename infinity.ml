@@ -528,7 +528,7 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
     | CP.BagSub _
     | CP.BagMin _
     | CP.BagMax _
-    | CP.VarPerm _
+    (* | CP.VarPerm _ *)
     | CP.RelForm _ -> false
     
 (*
@@ -927,7 +927,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
       | CP.BagSub _
       | CP.BagMin _
       | CP.BagMax _
-      | CP.VarPerm _
+      (* | CP.VarPerm _ *)
       | CP.RelForm _ -> p_f,tbf
     ) in (p_f_conv,bf_ann),(tbf,bf_ann)
     

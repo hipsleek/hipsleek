@@ -434,10 +434,11 @@ let process_source_full source =
     
     (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
     (* let _ = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
-    let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
    
-	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+    (* let _= print_string ("\n*After label_procs_prog iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     
 	(*let intermediate_prog_reverif = 
 			if (!Globals.reverify_all_flag) then 
@@ -483,7 +484,7 @@ let process_source_full source =
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
     (* let _ = I.set_iprog intermediate_prog in *)
     (*let _ = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
-    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
     (* let _ = if !Globals.sa_pure then *)
     (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
     (*       if v.Cast.view_kind = Cast.View_NORM then *)

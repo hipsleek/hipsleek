@@ -1,0 +1,41 @@
+data cell{ int v; }.
+
+
+checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & y!=null.
+print residue.
+
+checkentail_exact  y::cell<_> |- y::cell<_> & y!=null.
+print residue.
+
+/*
+# bug-4a
+
+checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & y!=null.
+print residue.
+
+# residue y=1 is dangerous. Could you use xpure_symbolic which
+  will add y!=null instead.
+
+Residue:
+ <1>emp&flted_4_17=2+3 & Anon_12=flted_4_17 & y=1&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [Q --> y::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+We may need to keep xpure of extracted term, e.g. y!=null, 
+into residue of main expr.
+
+Entail 1: Fail.(may) cause: true |-  y!=null. LOCS:[0;4] (may-bug)
+
+Residue:
+ <1>emp&flted_4_15=2+3 & Anon_12=flted_4_15&{FLOW,(4,8)=__MayError#E}[]
+ ho_vars: [Q --> y::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+*/
+
+//checkentail_exact  y::cell<_> * x::cell<3+2> |- %Q * x::cell<_> & x!=null.
+//print residue.

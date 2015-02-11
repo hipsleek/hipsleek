@@ -351,7 +351,7 @@ struct
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
-      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
+      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
 
   let rec get_all_pairs ls = match ls with
     | [] -> []

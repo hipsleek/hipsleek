@@ -278,9 +278,9 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
   in
   let lhns, lhvs, lhrs = CF.get_hp_rel_formula lhs in
   let rhns, rhvs, rhrs = CF.get_hp_rel_formula rhs in
-  let ( _,lmix_f,_,_,_) = CF.split_components lhs in
+  let ( _,lmix_f,_,_,_,_) = CF.split_components lhs in
   let leqs = (MCP.ptr_equations_without_null lmix_f) in
-  let ( _,rmix_f,_,_,_) = CF.split_components rhs in
+  let ( _,rmix_f,_,_,_,_) = CF.split_components rhs in
   let reqs = (MCP.ptr_equations_without_null rmix_f) in
   let cands = lhrs @ rhrs in
   let cands1 = List.filter (fun (hp,el,l) -> not (CP.mem_svl hp unk_hps) && (List.length el) >= 2) cands in
@@ -3242,8 +3242,8 @@ let generalize_pure_def_from_hpunk_x prog hp_def_names cs=
         in d
       else []
   in
-  let _, mxlhs, _,_,_ = (CF.split_components cs.CF.hprel_lhs) in
-  let _, prhs, _,_,_ = (CF.split_components cs.CF.hprel_rhs) in
+  let _, mxlhs, _, _,_,_ = (CF.split_components cs.CF.hprel_lhs) in
+  let _, prhs, _, _,_,_ = (CF.split_components cs.CF.hprel_rhs) in
   let plhs = (MCP.pure_of_mix mxlhs) in
   let pos = (CP.pos_of_formula plhs) in
   let p = CP.mkAnd  plhs (MCP.pure_of_mix prhs) pos in

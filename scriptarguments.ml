@@ -232,7 +232,7 @@ let common_arguments = [
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
-  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
   ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
   ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");
@@ -558,7 +558,11 @@ let common_arguments = [
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
   ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
-  
+
+  (* HO predicate *)
+  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
+
   (* Proof Logging *)
   ("--en-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
