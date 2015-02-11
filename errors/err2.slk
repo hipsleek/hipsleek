@@ -48,7 +48,7 @@ checkentail true |- x::node<_,_> .
 // x!=y ==> y<x | x<y: because CP.simplify_filter_ante call simplify from provers.
 checkentail y::node<_,_> & x!=y |- x::node<_,_> .
 
-//11. may. cause:15.3  true |-  x!=null (may-bug).
+//11. must. cause:15.3  true |-  x!=null (may-bug).
 checkentail y=null |- x::node<_,_> .
 
 //12. must. cause:15.1 y=x & x=null |-  x!=null

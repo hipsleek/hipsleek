@@ -2006,14 +2006,14 @@ my $inv = '--inv-test';
     #     ["lseg.slk", " --elp ", "Valid.Fail.", ""],
     #     ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
     # ],
-    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
-        		   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
-        		   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
-        		   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
-        		   ["err6.slk","","must.Valid.may.may.must.Valid."],
-        		   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
-               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
+    "musterr"=>[["err1.slk","",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.must.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
+                ["err3.slk","",(),"must.must.must.must.must.must.may.must.must."],
+                ["err4.slk","",(),"must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+                ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+                ["err6.slk","",(),"must.Valid.may.must.must.Valid."],
+                ["err7.slk","",(),"Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]]
 
     );
 
@@ -2230,20 +2230,22 @@ sub sleek_process_file  {
       #my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
       my $barr = 0;
-      if ("$param" =~ "musterr") {
-          print "Starting sleek must/may errors tests:\n";
-          $exempl_path_full = "$exec_path/errors";
-          $err = 1;
-      }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
       
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
-      }else {
+      }
+      else {
           $exempl_path_full = "$exempl_path/sleek/$param";
           print "Starting sleek-$param tests:\n";
       }
+      if ("$param" =~ "musterr") {
+          print "Starting sleek must/may errors tests:\n";
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
+      #print "\n!!!exempl_path_full: $exempl_path_full";
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
       {
@@ -2274,16 +2276,21 @@ sub sleek_process_file  {
                   if($line =~ m/Valid\./) { $inv_results = $inv_results ."Valid."; }
                   elsif($line =~ m/Fail\./)  { $inv_results = $inv_results ."Fail.";}
               } elsif($line =~ m/Entail/){
+                  #print "\n!!!output: $line";
                   if( $err == 1) {
                       $i = index($line, "Valid. (bot)",0);
                       $h = index($line, "Valid.",0);
                       $j = index($line, "Fail.(must)",0);
                       $k = index($line, "Fail.(may)",0);
                       #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                      if($i >= 0) { $r = $r ."bot."; }
-                      elsif($h >= 0) { $r = $r ."Valid."; }
-                      elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-                      elsif($k >= 0)  { $r = $r ."may.";}
+                      #if($i >= 0) { $r = $r ."bot."; }
+                      #elsif($h >= 0) { $r = $r ."Valid."; }
+                      #elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                      #elsif($k >= 0)  { $r = $r ."may.";}
+                      if($i >= 0) { $entail_results = $entail_results ."bot."; }
+                      elsif($h >= 0) { $entail_results = $entail_results ."Valid."; }
+                      elsif($j >= 0)  { $entail_results = $entail_results ."must.";} #$line =~ m/Fail.(must)/
+                      elsif($k >= 0)  { $entail_results = $entail_results ."may.";}
                   }
                   else {
                       if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
