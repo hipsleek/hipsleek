@@ -684,7 +684,7 @@ let peek_dc =
        (fun strm ->
            match Stream.npeek 3 strm with 
              (* | [_;_;DIV,_] -> let _ = print_endline "peek_div_op1" in () *)
-             | [_;DIV,_;_] -> (* let _ = print_endline "peek_div_op2" *) in ()
+             | [_;DIV,_;_] -> (* let _ = print_endline "peek_div_op2" in *) ()
              | ls -> (* let _ = print_endline "peek_div_op3" in *) raise Stream.Failure)
 
  let peek_cexp_list = 
