@@ -2009,7 +2009,7 @@ my $inv = '--inv-test';
     "musterr"=>[["err1.slk","",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.must.must.must.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may.may.must.must."],
                 ["err3.slk","",(),"must.must.must.must.must.must.may.must.must."],
-                ["err4.slk","",(),"must.Valid.must.must.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+                ["err4.slk","",(),"must.Valid.must.must.Valid.Valid.Valid.must.must.must.may.must.Valid.may.may.must.must.Valid."],
                 ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
                 ["err6.slk","",(),"must.Valid.may.must.must.Valid."],
                 ["err7.slk","",(),"Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],

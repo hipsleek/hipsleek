@@ -50,11 +50,11 @@ checkentail true |- true.
 // 7. valid
 checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
 
-// 8.may.
-checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+// 8.must.
+checkentail x::pos_ll<n>  & n>0 |- x::neg_ll<n>.
 
-//9. may fail
-checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+//9. must fail
+checkentail x::pos_ll<n>  & n>0 |- x::neg_ll<n>.
 /* INCONSISTENCY:
 Entail(9)=Fail.(must) cause:12
 printing here:  

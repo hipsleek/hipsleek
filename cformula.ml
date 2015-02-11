@@ -13408,6 +13408,11 @@ let proc_esc_stack pid f_es es =
       else e
   ) es
 
+let change_flow_w_flag f b fl=
+  if b then
+    substitute_flow_into_f fl f
+  else f
+
 let normalize_max_renaming_list_partial_context f pos b ctx = 
   (* let _ = print_string("cris: normalize 11\n") in *)
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx

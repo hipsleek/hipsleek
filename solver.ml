@@ -12746,15 +12746,20 @@ and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is
       (* anode |- _ *)
       (* unfold by removing LHS head anode, and replaced with rhs_b into new_lhs to continue *)
         let old_trace = estate.es_trace in
-        let estate = {estate with es_trace=(("(left: " ^ coer.coercion_name ^ ")")::old_trace)} in
+        let _ = DD.ninfo_hprint (add_str "ok" string_of_int) ok no_pos in
+        let estate = {estate with
+            es_trace=(("(left: " ^ coer.coercion_name ^ ")")::old_trace)} in
+         let _ = DD.ninfo_hprint (add_str "estate.es_formula" !print_formula) estate.es_formula no_pos in
       let ctx0 = Ctx estate in
-      let new_ctx1 = build_context ctx0 new_lhs pos in
+      (*err.4/E8*)
+      let new_ctx1 = build_context ctx0 ( CF.change_flow_w_flag new_lhs (ok==2) !error_flow_int) pos in
       (* let new_ctx = set_context_formula ctx0 new_lhs in *)
       let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
       let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
-      let new_res =
-        if ok == 1 then res
-        else CF.invert_outcome res
+      let new_res = res 
+        (*err.4/E8*)
+        (* if ok == 1 then res *)
+        (* else CF.invert_outcome res *)
       in
       let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
 	coer.coercion_body tmp_prf coer.coercion_name
