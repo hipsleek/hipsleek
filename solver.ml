@@ -11907,14 +11907,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | Some (new_estate,pf) ->
                     begin
                     match relass with
-                      | [] -> 
+                      | [] ->
                         (* explicitly force unsat checking to be done here *)
                         let ctx1 = (elim_unsat_es_now 9 prog (ref 1) new_estate) in
                         (* let ctx1 = set_unsat_flag ctx1 false in  *)
                           let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None None None pos in
                         let r1 = add_infer_pure_to_list_context [pf] r1 in
                         (r1,prf)
-                      | [(_,h,_)] -> 
+                      | [(_,h,_)] ->
                         (* explicitly force unsat checking to be done here *)
                         let ctx1 = (elim_unsat_es_now 10 prog (ref 1) new_estate) in
                         (* let ctx1 = set_unsat_flag ctx1 false in  *)
@@ -11928,10 +11928,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     begin
                     match relass with
                       | [] ->( if Infer.no_infer_all_all estate then
+                          let _ =  Debug.ninfo_hprint (add_str "do_unmatched_rhs" pr_id) "xxxx3" pos in
                           match rhs with
                             | DataNode _ | ViewNode _ ->
                                   let lhs_null_ptrs = Cformula.get_null_svl estate.es_formula in
-                                  (* let _ =  Debug.info_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in *)
+                                  let _ =  Debug.ninfo_hprint (add_str "rhs" Cprinter.string_of_h_formula) rhs pos in
+                                  let _ =  Debug.ninfo_hprint (add_str "estate.es_formula" Cprinter.string_of_formula) estate.es_formula pos in
+                                  let _ =  Debug.ninfo_hprint (add_str "lhs_null_ptrs" !CP.print_svl) lhs_null_ptrs pos in
                                   let root = Cformula.get_ptr_from_data rhs in
                                   if (Cfutil.is_empty_heap_f estate.es_formula) || CP.mem_svl root lhs_null_ptrs then
                                     let must_estate = {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula} in
@@ -11946,7 +11949,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                               (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                               CF.mk_failure_may (msg) sl_error, estate.es_trace)) (Ctx (convert_to_may_es estate)) (mk_cex false), NoAlias)
                         else
-                            let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                          let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
                             if not(CF.isFailCtx lc) then first_r
                             else
