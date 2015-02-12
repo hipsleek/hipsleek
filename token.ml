@@ -89,7 +89,7 @@ type sleek_token =
   | FAIL_MAY
   | XPURE
   | PAR
-  | SKIP
+  (* | SKIP - should be an identifier! *)
   (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
 
@@ -197,7 +197,7 @@ module Token = struct
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
     | PAR -> "par"
-    | SKIP -> "skip"
+    (* | SKIP -> "skip" *)
     (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 
 

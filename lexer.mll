@@ -287,7 +287,7 @@ module Make (Token : SleekTokenS)
    ("template_solve", TEMPL_SOLVE);
    (flow, FLOW flow);
    ("par", PAR);
-   ("skip", SKIP)
+   (* ("skip", SKIP) *)
   ]
 }
   

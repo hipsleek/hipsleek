@@ -3323,7 +3323,7 @@ valid_declaration_statement:
    | t=jump_statement;`SEMICOLON  -> t
    | t= assert_statement;`SEMICOLON -> t
    | t=dprint_statement;`SEMICOLON  -> t
-   | t=skip_statement;`SEMICOLON  -> t
+   (* | t=skip_statement;`SEMICOLON  -> t *)
    | t=debug_statement -> t
    | t=time_statement -> t
    | t=bind_statement -> t
@@ -3367,8 +3367,8 @@ dprint_statement:
   [[ `DPRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos_camlp4 _loc 1)})
    | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
 
-skip_statement:
-  [[ `SKIP  -> Empty (get_pos_camlp4 _loc 1); ]];
+(* skip_statement: *)
+(*   [[ `SKIP  -> Empty (get_pos_camlp4 _loc 1); ]]; *)
    
 bind_statement:
   [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->
