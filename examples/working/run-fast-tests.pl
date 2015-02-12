@@ -2007,6 +2007,7 @@ my $inv = '--inv-test';
     #     ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
     # ],
     "musterr"=>[["err1.slk","",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
+                ["err1-exc.slk","--efa-exc",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
                ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.must.must.must.must.may.must.must.must.must.must.must.Valid.may.Valid.must.must.must.must.Valid.may.may.may.must.must."],
                 ["err3.slk","",(),"must.must.must.must.must.must.may.must.must."],
                 ["err4.slk","",(),"must.Valid.must.must.must.Valid.Valid.must.must.must.Valid.must.Valid.must.must.must.must.Valid."],

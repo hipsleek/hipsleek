@@ -11652,6 +11652,15 @@ and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
   | _ -> Err.report_error {Err.error_loc = pos;
 						   Err.error_text = "flow_of_context: disjunctive or fail context"}
 
+and flow_formula_of_list_context ls=
+  match ls with
+    | FailCtx _ -> []
+    | SuccCtx cl -> begin
+        try
+          List.map (fun ctx -> flow_formula_of_ctx ctx no_pos) cl
+        with _ -> []
+      end
+
 and set_flow_in_ctx_override (c:context) (f:flow_formula) :context = match c with
 	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula_override f c1.es_formula}
 	| OCtx (c1,c2) -> OCtx ((set_flow_in_ctx_override c1 f),(set_flow_in_ctx_override c2 f))
