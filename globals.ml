@@ -1118,10 +1118,10 @@ let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
-(* let ann_vp = ref false (\* Disable variable permissions in default, turn on in para5*\) *)
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
-let ann_vp = ref true (* Enable variable permissions in rho, any problem
-for run-fast-test? *)
+(* let ann_vp = ref true (\* Enable variable permissions in rho, any problem *)
+(* for run-fast-test? *\) *)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 

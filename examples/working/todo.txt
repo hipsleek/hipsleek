@@ -1046,7 +1046,62 @@ infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
 
 
 ====================================================================
-====================================================================
+# hip --eps
+
+Total number of errors: 52 in files:
+ error at: bubble.ss id2
+error at: bubble.ss id3
+error at: bubble.ss bubble
+error at: bubble.ss bsort
+error at: vperm/vperm_check.ss inc
+error at: vperm/vperm_check.ss incCell
+error at: vperm/vperm_check.ss test1
+error at: vperm/vperm_check.ss test2
+error at: vperm/vperm_check.ss test3
+error at: vperm/vperm_check.ss test4
+error at: vperm/task_decompose.ss inc
+error at: vperm/task_decompose.ss creator
+error at: parahip/cell.ss test
+error at: parahip/cell.ss test1
+error at: parahip/cell-extreme-cases.ss test
+error at: parahip/cell-extreme-cases.ss test2
+error at: parahip/cell-extreme-cases.ss test3
+error at: parahip/cell-extreme-cases.ss test4
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss func
+error at: parahip/unordered-locking.ss main
+error at: veribsync/hip-bperm1.ss updateCell
+error at: veribsync/barrier-static-consistency.ss participant
+error at: veribsync/barrier-static-consistency.ss participant1
+error at: veribsync/barrier-dynamic-exp3.ss thread1
+error at: veribsync/barrier-dynamic-exp3.ss thread2
+error at: veribsync/barrier-dynamic-exp3.ss thread3
+error at: veribsync/barrier-dynamic-exp4.ss childthread1
+error at: veribsync/barrier-dynamic-exp4.ss childthread2
+error at: veribsync/barrier-dynamic-exp4.ss thread1
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.====================================================================
 ====================================================================
 ====================================================================
 ====================================================================
