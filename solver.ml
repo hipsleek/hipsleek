@@ -10825,11 +10825,12 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_
       else None in 
     begin
       match r with
-        | Some (new_iv,new_rn,dead_iv) -> 
+        | Some (new_iv,new_rn,dead_iv,done_iv) -> 
               let new_estate =
                 let _ = DD.tinfo_hprint (add_str "new_rn" Cprinter.string_of_h_formula) new_rn no_pos in
                 {estate with 
-                    es_infer_vars = new_iv; 
+                    es_infer_vars = new_iv;
+                    (* es_infer_vars_done_heap = CP.remove_dups_svl (estate.es_infer_vars_done_heap@done_iv); *)
                     es_infer_vars_dead = dead_iv@estate.es_infer_vars_dead; 
                     es_infer_heap = new_rn::estate.es_infer_heap;
                     es_formula = CF.normalize_combine_heap estate.es_formula new_rn;

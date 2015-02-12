@@ -478,14 +478,17 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             let alias = CP.EMapSV.find_equiv_all orig_r lhs_aset in
             let rt_al = [orig_r]@alias in (* set of alias with root of rhs *)
             let over_dead = CP.intersect dead_iv rt_al in
-            let iv_alias = CP.intersect iv rt_al in 
+            let iv_alias = CP.intersect_svl iv rt_al in
+            let _ = DD.ninfo_hprint (add_str "iv_alias" !CP.print_svl) iv_alias no_pos in
+            let _ = DD.ninfo_hprint (add_str "over_dead" !CP.print_svl) over_dead no_pos in
             let b = (over_dead!=[] || iv_alias == []) in (* does alias of root intersect with iv? *)
             (* let new_iv = (CP.diff_svl (inf_arg@iv) rt_al) in *)
             (* let alias = if List.mem orig_r iv then [] else alias in *)
             if b then None
             else 
               begin
-                let new_iv = inf_av@inf_arg@iv in
+                let new_iv =(inf_av@inf_arg@iv) in
+                (* let done_iv= [] in *)
                 (* Take the alias as the inferred pure *)
                 (* let iv_al = CP.intersect iv iv_alias in (\* All relevant vars of interest *\) *)
                 (* let iv_al = CP.diff_svl iv_al r in *)
@@ -520,7 +523,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
                     must_action_stk # push act;
-                    Some (new_iv,new_h,iv_alias))
+                    Some (new_iv,new_h,iv_alias, done_iv))
               end
 
 
@@ -533,7 +536,7 @@ type: Cformula.entail_state ->
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
-  let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
+  let pr3 = pr_option (pr_quad !print_svl pr2 !print_svl !print_svl) in
   Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
       (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
@@ -933,7 +936,8 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
       (p,None,rel_ass)
     else
       let _ = Debug.ninfo_hprint (add_str "iv_orig" (!CP.print_svl)) iv_orig no_pos in
-      let iv = iv_orig(* @iv_lhs_rel *) in
+      let iv = iv_orig (* CP.diff_svl iv_orig estate.CF.es_infer_vars_done_heap *) (* @iv_lhs_rel *) in
+      let _ = Debug.ninfo_hprint (add_str "iv" (!CP.print_svl)) iv no_pos in
       let lhs_xpure = MCP.pure_of_mix lhs_xpure0 in 
       let rhs_xpure = MCP.pure_of_mix rhs_xpure_orig in 
       let split_rhs = CP.split_conjunctions rhs_xpure in

@@ -9024,6 +9024,7 @@ think it is used to instantiate when folding.
   (* es_subst_ref: (CP.spec_var * CP.spec_var) list; *)
   (* WN : why so many diff type of infer vars, can we streamline?? *)
   es_infer_vars : CP.spec_var list;  (* for first-order object *)
+  (* es_infer_vars_done_heap: CP.spec_var list; *)  (* by first-order infer_heap *)
   es_infer_vars_rel : CP.spec_var list; (* for relations *)
   es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_sel_post_hp_rel: CP.spec_var list;
@@ -9371,6 +9372,7 @@ let empty_es flowt grp_lbl pos =
   es_is_normalizing = false;
   es_infer_post = false;
   es_infer_vars = [];
+  (* es_infer_vars_done_heap = []; *)
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
