@@ -808,6 +808,7 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
     | Block b ->
       let lvars = to_IS (List.map three1 b.exp_block_local_vars) in
       let clash_lvars = IS.inter bvars lvars in
+      let _ = Debug.binfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
       if (IS.is_empty clash_lvars) then None
       else 
         let clash_subs = new_naming (from_IS clash_lvars) in
@@ -852,7 +853,7 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
 
 let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp = 
   let pr1 = Iprinter.string_of_exp in
-  let pr2 (bv,subs) = pr_list (pr_pair pr_id pr_id) subs in
+  let pr2  = pr_pair string_of_IS (pr_list (pr_pair pr_id pr_id)) in
  Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp e xx
 
 let rename_proc gvs proc : proc_decl = 
