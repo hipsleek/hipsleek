@@ -850,11 +850,14 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
   map_exp_args e (bvars, subs) f f_args
 
 
-
+let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp = 
+  let pr1 = Iprinter.string_of_exp in
+  let pr2 (bv,subs) = pr_list (pr_pair pr_id pr_id) subs in
+ Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp e xx
 
 let rename_proc gvs proc : proc_decl = 
 	(* let _ = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
-	(* let _ = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_decl proc) ^ " }") in *)
+	(* let _ = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_dec,l proc) ^ " }") in *)
   let pv v = v.param_name in
   let pargs = to_IS (List.map pv proc.proc_args) in
   let clash_vars = IS.inter pargs gvs in
