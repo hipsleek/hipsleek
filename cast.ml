@@ -1471,6 +1471,13 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
+let exist_left_lemma_w_fl coers fl=
+  let is_rhs_subsume_flow_ff coer=
+    F.struc_formula_is_eq_flow coer.coercion_body_norm fl.F.formula_flow_interval
+  in
+  (* exist a lemma i.e. rhs has fl flow *)
+  List.exists is_rhs_subsume_flow_ff coers
+
 (*
   a coercion can be simple, complex or normalizing
   Note that:

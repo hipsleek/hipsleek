@@ -5105,7 +5105,9 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               (*       lc *)
               (*     end *)
               (* in *)
-              let osubsumed_es, non_subsume_es = if !Globals.enable_error_as_exc then (Some es), None
+              let osubsumed_es, non_subsume_es = if (* !Globals.enable_error_as_exc || *)
+               (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+              then (Some es), None
               else Cfutil.obtain_subsume_es es conseq
               in
               let tmp0, prf = match osubsumed_es with
@@ -7176,7 +7178,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
                     (*   (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte) *)
                     (* else *)
-                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then (
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) && not !Globals.enable_error_as_exc && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2)) then (
                       Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                       ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                       (* TODO : change to meaningful msg *)

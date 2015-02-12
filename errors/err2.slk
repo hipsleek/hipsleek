@@ -62,7 +62,7 @@ checkentail x=y |- x::node<_,_> * y::node<_,_>.
 
 
 //15. may. cause:15.3  y<x | x<y |-  x!=null (may-bug).
-checkentail x!=y |- x::node<_,_> * y::node<_,_>.
+checkentail htrue & x!=y |- x::node<_,_> * y::node<_,_>.
 /*
 Why \/ on LHS?  because CP.simplify_filter_ante call simplify from provers.
 */
@@ -91,7 +91,7 @@ checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
 checkentail x::node<_,null> & y=null  |- y::ll<n>.
 
 //23. must-bug - cause:22  y!=null |-  y=null (must-bug).
-
+// may-bug: change search strategy. sleek now no longer fold-base-case
 checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
 
 //24 valid
