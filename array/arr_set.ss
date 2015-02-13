@@ -25,7 +25,7 @@ int get_arr(arr a,int i)
 arr new_arr(int size)
   requires size>0
   ensures res::arr<0,size-1,{0}>;
-
+/*
 // Initialize an array from left to right with 0, without loop involved 
 void initleft(arr a, int i, int j) 
   requires a::arr<i,j,_> 
@@ -37,7 +37,7 @@ void initleft(arr a, int i, int j)
 	  initleft(a, i, j-1);
 	}
 }
-
+*/
 // Initialize an array with some scalar value, with loop
 void initLoop(arr a,int i,int j)
   requires a::arr<i,j,S>
@@ -46,12 +46,14 @@ void initLoop(arr a,int i,int j)
   int k=i;
   while(k<j)
     //requires a::arr<i,k,S> ensures ?;
+    requires a::arr<i,j,S>
+      ensures a::arr<i,j,{0}>;
     {
-    update_arr(0,a,k);
-    k++;
-  }
+      update_arr(0,a,k);
+      k++;
+    }
 }
-
+/*
 // Update array a with another array b.
 // Assuming that these two arrays have the same length
 void initWithArr(arr a,arr b,int i,int j)
@@ -115,3 +117,4 @@ int sentinel(arr a, int x, int i, int j)
       return -1;
     }
 }
+*/

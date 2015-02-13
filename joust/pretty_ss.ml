@@ -403,7 +403,7 @@ let rec print f comp =
   begin
     match comp.package with
     | Some pkg ->
-	print_id_comments f (List.hd pkg);
+	print_id_comments f (List.hd pkg)
 	(*fprintf f "package %a;@\n@\n" print_name pkg*)
     | None -> ()
   end;
@@ -784,8 +784,8 @@ let print_out_str input_filename =
 let print_out_str_from_files input_list outputfilename = 
   let rec helper input_list = 
     match input_list with
-    | fname::rest ->  (print_out_str fname)^"\n"^(helper rest)
-    | [] -> ""
+      | fname::rest ->  (print_out_str fname)^"\n"^(helper rest)
+      | [] -> ""
   in
   let outputchannel = open_out(outputfilename) in
   let finalStr = helper input_list in
@@ -793,6 +793,32 @@ let print_out_str_from_files input_list outputfilename =
   let _ = print_endline(finalStr) in
   finalStr
 
+
+(*
+let combine_compile_unit c1 c2 =
+  match c1, c2 with
+  | {package = _; imports = _;decls = d1;comments = com1},{package = _; imports = [];decls = d2;comments = com2} ->
+          {package = None;imports = [];decls = d1@d2;comments = com1@com2}
+  | _ -> failwith "combine_compile_unit: Unexpected"
+*)
+
+(*
+let print_out_str_from_files_new input_list outputfilename = 
+  let file_to_string input_filename =
+    let channelf = open_in (input_filename) in
+    let n = in_channel_length channelf in
+    let s = String.create n in
+    really_input channelf s 0 n;
+    close_in channelf;
+    s
+  in
+  let big_s = List.fold_left (fun s i -> s^"\n"^(file_to_string i)) "" input_list in
+  let tmpOutChannel = open_out ("combined_tmp.java") in
+  Printf.fprintf tmpOutChannel "%s" big_s;
+  close_out tmpOutChannel;
+  print_out_str_to_file "combined_tmp.java" outputfilename;
+  Sys.remove "combined_tmp.java"
+*)
 
 let print_out_str_from_files_new input_list outputfilename = 
   let file_to_string input_filename =
