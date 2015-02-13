@@ -826,6 +826,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 let sap = ref false
+let fo_iheap = ref true
+
 let sae = ref false
 let sac = ref false
 
