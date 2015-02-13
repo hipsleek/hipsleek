@@ -15,6 +15,9 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+let sp_rm_prime v = match v with
+    SpecVar (a,b,_) -> SpecVar(a,b,Unprimed)
+
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)

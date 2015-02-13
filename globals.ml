@@ -1381,6 +1381,7 @@ type infer_type =
   | INF_FLOW (* For infer[@flow] *)
   | INF_CLASSIC (* For infer[@leak] *)
   | INF_PAR (* For infer[@par] inside par *)
+  | INF_VER_POST (* For infer[@ver_post] for post-checking *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1405,6 +1406,7 @@ let string_of_inf_const x =
   | INF_FLOW -> "@flow"
   | INF_CLASSIC -> "@leak"
   | INF_PAR -> "@par"
+  | INF_VER_POST -> "@ver_post"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1504,6 +1506,7 @@ object (self)
       helper "@flow"          INF_FLOW;
       helper "@leak"          INF_CLASSIC;
       helper "@par"           INF_PAR;
+      helper "@ver_post"      INF_VER_POST;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1522,6 +1525,7 @@ object (self)
   method is_term_wo_post = self # get INF_TERM_WO_POST
   method is_pre  = self # get INF_PRE
   method is_post  = self # get INF_POST
+  method is_ver_post  = self # get INF_VER_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
   method is_error  = self # get INF_ERROR

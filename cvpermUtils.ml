@@ -11,20 +11,49 @@ let mem = Gen.BList.mem_eq eq_spec_var
 
 (* To store vperm of variables *)
 type vperm_sets = {
+  vperm_unprimed_flag: bool;
   vperm_zero_vars: spec_var list;
   vperm_lend_vars: spec_var list;
   vperm_value_vars: spec_var list;
   vperm_full_vars: spec_var list;
-  vperm_frac_vars: (Frac.frac * spec_var list) list; }
+  vperm_frac_vars: (Frac.frac * spec_var list) list; 
+}
 
 let print_vperm_sets = ref (fun (vps: vperm_sets) -> "vperm_sets printer has not been initialized") 
 
-let empty_vperm_sets = {
-  vperm_zero_vars = [];
-  vperm_lend_vars = [];
-  vperm_value_vars = [];
-  vperm_full_vars = [];
-  vperm_frac_vars = []; }
+(* unused cos of ivperm? *)
+let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
+ ?frac:(frac=[]) full
+=
+  {
+    vperm_unprimed_flag = true;
+    vperm_zero_vars = List.map sp_rm_prime zero;
+    vperm_lend_vars = List.map sp_rm_prime lend;
+    vperm_value_vars = List.map sp_rm_prime value;
+    vperm_full_vars = List.map sp_rm_prime full;
+    vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) frac;
+  }
+
+
+let vperm_rm_prime vp =
+  { vperm_unprimed_flag = true;
+  vperm_zero_vars = List.map sp_rm_prime vp.vperm_zero_vars;
+  vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars;
+  vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars;
+  vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars;
+  vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) vp.vperm_frac_vars;
+  }
+
+let vperm_rm_prime vps = 
+  let pr = !print_vperm_sets in
+  Debug.no_1 "vperm_rm_prime" pr pr vperm_rm_prime vps
+
+let vperm_rm_prime vp =
+  if vp.vperm_unprimed_flag then vp
+  else vperm_rm_prime vp
+
+
+let empty_vperm_sets = build_vperm []
 
 let is_empty_vperm_sets vps = 
   (is_empty vps.vperm_full_vars) &&
@@ -47,6 +76,7 @@ let is_Zero ann =
   | _ -> false
 
 let norm_vperm_sets vps = 
+  let vps = vperm_rm_prime vps in
   let zero_vars = remove_dups vps.vperm_zero_vars in (* @zero[x] * @zero[x] -> @zero[x] *)
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   let full_vars = (* remove_dups *) vps.vperm_full_vars in (* @full[x] * @full[x] -> false *)
@@ -67,14 +97,16 @@ let norm_vperm_sets vps =
 let merge_vperm_sets vps_list = 
   let rec helper vps_list =  
     match vps_list with
-    | [] -> empty_vperm_sets
-    | v::vs ->
-      let mvs = helper vs in
-      { vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
-        vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
-        vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
-        vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
-        vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
+      | [] -> empty_vperm_sets
+      | v::vs ->
+            let mvs = helper vs in
+            { 
+                vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
+                vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
+                vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
+                vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
+                vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
+                vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
   in norm_vperm_sets (helper vps_list)
 
 (* @full[x] * @full[x] -> ERR                     *)
@@ -86,14 +118,16 @@ let merge_vperm_sets vps_list =
 let combine_vperm_sets vps_list = 
   let rec helper vps_list =  
     match vps_list with
-    | [] -> empty_vperm_sets
-    | v::vs ->
-      let mvs = helper vs in
-      { vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
-        vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
-        vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
-        vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
-        vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
+      | [] -> empty_vperm_sets
+      | v::vs ->
+            let mvs = helper vs in
+            { 
+                vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
+                vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
+                vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
+                vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
+                vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
+                vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
   in
   let comb_vps = helper vps_list in
   let full_vars = comb_vps.vperm_full_vars in
@@ -105,8 +139,8 @@ let combine_vperm_sets vps_list =
   then Error.report_error err
   else
     { comb_vps with
-      vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
-      vperm_lend_vars = remove_dups lend_vars; }
+        vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
+        vperm_lend_vars = remove_dups lend_vars; }
 
 (* @full[x] or @full[x] -> @full[x] *)
 (* @full[x] or @lend[x] -> @lend[x] *)
@@ -123,11 +157,13 @@ let combine_or_vperm_sets vps1 vps2 =
   let z = remove_dups (z1 @ z2 @ alone_vars) in
   let l = remove_dups (diff (l1 @ l2) z) in
   let f = remove_dups (diff (f1 @ f2) (l @ z)) in
-  { vperm_zero_vars = z;
-    vperm_lend_vars = l;
-    vperm_full_vars = f;
-    vperm_value_vars = vps1.vperm_value_vars @ vps2.vperm_value_vars; (* TODO *)
-    vperm_frac_vars = vps1.vperm_frac_vars @ vps2.vperm_frac_vars; (* TODO *) }
+  { 
+      vperm_unprimed_flag = (vps1.vperm_unprimed_flag && vps2.vperm_unprimed_flag);
+      vperm_zero_vars = z;
+      vperm_lend_vars = l;
+      vperm_full_vars = f;
+      vperm_value_vars = vps1.vperm_value_vars @ vps2.vperm_value_vars; (* TODO *)
+      vperm_frac_vars = vps1.vperm_frac_vars @ vps2.vperm_frac_vars; (* TODO *) }
 
 let vperm_sets_of_anns ann_list =
   let rec helper ann_list =  

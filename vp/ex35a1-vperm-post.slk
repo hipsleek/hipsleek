@@ -1,0 +1,11 @@
+infer [@ver_post] @value[x] |- @full[x].
+expect Fail.
+
+infer [@ver_post] @value[x] |- @value[x].
+expect Fail.
+
+infer [@ver_post] @full[x] |- @full[x].
+expect Valid.
+
+infer [@ver_post] @full[x] |- @value[x].
+expect Fail.

@@ -768,7 +768,7 @@ let rename_formula subs1 f =
 let rec remove_first i xs =
   match xs with
     | [] -> []
-    | (a,b)::xs -> if i=a then xs else (a,b)::remove_first i xs
+    | ((a,b) as cc)::xs -> if i=a then xs else cc::remove_first i xs
 
 class impset  =
 object (self)
@@ -781,18 +781,18 @@ object (self)
     let rec diff xs ys =
       match xs,ys with
         | xs,[] -> xs
-        | (x,x1)::xst, (y,y1)::yst ->
+        | ((x,x1) as cc)::xst, (y,y1)::yst ->
               if x1=y1 then diff xst yst
-              else (x,x1)::(diff xst ys)
+              else cc::(diff xst ys)
         | [],_ -> 
               let pr = pr_list (pr_pair pr_id pr_id) in
-              let _ = Debug.binfo_hprint (add_str "WARNING : un-declared" pr) ys no_pos in
+              let _ = Debug.binfo_hprint (add_str "WARNING : un-declared remains" pr) ys no_pos in
                 []
     in
-    let diff xs ys =
-      let pr = pr_list (pr_pair pr_id pr_id) in
-      Debug.no_2 "impset.diff" pr pr pr diff xs ys
-    in
+    (* let diff xs ys = *)
+    (*   let pr = pr_list (pr_pair pr_id pr_id) in *)
+    (*   Debug.no_2 "impset.diff" pr pr pr diff xs ys *)
+    (* in *)
     diff xs vs
   method string_of = pr_list (pr_pair pr_id pr_id) vs
 end
@@ -805,150 +805,153 @@ end
 (* bvas - have been declared vars
    subs - substitution list - pair of vars list
 *)
-let imp_bvars = new impset;;
 
-let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
-(*  let imp_bvars = new impset in *)
-  let subst_of_ident_with_bool_with_wrapper subs id =
-    let new_subs = imp_bvars # filter_undecl subs in
-    (* let _ = Debug.binfo_hprint (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
-    subst_of_ident_with_bool new_subs id
-  in
-  let f_args (bvars, subs) e =
-    match e with
-      | Bind b ->
-            (union_all [to_IS b.exp_bind_fields; bvars], subs)
-      | Block b ->
-            let lvars0 = List.map three1 b.exp_block_local_vars in
-            let lvars = to_IS lvars0 in
-            (union_all [lvars; bvars], subs)
-      | Catch b ->
-            let x = b.exp_catch_var in
-            (match x with
-              | None -> (bvars, subs)
-              | Some v -> (IS.add v bvars, subs)
-            )
-      | _ -> (bvars, subs)
-  in 
-  let f (bvars, subs) e = 
-    match e with 
-      | Assert f -> 
-            let ft1 = 
-              match f.exp_assert_asserted_formula with 
-                | None -> None
-                | Some (sf, bl) -> Some (rename_struc_formula subs sf, bl)
-            in
-            let fa1 = 
-              match f.exp_assert_assumed_formula with
-                | None -> None
-                | Some fml -> Some (rename_formula subs fml)
-            in
-            Some (Assert 
-                { f with
-                    exp_assert_asserted_formula = ft1;
-                    exp_assert_assumed_formula = fa1;
-                })
-      | Var b -> Some (Var {b with exp_var_name = fst (subst_of_ident_with_bool_with_wrapper subs b.exp_var_name);})
-      | VarDecl b ->
-            let helper (v, e, l) = 
-              let e1 = 
-                (match e with
+let rename_exp2 e subs = 
+  let imp_bvars = new impset in
+
+  let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
+    (*  let imp_bvars = new impset in *)
+    let subst_of_ident_with_bool_with_wrapper subs id =
+      let new_subs = imp_bvars # filter_undecl subs in
+      (* let _ = Debug.binfo_hprint (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
+      subst_of_ident_with_bool new_subs id
+    in
+    let f_args (bvars, subs) e =
+      match e with
+        | Bind b ->
+              (union_all [to_IS b.exp_bind_fields; bvars], subs)
+        | Block b ->
+              let lvars0 = List.map three1 b.exp_block_local_vars in
+              let lvars = to_IS lvars0 in
+              (union_all [lvars; bvars], subs)
+        | Catch b ->
+              let x = b.exp_catch_var in
+              (match x with
+                | None -> (bvars, subs)
+                | Some v -> (IS.add v bvars, subs)
+              )
+        | _ -> (bvars, subs)
+    in 
+    let f (bvars, subs) e = 
+      match e with 
+        | Assert f -> 
+              let ft1 = 
+                match f.exp_assert_asserted_formula with 
                   | None -> None
-                  | Some e0 -> Some (rename_exp e0 (bvars, subs))
-                )
+                  | Some (sf, bl) -> Some (rename_struc_formula subs sf, bl)
               in
-              let _ = imp_bvars # pop_elem v in
-              let (v1, b) = subst_of_ident_with_bool subs v in
-              (v1, e1, l)
-            in
-            Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
-      | ConstDecl b ->
-            let helper (v,e,l) = 
-              let e1 = (rename_exp e (bvars, subs)) in
-              let (v1, b) = subst_of_ident_with_bool subs v in
-              (v1, e1, l)
-            in
-            Some (ConstDecl {b with exp_const_decl_decls = List.map helper b.exp_const_decl_decls})
+              let fa1 = 
+                match f.exp_assert_assumed_formula with
+                  | None -> None
+                  | Some fml -> Some (rename_formula subs fml)
+              in
+              Some (Assert 
+                  { f with
+                      exp_assert_asserted_formula = ft1;
+                      exp_assert_assumed_formula = fa1;
+                  })
+        | Var b -> Some (Var {b with exp_var_name = fst (subst_of_ident_with_bool_with_wrapper subs b.exp_var_name);})
+        | VarDecl b ->
+              let helper (v, e, l) = 
+                let e1 = 
+                  (match e with
+                    | None -> None
+                    | Some e0 -> Some (rename_exp e0 (bvars, subs))
+                  )
+                in
+                let _ = imp_bvars # pop_elem v in
+                let (v1, b) = subst_of_ident_with_bool subs v in
+                (v1, e1, l)
+              in
+              Some (VarDecl {b with exp_var_decl_decls = List.map helper b.exp_var_decl_decls})
+        | ConstDecl b ->
+              let helper (v,e,l) = 
+                let e1 = (rename_exp e (bvars, subs)) in
+                let (v1, b) = subst_of_ident_with_bool subs v in
+                (v1, e1, l)
+              in
+              Some (ConstDecl {b with exp_const_decl_decls = List.map helper b.exp_const_decl_decls})
 
-      | Bind b ->
-            let x = b.exp_bind_bound_var in
-            let flds = to_IS b.exp_bind_fields in
-            let e = b.exp_bind_body in
-            let clash_fields = IS.inter bvars flds in
-            let clash_subs = new_naming (from_IS clash_fields) in
-            let new_fields = List.map (compose fst (subst_of_ident_with_bool clash_subs)) b.exp_bind_fields in
-            let (nx, nb) = subst_of_ident_with_bool subs x in
-            if (nb || not (IS.is_empty clash_fields)) 
-            then 
-              let new_e = rename_exp e (IS.union flds bvars, subs @ clash_subs) in
-              (Some (Bind 
-                  { b with 
-                      exp_bind_bound_var = nx;
-                      exp_bind_fields = new_fields;
-                      exp_bind_body = new_e;
-                  }))
-            else None
-              
-      | Block b ->
-            let fn b =
-              let local_vs = b.exp_block_local_vars in
-              let lvars = to_IS (List.map three1 local_vs) in
-              let clash_lvars = IS.inter bvars lvars in
-              if (IS.is_empty clash_lvars) then None
-              else 
-                let _ = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
-                let _ = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
-                let body = b.exp_block_body in
-                (* { vs,  int x=?; e2} *) 
-                let _ = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
-                let clash_subs = new_naming (from_IS clash_lvars) in
-                let _ = imp_bvars # push_list clash_subs in
-                let _ = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
-                let new_subs = clash_subs @ subs in
-                let _ = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
-                let new_vars =
-                  let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
-                  List.map fun0 local_vs (* b.exp_block_local_vars *) in
-                let new_e = rename_exp body (IS.union lvars bvars, new_subs) in
-                Some (Block 
-                    { b with
-                        exp_block_local_vars = new_vars;
-                        exp_block_body = new_e;
-                    }) 
-            in fn b
+        | Bind b ->
+              let x = b.exp_bind_bound_var in
+              let flds = to_IS b.exp_bind_fields in
+              let e = b.exp_bind_body in
+              let clash_fields = IS.inter bvars flds in
+              let clash_subs = new_naming (from_IS clash_fields) in
+              let new_fields = List.map (compose fst (subst_of_ident_with_bool clash_subs)) b.exp_bind_fields in
+              let (nx, nb) = subst_of_ident_with_bool subs x in
+              if (nb || not (IS.is_empty clash_fields)) 
+              then 
+                let new_e = rename_exp e (IS.union flds bvars, subs @ clash_subs) in
+                (Some (Bind 
+                    { b with 
+                        exp_bind_bound_var = nx;
+                        exp_bind_fields = new_fields;
+                        exp_bind_body = new_e;
+                    }))
+              else None
+                
+        | Block b ->
+              let fn b =
+                let local_vs = b.exp_block_local_vars in
+                let lvars = to_IS (List.map three1 local_vs) in
+                let clash_lvars = IS.inter bvars lvars in
+                if (IS.is_empty clash_lvars) then None
+                else 
+                  let _ = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
+                  let body = b.exp_block_body in
+                  (* { vs,  int x=?; e2} *) 
+                  let _ = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
+                  let clash_subs = new_naming (from_IS clash_lvars) in
+                  let _ = imp_bvars # push_list clash_subs in
+                  let _ = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
+                  let new_subs = clash_subs @ subs in
+                  let _ = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
+                  let new_vars =
+                    let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
+                    List.map fun0 local_vs (* b.exp_block_local_vars *) in
+                  let new_e = rename_exp body (IS.union lvars bvars, new_subs) in
+                  Some (Block 
+                      { b with
+                          exp_block_local_vars = new_vars;
+                          exp_block_body = new_e;
+                      }) 
+              in fn b
 
-      | Catch b -> begin
-          match b.exp_catch_var with 
-            | None -> None
-            | Some x -> 
-                  let e = b.exp_catch_body in
-                  if (IS.mem x bvars) then None
-                  else 
-                    let clash_subs = new_naming ([x]) in
-                    let nx = fst (subst_of_ident_with_bool clash_subs x) in
-                    let ne = rename_exp e (IS.add x bvars, subs @ clash_subs) in
-                    Some (Catch 
-                        { b with
-                            exp_catch_var = Some nx;
-                            exp_catch_body = ne;
-                        })
-        end
-      | CallNRecv b -> 
-            begin match b.exp_call_nrecv_ho_arg with
+        | Catch b -> begin
+            match b.exp_catch_var with 
               | None -> None
-              | Some f -> 
-                    let nf = rename_formula subs f in
-                    Some (CallNRecv { b with exp_call_nrecv_ho_arg = Some nf })
-            end
-      | _ -> None
-  in
-  map_exp_args e (bvars, subs) f f_args
+              | Some x -> 
+                    let e = b.exp_catch_body in
+                    if (IS.mem x bvars) then None
+                    else 
+                      let clash_subs = new_naming ([x]) in
+                      let nx = fst (subst_of_ident_with_bool clash_subs x) in
+                      let ne = rename_exp e (IS.add x bvars, subs @ clash_subs) in
+                      Some (Catch 
+                          { b with
+                              exp_catch_var = Some nx;
+                              exp_catch_body = ne;
+                          })
+          end
+        | CallNRecv b -> 
+              begin match b.exp_call_nrecv_ho_arg with
+                | None -> None
+                | Some f -> 
+                      let nf = rename_formula subs f in
+                      Some (CallNRecv { b with exp_call_nrecv_ho_arg = Some nf })
+              end
+        | _ -> None
+    in
+    map_exp_args e (bvars, subs) f f_args
+  in rename_exp e subs
 
 
 let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp = 
   let pr1 = Iprinter.string_of_exp in
   let pr2  = pr_pair string_of_IS (pr_list (pr_pair pr_id pr_id)) in
- Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp e xx
+ Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp2 e xx
 
 let rename_proc gvs proc : proc_decl = 
 	(* let _ = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)

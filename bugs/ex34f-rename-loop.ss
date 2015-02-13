@@ -17,7 +17,7 @@ void main () {
      // [x->x16][x->x14] not yet (x,x16)
      int x = x;
      // [x->x16][x->x14] not yet 
-     x = x+1;
+     x = x+y;
    }
    // [x->x14] not yet 
    x=x+1;
@@ -27,20 +27,20 @@ void main () {
 /*
 # ex34b
 
-renaming incorrect..
-
-ERROR: at ex34b-rename-loop.ss_4:11_4:12
-Message: x_14, line 4, col 11 is used before declared
-
-int x = 1;
+rename_exp@1 EXIT:
+{local: int x,int y
+int x = 1, y = 4;
 {local: int x_14
-x_14 = x_14 + 1;
-{local: int x_15
-int x_15 = x_15;
-x_15 = x_15 + 1};
-int x_14 = x_14;
+x = x + 1;
+{local: int x_15,int y_16
+int x_15 = x + y;
+int y_16 = x_15;
+x_15 = x_15 + y_16};
+int x_14 = x;
+ {local: int x_17
+  int x_17 = x_14;
+  x_17 = x_17 + y};
 x_14 = x_14 + 1}}
-
 
 
 */

@@ -7250,7 +7250,8 @@ and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.
     sv
   in
   let trans_vl vl = List.map trans_v vl in
-  { CVP.vperm_zero_vars = trans_vl vps.IVP.vperm_zero_vars;
+  {   CVP.vperm_unprimed_flag = false;
+      CVP.vperm_zero_vars = trans_vl vps.IVP.vperm_zero_vars;
     CVP.vperm_lend_vars = trans_vl vps.IVP.vperm_lend_vars;
     CVP.vperm_value_vars = trans_vl vps.IVP.vperm_value_vars;
     CVP.vperm_full_vars = trans_vl vps.IVP.vperm_full_vars;

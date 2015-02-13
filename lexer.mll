@@ -391,6 +391,7 @@ rule tokenizer file_name = parse
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
+  | "@ver_post" { INFER_AT_VER_POST }
   | "@imm" { INFER_AT_IMM }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }
