@@ -1,14 +1,14 @@
 void main () {
-  int x=1; y=4;
+  int x=1, y=4;
  { // [x->x14],  not yet (x,x14) 
    x = x+1;
    { 
      // [y->y1][x->x15][x->x14] not yet (y,y1),(x,x15),(x,14) 
-     int x = x;
+     int x = x+y;
      // [y->y1][x->x15][x->x14] not yet (y,y1),(x,14) 
      int y = x;
      // [x->x15][x->x14] not yet (x,14) 
-     x = x+1;
+     x = x+y;
    }
    // [x->x14] not yet (x,x14)
    int x = x;
