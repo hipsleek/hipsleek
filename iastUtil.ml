@@ -784,7 +784,10 @@ object (self)
         | (x,x1)::xst, (y,y1)::yst ->
               if x1=y1 then diff xst yst
               else (x,x1)::(diff xst ys)
-        | [],_ -> []
+        | [],_ -> 
+              let pr = pr_list (pr_pair pr_id pr_id) in
+              let _ = Debug.binfo_hprint (add_str "WARNING : un-declared" pr) ys no_pos in
+                []
     in
     let diff xs ys =
       let pr = pr_list (pr_pair pr_id pr_id) in
@@ -893,16 +896,16 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
               let clash_lvars = IS.inter bvars lvars in
               if (IS.is_empty clash_lvars) then None
               else 
-                let _ = Debug.binfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
-                let _ = Debug.binfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
+                let _ = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
+                let _ = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
                 let body = b.exp_block_body in
                 (* { vs,  int x=?; e2} *) 
-                let _ = Debug.binfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
+                let _ = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
                 let clash_subs = new_naming (from_IS clash_lvars) in
                 let _ = imp_bvars # push_list clash_subs in
-                let _ = print_endline ("stack: "^(imp_bvars # string_of )) in
+                let _ = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
                 let new_subs = clash_subs @ subs in
-                let _ = Debug.binfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
+                let _ = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
                 let new_vars =
                   let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
                   List.map fun0 local_vs (* b.exp_block_local_vars *) in
