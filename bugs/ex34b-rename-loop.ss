@@ -1,7 +1,8 @@
 void main () {
- int x;
+ int x=1;
  {
-  int x = x;
+   int x = x;
+  x=x+1;
  }
 }
 
@@ -20,4 +21,15 @@ rename_exp@1 EXIT:{local: int x
 int x;
 {local: int x_14
 int x_14 = x_14}}
+
+
+
+ int x=1;
+ {int x2 = x
+ {
+  int x = x2;
+  x=x+1;
+ }
+}
+
 */
