@@ -488,7 +488,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             else 
               begin
                 let new_iv =(inf_av@inf_arg@iv) in
-                (* let done_iv= [] in *)
+                let done_iv= [] in
                 (* Take the alias as the inferred pure *)
                 (* let iv_al = CP.intersect iv iv_alias in (\* All relevant vars of interest *\) *)
                 (* let iv_al = CP.diff_svl iv_al r in *)
