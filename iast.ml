@@ -482,9 +482,10 @@ exp_unary_pos : loc }
 and exp_var = { exp_var_name : ident;
 exp_var_pos : loc }
 
-and exp_var_decl = { exp_var_decl_type : typ;
-exp_var_decl_decls : (ident * exp option * loc) list;
-exp_var_decl_pos : loc }
+and exp_var_decl = { 
+    exp_var_decl_type : typ;
+    exp_var_decl_decls : (ident * exp option * loc) list;
+    exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
 exp_while_body : exp;
