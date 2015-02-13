@@ -45,25 +45,22 @@ void three(){
 
 renaming incorrect..
 
-rename_exp@1
-rename_exp inp1 :{local: int x
-int x;
-{local: int x
-int x = x}}
-rename_exp inp2 :[]
-rename_exp@1 EXIT:{local: int x
-int x;
+ERROR: at ex34b-rename-loop.ss_4:11_4:12
+Message: x_14, line 4, col 11 is used before declared
+
+int x = 1;
 {local: int x_14
-int x_14 = x_14}}
+int x_14 = x_14;
+x_14 = x_14 + 1}}
 
+int x = 1;
+{local: int x_14
+int x_14 = x;
+x_14 = x_14 + 1}}
 
+{local: int x;
+int x = x;
+x_14 = x_14 + 1}}
 
- int x=1;
- {int x2 = x
- {
-  int x = x2;
-  x=x+1;
- }
-}
 
 */
