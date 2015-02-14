@@ -218,7 +218,7 @@ let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx
 
 (******************************************************************************)
 
-exception Vperm_Entail_Fail of (spec_var * vp_ann * vp_ann)
+exception Vperm_Entail_Fail of (string * spec_var * vp_ann * vp_ann)
 
 type vperm_res = 
   | Fail of CF.list_context
@@ -264,38 +264,57 @@ let rec pair_ann_sets lhs_as rhs_as =
     with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
 let vperm_entail_var es sv lhs_ann rhs_ann = 
-  let err = Vperm_Entail_Fail (sv, lhs_ann, rhs_ann) in
+  let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
   match lhs_ann with
   | VP_Full ->
     begin match rhs_ann with
     | VP_Full -> VP_Zero
-    | VP_Lend -> if es.CF.es_infer_obj # is_par then raise err else VP_Full 
-    | VP_Value -> VP_Full
+    | VP_Lend -> 
+          if es.CF.es_infer_obj # is_par then raise (err "Par") 
+          else if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Full 
+    | VP_Value -> 
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Full
     | VP_Zero -> VP_Full
     | _ -> lhs_ann
     end
   | VP_Lend ->
     begin match rhs_ann with
-    | VP_Full -> raise err
-    | VP_Lend -> VP_Lend
-    | VP_Value -> VP_Lend
+    | VP_Full -> raise (err "")
+    | VP_Lend -> 
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Lend
+    | VP_Value -> 
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Lend
     | VP_Zero -> VP_Lend
     | _ -> lhs_ann
     end
   | VP_Value ->
     begin match rhs_ann with
-    | VP_Full -> VP_Zero
-    | VP_Lend -> VP_Value (* TODO: to check *)
-    | VP_Value -> VP_Value
+    | VP_Full -> 
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Zero
+    | VP_Lend -> 
+          (* VP_Value (\* TODO: to check *\) *)
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Value
+    | VP_Value -> 
+          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          else VP_Value
     | VP_Zero -> VP_Value
     | _ -> lhs_ann
     end
   | VP_Zero ->
     begin match rhs_ann with
     | VP_Zero -> VP_Zero
-    | _ -> raise err
+    | _ -> raise (err "")
     end
   | _ -> lhs_ann
+
+(* let vperm_entail_var es sv lhs_ann rhs_ann =  *)
+(*   Debug.no_3 "vperm_entail_var" pr_sv pr_ann pr_ann pr_none (fun _ _ _ -> vperm_entail_var es sv lhs_ann rhs_ann) sv lhs_ann rhs_ann  *)
 
 let mkFailCtx_vp msg estate conseq pos = 
   (* let msg = "Error in VPerm entailment: " ^ msg in *)
@@ -332,10 +351,11 @@ let vperm_entail_rhs estate conseq pos =
         let res_f = set_vperm_sets_formula res_vps estate.es_formula in
         let estate = { estate with es_formula = res_f; }
         in Succ estate
-      with (Vperm_Entail_Fail (sv, lhs_ann, rhs_ann)) ->
-        let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy " ^ (pr_vp (sv, rhs_ann)) in
-        let fctx = mkFailCtx_vp msg estate conseq pos in
-        Fail fctx
+      with (Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann)) ->
+          let m = if s="" then "" else "(under "^s^") " in
+          let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy "^m^ (pr_vp (sv, rhs_ann)) in
+          let fctx = mkFailCtx_vp msg estate conseq pos in
+          Fail fctx
 
 let vperm_entail_rhs estate conseq pos =
   let pr1 = !CF.print_entail_state in
