@@ -94,6 +94,12 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
       (restore_fn old_values;
       raise e)
 
+let wrap_ver_post f a =
+  let save_fn () = infer_const_obj # is_ver_post in
+  let set_fn () = infer_const_obj # set INF_VER_POST in
+  let restore_fn f = if f then () else infer_const_obj # reset INF_VER_POST in
+  wrap_gen save_fn set_fn restore_fn () f a
+
 let wrap_one_bool flag new_value f a =
   let save_fn flag = (flag,!flag) in
   let set_fn flag = flag := new_value in

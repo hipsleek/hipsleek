@@ -1,7 +1,4 @@
-/*--ann-vp
-
-  Description: fairly complicated inter-procedural passing 
-  of stack variables between concurrent threads
+/* --ann-vp
 
 */
 
