@@ -55,6 +55,26 @@ error at: vperm/vperm_check.ss test4
 error at: vperm/task_decompose.ss inc
 error at: vperm/task_decompose.ss creator
 ====================================================================
+run-fast-test thread_hip
+
+Starting sleek-hip_threads tests:
+Starting hip tests:
+Checking threads/motiv-example.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/motiv-example2.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/no-deadlock-nonlexical2.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical2.ss main
+error at: threads/no-deadlock-nonlexical2.ss thread1
+error at: threads/no-deadlock-nonlexical2.ss thread2
+Checking threads/no-deadlock-nonlexical.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical.ss main
+error at: threads/no-deadlock-nonlexical.ss thread1
+error at: threads/no-deadlock-nonlexical.ss thread2
+Checking threads/forkjoin.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/forkjoin.ss func
+error at: threads/forkjoin.ss main
+Checking threads/cell4.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/cell4.ss inc
+error at: threads/cell4.ss main
 ====================================================================
 ====================================================================
 ====================================================================

@@ -1102,6 +1102,106 @@ error at: conchip/deadpool.ss joinThreads
 error at: conchip/deadpool.ss main
 error at: conchip/deadpool.ss thread
 .====================================================================
+run-fast-test thread_hip
+
+Starting sleek-hip_threads tests:
+Starting hip tests:
+Checking threads/motiv-example.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/motiv-example2.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/no-deadlock-nonlexical2.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical2.ss main
+error at: threads/no-deadlock-nonlexical2.ss thread1
+error at: threads/no-deadlock-nonlexical2.ss thread2
+Checking threads/no-deadlock-nonlexical.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical.ss main
+error at: threads/no-deadlock-nonlexical.ss thread1
+error at: threads/no-deadlock-nonlexical.ss thread2
+Checking threads/forkjoin.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/forkjoin.ss func
+error at: threads/forkjoin.ss main
+Checking threads/cell4.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/cell4.ss inc
+error at: threads/cell4.ss main
+Checking threads/ls-bind.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/ls-bind.ss func
+error at: threads/ls-bind.ss main
+Checking threads/no-deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock1.ss func
+error at: threads/no-deadlock1.ss main
+Checking threads/no-deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock2.ss func
+error at: threads/no-deadlock2.ss main
+Checking threads/no-deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock3.ss func
+error at: threads/no-deadlock3.ss main
+Checking threads/deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock1.ss func
+error at: threads/deadlock1.ss main
+Checking threads/deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock2.ss func
+error at: threads/deadlock2.ss main
+Checking threads/deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock3.ss func
+error at: threads/deadlock3.ss main
+Checking threads/disj-no-deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock1.ss func
+error at: threads/disj-no-deadlock1.ss main
+Checking threads/disj-no-deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock2.ss func
+error at: threads/disj-no-deadlock2.ss main
+Checking threads/disj-no-deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock3.ss func
+error at: threads/disj-no-deadlock3.ss main
+Checking threads/disj-deadlock.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-deadlock.ss func
+error at: threads/disj-deadlock.ss main
+Checking threads/ordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/ordered-locking.ss func
+error at: threads/ordered-locking.ss main
+Checking threads/unordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/unordered-locking.ss func
+error at: threads/unordered-locking.ss main
+Checking threads/oracle.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/oracle.ss thread
+error at: threads/oracle.ss main
+Checking threads/owicki-gries.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/owicki-gries.ss incrementor2
+error at: threads/owicki-gries.ss incrementor1
+error at: threads/owicki-gries.ss main
+Checking threads/fibonacci.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/fibonacci.ss seq_fib
+error at: threads/fibonacci.ss para_fib
+Total number of errors: 43 in files:
+
+				["threads/motiv-example.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/motiv-example2.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical2.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "inc","SUCCESS",
+                                "main","SUCCESS"
+
+to fix : ex40-44 for threadhip
 ====================================================================
 ====================================================================
 ====================================================================
