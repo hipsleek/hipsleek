@@ -75,13 +75,56 @@ Checking threads/no-deadlock-nonlexical.ss (runs with extra options: --en-para -
 error at: threads/no-deadlock-nonlexical.ss main
 error at: threads/no-deadlock-nonlexical.ss thread1
 error at: threads/no-deadlock-nonlexical.ss thread2
-Checking threads/forkjoin.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+Checking threads/forkjoin.ss (runs with extra options: 
+--en-para -tp parahip --en-lsmu-infer --en-thrd-resource
+)
 error at: threads/forkjoin.ss func
 error at: threads/forkjoin.ss main
 Checking threads/cell4.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
 error at: threads/cell4.ss inc
 error at: threads/cell4.ss main
 ====================================================================
+spec in prelude:
+================
+  khanh Sun Jan 08 16:15:58 2012 +0800: 
+        Tue Mar 06 20:57:47 2012 +0800: void acquire()
+        Tue Mar 06 20:57:47 2012 +0800:   requires true
+        Tue Mar 06 20:57:47 2012 +0800:   ensures true;
+  khanh Sun Jan 08 16:15:58 2012 +0800: 
+        Tue Mar 06 20:57:47 2012 +0800: void release()
+        Tue Mar 06 20:57:47 2012 +0800:   requires true
+        Tue Mar 06 20:57:47 2012 +0800:   ensures true;
+
+forkjoin.ss
+===========
+void func(lock l1)
+     requires l1::LOCK(0.5)<> & [waitlevel<l1.mu # l1 notin LS]
+     ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
+{
+  acquire(l1);
+  release(l1);
+}
+
+../hip ex43-forkjoin.ss --en-para -tp parahip --en-thrd-resource 
+
+!!!Full processing file "ex43-forkjoin.ss"
+Parsing file "ex43-forkjoin.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+Starting z3... 
+
+Checking procedure func$lock... Starting Reduce... 
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+
+
+Questions: 
+ Is the spec for acquire/release correct?
+ Why did the system terminate abruptly?
+
 ====================================================================
 ====================================================================
 ====================================================================

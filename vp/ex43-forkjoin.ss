@@ -18,6 +18,7 @@ void func(lock l1)
   release(l1);
 }
 
+/*
 void main()
   requires LS={}
   ensures LS'={}; //'
@@ -36,3 +37,4 @@ void main()
   //
   join(id);//checking ok
 }
+*/
