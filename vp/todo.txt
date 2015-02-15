@@ -62,6 +62,12 @@ Starting hip tests:
 Checking threads/motiv-example.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
 Checking threads/motiv-example2.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
 Checking threads/no-deadlock-nonlexical2.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+
+Starting Omega.../usr/local/bin/oc
+Starting z3... 
+Checking procedure main$... 
+
+
 error at: threads/no-deadlock-nonlexical2.ss main
 error at: threads/no-deadlock-nonlexical2.ss thread1
 error at: threads/no-deadlock-nonlexical2.ss thread2

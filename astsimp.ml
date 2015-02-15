@@ -3285,6 +3285,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         else dynamic_specs_list
       in
       (******<< Infering LSMU from LS if there is LS in spec  *********)
+      (* WN : what is LSMU? lockset? *)
       (* Termination: Normalize the specification 
        * with the default termination information
        * Primitive functions: Term[] 
