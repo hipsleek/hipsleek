@@ -264,17 +264,19 @@ let rec pair_ann_sets lhs_as rhs_as =
     with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
 let vperm_entail_var es sv lhs_ann rhs_ann = 
+  let ver_post_flag = es.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
+  let par_flag = es.CF.es_infer_obj # is_par || infer_const_obj # is_par in
   let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
   match lhs_ann with
   | VP_Full ->
     begin match rhs_ann with
     | VP_Full -> VP_Zero
     | VP_Lend -> 
-          if es.CF.es_infer_obj # is_par then raise (err "Par") 
-          else if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if par_flag then raise (err "Par") 
+          else if ver_post_flag then raise (err "verify_post")
           else VP_Full 
     | VP_Value -> 
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Full
     | VP_Zero -> VP_Full
     | _ -> lhs_ann
@@ -283,10 +285,10 @@ let vperm_entail_var es sv lhs_ann rhs_ann =
     begin match rhs_ann with
     | VP_Full -> raise (err "")
     | VP_Lend -> 
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Lend
     | VP_Value -> 
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Lend
     | VP_Zero -> VP_Lend
     | _ -> lhs_ann
@@ -294,14 +296,14 @@ let vperm_entail_var es sv lhs_ann rhs_ann =
   | VP_Value ->
     begin match rhs_ann with
     | VP_Full -> 
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Zero
     | VP_Lend -> 
           (* VP_Value (\* TODO: to check *\) *)
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Value
     | VP_Value -> 
-          if es.CF.es_infer_obj # is_ver_post then raise (err "verify_post")
+          if ver_post_flag then raise (err "verify_post")
           else VP_Value
     | VP_Zero -> VP_Value
     | _ -> lhs_ann

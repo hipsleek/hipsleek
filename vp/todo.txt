@@ -17,7 +17,7 @@ expect Fail.
 
 Unexpected: 1 2 4 
 ====================================================================
-# vp/ex35d1-vp-post-err.ss --ann-vp
+# vp/ex35d1-vp-post-err.ss --ann-vp (FIXED)
 
 void inc5(int i)
  requires @value[i]

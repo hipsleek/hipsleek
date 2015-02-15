@@ -68,11 +68,11 @@ let wrap_par_case_check f c =
 1
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
-  let _ = Debug.binfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
-  let _ = Debug.binfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
+  let _ = Debug.ninfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
+  let _ = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let _ = infer_const_obj # set t in
-  let flag2 = infer_const_obj # is_infer_type t in
-  let _ = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in
+  (* let flag2 = infer_const_obj # is_infer_type t in *)
+  (* let _ = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
