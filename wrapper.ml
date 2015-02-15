@@ -68,8 +68,11 @@ let wrap_par_case_check f c =
 
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
-  let _ = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
+  let _ = Debug.binfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
+  let _ = Debug.binfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let _ = infer_const_obj # set t in
+  let flag2 = infer_const_obj # is_infer_type t in
+  let _ = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
@@ -94,11 +97,13 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
       (restore_fn old_values;
       raise e)
 
-let wrap_ver_post f a =
-  let save_fn () = infer_const_obj # is_ver_post in
-  let set_fn () = infer_const_obj # set INF_VER_POST in
-  let restore_fn f = if f then () else infer_const_obj # reset INF_VER_POST in
-  wrap_gen save_fn set_fn restore_fn () f a
+let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
+
+(* let wrap_ver_post f a = *)
+(*   let save_fn () = infer_const_obj # is_ver_post in *)
+(*   let set_fn () = infer_const_obj # set INF_VER_POST in *)
+(*   let restore_fn f = if f then () else infer_const_obj # reset INF_VER_POST in *)
+(*   wrap_gen save_fn set_fn restore_fn () f a *)
 
 let wrap_one_bool flag new_value f a =
   let save_fn flag = (flag,!flag) in

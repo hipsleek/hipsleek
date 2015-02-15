@@ -2791,7 +2791,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
-  let f = wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid)) in
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid))) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
