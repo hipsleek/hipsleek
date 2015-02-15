@@ -40,7 +40,20 @@ let wrap_ver_post f a =
   wrap_gen save_fn set_fn restore_fn () f a
 
 ====================================================================
+Add infer_object flags to --esl
 ====================================================================
+make more vperm examples work
+
+ex36 + ex37
+
+error at: vperm/vperm_check.ss inc
+error at: vperm/vperm_check.ss incCell
+error at: vperm/vperm_check.ss test1
+error at: vperm/vperm_check.ss test2
+error at: vperm/vperm_check.ss test3
+error at: vperm/vperm_check.ss test4
+error at: vperm/task_decompose.ss inc
+error at: vperm/task_decompose.ss creator
 ====================================================================
 ====================================================================
 ====================================================================
