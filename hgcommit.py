@@ -59,7 +59,7 @@ for line in f:
 
 
 #check for added files
-print "Checking hg stat for added files... "
+print ".... checking for added files... "
 subprocess.call("hg stat -an  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
