@@ -14,7 +14,7 @@ void func(lock l1)
      requires l1::LOCK(0.5)<> & [waitlevel<l1.mu # l1 notin LS]
      ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
-  acquire(l1);
+  //acquire(l1);
   release(l1);
 }
 

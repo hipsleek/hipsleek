@@ -25,8 +25,9 @@ let print_vperm_sets = ref (fun (vps: vperm_sets) -> "vperm_sets printer has not
 let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
  ?frac:(frac=[]) full
 =
+  let cnt = (List.length zero) + (List.length lend) + (List.length value) + (List.length frac) + (List.length full) in
   {
-    vperm_unprimed_flag = true;
+    vperm_unprimed_flag = if cnt=0 then true else false;
     vperm_zero_vars = List.map sp_rm_prime zero;
     vperm_lend_vars = List.map sp_rm_prime lend;
     vperm_value_vars = List.map sp_rm_prime value;
@@ -36,13 +37,15 @@ let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
 
 
 let vperm_rm_prime vp =
-  { vperm_unprimed_flag = true;
-  vperm_zero_vars = List.map sp_rm_prime vp.vperm_zero_vars;
-  vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars;
-  vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars;
-  vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars;
-  vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) vp.vperm_frac_vars;
-  }
+  if vp.vperm_unprimed_flag then vp
+  else 
+    { vperm_unprimed_flag = true;
+    vperm_zero_vars = List.map sp_rm_prime vp.vperm_zero_vars;
+    vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars;
+    vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars;
+    vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars;
+    vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) vp.vperm_frac_vars;
+    }
 
 let vperm_rm_prime vps = 
   let pr = !print_vperm_sets in
@@ -109,6 +112,13 @@ let merge_vperm_sets vps_list =
                 vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
   in norm_vperm_sets (helper vps_list)
 
+let merge_vperm_sets vps_list = 
+  let vps_list = List.filter (fun x -> not (is_empty_vperm_sets x)) vps_list in
+  if (List.length vps_list)<=1 then merge_vperm_sets vps_list
+  else 
+    let pr = !print_vperm_sets in
+    Debug.no_1 "merge_vperm_sets" (pr_list pr) pr merge_vperm_sets vps_list
+
 (* @full[x] * @full[x] -> ERR                     *)
 (* @full[x] * @lend[x] -> ERR                     *)
 (* @full[x] * @zero[x] -> @full[x]                *)
@@ -120,6 +130,7 @@ let combine_vperm_sets vps_list =
     match vps_list with
       | [] -> empty_vperm_sets
       | v::vs ->
+            let v = vperm_rm_prime v in 
             let mvs = helper vs in
             { 
                 vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
@@ -135,12 +146,21 @@ let combine_vperm_sets vps_list =
   let zero_vars = comb_vps.vperm_zero_vars in
   let msg = "Combination of vperm sets causes contradiction" in
   let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
+  (* let _ = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
   if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
   then Error.report_error err
   else
     { comb_vps with
         vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
         vperm_lend_vars = remove_dups lend_vars; }
+
+let combine_vperm_sets vps_list = 
+  let vps_list = List.filter (fun x -> not (is_empty_vperm_sets x)) vps_list in
+  if (List.length vps_list)<=1 then combine_vperm_sets vps_list
+  else 
+    let pr = !print_vperm_sets in
+    Debug.no_1 "combine_vperm_sets" (pr_list pr) pr combine_vperm_sets vps_list
+
 
 (* @full[x] or @full[x] -> @full[x] *)
 (* @full[x] or @lend[x] -> @lend[x] *)

@@ -125,6 +125,32 @@ Questions:
  Is the spec for acquire/release correct?
  Why did the system terminate abruptly?
 
+=================================================
+concurrency primitives hard-coded.
+
+prepost_of_acquire@1 EXIT: EBase exists (Expl)[](Impl)[f_1384](ex)[]l1'::LOCK{}( f_1384)<>&
+       l1' <notin> LS'  & waitlevel'<(level(l1')) & f_1384>FLOAT 0. & 
+       f_1384<=FLOAT 1.&{FLOW,(1,28)=__flow#E}[]
+         EAssume ref [LS;LSMU]
+           (htrue) * l1'::LOCK{}( f_1384)<>&LS'=union(LS,{l1'}) & 
+           LSMU'=union(LSMU,{level(l1')})&{FLOW,(4,5)=__norm#E}[]
+
+-dre ".*release" : missing
+# resolved by masking acquire..
+
+Checking procedure func$lock... 
+prepost_of_release@1
+prepost_of_release inp1 :l1'
+prepost_of_release inp2 :LOCK
+prepost_of_release inp3 :[]
+prepost_of_release inp4 : htrue&{FLOW,(4,5)=__norm#E}[]
+prepost_of_release@1 EXIT: EBase htrue&l1' <in> LS' &{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [LS;LSMU]
+           htrue&LS'=LS-{l1'} & LSMU'=LSMU-{level(l1')}&
+           {FLOW,(4,5)=__norm#E}[]
+           
+Starting Reduce... 
+
 ====================================================================
 ====================================================================
 ====================================================================
