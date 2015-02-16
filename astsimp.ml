@@ -1485,13 +1485,15 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
       let prims,prim_rels = gen_primitives prog0 in
       (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
-      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
+      let _ = Debug.ninfo_hprint (add_str "prims" (pr_list Iprinter.string_of_proc_decl)) prims no_pos in
+      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in
       (* let prims,prim_rels = ([],[]) in *)
       let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 	  (* AN HOA : adjoint the program with primitive relations *)
 	  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
 	  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
       } in
+      (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog)^"\n") in*)
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @

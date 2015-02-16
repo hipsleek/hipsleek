@@ -350,6 +350,25 @@ let hip_epilogue () =
   if (!Globals.dump_lemmas) then 
     Lem_store.all_lemma # dump
   else ()
+(* -------------------------------------------------------- *)
+(* Process primitives list in prelude.ss.                   *)
+let replace_with_user_include
+      prim_lists prim_incls =
+  let is_same_prim
+        proc1 proc2 =
+    match proc1.Iast.proc_body, proc2.Iast.proc_body with
+      | None, None ->
+            (proc1.Iast.proc_name = proc2.Iast.proc_name) 
+      | _, _ ->
+            false
+  in
+  let is_covered_by_user
+        proc prim_incls =
+    List.fold_left (fun r prog -> r || (List.fold_left (fun r1 proc1 -> r1 || (is_same_prim proc proc1)) false prog.Iast.prog_proc_decls)) false prim_incls
+  in
+  List.map (fun prog -> { prog with Iast.prog_proc_decls = List.filter (fun pc -> not (is_covered_by_user pc prim_incls)) prog.Iast.prog_proc_decls}) prim_lists
+;;
+(* --------------------------------------------------------- *)
 
 (***************end process compare file*****************)
 
@@ -374,10 +393,15 @@ let process_source_full source =
     | None -> ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
+  (*let _ = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
   let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
+  let _ = Debug.ninfo_hprint (add_str "prims_list.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_list no_pos in
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
+  let _ = Debug.ninfo_hprint (add_str "prims_incls.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_incls no_pos in
+  let prims_list = replace_with_user_include prims_list prims_incls in
+  let _ = Debug.ninfo_hprint (add_str "new_prims_lists.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> Iprinter.string_of_proc_decl proc) prog.Iast.prog_proc_decls)))) prims_list no_pos in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
