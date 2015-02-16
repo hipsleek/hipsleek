@@ -67,6 +67,12 @@ let is_empty_vperm_sets vps =
   (is_empty vps.vperm_zero_vars) &&
   (is_empty vps.vperm_frac_vars)
 
+(* WN : need to filter frac list *)
+let is_leak_vperm vps = 
+  match vps with
+    | { vperm_full_vars = full; vperm_frac_vars = frac } ->
+          not(is_empty full) || not(is_empty frac)
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []

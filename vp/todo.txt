@@ -84,7 +84,7 @@ Checking threads/cell4.ss (runs with extra options: --en-para -tp parahip --en-l
 error at: threads/cell4.ss inc
 error at: threads/cell4.ss main
 ====================================================================
-spec in prelude:
+spec in prelude: 
 ================
   khanh Sun Jan 08 16:15:58 2012 +0800: 
         Tue Mar 06 20:57:47 2012 +0800: void acquire()
@@ -182,8 +182,20 @@ global int CNT=0;// this init seems useless
 Please test if the two prim can be hip_include
 
 ====================================================================
+merge ivpermUtil & cvpermUtil ..
 ====================================================================
+# ex38 working now, need to unify two classic mechanism..
+
+Local var should use @value rather than @full
+
+Need to unify, by replacing the former by the latter.
+
+ let opt_classic = ref false                (* option --classic is turned on or not? *)
+
+  | INF_CLASSIC (* For infer[@leak] *)
+
 ====================================================================
+# support ex39-frac
 ====================================================================
 ====================================================================
 ====================================================================
