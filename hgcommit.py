@@ -44,7 +44,7 @@ if len(log_message) <= 0 :
 commit_command = "hg commit -m \"" + log_message + "\"" # the commit command
 
 #check for modified files 
-print "Checking hg stat for added/modified/deleted files... "
+print "Checking hg stat for modified files... "
 subprocess.call("hg stat -mn  > " + temp_file, executable="bash", shell=True)
 
 f = open(temp_file, 'r+')
@@ -59,6 +59,7 @@ for line in f:
 
 
 #check for added files
+print "Checking hg stat for added files... "
 subprocess.call("hg stat -an  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
@@ -69,18 +70,20 @@ for line in f:
         size_warning = True
 
 #check for removed files
+print "Checking hg stat for removed files... "
 subprocess.call("hg stat -rn  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
     nof += 1
     print "R " + line.rstrip('\n')
 
-#check for deleted files
+#check for deleted/inaccessible (but tracked) files
+print "Checking hg stat for missing (but tracked) files... "
 subprocess.call("hg stat -dn  > " + temp_file, executable="bash", shell=True)
 f = open(temp_file, 'r+')
 for line in f:
     nof += 1
-    print "D " + line.rstrip('\n')
+    print "! " + line.rstrip('\n')
 
 answ = CONTINUE
 question = "\nAre you sure you want to continue with this commit? (" + CONTINUE + "/no)"
