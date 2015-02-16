@@ -41,6 +41,14 @@ let wrap_reverify_scc f a b c =
       (reverify_flag := flag;
       raise e)
 
+let wrap_norm flag norm f a =
+  try
+    let res = f a in
+    if flag then norm res
+    else res
+  with _ as e ->
+    raise e
+
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with

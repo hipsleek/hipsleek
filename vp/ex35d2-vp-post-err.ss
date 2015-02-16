@@ -3,7 +3,8 @@
  this should detect leakage of variable permission
 
 */
-
+hip_include 'extra_prelude.ss'
+//hip_include `extra-prelude.ss`
 
 void inc7(int i)
  requires @full[i]
@@ -17,7 +18,7 @@ void inc8(int i)
  requires @full[i]
  ensures  @full[i]; //'@full[i] &
 {
-  i++;
+  i = 5;
 }
 
 
