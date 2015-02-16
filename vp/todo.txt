@@ -172,6 +172,15 @@ prepost_of_release@1 EXIT: EBase htrue&l1' <in> LS' &{FLOW,(4,5)=__norm#E}[]
 Starting Reduce... 
 
 ====================================================================
+# ex50-global.ss --pcp
+
+Global initialization need to be reflected inside special
+main method.
+
+global int CNT=0;// this init seems useless
+
+Please test if the two prim can be hip_include
+
 ====================================================================
 ====================================================================
 ====================================================================
