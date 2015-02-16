@@ -128,7 +128,27 @@ Questions:
 =================================================
 concurrency primitives hard-coded.
 
-prepost_of_acquire@1 EXIT: EBase exists (Expl)[](Impl)[f_1384](ex)[]l1'::LOCK{}( f_1384)<>&
+../hip ex43-forkjoin.ss --en-para -tp parahip --en-thrd-resource 
+
+hip_include 'prelude_extra.ss'
+
+global int waitlevel;
+global set(LOCK) LS;
+global set(int) LSMU;
+
+void acquire(LOCK l1)
+ requires l1::LOCK<>(f)<> & l1 \notin LS  & waitlevel<level(l1') 
+         & f>0.0 & f<=1.0 
+ ensures  l1::LOCK<>(f)<> & LS'=union(LS,{l1}) &
+         LSMU'=union(LSMU,{level(l1')}) & waitlevel'=waitlevel'
+
+void release(LOCK l1)
+   requires  l1 <in> LS 
+   ensures   LS'=LS-{l1} & LSMU'=LSMU-{level(l1)};
+
+
+prepost_of_acquire@1 EXIT: EBase exists (Expl)[](Impl)[f_1384](ex)[]
+l1'::LOCK{}( f_1384)<>&
        l1' <notin> LS'  & waitlevel'<(level(l1')) & f_1384>FLOAT 0. & 
        f_1384<=FLOAT 1.&{FLOW,(1,28)=__flow#E}[]
          EAssume ref [LS;LSMU]
