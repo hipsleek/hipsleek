@@ -2091,7 +2091,7 @@ and pr_vperm_sets vps =
       (fmt_string (string_of_vp_ann vpa);
       fmt_string "["; pr_list_of_spec_var svl; fmt_string "]")
   in
-  (fmt_string (if vps.CVP.vperm_unprimed_flag then "" else "U"));
+  (fmt_string (if vps.CVP.vperm_unprimed_flag then "N" else "U"));
   (pr_elem VP_Full vps.CVP.vperm_full_vars);
   (pr_elem VP_Lend vps.CVP.vperm_lend_vars);
   (pr_elem VP_Value vps.CVP.vperm_value_vars);

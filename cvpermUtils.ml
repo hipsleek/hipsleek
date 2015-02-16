@@ -35,6 +35,7 @@ let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
     vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) frac;
   }
 
+let vperm_unprime vp = { vp with vperm_unprimed_flag = false}
 
 let vperm_rm_prime vp =
   if vp.vperm_unprimed_flag then vp
@@ -51,9 +52,10 @@ let vperm_rm_prime vps =
   let pr = !print_vperm_sets in
   Debug.no_1 "vperm_rm_prime" pr pr vperm_rm_prime vps
 
-let vperm_rm_prime vp =
-  if vp.vperm_unprimed_flag then vp
-  else vperm_rm_prime vp
+(* ZH: it is redundant?*)
+(* let vperm_rm_prime vp = *)
+(*   if vp.vperm_unprimed_flag then vp *)
+(*   else vperm_rm_prime vp *)
 
 
 let empty_vperm_sets = build_vperm []
@@ -234,8 +236,20 @@ let subst_f f sst vps =
 let subst_par sst vps = 
   subst_f subst_var_par sst vps
 
+(* type: (Cpure.spec_var * Cpure.spec_var) list -> vperm_sets -> vperm_sets *)
+
+let subst_par sst vps = 
+  let pr = pr_list (pr_pair Cpure.string_of_spec_var Cpure.string_of_spec_var) in
+  let pr2 = !print_vperm_sets  in
+  Debug.no_2 "subst_par" pr pr2 pr2 subst_par sst vps
+
 let subst_one sst vps = 
   subst_f subst_var sst vps
+
+let subst_one sst vps = 
+  let pr = (pr_pair Cpure.string_of_spec_var Cpure.string_of_spec_var) in
+  let pr2 = !print_vperm_sets  in
+  Debug.no_2 "subst_one" pr pr2 pr2 subst_one sst vps
 
 let subst_avoid_capture f t vps = 
   let sst = List.combine f t in
