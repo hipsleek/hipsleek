@@ -1,7 +1,16 @@
 // x' is same as x for variables
-infer[] @frac(1,2)[x] |- @frac(1,3)[x].
+infer[] @full[x] |- @full[x].
 print residue.
-
+infer[] @frac(1/5)[x] |- @frac(1/3)[x].
+print residue.
+infer[] @frac(1/3)[x] |- @frac(1/1)[x].
+print residue.
+checkentail @frac(1/3)[x] |- @frac(1/2)[x].
+print residue.
+checkentail @frac(1/2)[x] |- @frac(1/3)[x].
+print residue.
+infer[] @frac(1/2)[x] |- @frac(1/3)[x].
+print residue.
 
 // how about fraction?
 

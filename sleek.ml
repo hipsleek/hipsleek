@@ -369,7 +369,7 @@ let main () =
         begin
             print_string ("\n")
         end
-    | _ -> 
+    | _ ->
           begin
             dummy_exception();
             let _ = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in

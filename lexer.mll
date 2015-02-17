@@ -309,7 +309,7 @@ module Make (Token : SleekTokenS)
   let bin_literal = '0' ['b' 'B'] ['0'-'1'] ['0'-'1' '_']*
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
   let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
-  (* let frac_literal = int_literal ('/') int_literal *)
+  let frac_literal = int_literal ('/') int_literal
   
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
@@ -320,14 +320,15 @@ rule tokenizer file_name = parse
   | float_literal as f
         { try  FLOAT_LIT(float_of_string f, f)
           with Failure _ -> err (Literal_overflow "float") (Loc.of_lexbuf lexbuf) }
-  (* | frac_literal as f  *)
-  (*   { try *)
-  (*       let div_index = String.index f '/' in *)
-  (*       let num = int_of_string (String.sub f 0 div_index) in *)
-  (*       let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in *)
-  (*       FRAC_LIT ((num, den), f) *)
-  (*     with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf) *)
-  (*   } *)
+  | frac_literal as f
+    { try
+      let _ = print_endline "frac_literal" in
+        let div_index = String.index f '/' in
+        let num = int_of_string (String.sub f 0 div_index) in
+        let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in
+        FRAC_LIT ((num, den), f)
+      with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf)
+    }
   | (int_literal as i) "l"
         { try  INT_LITER(int_of_string i, i) (*can try different converter if needed*)
           with Failure _ -> err (Literal_overflow "int32") (Loc.of_lexbuf lexbuf) }
@@ -358,7 +359,8 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
-  | "@A" { ACCS }  
+  | "@frac" { PFRAC }
+  | "@A" { ACCS }
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
