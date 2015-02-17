@@ -10,7 +10,7 @@ expect Valid. //should succeed but fail
 
 infer[] @frac(1/3)[x] * @frac(1/2)[x] |- @frac(2/3)[x].
 print residue.
-expect Valid. //should succeed with 0 residue but fail 1/3+3/6 = 2/3
+expect Valid. //should succeed 1/6
 
 infer[] @frac(4/3)[x]  |- false.
 print residue.
@@ -19,6 +19,10 @@ expect Valid. //should succeed with false
 infer[] @full[x]*@full[x]  |- false.
 print residue.
 expect Valid. //this succeeded with false
+
+infer[] @frac(1/3)[x] * @frac(1/2)[x] |- true.
+print residue.
+expect Valid. //zero
 
 /*
 # ex39d.slk --ann-vp
