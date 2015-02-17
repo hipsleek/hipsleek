@@ -20,6 +20,7 @@ type frac = bool option * Ratio.ratio
 let subtract = Ratio.sub_ratio
 ;;
 
+
 let eq_frac (_,r1) (_,r2) =
   Ratio.eq_ratio r1 r2
 
@@ -30,6 +31,34 @@ let less_eq_frac (_,r1) (_,r2) =
 (* Take the value from only one of them? What if they are different? *)
 let subtract (d,r1) (_,r2) =
   (d, Ratio.sub_ratio r1 r2)
+
+let comb d1 d2 = 
+  match d1,d2 with
+    | None, x -> x
+    | x, None -> x
+    | Some f1, Some f2 ->Some (f1 && f2)
+
+let add (d1,r1) (d2,r2) =
+  (comb d1 d2, Ratio.add_ratio r1 r2)
+
+let is_false (_,r1) = 
+  let n = Ratio.numerator_ratio r1 in 
+  let d = Ratio.denominator_ratio r1 in 
+  Big_int.gt_big_int n d
+
+let is_unit (_,r1) = 
+  let n = Ratio.numerator_ratio r1 in 
+  let d = Ratio.denominator_ratio r1 in 
+  Big_int.eq_big_int n d
+
+let is_zero (_,r1) = 
+  let n = Ratio.numerator_ratio r1 in 
+  Big_int.sign_big_int n = 0
+
+let is_value (d,r1) = 
+  match d with
+    | None -> true
+    | Some f -> f
 
 let string_of_frac (d,r) =
   let s = match d with 

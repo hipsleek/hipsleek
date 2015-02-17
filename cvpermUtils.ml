@@ -67,11 +67,15 @@ let is_empty_vperm_sets vps =
   (is_empty vps.vperm_zero_vars) &&
   (is_empty vps.vperm_frac_vars)
 
+let is_empty_frac fr =
+  let xs = List.filter (fun (f,_) -> not(Frac.is_zero f || Frac.is_value f)) fr in
+  is_empty xs
+
 (* WN : need to filter frac list *)
 let is_leak_vperm vps = 
   match vps with
     | { vperm_full_vars = full; vperm_frac_vars = frac } ->
-          not(is_empty full) || not(is_empty frac)
+          not(is_empty full) || not(is_empty_frac frac)
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -84,6 +88,7 @@ let rec partition_by_key key_of key_eq ls =
 let is_Zero ann = 
   match ann with
   | VP_Zero -> true
+  | VP_Frac f -> Frac.is_zero f
   | _ -> false
 
 let norm_vperm_sets vps = 
@@ -92,9 +97,11 @@ let norm_vperm_sets vps =
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   let full_vars = (* remove_dups *) vps.vperm_full_vars in (* @full[x] * @full[x] -> false *)
   let group_frac_vars_sets = partition_by_key fst Frac.eq_frac vps.vperm_frac_vars in
+  (* WN : need to check if below correct! *)
   let frac_vars_set = List.map (fun (frac, group) -> 
     let m_group = List.concat (List.map snd group) in
-    (frac, m_group)) group_frac_vars_sets in
+    (frac, m_group)) group_frac_vars_sets 
+  in
   { vps with
     vperm_full_vars = full_vars;
     vperm_lend_vars = diff lend_vars full_vars;
