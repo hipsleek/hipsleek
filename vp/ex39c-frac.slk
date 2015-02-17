@@ -19,6 +19,9 @@ infer[] @frac(1/2)[x] |- @full[x].
 print residue.
 expect Fail.
 
+infer[] @frac(7/12)[x] |- @frac(1/12)[x].
+print residue.
+expect Valid.
 
 // how about fraction?
 

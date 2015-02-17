@@ -322,7 +322,6 @@ rule tokenizer file_name = parse
           with Failure _ -> err (Literal_overflow "float") (Loc.of_lexbuf lexbuf) }
   | frac_literal as f
     { try
-      let _ = print_endline "frac_literal" in
         let div_index = String.index f '/' in
         let num = int_of_string (String.sub f 0 div_index) in
         let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in
