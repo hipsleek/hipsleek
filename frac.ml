@@ -1,6 +1,6 @@
-type frac = int * int
+(* type frac = int * int *)
 
-type valfrac = bool * (int * int)
+type frac = bool option * (int * int)
 
 let string_of_frac (num, den) =
   (string_of_int num) ^ "/" ^ (string_of_int den)
@@ -12,18 +12,30 @@ let less_eq_frac (n1,d1) (n2,d2) =
   (n1 * d2) <= (n2 *d1)
 
 (* need to normalize *)
-let substract (n1,d1) (n2,d2) =
+let subtract (n1,d1) (n2,d2) =
   ((n1*d2 - n2*d1),(d1*d2))
 
-let isFull (n,d) == n=d
+let eq_frac (_,r1) (_,r2) =
+  eq_frac r1 r2
 
-let isZero (n,d) == n=0
+let less_eq_frac (_,r1) (_,r2) =
+  less_eq_frac r1 r2
 
-let mkFrac ?(value=true) n d = (value,(n,d))
+let subtract (d,r1) (_,r2) =
+  (d,subtract r1 r2)
 
-let full2frac  = mkFrac ~value:false 1 1
+let string_of_frac (d,r) =
+  "X"^(string_of_frac r)
 
-let value2frac = mkFrac 1 1
+let isFull (n,d) = n=d
+
+let isZero (n,d) = n=0
+
+let make ?(value=None) n d : frac = (value,(n,d))
+
+let full2frac  = make ~value:(Some false) 1 1
+
+let value2frac = make ~value:(Some true) 1 1
 
 (* we need a flag to indicate if a frac is orig @full or @value *)
 

@@ -321,7 +321,7 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) es sv lhs_ann rhs_
             | VP_Lend -> raise (err "UNKNOWN")
             | VP_Frac f_post ->
                   if Frac.less_eq_frac f_post f
-                  then VP_Frac (Frac.substract f f_post)
+                  then VP_Frac (Frac.subtract f f_post)
                   else raise (err "verify_post")
           end
    (* | _ -> lhs_ann*)

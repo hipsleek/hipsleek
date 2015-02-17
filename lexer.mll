@@ -326,7 +326,7 @@ rule tokenizer file_name = parse
         let div_index = String.index f '/' in
         let num = int_of_string (String.sub f 0 div_index) in
         let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in
-        FRAC_LIT ((num, den), f)
+        FRAC_LIT (Frac.make num den, f)
       with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf)
     }
   | (int_literal as i) "l"
