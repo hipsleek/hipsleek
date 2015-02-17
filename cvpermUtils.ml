@@ -137,7 +137,6 @@ let check_dupl_two s1 s2 =
             else aux s1 t2 in
   aux s1 s2
 
-
 let norm_full_value full value =
   let svl1,f1 = norm_list full in
   let svl2,f2 = norm_list value in
@@ -148,6 +147,14 @@ let norm_full_value full value =
 let is_frac_false xs =
   List.exists (Frac.is_false) (List.map fst xs)
 
+(* let rm_zero frac_vars = *)
+(*   List.filter (fun (f,v) -> not(Frac.is_zero f)) frac_vars *)
+
+let is_false_frac_other frac_vars full_vars value_vars =
+  let vs = full_vars@value_vars in
+   List.exists (fun (f,v) -> not(Frac.is_zero f) && mem v vs) frac_vars 
+
+
 let norm_vperm_sets vps = 
   let vps = vperm_rm_prime vps in
   let (full_vars,value_vars,flag1) = norm_full_value vps.vperm_full_vars vps.vperm_value_vars in
@@ -155,7 +162,8 @@ let norm_vperm_sets vps =
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   (* let full_vars = (\* remove_dups *\) vps.vperm_full_vars in (\* @full[x] * @full[x] -> false *\) *)
   let frac_vars2 = norm_frac_list vps.vperm_frac_vars in
-  let false_flag = flag1 || (is_frac_false frac_vars2) in
+  let false_flag = flag1 || (is_frac_false frac_vars2) 
+    || (is_false_frac_other frac_vars2 full_vars value_vars) in
   (* WN : need to check if below correct! *)
   (* let frac_vars_set = List.map (fun (frac, group) ->  *)
   (*   let m_group = List.concat (List.map snd group) in *)

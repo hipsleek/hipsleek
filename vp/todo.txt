@@ -212,10 +212,37 @@ expect Valid. //should succeed with 0 residue but fail 1/3+3/6 = 2/3
 
 Normalization of frac not properly done.
 ====================================================================
-# cvpermUiils.ml : change to below:
+# cvpermUiils.ml : change to below: (DONE)
   vperm_frac_vars: (Frac.frac * spec_var list) list; 
   (* vperm_frac_vars: (Frac.frac * spec_var) list; (\*simpler*\)  *)
 ====================================================================
+# ex39e.slk --ann-vp (OK)
+
+Why is subtraction not working?
+works with --ann-vp
+
+infer[] @full[x]  |- @frac(1/3)[x].
+Residue:
+ <1>htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+Validate 5: OK
+ <1>htrue*N@F2/3[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+infer[] @frac(0/3)[x]  |- @frac(1/3)[x].
+Entail (6) : Valid. 
+Residue:
+ <1>htrue*N@0/1[x]&{FLOW,(4,5)=__norm#E}[]
+Validate 6: Expecting 3 Fail BUT got : Valid
+ <1>htrue*N@0/1[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+infer[] @frac(5/6)[x]  |- @frac(1/3)[x].
+Entail (7) : Valid. 
+Residue:
+ <1>htrue*N@5/6[x]&{FLOW,(4,5)=__norm#E}[]
+ <1>htrue*N@1/2[x]&{FLOW,(4,5)=__norm#E}[]
+
+
 ====================================================================
 ====================================================================
 ====================================================================
