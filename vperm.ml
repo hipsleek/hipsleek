@@ -8,19 +8,19 @@ open Exc.GTable
 
 (* module CP = Cpure *)
 module CF = Cformula
-(* module MCP = Mcpure   *)
-(* module MCD = Mcpure_D *)
-(* module CVP = CvpermUtils *)
+    (* module MCP = Mcpure   *)
+    (* module MCD = Mcpure_D *)
+    (* module CVP = CvpermUtils *)
 
 (******************************************************************************)
 let rec add_vperm_sets_formula (vp: vperm_sets) (f: CF.formula): CF.formula = 
   match f with
-  | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; } as o) ->
-    CF.Or ({ o with 
-      formula_or_f1 = add_vperm_sets_formula vp f1; 
-      formula_or_f2 = add_vperm_sets_formula vp f2; })
-  | CF.Base b -> CF.Base { b with formula_base_vperm = merge_vperm_sets [b.formula_base_vperm; vp]; }
-  | CF.Exists e -> CF.Exists { e with formula_exists_vperm = merge_vperm_sets [e.formula_exists_vperm; vp]; }
+    | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; } as o) ->
+          CF.Or ({ o with 
+              formula_or_f1 = add_vperm_sets_formula vp f1; 
+              formula_or_f2 = add_vperm_sets_formula vp f2; })
+    | CF.Base b -> CF.Base { b with formula_base_vperm = merge_vperm_sets [b.formula_base_vperm; vp]; }
+    | CF.Exists e -> CF.Exists { e with formula_exists_vperm = merge_vperm_sets [e.formula_exists_vperm; vp]; }
 
 let add_vperm_sets_list_failesc_ctx (vp: CVP.vperm_sets) ctx =
   let add_vperm_sets_es vp es =
@@ -29,14 +29,14 @@ let add_vperm_sets_list_failesc_ctx (vp: CVP.vperm_sets) ctx =
 
 let rec set_vperm_sets_formula (vp: CVP.vperm_sets) (f: CF.formula): CF.formula = 
   match f with
-  | CF.Or ({
-      formula_or_f1 = f1; 
-      formula_or_f2 = f2; } as o) ->
-    CF.Or ({ o with 
-      formula_or_f1 = set_vperm_sets_formula vp f1; 
-      formula_or_f2 = set_vperm_sets_formula vp f2; })
-  | CF.Base b -> CF.Base { b with formula_base_vperm = vp; }
-  | CF.Exists e -> CF.Exists { e with formula_exists_vperm = vp; }
+    | CF.Or ({
+          formula_or_f1 = f1; 
+          formula_or_f2 = f2; } as o) ->
+          CF.Or ({ o with 
+              formula_or_f1 = set_vperm_sets_formula vp f1; 
+              formula_or_f2 = set_vperm_sets_formula vp f2; })
+    | CF.Base b -> CF.Base { b with formula_base_vperm = vp; }
+    | CF.Exists e -> CF.Exists { e with formula_exists_vperm = vp; }
 
 let set_vperm_sets_list_failesc_ctx (vp: vperm_sets) ctx =
   let set_vperm_sets_es vp es =
@@ -45,16 +45,16 @@ let set_vperm_sets_list_failesc_ctx (vp: vperm_sets) ctx =
 
 let rec clear_vperm_sets_formula ann_list (f: CF.formula): CF.formula = 
   match f with
-  | CF.Or ({
-      formula_or_f1 = f1; 
-      formula_or_f2 = f2; } as o) ->
-    CF.Or ({ o with 
-      formula_or_f1 = clear_vperm_sets_formula ann_list f1; 
-      formula_or_f2 = clear_vperm_sets_formula ann_list f2; })
-  | CF.Base b -> CF.Base { b with 
-      formula_base_vperm = clear_vperm_sets ann_list b.formula_base_vperm; }
-  | CF.Exists e -> CF.Exists { e with 
-      formula_exists_vperm = clear_vperm_sets ann_list e.formula_exists_vperm; }
+    | CF.Or ({
+          formula_or_f1 = f1; 
+          formula_or_f2 = f2; } as o) ->
+          CF.Or ({ o with 
+              formula_or_f1 = clear_vperm_sets_formula ann_list f1; 
+              formula_or_f2 = clear_vperm_sets_formula ann_list f2; })
+    | CF.Base b -> CF.Base { b with 
+          formula_base_vperm = clear_vperm_sets ann_list b.formula_base_vperm; }
+    | CF.Exists e -> CF.Exists { e with 
+          formula_exists_vperm = clear_vperm_sets ann_list e.formula_exists_vperm; }
 
 let clear_vperm_sets_list_failesc_ctx ann_list ctx =
   let clear_vperm_sets_es ann_list es =
@@ -85,11 +85,11 @@ let collect_vperm_sets f =
 
 let rec vperm_sets_of_formula f = 
   match f with
-  | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
-    let vp1 = vperm_sets_of_formula f1 in
-    let vp2 = vperm_sets_of_formula f2 in
-    combine_or_vperm_sets vp1 vp2
-  | _ -> collect_vperm_sets f
+    | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2 } ->
+          let vp1 = vperm_sets_of_formula f1 in
+          let vp2 = vperm_sets_of_formula f2 in
+          combine_or_vperm_sets vp1 vp2
+    | _ -> collect_vperm_sets f
 
 let vperm_sets_list_failesc_context ctx = 
   let f = formula_of_list_failesc_context ctx in
@@ -98,13 +98,13 @@ let vperm_sets_list_failesc_context ctx =
 let clean_es_heap_h_formula_for_par vars hf =
   let f_h_f hf =
     match hf with
-    | DataNode d ->
-      if mem d.h_formula_data_node vars then Some HEmp
-      else Some hf
-    | ViewNode v ->
-      if mem v.h_formula_view_node vars then Some HEmp
-      else Some hf
-    | _ -> None 
+      | DataNode d ->
+            if mem d.h_formula_data_node vars then Some HEmp
+            else Some hf
+      | ViewNode v ->
+            if mem v.h_formula_view_node vars then Some HEmp
+            else Some hf
+      | _ -> None 
   in
   transform_h_formula f_h_f hf
 
@@ -117,7 +117,7 @@ let clean_es_heap_list_failesc_ctx_for_par vars ctx =
   let pr1 = !print_svl in
   let pr2 = !print_list_failesc_context in
   Debug.no_2 "clean_es_heap_list_failesc_ctx_for_par" pr1 pr2 pr2
-  clean_es_heap_list_failesc_ctx_for_par vars ctx
+      clean_es_heap_list_failesc_ctx_for_par vars ctx
 
 let norm_list_failesc_context_for_par norm_es ctx = 
   let norm_es_for_par es = Ctx (norm_es es)
@@ -126,7 +126,7 @@ let norm_list_failesc_context_for_par norm_es ctx =
   transform_list_failesc_context (idf, idf, norm_es_for_par) ctx 
 
 let compose_list_failesc_context_formula_for_par case_pre 
-  (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =
+      (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context =
   let vps = vperm_sets_of_formula post in
   let out_vars = List.map to_primed vps.vperm_full_vars in
   let lend_vars = List.map to_primed vps.vperm_lend_vars in
@@ -137,7 +137,7 @@ let compose_list_failesc_context_formula_for_par case_pre
       let ctx_fv = context_fv compose_ctx in
       let post_ctx = push_exists_context (diff ctx_fv (out_vars @ lend_vars)) compose_ctx in
       map_context (fun es -> { es with 
-        es_formula = set_vperm_sets_formula vps es.es_formula; }) post_ctx
+          es_formula = set_vperm_sets_formula vps es.es_formula; }) post_ctx
     else
       let out_vars = List.filter (fun v -> not (is_node_typ v)) out_vars in 
       let compose_ctx = compose_context_formula (Ctx es) post out_vars false Flow_replace pos in 
@@ -146,13 +146,13 @@ let compose_list_failesc_context_formula_for_par case_pre
   transform_list_failesc_context (idf, idf, compose_es_formula) ctx
 
 let compose_list_failesc_context_formula_for_par case_pre 
-  (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context = 
+      (ctx: list_failesc_context) (post: CF.formula) pos: list_failesc_context = 
   let pr1 = !print_list_failesc_context in
   let pr2 = !CF.print_formula in
   let pr3 b = if b then "FOR CASE POST" else "FOR PAR POST" in  
   Debug.no_3 "compose_list_failesc_context_formula_for_par" pr3 pr1 pr2 pr1
-  (fun _ _ _ -> compose_list_failesc_context_formula_for_par case_pre ctx post pos)
-  case_pre ctx post
+      (fun _ _ _ -> compose_list_failesc_context_formula_for_par case_pre ctx post pos)
+      case_pre ctx post
 
 let compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos: list_failesc_context = 
   if case_pre then
@@ -168,8 +168,8 @@ let compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos: list_failes
   let pr1 = !print_list_failesc_context in
   let pr2 b = if b then "FOR CASE POST" else "FOR PAR POST" in  
   Debug.no_3 "compose_list_failesc_contexts_for_par" pr2 pr1 pr1 pr1
-  (fun _ _ _ -> compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos) 
-  case_pre post_ctx ctx
+      (fun _ _ _ -> compose_list_failesc_contexts_for_par case_pre post_ctx ctx pos) 
+      case_pre post_ctx ctx
 
 let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx pos =
   (* Calculate resiue heap and pure part to add back to par_pre_ctx  *)
@@ -186,8 +186,8 @@ let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx
   if not (CF.isSuccessListFailescCtx_new rem_ctx) then
     let msg = ("Variable permission/Heap requirement of par cannot be satisfied.") in
     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context rem_ctx) ^ ") ") msg pos;
-     Debug.print_info ("(Cause of Par Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
-     Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+    Debug.print_info ("(Cause of Par Failure)") (Cprinter.string_of_failure_list_failesc_context rem_ctx) pos;
+    Err.report_error { Err.error_loc = pos; Err.error_text = msg })
   else
     (* Add back lend heap for par and normal heap for rem *)
     let par_pre_ctx = compose_list_failesc_context_formula_for_par false rem_ctx lh pos in
@@ -208,7 +208,7 @@ let prepare_list_failesc_ctx_for_par f_ent (vp: vperm_sets) (lh: CF.formula) ctx
   let pr2 = !CF.print_formula in
   let prr (pre, rem) = ("\nPAR_PRE_CTX:\n" ^ (pr1 pre) ^ "\nREM_CTX:\n" ^ (pr1 rem)) in 
   Debug.no_2 "prepare_list_failesc_ctx_for_par" pr1 pr2 prr
-  (fun _ _ -> prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos) ctx lh
+      (fun _ _ -> prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos) ctx lh
 
 (* let update_vperm_sets f vps =                                                  *)
 (*   match f with                                                                 *)
@@ -230,90 +230,101 @@ let ann_set_of_vperm_sets vps =
   let value_vars = List.map (fun v -> (v, VP_Value)) vps.vperm_value_vars in
   let zero_vars = List.map (fun v -> (v, VP_Zero)) vps.vperm_zero_vars in
   let frac_vars = List.concat (List.map (fun (fperm, svl) -> 
-    List.map (fun v -> (v, VP_Frac fperm)) svl) vps.vperm_frac_vars) in
+      List.map (fun v -> (v, VP_Frac fperm)) svl) vps.vperm_frac_vars) in
   full_vars @ lend_vars @ value_vars @ zero_vars @ frac_vars
 
 let vperm_sets_of_ann_set ans = 
   let rec helper ans = match ans with
     | [] -> empty_vperm_sets
     | (v, ann)::ans ->
-      let vps = helper ans in
-      begin match ann with
-      | VP_Full -> { vps with vperm_full_vars = vps.vperm_full_vars @ [v] }
-      | VP_Lend -> { vps with vperm_lend_vars = vps.vperm_lend_vars @ [v] }
-      | VP_Value -> { vps with vperm_value_vars = vps.vperm_value_vars @ [v] }
-      | VP_Zero -> { vps with vperm_zero_vars = vps.vperm_zero_vars @ [v] }
-      | VP_Frac fperm ->
-        let fperm_svl, others = List.partition (fun (vf, _) -> Frac.eq_frac fperm vf) vps.vperm_frac_vars in
-        let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in
-        { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] }
-      end
+          let vps = helper ans in
+          begin match ann with
+            | VP_Full -> { vps with vperm_full_vars = vps.vperm_full_vars @ [v] }
+            | VP_Lend -> { vps with vperm_lend_vars = vps.vperm_lend_vars @ [v] }
+            | VP_Value -> { vps with vperm_value_vars = vps.vperm_value_vars @ [v] }
+            | VP_Zero -> { vps with vperm_zero_vars = vps.vperm_zero_vars @ [v] }
+            | VP_Frac fperm ->
+                  let fperm_svl, others = List.partition (fun (vf, _) -> Frac.eq_frac fperm vf) vps.vperm_frac_vars in
+                  let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in
+                  { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] }
+          end
   in CVP.norm_vperm_sets (helper ans)
 
 (* Pair LHS and RHS vp_ann sets        *)
 (* Return: pair sets, rem lhs, rem rhs *)
 let rec pair_ann_sets lhs_as rhs_as = 
   match lhs_as with
-  | [] -> ([], [], rhs_as)
-  | (vl, lhs_ann)::lhs_as ->
-    let ps, ls, rs = pair_ann_sets lhs_as rhs_as in
-    try
-      let _, rhs_ann = List.find (fun (vr, _) -> eq_spec_var vl vr) rs in
-      let rem_rs = List.filter (fun (vr, _) -> not (eq_spec_var vl vr)) rs in
-      (vl, lhs_ann, rhs_ann)::ps, ls, rem_rs
-    with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
+    | [] -> ([], [], rhs_as)
+    | (vl, lhs_ann)::lhs_as ->
+          let ps, ls, rs = pair_ann_sets lhs_as rhs_as in
+          try
+            let _, rhs_ann = List.find (fun (vr, _) -> eq_spec_var vl vr) rs in
+            let rem_rs = List.filter (fun (vr, _) -> not (eq_spec_var vl vr)) rs in
+            (vl, lhs_ann, rhs_ann)::ps, ls, rem_rs
+          with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
 let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) es sv lhs_ann rhs_ann = 
   (* let ver_post_flag = es.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in *)
   (* let par_flag = es.CF.es_infer_obj # is_par || infer_const_obj # is_par in *)
   let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
   match lhs_ann with
-  | VP_Full ->
-    begin match rhs_ann with
-    | VP_Full -> VP_Zero
-    | VP_Lend -> 
-          if par_flag then raise (err "Par") 
-          else if ver_post_flag then raise (err "verify_post")
-          else VP_Full 
-    | VP_Value -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Full
-    | VP_Zero -> VP_Full
-    | _ -> lhs_ann
-    end
-  | VP_Lend ->
-    begin match rhs_ann with
-    | VP_Full -> raise (err "")
-    | VP_Lend -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Lend
-    | VP_Value -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Lend
-    | VP_Zero -> VP_Lend
-    | _ -> lhs_ann
-    end
-  | VP_Value ->
-    begin match rhs_ann with
-    | VP_Full -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Zero
-    | VP_Lend -> 
-          (* VP_Value (\* TODO: to check *\) *)
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Value
-    | VP_Value -> 
-          if ver_post_flag then raise (err "verify_post")
-          else VP_Value
-    | VP_Zero -> VP_Value
-    | _ -> lhs_ann
-    end
-  | VP_Zero ->
-    begin match rhs_ann with
-    | VP_Zero -> VP_Zero
-    | _ -> raise (err "")
-    end
-  | _ -> lhs_ann
+    | VP_Full ->
+          begin match rhs_ann with
+            | VP_Full -> VP_Zero
+            | VP_Lend -> 
+                  if par_flag then raise (err "Par") 
+                  else if ver_post_flag then raise (err "verify_post")
+                  else VP_Full 
+            | VP_Value -> 
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Full
+            | VP_Zero -> VP_Full
+            | _ -> lhs_ann
+          end
+    | VP_Lend ->
+          begin match rhs_ann with
+            | VP_Full -> raise (err "")
+            | VP_Lend -> 
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Lend
+            | VP_Value -> 
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Lend
+            | VP_Zero -> VP_Lend
+            | _ -> lhs_ann
+          end
+    | VP_Value ->
+          begin match rhs_ann with
+            | VP_Full -> 
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Zero
+            | VP_Lend -> 
+                  (* VP_Value (\* TODO: to check *\) *)
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Value
+            | VP_Value -> 
+                  if ver_post_flag then raise (err "verify_post")
+                  else VP_Value
+            | VP_Zero -> VP_Value
+            | _ -> lhs_ann
+          end
+    | VP_Zero ->
+          begin match rhs_ann with
+            | VP_Zero -> VP_Zero
+            | _ -> raise (err "")
+          end
+    | VP_Frac f ->
+          begin match rhs_ann with
+            | VP_Zero -> VP_Frac f
+            | VP_Full -> raise (err "verify_post")
+            | VP_Value -> raise (err "verify_post")
+            | VP_Lend -> raise (err "UNKNOWN")
+            | VP_Frac f_post ->
+                  if Frac.less_eq_frac f_post f
+                  then VP_Frac (Frac.substract f f_post)
+                  else raise (err "verify_post")
+          end
+   (* | _ -> lhs_ann*)
 
 (* let vperm_entail_var es sv lhs_ann rhs_ann =  *)
 (*   Debug.no_3 "vperm_entail_var" pr_sv pr_ann pr_ann pr_none (fun _ _ _ -> vperm_entail_var es sv lhs_ann rhs_ann) sv lhs_ann rhs_ann  *)
@@ -323,8 +334,8 @@ let mkFailCtx_vp msg estate conseq pos =
   let rhs_b = extr_rhs_b conseq in
   let estate = { estate with es_formula = substitute_flow_into_f !Exc.GTable.top_flow_int estate.es_formula } in
   mkFailCtx_in (
-    Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
-    mk_failure_may msg logical_error, estate.es_trace)) (mk_cex true)
+      Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
+      mk_failure_may msg logical_error, estate.es_trace)) (mk_cex true)
 
 let vperm_entail_rhs estate conseq pos =
   let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
@@ -379,7 +390,7 @@ let vperm_entail_rhs estate conseq pos =
     | Succ es -> pr1 es 
   in 
   Debug.no_2 "vperm_entail_rhs" pr1 pr2 pr 
-  (fun _ _ -> vperm_entail_rhs estate conseq pos) estate conseq
+      (fun _ _ -> vperm_entail_rhs estate conseq pos) estate conseq
 
 (*************************************************************************************)
 (************************************* OLD STUFFS ************************************)
