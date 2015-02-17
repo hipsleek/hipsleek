@@ -1680,10 +1680,12 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h = mkStarH h1 h2 pos in
   let p = MCP.merge_mems p1 p2 true in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
+  (* let is_false = CVP.quick_is_false vp in *)
   let t = mkAndType t1 t2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (* assuming merging a1 and a2 *)
   mkBase h p vp t fl a pos (*TO CHECK: how about a1,a2: DONE*)
+      (* TODO *)
 
 
 and combine_and_pure (f1:formula) (p:MCP.mix_formula) (f2:MCP.mix_formula): MCP.mix_formula*bool = 

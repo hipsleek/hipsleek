@@ -1,0 +1,14 @@
+
+
+
+infer[] @full[x]*@full[x]  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+
+/*
+# ex39d.slk --ann-vp
+
+Normalization of frac not properly done.
+
+*/

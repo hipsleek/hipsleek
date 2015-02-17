@@ -337,8 +337,10 @@ let subst_avoid_capture f t vps =
   subst_f subs_one sst vps
 
 let is_false_vperm_sets vps = 
-  let full_vars = vps.vperm_full_vars in
-  check_dups full_vars
+  let vps = norm_vperm_sets vps in
+  vps.vperm_is_false
+(* let full_vars = vps.vperm_full_vars in *)
+(*   check_dups full_vars *)
 
 let get_vperm_spec_var sv vps = 
   if mem sv vps.vperm_full_vars then VP_Full
