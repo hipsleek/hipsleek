@@ -16,8 +16,8 @@ type vperm_sets = {
   vperm_lend_vars: spec_var list;
   vperm_value_vars: spec_var list;
   vperm_full_vars: spec_var list;
-  vperm_frac_vars: (Frac.frac * spec_var list) list; 
-  (* vperm_frac_vars: (Frac.frac * spec_var) list; (\*simpler*\)  *)
+  (* vperm_frac_vars: (Frac.frac * spec_var list) list;  *)
+  vperm_frac_vars: (Frac.frac * spec_var) list; (*simpler*)
 }
 
 let print_vperm_sets = ref (fun (vps: vperm_sets) -> "vperm_sets printer has not been initialized") 
@@ -33,7 +33,7 @@ let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
     vperm_lend_vars = List.map sp_rm_prime lend;
     vperm_value_vars = List.map sp_rm_prime value;
     vperm_full_vars = List.map sp_rm_prime full;
-    vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) frac;
+    vperm_frac_vars = List.map (fun (a,v) -> (a,sp_rm_prime v)) frac;
   }
 
 let vperm_unprime vp = { vp with vperm_unprimed_flag = false}
@@ -46,7 +46,7 @@ let vperm_rm_prime vp =
     vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars;
     vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars;
     vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars;
-    vperm_frac_vars = List.map (fun (a,vs) -> (a,List.map sp_rm_prime vs)) vp.vperm_frac_vars;
+    vperm_frac_vars = List.map (fun (a,vs) -> (a,sp_rm_prime vs)) vp.vperm_frac_vars;
     }
 
 let vperm_rm_prime vps = 
@@ -97,17 +97,17 @@ let norm_vperm_sets vps =
   let zero_vars = remove_dups vps.vperm_zero_vars in (* @zero[x] * @zero[x] -> @zero[x] *)
   let lend_vars = remove_dups vps.vperm_lend_vars in (* @lend[x] * @lend[x] -> @lend[x] *)
   let full_vars = (* remove_dups *) vps.vperm_full_vars in (* @full[x] * @full[x] -> false *)
-  let group_frac_vars_sets = partition_by_key fst Frac.eq_frac vps.vperm_frac_vars in
+  let frac_vars = List.sort (fun (_,sv1) (_,sv2) -> 
+      String.compare (get_unprime sv1) (get_unprime sv2)) vps.vperm_frac_vars in
   (* WN : need to check if below correct! *)
-  let frac_vars_set = List.map (fun (frac, group) -> 
-    let m_group = List.concat (List.map snd group) in
-    (frac, m_group)) group_frac_vars_sets 
-  in
+  (* let frac_vars_set = List.map (fun (frac, group) ->  *)
+  (*   let m_group = List.concat (List.map snd group) in *)
+  (*   (frac, m_group)) group_frac_vars_sets  *)
   { vps with
     vperm_full_vars = full_vars;
     vperm_lend_vars = diff lend_vars full_vars;
     vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); 
-    vperm_frac_vars = frac_vars_set; }
+    vperm_frac_vars = frac_vars; }
 
 let norm_vperm_sets vps = 
   let pr = !print_vperm_sets in
@@ -212,7 +212,7 @@ let vperm_sets_of_anns ann_list =
       | VP_Full -> { mvs with vperm_full_vars = mvs.vperm_full_vars @ svl; } 
       | VP_Value -> { mvs with vperm_value_vars = mvs.vperm_value_vars @ svl; } 
       | VP_Lend -> { mvs with vperm_lend_vars = mvs.vperm_lend_vars @ svl; } 
-      | VP_Frac frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ [(frac, svl)]; }
+      | VP_Frac frac -> { mvs with vperm_frac_vars = mvs.vperm_frac_vars @ (List.map (fun v -> (frac, v)) svl); }
   in norm_vperm_sets (helper ann_list)
 
 let clear_vperm_sets ann_list vps =
@@ -226,17 +226,17 @@ let clear_vperm_sets ann_list vps =
       | VP_Full -> { cvs with vperm_full_vars = diff cvs.vperm_full_vars svl; } 
       | VP_Value -> { cvs with vperm_value_vars = diff cvs.vperm_value_vars svl; } 
       | VP_Lend -> { cvs with vperm_lend_vars = diff cvs.vperm_lend_vars svl; } 
-      | VP_Frac frac ->
-        let frac_sets, others = List.partition (fun (f, _) -> 
-          Frac.eq_frac f frac) cvs.vperm_frac_vars in
-        let frac_svl = List.concat (List.map snd frac_sets) in
-        let frac_svl = (frac, diff frac_svl svl) in
-        { cvs with vperm_frac_vars = (frac, svl)::others; }  
+      | VP_Frac frac -> { cvs with vperm_lend_vars = diff cvs.vperm_lend_vars svl; } (* TODO:WN *)
+      (*   let frac_sets, others = List.partition (fun (f, _) ->  *)
+      (*     Frac.eq_frac f frac) cvs.vperm_frac_vars in *)
+      (*   let frac_svl = List.concat (List.map snd frac_sets) in *)
+      (*   let frac_svl = (frac, diff frac_svl svl) in *)
+      (*   { cvs with vperm_frac_vars = (frac, svl)::others; }   *)
   in helper ann_list
 
 let fv vps =
   remove_dups (vps.vperm_zero_vars @ vps.vperm_full_vars @ vps.vperm_value_vars @
-    vps.vperm_lend_vars @ (List.concat (List.map snd vps.vperm_frac_vars)))
+    vps.vperm_lend_vars @ (List.map snd vps.vperm_frac_vars))
 
 let subst_f f sst vps = 
   let f_list vl = List.map (fun v -> f sst v) vl in
@@ -245,7 +245,7 @@ let subst_f f sst vps =
     vperm_lend_vars = f_list vps.vperm_lend_vars;
     vperm_value_vars = f_list vps.vperm_value_vars;
     vperm_full_vars = f_list vps.vperm_full_vars;
-    vperm_frac_vars = List.map (fun (frac, vl) -> (frac, f_list vl)) vps.vperm_frac_vars; } 
+    vperm_frac_vars = List.map (fun (frac, v) -> (frac, f sst v)) vps.vperm_frac_vars; } 
 
 let subst_par sst vps = 
   subst_f subst_var_par sst vps
@@ -279,6 +279,6 @@ let get_vperm_spec_var sv vps =
   else if mem sv vps.vperm_value_vars then VP_Value
   else 
     try
-      let frac_perm, _ = List.find (fun (_, svl) -> mem sv svl) vps.vperm_frac_vars in
+      let frac_perm, _ = List.find (fun (_, s) -> eq_spec_var sv s) vps.vperm_frac_vars in
       VP_Frac frac_perm
     with _ -> VP_Zero

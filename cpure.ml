@@ -28,6 +28,8 @@ let is_zero s = s==mk_zero
 
 let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
+let get_unprime (SpecVar(_,id,_)) = id
+
 
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10

@@ -7258,7 +7258,8 @@ and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.
     CVP.vperm_lend_vars = trans_vl vps.IVP.vperm_lend_vars;
     CVP.vperm_value_vars = trans_vl vps.IVP.vperm_value_vars;
     CVP.vperm_full_vars = trans_vl vps.IVP.vperm_full_vars;
-    CVP.vperm_frac_vars = List.map (fun (frac, vl) -> (frac, trans_vl vl)) vps.IVP.vperm_frac_vars; }
+    CVP.vperm_frac_vars = List.concat (List.map 
+        (fun (frac, vl) -> List.map (fun v -> (frac, trans_v v)) vl) vps.IVP.vperm_frac_vars); }
   
   
 and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =

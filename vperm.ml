@@ -229,8 +229,10 @@ let ann_set_of_vperm_sets vps =
   let lend_vars = List.map (fun v -> (v, VP_Lend)) vps.vperm_lend_vars in
   let value_vars = List.map (fun v -> (v, VP_Value)) vps.vperm_value_vars in
   let zero_vars = List.map (fun v -> (v, VP_Zero)) vps.vperm_zero_vars in
-  let frac_vars = List.concat (List.map (fun (fperm, svl) -> 
-      List.map (fun v -> (v, VP_Frac fperm)) svl) vps.vperm_frac_vars) in
+  let frac_vars = List.map (fun (f,v) -> (v,VP_Frac f)) vps.vperm_frac_vars in
+  (* TODO:WN *)
+  (* let frac_vars = List.concat (List.map (fun (fperm, svl) ->  *)
+  (*     List.map (fun v -> (v, VP_Frac fperm)) svl) vps.vperm_frac_vars) in *)
   full_vars @ lend_vars @ value_vars @ zero_vars @ frac_vars
 
 let vperm_sets_of_ann_set ans = 
@@ -243,10 +245,10 @@ let vperm_sets_of_ann_set ans =
             | VP_Lend -> { vps with vperm_lend_vars = vps.vperm_lend_vars @ [v] }
             | VP_Value -> { vps with vperm_value_vars = vps.vperm_value_vars @ [v] }
             | VP_Zero -> { vps with vperm_zero_vars = vps.vperm_zero_vars @ [v] }
-            | VP_Frac fperm ->
-                  let fperm_svl, others = List.partition (fun (vf, _) -> Frac.eq_frac fperm vf) vps.vperm_frac_vars in
-                  let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in
-                  { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] }
+            | VP_Frac f -> { vps with vperm_frac_vars = vps.vperm_frac_vars @ [(f,v)]}
+                  (* let fperm_svl, others = List.partition (fun (vf, _) -> Frac.eq_frac fperm vf) vps.vperm_frac_vars in *)
+                  (* let fperm_svl = v::(List.concat (List.map snd fperm_svl)) in *)
+                  (* { vps with vperm_frac_vars = others @ [(fperm, fperm_svl)] } *)
           end
   in CVP.norm_vperm_sets (helper ans)
 
