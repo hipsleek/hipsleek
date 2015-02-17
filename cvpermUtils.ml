@@ -17,6 +17,7 @@ type vperm_sets = {
   vperm_value_vars: spec_var list;
   vperm_full_vars: spec_var list;
   vperm_frac_vars: (Frac.frac * spec_var list) list; 
+  (* vperm_frac_vars: (Frac.frac * spec_var) list; (\*simpler*\)  *)
 }
 
 let print_vperm_sets = ref (fun (vps: vperm_sets) -> "vperm_sets printer has not been initialized") 

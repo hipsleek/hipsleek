@@ -212,6 +212,9 @@ expect Valid. //should succeed with 0 residue but fail 1/3+3/6 = 2/3
 
 Normalization of frac not properly done.
 ====================================================================
+# cvpermUiils.ml : change to below:
+  vperm_frac_vars: (Frac.frac * spec_var list) list; 
+  (* vperm_frac_vars: (Frac.frac * spec_var) list; (\*simpler*\)  *)
 ====================================================================
 ====================================================================
 ====================================================================
