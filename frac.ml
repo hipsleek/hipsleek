@@ -25,13 +25,19 @@ let subtract (d,r1) (_,r2) =
   (d,subtract r1 r2)
 
 let string_of_frac (d,r) =
-  "X"^(string_of_frac r)
+  let s = match d with 
+      None -> ""
+    | Some f -> if f then "V" else "F" 
+  in s^(string_of_frac r)
 
 let isFull (n,d) = n=d
 
 let isZero (n,d) = n=0
 
-let make ?(value=None) n d : frac = (value,(n,d))
+let make ?(value=None) n d : frac = 
+  if d<=0 then failwith "frac cannot have zero or -ve denominator"
+  else if n<0 then failwith "frac cannot have -ve numerator"
+  else (value,(n,d))
 
 let full2frac  = make ~value:(Some false) 1 1
 

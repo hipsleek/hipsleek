@@ -267,63 +267,69 @@ let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) es sv lhs_ann rhs_
   (* let ver_post_flag = es.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in *)
   (* let par_flag = es.CF.es_infer_obj # is_par || infer_const_obj # is_par in *)
   let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
-  match lhs_ann with
-    | VP_Full ->
-          begin match rhs_ann with
-            | VP_Full -> VP_Zero
-            | VP_Lend -> 
-                  if par_flag then raise (err "Par") 
-                  else if ver_post_flag then raise (err "verify_post")
-                  else VP_Full 
-            | VP_Value -> 
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Full
-            | VP_Zero -> VP_Full
-            | _ -> lhs_ann
-          end
-    | VP_Lend ->
-          begin match rhs_ann with
-            | VP_Full -> raise (err "")
-            | VP_Lend -> 
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Lend
-            | VP_Value -> 
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Lend
-            | VP_Zero -> VP_Lend
-            | _ -> lhs_ann
-          end
-    | VP_Value ->
-          begin match rhs_ann with
-            | VP_Full -> 
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Zero
-            | VP_Lend -> 
-                  (* VP_Value (\* TODO: to check *\) *)
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Value
-            | VP_Value -> 
-                  if ver_post_flag then raise (err "verify_post")
-                  else VP_Value
-            | VP_Zero -> VP_Value
-            | _ -> lhs_ann
-          end
-    | VP_Zero ->
-          begin match rhs_ann with
-            | VP_Zero -> VP_Zero
-            | _ -> raise (err "")
-          end
-    | VP_Frac f ->
-          begin match rhs_ann with
-            | VP_Zero -> VP_Frac f
-            | VP_Full -> raise (err "verify_post")
-            | VP_Value -> raise (err "verify_post")
-            | VP_Lend -> raise (err "UNKNOWN")
-            | VP_Frac f_post ->
-                  if Frac.less_eq_frac f_post f
-                  then VP_Frac (Frac.subtract f f_post)
-                  else raise (err "verify_post")
-          end
+  let rec aux lhs_ann rhs_ann =
+    match lhs_ann with
+      | VP_Full ->
+            begin match rhs_ann with
+              | VP_Full -> VP_Zero
+              | VP_Lend -> 
+                    if par_flag then raise (err "Par") 
+                    else if ver_post_flag then raise (err "verify_post")
+                    else VP_Full 
+              | VP_Value -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Full
+              | VP_Zero -> VP_Full
+              | VP_Frac f -> aux (VP_Frac Frac.full2frac) rhs_ann
+            end
+      | VP_Lend ->
+            begin match rhs_ann with
+              | VP_Full -> raise (err "")
+              | VP_Lend -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Lend
+              | VP_Value -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Lend
+              | VP_Zero -> VP_Lend
+              | VP_Frac f -> raise (err "lend -> frac")
+            end
+      | VP_Value ->
+            begin match rhs_ann with
+              | VP_Full -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Zero
+              | VP_Lend -> 
+                    (* VP_Value (\* TODO: to check *\) *)
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Value
+              | VP_Value -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else VP_Value
+              | VP_Zero -> VP_Value
+              | VP_Frac f -> aux (VP_Frac Frac.value2frac) rhs_ann
+            end
+      | VP_Zero ->
+            begin match rhs_ann with
+              | VP_Zero -> VP_Zero
+              | _ -> raise (err "")
+            end
+      | VP_Frac f ->
+            begin match rhs_ann with
+              | VP_Zero -> lhs_ann
+              | VP_Full ->  aux lhs_ann (VP_Frac Frac.full2frac)
+              | VP_Value -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else lhs_ann
+              | VP_Lend -> 
+                    if ver_post_flag then raise (err "verify_post")
+                    else lhs_ann
+              | VP_Frac f_post ->
+                    if Frac.less_eq_frac f_post f
+                    then VP_Frac (Frac.subtract f f_post)
+                    else raise (err "insufficient to subtract")
+            end
+  in aux lhs_ann rhs_ann
    (* | _ -> lhs_ann*)
 
 (* let vperm_entail_var es sv lhs_ann rhs_ann =  *)

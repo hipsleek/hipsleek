@@ -7,6 +7,10 @@ infer[] @full[x] |- @frac(2/2)[x].
 print residue.
 expect Valid. //zero
 
+infer[] @value[x] |- @frac(1/2)[x].
+print residue.
+expect Valid. //zero
+
 infer[] @frac(1/2)[x] |- @value[x].
 print residue.
 expect Valid.
