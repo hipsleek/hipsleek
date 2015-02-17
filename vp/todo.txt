@@ -184,7 +184,7 @@ Please test if the two prim can be hip_include
 ====================================================================
 merge ivpermUtil & cvpermUtil ..
 ====================================================================
-# ex38 working now, need to unify two classic mechanism..
+# ex38 working now, need to unify two classic mechanism (DONE)
 
 Local var should use @value rather than @full
 
@@ -196,6 +196,8 @@ Need to unify, by replacing the former by the latter.
 
 ====================================================================
 # support ex39-frac
+
+ 1/2 |- 1/3 --> 1/6
 ====================================================================
 ====================================================================
 ====================================================================

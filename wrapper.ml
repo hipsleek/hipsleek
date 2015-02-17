@@ -52,7 +52,7 @@ let wrap_norm flag norm f a =
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with
-    | None -> !opt_classic
+    | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
     | Some b -> b);
   try
     let res = f a in
