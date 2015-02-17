@@ -199,6 +199,18 @@ Need to unify, by replacing the former by the latter.
 
  1/2 |- 1/3 --> 1/6
 ====================================================================
+# ex39d.slk --ann-vp
+
+infer[] @frac(2/3)[x] * @frac(1/2)[x] |- false.
+print residue.
+expect Valid. //should succeed but fail
+
+infer[] @frac(1/3)[x] * @frac(1/2)[x] |- @frac(2/3)[x].
+print residue.
+expect Valid. //should succeed with 0 residue but fail 1/3+3/6 = 2/3
+
+
+Normalization of frac not properly done.
 ====================================================================
 ====================================================================
 ====================================================================
