@@ -169,34 +169,38 @@ let norm_vperm_sets vps =
   (*   let m_group = List.concat (List.map snd group) in *)
   (*   (frac, m_group)) group_frac_vars_sets  *)
   { vps with
-    vperm_full_vars = full_vars;
-    vperm_is_false = false_flag;
-    vperm_lend_vars = diff lend_vars full_vars; (* TO FIX Value? *)
-    vperm_value_vars = value_vars;
-    vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); 
-    vperm_frac_vars = frac_vars2; }
+      vperm_full_vars = full_vars;
+      vperm_is_false = false_flag;
+      vperm_lend_vars = diff lend_vars full_vars; (* TO FIX Value? *)
+      vperm_value_vars = value_vars;
+      vperm_zero_vars = diff zero_vars (full_vars @ lend_vars); 
+      vperm_frac_vars = frac_vars2; }
 
 let norm_vperm_sets vps = 
-  let pr = !print_vperm_sets in
-  Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
+  if not (!Globals.ann_vp) then vps
+  else
+    let pr = !print_vperm_sets in
+    Debug.no_1 "norm_vperm_sets" pr pr norm_vperm_sets vps
 
 let quick_is_false vps = vps.vperm_is_false 
 
 let merge_vperm_sets vps_list = 
-  let rec helper vps_list =  
-    match vps_list with
-      | [] -> empty_vperm_sets
-      | v::vs ->
-            let mvs = helper vs in
-            { 
-                vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
-                vperm_is_false = v.vperm_is_false ||  mvs.vperm_is_false;
-                vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
-                vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
-                vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
-                vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
-                vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
-  in norm_vperm_sets (helper vps_list)
+  if not (!Globals.ann_vp) then empty_vperm_sets
+  else
+    let rec helper vps_list =  
+      match vps_list with
+        | [] -> empty_vperm_sets
+        | v::vs ->
+              let mvs = helper vs in
+              { 
+                  vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
+                  vperm_is_false = v.vperm_is_false ||  mvs.vperm_is_false;
+                  vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
+                  vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
+                  vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
+                  vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
+                  vperm_frac_vars = v.vperm_frac_vars @ mvs.vperm_frac_vars; }
+    in norm_vperm_sets (helper vps_list)
 
 let merge_vperm_sets vps_list = 
   let vps_list = List.filter (fun x -> not (is_empty_vperm_sets x)) vps_list in
@@ -212,34 +216,36 @@ let merge_vperm_sets vps_list =
 (* @lend[x] * @zero[x] -> @lend[x]                *)
 (* @zero[x] * @zero[x] -> @zero[x] => remove_dups *)
 let combine_vperm_sets vps_list = 
-  let rec helper vps_list =  
-    match vps_list with
-      | [] -> empty_vperm_sets
-      | v::vs ->
-            let v = vperm_rm_prime v in 
-            let mvs = helper vs in
-            { 
-                vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
-                vperm_is_false = v.vperm_is_false || mvs.vperm_is_false;
-                vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
-                vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
-                vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
-                vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
-                vperm_frac_vars = norm_frac_list (v.vperm_frac_vars @ mvs.vperm_frac_vars); }
-  in
-  let comb_vps = helper vps_list in
-  let full_vars = comb_vps.vperm_full_vars in
-  let lend_vars = comb_vps.vperm_lend_vars in
-  let zero_vars = comb_vps.vperm_zero_vars in
-  let msg = "Combination of vperm sets causes contradiction" in
-  let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
-  (* let _ = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
-  if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
-  then Error.report_error err
+  if not (!Globals.ann_vp) then empty_vperm_sets
   else
-    { comb_vps with
-        vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
-        vperm_lend_vars = remove_dups lend_vars; }
+    let rec helper vps_list =  
+      match vps_list with
+        | [] -> empty_vperm_sets
+        | v::vs ->
+              let v = vperm_rm_prime v in 
+              let mvs = helper vs in
+              { 
+                  vperm_unprimed_flag = (v.vperm_unprimed_flag && mvs.vperm_unprimed_flag);
+                  vperm_is_false = v.vperm_is_false || mvs.vperm_is_false;
+                  vperm_zero_vars = v.vperm_zero_vars @ mvs.vperm_zero_vars;
+                  vperm_lend_vars = v.vperm_lend_vars @ mvs.vperm_lend_vars;
+                  vperm_value_vars = v.vperm_value_vars @ mvs.vperm_value_vars;
+                  vperm_full_vars = v.vperm_full_vars @ mvs.vperm_full_vars;
+                  vperm_frac_vars = norm_frac_list (v.vperm_frac_vars @ mvs.vperm_frac_vars); }
+    in
+    let comb_vps = helper vps_list in
+    let full_vars = comb_vps.vperm_full_vars in
+    let lend_vars = comb_vps.vperm_lend_vars in
+    let zero_vars = comb_vps.vperm_zero_vars in
+    let msg = "Combination of vperm sets causes contradiction" in
+    let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
+    (* let _ = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
+    if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
+    then Error.report_error err
+    else
+      { comb_vps with
+          vperm_zero_vars = remove_dups (diff zero_vars (full_vars @ lend_vars));
+          vperm_lend_vars = remove_dups lend_vars; }
 
 let combine_vperm_sets vps_list = 
   let vps_list = List.filter (fun x -> not (is_empty_vperm_sets x)) vps_list in

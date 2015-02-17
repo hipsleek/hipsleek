@@ -390,15 +390,17 @@ let vperm_entail_rhs estate conseq pos =
           Fail fctx
 
 let vperm_entail_rhs estate conseq pos =
-  let pr1 = !CF.print_entail_state in
-  let pr2 = !CF.print_formula in
-  let pr3 = !CF.print_list_context in
-  let pr res = match res with
-    | Fail ctx -> pr3 ctx
-    | Succ es -> pr1 es 
-  in 
-  Debug.no_2 "vperm_entail_rhs" pr1 pr2 pr 
-      (fun _ _ -> vperm_entail_rhs estate conseq pos) estate conseq
+  if not (!Globals.ann_vp) then Succ estate
+  else
+    let pr1 = !CF.print_entail_state in
+    let pr2 = !CF.print_formula in
+    let pr3 = !CF.print_list_context in
+    let pr res = match res with
+      | Fail ctx -> pr3 ctx
+      | Succ es -> pr1 es 
+    in 
+    Debug.no_2 "vperm_entail_rhs" pr1 pr2 pr 
+        (fun _ _ -> vperm_entail_rhs estate conseq pos) estate conseq
 
 (*************************************************************************************)
 (************************************* OLD STUFFS ************************************)
