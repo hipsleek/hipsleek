@@ -182,7 +182,7 @@ global int CNT=0;// this init seems useless
 Please test if the two prim can be hip_include
 
 ====================================================================
-merge ivpermUtil & cvpermUtil ..
+merge ivpermUtil & cvpermUtil ..(no need now)
 ====================================================================
 # ex38 working now, need to unify two classic mechanism (DONE)
 
@@ -195,11 +195,11 @@ Need to unify, by replacing the former by the latter.
   | INF_CLASSIC (* For infer[@leak] *)
 
 ====================================================================
-# support ex39-frac
+# support ex39-frac (FIXED)
 
  1/2 |- 1/3 --> 1/6
 ====================================================================
-# ex39d.slk --ann-vp
+# ex39d.slk --ann-vp (FIXED)
 
 infer[] @frac(2/3)[x] * @frac(1/2)[x] |- false.
 print residue.
@@ -244,6 +244,27 @@ Residue:
 
 
 ====================================================================
+# ex52a-vperm_check.ss
+
+Is #1 unsound?
+
+#1 Why did we have x'=1+x+_1450 which contradicts with x'=x_1450?
+#2 Where is @full[x]?
+
+
+Successful States:
+[
+ Label: []
+ State:htrue*N@full[r_37,y]@zero[x]&r_37'=tid_1451 & y'=1+y &
+x_1452=x&{FLOW,(4,5)=__norm#E}
+AND  <thread=tid_1451>  <delayed:true>  <ref:[x]> emp&x'=1+x_1452
+
+ ]
+
+
+                                [END of message]
+? Help       < MsgIndex   P PrevMsg       - PrevPage D Delete     R Reply       
+O OTHER CMDS > ViewAttch  N NextMsg     Spc NextPage U Undelete   F Forward    
 ====================================================================
 ====================================================================
 ====================================================================
