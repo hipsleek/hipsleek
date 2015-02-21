@@ -343,6 +343,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
+let print_vperm_sets = ref(fun (c:CVP.vperm_sets) -> "printer not yet initialized")
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
@@ -12762,6 +12763,13 @@ let keep_hrel e=
   Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
       (fun _ -> keep_hrel_x e) e
 
+let extract_single_hvar (hf: h_formula) : CP.spec_var option =
+  let f hf = match hf with
+    | HVar v -> Some v
+    | _ -> None
+  in 
+  f hf
+
 let extract_hvar (hf: h_formula) : CP.spec_var list =
   let f hf = match hf with
     | HVar v -> Some [v]
@@ -12775,6 +12783,21 @@ let extract_hvar_f_x (f0:formula) : CP.spec_var list =
     | Base ({ formula_base_heap = h1; })
     | Exists ({formula_exists_heap = h1; }) -> extract_hvar h1
     | _ -> report_error no_pos "extract_hvar: OR unexpected, expect HVar only"
+  in helper f0
+
+(* TODO:WN need to check pure & others are empty *)
+let extract_single_hvar_f (f0:formula) : CP.spec_var option =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
+    | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
+        -> 
+          let _ = Debug.binfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+          let _ = Debug.binfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+          if CVP.is_empty_vperm_sets vp then 
+            extract_single_hvar h1
+          else None
+    | _ -> report_error no_pos "extract_hvar: OR unexpected, expect single HVar only"
   in helper f0
 
 let extract_hvar_f (f0:formula) : CP.spec_var list =

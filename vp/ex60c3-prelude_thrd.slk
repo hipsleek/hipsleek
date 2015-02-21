@@ -8,6 +8,8 @@ pred_prim dead<>.
 
 
 /*
+
+
 # ex60c --ann-vp
 
 Residue:
@@ -50,15 +52,16 @@ Good Context: length= 1 [es_formula: emp&{FLOW,(4,5)=__norm#E}[]
                          es_trace:  COND ==>  UnmatchedRHSData ==> 
 
 
-checkentail t::Thrd{-@full[x]}<>
-   * @full[t,x]&x=5
-   |-  t::Thrd{ -%PPP}<> . // * %P.
+checkentail t::Thrd{-x::cell<n>}<>
+   & n=5
+   |-  t::Thrd{ -%ZZZ}<> . // * %P.
 print residue.
 
 */
 
 
-checkentail t::Thrd{-x::cell<n>}<>
-   & n=5
-   |-  t::Thrd{ -%ZZZ}<> . // * %P.
+checkentail t::Thrd{-@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ -%PPP}<> . // * %P.
 print residue.
+

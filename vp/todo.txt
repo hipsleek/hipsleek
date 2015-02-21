@@ -277,7 +277,37 @@ Although, could this message be more accurate, saying
 
 how to support with %P,%Q ?
 ====================================================================
+# ex60d --ann-vp
+
+checkentail t::Thrd{-@full[x,y]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*@full[x]}<> . // * %P.
+print residue.
+
+Should we not have PPP --> full[y]??
+
+!!! residue:vp: N@full[x]
+!!! residue:pure: true
+!!! single rhs hvar:None
+!!! hvars:[PPP]
+!!! new_ho_lhs: HVar PPP*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+!!! new_ho_rhs: htrue*N@full[x,y]&{FLOW,(4,5)=__norm#E}[]
+Entail 1: Fail.(must) cause:matching of ho_args failed (Mismatch non-zero variable permission in consequent [(y,@full)])
 ====================================================================
+# ex60d3.slk
+
+checkentail t::Thrd{-c::cell<5>*d::cell<5>}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*c::cell<a>}<> . // * %P.
+print residue.
+
+Also succeed? How can c::cell<a> |- c::cell<5>?
+
+Residue:
+ <1>emp*N@full[t,x]&x=5&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> d::cell<flted_33_32>&5=flted_33_32&
+           {FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
 ====================================================================
 ====================================================================
 ====================================================================

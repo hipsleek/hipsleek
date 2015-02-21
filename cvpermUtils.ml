@@ -65,11 +65,12 @@ let vperm_rm_prime vps =
 let empty_vperm_sets = build_vperm []
 
 let is_empty_vperm_sets vps = 
-  (is_empty vps.vperm_full_vars) &&
-  (is_empty vps.vperm_lend_vars) &&
-  (is_empty vps.vperm_value_vars) &&
-  (is_empty vps.vperm_zero_vars) &&
-  (is_empty vps.vperm_frac_vars)
+  not (!Globals.ann_vp) ||
+      ((is_empty vps.vperm_full_vars) &&
+          (is_empty vps.vperm_lend_vars) &&
+          (is_empty vps.vperm_value_vars) &&
+          (is_empty vps.vperm_zero_vars) &&
+          (is_empty vps.vperm_frac_vars))
 
 let is_empty_frac fr =
   let xs = List.filter (fun (f,_) -> not(Frac.is_zero f || Frac.is_value f)) fr in
