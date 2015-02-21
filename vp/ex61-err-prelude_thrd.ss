@@ -20,7 +20,7 @@ void join(thrd t)
 # ex61
 
 Error message should have a line number.
-Although, could this message be more accurate, saying
+Also, could this message be more accurate, saying
   %Q rather than Q?
 
 !!!WARNING : uninterpreted free variables [Q] in specification.Stop Omega... 34 invocations 

@@ -1,0 +1,31 @@
+pred_prim Thrd{-%P,+%Q}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail t::Thrd{-@full[x], +@full[x]&x'=1+x}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ -%P, +%Q}<> . //* %P.
+print residue.
+
+/*
+# ex60
+
+Why only Q instantiated?
+
+Entail 1: Valid. 
+Residue:
+ <1>emp&x=5 & x'=x+1&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [Q --> emp*U@full[x]&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
+
+
+how to support with %P,%Q ?
+
+id: 5; caller: []; line: 25; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail t_39'::Thrd{ + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[], - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]}<>*
+N@full[t_39,x]&x=5&{FLOW,(4,5)=__norm#E}[]
+ |-  t_39'::Thrd{ + HVar Q&{FLOW,(4,5)=__norm#E}[], - HVar P&{FLOW,(4,5)=__norm#E}[]}<> * 
+(HVar P)&{FLOW,(4,5)=__norm#E}[]. 
+h
+*/

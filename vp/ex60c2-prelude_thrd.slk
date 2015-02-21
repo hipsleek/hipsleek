@@ -1,0 +1,33 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+checkentail t::Thrd{-x::cell<n>}<>
+   & n=5
+   |-  t::Thrd{ -%P}<> . //* %P.
+print residue.
+
+checkentail t::Thrd{-@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ -%P}<> . //* %P.
+print residue.
+
+/*
+# ex60c --ann-vp
+
+Residue:
+ <1>emp&n=5&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [P --> x::cell<n>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
+
+Why only there a failure with @full[x] on -%P failure?
+
+Entail 2: Fail.(must) cause:matching of ho_args failed (Mismatch non-zero variable permission in consequent [(x,@full)])
+
+
+
+*/
