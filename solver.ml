@@ -10028,9 +10028,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let ho_lhs = lhs.CF.rflow_base in
                 let ho_rhs = rhs.CF.rflow_base in
                 let shvars = CF.extract_single_hvar_f ho_rhs in
-                let _ = Debug.binfo_hprint (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
+                let _ = Debug.tinfo_hprint (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
                 let hvars = CF.extract_hvar_f ho_rhs in
-                let _ = Debug.binfo_hprint (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
+                let _ = Debug.tinfo_hprint (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
                 match shvars with
                   | Some v -> (None,None,None,[(v,ho_lhs)])
                   | None ->
@@ -10072,8 +10072,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
                 let pr = Cprinter.string_of_formula in
-                let _ = Debug.binfo_hprint (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
-                let _ = Debug.binfo_hprint (add_str "new_ho_rhs" pr) f_rhs no_pos in
+                let _ = Debug.tinfo_hprint (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
+                let _ = Debug.tinfo_hprint (add_str "new_ho_rhs" pr) f_rhs no_pos in
                 let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                 let res_ctx, res_prf =
                   Wrapper.wrap_classic (Some true) (* exact *)

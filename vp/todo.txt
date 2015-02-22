@@ -277,7 +277,7 @@ Although, could this message be more accurate, saying
 
 how to support with %P,%Q ?
 ====================================================================
-# ex60d --ann-vp
+# ex60d --ann-vp (DONE)
 
 checkentail t::Thrd{-@full[x,y]}<>
    * @full[t,x]&x=5
@@ -309,6 +309,12 @@ Residue:
            {FLOW,(4,5)=__norm#E}[]]
 [[ COND ==>  Match(t,t) ==> ]]
 ====================================================================
+# ex60a.ss
+
+# why first x=x+1 not reflected?
+# why "fork" cannot be used?
+# why two Q in dprint3? should it be eliminated?
+
 ====================================================================
 ====================================================================
 ====================================================================

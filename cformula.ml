@@ -12792,8 +12792,8 @@ let extract_single_hvar_f (f0:formula) : CP.spec_var option =
     | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
     | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
         -> 
-          let _ = Debug.binfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
-          let _ = Debug.binfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+          let _ = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+          let _ = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
           if CVP.is_empty_vperm_sets vp then 
             extract_single_hvar h1
           else None

@@ -29,7 +29,7 @@ void forkk(thrd t)
   requires t::Thrd{-%P,+%Q}<> * %P
   ensures  t::Thrd2{+%Q}<>;
 
-void join(thrd t)
+void joinkk(thrd t)
   requires t::Thrd2{+%Q}<>
   ensures %Q * t::dead<>;
 
@@ -38,25 +38,26 @@ int main(int x)
   ensures res=6;
 {
   thrd t = create_thread(x);
-  //x=x+1;
+  x=x+1;
   dprint;
   forkk(t);
-  //dprint;
-  /*
-  join(t);
   dprint;
-  */
+  joinkk(t);
+  dprint;
   return 6;
 }
 /*
 # ex60
 
-how to support with %P,%Q ?
+dprint 1:
+ State:t_39'::Thrd{ - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[], + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[]}<>*N@full[t_39,x]&x'=1+x_1378 & x=5&{FLOW,(4,5)=__norm#E}[]
 
-id: 5; caller: []; line: 25; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
- checkentail t_39'::Thrd{ + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[], - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]}<>*
-N@full[t_39,x]&x=5&{FLOW,(4,5)=__norm#E}[]
- |-  t_39'::Thrd{ + HVar Q&{FLOW,(4,5)=__norm#E}[], - HVar P&{FLOW,(4,5)=__norm#E}[]}<> * 
-(HVar P)&{FLOW,(4,5)=__norm#E}[]. 
-h
+dprint 2:
+how to support with %P,%Q ?
+ State:t_39'::Thrd2{ + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[]}<>*N@full[t_
+39]@zero[x]&x=5 & x'=1+x_1378&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]; 
+                        Q --> emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[]]
+
+
 */
