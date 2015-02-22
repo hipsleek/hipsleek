@@ -35,28 +35,21 @@ void joinkk(thrd t)
 
 int main(int x)
   requires @full[x] & x=5
-  ensures res=6;
+  ensures res=7;
 {
-  thrd t = create_thread(x);
+  //thrd t = create_thread(x);
   dprint;
   /*
-
- State:t_39'::Thrd{ - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[], + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[]}<>*N@full[t_39,x]&x=5&{FLOW,(4,5)=__norm#E}
- */
-  x=x+2;
-  /*
- State:t_39'::Thrd{ - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[], + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[]}<>*N@full[t_39,x]&x'=2+x_1380 & x=5&{FLOW,(4,5)=__norm#E}[]
-
- Why x'=2+x_1380?
-
+ State:emp*N@full[x]&MayLoop[] & x=5 & x'=x&{FLOW,(4,5)=__norm#E}[]
   */
+  x=x+2;
+ /*
+ State:emp*N@full[x]&x'=2+x_1368 & x=5 & x_1368=x&{FLOW,(4,5)=__norm#E}[]
+ Why x_1360=x not present in ex60a1?
+ */
 
   dprint;
-  forkk(t);
-  dprint;
-  joinkk(t);
-  dprint;
-  return 6;
+  return x;
 }
 /*
 # ex60a.ss

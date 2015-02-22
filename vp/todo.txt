@@ -311,9 +311,13 @@ Residue:
 ====================================================================
 # ex60a.ss
 
-# why first x=x+1 not reflected?
+# why first x=x+2 reflected as x'=2+x_1380?
 # why "fork" cannot be used?
 # why two Q in dprint3? should it be eliminated?
+# how to handle parameters of forked tasks?
+
+ State:t_39'::dead{}<>&x'=1+x & x'=2+x_1380 & x=5&{FLOW,(4,5)=__norm#E}[]
+
 
 ====================================================================
 ====================================================================
