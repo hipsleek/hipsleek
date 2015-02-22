@@ -3,9 +3,27 @@ pred_prim Thrd2{+%Q@Split}<>;
 pred_prim dead<>;
 
 
-thrd create_thread(ref int n) 
+thrd create_thread(ref int nnn) 
   requires true
-  ensures res::Thrd{-@full[n],+@full[n]& n'=n+1}<>;//'
+  ensures res::Thrd{-@full[nnn],+@full[nnn]& nnn'=nnn+1}<>;//'
+
+/*
+
+# ex60a.ss
+
+HO-parameters has been reversed?
+
+thrd create_thread(int@R n)[]
+static EBase: [][](htrue) * ([] & true)( FLOW __norm) {EAssume: 1,:(emp ; (emp ; (res::Thrd{- (htrue) * (@full[n][] & true)( FLOW __norm),+ (emp) * (@full[n][] 
+& n' = n+1)( FLOW __norm)}<>@M[HeapNode1]))) * ([] & true)( FLOW __norm)}
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false) 
+
+static  EBase htrue&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume ref [n]
+                   res::Thrd{ + emp*N@full[n]&n'=1+n&{FLOW,(4,5)=__norm#E}[], - htrue*N@full[n]&{FLOW,(4,5)=__norm#E}[]}<>&
+                   {FLOW,(4,5)=__norm#E}[]
+*/
 
 void forkk(thrd t)
   requires t::Thrd{-%P,+%Q}<> * %P

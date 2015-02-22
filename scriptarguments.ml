@@ -388,6 +388,10 @@ let common_arguments = [
   ("-dre", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
+  ("-drea", Arg.String (fun s ->
+      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+      Debug.mk_debug_arg s),
+   "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,

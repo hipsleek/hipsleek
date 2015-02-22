@@ -5,6 +5,8 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
+let z_debug_arg = ref (None:Str.regexp option)
+
 let _ = if !compete_mode then
   begin
     trace_on := false;
@@ -293,7 +295,7 @@ let pick_front n ss =
 
 module DebugCore  =
 struct
-  let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+  let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -306,6 +308,16 @@ struct
           if (a1=(List.nth args (i-1))) then helper xs
           else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
       helper xs in
+    let check_args args = true
+      (* match !z_debug_arg with *)
+      (*   | None -> false  *)
+      (*   | Some re ->  *)
+      (*         (\* let _ = print_endline ("check_args:"^s) in *\) *)
+      (*         List.exists (fun x ->  *)
+      (*             try  *)
+      (*               (Str.search_forward re x 0);true *)
+      (*             with _ -> false) args *)
+    in
     let (test,pr_o) = match g with
       | None -> (test,pr_o)
       | Some g -> 
@@ -331,19 +343,33 @@ struct
     let r = (try
       pop_aft_apply_with_exc f e
     with ex -> 
-        (let _ = print_string ("\n"^h^"\n") in
+        (
         (* if not df then *) 
-        (pr_args args; pr_lazy_res lz);
-        let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-        flush stdout;
-        raise ex)) in
+        let flag = check_args args in
+        if flag then
+          begin
+            let _ = print_string ("\n"^h^"\n") in
+            (pr_args args; pr_lazy_res lz);
+            let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+            flush stdout;
+            raise ex 
+          end
+        else raise ex
+        )) in
     (if not(test r) then r else
-      let _ = print_string ("\n"^h^"\n") in
       (* if not df then *)
-      (pr_args args; pr_lazy_res lz);
-      let _ = print_string (s^" EXIT:"^(pr_o r)^"\n") in
-      flush stdout;
-      r)
+      let res_str = pr_o r in
+      let flag = check_args (res_str::args) in
+      if not(flag) then r
+      else
+        begin
+          let _ = print_string ("\n"^h^"\n") in
+          (pr_args args; pr_lazy_res lz);
+          let _ = print_string (s^" EXIT:"^(res_str)^"\n") in
+          flush stdout;
+          r
+        end
+    )
 
 let choose bs xs = 
   let rec hp bs xs = match bs,xs with
@@ -465,6 +491,9 @@ let regexp_line_str = ref []
 let z_debug_file = ref ""
 (* let z_debug_regexp = ref None *)
 let z_debug_flag = ref false
+let mk_debug_arg s =
+  let re = Str.regexp s in
+  z_debug_arg := Some re
 
 (*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
 let debug_file ()=

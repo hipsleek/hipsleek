@@ -6539,7 +6539,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
           let (n_tl,n_f2) = helper b.IF.formula_or_f2 n_tl in
           (n_tl,CF.mkOr n_f1 n_f2 b.IF.formula_or_pos)
       | IF.Base ( {
-            IF.formula_base_heap = h;
+            IF.formula_base_heap = hh;
             IF.formula_base_pure = p;
             IF.formula_base_vperm = vp;
             IF.formula_base_flow = fl;
@@ -6549,7 +6549,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let n_tl = 
               if sep_collect then
                 let n_tl = gather_type_info_pure prog p n_tl in
-                gather_type_info_heap prog h n_tl
+                gather_type_info_heap prog hh n_tl
               else n_tl in
             let _ = List.map (fun x -> helper_one_formula x tl) a in
             (* transform bexpr *)
@@ -6628,6 +6628,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             (res_replace n_tlist rl clean_res fl, ch)) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let (n_tl,cf) = helper f0 tlist in
+  let pr = Cprinter.string_of_formula in
+  let _ = Debug.tinfo_hprint (add_str "cf" pr) cf no_pos in
   (*let cf = Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
@@ -6818,8 +6820,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let trans_f f tl = trans_formula prog false [] false f tl false in
             let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
               let (ntl, b) = trans_f a.IF.rflow_base tl in 
-              (ntl, r @ [{ CF.rflow_kind = a.IF.rflow_kind; 
-                           CF.rflow_base = b; }])) 
+              (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
+                           CF.rflow_base = b; })::r)) 
               (tl, []) ho_exps in
             let ho_args = List.rev ho_args in
             if (deref > 0) then (
