@@ -320,7 +320,25 @@ Residue:
 
 
 ====================================================================
+#ex41b.slk
+
+What happen to a? and g?
+Is below correct?
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<g>}<>.
+
+ <1>x::Thrd{ + b::cell<flted_9_29>&2=flted_9_29&{FLOW,(4,5)=__norm#E}[]}<>
+    &flted_9_29=2 & flted_9_30=1 & b!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
 ====================================================================
+#ex41a.slk
+
+Why is there a node expected?
+Entail 1: EXCast. Failure("Expect a node")
+
+checkentail x::Thrd{+@full[a,b]}<> |- x::Thrd{+@full[a]}<>.
+
+Last Proving Location: 1 File "ex41a-frac-Thrd.slk",Line:1,Col:10
 ====================================================================
 ====================================================================
 ====================================================================

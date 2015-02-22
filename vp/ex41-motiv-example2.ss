@@ -4,56 +4,56 @@
  */
 
 //memory cell
-data cell{ int val;}
 
-//fractional permission split for cell
-lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
+pred_prim Thrd{+%Q@Split}<>;
+pred_prim dead<>;
 
-////fractional permission combine for cell
-lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v>;
+void join2(Thrd t)
+  requires t::Thrd{+%Q}<>
+  ensures %Q * t::dead<>;
 
-/* // */
-
-//deallocate a cell
-void destroyCell(cell a)
-  requires a::cell<_>
-  ensures true;
-
-void thread1(cell x, cell y)
-  requires x::cell<0> * y::cell<0>
-  ensures x::cell<1> * y::cell<2>;
+void thread1(ref int x, ref int y)
+     requires @full[x,y] 
+     ensures @full[x,y] & x'=x+1 & y'=y+2;
 {
-  x.val = x.val + 1;
-  y.val = y.val + 2;
+  x = x + 1;
+  y = y + 2;
 }
 
-void thread2(thrd t1, cell x, cell y)
-  requires t1::thrd<# x::cell(0.6)<1> * y::cell(0.6)<2> & true #>
-  ensures x::cell(0.6)<1> * y::cell(0.6)<2>;
+Thrd fork_thread1(ref int x, ref int y)
+  requires @full[x,y] 
+  ensures res::Thrd{+@full[x,y] & x'=x+1 & y'=y+2}<>;
+
+void thread2(Thrd t1, ref int x, ref int y)
+  requires t1::Thrd{+ @frac(1/2)[x,y]}<> * @value[t1]
+  ensures  @frac(1/2)[x,y] & x'=x & y'=y;
 {
-  join(t1);
-  int a = x.val + y.val;
+  join2(t1);
+  dprint;
+  int a = x + y;
   assert a'=3; //'
 }
+
+Thrd fork_thread2(Thrd t1, ref int x, ref int y)
+  requires t1::Thrd{+ @frac(1/2)[x,y]}<> * @value[t1]
+  ensures  res::Thrd{+ @frac(1/2)[x,y] & x'=x & y'=y}<>;
 
 void main()
   requires true ensures true;
 {
 
-  cell x = new cell(0);
-  cell y = new cell(0);
+  int x = 0;
+  int y = 0;
 
-  thrd t1 = fork(thread1,x,y);
-  thrd t2 = fork(thread2,t1,x,y); //fractional split of resource required
+  Thrd t1 = fork_thread1(x,y);
+  Thrd t2 = fork_thread2(t1,x,y); //fractional split of resource required
 
-  join(t1);
-  int a = x.val + y.val;
+  join2(t1);
+  int a = x + y;
   assert a'=3; //'
 
-  join(t2);
+  join2(t2);
 
-  assert x'::cell<1> * y'::cell<2>;
+  assert x'=1 & y'=2;
 
-  destroyCell(x);
-  destroyCell(y);
 }
