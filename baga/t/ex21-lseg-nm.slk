@@ -18,5 +18,10 @@ bottomupgen([lseg], [3], SimHeur);
 compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
 
 But sleek goes into a LOOP? why?
+However, baga-sat website do not loop;
+so perhaps the latest code has not been committed.
+
+However, baga-sat version did not pick more precise
+inferred numeric inv.
 
 */
