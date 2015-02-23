@@ -1,3 +1,4 @@
+open Gen
 open Globals
 open Ipure
 
@@ -26,6 +27,14 @@ let empty_vperm_sets = {
   vperm_full_vars = [];
   vperm_frac_vars = [];
 }
+
+let is_empty_vperm_sets vps = 
+  not (!Globals.ann_vp) ||
+      ((is_empty vps.vperm_full_vars) &&
+          (is_empty vps.vperm_lend_vars) &&
+          (is_empty vps.vperm_value_vars) &&
+          (is_empty vps.vperm_zero_vars) &&
+          (is_empty vps.vperm_frac_vars))
 
 let create_vperm_sets ann svl =
   let empty_vps = empty_vperm_sets in

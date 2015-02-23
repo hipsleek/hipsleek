@@ -524,7 +524,7 @@ let isStrictConstTrue2 f = match f with
         (h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
   | _ -> false
 
-let isStrictConstTrue_x f = match f with
+let isStrictConstTrue f = match f with
   | Exists ({ formula_exists_heap = h;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
@@ -537,7 +537,7 @@ let isStrictConstTrue_x f = match f with
   | _ -> false
 
 let  isStrictConstTrue (f:formula) = 
-  Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
+  Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue f
 
 let isStrictConstHTrue f = match f with
   | Exists ({ formula_exists_heap = h;
@@ -579,18 +579,18 @@ let chg_assume_forms b f1 f2 = { b with
 	formula_assume_struc = f2;}
 
 let mkEList_no_flatten_x l =
-  if isConstETrue (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos
-  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  (* if isConstETrue (EList l) then *)
+  (*   mkETrue (mkTrueFlow ()) no_pos *)
+  (* else *) if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
     if l=[] then mkEFalse (mkFalseFlow) no_pos
     else EList l
 
 let mkEList_no_flatten2 l =
-  if isConstETrue2 (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos
-  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  (* if isConstETrue2 (EList l) then *)
+  (*   mkETrue (mkTrueFlow ()) no_pos *)
+  (* else *) if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
     if l=[] then mkEFalse (mkFalseFlow) no_pos
@@ -1509,17 +1509,17 @@ and mkOr f1 f2 pos =
   (*       	  if (isAnyConstFalse c) then ([],[c],[]) *)
   (*       	  else if (isAnyConstTrue c) then ([c],[],[]) *)
   (*       	  else ([],[],[c]) in *)
-  if isStrictConstTrue f1 || isStrictConstTrue f2 then
-	mkTrue (mkTrueFlow ()) pos
-  else if isAnyConstFalse f1 then f2
+  (* if isStrictConstTrue f1 || isStrictConstTrue f2 then *)
+  (*       mkTrue (mkTrueFlow ()) pos *)
+  (* else  *)if isAnyConstFalse f1 then f2
   else if isAnyConstFalse f2 then f1
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
 
 and mkOr_n f1 f2 pos =
-  if isStrictConstHTrue f1 then f2 else
-    if isStrictConstHTrue f2 then f1
-  else if isAnyConstFalse f1 then f2
+  (* if isStrictConstHTrue f1 then f2 else *)
+  (*   if isStrictConstHTrue f2 then f1 *)
+  (* else *) if isAnyConstFalse f1 then f2
   else if isAnyConstFalse f2 then f1
   else
     Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})

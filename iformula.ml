@@ -276,9 +276,9 @@ and formula_of_pure_with_flow_emp p f a pos =
   let h = HEmp in
   mkBase h p VP.empty_vperm_sets f a pos (* pure formula has HTRUE heap *)
 
-(* and formula_of_vperm_pure_with_flow_htrue p vp f a pos = *)
-(*   let h = if Ipure.isConstTrue p then HTrue else HEmp in *)
-(*   mkBase h p vp f a pos *)
+and formula_of_vperm_pure_with_flow_htrue p vp f a pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p vp f a pos
 
 and formula_of_vperm_pure_with_flow_emp p vp f a pos =
   let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
@@ -327,7 +327,7 @@ and isConstTrue f0 = match f0 with
   | Base f -> begin
 	  let h, p = f.formula_base_heap, f.formula_base_pure in
 		match h with
-		  | HEmp -> (P.isConstTrue p)
+		  | HEmp -> (P.isConstTrue p && VP.is_empty_vperm_sets f.formula_base_vperm)
 		  | _ -> false
 	end
   | _ -> false
@@ -447,9 +447,9 @@ and mkOr f1 f2 pos =
 			formula_or_f2 = f2;
 			formula_or_pos = pos } in
    if (formula_same_flow f1 f2) then
-    if (isConstTrue f1) then f1
-    else if (isConstTrue f2) then f2
-    else if (isConstFalse f1) then f2
+    (* if (isConstTrue f1) then f1 *)
+    (* else if (isConstTrue f2) then f2 *)
+    (* else *) if (isConstFalse f1) then f2
     else if (isConstFalse f2) then f1
     else raw
    else raw
