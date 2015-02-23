@@ -10101,7 +10101,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       | None -> (None, None, p_res_opt, es.es_ho_vars_map)
                       | Some v -> 
                         try
+                          let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+                          let _ = Debug.tinfo_hprint (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
                           let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                          let _ = Debug.tinfo_hprint (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
                           let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
                           (None, Some v_binding, p_res_opt, other_bindings) 
                         with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
@@ -10207,7 +10210,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       (match residue with
                         | None -> (flag, arg::result)
                         | Some r ->
-                          if ((isConstEmpFormula r) || (isConstTrueFormula2 r))
+                          if (CVP.is_empty_vperm_sets (CF.get_vperm_set r) && ( (isConstEmpFormula r) || (isConstTrueFormula2 r)))
                           then (flag, arg::result) (* splitable but empty residue *)
                           else
                             let arg_r = { arg with CF.rflow_base = r; } in 
@@ -12065,12 +12068,24 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (* let rhs_xpure,_,_,_ = xpure prog conseq in *)
               (* let r = Infer.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
               (* Thai: change back to Infer.infer_pure *)
-              let _ = Debug.binfo_hprint (add_str "unmatched rhs" Cprinter.string_of_h_formula) rhs no_pos in
-              let _ = Debug.binfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
-              let _ = Debug.binfo_hprint (add_str "lhs formula" Cprinter.string_of_formula) estate.es_formula no_pos in
+              let _ = Debug.tinfo_hprint (add_str "unmatched rhs" Cprinter.string_of_h_formula) rhs no_pos in
+              let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+              let _ = Debug.tinfo_hprint (add_str "lhs formula" Cprinter.string_of_formula) estate.es_formula no_pos in
               let lhs_vp_set = CF.get_vperm_set estate.es_formula in
-              let _ = Debug.binfo_hprint (add_str "lhs_vp_set" Cprinter.string_of_vperm_sets) lhs_vp_set no_pos in
-              let _ = Debug.binfo_hprint (add_str "vp_set" Cprinter.string_of_vperm_sets) vp_set no_pos in
+              let _ = Debug.tinfo_hprint (add_str "lhs_vp_set" Cprinter.string_of_vperm_sets) lhs_vp_set no_pos in
+              let _ = Debug.tinfo_hprint (add_str "vp_set" Cprinter.string_of_vperm_sets) vp_set no_pos in
+              let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
+              let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
+              let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+              let resopt,res_vps = Vperm.vperm_entail_set ~par_flag:par_flag ~ver_post_flag:ver_post_flag ~classic_flag:classic_flag lhs_vp_set vp_set in
+              match resopt with
+                | Some msg ->
+                      let fctx = Vperm.mkFailCtx_vp msg estate conseq pos in
+                      fctx,NoAlias
+                | None ->
+                      let res_f = Vperm.set_vperm_sets_formula res_vps estate.es_formula in
+                      let estate = { estate with es_formula = res_f; } in
+                      let conseq = CF.write_vperm_set conseq CVP.empty_vperm_sets in
               let rhs_node = match rhs with
                 | DataNode n -> n.h_formula_data_node
                 | ViewNode n -> n.h_formula_view_node
@@ -12177,7 +12192,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 (match succ_estate with
                                   | Some es -> 
                                     let new_ctx = CF.Ctx (CF.add_to_estate es "binding of ho var") in
-                                    let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; } in
+                                    let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; formula_base_vperm = CVP.empty_vperm_sets } in
                                     heap_entail_conjunct 18 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
                                   | None ->
                                     let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in

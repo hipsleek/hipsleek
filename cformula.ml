@@ -18132,6 +18132,12 @@ let get_vperm_set f =
     | Base {formula_base_vperm = vp}
     | Exists {formula_exists_vperm = vp}
             -> vp
-    | _ -> CVP.empty_vperm_sets
+    | _ -> failwith "get_vperm_set: not expecting OR formula"
   in helper f
 
+let write_vperm_set f vp = 
+  let helper f = match f with
+    | Base b -> Base { b with formula_base_vperm = vp;}
+    | Exists b -> Exists { b with formula_exists_vperm = vp;}
+    | _ -> failwith "write_vperm_set:not expecting OR formula"
+  in helper f

@@ -384,6 +384,14 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
           (* Fail fctx *)
           Some msg, err_vperm_sets
 
+let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=false) lhs_vperm_sets rhs_vperm_sets =
+  if not (!Globals.ann_vp) then None,CVP.empty_vperm_sets
+  else
+    let pr1 = !CVP.print_vperm_sets in
+    let pr2 = pr_pair (pr_option pr_id) !CVP.print_vperm_sets in
+    Debug.no_2 "vperm_entail_set" pr1 pr1 pr2
+        (fun _ _ -> vperm_entail_set  ~par_flag ~ver_post_flag ~classic_flag lhs_vperm_sets rhs_vperm_sets) lhs_vperm_sets rhs_vperm_sets
+
 let vperm_entail_rhs estate conseq pos =
   let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
   let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
