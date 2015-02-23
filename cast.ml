@@ -122,6 +122,7 @@ and view_decl = {
     mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
+    mutable view_fixcalc : (MP.mix_formula) option; (*XPURE 1 -> revert to P.formula*)
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     (* exact baga *)
     mutable view_baga_inv : Excore.ef_pure_disj option;

@@ -521,6 +521,14 @@ But sleek goes into a LOOP? why?
 !!! Predicate lseg has precise invariant
 
 ==============================================
+# ex21b.slk
+
+must detect false is not invariant
+need to do fixpoint checking for user-supplied inv
+
+!!! WARNING: User supplied is more precise: false
+!!! WARNING: TODO fixpt check
+
 ==============================================
 ==============================================
 ==============================================

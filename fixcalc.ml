@@ -584,7 +584,7 @@ let compute_inv name vars fml data_name lower_views pf =
       name vars fml pf
 
 (*compute invs of views in one loop*)
-let compute_inv_mutrec_x mutrec_vnames views =
+let compute_inv_mutrec mutrec_vnames views =
   (**************************************************)
   let str_cmp s1 s2 = String.compare s1 s2 = 0 in
   let rec lookup_map vmaps vname0=
@@ -611,8 +611,9 @@ let compute_inv_mutrec_x mutrec_vnames views =
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.binfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
-          view.Cast.view_x_formula <- memo_pf_P;
+          Debug.binfo_hprint (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          view.Cast.view_fixcalc <- Some memo_pf_P;
+          (* view.Cast.view_x_formula <- memo_pf_P; *)
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
           view
         end
@@ -645,7 +646,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
     in
     (* Call the fixpoint calculation *)
     let invs = (compute_invs_fixcalc input_fixcalc) in
-    let _ = DD.binfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
+    let _ = DD.tinfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in
@@ -657,9 +658,9 @@ let compute_inv_mutrec_x mutrec_vnames views =
 
 let compute_inv_mutrec mutrec_views views =
   let pr1 = pr_list pr_id in
-  let pr2 v = v.Cast.view_name in
-  Debug.no_2 "compute_inv_mutrec" pr1 (pr_list pr2)  (pr_list pr2)
-      (fun _ _ -> compute_inv_mutrec_x mutrec_views views)
+  let pr2 v = (pr_pair pr_id (pr_option Cprinter.string_of_mix_formula)) (v.Cast.view_name,v.Cast.view_fixcalc) in
+  Debug.no_eff_2 "compute_inv_mutrec" [false;true] pr1 (pr_list pr2)  (pr_list pr2)
+      (fun _ _ -> compute_inv_mutrec mutrec_views views)
       mutrec_views views
 
 (******************************************************************************)
