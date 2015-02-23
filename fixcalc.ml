@@ -492,6 +492,11 @@ let compute_invs_fixcalc input_fixcalc=
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " (pr_list !CP.print_formula)) invs no_pos in
   invs
 
+
+let compute_invs_fixcalc input_fixcalc =
+  let pr = (pr_list Cprinter.string_of_pure_formula) in
+  Debug.no_1 "compute_invs_fixcalc" pr_id pr compute_invs_fixcalc input_fixcalc
+
 let lookup_inv invs pos fr_vars rev_sst=
   let rec helper rest_invs=
     match rest_invs with
@@ -509,7 +514,7 @@ let lookup_inv invs pos fr_vars rev_sst=
       List.nth invs pos
 
 (* TODO: TO MERGE WITH ABOVE *)
-let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
+let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
   (* let vars = para_names in *)
   (* Prepare the input for the fixpoint calculation *)
   let lower_invs = Cast.extract_view_x_invs transed_views in
@@ -524,7 +529,7 @@ let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var l
     let fixc_header = slk2fix_header 1 [name] in
     (fixc_body ^ fixc_header, fr_vars, rev_sst)
   in
-  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+  DD.binfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -554,7 +559,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
   let pr1 = !CP.print_formula in
   let pr2 (f, _) = Cprinter.string_of_formula f in
   Debug.no_3 "compute_heap_pure_inv" (pr_list_ln pr2) pr_id !CP.print_svl pr1
-      (fun _ _ _ ->  compute_heap_pure_inv_x fml name data_name para_names lower_invs)
+      (fun _ _ _ ->  compute_heap_pure_inv fml name data_name para_names lower_invs)
       fml name para_names
 
 (******************************************************************************)
@@ -1316,6 +1321,7 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
           | _ -> acc
         in new_acc
     ) 1 input_pairs in
+    let _ = Debug.binfo_hprint (add_str "n_base" string_of_int) n_base no_pos in
     Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
