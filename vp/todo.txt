@@ -359,6 +359,16 @@ What happen to frac? Why did we have
 
 What is check_specs?
 ====================================================================
+Support higher-order fork?
+
+Remove hardwired fork/join acquire/release
+
+Support option in file
+  //@option --ann-vp
+
+locks?
+
+
 ====================================================================
 ====================================================================
 ====================================================================

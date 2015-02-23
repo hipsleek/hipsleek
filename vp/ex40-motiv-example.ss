@@ -4,6 +4,12 @@
 
 //memory cell
 data cell{ int val;}
+pred_prim Thrd{+%Q@Split}<>;
+pred_prim dead<>;
+
+void join2(Thrd t)
+  requires t::Thrd{+%Q}<>
+  ensures %Q * t::dead<>;
 
 //deallocate a cell
 void destroyCell(cell a)
@@ -18,13 +24,22 @@ void thread1(cell x, cell y)
   y.val = y.val + 2;
 }
 
-void thread2(thrd t1, cell y)
-  requires t1::thrd<# y::cell<2> & true #>
-  ensures y::cell<4>;
+Thrd fork_thread1(cell x, cell y)
+  requires x::cell<0> * y::cell<0>
+  ensures res::Thrd{+x::cell<1> * y::cell<2>}<>;
+
+
+void thread2(Thrd t1, cell y)
+  requires t1::Thrd{+ y::cell<2> }<>
+  ensures y::cell<4> * t1::dead<>;
 {
-  join(t1);
+  join2(t1);
   y.val = y.val + 2;
 }
+
+Thrd fork_thread2(Thrd t1, cell y)
+  requires t1::Thrd{+ y::cell<2>}<>
+  ensures res::Thrd{+ y::cell<4> * t1::dead<>}<>;
 
 void main()
   requires true ensures true;
@@ -33,13 +48,13 @@ void main()
   cell x = new cell(0);
   cell y = new cell(0);
 
-  thrd t1 = fork(thread1,x,y);
-  thrd t2 = fork(thread2,t1,y);
+  Thrd t1 = fork_thread1(x,y);
+  Thrd t2 = fork_thread2(t1,y);
 
-  join(t1);
+  join2(t1);
   x.val = x.val + 1;
 
-  join(t2);
+  join2(t2);
 
   assert x'::cell<2> * y'::cell<4>;
 

@@ -2,12 +2,12 @@ open Gen
 open Globals
 open Cpure
 
-let remove_dups = Gen.BList.remove_dups_eq eq_spec_var
-let check_dups = Gen.BList.check_dups_eq eq_spec_var
-let diff = Gen.BList.difference_eq eq_spec_var
-let intersect = Gen.BList.intersect_eq eq_spec_var
-let overlap = Gen.BList.overlap_eq eq_spec_var
-let mem = Gen.BList.mem_eq eq_spec_var
+let remove_dups = Gen.BList.remove_dups_eq eq_spec_var_ident
+let check_dups = Gen.BList.check_dups_eq eq_spec_var_ident
+let diff = Gen.BList.difference_eq eq_spec_var_ident
+let intersect = Gen.BList.intersect_eq eq_spec_var_ident
+let overlap = Gen.BList.overlap_eq eq_spec_var_ident
+let mem = Gen.BList.mem_eq eq_spec_var_ident
 
 (* To store vperm of variables *)
 type vperm_sets = {
@@ -40,21 +40,21 @@ let build_vperm  ?zero:(zero=[])  ?lend:(lend=[])  ?value:(value=[])
 
 let vperm_unprime vp = { vp with vperm_unprimed_flag = false}
 
-let vperm_rm_prime vp =
-  if vp.vperm_unprimed_flag then vp
-  else 
-    { vp with
-        vperm_unprimed_flag = true;
-        vperm_zero_vars = List.map sp_rm_prime vp.vperm_zero_vars;
-        vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars;
-        vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars;
-        vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars;
-        vperm_frac_vars = List.map (fun (a,vs) -> (a,sp_rm_prime vs)) vp.vperm_frac_vars;
-    }
+let vperm_rm_prime vp = vp
+  (* if vp.vperm_unprimed_flag then vp *)
+  (* else  *)
+  (*   { vp with *)
+  (*       vperm_unprimed_flag = true; *)
+  (*       vperm_zero_vars = List.map sp_rm_prime vp.vperm_zero_vars; *)
+  (*       vperm_lend_vars = List.map sp_rm_prime vp.vperm_lend_vars; *)
+  (*       vperm_value_vars = List.map sp_rm_prime vp.vperm_value_vars; *)
+  (*       vperm_full_vars = List.map sp_rm_prime vp.vperm_full_vars; *)
+  (*       vperm_frac_vars = List.map (fun (a,vs) -> (a,sp_rm_prime vs)) vp.vperm_frac_vars; *)
+  (*   } *)
 
-let vperm_rm_prime vps = 
-  let pr = !print_vperm_sets in
-  Debug.no_1 "vperm_rm_prime" pr pr vperm_rm_prime vps
+(* let vperm_rm_prime vps =  *)
+(*   let pr = !print_vperm_sets in *)
+(*   Debug.no_1 "vperm_rm_prime" pr pr vperm_rm_prime vps *)
 
 (* ZH: it is redundant?*)
 (* let vperm_rm_prime vp = *)
@@ -101,7 +101,7 @@ let norm_frac_list xs =
     match xs with
       | [] -> [(fr,sv)]
       | (fr2,sv2)::xs -> 
-            if eq_spec_var sv sv2 then aux xs (Frac.add fr fr2) sv
+            if eq_spec_var_ident sv sv2 then aux xs (Frac.add fr fr2) sv
             else (fr,sv)::(aux xs fr2 sv2)
   in match xs with
     | [] -> []
@@ -117,7 +117,7 @@ let check_dupl svl =
   let rec aux svl p =
     match svl with
       | [] -> false
-      | v::vs -> if eq_spec_var p v then true else aux vs v
+      | v::vs -> if eq_spec_var_ident p v then true else aux vs v
   in match svl with
     | [] -> false
     | v::vs -> aux vs v
@@ -366,6 +366,6 @@ let get_vperm_spec_var sv vps =
   else if mem sv vps.vperm_value_vars then VP_Value
   else 
     try
-      let frac_perm, _ = List.find (fun (_, s) -> eq_spec_var sv s) vps.vperm_frac_vars in
+      let frac_perm, _ = List.find (fun (_, s) -> eq_spec_var_ident sv s) vps.vperm_frac_vars in
       VP_Frac frac_perm
     with _ -> VP_Zero

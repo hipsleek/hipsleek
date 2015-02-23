@@ -2168,25 +2168,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*************************************************************)
                   (* VPerm: Check @lend for normal args and @full for ref args *)
                   (*************************************************************)
-                  let b = 
-                    if !ann_vp then
-                      let ref_params = proc.proc_by_name_params in
-                      let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
-                      let ref_args = CP.subst_var_list pairs_sst ref_params in
-                      let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
-                      let vperm_f = VP.formula_of_vperm_anns [] in
-                      (* (VP_Lend, norm_args); (VP_Full, ref_args)] in *)
-                      let vperm_f = CF.set_flow_in_formula_override
-                        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
-                      in
-                      let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in
-                      if not (CF.isSuccessListFailescCtx_new vperm_res) then
-                        let msg = ("Arguments do not have @lend/@full permission to read/write.") in
-                        (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
-                         Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
-                         Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-                      else true
-                    else true
+                  (* WN : NO NEED - as we may require no access or read-only *)
+                  let b = true
+                    (* if !ann_vp then *)
+                    (*   let ref_params = proc.proc_by_name_params in *)
+                    (*   let pairs_sst = List.combine farg_spec_vars actual_spec_vars in *)
+                    (*   let ref_args = CP.subst_var_list pairs_sst ref_params in *)
+                    (*   let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in *)
+                    (*   let vperm_f = VP.formula_of_vperm_anns [] in *)
+                    (*   (\* (VP_Lend, norm_args); (VP_Full, ref_args)] in *\) *)
+                    (*   let vperm_f = CF.set_flow_in_formula_override *)
+                    (*     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f *)
+                    (*   in *)
+                    (*   let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in *)
+                    (*   if not (CF.isSuccessListFailescCtx_new vperm_res) then *)
+                    (*     let msg = ("Arguments do not have @lend/@full permission to read/write.") in *)
+                    (*     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos; *)
+                    (*      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos; *)
+                    (*      Err.report_error { Err.error_loc = pos; Err.error_text = msg }) *)
+                    (*   else true *)
+                    (* else true *)
                   in
                   if not b then ctx
                   else
