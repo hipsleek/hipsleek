@@ -24,4 +24,13 @@ so perhaps the latest code has not been committed.
 However, baga-sat version did not pick more precise
 inferred numeric inv.
 
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
 */

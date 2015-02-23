@@ -611,7 +611,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.ninfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          Debug.binfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_x_formula <- memo_pf_P;
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
           view
@@ -645,7 +645,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
     in
     (* Call the fixpoint calculation *)
     let invs = (compute_invs_fixcalc input_fixcalc) in
-    let _ = DD.ninfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
+    let _ = DD.binfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in

@@ -1879,10 +1879,12 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               (*   | None -> xform2 *)
               (*   | Some disj -> Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj disj) *)
               (* in *)
-              Debug.ninfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
-              Debug.ninfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
-              Debug.ninfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
-              Debug.ninfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
+              Debug.binfo_hprint (add_str "old view_x_formula" Cprinter.string_of_mix_formula) vdef.C.view_x_formula pos;
+              Debug.binfo_hprint (add_str "xform2" Cprinter.string_of_mix_formula) xform2 pos;
+              Debug.binfo_hprint (add_str "old x_formula" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
+              Debug.binfo_hprint (add_str "baga_over" (pr_option Excore.EPureI.string_of_disj)) baga_over pos;
+              Debug.binfo_hprint (add_str "view body" Cprinter.string_of_formula) body pos;
+              Debug.binfo_hprint (add_str "baga_over(unfolded)" (pr_option Excore.EPureI.string_of_disj)) u_b pos;
               vdef.C.view_baga_x_over_inv <- u_b ;
 	      vdef.C.view_x_formula <- xform2;
               vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2
@@ -2067,7 +2069,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) &&  not(CF.isFailCtx baga_rs2) &&
           not(over_fail) && not(under_fail) then
             begin
-            let _ = Debug.ninfo_pprint ("View defn for " ^ vn ^ " has precise invariant\n") no_pos in
+            let _ = Debug.binfo_pprint ("XX View defn for " ^ vn ^ " has precise invariant\n") no_pos in
 	    let pf = pure_of_mix vdef.C.view_user_inv in
 	    let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in
             let do_not_recompute_flag = disj_form (* (List.length disj_f>1) *) && not(!Globals.disj_compute_flag) in
@@ -2081,6 +2083,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                   (vdef.C.view_user_inv <- sf; vdef.C.view_xpure_flag <- false);
 	        Debug.tinfo_zprint (lazy (("Using a simpler inv for xpure0 of "^vdef.C.view_name))) pos;
                 Debug.tinfo_hprint (add_str "inv(xpure0)" pr) vdef.C.view_user_inv pos;
+                Debug.tinfo_hprint (add_str "inv_lock" (pr_option Cprinter.string_of_formula)) vdef.C.view_inv_lock pos;
 
 	        Debug.tinfo_hprint (add_str "inv(xpure1)" pr) vdef.C.view_x_formula pos
               end
@@ -2565,8 +2568,14 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let _ = List.iter (fun (vd,inv) ->
                 Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
+            let unfold_cnt = new Gen.change_flag in
             let rec unfold precise old_invs =
-              let _ = Debug.ninfo_hprint (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in
+              if unfold_cnt # exceed 10 then 
+                let _ = Debug.binfo_pprint "WARNING : Unfolding for baga-inv exceeded 10" no_pos in
+                old_invs
+              else 
+              let _ = unfold_cnt # inc in
+              (* let _ = Debug.binfo_hprint (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
                   let new_inv = Cvutil.xpure_symbolic_baga3 cviews0 (Cast.formula_of_unstruc_view_f vd) in
                   let new_inv = List.map (fun (svl,pf) ->
@@ -2600,14 +2609,16 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             in
             let precise_list = List.map (fun (vd, num_inv) ->
                 let is_precise_num =
+                  let _ = Debug.binfo_hprint (add_str "precise? view_user_inv" Cprinter.string_of_mix_formula) vd.Cast.view_user_inv no_pos in
+                  let _ = Debug.binfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) vd.Cast.view_x_formula no_pos in
                   if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then true
                   else if CP.isConstTrue num_inv then true
                   else
                     let body = CF.project_body_num vd.Cast.view_un_struc_formula num_inv vd.Cast.view_vars in
                     let root = CP.mk_spec_var "self" in
                     let body = CP.wrap_exists_svl body [root] in
-                    let _ = Debug.ninfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                    let _ = Debug.ninfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) num_inv no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) num_inv no_pos in
                     Tpdispatcher.imply_raw num_inv body
                 in
                 let _ = if is_precise_num then
@@ -2616,8 +2627,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant\n") no_pos
                 in is_precise_num
             ) (List.combine view_list_baga0 num_invs_wrap_index) in
+            (* WN : Looping at unfold with imprecise inv *)
             let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
-            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
+            let _ = Debug.tinfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
             ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)

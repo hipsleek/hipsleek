@@ -511,6 +511,15 @@ compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
 
 But sleek goes into a LOOP? why?
 
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
 ==============================================
 ==============================================
 ==============================================
