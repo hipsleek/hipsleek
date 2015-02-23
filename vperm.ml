@@ -260,8 +260,8 @@ let rec pair_ann_sets lhs_as rhs_as =
     | (vl, lhs_ann)::lhs_as ->
           let ps, ls, rs = pair_ann_sets lhs_as rhs_as in
           try
-            let _, rhs_ann = List.find (fun (vr, _) -> eq_spec_var vl vr) rs in
-            let rem_rs = List.filter (fun (vr, _) -> not (eq_spec_var vl vr)) rs in
+            let _, rhs_ann = List.find (fun (vr, _) -> eq_spec_var_unp vl vr) rs in
+            let rem_rs = List.filter (fun (vr, _) -> not (eq_spec_var_unp vl vr)) rs in
             (vl, lhs_ann, rhs_ann)::ps, ls, rem_rs
           with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
