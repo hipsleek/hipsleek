@@ -2174,7 +2174,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
                       let ref_args = CP.subst_var_list pairs_sst ref_params in
                       let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
-                      let vperm_f = VP.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
+                      let vperm_f = VP.formula_of_vperm_anns [] in
+                      (* (VP_Lend, norm_args); (VP_Full, ref_args)] in *)
                       let vperm_f = CF.set_flow_in_formula_override
                         { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
                       in
