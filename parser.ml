@@ -1640,7 +1640,7 @@ core_constr:
       F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
     | vp= vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in
-      F.formula_of_vperm_pure_with_flow_htrue (P.mkAnd pc fb pos) vp fc [] pos
+      F.formula_of_vperm_pure_with_flow_emp (P.mkAnd pc fb pos) vp fc [] pos
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in 
       F.mkBase hc (P.mkAnd pc fb pos) vp fc [] pos

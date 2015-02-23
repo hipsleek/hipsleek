@@ -265,7 +265,7 @@ let rec pair_ann_sets lhs_as rhs_as =
             (vl, lhs_ann, rhs_ann)::ps, ls, rem_rs
           with Not_found -> (ps, (vl, lhs_ann)::ls, rs)
 
-let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) es sv lhs_ann rhs_ann = 
+let vperm_entail_var ?(ver_post_flag=false) ?(par_flag=false) sv lhs_ann rhs_ann = 
   (* let ver_post_flag = es.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in *)
   (* let par_flag = es.CF.es_infer_obj # is_par || infer_const_obj # is_par in *)
   let err s = Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann) in
@@ -345,49 +345,98 @@ let mkFailCtx_vp msg estate conseq pos =
       Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
       mk_failure_may msg logical_error, estate.es_trace)) (mk_cex true)
 
-let vperm_entail_rhs estate conseq pos =
-  let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
-  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
-  let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
-  if not (!Globals.ann_vp) then Succ estate
-  else
+let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=false) lhs_vperm_sets rhs_vperm_sets =
     let pr_vp = pr_pair !print_sv string_of_vp_ann in
-    let lhs_vperm_sets = collect_vperm_sets estate.es_formula in
     let lhs_vperm_sets = CVP.norm_vperm_sets lhs_vperm_sets in
-    let rhs_vperm_sets = collect_vperm_sets conseq in
     let rhs_vperm_sets = CVP.norm_vperm_sets rhs_vperm_sets in
-
     let las = ann_set_of_vperm_sets lhs_vperm_sets in
     let ras = ann_set_of_vperm_sets rhs_vperm_sets in
     let pas, rem_las, rem_ras = pair_ann_sets las ras in
-
+    let err_vperm_sets = lhs_vperm_sets in
     let non_zero_vps = List.find_all (fun (_, ann) -> not (CVP.is_Zero ann)) rem_ras in
     if (non_zero_vps != []) then
       let msg = 
         "Mismatch non-zero variable permission in consequent " ^
             (pr_list pr_vp non_zero_vps) in 
-      let fctx = mkFailCtx_vp msg estate conseq pos in
-      Fail fctx
+      (* let fctx = mkFailCtx_vp msg estate conseq pos in *)
+      (* Fail fctx *)
+      Some msg,err_vperm_sets
     else
       try
-        let res_vas = List.map (fun (v, la, ra) -> (v, vperm_entail_var ~par_flag:par_flag ~ver_post_flag:ver_post_flag estate v la ra)) pas in
+        let res_vas = List.map (fun (v, la, ra) -> (v, vperm_entail_var ~par_flag:par_flag ~ver_post_flag:ver_post_flag (* estate *) v la ra)) pas in
         let res_vps = vperm_sets_of_ann_set (rem_las @ res_vas) in
         if classic_flag && (CVP.is_leak_vperm res_vps) then 
           (* TODO:WN *)
           let vp_str = !print_vperm_sets res_vps in
           let _ = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in
           let msg = " var permission leakage "^vp_str in
-          let fctx = mkFailCtx_vp msg estate conseq pos in
-          Fail fctx
+          (* let fctx = mkFailCtx_vp msg estate conseq pos in *)
+          (* Fail fctx *)
+          Some msg, err_vperm_sets
         else 
-          let res_f = set_vperm_sets_formula res_vps estate.es_formula in
-          let estate = { estate with es_formula = res_f; }
-          in Succ estate
+          (* let res_f = set_vperm_sets_formula res_vps estate.es_formula in *)
+          (* let estate = { estate with es_formula = res_f; } in *)
+          None, res_vps
       with (Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann)) ->
           let m = if s="" then "" else "(under "^s^") " in
           let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy "^m^ (pr_vp (sv, rhs_ann)) in
-          let fctx = mkFailCtx_vp msg estate conseq pos in
-          Fail fctx
+          (* let fctx = mkFailCtx_vp msg estate conseq pos in *)
+          (* Fail fctx *)
+          Some msg, err_vperm_sets
+
+let vperm_entail_rhs estate conseq pos =
+  let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
+  let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
+  let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+  if not (!Globals.ann_vp) then Succ estate
+  else
+    let lhs_vperm_sets = collect_vperm_sets estate.es_formula in
+    let rhs_vperm_sets = collect_vperm_sets conseq in
+    let resopt,res_vps = vperm_entail_set ~par_flag:par_flag ~ver_post_flag:ver_post_flag ~classic_flag:classic_flag lhs_vperm_sets  rhs_vperm_sets in
+    match resopt with
+      | None ->
+            let res_f = set_vperm_sets_formula res_vps estate.es_formula in
+            let estate = { estate with es_formula = res_f; }
+            in Succ estate
+      | Some msg -> 
+            let fctx = mkFailCtx_vp msg estate conseq pos in
+            Fail fctx
+
+    (* let pr_vp = pr_pair !print_sv string_of_vp_ann in *)
+    (* let lhs_vperm_sets = CVP.norm_vperm_sets lhs_vperm_sets in *)
+    (* let rhs_vperm_sets = CVP.norm_vperm_sets rhs_vperm_sets in *)
+
+    (* let las = ann_set_of_vperm_sets lhs_vperm_sets in *)
+    (* let ras = ann_set_of_vperm_sets rhs_vperm_sets in *)
+    (* let pas, rem_las, rem_ras = pair_ann_sets las ras in *)
+
+    (* let non_zero_vps = List.find_all (fun (_, ann) -> not (CVP.is_Zero ann)) rem_ras in *)
+    (* if (non_zero_vps != []) then *)
+    (*   let msg =  *)
+    (*     "Mismatch non-zero variable permission in consequent " ^ *)
+    (*         (pr_list pr_vp non_zero_vps) in  *)
+    (*   let fctx = mkFailCtx_vp msg estate conseq pos in *)
+    (*   Fail fctx *)
+    (* else *)
+    (*   try *)
+    (*     let res_vas = List.map (fun (v, la, ra) -> (v, vperm_entail_var ~par_flag:par_flag ~ver_post_flag:ver_post_flag (\* estate *\) v la ra)) pas in *)
+    (*     let res_vps = vperm_sets_of_ann_set (rem_las @ res_vas) in *)
+    (*     if classic_flag && (CVP.is_leak_vperm res_vps) then  *)
+    (*       (\* TODO:WN *\) *)
+    (*       let vp_str = !print_vperm_sets res_vps in *)
+    (*       let _ = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in *)
+    (*       let msg = " var permission leakage "^vp_str in *)
+    (*       let fctx = mkFailCtx_vp msg estate conseq pos in *)
+    (*       Fail fctx *)
+    (*     else  *)
+    (*       let res_f = set_vperm_sets_formula res_vps estate.es_formula in *)
+    (*       let estate = { estate with es_formula = res_f; } *)
+    (*       in Succ estate *)
+    (*   with (Vperm_Entail_Fail (s,sv, lhs_ann, rhs_ann)) -> *)
+    (*       let m = if s="" then "" else "(under "^s^") " in *)
+    (*       let msg = (pr_vp (sv, lhs_ann)) ^ " cannot satisfy "^m^ (pr_vp (sv, rhs_ann)) in *)
+    (*       let fctx = mkFailCtx_vp msg estate conseq pos in *)
+    (*       Fail fctx *)
 
 let vperm_entail_rhs estate conseq pos =
   if not (!Globals.ann_vp) then Succ estate

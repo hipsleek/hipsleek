@@ -1,4 +1,5 @@
 open Globals
+open Gen.Basic
 
 let debug_on = ref false
 let devel_debug_on = ref false
@@ -36,6 +37,7 @@ let pprint msg (pos:loc) =
 (* system development debugging *)
 let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
+  (* let _ = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
   (* WN : should we use && or || *)
   if !Globals.compete_mode then ()
   else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
@@ -562,9 +564,13 @@ let proc_option str =
     match str with
       | [] -> (tr_flag,lp_flag)
       | s::str ->
-            if String.compare s "Trace" == 0 then aux str true lp_flag 
-            else if String.compare s "Loop" == 0 then aux str tr_flag true 
-            else aux str tr_flag lp_flag
+            begin
+              if String.compare s "Trace" == 0 then aux str true lp_flag 
+              else if String.compare s "Loop" == 0 then aux str tr_flag true 
+              else 
+                let _ = (print_endline ("Warning - wrong debug command :"^s)) 
+                in aux str tr_flag lp_flag
+            end
   in aux str false false
 
 let rec get_words str =

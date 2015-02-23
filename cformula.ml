@@ -18126,3 +18126,12 @@ let subst_struc_pre sst (f : struc_formula) =
 (*   map_list_failesc_context clear_inf_par_ctx ctx *)
 
 (* End of Utils for Vperm reasoning *)
+
+let get_vperm_set f =
+  let helper f = match f with
+    | Base {formula_base_vperm = vp}
+    | Exists {formula_exists_vperm = vp}
+            -> vp
+    | _ -> CVP.empty_vperm_sets
+  in helper f
+

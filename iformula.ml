@@ -272,8 +272,16 @@ and formula_of_pure_with_flow_htrue p f a pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
   mkBase h p VP.empty_vperm_sets f a pos (* pure formula has HTRUE heap *)
 
-and formula_of_vperm_pure_with_flow_htrue p vp f a pos =
-  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+and formula_of_pure_with_flow_emp p f a pos =
+  let h = HEmp in
+  mkBase h p VP.empty_vperm_sets f a pos (* pure formula has HTRUE heap *)
+
+(* and formula_of_vperm_pure_with_flow_htrue p vp f a pos = *)
+(*   let h = if Ipure.isConstTrue p then HTrue else HEmp in *)
+(*   mkBase h p vp f a pos *)
+
+and formula_of_vperm_pure_with_flow_emp p vp f a pos =
+  let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
   mkBase h p vp f a pos
 
 and one_formula_of_formula f =
