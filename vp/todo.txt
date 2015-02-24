@@ -331,7 +331,7 @@ checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<g>}<>.
     &flted_9_29=2 & flted_9_30=1 & b!=null&{FLOW,(4,5)=__norm#E}[]
 [[ COND ==>  Match(x,x) ==> ]]
 ====================================================================
-#ex41a.slk
+#ex41a.slk (DONE)
 
 Why is there a node expected?
 Entail 1: EXCast. Failure("Expect a node")
@@ -340,7 +340,7 @@ checkentail x::Thrd{+@full[a,b]}<> |- x::Thrd{+@full[a]}<>.
 
 Last Proving Location: 1 File "ex41a-frac-Thrd.slk",Line:1,Col:10
 ====================================================================
-#ex41.ss
+#ex41.ss (FIXED)
 
 id: 7; caller: []; line: 51; classic: false; kind: Check_Specs; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
 
@@ -370,6 +370,14 @@ locks?
 
 
 ====================================================================
+subst_struc_pre@141
+subst_struc_pre inp1 :[(id_38,id_38'),(xxx_39,xxx_39'),(LS,LS'),(LSMU,LSMU'),(waitlevel,waitlevel')]
+subst_struc_pre inp2 : EBase id_38::Thrd{ + emp&xxx_39'=1+xxx_39&{FLOW,(4,5)=__norm#E}[]}<>&
+       {FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume ref [xxx_39]
+                   emp&xxx_39'=1+xxx_39&{FLOW,(4,5)=__norm#E}[]
+
 ====================================================================
 ====================================================================
 ====================================================================
