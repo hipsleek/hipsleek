@@ -2562,10 +2562,16 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 let user_inv = MCP.pure_of_mix vd.Cast.view_user_inv in 
                 let better = 
                   if (Tpdispatcher.imply_raw fixc user_inv) then fixc 
-                  else 
-                    let _ = Debug.binfo_hprint (add_str "WARNING: User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
-                    let _ = Debug.binfo_pprint "WARNING: TODO fixpt check" no_pos in
-                  user_inv
+                  else
+                    (* to check view_form ==> usr_inv *)
+                    let body = CF.project_body_num vd.Cast.view_un_struc_formula user_inv vd.Cast.view_vars in
+                    let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    if (Tpdispatcher.imply_raw body user_inv) then
+                      let _ = Debug.binfo_hprint (add_str "WARNING: User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
+                      let _ = Debug.binfo_pprint "WARNING: TODO fixpt check" no_pos in
+                      user_inv
+                    else fixc
                 in better
             )  infer_vs_user in
             let precise_list = List.map (fun (vd,fixc) ->

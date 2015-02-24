@@ -543,6 +543,15 @@ therefore over-inv message is incorrect.
 !!! memo_pf_P: n>=0 & n=m & n=idx
 !!! Predicate lseg has over invariant
 ==============================================
+# ex21b.slk
+
+GOT
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], true)]
+
+EXPECTED
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], m=n & n>=1)]
 ==============================================
 ==============================================
 ==============================================
