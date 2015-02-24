@@ -2091,11 +2091,12 @@ and pr_vperm_sets vps =
       (fmt_string (string_of_vp_ann vpa);
       fmt_string "["; pr_list_of_spec_var svl; fmt_string "]")
   in
+  (fmt_string (if vps.CVP.vperm_unprimed_flag then "N" else "U"));
   (pr_elem VP_Full vps.CVP.vperm_full_vars);
   (pr_elem VP_Lend vps.CVP.vperm_lend_vars);
   (pr_elem VP_Value vps.CVP.vperm_value_vars);
   (pr_elem VP_Zero vps.CVP.vperm_zero_vars);
-  (List.iter (fun (frac, svl) -> pr_elem (VP_Frac frac) svl) vps.CVP.vperm_frac_vars) 
+  (List.iter (fun (frac, sv) -> pr_elem (VP_Frac frac) [sv]) vps.CVP.vperm_frac_vars) 
 
 and string_of_vperm_sets vps = poly_string_of_pr pr_vperm_sets vps
 
@@ -4610,7 +4611,7 @@ let string_of_proc_decl p =
 	  else ("\n@ref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
       ^ (if Gen.is_empty p.proc_by_copy_params then "" 
 	  else ("\n@copy " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_copy_params)) ^ "\n"))
-      ^ (if p.proc_is_recursive then " rec" else "") ^ "\n"
+      ^ (if p.proc_is_recursive then " rec\n" else "")
       ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
       ^ (match p.proc_body with 
@@ -5341,3 +5342,4 @@ Perm.print_exp := string_of_formula_exp;;
 Lem_store.lem_pr:= string_of_coerc_long;;
 Lem_store.lem_pr_med:= string_of_coerc_med;;
 CVP.print_vperm_sets := string_of_vperm_sets;;
+Cformula.print_vperm_sets := string_of_vperm_sets;;

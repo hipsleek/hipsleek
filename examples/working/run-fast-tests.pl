@@ -747,7 +747,7 @@ $output_file = "log";
 				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
 				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
 				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
-				["vperm/vperm_check.ss",6,  "--ann-vp", 
+				["vperm/ho_vperm_check.ss",6,  "--ann-vp", 
                                 "inc","SUCCESS",
                                 "incCell","SUCCESS",
                                 "test1","FAIL",

@@ -388,6 +388,10 @@ let common_arguments = [
   ("-dre", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
+  ("-drea", Arg.String (fun s ->
+      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+      Debug.mk_debug_arg s),
+   "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -626,8 +630,14 @@ let common_arguments = [
   ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
 
   (* use classical reasoning in separation logic *)
-  ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-  ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
+  ("--classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # set Globals.INF_CLASSIC),
+  (* Arg.Set Globals.opt_classic,  *)
+  "Use classical reasoning in separation logic");
+  ("--dis-classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # reset Globals.INF_CLASSIC),
+  (* Arg.Clear Globals.opt_classic,  *)
+  "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");

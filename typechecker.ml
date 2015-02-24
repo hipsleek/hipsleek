@@ -1238,7 +1238,9 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
           (***generating spec for init***)
           CF.prepost_of_init lock_var lock_sort new_args post_start_label pos
       in
+      let _ = Debug.binfo_hprint (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
       let prepost = Cvutil.prune_pred_struc prog true prepost in (* specialise --eps *)
+      let _ = Debug.binfo_hprint (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
       let ctx = 
         if (mn_str=Globals.finalize_name) then
           (*try to combine fractional permission before finalize*)
@@ -1435,6 +1437,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
             (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs 
           in
+          let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (Cprinter.string_of_list_failesc_context) (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs
+          in
           let assign_op () =
             begin
               let _ = proving_loc # set pos in
@@ -1529,7 +1533,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      Gen.Profiling.push_time "[check_exp] Assign";  
 	      let res = wrap_proving_kind PK_Assign_Stmt assign_op () in
 	      Gen.Profiling.pop_time "[check_exp] Assign";
-	      res		
+	      res
 	| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
 	      let mkprf prf_l = PTracer.ContextList
 		{PTracer.context_list_ante = []; PTracer.context_list_conseq = CF.mkETrue (CF.mkTrueFlow ()) pos; PTracer.context_list_proofs = prf_l; } in
@@ -2164,24 +2168,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*************************************************************)
                   (* VPerm: Check @lend for normal args and @full for ref args *)
                   (*************************************************************)
-                  let b = 
-                    if !ann_vp then
-                      let ref_params = proc.proc_by_name_params in
-                      let pairs_sst = List.combine farg_spec_vars actual_spec_vars in
-                      let ref_args = CP.subst_var_list pairs_sst ref_params in
-                      let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in
-                      let vperm_f = VP.formula_of_vperm_anns [(VP_Lend, norm_args); (VP_Full, ref_args)] in
-                      let vperm_f = CF.set_flow_in_formula_override
-                        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f
-                      in
-                      let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in
-                      if not (CF.isSuccessListFailescCtx_new vperm_res) then
-                        let msg = ("Arguments do not have @lend/@full permission to read/write.") in
-                        (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
-                         Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
-                         Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-                      else true
-                    else true
+                  (* WN : NO NEED - as we may require no access or read-only *)
+                  let b = true
+                    (* if !ann_vp then *)
+                    (*   let ref_params = proc.proc_by_name_params in *)
+                    (*   let pairs_sst = List.combine farg_spec_vars actual_spec_vars in *)
+                    (*   let ref_args = CP.subst_var_list pairs_sst ref_params in *)
+                    (*   let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in *)
+                    (*   let vperm_f = VP.formula_of_vperm_anns [] in *)
+                    (*   (\* (VP_Lend, norm_args); (VP_Full, ref_args)] in *\) *)
+                    (*   let vperm_f = CF.set_flow_in_formula_override *)
+                    (*     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f *)
+                    (*   in *)
+                    (*   let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in *)
+                    (*   if not (CF.isSuccessListFailescCtx_new vperm_res) then *)
+                    (*     let msg = ("Arguments do not have @lend/@full permission to read/write.") in *)
+                    (*     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos; *)
+                    (*      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos; *)
+                    (*      Err.report_error { Err.error_loc = pos; Err.error_text = msg }) *)
+                    (*   else true *)
+                    (* else true *)
                   in
                   if not b then ctx
                   else
@@ -2260,7 +2266,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let st_lsmu = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) lsmu_var in
                     let st_waitlevel = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) waitlevel_var in
                     let st3= st2@st_ls@st_lsmu@st_waitlevel in
+                    let _ = Debug.tinfo_hprint (add_str "renamed_spec" Cprinter.string_of_struc_formula) renamed_spec no_pos in
                     let pre2 = CF.subst_struc_pre st3 renamed_spec in
+                    let _ = Debug.tinfo_hprint (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
                     (* Termination: Store unreachable state *)
                     let _ =
@@ -2791,7 +2799,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
-  let f = wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid)) in
+  (* WN : why do we have wrap_ad_flow here *)
+  let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST (check_post_x prog proc ctx posts pos pid))) in
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
@@ -2858,13 +2867,13 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let _ = Debug.binfo_hprint (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
         (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
         let final_state_prim = CF.push_exists_list_partial_context w ctx in
-        Debug.binfo_hprint  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
+        Debug.tinfo_hprint  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
         (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
         (* let _ = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
         Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
         let final_state = 
           if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
-        Debug.binfo_hprint  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
+        Debug.tinfo_hprint  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
         (* let _ = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
         (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
         (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
@@ -3893,7 +3902,7 @@ let check_coercion (prog : prog_decl) =
 
   (* combine the 2 lists of coercions into one list of lemmas:
      - coercions that have the same name in the left and right list of coercions -> (Some c1,Some c2)
-     - left coercion c -> (Some c, None)
+     - left coercion c -> (Some c, one)
      - right coercion c -> (None, Some c)
   *)
   let left_coercs  =  List.filter (fun c -> c.Cast.coercion_kind != LEM_UNSAFE ) (Lem_store.all_lemma # get_left_coercion) in

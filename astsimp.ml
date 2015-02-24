@@ -1485,13 +1485,15 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
       let prims,prim_rels = gen_primitives prog0 in
       (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
-      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
+      let _ = Debug.ninfo_hprint (add_str "prims" (pr_list Iprinter.string_of_proc_decl)) prims no_pos in
+      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in
       (* let prims,prim_rels = ([],[]) in *)
       let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
 	  (* AN HOA : adjoint the program with primitive relations *)
 	  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
 	  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
       } in
+      (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog)^"\n") in*)
       (set_mingled_name prog;
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
@@ -3285,6 +3287,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         else dynamic_specs_list
       in
       (******<< Infering LSMU from LS if there is LS in spec  *********)
+      (* WN : what is LSMU? lockset? *)
       (* Termination: Normalize the specification 
        * with the default termination information
        * Primitive functions: Term[] 
@@ -6536,7 +6539,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
           let (n_tl,n_f2) = helper b.IF.formula_or_f2 n_tl in
           (n_tl,CF.mkOr n_f1 n_f2 b.IF.formula_or_pos)
       | IF.Base ( {
-            IF.formula_base_heap = h;
+            IF.formula_base_heap = hh;
             IF.formula_base_pure = p;
             IF.formula_base_vperm = vp;
             IF.formula_base_flow = fl;
@@ -6546,7 +6549,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let n_tl = 
               if sep_collect then
                 let n_tl = gather_type_info_pure prog p n_tl in
-                gather_type_info_heap prog h n_tl
+                gather_type_info_heap prog hh n_tl
               else n_tl in
             let _ = List.map (fun x -> helper_one_formula x tl) a in
             (* transform bexpr *)
@@ -6625,6 +6628,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             (res_replace n_tlist rl clean_res fl, ch)) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let (n_tl,cf) = helper f0 tlist in
+  let pr = Cprinter.string_of_formula in
+  let _ = Debug.tinfo_hprint (add_str "cf" pr) cf no_pos in
   (*let cf = Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
@@ -6815,8 +6820,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let trans_f f tl = trans_formula prog false [] false f tl false in
             let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
               let (ntl, b) = trans_f a.IF.rflow_base tl in 
-              (ntl, r @ [{ CF.rflow_kind = a.IF.rflow_kind; 
-                           CF.rflow_base = b; }])) 
+              (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
+                           CF.rflow_base = b; })::r)) 
               (tl, []) ho_exps in
             let ho_args = List.rev ho_args in
             if (deref > 0) then (
@@ -7250,12 +7255,15 @@ and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.
     sv
   in
   let trans_vl vl = List.map trans_v vl in
-  {   CVP.vperm_unprimed_flag = false;
+  let vp = {   CVP.vperm_unprimed_flag = false;
+  CVP.vperm_is_false = false;
       CVP.vperm_zero_vars = trans_vl vps.IVP.vperm_zero_vars;
     CVP.vperm_lend_vars = trans_vl vps.IVP.vperm_lend_vars;
     CVP.vperm_value_vars = trans_vl vps.IVP.vperm_value_vars;
     CVP.vperm_full_vars = trans_vl vps.IVP.vperm_full_vars;
-    CVP.vperm_frac_vars = List.map (fun (frac, vl) -> (frac, trans_vl vl)) vps.IVP.vperm_frac_vars; }
+    CVP.vperm_frac_vars = List.concat (List.map 
+        (fun (frac, vl) -> List.map (fun v -> (frac, trans_v v)) vl) vps.IVP.vperm_frac_vars); } in
+  CVP.norm_vperm_sets vp
   
   
 and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =

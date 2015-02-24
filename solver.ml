@@ -8122,7 +8122,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
       DD.devel_hprint (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
       DD.devel_hprint (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
-      DD.devel_hprint (add_str "conseq1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
+      DD.devel_hprint (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
       let split_conseq =
 	    if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
 	    then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos
@@ -10027,7 +10027,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let flow_ann = lhs.CF.rflow_kind in
                 let ho_lhs = lhs.CF.rflow_base in
                 let ho_rhs = rhs.CF.rflow_base in
+                let shvars = CF.extract_single_hvar_f ho_rhs in
+                let _ = Debug.tinfo_hprint (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
                 let hvars = CF.extract_hvar_f ho_rhs in
+                let _ = Debug.tinfo_hprint (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
+                match shvars with
+                  | Some v -> (None,None,None,[(v,ho_lhs)])
+                  | None ->
                 let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
                 let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
                 let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
@@ -10036,6 +10042,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_gen_impl_vars = new_impl_vars @ hvars;
                   es_unsat_flag = false; } 
                 in
+                (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
+                (* let pr = Cprinter.string_of_formula in *)
+                (* let _ = Debug.binfo_hprint (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *)
                 (* tmp_ho_var is used to capture residue after matching *)
                 let tmp_ho_var, new_es, new_ho_rhs =
                   match hvars with
@@ -10092,7 +10101,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       | None -> (None, None, p_res_opt, es.es_ho_vars_map)
                       | Some v -> 
                         try
+                          let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+                          let _ = Debug.tinfo_hprint (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
                           let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                          let _ = Debug.tinfo_hprint (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
                           let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
                           (None, Some v_binding, p_res_opt, other_bindings) 
                         with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
@@ -10198,7 +10210,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       (match residue with
                         | None -> (flag, arg::result)
                         | Some r ->
-                          if ((isConstEmpFormula r) || (isConstTrueFormula2 r))
+                          if (CVP.is_empty_vperm_sets (CF.get_vperm_set r) && ( (isConstEmpFormula r) || (isConstTrueFormula2 r)))
                           then (flag, arg::result) (* splitable but empty residue *)
                           else
                             let arg_r = { arg with CF.rflow_base = r; } in 
@@ -10273,20 +10285,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
 (* (andreeac) you don't use ctx0, is there any point to have it as a parameter?  *)
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
+  Debug.tinfo_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
     let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
-    let _ = DD.ninfo_hprint (add_str " ante" Cprinter.prtt_string_of_formula) ante no_pos in
-    let _ = DD.ninfo_hprint (add_str " conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
-    let _ = DD.ninfo_hprint (add_str " estate.es_rhs_eqset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) estate.es_rhs_eqset  no_pos in
-    let _ = DD.ninfo_hprint (add_str " estate.es_evars" !CP.print_svl) estate.es_evars  no_pos in
-    let _ = DD.ninfo_hprint (add_str " state.es_gen_impl_vars" !CP.print_svl) estate.es_gen_impl_vars no_pos in
-    let _ = DD.ninfo_hprint (add_str " state.es_gen_expl_vars" !CP.print_svl) estate.es_gen_expl_vars no_pos in
+    let _ = DD.tinfo_hprint (add_str " ante" Cprinter.prtt_string_of_formula) ante no_pos in
+    let _ = DD.tinfo_hprint (add_str " conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+    let _ = DD.tinfo_hprint (add_str " estate.es_rhs_eqset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) estate.es_rhs_eqset  no_pos in
+    let _ = DD.tinfo_hprint (add_str " estate.es_evars" !CP.print_svl) estate.es_evars  no_pos in
+    let _ = DD.tinfo_hprint (add_str " state.es_gen_impl_vars" !CP.print_svl) estate.es_gen_impl_vars no_pos in
+    let _ = DD.tinfo_hprint (add_str " state.es_gen_expl_vars" !CP.print_svl) estate.es_gen_expl_vars no_pos in
     let lhs_h,lhs_p,_,_,_,_ = CF.extr_formula_base lhs_b in
     let rhs_h,rhs_p,_,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
     let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
-    let _ = DD.ninfo_hprint (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
+    let _ = DD.tinfo_hprint (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
     let rhs_eqset = (* if !Globals.allow_imm then *)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) ->
         CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22
     ) estate.es_rhs_eqset
@@ -10295,15 +10307,15 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       (* eqns *)
     in
     (* let _ = print_endline "CA:1" in *)
-    let _ = DD.ninfo_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "START"  no_pos in
+    let _ = DD.tinfo_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "START"  no_pos in
     (* let _ = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
-    let _ = DD.ninfo_hprint (add_str "estate.es_pure" Cprinter.string_of_mix_formula) estate.es_pure  no_pos in
-    let _ = DD.ninfo_hprint (add_str "conseq" Cprinter.string_of_formula) conseq  no_pos in
-    let _ = DD.ninfo_hprint (add_str "ctx0" Cprinter.string_of_context) ctx0  no_pos in
-    let _ = Debug.ninfo_hprint (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
+    let _ = DD.tinfo_hprint (add_str "estate.es_pure" Cprinter.string_of_mix_formula) estate.es_pure  no_pos in
+    let _ = DD.tinfo_hprint (add_str "conseq" Cprinter.string_of_formula) conseq  no_pos in
+    let _ = DD.tinfo_hprint (add_str "ctx0" Cprinter.string_of_context) ctx0  no_pos in
+    let _ = Debug.tinfo_hprint (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
     let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
         posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
-    let _ = DD.ninfo_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "END"  no_pos in
+    let _ = DD.tinfo_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "END"  no_pos in
     (* !!!!!!!!
        (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
        caller a estate conseq (Base lhs_b) (Base rhs_b)
@@ -12048,7 +12060,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 | _, _ ->  do_match ()
               else do_match ()
 	    end
-      | Context.M_unmatched_rhs_data_node (rhs, rhs_rest) ->
+      | Context.M_unmatched_rhs_data_node (rhs, rhs_rest,vp_set) ->
             (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
             (*****************************************************************************)
             begin
@@ -12056,6 +12068,24 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (* let rhs_xpure,_,_,_ = xpure prog conseq in *)
               (* let r = Infer.infer_pure_m 3 estate lhs_xpure rhs_xpure pos in *)
               (* Thai: change back to Infer.infer_pure *)
+              let _ = Debug.tinfo_hprint (add_str "unmatched rhs" Cprinter.string_of_h_formula) rhs no_pos in
+              let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+              let _ = Debug.tinfo_hprint (add_str "lhs formula" Cprinter.string_of_formula) estate.es_formula no_pos in
+              let lhs_vp_set = CF.get_vperm_set estate.es_formula in
+              let _ = Debug.tinfo_hprint (add_str "lhs_vp_set" Cprinter.string_of_vperm_sets) lhs_vp_set no_pos in
+              let _ = Debug.tinfo_hprint (add_str "vp_set" Cprinter.string_of_vperm_sets) vp_set no_pos in
+              let par_flag = estate.CF.es_infer_obj # is_par || infer_const_obj # is_par in
+              let ver_post_flag = estate.CF.es_infer_obj # is_ver_post || infer_const_obj # is_ver_post in
+              let classic_flag = estate.CF.es_infer_obj # is_classic || infer_const_obj # is_classic in
+              let resopt,res_vps = Vperm.vperm_entail_set ~par_flag:par_flag ~ver_post_flag:ver_post_flag ~classic_flag:classic_flag lhs_vp_set vp_set in
+              match resopt with
+                | Some msg ->
+                      let fctx = Vperm.mkFailCtx_vp msg estate conseq pos in
+                      fctx,NoAlias
+                | None ->
+                      let res_f = Vperm.set_vperm_sets_formula res_vps estate.es_formula in
+                      let estate = { estate with es_formula = res_f; } in
+                      let conseq = CF.write_vperm_set conseq CVP.empty_vperm_sets in
               let rhs_node = match rhs with
                 | DataNode n -> n.h_formula_data_node
                 | ViewNode n -> n.h_formula_view_node
@@ -12134,7 +12164,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                   CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
-                              | HVar v -> (* Do the instatiation for the HVar v *)
+                              | HVar v -> (* Do the instantiation for the HVar v *)
                                 let succ_estate =
                                   if (is_mem v estate.CF.es_gen_impl_vars) && (CF.is_emp_heap rhs_rest) then
                                     let bind_f = estate.CF.es_formula in
@@ -12162,7 +12192,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                 (match succ_estate with
                                   | Some es -> 
                                     let new_ctx = CF.Ctx (CF.add_to_estate es "binding of ho var") in
-                                    let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; } in
+                                    let new_rhs_base = CF.Base { rhs_b with formula_base_heap = rhs_rest; formula_base_vperm = CVP.empty_vperm_sets } in
                                     heap_entail_conjunct 18 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
                                   | None ->
                                     let may_estate = { estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in

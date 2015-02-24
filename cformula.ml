@@ -343,6 +343,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
 let print_spec_var_list = print_svl
+let print_vperm_sets = ref(fun (c:CVP.vperm_sets) -> "printer not yet initialized")
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
@@ -478,6 +479,7 @@ let isAnyConstFalse f = match f with
     h = HFalse || MCP.isConstMFalse p || 
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
+(* TODO:WN : could we ensure vperm is normalized *)
 
 let isAnyConstFalse f =
   let pr1 = !print_formula in
@@ -522,7 +524,7 @@ let isStrictConstTrue2 f = match f with
         (h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
   | _ -> false
 
-let isStrictConstTrue_x f = match f with
+let isStrictConstTrue f = match f with
   | Exists ({ formula_exists_heap = h;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
@@ -535,7 +537,7 @@ let isStrictConstTrue_x f = match f with
   | _ -> false
 
 let  isStrictConstTrue (f:formula) = 
-  Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
+  Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue f
 
 let isStrictConstHTrue f = match f with
   | Exists ({ formula_exists_heap = h;
@@ -577,18 +579,18 @@ let chg_assume_forms b f1 f2 = { b with
 	formula_assume_struc = f2;}
 
 let mkEList_no_flatten_x l =
-  if isConstETrue (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos
-  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  (* if isConstETrue (EList l) then *)
+  (*   mkETrue (mkTrueFlow ()) no_pos *)
+  (* else *) if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
     if l=[] then mkEFalse (mkFalseFlow) no_pos
     else EList l
 
 let mkEList_no_flatten2 l =
-  if isConstETrue2 (EList l) then
-    mkETrue (mkTrueFlow ()) no_pos
-  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  (* if isConstETrue2 (EList l) then *)
+  (*   mkETrue (mkTrueFlow ()) no_pos *)
+  (* else *) if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
   else
     let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
     if l=[] then mkEFalse (mkFalseFlow) no_pos
@@ -1507,17 +1509,17 @@ and mkOr f1 f2 pos =
   (*       	  if (isAnyConstFalse c) then ([],[c],[]) *)
   (*       	  else if (isAnyConstTrue c) then ([c],[],[]) *)
   (*       	  else ([],[],[c]) in *)
-  if isStrictConstTrue f1 || isStrictConstTrue f2 then
-	mkTrue (mkTrueFlow ()) pos
-  else if isAnyConstFalse f1 then f2
+  (* if isStrictConstTrue f1 || isStrictConstTrue f2 then *)
+  (*       mkTrue (mkTrueFlow ()) pos *)
+  (* else  *)if isAnyConstFalse f1 then f2
   else if isAnyConstFalse f2 then f1
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
 
 and mkOr_n f1 f2 pos =
-  if isStrictConstHTrue f1 then f2 else
-    if isStrictConstHTrue f2 then f1
-  else if isAnyConstFalse f1 then f2
+  (* if isStrictConstHTrue f1 then f2 else *)
+  (*   if isStrictConstHTrue f2 then f1 *)
+  (* else *) if isAnyConstFalse f1 then f2
   else if isAnyConstFalse f2 then f1
   else
     Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
@@ -1680,10 +1682,12 @@ and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h = mkStarH h1 h2 pos in
   let p = MCP.merge_mems p1 p2 true in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
+  let vp = CVP.norm_vperm_sets vp in
   let t = mkAndType t1 t2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (* assuming merging a1 and a2 *)
   mkBase h p vp t fl a pos (*TO CHECK: how about a1,a2: DONE*)
+      (* TODO *)
 
 
 and combine_and_pure (f1:formula) (p:MCP.mix_formula) (f2:MCP.mix_formula): MCP.mix_formula*bool = 
@@ -1734,6 +1738,7 @@ and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   (* let h = mkStarH h1 h2 pos in *)
   let p, _ = combine_and_pure f1 p1 p2 in
   let vp = CVP.merge_vperm_sets [vp1; vp2] in
+  let vp_2 = CVP.combine_vperm_sets [vp1; vp2] in
   let t = mkAndType t1 t2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (*combine a1 and a2: assuming merging a1 and a2*)
@@ -3072,6 +3077,7 @@ and subst_struc_pre sst (f : struc_formula) =
   match sst with
   | s :: rest -> subst_struc_pre rest (apply_one_struc_pre s f)
   | [] -> f
+
 
 and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula = match f with
   | ECase b -> ECase {b with 
@@ -4470,10 +4476,16 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
           (phase,xs)
     | _ -> (f,[])
 
+(* type: struc_formula -> formula -> struc_formula *)
+and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_formula  =  
+  let pr1 = !print_struc_formula in
+  let pr2 = !print_formula in
+  Debug.no_2 "rename_struc_clash_bound_vars" pr1 pr2 pr1 rename_struc_clash_bound_vars_X f1 f2 
+
 (* -- 13.05.2008 *)
 (* rename only those bound vars of f1 which clash with fv(f2) *)
 (* return the new formula and the list of fresh names *)
-and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_formula  =  match f1 with
+and rename_struc_clash_bound_vars_X (f1 : struc_formula) (f2 : formula) : struc_formula  =  match f1 with
 	| EAssume b -> EAssume {b with
 		formula_assume_simpl = fst (rename_clash_bound_vars b.formula_assume_simpl f2);
 		formula_assume_struc = rename_struc_clash_bound_vars b.formula_assume_struc f2;}
@@ -12751,6 +12763,13 @@ let keep_hrel e=
   Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
       (fun _ -> keep_hrel_x e) e
 
+let extract_single_hvar (hf: h_formula) : CP.spec_var option =
+  let f hf = match hf with
+    | HVar v -> Some v
+    | _ -> None
+  in 
+  f hf
+
 let extract_hvar (hf: h_formula) : CP.spec_var list =
   let f hf = match hf with
     | HVar v -> Some [v]
@@ -12764,6 +12783,21 @@ let extract_hvar_f_x (f0:formula) : CP.spec_var list =
     | Base ({ formula_base_heap = h1; })
     | Exists ({formula_exists_heap = h1; }) -> extract_hvar h1
     | _ -> report_error no_pos "extract_hvar: OR unexpected, expect HVar only"
+  in helper f0
+
+(* TODO:WN need to check pure & others are empty *)
+let extract_single_hvar_f (f0:formula) : CP.spec_var option =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
+    | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
+        -> 
+          let _ = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+          let _ = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+          if CVP.is_empty_vperm_sets vp then 
+            extract_single_hvar h1
+          else None
+    | _ -> report_error no_pos "extract_hvar: OR unexpected, expect single HVar only"
   in helper f0
 
 let extract_hvar_f (f0:formula) : CP.spec_var list =
@@ -13090,6 +13124,17 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
 (*   let new_f_arg = (no_f,no_f,no_f,(no_f,no_f,no_f),no_f) in *)
 (*   trans_formula e () new_f new_f_arg f_comb *)
 
+(*
+  type: (struc_formula -> struc_formula option) * (formula -> formula option) *
+  (h_formula -> h_formula option) *
+  
+  ((Mcpure_D.memo_pure -> Mcpure_D.memo_pure option) *
+   (Mcpure_D.var_aset -> Mcpure_D.var_aset option) *
+   (CP.formula -> CP.formula option) *
+   (Cpure.b_formula -> Cpure.b_formula option) * (CP.exp -> CP.exp option)) ->
+  struc_formula -> struc_formula
+*)
+
 let rec transform_struc_formula f (e:struc_formula) :struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
 	let r = f_e_f e in 
@@ -13193,6 +13238,19 @@ let rec trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc
 			let ne,vals = map_l_snd_res (trans_struc new_arg) b in
 			(mkEList_no_flatten ne, f_comb vals)
 		
+let conv f = fun _ x -> match (f x) with
+  | None -> None
+  | Some r -> Some (r,())
+
+(* let map_struc_formula (e: struc_formula) f f_arg f_comb : (struc_formula * 'b) = *)
+(*   let f_struc_f, f_f, f_h_formula, f_pure, f_memo = f in (\* f -> f option *\) *)
+(*   let f_conv = (conv f_struc_f, conv f_f, conv f_h_formula, conv f_pure, conv f_memo) in *)
+(*   let arg_any _ _ = () in *)
+(*   let f_arg = (arg_any, arg_any, arg_any, arg_any, arg_any) in *)
+(*   let f_comb _ = () in *)
+(*   let (e,_) = trans_struc_formula e f_conv f_arg f_comb in *)
+(*   e *)
+
 let rec transform_context f (c:context):context = 
 	match c with
 	| Ctx e -> 
@@ -18004,6 +18062,35 @@ let isLend_formula f =
   | Exists ({ formula_exists_heap = h }) -> 
     isLend_h_formula h
 
+(*
+  type: (struc_formula -> struc_formula option) * (formula -> formula option) *
+  (h_formula -> h_formula option) *
+  
+  ((Mcpure_D.memo_pure -> Mcpure_D.memo_pure option) *
+   (Mcpure_D.var_aset -> Mcpure_D.var_aset option) *
+   (CP.formula -> CP.formula option) *
+   (Cpure.b_formula -> Cpure.b_formula option) * (CP.exp -> CP.exp option)) ->
+  struc_formula -> struc_formula
+*)
+
+let f_change f = match f with
+  | Base fe -> Some (Base { fe with formula_base_vperm = CVP.vperm_unprime fe.formula_base_vperm })
+  | Exists f2 -> Some (Exists { f2 with formula_exists_vperm = CVP.vperm_unprime f2.formula_exists_vperm})
+  | Or _  -> None
+
+let un_norm_fn e =
+  let f_none _ = None in
+  let f_id x = Some x in
+  (* let f_change = f_id in *)
+  let f = (f_none, f_change, f_id,(f_id, f_id,f_id,f_id,f_id)) in
+  transform_struc_formula f e 
+
+let subst_struc_pre sst (f : struc_formula) =
+  let un_norm_flag = true in
+  (* let un_norm_fn r = r in  *)
+  let pr = !print_struc_formula in
+  let prlst = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "subst_struc_pre" prlst pr pr (fun _ _ -> Wrapper.wrap_norm un_norm_flag un_norm_fn (subst_struc_pre sst) f) sst f
 
 (* let map_list_failesc_context f ctx =                           *)
 (*   let f_ctx _ ctx = Some (f ctx, ()) in                        *)
@@ -18039,3 +18126,18 @@ let isLend_formula f =
 (*   map_list_failesc_context clear_inf_par_ctx ctx *)
 
 (* End of Utils for Vperm reasoning *)
+
+let get_vperm_set f =
+  let helper f = match f with
+    | Base {formula_base_vperm = vp}
+    | Exists {formula_exists_vperm = vp}
+            -> vp
+    | _ -> failwith "get_vperm_set: not expecting OR formula"
+  in helper f
+
+let write_vperm_set f vp = 
+  let helper f = match f with
+    | Base b -> Base { b with formula_base_vperm = vp;}
+    | Exists b -> Exists { b with formula_exists_vperm = vp;}
+    | _ -> failwith "write_vperm_set:not expecting OR formula"
+  in helper f

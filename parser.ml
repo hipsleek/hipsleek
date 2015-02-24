@@ -1535,7 +1535,8 @@ p_vp_ann:
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
    | `PLEND -> VP_Lend
-   | `AT; `FRAC_LIT (f, _) -> VP_Frac f
+   | `PFRAC;`OPAREN; `FRAC_LIT (f,s);`CPAREN-> VP_Frac f
+   (* | `AT; `FRAC_LIT (f, _) -> VP_Frac f *)
    (* | `PREF -> VP_Ref *)
   ]];
 
@@ -1639,7 +1640,8 @@ core_constr:
       F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
     | vp= vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in
-      F.formula_of_vperm_pure_with_flow_htrue (P.mkAnd pc fb pos) vp fc [] pos
+      F.formula_of_vperm_pure_with_flow_emp (*
+emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in 
       F.mkBase hc (P.mkAnd pc fb pos) vp fc [] pos
