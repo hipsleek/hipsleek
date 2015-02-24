@@ -17666,7 +17666,7 @@ and collect_important_vars_in_spec deep_flag (spec : struc_formula) : (CP.spec_v
   helper spec
 
 (** An Hoa : end collect_important_vars_in_spec **)
-
+(*Loc: should support mutrec views*)
 let project_h_formula_num hf inv svl =
   let rec helper hf =
     match hf with
@@ -17681,7 +17681,16 @@ let project_h_formula_num hf inv svl =
             CP.subst sst inv
       | _ -> CP.mkTrue no_pos
   in
-  helper hf
+  try
+    helper hf
+  with _ -> CP.mkTrue no_pos
+
+let project_h_formula_num hf inv svl =
+  let pr1 = !print_h_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 = !CP.print_formula in
+  Debug.no_3 "project_h_formula_num" pr1 pr3 pr2 pr3
+      project_h_formula_num hf inv svl
 
 let project_formula_num f inv svl =
   let rec helper f =
@@ -17713,6 +17722,7 @@ let project_body_num body inv svl =
 
 (* type: (formula * 'a) list -> CP.formula -> CP.spec_var list -> CP.formula *)
 
+(*Loc: should support mutrec views*)
 let project_body_num body inv svl =
   let pr = !print_pure_f in
   Debug.no_3 "project_body_num" (pr_list (fun (a,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
