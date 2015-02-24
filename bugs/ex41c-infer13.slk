@@ -1,0 +1,58 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+
+infer_exact [x,z] x::node<z>  |- x::lseg<z> .
+print residue.
+
+/*
+# ex41c
+
+Residue:
+ <1>HP_44(x,z)&x!=null & z!=x & z=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> z::lseg<z> * HP_44(x,z@NI)& true; 
+                  HP_44(x,z@NI)&true --> emp &(x!=z)  //& x!=null))]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+
+Residue:
+ <1>HP_44(x,z)&x!=null & q_39!=x & q_39=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(q_39,x)&true --> q_39::lseg<q_39> * HP_44(x,q_39@NI)&
+                   true; 
+                  HP_44(x,z@NI)&true --> emp&(z<x | (x<z & x!=null))]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+Expected answer:
+ H2(z,x) --> z::lseg<x> & z!=x
+Or:
+ H2(z,x) --> z::lseg<x> * U(x,z)
+ U(x,z) --> emo & z!=x &x!=null
+
+Residue:
+ <1>emp&x!=inf_p_60 & (((z=inf_p_60 & inf_p_60<x) | ((inf_p_60+1)<=x & (inf_p_60+1)<=z & x!=null & z!=null) | (z!=null & z<inf_p_60 & inf_p_60<x) | (x!=null & x<inf_p_60 & inf_p_60<z) | (z<=inf_p_60 & z!=null & x<inf_p_60 & x!=null))) & q_54=z & (((z=inf_p_60 & inf_p_60<x) | (x=inf_p_60 & z!=null & z<=inf_p_60) | (x=inf_p_60 & inf_p_60!=null & inf_p_60<z) | (x<inf_p_60 & x!=null & z=inf_p_60)))&{FLOW,(4,5)=__norm#E}[]
+ inferred heap: [z::lseg{}<inf_p_60>]
+ inferred pure: [((z=inf_p_60 & (1+inf_p_60)<=x) | (x=inf_p_60 & z!=null & 
+                 z<=inf_p_60) | (x=inf_p_60 & inf_p_60!=null & (1+
+                 inf_p_60)<=z) | ((1+x)<=inf_p_60 & x!=null & z=inf_p_60)); 
+                 ((z=inf_p_60 & (1+inf_p_60)<=x) | ((1+inf_p_60)<=x & (1+
+                 inf_p_60)<=z & x!=null & z!=null) | (z!=null & (1+
+                 z)<=inf_p_60 & (1+inf_p_60)<=x) | (x!=null & (1+
+                 x)<=inf_p_60 & (1+inf_p_60)<=z) | (z<=inf_p_60 & z!=null & 
+                 (1+x)<=inf_p_60 & x!=null))]
+
+
+*/
