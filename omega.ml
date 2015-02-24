@@ -264,7 +264,7 @@ let prelude () =
 let start() =
   try (
     if not !is_omega_running then begin
-        if (not !Globals.web_compile_flag) then 
+        (* if (not !Globals.web_compile_flag) then  *)
           print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
         last_test_number := !test_number;
         let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
