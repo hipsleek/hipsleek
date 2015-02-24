@@ -508,7 +508,8 @@ and comment file_name = parse
   | _  { comment file_name lexbuf }
 
 and line_comment file_name = parse
-  | newline { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
+  | newline 
+  | eof { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | _ { line_comment file_name lexbuf }
   
 
