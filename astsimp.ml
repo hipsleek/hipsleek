@@ -2544,7 +2544,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ) view_list_num0 in
             let _ = Expure.fix_ef view_list_baga cviews0 in
             let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
-            let _ = Debug.binfo_hprint (add_str "fixcalc (view with inv)" (pr_list (fun vd -> pr_option Cprinter.string_of_mix_formula vd.Cast.view_fixcalc))) view_list_num_with_inv no_pos in
+            let _ = Debug.tinfo_hprint (add_str "fixcalc (view with inv)" (pr_list (fun vd -> pr_option Cprinter.string_of_mix_formula vd.Cast.view_fixcalc))) view_list_num_with_inv no_pos in
             let fixcalc_invs_inv = List.map (fun vd -> match vd.Cast.view_fixcalc with Some f -> f | None -> MCP.mkMTrue no_pos) view_list_num_with_inv in
             let num_invs_wrap_index = List.map (fun mf ->
                 let pf = MCP.pure_of_mix mf in
@@ -2566,8 +2566,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   else
                     (* to check view_form ==> usr_inv *)
                     let body = CF.project_body_num vd.Cast.view_un_struc_formula user_inv vd.Cast.view_vars in
-                    let _ = Debug.binfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                    let _ = Debug.binfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
                     let _ = Debug.binfo_pprint "WARNING: TODO fixpt check" no_pos in
                     if (Tpdispatcher.imply_raw body user_inv) then
                       let _ = Debug.binfo_hprint (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
@@ -2587,8 +2587,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (* let root = CP.mk_spec_var "self" in *)
                 let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
                 let body = CP.wrap_exists_svl body (*[root]*) ptrs_vars in
-                let _ = Debug.binfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                let _ = Debug.binfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
+                let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                let _ = Debug.tinfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
                 let is_precise_num = Tpdispatcher.imply_raw fixc body in
                 let _ = if is_precise_num then
                   Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos
@@ -2600,10 +2600,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
             let fixcalc_invs = List.map (fun vd -> vd.Cast.view_fixcalc) view_list_baga in
             let fixcalc_invs_cviews0 = List.map (fun vd -> vd.Cast.view_fixcalc) cviews0 in
-            let _ = Debug.binfo_hprint (add_str "fixcalc_invs" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs no_pos in
+            let _ = Debug.tinfo_hprint (add_str "fixcalc_invs" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs no_pos in
             (* let _ = Debug.tinfo_hprint (add_str "fixcalc_invs_inv" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_inv no_pos in *)
-            let _ = Debug.binfo_hprint (add_str "fixcalc_invs (cviews0)" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_cviews0 no_pos in
-            let _ = Debug.binfo_hprint (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
+            let _ = Debug.tinfo_hprint (add_str "fixcalc_invs (cviews0)" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_cviews0 no_pos in
+            let _ = Debug.tinfo_hprint (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
             let baga_num_invs = List.combine baga_invs num_invs in
             let combined_invs = List.map (fun (disj,pf) ->

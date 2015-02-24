@@ -611,7 +611,7 @@ let compute_inv_mutrec mutrec_vnames views =
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.binfo_hprint (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          Debug.tinfo_hprint (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_fixcalc <- Some memo_pf_P;
           (* view.Cast.view_x_formula <- memo_pf_P; *)
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
