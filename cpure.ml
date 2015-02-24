@@ -5351,6 +5351,19 @@ let combine_branch b (f, l) =
 ;;*)
 
 let wrap_exists_svl f evars = mkExists evars f None no_pos
+
+(* let wrap_exists_svl_new_x f evars = *)
+(*   let pos =pos_of_formula f in *)
+(*   (\* partition f into dependent vs. independent evars *\) *)
+(*   let dep_ps, indep_ps = List.partition (fun p -> *)
+(*       intersect_svl (fv p) evars !=[] *)
+(*   ) (list_of_conjs f) in *)
+(*   let dep_quan_p = mkExists evars (conj_of_list dep_ps pos) None pos in *)
+(*   mkAnd (conj_of_list indep_ps pos) dep_quan_p pos *)
+
+(* let wrap_exists_svl_new f evars = *)
+(*   Debug.no_2 "wrap_exists_svl_new" !print_formula !print_svl !print_formula *)
+(*       wrap_exists_svl_new_x f evars *)
 (*
 let merge_branches_with_common l1 l2 cf evars =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in

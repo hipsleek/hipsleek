@@ -2553,6 +2553,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 let new_pf = if List.mem idx pf_svl then CP.wrap_exists_svl pf [idx] else pf in
                 Tpdispatcher.simplify new_pf
             ) fixcalc_invs_inv in
+             let _ = Debug.ninfo_hprint (add_str "fixcalc_invs_inv" (pr_list Cprinter.string_of_mix_formula)) fixcalc_invs_inv no_pos in
             (* WN : Need to check if supplied inv is a fixpoint! *)
             let infer_vs_user = List.combine view_list_num_with_inv num_invs_wrap_index in
             let num_invs = List.map (fun (vd,fixc) ->
@@ -2583,18 +2584,22 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (*   vd.Cast.view_user_inv *)
                 (* else *)
                 (*   vd.Cast.view_x_formula *)
-                let body = CF.project_body_num vd.Cast.view_un_struc_formula fixc vd.Cast.view_vars in
-                (* let root = CP.mk_spec_var "self" in *)
-                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
-                let body = CP.wrap_exists_svl body (*[root]*) ptrs_vars in
-                let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                let _ = Debug.tinfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
-                let is_precise_num = Tpdispatcher.imply_raw fixc body in
-                let _ = if is_precise_num then
-                  Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos
-                else
-                  Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant\n") no_pos in
-                is_precise_num
+                try
+                  let body = CF.project_body_num vd.Cast.view_un_struc_formula fixc vd.Cast.view_vars in
+                  (* let root = CP.mk_spec_var "self" in *)
+                  let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
+                  let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
+                  let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
+                  let is_precise_num = Tpdispatcher.imply_raw fixc body in
+                  let _ = if is_precise_num then
+                    Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos
+                  else
+                    Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant\n") no_pos in
+                  is_precise_num
+                with _ ->
+                    let _ = Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant (exc) \n") no_pos in
+                    false
             )  (List.combine view_list_num_with_inv num_invs) in
             (* let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in *)
             let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
