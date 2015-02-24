@@ -598,8 +598,8 @@ let compute_inv_mutrec mutrec_vnames views =
     try
       let (vname, fr_vars, rev_sst) = lookup_map vmaps view.Cast.view_name in
       let new_pf = lookup_inv invs pos fr_vars rev_sst in
-      let pf =  MCP.pure_of_mix view.Cast.view_user_inv in
-      let check_imply = TP.imply_raw new_pf pf in
+      (* let pf =  MCP.pure_of_mix view.Cast.view_user_inv in *)
+      let check_imply = true (* TP.imply_raw new_pf pf *) in
       if check_imply then
         let _ = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
         (* let _ = print_endline "" in *)

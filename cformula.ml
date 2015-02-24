@@ -17710,3 +17710,9 @@ let project_body_num body inv svl =
       let pf = project_formula_num f inv svl in
       CP.mkOr acc pf None no_pos
   ) (CP.mkFalse no_pos) body
+
+(* type: (formula * 'a) list -> CP.formula -> CP.spec_var list -> CP.formula *)
+
+let project_body_num body inv svl =
+  let pr = !print_pure_f in
+  Debug.no_3 "project_body_num" (pr_list (fun (a,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
