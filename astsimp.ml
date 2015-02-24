@@ -2584,8 +2584,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (* else *)
                 (*   vd.Cast.view_x_formula *)
                 let body = CF.project_body_num vd.Cast.view_un_struc_formula fixc vd.Cast.view_vars in
-                let root = CP.mk_spec_var "self" in
-                let body = CP.wrap_exists_svl body [root] in
+                (* let root = CP.mk_spec_var "self" in *)
+                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
+                let body = CP.wrap_exists_svl body (*[root]*) ptrs_vars in
                 let _ = Debug.binfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                 let _ = Debug.binfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
                 let is_precise_num = Tpdispatcher.imply_raw fixc body in
