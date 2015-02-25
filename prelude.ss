@@ -462,8 +462,8 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-pred_prim memLoc<heap:bool,size:int>
-  inv size>0;
+/* pred_prim memLoc<heap:bool,size:int> */
+/*   inv size>0; */
 
                                   ///////////////
                                   /*
@@ -516,8 +516,8 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-pred_prim WAIT<b:bag((Object,Object))>;
-pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
+/* pred_prim WAIT<b:bag((Object,Object))>; */
+/* pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>; */
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
 relation concrete(bag(Object) g).

@@ -1,0 +1,8 @@
+data node2 {
+     node2 next;
+     node2 prev;
+}.
+
+pred dll<p,n> == self=null & n=0
+  or self::node2<p,q> * q::dll<self,n-1>
+  .

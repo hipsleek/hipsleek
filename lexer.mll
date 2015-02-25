@@ -320,14 +320,14 @@ rule tokenizer file_name = parse
   | float_literal as f
         { try  FLOAT_LIT(float_of_string f, f)
           with Failure _ -> err (Literal_overflow "float") (Loc.of_lexbuf lexbuf) }
-  | frac_literal as f
-    { try
-        let div_index = String.index f '/' in
-        let num = int_of_string (String.sub f 0 div_index) in
-        let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in
-        FRAC_LIT (Frac.make num den, f)
-      with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf)
-    }
+  (* | frac_literal as f *)
+  (*   { try *)
+  (*       let div_index = String.index f '/' in *)
+  (*       let num = int_of_string (String.sub f 0 div_index) in *)
+  (*       let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in *)
+  (*       FRAC_LIT (Frac.make num den, f) *)
+  (*     with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf) *)
+  (*   } *)
   | (int_literal as i) "l"
         { try  INT_LITER(int_of_string i, i) (*can try different converter if needed*)
           with Failure _ -> err (Literal_overflow "int32") (Loc.of_lexbuf lexbuf) }
@@ -508,7 +508,8 @@ and comment file_name = parse
   | _  { comment file_name lexbuf }
 
 and line_comment file_name = parse
-  | newline { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
+  | newline 
+  | eof { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | _ { line_comment file_name lexbuf }
   
 

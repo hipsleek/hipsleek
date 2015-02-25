@@ -3,7 +3,7 @@ data GTyp {
   GTyp f0;
   GTyp f1;
 }.
-
+/*
 pred P<> ==
 self::one<> * self::Q<>.
 
@@ -13,7 +13,7 @@ or (exists x1: x1::succ1circuit<self> * x1::Q<>).
 
 pred succ1circuit<y1> ==
 self::notg<y1>.
-
+*/
 pred notg<y> ==
  self::zero<> * y::one<>
 or self::one<> * y::zero<>.
@@ -30,11 +30,12 @@ or y::zero<> * z::zero<>
 or self::one<> * y::one<> * z::one<>.
 
 pred one<> ==
-null != self.
+self::GTyp<_,_>.
 
 pred zero<> ==
 null = self.
 
+/*
 checkentail x0::P<>
          |- false.
-
+*/

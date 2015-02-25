@@ -1535,7 +1535,8 @@ p_vp_ann:
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
    | `PLEND -> VP_Lend
-   | `PFRAC;`OPAREN; `FRAC_LIT (f,s);`CPAREN-> VP_Frac f
+   | `PFRAC;`OPAREN; `INT_LITER(i1,_); `DIV;  `INT_LITER(i2,_)
+         (* `FRAC _LIT (f,s) *);`CPAREN-> VP_Frac (Frac.make i1 i2)
    (* | `AT; `FRAC_LIT (f, _) -> VP_Frac f *)
    (* | `PREF -> VP_Ref *)
   ]];
@@ -1860,9 +1861,10 @@ perm: [[
 
 (*LDK: for fractionl permission, we expect cexp*)
 perm_aux: [[ 
-    peek_div_op; (* peek_print; *)
+    peek_div_op;  
+    (* peek_print; *)
     t1 = integer_literal ; `DIV ; t2 = integer_literal ->
-     let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in
+     (* let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in *)
        Ipure.Div (Ipure.IConst(t1,get_pos_camlp4 _loc 2),
        Ipure.IConst(t2,get_pos_camlp4 _loc 4),get_pos_camlp4 _loc 3)
   | (* peek_print; *)

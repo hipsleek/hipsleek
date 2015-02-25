@@ -1,4 +1,4 @@
- 
+
 module type INC_TYPE =
 sig
   type t
@@ -504,6 +504,7 @@ class change_flag =
        begin
          cnt <- cnt+1
        end
+     method exceed n = cnt>n
      method is_change = cnt>0
      method no_change = (cnt==0)
    end;;
