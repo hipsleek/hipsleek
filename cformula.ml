@@ -15259,6 +15259,21 @@ let add_exists vs f =
     | Exists b -> Exists {b with formula_exists_qvars=(vs@b.formula_exists_qvars)}
     | _ -> report_error no_pos "expecting ExistBase formula here"
 
+let wrap_exists svl f =
+  let rec helper f =
+    match f with
+      | Base b ->
+            let h,p,vp,fl,t,a = split_components f in
+            let pos = pos_of_formula f in
+            mkExists svl h p vp t fl a pos
+      | Exists e -> add_exists svl f
+      | Or o ->
+            let f1 = o.formula_or_f1 in
+            let f2 = o.formula_or_f2 in
+            let pos = pos_of_formula f in
+            mkOr (helper f1) (helper f2) pos
+  in helper f
+
 let lax_impl_of_post f =
   let (evs,hvs,bf) = unwrap_exists f in
   let impl_vs = CP.intersect evs hvs in
@@ -17993,7 +18008,7 @@ and collect_important_vars_in_spec deep_flag (spec : struc_formula) : (CP.spec_v
   helper spec
 
 (** An Hoa : end collect_important_vars_in_spec **)
-
+(*Loc: should support mutrec views*)
 let project_h_formula_num hf inv svl =
   let rec helper hf =
     match hf with

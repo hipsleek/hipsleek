@@ -1860,9 +1860,10 @@ perm: [[
 
 (*LDK: for fractionl permission, we expect cexp*)
 perm_aux: [[ 
-    peek_div_op; (* peek_print; *)
+    peek_div_op;  
+    (* peek_print; *)
     t1 = integer_literal ; `DIV ; t2 = integer_literal ->
-     let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in
+     (* let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in *)
        Ipure.Div (Ipure.IConst(t1,get_pos_camlp4 _loc 2),
        Ipure.IConst(t2,get_pos_camlp4 _loc 4),get_pos_camlp4 _loc 3)
   | (* peek_print; *)

@@ -499,9 +499,59 @@ split-lhs-\/
 ([],self=null & n<1 & n!=0) <<= self::node<_,q>*q::ll<n-q> // empty
 
 ==============================================
+# ex21.slk
+
+Inferred inv
+compute_invs_fixcalc@1
+compute_invs_fixcalc inp1 :
+lseg:={[self,NODp_46,n_47,m_48,idx_49] -> [] -> []:  exists (self,NODp: 0=0 && self=NODp && n_47=0 && m_48=0 && idx_49=0) ||  exists (self,NODp,NODp_16,flted_6_14,flted_6_15,NODq,idx_45: (self>0 && lseg(NODq,NODp_16,flted_6_15,flted_6_14,idx_45)) && flted_6_15+1=n_47 && flted_6_14+1=m_48 && NODp_16=NODp && idx_49=idx_45+1)
+};
+bottomupgen([lseg], [3], SimHeur);
+compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+
+But sleek goes into a LOOP? why?
+
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
 ==============================================
+# ex21b.slk
+
+must detect false is not invariant
+need to do fixpoint checking for user-supplied inv
+
+!!! WARNING: User supplied is more precise: false
+!!! WARNING: TODO fixpt check
+
 ==============================================
+# ex21c.slk
+
+pred lseg<p,n,m> == self=p & n=0 & m=0
+  or self::node<q> * q::lseg<p,n-1,m-1>
+  inv n,m>=0
+ .
+
+supplied is less precise than fixcalc;
+therefore over-inv message is incorrect.
+
+!!! memo_pf_P: n>=0 & n=m & n=idx
+!!! Predicate lseg has over invariant
 ==============================================
+# ex21b.slk
+
+GOT
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], true)]
+
+EXPECTED
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], m=n & n>=1)]
 ==============================================
 ==============================================
 ==============================================
