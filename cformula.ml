@@ -17994,6 +17994,66 @@ and collect_important_vars_in_spec deep_flag (spec : struc_formula) : (CP.spec_v
 
 (** An Hoa : end collect_important_vars_in_spec **)
 
+let project_h_formula_num hf inv svl =
+  let rec helper hf =
+    match hf with
+      | Star sf ->
+            let pf1 = helper sf.h_formula_star_h1 in
+            let pf2 = helper sf.h_formula_star_h2 in
+            let pos = pos_of_h_formula hf in
+            CP.mkAnd pf1 pf2 pos
+      | ViewNode vn ->
+            let args = vn.h_formula_view_arguments in
+            let sst = List.combine svl args in
+            CP.subst sst inv
+      | _ -> CP.mkTrue no_pos
+  in
+  try
+    helper hf
+  with _ -> CP.mkTrue no_pos
+
+let project_h_formula_num hf inv svl =
+  let pr1 = !print_h_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 = !CP.print_formula in
+  Debug.no_3 "project_h_formula_num" pr1 pr3 pr2 pr3
+      project_h_formula_num hf inv svl
+
+let project_formula_num f inv svl =
+  let rec helper f =
+    match f with
+      | Base b ->
+            let hf = project_h_formula_num b.formula_base_heap inv svl in
+            let pf = MCP.pure_of_mix b.formula_base_pure in
+            let pos = pos_of_formula f in
+            CP.mkAnd hf pf pos
+      | Or o ->
+            let pf1 = helper o.formula_or_f1 in
+            let pf2 = helper o.formula_or_f2 in
+            let pos = pos_of_formula f in
+            CP.mkOr pf1 pf2 None pos
+      | Exists e ->
+            let hf = project_h_formula_num e.formula_exists_heap inv svl in
+            let pf = MCP.pure_of_mix e.formula_exists_pure in
+            let vs = e.formula_exists_qvars in
+            let pos = pos_of_formula f in
+            CP.mkExists vs (CP.mkAnd hf pf pos) None pos
+  in
+  helper f
+
+let project_body_num body inv svl =
+  List.fold_left (fun acc (f,_) ->
+      let pf = project_formula_num f inv svl in
+      CP.mkOr acc pf None no_pos
+  ) (CP.mkFalse no_pos) body
+
+(* type: (formula * 'a) list -> CP.formula -> CP.spec_var list -> CP.formula *)
+
+(*Loc: should support mutrec views*)
+let project_body_num body inv svl =
+  let pr = !print_pure_f in
+  Debug.no_3 "project_body_num" (pr_list (fun (a,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
+
 let subst_hvar_struc f subst =
   let f_f e = Some (subst_hvar e subst) in
   transform_struc_formula 
