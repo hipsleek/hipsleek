@@ -33,7 +33,7 @@ let string_of_perm_type t =
 let disable_para () =
   allow_norm:= true;
   perm:= NoPerm;
-  ann_vp:= false;
+  (* ann_vp:= false; *)
   allow_ls:= false;
   allow_locklevel:=false
 

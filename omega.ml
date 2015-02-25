@@ -167,7 +167,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
+  (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
   | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
@@ -487,11 +487,11 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
-    let pe0 = drop_varperm_formula pe in
-    let svl0 = Cpure.fv pe0 in
+    (* let pe0 = drop_varperm_formula pe in *)
+    let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
-    let pe = Cpure.subst ss pe0 in
+    let pe = Cpure.subst ss pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
       begin
@@ -587,11 +587,11 @@ let is_sat (pe : formula) sat_no : bool =
 let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
-      let pe0 = drop_varperm_formula pe in
-      let svl0 = Cpure.fv pe0 in
+      (* let pe0 = drop_varperm_formula pe in *)
+      let svl0 = Cpure.fv pe in
       let svl,fr_svl = mkSpecVarList 0 svl0 in
       let ss = List.combine svl fr_svl in
-      let pe = Cpure.subst ss pe0 in
+      let pe = Cpure.subst ss pe in
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
@@ -817,12 +817,12 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* let _ = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   begin
-    let pe0 = drop_varperm_formula pe in
-    let svl0 = Cpure.fv pe0 in
+    (* let pe0 = drop_varperm_formula pe in *)
+    let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
     let ss2 = List.combine fr_svl svl in
-    let pe1 =  Cpure.subst ss1  pe0 in
+    let pe1 =  Cpure.subst ss1 pe in
     (*let pe = drop_varperm_formula pe in*)
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
@@ -1019,8 +1019,8 @@ else
 let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
   begin
     omega_subst_lst := [];
-    let pe1 = drop_varperm_formula pe1 in
-    let pe2 = drop_varperm_formula pe2 in
+    (* let pe1 = drop_varperm_formula pe1 in *)
+    (* let pe2 = drop_varperm_formula pe2 in *)
     match ((omega_of_formula_old 21 pe1), (omega_of_formula_old 21 pe2)) with
       | (Some fstr1, Some fstr2) ->
             let vars_list1 = get_vars_formula pe1 in
@@ -1045,7 +1045,7 @@ let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
     omega_subst_lst := [];
-    let pe = drop_varperm_formula pe in
+    (* let pe = drop_varperm_formula pe in *)
     match (omega_of_formula_old 21 pe) with
       | None -> pe
       | Some fstr ->
@@ -1077,7 +1077,7 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
-    let pe = drop_varperm_formula pe in
+    (* let pe = drop_varperm_formula pe in *)
     match omega_of_formula_old 22 pe with
       | None -> pe
       | Some fstr ->
@@ -1102,7 +1102,7 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
     omega_subst_lst := [];
-    let pe1 = drop_varperm_formula pe1 in
+    (* let pe1 = drop_varperm_formula pe1 in *)
     let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
     let fstr1 = omega_of_formula_old 23 pe1 in
     let fstr2 = omega_of_formula_old 24 pe2 in

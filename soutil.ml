@@ -15,7 +15,7 @@ open Mcpure
 open Cvutil
 
 let exist_invisible_cells f vars=
-  let (hf,mf,_,_,_) = CF.split_components f in
+  let (hf,mf,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let dnodes = get_datas f in
   List.exists (fun dn ->

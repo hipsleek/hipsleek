@@ -351,7 +351,7 @@ struct
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
-      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
+      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
 
   let rec get_all_pairs ls = match ls with
     | [] -> []
@@ -1200,8 +1200,8 @@ struct
       (* let l1 = dd_stk # get_stk in *)
       (* let l2 = debug_stk # get_stk in *)
       (* let pr = Basic.pr_list string_of_int in *)
-      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in  *)
-       if (v1==v2) then Some v1 else None
+      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
+       if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
     match (is_same_dd_get()) 
@@ -1244,12 +1244,13 @@ struct
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
+    (* let _ = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
     ctr#inc;
     let v = ctr#get in
-    debug_stk#push v; if flag_detail then dd_stk#push v;
+    debug_stk#push v; 
+    if flag_detail then dd_stk#push v;
     let s = os^"@"^(string_of_int v) in
     let h = os^"@"^string_of() in
-    (* let _ = print_endline ("push_call:"^os^":"^s^":"^h) in  *)
     s,h
 
   (* push call without detailed tracing *)

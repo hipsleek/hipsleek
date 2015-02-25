@@ -86,11 +86,13 @@ module M = Lexer.Make(Token.Token)
 (*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
 (*       raise t) *)
 
+(* TODO : This is a reptition of proc_one_cmd *)
 let proc_gen_cmd cmd =
+  let _ = print_endline "proc_gen_cmd" in
   match cmd with
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def_4_iast pdef
-    | BarrierCheck bdef -> (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) 
+    | BarrierCheck bdef -> (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
                              ; process_barrier_def bdef)
     | FuncDef fdef -> process_func_def fdef
     | RelDef rdef -> process_rel_def rdef
@@ -124,9 +126,12 @@ let proc_gen_cmd cmd =
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | CheckNorm f -> process_check_norm f
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype; ())
+    | InferCmd (itype, ivars, iante, iconseq, etype) ->
+          let _ = print_endline "InferCmd" in
+          let _ = Debug.binfo_hprint (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in
+          (process_infer itype ivars iante iconseq etype; ())
     | CaptureResidue lvar -> process_capture_residue lvar
-    | LemmaDef ldef -> process_list_lemma ldef 
+    | LemmaDef ldef -> process_list_lemma ldef
     | PrintCmd pcmd -> process_print_command pcmd
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -226,7 +231,21 @@ let parse_file (parse) (source_file : string) =
       | EqCheck (lv, if1, if2) ->
             (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
             process_eq_check lv if1 if2
-      | InferCmd (itype, ivars, iante, iconseq, etype) -> (process_infer itype ivars iante iconseq etype;())
+      | InferCmd (itype, ivars, iante, iconseq, etype) -> 
+            (* None  -> look for presence of @leak
+               Some true
+               Some false
+            *)
+            (* let _ = print_endline "InferCmd2" in *)
+            let change_etype x f = 
+              if f then match x with 
+                | None -> Some f 
+                | _ -> x
+              else x in
+            let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
+            let _ = Debug.tinfo_hprint (add_str "etype" (pr_option string_of_bool)) etype no_pos in
+            let _ = Debug.tinfo_hprint (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+            (process_infer itype ivars iante iconseq etype;())
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd ->
             let _ = Debug.ninfo_pprint "at print" no_pos in
@@ -369,7 +388,7 @@ let main () =
         begin
             print_string ("\n")
         end
-    | _ -> 
+    | _ ->
           begin
             dummy_exception();
             let _ = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in

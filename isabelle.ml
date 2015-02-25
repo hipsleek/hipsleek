@@ -51,6 +51,7 @@ let rec isabelle_of_typ = function
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "NUM, RelT, HpT and AnnT not supported for Isabelle"}
   | TVar _ 
+  (* | SLTyp *)
   | Named _ 
   | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
@@ -228,7 +229,7 @@ and isabelle_of_b_formula b =
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
-  | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
+  (* | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle") *)
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   

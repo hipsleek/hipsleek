@@ -380,7 +380,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
   let helper args f=
     match args with
       | sv::_ ->
-            let ( _,mix_f,_,_,_) = CF.split_components f in
+            let ( _,mix_f,_,_,_,_) = CF.split_components f in
             let reqs2 = (MCP.ptr_equations_without_null mix_f) in
             let cl_svl = CP.remove_dups_svl (CF.find_close [sv] (reqs2)) in
             (* let _ = Debug.info_hprint (add_str "   cl_svl: " !CP.print_svl) cl_svl no_pos in *)
@@ -2680,7 +2680,7 @@ let shape_widening_x prog hp args unk_hps pdefs pos=
         | [f21;f22] -> (*after reaarange + subst*)
               let hpargs1 = CF.get_HRels_f f21 in
               let hpargs2 = CF.get_HRels_f f22 in
-              let ( _,mix_lf2,_,_,_) = CF.split_components f22 in
+              let ( _,mix_lf2,_,_,_,_) = CF.split_components f22 in
               let sst2 = MCP.ptr_equations_without_null mix_lf2 in
               let hpargs22 = List.map (fun (hp, args) ->
                   (hp, List.fold_left Sautil.close_def args sst2)
@@ -2958,7 +2958,7 @@ let elim_diverg_paras_x prog pdefs=
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let f1, _ = CF.drop_hrel_f f [hp] in
     let svl = CF.get_ptrs_w_args_f f1 in
-    let ( _,mf,_,_,_) = CF.split_components f in
+    let ( _,mf,_,_,_,_) = CF.split_components f in
     let eqNulls = MCP.get_null_ptrs mf in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let may_reach_ptrs = CP.remove_dups_svl ((svl@eqNulls@args)@(CF.find_close (svl@eqNulls@args) eqs)) in
@@ -2971,7 +2971,7 @@ let elim_diverg_paras_x prog pdefs=
         (* CF.subst  *)
   in
   let elim_diverg_paras_pdef diver_pos (hp,args,f)=
-    let ( _,mf,_,_,_) = CF.split_components f in
+    let ( _,mf,_,_,_,_) = CF.split_components f in
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let diverg_svl0 = List.fold_left (fun r (_,args) ->
@@ -3006,7 +3006,7 @@ let elim_diverg_paras prog pdefs=
 let compute_lfp_x prog dang_hps defs pdefs=
   (********INTERNAL*******)
   let mk_exp_root_x hp r f =
-    let _, mf, _, _, _ = CF.split_components f in
+    let _, mf, _, _, _, _ = CF.split_components f in
     let ss = MCP.ptr_equations_without_null mf in
     (CF.trans_heap (mk_expl_root_fnc hp ss r) f)
   in
@@ -3060,7 +3060,9 @@ let compute_lfp_x prog dang_hps defs pdefs=
               let hps = CF.get_hp_rel_name_formula f in
               acc@[(f,None)], acc_diver||(CP.mem_svl hp0 hps)
           ) ([],false) fixn in
-          let def = if is_diver then [((CF.mkBase CF.HTrue (MCP.mkMTrue no_pos) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos ), None)] else def0 in
+          let def = if is_diver then 
+            [((CF.mkBase CF.HTrue (MCP.mkMTrue no_pos) CvpermUtils.empty_vperm_sets 
+               CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos ), None)] else def0 in
           let lhs = CF.HRel (hp0, List.map (fun x -> CP.mkVar x pos) args0, pos) in
           (hp0, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp0, r, non_r_args)) lhs def None)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
@@ -3274,7 +3276,7 @@ let pred_split_cands_one_branch_x prog unk_hps hprel f=
   in
   (*******************END INTERNAL************************)
   let hns, hvs, hrs = CF.get_hp_rel_formula f in
-  let ( _,mf,_,_,_) = CF.split_components f in
+  let ( _,mf,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
   let cands = hprel::hrs in
@@ -3854,7 +3856,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
     (*************************END INTERNAL*********************)
   (****************************************************************)
   let is_valid, nhp_defs, n_split = prove_sem_ext (List.map fst comps) (List.map fst pure_comps)
-    [] (CF.mkBase rhs_hf0 (MCP.mix_of_pure rhs_rel_pure0) Cformula.TypeTrue (Cformula.mkTrueFlow ()) []  no_pos)
+    [] (CF.mkBase rhs_hf0 (MCP.mix_of_pure rhs_rel_pure0) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) []  no_pos)
     cur_hpdef [] 0 in
   (is_valid, nhp_defs, n_split)
 

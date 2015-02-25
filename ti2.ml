@@ -58,14 +58,14 @@ let simplify_and_slit_disj f =
 
 (* To be improved *)
 let fp_imply f p =
-  let _, pf, _, _, _ = CF.split_components f in
+  let _, pf, _, _, _, _ = CF.split_components f in
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
   
 let unsat_base_nth = ref (fun _ _ _ _ -> true) (* Solver.unsat_base_nth *)
   
 let f_is_sat prog f =
-  (* let _, pf, _, _, _ = CF.split_components f in *)
+  (* let _, pf, _, _, _, _ = CF.split_components f in *)
   (* Tpdispatcher.is_sat_raw pf                    *)
   not (!unsat_base_nth 1 prog (ref 0) f)
   
@@ -1275,6 +1275,7 @@ let is_nt_partial_yes = function
 let is_nt_nondet_may = function
   | NT_Nondet_May _ -> true
   | _ -> false
+
 let cond_of_nt_res = function
   | NT_No ic -> ic
   | _ -> []
@@ -1468,6 +1469,7 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
     (pr_list pr) pr print_ret_trel print_nt_res
     (fun _ _ _ -> proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel)
     lhs_uids rhs_uid trrel
+
 let is_nondet_rec rec_trrel base_trrels = 
   let base_ctx = List.map (fun btr ->
     simplify 10 btr.ret_ctx btr.termr_rhs_params) base_trrels in

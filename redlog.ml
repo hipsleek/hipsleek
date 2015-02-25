@@ -345,7 +345,7 @@ let rl_of_b_formula b =
       let a3 = rl_of_exp e3 in
       "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
-  | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
+  (* | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*) *)
   | _ -> failwith "redlog: bags is not supported"
 
 let rec rl_of_formula_x pr_w pr_s f0 =

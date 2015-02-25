@@ -116,7 +116,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
     ) 
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  (* | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula" *)
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -240,7 +240,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | Neq (e1, e2, _) -> "(" ^ (spass_tptp_of_exp e1) ^ " != " ^ (spass_tptp_of_exp e2) ^ ")"
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  (* | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula" *)
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -323,7 +323,7 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | Neq (ex1, ex2, _)    -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
   | EqMax _              -> false
   | EqMin _              -> false
-  | VarPerm _            -> false
+  (* | VarPerm _            -> false *)
   (* bag formulars *)
   | BagIn _
   | BagNotIn _

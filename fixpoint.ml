@@ -43,8 +43,8 @@ let rec eqHeap h1 h2 = match (h1,h2) with
 
 let rev_imply_formula f1 f2 = match (f1,f2) with
   | (CF.Base _, CF.Base _) | (CF.Exists _, CF.Exists _) -> 
-    let h1,p1,fl1,b1,t1 = CF.split_components f1 in
-    let h2,p2,fl2,b2,t2 = CF.split_components f2 in
+    let h1,p1,vp1,fl1,b1,t1 = CF.split_components f1 in
+    let h2,p2,vp2,fl2,b2,t2 = CF.split_components f2 in
 (*    let p1 = MCP.pure_of_mix p1 in*)
 (*    let p2 = MCP.pure_of_mix p2 in*)
     let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
@@ -110,7 +110,7 @@ and elim_heap h p pre_vars heap_vars aset ref_vars =
       (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars aset ref_vars) h p pre_vars heap_vars
 
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
-  let h, p, _, _, _ = CF.split_components post_fml in
+  let h, p, _, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in
   let h = if pre_vars = [] || not(inf_post) then h else (
       enulalias := true;
@@ -176,7 +176,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let exists_h_vars = if pre_vars = [] then [] else 
       List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
     let fml = CF.mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
-        h (MCP.mix_of_pure p) b.CF.formula_base_type b.CF.formula_base_flow b.CF.formula_base_and
+        h (MCP.mix_of_pure p) b.CF.formula_base_vperm b.CF.formula_base_type b.CF.formula_base_flow b.CF.formula_base_and
         b.CF.formula_base_pos
     in (fml,pre)
 
@@ -197,7 +197,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
 (*    if f1 = f2 then f1*)
 (*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
-    let h, p, fl, t, a = CF.split_components pre_fml in
+    let h, p, vp, fl, t, a = CF.split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
@@ -214,7 +214,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
       let pre = Wrapper.wrap_exception pre CF.simplify_aux pre in
       pre
     in
-    CF.mkBase h (MCP.mix_of_pure p) t fl a no_pos
+    CF.mkBase h (MCP.mix_of_pure p) vp t fl a no_pos
 
 let simplify_pre pre_fml lst_assume =
   let pr = !CF.print_formula in
