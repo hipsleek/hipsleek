@@ -2646,7 +2646,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                       let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl pf [idx] else pf in
                       (svl,new_pf)
                   ) new_inv in
-                  let _ = Debug.info_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
                   new_inv
               ) view_list_baga0 in
               let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
