@@ -1535,7 +1535,8 @@ p_vp_ann:
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
    | `PLEND -> VP_Lend
-   | `PFRAC;`OPAREN; `FRAC_LIT (f,s);`CPAREN-> VP_Frac f
+   | `PFRAC;`OPAREN; `INT_LITER(i1,_); `DIV;  `INT_LITER(i2,_)
+         (* `FRAC _LIT (f,s) *);`CPAREN-> VP_Frac (Frac.make i1 i2)
    (* | `AT; `FRAC_LIT (f, _) -> VP_Frac f *)
    (* | `PREF -> VP_Ref *)
   ]];
