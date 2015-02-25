@@ -304,6 +304,32 @@ let prepost_ctr = new Gen.counter 0
 (*   Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr *)
 (*       (normalize_list_failesc_context_w_lemma prog) lctx *)
 
+(* this checks for read permission *)
+(* 
+   TODO:WN: is @Lend safe for bind, can v be updated and
+   and would it cause race problem?
+*)
+let check_var_read_perm_type msg prog ctx pos v t perm_ty=
+  if !ann_vp then
+    let sv = (CP.SpecVar (t, v, Unprimed)) in
+    (* let sv = CP.sp_rm_prime sv in *)
+    (* let v = CP.ident_of_spec_var sv in *)
+    let lend_f = VP.formula_of_vperm_anns [(perm_ty, [sv])] in
+    let lend_f = CF.set_flow_in_formula_override
+      { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
+    in
+    let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
+    if not (CF.isSuccessListFailescCtx_new vperm_res) then
+      let msg = (v ^ " does not have @lend/@full permission to read "^msg) in
+      (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
+      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
+      Err.report_error { Err.error_loc = pos; Err.error_text = msg })
+
+let check_var_read_perm ?(msg="") prog ctx pos v t =
+  check_var_read_perm_type msg prog ctx pos v t VP_Lend
+
+let check_var_read_perm_frac f ?(msg="") prog ctx pos v t =
+  check_var_read_perm_type msg prog ctx pos v t (VP_Frac f)
 
 (* WN : need to trace check_specs_infer with Debug.no_; can we add and later check infer[@classic] etc with wrap_ *)
 
@@ -1630,6 +1656,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   DD.tinfo_hprint (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
                   DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
                   DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;
+                  DD.tinfo_pprint ("Check for @L read permission on bind node "^v) pos;
+                  Debug.winfo_pprint "Safe to use @L for Bind? Use frac?" pos;
+                  check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t;
                   (* let b,res = (if !Globals.ann_vp then                          *)
                   (*   (*check for access permissions*)                            *)
                   (*   let var = (CP.SpecVar (v_t, v, Primed)) in                  *)
@@ -2493,21 +2522,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (*********************************************)
             (* VPerm: Check @full/@lend permission for v *)
             (*********************************************)
-            let b = 
-              if !ann_vp then
-                let sv = (CP.SpecVar (t, v, Unprimed)) in
-                let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in
-                let lend_f = CF.set_flow_in_formula_override
-                  { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
-                in
-                let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
-                if not (CF.isSuccessListFailescCtx_new vperm_res) then
-                  let msg = (v ^ " does not have @lend/@full permission to read.") in
-                  (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
-                   Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos;
-                   Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-                else true
-              else true
+            let b =
+              (* let sv = (CP.SpecVar (t, v, Unprimed)) in *)
+              let _ = check_var_read_perm ~msg:"(var access)" prog ctx pos v t in
+              true
+              (* if !ann_vp then *)
+              (*   let sv = (CP.SpecVar (t, v, Unprimed)) in *)
+              (*   let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in *)
+              (*   let lend_f = CF.set_flow_in_formula_override *)
+              (*     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f  *)
+              (*   in *)
+              (*   let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in *)
+              (*   if not (CF.isSuccessListFailescCtx_new vperm_res) then *)
+              (*     let msg = (v ^ " does not have @lend/@full permission to read.") in *)
+              (*     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos; *)
+              (*      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos; *)
+              (*      Err.report_error { Err.error_loc = pos; Err.error_text = msg }) *)
+              (*   else true *)
+              (* else true *)
             in
             let res = 
               (* if (not b) then res (*do not have permission for variable v*) *)
