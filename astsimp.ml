@@ -2646,9 +2646,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                       let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl pf [idx] else pf in
                       (svl,new_pf)
                   ) new_inv in
-                  let _ = Debug.ninfo_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
+                  let _ = Debug.info_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
                   new_inv
               ) view_list_baga0 in
+              let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
               if List.length old_invs = 0 then
                 let _ = List.iter (fun (vd,new_inv) ->
                     Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
@@ -2689,7 +2690,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             (* ) (List.combine view_list_baga0 num_invs) in *)
             (* WN : Looping at unfold with imprecise inv *)
             let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
-            let _ = Debug.tinfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
+            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
             ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
