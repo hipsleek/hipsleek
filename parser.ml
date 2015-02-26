@@ -719,6 +719,7 @@ let peek_star =
              | [STAR,_;PFULL,_;_] -> raise Stream.Failure
              | [STAR,_;PLEND,_;_] -> raise Stream.Failure
              | [STAR,_;PVALUE,_;_] -> raise Stream.Failure
+             | [STAR,_;PFRAC,_;_] -> raise Stream.Failure
              | [STAR,_;PZERO,_;_] -> raise Stream.Failure
              | _ -> ())                   
              
