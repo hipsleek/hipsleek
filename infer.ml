@@ -1263,10 +1263,11 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                           if not (CP.subset (CP.fv inferred_pure) not_rel_vars) then (None,None,[])
                           else if rel_ass = [] then (None,Some inferred_pure,[])
                           else
-                            let pf1 = (CP.mkAnd lhs_xpure (CP.conj_of_list (ps@rs) pos) pos) in
-                            let pf2a = TP.simplify_with_pairwise 2 pf1 in
+                            let pf0a = (CP.conj_of_list (ps@rs) pos) in
                             let lhs_neq_nulls = (CP.get_neq_null_svl lhs_xpure) in
-                            let pf2 = remove_redudant_neq lhs_neq_nulls pf2a in
+                            let pf0 = remove_redudant_neq lhs_neq_nulls pf0a in
+                            let pf1 = (CP.mkAnd lhs_xpure pf0 pos) in
+                            let pf2 = TP.simplify_with_pairwise 2 pf1 in
                             (* let pf = MCP.mix_of_pure pf2 in *)
                             let _ = DD.ninfo_hprint (add_str "pf2" !CP.print_formula) pf2 pos in
                             let _ = DD.ninfo_hprint (add_str "lhs_wo_heap" !CP.print_formula) ( lhs_wo_heap) pos in
@@ -1283,7 +1284,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                             } 
                             in
                             let pr = Cprinter.string_of_pure_formula in
-                            let _ = DD.info_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
+                            let _ = DD.tinfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
                             let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
                             let _ = DD.devel_hprint (add_str "pure(before)" pr) pf1 pos in
                             let _ = DD.devel_hprint (add_str "pure(simplified)" pr) pf2 pos in
@@ -1292,7 +1293,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                             let rel_ass,heap_ass,new_estate =
                               if unk_heaps!=[] then
                                 let _ = DD.ninfo_pprint "WN : to convert unk_heaps to corresponding pure relation using __pure_of_" no_pos in
-                                let _ = DD.info_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
+                                let _ = DD.tinfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps no_pos in
                                 (* PURE_RELATION_OF_HEAP_PRED *)
                                 (* WN infer_pure_heap_pred : to implement below *)
                                 (* for rel_ass of heap_pred, convert to hprel form *)
