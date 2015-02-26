@@ -35,16 +35,22 @@ Thrd creator(ref int x,ref int y)
 void joiner(Thrd id, ref int x)
   //requires id::Thrd{+ @full[x] & x'=x+1}<> * @value[id]
   //ensures  id::dead<> * @full[x] & x'=x+1 ; //' @full[x] &
-  requires id::Thrd{+ %PP}<> * @value[id]
-  ensures  id::dead<> * %PP; //' @full[x] &
+  //requires id::Thrd{+ @full[x] }<> * @value[id]
+  //ensures  id::dead<> * @full[x] & x'=0; //' @full[x] &
+  requires id::Thrd{+  @full[x] * %PP(x')}<> * @value[id] 
+  // x' in pre? %%PP(x')
+  // also %%PP(x')
+  ensures  (exists x0: id::dead<> * @full[x] * %PP(x0) & x'=x0+1); //' @full[x] &
 {
   join2(id);
+  x=x+1;
+  dprint;
 }
 
 
 int main()
 requires true
-  ensures res=2;
+  ensures res=1;
 {
   Thrd id;
   int xxx,y;
@@ -53,11 +59,14 @@ requires true
   //dprint;
   id = creator(xxx,y);
   // id_38'::Thrd{ + emp*U@full[xxx_39]&xxx_39'=1+xxx_39[]}<>*U@full[id_38,y_40]@zero[xxx_39]&y_40'=1+0 & xxx_39'=0
-  //dprint;
+  dprint;
+  // (exists xxx_1415: (htrue) * id_35'::Thrd{U@full[xxx_36]&xxx_36'=1+xxx_1415
+  // &{FLOW,(4,5)=__norm#E}[]}<>*U@full[id_35,y_37]@zero[xxx_36]&y_37'=1+0 & xxx_1415=0
   joiner(id,xxx);
-  // id_38'::Thrd{ + emp*N@zero[xxx_39]}<>*U@full[id_38,xxx_39,y_40]&xxx_39'=1+0 & 0=1+xxx_39 & y_40'=1+0
-  // why is there a 0=1+xxx_39 ???
-  //dprint; 
+  // (htrue) * id_35'::Thrd{ + emp*N@zero[xxx_36]&{FLOW,(4,5)=__norm#E}[]}<> * id_35'::dead{}<>*
+  // U@full[id_35,xxx_36,y_37]&xxx_36'=0 & xxx_1422=0 & y_37'=1+0&{FLOW,(4,5)=__norm#E}[]
+  // where is xxx_36'=1+xxx_141 ??
+  dprint; 
   return xxx+y;
 }
 
