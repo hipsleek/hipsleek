@@ -1442,7 +1442,7 @@ print residue.
 Residue:
  <1>htrue*@full[x3]&{FLOW,(4,5)=__norm#E}[]
 ===================================================================
-# ex41b
+# ex41b: FIXED
 
 infer [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
 print residue.
