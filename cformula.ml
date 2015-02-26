@@ -3277,7 +3277,7 @@ and vn_subst sst vn=
     | _ -> report_error no_pos "CF.vn_subst"
 
 and rf_subst sst (f: rflow_formula) = 
-  { f with rflow_base = (* subst sst *) f.rflow_base; }
+  { f with rflow_base = subst sst f.rflow_base; }
 
 and h_subst sst (f : h_formula) = 
 	match f with
