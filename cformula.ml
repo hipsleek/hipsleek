@@ -220,7 +220,7 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
-  | HVar of CP.spec_var
+  | HVar of CP.spec_var * (CP.spec_var list)
 
 
 and h_formula_star = {  h_formula_star_h1 : h_formula;
@@ -2054,11 +2054,12 @@ and get_node_label (h : h_formula) = match h with
   | DataNode ({h_formula_data_label = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
 
+(* TODO:WN:HVar *)
 and get_node_var_x (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_node = c})
   | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
-  | HVar v -> v
+  | HVar (v,hvar_vs) -> v
   | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
@@ -2945,7 +2946,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
         let vid = r in
         vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
   | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
-  | HVar v -> [v]
+  | HVar (v,ls) -> v::ls
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
@@ -3403,7 +3404,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_thread_pos = pos})
   | HRel (r, args, pos) ->
       HRel (CP.subst_var_par sst r, List.map (CP.e_apply_subs sst) args, pos)
-  | HVar v -> HVar (CP.subst_var_par sst v)
+  | HVar (v,ls) -> HVar ((CP.subst_var_par sst v),(List.map (CP.subst_var_par sst) ls))
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -3673,7 +3674,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         h_formula_thread_delayed = CP.apply_one s dl;
         h_formula_thread_resource = apply_one s rsr;})
   | HRel (r, args, pos) -> HRel (r, List.map (CP.e_apply_one s ) args, pos)
-  | HVar v -> HVar (CP.subst_var s v)
+  | HVar (v,ls) -> HVar (CP.subst_var s v, List.map (CP.subst_var s) ls)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -12773,16 +12774,17 @@ let keep_hrel e=
   Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
       (fun _ -> keep_hrel_x e) e
 
+(* TODO:WN:HVar *)
 let extract_single_hvar (hf: h_formula) : CP.spec_var option =
   let f hf = match hf with
-    | HVar v -> Some v
+    | HVar (v,_) -> Some v
     | _ -> None
   in 
   f hf
 
 let extract_hvar (hf: h_formula) : CP.spec_var list =
   let f hf = match hf with
-    | HVar v -> Some [v]
+    | HVar (v,_) -> Some [v]
     | _ -> None
   in 
   fold_h_formula hf f List.concat
@@ -12817,9 +12819,10 @@ let extract_hvar_f (f0:formula) : CP.spec_var list =
     (fun _ ->  extract_hvar_f_x f0) f0
 
 (*get hvars whose spec_var belong to vars*)
+(* TODO:WN:HVar *)
 let get_hvar_x e vars =
   let f hf = match hf with
-    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some [hf] else None
+    | HVar (v,_) -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some [hf] else None
     | _ -> None
   in 
   fold_h_formula e f List.concat
@@ -12833,7 +12836,7 @@ let get_hvar e vars =
 (*drop hvars whose spec_var belong to vars*)
 let drop_hvar_x hf vars =
   let func hf = match hf with
-    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some HEmp else None
+    | HVar (v,_) -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some HEmp else None
     | _ -> None
   in
   map_h_formula hf func

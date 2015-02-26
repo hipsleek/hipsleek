@@ -1413,7 +1413,7 @@ let rec pr_h_formula h =
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string "emp"
-    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
+    | HVar (v,ls) -> fmt_string ("HVar "^(string_of_spec_var v)^(string_of_spec_var_list ls))
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
@@ -1605,7 +1605,7 @@ and prtt_pr_h_formula h =
 	    end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
-    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
+    | HVar (v,vs) -> fmt_string ("HVar "^(string_of_spec_var v)^(string_of_spec_var_list vs))
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -1776,7 +1776,7 @@ and prtt_pr_h_formula_inst prog h =
 		  end
     | HTrue -> fmt_string "htrue"
     | HFalse -> fmt_string "hfalse"
-    | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
+    | HVar (v,vs) -> fmt_string ("HVar "^(string_of_spec_var v)^(string_of_spec_var_list vs))
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
     | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -2078,7 +2078,8 @@ and pr_h_formula_for_spec h =
   | HRel a ->  (pr_hrel_formula (HRel a))
   | HTrue -> fmt_bool true
   | HFalse -> fmt_bool false
-  | HVar v -> fmt_string ("HVar "^(string_of_spec_var v))
+  (* | HVar v -> fmt_string ("HVar "^(string_of_spec_var v)) *)
+  | HVar (v,vs) -> fmt_string ("HVar "^(string_of_spec_var v)^(string_of_spec_var_list vs))
   | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
@@ -5084,7 +5085,7 @@ let rec html_of_h_formula h = match h with
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
-  | HVar v-> "<b>HVar "^(string_of_spec_var v)^"</b>"
+  | HVar (v,ls)-> "<b>HVar "^(string_of_spec_var v)^(string_of_spec_var_list ls)^"</b>"
   | HRel (r, args, l) -> (* "<b>HRel</b>" ^ *) (string_of_spec_var r) ^ "(" ^ (match args with
       | [] -> ""
       | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"

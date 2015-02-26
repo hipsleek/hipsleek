@@ -1500,4 +1500,5 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
-    | IF.HVar v -> (v,{sv_info_kind = FORM;id=0})::tlist
+    (* TODO:WN:HVar *)
+    | IF.HVar (v,hvar_vs) -> (v,{sv_info_kind = FORM;id=0})::tlist

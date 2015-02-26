@@ -137,7 +137,7 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
-  | HVar of ident
+  | HVar of ident * (ident list)
 
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
@@ -772,7 +772,8 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
-  | HVar v -> [(v,Unprimed)] (* TODO:HO -prime? *)
+  (* TODO:WN:HVar -*)
+  | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
   | HTrue -> []
   | HFalse -> [] 
   | HEmp -> [] 
@@ -1397,7 +1398,11 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HTrue -> f
   | HFalse -> f
   | HEmp  -> f
-  | HVar v -> let (v1, _) =  (subst_var s (v, Unprimed)) in HVar v1
+  (* URGENT:TODO:WN:HVar *)
+  | HVar (v,ls) -> 
+        let (v1, _) =  (subst_var s (v, Unprimed)) in
+        let lsx =  List.map (fun v -> (subst_var s (v, Unprimed))) ls in
+        HVar (v1,ls)
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
 and rename_bound_vars_x (f : formula) = 
@@ -1705,7 +1710,8 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
     | HTrue -> f
     | HFalse -> f
     | HEmp -> f
-    | HVar v -> HVar (subst_data_name s v) (* TODO:HO *)
+    (* URGENT:TODO:WN:HVar *)
+    | HVar (v,hvar_vs) -> HVar (subst_data_name s v,hvar_vs) (* TODO:HO *)
     | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
   in
   helper f0
@@ -3009,7 +3015,7 @@ let h_formula_collect_hvar hf0 =
           h_formula_conjconj_h2 = hf2;}
     |  Phase { h_formula_phase_rd = hf1;
           h_formula_phase_rw = hf2;} -> (helper hf1)@(helper hf2)
-    | HVar v -> [v]
+    | HVar (v,_) -> [v]
     | _ -> []
   in
   helper hf0
