@@ -1,0 +1,24 @@
+Instead of:
+
+  %P should we use H(..)
+
+For example:
+
+  requires x::Thrd{+ H()}<>
+  ensures H();
+
+====================================================================
+# ex37a.ss (join2)
+
+void join2(Thrd t)
+  requires t::Thrd{+ H()}<>
+  ensures H() * t::dead<>;
+
+!!!WARNING : uninterpreted free variables [H] in specification.Stop Omega... 33 invocations 
+
+How do we distinguish var from H?
+
+How about use H for type-inferencing, and convert
+to HVar subsequently, when we manage to recognize?
+
+====================================================================
