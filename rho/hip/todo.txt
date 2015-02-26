@@ -1,0 +1,284 @@
+# ex2-latch (OK now, see ex1-latch ..)
+
+Proving precondition in method countDown$CDL Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "latch.ss",Line:52,Col:2
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure main$
+Stop Omega... 52 invocations 
+
+// why below fail?
+
+id: 3; caller: []; line: 52; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists x_1563,v_int_50_1423': x_41'::cell<v_int_48_1561> * 
+c_42'::LatchIn{ - (exists flted_26_67: x_1563::cell<flted_26_67>&flted_26_67=10&
+{FLOW,(4,5)=__norm#E})[]}<> * 
+c_42'::LatchOut{ + (exists flted_26_68: x_1563::cell<flted_26_68>&flted_26_68=10&
+{FLOW,(4,5)=__norm#E})[]}<> * 
+c_42'::CNT{}<v_int_50_1423'>&v_int_48_1561=10 & v_int_50_1423'=1&
+{FLOW,(4,5)=__norm#E})[]
+ |-  c_42'::LatchIn{ - HVar P&{FLOW,(4,5)=__norm#E}[]}<> * (HVar P) * 
+c_42'::CNT{}<n>&0<n&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         
+          fe_kind: MAY
+          fe_name: separation entailment
+================================================================
+# ex2a-latch.slk (DONE)
+
+why non-base formula disallowed?
+
+Message: Non-Base formula is disalowed in resource flow
+File "ex2a-latch.slk", line 12, characters 78-79
+ error: Failure("Non-Base formula is disalowed in resource flow")
+ at:error at: 
+================================================================
+# ex1-latch-simple.ss
+
+[
+ Label: []
+ State:
+(exists flted_39_1602: c_42'::CNT{}<flted_39_1602> * x_41'::cell<Anon_11>
+&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
+& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
+& n=v_int_48_1587 & Anon_11=v_int_46_1576 
+& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
+& 0<=(n+1)&{FLOW,(4,5
+)=__norm#E})[]
+       es_ho_vars_map: [Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]; 
+                        Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+
+# print (P,x'_41...)
+# what is below? why is it a repeat of above?
+ 
+EXISTS(flted_39_1602: c_42'::CNT<flted_39_1602> * x_41'::cell<Anon_11>
+&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
+& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
+& n=v_int_48_1587 & Anon_11=v_int_46_1576 
+& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
+& 0<=(n+1))[]
+================================================================
+# ex4a.ss
+
+      x = new cell(1); 
+      y = new cell(2); 
+      dprint;
+      countDown(c);
+      dprint;
+      int k = x.val;
+
+How come no printing?
+How come can still access x.val?
+
+What is:
+       EXISTS(v_int_47_1431': c_42'::LatchIn<> * c_42'::LatchOut<> * c_42'::CNT<v_int_47_1431'>&v_int_47_1431'=1)[]
+
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_47_1431': c_42'::LatchIn{ - (exists flted_47_1581,flted_47_1582: x_40'::cell<flted_47_1582> * 
+y_41'::cell<flted_47_1581>&flted_47_1582=1 & flted_47_1581=2&
+{FLOW,(4,5)=__norm#E})[]}<> * c_42'::LatchOut{ + (exists flted_47_1583,flted_47_1584: x_40'::cell<flted_47_1584> * 
+y_41'::cell<flted_47_1583>&flted_47_1584=1 & flted_47_1583=2&
+{FLOW,(4,5)=__norm#E})[]}<> * c_42'::CNT{}<v_int_47_1431'>&v_int_47_1431'=1&{FLOW,(4,5)=__norm#E})[]
+       EXISTS(v_int_47_1431': c_42'::LatchIn<> * c_42'::LatchOut<> * c_42'::CNT<v_int_47_1431'>&v_int_47_1431'=1)[]
+
+ ]
+================================================================
+# ex13.slk
+
+//(2)
+infer [@par] @full[x]  |- @lend[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(4)
+infer [@par] @lend[x]  |- @lend[x].
+// WRONG: expect @lend[x]
+print residue.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+//(5)
+infer [@par] @lend[x]  |- @full[x].
+// WRONG : expect ERROR
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
+
+//(6)
+infer [@par] @zero[x]  |- @lend[x].
+// WRONG :expect ERROR
+print residue.
+// <1>emp&@zero[[x]]&{FLOW,(4,5)=__norm#E}[]
+================================================================
+// # ex13a.slk (2)
+checkentail @full[x] * @full[x]  |- true.
+// expect @full[x]
+print residue.
+//<1>htrue*@full[x]&{FLOW,(4,5)=__norm#E}[]
+// should be false
+================================================================
+# ex12c1.ss
+
+  par 
+    {x,y@L,v@L}
+  {  
+   // exists r1',r2'
+  case {x,v@L} true ->
+     x = v+1;
+    //dprint;
+    || // {y@L,v@L}
+  else // {y@L,v@L} 
+      ->
+      y = y+22+v; // cannot update y
+     //dprint;
+  }
+Why parser error?
+
+File "ex12c1-varperm-simple.ss", line 9, characters 4-5
+ --error: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
+ at:caught
+
+Exception occurred: Stream.Error("[par_case_list] expected after OBRACE (in [par_statement])")
+================================================================
+# ex12c1.ss
+
+  par 
+    {x,y@L,v@L}
+  {  
+   // exists r1',r2'
+  case {x,v@L} true ->
+     x = v+1;
+    //dprint;
+    || // {y@L,v@L}
+  else // {y@L,v@L}   end?
+      ->
+      y = y+22+v; // cannot update y
+     //dprint;
+  }
+
+Problems:
+ (i) What happen to varperm?
+ (ii) Why did we not have a *-combine at the end
+
+ State:htrue&x_36'=1+v_38'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: ex12c1-varperm-simple.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1
+  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp&y_37'=v_38'+22+y_1373 & v_38'=5 & y_1373=40 & x_36'=4&{FLOW,(4,5)=__n
+orm#E}[]
+
+# There seems to be a combine error below..
+
+ State:emp&{FLOW,(4,5)=__norm#E}[]
+================================================================
+# ex14.ss
+
+Successful States:
+[
+ Label: []
+ State:htrue*@full[x_36,y_37,v_38,kk_39]&v_38'=kk_39'+v_1343 & v_1343=5 & y_37'=40 & x_36'=4 & kk_39'=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+void main()
+  requires true ensures true;
+{
+  int x,y,v;
+  x=4; y=40; v=5;
+  dprint;
+  { int kk =1;
+    v = v +kk;
+    dprint;
+  }
+  dprint;
+}
+
+# need to remove kk_39 from the varperm list at the end of k-scope
+
+dprint: ex14-varperm-block.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*@full[x_36,y_37,v_38,kk_39]&v_38'=1+v_1343 & v_1343=5 & y_37'=40 & x_36'=4&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+================================================================
+# ex14.ss --dis-ann-vp
+
+
+# Can we avoid adding vperm when --dispann-vp is invoked
+
+dprint: ex14-varperm-block.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*@full[x_36,y_37,v_38,kk_39]&v_38'=1+v_1343 & v_1343=5 & y_37'=40 & x_36'=4&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+================================================================
+# ex4d1.ss
+
+# bind vars need to be given permissions
+
+Last Proving Location: 1 File "ex4d1-bind.ss",Line:24,Col:11
+
+ERROR: at ex4d1-bind.ss_24:11_24:16
+Message: val_24_1390 does not have @lend/@full permission to read.
+================================================================
+# ex4d.ss
+
+What lexvar error is this?
+
+
+Last Proving Location: 1 File "ex4d-bind.ss",Line:18,Col:6
+
+ERROR: at _0:0_0:0
+Message: [term.ml][strip_lexvar_lhs]: More than one LexVar to be stripped.
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================

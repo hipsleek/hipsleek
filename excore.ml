@@ -14,6 +14,7 @@ open Cpure
 
 let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
 let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
+let pairwisecheck = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
 
 
 let simplify_conj simp f =
@@ -21,11 +22,11 @@ let simplify_conj simp f =
   | AndList ls -> AndList (List.map (fun (l,f) -> (l,simp f)) ls)
   | rest -> simp rest
 
-let simplify_with_label simp (f:formula) = 
+let simplify_with_label simp (f:formula) =
   let ls = split_disjunctions f in
   let ls = List.map (simplify_conj simp) ls in
   join_disjunctions ls
-  
+
 let simplify_with_label_omega (f:formula) =
   let simp = (* Omega.simplify *) !simplify_raw in
   simplify_with_label simp f
@@ -422,10 +423,10 @@ end;;
 module type FORM_TYPE =
 sig
   type t
-  val mk_false : t 
-  val mk_true : t 
-  val unsat : t -> bool 
-  val imply : t -> t -> bool 
+  val mk_false : t
+  val mk_true : t
+  val unsat : t -> bool
+  val imply : t -> t -> bool
 end;;
 
 
@@ -511,7 +512,7 @@ struct
     ef_conv_disj_ho ef_conv disj
 
   let ef_conv_disj disj : formula =
-    (* Debug.no_1 "ef_conv_disj" string_of_ef_pure_disj string_of_pure_formula *)
+    Debug.no_1 "ef_conv_disj" string_of_disj !Cpure.print_formula
     ef_conv_disj_x disj
 
   let ef_conv_enum_disj_x disj : formula =
@@ -652,7 +653,7 @@ struct
     let f = List.map (fun (b,f) -> (b,f)) in
     ef_imply_disj_0 (f ante) (f conseq)
 
-  let pair_cmp (x1,x2) (y1,y2) = 
+  let pair_cmp (x1,x2) (y1,y2) =
     let c = Elt.compare x1 y1 in
     if c==0 then Elt.compare x2 y2
     else c
@@ -673,6 +674,12 @@ struct
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
 
+  let simplify_disj (disj : epure_disj) : epure_disj =
+    List.map (fun (baga,pf) -> (baga,simplify_with_label_omega pf)) disj
+
+  let pairwisecheck_disj (disj : epure_disj) : epure_disj =
+    List.map (fun (baga,pf) -> (baga,!pairwisecheck pf)) disj
+
 (*
             List.map (fun (baga, eq, ineq) ->
               let new_baga = subst_var_list sst baga in
@@ -688,7 +695,7 @@ struct
           ) efpd in
 *)
 
-  let mk_epure (pf:formula) = 
+  let mk_epure (pf:formula) =
     [([], (* subs_null *) pf)]
 
   let to_cpure (ep : epure) = ep
@@ -1560,3 +1567,4 @@ module EPureI = EPURE(SV)
 type ef_pure_disj = EPureI.epure_disj
 
 let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
+let map_precise_invs : ((string, bool) Hashtbl.t) = Hashtbl.create 10

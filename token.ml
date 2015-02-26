@@ -6,6 +6,7 @@ type sleek_token =
   | IDENTIFIER    of string
   | INT_LITER     of int * string
   | FLOAT_LIT     of float * string
+  | FRAC_LIT of   Frac.frac * string
   | CHAR_LIT      of char * string
   | STRING        of string * string
         (*| COMMENT       of string*)
@@ -50,7 +51,8 @@ type sleek_token =
   | TERM_INFER 
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
-  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR
+  | INFER_AT_VER_POST
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST 
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
   | INFER_AT_SIZE
@@ -70,7 +72,7 @@ type sleek_token =
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
   | TOPAREN | TCPAREN
   | PERCENT | PMACRO 
-  | PZERO | PFULL | PVALUE (* | PREF *)
+  | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
   | TUP2
   | PLUS | PRIME 
@@ -87,6 +89,9 @@ type sleek_token =
   | FAIL_MUST
   | FAIL_MAY
   | XPURE
+  | PAR
+  (* | SKIP - should be an identifier! *)
+  (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
@@ -100,7 +105,7 @@ module Token = struct
   let sf = Printf.sprintf
 
   let to_string k = match k with 
-    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s | FRAC_LIT (_, s) -> s
           (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
@@ -142,7 +147,7 @@ module Token = struct
           (*operators*)
     | NI ->"@NI" | RO ->"@RO" | ATATSQ -> "@@[" | CARET -> "^"
     | DOTDOT ->".."
-    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" (* | VAL ->"@VAL" | REC ->"@REC"*)
+    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" |PFRAC -> "@frac"(* | VAL ->"@VAL" | REC ->"@REC"*)
     | TEMPLATE -> "template" | TEMPL_SOLVE -> "template_solve"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
@@ -154,7 +159,7 @@ module Token = struct
     | MEM -> "mem" | MEME -> "memE"
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
-          (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
+    (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero" | PLEND -> "@lend" | PCONST f -> "@" ^ (Frac.string_of_frac f)
     | SPLITANN -> "@Split"
     | TUP2 -> "tup2"
     | INVLOCK->"inv_lock"
@@ -178,9 +183,11 @@ module Token = struct
     | INFER_AT_DFA -> "@dfa"
     | INFER_AT_TERM -> "@term"
     | INFER_AT_TERM_WO_POST -> "@term_wo_post"
-    | INFER_AT_PRE -> "@pre"
-    | INFER_AT_POST -> "@post"
+    | INFER_AT_PRE -> "@pre_n"
+    | INFER_AT_POST -> "@post_n"
+    | INFER_AT_VER_POST -> "@ver_post"
     | INFER_AT_CLASSIC -> "@leak"
+    | INFER_AT_PAR -> "@par"
     | INFER_AT_IMM -> "@imm"
     | INFER_AT_SHAPE -> "@shape"
     | INFER_AT_ERROR -> "@error"
@@ -191,6 +198,9 @@ module Token = struct
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    | PAR -> "par"
+    (* | SKIP -> "skip" *)
+    (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 
 
   let print ppf x = pp_print_string ppf (to_string x)
@@ -198,8 +208,9 @@ module Token = struct
   let match_keyword kwd _ = false 
     
   let extract_string t = match t with
-     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
-     | _ -> ""
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s) | FRAC_LIT (_, s) 
+    | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
+    | _ -> ""
      
     
   module Error = struct

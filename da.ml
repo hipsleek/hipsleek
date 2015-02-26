@@ -118,6 +118,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
       | This _   | Time _
       | Var _   | VarDecl _
       | Unfold _  | Unit _
+      | Par _
       | Sharp _  -> path_conds
       | Label b ->  helper b.exp_label_exp path_conds
       | Assign b -> begin (*to update aliasing *)
@@ -299,6 +300,7 @@ let find_rel_args_groups_x prog proc e0=
       | This _   | Time _
       | Var _   | VarDecl _
       | Unfold _  | Unit _
+      | Par _
       | Sharp _  -> neqs
       | Label b ->  find_must_neq_helper b.exp_label_exp neqs
       | Assign b -> (*to handle alias*) neqs

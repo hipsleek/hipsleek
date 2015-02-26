@@ -896,9 +896,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
                 Cpure.mkNull sv no_pos) subst_vars in
             let new_const = List.fold_left (fun f0 f1 ->
                 Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
-            let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components f in
+            let new_h, new_p, new_vp, new_fl, new_t, new_a = Cformula.split_components f in
             let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
-            let new_f = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in
+            let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
             new_f
   in
 	match mf0 with
@@ -1004,7 +1004,7 @@ let run_simplify (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.simplify_tp pf in
@@ -1020,7 +1020,7 @@ let run_hull (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.hull pf in
@@ -1037,7 +1037,7 @@ let run_pairwise (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.tp_pairwisecheck pf in
@@ -2190,15 +2190,18 @@ let process_term_infer () =
   end
 
 let process_check_norm_x (f : meta_formula) =
-  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
-  let num_id = "\nCheckNorm "^nn in  
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) else () in
+  let nn = "(" ^ (string_of_int (sleek_proof_counter#inc_and_get)) ^ ") " in
+  let num_id = "\nCheckNorm " ^ nn in  
+  let _ = if (!Globals.print_input || !Globals.print_input_all) 
+    then print_endline ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
+    else () 
+  in
   let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
-  let (n_tl,cf) = meta_to_formula f false [] []  in
+  let (n_tl, cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
   let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
-  let _ = print_string (num_id^": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
+  let _ = print_string (num_id ^ ": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
   () (* TO IMPLEMENT*)
 
 let process_check_norm (f : meta_formula) =

@@ -1,0 +1,39 @@
+/*
+  Example with simple CountDownLatch
+ */
+
+//CountDownLatch
+data CDL{}.
+
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+pred_prim CNT<n:int>
+inv n>=(-1).
+
+//lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>.
+
+checkentail 
+ (exists v_int_48_1424': x_41'::cell<v_int_46_1576> * 
+  c_42'::LatchIn{ - x_41'::cell<Anon_11>}<> * 
+  c_42'::LatchOut{ + x_41'::cell<Anon_11>}<> * 
+  c_42'::CNT{}<v_int_48_1424'>&v_int_46_1576=10 & v_int_48_1424'=1)
+|- c_42'::LatchIn{-%P}<> * %P * c_42'::CNT<n> & n>0.
+
+print redisue.
+
+checkentail 
+  x::cell<10> * 
+  c::LatchIn{ - x::cell<10>}<> * 
+  c::LatchOut{ + x::cell<10>}<> * 
+  c::CNT{}<1> |- 
+  c::LatchIn{-%P}<> * %P * c::CNT<n> & n>0.
+
+print residue.

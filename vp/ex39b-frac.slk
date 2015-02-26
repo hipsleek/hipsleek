@@ -1,0 +1,11 @@
+// x' is same as x for variables
+checkentail @frac(1/2)[x] |- @frac(1/3)[x].
+print residue.
+
+
+// how about fraction?
+
+/*
+# ex38 --ann-vp
+
+*/

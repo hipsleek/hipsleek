@@ -1,0 +1,36 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+/*
+# ex41a
+
+Expected answer:
+ H2(z,x) --> z::lseg<x> & z!=x
+Or:
+ H2(z,x) --> z::lseg<x> * U(x,z)
+ U(x,z) --> emo & z!=x &x!=null
+
+(1) spurious q_89 (normalize existential vars)
+(2) can we recover z!=x instead of (z<x | (x<z)
+
+<1>HP_94(x,z)&x!=null & q_89!=x & q_89=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(q_89,x)&true --> q_89::lseg<q_89> * HP_94(x,q_89@NI)&
+                   true; 
+                  HP_94(x,z@NI)&true --> emp&(z<x | (x<z & x!=null))]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+*/

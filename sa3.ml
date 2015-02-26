@@ -418,7 +418,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
   (*internal method*)
   let split_one cs total_unk_map=
     let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
-    let (_ ,mix_lf,_,_,_) = Cformula.split_components cs.Cformula.hprel_lhs in
+    let (_ ,mix_lf,_,_,_,_) = Cformula.split_components cs.Cformula.hprel_lhs in
     let l_qvars, lhs = Cformula.split_quantifiers cs.Cformula.hprel_lhs in
     let r_qvars, rhs = Cformula.split_quantifiers cs.Cformula.hprel_rhs in
     let l_hpargs = Cformula.get_HRels_f lhs in
@@ -444,7 +444,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         (* in *)
         let lfb = lhs_b1 in
         let lhds, lhvs, lhrs = Cformula.get_hp_rel_bformula lfb in
-        let (_ ,mix_lf,_,_,_) = Cformula.split_components (Cformula.Base lfb) in
+        let (_ ,mix_lf,_,_,_,_) = Cformula.split_components (Cformula.Base lfb) in
         let leqNulls = MCP.get_null_ptrs mix_lf in
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let ls_rhp_args = Cformula.get_HRels_f (Cformula.Base rhs_b1) in
@@ -980,7 +980,7 @@ let remove_neqNull_grp_helper grp=
 
 let get_null_quans f=
   let qvars, base_f = Cformula.split_quantifiers f in
-   let (_ ,mix_lf,_,_,_) = Cformula.split_components base_f in
+   let (_ ,mix_lf,_,_,_,_) = Cformula.split_components base_f in
    let eqNulls = MCP.get_null_ptrs mix_lf in
    (CP.intersect_svl eqNulls qvars, base_f)
 

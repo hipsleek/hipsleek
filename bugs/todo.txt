@@ -1392,13 +1392,79 @@ Residue:
  <1>htrue&{FLOW,(4,5)=__norm#E}[]
 [[ COND ==>  UnmatchedRHSData ==> ]]
 ===================================================================
-infer/infer13.slk({E5#Valid})
+# ex31b.slk
 
+Why is there a parser error?
 
- infer/infer16.slk({E5#Valid},{E6#Valid})
+ checkentail x::cellp(1/2)<v1> |-  x::cellp(1/4)<v1>.
 
+File "ex31b-split-fracperm.slk", line 10, characters 20-21
+ error: Stream.Error("[cexp] expected after OPAREN (in [perm])")
+ at:error at: 
+===================================================================
+# ex31a.slk --en-para -perm fperm -tp redlog
 
+Why are there so many nested timer interrupt?
 
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+
+Why are there two similar residues?
+
+Residue:
+ <1>x::cellp{}( f2_84)<v_93>&v_93=v1 & perm_13_65=FLOAT 1. & Anon_full_perm=FLOAT 1. & FLOAT 0.<f2_84 & perm_13_65=f2_84+FLOAT 0.5 & FLOAT 0.<FLOAT 0.5&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==> (Match-->try split/combine) ==>  SEARCH ==>  (Lemma ==> split2(x,x)) ==>  Match(x,x) ==> ]]
+
+<2>x::cellp{}( f2_103)<v_112>&v_112=v1 & perm_13_65=FLOAT 1. & Anon_full_perm=FLOAT 1. & FLOAT 0.<f2_103 & perm_13_65=f2_103+FLOAT 0.5 & FLOAT 0.<FLOAT 0.5&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split2(x,x)) ==>  Match(x,x) ==> ]]
+===================================================================
+  infer/infer13.slk({E5#Valid}) 
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+===================================================================
+# ex32-vperm.slk
+
+Why isn't LHS false?
+checkentail @full[x3]*@value[x3]  |- @full[x3].
+print residue.
+// why isn't there a contracdicition on LHS
+   Moreover there is a residue
+
+Residue:
+ <1>htrue*@full[x3]&{FLOW,(4,5)=__norm#E}[]
+===================================================================
+# ex41b
+
+infer [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+1. x!=null already on LHS
+
+Expected answer:
+ H2(z,x)&true --> emp&x=z 
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

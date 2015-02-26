@@ -1,0 +1,49 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<2>}<>.
+expect Fail.
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<zz>}<>.
+print residue.
+expect Valid.
+
+/*
+Why isn't zz instaniated to 1?
+
+ <1>x::Thrd{ + b::cell<flted_11_49>&2=flted_11_49&{FLOW,(4,5)=__norm#E}[]}<>&flted_11_49=2 & flted_11_50=1 & b!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+*/
+
+checkentail x::Thrd{+ a::cell<zz>*b::cell<2>}<> |- x::Thrd{+a::cell<1>}<>.
+expect Fail.
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<_>}<>.
+expect Valid.
+
+checkentail x::Thrd{+ y::cell<1>*@full[a,b]}<> 
+    |- x::Thrd{+ y::cell<_>*@full[a]}<>.
+expect Valid.
+print residue.
+/*
+why expecting a node?
+
+Entail 5: EXCast. Failure("Expect a node")
+Validate 5: Expecting ValidBUT got no residue
+*/
+
+checkentail x::Thrd{+ y::cell<1>*@full[a,b]}<> 
+    |- x::Thrd{+ y::cell<_>*@full[a]}<>.
+expect Valid.// why no residue?
+/*
+vp not subtracted?
+
+Residue:
+ <1>emp&flted_28_94=1&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+*/
+

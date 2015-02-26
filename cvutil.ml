@@ -197,7 +197,7 @@ let extract_callee_view_info_x prog f=
   in
   (*******************)
   (* local info *)
-  let h,mf, _, _, _ = split_components f in
+  let h,mf, _, _, _, _ = split_components f in
   let p = (MCP.pure_of_mix mf) in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let neqs = CP.get_neqs_new p in
@@ -1166,7 +1166,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
             let ph, addrs, _ = xpure_heap_symbolic 2 prog h p 1 in
             let n_p = MCP.merge_mems p ph true in
 	    (* Set a complex heap formula to a simpler one *)
-	    let n_f0 = mkBase HEmp n_p TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
+	    let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
             (n_f0, addrs)
       | Exists e ->
 	    let ({ formula_exists_qvars = qvars;
@@ -1177,7 +1177,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
             let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
             let n_qp = MCP.merge_mems qp pqh true in
             (* Set a complex heap formula to a simpler one *)
-	    let n_f0 = mkExists qvars HEmp n_qp TypeTrue (mkTrueFlow ()) [] pos in
+	    let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
             (n_f0, addrs)
   in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -1404,6 +1404,26 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_formula =
   Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula
       (fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
+
+and xpure_symbolic_baga3 (views : view_decl list) (h0 : formula) : Excore.EPureI.epure_disj =
+  let new_baga = Expure.build_ef_formula h0 views in
+  let _ = Debug.ninfo_hprint (add_str "new_baga" (Excore.EPureI.string_of_disj)) new_baga no_pos in
+  new_baga
+
+and xpure_symbolic_baga2_x (prog : prog_decl) (vn : string) uf (h0 : formula) : Excore.EPureI.epure_disj =
+  let view_decls = prog.Cast.prog_view_decls in
+  let view_decls = List.map (fun view_decl ->
+      if view_decl.Cast.view_name = vn then
+        {view_decl with Cast.view_baga_under_inv = Some [uf]}
+      else
+        view_decl
+  ) view_decls in
+  let new_baga = Expure.build_ef_formula h0 view_decls in
+  new_baga
+
+and xpure_symbolic_baga2 (prog : prog_decl) (vn : string) uf (h0 : formula) : Excore.EPureI.epure_disj =
+  Debug.no_1 "xpure_symbolic_baga2" Cprinter.string_of_formula Excore.EPureI.string_of_disj
+      (fun _ -> xpure_symbolic_baga2_x prog vn uf h0) h0
 
 and xpure_symbolic_baga (prog : prog_decl) (h0 : formula) : Excore.EPureI.epure_disj =
   let new_baga = Expure.build_ef_formula h0 prog.Cast.prog_view_decls in
@@ -1909,7 +1929,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
           let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
           let zip = List.combine fr_vars to_vars in
-          let new_ho_agrs = List.map (fun arg -> prune_preds prog true arg) v.h_formula_view_ho_arguments in
+          let new_ho_agrs = List.map (trans_rflow_formula (prune_preds prog true)) v.h_formula_view_ho_arguments in
           let v = {v with h_formula_view_ho_arguments = new_ho_agrs;} in
           let (rem_br, prun_cond, first_prune, chg) =  
             match v.h_formula_view_remaining_branches with
@@ -2013,14 +2033,14 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
           let rp = f_p_simp rp in
           let new_a = List.map helper_one_formula e.formula_exists_and in
-          mkExists_w_lbl e.formula_exists_qvars rh rp 
+          mkExists_w_lbl e.formula_exists_qvars rh rp e.formula_exists_vperm
               e.formula_exists_type e.formula_exists_flow new_a e.formula_exists_pos e.formula_exists_label
     | Base b ->
           let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
           (* let _ = print_endline ("\nprune_preds: before: rp = " ^ (Cprinter.string_of_mix_formula rp)) in *)
           let rp = f_p_simp rp in
           let new_a = List.map helper_one_formula b.formula_base_and in
-          mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow new_a b.formula_base_pos b.formula_base_label in
+          mkBase_w_lbl rh rp b.formula_base_vperm b.formula_base_type  b.formula_base_flow new_a b.formula_base_pos b.formula_base_label in
   (* if not !Globals.allow_pred_spec then f *)
   let helper_formulas f = 
     let p2 = Cprinter.string_of_formula in

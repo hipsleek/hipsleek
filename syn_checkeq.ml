@@ -259,8 +259,8 @@ let rec check_relaxeq_formula_x args f10 f20=
   try
     let qvars1, base_f1 = Cformula.split_quantifiers f1 in
     let qvars2, base_f2 = Cformula.split_quantifiers f2 in
-    let hf1,mf1,_,_,_ = Cformula.split_components base_f1 in
-    let hf2,mf2,_,_,_ = Cformula.split_components base_f2 in
+    let hf1,mf1,_,_,_,_ = Cformula.split_components base_f1 in
+    let hf2,mf2,_,_,_,_ = Cformula.split_components base_f2 in
     Debug.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
     Debug.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
     (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
@@ -554,12 +554,12 @@ let syntax_contrb_lemma_end_null_x prog lhs rhs=
     | _ -> hf
   in
    (*****************************************)
-  let ( _,rmf,_,_,_) = Cformula.split_components rhs in
+  let ( _,rmf,_,_,_,_) = Cformula.split_components rhs in
   let r_eqnull_svl =  MCP.get_null_ptrs rmf in
   if r_eqnull_svl = [] then
     (lhs, rhs)
   else
-    let ( _,lmf,_,_,_) = Cformula.split_components lhs in
+    let ( _,lmf,_,_,_,_) = Cformula.split_components lhs in
     let l_eqnull_svl =  MCP.get_null_ptrs lmf in
     if l_eqnull_svl = [] then
       (lhs, rhs)

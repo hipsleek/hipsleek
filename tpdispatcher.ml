@@ -372,6 +372,7 @@ let set_tp tp_str =
   (******we allow normalization/simplification that may not hold
   in the presence of floating point constraints*)
   (* let _ = print_endline ("solver:" ^ tp_str) in *)
+   let _ = print_endline ("!!! Using " ^ tp_str) in 
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -469,7 +470,7 @@ let init_tp () =
       let _ = Omega.omegacalc := "./oc" in
       ()
       else ()) in
-  let _ = print_endline ("!!! init_tp : Using Z3 by default") in 
+  let _ = print_endline ("!!! init_tp by default: ") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 
@@ -792,7 +793,7 @@ let is_array_b_formula (pf,_) = match pf with
     | CP.ListPerm _
         -> Some false
     | CP.RelForm _ -> Some true
-    | CP.VarPerm _ -> Some false
+    (* | CP.VarPerm _ -> Some false *)
 
 let is_list_b_formula (pf,_) = match pf with
     | CP.BConst _ 
@@ -2997,9 +2998,9 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
 	      let imp_no = 
 		if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
 		else imp_no in
-              (*DROP VarPerm formula before checking*)
-              let conseq = CP.drop_varperm_formula conseq in
-              let ante = CP.drop_varperm_formula ante in
+              (* (*DROP VarPerm formula before checking*)       *)
+              (* let conseq = CP.drop_varperm_formula conseq in *)
+              (* let ante = CP.drop_varperm_formula ante in     *)
 	      let res1 =
 		if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
 		  let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
@@ -3809,4 +3810,5 @@ let _ =
   Cast.imply_raw := imply_raw;
   Excore.is_sat_raw := is_sat_raw;
   Excore.simplify_raw := simplify_raw;
+  Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := simplify_omega;
