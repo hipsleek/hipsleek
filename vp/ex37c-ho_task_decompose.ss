@@ -24,7 +24,7 @@ Thrd fork_inc(ref int i)
 
 Thrd creator(ref int x,ref int y)
   requires @full[x,y]
-    ensures res::Thrd{+ @full[x] & x'=x+1}<> * @full[y] & y'=y+1 ; //& x'=x;
+  loris-82ensures res::Thrd{+ @full[x] & x'=x+1}<> * @full[y] & y'=y+1 ; //& x'=x;
 {
   Thrd id;
   id=fork_inc(x);
