@@ -43,6 +43,10 @@ inferred hprel: [H1(z)&true --> emp&z=null]
 infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
 print residue.
 
+HeapPred H3(node y,node@NI x).
+infer_exact [H3] x::node<z> * H3(z,x)  |- x::lseg<z> .
+print residue.
+
 /*
 # ex41a
 
