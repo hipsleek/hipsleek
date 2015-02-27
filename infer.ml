@@ -2214,7 +2214,7 @@ let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
 *)
 let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
       total_unk_map post_hps prog_vars=
-  let get_rhs_unfold_fwd_svl h_node h_args def_svl leqNulls lhs_hpargs=
+  let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
         | [] -> (false, false, [],[])
@@ -2252,9 +2252,16 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let ls_fwd_svl = (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12) in
+      let _ = Debug.ninfo_hprint (add_str "args12"  (pr_list (pr_pair !CP.print_sv print_arg_kind) )) args12 no_pos in
+      let ls_fwd_svl = if args12 =[] then
+        if is_view then
+          (* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*)
+          [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
+        else []
+      else (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
+      in
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then []
+      let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
       else
         [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       in
@@ -2468,7 +2475,11 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let def_vs1 = if CF.is_view n_unmatched then CP.diff_svl (def_vs@hrel_args2) h_args
       else (def_vs@hrel_args2)
       in
-      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args (def_vs1) leqNulls ls_lhp_args in
+      let is_view = match n_unmatched with
+        | CF.ViewNode vn -> true
+        | _ -> false
+      in
+      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
       let ass_guard1 = match n_unmatched with
         | CF.ViewNode vn ->
               find_guard prog lhds lhvs leqs selected_hpargs (vn.CF.h_formula_view_node::h_args)

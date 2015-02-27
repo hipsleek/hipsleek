@@ -12,7 +12,7 @@ HeapPred H1(node y).
 
 HeapPred H2(node y,node x).
 
-
+/*
 infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
 print residue.
 /*
@@ -23,6 +23,8 @@ Residue:
                    true; 
                   HP_96(x,z@NI)&true --> emp&x!=z]
 [[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+*/
+
 */
 
 HeapPred H3(node y,node@NI x).
@@ -46,5 +48,3 @@ Residue:
  <1>H3(z,x)&x!=null & q_107!=x & q_107=z&{FLOW,(4,5)=__norm#E}[]
  inferred hprel: [H3(z,x@NI)&true --> emp&x!=z]
 */
-
-/
