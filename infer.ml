@@ -1054,9 +1054,16 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
             let lhs_xpure_ann = Cpure.add_ann_constraints imm_vrs lhs_xpure in
             let _ = DD.tinfo_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
             let _ = DD.tinfo_hprint (add_str "quan_var_new : " !CP.print_svl) quan_var_new  pos  in
+            let _ = DD.tinfo_hprint (add_str "rhs_xpure " !CP.print_formula) rhs_xpure pos  in
             let _ = DD.tinfo_hprint (add_str "quan_var : " !CP.print_svl) quan_var  pos  in
-            let new_p = TP.simplify_raw (CP.mkForall quan_var 
-                (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
+            let rhs_xpure_sst = Cputil.sel_subst rhs_xpure
+              (MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure_ann)) quan_var in
+            let ip = if CP.intersect_svl (CP.fv rhs_xpure_sst) quan_var = [] then 
+              (CP.mkOr ( CP.mkForall quan_var  (CP.mkNot_s lhs_xpure_ann) None pos) rhs_xpure_sst None pos)
+            else (CP.mkForall quan_var 
+                (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure_sst None pos) None pos)
+            in
+            let new_p = TP.simplify_raw ip in
             let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos  in
             let ctr  = TP.simplify_raw (CP.mkAnd new_p lhs_xpure_ann no_pos) in
             let _ = DD.tinfo_hprint (add_str "new_p: " !CP.print_formula) new_p pos  in
@@ -1076,6 +1083,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   (CP.mkAnd lhs_heap_xpure1_pure new_p pos) None pos) in
             let _ = DD.tinfo_hprint (add_str "new_p_better" !CP.print_formula) new_p_better pos in
             let new_p = new_p_better in
+            let _ = DD.tinfo_hprint (add_str "new_p 1a" !CP.print_formula) new_p pos in
             let new_p_for_assume = new_p in
             (*          let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in*)
             let _ = DD.trace_hprint (add_str "rhs_xpure: " !CP.print_formula) rhs_xpure pos  in

@@ -18,9 +18,14 @@ HeapPred H2(node y,node x).
 
 HeapPred H3(node y,node@NI x).
 
-
+/*
 infer [H3] x::node<z> * H3(z,x)  |- 
        (exists q: x::node<q> * q::lseg<z> & x!=z).
+print residue.
+*/
+
+infer [H3] H3(z,x)  |- 
+         z::lseg<z> & x!=z.
 print residue.
 
 /*
