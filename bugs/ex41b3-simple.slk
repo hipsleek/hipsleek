@@ -1,0 +1,63 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+infer [H2]  H2(z,x) & q=z & x!=null  |- x!=q .
+print residue.
+/*
+ <1>H2(z,x)&q=z & x!=null & q!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> emp&((x!=null & x!=z) | x=null)]
+*/
+
+infer [H2]  H2(z,x) & q=z & x!=null  |- x!=z .
+print residue.
+
+infer [z,x]  q=z & x!=null  |- x!=q .
+print residue.
+
+/*
+<1>emp&x!=null & q=z & (((1<=x & x!=z) | x<=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [((1<=x & x!=z) | x<=0)]
+*/
+
+infer [z,x]  x!=0  |- x!=z .
+print residue.
+/*
+<1>emp&x!=0 & ((z!=x | x=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(z!=x | x=0)]
+*/
+
+
+
+infer [z,x]  q=z & x!=0  |- x!=q .
+print residue.
+
+/*
+ inferred pure: [((1<=z & z!=x) | (z<=-1 & (1+z)<=x) | ((1+x)<=z & z<=-1) | 
+                 z=0)]
+*/
+
+
+
+infer [z,x]  q=z & x!=0  |- x!=z .
+print residue.
+
+
+/*
+inferred pure: [((1<=z & z!=x) | (z<=-1 & (1+z)<=x) | ((1+x)<=z & z<=-1) | 
+                 z=0)]
+*/

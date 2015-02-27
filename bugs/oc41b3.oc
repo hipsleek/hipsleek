@@ -1,0 +1,13 @@
+P2 := {[x,z]:forall(q: not(q=z && q!=0) || x!=q)};
+P2;
+
+P1 := {[x,z]:forall(q: not(q=z && q!=0) || x!=z)};
+P1;
+
+P := {[x,z]:forall(q: not(q=z && q!=0)) || x!=z};
+P;
+
+P subset P1;
+P1 subset P;
+PairWiseCheck P1;
+P;
