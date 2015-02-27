@@ -12,10 +12,22 @@ HeapPred H1(node y).
 
 HeapPred H2(node y,node x).
 
-/*
 infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
 print residue.
+
 /*
+# ex42a.slk
+
+WHy does this fail now?
+
+Entail (1) : Fail.(must) cause:UnionR[residue is forbidden.(1),residue is forbidden.(1)]
+
+Residue:
+ <1>x::node<z> * H2(z,x)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
 Entail (3) : Valid. 
 Residue:
  <1>HP_96(x,z)&x!=null & q_91!=x & q_91=z&{FLOW,(4,5)=__norm#E}[]
@@ -25,7 +37,6 @@ Residue:
 [[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
 */
 
-*/
 
 HeapPred H3(node y,node@NI x).
 infer_exact [H3] x::node<z> * H3(z,x)  |- x::lseg<z> .

@@ -1472,6 +1472,21 @@ Residue:
  <1>H3(z,x)&x!=null & q_107!=x & q_107=z&{FLOW,(4,5)=__norm#E}[]
  inferred hprel: [H3(z,x@NI)&true --> emp&x!=z]
 ===================================================================
+# ex42a.slk
+
+HeapPred H2(node y,node x).
+
+infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+WHy does this fail now?
+
+Entail (1) : Fail.(must) cause:UnionR[residue is forbidden.(1),residue is forbidden.(1)]
+
+Residue:
+ <1>x::node<z> * H2(z,x)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
 ===================================================================
 ===================================================================
 ===================================================================
