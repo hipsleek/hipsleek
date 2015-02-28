@@ -2766,7 +2766,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-          if !Globals.gen_baga_inv then tp_syn h p
+          if !Globals.baga_xpure (* !Globals.gen_baga_inv *) then tp_syn h p
           else tp_sem h p
           (* let p = MCP.translate_level_mix_formula p in *)
 	  (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
