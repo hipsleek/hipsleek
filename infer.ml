@@ -2253,15 +2253,15 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
       let _ = Debug.ninfo_hprint (add_str "args12"  (pr_list (pr_pair !CP.print_sv print_arg_kind) )) args12 no_pos in
-      let ls_fwd_svl = if args12 =[] then
-        if is_view then
-          (* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*)
-          [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
-        else []
-      else (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
+      let ls_fwd_svl =(*  if args12 =[] then *)
+      (*   if is_view then *)
+      (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
+      (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
+      (*   else [] *)
+      (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
       in
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
+      let extra_clls = if niu_svl_i = [] then  (* [] *) [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       else
         [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       in
