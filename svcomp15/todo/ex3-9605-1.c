@@ -1,11 +1,14 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
-#include <stdlib.h>
+//#include <stdlib.h>
+
+#include "stdlib.h"
 
 int *a, *b;
 int n;
 
 #define BLOCK_SIZE 128
+
 
 void foo ()
 {

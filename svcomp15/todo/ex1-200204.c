@@ -1,11 +1,13 @@
+#include "stdlib.h"
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
 /* Origin: abbott@dima.unige.it
  * PR c/5120
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdio.h>
+//#include <stdlib.h>
 
 typedef unsigned int FFelem;
 

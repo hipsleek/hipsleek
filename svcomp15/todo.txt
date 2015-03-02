@@ -4,9 +4,22 @@
 ERROR: at _0:0_0:0
 Message: Function "calloc" is not defined within program
 
+
+gcc -C -E ex1-200204.c -o ex1-200204.c.prep
+old type = TFun(TPtr(TVoid(), ), size: TInt(int, ), )
+new type = TFun(TPtr(TVoid(), ),
+                __size: TNamed(size_t___0, TInt(unsigned long, ), ),
+                 __attribute__((__leaf__)) )
+caught
+
+Exception occurred: Errormsg.Error
+Error3(s) detected at main
+466:1-466:108: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different integer types).
+
+
 ==============================================================
 
-#ex1a-calloc.c
+#ex1a-calloc.c:
 
 to support calloc
 
@@ -24,6 +37,16 @@ caught
 
 ERROR: at _0:0_0:0
 Message: scc = [free]not found
+
+
+==============================================================
+#ex3-a.c
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: node & void_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: node & void_star")
 
 
 ==============================================================

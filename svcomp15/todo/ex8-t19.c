@@ -1,6 +1,8 @@
+#include "stdlib.h"
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
-#include <stdlib.h>
+//#include <stdlib.h>
 
 typedef struct {
     void *lo;
