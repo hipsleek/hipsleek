@@ -64,10 +64,40 @@ caught
 
 
 ==============================================================
+# ex8-t19.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
+
 ==============================================================
+# ex9-t19.c (true-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
 ==============================================================
+# ex10-t0102.c (false-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
 ==============================================================
+# ex11-t0102.c (true-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
+
 ==============================================================
+
+
 ==============================================================
 ==============================================================
 ==============================================================
