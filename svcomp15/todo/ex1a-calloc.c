@@ -1,3 +1,5 @@
+#include "stdlib.h"
+
 struct node
 {
   int val;
@@ -5,6 +7,6 @@ struct node
 
 struct node* nodenew()
 {
-  struct node * ans = (struct node *)calloc(1, sizeof(struct node));
+  struct node * ans = (struct node *)malloc(1* sizeof(struct node));
   return ans;
 }
