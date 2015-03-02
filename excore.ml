@@ -476,7 +476,7 @@ struct
           mkAnd f1 f2 no_pos
       in
       let f1 = helper 0 1 baga (List.length baga) in
-      let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos)
+      let f2 = List.fold_left (fun f sv -> mkAnd f (mkGtVarInt sv 0 no_pos) no_pos)
         (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
     mkAnd f1 f2 no_pos
 
