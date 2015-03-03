@@ -86,7 +86,14 @@ let parse_file_full file_name (primitive: bool) =
     ) in
     close_in org_in_chnl;
     let _ = Gen.Profiling.pop_time "Parsing" in
-    prog
+    let prog1 = if not primitive then
+      let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) "start\n" no_pos in
+      let p = IastUtil.generate_free_fnc prog in
+      let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) "end\n" no_pos in
+      p
+    else prog
+    in
+    prog1
   with
       End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)-> (

@@ -598,7 +598,8 @@ let rec create_pointer_casting_proc (in_typ_name: string) (out_typ_name: string)
   let proc_decl = (
     try Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
-      if (is_pointer_typ_name in_typ_name) && (is_pointer_typ_name out_typ_name) then (
+        (* node is a pointer type? *)
+      if (is_pointer_typ_name in_typ_name) && (is_pointer_typ_name out_typ_name) then(
         let cast_proc = (
           out_typ_name ^ " " ^ proc_name ^ " (" ^ in_typ_name ^ " p)\n" ^
           "  case { \n" ^

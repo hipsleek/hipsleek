@@ -22,11 +22,6 @@ void* calloc(int size, int ssize) __attribute__ ((noreturn))
   }
 */;
 
-void free(void* p) __attribute__ ((noreturn))
-/*@
-   requires p::memLoc<h,s> & (p != null) & h ensures emp & true;
-*/;
-
 void* alloca(int size) __attribute__ ((noreturn))
 /*@
   case {
