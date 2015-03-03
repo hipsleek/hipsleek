@@ -30,6 +30,12 @@ void* alloca(int size) __attribute__ ((noreturn))
   }
 */;
 
+void abort()
+/*@
+  requires true
+  ensures true & flow __Error;
+*/;
+
 /**************************/
 /*** Pointer Arithmetic ***/
 /**************************/

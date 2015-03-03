@@ -17,11 +17,13 @@ Error3(s) detected at main
 466:1-466:108: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different integer types).
 
 
-==============================================================
-
-#ex1a-calloc.c:
+#ex1a-calloc.c: DONE
 
 to support calloc
+------------------------------------
+ERROR: at ex1-200204.c_40:19_-1:-1
+Message: lhs and rhs do not match 1
+
 
 ==============================================================
 
@@ -35,18 +37,32 @@ caught
 ==============================================================
 #ex3-9605-1.c (false-free)
 
+------------------------------------
 ERROR: at _0:0_0:0
 Message: scc = [free]not found
 
-
-==============================================================
-#ex3-a.c
+#ex3-a.c: OK
 
 ERROR: at _0:0_0:0
 Message: create_pointer_casting_proc: expect pointer types but found: node & void_star
 caught
 
 Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: node & void_star")
+
+------------------------------
+Checking procedure while_16_2$int~int~int_star...
+Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex3-9605-1.c",Line:17,Col:4
+
+Procedure while_16_2$int~int~int_star FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+
 
 
 ==============================================================
