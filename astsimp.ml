@@ -2644,6 +2644,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let _ = Debug.tinfo_hprint (add_str "fixcalc_invs (cviews0)" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_cviews0 no_pos in
             let _ = Debug.tinfo_hprint (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
+            let _ = List.iter (fun (vd,inv) ->
+                Hashtbl.add Excore.map_num_invs vd.Cast.view_name ((CP.mk_self None)::vd.Cast.view_vars,inv)
+            ) (List.combine view_list_baga0 num_invs) in
             let baga_num_invs = List.combine baga_invs num_invs in
             let combined_invs = List.map (fun (disj,pf) ->
               let disj1 = List.hd (Excore.EPureI.mk_epure pf) in

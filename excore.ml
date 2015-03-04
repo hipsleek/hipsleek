@@ -1570,4 +1570,5 @@ module EPureI = EPURE(SV)
 type ef_pure_disj = EPureI.epure_disj
 
 let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
+let map_num_invs : ((string, (Cpure.spec_var list * Cpure.formula)) Hashtbl.t) = Hashtbl.create 10
 let map_precise_invs : ((string, bool) Hashtbl.t) = Hashtbl.create 10

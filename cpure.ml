@@ -10905,7 +10905,7 @@ let is_rel_defn rt = match rt with
 
 let add_conj x rs pos =
   List.map (fun y -> And (x,y,pos)) rs
-  
+
 let rec dist_conj xs ys pos =
   let r_xs = List.map (fun x -> add_conj x ys pos) xs in
   List.concat r_xs
@@ -13746,11 +13746,11 @@ let overapp_ptrs p=
   Debug.no_1 "overapp_ptrs" pr1 pr1
       (fun _ -> overapp_ptrs_x p) p
 
-let mk_self t = 
+let mk_self t =
   let t =
     match t with
       | None   -> Globals.null_type
-      | Some t -> t 
+      | Some t -> t
   in
   SpecVar (t, self, Unprimed)
 

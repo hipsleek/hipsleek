@@ -1596,13 +1596,13 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
             (tmp1, addrs1 @ addrs2)          *)
     | Phase ({ h_formula_phase_rd = h1;
       h_formula_phase_rw = h2;
-      h_formula_phase_pos = pos}) 
+      h_formula_phase_pos = pos})
     | Conj ({ h_formula_conj_h1 = h1;
       h_formula_conj_h2 = h2;
       h_formula_conj_pos = pos})
     | ConjStar ({ h_formula_conjstar_h1 = h1;
       h_formula_conjstar_h2 = h2;
-      h_formula_conjstar_pos = pos})	  	  
+      h_formula_conjstar_pos = pos})
     | ConjConj ({ h_formula_conjconj_h1 = h1;
       h_formula_conjconj_h2 = h2;
       h_formula_conjconj_pos = pos}) ->

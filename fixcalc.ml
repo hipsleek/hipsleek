@@ -190,8 +190,24 @@ let rec fixcalc_of_h_formula f = match f with
               h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else if (List.length svs = 0) then c ^ "(" ^ (fixcalc_of_spec_var sv) ^ ")"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
-                   (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+    else
+      let str =
+        try
+          let (svl1,pf) = Hashtbl.find Excore.map_num_invs c in
+          let svl2 = sv::svs in
+          let svl2 = if (List.length svl1 < List.length svl2) then
+            List.rev (List.tl (List.rev svl2)) (* svl2 has idx variable, remove it *)
+          else svl2 in
+          let new_pf = CP.subst (List.combine svl1 svl2) pf in
+          fixcalc_of_pure_formula new_pf
+        with _ ->
+            c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
+                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+      in str
+    (* fixcalc_of_pure_formula new_pf *)
+    (* else if (List.length svs = 0) then c ^ "(" ^ (fixcalc_of_spec_var sv) ^ ")" *)
+    (* else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ *)
+    (*                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")" *)
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "0=0"
