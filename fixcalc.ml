@@ -91,6 +91,7 @@ and fixcalc_of_exp e = match e with
       | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
     end
+  | CP.InfConst _ -> "inf"
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let fixcalc_of_bool b =
