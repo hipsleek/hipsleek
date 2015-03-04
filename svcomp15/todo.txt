@@ -28,6 +28,15 @@ to support calloc
 
 Exception Invalid_argument("List.combine") Occurred!
 
+------------------------------------
+@ex1-d.c: FIXED
+
+------------------------------------
+@ex1-e.c:
+
+ERROR: at ex1-e.c_74:6_74:18
+Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__int__$int~int has invalid argument types
+
 
 ------------------------------------
 ERROR: at ex1-200204.c_40:19_-1:-1

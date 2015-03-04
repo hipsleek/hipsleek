@@ -14,7 +14,6 @@ typedef struct DUPFFstruct *DUPFF;
 DUPFF DUPFFnew(const int maxdeg)
 {
   DUPFF ans = (DUPFF)malloc(sizeof(struct DUPFFstruct));
-  // dprint;
-   ans->coeffs = 0;
+  ans->coeffs = 0;
   return ans;
 }
