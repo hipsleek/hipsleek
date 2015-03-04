@@ -16,10 +16,19 @@ Exception occurred: Errormsg.Error
 Error3(s) detected at main
 466:1-466:108: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different integer types).
 
-
+------------------------------------
 #ex1a-calloc.c: DONE
 
 to support calloc
+------------------------------------
+@ex1-b.c FIXED
+
+------------------------------------
+@ex1-c.c: FIXED. added offset into defer data node.
+
+Exception Invalid_argument("List.combine") Occurred!
+
+
 ------------------------------------
 ERROR: at ex1-200204.c_40:19_-1:-1
 Message: lhs and rhs do not match 1

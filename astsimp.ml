@@ -6922,7 +6922,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   s := !s ^ "_star";
                   let e = IF.P.Var (!p1, l) in
                   let h1 = IF.mkHeapNode n !s ho_exps 0 dr split imm full inv pd perm [e] ann_param None l in
-                  let h2 = IF.mkHeapNode p base_heap_id ho_exps 0 dr split imm full inv pd perm exps ann_param pi l in
+                  let h2 = IF.mkHeapNode p base_heap_id ho_exps 0 dr split imm full inv pd perm (exps) ann_param pi l in
                   let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                   (hf, !new_vars)
                 )
@@ -6948,8 +6948,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 done;
                 s := !s ^ "_star";
                 let e = IF.P.Var (!p1, l) in
-                let h1 = IF.mkHeapNode n !s ho_exps 0 dr split imm full inv pd perm [e] ann_param None l in
-                let h2 = IF.mkHeapNode p c ho_exps 0 dr split imm full inv pd perm exps ann_param pi l in
+                let offe = IF.P.Var (("o", Unprimed), l) in
+                let h1 = IF.mkHeapNode n !s ho_exps 0 dr split imm full inv pd perm [e;offe] ann_param None l in
+                let h2 = IF.mkHeapNode p c ho_exps 0 dr split imm full inv pd perm (exps) ann_param pi l in
                 let hf = List.fold_left (fun f1 f2 -> IF.mkStar f1 f2 l) h1 (!heaps @ [h2]) in
                 (hf, !new_vars)
               )

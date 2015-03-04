@@ -1740,7 +1740,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_pruning_conditions = [];
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
-                    let _ = DD.tinfo_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
+                    let _ = DD.ninfo_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
                     (*Test whether fresh_perm_exp is full permission or not
                       writable -> fresh_perm_exp = full_perm => normally
                       read-only -> fresh_perm_exp != full_perm => in order to 
@@ -1761,10 +1761,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         vheap
                     in
-                    let _ = DD.tinfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
+                    let _ = DD.ninfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
                     let vheap = Immutable.normalize_field_ann_formula vheap in
 	            let vheap = Cvutil.prune_preds prog false vheap in
-                    let _ = DD.tinfo_hprint (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
+                    let _ = DD.ninfo_hprint (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];
                         CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then perm_vars else [];  (*need to instantiate f*)
@@ -3723,7 +3723,12 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		    Prooftracer.add_proc proc pp;
 		  end
 		  in
-		  let _ = match exc with | Some e -> raise e | None -> () in
+		  let _ = match exc with
+                    | Some e ->
+                          (* let _ = print_string_quiet (get_backtrace_quiet ()) in *)
+                          raise e
+                    | None -> ()
+                  in
                   if pr_flag then
                     begin
 		      if pp then

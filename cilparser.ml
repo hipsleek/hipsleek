@@ -560,7 +560,8 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
               match data_decl.Iast.data_fields with
               | []   -> report_error no_pos "create_void_pointer_casting_proc: Invalid data_decl fields"
               | [hd] -> "<_>"
-              | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
+              | hd::tl ->
+                    "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
             with Not_found -> report_error no_pos ("create_void_pointer_casting_proc: Unknown data type: " ^ base_data)
           ) 
       ) in
@@ -573,6 +574,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
         "  }\n"
       ) in
+      let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
       let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
       Hashtbl.add tbl_aux_proc proc_name pd;
       pd
