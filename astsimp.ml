@@ -4666,18 +4666,20 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let cts = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts
                 else if (mn=Globals.join_name) then
                   (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
-                else
-              (
-                  if (List.length args != List.length proc_decl.I.proc_args) then
-                    report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
-                  else
-                  List.map2 (fun p1 t2 ->
-                      let t1 = p1.I.param_type in
-                      match t1, t2 with
-                        | Globals.Named _, Globals.Named "" -> t1  (* null case *)
-                        | _ -> t2
-                  ) proc_decl.I.proc_args cts
-              ) in
+                else (
+                    let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
+                    if ((List.length args) != (List.length proc_decl.I.proc_args)) then
+                      report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
+                    else
+                      List.map2 (fun p1 t2 ->
+                          let t1 = p1.I.param_type in
+                          match t1, t2 with
+                            | Globals.Named _, Globals.Named "" -> t1  (* null case *)
+                            | _ -> t1 (* t2 *) (* Loc: why not t1 *)
+                      ) proc_decl.I.proc_args cts
+                )
+            in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
             let this_recv = 
               if Gen.is_some proc.I.proc_data_decl then
@@ -4791,7 +4793,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     (*======== <<<<INIT ==========*)
             else (
                 try (
-                    let pdef = if (mn=Globals.join_name) then proc_decl else I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
+                    let pdef = if (mn=Globals.join_name) then proc_decl else
+                       let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
+                       I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
+                    in
                     let proc_args = if (mn=Globals.join_name) then
                           if (!Globals.allow_threads_as_resource) then
                             (*threads as resource -> thrd type*)
@@ -4829,7 +4834,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                         Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
-                      else 
+                      else
+                        let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
                         (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                         let positions = List.map I.get_exp_pos args in
                         let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
@@ -4855,7 +4861,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 with Not_found -> (
                     try
                       let _ = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
-                      report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mingled_mn ^ " has invalid argument types")
+                      let _ = print_string_quiet (get_backtrace_quiet ()) in
+                      report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mingled_mn ^ " has invalid argument types (exc)")
                     with Not_found -> 
                         report_error pos ("trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found"))
                 )

@@ -776,6 +776,7 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
     ) in
     Debug.binfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
     let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
+    let _ = Debug.ninfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
     Hashtbl.add tbl_aux_proc proc_name proc_decl;
     proc_decl
   )
@@ -1351,6 +1352,7 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   (* | Cil.TPtr _, Cil.TPtr _ -> *)
       let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
       let proc_name = pointer_arith_proc.Iast.proc_name in
+      let _ =  Debug.info_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
       Iast.mkCallNRecv proc_name None [e1; e2] None None pos
   (* not pointer arithmetic *)
   | _, _ ->
