@@ -7301,7 +7301,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HTrue ->  (CF.HTrue, CF.TypeTrue, [], tl)
       | IF.HFalse -> (CF.HFalse, CF.TypeFalse, [], tl) 
       | IF.HEmp -> (CF.HEmp, CF.TypeTrue, [], tl)
-      | IF.HVar v -> (CF.HVar (CP.SpecVar (FORM, v, Unprimed)), CF.TypeTrue, [], tl)
+      (* URGENT:TODOWN:HVar *)
+      | IF.HVar (v,hvar_vs) -> 
+            let vs = List.map (fun v -> (CP.SpecVar (FORM, v, Unprimed))) hvar_vs in
+            (CF.HVar (CP.SpecVar (FORM, v, Unprimed),vs), CF.TypeTrue, [], tl)
     ) in 
     res
   ) in
@@ -8051,7 +8054,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
       | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) 
-      | IF.HVar v -> (used_names, [], IF.HVar v, IP.mkTrue no_pos) 
+      (* URGENT:TODO:WN:HVar *)
+      | IF.HVar (v,hvar_vs) -> (used_names, [], IF.HVar (v,hvar_vs), IP.mkTrue no_pos) 
   in 
 
   (* added to filter out global relation from implicit quantification *)

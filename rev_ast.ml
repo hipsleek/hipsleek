@@ -114,7 +114,7 @@ let rec rev_trans_heap f = match f with
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
   | CF.HEmp   -> IF.HEmp
-  | CF.HVar (CP.SpecVar(_,v,_))   -> IF.HVar v
+  | CF.HVar (CP.SpecVar(_,v,_),ls)   -> IF.HVar (v,List.map (Cpure.string_of_spec_var) ls)
   | CF.ThreadNode b ->
         IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
             b.CF.h_formula_thread_name

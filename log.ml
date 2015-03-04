@@ -68,6 +68,7 @@ type sleek_log_entry = {
     sleek_proving_tntrel_ass: Ti3.tntrel list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_rel_ass: CP.infer_rel_type list;
+    (* TODO:WN:HVar *)
     sleek_ho_vars_map: ( CP.spec_var * CF.formula) list; (* map: HVar -> its formula *)
     sleek_time : float;
     sleek_timeout : bool;

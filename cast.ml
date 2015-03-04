@@ -1543,7 +1543,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
               in
               only_self) hs  in
           let get_name h = match h with
-            | F.HVar v -> P.name_of_sv v
+            | F.HVar (v,_) -> P.name_of_sv v
             | F.DataNode _
             | F.ViewNode _-> F.get_node_name h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
