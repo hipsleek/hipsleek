@@ -2626,15 +2626,15 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
-        let l = List.map (fun ((a,ls) as lbl,f)->
-            let new_lbl =
-              if string_compare a "" then
-                match ls with
-                  | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl
-                  | _ -> lbl
-              else lbl
-            in
-            ( new_lbl,f)) l in
+        (* let l = List.map (fun ((a,ls) as lbl,f)-> *)
+        (*     let new_lbl = *)
+        (*       if string_compare a "" then *)
+        (*         match ls with *)
+        (*           | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl *)
+        (*           | _ -> lbl *)
+        (*       else lbl *)
+        (*     in *)
+        (*     ( new_lbl,f)) l in *)
 	AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
 	Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
