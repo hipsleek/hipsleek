@@ -99,6 +99,10 @@ let binfo_pprint (msg:string) (pos:loc) =
   let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^m) msg
 
+let winfo_pprint (msg:string) (pos:loc) =
+  let s = if !devel_debug_on then (prior_msg pos) else " " in
+  let flag = !trace_on || !devel_debug_on in
+  ho_print flag (fun m -> s^m) ("**ERROR:WARNING**"^msg)
 
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in

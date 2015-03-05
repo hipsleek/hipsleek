@@ -7337,8 +7337,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                                   let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components new_es.es_formula in
                                   let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
+                                  (* TODO:WN:HVAr *)
                                   let hv = match l_h with
-                                    | HVar v -> if is_mem v new_es.es_gen_impl_vars then Some v else None
+                                    | HVar (v,_) -> if is_mem v new_es.es_gen_impl_vars then Some v else None
                                     | _ -> None
                                   in
                                   if (not r) && (is_None hv) then
@@ -9514,7 +9515,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_ho_arguments = l_ho_args;
         h_formula_view_annot_arg = l_annot } -> 
       (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
-    | HVar v -> ([], [], CP.name_of_spec_var v, "ho_var", None, CP.ConstAnn Mutable, [])
+    (* TODO:WN:HVar -*)
+    | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, "ho_var", None, CP.ConstAnn Mutable, [])
     | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel", None, CP.ConstAnn Mutable, [])
     | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" 
   in
@@ -9542,7 +9544,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_annot_arg = r_annot;
         h_formula_view_node = r_var } -> 
       (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
-    | HVar v -> ([], [], CP.name_of_spec_var v, v, None, CP.ConstAnn Mutable, [])
+    (* TODO:WN:HVar -*)
+     | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, v, None, CP.ConstAnn Mutable, [])
     | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable, [])
     | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" 
   in
@@ -10054,8 +10057,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
                       let new_ho_rhs =
                         match ho_rhs with
-                        | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar v) pos }
-                        | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar v) pos }
+                            (* TODO:WN:HVar -*)
+                        | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar (v,[])) pos }
+                        | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar (v,[])) pos }
                         | _ -> ho_rhs
                       in
                       Some v, 
@@ -12089,7 +12093,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rhs_node = match rhs with
                 | DataNode n -> n.h_formula_data_node
                 | ViewNode n -> n.h_formula_view_node
-                | HVar v -> v
+                (* TODO:WN:HVar *)
+                | HVar (v,_) -> v
                 | HRel (hrel,_,_) -> hrel
                 | _ -> report_error pos "Expect a node"
               in
@@ -12145,7 +12150,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components estate.es_formula in
                           let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
                           let hv = match l_h with
-                            | HVar v -> if is_mem v estate.es_gen_impl_vars then Some v else None
+                            (* TODO:WN:HVar *)
+                            | HVar (v,hvar_vs) -> if is_mem v estate.es_gen_impl_vars then Some v else None
                             | _ -> None
                           in
                           match hv with
@@ -12164,7 +12170,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                                   (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                   CF.mk_failure_may (msg) sl_error, estate.es_trace)) (mk_cex false), NoAlias)
-                              | HVar v -> (* Do the instantiation for the HVar v *)
+                              (* TODO:WN:HVar *)
+                              | HVar (v,hvar_vs) -> (* Do the instantiation for the HVar v *)
                                 let succ_estate =
                                   if (is_mem v estate.CF.es_gen_impl_vars) && (CF.is_emp_heap rhs_rest) then
                                     let bind_f = estate.CF.es_formula in
@@ -13570,7 +13577,8 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                 | ViewNode vn -> vn.h_formula_view_name
                 | DataNode dn -> dn.h_formula_data_name
                 | ThreadNode tn -> tn.h_formula_thread_name
-                | HVar v -> (CP.name_of_spec_var v)
+                (* TODO:WN:HVar *)
+                | HVar (v,hvar_vs) -> (CP.name_of_spec_var v)
                 | HTrue -> "htrue"
                 | _ -> let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
                   ""

@@ -366,7 +366,8 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       let imm, pimm, p = match rhs_node with
         | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (imm, pimm, p)
         | ViewNode { h_formula_view_node=p; h_formula_view_imm=imm } -> (imm, [], p)
-        | HVar v -> (CP.ConstAnn(Mutable), [], v)
+        (* TODO:WN:HVar *)
+        | HVar (v,_) -> (CP.ConstAnn(Mutable), [], v)
         | ThreadNode { h_formula_thread_node=p; } -> (CP.ConstAnn(Mutable), [], p)
         | HRel (hp, e, _) ->
           let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
@@ -791,9 +792,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
-    | HVar v -> 
+    | HVar (v,_) -> 
       (match rhs_node with
-        | HVar vr -> if CP.eq_spec_var v vr then [(HEmp, f, [], Root)] else []
+        (* URGENT:TODO:WN:HVar *)
+        | HVar (vr,_) -> if CP.eq_spec_var v vr then [(HEmp, f, [], Root)] else []
         | _ -> [])
     | ThreadNode ({h_formula_thread_node = p1;}) -> (
         match rhs_node with

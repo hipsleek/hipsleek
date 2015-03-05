@@ -719,6 +719,7 @@ let peek_star =
              | [STAR,_;PFULL,_;_] -> raise Stream.Failure
              | [STAR,_;PLEND,_;_] -> raise Stream.Failure
              | [STAR,_;PVALUE,_;_] -> raise Stream.Failure
+             | [STAR,_;PFRAC,_;_] -> raise Stream.Failure
              | [STAR,_;PZERO,_;_] -> raise Stream.Failure
              | _ -> ())                   
              
@@ -1535,7 +1536,8 @@ p_vp_ann:
    | `PFULL -> VP_Full
    | `PVALUE -> VP_Value
    | `PLEND -> VP_Lend
-   | `PFRAC;`OPAREN; `FRAC_LIT (f,s);`CPAREN-> VP_Frac f
+   | `PFRAC;`OPAREN; `INT_LITER(i1,_); `DIV;  `INT_LITER(i2,_)
+         (* `FRAC _LIT (f,s) *);`CPAREN-> VP_Frac (Frac.make i1 i2)
    (* | `AT; `FRAC_LIT (f, _) -> VP_Frac f *)
    (* | `PREF -> VP_Ref *)
   ]];
@@ -1839,7 +1841,7 @@ simple_heap_constr:
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
      (* High-order variables, e.g. %P*)
-   | `PERCENT; `IDENTIFIER id -> F.HVar id
+   | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
          (* if hp_names # mem id then *)
            F.HRel(id, cl, (get_pos_camlp4 _loc 2))

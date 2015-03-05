@@ -9,7 +9,6 @@ inv l>=p.
 
 checkentail x::node<_,q>*q::lseg<l,y,p> |- x::lseg<m,y,z>.
 print residue.
-
 // <1>emp&p=z & l+1=m & exists(y_60:y=y_60) & Anon_61=Anon_13&{FLOW,(4,5)=__norm#E}[]
 
 // non-empty sorted linked-list
@@ -19,5 +18,4 @@ inv self!=null.
 
 checkentail_exact x::node<2,q1>*q1::node<4,null> |- x::sortll<m>.
 print residue.
-
 //<1>emp&m<=flted_19_111 & flted_19_112=m & flted_19_112<=flted_19_111 & flted_19_110=null & flted_19_111=4 & flted_19_112=2&{FLOW,(4,5)=__norm#E}[]

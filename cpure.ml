@@ -580,6 +580,8 @@ let is_int_str_aux (n:int) (s:string) : bool =
     if (p=const_prefix) then true
     else false
 
+let ident_of_spec_var (sv: spec_var) = match sv with
+    | SpecVar (t, v, _) -> v 
 
 let string_of_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
