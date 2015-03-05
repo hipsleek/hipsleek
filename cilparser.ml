@@ -1102,9 +1102,14 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
           let ty = Globals.Named comp.Cil.cname in
           ((ty, name), pos, true, [gen_field_ann ty] (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
     | Cil.TPtr (ty, _) ->
+          let _ = Debug.ninfo_hprint (add_str "ftyp" string_of_cil_typ) ftyp no_pos in
+          let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
           let new_ty = (
-              if (is_cil_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
-              else translate_typ ftyp pos
+              (* Loc: why do we ignore the outest pointer? *)
+              (* if (is_cil_struct_pointer ftyp) then *)
+              (*   translate_typ ty pos    (\* pointer goes down 1 level *\) *)
+              (* else *)
+                translate_typ ftyp pos
           ) in
           ((new_ty, name), pos, false, [gen_field_ann new_ty] (* Iast.F_NO_ANN *))
     | _ ->
@@ -1114,6 +1119,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let name = comp.Cil.cname in
+  let _ = Debug.info_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
   Hashtbl.add tbl_data_decl (Globals.Named name) datadecl;
