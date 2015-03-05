@@ -2626,15 +2626,22 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
-        (* let l = List.map (fun ((a,ls) as lbl,f)-> *)
-        (*     let new_lbl = *)
-        (*       if string_compare a "" then *)
-        (*         match ls with *)
-        (*           | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl *)
-        (*           | _ -> lbl *)
-        (*       else lbl *)
-        (*     in *)
-        (*     ( new_lbl,f)) l in *)
+        let _ = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+        let l = if !Globals.gen_baga_inv
+        then
+          List.map (fun ((a,ls) as lbl,f) ->
+              let new_lbl =
+                if string_compare a "" then
+                  match ls with
+                    | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl
+                    | _ -> lbl
+                else lbl
+              in
+              (new_lbl,f)) l
+        else
+          l
+        in
+        let _ = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
 	AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
 	Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
