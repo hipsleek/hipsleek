@@ -1214,6 +1214,18 @@ Total number of errors: 20 in files:
 Total number of errors: 19 in files:
   label-basic.slk({E3#Valid}) lst-under1.slk({I2#Fail}) lst-under2.slk({I1#Fail}) ll-under1c.slk({I2#Fail}) ll-under1e.slk({I1#Fail},{I2#Fail}) ll-under1f.slk({I2#Fail}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid}) infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm-field/sleek05.slk({E1#Valid}) inf-no-eps.slk(no result  for {E}) infinity.slk(no result  for {E}) inflem.slk({E1#Fail},{E2#Valid}).
 ====================================================================
+# rft sleek
+
+Total number of errors: 3 in files:
+  label-basic.slk({E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+
+How come label-basic is failing?
+Two other problems for --inv-baga below.
+
+# rft sleek -flags "--inv-baga"
+
+Total number of errors: 5 in files:
+  label-basic.slk({E3#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) inflem.slk({E1#Fail},{E2#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================
