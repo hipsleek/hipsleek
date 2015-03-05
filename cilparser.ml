@@ -1152,7 +1152,7 @@ and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
     | Cil.LOr -> Iast.OpLogicalOr
 
 
-and translate_lval (lv: Cil.lval) : Iast.exp =
+and translate_lval_x (lv: Cil.lval) : Iast.exp =
   let _, _, l = lv in
   let pos = translate_location l in
   let lv_str = string_of_cil_lval lv in
@@ -1165,7 +1165,9 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
       let pos = translate_location loc in
       let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
             (found_fields : string list) pos
-            : Iast.exp = (
+            : Iast.exp =
+        let _ = Debug.ninfo_hprint (add_str "base" Iprinter.string_of_exp) base no_pos in
+        (
                 match offset with
                   | Cil.NoOffset -> (
                         match found_fields with 
@@ -1184,6 +1186,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
                                 let b = Iast.mkMember base found_fields None p in
                                 Iast.mkArrayAt b [(translate_exp e)] p
                         ) in
+                        let _ = Debug.ninfo_hprint (add_str "new_base" Iprinter.string_of_exp) new_base no_pos in
                         create_complex_exp new_base off [] pos
             ) in
       match lhost with
@@ -1194,12 +1197,15 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
         | Cil.Mem e ->
               (* access to data in pointer variable *)
               let base_typ = typ_of_cil_exp e in
+              let _ = Debug.ninfo_hprint (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
               match base_typ with
                 | Cil.TPtr (Cil.TComp _, _) ->
                       let base = translate_exp e  in
                       create_complex_exp base offset [] pos
                 | Cil.TPtr (Cil.TNamed _, _) ->
-                      let base = translate_exp e  in
+                      let ptr_base = translate_exp e  in
+                      let data_fields = [str_value] in
+                      let base = Iast.mkMember ptr_base data_fields None pos in
                       create_complex_exp base offset [] pos
                 | _ -> (
                       let data_base = translate_exp e  in
@@ -1208,6 +1214,12 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
                       create_complex_exp base offset [] pos
                   )
   )
+
+and translate_lval (lv: Cil.lval) : Iast.exp =
+  let pr_e = (add_str "cil_lv" string_of_cil_lval) in
+  let pr_res = (add_str "res" !Iast.print_exp) in
+  Debug.no_1 "translate_lval" pr_e pr_res
+      (fun _ -> translate_lval_x lv) lv
 
 and translate_exp_x (e: Cil.exp) : Iast.exp =
   match e with
@@ -1256,7 +1268,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
         let newexp = Iast.mkCast target_typ unexp pos in 
         newexp
       )
-    | Cil.BinOp (op, e1, e2, ty, l) -> translate_exp_binary op e1 e2 ty l
+    | Cil.BinOp (op, e1, e2, ty, l) ->
+          translate_exp_binary op e1 e2 ty l
     | Cil.Question (exp1, exp2, exp3, ty, l) ->
         let e1 = translate_exp exp1 in
         let e2 = translate_exp exp2 in
@@ -1328,7 +1341,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
               report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
           )
       )
-    | Cil.StartOf (lv, l) -> translate_lval lv
+    | Cil.StartOf (lv, l) ->
+          translate_lval lv
 
 and translate_exp (e: Cil.exp) : Iast.exp =
   let pr_e = (add_str "cil exp" string_of_cil_exp) in
@@ -1352,7 +1366,7 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   (* | Cil.TPtr _, Cil.TPtr _ -> *)
       let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
       let proc_name = pointer_arith_proc.Iast.proc_name in
-      let _ =  Debug.info_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+      let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
       Iast.mkCallNRecv proc_name None [e1; e2] None None pos
   (* not pointer arithmetic *)
   | _, _ ->
