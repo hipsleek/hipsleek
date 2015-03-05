@@ -18,19 +18,9 @@ struct DUPFFstruct
 
 typedef struct DUPFFstruct *DUPFF;
 
-//this func trigger diff type of error at line 38. see ex1-e2
-void DUPFFexgcd_g(struct DUPFFstruct* f)
-{
-   f->coeffs[0] = 0;
-
-  return;
-}
-
 /*
-ERROR: at ex1-e1.c_24:3_24:20
-Message: lhs is not an lvalue
-
-
+ERROR: at ex1-e2.c_24:9_24:11
+Message: OpAssign : lhs and rhs do not match 2
  */
 void DUPFFexgcd( const DUPFF f)
 {
@@ -39,3 +29,9 @@ void DUPFFexgcd( const DUPFF f)
   return;
 }
 
+/* void foo( const DUPFF f) */
+/* { */
+/*   FFelem i = f->coeffs[0]; */
+
+/*   return; */
+/* } */
