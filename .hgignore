@@ -36,7 +36,7 @@ smt2slk_src/compile$
 smt2slk_src/smtlib_lex.ml$
 smt2slk_src/smtlib_parse.ml$
 decidez.glob$
-
+/*.native$
 
 
 
