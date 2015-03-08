@@ -1827,6 +1827,7 @@ $output_file = "log";
 # the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 my $lem = '--elp';
 my $inv = '--inv-test';
+my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["cll-d.slk", "", (), "Valid."],
@@ -1851,14 +1852,14 @@ my $inv = '--inv-test';
                       ["sleek9.slk", " --elp ", ([$lem,"Valid.Valid."]),"Valid.Fail.Valid.Valid."],
                       ["sleek12-lend.slk", "", (), "Valid.Fail.Valid."],
                       ["sleek13-lend.slk", "", (), "Valid.Valid.Valid.Fail."],
-                      ["lst-under1.slk", "--inv-test", ([$inv,"Valid.Fail."]), "Valid.Fail."],
-                      ["lst-under2.slk", "--inv-test", ([$inv,"Fail.Valid"]), "Valid.Fail."],
-              ["ll-under1a.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1b.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Valid."]), ""],
-              ["ll-under1c.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
-              ["ll-under1d.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1e.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Fail."]), ""],
-              ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
+                      ["lst-under1.slk", "--inv-test", ([$dis,"Valid.Fail."]), "Valid.Fail."],
+                      ["lst-under2.slk", "--inv-test", ([$dis,"Fail.Valid"]), "Valid.Fail."],
+              ["ll-under1a.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1b.slk", " --inv-test --baga-xpure ", ([$dis,"Fail.Valid."]), ""],
+              ["ll-under1c.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Fail."]), ""],
+              ["ll-under1d.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1e.slk", " --inv-test --baga-xpure ", ([$dis,"Fail.Fail."]), ""],
+              ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Fail."]), ""],
                       ["baga-test-eps.slk", "--eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],

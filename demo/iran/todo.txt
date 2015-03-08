@@ -39,6 +39,22 @@ Term[7,pv_1447]&{FLOW,(4,5)=__norm#E}[]
 flted_16_55=null & n_1502!=0 & v_node_19_1443'=y' & Term[7,pv_1448]&
 {FLOW,(4,5)=__norm#E}[]. 
 ==================================================
+# ex5-lemma-proof
+
+. Why is it Lemma_16, not Lemma_17?
+. Why this cannot be proven?
+. Why is Lemma_14 sufficient?
+
+
+Entailing lemma lem_16: Fail. (no cex)(must) cause: lor[ emp&flted_17_1472=0 & self_lem_16=q_1473 & flted_17_1472+1=n & 
+Anon_1476=Anon_1471 & p_1477=x_1474&{FLOW,(6,10)=__Error#E}[], q_1493::node<Anon_1491,x_1494>&flted_17_1492!=0 & flted_8_1488+
+1=flted_17_1492 & p_1487=q_1493 & flted_17_1492+1=n & Anon_1496=Anon_1489 & 
+p_1497=q_1490&{FLOW,(6,10)=__Error#E}[]]
+
+Entailing lemma lem_14: Valid.
+
+Valid Lemmas : [lem_14:<==>] added to lemma store.
+
 ==================================================
 ==================================================
 ==================================================

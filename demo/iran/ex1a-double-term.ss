@@ -16,7 +16,7 @@ There is no transition but yet an error!
 Termination checking result: 
 (8)->(8) (ERR: invalid transition)  Term[17; n] ->  Loop{ 1:0}[]
 
-see # ex1a-double-term.ss
+see # ex1c-double-term.slk
 
 checkentail !(v_bool_7_1324') & n'!=0 & 0<=n & n'=n & v_int_8_1322'=2 & 
 v_int_8_1319'+1=n' & Term
