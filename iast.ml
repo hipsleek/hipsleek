@@ -2334,7 +2334,7 @@ let sub_type2 (t1 : typ) (t2 : typ) =
     exists_path (string_of_typ t1) (string_of_typ t2)
   else false
    
-let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
+let sub_type t1 t2 = Exc.GTable.sub_type t1 t2 || sub_type2 t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 

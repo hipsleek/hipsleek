@@ -483,6 +483,7 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       | ex ->
             let _ = print_string_quiet (get_backtrace_quiet ()) in
             report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
+            (* raise ex *)
 
 and gather_type_info_exp prog a0 tlist et =  
   Debug.no_eff_3 "gather_type_info_exp" [false;true] 
