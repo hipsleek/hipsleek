@@ -4668,7 +4668,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
                 else (
                     let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
-                    let _ = Debug.ninfo_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
+                    let _ = Debug.info_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
                     if ((List.length args) != (List.length proc_decl.I.proc_args)) then
                       report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
                     else
