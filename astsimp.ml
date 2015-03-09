@@ -1110,28 +1110,28 @@ let line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_
 			| Cpure.Subsumed 
 			| Cpure.Subsuming -> raise Not_found
 			| Cpure.Equal -> begin match a1 with
-				| None -> (Some false,a2) 
+				| None -> (Some false,a2)
 				| Some false -> (a1,a2)
 				| Some true -> raise Not_found end
 			| Cpure.Contradicting -> begin match a1 with
-				| None -> (Some true,Some con) 
-				| Some false ->  raise Not_found 
+				| None -> (Some true,Some con)
+				| Some false ->  raise Not_found
 				| Some true -> match a2 with
-					| None -> raise Not_found 
+					| None -> raise Not_found
 					| Some s-> if (Cpure.equalBFormula con s) then (a1,a2)
-					  else raise Not_found end										
+					  else raise Not_found end
 		  ) (None,None) br_list in
 		  (*consistencies across all branches*)
 		  match contr with
 			| None -> raise Not_found
 			| Some false -> (br_index::l1,l2,n)
-			| Some true -> 
+			| Some true ->
 				  match (n,con_f) with
 					| None, Some s -> (l1,br_index::l2, Some s)
 					| _, None ->  raise Not_found
 					| Some s1, Some s2 -> if (Cpure.equalBFormula s1 s2) then  (l1,br_index::l2, n)
 					  else raise Not_found
-	) ([],[],None) branches in	
+	) ([],[],None) branches in
     match n with
 	  | None -> (cons, [],[])
 	  | Some n -> (n, l1,l2)
@@ -1190,10 +1190,10 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	  let matr = Array.make_matrix sz sz Cpure.Unknown in
 	  let f_sat f = TP.is_sat_sub_no 12 f (ref 0) in
 	  let f_imply f1 f2 = if (CP.fast_imply [] [f1] f2>0) then true else false in
-	  let filled_matr = 
+	  let filled_matr =
 	    Array.mapi(fun x c->(Array.mapi (fun y c->
-		if (x>y) then Cpure.compute_constraint_relation f_sat f_imply (constr_array.(x)) (constr_array.(y)) 
-		else if x=y then Cpure.Equal 
+		if (x>y) then Cpure.compute_constraint_relation f_sat f_imply (constr_array.(x)) (constr_array.(y))
+		else if x=y then Cpure.Equal
 		else matr.(x).(y) ) c)) matr in
 	  let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
 	      if (x<y) then filled_matr.(y).(x)
@@ -1204,14 +1204,13 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	    let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
 	    Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
 	    ) filled_matr "")^"\n") in*)
-	  
 	  let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
-			let rec arr_exists i b = 
-				if i=x then b 
-				else if filled_matr.(i).(x)=Cpure.Contradicting || (filled_matr.(i).(x)=Cpure.Equal) then true 
-				else arr_exists (i+1) b in 
+			let rec arr_exists i b =
+				if i=x then b
+				else if filled_matr.(i).(x)=Cpure.Contradicting || (filled_matr.(i).(x)=Cpure.Equal) then true
+				else arr_exists (i+1) b in
 		  if (arr_exists 0 false) then ((Cpure.BForm (cons, None)),(Cpure.BForm (cons, None)),[],[])
-		  else 
+		  else
 			let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
 			let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
 			let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
@@ -2104,9 +2103,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
           let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
           (* WN : this test is unsound *)
-          (* if !Globals.do_test_inv then report_warning pos msg *)
-          (* else report_warning pos msg *)
-          ()
+          if !Globals.do_test_inv then report_error pos msg
+          else report_warning pos msg
       in ()
     else ()
   in
@@ -2573,15 +2571,16 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (*   vd.Cast.view_x_formula *)
                 let user_inv = MCP.pure_of_mix vd.Cast.view_user_inv in
                 let better =
-                  if (Tpdispatcher.imply_raw fixc user_inv) then fixc
+                  if List.exists (fun sv -> (CP.type_of_spec_var sv) != Int) (CP.fv user_inv) then fixc (* user inv is not just numeric *)
+                  else if (Tpdispatcher.imply_raw fixc user_inv) then fixc
                   else
                     (* to check view_form ==> usr_inv *)
                     let body = CF.project_body_num vd.Cast.view_un_struc_formula user_inv vd.Cast.view_vars in
-                    let _ = Debug.binfo_hprint (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
-                    let _ = Debug.binfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                    let _ = Debug.binfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
-                    let _ = Debug.binfo_pprint "WARNING: TODO fixpt check" no_pos in
-                    if (true (* Tpdispatcher.imply_raw body user_inv *)) then
+                    let _ = Debug.tinfo_hprint (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                    let _ = Debug.tinfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    let _ = Debug.tinfo_pprint "WARNING: TODO fixpt check" no_pos in
+                    if (Tpdispatcher.imply_raw body user_inv) then
                       let _ = Debug.binfo_hprint (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
                       user_inv
                     else
