@@ -19,12 +19,14 @@ struct DUPFFstruct
 typedef struct DUPFFstruct *DUPFF;
 
 //this func trigger diff type of error at line 38. see ex1-e2
+
 void DUPFFexgcd_g( struct DUPFFstruct * f)
 {
    f->coeffs[0] = 0;
 
   return;
 }
+
 
 /*
 ERROR: at ex1-e1.c_24:3_24:20
@@ -50,10 +52,13 @@ Message: gather_type_info_var : unexpected exception Failure("Can not find flow 
 /*   return; */
 /* } */
 
+
+
 void DUPFFexgcd( const DUPFF f)
 {
   FFelem i = f->coeffs[0];
 
   return;
 }
+
 

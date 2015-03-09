@@ -4594,6 +4594,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_recv_arguments = args;
             I.exp_call_recv_path_id = pi;
             I.exp_call_recv_pos = pos } ->
+            let _ = Debug.ninfo_hprint (add_str "args" (pr_list !Iast.print_exp)) (args) no_pos in
             let (crecv, crecv_t) = helper recv in
             let (recv_ident, recv_init, new_recv_ident) =
               (match crecv with
@@ -4620,6 +4621,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
                 Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
               else
+                let _ = Debug.ninfo_hprint (add_str "CallRecv:pdef.I.proc_args" (!Iast.print_param_list)) (pdef.I.proc_args) no_pos in
+                let _ = Debug.ninfo_hprint (add_str "CallRecv:cts" (pr_list  Typeinfer.string_of_spec_var_kind)) cts no_pos in
                 (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
                 if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                   Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match 1";}
@@ -4668,7 +4671,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
                 else (
                     let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
-                    let _ = Debug.info_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
                     if ((List.length args) != (List.length proc_decl.I.proc_args)) then
                       report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
                     else
@@ -4676,7 +4679,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                           let t1 = p1.I.param_type in
                           match t1, t2 with
                             | Globals.Named _, Globals.Named "" -> t1  (* null case *)
-                            | _ -> t1 (* t2 *) (* Loc: why not t1 *)
+                            | _ -> t2
                       ) proc_decl.I.proc_args cts
                 )
             in

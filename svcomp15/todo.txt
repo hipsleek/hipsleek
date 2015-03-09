@@ -37,6 +37,11 @@ Exception Invalid_argument("List.combine") Occurred!
 ERROR: at ex1-e.c_74:6_74:18
 Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__int__$int~int has invalid argument types
 
+------------------------------------
+#ex1-f:
+
+!!!>>>>>> mismatch ptr value_32_1895::DUPFFstruct<maxdeg_32_1896,deg_32_1897,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr value_32_1898::DUPFFstruct<maxdeg_32_1899,deg_32_1900,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
 
 ------------------------------------
 ERROR: at ex1-200204.c_40:19_-1:-1

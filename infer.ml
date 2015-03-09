@@ -2261,7 +2261,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
       in
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then  (* [] *) [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
+      let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
       else
         [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       in
