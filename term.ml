@@ -1123,7 +1123,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
                 if (List.exists (fun (v2,_) -> eq_spec_var v v2) subst) then [] 
                 else 
                   begin
-                    Debug.info_hprint (add_str "var -> 0" !print_sv) v no_pos;
+                    Debug.tinfo_hprint (add_str "var -> 0" !print_sv) v no_pos;
                     [(v,0)]
                   end
                 end

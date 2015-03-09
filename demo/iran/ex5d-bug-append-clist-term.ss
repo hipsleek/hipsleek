@@ -11,7 +11,7 @@ clist<n> == self::node<_,p>*p::lseg<n-1,self>
   inv self!=null & n>0;
 
 void append(node x, node y)
-  requires x::lseg<n,null> & n!=0 & Term[n]
+  requires x::lseg<n,null> & n!=0 & Term[n+222]
   ensures x::lseg<n,y>;
   requires x::lseg<n,null> & n!=0 & x=y & Term[n]
   ensures x::clist<n>;
@@ -24,10 +24,12 @@ void append(node x, node y)
 
 # ex5d-bug
 
-  requires x::lseg<n,null> & n!=0 & Term[n]
+  requires x::lseg<n,null> & n!=0 & Term[n+2]
   ensures x::lseg<n,y>;
   requires x::lseg<n,null> & n!=0 & x=y & Term[n]
   ensures x::clist<n>;
+
+Above seems OK, as the two calls are in diff phases..
 
  Why is there is non-decreasing issue?
  Seems like another multi pre/post issue

@@ -13,6 +13,10 @@ clist<n> == self::node<_,p>*p::lseg<n-1,self>
 lemma_unsafe self::clist<n> <- self::lseg<n-1,q>*q::node<_,x>;
 
 void append(node x, node y)
+/*
+  requires x::lseg<n,null> & n!=0 & Term[n]
+  ensures x::lseg<n,y>;
+*/
   requires x::clist<n> & Loop
   ensures true;
 {
@@ -20,3 +24,18 @@ void append(node x, node y)
   else append(x.next, y);
 }
 
+/*
+# ex5g-bug
+
+ Why is false post-cond not being checked
+ for Loop? There is also no message indicating
+ that term-checking is being done.
+
+  requires x::clist<n> & Loop
+  ensures true;
+
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS.
+
+
+*/

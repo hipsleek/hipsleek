@@ -1,4 +1,4 @@
-# ex1a.ss
+# ex1a.ss (FIXED)
 
 There is no transition but yet an error!
 
@@ -56,6 +56,18 @@ Entailing lemma lem_14: Valid.
 Valid Lemmas : [lem_14:<==>] added to lemma store.
 
 ==================================================
+# ex5g-bug
+
+ Why is false post-cond not being checked
+ for Loop? There is also no message indicating
+ that term-checking is being done.
+
+  requires x::clist<n> & Loop
+  ensures true;
+
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS.
+
 ==================================================
 ==================================================
 ==================================================
