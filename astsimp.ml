@@ -2101,9 +2101,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         else
           let s1 = if over_fail then "-- incorrect over-approx inv : "^(pr_d over_f)^"\n" else "" in
           let s2 = if under_fail then "-- incorrect under-approx inv : "^(pr_d under_f)^"\n" else "" in
-          let msg = ("view defn for "^vn^" has incorrectly supplied invariant\n"^s1^s2) in
+          let msg = ("view defn for "^vn^" has incorrectly inferred/supplied invariant\n"^s1^s2) in
           (* WN : this test is unsound *)
-          if !Globals.do_test_inv then report_error pos msg
+          if !Globals.do_test_inv then report_warning pos msg
           else report_warning pos msg
       in ()
     else ()
@@ -2753,6 +2753,12 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
             let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
             let _ = print_string_quiet "\n" in
+            let user_inv = MCP.pure_of_mix cv.Cast.view_user_inv in
+            let body = CF.project_body_num cv.Cast.view_un_struc_formula user_inv cv.Cast.view_vars in
+            let is_sound = Tpdispatcher.imply_raw body user_inv in
+            let _ = if not is_sound then
+              Debug.binfo_hprint (add_str "User supplied inv is not sound: " !CP.print_formula) user_inv no_pos
+            else () in
             if precise then
               match cv.Cast.view_baga_inv with
                 | None -> {cv with
@@ -2774,12 +2780,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                       }
                       else cv
             else
-              {cv with
-                  C.view_baga_over_inv = Some inv;
-                  C.view_baga_x_over_inv = Some inv;
-                  C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                  C.view_x_formula = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-              }
+              let inf_inv = Excore.EPureI.ef_conv_disj inv in
+              if (Tpdispatcher.imply_raw inf_inv user_inv) || (not is_sound) then
+                {cv with
+                    C.view_baga_over_inv = Some inv;
+                    C.view_baga_x_over_inv = Some inv;
+                    C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                    C.view_x_formula = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                }
+              else cv
         ) cviews0
       (* else *)
       (*   cviews0 *)
@@ -4930,7 +4939,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                           | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
                         C.exp_catch_flow_var = cfv;
                         C.exp_catch_var = Some (ct,alpha);
-                        C.exp_catch_body = new_bd;                                                                                     
+                        C.exp_catch_body = new_bd;
                         C.exp_catch_pos = pos;
                         } in (r,ct2) end
                 | None ->  
@@ -4940,7 +4949,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       (C.Catch{ C.exp_catch_flow_type = exlist # get_hash cvt;
                       C.exp_catch_flow_var = cfv;
                       C.exp_catch_var = None;
-                      C.exp_catch_body = new_bd;                                                                                       
+                      C.exp_catch_body = new_bd;
                       C.exp_catch_pos = pos;},ct2)
             end
       | I.Cond {I.exp_cond_condition = e1;
@@ -5141,7 +5150,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
         I.exp_return_pos = pos} ->  begin
           let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
-          let _=if(!Globals.proof_logging_txt) then (*proof logging*)   
+          let _=if(!Globals.proof_logging_txt) then (*proof logging*)
             Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
           match oe with
             | None -> 
@@ -5290,8 +5299,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                           I.exp_assign_lhs = e;
                           I.exp_assign_rhs = add1_e;
                           I.exp_assign_path_id = None;
-                          I.exp_assign_pos = pos;})                     
-              | I.OpPostDec -> 
+                          I.exp_assign_pos = pos;})
+              | I.OpPostDec ->
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl {
                         I.exp_var_decl_type = I.int_type;
@@ -7644,7 +7653,7 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     | IP.TermU uid -> CP.TermU (trans_term_id uid tlist)
     | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
     | IP.Fail f -> CP.Fail (trans_term_fail f)
-                                                                       
+
 and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp" 
       (Iprinter.string_of_formula_exp)

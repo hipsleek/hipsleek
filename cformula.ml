@@ -18024,6 +18024,9 @@ let project_h_formula_num hf inv svl =
             let args = vn.h_formula_view_arguments in
             let sst = List.combine svl args in
             CP.subst sst inv
+      | DataNode dn ->
+            let pos = pos_of_h_formula hf in
+            CP.mkGtVarInt dn.h_formula_data_node 0 pos
       | _ -> CP.mkTrue no_pos
   in
   try
