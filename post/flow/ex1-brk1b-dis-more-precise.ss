@@ -17,10 +17,14 @@ int main(int x)
 }
 
 /*
+# post/flow/ex1
 
-With --en-split-fixcalc:
+It seems that dis-split-fixcalc is more precise
+than en-split fixcalc. Is this correct?
 
-((x'=2001 & 1<=x & x<=2000) | (x=x' & 2001<=x') | (x=x' & x'<=0))
+# see ex1a.oc
+
+With --dis-split-fixcalc:
 
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume ref [x]
@@ -31,7 +35,7 @@ With --en-split-fixcalc:
            {FLOW,(4,5)=__norm#E}[]
 
 
-Without --en-split-fixcalc:
+--en-split-fixcalc:
 
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume ref [x]
