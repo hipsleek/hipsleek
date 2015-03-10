@@ -44,22 +44,20 @@ void main()
 {
   cell h, r;
   int v;
-  CDL c = create_latch(2) with h'::cell<_> * r'::cell<_>;
+  CDL c = create_latch(2) with h'::cell<_> * r'::cell<_> * @full[h, r];
   par {h, r, v, c@L}
   {
-    case {h, c@L} c'::LatchIn{- h'::cell<_>}<> * c'::CNT<(1)> ->
-      dprint;
+    case {h, c@L} c'::LatchIn{- h'::cell<_> * @full[h]}<> * c'::CNT<(1)> ->
       h = new cell(1);
-      dprint;
       countDown(c);
       //dprint;
     ||
-    case {r, c@L} c'::LatchIn{- r'::cell<_>}<> * c'::CNT<(1)> ->
+    case {r, c@L} c'::LatchIn{- r'::cell<_> * @full[r]}<> * c'::CNT<(1)> ->
       r = new cell(2);
       countDown(c);
       //dprint;
     ||
-    case {v, c@L} c'::LatchOut{+ h'::cell<_> * r'::cell<_>}<> * c'::CNT<0> ->
+    case {v, c@L} c'::LatchOut{+ h'::cell<_> * r'::cell<_> * @full[h, r]}<> * c'::CNT<0> ->
       await(c);
       v = h.val + r.val;
       //dprint;

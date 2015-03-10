@@ -46,7 +46,9 @@ void main()
   par {h, r, v, c@L}
   {
     case {h, c@L} c'::LatchIn{- h'::cell<1>}<> * c'::CNT<(1)> ->
+      dprint;
       h = new cell(1);
+      dprint;
       countDown(c);
       dprint;
     ||
