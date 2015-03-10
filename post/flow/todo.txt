@@ -202,6 +202,17 @@ The result: x'<=x
 When change fixcalc input to [3] -> result: ((x >= 1 && 0 = PRIx) || (PRIx >= 2223 && PRIx = x) || (0 >= PRIx && PRIx = x))
 but it is not correct.
 =======================================================
+# post/ex3-bug
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&{FLOW,(1,30)=__flow#E}[]
+
+Why inferred spec not capturing below:
+
+!!! POST:  ((flow>=23 & 24>=flow & x>=1 & 0=x') | (flow>=23 & 24>=flow & 0>=x' & x'=x))
 =======================================================
 =======================================================
 =======================================================

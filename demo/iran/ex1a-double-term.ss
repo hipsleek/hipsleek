@@ -1,17 +1,21 @@
+
 int double(int n)
+/*
   requires n>=0 & Term[n]
-  ensures  res=2*n & res>=0;
+  ensures  res=2*n+1 & res>=0;
   requires n<0 & Loop
   ensures  false;
-//infer [@term] requires true ensures true;
+*/
+  infer [@post_n,@term] requires true ensures true;
 {
   if (n==0) return 0;
   else return 2+double(n-1);
 }
 
 
-
 /*
+//infer [@term] requires true ensures true;
+
 double:  
  requires true 
  case {
