@@ -1,0 +1,209 @@
+
+!!!Full processing file "t/fact2.ss"
+Parsing file "t/fact2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume n'=n & v_int_9_1404+1=n' & 
+res=v_int_9_1367' & factpost_1394(v_int_9_1404) --> factpost_1394(n).
+
+ termAssume n'=n & v_int_9_1366'+
+1=n' & factpre_0(n) --> factpre_0(v_int_9_1366').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] true@R]
+]
+Termination Inference Result:
+fact:  requires true * U & truerequires emp * N & Loop
+{ 9:9}[]
+     ensures false * N & false;
+
+Checking procedure fact1$int... 
+Procedure fact1$int SUCCESS.
+
+Checking procedure fact1$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_16_1359') & n'!=0 & n'=n & v_int_17_1441+1=n' & 
+res=v_int_17_1358' & fact1post_1423(v_int_17_1441) --> fact1post_1423(n).
+
+ termAssume v_bool_16_1359' & n'=0 & n'=n & v_int_16_1353'=0 & 
+res=v_int_16_1353' --> fact1post_1423(n).
+
+ termAssume !(v_bool_16_1359') & n'!=0 & n'=n & v_int_17_1357'+
+1=n' & fact1pre_0(n) --> fact1pre_0(v_int_17_1357').
+
+
+Base/Rec Case Splitting:
+[	fact1: [[2] n=0@B,[3] 1<=n@R,[4] n<=(0-1)@R]
+]
+Starting z3... 
+Termination Inference Result:
+fact1:  requires true * U & truecase {
+                          n=0 -> requires emp * N & Term[32,1]
+     ensures true * N & true;
+                          
+                          1<=n -> requires emp * N & Term[32,2,-1+(1*
+                          n)]
+     ensures true * N & true; 
+                          n<=(0-1) -> requires emp * N & Loop
+                          { 17:14}[]
+     ensures false * N & false; 
+                          }
+
+Checking procedure fact2$int... 
+Procedure fact2$int SUCCESS.
+
+Checking procedure fact2$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_24_1347') & n'<0 & n'=n & v_int_25_1485+1=n' & 
+res=v_int_25_1346' & fact2post_1467(v_int_25_1485) --> fact2post_1467(n).
+
+ termAssume v_bool_24_1347' & 0<=n' & n'=n & v_int_24_1341'=0 & 
+res=v_int_24_1341' --> fact2post_1467(n).
+
+ termAssume !(v_bool_24_1347') & n'<0 & n'=n & v_int_25_1345'+
+1=n' & fact2pre_0(n) --> fact2pre_0(v_int_25_1345').
+
+
+Base/Rec Case Splitting:
+[	fact2: [[2] 0<=n@B,[3] n<=(0-1)@R]
+]
+Termination Inference Result:
+fact2:  requires true * U & truecase {
+                          0<=n -> requires emp * N & Term[34,1]
+     ensures true * N & true;
+                          
+                          n<=(0-1) -> requires emp * N & Loop
+                          { 25:14}[]
+     ensures false * N & false; 
+                          }
+
+Checking procedure fact3$int... 
+Procedure fact3$int SUCCESS.
+
+Checking procedure fact3$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_32_1335') & n'<0 & n'=n & v_int_33_1521=1+n' & 
+res=v_int_33_1334' & fact3post_1503(v_int_33_1521) --> fact3post_1503(n).
+
+ termAssume v_bool_32_1335' & 0<=n' & n'=n & v_int_32_1329'=0 & 
+res=v_int_32_1329' --> fact3post_1503(n).
+
+ termAssume !(v_bool_32_1335') & n'<0 & n'=n & v_int_33_1333'=1+
+n' & fact3pre_0(n) --> fact3pre_0(v_int_33_1333').
+
+
+Base/Rec Case Splitting:
+[	fact3: [[2] 0<=n@B,[3] n<=(0-1)@R]
+]
+Termination Inference Result:
+fact3:  requires true * U & truecase {
+                          0<=n -> requires emp * N & Term[35,1]
+     ensures true * N & true;
+                          
+                          n<=(0-1) -> requires emp * N & Term[35,2,-1+(-1*
+                          n)]
+     ensures true * N & true; 
+                          }
+
+Checking procedure fact4$int... 
+Procedure fact4$int SUCCESS.
+
+Checking procedure fact5$int... 
+Procedure fact5$int SUCCESS.
+
+!!! INFERRED SHAPE SPEC: EInfer @term[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+!!! INFERRED SHAPE SPEC: EInfer @term[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+Checking procedure fact4$int... 
+Checking procedure fact5$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_48_1311') & n'!=0 & n'=n & v_int_49_1602+1=n' & 
+res=v_int_49_1310' & fact4post_1565(v_int_49_1602) --> fact5post_1566(n).
+
+ termAssume v_bool_48_1311' & n'=0 & n'=n & v_int_48_1305'=0 & 
+res=v_int_48_1305' --> fact5post_1566(n).
+
+ termAssume !(v_bool_40_1323') & n'!=0 & n'=n & v_int_41_1584+1=n' & 
+res=v_int_41_1322' & fact5post_1566(v_int_41_1584) --> fact4post_1565(n).
+
+ termAssume v_bool_40_1323' & n'=0 & n'=n & v_int_40_1317'=0 & 
+res=v_int_40_1317' --> fact4post_1565(n).
+
+ termAssume !(v_bool_48_1311') & n'!=0 & n'=n & v_int_49_1309'+
+1=n' & fact5pre_0(n) --> fact4pre_0(v_int_49_1309').
+
+ termAssume !(v_bool_40_1323') & n'!=0 & n'=n & v_int_41_1321'+
+1=n' & fact4pre_0(n) --> fact5pre_0(v_int_41_1321').
+
+
+Base/Rec Case Splitting:
+[	fact5: [[3] n=0@B,[4] 1<=n@R,[5] n<=(0-1)@R]
+,	fact4: [[6] n=0@B,[7] 1<=n@R,[8] n<=(0-1)@R]
+]
+Termination Inference Result:
+fact4:  requires true * U & truecase {
+                          n=0 -> requires emp * N & Term[36,2]
+     ensures true * N & true;
+                          
+                          1<=n -> requires emp * N & Term[36,3,-1+(1*
+                          n)]
+     ensures true * N & true; 
+                          n<=(0-1) -> requires emp * N & Loop
+                          { 49:14}[]
+     ensures false * N & false; 
+                          }
+fact5:  requires true * U & truecase {
+                          n=0 -> requires emp * N & Term[36,1]
+     ensures true * N & true;
+                          
+                          1<=n -> requires emp * N & Term[36,3,-1+(1*
+                          n)]
+     ensures true * N & true; 
+                          n<=(0-1) -> requires emp * N & Loop
+                          { 49:14}[]
+     ensures false * N & false; 
+                          }
+
+0 false contexts at: ()
+
+Total verification time: 0.620676 second(s)
+	Time spent in main process: 0.548959 second(s)
+	Time spent in child processes: 0.071717 second(s)
+

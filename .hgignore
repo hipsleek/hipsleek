@@ -20,6 +20,8 @@ xml/xml_parser.mli
 xml/xml_lexer.ml
 /fixcalc*.inf$
 fixcalc*.inf$
+/fixcalc.td$
+fixcalc.td$
 /[abcde]$
 /tmp/
 /*.log$

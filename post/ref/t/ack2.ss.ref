@@ -1,0 +1,25 @@
+
+!!!Full processing file "t/ack2.ss"
+Parsing file "t/ack2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+Termination checking result: 
+(19)->(19) (MayTerm ERR: not bounded)[m; 
+n]
+(17)->(17) (MayTerm ERR: not bounded)[m; 
+n]
+(11)->(11) (MayTerm ERR: not bounded)[m; 
+n]
+
+
+0 false contexts at: ()
+
+Total verification time: 0.415583 second(s)
+	Time spent in main process: 0.371816 second(s)
+	Time spent in child processes: 0.043767 second(s)
+

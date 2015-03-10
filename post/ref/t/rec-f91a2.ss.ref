@@ -1,0 +1,90 @@
+
+!!!Full processing file "t/rec-f91a2.ss"
+Parsing file "t/rec-f91a2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f91$int] for f91$int
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1343_1344: ( n=res & 91<=res) -->  post_1343_1344(n,res),
+RELDEFN post_1343_1345: ( res=91 & n=90) -->  post_1343_1345(n,res),
+RELDEFN post_1343_1345: ( post_1343_1344(v_int_14_1325',v_int_14_1325') & v_int_14_1325'=91 & 
+res=91 & n<=89 & post_1343_1345(1+n,v_int_14_1325')) -->  post_1343_1345(n,res)]
+*************************************
+
+Post Inference result:
+f91$int
+ ECase case {
+        91<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                         EAssume 
+                           emp&n=res & 91<=n & n>=91 & n=res&
+                           {FLOW,(4,5)=__norm#E}[]
+                            ;
+        n<91 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&res=91 & n<91 & 90>=n & 91=res&
+                          {FLOW,(4,5)=__norm#E}[]
+                           
+        }
+
+Checking procedure f91$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_14_1428=1+n' & n'=n & n<91 & n'<91 & !(v_bool_13_1326') & 
+v_int_14_1428<91 & 90>=v_int_14_1428 & 91=v_int_14_1325' & 
+v_int_14_1325'>=91 & 
+res=v_int_14_1325' & f91post_1391(v_int_14_1428) & f91post_1390(v_int_14_1325') --> f91post_1391(n).
+
+ termAssume !(v_bool_13_1326') & n'<91 & n<91 & n'=n & v_int_14_1325'=1+n' & 
+v_int_14_1325'>=91 & 
+res=v_int_14_1325' & f91post_1390(v_int_14_1324') & f91post_1390(v_int_14_1325') --> f91post_1391(n).
+
+ termAssume v_bool_13_1326' & 91<=n' & 91<=n & n'=n & 
+res=n' --> f91post_1390(n).
+
+ termAssume v_int_14_1428=1+n' & n'=n & n<91 & n'<91 & !(v_bool_13_1326') & 
+v_int_14_1428<91 & 90>=v_int_14_1428 & 91=v_int_14_1324' & 
+91<=v_int_14_1324' & f91pre_0(n) --> f91pre_0(v_int_14_1324').
+
+ termAssume v_int_14_1324'=v_int_14_1324' & v_int_14_1324'>=91 & 
+91<=v_int_14_1324' & !(v_bool_13_1326') & n'<91 & n<91 & n'=n & 
+v_int_14_1324'=1+n' & 
+91<=v_int_14_1324' & f91pre_0(n) --> f91pre_0(v_int_14_1324').
+
+ termAssume v_int_14_1322'<91 & v_int_14_1322'=1+n' & n'=n & n<91 & n'<91 & 
+!(v_bool_13_1326') & f91pre_0(n) --> f91pre_0(v_int_14_1322').
+
+ termAssume 91<=v_int_14_1322' & v_int_14_1322'=1+n' & n'=n & n<91 & n'<91 & 
+!(v_bool_13_1326') & f91pre_0(n) --> f91pre_0(v_int_14_1322').
+
+
+Base/Rec Case Splitting:
+[	f91: [[5] 91<=n@B,[6] n<=90@R]
+]
+Starting z3... 
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp * N & Term[31,1]
+     ensures emp * N & n=res & 
+  n>=91 & 91<=n & n=res; 
+  n<=90 -> requires emp * N & Term[31,2,90+(-1*
+  n)]
+     ensures emp * N & 91=res & 90>=n & n<91 & res=91; 
+  }
+
+6 false contexts at: ( (13,13)  (14,7)  (14,24)  (14,22)  (14,18)  (14,14) )
+
+Total verification time: 0.519136 second(s)
+	Time spent in main process: 0.427002 second(s)
+	Time spent in child processes: 0.092134 second(s)
+
