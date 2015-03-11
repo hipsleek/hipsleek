@@ -50,14 +50,14 @@ void main()
   ensures emp & flow __norm;
 {
   cell p;
-  CDL c = create_latch(2) with p'::cell<_>;
+  CDL c = create_latch(2) with p'::cell<_> * @full[p];
   par {p, c@L}
   {
-    case {c@L} c'::LatchOut{+ p'::cell<_>}<> * c'::CNT<(0)> ->
+    case {c@L} c'::LatchOut{+ p'::cell<_> * @full[p]}<> * c'::CNT<(0)> ->
       await(c);
       //dprint;
     ||
-    case {p, c@L} c'::LatchIn{- p'::cell<_>}<> * c'::CNT<(2)> ->
+    case {p, c@L} c'::LatchIn{- p'::cell<_> * @full[p]}<> * c'::CNT<(2)> ->
       p = new cell(1);
       countDown(c);
       //dprint;

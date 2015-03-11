@@ -138,7 +138,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
 
 let subst_formula formula hprel_def =
   let helper formula h_formula hprel_def =
-    if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
+    if (Cformula.get_node_name 14 h_formula == Cformula.get_node_name 15 hprel_def.Cformula.hprel_def_hrel)
     then (
         let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
           | (_, None,_) -> formula

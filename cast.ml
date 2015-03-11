@@ -1545,7 +1545,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           let get_name h = match h with
             | F.HVar (v,_) -> P.name_of_sv v
             | F.DataNode _
-            | F.ViewNode _-> F.get_node_name h
+            | F.ViewNode _-> F.get_node_name 2 h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
             | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
           (List.length hs),self_n, List.map get_name hs
@@ -3111,8 +3111,8 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
   let vname = vdecl.view_name in
   let self_var = P.SpecVar (Named dname, self, Unprimed) in
   let self_closure = F.find_close [self_var] eqs in
-  let is_core_dnode node = eq_str (F.get_node_name node) dname in
-  let is_core_vnode node = eq_str (F.get_node_name node) vname in
+  let is_core_dnode node = eq_str (F.get_node_name 3 node) dname in
+  let is_core_vnode node = eq_str (F.get_node_name 4 node) vname in
   let core_dnodes = List.filter is_core_dnode (F.get_dnodes f) in
   let core_vnodes = List.filter is_core_vnode (F.get_vnodes f) in
   let core_nodes = core_dnodes @ core_vnodes in

@@ -309,7 +309,7 @@ let prepost_ctr = new Gen.counter 0
    TODO:WN: is @Lend safe for bind, can v be updated and
    and would it cause race problem?
 *)
-let check_var_read_perm_type msg prog ctx pos v t perm_ty=
+let check_var_read_perm_type msg prog ctx pos v t perm_ty =
   if !ann_vp then
     let sv = (CP.SpecVar (t, v, Unprimed)) in
     (* let sv = CP.sp_rm_prime sv in *)

@@ -42,9 +42,10 @@ void main()
 {
   cell x = new cell(10);
   //dprint;
-  CDL c = create_latch(1) with x'::cell<_>;
+  CDL c = create_latch(1) with x'::cell<_> * @full[x];
   //dprint;
   countDown(c);
+  //x = null; // causes contradiction
   //dprint;
   assert x'::cell<10>;
   await(c);
