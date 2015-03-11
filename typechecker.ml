@@ -3024,6 +3024,9 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
+  let _ =  Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: STARTING" (
+      let pr proc = Cprinter.string_of_struc_formula_for_spec_inst prog (proc.proc_stk_of_static_specs # top) in
+      pr_list_ln  pr)) scc_procs no_pos in
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
@@ -3242,7 +3245,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       let _ = List.iter (fun proc ->
           if is_print_inferred_spec then
           let _ =  Debug.info_hprint (add_str "INFERRED SHAPE SPEC"
-              (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              (Cprinter.string_of_struc_formula)) (proc.proc_stk_of_static_specs#top) (*proc.proc_static_specs*)  no_pos in
           ()
           else ()
       ) new_scc_procs in
@@ -3305,7 +3308,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     print_endline_quiet "\n\n******************************";
                     print_endline_quiet "   ******* SPECIFICATION1 ********";
                     print_endline_quiet "******************************";
-                    print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
+                    print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog (proc0.proc_stk_of_static_specs # top)
+                        (* proc0.Cast.proc_static_specs *))
                   end
                   in
                   (*****LOCKSET variable: ls'=ls *********)
@@ -4080,7 +4084,14 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
-    let scc, ini_hpdefs = Da.find_rel_args_groups_scc prog scc in
+    let scc, ini_hpdefs =
+      (*
+        temporally ignore this one since pure + term have not manage this information properly.
+        should implement it for incr spec inference
+      *)
+      scc,[]
+      (* Da.find_rel_args_groups_scc prog scc *)
+    in
 
     let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
 

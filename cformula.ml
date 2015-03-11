@@ -7135,6 +7135,9 @@ and filter_vars_hf hf rvs=
     | HFalse
     | HEmp | HVar _ -> hf
 
+
+
+
 let generate_xpure_view_x drop_hpargs total_unk_map=
   let rec lookup_xpure_view hp rem_map=
     match rem_map with

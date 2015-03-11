@@ -249,6 +249,7 @@ let rec modify_infer_vars sf infer_vars = match sf with
 let add_post_relation_scc prog scc =
   let _ = List.iter (fun proc ->
       let spec = proc.proc_stk_of_static_specs # top in
+      let _ =  Debug.ninfo_hprint (add_str "add_post_relation_scc" (Cprinter.string_of_struc_formula_for_spec_inst prog)) (spec) no_pos in
       let _ = if is_need_to_add_post_rel spec then
         let new_spec = add_post_relation prog proc spec in
         proc.proc_stk_of_static_specs # push new_spec

@@ -1685,6 +1685,7 @@ and add_pre_to_cprog_one cprog c =
   let ns_caller = if c.C.proc_by_copy_params = [] then ns else
     trans_copy_spec_4caller c.C.proc_by_copy_params ns
   in
+  let _ =  Debug.ninfo_hprint (add_str "ns_caller" (Cprinter.string_of_struc_formula)) (ns_caller) no_pos in
   let _ = c.C.proc_stk_of_static_specs # push ns_caller in
   c
 
@@ -7076,9 +7077,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   let d = i - offset in
                   if (d < 0 || d >= numargs) then List.append l [i] else l
                 ) [] temp in
-                let _ = Debug.info_hprint (add_str "holes" (pr_list string_of_int)) holes no_pos in
-                let _ = Debug.info_hprint (add_str "vs" (Cprinter.string_of_spec_var_list)) vs no_pos in
-                let _ = Debug.info_hprint (add_str "offset" string_of_int) offset no_pos in
+                let _ = Debug.ninfo_hprint (add_str "holes" (pr_list string_of_int)) holes no_pos in
+                let _ = Debug.ninfo_hprint (add_str "vs" (Cprinter.string_of_spec_var_list)) vs no_pos in
+                let _ = Debug.ninfo_hprint (add_str "offset" string_of_int) offset no_pos in
                 let newvs = List.map (fun i ->
                     (* let v = List.nth vs (i - offset) in *)
                     if (List.mem i holes) then 

@@ -28,20 +28,21 @@ typedef struct DUPFFstruct *DUPFF;
 
 //  ../../hip ex1-g.c -infer "@shape,@post_n" 
 int DUPFFdeg(const DUPFF f)
-// infer[@shape,@post_n] requires emp&true ensures emp&true;
+//@ infer[@shape,@post_n] requires true ensures true;
 {
   return f->deg;
 }
 
 
 void DUPFFshift_add(DUPFF f, const DUPFF g, int deg, const FFelem coeff)
-// infer[@shape,@post_n] requires true ensures true;
+//to add this spec for nobody
+//@ requires true ensures true;
 {
 }
 
 
 DUPFF DUPFFexgcd(DUPFF u)
-// infer[@shape,@post_n] requires true ensures true;
+//@ infer[@shape,@post_n] requires true ensures true;
 {
   DUPFF  v, uf, ug, vf, vg;
   FFelem q, lcu, lcvrecip, p;
@@ -49,12 +50,13 @@ DUPFF DUPFFexgcd(DUPFF u)
 
   
     while ( DUPFFdeg(u) >= dv)
-      // infer[@shape,@post_n] requires true ensures true;
+      //@ infer[@shape,@post_n] requires emp&true ensures emp&true;
     {
       du = DUPFFdeg(u);
       lcu = u->coeffs[du];
       q = FFmul(lcu, lcvrecip);
       DUPFFshift_add(u, v, du-dv, p-q);
+      // dprint;
       DUPFFshift_add(uf, vf, du-dv, p-q);
       DUPFFshift_add(ug, vg, du-dv, p-q);
     }
