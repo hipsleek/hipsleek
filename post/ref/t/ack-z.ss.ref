@@ -1,0 +1,16 @@
+
+!!!Full processing file "t/ack-z.ss"
+Parsing file "t/ack-z.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.403087 second(s)
+	Time spent in main process: 0.361785 second(s)
+	Time spent in child processes: 0.041302 second(s)
+

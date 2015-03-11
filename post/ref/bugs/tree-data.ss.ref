@@ -1,0 +1,31 @@
+
+!!!Full processing file "bugs/tree-data.ss"
+Parsing file "bugs/tree-data.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure height$node... 
+Procedure height$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1376: ( res=0) -->  post_1376(res),
+RELDEFN post_1376: ( true) -->  post_1376(res)]
+*************************************
+
+
+Post Inference result:
+height$node
+ EBase x::tree{}<>&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           x::tree{}<>&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.423277 second(s)
+	Time spent in main process: 0.371729 second(s)
+	Time spent in child processes: 0.051548 second(s)
+

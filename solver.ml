@@ -10063,10 +10063,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
                       let new_ho_rhs =
                         match ho_rhs with
-                            (* TODO:WN:HVar -*)
                         | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar (v,[])) pos }
                         | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar (v,[])) pos }
-                        | _ -> ho_rhs
+                        | _ -> failwith "ho arguments: not expecting OR formula"
                       in
                       Some v, 
                       { new_es with 
@@ -10078,7 +10077,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 in
                 let f_es, f_rhs =
                   match flow_ann with
-                  | INFLOW -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+                  | INFLOW -> 
+                    (match k with
+                    | HO_SPLIT ->
+                      let vpl = CF.get_vperm_set ho_lhs in
+                      let vpr = CF.get_vperm_set new_ho_rhs in
+                      let contra_lhs = CF.write_vperm_set new_ho_rhs vpl in
+                      let contra_rhs = CF.write_vperm_set ho_lhs vpr in
+                      { new_es with es_formula = contra_lhs; }, contra_rhs
+                    | _ -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+                    )
                   | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs 
                 in
                 let pr = Cprinter.string_of_formula in
@@ -10102,7 +10110,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   | c::_ -> 
                     match c with
                     | Ctx es ->
-                      let _, p_res, _, _, _, _ = CF.split_components es.es_formula in
+                      let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in
                       let p_res_opt =
                         if MCP.isConstMTrue p_res then None
                         else Some p_res 
@@ -10114,6 +10122,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                           let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
                           let _ = Debug.tinfo_hprint (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
                           let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                          let v_binding = CF.write_vperm_set v_binding vp_res in
                           let _ = Debug.tinfo_hprint (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
                           let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
                           (None, Some v_binding, p_res_opt, other_bindings) 
