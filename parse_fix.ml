@@ -220,7 +220,7 @@ END
 
 (******************************************************************************)
 
-let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") "res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0"
+let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") s
 
 let parse_fix s =
   Debug.no_1 "parse_fix" pr_id (pr_list !Cpure.print_formula) parse_fix s
