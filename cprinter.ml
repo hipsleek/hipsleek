@@ -2216,7 +2216,7 @@ and pr_formula_base e =
 	  formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           pr_h_formula h;
-          (if not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp)); 
+          (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp)); 
           (if not(MP.isConstMTrue p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
           ;pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
@@ -2465,8 +2465,7 @@ and pr_formula_for_spec e =
   let print_fun = fun fml ->
     let h,p,vp,_,_,_ = Cformula.split_components fml in
     (pr_h_formula_for_spec h);
-    fmt_string " * ";
-    (pr_vperm_sets vp);
+    if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (fmt_string " * ";pr_vperm_sets vp);
     fmt_string " & ";
     (pr_mix_formula p)
   in

@@ -1,0 +1,11 @@
+
+!!!Full processing file "t/exc1.ss"
+Parsing file "t/exc1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+
+1 false contexts at: ( (12,4) )

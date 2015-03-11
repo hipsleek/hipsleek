@@ -1,0 +1,15 @@
+
+!!!Full processing file "t/exc7a.ss"
+Parsing file "t/exc7a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int FAIL.(2)
+
+Exception Failure("hd") Occurred!
+
+Error(s) detected when checking procedure loop$int
+
+0 false contexts at: ()

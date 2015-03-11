@@ -4145,7 +4145,7 @@ let rec check_prog iprog (prog : prog_decl) =
             r
           end
       ) in
-      
+
       let should_print_term_res = List.fold_left (fun acc proc ->
         if not acc then CF.has_known_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top)
         else acc) false scc in

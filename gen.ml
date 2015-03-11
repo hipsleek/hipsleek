@@ -24,6 +24,7 @@ struct
   exception Bail
 
   let silenced_print f s = if !Globals.silence_output then () else f s 
+  let min_print f s = if !Globals.silence_output || !Globals.print_min then () else f s 
 
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)

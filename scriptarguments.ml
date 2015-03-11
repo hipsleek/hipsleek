@@ -789,14 +789,14 @@ let common_arguments = [
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
-          Globals.lemma_ep := false;
+          (* Globals.lemma_ep := false; *)
           Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_gen_unsafe:=true; *)
           (* Globals.lemma_syn := true; *)
           (* Globals.acc_fold := true; *)
-          Globals.smart_lem_search := true;
+          (* Globals.smart_lem_search := true; *)
           Globals.print_min := true;
           (* Globals.gen_baga_inv := true; *)
           (* Globals.en_pred_sat (); *)
@@ -806,8 +806,9 @@ let common_arguments = [
           (* Globals.is_solver_local := true; *)
           Globals.disable_failure_explaining := false;
           (* Globals.smt_compete_mode:=true; *)
-          Globals.return_must_on_pure_failure := true;
-          Globals.dis_impl_var := true),
+          Globals.return_must_on_pure_failure := true
+          (* ;Globals.dis_impl_var := true *)
+      ),
    "Minimal printing only");
   ("--svcomp-compete",
      Arg.Unit

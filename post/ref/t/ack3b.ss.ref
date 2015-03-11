@@ -1,0 +1,155 @@
+
+!!!Full processing file "t/ack3b.ss"
+Parsing file "t/ack3b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [Ack$int~int] for Ack$int~int
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1375_1377_1378: ( m=0 & res=1+n & (n+1)<=0) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1378: ( (r_1500+1)<=0 & n1_1502+1=n & v_int_25_1499+1=m & (n+1)<=0 & 1<=m & 
+post_1375_1377_1378(v_int_25_1499,r_1500,res,flow) & 
+post_1375_1377_1378(m,n1_1502,r_1500,flow)) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1378: ( 0<=res & 0<=r_1506 & n1_1508+1=n & v_int_25_1505+1=m & (n+1)<=0 & 1<=m & 
+post_1375_1377_1379(v_int_25_1505,r_1506,res,flow) & 
+post_1375_1377_1378(m,n1_1508,r_1506,flow)) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( m=0 & res=1+n & 0<=n) -->  post_1375_1377_1379(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( 0<=res & m1_1571+1=m & n=0 & 1<=m & post_1375_1377_1379(m1_1571,1,res,flow)) -->  post_1375_1377_1379(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( 0<=n1_1576 & 0<=res & 0<=v_int_25_1573 & 0<=r_1574 & m'=1+v_int_25_1573 & 
+m=1+v_int_25_1573 & n=1+n1_1576 & 
+post_1375_1377_1379(v_int_25_1573,r_1574,res,flow) & 
+post_1375_1377_1379(m',n1_1576,r_1574,flow)) -->  post_1375_1377_1379(m,n,res,flow)]
+*************************************
+
+Post Inference result:
+Ack$int~int
+ ECase case {
+        m<0 -> EBase emp&Loop{ 1:0}[]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         hfalse&false&{FLOW,(4,5)=__norm#E}[]
+                          ;
+        0<=m -> ECase case {
+                       n<0 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                                      EAssume 
+                                        htrue&n<0 & 0<=m & !(res) & 0=m & 
+                                        res=n+1&{FLOW,(4,5)=__norm#E}[]
+                                         ;
+                       0<=n -> EBase htrue&{FLOW,(4,5)=__norm#E}[]
+                                       EBase emp&MayLoop[]&
+                                             {FLOW,(4,5)=__norm#E}[]
+                                               EAssume 
+                                                 emp&0<=res & 0<=n & 0<=m & 
+                                                 res & m>=0 & res>=(1+m+n)&
+                                                 {FLOW,(4,5)=__norm#E}[]
+                                                  
+                       }
+        
+        }
+
+Checking procedure Ack$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_25_1772+1=m' & 0<=n1_1771 & !(v_bool_13_1357') & n'!=0 & 
+!(v_bool_12_1358') & m'!=0 & 0<=n & 0<=m & n'=n & m'=m & m1_1770+1=m' & 
+n1_1771+1=n' & 0<=m' & r_1773 & r_1773>=(1+m'+n1_1771) & 0<=v_int_25_1356' & 
+0<=r_1773 & v_int_25_1356' & v_int_25_1772>=0 & v_int_25_1356'>=(1+
+v_int_25_1772+r_1773) & 
+res=v_int_25_1356' & Ackpost_1589(m',n1_1771) & Ackpost_1589(v_int_25_1772,r_1773) --> Ackpost_1589(m,n).
+
+ termAssume v_bool_13_1357' & !(v_bool_12_1358') & m'!=0 & 0<=n & 0<=m & 
+n'=n & m'=m & n'=0 & m1_1768+1=m' & v_int_17_1769=1 & 0<=v_int_17_1329' & 
+0<=v_int_17_1769 & v_int_17_1329' & m1_1768>=0 & v_int_17_1329'>=(1+m1_1768+
+v_int_17_1769) & 
+res=v_int_17_1329' & Ackpost_1589(m1_1768,v_int_17_1769) --> Ackpost_1589(m,n).
+
+ termAssume res=v_int_12_1317' & v_int_12_1317'=1+n' & m'=m & n'=n & 0<=m & 
+0<=n & m'=0 & v_bool_12_1358' --> Ackpost_1589(m,n).
+
+ termAssume res=v_int_12_1317' & v_int_12_1317'=1+n' & m'=m & n'=n & 0<=m & 
+n<0 & m'=0 & v_bool_12_1358' --> Ackpost_1588(m,n).
+
+ termAssume 0<=v_int_25_1355' & v_int_25_1355'+1=m' & 0<=n1_34' & 
+!(v_bool_13_1357') & n'!=0 & !(v_bool_12_1358') & m'!=0 & 0<=n & 0<=m & 
+n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 0<=m' & 0<=r_35' & r_35' & 
+r_35'>=(1+m'+n1_34') & Ackpre_0(m,n) --> Ackpre_0(v_int_25_1355',r_35').
+
+ termAssume 0<=n1_34' & !(v_bool_13_1357') & n'!=0 & !(v_bool_12_1358') & 
+m'!=0 & 0<=n & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 
+0<=m' & Ackpre_0(m,n) --> Ackpre_0(m',n1_34').
+
+ termAssume 0<=v_int_17_1328' & v_bool_13_1357' & !(v_bool_12_1358') & 
+m'!=0 & 0<=n & 0<=m & n'=n & m'=m & n'=0 & m1_36'+1=m' & v_int_17_1328'=1 & 
+0<=m1_36' & Ackpre_0(m,n) --> Ackpre_0(m1_36',v_int_17_1328').
+
+ termAssume n1_34'<0 & !(v_bool_13_1357') & n'!=0 & !(v_bool_12_1358') & 
+m'!=0 & n<0 & 0<=m & n'=n & m'=m & m1_33'+1=m' & n1_34'+1=n' & 
+0<=m' & Ackpre_0(m,n) --> Ackpre_0(m',n1_34').
+
+
+Base/Rec Case Splitting:
+[	Ack: [[5] m=0@B,[6] n=0 & 1<=m@R,[7] 1<=n & 1<=m@R,[8] ((m<=(0-1) & n<=0) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 1<=n))@R]
+]
+Starting z3... 
+Termination Inference Result:
+Ack:  case {
+  m<=(0-1) -> requires emp & Loop{ 1:0}[]
+     ensures false & false; 
+  0<=m -> case {
+           n<0 -> case {
+                   m=0 -> requires emp & Term[3,1]
+     ensures true & res=n+
+                   1 & 0=m & !(res) & 0<=m & n<0; 
+                   n=0 & 
+                   1<=m -> requires false & false
+     ensures false & false; 
+                   1<=n & 
+                   1<=m -> requires false & false
+     ensures false & false; 
+                   ((n<=(0-1) & 1<=m) | m<=(0-1)) -> requires emp & Loop
+                   { 23:12}[]
+     ensures false & false; 
+                   }
+           
+           0<=n -> requires true & truecase {
+                                        m=0 -> requires emp & Term[3,1]
+     ensures emp & res>=(1+
+                                        m+n) & m>=0 & res & 0<=m & 0<=n & 
+                                        0<=res; 
+                                        n=0 & 
+                                        1<=m -> requires emp & Term[3,2,0+(1*
+                                        m)+(0*n),0+(1*m)+(1*
+                                        n)]
+     ensures emp & res>=(1+m+
+                                        n) & m>=0 & res & 0<=m & 0<=n & 
+                                        0<=res; 
+                                        1<=n & 
+                                        1<=m -> requires emp & Term[3,2,0+(1*
+                                        m)+(0*n),0+(1*m)+(1*
+                                        n)]
+     ensures emp & res>=(1+m+
+                                        n) & m>=0 & res & 0<=m & 0<=n & 
+                                        0<=res; 
+                                        ((n<=(0-1) & 1<=m) | m<=(0-
+                                        1)) -> requires false & false
+     ensures false & false;
+                                        
+                                        }
+           
+           }
+  
+  }
+
+14 false contexts at: ( (17,19)  (17,11)  (14,11)  (14,13)  (14,6)  (13,16)  (25,4)  (25,17)  (25,15)  (25,11)  (17,4)  (12,11)  (12,20)  (12,18) )

@@ -2065,8 +2065,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             | Some f ->
                   if fail_res then
                     print_endline_quiet ("\nInv Check: Fail.("^msg^")")
-                  else
-                    print_endline_quiet ("\nInv Check: Valid.("^msg^")")
+                  (* else *)
+                  (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
             | None -> ()
         else ()
       in
