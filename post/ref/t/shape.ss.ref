@@ -26,7 +26,7 @@ Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
 ERROR: at t/shape.ss_15:4_15:9
 Message: Expect a node
 
-!!! WARNING logtime exception:0.000593
+!!! WARNING logtime exception:0.000757
 Procedure while_10_2$cell~cell FAIL.(2)
 
 Exception Failure("Expect a node") Occurred!
@@ -50,7 +50,7 @@ Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
 ERROR: at t/shape.ss_10:2_16:3
 Message: Expect a node or a hrel
 
-!!! WARNING logtime exception:0.000269
+!!! WARNING logtime exception:0.000935
 Procedure main$cell~cell FAIL.(2)
 
 Exception Failure("Expect a node or a hrel") Occurred!

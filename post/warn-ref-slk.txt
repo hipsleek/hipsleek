@@ -1,8 +1,4 @@
 ref/field/field2.slk.ref: <1>emp&x!=null&{FLOW,(4,8)=__MayError#E}[]
-ref/field/field3.slk.ref:[Warning] False ctx
-ref/field/field.slk.ref:[Warning] False ctx
-ref/field/field.slk.ref:[Warning] False ctx
-ref/field/field.slk.ref:[Warning] False ctx
 ref/field/field.slk.ref: <1>(Hole[186]) * q_185::ll{}<flted_7_183>&0<n & flted_7_183+1=n & Anon_20=Anon_184 & q=q_185&{FLOW,(4,8)=__MayError#E}[]
 ref/flow/flow1.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
 ref/flow/flow1.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
@@ -10,11 +6,6 @@ ref/flow/flow2.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
 ref/flow/flow3.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
 ref/flow/flow5r.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
 ref/flow/flow5.slk.ref:WARNING: _0:0_0:0:LHS should not be top_flow
-ref/t/loop2.slk.ref:[Warning] False ctx
-ref/t/loop2.slk.ref:[Warning] False ctx
-ref/t/loop2.slk.ref:[Warning] False ctx
-ref/t/loop2.slk.ref:[Warning] False ctx
-ref/t/loop2.slk.ref:[Warning] False ctx
 ref/t/sexc1a.slk.ref: error: Stream.Error("illegal begin of sprog")
 ref/t/sexc1a.slk.ref: at:error at: 
 ref/t/sexc1a.slk.ref:SLEEK FAILURE (END)

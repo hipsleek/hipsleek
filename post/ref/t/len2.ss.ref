@@ -26,9 +26,6 @@ length3$node
            
 
 Checking procedure length4$node... 
-!!! WARNING : Inferable vars include some external variables!
-vars:[R1,R2] pre_post_vars:[m_1398,n,R2,res,x]
-
 Procedure length4$node SUCCESS.
 
 *************************************

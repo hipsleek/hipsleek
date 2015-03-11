@@ -1,7 +1,6 @@
 !!! init_tp by default: 
 !!! Using z3
 Starting z3... 
-[Warning] False ctx
 Starting Omega.../usr/local/bin/oc
 
 Entail (1) : Valid. 
@@ -10,7 +9,6 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
  inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
 
-[Warning] False ctx
 
 Entail (2) : Valid. 
 
@@ -18,7 +16,6 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
  inferred rel: [RELDEFN fpostXXX: ( false) -->  fpostXXX_0(x)[]]
 
-[Warning] False ctx
 
 Entail (3) : Valid. 
 
@@ -26,7 +23,6 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
  inferred rel: [RELDEFN fpostXXX: ( false) -->  fpostXXX_0(x)[]]
 
-[Warning] False ctx
 
 Entail (4) : Valid. 
 
@@ -34,7 +30,6 @@ Residue:
  <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
  inferred rel: [RELDEFN fpostXXX: ( false) -->  fpostXXX_0(x)[]]
 
-[Warning] False ctx
 
 Entail (5) : Valid. 
 
