@@ -935,6 +935,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
+        | c=class_decl -> DataDef c
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
