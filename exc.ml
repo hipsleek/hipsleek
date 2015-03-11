@@ -702,8 +702,8 @@ struct
     method get_hash (f:string) : nflow =
       begin
         let foo f =
-          if (f="") then  !top_flow_int
-          else if ((String.compare f stub_flow)==0) then 
+          if (f="") then !top_flow_int
+          else if ((String.compare f stub_flow)==0) then
 	        Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
           else
 	        let rec get (lst:(string*string*nflow)list):nflow = match lst with

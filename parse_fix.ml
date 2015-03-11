@@ -96,15 +96,15 @@ GLOBAL: expression;
     | NATIVEINT; ">="; NATIVEINT -> mkTrue loc
     | NATIVEINT; "!="; NATIVEINT -> mkTrue loc
     | x = INT; "="; y = INT ->
-      let tmp = 
-        if int_of_string x = int_of_string y 
-        then BConst (true,loc) 
-        else BConst (false,loc) 
+      let tmp =
+        if int_of_string x = int_of_string y
+        then BConst (true,loc)
+        else BConst (false,loc)
       in BForm ((tmp, None), None)
-    |	x = exp; "<"; y = exp ->
-      if is_res_var y && is_zero x then 
-        BForm ((BVar (get_var "res" tlist, loc), None), None) 
-      else if is_res_var x && is_one y then 
+    | x = exp; "<"; y = exp ->
+      if is_res_var y && is_zero x then
+        BForm ((BVar (get_var "res" tlist, loc), None), None)
+      else if is_res_var x && is_one y then
         Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc) 
       else
         let tmp = 
@@ -164,7 +164,7 @@ GLOBAL: expression;
             Eq (Var(get_var "self" tlist, loc), Null loc, loc)
           else Gte (x, y, loc)
         in BForm ((tmp, None), None)
-    | x = exp; "="; y = exp -> 
+    | x = exp; "="; y = exp ->
       let tmp = 
         if is_node x && is_node y then 
           Eq (Var(get_var (get_node x) tlist, loc), 
@@ -183,46 +183,46 @@ GLOBAL: expression;
               Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
         else Eq (x, y, loc)
       in BForm ((tmp, None), None)
-    | x = exp; "!="; y = exp -> 
+    | x = exp; "!="; y = exp ->
       let tmp = Neq (x, y, loc) in
       BForm ((tmp, None), None)
     ]
-  ]; 
-      
+  ];
+
   exp:
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
     | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
-    | x = INT; y = SELF -> 
-          let ni=IConst (int_of_string x, loc) 
-          in Mult (ni, y, loc)
-    | x = INT; "*"; y = SELF -> 
+    (* | x = INT; y = SELF -> *)
+    (*       let ni=IConst (int_of_string x, loc)  *)
+    (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
+    | x = INT; "*"; y = SELF ->
           let ni=IConst (int_of_string x, loc) 
           in Mult (ni, y, loc)
     | x = specvar             -> Var (x, loc)
     | x = INT                 -> IConst (int_of_string x, loc) 
     | NATIVEINT               -> Var (SpecVar(Named "abc", "abc", Unprimed),loc)
     ]
-  ]; 
-		
+  ];
+
   specvar:
   [ "specvar" NONA
     [ x = LIDENT -> get_var x tlist
-    | x = UIDENT -> 
-      if is_substr "REC" x 
-      then 
+    | x = UIDENT ->
+      if is_substr "REC" x
+      then
         add_prefix (get_var (String.sub x 3 (String.length x - 3)) tlist) "REC"
       else get_var x tlist
     ]
-  ]; 
+  ];
 
 END
-	
+
 (******************************************************************************)
 
-let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") s
+let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") "res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0"
 
-let parse_fix s = 
+let parse_fix s =
   Debug.no_1 "parse_fix" pr_id (pr_list !Cpure.print_formula) parse_fix s
 
 
