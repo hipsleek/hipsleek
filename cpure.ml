@@ -2626,6 +2626,22 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
+        let _ = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+        let l = if !Globals.gen_baga_inv
+        then
+          List.map (fun ((a,ls) as lbl,f) ->
+              let new_lbl =
+                if string_compare a "" then
+                  match ls with
+                    | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl
+                    | _ -> lbl
+                else lbl
+              in
+              (new_lbl,f)) l
+        else
+          l
+        in
+        let _ = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
 	AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
 	Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
@@ -5386,9 +5402,9 @@ let wrap_exists_svl f evars = mkExists evars f None no_pos
 (*   let dep_quan_p = mkExists evars (conj_of_list dep_ps pos) None pos in *)
 (*   mkAnd (conj_of_list indep_ps pos) dep_quan_p pos *)
 
-(* let wrap_exists_svl_new f evars = *)
-(*   Debug.no_2 "wrap_exists_svl_new" !print_formula !print_svl !print_formula *)
-(*       wrap_exists_svl_new_x f evars *)
+let wrap_exists_svl f evars =
+  Debug.no_2 "wrap_exists_svl" !print_formula !print_svl !print_formula
+      wrap_exists_svl f evars
 (*
 let merge_branches_with_common l1 l2 cf evars =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -7546,7 +7562,7 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
         if (i>0) 
         then
           let pri = string_of_int in
-          let _ = Debug.ninfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          let _ = Debug.tinfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
           Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
       in 
@@ -10898,7 +10914,7 @@ let is_rel_defn rt = match rt with
 
 let add_conj x rs pos =
   List.map (fun y -> And (x,y,pos)) rs
-  
+
 let rec dist_conj xs ys pos =
   let r_xs = List.map (fun x -> add_conj x ys pos) xs in
   List.concat r_xs
@@ -13739,11 +13755,11 @@ let overapp_ptrs p=
   Debug.no_1 "overapp_ptrs" pr1 pr1
       (fun _ -> overapp_ptrs_x p) p
 
-let mk_self t = 
+let mk_self t =
   let t =
     match t with
       | None   -> Globals.null_type
-      | Some t -> t 
+      | Some t -> t
   in
   SpecVar (t, self, Unprimed)
 

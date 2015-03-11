@@ -75,7 +75,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars = match sf wit
         let rel_vars = List.filter (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t = Int) (fvs@proc_args@proc_primed_args) in
         let rel_vars = CP.remove_dups_svl rel_vars in
-        let rel_vars = if ei.CF.formula_inf_obj # is_add_flow then rel_vars@[CP.mk_typed_spec_var Int "flow"] else rel_vars in
+        let rel_vars = if true (* ei.CF.formula_inf_obj # is_add_flow *) then rel_vars@[CP.mk_typed_spec_var Int "flow"] else rel_vars in
         let _ = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
         let rel_type = RelT (List.map (fun sv -> match sv with
           | CP.SpecVar (t,_,_) -> t) rel_vars) in

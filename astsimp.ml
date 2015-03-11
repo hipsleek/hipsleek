@@ -2066,8 +2066,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             | Some f ->
                   if fail_res then
                     print_endline_quiet ("\nInv Check: Fail.("^msg^")")
-                  else
-                    print_endline_quiet ("\nInv Check: Valid.("^msg^")")
+                  (* else *)
+                  (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
             | None -> ()
         else ()
       in
@@ -2563,7 +2563,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 let new_pf = if List.mem idx pf_svl then CP.wrap_exists_svl pf [idx] else pf in
                 Tpdispatcher.simplify new_pf
             ) fixcalc_invs_inv in
-             let _ = Debug.ninfo_hprint (add_str "fixcalc_invs_inv" (pr_list Cprinter.string_of_mix_formula)) fixcalc_invs_inv no_pos in
+            let _ = Debug.ninfo_hprint (add_str "fixcalc_invs_inv" (pr_list Cprinter.string_of_mix_formula)) fixcalc_invs_inv no_pos in
             (* WN : Need to check if supplied inv is a fixpoint! *)
             let infer_vs_user = List.combine view_list_num_with_inv num_invs_wrap_index in
             let num_invs = List.map (fun (vd,fixc) ->
@@ -2571,25 +2571,26 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 (*   vd.Cast.view_user_inv *)
                 (* else *)
                 (*   vd.Cast.view_x_formula *)
-                let user_inv = MCP.pure_of_mix vd.Cast.view_user_inv in 
-                let better = 
-                  if (Tpdispatcher.imply_raw fixc user_inv) then fixc 
+                let user_inv = MCP.pure_of_mix vd.Cast.view_user_inv in
+                let better =
+                  if (Tpdispatcher.imply_raw fixc user_inv) then fixc
                   else
                     (* to check view_form ==> usr_inv *)
                     let body = CF.project_body_num vd.Cast.view_un_struc_formula user_inv vd.Cast.view_vars in
-                    let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                    let _ = Debug.tinfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
+                    let _ = Debug.binfo_hprint (add_str "fixc" Cprinter.string_of_pure_formula) fixc no_pos in
+                    let _ = Debug.binfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                    let _ = Debug.binfo_hprint (add_str "user_inv" Cprinter.string_of_pure_formula) user_inv no_pos in
                     let _ = Debug.binfo_pprint "WARNING: TODO fixpt check" no_pos in
-                    if (Tpdispatcher.imply_raw body user_inv) then
+                    if (true (* Tpdispatcher.imply_raw body user_inv *)) then
                       let _ = Debug.binfo_hprint (add_str "User supplied is more precise" Cprinter.string_of_pure_formula) user_inv no_pos in
                       user_inv
-                    else 
+                    else
                       let _ = Debug.binfo_hprint (add_str "User supplied is unsound" Cprinter.string_of_pure_formula) user_inv no_pos in
                       let _ = Debug.binfo_hprint (add_str "Using fixcalc version" Cprinter.string_of_pure_formula) fixc no_pos in
                       fixc
                 in better
             )  infer_vs_user in
-            let precise_list = List.map (fun (vd,fixc) ->
+            let precise_num_invs = List.map (fun (vd,fixc) ->
                 (* if not(CP.isConstTrue (MCP.pure_of_mix vd.Cast.view_user_inv)) then *)
                 (*   vd.Cast.view_user_inv *)
                 (* else *)
@@ -2599,18 +2600,42 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   (* let root = CP.mk_spec_var "self" in *)
                   let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
                   let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
-                  let _ = Debug.tinfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
-                  let is_precise_num = Tpdispatcher.imply_raw fixc body in
-                  let _ = if is_precise_num then
-                    Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos
+                  let _ = Debug.ninfo_hprint (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
+                  let is_precise_num = if Tpdispatcher.imply_raw fixc body then
+                    let _ = Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
+                    (true,fixc)
                   else
-                    Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant\n") no_pos in
+                    let idx = CP.mk_typed_spec_var Int "idx" in
+                    let alter_num_inv =
+                      let f1 = CF.project_body_num vd.Cast.view_un_struc_formula (CP.mkFalse no_pos) vd.Cast.view_vars in
+                      let f1 = Tpdispatcher.simplify_raw (CP.wrap_exists_svl f1 [idx]) in
+                      let f2 = CF.project_body_num vd.Cast.view_un_struc_formula f1 vd.Cast.view_vars in
+                      let f2 = Tpdispatcher.simplify_raw (CP.wrap_exists_svl f2 [idx]) in
+                      let f3 = CF.project_body_num vd.Cast.view_un_struc_formula f2 vd.Cast.view_vars in
+                      let f3 = Tpdispatcher.simplify_raw (CP.wrap_exists_svl f3 [idx]) in
+                      let f3p = TP.pairwisecheck_raw f3 in
+                      let f4 = CF.project_body_num vd.Cast.view_un_struc_formula f3p vd.Cast.view_vars in
+                      let f4 = Tpdispatcher.simplify_raw (CP.wrap_exists_svl f4 [idx]) in
+                      let f5 = Fixcalc.widen f3 f4 in
+                      f5
+                    in
+                    let _ = Debug.tinfo_hprint (add_str "alter_num_inv" Cprinter.string_of_pure_formula) alter_num_inv no_pos in
+                    let alter_body = CF.project_body_num vd.Cast.view_un_struc_formula alter_num_inv vd.Cast.view_vars in
+                    let alter_body = Tpdispatcher.simplify_raw (CP.wrap_exists_svl alter_body [idx]) in
+                    if Tpdispatcher.imply_raw alter_num_inv alter_body then
+                      let _ = Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
+                      (true,alter_num_inv)
+                    else
+                      let _ = Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant\n") no_pos in
+                      (false,fixc)
+                  in
                   is_precise_num
                 with _ ->
                     let _ = Debug.binfo_pprint ("Predicate " ^ vd.Cast.view_name ^ " has over invariant (exc) \n") no_pos in
-                    false
+                    (false,fixc)
             )  (List.combine view_list_num_with_inv num_invs) in
+            let precise_list,num_invs = List.split precise_num_invs in
             (* let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in *)
             let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
             let fixcalc_invs = List.map (fun vd -> vd.Cast.view_fixcalc) view_list_baga in
@@ -2620,22 +2645,25 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let _ = Debug.tinfo_hprint (add_str "fixcalc_invs (cviews0)" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs_cviews0 no_pos in
             let _ = Debug.tinfo_hprint (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs_wrap_index no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
+            let _ = List.iter (fun (vd,inv) ->
+                Hashtbl.add Excore.map_num_invs vd.Cast.view_name ((CP.mk_self None)::vd.Cast.view_vars,inv)
+            ) (List.combine view_list_baga0 num_invs) in
             let baga_num_invs = List.combine baga_invs num_invs in
             let combined_invs = List.map (fun (disj,pf) ->
               let disj1 = List.hd (Excore.EPureI.mk_epure pf) in
               let new_disj = List.map (fun disj2 -> Excore.EPureI.mk_star disj1 disj2) disj in
               new_disj
             ) baga_num_invs in
-            let _ = Debug.ninfo_hprint (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
+            let _ = Debug.tinfo_hprint (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
             let _ = List.iter (fun (vd,inv) ->
                 Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
             let unfold_cnt = new Gen.change_flag in
             let rec unfold precise old_invs =
-              if unfold_cnt # exceed 10 then 
+              if unfold_cnt # exceed 10 then
                 let _ = Debug.binfo_pprint "WARNING : Unfolding for baga-inv exceeded 10" no_pos in
                 old_invs
-              else 
+              else
               let _ = unfold_cnt # inc in
               (* let _ = Debug.binfo_hprint (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
@@ -2649,6 +2677,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   let _ = Debug.ninfo_hprint (add_str "new_inv" Excore.EPureI.string_of_disj) new_inv no_pos in
                   new_inv
               ) view_list_baga0 in
+              let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
               if List.length old_invs = 0 then
                 let _ = List.iter (fun (vd,new_inv) ->
                     Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
@@ -2689,7 +2718,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             (* ) (List.combine view_list_baga0 num_invs) in *)
             (* WN : Looping at unfold with imprecise inv *)
             let new_invs = unfold (List.for_all (fun a -> a) precise_list) combined_invs in
-            let _ = Debug.tinfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
+            let _ = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
             ()
             (* let new_invs_list = Expure.fix_ef view_list cviews0 in *)
             (* let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in *)
@@ -2723,7 +2752,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         List.map (fun cv ->
             let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
             let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) (Excore.EPureI.pairwisecheck_disj inv) no_pos in
+            let _ = Debug.binfo_hprint (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
             let _ = print_string_quiet "\n" in
             if precise then
               match cv.Cast.view_baga_inv with
@@ -2733,6 +2762,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                       C.view_baga_under_inv = Some inv;
                       C.view_baga_x_over_inv = Some inv;
                       C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                      C.view_x_formula = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
                   }
                 | Some inv0 ->
                       if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then {cv with
@@ -2741,6 +2771,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                           C.view_baga_under_inv = Some inv;
                           C.view_baga_x_over_inv = Some inv;
                           C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                          C.view_x_formula = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
                       }
                       else cv
             else
@@ -2748,6 +2779,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   C.view_baga_over_inv = Some inv;
                   C.view_baga_x_over_inv = Some inv;
                   C.view_user_inv = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                  C.view_x_formula = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
               }
         ) cviews0
       (* else *)

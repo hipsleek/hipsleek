@@ -1596,13 +1596,13 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
             (tmp1, addrs1 @ addrs2)          *)
     | Phase ({ h_formula_phase_rd = h1;
       h_formula_phase_rw = h2;
-      h_formula_phase_pos = pos}) 
+      h_formula_phase_pos = pos})
     | Conj ({ h_formula_conj_h1 = h1;
       h_formula_conj_h2 = h2;
       h_formula_conj_pos = pos})
     | ConjStar ({ h_formula_conjstar_h1 = h1;
       h_formula_conjstar_h2 = h2;
-      h_formula_conjstar_pos = pos})	  	  
+      h_formula_conjstar_pos = pos})
     | ConjConj ({ h_formula_conjconj_h1 = h1;
       h_formula_conjconj_h2 = h2;
       h_formula_conjconj_pos = pos}) ->
@@ -1639,7 +1639,7 @@ let xpure_heap i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_x
   let sym_flag = false in
   let _ = smart_same_flag := true in
   let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
-  Debug.no_3_num i "xpure_heap"
+  Debug.no_3_num i "xpure_heap_i"
       Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 
@@ -1647,7 +1647,7 @@ let xpure_heap_sym i (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (whi
   let sym_flag = true in
   let _ = smart_same_flag := true in
   let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
-  Debug.no_3_num i "xpure_heap"
+  Debug.no_3_num i "xpure_heap_sym_i"
       Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_new prog h0 p0 which_xpure sym_flag ) h0 p0 which_xpure
 

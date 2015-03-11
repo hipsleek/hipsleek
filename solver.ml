@@ -2766,7 +2766,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-          if !Globals.gen_baga_inv then tp_syn h p
+          if !Globals.baga_xpure (* !Globals.gen_baga_inv *) then tp_syn h p
           else tp_sem h p
           (* let p = MCP.translate_level_mix_formula p in *)
 	  (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
@@ -8021,52 +8021,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
   in
-  (*let _ = print_string "what is going on?\n" in*)
-  (* Termination *)
-  let pr = Cprinter.string_of_formula in
-  (* let _ = Debug.info_hprint (add_str "stk_estate" (pr_list pr))  *)
-  (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
-  let (estate,_,rhs_p,rhs_wf) =
-    if not !Globals.dis_term_chk then
-      Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    else
-      let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in
-      (estate, lhs_p, rhs_p, None)
-  in
-  (* Termination: Try to prove rhs_wf with inference *)
-  (* rhs_wf = None --> measure succeeded or no striggered inference *)
-  (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
-  (* lctx = Succ --> termination succeeded with inference *)
-  let estate = match rhs_wf with
-    | None -> estate 
-    | Some rank ->
-          begin
-            let _ = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
-            match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
-              | None -> (try
-                    let t_ann, ml, il = Term.find_lexvar_es estate in
-                    let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
-                    let term_measures, term_res, term_err_msg =
-                      Some (CP.Fail CP.TermErr_May, ml, il),
-                      (term_pos, t_ann_trans, orig_ante, 
-                      Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
-                      Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
-                    in
-                    let term_stack = match term_err_msg with
-                      | None -> estate.CF.es_var_stack
-                      | Some msg -> msg::estate.CF.es_var_stack
-                    in
-                    Term.term_res_stk # pop;
-                    Term.term_res_stk # push term_res;
-                    { estate with 
-                        CF.es_var_measures = term_measures;
-                        CF.es_var_stack = term_stack; 
-                        CF.es_term_err = term_err_msg;
-                    }
-                with _ -> estate)
-              | Some es -> es
-          end
-  in
+  (* let _ = print_string "what is going on?\n" in *)
+  (* Termination: Only strip lexvar in RHS and                        *)
+  (* Delay term checking until we have the entailment checking result *)
+  let rhs_p_lexvar = rhs_p in
+  let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in
+  
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
   (* TO DOCUMENT : Loc : What are result types here? *)
@@ -8391,6 +8351,52 @@ type: bool *
       let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
       let res_delta = CF.simplify_pure_f_old res_delta in
       let estate = { estate with es_formula = res_delta; } in
+
+      (* Termination *)
+      (* let pr = Cprinter.string_of_formula in *)
+      (* let _ = Debug.info_hprint (add_str "stk_estate" (pr_list pr))  *)
+      (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
+      let (estate, _, (* rhs_p, *) rhs_wf) =
+        if not !Globals.dis_term_chk then
+          Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p_lexvar pos
+        else
+          (* let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in *)
+          (estate, lhs_p, (* rhs_p, *) None)
+      in
+      (* Termination: Try to prove rhs_wf with inference *)
+      (* rhs_wf = None --> measure succeeded or no striggered inference *)
+      (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
+      (* lctx = Succ --> termination succeeded with inference *)
+      let estate = match rhs_wf with
+        | None -> estate
+        | Some rank ->
+              begin
+                let _ = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
+                match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
+                  | None -> (try
+                        let t_ann, ml, il = Term.find_lexvar_es estate in
+                        let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+                        let term_measures, term_res, term_err_msg =
+                          Some (CP.Fail CP.TermErr_May, ml, il),
+                          (term_pos, t_ann_trans, orig_ante,
+                          Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
+                          Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+                        in
+                        let term_stack = match term_err_msg with
+                          | None -> estate.CF.es_var_stack
+                          | Some msg -> msg::estate.CF.es_var_stack
+                        in
+                        Term.term_res_stk # pop;
+                        Term.term_res_stk # push term_res;
+                        { estate with
+                            CF.es_var_measures = term_measures;
+                            CF.es_var_stack = term_stack;
+                            CF.es_term_err = term_err_msg;
+                        }
+                    with _ -> estate)
+                  | Some es -> es
+              end
+      in
 
       (*************************************************************************)
       (********** BEGIN ENTAIL VarPerm [lhs_vperm_vars] |- rhs_vperms **********)

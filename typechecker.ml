@@ -1656,7 +1656,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   DD.tinfo_hprint (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
                   DD.tinfo_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
                   DD.tinfo_hprint (add_str "read-only" string_of_bool) read_only pos;
-                  DD.tinfo_pprint ("Check for @L read permission on bind node "^v) pos;
+                  (* yes below is safe *)
+                  (* DD.tinfo_pprint ("Check for @L read permission on bind node "^v) pos; *)
                   (* Debug.winfo_pprint "Safe to use @L for Bind? Use frac?" pos; *)
                   check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t;
                   (* let b,res = (if !Globals.ann_vp then                          *)
@@ -4144,7 +4145,7 @@ let rec check_prog iprog (prog : prog_decl) =
             r
           end
       ) in
-      
+
       let should_print_term_res = List.fold_left (fun acc proc ->
         if not acc then CF.has_known_pre_lexvar_struc (proc.Cast.proc_stk_of_static_specs # top)
         else acc) false scc in

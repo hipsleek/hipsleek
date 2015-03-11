@@ -338,7 +338,7 @@ let norm_term_measures_by_length src dst =
   else Some (src, Gen.BList.take sl dst)
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
-let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -346,7 +346,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
   match ans with
       (* From primitive calls - 
        * Do not need to add messages to stack *)
-    | None -> (estate, lhs_p, rhs_p, None)     
+    | None -> (estate, lhs_p, (* rhs_p, *) None)     
     | Some (src_lv, dst_lv) ->
         (* TODO : Let us assume Term[] is for base-case
            and primitives. In the case of non-primitive,
@@ -385,7 +385,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
             es_term_err = term_err_msg;
           } in
           add_term_res_stk term_res;
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
         else
           (* [(s1,d1), (s2,d2)] -> [[(s1,d1)], [(s1,d1),(s2,d2)]]*)
           let lst_measures = List.fold_right (fun bm res ->
@@ -418,7 +418,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
             Debug.devel_zprint (lazy (">>>>>> [term.ml][trans_lexvar_rhs] <<<<<<")) pos;
-            Debug.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
+            (* Debug.devel_zprint (lazy ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p))) pos; *)
             Debug.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
             Debug.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
             Debug.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
@@ -492,25 +492,25 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
             es_term_err = term_err_msg
           } in
           add_term_res_stk term_res;
-          (n_estate, lhs_p, rhs_p, rank_formula)
+          (n_estate, lhs_p, (* rhs_p, *) rank_formula)
 
-let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos =
   let pr = !MCP.print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
   let pr3 = pr_list !print_exp in
-  Debug.no_5 "check_term_measures" pr2 
+  Debug.no_4 "check_term_measures" pr2 
     (add_str "lhs_p" pr)
-    (add_str "rhs_p" pr) 
+    (* (add_str "rhs_p" pr) *)
     (add_str "src_lv" pr3) 
     (add_str "src_rv" pr3)
-    (fun (es, lhs, rhs, rank_fml) ->
-      pr_quad pr2 (add_str "lhs" pr)
-      (add_str "rhs" pr) 
+    (fun (es, lhs, (* rhs, *) rank_fml) ->
+      (* pr_quad *) pr_triple pr2 (add_str "lhs" pr)
+      (* (add_str "rhs" pr) *)
       (add_str "rank_fml" (pr_option pr1)) 
-      (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ _ -> check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
-        estate lhs_p rhs_p src_lv dst_lv
+      (es, lhs, (* rhs, *) rank_fml))  
+      (fun _ _ _ _ -> check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos) 
+        estate lhs_p (* rhs_p *) src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
@@ -524,7 +524,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in 
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
-      let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+      (* let _, rhs_p = strip_lexvar_mix_formula rhs_p in *)
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let c_pos = proving_loc # get in
@@ -552,7 +552,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       match (t_ann_s, t_ann_d) with
       | (_, TermR _) ->
         let estate = process_turel true estate in
-        (estate, lhs_p, rhs_p, None)
+        (estate, lhs_p, (* rhs_p, *) None)
       | (TermU uid, _) -> begin
         match t_ann_d with
         | Term -> (* Only add Call Relation of methods in the same scc *) 
@@ -560,22 +560,22 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           let termu_src_order = uid.tu_call_num in
           let term_dst_order = get_call_order dst_lv in
           if termu_src_order > term_dst_order then
-            (estate, lhs_p, rhs_p, None)
+            (estate, lhs_p, (* rhs_p, *) None)
           else
             let estate = process_turel false estate in
-            (estate, lhs_p, rhs_p, None)
+            (estate, lhs_p, (* rhs_p, *) None)
         | _ -> 
           let estate = process_turel false estate in
-          (estate, lhs_p, rhs_p, None) end
+          (estate, lhs_p, (* rhs_p, *) None) end
       | (Term, TermU _) -> 
         let estate = process_turel false estate in
-        (estate, lhs_p, rhs_p, None)
-      | (_, TermU _) -> (estate, lhs_p, rhs_p, None)
-      | (TermR _, _) -> (estate, lhs_p, rhs_p, None)
+        (estate, lhs_p, (* rhs_p, *) None)
+      | (_, TermU _) -> (estate, lhs_p, (* rhs_p, *) None)
+      | (TermR _, _) -> (estate, lhs_p, (* rhs_p, *) None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
-          check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
+          check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *)
             src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
@@ -594,26 +594,26 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
             es_term_err = Some (string_of_term_res term_res);
           } in
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
       | (Loop _, Loop _) ->
           let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
       | (Loop _, _) ->
           let term_measures = Some (Loop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
       | (MayLoop _, _) ->
           let term_measures = Some (MayLoop None, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
       | (Fail TermErr_Must, _) ->
           let n_estate = {estate with 
             es_var_measures = Some (Fail TermErr_Must, src_lv, src_il);
           } in
-          (n_estate, lhs_p, rhs_p, None)
+          (n_estate, lhs_p, (* rhs_p, *) None)
     end
-  with _ -> (estate, lhs_p, rhs_p, None)
+  with _ -> (estate, lhs_p, (* rhs_p, *) None)
 
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
@@ -623,10 +623,10 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = Mmix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
-  if !Globals.dis_term_chk || estate.es_term_err != None then
+  if (* !Globals.dis_term_chk || *) estate.es_term_err != None then
     (* Remove LexVar in RHS *)
-    let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-    (estate, lhs_p, rhs_p, None)
+    (* let _, rhs_p = strip_lexvar_mix_formula rhs_p in *)
+    (estate, lhs_p, (* rhs_p, *) None)
   else
     check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
@@ -635,7 +635,7 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr2 = !print_entail_state in
   let f = wrap_proving_kind PK_Term_Dec (check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
   Debug.no_3(* _loop *) "check_term_rhs" 
-    pr2 pr pr (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+    pr2 pr pr (fun (es, lhs, (* rhs, *) _) -> pr_pair pr2 pr (* pr *) (es, lhs (*, rhs *)))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
 
 (* For temination assumption (termAssume) checking *)        
@@ -1123,7 +1123,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
                 if (List.exists (fun (v2,_) -> eq_spec_var v v2) subst) then [] 
                 else 
                   begin
-                    Debug.info_hprint (add_str "var -> 0" !print_sv) v no_pos;
+                    Debug.tinfo_hprint (add_str "var -> 0" !print_sv) v no_pos;
                     [(v,0)]
                   end
                 end
@@ -1267,7 +1267,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 (* Main function of the termination checker *)
 let term_check_output_scc () =
   if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) && 
-     not(term_res_stk # is_empty) && not !Globals.dis_term_chk then
+     (* not (term_res_stk # is_empty) && *) not !Globals.dis_term_chk then
   begin
     if not !Globals.svcomp_compete_mode then (
       print_string_quiet "\nTermination checking result: ";
