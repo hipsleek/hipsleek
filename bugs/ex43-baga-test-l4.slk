@@ -6,7 +6,7 @@ data node {
 
 pred l4<q:node> == 
   (exists z: self::node<r>*r::node<_> & r=z & z=q)
-inv self=null
+inv self!=null
 //inv false
 // baga {self,q}
 .
