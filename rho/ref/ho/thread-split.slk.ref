@@ -1,0 +1,8 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "ho/thread-split.slk", line 5, characters 15-16
+ error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:error at: 
+SLEEK FAILURE (END)
+

@@ -1,0 +1,18 @@
+
+!!!Full processing file "web/cdl-ex5-deadlock.ss"
+Parsing file "web/cdl-ex5-deadlock.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+!!! WARNING: [ERR-DEADLOCK:web/cdl-ex5-deadlock.ss_54:2_64:3]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.698425 second(s)
+	Time spent in main process: 0.652978 second(s)
+	Time spent in child processes: 0.045447 second(s)
+

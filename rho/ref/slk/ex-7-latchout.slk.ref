@@ -1,0 +1,56 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "slk/ex-7-latchout.slk",Line:4,Col:10
+
+ERROR: at slk/ex-7-latchout.slk_4:10_4:31
+Message: compute_view_fw_bw: data not found: LatchOut
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&y!=null&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&y!=null&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [QQQ --> y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 3: Fail.(must) cause:matching of ho_args failed (do_unmatched_rhs : HVar PPP[])
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>c::LatchOut{ + y::cell<flted_30_41>&3=flted_30_41&{FLOW,(4,5)=__norm#E}[]}<>&3<n & flted_30_41=3 & y!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 6: Fail.(must) cause:matching of ho_args failed ( 3<n |-  5<n. LOCS:[35;36] (may-bug))
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+

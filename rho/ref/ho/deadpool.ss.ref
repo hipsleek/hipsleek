@@ -1,0 +1,9 @@
+
+!!!Full processing file "ho/deadpool.ss"
+Parsing file "ho/deadpool.ss" by default parser...
+File "ho/deadpool.ss", line 12, characters 14-15
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

@@ -1,0 +1,9 @@
+
+!!!Full processing file "ho/thread-dead.ss"
+Parsing file "ho/thread-dead.ss" by default parser...
+File "ho/thread-dead.ss", line 15, characters 14-15
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

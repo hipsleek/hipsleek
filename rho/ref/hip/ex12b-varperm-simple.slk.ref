@@ -1,0 +1,10 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(may) cause:Mismatch non-zero variable permission in consequent [(x,@value)]
+
+Residue:
+ <1>emp&x'=1 & y'=4&{FLOW,(1,26)=__flow#E}[]
+
+

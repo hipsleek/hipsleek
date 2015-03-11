@@ -1,0 +1,72 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(may) cause: true |-  Anon_11=Anon_13. LOCS:[0;3] (may-bug)
+
+Residue:
+ <1>(Hole[37]) * y::cell<Anon_12>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp*N@full[x,y]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (3) : Fail.(must) cause:mismatched imm annotation @par for data cell
+
+Residue:
+ <1>(Hole[50]) * y::cell<Anon_15>&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail (4) : Fail.(may) cause:(x,@full) cannot satisfy (under Par) (x,@lend)
+
+Residue:
+ <1>emp*U@full[x,y]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail 5: Fail.(may) cause: true |-  Anon_17=Anon_19. LOCS:[0;16] (may-bug)
+
+Residue:
+ <1>(Hole[62]) * y::cell<Anon_18>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail (6) : Fail.(may) cause: true |-  Anon_20=Anon_22. LOCS:[0;19] (may-bug)
+
+Residue:
+ <1>(Hole[74]) * y::cell<Anon_21>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail (7) : Fail.(must) cause:mismatched imm annotation @par for data cell
+
+Residue:
+ <1>y::cell<Anon_24>&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail (8) : Fail.(may) cause: Anon_11=1 |-  Anon_11=Anon_13. LOCS:[26] (may-bug)
+
+Residue:
+ <1>Hole[102]*U@full[y_41,z_42]@lend[x_40]&Anon_11=v_int_6_1391 & z_42'=2 & y_41'=1 & v_int_6_1391=1&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x_40',x_40') ==> ]]
+
+
+
+Entail 9: Fail.(may) cause: Anon_11=1 |-  Anon_11=Anon_12. LOCS:[30;31] (may-bug)
+
+Residue:
+ <1>Hole[120]*U@full[y_41,z_42]@lend[x_40]&Anon_11=v_int_6_1391 & z_42'=2 & y_41'=1 & v_int_6_1391=1&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x_40',x_40') ==> ]]
+
+
+
