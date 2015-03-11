@@ -1,0 +1,15 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&m_1205+1=mm & q_68=q_1225 & Anon_67=Anon_1224 & res=v_int_30_1186' & v_int_30_1186'=1+v_int_30_36 & post1(m_1205,n_1228,v_int_30_36) & 0<=n_1228 & 0<=flted_14_1223 & n_1228=flted_14_1223 & !(v_bool_29_1187') & x'!=null & x'=x & 1+flted_14_1223=n&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN post1: ( post1(m_1205,n_1228,v_int_30_36) & 0<=m_1205 & res=1+v_int_30_36 & n_1228+
+1=n & 1<=n & mm=m_1205+1) -->  post1(mm,n,res)]
+[[ Fold ==>  SEARCH ==>  Match(x',x) ==>  COND ==>  Match(q_1225,q_68) ==> ]]
+
+
+

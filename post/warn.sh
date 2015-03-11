@@ -1,1 +1,2 @@
-egrep "rror|arning|xception|WARN" ref/*/*ref > warn-ref.txt
+egrep "rror|arning|xception|WARN|ERROR|FAILURE" ref/*/*ss.ref > warn-ref-ss.txt
+egrep "rror|arning|xception|WARN|ERROR|FAILURE" ref/*/*slk.ref > warn-ref-slk.txt
