@@ -457,12 +457,15 @@ struct
 
   (* convert ptr to integer constraints *)
   (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
-  let baga_conv baga : formula =
+  let baga_conv ?(neq_flag=false) baga : formula =
+    let choose hd pos =
+      if neq_flag then mkNeqNull hd pos
+      else mkGtVarInt hd 0 pos in
     let baga = Elt.conv_var baga in
     if (List.length baga = 0) then
       mkTrue no_pos
     else if (List.length baga = 1) then
-      mkGtVarInt (List.hd baga) 0 no_pos
+      choose (List.hd baga) no_pos
     else
       let rec helper i j baga len =
         let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
@@ -476,8 +479,8 @@ struct
           mkAnd f1 f2 no_pos
       in
       let f1 = helper 0 1 baga (List.length baga) in
-      let f2 = List.fold_left (fun f sv -> mkAnd f (mkGtVarInt sv 0 no_pos) no_pos)
-        (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
+      let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos)
+        (choose (List.hd baga) no_pos) (List.tl baga) in
     mkAnd f1 f2 no_pos
 
   (* ef_conv :  ef_pure -> formula *)
@@ -485,6 +488,13 @@ struct
   (* ([a,a,b],pure)  --> baga[a,ab] & a>0 & a>0 & b>01 & pure *)
   let ef_conv ((baga,f)) : formula =
     let bf = baga_conv baga in
+    mkAnd bf f no_pos
+
+  (* ef_conv :  ef_pure -> formula *)
+  (* conseq must use this *)
+  (* ([a,a,b],pure)  --> baga[a,ab] & a!=null & a!=null & b!=null1 & pure *)
+  let ef_conv_neq ((baga,f)) : formula =
+    let bf = baga_conv ~neq_flag:true baga in
     mkAnd bf f no_pos
 
   (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
@@ -512,7 +522,7 @@ struct
     ) (mkFalse no_pos) disj
 
   let ef_conv_disj_x disj : formula =
-    ef_conv_disj_ho ef_conv disj
+    ef_conv_disj_ho ef_conv_neq disj
 
   let ef_conv_disj disj : formula =
     Debug.no_1 "ef_conv_disj" string_of_disj !Cpure.print_formula

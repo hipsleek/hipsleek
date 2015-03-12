@@ -2007,6 +2007,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let (baga_rs1, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_formula pos in
       let ctx1 = CF.build_context (CF.true_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled pos) baga_enum_formula pos in
+      (* TODO:WN:under Why do we need formula1_under in RHS here? *) 
       let (baga_rs2, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in
       (* let _ = Debug.tinfo_hprint (add_str "context1" Cprinter.string_of_context) ctx1 no_pos in *)
       let _ = Debug.tinfo_hprint (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
@@ -2039,6 +2040,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let (baga_under_rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx1 ]) formula1_under pos in *)
       let over_fail = (CF.isFailCtx baga_over_rs) in
       (* let under_fail = (CF.isFailCtx baga_under_rs) in *)
+      (* type: int -> Excore.EPureI.epure -> CF.formula list -> string -> bool *)
       let check_under no uf fl vn =
         (* unfold helper, now unfold 3 times *)
         let rec helper_unfold no bfs ifs =
@@ -2077,11 +2079,16 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             let _ = Debug.ninfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw upf pf
       in
+      (* type: int -> Excore.EPureI.epure -> CF.formula list -> string -> bool *)
+      let check_under no uf fl vn = 
+        Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
+      (* let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in *)
+      let body_under = [formula1_under] in
       let under_fail = match under_f with
         | None -> false
         | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
             List.exists (fun uf ->
-                not(check_under 3 uf (fst (List.split vdef.view_un_struc_formula)) vdef.view_name)
+                not(check_under 3 uf body_under (* (fst (List.split vdef.view_un_struc_formula)) *) vdef.view_name)
             ) ufl
             (* let baga_under_formula_list = CP.split_disjunctions baga_under_formula in *)
             (* List.exists (fun baga_under_formula -> *)

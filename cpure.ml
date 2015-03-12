@@ -2578,6 +2578,8 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 and mkNeqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Neq (Var (sv, pos), IConst (i, pos), pos), None),None)
 
+(* and mkNeqNull (sv : spec_var) pos = *)
+(*   BForm ((Neq (Var (sv, pos), Null pos, pos), None),None) *)
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
 
