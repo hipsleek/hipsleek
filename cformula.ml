@@ -11710,7 +11710,10 @@ let list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_con
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   (* List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1) *)
-  List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
+  if List.length l1 = 0 then l2
+  else if List.length l2 = 0 then l1
+  else
+    List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
