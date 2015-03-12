@@ -574,7 +574,7 @@ struct
 
   (* DO NOT CALL DIRECTLY *)
   let ef_unsat_0 (f : epure) : bool =
-    (* Debug.no_1 "ef_unsat" string_of_ef_pure string_of_bool *)
+    Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
         ef_unsat_0 f
 
   let unsat (b,f) = ef_unsat_0 (b, f)
@@ -618,7 +618,7 @@ struct
     not (!is_sat_raw (Mcpure.mix_of_pure f))
 
   let ef_imply_0 (ante : epure) (conseq : epure) : bool =
-    (* Debug.no_2 "ef_imply" string_of_ef_pure string_of_ef_pure string_of_bool *)
+    Debug.no_2 "ef_imply" string_of(* _ef_pure *) string_of(* _ef_pure *) string_of_bool
         ef_imply_0 ante conseq
 
   let imply (ante : epure) (conseq : epure) : bool =
