@@ -1,0 +1,14 @@
+
+!!!Full processing file "ho/inst2.ss"
+Parsing file "ho/inst2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+!!!WARNING : uninterpreted free variables [mmm] in specification.
+0 false contexts at: ()
+
+Total verification time: 0.312135 second(s)
+	Time spent in main process: 0.294695 second(s)
+	Time spent in child processes: 0.01744 second(s)
+

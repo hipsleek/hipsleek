@@ -1,0 +1,31 @@
+
+!!!Full processing file "t/exc6.ss"
+Parsing file "t/exc6.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1358: ( x=1+res & 0<=res & post_1358(res,v_int_12_1377)) -->  post_1358(x,res),
+RELDEFN post_1358: ( x=res & res<=0) -->  post_1358(x,res)]
+*************************************
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((res>=0 & res+1=x) | (0>=x & x=res))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.409597 second(s)
+	Time spent in main process: 0.339576 second(s)
+	Time spent in child processes: 0.070021 second(s)
+

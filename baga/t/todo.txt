@@ -463,12 +463,121 @@ for ll-3e.ss but fails for ll-3.ss.
 
 This works!
 ==============================================
+# ex10-11-under.slk
+
+
+Can we distinguish something that is
+definitely UNSAT such as ([],false)  or  ([self],n=0)
+
+from over-approx such as ([self],n>=0)
+or unknown such as ([self],n>=10)
+
+?
 ==============================================
+# err-10.slk
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1>
+inv_sat BG([],self=null & n<1) 
+   // reported invalid, but this can be proven cylicly..
+.
+
+([],self=null & n<1) <<= self::ll<n>
+
+([],self=null & n<1) <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+([],self=null & n<1 & n=0) \/ ([],self=null & n<1 & n!=0) 
+  <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+split-lhs-\/
+
+([],self=null & n<1 & n=0)  <<= self=null & n=0
+([],self=null & n<1 & n=0)  <<= self=null & n=0 // valid
+
+([],self=null & n<1 & n!=0) <<= self::node<_,q>*q::ll<n-q> // empty
+
 ==============================================
+# ex21.slk
+
+Inferred inv
+compute_invs_fixcalc@1
+compute_invs_fixcalc inp1 :
+lseg:={[self,NODp_46,n_47,m_48,idx_49] -> [] -> []:  exists (self,NODp: 0=0 && self=NODp && n_47=0 && m_48=0 && idx_49=0) ||  exists (self,NODp,NODp_16,flted_6_14,flted_6_15,NODq,idx_45: (self>0 && lseg(NODq,NODp_16,flted_6_15,flted_6_14,idx_45)) && flted_6_15+1=n_47 && flted_6_14+1=m_48 && NODp_16=NODp && idx_49=idx_45+1)
+};
+bottomupgen([lseg], [3], SimHeur);
+compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+
+But sleek goes into a LOOP? why?
+
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
 ==============================================
+# ex21b.slk: FIXED
+
+must detect false is not invariant
+need to do fixpoint checking for user-supplied inv
+
+!!! WARNING: User supplied is more precise: false
+!!! WARNING: TODO fixpt check
+
 ==============================================
+# ex21c.slk : FIXED
+
+pred lseg<p,n,m> == self=p & n=0 & m=0
+  or self::node<q> * q::lseg<p,n-1,m-1>
+  inv n,m>=0
+ .
+
+supplied is less precise than fixcalc;
+therefore over-inv message is incorrect.
+
+!!! memo_pf_P: n>=0 & n=m & n=idx
+!!! Predicate lseg has over invariant
 ==============================================
+# ex21b.slk: FIXED
+
+GOT
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], true)]
+
+EXPECTED
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], m=n & n>=1)]
 ==============================================
+Total number of errors: 20 in files:
+
+ label-dll.slk({E3#Valid},{E4#Valid}): FIXED
+ lst-under1.slk({I2#Fail})
+ lst-under2.slk({I1#Fail})
+ ll-under1c.slk({I2#Fail})
+ ll-under1e.slk({I1#Fail},{I2#Fail})
+ ll-under1f.slk({I2#Fail})
+ baga-test-eps.slk({E10#Valid},{E6#Valid})
+ baga-test-2.slk({E10#Valid},{E6#Valid})
+ infer/infer7.slk({E6#Valid},{E7#Valid})
+ infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid})
+ infer/infer9.slk({E7#Valid})
+ infer/infer10.slk({E1#Valid},{E2#Valid})
+ infer/infer13.slk({E5#Valid})
+ infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid})
+ infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid})
+ infer/infer16.slk({E5#Valid},{E6#Valid})
+ imm-field/sleek05.slk({E1#Valid})
+ inf-no-eps.slk(no result  for {E})
+ infinity.slk(no result  for {E})
+ inflem.slk({E1#Fail},{E2#Valid}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ==============================================
 ==============================================
 ==============================================

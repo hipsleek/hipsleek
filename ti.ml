@@ -168,10 +168,19 @@ let solve_trrel_list params trrels turels =
   in
   
   let conds = base_conds @ rec_conds in
-  let may_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
-  if (is_sat may_cond) && not !Globals.tnt_infer_lex then
-    conds @ [MayTerm may_cond]
-  else conds
+  
+  let rem_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
+  let pre_cond = CP.join_conjunctions (List.fold_left (fun acc tu ->
+    let cond = simplify 11 tu.call_ctx params in
+    acc @ [cond]) [] turels) in
+  let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
+  let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
+  
+  (* if (* (is_sat may_cond) && *) not !Globals.tnt_infer_lex then *)
+    conds @ 
+    (if is_sat unk_cond then [Rec unk_cond] else []) @
+    (if is_sat may_cond then [Rec may_cond] else [])
+  (* else conds *)
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
@@ -437,9 +446,10 @@ let solve no_verification_errors should_infer_tnt prog =
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then 
-    print_endline_quiet ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n")
+    Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    print_endline_quiet ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n")
+    let _ = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
+    ()
   else if not should_infer_tnt then ()
   else
     let _ = print_endline_quiet "\n\n*****************************" in

@@ -227,9 +227,10 @@ let rec find_read_write_global_var
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         find_read_write_global_var global_vars local_vars new_e
         with _ ->
                 Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
@@ -387,6 +388,12 @@ let rec find_read_write_global_var
 		| None  -> (IdentSet.empty, IdentSet.empty)
 		| Some e -> find_read_write_global_var global_vars local_vars e
 		end 
+  | I.Par e ->
+    let (rl, wl) = List.split (List.map (fun c -> 
+      find_read_write_global_var global_vars local_vars c.I.exp_par_case_body
+      ) e.I.exp_par_cases)
+    in (union_all rl, union_all wl)
+    
   
 (** Construct the read/write variable declarations from the read/write sets 
 	@param global_var_decls list of global variable declarations 
@@ -683,9 +690,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         let new_e1 = extend_body temp_procs new_e in
         (* ================== *)
         match new_e1 with
@@ -696,9 +704,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
               let new_fork_exp = I.CallNRecv {
                   I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
                   I.exp_call_nrecv_method = e.I.exp_call_nrecv_method; (*fork_name*)
-		          I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
-		          I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
-		          I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
+                  I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
+                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
+                  I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
               in
               new_fork_exp
           | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a I.CallNRecv")}
@@ -798,6 +807,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		I.exp_raise_val = match e.I.exp_raise_val with 
 			| None -> None
 			| Some e -> Some (extend_body temp_procs e)}
+  | I.Par e ->
+    let cl = List.map (fun c -> { c with 
+      I.exp_par_case_body = extend_body temp_procs c.I.exp_par_case_body }) e.I.exp_par_cases in
+    I.Par { e with I.exp_par_cases = cl; }
 
 (* Rename local variables when there is conflict *)
 
@@ -1003,6 +1016,10 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		I.exp_raise_val = match e.I.exp_raise_val with 
 			| None -> None
 			| Some e -> Some (check_and_change global_vars e)}
+  | I.Par e ->
+    let cl = List.map (fun c -> { c with 
+      I.exp_par_case_body = check_and_change global_vars c.I.exp_par_case_body }) e.I.exp_par_cases in
+    I.Par { e with I.exp_par_cases = cl; }
   
 (** Rename the parameters and local variables if there is conflict with global variables 
 	@param proc procedure declaration

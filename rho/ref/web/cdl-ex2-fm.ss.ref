@@ -1,0 +1,42 @@
+
+!!!Full processing file "web/cdl-ex2-fm.ss"
+Parsing file "web/cdl-ex2-fm.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+( []) :web/cdl-ex2-fm.ss:57: 14: p_43 does not have @lend/@full permission to read (inside bind)
+
+(Cause of ParCase Failure):web/cdl-ex2-fm.ss:57: 14:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(p_43,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "web/cdl-ex2-fm.ss",Line:57,Col:14
+
+ERROR: at web/cdl-ex2-fm.ss_57:14_57:19
+Message: p_43 does not have @lend/@full permission to read (inside bind)
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("p_43 does not have @lend/@full permission to read (inside bind)") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.596468 second(s)
+	Time spent in main process: 0.563973 second(s)
+	Time spent in child processes: 0.032495 second(s)
+

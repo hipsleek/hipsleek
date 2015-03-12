@@ -159,6 +159,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.Var e -> e.Iast.exp_var_pos
   | Iast.VarDecl e -> e.Iast.exp_var_decl_pos
   | Iast.While e -> e.Iast.exp_while_pos
+  | Iast.Par e -> e.Iast.exp_par_pos
 
 let loc_of_cil_exp (exp: Cil.exp) : Cil.location =
   match exp with
@@ -1244,7 +1245,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | Cil.LNot ->
               let not_proc = create_logical_not_proc new_t in
               let proc_name = not_proc.Iast.proc_name in
-              Iast.mkCallNRecv proc_name None [e] None pos
+              Iast.mkCallNRecv proc_name None [e] None None pos
           | _ -> Iast.mkUnary o e None pos
         ) in
         let target_typ = translate_typ ty pos in
@@ -1289,18 +1290,20 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | Globals.Named otyp_name, Globals.Named ityp_name ->
               if (ityp_name = "void_star") then (
                 let cast_proc = create_void_pointer_casting_proc otyp_name in
-                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
               )
               else (
                 let cast_proc = create_pointer_casting_proc ityp_name otyp_name in
-                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
               )
           | Globals.Named otyp_name, Globals.Int ->
-              let cast_proc = create_int_to_pointer_casting_proc otyp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                let cast_proc = create_int_to_pointer_casting_proc otyp_name in
+                Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
           | Globals.Int, Globals.Named ityp_name ->
-              let cast_proc = create_pointer_to_int_casting_proc ityp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                (* let cast_proc = create_pointer_to_int_casting_proc ityp_name in *)
+                (* Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos *)
+                (*Loc: should have a systematic way to handle deep data structures (e.g cll) with arith *)
+                input_exp
           | _ ->
               report_error pos ("translate_exp: couldn't cast type 2: " 
                   ^ (Globals.string_of_typ input_typ) 
@@ -1341,11 +1344,11 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   match (t1, t2) with
   (* pointer arithmetic *)
   | Cil.TPtr _, Cil.TInt _
-  | Cil.TInt _, Cil.TPtr _
-  | Cil.TPtr _, Cil.TPtr _ ->
+  | Cil.TInt _, Cil.TPtr _ ->
+  (* | Cil.TPtr _, Cil.TPtr _ -> *)
       let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
       let proc_name = pointer_arith_proc.Iast.proc_name in
-      Iast.mkCallNRecv proc_name None [e1; e2] None pos
+      Iast.mkCallNRecv proc_name None [e1; e2] None None pos
   (* not pointer arithmetic *)
   | _, _ ->
       let o = translate_binary_operator op pos in
@@ -1380,7 +1383,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
               Hashtbl.add Iast.tnt_prim_proc_tbl fname fname
             else ()
           in
-          let func_call = Iast.mkCallNRecv fname None args None pos in (
+          let func_call = Iast.mkCallNRecv fname None args None None pos in (
               match lv_opt with
                 | None -> func_call
                 | Some lv ->
@@ -1437,6 +1440,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                 | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
                 | _ -> translate_typ ty pos
               ) in
+              (* let _ =  Debug.info_hprint (add_str "If:new_ty" (string_of_typ)) (new_ty) no_pos in *)
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (
@@ -1445,16 +1449,16 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                   (* | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) *)
                   (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
                   | Cil.BinOp (op, exp1, exp2, ty, l) 
-                    when (is_arith_comparison_op op) ->
-                      let e1 = translate_exp exp1 in
-                      let e2 = translate_exp exp2 in
-                      let o = translate_binary_operator op pos in
-                      Iast.mkBinary o e1 e2 None pos
+                          when (is_arith_comparison_op op) ->
+                        let e1 = translate_exp exp1 in
+                        let e2 = translate_exp exp2 in
+                        let o = translate_binary_operator op pos in
+                        Iast.mkBinary o e1 e2 None pos
                   | _ ->
                       let cast_e e ty = 
                         let bool_of_proc = create_bool_casting_proc ty in
                         let proc_name = bool_of_proc.Iast.proc_name in
-                        Iast.mkCallNRecv proc_name None [e] None pos
+                        Iast.mkCallNRecv proc_name None [e] None None pos
                       in
                       let e = translate_exp exp in
                       let e_vars = get_vars_exp e in
@@ -1466,8 +1470,10 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                         | Globals.Float -> 
                           let zero = Iast.mkFloatLit 0.0 pos in
                           Iast.mkBinary Iast.OpGt e zero None pos 
-                        | _ -> cast_e e new_ty
-                      else cast_e e new_ty
+                        | _ ->
+                          cast_e e new_ty
+                      else
+                        cast_e e new_ty
                   )
           ) in
           let e1 = translate_block blk1 in
@@ -1783,8 +1789,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               p (* TODO *)
         | Ipure.BagMax _ -> 
               p (* TODO *)
-        | Ipure.VarPerm (va, ipl, pos) ->
-              p (* TODO *)
+        (* | Ipure.VarPerm (va, ipl, pos) -> *)
+        (*       p (* TODO *)                *)
         | Ipure.ListIn (e1, e2, pos) ->
               Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
         | Ipure.ListNotIn (e1, e2, pos) ->
@@ -2070,6 +2076,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_hp_decls = hp_decls;
         Iast.proc_constructor = false;
         Iast.proc_args = funargs;
+        Iast.proc_ho_arg = None;
         Iast.proc_args_wi = args_wi;
         Iast.proc_source = ""; (* WN : need to change *)
         Iast.proc_return = return_typ;

@@ -1,0 +1,39 @@
+
+!!!Full processing file "t/fact-case2.ss"
+Parsing file "t/fact-case2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure fact$int... 
+
+Warning: False precondition detected in procedure fact$int
+ with context:  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1340_1341: ( x=0 & res=1) -->  post_1340_1341(x,res),
+RELDEFN post_1340_1342: ( res=2 & x=1) -->  post_1340_1342(x,res),
+RELDEFN post_1340_1342: ( post_1340_1342(v_int_10_1388,v_int_10_1392) & 1<=v_int_10_1392 & 
+1<=v_int_10_1388 & x=1+v_int_10_1388 & res=1+v_int_10_1392) -->  post_1340_1342(x,res)]
+*************************************
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at _0:0_0:0
+Message: Error in compute_fixpoint_aux
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+
+Error1(s) detected at main 
+caught
+
+Exception occurred: Failure("Error in compute_fixpoint_aux")
+Error3(s) detected at main 

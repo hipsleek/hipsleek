@@ -482,7 +482,7 @@ let cont_para_analysis_view cprog vdef other_vds=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else
       let _, reach_dns, reach_vns = look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
-      let ( _,mix_f,_,_,_) = CF.split_components f in
+      let ( _,mix_f,_,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
       let rec_vns, other_vns = List.partition (fun vn ->
         String.compare vn.CF.h_formula_view_name vname = 0
@@ -981,7 +981,7 @@ let convert_formula_to_linear_x prog (vdef: C.view_decl) (f: CF.formula): CF.for
             let ((f1_heap, f1_pure, f1_qv), new_view) = convert_h_formula_to_linear prog vdef f1.CF.formula_base_heap  f1_pure [] in
             if not(Gen.is_empty f1_qv) then 
               (* should never reach this branch if normalization works ok *)
-              CF.mkExists_w_lbl f1_qv f1_heap f1_pure f1.CF.formula_base_type 
+              CF.mkExists_w_lbl f1_qv f1_heap f1_pure f1.CF.formula_base_vperm f1.CF.formula_base_type 
                   f1.CF.formula_base_flow  f1.CF.formula_base_and f1.CF.formula_base_pos f1.CF.formula_base_label
             else
               CF.Base({f1 with formula_base_heap = f1_heap; formula_base_pure = f1_pure})

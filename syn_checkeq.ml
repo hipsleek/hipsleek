@@ -259,13 +259,26 @@ let rec check_relaxeq_formula_x args f10 f20=
   try
     let qvars1, base_f1 = Cformula.split_quantifiers f1 in
     let qvars2, base_f2 = Cformula.split_quantifiers f2 in
-    let hf1,mf1,_,_,_ = Cformula.split_components base_f1 in
-    let hf2,mf2,_,_,_ = Cformula.split_components base_f2 in
+    let hf1,mf1,_,_,_,_ = Cformula.split_components base_f1 in
+    let hf2,mf2,_,_,_,_ = Cformula.split_components base_f2 in
     Debug.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
     Debug.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
     (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
     let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
     if r1 then
+      let r2 = if !Globals.pred_elim_dangling then
+        List.for_all (fun ((CP.SpecVar (_,id1,_)), (CP.SpecVar (_,id2,_))) ->
+            try
+              let pre1 = String.sub id1 0 5 in
+              let pre2 = String.sub id2 0 5 in
+              let b1 = string_compare pre1 dang_hp_default_prefix_name in
+              let b2 = string_compare pre2 dang_hp_default_prefix_name in
+              (b1 && b2) || (not b1 && not b2)
+            with _ -> true
+        ) ss
+      else true in
+      if not r2 then false
+      else
       (* let new_mf1 = xpure_for_hnodes hf1 in *)
       (* let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in *)
       (* let new_mf2 = xpure_for_hnodes hf2 in *)
@@ -330,6 +343,31 @@ and checkeq_formula_list fs1 fs2=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
+
+let rec checkeq_formula_list_w_args_x args fs1 fs2=
+  let rec look_up_f f fs fs1=
+    match fs with
+      | [] -> (false, fs1)
+      | f1::fss -> if (check_relaxeq_formula args f f1) then
+            (true,fs1@fss)
+          else look_up_f f fss (fs1@[f1])
+  in
+  if List.length fs1 = List.length fs2 then
+    match fs1 with
+      | [] -> true
+      | f1::fss1 ->
+          begin
+              let r,fss2 = look_up_f f1 fs2 [] in
+              if r then
+                checkeq_formula_list_w_args args fss1 fss2
+              else false
+          end
+  else false
+
+and checkeq_formula_list_w_args args fs1 fs2=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
+      (fun _ _ -> checkeq_formula_list_w_args_x args fs1 fs2) fs1 fs2
 
 
 let check_exists_cyclic_proofs_x es (ante,conseq)=
@@ -516,12 +554,12 @@ let syntax_contrb_lemma_end_null_x prog lhs rhs=
     | _ -> hf
   in
    (*****************************************)
-  let ( _,rmf,_,_,_) = Cformula.split_components rhs in
+  let ( _,rmf,_,_,_,_) = Cformula.split_components rhs in
   let r_eqnull_svl =  MCP.get_null_ptrs rmf in
   if r_eqnull_svl = [] then
     (lhs, rhs)
   else
-    let ( _,lmf,_,_,_) = Cformula.split_components lhs in
+    let ( _,lmf,_,_,_,_) = Cformula.split_components lhs in
     let l_eqnull_svl =  MCP.get_null_ptrs lmf in
     if l_eqnull_svl = [] then
       (lhs, rhs)

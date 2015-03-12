@@ -1,0 +1,14 @@
+data node {
+  int val;
+  node next;
+}
+.
+
+// infer10.slk (15) 
+// infer12.slk (15) 
+infer [m] m>2  |- p>m & m>4.
+print residue.
+
+/*
+error in rfp. Above example should be valid 
+*/

@@ -43,8 +43,8 @@ let rec eqHeap h1 h2 = match (h1,h2) with
 
 let rev_imply_formula f1 f2 = match (f1,f2) with
   | (CF.Base _, CF.Base _) | (CF.Exists _, CF.Exists _) -> 
-    let h1,p1,fl1,b1,t1 = CF.split_components f1 in
-    let h2,p2,fl2,b2,t2 = CF.split_components f2 in
+    let h1,p1,vp1,fl1,b1,t1 = CF.split_components f1 in
+    let h2,p2,vp2,fl2,b2,t2 = CF.split_components f2 in
 (*    let p1 = MCP.pure_of_mix p1 in*)
 (*    let p2 = MCP.pure_of_mix p2 in*)
     let res = eqHeap h1 h2 && fl1=fl2 && b1=b2 && t1=t2 in
@@ -110,7 +110,7 @@ and elim_heap h p pre_vars heap_vars aset ref_vars =
       (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars aset ref_vars) h p pre_vars heap_vars
 
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
-  let h, p, _, _, _ = CF.split_components post_fml in
+  let h, p, _, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in
   let h = if pre_vars = [] || not(inf_post) then h else (
       enulalias := true;
@@ -176,7 +176,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let exists_h_vars = if pre_vars = [] then [] else 
       List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
     let fml = CF.mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
-        h (MCP.mix_of_pure p) b.CF.formula_base_type b.CF.formula_base_flow b.CF.formula_base_and
+        h (MCP.mix_of_pure p) b.CF.formula_base_vperm b.CF.formula_base_type b.CF.formula_base_flow b.CF.formula_base_and
         b.CF.formula_base_pos
     in (fml,pre)
 
@@ -197,7 +197,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
 (*    if f1 = f2 then f1*)
 (*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
-    let h, p, fl, t, a = CF.split_components pre_fml in
+    let h, p, vp, fl, t, a = CF.split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
     let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
@@ -209,10 +209,12 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
       let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
       let pres = List.concat (List.map (fun (a1,a2,a3) ->
           if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
-      let pre = CP.conj_of_list (ps@pres) no_pos in
+      let pfl = ps@pres in
+      let pre = CP.conj_of_list pfl no_pos in
+      let pre = Wrapper.wrap_exception pre CF.simplify_aux pre in
       pre
     in
-    CF.mkBase h (MCP.mix_of_pure p) t fl a no_pos
+    CF.mkBase h (MCP.mix_of_pure p) vp t fl a no_pos
 
 let simplify_pre pre_fml lst_assume =
   let pr = !CF.print_formula in
@@ -243,7 +245,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
         let pre = CP.conj_of_list pres no_pos in
-        let xpure_base,_,_ = Cvutil.xpure prog b.CF.formula_struc_base in
+        let xpure_base,_,_ = Cvutil.xpure 16 prog b.CF.formula_struc_base in
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
           simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
@@ -333,7 +335,7 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let _ = Debug.devel_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let _ = Debug.ninfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
   | [(_,rec_inv)] ->
@@ -358,6 +360,7 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     (* let final_pre4a = TP.pairwisecheck_raw final_pre3 in *)
     let final_pre4b = TP.pairwisecheck_raw final_pre3a in
     let final_pre = TP.om_gist final_pre4b pre in
+
     let _ = Debug.devel_hprint (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
     let _ = Debug.devel_hprint (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
     let _ = Debug.devel_hprint (add_str "final_pre2" !CP.print_formula) final_pre2 no_pos in
@@ -402,10 +405,10 @@ let compute_td_one (lhs,old_rhs) (rhs,new_args) pre_rel =
   let lhs = CP.conj_of_list (new_rels @ others) no_pos in
   (lhs,rhs)
 
-let compute_td_fml pre_rel_df pre_rel = 
+let compute_td_fml pre_rel_df pre_rel =
   let rhs = match pre_rel with
     | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-      let new_args = List.map (fun x -> CP.mkVar 
+      let new_args = List.map (fun x -> CP.mkVar
         (CP.add_prefix_to_spec_var "p" (CP.exp_to_spec_var x)) no_pos) args in
       CP.BForm ((CP.RelForm (name,args@new_args,o1),o2),o3),new_args
     | _ -> report_error no_pos "Expecting a relation"
@@ -420,16 +423,16 @@ let pre_rel_fixpoint_x pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_
     (* List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) constTrue pre_invs in *)
   let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
   let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
-  let pure_oblg_to_check = 
+  let pure_oblg_to_check =
     List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
   let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
   let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
   if checkpoint1 then [(constTrue,constTrue,pre_rel,constTrue)]
-  else 
+  else
     let input_fml = compute_td_fml pre_rel_df pre_rel in
     let pr = Cprinter.string_of_pure_formula in
     let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
-    pre_calculate fp_func input_fml pre_vars proc_spec 
+    pre_calculate fp_func input_fml pre_vars proc_spec
         pre_inv (* constTrue *) pure_oblg_to_check ([constTrue,constTrue],pre_rel) pre_fmls pre_rel_vars pre_rel_df
 
 let pre_rel_fixpoint pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df=
@@ -446,7 +449,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
   pre_vars proc_spec grp_post_rel_flag =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
-  let _ = Debug.tinfo_pprint ("inside update_with_td") no_pos in
+  let _ = Debug.ninfo_pprint ("inside update_with_td") no_pos in
   match bottom_up_fp, pre_rel_fmls with
   | [], [pre_rel] ->
         pre_rel_fixpoint pre_rel (*formula of pre_rel_var*) pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df
@@ -514,7 +517,10 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
 (*          let rels_fml = List.filter CP.is_RelForm (CP.list_of_conjs f1_orig) in*)
 (*          [(constTrue, List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]*)
 (*        else *)
-          let _,_,l = Infer.infer_pure_m 3 [] es f1 f1 f1 f2 no_pos in
+        (* TODO WN : need to use lhs_heap_xpure1 only *)
+        let lhs_heap_xpure1 = MCP.mkMTrue no_pos in
+        let _ = Debug.binfo_pprint "TODO : fix lhs_heap_xpure1" no_pos in
+          let _,_,l = Infer.infer_pure_m 3 [] es lhs_heap_xpure1 f1 f1 f1 f2 no_pos in
           List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) l)
       in lst
 (*      if lst=[] then*)

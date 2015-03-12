@@ -1,0 +1,52 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&v<:@M&{FLOW,(4,5)=__norm#E}[]
+
+Starting Omega.../usr/local/bin/oc
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&v<:@A & v=@M&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [v=@M]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [!(@L<:v)]
+
+
+Entail (4) : Valid. 
+
+Residue:
+ <1>emp&v<:@L & ((v=@M | v=@A))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(v=@M | v=@A)]
+
+
+Entail (5) : Valid. 
+
+Residue:
+ <1>emp&v<:@L & @L<:v&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [@L<:v]
+
+
+Entail (6) : Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [v!=@A]
+
+
+Entail (7) : Valid. 
+
+Residue:
+ <1>emp&v<:@A&{FLOW,(4,5)=__norm#E}[]
+
+

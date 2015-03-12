@@ -1,0 +1,33 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == emp & self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+//(1)
+checkentail x::ll<n> & n>0 |- x::node<_,q>@L.
+// any residue?
+print residue.
+
+//(2)
+checkentail x::node<1,q>*q::ll<n> & n>0 |- x::ll<m>@L & m>1.
+// any residue?
+print residue.
+
+//(3)
+checkentail x::node<1,q>*q::ll<n> & n>0 |- x::ll<m>@M & m>1.
+// any residue?
+print residue.
+
+//(4)
+checkentail x::ll<n>@L & n>2 |- x::ll<m>@M & m>1.
+// correct?
+
+//(5)
+checkentail x::ll<n>@L & n>2 |- x::ll<m>@L & m>1.
+// any residue?
+print residue.
+

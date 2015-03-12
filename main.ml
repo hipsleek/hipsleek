@@ -40,7 +40,7 @@ let parse_file_full file_name (primitive: bool) =
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
-      if primitive or (!Parser.parser_name = "default") then
+      if primitive || (!Parser.parser_name = "default") then
         (* always parse primitive files by default parser *)
         "default" 
       else if (!Parser.parser_name = "default") then
@@ -341,7 +341,8 @@ let reverify_with_hp_rel old_cprog iprog =
   in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps [] need_trans_hprels1 chprels_decl in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
+    [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
@@ -349,6 +350,25 @@ let hip_epilogue () =
   if (!Globals.dump_lemmas) then 
     Lem_store.all_lemma # dump
   else ()
+(* -------------------------------------------------------- *)
+(* Process primitives list in prelude.ss.                   *)
+let replace_with_user_include
+      prim_lists prim_incls =
+  let is_same_prim
+        proc1 proc2 =
+    match proc1.Iast.proc_body, proc2.Iast.proc_body with
+      | None, None ->
+            (proc1.Iast.proc_name = proc2.Iast.proc_name) 
+      | _, _ ->
+            false
+  in
+  let is_covered_by_user
+        proc prim_incls =
+    List.fold_left (fun r prog -> r || (List.fold_left (fun r1 proc1 -> r1 || (is_same_prim proc proc1)) false prog.Iast.prog_proc_decls)) false prim_incls
+  in
+  List.map (fun prog -> { prog with Iast.prog_proc_decls = List.filter (fun pc -> not (is_covered_by_user pc prim_incls)) prog.Iast.prog_proc_decls}) prim_lists
+;;
+(* --------------------------------------------------------- *)
 
 (***************end process compare file*****************)
 
@@ -373,10 +393,15 @@ let process_source_full source =
     | None -> ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
+  (*let _ = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
   let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
+  let _ = Debug.ninfo_hprint (add_str "prims_list.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_list no_pos in
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
+  let _ = Debug.ninfo_hprint (add_str "prims_incls.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_incls no_pos in
+  let prims_list = replace_with_user_include prims_list prims_incls in
+  let _ = Debug.ninfo_hprint (add_str "new_prims_lists.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> Iprinter.string_of_proc_decl proc) prog.Iast.prog_proc_decls)))) prims_list no_pos in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -433,10 +458,11 @@ let process_source_full source =
     
     (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
     (* let _ = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
-    let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
    
-	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+    (* let _= print_string ("\n*After label_procs_prog iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     
 	(*let intermediate_prog_reverif = 
 			if (!Globals.reverify_all_flag) then 
@@ -482,7 +508,7 @@ let process_source_full source =
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
     (* let _ = I.set_iprog intermediate_prog in *)
     (*let _ = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
-    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
     (* let _ = if !Globals.sa_pure then *)
     (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
     (*       if v.Cast.view_kind = Cast.View_NORM then *)
@@ -658,7 +684,7 @@ let process_source_list source_files =
       let parser = 
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
-        else "default"
+        else (* "default" *) !Parser.parser_name
       in 
       let _ = Parser.parser_name := parser in
       List.map process_source_full source_files
@@ -910,8 +936,8 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Log.last_cmd # dumping "finalize on hip";
-  Log.process_proof_logging !Globals.source_files;
+  let _ = Log.last_cmd # dumping "finalize on hip" in
+  let _ = Log.process_proof_logging !Globals.source_files in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 

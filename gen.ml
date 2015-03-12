@@ -1,4 +1,4 @@
- 
+
 module type INC_TYPE =
 sig
   type t
@@ -78,6 +78,8 @@ struct
   let pr_hexa f1 f2 f3 f4 f5 f6 (x,y,z,z2,z3,z4) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^")"
 
   let pr_hepta f1 f2 f3 f4 f5 f6 f7 (x,y,z,z2,z3,z4,z5) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"
+
+let pr_octa f1 f2 f3 f4 f5 f6 f7 f8 (x,y,z,z2,z3,z4,z5,z6) = "("^(f1 x)^",2:"^(f2 y)^",3:"^(f3 z)^",4:"^(f4 z2)^",5:"^(f5 z3)^",6:"^(f6 z4)^",7:"^(f7 z5)^")"^",8:"^(f8 z6)^")"
 
   let pr_quad_ln f1 f2 f3 f4 (x,y,z,z2) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^")"
   let pr_penta_ln f1 f2 f3 f4 f5 (x,y,z,z2,z3) = "("^(f1 x)^"\n,2:"^(f2 y)^"\n,3:"^(f3 z)^"\n,4:"^(f4 z2)^"\n,5:"^(f5 z3)^")"
@@ -349,7 +351,7 @@ struct
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
-      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
+      | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
 
   let rec get_all_pairs ls = match ls with
     | [] -> []
@@ -502,6 +504,7 @@ class change_flag =
        begin
          cnt <- cnt+1
        end
+     method exceed n = cnt>n
      method is_change = cnt>0
      method no_change = (cnt==0)
    end;;
@@ -633,6 +636,8 @@ class counter x_init =
      method add (i:int) = ctr <- ctr + i
      method reset = ctr <- 0x0
      method string_of : string= (string_of_int ctr)
+     method str_get_next : string 
+     = ctr <- ctr + 1; string_of_int ctr
    end;;
 
 (* class ['a] stack2 xinit = *)
@@ -1195,8 +1200,8 @@ struct
       (* let l1 = dd_stk # get_stk in *)
       (* let l2 = debug_stk # get_stk in *)
       (* let pr = Basic.pr_list string_of_int in *)
-      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in  *)
-       if (v1==v2) then Some v1 else None
+      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
+       if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
     match (is_same_dd_get()) 
@@ -1239,12 +1244,13 @@ struct
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
+    (* let _ = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
     ctr#inc;
     let v = ctr#get in
-    debug_stk#push v; if flag_detail then dd_stk#push v;
+    debug_stk#push v; 
+    if flag_detail then dd_stk#push v;
     let s = os^"@"^(string_of_int v) in
     let h = os^"@"^string_of() in
-    (* let _ = print_endline ("push_call:"^os^":"^s^":"^h) in  *)
     s,h
 
   (* push call without detailed tracing *)

@@ -11,6 +11,8 @@ module CP = Cpure
 module MCP = Mcpure
 module TP = Tpdispatcher
 
+let fix_num = new counter 0
+
 (******************************************************************************)
 
 (* Operators *)
@@ -89,6 +91,7 @@ and fixcalc_of_exp e = match e with
       | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
     end
+  | CP.InfConst _ -> "inf"
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
 let fixcalc_of_bool b =
@@ -120,6 +123,12 @@ let rec fixcalc_of_b_formula b =
         let s = fixcalc_of_exp e1 in
         let t = fixcalc_of_exp e2 in
         "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
+    | EqMax (e1, e2, e3, _) ->
+      let e1str = fixcalc_of_exp e1 in
+      let e2str = fixcalc_of_exp e2 in
+      let e3str = fixcalc_of_exp e3 in
+        "((" ^ e2str ^ " >= " ^ e3str ^ " && " ^ e1str ^ " = " ^ e2str ^ ") || ("
+        ^ e3str ^ " > " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
     | CP.RelForm (id,args,_) -> 
       if List.exists 
         (fun x -> match x with | CP.IConst _ -> true | _ -> false) args 
@@ -128,13 +137,14 @@ let rec fixcalc_of_b_formula b =
         (fixcalc_of_spec_var id) ^ "(" ^ 
           (string_of_elems args fixcalc_of_exp ",") ^ ")"
     | _ -> 
-      illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+          let _ = Debug.binfo_hprint (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
+          illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
-    "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
+    "" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ "" (* baga/infer/btree.slk *)
   | CP.AndList b -> 
     (match b with 
     | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
@@ -181,8 +191,24 @@ let rec fixcalc_of_h_formula f = match f with
               h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else if (List.length svs = 0) then c ^ "(" ^ (fixcalc_of_spec_var sv) ^ ")"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
-                   (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+    else
+      let str =
+        try
+          let (svl1,pf) = Hashtbl.find Excore.map_num_invs c in
+          let svl2 = sv::svs in
+          let svl2 = if (List.length svl1 < List.length svl2) then
+            List.rev (List.tl (List.rev svl2)) (* svl2 has idx variable, remove it *)
+          else svl2 in
+          let new_pf = CP.subst (List.combine svl1 svl2) pf in
+          fixcalc_of_pure_formula new_pf
+        with _ ->
+            c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^
+                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+      in str
+    (* fixcalc_of_pure_formula new_pf *)
+    (* else if (List.length svs = 0) then c ^ "(" ^ (fixcalc_of_spec_var sv) ^ ")" *)
+    (* else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ *)
+    (*                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")" *)
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "0=0"
@@ -299,7 +325,7 @@ let syscall cmd =
 let compute_inv name vars fml pf =
   if not !Globals.do_infer_inv then pf
   else
-    let output_of_sleek = "fixcalc.inp" in
+    let output_of_sleek = "fixcalc"^(fix_num # str_get_next)^".inp" in
     let oc = open_out output_of_sleek in
     let input_fixcalc = 
       name ^ ":=" ^ "{" ^ "[" ^ self ^ "," ^ 
@@ -333,6 +359,49 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 
 (******************************************************************************)
 
+let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  let _ = DD.ninfo_hprint (add_str "f1" Cprinter.string_of_pure_formula) f1 no_pos in
+  let _ = DD.ninfo_hprint (add_str "f2" Cprinter.string_of_pure_formula) f2 no_pos in
+  let svl1 = CP.fv f1 in
+  let svl2 = CP.fv f2 in
+  let _ = DD.ninfo_hprint (add_str "svl1" Cprinter.string_of_spec_var_list) svl1 no_pos in
+  let _ = DD.ninfo_hprint (add_str "svl2" Cprinter.string_of_spec_var_list) svl2 no_pos in
+
+  (* Prepare the input for the fixpoint calculation *)
+  let input_fixcalc =
+    try
+      "F1:={[" ^ (string_of_elems svl1 fixcalc_of_spec_var ",") ^ "]: " ^
+      (string_of_elems [f1] fixcalc_of_pure_formula op_or) ^ "};\n" ^
+      "F2:={[" ^ (string_of_elems svl2 fixcalc_of_spec_var ",") ^ "]: " ^
+      (string_of_elems [f2] fixcalc_of_pure_formula op_or) ^ "};\n" ^
+      "F2W:=widen(F1,F2,SimHeur);\nF2W;"
+    with _ -> report_error no_pos "Error in widening with fixcalc"
+  in
+  DD.ninfo_pprint ("input = " ^ input_fixcalc) no_pos;
+
+  let _ =
+    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+  in
+
+  (* Call the fixpoint calculation *)
+  let output_of_sleek = "fixcalc.inp" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (!fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+
+  (* Remove parentheses *)
+  let res = remove_paren res (String.length res) in
+  DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
+
+  (* Parse result *)
+  let inv = List.hd (Parse_fix.parse_fix res) in
+  let _ = DD.ninfo_hprint (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
+  inv
+
+(******************************************************************************)
+
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
   let vars = para_names in
   let fmls = List.map (fun p -> 
@@ -354,7 +423,8 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inp" in
+  let output_of_sleek = "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -404,6 +474,7 @@ let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=
   (input_fixcalc)
 
 let slk2fix_header disj_num vnames=
+  let _ = DD.ninfo_hprint (add_str "vnames" (pr_list pr_id)) vnames no_pos in
   let ls_vnames = String.concat "," vnames in
   let ls_disj_nums=  String.concat "," (List.map (fun _ -> string_of_int disj_num) vnames) in
   let _ = DD.ninfo_hprint (add_str "ls_vnames" pr_id) ls_vnames no_pos in
@@ -418,7 +489,8 @@ let compute_invs_fixcalc input_fixcalc=
     with _ ->
         (res)
   in
-  let output_of_sleek =  (* Globals.fresh_any_name *) "fixcalc.inp" in
+  let output_of_sleek =  (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -437,6 +509,11 @@ let compute_invs_fixcalc input_fixcalc=
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " (pr_list !CP.print_formula)) invs no_pos in
   invs
 
+
+let compute_invs_fixcalc input_fixcalc =
+  let pr = (pr_list Cprinter.string_of_pure_formula) in
+  Debug.no_1 "compute_invs_fixcalc" pr_id pr compute_invs_fixcalc input_fixcalc
+
 let lookup_inv invs pos fr_vars rev_sst=
   let rec helper rest_invs=
     match rest_invs with
@@ -454,7 +531,7 @@ let lookup_inv invs pos fr_vars rev_sst=
       List.nth invs pos
 
 (* TODO: TO MERGE WITH ABOVE *)
-let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
+let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
   (* let vars = para_names in *)
   (* Prepare the input for the fixpoint calculation *)
   let lower_invs = Cast.extract_view_x_invs transed_views in
@@ -469,7 +546,7 @@ let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var l
     let fixc_header = slk2fix_header 1 [name] in
     (fixc_body ^ fixc_header, fr_vars, rev_sst)
   in
-  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+  DD.binfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -499,7 +576,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
   let pr1 = !CP.print_formula in
   let pr2 (f, _) = Cprinter.string_of_formula f in
   Debug.no_3 "compute_heap_pure_inv" (pr_list_ln pr2) pr_id !CP.print_svl pr1
-      (fun _ _ _ ->  compute_heap_pure_inv_x fml name data_name para_names lower_invs)
+      (fun _ _ _ ->  compute_heap_pure_inv fml name data_name para_names lower_invs)
       fml name para_names
 
 (******************************************************************************)
@@ -524,7 +601,7 @@ let compute_inv name vars fml data_name lower_views pf =
       name vars fml pf
 
 (*compute invs of views in one loop*)
-let compute_inv_mutrec_x mutrec_vnames views =
+let compute_inv_mutrec mutrec_vnames views =
   (**************************************************)
   let str_cmp s1 s2 = String.compare s1 s2 = 0 in
   let rec lookup_map vmaps vname0=
@@ -538,24 +615,30 @@ let compute_inv_mutrec_x mutrec_vnames views =
     try
       let (vname, fr_vars, rev_sst) = lookup_map vmaps view.Cast.view_name in
       let new_pf = lookup_inv invs pos fr_vars rev_sst in
-      let pf =  MCP.pure_of_mix view.Cast.view_user_inv in
-      let check_imply = TP.imply_raw new_pf pf in
-      if check_imply then 
-        let _ = DD.info_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
-        let _ = print_endline "" in
+      (* let pf =  MCP.pure_of_mix view.Cast.view_user_inv in *)
+      let check_imply = true (* TP.imply_raw new_pf pf *) in
+      if check_imply then
+        let _ = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
+        (* let _ = print_endline "" in *)
+        (* let idx = CP.mk_typed_spec_var Int "idx" in *)
+        (* let new_pf_svl = CP.fv new_pf in *)
+        (* let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl new_pf [idx] else new_pf in *)
+        let _ = DD.ninfo_hprint (add_str "new_pf" !CP.print_formula) new_pf no_pos in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
-          Debug.binfo_hprint (add_str "view_x_formula" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
-          view.Cast.view_x_formula <- memo_pf_P;
+          Debug.tinfo_hprint (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
+          view.Cast.view_fixcalc <- Some memo_pf_P;
+          (* view.Cast.view_x_formula <- memo_pf_P; *)
+          view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
           view
         end
       else view
     with _ -> view
   in
   (**************************************************)
-  if  not !Globals.do_infer_inv then
+  if (not !Globals.do_infer_inv) && (not !Globals.gen_baga_inv) then
     views
   else
     (*get all views of the loop*)
@@ -572,14 +655,15 @@ let compute_inv_mutrec_x mutrec_vnames views =
           view.Cast.view_un_struc_formula view.Cast.view_name view.Cast.view_data_name view.Cast.view_vars in
         (r1 ^ "\n" ^ fixc_body, r2@[view.Cast.view_name], r3@[(view.Cast.view_name,fr_vars, rev_sst)])
     ) ("",[],[]) mutrec_views in
-    let fixc_header = slk2fix_header 1 vnames in
+    let fixc_header = slk2fix_header 3 vnames in
     let input_fixcalc  =  fixc_bodys ^ fixc_header in
     let _ = DD.ninfo_hprint (add_str "Input of fixcalc " pr_id) input_fixcalc no_pos in
     let _ =
-    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+      if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
     in
     (* Call the fixpoint calculation *)
     let invs = (compute_invs_fixcalc input_fixcalc) in
+    let _ = DD.tinfo_hprint (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in
@@ -591,9 +675,9 @@ let compute_inv_mutrec_x mutrec_vnames views =
 
 let compute_inv_mutrec mutrec_views views =
   let pr1 = pr_list pr_id in
-  let pr2 v = v.Cast.view_name in
-  Debug.no_2 "compute_inv_mutrec" pr1 (pr_list pr2)  (pr_list pr2)
-      (fun _ _ -> compute_inv_mutrec_x mutrec_views views)
+  let pr2 v = (pr_pair pr_id (pr_option Cprinter.string_of_mix_formula)) (v.Cast.view_name,v.Cast.view_fixcalc) in
+  Debug.no_eff_2 "compute_inv_mutrec" [false;true] pr1 (pr_list pr2)  (pr_list pr2)
+      (fun _ _ -> compute_inv_mutrec mutrec_views views)
       mutrec_views views
 
 (******************************************************************************)
@@ -621,7 +705,8 @@ let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_v
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = (* Globals.fresh_any_name *) "fixcalc.inp" in
+  let output_of_sleek = (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -670,7 +755,8 @@ let substitute_args_x a_rel = match a_rel with
         | CP.Var _ -> (e, [])
         | _ -> 
           (try 
-            let arb = List.hd (CP.afv e) in 
+            let fvs = CP.afv e in
+            let arb = if List.length fvs > 0 then List.hd (CP.afv e) else (CP.mk_typed_spec_var Int "c") in 
             let var = CP.fresh_spec_var_prefix "fc" arb in
             let var = CP.mkVar var no_pos in
             (var, [CP.mkEqExp var e no_pos])
@@ -695,7 +781,7 @@ let rec get_other_branches or_fml args = match or_fml with
     (get_other_branches fml.formula_or_f2 args)
   | _ ->
     (* TODO CHECK: a *)
-    let _,p,_,_,a = split_components or_fml in 
+    let _,p,_,_,_,a = split_components or_fml in 
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
@@ -769,8 +855,10 @@ let compute_cmd rel_defs bottom_up =
       CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
   if bottom_up then
+    let _ = DD.binfo_pprint "bottom up" no_pos in
     "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
   else
+    let _ = DD.binfo_pprint "top down" no_pos in
     "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
 let compute_fixpoint_aux rel_defs ante_vars bottom_up =
@@ -790,7 +878,8 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
   in
 
-  let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
+  let output_of_sleek = if bottom_up then ("logs/fixcalc"^(* (fix_num #str_get_next)^ *)".inf") else "fixcalc.td" in
+  let _ = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -837,9 +926,9 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 let extract_inv_helper_x (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
   Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;
-  let pfs = List.map (fun p -> 
+  let pfs = List.map (fun p ->
       let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in
-      if bag_vars == [] then p else 
+      if bag_vars == [] then p else
         let p = TP.simplify_raw p in
         CP.remove_cnts bag_vars p
       ) pfs
@@ -851,10 +940,10 @@ let extract_inv_helper_x (rel, pfs) ante_vars specs =
 
   (* Make existence *)
   let pfs = List.concat (List.map (fun p ->
-    let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
-    let res = CP.mkExists exists_vars p None no_pos in
-    if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
-    else [res]) pfs)
+      let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
+      let res = CP.mkExists exists_vars p None no_pos in
+      if CP.isConstTrue (TP.simplify_raw res) then [CP.mkTrue no_pos]
+      else [res]) pfs)
   in
 
   Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
@@ -1191,8 +1280,8 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   in bag_res @ num_res
 
 let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
+  let pr = !CP.print_formula in
   if !Globals.split_fixcalc then
-    let pr = !CP.print_formula in
     let _ = DD.ninfo_hprint (add_str "input_pairs" (pr_list (pr_pair pr pr))) input_pairs no_pos in
     let constrs = List.fold_left (fun acc (pf,_) ->
         let _ = DD.ninfo_hprint (add_str "pf" pr) pf no_pos in
@@ -1241,7 +1330,17 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
     let _ = DD.ninfo_hprint (add_str "res" (pr_list (pr_pair pr pr))) res no_pos in
     res
   else
-    compute_fixpoint_x input_pairs ante_vars specs bottom_up
+    (* compute_fixpoint_x input_pairs ante_vars specs bottom_up *)
+    let n_base = List.fold_left (fun acc (pf1,pf2) ->
+        let new_acc = match pf2 with
+          | CP.BForm((CP.RelForm (sv,_,_), _), _) ->
+            let svl = CP.fv pf1 in
+            if Gen.BList.mem_eq CP.eq_spec_var sv svl then acc else acc+1
+          | _ -> acc
+        in new_acc
+    ) 1 input_pairs in
+    let _ = Debug.binfo_hprint (add_str "n_base" string_of_int) n_base no_pos in
+    Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in

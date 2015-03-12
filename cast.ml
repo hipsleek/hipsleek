@@ -17,6 +17,7 @@ module P = Cpure
 module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
+module CVP = CvpermUtils
 
 (*used in Predicate*)
 let pure_hprel_map = ref ([]: (ident * ident) list)
@@ -122,6 +123,7 @@ and view_decl = {
     mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
+    mutable view_fixcalc : (MP.mix_formula) option; (*XPURE 1 -> revert to P.formula*)
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     (* exact baga *)
     mutable view_baga_inv : Excore.ef_pure_disj option;
@@ -189,6 +191,7 @@ and axiom_decl = {
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
+    proc_ho_arg : typed_ident option;
     proc_args_wi: (ident*hp_arg_kind) list;
     proc_imm_args : (ident * bool) list;
     proc_source : ident; (* source file *)
@@ -332,10 +335,11 @@ and exp_bind = {
     exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
-and exp_block = { exp_block_type : typ;
-exp_block_body : exp;
-exp_block_local_vars : typed_ident list;
-exp_block_pos : loc }
+and exp_block = { 
+  exp_block_type : typ;
+  exp_block_body : exp;
+  exp_block_local_vars : typed_ident list;
+  exp_block_pos : loc }
 
 and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
 
@@ -385,14 +389,16 @@ exp_return_val : ident option;
 exp_return_pos : loc }
 
 (* static call *)
-and exp_scall = { exp_scall_type : typ;
-exp_scall_method_name : ident;
-exp_scall_lock : ident option;
-exp_scall_arguments : ident list;
-exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
-(*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-exp_scall_path_id : control_path_id;
-exp_scall_pos : loc }
+and exp_scall = { 
+  exp_scall_type : typ;
+  exp_scall_method_name : ident;
+  exp_scall_lock : ident option;
+  exp_scall_arguments : ident list;
+  exp_scall_ho_arg : F.formula option;
+  exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
+  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+  exp_scall_path_id : control_path_id;
+  exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : typ;
 exp_seq_exp1 : exp;
@@ -433,9 +439,10 @@ and exp_emparray = { exp_emparray_type : typ;
 exp_emparray_dim : int;
 exp_emparray_pos : loc }
 
-and exp_var_decl = { exp_var_decl_type : typ;
-exp_var_decl_name : ident;
-exp_var_decl_pos : loc }
+and exp_var_decl = { 
+  exp_var_decl_type : typ;
+  exp_var_decl_name : ident;
+  exp_var_decl_pos : loc }
 
 and exp_while = { 
     exp_while_condition : ident;
@@ -464,6 +471,21 @@ and exp_label = {
     exp_label_type : typ;
     exp_label_path_id : (control_path_id * path_label);
     exp_label_exp: exp;}
+    
+and exp_par = {
+  exp_par_vperm: CVP.vperm_sets;
+  exp_par_lend_heap: F.formula;
+  exp_par_cases: exp_par_case list;
+  exp_par_pos: loc;
+}
+
+and exp_par_case = {
+  exp_par_case_cond: F.formula option;
+  exp_par_case_vperm: CVP.vperm_sets;
+  exp_par_case_body: exp;
+  exp_par_case_else: bool;
+  exp_par_case_pos: loc;
+}
     
 and exp = (* expressions keep their types *)
     (* for runtime checking *)
@@ -510,6 +532,7 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+  | Par of exp_par
 
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
@@ -796,7 +819,14 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
                     let e1,r1 = helper n_arg b.exp_try_body in 
                     let e2,r2 = helper n_arg b.exp_catch_clause in
 		            (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
-
+            | Par b ->
+              let trans_par_case c =
+                let ce, cr = helper n_arg c.exp_par_case_body in
+                ({ c with exp_par_case_body = ce }, cr)
+              in 
+              let cl, rl = List.split (List.map trans_par_case b.exp_par_cases) in
+              let r = comb_f rl in
+              (Par { b with exp_par_cases = cl }, r)
   in helper init_arg e
 
 
@@ -970,6 +1000,7 @@ let rec type_of_exp (e : exp) = match e with
   | Try _ -> Some void_type
   | Time _ -> None
   | Sharp b -> Some b.exp_sharp_type
+  | Par _ -> Some void_type
 
 and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
@@ -1124,7 +1155,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
       hp_root_pos = 0; (*default, reset when def is inferred*)
       hp_vars_inst = unknown_ptrs;
       hp_is_pre = is_pre;
-      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) F.TypeTrue (F.mkTrueFlow()) [] pos;}
+      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
     prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
@@ -1478,7 +1509,7 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
 *)
 (*TODO: re-implement with care*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
-  let h,_,_,_,_ = F.split_components lhs in
+  let h,_,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then 
 	    let sm = List.hd hs in (match sm with
@@ -1512,7 +1543,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
               in
               only_self) hs  in
           let get_name h = match h with
-            | F.HVar v -> P.name_of_sv v
+            | F.HVar (v,_) -> P.name_of_sv v
             | F.DataNode _
             | F.ViewNode _-> F.get_node_name h
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
@@ -1635,6 +1666,10 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
     exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
   | Try b -> Gen.BList.remove_dups_eq (=) ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
+  | Par b ->
+    let callees = List.concat (List.map (fun c -> 
+        callees_of_exp c.exp_par_case_body) b.exp_par_cases) in
+    Gen.BList.remove_dups_eq (=) callees 
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
   let tmp1 = List.map (callees_of_proc prog) names in
@@ -1867,6 +1902,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Time _ 
   | Java _ -> false
   
+  | Par _
   | Barrier _ 
   | BConst _
 	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
@@ -1922,6 +1958,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
   | Label b -> pos_of_exp b.exp_label_exp
+  | Par b -> b.exp_par_pos
 	  
 let get_catch_of_exp e = match e with
 	| Catch e -> e
@@ -1939,20 +1976,28 @@ let check_proper_return cret_type exc_list f =
 	| F.Base b->
               let res_t,b_rez = F.get_result_type f0 in
 	      let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
-	      if b_rez & not(F.equal_flow_interval !error_flow_int fl_int)
-                & not(F.equal_flow_interval !top_flow_int fl_int) &&
+	      if b_rez && not(F.equal_flow_interval !error_flow_int fl_int)
+                && not(F.equal_flow_interval !top_flow_int fl_int) &&
                 not(F.equal_flow_interval !mayerror_flow_int fl_int) then
 		  if not (sub_type res_t cret_type) then
 		    Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 		  else ()
-	      else if not (List.exists (fun c->
+	      else 
+                let _ = Debug.tinfo_hprint (add_str "fl_int" !print_dflow) fl_int no_pos in
+                let _ = Debug.tinfo_hprint (add_str "norm_flow_int" !print_dflow) !norm_flow_int no_pos in
+                let exc_list = !norm_flow_int::exc_list in
+                let  _ = Debug.tinfo_hprint (add_str "exc_list" (pr_list !print_dflow)) exc_list no_pos in
+                if not (List.exists (fun c->
                   (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
                 let _ = Debug.ninfo_pprint "Here:" no_pos in
                 let _ = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
                 let _ = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
+                if exc_list!= [] then
 		Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
-	      else if not(overlap_flow_type fl_int res_t) then
-		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
+	      (* WN: exception and result type do not match ..
+              else if not(overlap_flow_type fl_int res_t) then
+		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type "^(!print_dflow res_t)^" does not correspond (overlap) with the flow type"^(!print_dflow fl_int);}
+              *)
 	      else
 (* else *)
 		(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
@@ -1990,7 +2035,7 @@ let check_proper_return cret_type exc_list f =
 	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
 	in
-  helper f
+    helper f
 
  
 (* type: Globals.typ -> Globals.nflow list -> F.struc_formula -> unit *)
@@ -2619,7 +2664,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
            let quans,bare = F.split_quantifiers eb.F.formula_struc_base in
            let _ = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
            if quans = [] then false else
-             let _, mf, _, _, _ = F.split_components bare in
+             let _, mf, _, _, _, _ = F.split_components bare in
              let eqnull_svl =  Mcpure.get_null_ptrs mf in
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
@@ -2663,7 +2708,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_touching_branch branch = (
-    let (_,mf,_,_,_) = F.split_components branch in
+    let (_,mf,_,_,_,_) = F.split_components branch in
     let self_sv = P.SpecVar (Named vdecl.view_data_name, self, Unprimed) in
     let nontouching_cond = (
       let conds = List.map (fun y -> P.mkNeqVar self_sv y pos) forward_ptrs in
@@ -2698,7 +2743,7 @@ let is_segmented_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_segmented_branch branch = (
-    let (_,mf,_,_,_) = F.split_components branch in
+    let (_,mf,_,_,_,_) = F.split_components branch in
     let pf = MP.pure_of_mix mf in
     List.exists (fun sv ->
       let null_cond = P.mkNull sv pos in
@@ -2844,7 +2889,7 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
   let vname = vd.view_name in
   let collect_view_pointed_by_self f = (
     let views = ref [] in
-    let (hf,_,_,_,_) = F.split_components f in
+    let (hf,_,_,_,_,_) = F.split_components f in
     let f_hf hf = (match hf with
       | F.ViewNode vn ->
           let nname = P.name_of_spec_var vn.F.h_formula_view_node in
@@ -2980,7 +3025,7 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
           let _ = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !P.print_sv !P.print_sv))) subs no_pos in
           let replacing_f = F.subst_one_by_one subs base_f in
           let _ = Debug.ninfo_hprint (add_str "replacing_f" !F.print_formula) replacing_f no_pos in
-          let (replacing_hf,extra_pf,_,_,_) = F.split_components replacing_f in
+          let (replacing_hf,extra_pf,_,_,_,_) = F.split_components replacing_f in
           let extra_qvars = F.get_exists replacing_f in
           let _ = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !P.print_sv)) extra_qvars no_pos in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
@@ -3034,7 +3079,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
       | _ -> None
     ) in
     let _ = List.iter (fun f->
-      let (hf,pf,_,_,_) = F.split_components f in
+      let (hf,pf,_,_,_,_) = F.split_components f in
       let _ = F.transform_h_formula collect_node hf in
       let eqs = MP.ptr_equations_without_null pf in
       residents := F.find_close !residents eqs;
@@ -3043,7 +3088,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
     let _ = List.iter (fun f ->
       (* unfold the inductive formulathen collect residents *)
       let new_f = unfold_base_case_formula f vd base_f in
-      let (hf,pf,_,_,_) = F.split_components new_f in
+      let (hf,pf,_,_,_,_) = F.split_components new_f in
       let _ = F.transform_h_formula collect_node hf in
       let eqs = MP.ptr_equations_without_null pf in
       residents := F.find_close !residents eqs;
@@ -3060,7 +3105,7 @@ let compute_view_residents (vd: view_decl) : P.spec_var list =
       (fun _ -> compute_view_residents_x vd) vd
 
 let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp bwf =
-  let (hf,pf,_,_,_) = F.split_components f in
+  let (hf,pf,_,_,_,_) = F.split_components f in
   let eqs = MP.ptr_equations_without_null pf in
   let dname = ddecl.data_name in
   let vname = vdecl.view_name in
@@ -3281,7 +3326,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
             Debug.ninfo_hprint (add_str "body_nodes" (pr_list !F.print_h_formula)) body_nodes no_pos;
             Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !P.print_sv)) head_ptrs no_pos;
             Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !P.print_sv)) body_ptrs no_pos;
-            let (hf,pf,_,_,_) = F.split_components f in
+            let (hf,pf,_,_,_,_) = F.split_components f in
             let eqs = MP.ptr_equations_without_null pf in
             let _ = match head_node with
               | F.ViewNode vn -> 
@@ -3616,13 +3661,13 @@ let add_inf_post_proc proc =
 let add_post_for_tnt_prog prog =
   let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
     let spec = proc.proc_static_specs in
-    if not (Cformula.is_inf_term_struc spec) then acc
-    else acc @ [proc]) prog.new_proc_decls [] in
+    if not (Cformula.is_inf_term_only_struc spec) then acc
+    else acc @ [proc]) prog.new_proc_decls [] in (* @term only, no @term_wo_post *)
   let inf_post_procs = List.fold_left (fun acc proc ->
     let dprocs = dependence_procs_of_proc prog proc in
     let _ = 
       if is_empty dprocs then ()
-      else print_endline_quiet("\n !!! @post is added into " ^ 
+      else print_endline_quiet ("\n !!! @post is added into " ^ 
         (pr_list idf dprocs) ^ " for " ^ proc.proc_name) 
     in
     acc @ dprocs) [] inf_term_procs in

@@ -44,6 +44,10 @@ let set_gen_cpfile arg =
 let set_lib_file arg =
   Globals.lib_files := [arg]
 
+let set_tp solver=
+  let _ = print_endline ("!!! init_tp by user: ") in 
+  Tpdispatcher.set_tp solver
+
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
   | "xml" -> fe := XmlFE
@@ -232,7 +236,7 @@ let common_arguments = [
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
-  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
   ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
   ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
   ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");
@@ -250,6 +254,9 @@ let common_arguments = [
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
   ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
+  ("--oc-en-simp", Arg.Set Globals.oc_simplify,"enable oc simplification");
+  ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
+  ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
@@ -280,7 +287,10 @@ let common_arguments = [
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
-  ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
+  ("--en-inf", Arg.Unit (fun _ ->
+               Globals.allow_inf:=true;
+               Globals.deep_split_disjuncts:=true
+               ),"enable support for infinity (tgt with --dsd) ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -356,7 +366,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-   "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
+   "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
@@ -364,6 +374,7 @@ let common_arguments = [
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
   ("--en-split-fixcalc", Arg.Set Globals.split_fixcalc, "Enable split fixcalc (for infer post)");
   ("--dis-split-fixcalc", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
+  ("--dsf", Arg.Clear Globals.split_fixcalc, "Disable split fixcalc (for infer post)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
    "Restart Omega Calculator after number of proof. Default = 0, not restart");
   ("--use-field", Arg.Set Globals.use_field,
@@ -384,6 +395,10 @@ let common_arguments = [
   ("-dre", Arg.String (fun s ->
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
+  ("-drea", Arg.String (fun s ->
+      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+      Debug.mk_debug_arg s),
+   "Matched input/output with reg-exp");
   ("-v", Arg.Set Debug.debug_on,
    "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -554,7 +569,11 @@ let common_arguments = [
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
   ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
-  
+
+  (* HO predicate *)
+  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
+
   (* Proof Logging *)
   ("--en-logging", Arg.Unit (fun _ ->
       Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
@@ -618,8 +637,14 @@ let common_arguments = [
   ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
 
   (* use classical reasoning in separation logic *)
-  ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-  ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
+  ("--classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # set Globals.INF_CLASSIC),
+  (* Arg.Set Globals.opt_classic,  *)
+  "Use classical reasoning in separation logic");
+  ("--dis-classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # reset Globals.INF_CLASSIC),
+  (* Arg.Clear Globals.opt_classic,  *)
+  "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");

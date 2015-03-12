@@ -33,7 +33,7 @@ let string_of_perm_type t =
 let disable_para () =
   allow_norm:= true;
   perm:= NoPerm;
-  ann_vp:= false;
+  (* ann_vp:= false; *)
   allow_ls:= false;
   allow_locklevel:=false
 
@@ -220,7 +220,7 @@ struct
                 let ec_var,ec_ls = float_one ec in
                 let et_var,et_ls = float_one et in
                 let ea_var,ea_ls = float_one ea in
-                let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
+                (* let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in *)
                 let new_perm = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
                 (Some new_perm,ec_ls@et_ls@ea_ls)
                 (* let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)

@@ -1,0 +1,21 @@
+// x' is same as x for variables
+infer[@leak] @full[x] |- @zero[x].
+print residue.
+expect Fail.
+
+infer[@leak] @full[x] |- @full[x].
+print residue.
+expect Valid.
+
+infer[@leak] @value[x] |- @zero[x].
+print residue.
+expect Valid.
+
+infer[@leak] @lend[x] |- @zero[x].
+print residue.
+expect Valid.
+
+/*
+# ex38 --ann-vp
+
+*/

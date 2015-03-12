@@ -1,0 +1,58 @@
+
+!!!Full processing file "hip/ex4a1-latch-par-simple.ss"
+Parsing file "hip/ex4a1-latch-par-simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex4a1-latch-par-simple.ss:53: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_49_1422',v_int_50_1423': c_39'::LatchIn{ - (exists flted_49_1620: x_37'::cell<flted_49_1620>&flted_49_1620=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + (exists flted_49_1621: x_37'::cell<flted_49_1621>&flted_49_1621=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<v_int_49_1422'> * x_37'::cell<v_int_50_1423'>*N@full[c_39,r1_40,r2_41,x_37,y_38]&r2_41'=0 & r1_40'=0 & v_int_50_1423'=1 & v_int_49_1422'=1 & 0<v_int_49_1422'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a1-latch-par-simple.ss:59: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_58_1686,r2_1687,v_int_50_1688,flted_49_1689,v_int_49_1690,b_1691,r2_41',v_int_50_1665,v_int_49_1664: c_39'::LatchOut{ + (exists flted_58_44: x_37'::cell<flted_58_44>&flted_58_44=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_58_1686>*U@full[r1_40]@lend[x_37,c_39]&r2_41'=0 & r1_40'=0 & v_int_50_1665=1 & v_int_49_1664=1 & 0<v_int_49_1664 & r2_1687=0 & r1_40'=0 & v_int_50_1688=1 & v_int_49_1690=1 & 0<v_int_49_1690 & flted_49_1689=1 & 0<=b_1691 & 0<=0 & v_int_49_1690=b_1691+0 & flted_58_1686=0&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a1-latch-par-simple.ss:64: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_63_1846,flted_49_1847,v_int_49_1848,v_int_50_1849,r1_1850,r2_1851,flted_63_1852,b_1853,b_1854,r2_41',r1_40',v_int_50_1665,v_int_49_1664: c_39'::LatchIn{ - (exists flted_63_47: x_37'::cell<flted_63_47>&flted_63_47=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_63_1846>*U@lend[x_37,c_39]&r2_41'=0 & r1_40'=0 & v_int_50_1665=1 & v_int_49_1664=1 & 0<v_int_49_1664 & v_int_49_1848=b_1853+0 & 0<=b_1853 & flted_49_1847=1 & 0<v_int_49_1848 & v_int_49_1848=1 & v_int_50_1849=1 & r1_1850=0 & r2_1851=0 & flted_63_1852=1 & 0<=b_1854 & 0<=1 & b_1853=b_1854+1 & flted_63_1846=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Proving precondition in method countDown$CDL Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/ex4a1-latch-par-simple.ss",Line:65,Col:6
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.59046 second(s)
+	Time spent in main process: 0.560189 second(s)
+	Time spent in child processes: 0.030271 second(s)
+

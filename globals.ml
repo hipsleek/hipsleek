@@ -70,11 +70,19 @@ type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
-and control_path_id = control_path_id_strict  option
+and control_path_id = control_path_id_strict option
     (*identifier for if, catch, call*)
 
-let gen_lemma_action_invalid = -1
+let eq_ho_flow_kind k1 k2 = 
+  match k1, k2 with
+  | INFLOW, INFLOW
+  | OUTFLOW, OUTFLOW
+  | NEUTRAL, NEUTRAL -> true
+  | _ -> false
 
+let ho_always_split = ref false
+
+let gen_lemma_action_invalid = -1
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
@@ -111,8 +119,20 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
+and vp_ann = 
+  | VP_Zero | VP_Full | VP_Value
+  | VP_Lend | VP_Frac of Frac.frac 
+  (* | VP_Ref * *)
 
+let eq_vp_ann a1 a2 = 
+  match a1, a2 with
+  | VP_Zero, VP_Zero -> true
+  | VP_Full, VP_Full -> true
+  | VP_Lend, VP_Lend -> true
+  | VP_Value, VP_Value -> true
+  | VP_Frac f1, VP_Frac f2 -> Frac.eq_frac f1 f2
+  | _ -> false
+  
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -136,7 +156,7 @@ let print_arg_kind i= match i with
 
 (* TODO : move typ here in future *)
 type typ =
-  | FORM
+  | FORM (* Type for formula *)
   | UNK
   | TVar of int
   | AnnT
@@ -160,6 +180,7 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+  (* | SLTyp (* type of ho formula *) *)
 
 let is_node_typ t =
   match t with
@@ -358,15 +379,17 @@ let string_of_vp_ann a =
     | VP_Zero -> "@zero"
     | VP_Full -> "@full"
     | VP_Value -> "@value"
+    | VP_Lend -> "@lend"
+    | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
     (* | VP_Ref-> "@p_ref" *)
   )
 
 
 let string_of_ho_flow_kind (k:ho_flow_kind) =
   match k with
-    | INFLOW -> "(-)"
-    | OUTFLOW -> "(+)"
-    | NEUTRAL -> "(.)" (* or "" *)
+    | INFLOW -> "-"
+    | OUTFLOW -> "+"
+    | NEUTRAL -> "."
 
 let string_of_ho_split_kind (k:ho_split_kind) =
   match k with
@@ -533,6 +556,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
+  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -578,6 +602,7 @@ let rec string_of_typ_alpha = function
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | UtT -> "UtT"
   | HpT        -> "HpT"
+  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
@@ -687,10 +712,20 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
+(*use error type in the error msg*)
+type error_type=
+  | Mem of int
+  | Heap
+  | Pure
+
 let sl_error = "separation entailment" (* sl_error is a may error *)
 let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
+let mem_leak_error = "mem leak detection"
+let mem_deref_error = "mem deref detection"
+let mem_dfree_error = "mem double free detection"
 let lemma_error = "lemma" (* may error *)
+let mem_leak = "memory leak"
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -760,7 +795,7 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
-let split_fixcalc = ref true
+let split_fixcalc = ref false (* present split is unsound *)
 
 let ptr_to_int_exact = ref false
 
@@ -857,6 +892,8 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let mem_leak_detect = ref false
+
 let print_relassume  = ref true
 
 let lemma_syn = ref false
@@ -932,7 +969,7 @@ let pred_disj_unify = ref false
 
 let pred_seg_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_equiv_one = ref true
 
@@ -1000,6 +1037,8 @@ let allow_frame = ref false
 let graph_norm = ref false
 
 let oc_simplify = ref true
+
+let oc_adv_simplify = ref true
 
 let graph_norm_instance_threshold = 1
 
@@ -1085,6 +1124,9 @@ let allow_threads_as_resource = ref false
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
+(* let ann_vp = ref true (\* Enable variable permissions in rho, any problem *)
+(* for run-fast-test? *\) *)
+
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
 let print_proc = ref false
@@ -1144,7 +1186,7 @@ let n_xpure = ref 1
 
 let verbose_num = ref 0
 
-let fixcalc_disj = ref 2
+let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1218,6 +1260,8 @@ let print_cil_input = ref false
 (* let allow_pred_spec = ref false *)
 
 let disable_failure_explaining = ref true
+
+let bug_detect = ref false
 
 let simplify_error = ref false
 
@@ -1323,20 +1367,25 @@ let infer_const = ref ""
 (* TNT Inference *)
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref false
-let tnt_add_post = ref true
+let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
+  | INF_TERM_WO_POST (* For infer[@term_wo_post] *)
   | INF_POST (* For infer[@post] *)
   | INF_PRE (* For infer[@pre] *)
   | INF_SHAPE (* For infer[@shape] *)
+  | INF_ERROR (* For infer[@error] *)
   | INF_SIZE (* For infer[@size] *)
   | INF_IMM (* For infer[@imm] *)
   | INF_EFA (* For infer[@efa] *)
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
+  | INF_CLASSIC (* For infer[@leak] *)
+  | INF_PAR (* For infer[@par] inside par *)
+  | INF_VER_POST (* For infer[@ver_post] for post-checking *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1349,14 +1398,19 @@ type infer_type =
 let string_of_inf_const x =
   match x with
   | INF_TERM -> "@term"
+  | INF_TERM_WO_POST -> "@term_wo_post"
   | INF_POST -> "@post"
   | INF_PRE -> "@pre"
   | INF_SHAPE -> "@shape"
+  | INF_ERROR -> "@error"
   | INF_SIZE -> "@size"
   | INF_IMM -> "@imm"
   | INF_EFA -> "@efa"
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
+  | INF_CLASSIC -> "@leak"
+  | INF_PAR -> "@par"
+  | INF_VER_POST -> "@ver_post"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1443,15 +1497,20 @@ object (self)
       with Not_found -> ()
     in
     begin
-      helper "@term"  INF_TERM;
-      helper "@pre"   INF_PRE;
-      helper "@post"  INF_POST;
-      helper "@imm"   INF_IMM;
-      helper "@shape" INF_SHAPE;
-      helper "@size" INF_SIZE;
-      helper "@efa" INF_EFA;
-      helper "@dfa" INF_DFA;
-      helper "@flow" INF_FLOW;
+      helper "@term"          INF_TERM;
+      helper "@term_wo_post"  INF_TERM_WO_POST;
+      helper "@pre"           INF_PRE;
+      helper "@post"          INF_POST;
+      helper "@imm"           INF_IMM;
+      helper "@shape"         INF_SHAPE;
+      helper "@error"         INF_ERROR;
+      helper "@size"          INF_SIZE;
+      helper "@efa"           INF_EFA;
+      helper "@dfa"           INF_DFA;
+      helper "@flow"          INF_FLOW;
+      helper "@leak"          INF_CLASSIC;
+      helper "@par"           INF_PAR;
+      helper "@ver_post"      INF_VER_POST;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1466,14 +1525,19 @@ object (self)
   method string_of = "["^(self #string_of_raw)^"]"
   method get c  = List.mem c arr
   (* method get_int i  = Array.get arr i *)
-  method is_term  = self # get INF_TERM
+  method is_term = (self # get INF_TERM) || (self # get INF_TERM_WO_POST)
+  method is_term_wo_post = self # get INF_TERM_WO_POST
   method is_pre  = self # get INF_PRE
   method is_post  = self # get INF_POST
+  method is_ver_post  = self # get INF_VER_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
+  method is_error  = self # get INF_ERROR
   method is_size  = self # get INF_SIZE
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
+  method is_classic  = self # get INF_CLASSIC
+  method is_par  = self # get INF_PAR
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
   method is_infer_type t  = self # get t
@@ -1530,7 +1594,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
-let do_test_inv = ref false
+let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)

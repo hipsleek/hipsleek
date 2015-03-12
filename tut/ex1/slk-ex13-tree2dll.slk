@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node left;
+  node right;
+}.
+
+
+pred dll<pr> == emp & self=null 
+  or self::node<_,pr,p>*p::dll<self> 
+  inv true.
+
+checkentail p_1480::dll<self_1477> * 
+x'::node<Anon_16,Anon_17,tmp'> * 
+tmp'::node<Anon_1478,x',q_1479>
+& pr_1476=Anon_19 & self_1477=tmp' & 
+tmp'=tmp & x'=x & right_27_1452=Anon_18 & tmp'!=null & v_bool_28_1426' & 
+tmp'!=null & v_bool_28_1426' & left_28_1481=pr_1476 & res=x
+ |-  res::dll{}<Anon_1436>&res=x .

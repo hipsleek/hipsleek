@@ -1,0 +1,28 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+[Warning] False ctx
+
+Entail 3: Valid. 
+
+

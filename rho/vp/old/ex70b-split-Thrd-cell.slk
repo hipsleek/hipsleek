@@ -1,0 +1,27 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>
+   }<> 
+    |- x::Thrd{+ a::cell<_>}<>.
+expect Valid.
+print residue.
+/*
+# ex70b.slk
+
+!!! unmatched rhs: HVar V_29
+!!! rhs_rest: emp
+!!! lhs formula: b::cell<flted_9_30>&flted_9_30=2 & flted_9_31=1&{FLOW,(4,5)=__norm#E}[]
+!!! lhs_vp_set: N
+!!! vp_set: U
+
+htrue at ex70a.slk
+
+*/
+
+

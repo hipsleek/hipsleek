@@ -1,6 +1,22 @@
 open Globals
 open Gen.Basic
 
+let wrap_exception dval f e =
+  try 
+    f e 
+  with _ -> dval
+
+let wrap_num_disj f n a b c d =
+  let old_disj = !fixcalc_disj in
+  fixcalc_disj := max n old_disj;
+  try
+    let res = f a b c d in
+    fixcalc_disj := old_disj;
+    res
+  with _ as e ->
+      (fixcalc_disj := old_disj;
+      raise e)
+
 let wrap_under_baga f a =
   let flag = !do_under_baga_approx in
   do_under_baga_approx := true;
@@ -25,10 +41,18 @@ let wrap_reverify_scc f a b c =
       (reverify_flag := flag;
       raise e)
 
+let wrap_norm flag norm f a =
+  try
+    let res = f a in
+    if flag then norm res
+    else res
+  with _ as e ->
+    raise e
+
 let wrap_classic et f a =
   let flag = !do_classic_frame_rule in
   do_classic_frame_rule := (match et with
-    | None -> !opt_classic
+    | None -> infer_const_obj # get INF_CLASSIC  (* !opt_classic *)
     | Some b -> b);
   try
     let res = f a in
@@ -39,10 +63,24 @@ let wrap_classic et f a =
     (do_classic_frame_rule := flag;
     raise e)
 
+let wrap_par_case_check f c =
+  let flag = !ho_always_split in
+  ho_always_split := true;
+  try
+    let res = f c in
+    ho_always_split := flag;
+    res
+  with _ as e ->
+    (ho_always_split := flag;
+    raise e)
+1
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
+  let _ = Debug.ninfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
   let _ = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let _ = infer_const_obj # set t in
+  (* let flag2 = infer_const_obj # is_infer_type t in *)
+  (* let _ = Debug.binfo_hprint (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
@@ -66,6 +104,14 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
   with _ as e ->
       (restore_fn old_values;
       raise e)
+
+let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
+
+(* let wrap_ver_post f a = *)
+(*   let save_fn () = infer_const_obj # is_ver_post in *)
+(*   let set_fn () = infer_const_obj # set INF_VER_POST in *)
+(*   let restore_fn f = if f then () else infer_const_obj # reset INF_VER_POST in *)
+(*   wrap_gen save_fn set_fn restore_fn () f a *)
 
 let wrap_one_bool flag new_value f a =
   let save_fn flag = (flag,!flag) in

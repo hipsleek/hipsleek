@@ -418,7 +418,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
   (*internal method*)
   let split_one cs total_unk_map=
     let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
-    let (_ ,mix_lf,_,_,_) = Cformula.split_components cs.Cformula.hprel_lhs in
+    let (_ ,mix_lf,_,_,_,_) = Cformula.split_components cs.Cformula.hprel_lhs in
     let l_qvars, lhs = Cformula.split_quantifiers cs.Cformula.hprel_lhs in
     let r_qvars, rhs = Cformula.split_quantifiers cs.Cformula.hprel_rhs in
     let l_hpargs = Cformula.get_HRels_f lhs in
@@ -444,7 +444,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         (* in *)
         let lfb = lhs_b1 in
         let lhds, lhvs, lhrs = Cformula.get_hp_rel_bformula lfb in
-        let (_ ,mix_lf,_,_,_) = Cformula.split_components (Cformula.Base lfb) in
+        let (_ ,mix_lf,_,_,_,_) = Cformula.split_components (Cformula.Base lfb) in
         let leqNulls = MCP.get_null_ptrs mix_lf in
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let ls_rhp_args = Cformula.get_HRels_f (Cformula.Base rhs_b1) in
@@ -718,7 +718,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             let n_cond = CP.remove_redundant cond in
             let nf = (Cformula.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (Cformula.pos_of_formula rhs)) in
             if not b_acc_unsat && Sautil.is_unsat nf then [] else
-            [(hp,args,unk_svl, n_cond, lhs, og, Some (Cformula.simplify_pure_f nf))]
+            [(hp,args,unk_svl, n_cond, lhs, og, Some (Cformula.simplify_pure_f_old nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
   let mkAnd_w_opt hp args (* ss *) of1 of2=
@@ -980,7 +980,7 @@ let remove_neqNull_grp_helper grp=
 
 let get_null_quans f=
   let qvars, base_f = Cformula.split_quantifiers f in
-   let (_ ,mix_lf,_,_,_) = Cformula.split_components base_f in
+   let (_ ,mix_lf,_,_,_,_) = Cformula.split_components base_f in
    let eqNulls = MCP.get_null_ptrs mix_lf in
    (CP.intersect_svl eqNulls qvars, base_f)
 
@@ -1007,7 +1007,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       else f2
     in
     (* fresh non-shape values *)
-    let f4 = Cfutil.fresh_data_v f3 in
+    let f4 = Cfutil.fresh_data_v_no_change f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)
@@ -1106,12 +1106,12 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
                     Cformula.mkFalse_nf no_pos
                 in
                 let def = Cformula.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
-                  (Cformula.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] in
+                  (Cformula.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] None in
                 (true, [(hp, def)],[])
               else
                 let def = Cformula.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
                   (Cformula.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos))
-                  (List.map (fun (a1,args,og,f,_) -> (f,og)) guarded_top_par_defs) in
+                  (List.map (fun (a1,args,og,f,_) -> (f,og)) guarded_top_par_defs) None in
                 (true, [(hp, def)],[])
         in
         let hpdefs = if is_put_top_guarded then hpdefs else
@@ -1442,7 +1442,7 @@ let def_subst_fix_x prog post_hps unk_hps prefix_hps hpdefs=
       if b then
         let r, others = Sautil.find_root prog (hp::unk_hps) args (List.map fst fs1_wg) in
         let _ = CA.set_proot_hp_def_raw (Sautil.get_pos args 0 r) prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
-        (b , Cformula.mk_hp_rel_def1 (* hpdef.Cformula.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(Cformula.disj_of_list fs1 no_pos, g)] *) fs1_wg)
+        (b , Cformula.mk_hp_rel_def1 (* hpdef.Cformula.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(Cformula.disj_of_list fs1 no_pos, g)] *) fs1_wg None)
       else (false, hpdef)
     else
       (*return*)
@@ -1651,7 +1651,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
               let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" pos in
               let _ = DD.ninfo_pprint ((let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in pr diff) ^ "::=" ^
                   (Cprinter.prtt_string_of_formula r) ) pos in
-                  ([],[( Cformula.mk_hp_rel_def1 def_tit hf [(r,None)] )], hps)
+                  ([],[( Cformula.mk_hp_rel_def1 def_tit hf [(r,None)] None)], hps)
             else
               ([constr],[], [])
         end
@@ -2843,7 +2843,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
       let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in
       let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in
       let hp_defs4 = List.map (fun def ->
-            match def.CF.def_cat with
+          let n_def = match def.CF.def_cat with
               | CP.HPRelDefn (hp, r, args) ->
                     if CP.mem_svl hp post_hps then
                     let n_rhs = List.map (fun (f, og) ->
@@ -2852,6 +2852,8 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
                     n_def
                     else def
               | _ -> def
+          in
+          {def with CF.def_flow = Some iflow;}
         ) is3.CF.is_hp_defs
       in
       let is4 = {is3 with CF.is_hp_defs = hp_defs4 } in
@@ -2984,7 +2986,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
         let f = if fs = [] then Cformula.formula_of_heap Cformula.HTrue no_pos else
           Cformula.disj_of_list fs no_pos
         in
-        Cformula.mk_hp_rel_def1 hpdef.Cformula.hprel_def_kind hpdef.Cformula.hprel_def_hrel [(f,hpdef.Cformula.hprel_def_guard)]) link_hpdefs
+        Cformula.mk_hp_rel_def1 hpdef.Cformula.hprel_def_kind hpdef.Cformula.hprel_def_hrel [(f,hpdef.Cformula.hprel_def_guard)] None) link_hpdefs
     in
     (cl_sel_hps@(List.map fst link_hpargs), hpdefs@link_hpdefs,
     tupled_defs2, is.Cformula.is_hp_defs@link_hp_defs)

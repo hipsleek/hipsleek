@@ -1,0 +1,30 @@
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+pred_prim CNT<n:int>
+inv n>=(-1).
+
+checkentail (exists x_1563,v_int_50_1423': x_41'::cell<v_int_48_1561> * 
+c_42'::LatchIn{- x_1563::cell<flted_26_67>&flted_26_67=10}<> * 
+c_42'::LatchOut{+ x_1563::cell<flted_26_68>&flted_26_68=10}<> * 
+c_42'::CNT{}<v_int_50_1423'>&v_int_48_1561=10 & v_int_50_1423'=1
+      & x_1563=x_41')
+ |-  c_42'::LatchIn{- %P}<> * %P * 
+c_42'::CNT{}<n>&0<n. 
+print residue.
+
+/*
+# ex2b-latch.slk
+
+
+Two x-s are unrelated..
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : x_21::cell<flted_26_67>
+
+
+
+*/

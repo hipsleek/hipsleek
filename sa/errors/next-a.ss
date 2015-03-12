@@ -9,7 +9,7 @@ HeapPred G(node a, node b).
 
 node get_next(node x)
   infer [H,G]
-  requires H(x)   ensures  G(x, res) or true & flow __Error ;
+  requires H(x)   ensures  G(x, res) ;
 //  requires x::node<p> or x=null ensures x::node<p> & res=p or x=null & res=null;
 {
   if (x == null) return null;

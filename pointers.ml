@@ -89,7 +89,7 @@ let default_value (t :typ) pos : exp =
           failwith "default_value: list can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
-    | Named c -> Null pos
+    | Named _ (* | SLTyp *) -> Null pos
     | Pointer ptr -> Null pos
 	| Array (t, d) ->
        failwith "default_value: Array not supported"
@@ -330,6 +330,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       | Unfold _
       | Barrier _ (*TO CHECK*)
       | Continue _ -> (bvars,[],[])
+      | Par _ -> (bvars, [], []) (* TODO: Par *)
   in helper e bvars
 
 let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (ident list) =
@@ -516,6 +517,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
               exp_while_wrappings = wrap}
           in
           (new_e)
+      | Par _ -> e (* TODO: Par *) 
       | Debug _
       | Dprint _
       | Empty _
@@ -784,6 +786,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
       | Unfold _
       | Barrier _ (*TO CHECK*)
       | Continue _ -> (e,vars)
+      | Par _ -> (e, vars) (* TODO: Par *)
   in helper e vars
 
 (*STEP 1: Translate pointers: 
@@ -906,7 +909,7 @@ let rec trans_specs_x specs new_params flags pos =
       else (h,p,ex_vars)
   ) (Iformula.HTrue,Ipure.mkTrue pos,[]) tmp
   in
-  let post = Iformula.mkBase_wo_flow post_h post_p [] pos in
+  let post = Iformula.mkBase_wo_flow post_h post_p IvpermUtils.empty_vperm_sets [] pos in
   (* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
   (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
@@ -1026,6 +1029,7 @@ and mkDelete (var:ident) pos =
       exp_call_nrecv_method = ptr_delete;
       exp_call_nrecv_lock = None;
       exp_call_nrecv_arguments = args;
+      exp_call_nrecv_ho_arg = None;
       exp_call_nrecv_path_id = None;
       exp_call_nrecv_pos = pos;}
 
@@ -1346,9 +1350,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                 let new_e = CallNRecv {
                     exp_call_nrecv_lock = c.exp_call_nrecv_lock;
                     exp_call_nrecv_method = fn;
-		            exp_call_nrecv_arguments = args;
-		            exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
-		            exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
+                    exp_call_nrecv_arguments = args;
+                    exp_call_nrecv_ho_arg = None;
+                    exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
+                    exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
                 (*trans_exp_addr that asyn call*)
                 let new_e1 = helper new_e vars in
                 (*then get back the fork call*)
@@ -1361,9 +1366,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       let new_fork_exp = CallNRecv {
                           exp_call_nrecv_lock = c.exp_call_nrecv_lock;
                           exp_call_nrecv_method = c.exp_call_nrecv_method; (*fork_name*)
-		                  exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
-		                  exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
-		                  exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
+                          exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
+                          exp_call_nrecv_ho_arg = None;
+                          exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
+                          exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
                       in
                       new_fork_exp
                   | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a CallNRecv")}
@@ -1590,6 +1596,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               exp_while_wrappings = wrap}
           in
           (new_e)
+      | Par _ -> e (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _
@@ -1726,6 +1733,7 @@ and find_addr (e:exp) : ident list =
             )
           in
           (vs1@vs2@vs3)
+      | Par _ -> [] (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _
@@ -2324,6 +2332,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
             )
           in
           (vs1@vs2@vs3)
+      | Par _ -> [] (* TODO: Par *)
       | Debug _
       | Dprint _
       | Empty _

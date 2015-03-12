@@ -125,7 +125,7 @@ and cvc3_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvc3_of_exp e1 ^ ", " ^ cvc3_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvc3_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3")
+  (* | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3") *)
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

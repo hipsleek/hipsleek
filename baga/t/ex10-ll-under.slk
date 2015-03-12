@@ -1,0 +1,45 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1>
+//inv_sat BG([],n>=0) // wrong - over
+//inv_sat BG([],self=null & n=0) // valid - under
+//inv_sat BG([self],n>=0) // wrong - over
+//inv_sat BG([self],n>=1) // valid -under
+//inv_sat BG([self],n>=3) // valid - under
+//inv_sat BG([self],2<=n<=10000) // valid - under
+// how is this inductively proven?
+//inv_sat BG([],false) // invalid sat - - empty
+//inv_sat BG([self],false) // reported valid but unsat!
+//inv_sat BG([self],n=0) // wrong
+//inv_sat BG([self],2=n | n>2) // valid 
+//inv_sat BG([self],n>=10) // valid but reported incorrect..
+//inv_sat BG([self],n>=4) // valid but reported incorrect..
+//inv_sat BG([self],2=n | n>3) // valid but fail
+//inv_sat BG([self],n<1) // invalid sat -empty
+//inv_sat BG([],self=null & n<1) // reported invalid, but isn't this true?
+inv_sat BG([],self=null & n<0) // reported invalid, cos empty.
+.
+
+
+/*
+# ex10-11-under.slk
+
+
+Can we distinguish something that is
+definitely UNSAT such as ([],false)  or  ([self],n=0)
+
+from over-approx such as ([self],n>=0)
+or unknown such as ([self],n>=10)
+
+?
+
+
+Valid.(Over)
+Valid.(Under)
+
+*/

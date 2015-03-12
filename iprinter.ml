@@ -9,6 +9,7 @@ open Gen.Basic
 
 module F = Iformula
 module P = Ipure
+module VP = IvpermUtils
 (* module LO=Label_only.Lab_List *)
 module LO=Label_only.LOne
 module LO2=Label_only.Lab2_List
@@ -321,13 +322,24 @@ match pf with
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   (* | P.HRelForm (r, args, _) -> *)
   (*     r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")" *)
-  | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
+  (* | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]" *)
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
+
+and string_of_vperm_sets vps = 
+  let pr_elem vpa svl = 
+    if Gen.is_empty svl then "" 
+    else (string_of_vp_ann vpa) ^ (pr_list string_of_id svl)
+  in
+  (pr_elem VP_Full vps.VP.vperm_full_vars) ^ 
+  (pr_elem VP_Lend vps.VP.vperm_lend_vars) ^
+  (pr_elem VP_Value vps.VP.vperm_value_vars) ^
+  (pr_elem VP_Zero vps.VP.vperm_zero_vars) ^
+  (pr_list (fun (frac, svl) -> pr_elem (VP_Frac frac) svl) vps.VP.vperm_frac_vars) 
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -514,7 +526,9 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
-      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_pl))^"}" in
+      let ho_str = "{" ^ (String.concat "," (List.map 
+        (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
+                   (string_of_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
       let deref_str = ref "" in
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
@@ -531,7 +545,7 @@ let rec string_of_h_formula = function
                   F.h_formula_heap2_arguments = args;
                   F.h_formula_heap2_ho_arguments = ho_args
     }) ->
-      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_args))^"}" in
+      let ho_str = "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_args)) ^ "}" in
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
@@ -557,7 +571,7 @@ let rec string_of_h_formula = function
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
-  | F.HVar v -> "HVar "^v
+  | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
@@ -576,11 +590,16 @@ and string_of_one_formula (f:F.one_formula) =
 
 and string_of_one_formula_list (f:F.one_formula list) =
   String.concat "\n AND" (List.map string_of_one_formula f)
+  
+and string_of_rflow_formula ff =
+  (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^
+  (string_of_formula ff.F.rflow_base)
 
 (* pretty printing for formulae *) 
 and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
+                  F.formula_base_vperm = vp;
                   F.formula_base_flow = fl;
                   F.formula_base_and = a;
                   F.formula_base_pos = l}) ->
@@ -588,8 +607,10 @@ and string_of_formula = function
       let sa = sa ^ (string_of_one_formula_list a) in
       let rs = 
         let s = string_of_pure_formula pf in
+        let svp = string_of_vperm_sets vp in
+        let s = if svp = "" then s else svp ^ " & " ^ s in
         (if s = "" then  (string_of_h_formula hf)
-         else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+         else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")( FLOW "^fl^")")
       in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
@@ -597,6 +618,7 @@ and string_of_formula = function
       (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
                     F.formula_exists_heap = hf;
+                    F.formula_exists_vperm = vp;
                     F.formula_exists_flow = fl;
                     F.formula_exists_and = a;
                     F.formula_exists_pure = pf}) ->
@@ -604,6 +626,8 @@ and string_of_formula = function
       let sa = sa ^ string_of_one_formula_list a in
       let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
               ^ (let s = string_of_pure_formula pf in
+                 let svp = string_of_vperm_sets vp in
+                 let s = if svp = "" then s else svp ^ " & " ^ s in
                  if s = "" then  (string_of_h_formula hf)
                  else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
               ^ ")"
@@ -732,10 +756,12 @@ let rec string_of_exp = function
           else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = lock;
-				exp_call_nrecv_path_id = pid;
-				exp_call_nrecv_arguments = el})-> 
+                exp_call_nrecv_path_id = pid;
+                exp_call_nrecv_arguments = el;
+                exp_call_nrecv_ho_arg = ha })-> 
           let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
-          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")")
+          string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
+            (match ha with | None -> "" | Some f -> string_of_formula f))
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
 			   exp_call_recv_path_id = pid;
@@ -820,6 +846,19 @@ let rec string_of_exp = function
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
+  | Par ({ exp_par_vperm = vps; exp_par_lend_heap = lh; exp_par_cases = cl }) ->
+    let string_of_par_case c =
+      let cond = c.exp_par_case_cond in
+      let vps = c.exp_par_case_vperm in
+      let vps_str = string_of_vperm_sets vps in
+      let cond_str = match cond with
+      | None -> "else " ^ vps_str ^ " -> "
+      | Some f -> "case " ^ vps_str ^ " " ^ (string_of_formula f) ^ " -> "
+      in
+      cond_str ^ (string_of_exp c.exp_par_case_body)
+    in
+    "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^ 
+    "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 
 (* (* pretty printing for expressions *)                                                                       *)
 (* and string_of_exp e = match e with                                                                          *)
@@ -972,6 +1011,7 @@ let string_of_proc_decl p =
   in	*)
     (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
 	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
+    ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
     ^ "[" ^ p.proc_mingled_name ^ "]"
     ^ "\n" 
 	^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)
@@ -1143,6 +1183,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
+Iformula.print_rflow_formula :=string_of_rflow_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_param_list := string_of_param_list;;
 Iast.print_hp_decl := string_of_hp_decl;;

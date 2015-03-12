@@ -302,7 +302,7 @@ let try_fold_once_x (f: CF.formula) (root_view: C.view_decl) (fold_f: CF.formula
           ) in
           let replacing_f = CF.rename_bound_vars fold_f in
           let replacing_f = CF.subst subs replacing_f in
-          let (replacing_hf,extra_pf,_,_,_) = CF.split_components replacing_f in
+          let (replacing_hf,extra_pf,_,_,_,_) = CF.split_components replacing_f in
           let extra_qvars = CF.get_exists replacing_f in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
           Some replacing_hf
@@ -352,7 +352,7 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
     Debug.ninfo_hprint (add_str "f" !CF.print_formula) f no_pos;
     let new_f1 = try_fold_once f root_view base_f in
     Debug.ninfo_hprint (add_str "new_f1" !CF.print_formula) new_f1 no_pos;
-    let (hf1,pf1,_,_,_) = CF.split_components new_f1 in
+    let (hf1,pf1,_,_,_,_) = CF.split_components new_f1 in
     let heap_chains1 = collect_heap_chains hf1 pf1 root_sv root_view prog in
     let is_base_case_ok = (
       if (List.length heap_chains1 = 0) then false
@@ -370,7 +370,7 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
       (* try fold inductive case *)
       let new_f2 = try_fold_once f root_view induct_f in
       Debug.ninfo_hprint (add_str "new_f2" !CF.print_formula) new_f2 no_pos;
-      let (hf2,pf2,_,_,_) = CF.split_components new_f2 in
+      let (hf2,pf2,_,_,_,_) = CF.split_components new_f2 in
       let heap_chains2 = collect_heap_chains hf2 pf2 root_sv root_view prog in
       if (List.length heap_chains2 = 0) then []
       else (

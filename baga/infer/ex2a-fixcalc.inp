@@ -1,0 +1,53 @@
+bndll:={[p,l,u,n] -> [] -> []:  n=0  
+||  exists (v,f: bndll(v,l,u,f) 
+    && f+1=n && l<=v && v<=u 
+   &&  ((v<p) || (v>p)))
+};
+bottomupgen([bndll], [10], SimHeur);
+fix:={[p,l,u,n]:n=0 
+ || (n=1 && l<=u && (l<=p-1 || p<u))
+ || (n>1 && l+1<=u && (l<=p-1 || p<u))
+};
+
+K1 := bndll(fix);
+K1;
+K1 subset fix;
+fix subset K1;
+
+# ex2a-fixcalc.inp
+fix2:= {[p,l,u,n]: 
+     ((p>=1+l) && 1<=n) 
+     || 
+     ((u >= 1 + p) && 1<=n)
+     || 0 = n};
+K2 := bndll(fix2);
+K2 subset fix2;
+fix2 subset K2;
+
+fix3:= {[p,l,u,n]: 
+ (0 = 0 && 0 = n) 
+ || (n >= 1  && p >= 1 + l) 
+ || (n >= 1 && u >= 1 + p)
+};
+fix3 subset fix;
+fix subset fix3;
+
+fix3 subset fix2;
+fix2 subset fix3;
+
+
+f6:= {[p,l,u,n]:
+  (0 = 0 && 0 = n) 
+  || (((n >= 1 && 5 >= n) && p >= 1 + l) && 1 + 4u >= n + 4l) 
+  || (((n >= 1 && 5 >= n) && u >= 1 + p) && 1 + 4u >= n + 4l)};
+
+fone := {[p,l,u,n]:n=1};
+
+f10 := fone intersection f6;
+
+f11:={[p,l,u,n]:
+  (n=1 && l<=u && (l<=p-1 || p<u))
+};
+
+f11 subset f10;
+f10 subset f11;

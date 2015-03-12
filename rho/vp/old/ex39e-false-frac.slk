@@ -1,0 +1,59 @@
+
+//(1)
+infer[] @full[x]*@full[x]  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+infer[] @full[x]*@value[x]  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+//(3)
+infer[] @full[x]*@frac(1/3)[x]  |- false.
+print residue.
+expect Valid. //should succeed here
+
+infer[] @full[x]*@frac(0/3)[x]  |- false.
+print residue.
+expect Fail. //should succeed here
+
+//(5)
+infer[] @full[x]  |- @frac(1/3)[x].
+print residue.
+expect Valid. //should succeed with 2/3
+
+//(6)
+infer[] @frac(0/3)[x]  |- @frac(1/3)[x].
+print residue.
+expect Fail. //should succeed here
+
+//(7)
+infer[] @frac(5/6)[x]  |- @frac(1/3)[x].
+print residue.
+expect Valid. //should succeed here
+
+/*
+# ex39e.slk --ann-vp
+
+Why is subtraction not working?
+
+infer[] @full[x]  |- @frac(1/3)[x].
+Residue:
+ <1>htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+Validate 5: OK
+
+
+infer[] @frac(0/3)[x]  |- @frac(1/3)[x].
+Entail (6) : Valid. 
+Residue:
+ <1>htrue*N@0/1[x]&{FLOW,(4,5)=__norm#E}[]
+Validate 6: Expecting 3 Fail BUT got : Valid
+
+
+infer[] @frac(5/6)[x]  |- @frac(1/3)[x].
+Entail (7) : Valid. 
+Residue:
+ <1>htrue*N@5/6[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+*/

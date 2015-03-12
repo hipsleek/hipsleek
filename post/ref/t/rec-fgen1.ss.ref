@@ -1,0 +1,90 @@
+
+!!!Full processing file "t/rec-fgen1.ss"
+Parsing file "t/rec-fgen1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f$int~int] for f$int~int
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1343_1344: ( n=res & k<=res) -->  post_1343_1344(n,k,res),
+RELDEFN post_1343_1345: ( n+1=k & res=k & post_1343_1344(k,k,k)) -->  post_1343_1345(n,k,res),
+RELDEFN post_1343_1345: ( res=k & (n+2)<=k & post_1343_1344(k,k,k) & post_1343_1345(1+n,k,k)) -->  post_1343_1345(n,k,res)]
+*************************************
+
+Post Inference result:
+f$int~int
+ ECase case {
+        k<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&res=n & k<=n & n>=k & n=res&
+                          {FLOW,(4,5)=__norm#E}[]
+                           ;
+        n<k -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         emp&res=k & n<k & res>=(1+n) & res=k&
+                         {FLOW,(4,5)=__norm#E}[]
+                          
+        }
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_14_1441=1+n' & n'=n & k'=k & n<k & n'<k' & 
+!(v_bool_13_1326') & v_int_14_1441<k' & k'>=(1+v_int_14_1441) & k'>=k' & 
+k'=v_int_14_1325' & 
+res=v_int_14_1325' & fpost_1398(v_int_14_1441,k') & fpost_1397(k',k') --> fpost_1398(n,k).
+
+ termAssume !(v_bool_13_1326') & n'<k' & n<k & k'=k & n'=n & 
+v_int_14_1325'=1+n' & v_int_14_1325'>=k' & 
+res=v_int_14_1325' & fpost_1397(v_int_14_1324',k') & fpost_1397(v_int_14_1325',k') --> fpost_1398(n,k).
+
+ termAssume v_bool_13_1326' & k'<=n' & k<=n & k'=k & n'=n & 
+res=n' --> fpost_1397(n,k).
+
+ termAssume v_int_14_1441=1+n' & n'=n & k'=k & n<k & n'<k' & 
+!(v_bool_13_1326') & v_int_14_1441<k' & v_int_14_1324'>=(1+v_int_14_1441) & 
+v_int_14_1324'=k' & 
+k'<=v_int_14_1324' & fpre_0(n,k) --> fpre_0(v_int_14_1324',k').
+
+ termAssume v_int_14_1324'=v_int_14_1324' & v_int_14_1324'>=k' & 
+k'<=v_int_14_1324' & !(v_bool_13_1326') & n'<k' & n<k & k'=k & n'=n & 
+v_int_14_1324'=1+n' & 
+k'<=v_int_14_1324' & fpre_0(n,k) --> fpre_0(v_int_14_1324',k').
+
+ termAssume v_int_14_1321'<k' & v_int_14_1321'=1+n' & n'=n & k'=k & n<k & 
+n'<k' & !(v_bool_13_1326') & fpre_0(n,k) --> fpre_0(v_int_14_1321',k').
+
+ termAssume k'<=v_int_14_1321' & v_int_14_1321'=1+n' & n'=n & k'=k & n<k & 
+n'<k' & !(v_bool_13_1326') & fpre_0(n,k) --> fpre_0(v_int_14_1321',k').
+
+
+Base/Rec Case Splitting:
+[	f: [[5] k<=n@B,[6] n<k@R]
+]
+Starting z3... 
+Termination Inference Result:
+f:  case {
+  k<=n -> requires emp * N & Term[31,1]
+     ensures emp * N & n=res & 
+  n>=k & k<=n & res=n; 
+  n<k -> requires emp * N & Term[31,2,-1+(-1*n)+(1*
+  k)]
+     ensures emp * N & res=k & res>=(1+n) & n<k & res=k; 
+  }
+
+6 false contexts at: ( (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+
+Total verification time: 0.559082 second(s)
+	Time spent in main process: 0.482275 second(s)
+	Time spent in child processes: 0.076807 second(s)
+

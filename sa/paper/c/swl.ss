@@ -89,7 +89,7 @@ ensures prev'::ll<sent>  & cur'=sent ;
       cur = prev;
       // dprint;
       prev = null;
-      // dprint;
+      dprint;
   }
   lscan(cur,prev,sent);
 

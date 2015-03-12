@@ -1,0 +1,8 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "ho/msg5.slk", line 10, characters 16-17
+ error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:error at: 
+SLEEK FAILURE (END)
+

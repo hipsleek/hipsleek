@@ -1,0 +1,9 @@
+
+!!!Full processing file "vp/ex42-simple-csl.ss"
+Parsing file "vp/ex42-simple-csl.ss" by default parser...
+File "vp/ex42-simple-csl.ss", line 8, characters 28-29
+ --error: Stream.Error("[simple_heap_constr] expected after STAR (in [heap_wr])")
+ at:caught
+
+Exception occurred: Stream.Error("[simple_heap_constr] expected after STAR (in [heap_wr])")
+Error3(s) detected at main 

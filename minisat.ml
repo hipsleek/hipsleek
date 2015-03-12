@@ -162,7 +162,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
     | ListAllN _
     | ListPerm _
     | RelForm _       -> "" 
-    | VarPerm _ -> Error.report_no_pattern ()
+    (* | VarPerm _ -> Error.report_no_pattern () *)
 
 let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t)=
   
@@ -229,7 +229,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
     | ListAllN _
     | ListPerm _
     | RelForm _       -> ""
-    | XPure _ | VarPerm _ -> Error.report_no_pattern ()
+    | XPure _ (* | VarPerm _ *) -> Error.report_no_pattern ()
 
 let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match bf with
@@ -248,7 +248,7 @@ let return_pure bf f= match bf with
       | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
       | BVar(_,_)->f
       | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
-      | BagMin _ | BagMax _ | VarPerm _ | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ -> Error.report_no_pattern ()
+      | BagMin _ | BagMax _ (* | VarPerm _ *) | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ -> Error.report_no_pattern ()
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -440,7 +440,7 @@ and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
     | ListAllN _
     | ListPerm _
     | RelForm _            -> false
-    | XPure _ | VarPerm _ -> Error.report_no_pattern()
+    | XPure _ (* | VarPerm _ *) -> Error.report_no_pattern()
 
 and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with

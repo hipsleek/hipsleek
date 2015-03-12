@@ -5,6 +5,10 @@ class __ArrBoundErr extends __Error {}
 /* class ret_bool extends __RET { bool val } */
 class __RET extends __Exc {}
 
+void throw_err()
+  requires true
+  ensures true & flow __Error;
+
 int add___(int a, int b)
   requires true
   ensures res = a + b;
@@ -35,8 +39,8 @@ int mults___(int a, int b)
   }
 
 int div___(int a, int b) 
-/*
- case {
+
+case {
   a >= 0 -> case {
     b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
     b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
@@ -50,9 +54,9 @@ int div___(int a, int b)
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
   }
-*/
+
 /*
- case {
+case {
   a >= 0 -> case {
     b = 1 -> ensures res = a;
     b > 1 -> ensures (exists r: a = b*res + r & 0 <= r <= b-1 & res >= 0 & res < a);
@@ -68,6 +72,7 @@ int div___(int a, int b)
     }
   }
 */
+/*
 case {
   a = 0 -> case {
     b >= 1 -> ensures res = 0;
@@ -97,6 +102,7 @@ case {
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
   }
 }
+*/
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -456,8 +462,8 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-pred_prim memLoc<heap:bool,size:int>
-  inv size>0;
+/* pred_prim memLoc<heap:bool,size:int> */
+/*   inv size>0; */
 
                                   ///////////////
                                   /*
@@ -510,8 +516,8 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-pred_prim WAIT<b:bag((Object,Object))>;
-pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
+/* pred_prim WAIT<b:bag((Object,Object))>; */
+/* pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>; */
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
 relation concrete(bag(Object) g).

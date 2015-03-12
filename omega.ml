@@ -51,6 +51,10 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
             (* omega doesn't allow variable name starting with underscore *)
             let v = if ((String.get v 0) == '_') then "v" ^ v 
                     else v in
+            let v =
+              let reg = Str.regexp "\." in
+              Str.global_replace reg "" v
+            in
             let ln = (String.length v) in  
             let r_c = if (ln<20) then v
                       else "v" ^ (String.sub v (ln-20)  20) in
@@ -163,7 +167,7 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
+  (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
   | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
@@ -171,7 +175,7 @@ and omega_of_b_formula b =
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 		
+  | BForm ((b,_) as bf,_) ->
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
@@ -260,7 +264,7 @@ let prelude () =
 let start() =
   try (
     if not !is_omega_running then begin
-        if (not !Globals.web_compile_flag) then 
+        (* if (not !Globals.web_compile_flag) then  *)
           print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
         last_test_number := !test_number;
         let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
@@ -483,11 +487,11 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
-    let pe0 = drop_varperm_formula pe in
-    let svl0 = Cpure.fv pe0 in
+    (* let pe0 = drop_varperm_formula pe in *)
+    let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in
-    let pe = Cpure.subst ss pe0 in
+    let pe = Cpure.subst ss pe in
     let pvars = get_vars_formula pe in
     (*if not safe then true else*)
       begin
@@ -583,11 +587,11 @@ let is_sat (pe : formula) sat_no : bool =
 let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
-      let pe0 = drop_varperm_formula pe in
-      let svl0 = Cpure.fv pe0 in
+      (* let pe0 = drop_varperm_formula pe in *)
+      let svl0 = Cpure.fv pe in
       let svl,fr_svl = mkSpecVarList 0 svl0 in
       let ss = List.combine svl fr_svl in
-      let pe = Cpure.subst ss pe0 in
+      let pe = Cpure.subst ss pe in
       let pvars = get_vars_formula pe in
       (*if not safe then true else*)
         begin
@@ -687,7 +691,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let pr = !print_formula in
-  Debug.no_2 "[omega.ml]imply_ops_1" pr pr string_of_bool
+  Debug.no_2 "omega.imply_ops_1" pr pr string_of_bool
   (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
@@ -764,12 +768,12 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
   Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
-  
+
 let trans_bool (f: formula): formula =
   let get_bool_val is_lt e1 e2 pos = (* e1 < e2 *)
     let bv = get_boolean_var e1 in
     match bv with
-    | Some v -> 
+    | Some v ->
       let i = get_num_int_opt e2 in
       begin match i with
       | Some i -> 
@@ -813,12 +817,12 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* let _ = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   begin
-    let pe0 = drop_varperm_formula pe in
-    let svl0 = Cpure.fv pe0 in
+    (* let pe0 = drop_varperm_formula pe in *)
+    let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
     let ss2 = List.combine fr_svl svl in
-    let pe1 =  Cpure.subst ss1  pe0 in
+    let pe1 =  Cpure.subst ss1 pe in
     (*let pe = drop_varperm_formula pe in*)
     let v = try 
       (* Debug.info_pprint "here1" no_pos; *)
@@ -1015,8 +1019,8 @@ else
 let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
   begin
     omega_subst_lst := [];
-    let pe1 = drop_varperm_formula pe1 in
-    let pe2 = drop_varperm_formula pe2 in
+    (* let pe1 = drop_varperm_formula pe1 in *)
+    (* let pe2 = drop_varperm_formula pe2 in *)
     match ((omega_of_formula_old 21 pe1), (omega_of_formula_old 21 pe2)) with
       | (Some fstr1, Some fstr2) ->
             let vars_list1 = get_vars_formula pe1 in
@@ -1041,7 +1045,7 @@ let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
     omega_subst_lst := [];
-    let pe = drop_varperm_formula pe in
+    (* let pe = drop_varperm_formula pe in *)
     match (omega_of_formula_old 21 pe) with
       | None -> pe
       | Some fstr ->
@@ -1073,7 +1077,7 @@ let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
-    let pe = drop_varperm_formula pe in
+    (* let pe = drop_varperm_formula pe in *)
     match omega_of_formula_old 22 pe with
       | None -> pe
       | Some fstr ->
@@ -1098,7 +1102,7 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
     omega_subst_lst := [];
-    let pe1 = drop_varperm_formula pe1 in
+    (* let pe1 = drop_varperm_formula pe1 in *)
     let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
     let fstr1 = omega_of_formula_old 23 pe1 in
     let fstr2 = omega_of_formula_old 24 pe2 in
