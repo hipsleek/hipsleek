@@ -579,6 +579,19 @@ Total number of errors: 20 in files:
 
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ==============================================
+# baga/t/ex11.slk (smt2014)
+
+Why did we get failure message and also a disabling
+of inv gen? Why did we not use the precise inv?
+
+!!! Predicate l6 has precise invariant
+
+!!! infered baga inv(l6):[([q,self], true),([q], self=null)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+Inv Check: Fail.(Over)
 ==============================================
 ==============================================
 ==============================================

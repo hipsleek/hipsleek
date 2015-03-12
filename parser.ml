@@ -1019,7 +1019,7 @@ template_data_header:
 data_body: 
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
-      | `OBRACE; `CBRACE                             -> []] ];
+      | `OBRACE; `CBRACE                   -> []] ];
  
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
