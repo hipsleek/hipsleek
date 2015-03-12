@@ -108,6 +108,14 @@ I.data_invs = []; (* F.mkTrue no_pos; *)
 I.data_is_template = false;
 I.data_methods = [] }
 
+let iexc_def =  {I.data_name = raisable_class;
+I.data_fields = [];
+I.data_pos = no_pos;
+I.data_parent_name = "Object";
+I.data_invs = []; (* F.mkTrue no_pos; *)
+I.data_is_template = false;
+I.data_methods = [] }
+
 let ithrd_def =  {I.data_name = Globals.thrd_name ;
 I.data_fields = [];
 I.data_pos = no_pos;
@@ -117,7 +125,7 @@ I.data_is_template = false;
 I.data_methods = [] }
 
 let iprog = { I.prog_include_decls =[];
-I.prog_data_decls = [iobj_def;ithrd_def];
+I.prog_data_decls = [iobj_def;ithrd_def;iexc_def];
 I.prog_global_var_decls = [];
 I.prog_logical_var_decls = [];
 I.prog_enum_decls = [];
@@ -160,10 +168,13 @@ let cprog = ref {
     (*Cast.prog_left_coercions = [];
     Cast.prog_right_coercions = [];*)
     Cast. prog_barrier_decls = []}
-	
-let _ = 
-	Lem_store.all_lemma # clear_right_coercion;
-	Lem_store.all_lemma # clear_left_coercion
+
+let _ =
+  Lem_store.all_lemma # clear_right_coercion;
+  Lem_store.all_lemma # clear_left_coercion
+
+let update_iprog ip=
+  iprog = ip
 
 (* Moved to CFormula *)
 (* let residues =  ref (None : (CF.list_context * bool) option)    (\* parameter 'bool' is used for printing *\) *)
@@ -619,8 +630,14 @@ let process_list_lemma ldef_lst =
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
-    let tmp = iprog.I.prog_data_decls in
-    iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
+    (* let tmp = iprog.I.prog_data_decls in *)
+    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_compare dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
+    let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
+      let _ = Iast.build_exc_hierarchy true iprog in
+      let _ = exlist # compute_hierarchy  in
+      let _ = iprog.I.prog_data_decls <- iprog.I.prog_data_decls@[iexc_def] in
+      ()
+    in ()
   else begin
     dummy_exception() ;
     (* print_string (ddef.I.data_name ^ " is already defined.\n") *)

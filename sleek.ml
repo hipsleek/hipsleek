@@ -297,34 +297,40 @@ let main () =
   let _ = Globals.is_sleek_running := true in
   let _ = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
-		            I.prog_data_decls = [iobj_def;ithrd_def];
-                I.prog_global_var_decls = [];
-                I.prog_logical_var_decls = [];
-                I.prog_enum_decls = [];
-                I.prog_view_decls = [];
-                I.prog_func_decls = [];
-                I.prog_rel_decls = [];
-                I.prog_rel_ids = [];
-                I.prog_templ_decls = [];
-                I.prog_ut_decls = [];
-                I.prog_hp_decls = [];
-			    I.prog_hp_ids = [];
-                I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-                I.prog_proc_decls = [];
-                I.prog_coercion_decls = [];
-                I.prog_hopred_decls = [];
-		I.prog_barrier_decls = [];
-                I.prog_test_comps = [];
-              } in
+  I.prog_data_decls = [iobj_def;ithrd_def];
+  I.prog_global_var_decls = [];
+  I.prog_logical_var_decls = [];
+  I.prog_enum_decls = [];
+  I.prog_view_decls = [];
+  I.prog_func_decls = [];
+  I.prog_rel_decls = [];
+  I.prog_rel_ids = [];
+  I.prog_templ_decls = [];
+  I.prog_ut_decls = [];
+  I.prog_hp_decls = [];
+  I.prog_hp_ids = [];
+  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+  I.prog_proc_decls = [];
+  I.prog_coercion_decls = [];
+  I.prog_hopred_decls = [];
+  I.prog_barrier_decls = [];
+  I.prog_test_comps = [];
+  } in
   (*Generate barrier data type*)
   let _ = if (!Globals.perm = Globals.Dperm) then
         process_data_def (I.b_data_constr b_datan [])
       else if (!Globals.perm = Globals.Bperm) then
         process_data_def (I.b_data_constr b_datan [((Int,"phase"))])
   in
+  (* let _ = (exlist # add_edge "Object" "") in *)
+  (* let _ = (exlist # add_edge "String" "Object") in *)
+  (* let _ = (exlist # add_edge raisable_class "Object") in *)
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+  let iprog = {iprog with I.prog_data_decls = (Astsimp.mk_ret_type_into_data_decls iprog)@iprog.I.prog_data_decls; } in
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = exlist # compute_hierarchy  in  
+  let iprog = {iprog with I.prog_data_decls = iprog.I.prog_data_decls@[iexc_def]} in
+  (* let _ = print_string ("exc:1 "^(exlist#string_of)^"\n") in *)
+  let _ = exlist # compute_hierarchy  in
   (* let _ = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
