@@ -46,7 +46,7 @@ void main()
   requires emp ensures emp;
 {
   cell x, y;
-  CDL c = create_latch(1) with x'::cell<1> ;
+  CDL c = create_latch(1) with x'::cell<1> * @lend[x];
   x = new cell(1); 
   int r1,r2;
   r1=0; r2=0;
@@ -55,18 +55,20 @@ void main()
   {  
    // exists r1',r2'
     // exists x',y',r2'
-  case {x@L,r1,c@L} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
+  case {x@L,r1,c@L} c'::LatchOut{+x'::cell<1> * @lend[x]}<> * c'::CNT<0> -> // TODO: Should return error here
       dprint;
       await(c); 
-      r1 = x.val; 
+      r1 = x.val + 1; 
    ||
-   case {x@L,c@L} c'::LatchIn{- x'::cell<1> }<> * c'::CNT<(1)> -> 
-        dprint;
+   case {x@L,c@L} c'::LatchIn{- x'::cell<1> * @lend[x]}<> * c'::CNT<(1)> * x'::cell<1> -> 
+      dprint;
       countDown(c);
+      //x.val = x.val + 1;
       //dprint;
       //int k = x.val;
   }
   dprint;
+  assert r1'=2;
 }
 
 /*
