@@ -3478,7 +3478,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
     (* let res_l,prf_l =List.split res in *)
     (***************END******************)
     let res_l,prf_l = heap_entail_struc_partial_context_helper succ_branches [] [] [] in
-    let n = string_of_int (List.length res_l) in
+    (* let n = string_of_int (List.length res_l) in *)
     (* print_string ("\nCombining ==> :"^n^" "^(Cprinter.string_of_list_list_partial_context res_l)); *)
     let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
     (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
