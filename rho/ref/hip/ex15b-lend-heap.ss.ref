@@ -1,0 +1,64 @@
+
+!!!Full processing file "hip/ex15b-lend-heap.ss"
+Parsing file "hip/ex15b-lend-heap.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex15b-lend-heap.ss:13: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists z_1423,Anon_1424,v_int_6_1425,z_37',v_int_6_1422: x_35'::cell<Anon_1424>*U@full[x_35]@lend[y_36]&z_37'=2 & y_36'=1 & v_int_6_1422=1 & z_1423=2 & y_36'=1 & v_int_6_1425=1 & Anon_1424=v_int_6_1425&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex15b-lend-heap.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_14_1355': x_35'::cell<v_int_14_1355'>*N@full[val_14_1350,val_14_1356,x_35]@lend[y_36]&z_1452=2 & v_int_6_1453=1 & z_1449=2 & y_36'=1 & v_int_6_1451=1 & Anon_1450=v_int_6_1451 & v_int_14_1355'=Anon_1450+y_36' & val_14_1463=Anon_1450&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex15b-lend-heap.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp*N@full[z_37]@lend[y_36]@zero[x_35]&z_37'=y_36'+z_1476 & Anon_1473=v_int_6_1474 & v_int_6_1474=1 & y_36'=1 & z_1476=2 & v_int_6_1475=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex15b-lend-heap.ss:22: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_14_1481,z_1480: x_35'::cell<v_int_14_1481>*N@full[val_14_1350,val_14_1356,x_35,y_36,z_37]&z_1480=2 & y_36'=1 & v_int_6_1422=1 & z_1452=2 & v_int_6_1453=1 & z_1449=2 & y_36'=1 & v_int_6_1451=1 & Anon_1450=v_int_6_1451 & v_int_14_1481=Anon_1450+y_36' & val_14_1463=Anon_1450 & z_37'=y_36'+z_1476 & Anon_1473=v_int_6_1474 & v_int_6_1474=1 & y_36'=1 & z_1476=2 & v_int_6_1475=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert:hip/ex15b-lend-heap.ss:23: 2:  : ok
+
+
+assert/assume:hip/ex15b-lend-heap.ss:24: 2:  : failed
+
+
+assert/assume:hip/ex15b-lend-heap.ss:25: 2:  : failed
+
+
+assert/assume:hip/ex15b-lend-heap.ss:26: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.532032 second(s)
+	Time spent in main process: 0.50003 second(s)
+	Time spent in child processes: 0.032002 second(s)
+

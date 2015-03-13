@@ -11,7 +11,7 @@ void loop(ref int x)
     x = x-1;
     loop(x);
   } else {
-    raise new Exp(2);
+    return; //raise new Exp(2);
   }
 }
 
