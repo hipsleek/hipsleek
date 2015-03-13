@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc6c.ss"
 Parsing file "t/exc6c.ss" by default parser...
@@ -29,7 +30,7 @@ Escaped States:
 Successful States:
 [
  Label: [(,1 ); (,2 ); (,0 ); (,1 )]
- State:(exists v_int_15_1344': htrue&post_1364(x',v_int_15_1344') & x'+1=x_1387 & pre_1363(x) & x_1387=x & 0<x_1387 & v_bool_15_1345' & x_1387<=100 & !(v_bool_16_1340')&{FLOW,(4,5)=__norm#E}[]
+ State:(exists v_int_15_1344': htrue&post_1364(x',v_int_15_1344',flow) & x'+1=x_1387 & pre_1363(x) & x_1387=x & 0<x_1387 & v_bool_15_1345' & x_1387<=100 & !(v_bool_16_1340')&{FLOW,(4,5)=__norm#E}[]
 ;
  Label: [(,1 ); (,2 )]
  State:htrue&!(v_bool_15_1345') & x'<=0 & x'=x & pre_1363(x)&{FLOW,(4,5)=__norm#E}[]
@@ -56,21 +57,21 @@ Error(s) detected when checking procedure loop$int
 ******pure relation assumption*******
 *************************************
 [RELDEFN pre_1363: ( x=1+x' & 0<=x' & x'<=99 & pre_1363(x)) -->  pre_1363(x'),
-RELDEFN post_1364: ( x=1+res & 0<=res & res<=99 & post_1364(res,v_int_15_1394) & pre_1363(x)) -->  post_1364(x,res),
-RELDEFN post_1364: ( x=res & res<=0 & pre_1363(x)) -->  post_1364(x,res)]
+RELDEFN post_1364: ( x=1+res & 0<=res & res<=99 & post_1364(res,v_int_15_1394,flow) & pre_1363(x)) -->  post_1364(x,res,flow),
+RELDEFN post_1364: ( x=res & res<=0 & pre_1363(x)) -->  post_1364(x,res,flow)]
 *************************************
 
 Post Inference result:
 loop$int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           htrue&((res>=0 & res+1=x) | (0>=x & x=res))&
+           htrue&((x>=1 & x=res+1) | (!(res) & res=x))&
            {FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
 
-Total verification time: 0.426275 second(s)
-	Time spent in main process: 0.352686 second(s)
-	Time spent in child processes: 0.073589 second(s)
+Total verification time: 0.452027 second(s)
+	Time spent in main process: 0.376023 second(s)
+	Time spent in child processes: 0.076004 second(s)
 

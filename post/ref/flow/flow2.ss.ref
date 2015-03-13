@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "flow/flow2.ss"
 Parsing file "flow/flow2.ss" by default parser...
@@ -14,21 +15,3 @@ Procedure loop$int SUCCESS.
 [RELDEFN post_1356: ( x_1373+1=x & 1<=x & post_1356(x_1373,x',flow)) -->  post_1356(x,x',flow),
 RELDEFN post_1356(__norm#E): ( x'=x & x<=0) -->  post_1356(x,x',flow)]
 *************************************
-Starting Reduce... 
-
-Post Inference result:
-loop$int
- EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-         EAssume ref [x]
-           
-           htrue&x>=1 & 0=x'&{FLOW,(4,5)=__norm#E}[]
-           or htrue&0>=x' & x'=x&{FLOW,(4,5)=__norm#E}[]
-           
-           
-
-0 false contexts at: ()
-
-Total verification time: 0.392461 second(s)
-	Time spent in main process: 0.319073 second(s)
-	Time spent in child processes: 0.073388 second(s)
-

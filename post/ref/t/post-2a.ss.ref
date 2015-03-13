@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/post-2a.ss"
 Parsing file "t/post-2a.ss" by default parser...
@@ -25,7 +26,7 @@ fact$int
 
 0 false contexts at: ()
 
-Total verification time: 0.397455 second(s)
-	Time spent in main process: 0.338891 second(s)
-	Time spent in child processes: 0.058564 second(s)
+Total verification time: 0.408024 second(s)
+	Time spent in main process: 0.348021 second(s)
+	Time spent in child processes: 0.060003 second(s)
 

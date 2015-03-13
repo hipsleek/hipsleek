@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/tree-data1.ss"
 Parsing file "bugs/tree-data1.ss" by default parser...
@@ -11,8 +12,8 @@ Procedure height$node SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1376: ( res=0) -->  post_1376(res),
-RELDEFN post_1376: ( 0<=res) -->  post_1376(res)]
+[RELDEFN post_1376: ( res=0) -->  post_1376(res,flow),
+RELDEFN post_1376: ( 0<=res) -->  post_1376(res,flow)]
 *************************************
 
 
@@ -25,7 +26,7 @@ height$node
 
 0 false contexts at: ()
 
-Total verification time: 0.423647 second(s)
-	Time spent in main process: 0.374344 second(s)
-	Time spent in child processes: 0.049303 second(s)
+Total verification time: 0.504029 second(s)
+	Time spent in main process: 0.440026 second(s)
+	Time spent in child processes: 0.064003 second(s)
 

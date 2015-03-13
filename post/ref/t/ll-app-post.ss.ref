@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/ll-app-post.ss"
 Parsing file "t/ll-app-post.ss" by default parser...
@@ -11,9 +12,9 @@ Procedure append2$node~node SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1391: ( n1=1 & r_1374=n2+1 & 0<=n2) -->  post_1391(r_1374,n2,n1),
-RELDEFN post_1391: ( post_1391(r_1435,n2,n1_1421) & r_1435+1=r_1374 & n1_1421+1=n1 & 2<=r_1374 & 
-1<=n1 & 0<=n2) -->  post_1391(r_1374,n2,n1)]
+[RELDEFN post_1391: ( n1=1 & r_1374=n2+1 & 0<=n2) -->  post_1391(r_1374,n2,n1,flow),
+RELDEFN post_1391: ( r_1435+1=r_1374 & n1_1421+1=n1 & 2<=r_1374 & 1<=n1 & 0<=n2 & 
+post_1391(r_1435,n2,n1_1421,flow)) -->  post_1391(r_1374,n2,n1,flow)]
 *************************************
 
 Post Inference result:
@@ -27,7 +28,7 @@ append2$node~node
 
 0 false contexts at: ()
 
-Total verification time: 0.704211 second(s)
-	Time spent in main process: 0.586765 second(s)
-	Time spent in child processes: 0.117446 second(s)
+Total verification time: 1.020063 second(s)
+	Time spent in main process: 0.856053 second(s)
+	Time spent in child processes: 0.16401 second(s)
 

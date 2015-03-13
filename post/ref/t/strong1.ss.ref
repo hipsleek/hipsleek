@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/strong1.ss"
 Parsing file "t/strong1.ss" by default parser...
@@ -28,7 +29,7 @@ Error(s) detected when checking procedure rec1$int
 
 0 false contexts at: ()
 
-Total verification time: 0.392591 second(s)
-	Time spent in main process: 0.347593 second(s)
-	Time spent in child processes: 0.044998 second(s)
+Total verification time: 0.396023 second(s)
+	Time spent in main process: 0.352021 second(s)
+	Time spent in child processes: 0.044002 second(s)
 
