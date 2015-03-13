@@ -5,7 +5,7 @@
 
 open Globals
 open Cast
-open Prooftracer
+open Prooftracere
 open Gen.Basic
 open Cformula
 
