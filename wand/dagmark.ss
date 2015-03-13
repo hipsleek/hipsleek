@@ -15,9 +15,9 @@ dag<D> == self = null
 relation subset_reach(abstract D, node x, abstract D1).
 relation eq_notreach(abstract D, node x, abstract D1).
 
-rlemma "subdagupdate" x::dag<D1> * (x::dag<D> --@ (x::dag<D> U* y::dag<D>))
-      & subset_reach(D,x,D1) & eq_notreach(D,x,D1)
-      -> x::dag<D1> U* y::dag<D1>;
+rlemma "subdagupdate" l::dag<D1> * (l::dag<D> --@ (l::dag<D> U* r::dag<D>))
+      & subset_reach(D,l,D1) & eq_notreach(D,l,D1)
+      -> l::dag<D1> U* r::dag<D1>;
 
 relation mark(abstract D,node x,abstract D1).
 
@@ -46,8 +46,8 @@ axiom lookup(D,x,v,l,r) & mark(D,r,D1) & v != 1
 & mark(D2,l,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
 
 void mark(node x)
-requires x::dag<G>
-ensures x::dag<G1> & mark(G,x,G1);
+requires x::dag<D>
+ensures x::dag<D1> & mark(D,x,D1);
 {
 node l,r;
 if(x==null) return;

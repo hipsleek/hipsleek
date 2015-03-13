@@ -23,7 +23,7 @@ rlemma "subgraphupdate_r" r::graph<G1> * (r::graph<G> --@ (x::node<v,l,r> U* (l:
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
 rlemma "pttoupdate" x::node<v1,l,r> * (x::node<v,l,r> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
-      & lookup(G,x,v,l,r)
+      & lookup(G,x,v,l,r) & update(G,x,v1,l,r,G1)
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
 relation mark(abstract G,node x,abstract G1).
@@ -31,8 +31,6 @@ relation mark(abstract G,node x,abstract G1).
 axiom true ==> mark(G,null,G).
 
 axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
-
-axiom mark(G,x,G1) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1).
 
 axiom mark(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1) & lookup(G1,y,v1,l,r).
 
