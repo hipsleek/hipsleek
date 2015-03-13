@@ -12,6 +12,7 @@ open Mcpure_D
 open Mcpure
 open Label_only
 open Typeinfer
+open CvpermUtils
 
 module C = Cast
 module E = Env
@@ -3401,29 +3402,65 @@ and trans_loop_proc_x (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars: iden
       in (trans_proc prog new_proc)
   else (trans_proc prog proc)
 
-and add_perm_to_spec flag (e : CF.struc_formula) : CF.struc_formula  =
-  (* let f_none _ _ = None in *)
-  let f_f a e = Some(e,a)  in
-  let f1 a e = Some(e,a) in
-  let rec f_struc_f a e = 
-    match e with
-      | CF.EBase b -> 
-            (match a with
-              | Some _ -> None
-              | None ->
-                    begin
-                      match b.CF.formula_struc_continuation with
-                          None -> Some (e,None)
-                        | Some c -> 
-                              let flag=true in (* compute pre & post-permission *)
-                              let cf= add_perm_to_spec (Some true (* post-permission *)) c in
-                              Some (CF.EBase { b with CF.formula_struc_continuation = Some cf}, None)
+and comp_vp_add_pre_post f p_ref p_val =
+  let check_vp vp pref p_val =
+    let orig_full = vp.vperm_full_vars in
+    let orig_val = vp.vperm_value_vars in
+    let vp_ref = orig_full @ vp.vperm_zero_vars @ vp.vperm_lend_vars @ (List.map snd vp.vperm_frac_vars) in
+    let vp_val = orig_full @ orig_val @ vp.vperm_zero_vars @ vp.vperm_lend_vars in
+    let res_ref =  Cpure.diff_svl p_ref vp_ref in
+    let res_val =  Cpure.diff_svl p_val vp_val in
+    let pr_svl = Cprinter.string_of_spec_var_list in
+    let () = Debug.binfo_hprint (add_str "orig_full" pr_svl) orig_full no_pos in
+    let () = Debug.binfo_hprint (add_str "orig_val" pr_svl) orig_val no_pos in
+    let () = Debug.binfo_hprint (add_str "add_full" pr_svl) res_ref no_pos in
+    let () = Debug.binfo_hprint (add_str "add_val" pr_svl) res_val no_pos in
+    let new_vp = { vp with vperm_full_vars = orig_full @ res_ref; vperm_value_vars = orig_val@res_val; } in
+    new_vp,res_ref
+  in
+  match f with 
+      CF.Base b ->
+          let vp = b.CF.formula_base_vperm in
+          let n_vp,rem_vp = check_vp vp p_ref p_val in
+          (CF.Base {b with CF.formula_base_vperm=n_vp},[])
+    | CF.Exists g -> 
+          let vp = g.CF.formula_exists_vperm in
+          let n_vp,rem_vp = check_vp vp p_ref p_val in
+          (CF.Exists {g with CF.formula_exists_vperm=n_vp},[])
+    | _ -> 
+          let () = Debug.winfo_pprint "VPerm cannot be added to OR" no_pos in
+          (f,[]) (* print warning *)
+
+and add_perm_to_spec p_ref p_val (expr : CF.struc_formula) : CF.struc_formula  =
+  let pr_f = Cprinter.string_of_struc_formula in
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  Debug.no_2 "add_perm_to_spec" pr_f pr_svl pr_f (fun _ _ -> add_perm_to_spec_x p_ref p_val expr) expr p_ref
+
+and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula  =
+  let rec helper flag e =
+    (* let f_none _ _ = None in *)
+    let f_f a e = Some(e,a)  in
+    let f1 a e = Some(e,a) in
+    let rec f_struc_f a e = 
+      match e with
+        | CF.EBase b -> 
+              (match a with
+                | Some _ -> None
+                | None ->
+                      begin
+                        match b.CF.formula_struc_continuation with
+                            None -> Some (e,None)
+                          | Some c -> 
+                                let f = b.CF.formula_struc_base in
+                                let (nf,post_perm)=comp_vp_add_pre_post f p_ref p_val in (* compute pre & post-permission *)
+                                let cf= helper (Some post_perm) (* post-permission *) c in
+                                Some (CF.EBase { b with CF.formula_struc_base = nf; CF.formula_struc_continuation = Some cf}, None)
                     end)
       | CF.EAssume f -> 
             begin
               match a with 
                   None -> Some (e,None)
-                | Some post_perm -> Some (e,None) (* add post-perm *)
+                | Some post_perm -> Some (e,None) (* TODO:ZH : add post-perm to f *)
             end
       | _ -> None in
   (* let f2 a e = None in *)
@@ -3436,14 +3473,20 @@ and add_perm_to_spec flag (e : CF.struc_formula) : CF.struc_formula  =
   let (a,b) = CF.trans_n_struc_formula e flag f_gen f_arg (fun lst ->
       List.fold_left (fun r e -> match r with None -> e | _ -> r) None lst) in
   a
+  in helper None expr
 
-and add_perm_proc p = 
-  let ss = p.C.proc_static_specs in
-  let () = Debug.binfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
-  let () = Debug.binfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
-  let () = Debug.binfo_hprint (add_str "copy" Cprinter.string_of_spec_var_list) p.C.proc_by_copy_params no_pos in
-  let ns = add_perm_to_spec None ss in
-  p
+and add_perm_proc  p = 
+  if not(!Globals.ann_vp) then p
+  else
+    let p_ref = p.C.proc_by_name_params in
+    let p_val = p.C.proc_by_value_params @ p.C.proc_by_copy_params in
+    let ss = p.C.proc_static_specs in
+    let () = Debug.binfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
+    let () = Debug.binfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
+    let () = Debug.binfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
+    let ns = add_perm_to_spec p_ref p_val ss in
+    { p with C.proc_static_specs = ns}
+
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
     let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
@@ -3678,11 +3721,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (*    let _ = print_string "Function parameters : " in                    *)
       (*    let _ = print_endline (Cprinter.string_of_spec_var_list imp_vars) in*)
       (** An Hoa : end **)
-      let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
+      let (by_names_tmp,rest_lst) = List.partition (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
+      let (by_copies_tmp,no_mod_tmp) = List.partition (fun p -> p.I.param_mod = I.CopyMod) rest_lst in      
       let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
       let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
-      let by_copies = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed))
-        (List.filter (fun p -> p.I.param_mod = I.CopyMod) proc.I.proc_args) in
+      let by_copies = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_copies_tmp in
+      let by_values = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) no_mod_tmp in
+        (* (List.filter (fun p -> p.I.param_mod = I.CopyMod) proc.I.proc_args) in *)
       (******LOCKSET variable>>*********)
       (*only add lockset into ref_vars if it is mentioned in the spec
         This is to avoid adding too many LS in sequential settings*)
@@ -3786,7 +3831,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_hpdefs = [];
           C.proc_callee_hpdefs = [];
           C.proc_by_name_params = by_names;
-          C.proc_by_copy_params = by_copies;
+          C.proc_by_copy_params = by_copies; (* copy entire structure *)
+          C.proc_by_value_params = by_values; 
           C.proc_body = body;
           C.proc_logical_vars = [];
           C.proc_call_order = 0;
