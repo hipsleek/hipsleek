@@ -2083,9 +2083,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             TP.imply_raw upf pf
       in
       (* type: int -> Excore.EPureI.epure -> CF.formula list -> string -> bool *)
-      let check_under no uf fl vn = 
+      let check_under no uf fl vn =
         Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
       (* let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in *)
+      let body_under = fst (List.split vdef.view_un_struc_formula) in
       let body_under = [formula1_under] in
       (* let body_under = fst (List.split vdef.view_un_struc_formula) in *)
       let under_fail = match under_f with
@@ -2106,8 +2107,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             | Some f ->
                   if fail_res then
                     print_endline_quiet ("\nInv Check: Fail.("^msg^")")
-                  (* else *)
-                  (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
+                  else
+                    print_endline_quiet ("\nInv Check: Valid.("^msg^")")
             | None -> ()
         else ()
       in
@@ -2591,7 +2592,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                 ) vd.Cast.view_un_struc_formula in
                 {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_num0 in
-            let _ = Expure.fix_ef view_list_baga cviews0 in
+            let _ = Wrapper.wrap_infer_inv Expure.fix_ef view_list_baga cviews0 in
             let view_list_num_with_inv = Fixcalc.compute_inv_mutrec (List.map (fun vd -> vd.Cast.view_name) view_list_num) view_list_num in
             let _ = Debug.tinfo_hprint (add_str "fixcalc (view with inv)" (pr_list (fun vd -> pr_option Cprinter.string_of_mix_formula vd.Cast.view_fixcalc))) view_list_num_with_inv no_pos in
             let fixcalc_invs_inv = List.map (fun vd -> match vd.Cast.view_fixcalc with Some f -> f | None -> MCP.mkMTrue no_pos) view_list_num_with_inv in
@@ -2707,7 +2708,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               let _ = unfold_cnt # inc in
               (* let _ = Debug.binfo_hprint (add_str "old_invs" (pr_list Excore.EPureI.string_of_disj)) old_invs no_pos in *)
               let new_invs = List.map (fun vd ->
-                  let new_inv = Cvutil.xpure_symbolic_baga3 cviews0 (Cast.formula_of_unstruc_view_f vd) in
+                  let new_inv = Wrapper.wrap_infer_inv Cvutil.xpure_symbolic_baga3 cviews0 (Cast.formula_of_unstruc_view_f vd) in
                   let new_inv = List.map (fun (svl,pf) ->
                       let idx = CP.mk_typed_spec_var Int "idx" in
                       let new_pf_svl = CP.fv pf in
@@ -2834,10 +2835,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* else *)
       (*   cviews0 *)
       in
-      let _ = (* if !Globals.gen_baga_inv then *) (
-        Debug.binfo_pprint "end gen baga\n" no_pos;
-        Globals.dis_inv_baga ()
-      ) in
+      (* let _ = (\* if !Globals.gen_baga_inv then *\) ( *)
+      (*   Debug.binfo_pprint "end gen baga\n" no_pos; *)
+      (*   Globals.dis_inv_baga () *)
+      (* ) in *)
       cviews1
      else
       cviews0
