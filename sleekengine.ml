@@ -247,7 +247,7 @@ let clear_all () =
 (*   let pr2 = string_of_bool in *)
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name *)
 
-let silenced_print f s = if !Globals.silence_output then () else f s 
+let silenced_print f s = if !Gen.silence_output then () else f s 
 
 (*no longer used*)
 (* let process_pred_def pdef =  *)

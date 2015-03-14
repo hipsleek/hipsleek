@@ -2,6 +2,7 @@
 *)
 
 open Globals
+open VarGen
 open GlobProver
 open Cpure
 

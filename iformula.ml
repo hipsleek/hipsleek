@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open VarGen
 open Exc.GTable
 open Perm
 open Label_only

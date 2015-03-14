@@ -1,4 +1,5 @@
 open Globals
+open VarGen
 open GlobProver
 
 module CP = Cpure

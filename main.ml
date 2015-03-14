@@ -4,6 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
+open HipUtil
 (* module I = Iast *)
 
 module M = Lexer.Make(Token.Token)
@@ -36,7 +37,7 @@ let print_version () =
 
 
 let parse_file_full file_name (primitive: bool) =
-  Gen.proc_files # push file_name;
+  proc_files # push file_name;
   let org_in_chnl = open_in file_name in
   try
     Globals.input_file_name:= file_name;
@@ -216,7 +217,7 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 (* let rec replace_h_formula hformula fl cprog = (\* Long *\) *)
-(*   Solver.unfold_heap_x (cprog, None) hformula [] (Cpure.SpecVar (Globals.Named "node", "H", Globals.Unprimed)) fl 1 no_pos *)
+(*   Solver.unfold_heap_x (cprog, None) hformula [] (Cpure.SpecVar (Globals.Named "node", "H", Unprimed)) fl 1 no_pos *)
   (* match hformula with *)
     (* | Cformula.Star sh -> Cformula.Star { sh with *)
     (*       Cformula.h_formula_star_h1 = replace_h_formula sh.Cformula.h_formula_star_h1 iprog; *)
@@ -291,12 +292,12 @@ let print_spec cprog =
           | Some _ ->
                 let _ = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
                 (* let sf = p.Cast.proc_static_specs in *)
-                (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Globals.Unprimed)) p.Cast.proc_args in *)
+                (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
                 (* let new_sf = List.fold_left (fun sf fv ->  *)
                 (*     Solver.unfold_struc_nth 10 (cprog, None) sf fv false 0 no_pos *)
                 (*     ) sf fvs in *)
                 ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
-                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Globals.Unprimed)) *\) false 1 no_pos) *)
+                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
                 Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
         ) ^ (helper pl)
       | [] -> ""

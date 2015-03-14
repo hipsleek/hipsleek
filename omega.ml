@@ -5,6 +5,7 @@ open Globals
 open GlobProver
 open Gen.Basic
 open Cpure
+open VarGen
 
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
@@ -222,7 +223,7 @@ let omega_of_formula_old i f  =
 let is_local_solver = ref (false: bool)
 
 
-let omegacalc = if !Globals.compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
+let omegacalc = if !compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":string)
 else ref ("oc":string)
 
 let local_oc = "./oc"
@@ -255,7 +256,7 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag && (not !Globals.compete_mode) then
+	(if !log_all_flag && (not !compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
   done
@@ -265,14 +266,14 @@ let start() =
   try (
     if not !is_omega_running then begin
         (* if (not !Globals.web_compile_flag) then  *)
-          print_endline_if (not !Globals.compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
+          print_endline_if (not !compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
         last_test_number := !test_number;
         let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
         is_omega_running := true;
     end
   )
   with e -> (
-    if (!Globals.compete_mode) then (
+    if (!compete_mode) then (
       print_endline "Unable to run the prover Omega!";
       print_endline "Please make sure its executable file (oc) is installed";
     );

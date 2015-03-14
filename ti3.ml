@@ -3,6 +3,7 @@ module CF = Cformula
 module MCP = Mcpure
 
 open Globals
+open VarGen
 open Cast
 open Cprinter
 open Gen

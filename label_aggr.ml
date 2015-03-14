@@ -1,4 +1,5 @@
 open Globals
+open VarGen
 open Others
 open Gen.Basic
 open GlobProver

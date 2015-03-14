@@ -1,5 +1,7 @@
 open Gen
-let no_pos = Globals.no_pos
+open VarGen
+
+(* let no_pos = no_pos *)
 let report_error = Gen.report_error
 
 module Ts = Tree_shares.Ts
@@ -19,7 +21,7 @@ module CP = Cpure
     let string_of v1 = CP.string_of_spec_var v1
 	let rename s a =  match s with CP.SpecVar(t,_,p)-> CP.SpecVar(t,a,p)
     let get_name v = CP.string_of_spec_var v
-	let var_of v = CP.SpecVar(Globals.Tree_sh,v,Globals.Unprimed)
+	let var_of v = CP.SpecVar(Globals.Tree_sh,v,Unprimed)
     let fresh_var v = cnt:=!cnt+1; rename v ("__ts_fv_"^(string_of_int !cnt))
 end*)
 
@@ -44,7 +46,7 @@ module Ss_proc_Z3:Share_prover.SAT_SLV = functor (Sv:Share_prover.SV) ->
 	let string_of_eq (v1,v2,v3) = (Sv.string_of v1)^" * "^(Sv.string_of v2)^" = "^(match v3 with | PVar v3 ->  Sv.string_of v3 | _ -> " true")
 	let string_of_eq_l l = String.concat "\n" (List.map string_of_eq l)
 
-	let to_sv v = CP.SpecVar(Globals.Bool,Sv.string_of v,Globals.Unprimed)
+	let to_sv v = CP.SpecVar(Globals.Bool,Sv.string_of v,Unprimed)
 
 	let mkBfv v = CP.BForm ((CP.BVar (to_sv v,no_pos),None),None)
 

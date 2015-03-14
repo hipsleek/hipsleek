@@ -1526,7 +1526,7 @@ let norm_var_name (e: CP.formula) : CP.formula =
 
 (* Statistical function for formula size counting *)
 let disj_cnt a c s =
-  if (!Globals.enable_counters) then
+  if (!Gen.enable_counters) then
 	begin
 	  let rec p_f_size f = match f with
 		| CP.BForm _ -> 1

@@ -6,6 +6,7 @@
 
 open Globals
 open Gen.Basic
+open VarGen
 (* open Label_only *)
 open Label
 include Ipure_D

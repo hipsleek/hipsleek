@@ -3,6 +3,7 @@ this module contains funtions relating to output of cformula
 *)
 
 open Globals
+open VarGen
 open Gen
 open Exc.GTable
 open Perm

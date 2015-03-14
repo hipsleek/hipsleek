@@ -1,4 +1,5 @@
 open Globals 
+open VarGen
 open Others 
 open GlobProver
 open Stat_global

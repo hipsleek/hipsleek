@@ -1,6 +1,7 @@
 open Globals
 open GlobProver
 open Gen.Basic
+open VarGen
 module CP = Cpure
 
 module StringSet = Set.Make(String)

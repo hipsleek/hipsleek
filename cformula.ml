@@ -6,6 +6,7 @@
 
 module DD = Debug
 open Globals
+open VarGen
 open Gen
 open Exc.GTable
 open Perm

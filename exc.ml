@@ -1,5 +1,6 @@
 open Gen
 open Globals
+open VarGen
 
 (* type constant_flow = ident (\* identifier for flows *\) *)
 

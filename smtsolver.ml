@@ -1,6 +1,7 @@
 open Globals
 open GlobProver
 open Gen.Basic
+open VarGen
 module CP = Cpure
 
 module StringSet = Set.Make(String)
@@ -579,7 +580,7 @@ let prover_process = ref {
 }
 
 
-let smtsolver_path = if !Globals.compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
+let smtsolver_path = if !compete_mode then ref "./z3-4.3.2" else ref "z3-4.3.2" (* "z3" *)
 
 
 let local_oc = "./z3-4.3.2"
@@ -651,7 +652,7 @@ let rec prelude () = ()
 and start() =
   try (
     if not !is_z3_running then (
-      print_string_if (not !Globals.compete_mode (* && not !Globals.web_compile_flag *)) "Starting z3... \n"; flush stdout;
+      print_string_if (not !compete_mode (* && not !Globals.web_compile_flag *)) "Starting z3... \n"; flush stdout;
       last_test_number := !test_number;
       let _ = (
         if !smtsolver_name = "z3-2.19" then
@@ -667,7 +668,7 @@ and start() =
     )
   )
   with e -> (
-    if (!Globals.compete_mode) then (
+    if (!compete_mode) then (
       print_endline "Unable to run the prover Z3!";
       print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
     );

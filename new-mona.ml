@@ -99,7 +99,7 @@ and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) =
   | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
         let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
 	let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
+	let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Unprimed), l3), l3), l3), None), None) in
 	(CP.Var(new_evar, l3), additional_constr, [new_evar])
   | CP.Add (a1, a2, l1) -> 
     reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1

@@ -1,5 +1,6 @@
 open Globals
 open Gen.Basic
+open VarGen
 
 let wrap_exception dval f e =
   try 

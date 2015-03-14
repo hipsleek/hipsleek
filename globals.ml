@@ -1,3 +1,5 @@
+open VarGen
+
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
@@ -8,7 +10,6 @@ let total_entailments = ref 0
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
-let debug_precise_trace = ref false
 
 let change_flow = ref false
 
@@ -101,15 +102,16 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc =  {
-    start_pos : Lexing.position (* might be expanded to contain more information *);
-    mid_pos : Lexing.position;
-    end_pos : Lexing.position;
-  }
+(* and loc =  { *)
+(*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)
+(*     mid_pos : Lexing.position; *)
+(*     end_pos : Lexing.position; *)
+(*   } *)
 
-and primed =
-  | Primed
-  | Unprimed
+(* moved to Gen *)
+(* and primed = *)
+(*   | Primed *)
+(*   | Unprimed *)
 
 (* indicate whether lemma_split is applicable or not*)
 and split_ann =
@@ -338,14 +340,14 @@ type perm_type =
   
 let perm = ref NoPerm
 
-let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
-	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
-
-let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0)
+(* moved to Gen *)
+(* let no_pos =  *)
+(* 	let no_pos1 = { Lexing.pos_fname = ""; *)
+(* 				   Lexing.pos_lnum = 0; *)
+(* 				   Lexing.pos_bol = 0;  *)
+(* 				   Lexing.pos_cnum = 0 } in *)
+(* 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;} *)
+(* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
 
 let is_float_type (t:typ) = match t with
   | Float -> true
@@ -779,7 +781,6 @@ let lsmu_typ = BagT (Int)
 let thrd_name = "thrd"
 let thrd_typ = Named "thrd"
 
-let silence_output = ref false
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -1222,7 +1223,6 @@ let print_html = ref false
 
 let wrap_exists_implicit_explicit = ref false
 
-let profiling = ref false
 
 let enable_syn_base_case = ref false
 
@@ -1235,7 +1235,6 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
-let enable_counters = ref false
 
 let enable_time_stats = ref true
 
@@ -1284,8 +1283,6 @@ let exhaust_match = ref false
 
 let memo_verbosity = ref 2
 
-let profile_threshold = 0.5
-
 let no_cache_formula = ref false
 
 let simplify_imply = ref true
@@ -1316,7 +1313,6 @@ let cpfile = ref ""
   let do_sat_slice = ref false
 
 let smt_compete_mode = ref false
-let compete_mode = ref false
 let svcomp_compete_mode = ref false
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)

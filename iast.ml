@@ -5,7 +5,9 @@
 *)
 
 open Globals
+open VarGen
 open Gen.Basic
+open HipUtil
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
@@ -1220,7 +1222,7 @@ let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst po
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
-        F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
+        F.formula_inf_vars = [(hp_pre_decl.hp_name, Unprimed); (hp_post_decl.hp_name, Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
@@ -2908,7 +2910,7 @@ let add_bar_inits prog =
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
       { proc_name = "init_"^b.barrier_name;
-        proc_source = (Gen.proc_files # top)^"(barrier?)";
+        proc_source = (proc_files # top)^"(barrier?)";
         proc_flags = [];
         proc_mingled_name = "";
         proc_data_decl = None ;

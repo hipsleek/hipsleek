@@ -9,6 +9,7 @@ open Gen.Basic
 (* open Label *)
 
 open Cpure
+open VarGen
 (* open Cprinter *)
 
 

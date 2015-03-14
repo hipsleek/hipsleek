@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open VarGen
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable

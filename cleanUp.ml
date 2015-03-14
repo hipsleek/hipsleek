@@ -1,4 +1,5 @@
 open Globals
+open VarGen
 
 module CF=Cformula
 module CP=Cpure

@@ -13,6 +13,7 @@ open Mcpure
 open Label_only
 open Typeinfer
 open CvpermUtils
+open HipUtil
 
 module C = Cast
 module E = Env
@@ -5649,7 +5650,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_proc = {
                 I.proc_hp_decls = [];
                 I.proc_name = w_name;
-                I.proc_source = (Gen.proc_files # top) ^ "(while_loop)";
+                I.proc_source = (proc_files # top) ^ "(while_loop)";
                 I.proc_flags = [];
                 I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
                 I.proc_data_decl = proc.I.proc_data_decl;
@@ -7473,7 +7474,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             (*this lookup should be done when float_out_thread*)
             (*Here, try it the second chance*)
             (*look for an thread id*)
-            let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Globals.Unprimed) in
+            let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Unprimed) in
             (*find all spec_var which is equal to "thread"*)
             let vv = MCP.find_closure_mix_formula thread_var mix_dl in 
             let vv1 = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in

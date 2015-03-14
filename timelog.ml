@@ -1,5 +1,6 @@
 open Gen
 open Globals
+open VarGen
 
 let trace_timer = false
 

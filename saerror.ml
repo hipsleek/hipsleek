@@ -147,7 +147,7 @@ let subst_formula formula hprel_def =
         List.fold_left (fun all_formula (_, formula,_) ->
             match formula with
               | None -> all_formula
-              | Some f -> Cformula.mkOr all_formula f Globals.no_pos)
+              | Some f -> Cformula.mkOr all_formula f no_pos)
             first_formula (List.tl hprel_def.Cformula.hprel_def_body)
     )
     else formula
@@ -229,7 +229,7 @@ let get_case struc_formula prog args hprel_defs =
     ) case_list_list1
   in
   let case0 = helper struc_formula prog in
-  let case1 = Solver.normalize_to_CNF case0 Globals.no_pos in
+  let case1 = Solver.normalize_to_CNF case0 no_pos in
   (* let _ = List.map (fun arg -> print_endline (Cprinter.string_of_spec_var arg)) args in *)
   let case2 = Cpure.remove_dup_constraints case1 (* need more *) in
   match case2 with
@@ -278,10 +278,10 @@ let partition_paths hprel_defs prog =
 
 let rec group_cases pf_sf_l =
   let is_eq pf1 pf2 =
-    let not_pf1 = Cpure.mkNot pf1 None Globals.no_pos in
-    let not_pf2 = Cpure.mkNot pf2 None Globals.no_pos in
-    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None Globals.no_pos) (Cpure.mkOr not_pf2 pf1 None Globals.no_pos) Globals.no_pos in
-    not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None Globals.no_pos) "check eq" "")
+    let not_pf1 = Cpure.mkNot pf1 None no_pos in
+    let not_pf2 = Cpure.mkNot pf2 None no_pos in
+    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None no_pos) (Cpure.mkOr not_pf2 pf1 None Globals.no_pos) Globals.no_pos in
+    not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None no_pos) "check eq" "")
   in
   match pf_sf_l with
     | [] -> []
@@ -293,15 +293,15 @@ let rec group_cases pf_sf_l =
 let check_cases cases specs =
   let rec helper pure_formula =
     let list_conjs = Cpure.split_conjunctions pure_formula in
-    let filtered_list_conjs = List.filter (fun pf -> Tpdispatcher.is_sat 100 (Cpure.mkNot pf None Globals.no_pos) "check true conjs" "") list_conjs in
-    List.fold_left (fun pfs pf -> Cpure.mkAnd pfs pf Globals.no_pos) (List.hd filtered_list_conjs) (List.tl filtered_list_conjs)
+    let filtered_list_conjs = List.filter (fun pf -> Tpdispatcher.is_sat 100 (Cpure.mkNot pf None no_pos) "check true conjs" "") list_conjs in
+    List.fold_left (fun pfs pf -> Cpure.mkAnd pfs pf no_pos) (List.hd filtered_list_conjs) (List.tl filtered_list_conjs)
   in
-  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None Globals.no_pos) (List.hd cases) (List.tl cases) in
-  if not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None Globals.no_pos) "check universe" "")
+  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None no_pos) (List.hd cases) (List.tl cases) in
+  if not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None no_pos) "check universe" "")
   then (cases, specs)
   else (
-      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case Globals.no_pos)) None Globals.no_pos] in
-      let new_specs = specs@[Cformula.mkEFalse Cformula.mkFalseFlow Globals.no_pos] in
+      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case no_pos)) None Globals.no_pos] in
+      let new_specs = specs@[Cformula.mkEFalse Cformula.mkFalseFlow no_pos] in
       (new_cases, new_specs)
   )
 
@@ -372,7 +372,7 @@ let create_specs hprel_defs prog proc_name =
     (* if (check_cases cases specs) *)
     (* then Cformula.ECase { *)
     (*     Cformula.formula_case_branches = group_cases (List.combine cases specs); *)
-    (*     Cformula.formula_case_pos = Globals.no_pos *)
+    (*     Cformula.formula_case_pos = no_pos *)
     (* } *)
     (* else *)
     (* Cformula.mkEList_flatten specs *)
@@ -380,7 +380,7 @@ let create_specs hprel_defs prog proc_name =
     let (new_cases, new_specs) = (cases, specs) in
     let final_spec = Cformula.ECase {
         Cformula.formula_case_branches = group_cases (List.combine new_cases new_specs);
-        Cformula.formula_case_pos = Globals.no_pos
+        Cformula.formula_case_pos = no_pos
     }
     in
     let short_final_spec = 

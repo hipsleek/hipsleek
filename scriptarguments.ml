@@ -178,7 +178,7 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
-  ("--dd-trace", Arg.Set Globals.debug_precise_trace,
+  ("--dd-trace", Arg.Set Gen.debug_precise_trace,
    "Turn on more precise tracing");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
@@ -408,12 +408,12 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--en-pstat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Gen.profiling,
    "enable profiling statistics");
-  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-cstat", Arg.Set Gen.enable_counters, "enable counter statistics");
   ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
   ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
-  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-stat", (Arg.Tuple [Arg.Set Gen.profiling; Arg.Set Gen.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
@@ -790,7 +790,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -813,7 +813,7 @@ let common_arguments = [
      Arg.Unit
       (fun _ ->
           (* print_endline "inside svcomp-compete setting"; *)
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.svcomp_compete_mode:=true; (* main flag *)
           (* Globals.show_unexpected_ents := false; *)
           (* diable printing *)
@@ -821,7 +821,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           
@@ -853,13 +853,13 @@ let common_arguments = [
   ("--smt-compete",
      Arg.Unit
       (fun _ ->
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.smt_compete_mode:=true;
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -881,12 +881,12 @@ let common_arguments = [
       (fun _ ->
           (* Globals.show_unexpected_ents := true;  *)
           (*this flag is one that is  diff with compared to --smt-compete *)
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.smt_compete_mode :=true;
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -910,7 +910,7 @@ let common_arguments = [
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           (* Globals.lemma_gen_unsafe:=true; *)
@@ -1000,7 +1000,7 @@ let check_option_consistency () =
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
   (* if !Globals.allow_imm && Perm.allow_perm() then *)
   (* begin *)
-  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (*   Gen.Basic.report_error no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;

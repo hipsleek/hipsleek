@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open VarGen
 open Gen
 open GlobProver
 (* open Cpure *)
@@ -443,7 +444,7 @@ let rec preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) 
     | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
           let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Unprimed), l3), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Add (a1, a2, l1) -> 
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
@@ -1253,7 +1254,7 @@ let set_process (proc: prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string_if (not !Globals.compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    let _ = print_string_if (not !compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
@@ -1290,12 +1291,12 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline_if (not !Globals.compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = print_endline_if (not !compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
   (* Log.logtime_wrapper "restart mona" restart reason  *)
-  if (not !Globals.compete_mode) then
+  if (not !compete_mode) then
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
@@ -1351,7 +1352,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
-	    print_endline_if (not !Globals.compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
+	    print_endline_if (not !compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in

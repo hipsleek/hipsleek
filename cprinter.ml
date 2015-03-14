@@ -2,6 +2,7 @@
 
 open Format
 open Globals 
+open VarGen
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Lexing 

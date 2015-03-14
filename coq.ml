@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open VarGen
 open GlobProver
 module CP = Cpure
 module Err = Error

@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open VarGen
 
 type error = {
   error_loc : loc;

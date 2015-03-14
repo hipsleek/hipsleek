@@ -1,5 +1,6 @@
 open Globals
 open Gen.Basic
+open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
@@ -39,7 +40,7 @@ let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
   (* let _ = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
   (* WN : should we use && or || *)
-  if !Globals.compete_mode then ()
+  if !compete_mode then ()
   else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
     let s = (pr m) in
     let msg = match d with 
@@ -219,20 +220,20 @@ let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
 let info_pprint (msg:string) (pos:loc) : unit =
-  let flag = not(!Globals.compete_mode) in
+  let flag = not(!compete_mode) in
   ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-  let flag = not(!Globals.compete_mode) in
+  let flag = not(!compete_mode) in
   ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-  let flag = not(!Globals.compete_mode) in
+  let flag = not(!compete_mode) in
   if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
   else ()
 
 let info_zprint m (pos:loc) = 
-  let flag = not(!Globals.compete_mode) in
+  let flag = not(!compete_mode) in
   ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
