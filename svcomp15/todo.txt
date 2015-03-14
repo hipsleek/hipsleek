@@ -32,7 +32,7 @@ Exception Invalid_argument("List.combine") Occurred!
 @ex1-d.c: FIXED
 
 ------------------------------------
-@ex1-e.c:
+@ex1-e.c: FIXED
 
 ERROR: at ex1-e.c_74:6_74:18
 Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__int__$int~int has invalid argument types
@@ -44,8 +44,33 @@ Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__
 !!!>>>>>> mismatch ptr value_32_1898::DUPFFstruct<maxdeg_32_1899,deg_32_1900,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
 
 ------------------------------------
-ERROR: at ex1-200204.c_40:19_-1:-1
+ERROR: at ex1-200204.c_40:19_-1:-1: FIXED
 Message: lhs and rhs do not match 1
+
+------------------------------------
+#ex1-h1:
+
+Checking procedure main$... Proving binding in method main$ for spec  EAssume
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( []) bind: node  f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L cannot be derived from context
+ex1-h1.c_54:19_-1:-1
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message:
+                   do_unmatched_rhs : f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L
+                  fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]ex1-h1.c_54:19_-1:-1
+
 
 
 ==============================================================

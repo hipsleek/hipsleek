@@ -4085,12 +4085,7 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
     let scc, ini_hpdefs =
-      (*
-        temporally ignore this one since pure + term have not manage this information properly.
-        should implement it for incr spec inference
-      *)
-      scc,[]
-      (* Da.find_rel_args_groups_scc prog scc *)
+      Da.find_rel_args_groups_scc prog scc
     in
 
     let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
