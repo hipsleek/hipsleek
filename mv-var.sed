@@ -24,6 +24,6 @@ s/Globals.verbose_num/VarGen.verbose_num/
 s/Globals.sap/VarGen.sap/
 s/Globals.suppress_warning_msg/VarGen.suppress_warning_msg/
 s/Globals.en_warning_msg/VarGen.en_warning_msg/
-
+s/let _ = /let () = /
 
 

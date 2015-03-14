@@ -2039,3 +2039,4 @@ let string_of_lemma_kind (l: lemma_kind) =
       | LEM_SAFE      -> "LEM_SAFE"
       | LEM_INFER     -> "LEM_INFER"
       | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+
