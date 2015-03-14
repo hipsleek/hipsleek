@@ -3447,7 +3447,7 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
               (match a with
                 | Some (flag,e) -> 
                       (* flag indicates we are inside a structured EAssume *)
-                      if flag then failwith "inside EAssume - must add permission here"
+                      if flag then failwith "inside EAssume - TODO must add permission here"
                       else None
                 | None ->
                       begin
@@ -3466,11 +3466,14 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
               match a with 
                   None -> Some (e,None)
                 | Some (_,post_perm) -> 
-                      let assume_simpl = f.CF.formula_assume_simpl in (* must add vperm here *)
-                      let assume_struc = f.CF.formula_assume_struc in (* to add vperm if we have classic/exact post *)
+                      let assume_simpl = f.CF.formula_assume_simpl in (* TODO : must add vperm here *)
+                      let assume_struc = helper (Some(true,post_perm)) f.CF.formula_assume_struc in (* need to add vperm if we have classic/exact post *)
 	              let () = Debug.ninfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
 	              let () = Debug.ninfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in
-                      Some (e,None) (* TODO:ZH : add post-perm to f *)
+                      Some (CF.EAssume 
+                          {f with CF.formula_assume_struc=assume_struc;
+                              CF.formula_assume_simpl=assume_simpl},None) 
+
             end
       | _ -> None in
   (* let f2 a e = None in *)
