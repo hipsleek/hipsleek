@@ -31,7 +31,7 @@ let collect_ho_ass iprog cprog is_pre def_hps unk_hps (acc_constrs, post_no_def)
   (* if infer_hps = [] then (acc_constrs, post_no_def) else *)
     let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
     let  _ =
-      if !Globals.sap then
+      if !VarGen.sap then
         DD.info_zprint (lazy (((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)))) no_pos
       else ()
     in
@@ -342,7 +342,7 @@ let subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs
 
 let subst_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let (is_changed, new_cs1, unfrozen_hps) as res = subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs in
-   if !Globals.sap then
+   if !VarGen.sap then
      if not is_changed then DD.binfo_pprint "*** NO NORM-CONSEQ DONE ***" no_pos
       else
         begin
@@ -363,7 +363,7 @@ let subst_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs c
       constrs  frozen_hps frozen_constrs complex_hps
 
 let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
-  let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Ante (UNFOLD IN LHS)<<<<<<" pr_id) "" no_pos else () in
+  let _ = if !VarGen.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Ante (UNFOLD IN LHS)<<<<<<" pr_id) "" no_pos else () in
   (* let pr_hp_defs = List.fold_left (fun r def -> match def.CF.def_cat with *)
   (*   | CP.HPRelDefn (hp, root, args) -> r@[(hp, def, root::args, Sautil.is_top_guard_hp_def link_hps def)] *)
   (*   | _ -> r *)
@@ -392,7 +392,7 @@ let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
 
 let unfold_def_LHS prog link_hps constrs to_unfold_hps hp_defs=
   let (is_changed, new_cs1) as res = unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs in
-  if !Globals.sap then
+  if !VarGen.sap then
      if not is_changed then DD.binfo_pprint "*** NO NORM-ANTE DONE ***" no_pos
       else
         begin
@@ -593,7 +593,7 @@ let split_base_constr_a prog cond_path constrs post_hps sel_hps prog_vars unk_ma
   let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
   let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
   let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
-  if !Globals.sap then
+  if !VarGen.sap then
     if step_change # no_change then 
       DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
     else 
@@ -941,7 +941,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
 
 let combine_pdefs_pre prog unk_hps link_hps pr_pdefs=
   let (pdefs2,rem_constr,equivs) as res = combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs in
-  if !Globals.sap then
+  if !VarGen.sap then
      begin
        let pr1 = pr_list_num (fun (pdef, _) -> Sautil.string_of_par_def_w_name pdef) in
        let s1 = pr1 pr_pdefs in
@@ -1017,7 +1017,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _, f0,_ = (List.hd par_defs) in
-        let _ = if !Globals.sap then Debug.info_zprint (lazy (("    synthesize: " ^ (!CP.print_sv hp) ))) no_pos
+        let _ = if !VarGen.sap then Debug.info_zprint (lazy (("    synthesize: " ^ (!CP.print_sv hp) ))) no_pos
         else ()
         in
         let guarded_top_par_defs, par_defs = List.partition (fun (a1,args,og,f,unk_args) ->
@@ -1128,7 +1128,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
             (hp, {def with Cformula.def_rhs = def.Cformula.def_rhs@f_pdefs})
         ) hpdefs in
         (********PRINTING***********)
-        let _ = if !Globals.sap then
+        let _ = if !VarGen.sap then
           List.iter (fun (_, def) ->
             Debug.info_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos)
           hpdefs
@@ -1967,7 +1967,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
 
 let partition_constrs constrs post_hps dang_hps=
   let (pre_constrs,post_constrs, pre_fix_constrs, pre_oblg, post_oblg_constrs, pre_fix_hps) as res = partition_constrs_x constrs post_hps dang_hps in
-   if !Globals.sap then
+   if !VarGen.sap then
      begin
        let pr1 = pr_list_num Cprinter.string_of_hprel_short in
        let _ = DD.binfo_pprint "=============>>>>" no_pos in
@@ -2321,7 +2321,7 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog iflow proc_name callee_
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else
     (***************  PRINTING*********************)
-    let _ =  if !Globals.sap then
+    let _ =  if !VarGen.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline "";
@@ -2332,7 +2332,7 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog iflow proc_name callee_
       print_endline "*************************************"
     end;
     in
-    let _ = if !Globals.sap then
+    let _ = if !VarGen.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline "";
@@ -2560,7 +2560,7 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
         (* (constrs,[]) *)
         (n_is2,[],pre_oblg_constrs2)
       else
-        let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Conseq (UNFOLD IN RHS- FROZEND) <<<<<<" pr_id) "" no_pos else () in
+        let _ = if !VarGen.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Conseq (UNFOLD IN RHS- FROZEND) <<<<<<" pr_id) "" no_pos else () in
         (*pred-constrs*)
         let is_changed, constrs2,unfrozen_hps  = subst_cs prog sel_hps post_hps dang_hps link_hps (frozen_hps@equal_hps)
           (frozen_constrs1)
@@ -3128,7 +3128,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     (*turn off lemma printing during normalization*)
     let _ = Globals.lemma_ep := false in
     let callee_hps = [] in
-    let _ = if !Globals.sap then
+    let _ = if !VarGen.sap then
       DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
     else ()
     in
@@ -3186,7 +3186,7 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr5a = pr_list (pr_pair Cformula.string_of_cond_path (pr_pair !CP.print_sv !CP.print_svl)) in
-  let _ = if !Globals.print_heap_pred_decl && !Globals.sap then
+  let _ = if !Globals.print_heap_pred_decl && !VarGen.sap then
     let all_hps = Cformula.get_hp_rel_name_assumption_set hp_constrs in
     let all_hp_decls = List.fold_left (fun ls hp ->
         try
@@ -3195,7 +3195,7 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
         with _ -> ls
     ) [] all_hps
     in
-    if !Globals.sleek_flag || not (!Globals.sap) then () 
+    if !Globals.sleek_flag || not (!VarGen.sap) then () 
     else
       let _ = print_endline "\nHeap Predicate Declarations" in
       let _ = print_endline "===========================" in

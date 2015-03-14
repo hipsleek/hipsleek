@@ -2147,7 +2147,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
-		let _ = if !Globals.trace_failure then
+		let _ = if !VarGen.trace_failure then
 		  (print_string "caught\n"; print_backtrace_quiet ()) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
@@ -2278,7 +2278,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       res
     with ex -> 
         (* print_exc num_id *)
-        (if !Globals.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
+        (if !VarGen.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
         let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
         let _ = if is_tnt_flag then should_infer_tnt := false in
         (*   let _ = match itype with *)

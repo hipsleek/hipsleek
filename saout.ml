@@ -170,7 +170,7 @@ let hn_trans cprog vnames hn = match hn with
 
 let plugin_inferred_iviews views iprog cprog =
   let vnames = List.map (fun ((n,_),_)-> n) views in
-  let _ =  if !Globals.sap then
+  let _ =  if !VarGen.sap then
     Debug.info_pprint (" views: " ^ ((pr_list pr_id) vnames)) no_pos
   else ()
   in
@@ -239,7 +239,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
   (* let _ = cprog.C.prog_hp_decls <- cprog.C.prog_hp_decls@cdef_hprels in *)
   let _ = if def_hps = [] then () else
-     if !Globals.sap then
+     if !VarGen.sap then
        Debug.info_pprint (" transform: " ^ (!CP.print_svl def_hps) ^ "\n" )no_pos
      else ()
   in

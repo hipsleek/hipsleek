@@ -12,7 +12,18 @@ s/Globals.loc /VarGen.loc /
 s/Globals.start_pos/VarGen.start_pos/
 s/Globals.mid_pos/VarGen.mid_pos/
 s/Globals.end_pos/VarGen.end_pos/
+s/Globals.trace_failure/VarGen.trace_failure/
 s/VarGen.lock_typ/Globals.lock_typ/
+s/Globals.entail_pos/VarGen.entail_pos/
+s/Globals.post_pos/VarGen.post_pos/
+s/Globals.proving_loc/VarGen.proving_loc/
+s/Globals.store/VarGen.store/
+s/Globals.prog_loc/VarGen.prog_loc/
+s/Globals.failure_mode/VarGen.failure_mode/
+s/Globals.verbose_num/VarGen.verbose_num/
+s/Globals.sap/VarGen.sap/
+s/Globals.suppress_warning_msg/VarGen.suppress_warning_msg/
+s/Globals.en_warning_msg/VarGen.en_warning_msg/
 
 
 

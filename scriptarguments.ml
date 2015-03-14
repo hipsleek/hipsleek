@@ -209,7 +209,7 @@ let common_arguments = [
    "Disable timeout on provers");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
-  ("--trace-failure", Arg.Set Globals.trace_failure,
+  ("--trace-failure", Arg.Set VarGen.trace_failure,
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
@@ -320,7 +320,7 @@ let common_arguments = [
    "Number of unfolding using XPure");
   ("-mona-cycle", Arg.Set_int Mona.mona_cycle,
    "Number of times mona can be called before it restarts (default 90)");
-  ("-v:", Arg.Set_int Globals.verbose_num,
+  ("-v:", Arg.Set_int VarGen.verbose_num,
    "Verbosity level for Debugging");
   ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
@@ -673,13 +673,13 @@ let common_arguments = [
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
-  ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
   ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-  ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
@@ -782,8 +782,8 @@ let common_arguments = [
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
-  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
   ("--print-min",
      Arg.Unit
       (fun _ ->
@@ -818,7 +818,7 @@ let common_arguments = [
           Globals.svcomp_compete_mode:=true; (* main flag *)
           (* Globals.show_unexpected_ents := false; *)
           (* diable printing *)
-          Globals.trace_failure := false;
+          VarGen.trace_failure := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;

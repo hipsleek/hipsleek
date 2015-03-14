@@ -929,7 +929,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
    (*printing such that it is easy to construct a sleek test cases*)
-   let _ = if !Globals.print_heap_pred_decl && !Globals.sap then
+   let _ = if !Globals.print_heap_pred_decl && !VarGen.sap then
      let unk_hps = List.map fst tot_unk_hpargs in
      let _ = if unk_hps <> [] then
        let hp_names = List.map (CP.name_of_spec_var) unk_hps in

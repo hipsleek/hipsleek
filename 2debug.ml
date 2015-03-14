@@ -131,7 +131,7 @@ let ninfo_pprint m p = ()
 let add_str s f xs = s^":"^(f xs)
 
 let gen_vv_flags d =
-  let m = !Globals.verbose_num in
+  let m = !VarGen.verbose_num in
   let (flag,str) =
     if d<0 then (m==d,"EXACT:")
     else if m>50 then (d>=m,"DEBUG:")

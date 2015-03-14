@@ -3716,7 +3716,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   let callee_hps = List.map (fun d-> CF.get_hpdef_name d.CF.def_cat) callee_hpdefs in
   (* let _ = DD.info_zprint (lazy ((" callee_hps: " ^ (!CP.print_svl callee_hps)))) no_pos in *)
   let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ =  print_endline "" in
       let _ = print_endline "*********************************************************************" in
       let _ = print_endline "*******pre-process (split/unknown analyze) hprel assumptions ********" in
@@ -3741,7 +3741,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   let constrs1d = List.concat (List.map (Sautil.split_rhs prog) constrs1c)  in
   let constrs2 = constrs1d in
   let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ = print_string "\n\n*******relational assumptions (2) ********" in
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel in pr constrs2) ) no_pos in
@@ -3751,7 +3751,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (* let split_tb_hp_defs_split = [] in *)
   (*END for temporal*)
    let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ =  print_endline "" in
       let _ = print_endline "**************************************************************************" in
       let _ = print_endline "*******loop: collect partial defs, substition, simplification ********" in
@@ -3763,7 +3763,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
     callee_hps hp_rel_unkmap (List.map fst unk_hps) constrs2 in
   let unk_hpargs0 = List.filter (fun (hp,_) -> not (CP.mem_svl hp non_unk_hps)) unk_hps in
   let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ = print_string "\n\n*******relational assumptions (3) ********\n" in
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
@@ -3781,7 +3781,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   in
   (*step 6: over-approximate to generate hp def*)
   let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ =  print_endline "" in
       let _ = print_endline "*********************************************************************" in
       let _ = print_endline "*******subst, join, combine split, transfrom unknown ********" in
@@ -3852,7 +3852,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   in
   (****************************************************)
    let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ = print_endline "\n*******relational definitions ********" in
       let _ = print_endline
         ((let pr = pr_list_ln Cprinter.string_of_hp_rel_def_short in pr hp_defs5) )  in
@@ -3861,7 +3861,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   in
   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let _ =
-    if !Globals.sap then
+    if !VarGen.sap then
       let _ =  print_endline "" in
       let _ = print_endline "*********************************************************************" in
       let _ = print_endline "*******post-process: predefined predicates matching  ********" in

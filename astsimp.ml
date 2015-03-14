@@ -3413,10 +3413,10 @@ and comp_vp_add_pre_post f p_ref p_val =
     let res_ref =  Cpure.diff_svl p_ref vp_ref in
     let res_val =  Cpure.diff_svl p_val vp_val in
     let pr_svl = Cprinter.string_of_spec_var_list in
-    let () = Debug.binfo_hprint (add_str "orig_full" pr_svl) orig_full no_pos in
-    let () = Debug.binfo_hprint (add_str "orig_val" pr_svl) orig_val no_pos in
-    let () = Debug.binfo_hprint (add_str "add_full" pr_svl) res_ref no_pos in
-    let () = Debug.binfo_hprint (add_str "add_val" pr_svl) res_val no_pos in
+    let () = Debug.ninfo_hprint (add_str "orig_full" pr_svl) orig_full no_pos in
+    let () = Debug.ninfo_hprint (add_str "orig_val" pr_svl) orig_val no_pos in
+    let () = Debug.ninfo_hprint (add_str "add_full" pr_svl) res_ref no_pos in
+    let () = Debug.ninfo_hprint (add_str "add_val" pr_svl) res_val no_pos in
     let new_vp = { vp with vperm_full_vars = orig_full @ res_ref; vperm_value_vars = orig_val@res_val; } in
     new_vp,res_ref
   in
@@ -3496,9 +3496,9 @@ and add_perm_proc  p =
     let p_ref = p.C.proc_by_name_params in
     let p_val = p.C.proc_by_value_params @ p.C.proc_by_copy_params in
     let ss = p.C.proc_static_specs in
-    let () = Debug.binfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
-    let () = Debug.binfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
-    let () = Debug.binfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
+    let () = Debug.ninfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
+    let () = Debug.ninfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
+    let () = Debug.ninfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
     let ns = add_perm_to_spec p_ref p_val ss in
     { p with C.proc_static_specs = ns}
 
@@ -3635,8 +3635,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (*   | IF.EBase b -> b.IF.formula_struc_implicit_inst                                                                     *)
       (*   | _ -> [] in                                                                                                         *)
       (* let params2 = List.map (fun (v,p) -> CP.SpecVar (Int, v, p)) (find_vars proc.I.proc_static_specs) in                   *)
-      (* (* let _ = Debug.binfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)                  *)
-      (* (* let _ = Debug.binfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *) *)
+      (* (* let _ = Debug.ninfo_hprint (add_str "params" Cprinter.string_of_spec_var_list) params no_pos in *)                  *)
+      (* (* let _ = Debug.ninfo_hprint (add_str "specs" Iprinter.string_of_struc_formula) proc.I.proc_static_specs no_pos in *) *)
       (* let imp_spec_vars = CF.collect_important_vars_in_spec true static_specs_list in                                        *)
       (* let _ = Debug.tinfo_hprint (add_str "params2" Cprinter.string_of_spec_var_list) params2 no_pos in                      *)
       (* let _ = Debug.tinfo_hprint (add_str "imp_spec_vars" Cprinter.string_of_spec_var_list) imp_spec_vars no_pos in          *)
@@ -8388,9 +8388,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 let non_ex_vars = hv@p_vars@strad_vs@vars in
                 (* no automatic wrapping of exists for post-condition *)
                 let nb_struc = IF.wrap_post_struc_ex (non_ex_vars) nb_struc in
-                (* Debug.binfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos; *)
-                (* Debug.binfo_hprint (add_str "simp_form" Iprinter.string_of_formula) nb no_pos; *)
-                (* Debug.binfo_hprint (add_str "after wrap_post" Iprinter.string_of_struc_formula) nb_struc no_pos; *)
+                (* Debug.ninfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos; *)
+                (* Debug.ninfo_hprint (add_str "simp_form" Iprinter.string_of_formula) nb no_pos; *)
+                (* Debug.ninfo_hprint (add_str "after wrap_post" Iprinter.string_of_struc_formula) nb_struc no_pos; *)
                     (* and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)
                         (p_vars:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars (lax_implicit:bool)
                          strad_vs :IF.struc_formula* ((ident*primed)list) *)
@@ -8442,7 +8442,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     | Some l-> 
                         let r1,r2 = helper h1prm new_strad_vs vars l in 
                         (Some r1,r2) in
-                (* Debug.binfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
+                (* Debug.ninfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
                 let implvar = diff (IF.unbound_heap_fv onb) all_vars in
                 let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
                   Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in

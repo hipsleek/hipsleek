@@ -469,47 +469,10 @@ let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
 
-(*Proof logging facilities*)
-class ['a] store (x_init:'a) (epr:'a->string) =
-   object (self)
-     val emp_val = x_init
-     val mutable lc = None
-     method is_avail : bool = match lc with
-       | None -> false
-       | Some _ -> true
-     method set (nl:'a) = lc <- Some nl
-     method get :'a = match lc with
-       | None -> emp_val
-       | Some p -> p
-     method reset = lc <- None
-     method get_rm :'a = match lc with
-       | None -> emp_val
-       | Some p -> (self#reset; p)
-     method string_of : string = match lc with
-       | None -> "Why None?"
-       | Some l -> (epr l)
-     method dump = print_endline ("\n store dump :"^(self#string_of))
-   end;;
 
-(* this will be set to true when we are in error explanation module *)
-class failure_mode =
-object
-  inherit [bool] store false string_of_bool
-end;;
-
-
-class prog_loc =
-object
-  inherit [loc] store no_pos string_of_loc
-     method string_of_pos : string = match lc with
-       | None -> "None"
-       | Some l -> (string_of_pos l.start_pos)
-end;;
 
 
 (*Some global vars for logging*)
-let proving_loc  = new prog_loc
-let post_pos = new prog_loc
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -519,8 +482,6 @@ let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
 
 
-let entail_pos = ref no_pos
-let set_entail_pos p = entail_pos := p
 
 (* let set_proving_loc p = proving_loc#set p *)
 (*   (\* proving_loc := Some p *\) *)
@@ -851,7 +812,7 @@ let allow_exhaustive_norm = ref true
 
 let dis_show_diff = ref false
 
-let sap = ref false
+(* sap has moved to VarGen; needed by debug.ml *)
 let sae = ref false
 let sac = ref false
 
@@ -1181,7 +1142,6 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
-let verbose_num = ref 0
 
 let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
@@ -1203,8 +1163,6 @@ let self_fold_search_flag = ref false
 let show_gist = ref false
 let imply_top_flag = ref false
 let early_contra_flag = ref true
-
-let trace_failure = ref false
 
 let trace_all = ref false
 
@@ -1262,8 +1220,6 @@ let simplify_error = ref false
 
 let prune_cnt_limit = ref 2
 
-let suppress_warning_msg = ref false
-let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1318,24 +1274,6 @@ let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
-let print_endline_q s =
-  if !compete_mode then ()
-  else print_endline s
-
-let print_backtrace_quiet () =
-  if !compete_mode then ()
-  else
-    Printexc.print_backtrace stdout
-
-let get_backtrace_quiet () =
-  if !compete_mode then ""
-  else
-    Printexc.get_backtrace ()
-
-let record_backtrace_quite () =
-  if !compete_mode then ()
-  else
-    Printexc.record_backtrace !trace_failure
 
 (* for Termination *)
 let dis_term_chk = ref false
@@ -1833,22 +1771,6 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = 
-  p.start_pos.Lexing.pos_fname ^ "_" ^ 
-  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
-  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
-  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
-  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
-
-let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
-;;
-
-let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
-
-let string_of_loc_by_char_num (l : loc) = 
-  Printf.sprintf "(%d-%d)"
-    l.start_pos.Lexing.pos_cnum
-    l.end_pos.Lexing.pos_cnum
 
 let string_of_formula_label ((i,s):formula_label) =
       "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"

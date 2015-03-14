@@ -2443,7 +2443,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let hprel_assumptions = Infer.collect_hp_rel_list_failesc_context res in *)
                           if not(Infer.rel_ass_stk# is_empty) then
                         begin
-                          if (* !Globals.sap *) true then begin
+                          if (* !VarGen.sap *) true then begin
                             print_endline "";
                             print_endline "*************************************";
                             print_endline "*******relational assumptions 2 ********";
@@ -2453,7 +2453,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
                           let _ = Infer.rel_ass_stk # reset in
                           let _ = Infer.scc_rel_ass_stk # reset in
-                          if (* !Globals.sap *) true then begin
+                          if (* !VarGen.sap *) true then begin
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
@@ -3195,7 +3195,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     else CF.rel_def_stk
     in
     let inferred_hpdefs = (rel_defs# get_stk) in
-    if (* !Globals.sae *) false && not(rel_defs# is_empty) (* && !Globals.sap *) then
+    if (* !Globals.sae *) false && not(rel_defs# is_empty) (* && !VarGen.sap *) then
       begin
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
         (* combine predicate based on flows *)
@@ -3448,7 +3448,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       let _ = scc_proc_sel_post_hps := !scc_proc_sel_post_hps@sel_post_hp_rels in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
-                          if (* !Globals.sap *) true then begin
+                          if (* !VarGen.sap *) true then begin
                             print_endline_quiet "";
                             print_endline_quiet "*************************************";
                             print_endline_quiet "*******shape relational assumptions ********";
@@ -3457,7 +3457,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
                           let _ = Infer.rel_ass_stk # reset in
-                          if (* !Globals.sap *) true then begin
+                          if (* !VarGen.sap *) true then begin
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));

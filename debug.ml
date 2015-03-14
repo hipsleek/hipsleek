@@ -1,4 +1,4 @@
-open Globals
+(* open Globals *)
 open Gen.Basic
 open VarGen
 
@@ -70,8 +70,8 @@ let devel_print s =
 
 let prior_msg pos =
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
-  let tmp = if is_no_pos !entail_pos then tmp 
-  else (tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]") 
+  let tmp = if is_no_pos !VarGen.entail_pos then tmp 
+  else (tmp^"[entail:"^(string_of_int !VarGen.entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (VarGen.post_pos#get).start_pos.Lexing.pos_lnum)^"]") 
   in tmp
 
 let devel_pprint (msg:string) (pos:loc) =
@@ -151,7 +151,7 @@ let ninfo_pprint m p = ()
 let add_str s f xs = s^":"^(f xs)
 
 let gen_vv_flags d =
-  let m = !Globals.verbose_num in
+  let m = !VarGen.verbose_num in
   let (flag,str) =
     if d<0 then (m==d,"EXACT:")
     else if m>50 then (d>=m,"DEBUG:")
@@ -229,7 +229,7 @@ let info_hprint (pr:'a->string) (m:'a) (pos:loc) =
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
   let flag = not(!compete_mode) in
-  if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
+  if !VarGen.sap then ho_print flag (fun x -> " "^(pr x)) m
   else ()
 
 let info_zprint m (pos:loc) = 
