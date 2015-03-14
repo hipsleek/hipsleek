@@ -6,33 +6,23 @@ Parsing file "hip/ex2z-latch-simple.ss" by default parser...
 Starting Omega.../usr/local/bin/oc
 
 Checking procedure main$... 
-dprint: hip/ex2z-latch-simple.ss:51: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+dprint: hip/ex2z-latch-simple.ss:52: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
 
 Successful States:
 [
  Label: []
- State:(exists x_1580,v_int_50_1414': x_38'::cell<v_int_48_1578> * c_39'::LatchIn{ - (exists flted_26_64: x_67::cell<flted_26_64>&flted_26_64=10&
-{FLOW,(4,5)=__norm#E}[]}<x_1580> * c_39'::LatchOut{ + (exists flted_26_65: x_67::cell<flted_26_65>&flted_26_65=10&
-{FLOW,(4,5)=__norm#E}[]}<x_1580> * c_39'::CNT{}<v_int_50_1414'>*N@full[c_39,x_38]&v_int_48_1578=10 & v_int_50_1414'=1 & 0<v_int_50_1414'&{FLOW,(4,5)=__norm#E}[]
+ State:(exists v_int_51_1414': x_39'::cell<v_int_50_1577> * c_40'::LatchIn{ - x_39'::cell<Anon_12>&{FLOW,(4,5)=__norm#E}[]}<> * c_40'::LatchOut{ + x_39'::cell<Anon_12>&{FLOW,(4,5)=__norm#E}[]}<> * c_40'::CNT{}<v_int_51_1414'>*N@full[c_40,x_39]&v_int_50_1577=10 & v_int_51_1414'=1 & 0<v_int_51_1414'&{FLOW,(4,5)=__norm#E}[]
 
  ]
 
-Proving precondition in method countDown$CDL~cell Failed.
-Empty list_failesc_context
+assert:hip/ex2z-latch-simple.ss:58: 2:  : ok
 
-Context of Verification Failure: 1 File "",Line:0,Col:0
 
-Last Proving Location: 1 File "hip/ex2z-latch-simple.ss",Line:52,Col:2
-
-Procedure main$ FAIL.(2)
-
-Exception Failure("Proving precond failed") Occurred!
-
-Error(s) detected when checking procedure main$
+Procedure main$ SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.370626 second(s)
-	Time spent in main process: 0.35178 second(s)
-	Time spent in child processes: 0.018846 second(s)
+Total verification time: 0.528033 second(s)
+	Time spent in main process: 0.496031 second(s)
+	Time spent in child processes: 0.032002 second(s)
 

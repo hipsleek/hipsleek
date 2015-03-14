@@ -6,6 +6,7 @@
 *)
 
 open Globals
+open VarGen
 open GlobProver
 open Gen.Basic
 module CP = Cpure
@@ -297,34 +298,34 @@ let rec read_until substr chn : string =
 
 let read_prompt () = 
   let chn = !process.inchannel in 
-  let _ = input_char chn in (*reads '>'*)
-  let _ = input_char chn in (*reades space*)
+  let (todo_unk:char) = input_char chn in (*reads '>'*)
+  let (todo_unk:char) = input_char chn in (*reades space*)
   ()
 
 let prelude ()  =
   let ichn = !process.inchannel in 
   let ochn = !process.outchannel in 
-  let _ = read_until "Welcome to Isabelle" ichn in (*welcome text*)
-  let _ = read_prompt () in
+  let (todo_unk:string) = read_until "Welcome to Isabelle" ichn in (*welcome text*)
+  let () = read_prompt () in
   if !bag_flag then
     ( output_string ochn "theory isabelle_proofs imports Multiset Main\n"; flush ochn;
-      let _ = get_answer ichn in (*reads "theory#"*)
-      let _ = input_char ichn in (*reads space*)
+      let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
+      let (todo_unk:char) = input_char ichn in (*reads space*)
       output_string ochn "begin\n"; flush ochn;
-      let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
-      let _ = read_prompt() in 
+      let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+      let () = read_prompt() in 
       output_string ochn ("declare union_ac [simp]\n");
-      let _ = read_until "declare#" ichn in (*declare#*)
+      let (todo_unk:string) = read_until "declare#" ichn in (*declare#*)
       if!log_all_flag==true then
         output_string log_all ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
     )
   else
     (output_string ochn "theory isabelle_proofs imports Main\n"; flush ochn;
-     let _ = get_answer ichn in (*reads "theory#"*)
-     let _ = input_char ichn in (*reads space*)
+     let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
+     let (todo_unk:char) = input_char ichn in (*reads space*)
      output_string ochn "begin\n"; flush ochn;
-     let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
-     let _ = read_prompt() in 
+     let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+     let () = read_prompt() in 
      if!log_all_flag==true then
        output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
     )
@@ -334,20 +335,20 @@ let set_process proc =
 
 let rec check_image_existence image_lst =
   match image_lst with
-    | [] -> let _ = print_string ("\n WARNING: Isabelle's Image was not found. Aborting execution ...\n") in 
+    | [] -> let () = print_string ("\n WARNING: Isabelle's Image was not found. Aborting execution ...\n") in 
             exit(0)
     | img::imgs ->   
         if Sys.file_exists img then 
           isabelle_image := img
         else 
-          let _ = print_string ("\n WARNING: " ^ img ^ " was not found. Searching for the image in the next path...\n") in 
+          let () = print_string ("\n WARNING: " ^ img ^ " was not found. Searching for the image in the next path...\n") in 
           check_image_existence imgs
 
 (* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
    and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
 let start () =
-  let _ = check_image_existence image_path_lst in
-  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; !isabelle_image;"2> /dev/null"|]) set_process prelude in
+  let () = check_image_existence image_path_lst in
+  let () = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; !isabelle_image;"2> /dev/null"|]) set_process prelude in
   last_test_number := !test_number
 
 let ending_remarks () = 
@@ -368,7 +369,7 @@ let restart reason =
 (* checking the result given by Isabelle *)
 let rec check str : bool=
   try
-      let _ = Str.search_forward (Str.regexp "No subgoals") str 0 in
+      let (todo_unk:int) = Str.search_forward (Str.regexp "No subgoals") str 0 in
       if!log_all_flag==true then
         output_string log_all (" [isabelle.ml]: --> SUCCESS\n");
       true
@@ -391,11 +392,11 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
       let fnc () = 
         (* communication protocol with interactive isabelle *)
     	output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-        let _ = get_answer ichn in (*lemma#*)
-        let _ = input_char ichn in (*space*)
+        let (todo_unk:string) = get_answer ichn in (*lemma#*)
+        let (todo_unk:char) = input_char ichn in (*space*)
 
         output_string ochn "apply(auto)\n"; flush ochn;
-        let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
+        let (todo_unk:string) = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
         output_string ochn "oops\n"; flush ochn;
         let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)

@@ -2,7 +2,7 @@
 !!! Using z3
 Starting z3... 
 
-!!! WARNING logtime exception:0.000296
+!!! WARNING logtime exception:0.004
 Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
 : no residue 
 

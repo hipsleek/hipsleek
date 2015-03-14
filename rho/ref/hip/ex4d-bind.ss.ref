@@ -36,7 +36,7 @@ Error(s) detected when checking procedure main$
 
 0 false contexts at: ()
 
-Total verification time: 0.333454 second(s)
-	Time spent in main process: 0.315857 second(s)
-	Time spent in child processes: 0.017597 second(s)
+Total verification time: 0.404023 second(s)
+	Time spent in main process: 0.384023 second(s)
+	Time spent in child processes: 0.02 second(s)
 

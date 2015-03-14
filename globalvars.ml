@@ -1,3 +1,4 @@
+open VarGen
 (** Created 20-May-2009
 	Convert global variables into reference parameters
 *)
@@ -484,9 +485,9 @@ let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I
 	(I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = Hashtbl.find h proc.I.proc_name in
   (*LDK*)
-  (* let _ = print_string ("get_read_write_global_var: proc_name: "^ proc.I.proc_name ^ "\n") in *)
-  (* let _ = print_string ("read vars: "^(string_of_IdentSet reads)^"\n") in *)
-  (* let _ = print_string ("writes vars: "^(string_of_IdentSet writes)^"\n") in *)
+  (* let () = print_string ("get_read_write_global_var: proc_name: "^ proc.I.proc_name ^ "\n") in *)
+  (* let () = print_string ("read vars: "^(string_of_IdentSet reads)^"\n") in *)
+  (* let () = print_string ("writes vars: "^(string_of_IdentSet writes)^"\n") in *)
   let readSet = IdentSet.diff reads writes in
   let writeSet = writes in
   to_var_decl_list global_var_decls readSet writeSet
@@ -517,7 +518,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
       if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
           || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
           || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)) then
-        let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
+        let () = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
         ()
       else
         Error.report_error {Error.error_loc = no_pos; Error.error_text = ("scc = " ^ (string_of_ident_list scc) ^ "not found")}
@@ -535,7 +536,7 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 	let (r2,w2) = Hashtbl.find h v2 in
 	let r = IdentSet.union r1 r2 in
 	let w = IdentSet.union w1 w2 in
-	let _ = Hashtbl.replace h v1 (r,w) in
+	let () = Hashtbl.replace h v1 (r,w) in
 	merge_scc scc1
 
 (** Find read write global variables for all procedures using graph data structure 
@@ -545,12 +546,12 @@ let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_var_decls = prog.I.prog_global_var_decls in
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
   let proc_decls = prog.I.prog_proc_decls in
-  let _ = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
+  let () = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
   (* let scclist = NGComponents.scc_list g in *)
   (* let sccarr = Array.of_list scclist in    *)
   let sccarr = NGComponents.scc_array g in
   let n = Array.length sccarr in
-  let _ = Array.iter merge_scc sccarr in
+  let () = Array.iter merge_scc sccarr in
   for k = 0 to n-1 do
 	for i = 0 to n-1 do
 	  for j = 0 to n-1 do
@@ -880,8 +881,8 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 	  begin
 		(*if IdentSet.mem e.I.exp_bind_bound_var global_vars then
       let list_elem = IdentSet.elements global_vars in
-      let _ = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
-      let _ = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
+      let () = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
+      let () = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
       let new_name = create_new_ids global_vars e.I.exp_bind_bound_var in
 		  let new_body = Astsimp.rename_exp [e.I.exp_bind_bound_var,new_name] e.I.exp_bind_body in
 		  let new_exp = { e with I.exp_bind_bound_var = new_name; I.exp_bind_body = new_body } in
@@ -1106,7 +1107,7 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 	match prog.I.prog_global_var_decls with
 	| [] -> prog
 	| _ ->
-		let _ = find_read_write_global_var_all_procs prog in
+		let () = find_read_write_global_var_all_procs prog in
 		let temp_decls1 = List.map resolve_name_conflict prog.I.prog_proc_decls in
 		let temp_decls2 = List.map (extend_args prog.I.prog_global_var_decls) temp_decls1 in
 		let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in

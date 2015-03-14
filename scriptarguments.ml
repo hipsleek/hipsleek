@@ -1,3 +1,4 @@
+open VarGen
 open GlobProver
 
 let parse_only = ref false
@@ -45,7 +46,7 @@ let set_lib_file arg =
   Globals.lib_files := [arg]
 
 let set_tp solver=
-  let _ = print_endline ("!!! init_tp by user: ") in 
+  let () = print_endline ("!!! init_tp by user: ") in 
   Tpdispatcher.set_tp solver
 
 let set_frontend fe_str = match fe_str  with
@@ -178,7 +179,7 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
-  ("--dd-trace", Arg.Set Globals.debug_precise_trace,
+  ("--dd-trace", Arg.Set Gen.debug_precise_trace,
    "Turn on more precise tracing");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
@@ -208,7 +209,7 @@ let common_arguments = [
    "Disable timeout on provers");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
-  ("--trace-failure", Arg.Set Globals.trace_failure,
+  ("--trace-failure", Arg.Set VarGen.trace_failure,
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-all", Arg.Set Globals.trace_all,
    "Trace all proof paths");
@@ -319,7 +320,7 @@ let common_arguments = [
    "Number of unfolding using XPure");
   ("-mona-cycle", Arg.Set_int Mona.mona_cycle,
    "Number of times mona can be called before it restarts (default 90)");
-  ("-v:", Arg.Set_int Globals.verbose_num,
+  ("-v:", Arg.Set_int VarGen.verbose_num,
    "Verbosity level for Debugging");
   ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
@@ -408,12 +409,12 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--en-pstat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Gen.profiling,
    "enable profiling statistics");
-  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-cstat", Arg.Set Gen.enable_counters, "enable counter statistics");
   ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
   ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
-  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-stat", (Arg.Tuple [Arg.Set Gen.profiling; Arg.Set Gen.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
@@ -672,13 +673,13 @@ let common_arguments = [
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
-  ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
   ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
   ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-  ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
@@ -781,8 +782,8 @@ let common_arguments = [
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
   ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-  ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
-  ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
   ("--print-min",
      Arg.Unit
       (fun _ ->
@@ -790,7 +791,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -813,15 +814,15 @@ let common_arguments = [
      Arg.Unit
       (fun _ ->
           (* print_endline "inside svcomp-compete setting"; *)
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.svcomp_compete_mode:=true; (* main flag *)
           (* Globals.show_unexpected_ents := false; *)
           (* diable printing *)
-          Globals.trace_failure := false;
+          VarGen.trace_failure := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           
@@ -853,13 +854,13 @@ let common_arguments = [
   ("--smt-compete",
      Arg.Unit
       (fun _ ->
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.smt_compete_mode:=true;
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -881,12 +882,12 @@ let common_arguments = [
       (fun _ ->
           (* Globals.show_unexpected_ents := true;  *)
           (*this flag is one that is  diff with compared to --smt-compete *)
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.smt_compete_mode :=true;
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -910,7 +911,7 @@ let common_arguments = [
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=false;
+          Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           (* Globals.lemma_gen_unsafe:=true; *)
@@ -1000,7 +1001,7 @@ let check_option_consistency () =
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
   (* if !Globals.allow_imm && Perm.allow_perm() then *)
   (* begin *)
-  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (*   Gen.Basic.report_error no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;

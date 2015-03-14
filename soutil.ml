@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Others
 open Stat_global
@@ -20,7 +21,7 @@ let exist_invisible_cells f vars=
   let dnodes = get_datas f in
   List.exists (fun dn ->
       let cl_ptrs = find_close [dn.h_formula_data_node] eqs in
-      let _ =  DD.ninfo_hprint (add_str "cl_ptrs" !CP.print_svl) cl_ptrs no_pos in
+      let () =  DD.ninfo_hprint (add_str "cl_ptrs" !CP.print_svl) cl_ptrs no_pos in
       not (List.exists (fun (CP.SpecVar (_,id,prm)) ->
           prm = Primed && List.exists (fun ((_,id1)) -> string_compare id id1) vars
       ) cl_ptrs)

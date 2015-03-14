@@ -1,3 +1,4 @@
+open VarGen
 open Format
 open Globals 
 open Exc.GTable

@@ -1,3 +1,4 @@
+open VarGen
 (*
   Created 19-Feb-2006
 
@@ -99,7 +100,7 @@ and alpha_name (v : ident) : ident =
 	failwith ("alpha_name: name clash happens")
   else
 	try
-	  let _ = look_up v in (* name shadowing *)
+	  let (todo_unk:ident_info) = look_up v in (* name shadowing *)
 	  let fi = fresh_int () in
 		v ^ "__fr_fr__" ^ (string_of_int fi)
 	with
@@ -111,12 +112,12 @@ and name_clash (v : ident) : bool =
   if Gen.is_empty !scopes then
 	false
   else
-	let top_scope = List.hd !scopes in
-	  try
-		let _ = H.find top_scope v in
-		  true
-	  with
-		| Not_found -> false
+    let top_scope = List.hd !scopes in
+    try
+      let todo_unk = H.find top_scope v in
+      true
+    with
+      | Not_found -> false
 
 (*
   all visible names in the current scope

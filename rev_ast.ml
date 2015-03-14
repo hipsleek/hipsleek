@@ -1,3 +1,4 @@
+open VarGen
 (*translates cformulas to iformulas, with some simplifications*)
 open Globals
 open Wrapper
@@ -26,7 +27,7 @@ let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
   | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
-    (* let _ = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
+    (* let () = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
     IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.Bptriple ((c,t,a),p) ->
       let nc = IP.Var (rev_trans_spec_var c, p) in
@@ -253,4 +254,4 @@ let transform_hp_rels_to_iviews hp_rels =
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
 
-let _ = Solver.rev_trans_formula := rev_trans_formula
+let () = Solver.rev_trans_formula := rev_trans_formula

@@ -28,7 +28,7 @@ Procedure main$ SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.417695 second(s)
-	Time spent in main process: 0.395102 second(s)
-	Time spent in child processes: 0.022593 second(s)
+Total verification time: 0.556033 second(s)
+	Time spent in main process: 0.524032 second(s)
+	Time spent in child processes: 0.032001 second(s)
 

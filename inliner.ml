@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Iast
 
@@ -34,7 +35,7 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		  let mkfvar param arg = 
 			let fname = fresh_ty_var_name (param.param_type) pos.start_pos.Lexing.pos_lnum in
 			(*-- 09.05.2008 *)
-		  (*let _ = (print_string ("\n[inliner.ml, line 37]: fresh name = " ^ fname ^ "\n")) in*)
+		  (*let () = (print_string ("\n[inliner.ml, line 37]: fresh name = " ^ fname ^ "\n")) in*)
 		  (* 09.05.2008 --*)		
 			  (VarDecl { exp_var_decl_type = param.param_type;
 						 exp_var_decl_decls = [(fname, Some arg, pos)];

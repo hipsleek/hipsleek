@@ -36,7 +36,7 @@ Error(s) detected when checking procedure clone$node~node
 
 0 false contexts at: ()
 
-Total verification time: 0.434724 second(s)
-	Time spent in main process: 0.402915 second(s)
-	Time spent in child processes: 0.031809 second(s)
+Total verification time: 0.49603 second(s)
+	Time spent in main process: 0.452028 second(s)
+	Time spent in child processes: 0.044002 second(s)
 

@@ -93,7 +93,7 @@ class graphFindBCC =
 										 let wc1 = (self)#find_cell w map_list in
 											 let temp_edge = {ver1=v1;ver2=w} in (*modified here*)
 (*												let _= print_endline ("w_dfs_num:" ^(string_of_int w_dfs_num)^ "of "^w ) in*)
-												let _ = if(wc1.dfs_num =0 ) then
+												let () = if(wc1.dfs_num =0 ) then
 													begin
 													parents <- MapDFS.add w v1 parents;
 													(* print_endline ("pushed:" ^ w ^ " " ^ v1); *)
@@ -236,7 +236,7 @@ class rTC=
 																				let neib= Adj.list_from_vertex graph_ v in
 																				let _= List.map (fun x-> List.map (fun k-> if(k!=x) then 
 (*																					let _= print_endline ("chord here:" ^k ^ " " ^x) in*)
-																					let _ = G.add_edge graph_ k x in 
+																					let () = G.add_edge graph_ k x in 
 																					let _=G.add_edge graph k x in 
 																					let mem=Glabel.mem_edge gr_e k x in 
 																					if(mem=false) then 

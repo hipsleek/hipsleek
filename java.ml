@@ -1,3 +1,4 @@
+open VarGen
 (*
   Support to convert our code into Java code.
   

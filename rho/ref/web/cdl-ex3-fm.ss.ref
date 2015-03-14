@@ -6,37 +6,32 @@ Parsing file "web/cdl-ex3-fm.ss" by default parser...
 Starting Omega.../usr/local/bin/oc
 
 Checking procedure main$... 
-( []) :web/cdl-ex3-fm.ss:56: 14: q_38 does not have @lend/@full permission to read (inside bind)
+assert:web/cdl-ex3-fm.ss:58: 6:  : ok
 
-(Cause of ParCase Failure):web/cdl-ex3-fm.ss:56: 14:  List of Failesc Context: [FEC(1, 0, 0 )]
-Failed States:
-[
- Label: []
- State:
-        fe_kind: MAY
-        fe_name: logical bug
-        fe_locs: {
-                  fc_message: Mismatch non-zero variable permission in consequent [(q_38,@lend)]
-                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
-[[empty]]
- ]
 
-Context of Verification Failure: 1 File "",Line:0,Col:0
+assert:web/cdl-ex3-fm.ss:66: 6:  : ok
 
-Last Proving Location: 1 File "web/cdl-ex3-fm.ss",Line:56,Col:14
 
-ERROR: at web/cdl-ex3-fm.ss_56:14_56:19
-Message: q_38 does not have @lend/@full permission to read (inside bind)
+assert:web/cdl-ex3-fm.ss:69: 2:  : ok
 
-Procedure main$ FAIL.(2)
 
-Exception Failure("q_38 does not have @lend/@full permission to read (inside bind)") Occurred!
+assert/assume:web/cdl-ex3-fm.ss:70: 2:  : failed
 
-Error(s) detected when checking procedure main$
+
+assert/assume:web/cdl-ex3-fm.ss:71: 2:  : failed
+
+
+assert/assume:web/cdl-ex3-fm.ss:72: 2:  : failed
+
+
+assert/assume:web/cdl-ex3-fm.ss:73: 2:  : failed
+
+
+Procedure main$ SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.621209 second(s)
-	Time spent in main process: 0.590461 second(s)
-	Time spent in child processes: 0.030748 second(s)
+Total verification time: 2.41615 second(s)
+	Time spent in main process: 2.304143 second(s)
+	Time spent in child processes: 0.112007 second(s)
 

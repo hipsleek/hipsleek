@@ -46,32 +46,31 @@ void main()
   requires emp ensures emp;
 {
   cell x, y;
-  CDL c = create_latch(1) with x'::cell<1> * y'::cell<2>;
+  CDL c = create_latch(1) with x'::cell<1> * y'::cell<2> * @full[x, y];
   int r1,r2;
   r1=0; r2=0;
   //dprint;
-  par
+  par {x, y, r1, r2, c@L}
   {  
    // exists r1',r2'
-   case {x,y} c'::LatchIn{- x'::cell<1> * y'::cell<2>}<> * c'::CNT<(1)> -> 
+   case {x,y,c@L} c'::LatchIn{- x'::cell<1> * y'::cell<2> * @full[x, y]}<> * c'::CNT<(1)> -> 
         //dprint;
         x = new cell(1); 
         //dprint;
         y = new cell(2); 
-      //dprint;
+      dprint;
       countDown(c);
       //dprint;
       //int k = x.val;
   || 
     // exists x',y',r2'
-    case {r1} c'::LatchOut{+x'::cell<1>}<> * c'::CNT<0> -> // TODO: Should return error here
+    case {r1,c@L} c'::LatchOut{+x'::cell<1> * @full[x]}<> * c'::CNT<0> -> // TODO: Should return error here
       //dprint;
       await(c); 
       r1 = x.val; 
   || 
      // exists r1',x',y'
-     else {r2} -> 
-     //case {r2} c'::LatchOut{+y'::cell<2>}<> * c'::CNT<0> ->
+     case {r2,c@L} c'::LatchOut{+y'::cell<2> * @full[y]}<> * c'::CNT<0> ->
        //dprint;
        await(c); r2 = y.val;
   }

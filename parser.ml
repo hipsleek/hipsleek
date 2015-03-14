@@ -1,3 +1,4 @@
+open VarGen
 module DD=Debug (* which Debug is this? *)
 open Camlp4
 open Globals
@@ -7,6 +8,7 @@ open Iast
 open Token
 open Sleekcommons
 open Gen.Basic
+open HipUtil
 (* open Label_only *)
 
 open Perm
@@ -106,7 +108,7 @@ let default_rel_id = "rel_id__"
 
 (* let get_tmp_rel_decl ():rel_decl = *)
 (*   match !tmp_rel_decl with *)
-(*     | Some rd -> let _ = tmp_rel_decl := None in rd *)
+(*     | Some rd -> let () = tmp_rel_decl := None in rd *)
 (*     | None -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong" *)
 
 let macros = ref (Hashtbl.create 19)
@@ -683,9 +685,9 @@ let peek_dc =
    SHGram.Entry.of_parser "peek_div_op"
        (fun strm ->
            match Stream.npeek 3 strm with 
-             (* | [_;_;DIV,_] -> let _ = print_endline "peek_div_op1" in () *)
-             | [_;DIV,_;_] -> (* let _ = print_endline "peek_div_op2" in *)()
-             | ls -> (* let _ = print_endline "peek_div_op3" in *) raise Stream.Failure)
+             (* | [_;_;DIV,_] -> let () = print_endline "peek_div_op1" in () *)
+             | [_;DIV,_;_] -> (* let () = print_endline "peek_div_op2" in *)()
+             | ls -> (* let () = print_endline "peek_div_op3" in *) raise Stream.Failure)
 
  let peek_cexp_list = 
    SHGram.Entry.of_parser "peek_cexp_list"
@@ -771,15 +773,15 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (* let _ = print_endline "Array found!" in *) ()
-             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
+             |[_;OSQUARE,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
 let peek_pointer_type = 
    SHGram.Entry.of_parser "peek_pointer_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
+             |[_;STAR,_] -> (* let () = print_endline "Pointer found!" in *) ()
              | _ -> raise Stream.Failure)
 
 let peek_obrace_par = 
@@ -844,9 +846,9 @@ let set_slicing_utils_pure_double f il =
 		(* let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in                 *)
 		(* if (ls == []) then f                                                       *)
 		(* else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))       *)
-  | Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
-    | Pure_t (pc, ann0) -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in
-                          (* let _ = Hashtbl.add !Ipure.linking_exp_list ann0 0 in *)
+  | Pure_c pc -> let () = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
+    | Pure_t (pc, ann0) -> let () = Hashtbl.add !Ipure.linking_exp_list pc 0 in
+                          (* let () = Hashtbl.add !Ipure.linking_exp_list ann0 0 in *)
                           f
   else f
 
@@ -1348,7 +1350,7 @@ view_header:
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
       (* else *)
       let modes = get_modes anns in
-      let _ = view_names # push vn in
+      let () = view_names # push vn in
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
@@ -1428,7 +1430,7 @@ view_header_ext:
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
       (* else *)
       let modes = get_modes anns in
-      let _ = view_names # push vn in
+      let () = view_names # push vn in
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
@@ -1514,14 +1516,14 @@ cid_typ:
       let _ =
         (* WN : code below uses side-effects and may also result in relational name clashes *)
         if is_RelT ut then
-          (* let _ = print_endline ("ll 1: " ^ id) in *)
-          let _ = rel_names # push id in
+          (* let () = print_endline ("ll 1: " ^ id) in *)
+          let () = rel_names # push id in
           (* let rd = get_tmp_rel_decl () in *)
          (*  let rd = {rd with rel_name = id} in *)
         (* (\*push rd in the list*\) *)
-        (*   let _ = g_rel_defs # push rd in *)
+        (*   let () = g_rel_defs # push rd in *)
           ()
-        else (* let _ = print_endline ("ll: " ^ id)  in *) ()
+        else (* let () = print_endline ("ll: " ^ id)  in *) ()
       in
         (ut,id)
    ]];
@@ -1865,7 +1867,7 @@ perm_aux: [[
     peek_div_op;  
     (* peek_print; *)
     t1 = integer_literal ; `DIV ; t2 = integer_literal ->
-     (* let _ = DD.binfo_hprint pr_id "hello campl4" no_pos in *)
+     (* let () = DD.binfo_hprint pr_id "hello campl4" no_pos in *)
        Ipure.Div (Ipure.IConst(t1,get_pos_camlp4 _loc 2),
        Ipure.IConst(t2,get_pos_camlp4 _loc 4),get_pos_camlp4 _loc 3)
   | (* peek_print; *)
@@ -1879,7 +1881,7 @@ perm_aux: [[
                   let pa = List.hd (List.tl (List.tl t)) in
                   Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
                 else
-                  let _ = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let () = print_endline ("Warning: bounded permission has incorrect number of arguments") in
                   let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
                   Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
             | _ -> List.hd t (*other permission systems have one parameter*)
@@ -2002,9 +2004,9 @@ cexp_w:
         let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
         set_slicing_utils_pure_double f (if !opt_ineq (* && (is_ineq_linking_constraint lc cl) *) then true else false)
     | lc=SELF; `EQ;   cl=SELF  -> begin
-          (* let _ = print_endline "xxxx" in *)
-          (* let _ = DD.info_hprint (add_str "lc" string_of_pure_double) lc no_pos in *)
-          (* let _ = DD.info_hprint (add_str "cl" string_of_pure_double) cl no_pos in *)
+          (* let () = print_endline "xxxx" in *)
+          (* let () = DD.info_hprint (add_str "lc" string_of_pure_double) lc no_pos in *)
+          (* let () = DD.info_hprint (add_str "cl" string_of_pure_double) cl no_pos in *)
           let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
           set_slicing_utils_pure_double f false
     end
@@ -2109,7 +2111,7 @@ cexp_w:
   | "una"
     [ `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
     | `HASH ->
-        (* let _ = hash_count := !hash_count + 1 in  *)
+        (* let () = hash_count := !hash_count + 1 in  *)
         (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
         mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
@@ -2610,9 +2612,9 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
-   | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
-   | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
+   | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
+   | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
   [[ `VOID               -> void_type
@@ -2632,7 +2634,7 @@ pointer_type:
     if (n<=1) then (Pointer t) else (Pointer (create_pointer (n-1)))
   in
   let pointer_t = create_pointer r in
-  (* let _ = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in *)
+  (* let () = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in *)
   pointer_t
    ]];
 
@@ -2724,7 +2726,7 @@ func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
 func_header:
   [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
-      let _ = func_names # push id in 
+      let () = func_names # push id in 
       { func_name = id;
         func_typed_vars = tl;
       }
@@ -2749,16 +2751,16 @@ id_part_ann: [[
 
 (* typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)                    *)
 (*   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)                                    *)
-(*   | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)        *)
-(*   |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
-(*   |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*   | t = typ; `RO; `IDENTIFIER id -> let () = pred_root_id := id in (t,id, Globals.I)        *)
+(*   |  t = typ; `NI; `RO; `IDENTIFIER id->  let () = pred_root_id := id in (t,id, Globals.NI) *)
+(*   |  t = typ; `RO; `NI; `IDENTIFIER id->  let () = pred_root_id := id in (t,id, Globals.NI) *)
 (*  ]];                                                                                       *)
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
-  | t = typ; `RO; (id,n) = id_part_ann -> let _ = pred_root_id := id in (t,(id,n), Globals.I)
-  |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
-  |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
+  | t = typ; `RO; (id,n) = id_part_ann -> let () = pred_root_id := id in (t,(id,n), Globals.I)
+  |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
+  |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
  ]];
 
 
@@ -2781,7 +2783,7 @@ rel_header:[[
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in *)
-    let _ = rel_names # push id in
+    let () = rel_names # push id in
 		  { rel_name = id;
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
@@ -2794,7 +2796,7 @@ rel_header_view:[[
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
 		 } in
-  (* let _ = set_tmp_rel_decl rd in *)
+  (* let () = set_tmp_rel_decl rd in *)
   rd
 ]];
 
@@ -2805,7 +2807,7 @@ rel_body:[[ (* formulas {
 
 (* Template Definition *)
 templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN; b = OPT templ_body -> 
-  let _ = templ_names # push id in 
+  let () = templ_names # push id in 
   let tdef = { 
     templ_name = id;
     templ_ret_typ = t;
@@ -2822,7 +2824,7 @@ ut_fname: [[ `AT; `IDENTIFIER fn -> fn ]];
 ut_decl: 
   [[ `UTPRE; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
       let fname = un_option fn "" in
-      let _ = ut_names # push (id, fname, true) in
+      let () = ut_names # push (id, fname, true) in
       let utdef = { 
         ut_name = id;
         ut_fname = fname;
@@ -2832,7 +2834,7 @@ ut_decl:
       in utdef 
   | `UTPOST; fn = OPT ut_fname; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN ->
       let fname = un_option fn "" in
-      let _ = ut_names # push (id, fname, false) in
+      let () = ut_names # push (id, fname, false) in
       let utdef = { 
         ut_name = id;
         ut_fname = fname;
@@ -2851,10 +2853,10 @@ axiom_decl:[[
 
 hp_decl:[[
 `HP; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
-    let _ = hp_names # push id in
+    let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
-    let _ = pred_root_id := "" in
+    let () = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
@@ -2864,10 +2866,10 @@ hp_decl:[[
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
     }
   | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
-    let _ = hp_names # push id in
+    let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
-    let _ = pred_root_id := "" in
+    let () = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
@@ -2918,10 +2920,10 @@ hprogn:
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef ->
-              let _ = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
+              let () = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
               proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
-    let _ = List.map choose t in
+    let todo_unk = List.map choose t in
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];
@@ -3040,7 +3042,7 @@ class_decl:
                    data_invs = t2;
                    data_is_template = false;
                    data_methods = t3 } in
-      let _ = List.map (fun d -> set_proc_data_decl d cdef) t3 in
+      let todo_unk = List.map (fun d -> set_proc_data_decl d cdef) t3 in
       cdef]];
 
 extends: [[`EXTENDS; `IDENTIFIER id -> id]];
@@ -3106,6 +3108,19 @@ spec_list_grp:
       ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
   ]];
 
+disj_or_extn_constr:
+  [[
+      dc= disjunctive_constr -> 
+	  let f = F.subst_stub_flow n_flow dc in
+	  let sf = F.mkEBase [] [] [] f None no_pos in
+          (f,sf)
+    | dc= extended_constr -> 
+          let dc = F.subst_stub_flow_struc n_flow dc in
+	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
+	  (f,dc)
+  ]];
+
+
 spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
@@ -3116,7 +3131,7 @@ spec:
        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
          | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
-     let _ = List.iter (fun itype -> inf_o # set itype) i_consts in
+     let () = List.iter (fun itype -> inf_o # set itype) i_consts in
      let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
      F.EInfer {
        (* F.formula_inf_tnt = inf_o # get INF_TERM (\* (match itype with | Some INF_TERM -> true | _ -> false) *\); *)
@@ -3147,23 +3162,32 @@ spec:
 	      F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
 	      F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
               (* F.formula_ext_complete = false;*)
-    | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    | `ENSURES; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) None
-    | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
-	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
-	  F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
 
-    | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    (* | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) None *)
+    (* | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON -> *)
+    (*       let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in *)
+    (*       F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None *)
+
+    | `ENSURES_EXACT; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) (Some true)
 
-    | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    (* | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) (Some true) *)
+
+    | `ENSURES_INEXACT; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) (Some false)
+
+    (* | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) (Some false) *)
 
     | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
@@ -3214,11 +3238,13 @@ proc_decl:
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc "source_file" id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      let cur_file = proc_files # top in
+     mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc "source_file" id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    let cur_file = proc_files # top in
+    mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -3228,7 +3254,8 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ; flgs=opt_flag_list->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc "source_file" id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+    let cur_file = proc_files # top in
+      mkProc cur_file id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -3863,16 +3890,16 @@ primary_expression_no_array_no_parenthesis :
 		let pos = get_pos_camlp4 _loc 1 in
 		let res = if (String.contains id '.') then (* Identifier contains "." ==> this must be field access. *)
 				let flds = Str.split (Str.regexp "\\.") id in
-				(* let _ = print_endline "Member field access" in *)
+				(* let () = print_endline "Member field access" in *)
 					Member {
 						exp_member_base = Var { exp_var_name = List.hd flds;
 												exp_var_pos = pos };
 						exp_member_fields = List.tl flds; (* TODO merge the field access to match the core representation! *)
 						exp_member_path_id = None;
 						exp_member_pos = pos } 
-			else (* let _ = print_endline "Simple variable" in *)
+			else (* let () = print_endline "Simple variable" in *)
 				Var { exp_var_name = id; exp_var_pos = pos } in
-		(* let _ = print_endline ("Parsed expression at " ^ (string_of_loc pos) ^ ": { " ^ (Iprinter.string_of_exp res) ^ " }") in *)
+		(* let () = print_endline ("Parsed expression at " ^ (string_of_loc pos) ^ ": { " ^ (Iprinter.string_of_exp res) ^ " }") in *)
 			res
 ]];
 
@@ -3900,7 +3927,7 @@ cp_list:
       | Hpdecl hpdef  -> hp_defs2 # push hpdef 
       | ProcERes t -> proc_tcomps := t :: !proc_tcomps
     in
-    let _ = List.map choose t in
+    let todo_unk = List.map choose t in
     let hp_lst = hp_defs2 # get_stk in
     (hp_lst, !proc_tcomps)]];
 
@@ -3922,7 +3949,7 @@ test_list: [[t = LIST0 test_ele ->
       | ExpectedAss t  ->  ass := Some t
       | ExpectedHpDef t ->  hpdefs := Some t
     in
-    let _ = List.map choose t in
+    let todo_unk = List.map choose t in
     {expected_ass = !ass;
       expected_hpdefs = !hpdefs}]];
 
