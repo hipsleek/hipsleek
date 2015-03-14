@@ -1,3 +1,4 @@
+open VarGen
 open Gen.Basic
 
 external set_close_on_exec : Unix.file_descr -> unit = "unix_set_close_on_exec";;

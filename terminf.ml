@@ -1,3 +1,4 @@
+open VarGen
 open Template
 open Cpure
 open Globals

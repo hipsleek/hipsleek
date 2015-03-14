@@ -1,3 +1,4 @@
+open VarGen
 (*handle pure extension to spec inference*)
 
 open Globals

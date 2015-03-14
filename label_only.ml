@@ -1,3 +1,4 @@
+open VarGen
 open Gen
 open Globals
 (* module CF = Cformula *)

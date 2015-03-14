@@ -1,3 +1,4 @@
+open VarGen
 (*This file supports for framing specification*)
 
 module DD = Debug

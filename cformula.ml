@@ -9264,7 +9264,7 @@ and failure_cex = {
   and fail_explaining = {
      fe_kind: failure_kind; (*may/must*)
      fe_name: string;
-     fe_locs: (*Globals.loc*) int list; (*line number*)
+     fe_locs: (*VarGen.loc*) int list; (*line number*)
 (* fe_explain: string;  *)
 (* string explaining must failure *)
 (*  fe_sugg = struc_formula *)

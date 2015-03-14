@@ -1,5 +1,4 @@
-
-
+open VarGen
 
 let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (* let rec init body stmt cpl binding = match stmt with *)
@@ -147,7 +146,7 @@ let subst_formula formula hprel_def =
         List.fold_left (fun all_formula (_, formula,_) ->
             match formula with
               | None -> all_formula
-              | Some f -> Cformula.mkOr all_formula f no_pos)
+              | Some f -> Cformula.mkOr all_formula f VarGen.no_pos)
             first_formula (List.tl hprel_def.Cformula.hprel_def_body)
     )
     else formula
@@ -280,7 +279,7 @@ let rec group_cases pf_sf_l =
   let is_eq pf1 pf2 =
     let not_pf1 = Cpure.mkNot pf1 None no_pos in
     let not_pf2 = Cpure.mkNot pf2 None no_pos in
-    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None no_pos) (Cpure.mkOr not_pf2 pf1 None Globals.no_pos) Globals.no_pos in
+    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None no_pos) (Cpure.mkOr not_pf2 pf1 None VarGen.no_pos) VarGen.no_pos in
     not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None no_pos) "check eq" "")
   in
   match pf_sf_l with
@@ -300,7 +299,7 @@ let check_cases cases specs =
   if not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None no_pos) "check universe" "")
   then (cases, specs)
   else (
-      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case no_pos)) None Globals.no_pos] in
+      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case no_pos)) None VarGen.no_pos] in
       let new_specs = specs@[Cformula.mkEFalse Cformula.mkFalseFlow no_pos] in
       (new_cases, new_specs)
   )

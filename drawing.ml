@@ -1,3 +1,4 @@
+open VarGen
 (*
   Turn formulas to graph drawings.
 *)

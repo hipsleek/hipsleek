@@ -1,3 +1,4 @@
+open VarGen
 (*
   Call Fixpoint Calculator for numerical domains
 *)

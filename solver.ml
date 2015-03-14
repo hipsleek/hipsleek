@@ -1,3 +1,4 @@
+open VarGen
 (*
 26.11.2008
 todo: disable the default logging for omega

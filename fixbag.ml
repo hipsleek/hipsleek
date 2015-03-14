@@ -1,3 +1,4 @@
+open VarGen
 (*
   Call FixBag, send input to it
 *)

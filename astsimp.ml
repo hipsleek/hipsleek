@@ -1,3 +1,4 @@
+open VarGen
 
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
@@ -6972,14 +6973,14 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (n_tl,cf)
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
-                      : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
+                      : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
   let prR (_,f,qvar) = (pr_pair Cprinter.string_of_formula (add_str "\n qvars:" (pr_list (pr_id fst)))) (f,qvar) in
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
        prR linearize_formula_x prog f0 tlist
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
-                        : (spec_var_type_list * CF.formula * (Globals.ident * Globals.primed) list) =
+                        : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
   let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) =
     match hargs with
     | (e, _) :: rest ->
@@ -7002,7 +7003,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let hvars = e_hvars @ rest_hvars in
         hvars
     | [] -> [] in
-  let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * Globals.primed) list) = (
+  let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * VarGen.primed) list) = (
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
                    IF.h_formula_heap_name = c;
@@ -7105,7 +7106,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     | _ -> report_error pos "expand_dereference_node: expect a HeapNode"
   ) in
   let rec linearize_heap (f : IF.h_formula) pos (tl:spec_var_type_list)
-        : (( CF.h_formula (* *  (MCP.mix_formula list)  *)) * CF.t_formula * (Globals.ident * Globals.primed) list * (spec_var_type_list)) = ( 
+        : (( CF.h_formula (* *  (MCP.mix_formula list)  *)) * CF.t_formula * (Globals.ident * VarGen.primed) list * (spec_var_type_list)) = ( 
             (* andreeac: TODO add the constraints in a pair with  CF.h_formula *)
     let res = ( (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with

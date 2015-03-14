@@ -1,3 +1,4 @@
+open VarGen
 (**
    Helper and other ultilities for Hip/Sleek's GUI
  *)

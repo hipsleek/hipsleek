@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Exc.GTable
 open Gen.Basic
@@ -118,7 +119,7 @@ let string_of_cil_file (f: Cil.file) : string =
 (* supporting function                      *)
 (* ---------------------------------------- *)
 
-let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
+let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   match e with
   | Iast.ArrayAt e -> e.Iast.exp_arrayat_pos
   | Iast.ArrayAlloc e -> e.Iast.exp_aalloc_pos
@@ -186,9 +187,9 @@ let merge_iast_exp (es: Iast.exp list) : Iast.exp =
       List.fold_left (fun x y ->
         let posx = loc_of_iast_exp x in
         let posy = loc_of_iast_exp y in
-        let newpos = {Globals.start_pos = posx.Globals.start_pos;
-                      Globals.mid_pos = posy.Globals.mid_pos;
-                      Globals.end_pos = posy.Globals.end_pos;} in
+        let newpos = {VarGen.start_pos = posx.VarGen.start_pos;
+                      VarGen.mid_pos = posy.VarGen.mid_pos;
+                      VarGen.end_pos = posy.VarGen.end_pos;} in
         Iast.mkSeq x y newpos
       ) hd tl
 
@@ -209,17 +210,17 @@ let rec is_cil_struct_pointer (ty: Cil.typ) : bool = (
 )
 
 (* location  functions *)
-let makeLocation (startPos: Lexing.position) (endPos: Lexing.position) : Globals.loc =
-  let newloc = {Globals.start_pos = startPos;
-                Globals.mid_pos = startPos;
-                Globals.end_pos = endPos;} in
+let makeLocation (startPos: Lexing.position) (endPos: Lexing.position) : VarGen.loc =
+  let newloc = {VarGen.start_pos = startPos;
+                VarGen.mid_pos = startPos;
+                VarGen.end_pos = endPos;} in
   newloc
 
-let startPos (loc: Globals.loc) : Lexing.position =
-  loc.Globals.start_pos
+let startPos (loc: VarGen.loc) : Lexing.position =
+  loc.VarGen.start_pos
 
-let endPos (loc: Globals.loc) : Lexing.position =
-  loc.Globals.end_pos
+let endPos (loc: VarGen.loc) : Lexing.position =
+  loc.VarGen.end_pos
   
 let is_arith_comparison_op op = 
   match op with
@@ -925,7 +926,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
 (*************** main translation functions *****************)
 (************************************************************)
 
-and translate_location (loc: Cil.location) : Globals.loc =
+and translate_location (loc: Cil.location) : VarGen.loc =
   let cilsp = loc.Cil.start_pos in
   let cilep = loc.Cil.end_pos in
   let start_pos = {Lexing.pos_fname = cilsp.Cil.file;
@@ -936,9 +937,9 @@ and translate_location (loc: Cil.location) : Globals.loc =
   Lexing.pos_lnum = cilep.Cil.line;
   Lexing.pos_bol = cilep.Cil.line_begin;
   Lexing.pos_cnum = cilep.Cil.byte - 1;} in
-  let newloc = {Globals.start_pos = start_pos;
-  Globals.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
-  Globals.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
+  let newloc = {VarGen.start_pos = start_pos;
+  VarGen.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
+  VarGen.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
   (* return *)
   newloc
 

@@ -1,3 +1,4 @@
+open VarGen
 (*this module supports graph on physical heap*)
 
 open Globals

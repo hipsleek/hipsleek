@@ -1,3 +1,4 @@
+open VarGen
 (*
  This module performs data analysis
 *)

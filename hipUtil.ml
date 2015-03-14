@@ -1,3 +1,4 @@
+open VarGen
 open Gen
 open Basic
 open Globals

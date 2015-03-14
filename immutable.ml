@@ -1,3 +1,4 @@
+open VarGen
 (*
 2011: Immutability module:
   - utils for immutability
@@ -1477,7 +1478,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
     | [] -> []
 ;; 
 
-let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
@@ -1558,7 +1559,7 @@ let merge_imm_ann ann1 ann2 =
     | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
       (ann, [], [])
 
-let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
@@ -1579,19 +1580,19 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
           (n_dn, constr, new_vars)
     | _ -> (h, [], [])
 
-let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
-let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   if (!Globals.allow_field_ann) then
   (* if false then *)
     let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
     (h,constr,new_vars)
   else (h,[],[])
 
-let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1 "normalize_field_ann_heap_node" pr pr_out normalize_field_ann_heap_node_x h

@@ -1,3 +1,4 @@
+open VarGen
 (*
  1. this file provides interfaces and implementations for
    - must/may errors
@@ -75,7 +76,7 @@ module LO = Label_only.LOne
 (* and fail_explaining = { *)
 (*     fe_kind: failure_kind; (\*may/must*\) *)
 (*     fe_name: string; *)
-(*     fe_locs: Globals.loc list; *)
+(*     fe_locs: VarGen.loc list; *)
 (*     (\* fe_explain: string;  *\) *)
 (*     (\* string explaining must failure *\) *)
 (*     (\*  fe_sugg = struc_formula *\) *)

@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Exc.GTable 
 open Printf
@@ -1168,7 +1169,7 @@ type: I.prog_decl ->
   v : var ptr : Globals.ident ->
   int ->
   tlist : arg list : Iprinter.P.exp list ->
-  spec_var_type_list -> Globals.loc -> spec_var_type_list
+  spec_var_type_list -> VarGen.loc -> spec_var_type_list
 *)
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =

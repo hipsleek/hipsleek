@@ -1,3 +1,4 @@
+open VarGen
 (* pretty printing for iast *)
 
 (* open the needed modules *)

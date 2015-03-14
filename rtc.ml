@@ -1,3 +1,4 @@
+open VarGen
 (*
   Runtime checker.
 

@@ -1,3 +1,4 @@
+open VarGen
 (* asankhs:  Created on 03-Sep-2012 for Memory Specifications *)
 (* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --mem --field-ann -tp om *)
 (* For Ramifications use --ramify it will turn off unfold of duplicated pointers in solver.ml which is required to do ramifications *)

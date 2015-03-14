@@ -1,3 +1,4 @@
+open VarGen
 (* Translate an input program with pointer into an intermediate 
    input program without
    @param prog current program declaration

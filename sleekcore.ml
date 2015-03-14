@@ -1,3 +1,4 @@
+open VarGen
 (*
   the wrapper of sleek implementation
 *)

@@ -1,3 +1,4 @@
+open VarGen
 (*
   The frontend engine of SLEEK.
 *)

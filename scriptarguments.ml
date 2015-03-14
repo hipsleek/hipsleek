@@ -1,3 +1,4 @@
+open VarGen
 open GlobProver
 
 let parse_only = ref false

@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Others
 (* module DD = Debug *)
@@ -1495,7 +1496,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                   Cformula.entail_state ->
                   MCP.mix_formula (LHS) ->
                   MCP.mix_formula (RHS) ->
-                  Globals.loc -> (Cformula.entail_state * CP.formula) option
+                  VarGen.loc -> (Cformula.entail_state * CP.formula) option
                 *)
 
 (*
@@ -1792,7 +1793,7 @@ let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
 
 (*type: CP.spec_var list ->
   CP.Label_Pure.exp_ty ->
-  MCP.mix_formula -> Globals.loc -> bool * CP.Label_Pure.exp_ty
+  MCP.mix_formula -> VarGen.loc -> bool * CP.Label_Pure.exp_ty
                *)
 
 let detect_lhs_rhs_contra2 ivs lhs_c rhs_mix pos =
@@ -3098,7 +3099,7 @@ type: Cast.prog_decl ->
   Cformula.entail_state ->
   Sautil.CF.h_formula ->
   CP.spec_var list ->
-  CF.formula_base -> CF.formula_base -> Globals.loc -> bool * CF.entail_st
+  CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
 let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)

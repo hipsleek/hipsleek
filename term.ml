@@ -1,3 +1,4 @@
+open VarGen
 module CP = Cpure
 (* module CF = Cformula *)
 module MCP = Mcpure

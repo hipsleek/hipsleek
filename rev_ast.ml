@@ -1,3 +1,4 @@
+open VarGen
 (*translates cformulas to iformulas, with some simplifications*)
 open Globals
 open Wrapper
