@@ -571,7 +571,7 @@ class ['a] stack  =
        Oo.copy self
        (* let n = new Gen.stack in *)
        (*   let lst = self # get_stk in *)
-       (*   let _ = n # push_list lst in *)
+       (*   let () = n # push_list lst in *)
        (* n *)
    end;;
 
@@ -986,9 +986,9 @@ struct
       let (t1,t2) = order_two t1 t2 in
       List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
     let pr = string_of_debug in
-    (* let _ = print_endline ("eset1 :"^ (pr t1)) in *)
-    (* let _ = print_endline ("eset2 :"^ (pr t2)) in *)
-    (* let _ = print_endline ("eset_out :"^ (pr r)) in *)
+    (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
+    (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
+    (* let () = print_endline ("eset_out :"^ (pr r)) in *)
     r
 
     (* remove key e from e_set  *)
@@ -1214,7 +1214,7 @@ struct
       (* let l1 = dd_stk # get_stk in *)
       (* let l2 = debug_stk # get_stk in *)
       (* let pr = Basic.pr_list string_of_int in *)
-      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
+      (* let () = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
        if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
@@ -1258,7 +1258,7 @@ struct
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
-    (* let _ = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
+    (* let () = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
     ctr#inc;
     let v = ctr#get in
     debug_stk#push v; 
@@ -1633,7 +1633,7 @@ struct
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
     else
-      (* let _ = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      (* let () = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
       Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
@@ -1809,12 +1809,12 @@ struct
   let trim_str input =
     let start_idx = ref 0 in
     let len = String.length input in
-    let _ = 
+    let () = 
 	  while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
 	    start_idx := !start_idx + 1
 	  done in
     let end_idx = ref (len - 1) in
-    let _ = 
+    let () = 
 	  while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
 	    end_idx := !end_idx - 1
 	  done in
@@ -1905,7 +1905,7 @@ let string_of_file (fname : string) =
     let chn = open_in fname in
     let len = in_channel_length chn in
     let str = String.make len ' ' in
-    let _ = really_input chn str 0 len in
+    let () = really_input chn str 0 len in
     (close_in chn; str)
   else
     (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
@@ -1977,7 +1977,7 @@ let break_lines_1024 (input : string) : string =
   (* let n= String.index input ';' in *)
   (* let s = String.sub input 0 n in *)
   (* let delta = String.length input - String.length s in *)
-  (* let _ = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
+  (* let () = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
   (*     else  print_endline "" in *)
   break_lines_num input (1024-32)
 

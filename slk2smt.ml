@@ -143,7 +143,7 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
           let heap_name = hn.Iformula.h_formula_heap_name in
           let s_vnode, n_pred_abs_num = (* if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)  heap_name all_view_names then *)
             (* "index alpha" ^ (string_of_int  pred_abs_num) ^ " ",  pred_abs_num+1 else *) "", pred_abs_num in
-          let _ = Debug.ninfo_hprint (add_str "HeapNode" pr_id) (heap_name ^ s_vnode) no_pos in
+          let () = Debug.ninfo_hprint (add_str "HeapNode" pr_id) (heap_name ^ s_vnode) no_pos in
            let s =
             try
               let stl = Hashtbl.find tbl_datadef heap_name in
@@ -157,7 +157,7 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
           in (  s_vnode ^ s ),n_pred_abs_num
     | Iformula.HeapNode2 hn2 -> "HeapNode2",pred_abs_num
           (* let heap_name = hn2.Iformula.h_formula_heap2_name in *)
-          (* let _ = Debug.ninfo_hprint (add_str "HeapNode2" pr_id) heap_name no_pos in *)
+          (* let () = Debug.ninfo_hprint (add_str "HeapNode2" pr_id) heap_name no_pos in *)
           (* let (id,_) = hn2.Iformula.h_formula_heap2_node in *)
           (* let s = *)
           (*   try *)
@@ -254,7 +254,7 @@ let process_pred_def subst_self pdef iprog =
     (Iformula.subst_struc sst pdef.I.view_formula, smt_self)
   else (pdef.I.view_formula, self)
   in
-  let _ = Debug.ninfo_hprint (add_str "pred_formula" Iprinter.string_of_struc_formula) pred_formula no_pos in
+  let () = Debug.ninfo_hprint (add_str "pred_formula" Iprinter.string_of_struc_formula) pred_formula no_pos in
   let s1 = process_pred_name pred_name in
   let s2 = process_pred_vars !pred_pre_fix_var self_sv self_typ pred_vars pred_formula spl in
   let s3,_ = (process_struct_formula !pred_pre_fix_var pred_formula spl [] 0) in
@@ -276,7 +276,7 @@ let process_data_def ddef =
   let data_fields = ddef.I.data_fields in
   let s1 = process_data_name data_name in
   let (s2, field_name_list) = process_data_fields data_name data_fields in
-  let _ = Hashtbl.add tbl_datadef data_name field_name_list in
+  let () = Hashtbl.add tbl_datadef data_name field_name_list in
   s1 ^ s2
 
 let process_iante iante iprog all_view_names start_pred_abs_num=
@@ -401,14 +401,14 @@ let save_smt file_name s=
    let org_out_chnl = open_out file_name in
    try
      print_string ("\nSaving " ^ file_name ^ "\n"); flush stdout;
-       let _ = Printf.fprintf  org_out_chnl "%s" s in
-       let _ = close_out org_out_chnl in
+       let () = Printf.fprintf  org_out_chnl "%s" s in
+       let () = close_out org_out_chnl in
        ()
    with
        End_of_file -> exit 0
 
 let trans_smt slk_fname iprog cprog cmds =
-  let _ = reset_smt_number () in
+  let () = reset_smt_number () in
   let ent_cmds, other_cmds = List.partition (fun cmd -> match cmd with
     | EntailCheck _ -> true
     | _ -> false
@@ -429,12 +429,12 @@ let trans_smt slk_fname iprog cprog cmds =
   (*each ent check -> one file*)
   let str_ents = List.map (fun cmd -> (process_entail_new cprog iprog 0 cmd logic_header decl_s0)) ent_cmds in
   let norm_slk_fname =  Globals.norm_file_name slk_fname in
-  let _ = List.iter (fun s ->
+  let () = List.iter (fun s ->
       let n= fresh_number () in
       save_smt (norm_slk_fname ^ "-" ^ (string_of_int n) ^ ".smt2") s
       (* print_endline (s ^ "\n") *)
   ) str_ents in
-  let _ = smt_cmds := [] in
-  let _ = smt_ent_cmds := [] in
-  (* let _ = Slk2smt1.tmp () in *)
+  let () = smt_cmds := [] in
+  let () = smt_ent_cmds := [] in
+  (* let () = Slk2smt1.tmp () in *)
   true

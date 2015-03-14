@@ -110,16 +110,16 @@ let wrap_proving_kind (tk) exec_function args =
   (* if (!sleek_logging_txt || !proof_logging_txt) then *)
   begin
     (* let m = proving_kind # get_stk in *)
-    let _ = proving_kind # push tk in
+    let () = proving_kind # push tk in
     try 
       let res = exec_function args in
-      let _ =  proving_kind # pop in
-      (* let _ = proving_kind # set_stk m in *)
+      let () =  proving_kind # pop in
+      (* let () = proving_kind # set_stk m in *)
       res
     with _ as e ->
         begin
-          let _ = proving_kind # pop in
-          (* let _ = proving_kind # set_stk m in *)
+          let () = proving_kind # pop in
+          (* let () = proving_kind # set_stk m in *)
           raise e
         end
   end

@@ -94,7 +94,7 @@ let write_to_file java_code file_name : unit =
 let rec compile_prog (prog : C.prog_decl) source : unit =
   let java_code = Buffer.create 10240 in
   (* Compile data declarations *)
-  let _ = List.map 
+  let todo_unk = List.map 
     (fun ddef -> compile_data prog ddef java_code) 
     prog.C.prog_data_decls 
   in
@@ -104,26 +104,26 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
     prog.C.prog_view_decls
   in
   let pbvars = List.concat pbvars_tmp in
-  let _ = compile_partially_bound_vars pbvars java_code in
+  let () = compile_partially_bound_vars pbvars java_code in
   (* Compile procedures *)
-  let _ = Buffer.clear java_code in
+  let () = Buffer.clear java_code in
   (* Compile specs *)
   (* 
-     let _ = List.map 
+     let todo_unk = List.map 
      (fun pdef -> compile_proc_spec prog pdef java_code) prog.C.old_proc_decls in
   *)
-  let _ = C.proc_decls_iter prog (fun pdef -> compile_proc_spec prog pdef java_code) in
+  let () = C.proc_decls_iter prog (fun pdef -> compile_proc_spec prog pdef java_code) in
   (* Compile bodies *)
   (* add class declaration *)
   let tmp = Filename.chop_extension (Filename.basename source) in
   let main_class = Gen.replace_minus_with_uscore tmp in
-  let _ = Buffer.add_string java_code ("public class " ^ main_class ^ " {\n") in
+  let () = Buffer.add_string java_code ("public class " ^ main_class ^ " {\n") in
   (*
-    let _ = List.map (fun pdef -> 
+    let todo_unk = List.map (fun pdef -> 
     compile_proc_body prog pdef java_code) prog.C.old_proc_decls in
   *)
-  let _ = C.proc_decls_iter prog (fun pdef -> compile_proc_body prog pdef java_code) in
-  let _ = Buffer.add_string java_code ("\n}\n") in
+  let () = C.proc_decls_iter prog (fun pdef -> compile_proc_body prog pdef java_code) in
+  let () = Buffer.add_string java_code ("\n}\n") in
   let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
   write_to_file java_code (tmp2 ^ ".java")
 
@@ -210,12 +210,12 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     let output_vars = Gen.BList.difference_eq CP.eq_spec_var pre_fv farg_spec_vars in
     (* build vmap *)
     let vmap = H.create 103 in
-    let _ = List.map 
+    let todo_unk = List.map 
       (fun fname -> H.add vmap fname (HExp ("this", fname, false))) farg_names in
-    let _ = Predcomp.precond_output := output_vars in
+    let () = Predcomp.precond_output := output_vars in
     let combined_exp, disj_procs, _ = 
       gen_formula prog pre vmap [] (*output_vars*) in
-    let _ = Predcomp.precond_output := [] in
+    let () = Predcomp.precond_output := [] in
     (* generate fields *)
     let pbvars = get_partially_bound_vars prog pre in
     let fields_tmp = CP.remove_dups_spec_var_list (farg_spec_vars @ pre_fv) in
@@ -252,7 +252,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     I.data_invs = [];
     I.data_is_template = false;
     I.data_methods = check_proc :: disj_procs } in
-    let _ = check_proc.I.proc_data_decl <- Some ddef in
+    let () = check_proc.I.proc_data_decl <- Some ddef in
     let java_str = Java.java_of_data ddef [] in
     Buffer.add_string java_code "\n\n";
     Buffer.add_string java_code java_str;
@@ -286,7 +286,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     let field_names = farg_names @ (List.map CP.name_of_spec_var pre_outvars) in
     (* build vmap *)
     let vmap = H.create 103 in
-    let _ = List.map 
+    let todo_unk = List.map 
       (fun fname -> H.add vmap fname (HExp ("this", fname, false))) field_names in
     (* compile formula *)
     let combined_exp, disj_procs, _ = gen_formula prog post vmap [] in
@@ -299,8 +299,8 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 	CP.remove_dups_spec_var_list (res :: farg_spec_vars @ post_fv @ pre_outvars) 
     in
     (*
-      let _ = print_string ("Compiling " ^ proc.C.proc_name ^ "\n") in
-      let _ = print_string ((String.concat ", " (List.map CP.name_of_spec_var fields_tmp)) ^ "\n") in
+      let () = print_string ("Compiling " ^ proc.C.proc_name ^ "\n") in
+      let () = print_string ((String.concat ", " (List.map CP.name_of_spec_var fields_tmp)) ^ "\n") in
     *)
     let fields = gen_fields fields_tmp pbvars pos in
     (* parameters for traverse *)
@@ -335,7 +335,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     I.data_invs = [];
     I.data_is_template = false;
     I.data_methods = check_proc :: disj_procs } in
-    let _ = check_proc.I.proc_data_decl <- Some ddef in
+    let () = check_proc.I.proc_data_decl <- Some ddef in
     let java_str = Java.java_of_data ddef [] in
     Buffer.add_string java_code "\n\n";
     Buffer.add_string java_code java_str

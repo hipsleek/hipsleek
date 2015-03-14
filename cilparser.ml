@@ -302,7 +302,7 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
             collect_goto_label_in_block blk index depth
         | Cil.TryFinally _
         | Cil.TryExcept _ -> 
-            let _ = print_endline ("Cilparser: handle TryFinally, TryExcept later") in
+            let () = print_endline ("Cilparser: handle TryFinally, TryExcept later") in
             ([], [], index)
         | _ -> ([], [], index)
       ) in
@@ -543,7 +543,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
       let data_name, base_data = (
         let re = Str.regexp "\\(_star\\)" in
         try
-          let _ = Str.search_forward re typ_name 0 in
+          let (todo_unk:int) = Str.search_forward re typ_name 0 in
           let dname = Str.global_replace re "^" typ_name in
           let bdata = Str.global_replace re "" typ_name in
           (dname, bdata)
@@ -589,7 +589,7 @@ let is_pointer_typ_name (typ_name: string) : bool =
   if (len <= 5) then false
   else
     let suffix = String.sub typ_name (len - 5) 5 in
-    (* let _ = print_endline ("suffix = " ^ suffix) in *)
+    (* let () = print_endline ("suffix = " ^ suffix) in *)
     eq_str suffix "_star"
 
 
@@ -807,32 +807,32 @@ and gather_addrof_stmt (stmt: Cil.stmt) : unit =
     | Cil.Break _ -> ()
     | Cil.Continue _ -> ()
     | Cil.If (e, b1, b2, _) ->
-          let _ = gather_addrof_exp e in
-          let _ = gather_addrof_block b1 in
-          let _ = gather_addrof_block b2 in
+          let () = gather_addrof_exp e in
+          let () = gather_addrof_block b1 in
+          let () = gather_addrof_block b2 in
           ()
     | Cil.Switch (_, _, _, l) -> ()
     | Cil.Loop (blk, _, _, stmt_opt1, stmt_opt2) -> (
-          let _ = gather_addrof_block blk in
-          let _ = (match stmt_opt1 with
+          let () = gather_addrof_block blk in
+          let () = (match stmt_opt1 with
             | None -> ()
             | Some s -> gather_addrof_stmt s
           ) in
-          let _ = (match stmt_opt2 with
+          let () = (match stmt_opt2 with
             | None -> ()
             | Some s -> gather_addrof_stmt s
           ) in ()
       )
     | Cil.Block blk -> gather_addrof_block blk
     | Cil.TryFinally (b1, b2, _) ->
-          let _ = gather_addrof_block b1 in
-          let _ = gather_addrof_block b2 in
+          let () = gather_addrof_block b1 in
+          let () = gather_addrof_block b2 in
           ()
     | Cil.TryExcept (b1, (is, e), b2, _) ->
-          let _ = gather_addrof_block b1 in
-          let _ = List.iter gather_addrof_instr is in
-          let _ = gather_addrof_exp e in
-          let _ = gather_addrof_block b2 in
+          let () = gather_addrof_block b1 in
+          let () = List.iter gather_addrof_instr is in
+          let () = gather_addrof_exp e in
+          let () = gather_addrof_block b2 in
           ()
     | Cil.HipStmt (iast_exp, l) -> ()
 
@@ -840,8 +840,8 @@ and gather_addrof_instr (i: Cil.instr) : unit =
   match i with
     | Cil.Set (_, e, _) -> gather_addrof_exp e
     | Cil.Call (_, e, es, _) ->
-          let _ = gather_addrof_exp e in
-          let _ = List.iter gather_addrof_exp es in
+          let () = gather_addrof_exp e in
+          let () = List.iter gather_addrof_exp es in
           ()
     | Cil.Asm _ -> ()
 
@@ -856,14 +856,14 @@ and gather_addrof_exp (e: Cil.exp) : unit =
     | Cil.AlignOfE _ -> ()
     | Cil.UnOp (_, e1, _, _) -> gather_addrof_exp e1
     | Cil.BinOp (_, e1, e2, _, _) -> (
-          let _ = gather_addrof_exp e1 in
-          let _ = gather_addrof_exp e2 in
+          let () = gather_addrof_exp e1 in
+          let () = gather_addrof_exp e2 in
           ()
       )
     | Cil.Question (e1, e2, e3, _, _) -> (
-          let _ = gather_addrof_exp e1 in
-          let _ = gather_addrof_exp e2 in
-          let _ = gather_addrof_exp e3 in
+          let () = gather_addrof_exp e1 in
+          let () = gather_addrof_exp e2 in
+          let () = gather_addrof_exp e3 in
           ()
       )
     | Cil.CastE (_, e, _) -> gather_addrof_exp e
@@ -875,7 +875,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
             | Cil.TComp _ -> ()
             | _ -> (
                   try
-                    let _ = Hashtbl.find tbl_addrof_info lv_str in ()
+                    let todo_unk = Hashtbl.find tbl_addrof_info lv_str in ()
                   with Not_found -> (
                       let refined_ty = (match lv_ty with
                         | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
@@ -1270,7 +1270,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
         ) in
         let input_typ = (
           let ity = typ_of_cil_exp exp in
-          (* let _ = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
+          (* let () = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
           match ity with
           | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
           | _ -> translate_typ ity pos
@@ -1280,8 +1280,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | _ -> translate_typ ty pos
         ) in
         let input_exp = translate_exp exp in
-        (* let _ = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
-        (* let _ = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
+        (* let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+        (* let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
         if (input_typ = output_typ) then
           (* no need casting *)
           input_exp
@@ -1441,7 +1441,7 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
                 | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
                 | _ -> translate_typ ty pos
               ) in
-              (* let _ =  Debug.info_hprint (add_str "If:new_ty" (string_of_typ)) (new_ty) no_pos in *)
+              (* let () =  Debug.info_hprint (add_str "If:new_ty" (string_of_typ)) (new_ty) no_pos in *)
               match new_ty with
                 | Globals.Bool -> translate_exp exp
                 | _ -> (
@@ -1591,7 +1591,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
             if List.mem id idl then vd.Iast.exp_var_decl_type else find_typ tl id
       | _ -> Globals.Void
   and helper_formula (h: IF.formula) : IF.formula =
-    (* let _ = print_endline "hello" in *)
+    (* let () = print_endline "hello" in *)
     let pr = Iprinter.string_of_formula in
     Debug.no_1 "helper_formula" pr pr helper_formula_x h
   and helper_formula_x (f: IF.formula): IF.formula = (
@@ -1671,7 +1671,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               }
   )
   and helper_h_formula (h: IF.h_formula) : IF.h_formula =
-    (* let _ = print_endline "hello" in *)
+    (* let () = print_endline "hello" in *)
     let pr = Iprinter.string_of_h_formula in
     Debug.no_1 "helper_h_formula" pr pr helper_h_formula_x h
   and helper_h_formula_x (h: IF.h_formula) : IF.h_formula = (
@@ -1980,7 +1980,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
     aux_local_vardecls := [];
     nondet_vars := [Globals.nondet_int_proc_name]; (* To handle nondeterministic if conditions *)
-    let _ = gather_addrof_fundec fundec in
+    let () = gather_addrof_fundec fundec in
     (* start translating function *)
     let pos = match lopt with None -> no_pos | Some l -> translate_location l in
     let fheader = fundec.Cil.svar in
@@ -2035,7 +2035,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
     let has_shape_args = List.exists (fun p ->
-        (* let _ = print_endline (string_of_typ p.Iast.param_type) in *)
+        (* let () = print_endline (string_of_typ p.Iast.param_type) in *)
         is_node_typ p.Iast.param_type
     ) funargs in
     let static_specs1, hp_decls, args_wi = 
@@ -2045,10 +2045,10 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         | Iformula.EList [] -> begin
             match funbody with
               | Some _ ->
-                    let _ =  Debug.ninfo_hprint (add_str "infer_const_obj" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
+                    let () =  Debug.ninfo_hprint (add_str "infer_const_obj" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
 	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
                     (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
-  	          let _ = Debug.ninfo_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
+  	          let () = Debug.ninfo_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
   	          (ss, hps, args_wi)
               | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
           end
@@ -2061,7 +2061,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         (*             Iformula.formula_inf_obj = i_sf.Iformula.formula_inf_obj # mk_or i_sf2.Iformula.formula_inf_obj;} *)
         (*       | _ -> ss *)
         (*     in *)
-        (*     let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+        (*     let () = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
         (*     (ss,hps,args_wi) *)
         (*      else *)
         (*        static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs *)
@@ -2162,16 +2162,16 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
         | Cil.GType (tinfo, _) -> ();
         | Cil.GCompTag (comp, l) -> translate_compinfo comp (Some l)
         | Cil.GCompTagDecl _ ->
-              (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GEnumTag _ ->
-              (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GEnumTagDecl _ ->
-              (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GVarDecl (v, l) ->
-              (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GVar (v, init, l) ->
               let gvar = translate_global_var v init (Some l) in
@@ -2181,13 +2181,13 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
               let proc = translate_fundec fd (Some l) in
               proc_decls := !proc_decls @ [proc]
         | Cil.GAsm _ ->
-              (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GPragma _ ->
-              (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GText _ ->
-              (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
+              (* let () = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
               ()
         | Cil.GHipProgSpec (hipprog, _) ->
               aux_progs := !aux_progs @ [hipprog]
@@ -2265,10 +2265,10 @@ let process_one_file (cil: Cil.file) : unit =
     )
   );
   let prog = translate_file cil in
-  let _ = print_endline ("------------------------") in
-  let _ = print_endline ("--> translated program: ") in
-  let _ = print_endline ("------------------------") in 
-  let _ = print_endline (Iprinter.string_of_program prog) in 
+  let () = print_endline ("------------------------") in
+  let () = print_endline ("--> translated program: ") in
+  let () = print_endline ("------------------------") in 
+  let () = print_endline (Iprinter.string_of_program prog) in 
   ()
 
 
@@ -2305,6 +2305,6 @@ let parse_hip (filename: string) : Iast.prog_decl =
   let prog = translate_file cil in
   (* and clean temp files *)
   let cmd = ("rm " ^ prep_filename) in
-  let _ = Sys.command cmd in
+  let todo_unk = Sys.command cmd in
   (* return *)
   prog

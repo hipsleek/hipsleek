@@ -147,7 +147,7 @@ let syscall cmd =
        Buffer.add_channel buf ic 1
      done
    with End_of_file -> ());
-  let _ = Unix.close_process (ic, oc) in
+  let todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
    
 
@@ -181,7 +181,7 @@ let compute_inv name vars fml pf no_of_disjs =
       (*print_endline ("RES: " ^ res);*)
       DD.info_zprint (lazy (("Result of fixbag: " ^ res))) no_pos;
       let new_pf = List.hd (Parse_fixbag.parse_fix res) in
-      let _ = DD.devel_hprint (add_str "Result of fixbag (parsed): "  !CP.print_formula) new_pf no_pos in
+      let () = DD.devel_hprint (add_str "Result of fixbag (parsed): "  !CP.print_formula) new_pf no_pos in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
       Pr.fmt_string "INV:  ";
@@ -809,7 +809,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
         | _ -> report_error no_pos "Expecting a post"
     with _ -> 
       if not(is_rec pf) then 
-        let _ = DD.devel_hprint (add_str "Input: " !CP.print_formula) pf no_pos in
+        let () = DD.devel_hprint (add_str "Input: " !CP.print_formula) pf no_pos in
         let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)

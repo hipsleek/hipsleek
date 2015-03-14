@@ -243,7 +243,7 @@ let is_program_pointer (name:ident) =
   let slen = (String.length name) in
   try  
       let n = (String.rindex name '_') in
-      (* let _ = print_endline ((string_of_int n)) in *)
+      (* let () = print_endline ((string_of_int n)) in *)
       let l = (slen-(n+1)) in
       if (l==0) then (false,name)
       else 
@@ -1401,13 +1401,13 @@ let string_of_inf_const x =
 (*   method reset c  = Array.set arr (inf_const_to_int c) false *)
 (*   method mk_or (o2:inf_obj) =  *)
 (*     let o1 = o2 # clone in *)
-(*     let _ = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in *)
+(*     let () = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in *)
 (*     o1 *)
 (*   method clone =  *)
 (*     let no = new inf_obj in *)
 (*     let ar = no # get_arr in *)
-(*     let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in *)
-(*     (\* let _ = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+(*     let () = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in *)
+(*     (\* let () = print_endline ("Cloning :"^(no #string_of)) in *\) *)
 (*     no *)
 (* end;; *)
 
@@ -1479,12 +1479,12 @@ object (self)
   method mk_or (o2:inf_obj) = 
     let o1 = o2 # clone in
     let l = self # get_lst in
-    let _ = o1 # set_list l in
+    let () = o1 # set_list l in
     o1
   method clone = 
     let no = new inf_obj in
-    let _ = no # set_list arr in
-    (* let _ = print_endline ("Cloning :"^(no #string_of)) in *)
+    let () = no # set_list arr in
+    (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
     no
 end;;
 
@@ -1584,42 +1584,42 @@ let sleek_timeout_limit = ref 0.
 
 let dis_inv_baga () = 
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
-  let _ = gen_baga_inv := false in
+  let () = gen_baga_inv := false in
   ()
 
 let dis_bk ()=
-  let _ = oc_simplify := true in
-  let _ = sat_timeout_limit:= 2. in
-  let _ = user_sat_timeout := false in
-  let _ = imply_timeout_limit := 3. in
-  (* let _ = en_slc_ps := false in *)
+  let () = oc_simplify := true in
+  let () = sat_timeout_limit:= 2. in
+  let () = user_sat_timeout := false in
+  let () = imply_timeout_limit := 3. in
+  (* let () = en_slc_ps := false in *)
   ()
 
 let dis_pred_sat () = 
   if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
-  (* let _ = gen_baga_inv := false in *)
-  let _ = prove_invalid := false in
+  (* let () = gen_baga_inv := false in *)
+  let () = prove_invalid := false in
   (*baga bk*)
-  let _ = dis_bk () in
+  let () = dis_bk () in
   ()
 
 let en_bk () =
-  let _ = oc_simplify := false in
-  let _ = sat_timeout_limit:= 1. in
-  let _ = user_sat_timeout := true in
-  let _ = imply_timeout_limit := 1. in
-  (* let _ = en_slc_ps := true in *)
+  let () = oc_simplify := false in
+  let () = sat_timeout_limit:= 1. in
+  let () = user_sat_timeout := true in
+  let () = imply_timeout_limit := 1. in
+  (* let () = en_slc_ps := true in *)
   ()
 
 let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
-  (* let _ = gen_baga_inv := true in *)
-  let _ = prove_invalid := true in
+  (* let () = gen_baga_inv := true in *)
+  let () = prove_invalid := true in
   (*baga bk*)
-  let _ = en_bk ()  in
+  let () = en_bk ()  in
   ()
 
-(* let _ = if !smt_compete_mode then *)
+(* let () = if !smt_compete_mode then *)
 (*   begin *)
 (*     (\* Debug.trace_on := false; *\) *)
 (*     (\* Debug.devel_debug_on:= false; *\) *)
@@ -1639,7 +1639,7 @@ let en_pred_sat () =
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
 (* let report_error2 (pos : loc) (msg : string) = *)
-(*   let _ = *)
+(*   let () = *)
 (*     try !reporter pos msg *)
 (*     with Not_found -> *)
 (*       let report pos msg = *)
@@ -1737,7 +1737,7 @@ let fresh_var_name (tn:string)(ln:int):string =
 let fresh_trailer () =
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
-	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
+	(*let () = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
 
@@ -1871,7 +1871,7 @@ let norm_file_name str =
 (* let wrap_gen save_fn set_fn restore_fn flags f a = *)
 (*   (\* save old_value *\) *)
 (*   let old_values = save_fn flags in *)
-(*   let _ = set_fn flags in *)
+(*   let () = set_fn flags in *)
 (*   try  *)
 (*     let res = f a in *)
 (*     (\* restore old_value *\) *)
@@ -1963,14 +1963,14 @@ let set_last_sleek_fail () =
 
 (* let read_main () = *)
 (*   let xs = read_from_debug_file (debug_file ()) in *)
-(*   (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+(*   (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
 (*   List.iter (fun x -> *)
 (*       try *)
 (*         let l = String.index x ',' in *)
 (*         let m = String.sub x 0 l in *)
 (*         let split = String.sub x (l+1) ((String.length x) -l -1) in *)
-(*         let _ = print_endline (m) in *)
-(*         let _ = print_endline (split) in *)
+(*         let () = print_endline (m) in *)
+(*         let () = print_endline (split) in *)
 (*         let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
 (*           if String.compare split "Loop" == 0 then DO_Loop else *)
 (*             DO_Normal *)
@@ -2023,8 +2023,8 @@ let lcm_l (l: int list): int =
   | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
   
 let smt_return_must_on_error ()=
-  let _ = if !return_must_on_pure_failure then
-    (* let _ = smt_is_must_failure := (Some true) in *) ()
+  let () = if !return_must_on_pure_failure then
+    (* let () = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()
 

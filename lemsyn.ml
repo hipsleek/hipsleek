@@ -89,8 +89,8 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       check_iden (List.hd l_hvs) (List.hd r_hvs) then
       ()
     else
-      let _ = Debug.info_hprint (add_str "cyc lf1" !Cformula.print_formula) lf1 no_pos in
-      let _ = Debug.info_hprint (add_str "cyc rf1" !Cformula.print_formula) rf1 no_pos in
+      let () = Debug.info_hprint (add_str "cyc lf1" !Cformula.print_formula) lf1 no_pos in
+      let () = Debug.info_hprint (add_str "cyc rf1" !Cformula.print_formula) rf1 no_pos in
       let is_same,_ = Checkeq.checkeq_formulas [self] lf1 rf1 in
       if is_same then () else
         (* let lf1 = Cformula.subst lss  *)
@@ -115,10 +115,10 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
             ^ (Cprinter.string_of_formula rf1))
           else ()
         in
-        let _ = Globals.lemma_syn_count := !Globals.lemma_syn_count + 1 in
+        let () = Globals.lemma_syn_count := !Globals.lemma_syn_count + 1 in
         ()
   with e ->
-      let _ = if not !Globals.smt_compete_mode then print_endline (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) else ()
+      let () = if not !Globals.smt_compete_mode then print_endline (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) else ()
       in ()
 
 let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
@@ -136,7 +136,7 @@ let add_ihprel iprog chp_dclrs=
       | [] -> res
       | chp::rest ->
             try
-              let _ = Iast.look_up_hp_def_raw res chp.C.hp_name in
+              let todo_unk = Iast.look_up_hp_def_raw res chp.C.hp_name in
                process_one rest res
             with Not_found ->
                 let n_ihp = {
@@ -152,7 +152,7 @@ let add_ihprel iprog chp_dclrs=
                 process_one rest (res@[n_ihp])
   in
   let nihp_dclr = process_one chp_dclrs iprog.Iast.prog_hp_decls in
-  let _ = iprog.Iast.prog_hp_decls <- iprog.Iast.prog_hp_decls@nihp_dclr in
+  let () = iprog.Iast.prog_hp_decls <- iprog.Iast.prog_hp_decls@nihp_dclr in
   nihp_dclr
 
 let gen_lemma_infer_x (prog) ass_stk hpdef_stk
@@ -173,8 +173,8 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   let eqs = (Mcpure.ptr_equations_without_null mf) in
   let cl_dns = Cformula.find_close [dnode0.Cformula.h_formula_data_node] eqs in
   let inter_vargs = CP.intersect_svl cl_dns vnode0.Cformula.h_formula_view_arguments in
-  let _ = Debug.info_hprint (add_str "cl_dns" !CP.print_svl) cl_dns no_pos in
-  let _ = Debug.info_hprint (add_str "inter_vargs" !CP.print_svl) inter_vargs no_pos in
+  let () = Debug.info_hprint (add_str "cl_dns" !CP.print_svl) cl_dns no_pos in
+  let () = Debug.info_hprint (add_str "inter_vargs" !CP.print_svl) inter_vargs no_pos in
   let ss1 = List.map (fun sv -> (dnode0.Cformula.h_formula_data_node, sv)) inter_vargs in
   let ss2 = List.fold_left (fun r ((CP.SpecVar (t, id, p)) as sv1) ->
       if p = Primed then
@@ -213,9 +213,9 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   let l_coer = Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
   (*backup*)
   let cur_ass = ass_stk# get_stk in
-  let _ = ass_stk # reset in
+  let () = ass_stk # reset in
   let cur_hpdefs =  hpdef_stk # get_stk in
-  let _ = hpdef_stk # reset in
+  let () = hpdef_stk # reset in
   let r1,hp_defs0,r3 = manage_infer_pred_lemmas_fnc [l_coer] iprog prog xpure_heap in
   (*transform inferred def*)
   let hp_defs = (* Cformula.rel_def_stk # get_stk *) hp_defs0 in
@@ -232,21 +232,21 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     let l_coer = Iast.mk_lemma (lem_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf4 in
     (*add lemma*)
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
-    let _ = print_endline "\n*******relational definition ********" in
+    let () = print_endline "\n*******relational definition ********" in
     let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def (Cformula.rel_def_stk # get_stk) else
       (Cformula.rel_def_stk # get_stk) in
     let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-    let _ = print_endline (pr1 defs1) in
-    let _ = print_endline (" \n gen lemma (infer):" ^ (Cprinter.string_of_formula lf1) ^ ( " -> " )
+    let () = print_endline (pr1 defs1) in
+    let () = print_endline (" \n gen lemma (infer):" ^ (Cprinter.string_of_formula lf1) ^ ( " -> " )
     ^ (Cprinter.string_of_formula rf3)) in
     ()
   else ()
   in
   (*restore*)
-  let _ = ass_stk # reset in
-  let _ = ass_stk # push_list cur_ass in
-  let _ = hpdef_stk # reset in
-  let _ = hpdef_stk # push_list cur_hpdefs in
+  let () = ass_stk # reset in
+  let () = ass_stk # push_list cur_ass in
+  let () = hpdef_stk # reset in
+  let () = hpdef_stk # push_list cur_hpdefs in
   n_hp
 
 let gen_lemma_infer prog ass_stk hpdef_stk formula_rev_fnc manage_unsafe_lemmas_fnc manage_infer_lemmas_fnc

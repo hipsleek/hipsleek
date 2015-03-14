@@ -32,10 +32,10 @@ let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formul
   let ante_fl = true_f::(split_conjunctions ante_no_templ) in
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
   
-  (* let _ = print_endline ("collect_templ_assume_rhs: ante: " ^ (!print_formula ante)) in                *)
-  (* let _ = print_endline ("collect_templ_assume_rhs: ante_tl: " ^ (pr_list print_term_list ante_tl)) in *)
+  (* let () = print_endline ("collect_templ_assume_rhs: ante: " ^ (!print_formula ante)) in                *)
+  (* let () = print_endline ("collect_templ_assume_rhs: ante_tl: " ^ (pr_list print_term_list ante_tl)) in *)
 
-  let _ = templ_assume_scc_stk # push 
+  let () = templ_assume_scc_stk # push 
     { ass_vars = vars;
       ass_unks = ante_unks @ cons_unks;
       ass_ante = ante;
@@ -195,7 +195,7 @@ let gen_templ_constr (ta: templ_assume) =
 (******************************)
 let gen_slk_infer_templ_scc () =
   let inp = List.rev (templ_sleek_scc_stk # get_stk) in
-  let _ = templ_sleek_stk # reset in
+  let () = templ_sleek_stk # reset in
 
   let out = List.map (fun (templ_vars, ante, cons) ->
     "infer " ^ (!print_svl templ_vars) ^ " " ^ 
@@ -208,7 +208,7 @@ let gen_slk_file prog =
   let out_chn =
     let reg = Str.regexp ".ss" in
     let file_name_slk = "logs/templ_" ^ (Str.global_replace reg ".slk" file_name_ss) in
-    let _ = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
+    let () = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     open_out (file_name_slk)
   in
@@ -220,13 +220,13 @@ let gen_slk_file prog =
   let templ_infer_str = String.concat "\n\n" (List.rev (templ_sleek_stk # get_stk)) in
   
   let slk_output = templ_decl_str ^ "\n\n" ^ templ_infer_str in
-  let _ = output_string out_chn slk_output in
-  let _ = close_out out_chn in
+  let () = output_string out_chn slk_output in
+  let () = close_out out_chn in
   ()
 
 let solve_templ_assume _ =
   let templ_assumes = List.rev (templ_assume_scc_stk # get_stk) in
-  let _ = templ_assume_scc_stk # reset in
+  let () = templ_assume_scc_stk # reset in
   if templ_assumes = [] then [], [], Unknown
   else
     let constrs, templ_unks = List.fold_left (fun (ac, au) ta ->
@@ -234,13 +234,13 @@ let solve_templ_assume _ =
       (ac @ constr), (au @ ta.ass_unks)) ([], []) templ_assumes in
     let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
   
-    let _ = 
+    let () = 
       if !gen_templ_slk then gen_slk_infer_templ_scc ()
       else ()
     in
       
     (* Printing template assumptions *)
-    let _ = 
+    let () = 
       if !print_relassume then
         if templ_assumes = [] then ()
         else begin
@@ -264,13 +264,13 @@ let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) 
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
-    let _ = silent_pr silent ("TEMPLATE INFERENCE: Unsat.") in 
+    let () = silent_pr silent ("TEMPLATE INFERENCE: Unsat.") in 
     res, templ_assumes, templ_unks
   | Sat model ->
-    let _ = 
+    let () = 
       if not silent then
-        (* let _ = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in *)
-        (* let _ = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in         *)
+        (* let () = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in *)
+        (* let () = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in         *)
         let templ_decls = prog.C.prog_templ_decls in
         let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
         silent_pr silent "**** TEMPLATE INFERENCE RESULT ****";
@@ -287,7 +287,7 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
-      let _ = print_endline ("\nContinue with piecewise function inference ...") in
+      let () = print_endline ("\nContinue with piecewise function inference ...") in
       let ptempl_assumes, inf_ptempls, ptempl_defs = 
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -296,7 +296,7 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
         let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
         match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
-      let _ = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
+      let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else ()
   | _ -> ()
 

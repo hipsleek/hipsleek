@@ -274,7 +274,7 @@ and compile_disjunct (prog : C.prog_decl) (f0 : formula) (input_vars : ident lis
   | Exists ({formula_exists_heap = h;
 			 formula_exists_pure = pure;
 			 formula_exists_pos = pos}) -> begin
-	  let _ = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in
+	  let () = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in
 		(* Compile heap for now *)
 	  let h_exp, h_out, h_map = compile_heap prog f0 input_vars h in
 	  let evars_sv, _ = split_quantifiers f0 in
@@ -1645,7 +1645,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
      checkers for predicate invocations will use the same name as the
      root pointer for the predicate instance.
   *)
-  (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
+  (*  let () = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
   let h, pure0,_,_, _,_ = split_components base in
@@ -1660,7 +1660,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
   let pure0 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0  in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
-  (*  let _ = print_vmap vmap in *)
+  (*  let () = print_vmap vmap in *)
   (* compile *)
   (* tests *)
   let h_exp = gen_heap prog h vmap unbound_vars in
@@ -1848,11 +1848,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   *)
   let in_names = List.map CP.name_of_spec_var in_params in
   let vmap = H.create 103 in
-  let _ = List.iter 
+  let () = List.iter 
     (fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
   let pbvars0 = gen_partially_bound_params out_params (C.formula_of_unstruc_view_f vdef) in
   (* update partially bound vars for vdef *)
-  let _ = update_partially_bound vdef pbvars0 in
+  let () = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
