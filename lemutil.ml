@@ -18,11 +18,11 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
     Lem_store.all_lemma # get_left_coercion, Lem_store.all_lemma # get_right_coercion)
   in
   let reset_progs (ivdecls, ihpdecls, cvdecls, chpdecls, left_coers, righ_coers)=
-    let _ = iprog0.I.prog_view_decls <- ivdecls in
-    let _ = iprog0.I.prog_hp_decls <- ihpdecls in
-    let _ = cprog0.C.prog_view_decls <- cvdecls in
-    let _ = cprog0.C.prog_hp_decls <- chpdecls in
-    let _ = Lem_store.all_lemma # set_coercion left_coers righ_coers in
+    let () = iprog0.I.prog_view_decls <- ivdecls in
+    let () = iprog0.I.prog_hp_decls <- ihpdecls in
+    let () = cprog0.C.prog_view_decls <- cvdecls in
+    let () = cprog0.C.prog_hp_decls <- chpdecls in
+    let () = Lem_store.all_lemma # set_coercion left_coers righ_coers in
     ()
   in
   let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
@@ -32,7 +32,7 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
           match hpdef.Cformula.def_cat with
             | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
                 (*to remove after improve the algo with nested*)
-                let _ = List.map (fun (f,_) ->
+                let todo_unk = List.map (fun (f,_) ->
                     let hps = Cformula.get_hp_rel_name_formula f in
                     if CP.diff_svl hps [hp] != [] then
                       raise Not_found
@@ -88,10 +88,10 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
       (* let r2,_,_ = fnc f23 f13 in *)
       r2
   in
-  let _ = reset_progs bc in
+  let () = reset_progs bc in
   r
   end
-  with _ -> (* let _ = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in *)
+  with _ -> (* let () = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in *)
   false
 
 let checkeq_sem iprog cprog f1 f2 hpdefs to_infer_hps12 to_infer_hps21 =

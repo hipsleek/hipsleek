@@ -477,9 +477,9 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 		
 		let all_decomps_l l_decs vl = 
 			(*let pr1 = pr_list_s SV.string_of in*)
-			(*let _ = print_string ("all_decomps_l in1: "^(pr1 l_decs)^"\n all_decomps_l in2: "^(pr1 vl)^"\n") in*)
+			(*let () = print_string ("all_decomps_l in1: "^(pr1 l_decs)^"\n all_decomps_l in2: "^(pr1 vl)^"\n") in*)
 			let r = fold_1_map (all_decomps_2 l_decs) vl in
-			(*let _ = print_string ("all_decomps_l  out: "^(pr1 r)^"\n") in*)
+			(*let () = print_string ("all_decomps_l  out: "^(pr1 r)^"\n") in*)
 			r
 		
 		let longest_subst lst a dec_v = 
@@ -527,7 +527,7 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 					let nvl, el = List.fold_left expand_one_one_acc ([],[]) el in
 					let nvle, ve, new_to_dec = List.fold_left expand_one_ve ([],[],[]) ve in
 					let nvlc, vc = List.fold_left expand_one_vc ([],[]) vc in
-					(*let _ = print_string ("dec: "^(SV.string_of v)^" generated: " ^(pr_list SV.string_of new_to_dec)^"\n") in*)
+					(*let () = print_string ("dec: "^(SV.string_of v)^" generated: " ^(pr_list SV.string_of new_to_dec)^"\n") in*)
 					remove_dups_eq SV.eq (vl@nvl@nvle@nvlc), ve,vc,el,new_to_dec in			
 				
 				let rec expand_one_rec (vl,ve, vc, el) vl1 = match vl1 with
@@ -541,22 +541,22 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 				vl,ve,vc,el in
 									
 			let rec fix (avl,ave,avc,ael) (cvl,cve,cvc,cel) vs_dec_in_ante (*decomposed in ante*) vs_dec_in_cons (*decomposed in conseq*) =
-				(*let _ = print_string ("all dec in ante "^( pr_list_s SV.string_of avl)^"\n") in
-				let _ = print_string ("all dec in conseq "^( pr_list_s SV.string_of cvl)^"\n") in
-				let _ = print_string ("common vars in ante "^( pr_list_s SV.string_of vs_dec_in_ante)^"\n") in
-				let _ = print_string ("common vars in conseq "^( pr_list_s SV.string_of vs_dec_in_cons)^"\n") in*)
+				(*let () = print_string ("all dec in ante "^( pr_list_s SV.string_of avl)^"\n") in
+				let () = print_string ("all dec in conseq "^( pr_list_s SV.string_of cvl)^"\n") in
+				let () = print_string ("common vars in ante "^( pr_list_s SV.string_of vs_dec_in_ante)^"\n") in
+				let () = print_string ("common vars in conseq "^( pr_list_s SV.string_of vs_dec_in_cons)^"\n") in*)
 				(*let pr_vl = pr_list_s SV.string_of in
 				let pr_vel = pr_list_s (pr_pair SV.string_of SV.string_of) in
 				let pr_vcl = pr_list_s (pr_pair SV.string_of string_of_bool) in
 				let pr1 = pr_quad pr_vl pr_vel pr_vcl string_of_eq_l in
-				let _ = print_string ("fix ante: "^ pr1 (avl,ave,avc,ael)^"\n") in
-				let _ = print_string ("fix conseq: "^ pr1 (cvl,cve,cvc,cel)^"\n") in*)
+				let () = print_string ("fix ante: "^ pr1 (avl,ave,avc,ael)^"\n") in
+				let () = print_string ("fix conseq: "^ pr1 (cvl,cve,cvc,cel)^"\n") in*)
 				let c_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst vs_dec_in_cons) [] vs_dec_in_ante) in (*what needs decomposing in conseq*)
 				let a_exp = remove_dups_eq SV.eq (List.fold_left (longest_subst vs_dec_in_ante) [] vs_dec_in_cons) in (*what needs decomposing in ante*)
 				if a_exp=[] && c_exp=[] then avl,ael,ave,avc,cvl,cve,cvc,cel
 				else
-					(*let _ = print_string ("to dec in conseq "^( pr_list_s SV.string_of c_exp)^"\n") in
-					let _ = print_string ("to dec in ante "^( pr_list_s SV.string_of a_exp)^"\n") in*)
+					(*let () = print_string ("to dec in conseq "^( pr_list_s SV.string_of c_exp)^"\n") in
+					let () = print_string ("to dec in ante "^( pr_list_s SV.string_of a_exp)^"\n") in*)
 					let avl,ave,avc,ael = expand avl ave avc ael a_exp in
 					let cvl,cve,cvc,cel = expand cvl cve cvc cel c_exp in
 					fix (avl,ave,avc,ael) (cvl,cve,cvc,cel) (all_decomps_l avl vs_dec_in_ante) (all_decomps_l cvl vs_dec_in_cons) in
@@ -567,11 +567,11 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 (*		let pr_vel = pr_list_s (pr_pair SV.string_of SV.string_of) in*)
 (*		let pr_vcl = pr_list_s (pr_pair SV.string_of string_of_bool) in*)
 (*		let pr1 = pr_quad pr_vl pr_vel pr_vcl string_of_eq_l in*)
-(*		let _ = print_string ("meet_decompositions IN1: "^(pr1 ante)^"\n meet_decompositions IN2: "^(pr1 conseq)^"\n meet_decompositions IN3: "^(pr_vl int_vs)^"\n");flush_all () in flush stdout;*)
+(*		let () = print_string ("meet_decompositions IN1: "^(pr1 ante)^"\n meet_decompositions IN2: "^(pr1 conseq)^"\n meet_decompositions IN3: "^(pr_vl int_vs)^"\n");flush_all () in flush stdout;*)
 		let a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs = meet_decompositions ante conseq int_vs in
 (*		let rante = a_dec_vars, a_v_e, a_v_c, a_l_eqs in*)
 (*		let rconseq =  c_dec_vars, c_v_e, c_v_c, c_l_eqs in*)
-(*		let _ = print_string ("meet_decompositions OUT1: "^(pr1 rante)^"\n meet_decompositions OUT2: "^(pr1 rconseq)^"\n");flush_all () in flush stdout;*)
+(*		let () = print_string ("meet_decompositions OUT1: "^(pr1 rante)^"\n meet_decompositions OUT2: "^(pr1 rconseq)^"\n");flush_all () in flush stdout;*)
 		a_dec_vars, a_l_eqs, a_v_e, a_v_c, c_dec_vars,  c_v_e, c_v_c, c_l_eqs
 		
 		(*simplification  functions, reductions to v*v=v*)
@@ -814,9 +814,9 @@ module Dfrac_s_solver = functor (Ts : TREE_CONST) -> functor (SV : SV)-> functor
 			
 				let c_const_vars, c_subst_vars, c_l_eqs = solve_trivial_eq_l c_ev c_v_e c_v_c c_l_eqs in
 				let c_nz_cons = compute_nz_cons c_nzv (a_dec_vars@c_dec_vars) c_const_vars c_subst_vars in
-				(*let _ = print_string ("cnz: "^(pr_list (fun l-> "{"^pr_list_s SV.string_of l^"}") c_nz_cons)^"\n")  in*)
+				(*let () = print_string ("cnz: "^(pr_list (fun l-> "{"^pr_list_s SV.string_of l^"}") c_nz_cons)^"\n")  in*)
 				let c_nz_cons = List.fold_left (fun c_nz_cons (v1,v2)-> List.map (List.map (fun v-> if SV.eq v1 v then v2 else v)) c_nz_cons) c_nz_cons a_subst_vars in
-				(*let _ = print_string ("cnz: "^(pr_list (fun l-> "{"^pr_list_s SV.string_of l^"}") c_nz_cons)^"\n")  in*)
+				(*let () = print_string ("cnz: "^(pr_list (fun l-> "{"^pr_list_s SV.string_of l^"}") c_nz_cons)^"\n")  in*)
 				let c_nz_cons = List.fold_left (fun c_nz_cons (v,c)-> 
 					if c then List.filter (fun c-> not (mem_eq SV.eq v c)) c_nz_cons
 					else List.map (List.filter (fun c-> not (SV.eq c v))) c_nz_cons) c_nz_cons a_const_vars in

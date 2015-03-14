@@ -9,7 +9,7 @@ let trace_on = ref true
 
 let z_debug_arg = ref (None:Str.regexp option)
 
-let _ = if !compete_mode then
+let () = if !compete_mode then
   begin
     trace_on := false;
   end
@@ -38,7 +38,7 @@ let pprint msg (pos:loc) =
 (* system development debugging *)
 let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
-  (* let _ = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
+  (* let () = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
   (* WN : should we use && or || *)
   if !compete_mode then ()
   else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
@@ -257,16 +257,16 @@ open Gen.StackTrace
   (*   let r = try *)
   (*     pop_ho (f e1) e2  *)
   (*   with ex ->  *)
-  (*       let _ = print_string (h^"\n") in *)
-  (*       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
-  (*       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
-  (*       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in *)
+  (*       let () = print_string (h^"\n") in *)
+  (*       let () = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
+  (*       let () = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
+  (*       let () = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in *)
   (*       raise ex in *)
   (*   if not(test r) then r else *)
-  (*     let _ = print_string (h^"\n") in *)
-  (*     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
-  (*     let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
-  (*     let _ = print_string (s^" out :"^(pr_o r)^"\n") in *)
+  (*     let () = print_string (h^"\n") in *)
+  (*     let () = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
+  (*     let () = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
+  (*     let () = print_string (s^" out :"^(pr_o r)^"\n") in *)
   (*     r *)
 
 (* ss with at least one argument *)
@@ -319,7 +319,7 @@ struct
       (* match !z_debug_arg with *)
       (*   | None -> false  *)
       (*   | Some re ->  *)
-      (*         (\* let _ = print_endline ("check_args:"^s) in *\) *)
+      (*         (\* let () = print_endline ("check_args:"^s) in *\) *)
       (*         List.exists (fun x ->  *)
       (*             try  *)
       (*               (Str.search_forward re x 0);true *)
@@ -355,9 +355,9 @@ struct
         let flag = check_args args in
         if flag then
           begin
-            let _ = print_string ("\n"^h^"\n") in
+            let () = print_string ("\n"^h^"\n") in
             (pr_args args; pr_lazy_res lz);
-            let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+            let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
             flush stdout;
             raise ex 
           end
@@ -370,9 +370,9 @@ struct
       if not(flag) then r
       else
         begin
-          let _ = print_string ("\n"^h^"\n") in
+          let () = print_string ("\n"^h^"\n") in
           (pr_args args; pr_lazy_res lz);
-          let _ = print_string (s^" EXIT:"^(res_str)^"\n") in
+          let () = print_string (s^" EXIT:"^(res_str)^"\n") in
           flush stdout;
           r
         end
@@ -523,13 +523,13 @@ let debug_file ()=
   else
     begin
       let debug_conf = "./" ^ fname in
-      (* let _ = print_endline (debug_conf) in *)
+      (* let () = print_endline (debug_conf) in *)
       let global_debug_conf =
         if (Sys.file_exists debug_conf) then
           debug_conf
         else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
       in
-      (* let _ = print_endline global_debug_conf in *)
+      (* let () = print_endline global_debug_conf in *)
       try
         Some(open_in (global_debug_conf))
       with _ ->
@@ -573,7 +573,7 @@ let proc_option str =
               if String.compare s "Trace" == 0 then aux str true lp_flag 
               else if String.compare s "Loop" == 0 then aux str tr_flag true 
               else 
-                let _ = (print_endline ("Warning - wrong debug command :"^s)) 
+                let () = (print_endline ("Warning - wrong debug command :"^s)) 
                 in aux str tr_flag lp_flag
             end
   in aux str false false
@@ -605,8 +605,8 @@ let add_entry_with_options entry_fn xs =
           | true,false -> DO_Trace
           | true,true -> DO_Both
         in
-        let _ = print_endline (m) in
-        let _ = print_endline (split) in
+        let () = print_endline (m) in
+        let () = print_endline (split) in
         (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
         (*   if String.compare split "Loop" == 0 then DO_Loop else *)
         (*     DO_Normal *)
@@ -619,12 +619,12 @@ let read_main () =
   let xs = match debug_file() with
     | Some c -> read_from_debug_file c
     | _ -> [] in
-  let _ = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
-  let _ = add_entry_with_options (fun x k -> 
+  let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+  let () = add_entry_with_options (fun x k -> 
       let re = Str.regexp_case_fold x 
       in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
   ()
-  (* (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+  (* (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
   (* List.iter (fun x -> *)
   (*     try *)
   (*       let l = String.index x ',' in *)
@@ -637,8 +637,8 @@ let read_main () =
   (*         | false,true -> DO_Loop *)
   (*         | true,false -> DO_Trace *)
   (*         | true,true -> DO_Both *)
-  (*       (\* let _ = print_endline (m) in *\) *)
-  (*       (\* let _ = print_endline (split) in *\) *)
+  (*       (\* let () = print_endline (m) in *\) *)
+  (*       (\* let () = print_endline (split) in *\) *)
   (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
   (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
   (*       (\*     DO_Normal *\) *)

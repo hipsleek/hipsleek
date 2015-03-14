@@ -66,7 +66,7 @@ and dot_of_form prog (n : int) (f0 : formula) visib_names buffer = match f0 with
 *)
 and dot_of_conjunct prog n h p visib_names buffer = 
   let sgraph = fresh_name () in
-  let _ = Buffer.add_string buffer ("\nsubgraph " ^ sgraph ^ " {\n") in
+  let () = Buffer.add_string buffer ("\nsubgraph " ^ sgraph ^ " {\n") in
   let nodes = gen_nodes prog n h buffer in
 	gen_edges prog n h p nodes buffer;
 	gen_edges_visib_names n visib_names p nodes buffer;

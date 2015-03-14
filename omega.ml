@@ -81,7 +81,7 @@ let rec omega_of_exp e0 = match e0 with
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
             | _ -> 
-                  let _ = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
+                  let () = report_warning no_pos "[omega.ml] Non-linear arithmetic is not supported by Omega." in
                   "0=0"
                   (* illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
                 (* Error.report_error { *)
@@ -184,11 +184,11 @@ and omega_of_formula_x pr_w pr_s f  =
         end
   | AndList _ ->
         begin
-          let _ = print_endline ("AndList:?"^(!print_formula f)) in
+          let () = print_endline ("AndList:?"^(!print_formula f)) in
           report_error no_pos "omega.ml: encountered AndList, should have been already handled"
         end
   | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Or (p1, p2,_ , _) -> let () = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
@@ -197,15 +197,15 @@ and omega_of_formula_x pr_w pr_s f  =
 	helper f
   with _ as e -> 
       let s = Printexc.to_string e in
-      let _ = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
-      (* let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
+      let () = print_string_quiet ("Omega Error Exp:"^s^"\n Formula:"^(!print_formula f)^"\n") in
+      (* let () = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in *)
       raise e
 
 
 let omega_of_formula i pr_w pr_s f  =
-  let _ = set_prover_type () in
+  let () = set_prover_type () in
   let pr = !print_formula in 
-  (*let _ = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
+  (*let () = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
   Debug.no_1_num i "omega_of_formula" 
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
@@ -255,7 +255,7 @@ let prelude () =
   let finished = ref false in
   while not !finished do
     let line = input_line (!process.inchannel) in
-	  (*let _ = print_endline line in *)
+	  (*let () = print_endline line in *)
 	(if !log_all_flag && (not !compete_mode) then
           output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
     if (start_with line "#") then finished := true;
@@ -268,7 +268,7 @@ let start() =
         (* if (not !Globals.web_compile_flag) then  *)
           print_endline_if (not !compete_mode)  ("Starting Omega..." ^ !omegacalc); flush stdout;
         last_test_number := !test_number;
-        let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
+        let () = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
         is_omega_running := true;
     end
   )
@@ -286,18 +286,18 @@ let stop () =
     let num_tasks = !test_number - !last_test_number in
     if (not !Globals.web_compile_flag) then
     print_string_if !Globals.enable_count_stats ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
-    let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
+    let () = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
 
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let _ = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    let () = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
   else begin
-    let _ = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    let () = print_string_if !Globals.enable_count_stats (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
     end
 
 (*
@@ -353,7 +353,7 @@ let read_last_line_from_in_channel chn : string =
 (* let read_from_err_channel chn: bool= *)
 (*   let line = input_line chn in *)
 (*   if String.length line > 0 then *)
-(*     let _ = print_endline line in *)
+(*     let () = print_endline line in *)
 (*     true *)
 (*   else false *)
 
@@ -368,8 +368,8 @@ let check_formula f timeout =
 	        omega_call_count := 0;
         end;
       let fnc f = 
-        (* let _ = print_endline ("check:" ^ f) in *)
-        let _ = incr omega_call_count in
+        (* let () = print_endline ("check:" ^ f) in *)
+        let () = incr omega_call_count in
         let new_f = Gen.break_lines_1024 f
         (*  if ((String.length f) > 1024) then
 	        (Gen.break_lines_1024 f)
@@ -381,8 +381,8 @@ let check_formula f timeout =
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
         (* An Hoa : set original output *)
-        let _ = !set_prover_original_output str in
-        let _ = set_proof_result str in
+        let () = !set_prover_original_output str in
+        let () = set_proof_result str in
         let n = String.length str in
         if n > 7 then
           begin
@@ -421,25 +421,25 @@ let rec send_and_receive f timeout=
 	        omega_call_count := 0;
 	    end;
       let fnc () =
-        let _ = incr omega_call_count in
+        let () = incr omega_call_count in
         let new_f = Gen.break_lines_1024 f
         (*  if ((String.length f) > 1024) then
             (Gen.break_lines_1024 f)
           else
             f *)
         in
-        (* let _ = print_endline ("before omega: " ^ new_f) in *)
+        (* let () = print_endline ("before omega: " ^ new_f) in *)
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
         (* try *)
 	    let str = read_from_in_channel (!process.inchannel) in
-            (* let _ = print_endline ("string from omega: " ^ str) in *)
-            let _ = set_proof_result str in
+            (* let () = print_endline ("string from omega: " ^ str) in *)
+            let () = set_proof_result str in
             let lex_buf = Lexing.from_string str in
 	    (*print_string (line^"\n"); flush stdout;*)
             let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
             rel
-                (* with e -> let _ = read_from_err_channel (!process.errchannel) in *)
+                (* with e -> let () = read_from_err_channel (!process.errchannel) in *)
                 (*           raise e *)
       in
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
@@ -501,7 +501,7 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
           let fstr = omega_of_formula 1 pr_weak pr_strong pe in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 
-          let _ = set_proof_string ("SAT:"^fomega) in
+          let () = set_proof_string ("SAT:"^fomega) in
           if !log_all_flag then begin
               output_string log_all (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);
               output_string log_all (Gen.break_lines_1024 fomega);
@@ -513,20 +513,20 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
                 check_formula 1 fomega (if !user_sat_timeout then !sat_timeout_limit else !in_timeout)
             with
               | Procutils.PrvComms.Timeout as exc ->
-                    let _ = set_proof_result ("TIMEOUT") in
+                    let () = set_proof_result ("TIMEOUT") in
                     if !Globals.dis_provers_timeout then (stop (); raise exc)
                     else begin
                       Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
                       stop (); raise exc end
               | End_of_file ->
-                    let _ = set_proof_result ("END_OF_FILE") in
-                    (*let _ = print_endline "SAT: End_of_file" in*)
+                    let () = set_proof_result ("END_OF_FILE") in
+                    (*let () = print_endline "SAT: End_of_file" in*)
                     restart ("End_of_file when checking #SAT \n");
                     true
               | exc ->
                   begin
                       let exs = Printexc.to_string exc in
-                      let _ = set_proof_result ("EXCEPTION :"^exs) in
+                      let () = set_proof_result ("EXCEPTION :"^exs) in
                       Printf.eprintf "SAT Unexpected exception : %s" exs;
                       stop (); raise exc
                       (* restart ("Unexpected exception when doing IMPLY "); *)
@@ -603,8 +603,8 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
     (*test*)
 	(*print_endline (Gen.break_lines fomega);*)
 			(* An Hoa : set generated input *)
-	    let _ = !set_generated_prover_input fomega in
-            let _ = set_proof_string ("IMPLY:"^fomega) in
+	    let () = !set_generated_prover_input fomega in
+            let () = set_proof_string ("IMPLY:"^fomega) in
             if !log_all_flag then begin
                 (*output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
@@ -617,21 +617,21 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
                 not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
                 | Procutils.PrvComms.Timeout as exc -> 
-                      let _ = set_proof_result ("TIMEOUT") in
+                      let () = set_proof_result ("TIMEOUT") in
                       if !Globals.dis_provers_timeout then (stop (); raise exc)
                       else begin
                         Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
                         stop (); raise exc end
                 | End_of_file ->
-                      let _ = set_proof_result ("END_OF_FILE") in
-                    (*let _ = print_endline "IMPLY: End_of_file" in*)
-					(*let _ = print_string ("\n"^fomega^"\n") in*)
+                      let () = set_proof_result ("END_OF_FILE") in
+                    (*let () = print_endline "IMPLY: End_of_file" in*)
+					(*let () = print_string ("\n"^fomega^"\n") in*)
                     restart ("IMPLY : End_of_file when checking \n");
                     false
                 | exc ->
                     begin
                       let exs = Printexc.to_string exc in
-                      let _ = set_proof_result ("EXCEPTION :"^exs) in
+                      let () = set_proof_result ("EXCEPTION :"^exs) in
                         Printf.eprintf "IMPLY : Unexpected exception : %s" exs;
                         stop (); raise exc
           (* restart ("Unexpected exception when doing IMPLY "); *)
@@ -815,7 +815,7 @@ let trans_bool (f: formula): formula =
   
 let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
-  (* let _ = print_string ("\nomega_simplify: f
+  (* let () = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
   begin
     (* let pe0 = drop_varperm_formula pe in *)
@@ -843,7 +843,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
             begin
               try
                 let sv_list = Gen.BList.remove_dups_eq Cpure.eq_spec_var (fv pe1) in
-                (* let _ = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
+                (* let () = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
                   let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
                   let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
                   (* Debug.binfo_hprint (add_str "(simplify) input f" !print_formula) pe no_pos; *)
@@ -851,7 +851,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 	              (*test*)
 	              (*print_endline (Gen.break_lines fomega);*)
                   (* for simplify/hull/pairwise *)
-                  let _ = set_proof_string ("SIMPLIFY:"^fomega) in
+                  let () = set_proof_string ("SIMPLIFY:"^fomega) in
                   if !log_all_flag then begin
                     (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n"); *)
                     output_string log_all ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -867,40 +867,40 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                               else !in_timeout
                             in
 	                    let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
-                            let _ = is_complex_form := false in
-                        (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
+                            let () = is_complex_form := false in
+                        (* let () = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
 	                    let r = Cpure.subst ss2 (match_vars sv_list rel) in
                       trans_bool r
 	                  end
 	                with
                       | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
-                            let _ = set_proof_result ("TIMEOUT") in
+                            let () = set_proof_result ("TIMEOUT") in
                             restart ("Timeout when checking #simplify ");
                             if not (!Globals.dis_provers_timeout) then (* Cpure.subst ss2 *) pe
                             else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
-                            let _ = set_proof_result ("END_OF_FILE") in
+                            let () = set_proof_result ("END_OF_FILE") in
                             restart ("End_of_file when checking #simplify \n");
                             (* Cpure.subst ss2 *) pe
                       | exc -> (* stop (); raise exc  *)
                           begin
                             let exs = Printexc.to_string exc in
-                            let _ = set_proof_result ("EXCEPTION :"^exs) in
+                            let () = set_proof_result ("EXCEPTION :"^exs) in
                             Printf.eprintf "Unexpected exception : %s" exs;
                             restart ("Unexpected exception when checking #simplify\n ");
                             (* Cpure.subst ss2 *) pe
                           end
                   in
-                  let _ = is_complex_form := false in
+                  let () = is_complex_form := false in
                   (*   let post_time = Unix.gettimeofday () in *)
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
-                  (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
+                  (*let () = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f (* Cpure.subst ss2  simp_f *)
               with
               (* Timeout exception of provers is not expected at this level *)
-              | Procutils.PrvComms.Timeout as exc -> let _ = is_complex_form := false in raise exc 
-              | _ -> let _ = is_complex_form := false in
+              | Procutils.PrvComms.Timeout as exc -> let () = is_complex_form := false in raise exc 
+              | _ -> let () = is_complex_form := false in
                 (* Cpure.subst ss2 *) pe (* not simplified *)
             end
   end
@@ -926,7 +926,7 @@ let simplify (pe : formula) : formula =
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)
-(*   (\*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*\) *)
+(*   (\*let () = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*\) *)
 (*   begin *)
 (*     let (pe,subs,bvars) = memoise_formula_ho is_complex orig_pe in *)
 (*     let (pr_weak,pr_strong) = no_drop_ops in *)
@@ -972,7 +972,7 @@ let simplify (pe : formula) : formula =
 (*         in *)
 (*     (\*   let post_time = Unix.gettimeofday () in *\) *)
 (*     (\*   let time = (post_time -. pre_time) *. 1000. in *\) *)
-(*     (\*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*\) *)
+(*     (\*let () = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*\) *)
 (*         simp_f *)
 (*       with _ -> orig_pe (\* not simplified *\) *)
 (*     end *)
@@ -1002,7 +1002,7 @@ let simplify (pe : formula) : formula =
 (*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
 let simplify (pe : formula) : formula = if not !Globals.oc_simplify then
-  (* let _ = print_endline ("OC.Simplify: " ^ (!print_pure pe) ) in *)
+  (* let () = print_endline ("OC.Simplify: " ^ (!print_pure pe) ) in *)
   pe
 else
   match (do_with_check "" simplify pe)
@@ -1029,7 +1029,7 @@ let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
             let vars_list = vars_list1@vars_list2 in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
             let fomega =  "pairwisecheck ({[" ^ vstr ^ "] : (" ^ fstr1 ^ ")} union {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")});" ^ Gen.new_line_str in
-            let _ = set_proof_string ("PAIRWISE:"^fomega) in
+            let () = set_proof_string ("PAIRWISE:"^fomega) in
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
 	    if !log_all_flag then begin
@@ -1053,7 +1053,7 @@ let pairwisecheck (pe : formula) : formula =
             let vars_list = get_vars_formula pe in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
             let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-            let _ = set_proof_string ("PAIRWISE:"^fomega) in
+            let () = set_proof_string ("PAIRWISE:"^fomega) in
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
 	    if !log_all_flag then begin
@@ -1085,7 +1085,7 @@ let hull (pe : formula) : formula =
             let vars_list = get_vars_formula pe in
             let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
             let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-            let _ = set_proof_string ("HULL:"^fomega) in
+            let () = set_proof_string ("HULL:"^fomega) in
 
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
@@ -1104,7 +1104,7 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
   begin
     omega_subst_lst := [];
     (* let pe1 = drop_varperm_formula pe1 in *)
-    let _ = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
+    let () = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
     let fstr1 = omega_of_formula_old 23 pe1 in
     let fstr2 = omega_of_formula_old 24 pe2 in
     match fstr1,fstr2 with
@@ -1116,8 +1116,8 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
               let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                 ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
               (* gist not properly logged *)
-              let _ = Debug.ninfo_pprint ("fomega = " ^ fomega) no_pos in
-              let _ = set_proof_string ("GIST(not properly logged yet):"^fomega) in
+              let () = Debug.ninfo_pprint ("fomega = " ^ fomega) no_pos in
+              let () = set_proof_string ("GIST(not properly logged yet):"^fomega) in
               if !log_all_flag then begin
                 output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
                 output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);

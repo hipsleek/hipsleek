@@ -1120,7 +1120,7 @@ and contains_spec_var (f : h_formula) p : bool = match f with
 	h_formula_star_h2 = h2;}) ->
         (contains_spec_var h1 p) || (contains_spec_var h2 p)
   | HRel (_, expl, _) -> let svl = CP.afv_list expl in (*List.exists (fun e -> CP.eq_spec_var e p) svl*) 
-    (* let _ = print_endline (!print_sv (List.hd svl)) in *)
+    (* let () = print_endline (!print_sv (List.hd svl)) in *)
         CP.eq_spec_var (List.hd svl) p
   | _ -> false
 
@@ -3019,7 +3019,7 @@ and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : form
 and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
+  (*let () = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
@@ -3039,7 +3039,7 @@ and subst_avoid_capture_pure (fr : CP.spec_var list) (t : CP.spec_var list) (f :
 and subst_avoid_capture_pure_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
+  (*let () = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
@@ -3747,7 +3747,7 @@ and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
-			(* let _ = print_string("normalize 1\n") in *)
+			(* let () = print_string("normalize 1\n") in *)
 			let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -3897,7 +3897,7 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 Flow_combine pos in
-			(* let _ = print_string("normalize 2\n") in *)
+			(* let () = print_string("normalize 2\n") in *)
 			let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			resform
@@ -3932,7 +3932,7 @@ and split_components_x (f : formula) =
         formula_exists_and = a; (* TO CHECK: omit at the moment *)
         formula_exists_type = t }) -> (h, p, vp, fl, t, a)
     | Or ({ formula_or_pos = pos }) ->
-      let _ = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
+      let () = DD.tinfo_hprint (add_str "f" !print_formula) f no_pos in
       Err.report_error {
         Err.error_loc = pos;
         Err.error_text = "split_components: don't expect OR" }
@@ -3942,11 +3942,11 @@ and get_rel_args f0=
     match f with
       | Base ({formula_base_pure = p; }) ->
           (* let p1 = (MCP.pure_of_mix p) in *)
-          (* let _ =  Debug.info_zprint (lazy  ("XXXX p: " ^ (!CP.print_formula p1))) no_pos in *)
+          (* let () =  Debug.info_zprint (lazy  ("XXXX p: " ^ (!CP.print_formula p1))) no_pos in *)
           CP.get_rel_args (MCP.pure_of_mix p)
       | Exists ({ formula_exists_pure = p;}) ->
           (* let p1 = (MCP.pure_of_mix p) in *)
-          (* let _ =  Debug.info_zprint (lazy  ("XXXX p: " ^ (!CP.print_formula p1))) no_pos in *)
+          (* let () =  Debug.info_zprint (lazy  ("XXXX p: " ^ (!CP.print_formula p1))) no_pos in *)
           CP.get_rel_args (MCP.pure_of_mix p)
       | Or ({formula_or_f1 = of1;
           formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
@@ -4179,9 +4179,9 @@ and simplify_pure_f_x (f0:formula) =
   let simp f =
     let r1 = CP.remove_redundant f in
     let r2 = Wrapper.wrap_exception f simplify_aux r1 in
-    let _ = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
-    let _ = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
-    let _ = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
+    let () = Debug.tinfo_hprint (add_str "simp(f)" !print_pure_f) f no_pos in
+    let () = Debug.tinfo_hprint (add_str "simp(syn)" !print_pure_f) r1 no_pos in
+    let () = Debug.tinfo_hprint (add_str "simp(oc)" !print_pure_f) r2 no_pos in r2 in
   let rec helper f=
     match f with
       | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (simp (* CP.remove_redundant *) (MCP.pure_of_mix b.formula_base_pure));}
@@ -4234,18 +4234,18 @@ and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc
            let ( _,mf,_,_,_,_) = split_components base_f in
           let eqs = (MCP.ptr_equations_without_null mf) in
           let cl_qvars = find_close qvars eqs in
-          let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
-          let _ = DD.ninfo_hprint (add_str "cl_qvars" !CP.print_svl) cl_qvars no_pos in
-          let _ = DD.ninfo_hprint (add_str "pre_evars" !CP.print_svl) pre_evars no_pos in
-          let _ = DD.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+          let () = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+          let () = DD.ninfo_hprint (add_str "cl_qvars" !CP.print_svl) cl_qvars no_pos in
+          let () = DD.ninfo_hprint (add_str "pre_evars" !CP.print_svl) pre_evars no_pos in
+          let () = DD.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
           let inter = CP.intersect_svl cl_qvars pre_evars in
           let sst = List.fold_left (fun r (sv1, sv2) ->
             if CP.mem_svl sv1 qvars && CP.mem_svl sv2 inter then r@[(sv1,sv2)] else r
           ) [] eqs in
           let n_qvars = CP.subst_var_list sst qvars in
           let n_base_f = simplify_pure_f (subst sst base_f) in
-          let _ = DD.ninfo_hprint (add_str "n_qvars" !CP.print_svl) n_qvars no_pos in
-          let _ = DD.ninfo_hprint (add_str "n_base_f" !print_formula) n_base_f no_pos in
+          let () = DD.ninfo_hprint (add_str "n_qvars" !CP.print_svl) n_qvars no_pos in
+          let () = DD.ninfo_hprint (add_str "n_base_f" !print_formula) n_base_f no_pos in
              EAssume {b with
 	     formula_assume_simpl = add_quantifiers  n_qvars n_base_f;
 	     formula_assume_struc = (helper pre_evars) b.formula_assume_struc;}
@@ -4403,7 +4403,7 @@ and rename_bound_vars_x (f : formula) = match f with
         CP.is_hprel_typ sv)) qvars in
 	    let new_qvars = CP.fresh_spec_vars qvars in
 	    (*--- 09.05.2000 *)
-		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
+		(*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	    let rho = List.combine qvars new_qvars in
 	    let new_base_f = subst rho base_f in (*TO CHECK*)
@@ -4514,8 +4514,8 @@ and rename_struc_clash_bound_vars_X (f1 : struc_formula) (f2 : formula) : struc_
 		  formula_case_branches = (* List.map (fun (c1,c2)-> ((Cpure.subst rho c1),(subst_struc rho c2))) *) r1;
 		  formula_case_pos = b.formula_case_pos}
 	| EBase b ->
-         (* let _ = Debug.info_zprint (lazy  ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst))) no_pos in *)
-         (* let _ = Debug.info_zprint (lazy  ("  b.formula_struc_explicit_inst " ^ (!CP.print_svl b.formula_struc_explicit_inst))) no_pos in *)
+         (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst))) no_pos in *)
+         (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_explicit_inst " ^ (!CP.print_svl b.formula_struc_explicit_inst))) no_pos in *)
 		  let new_imp = List.map (fun v -> (if (check_name_clash v f2) &&
               not(CP.is_rel_typ v) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
 		  let new_exp = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_explicit_inst in
@@ -4555,7 +4555,7 @@ and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_v
 
 and check_name_clash (v : CP.spec_var) (f : formula) : bool =
   let spec_vars = fv f in
-  (*let _ = print_string ("[cformula.ml, line 467]: Spec vars: " ^ (string_of_spec_var_list spec_vars) ^ "\n") in*)
+  (*let () = print_string ("[cformula.ml, line 467]: Spec vars: " ^ (string_of_spec_var_list spec_vars) ^ "\n") in*)
   (List.exists (fun c -> (CP.eq_spec_var c v)) spec_vars)
       (* 13.05.2008 -- *)
 
@@ -4569,7 +4569,7 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr history (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+  (*let () = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
@@ -4577,15 +4577,15 @@ and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list)
   let new_phi = subst rho1 phi in
   let new_history = List.map (h_subst rho2) history in
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
-  let _ = must_consistent_formula "compose_formula 1" new_f in
+  let () = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
-  let _ = must_consistent_formula "compose_formula 2" resform in
+  let () = must_consistent_formula "compose_formula 2" resform in
   resform,new_history,rho2
 
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+  (*let () = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
@@ -4596,9 +4596,9 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
    (* WN : this checking seems to be for debugging purpose of *)
    (*   MCP formulae  *)
-  (* let _ = must_consistent_formula "compose_formula 1" new_f in *)
+  (* let () = must_consistent_formula "compose_formula 1" new_f in *)
   let resform = push_exists rs new_f in
-  (* let _ = must_consistent_formula "compose_formula 2" resform in *)
+  (* let () = must_consistent_formula "compose_formula 2" resform in *)
   resform
 
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
@@ -4636,16 +4636,16 @@ and normalize_keep_flow_join (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 and compose_formula_join_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+  (*let () = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
   let new_delta = subst rho2 delta in
   let new_phi = subst rho1 phi in
   let new_f = normalize_keep_flow_join new_delta new_phi flow_tr pos in
-  let _ = must_consistent_formula "compose_formula 1" new_f in
+  let () = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
-  let _ = must_consistent_formula "compose_formula 2" resform in
+  let () = must_consistent_formula "compose_formula 2" resform in
   resform
 
 (*compose formula when joined*)
@@ -6653,7 +6653,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
   in
   let fresh_var args f=
     let qvars, base1 = split_quantifiers f in
-    let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+    let () = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
     let fr_qvars = CP.fresh_spec_vars qvars in
     let ss = List.combine qvars fr_qvars in
     let nf = subst ss base1 in
@@ -6772,11 +6772,11 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf pre_quans) b.formula_case_branches}
     | EBase b ->
           let f1= formula_fct b.formula_struc_base in
-          let _ =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
+          let () =  Debug.ninfo_hprint (add_str "f1 pre" (!print_formula)) f1 no_pos in
           let new_pre_quans = fresh_data_v  b.formula_struc_base in
           let pre_cur_quans = CP.remove_dups_svl (b.formula_struc_implicit_inst@(new_pre_quans)) in
           let pre_quans1 = CP.remove_dups_svl (pre_quans@pre_cur_quans) in
-          let _ =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
+          let () =  Debug.ninfo_hprint (add_str "pre_quans1" (!CP.print_svl)) pre_quans1 no_pos in
           EBase {b with
 	      formula_struc_continuation = Gen.map_opt (recf pre_quans1) b.formula_struc_continuation;
               formula_struc_implicit_inst =  pre_cur_quans ;
@@ -6784,8 +6784,8 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
           }
     | EAssume ea->
           let f1 = formula_fct ea.formula_assume_simpl in
-          let _ =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
-          let _ =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
+          let () =  Debug.ninfo_hprint (add_str "f1 post" (!print_formula)) f1 no_pos in
+          let () =  Debug.ninfo_hprint (add_str "pre_quans:post" (!CP.print_svl)) pre_quans no_pos in
           let cur_quans, f1_bare = split_quantifiers f1 in
           let quans = CP.diff_svl (cur_quans@(fresh_data_v f1)) pre_quans in
           EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) (* formula_fct ea.formula_assume_simpl *) add_quantifiers quans f1_bare;
@@ -6841,7 +6841,7 @@ let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
   in
   (* let fresh_var args f= *)
   (*   let qvars, base1 = split_quantifiers f in *)
-  (*   let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in *)
+  (*   let () = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in *)
   (*   let fr_qvars = CP.fresh_spec_vars qvars in *)
   (*   let ss = List.combine qvars fr_qvars in *)
   (*   let nf = subst ss base1 in *)
@@ -7717,7 +7717,7 @@ let remove_neqNull_redundant_hnodes svl p=
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
   let p1 =  (CP.join_conjunctions new_ps) in
   let quans, bare_p, lbl,pos = CP.split_forall_quantifiers p1 in
-  (* let _ = Debug.info_zprint (lazy  ("  quans: " ^ (!CP.print_svl quans) )) no_pos in *)
+  (* let () = Debug.info_zprint (lazy  ("  quans: " ^ (!CP.print_svl quans) )) no_pos in *)
   if quans<> [] then
     let null_svl = CP.get_null_ptrs bare_p in
     if svl <> [] && null_svl <> [] then
@@ -8324,7 +8324,7 @@ and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_sele
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hpargs_nodes in
    (*assume keep vars = dnodes*)
-  let _ = DD.ninfo_zprint (lazy  ("  keep" ^ (!CP.print_svl keep_pure_vars))) no_pos in
+  let () = DD.ninfo_zprint (lazy  ("  keep" ^ (!CP.print_svl keep_pure_vars))) no_pos in
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
   let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
   (* DD.info_zprint (lazy  ("  keep" ^ (!CP.print_svl keep_pure_vars))) no_pos; *)
@@ -8334,7 +8334,7 @@ and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_sele
 
 and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
       matched_view_nodes matched_hrel_nodes keep_pure_vars=
-  let _ = DD.ninfo_zprint (lazy  ("  matched_hrel_nodes:" ^ (!CP.print_svl matched_hrel_nodes))) no_pos in
+  let () = DD.ninfo_zprint (lazy  ("  matched_hrel_nodes:" ^ (!CP.print_svl matched_hrel_nodes))) no_pos in
   let new_hf = drop_data_view_hrel_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hrel_nodes in
@@ -8788,7 +8788,7 @@ let drop_dups_x base f0=
             let n_hf = drop_hnodes_hf fb.formula_base_heap inter in
             (*pure*)
             (* let g_svl = h_fv n_hf in *)
-            let _ = Debug.ninfo_zprint (lazy (("    ss: " ^ ((pr_list (pr_pair (!CP.print_sv) (!CP.print_sv))) ss)))) no_pos in
+            let () = Debug.ninfo_zprint (lazy (("    ss: " ^ ((pr_list (pr_pair (!CP.print_sv) (!CP.print_sv))) ss)))) no_pos in
             let p = (MCP.pure_of_mix fb.formula_base_pure) in
             let g_pure = (* CP.filter_var *) (* CP.subst ss *) p in
             let p_base = get_pure base in
@@ -8918,10 +8918,10 @@ let extend_view_nodes_h hf0 old_v_name new_v_name extra_args =
                 let i = i +1 in
                 (r@[(CP.SVArg sv, i)], i)
             )  ([],(List.length vn.h_formula_view_arguments)) fr_extra_args in
-            (* let _ =  Debug.info_pprint ("  fr_extra_args: "^ (!CP.print_svl fr_extra_args)) no_pos in *)
-            (* let _ =  Debug.info_pprint ("  vn.h_formula_view_annot_arg: "^ ( *)
+            (* let () =  Debug.info_pprint ("  fr_extra_args: "^ (!CP.print_svl fr_extra_args)) no_pos in *)
+            (* let () =  Debug.info_pprint ("  vn.h_formula_view_annot_arg: "^ ( *)
             (*     (pr_list (pr_pair !CP.print_annot_arg string_of_int)) vn.h_formula_view_annot_arg)) no_pos in *)
-            (* let _ =  Debug.info_pprint ("  vn.h_formula_view_args_orig: "^ ( *)
+            (* let () =  Debug.info_pprint ("  vn.h_formula_view_args_orig: "^ ( *)
             (*     (pr_list (pr_pair CP.print_view_arg string_of_int)) (vn.h_formula_view_args_orig@ext_map))) no_pos in *)
             ViewNode {vn with h_formula_view_name = new_v_name;
                      h_formula_view_arguments = (vn.h_formula_view_arguments@ fr_extra_args);
@@ -8980,7 +8980,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let l = List.length args in
     let ns = gen_n 0 l [] in
     (* let pr = pr_list string_of_int in *)
-    (* let _ =  Debug.info_pprint ("  sel_pos: "^ (pr ns)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  sel_pos: "^ (pr ns)) no_pos in *)
     let cmb = List.combine ns args in
     List.map (fun p -> List.assoc p cmb) all_sel_pos
   in
@@ -8992,7 +8992,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
           then [pos] else []) ls_ann_infos) in
     (* let all_sel_pos1 = List.sort (fun a b -> a - b) all_sel_pos in *)
     (* let pr = pr_list string_of_int in *)
-    (* let _ =  Debug.info_pprint ("  all_sel_pos1: "^ (pr  all_sel_pos)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  all_sel_pos1: "^ (pr  all_sel_pos)) no_pos in *)
     let sel_args = get_args_from_pos dn.h_formula_data_arguments all_sel_pos in
     sel_args
   in
@@ -9011,7 +9011,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
               look_up rest
     in
     let extra_args= look_up hvs in
-    (* let _ =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
     if extra_args = [] then ([sv],[]) else ([],[(sv,extra_args)])
   in
   let pred_classify_rec_svl hrels n sv=
@@ -9030,7 +9030,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
               look_up rest
     in
     let extra_args= look_up hrels in
-    (* let _ =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
     if extra_args = [] then ([sv],[]) else ([],[(sv,extra_args)])
   in
   let classify_sel_null_svl f sel_svl=
@@ -9048,12 +9048,12 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let hds,hvs, hrels= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
     (*process null pointer*)
-    (* let _ =  Debug.info_pprint ("  f1: "^ (!print_formula f1)) no_pos in *)
-    (* let _ =  Debug.info_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  f1: "^ (!print_formula f1)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in *)
     let null_svl,null_paired_svl = classify_sel_null_svl f1 sel_svl in
-    (* let _ =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
     let sel_svl_rest = CP.diff_svl sel_svl null_svl in
-    (* let _ =  Debug.info_pprint ("  sel_svl_rest: "^ (!CP.print_svl sel_svl_rest)) no_pos in *)
+    (* let () =  Debug.info_pprint ("  sel_svl_rest: "^ (!CP.print_svl sel_svl_rest)) no_pos in *)
     let val_svl,rec_svl= if is_view then
       List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl_rest)
     else
@@ -10199,7 +10199,7 @@ let get_may_failure (f:list_context) =
           (match m with
             | Some s -> (Some (s, cex))
             | None -> 
-                  let _ = print_flush (!print_list_context_short f) 
+                  let () = print_flush (!print_list_context_short f) 
                   in report_error no_pos "Should be a may failure here")
     | SuccCtx cs -> begin
         let s_opt = get_may_error_from_ctx cs in
@@ -10258,7 +10258,7 @@ let get_must_failure_x (ft:list_context) =
             | _ -> None
           (* (try get_must_failure_ft f *)
           (* with a ->   *)
-          (*     let _ = print_flush (!print_list_context_short ft) in *)
+          (*     let () = print_flush (!print_list_context_short ft) in *)
           (*     raise a) *)
       end
     | SuccCtx cs -> begin
@@ -10862,8 +10862,8 @@ let add_infer_pure_to_estate cp es =
       (* let n = CP.norm_form n in *)
       let n = CP.arith_simplify_new n in
       if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
-  let _ = Debug.ninfo_hprint (add_str "cp" (pr_list !print_pure_f)) cp no_pos in
-  let _ = Debug.ninfo_hprint (add_str "es_infer_pure" (pr_list !print_pure_f)) new_cp no_pos in
+  let () = Debug.ninfo_hprint (add_str "cp" (pr_list !print_pure_f)) cp no_pos in
+  let () = Debug.ninfo_hprint (add_str "es_infer_pure" (pr_list !print_pure_f)) new_cp no_pos in
   {es with es_infer_pure = new_cp;
       (* add inferred pre to pure_this too *)
                es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
@@ -10924,7 +10924,7 @@ let add_infer_pre f_ctx ctx =
   if (ch!=[]) then
     if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
     else 
-    let _ = print_endline "ERROR : non-pure heap inferred for false" in
+    let () = print_endline "ERROR : non-pure heap inferred for false" in
     report_error no_pos ("add_infer_pre: non-pure inferred heap :"^(!print_context f_ctx))
   else
     let cp = collect_pre_pure f_ctx in
@@ -11278,12 +11278,12 @@ let merge_false_ctx c1 c2 =
 (*       | [] -> Some t2 *)
 (*       | [c1] -> *)
 (*             if isAnyFalseCtx c1 then *)
-(*               (\* let _ = print_endline ("FalseCtx") in *\) *)
+(*               (\* let () = print_endline ("FalseCtx") in *\) *)
 (*               if is_inferred_pre_ctx c1 then *)
-(*                 (\* let _ = print_endline ("Inferred") in *\) *)
+(*                 (\* let () = print_endline ("Inferred") in *\) *)
 (*                 Some t2 (\* drop FalseCtx with Pre *\) *)
 (*               else *)
-(*                 (\* let _ = print_endline ("NOT Inferred") in *\) *)
+(*                 (\* let () = print_endline ("NOT Inferred") in *\) *)
 (*                 Some t1 (\* keep FalseCtx wo Pre *\) *)
 (*             else None *)
 (*       | _ -> None *)
@@ -11557,7 +11557,7 @@ let remove_true_conj_pure (p:CP.formula) =
 let remove_true_conj_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
   (match f with
     | MCP.MemoF _ -> 
-        let _ = print_string ("[cformula.ml][remove_true_conj_mix_formula] Warning: not yet support MCP.MemoF \n") in
+        let () = print_string ("[cformula.ml][remove_true_conj_mix_formula] Warning: not yet support MCP.MemoF \n") in
         f
     | MCP.OnePF p_f -> (MCP.OnePF (remove_true_conj_pure p_f))
   )
@@ -11929,7 +11929,7 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
 	Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
-  (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
+  (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
 	Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 		
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
@@ -11975,7 +11975,7 @@ and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_
   Debug.no_2 "normalize_clash_es" pr pr_e pr_c (fun _ _ -> normalize_clash_es_x  f pos  result_is_sat es) f es
 
 and normalize_clash_es_x (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
-  (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
+  (* let () = print_string ("\nCformula.ml: normalize_clash_es") in *)
   match f with
 	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
 		let new_c1 = normalize_clash_es phi1 pos result_is_sat es in
@@ -12810,8 +12810,8 @@ let extract_single_hvar_f (f0:formula) : CP.spec_var option =
     | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
     | Exists ({formula_exists_heap = h1; formula_exists_vperm=vp; formula_exists_pure =pf;}) 
         -> 
-          let _ = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
-          let _ = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
+          let () = Debug.tinfo_hprint (add_str "residue:vp" !print_vperm_sets) vp no_pos in
+          let () = Debug.tinfo_hprint (add_str "residue:pure" !print_mix_formula) pf no_pos in
           if CVP.is_empty_vperm_sets vp then 
             extract_single_hvar h1
           else None
@@ -13537,8 +13537,8 @@ let rec erase_propagated f =
 (* 				mkHprel (CP.HPRelDefn h) h_args [] []  (formula_of_heap hf no_pos) (formula_of_pure_N c no_pos)  				 *)
 (* 				else raise Not_found *)
 (* 			| _ -> raise Not_found ) new_cp in *)
-(*                  (\* let _ = rel_ass_stk # push_list (new_rels) in *\) *)
-(*                  (\* let _ = Log.current_hprel_ass_stk # push_list (new_rels) in *\) *)
+(*                  (\* let () = rel_ass_stk # push_list (new_rels) in *\) *)
+(*                  (\* let () = Log.current_hprel_ass_stk # push_list (new_rels) in *\) *)
 (* 		 let scc_f es = Ctx {es with es_infer_hp_rel = new_rels@es.es_infer_hp_rel;} in *)
 (* 		 Some (transform_list_context (scc_f, (fun a -> a)) l) *)
 (* 	 with Not_found -> None *)
@@ -13685,7 +13685,7 @@ let proc_esc_stack pid f_es es =
   ) es
 
 let normalize_max_renaming_list_partial_context f pos b ctx = 
-  (* let _ = print_string("cris: normalize 11\n") in *)
+  (* let () = print_string("cris: normalize 11\n") in *)
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 
@@ -13706,7 +13706,7 @@ let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
       (fun _ _ -> normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx) f ctx
 
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
-  (* let _ = print_string("cris: normalize 12\n") in *)
+  (* let () = print_string("cris: normalize 12\n") in *)
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 
@@ -13724,16 +13724,16 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
       (fun _ _ -> normalize_max_renaming_list_failesc_context f pos b ctx) f ctx
 
 let normalize_max_renaming_list_failesc_context f pos b ctx =
-  (* let _ = print_string("cris: normalize 13\n") in *)
+  (* let () = print_string("cris: normalize 13\n") in *)
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
 let normalize_max_renaming f pos b ctx = 
-  (* let _ = print_string("cris: normalize 14\n") in *)
+  (* let () = print_string("cris: normalize 14\n") in *)
   if !max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
   else transform_list_context ((normalize_clash_es f pos b),(fun c->c)) ctx
 
 let normalize_max_renaming_s f pos b ctx = 
-  (* let _ = print_string("cris: normalize 15\n") in *)
+  (* let () = print_string("cris: normalize 15\n") in *)
   if !max_renaming then transform_context (normalize_es f pos b) ctx
   else transform_context (normalize_clash_es f pos b) ctx
 
@@ -14037,11 +14037,11 @@ let add_to_context (c:context) (s:string) =
   (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)
   match c with
     | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
-    | OCtx _ ->  (* let _ = Error.report_warning { *)
+    | OCtx _ ->  (* let () = Error.report_warning { *)
       (*             Error.error_loc = !post_pos; *)
       (*             Error.error_text = "[add_to_context] unexpected dealing with OCtx." *)
       (*           } in *)
-      (* let _ = print_endline (!print_context_short c) in *)
+      (* let () = print_endline (!print_context_short c) in *)
       set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c
 ;;
 
@@ -14679,7 +14679,7 @@ and merge_two_nodes dn1 dn2 =
 								let svname = CP.name_of_spec_var sv in
 									svname.[0] = '#' in
 							(* [Internal] Select the non-hole spec_var. *)
-                            (* let _ = print_endline ("merge_two_nodes: \n ### args1 = " ^ (string_of_spec_var_list args1) ^ "\n ### args2 = " ^ (string_of_spec_var_list args2)) in *)
+                            (* let () = print_endline ("merge_two_nodes: \n ### args1 = " ^ (string_of_spec_var_list args1) ^ "\n ### args2 = " ^ (string_of_spec_var_list args2)) in *)
 							let combine_vars sv1 sv2 =
 								if (is_hole_specvar sv1) then (sv2,true) 
 								else if (is_hole_specvar sv2) then (sv1,true)
@@ -14693,7 +14693,7 @@ and merge_two_nodes dn1 dn2 =
                                 | ([], ann2)   -> ann2
                                 | (ann1, [])   -> ann1
                                 | (ann1, ann2) -> ann1 in
-                            (* let _ = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
+                            (* let () = print_endline ("merge_two_nodes" ^ (string_of_bool not_clashed)) in *)
 							let res = DataNode { h_formula_data_node = dnsv1;
 										h_formula_data_name = n1;
 						                                h_formula_data_derv = dr1; (*TO CHECK*)
@@ -15545,12 +15545,12 @@ let add_inf_cmd_struc is_primitive f =
 let rec add_inf_post_struc f =
   match f with
   | EInfer ei -> 
-    let _ = ei.formula_inf_obj # set INF_POST in
+    let () = ei.formula_inf_obj # set INF_POST in
     EInfer ei
   | EList el -> EList (List.map (fun (sld, s) -> (sld, add_inf_post_struc s)) el)
   | _ -> 
     let new_inf_obj = new Globals.inf_obj in
-    let _ = new_inf_obj # set INF_POST in
+    let () = new_inf_obj # set INF_POST in
     EInfer {
       formula_inf_obj = new_inf_obj;
       formula_inf_post = true (* Globals.infer_const_obj # is_post *);
@@ -16018,8 +16018,8 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   in
   (**************)
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in (\*not allow SPLIT in pre*\) *)
-  (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
-  (* let _ = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
+  (* let () = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
+  (* let () = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
   (* let read_f = mkPermInv fresh_perm in (\*only need a certain permission to read*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1*)
   (* let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
@@ -16092,7 +16092,7 @@ let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_fo
           let one_f = one_formula_of_formula base id delayed_f in
           let one_f = {one_f with formula_ref_vars = ref_vars;} in
           (*add thread id*)
-          (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
+          (* let () = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
           let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
           let f1 = add_quantifiers evars f in
           let f2 = add_formula_and [one_f] f1 in
@@ -16772,7 +16772,7 @@ let collect_heap_args_failesc_context ((fail_c,esc_c, succ_c):failesc_context) (
     (try
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
-         let _ = List.iter (fun (args,id) ->
+         let () = List.iter (fun (args,id) ->
              if (id<>"") && (((List.length head_args) != (List.length args)) || (id!=head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
@@ -16796,7 +16796,7 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
     (try
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
-         let _ = List.iter (fun (args,id) ->
+         let () = List.iter (fun (args,id) ->
              if(id<>"") && (((List.length head_args) != (List.length args)) || (id<>head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
@@ -16835,15 +16835,15 @@ let trans_flow_formula f =
     let fv = Gen.BList.difference_eq CP.eq_spec_var (CP.fv pf) [CP.mk_spec_var "flow"] in
     let inf = CP.remove_redundant (CP.drop_svl_pure pf fv) in
     let il = List.sort compare (CP.get_num_int_list inf) in
-    let _ = Debug.ninfo_hprint (add_str "il" (pr_list string_of_int)) il no_pos in
+    let () = Debug.ninfo_hprint (add_str "il" (pr_list string_of_int)) il no_pos in
     il
   in
   let mk_new_formula mk f =
     let h,p,vp,fl,t,a = split_components f in
     let pos = pos_of_formula f in
-    let _ = Debug.ninfo_hprint (add_str "p" !CP.print_formula) (MCP.pure_of_mix p) no_pos in
+    let () = Debug.ninfo_hprint (add_str "p" !CP.print_formula) (MCP.pure_of_mix p) no_pos in
     let pl = CP.split_disjunctions (MCP.pure_of_mix p) in
-    let _ = Debug.ninfo_hprint (add_str "pl" (pr_list !CP.print_formula)) pl no_pos in
+    let () = Debug.ninfo_hprint (add_str "pl" (pr_list !CP.print_formula)) pl no_pos in
     let pils = List.map (fun pf -> (pf,get_interval pf)) pl in
     let fl = List.map (fun (pf,il) ->
         let new_flow_f = mkAndFlow (mkFlow il) fl Flow_combine in
@@ -16853,11 +16853,11 @@ let trans_flow_formula f =
     else
       let fst_f = List.hd fl in
       let new_f = List.fold_left (fun acc f -> mkOr acc f pos) fst_f (List.tl fl) in
-      let _ = Debug.ninfo_hprint (add_str "new_f" !print_formula) new_f no_pos in
+      let () = Debug.ninfo_hprint (add_str "new_f" !print_formula) new_f no_pos in
       new_f
   in
   let rec helper f =
-    let _ = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
+    let () = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
     match f with
       | Base b ->
             mk_new_formula mkBase f
@@ -16877,7 +16877,7 @@ let trans_flow_formula f =
 
 let trans_flow_struc_formula sf =
   let rec helper sf =
-    let _ = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
+    let () = Debug.ninfo_hprint (add_str "sf" !print_struc_formula) sf no_pos in
     match sf with
       | EList el -> EList ((List.map (fun (lbl,sf) -> (lbl,helper sf))) el)
       | ECase ec -> ECase { ec with
@@ -16905,7 +16905,7 @@ let trans_flow_struc_formula sf =
             }
   in
   let sfv = struc_fv sf in
-  let _ = Debug.ninfo_hprint (add_str "sfv" (pr_list !print_sv)) sfv no_pos in
+  let () = Debug.ninfo_hprint (add_str "sfv" (pr_list !print_sv)) sfv no_pos in
   if Gen.BList.mem_eq CP.eq_spec_var (CP.mk_spec_var "flow") sfv then helper sf
   else sf
 
@@ -17644,7 +17644,7 @@ let elim_e_var to_keep (f0 : formula) : formula =
 					| true,false -> (v2,v1)::a
 					| false,true 
 					| false,false -> (v1,v2)::a) [] a_alias in
-		let _ = print_string ("bai-dropped:   "^(pr_list (pr_pair !print_sv !print_sv) a_alias)^"\n") in
+		let () = print_string ("bai-dropped:   "^(pr_list (pr_pair !print_sv !print_sv) a_alias)^"\n") in
 		let np = MCP.memo_subst a_alias p in
 		let np = MCP.drop_triv_eq np in
 		Base{b with formula_base_pure = np;}
@@ -17701,9 +17701,9 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (*           (\*   | _ -> raise Not_found) in *\) *)
 (*           let rf = List.filter (fun hf -> contains_spec_var hf re) fl in *)
 (*           let fv = h_fv (List.hd rf) in *)
-(*           (\* let _ = print_endline (pr_list !print_sv fv) in *\) *)
+(*           (\* let () = print_endline (pr_list !print_sv fv) in *\) *)
 (*           let fl1 = helper fv fl in *)
-(*           (\* let _ = print_endline (pr_list !print_h_formula fl1) in *\) *)
+(*           (\* let () = print_endline (pr_list !print_h_formula fl1) in *\) *)
 (*           let hf1 = List.fold_left (fun f1 f2 -> mkStarH f1 f2 no_pos) (List.hd fl1) (List.tl fl1) in hf1 *)
 (*     | _ -> hf0 *)
 
@@ -17779,9 +17779,9 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (*                  | None -> [] *)
 (*   ) new_body1 in *)
 (*   let svl = List.flatten svll in *)
-(*   (\* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *\) *)
+(*   (\* let () = print_endline ((pr_list !print_sv) (args@svl)) in *\) *)
 (*   let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in *)
-(*   (\*let _ = print_endline ((pr_list !print_sv) svl_rd) in*\) *)
+(*   (\*let () = print_endline ((pr_list !print_sv) svl_rd) in*\) *)
 (*   (\* let svl_ra = (\\* svl_rd in  *\\)CP.diff_svl svl_rd args in *\) *)
 (*   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in *)
 (*   (\* let n_tbl = Hashtbl.create 1 in *\) *)
@@ -17863,11 +17863,11 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (*   let f0 = simplify_pure_f f in *)
 (*   let fvars = fv f0 in *)
 (*   let qvars,_ = split_quantifiers f0 in *)
-(*   (\* let _ = print_endline ((pr_list !print_sv) fv) in *\) *)
+(*   (\* let () = print_endline ((pr_list !print_sv) fv) in *\) *)
 (*   let vars = CP.remove_dups_svl (fvars@qvars) in *)
 (*   let n_tbl = Hashtbl.create 1 in *)
 (*   let new_svl,_ = shorten_svl vars n_tbl in *)
-(*   (\* let _ = print_endline ((pr_list !print_sv) new_svl) in *\) *)
+(*   (\* let () = print_endline ((pr_list !print_sv) new_svl) in *\) *)
 (*   (\* subst_avoid_capture vars new_svl f *\) *)
 (*   subst_all (List.combine vars new_svl) f0 *)
 
@@ -17877,9 +17877,9 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (*       | Ctx en -> Ctx {en with *)
 (*           es_formula = *)
 (*                 let fv = CP.remove_dups_svl (fv en.es_formula) in *)
-(*                 (\* let _ = print_endline ((pr_list !print_sv) fv) in *\) *)
+(*                 (\* let () = print_endline ((pr_list !print_sv) fv) in *\) *)
 (*                 let new_svl = shorten_svl fv in *)
-(*                 (\* let _ = print_endline ((pr_list !print_sv) new_svl) in *\) *)
+(*                 (\* let () = print_endline ((pr_list !print_sv) new_svl) in *\) *)
 (*                 subst_avoid_capture fv new_svl en.es_formula *)
 (*         } *)
 (*       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2) *)

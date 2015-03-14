@@ -244,7 +244,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
   let reach_both_trans, reach_other_trans = List.partition (fun (st, _) -> 
     match st with Reach_Both -> true | _ -> false) reach_status_trans in
 
-  let _ = 
+  let () = 
     Debug.tinfo_pprint ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
     List.iter (fun (r, t) -> Debug.tinfo_hprint (add_str "loop trans: "
       (fun (r, t) -> (print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")")) (r, t) no_pos)
@@ -266,7 +266,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
         trans_list @ [templ_trans], n_loop_cond_list, templ_id_list @ [templ_id]) 
       ([], loop_cond_list, []) reach_both_trans in
 
-    let _ = 
+    let () = 
       List.iter (fun t -> Debug.tinfo_hprint (add_str "templ loop trans: " 
         print_rec_trans) t no_pos) templ_reach_both_trans;
       List.iter (fun c -> Debug.tinfo_hprint (add_str "templ loop cond: " 
@@ -284,7 +284,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       let rec_cond_fv, rec_cond = List.assoc trans.trans_dst_id templ_loop_cond in
       let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in
 
-      let _ = 
+      let () = 
         Debug.tinfo_hprint (add_str "templ entail: " (fun (ctx, rc) -> 
           (!print_formula ctx) ^ " --> " ^ (!print_formula rc))) 
           (trans.trans_ctx, rec_cond) no_pos
@@ -296,7 +296,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     
     (* Solve the template constraints *)
     let _, templ_unks, res = solve_templ_assume () in
-    let _ = 
+    let () = 
       Debug.tinfo_hprint (add_str "templ res: " print_solver_res) res no_pos
     in
 
@@ -347,7 +347,7 @@ let infer_lex_template_init prog (inf_templs: ident list)
     templ_unks (templ_assumes: templ_assume list) =
   let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
-  let _ = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
+  let () = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
 
   if num_call_ctx == 1 then begin
     print_endline ("Nothing to do with Lexicographic Inference (only one call context).");
@@ -392,7 +392,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
-      let _ = print_endline ("Continue with piecewise function inference ...") in
+      let () = print_endline ("Continue with piecewise function inference ...") in
       let ptempl_assumes, inf_ptempls, ptempl_defs = 
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -401,9 +401,9 @@ let infer_rank_template_init prog (inf_templs: ident list) =
         let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
         match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
-      let _ = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
+      let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
-      let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in
+      let () = print_endline ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes
   | _ -> ()
 

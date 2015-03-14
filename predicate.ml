@@ -295,18 +295,18 @@ let partition_extn_svl p svl=
 let generate_extn_ho_procs prog cviews extn_view_name extn_args=
   let mk_ho_b args val_extns p =
     fun svl val_extns1 ->
-       (* let _ =  Debug.info_pprint ("  val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
-       (* let _ =  Debug.info_pprint ("  val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
+       (* let () =  Debug.info_pprint ("  val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+       (* let () =  Debug.info_pprint ("  val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
         (*may be nonnull*)
         let ss = if List.length val_extns = List.length val_extns1 then
               List.combine (args@val_extns) (svl@val_extns1)
             else List.combine (args) (svl)
         in
-        (* let _ =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in *)
+        (* let () =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in *)
         let n_p = CP.subst ss p in
         let n_p1,_ = CPP.norm_exp_min_max n_p in
-        (* let _ =  Debug.info_pprint ("  n_p: "^ (!CP.print_formula n_p)) no_pos in *)
-        (* let _ =  Debug.info_pprint ("  n_p1: "^ (!CP.print_formula n_p1)) no_pos in *)
+        (* let () =  Debug.info_pprint ("  n_p: "^ (!CP.print_formula n_p)) no_pos in *)
+        (* let () =  Debug.info_pprint ("  n_p1: "^ (!CP.print_formula n_p1)) no_pos in *)
         n_p1
   in
   let mk_ho_ind_rec ann args p =
@@ -320,32 +320,32 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
     (*may need some filter: CP.filter_var: omit now*)
     if from_args <> [] then (*ind_case*)
       (* let rec_args0 = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in *)
-      (* let _ =  Debug.info_pprint ("   from_args: "^ (!CP.print_svl from_args)) no_pos in *)
-      (* let _ =  Debug.info_pprint ("   to_args: "^ (!CP.print_svl to_args)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   from_args: "^ (!CP.print_svl from_args)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   to_args: "^ (!CP.print_svl to_args)) no_pos in *)
       let ss3 = List.combine from_args to_args in
       let new_p = CP.subst ss3 p in
-      (* let _ =  Debug.info_pprint ("   p_non_extn1: "^ (!CP.print_formula p_non_extn1)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   p_non_extn1: "^ (!CP.print_formula p_non_extn1)) no_pos in *)
       new_p
     else p
   in
   let mk_ho_ind args val_extns p rec_ls=
     (* let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) in *)
-    (* let _ =  CP.extract_outer_inner p args val_extns rec_args in [] *)
+    (* let () =  CP.extract_outer_inner p args val_extns rec_args in [] *)
     fun svl val_extns1 rec_ls1->
       (* let svl1 = List.concat (snd (List.split rec_ls)) in *)
       (*find subformula has svl1*)
-      (* let _ =  Debug.info_pprint ("   p: "^ (!CP.print_formula p)) no_pos in *)
-      (* let _ =  Debug.info_pprint ("   svl: "^ (!CP.print_svl svl)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   p: "^ (!CP.print_formula p)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   svl: "^ (!CP.print_svl svl)) no_pos in *)
       let p_extn, p_non_extn = partition_extn_svl p svl in
-      (* let _ =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
       let from_rec_args =  List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
       let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
       let ((is_bag_constr,(outer, root_e), (inner_e, first_e)), exquans, irr_ps) =  CPP.extract_outer_inner p_extn args val_extns from_rec_args in
       (*combine bag or non-bag constrs*)
       let comb_fn= if is_bag_constr then CPP.mk_exp_from_bag_tmpl else CPP.mk_exp_from_non_bag_tmpl in
       (*cmb inner most exp*)
-      (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
-      (* let _ =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
       (* let ss1 = List.combine val_extns val_extns1 in *)
       (* let n_first_e = CP.e_apply_subs ss1 first_e in *)
       let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
@@ -357,7 +357,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       (* let n_p = (CP.BForm ((n_outer, None), None)) in *)
       (* let n_p1,quans = CP.norm_exp_min_max n_p in *)
       let n_p2,quans = CPP.mk_formula_from_tmp outer n_root_e n_inner_e exquans irr_ps no_pos in
-      (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
+      (* let () =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
       (*other constraints*)
       let n_p3= if CP.isConstTrue p_non_extn then n_p2 else
       (*assume we extend one property each*)
@@ -388,7 +388,7 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
   let ho_inds = List.map (fun (p, ls) -> mk_ho_ind (*extn_v.CA.view_vars*) fr_extn_args
       val_extns p ls) ind_brs in
   (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
-  (* let _ =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
+  (* let () =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
   (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.C.view_vars *))
 
 let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), ls_extn_pos) =
@@ -406,9 +406,9 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
       | [] -> f
       | ho_fn::_ -> (*now, we just care the first one*)
           let extn_p = ho_fn extn_args val_svl in
-          (* let _ =  Debug.info_pprint ("  pure np: "^ (!CP.print_formula extn_p)) no_pos in *)
+          (* let () =  Debug.info_pprint ("  pure np: "^ (!CP.print_formula extn_p)) no_pos in *)
           let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
-          (*let _ =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
+          (*let () =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
           nf
   in
   let do_extend_ind_case ho_inds extn_args (f,val_extns,rec_extns)=
@@ -422,7 +422,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
             (*add rec_extns into exists*)
             let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
             let nf1 = CF.add_quantifiers (quans0@new_extn_args@quans) nf in
-            (* let _ =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
+            (* let () =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
             nf1
   in
   (*********END INTERNAL********)
@@ -479,7 +479,7 @@ let extend_pred_one_derv (prog : I.prog_decl) cprog hp_defs hp args extn_info =
 (*   else () *)
 
 let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
-  (* let _ = do_sanity_check derv_info in *)
+  (* let () = do_sanity_check derv_info in *)
   match derv_info with
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->

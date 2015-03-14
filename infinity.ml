@@ -40,7 +40,7 @@ Normalizes Min and Max Exp as per the rules
    max(w,-\inf) ==> w
 *)
 let rec normalize_exp (exp: CP.exp) : CP.exp =
-  let _ = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
+  let () = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
   (*let exp = CP.norm_exp exp in*)
   match exp with
     | CP.Min(e1,e2,pos) -> 
@@ -265,8 +265,8 @@ Normalize b_formula containing \inf
 *)
 
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
-  let _ = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
-  (*let _ = Gen.Profiling.push_time "INF-Normalize" in*)
+  let () = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
+  (*let () = Gen.Profiling.push_time "INF-Normalize" in*)
   let rec helper p_f =
   (*let p_f_norm =*)
     (match p_f with
@@ -387,9 +387,9 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else CP.Neq(e1_norm,e2_norm,pos)                            
       | CP.EqMax (e1,e2,e3,pos) -> 
             let flag,w1,w2 = check_neg_inf e1 e2 e3 in
-            (*let _ = if flag then print_string("True") else print_string("False") in
-            let _ = print_string("w1: "^(string_of_formula_exp w1)^"\n") in
-			let _ = print_string("w2: "^(string_of_formula_exp w2)^"\n") in*)
+            (*let () = if flag then print_string("True") else print_string("False") in
+            let () = print_string("w1: "^(string_of_formula_exp w1)^"\n") in
+			let () = print_string("w2: "^(string_of_formula_exp w2)^"\n") in*)
             if flag then CP.Eq(w1,w2,pos)
 			else
 			  let e1_norm = normalize_exp e1 in
@@ -415,25 +415,25 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
       | _ -> p_f
     ) in  
   let (p_f,bf_ann) = bf in
-  let _ = DD.vv_trace("in normalized_b_formula: "^ (string_of_b_formula (p_f,bf_ann))) in
-  (*let _ = Gen.Profiling.pop_time "INF-Normalize" in*)
+  let () = DD.vv_trace("in normalized_b_formula: "^ (string_of_b_formula (p_f,bf_ann))) in
+  (*let () = Gen.Profiling.pop_time "INF-Normalize" in*)
     ((helper p_f),bf_ann)
 
 (* 
 Main func normalization starts here
 *)
 let rec normalize_inf_formula (pf: CP.formula) : CP.formula = 
-  let _ = DD.vv_trace("in normalize_inf_formula: "^ (string_of_pure_formula pf)) in
+  let () = DD.vv_trace("in normalize_inf_formula: "^ (string_of_pure_formula pf)) in
   (*if not (contains_inf_or_inf_var pf) then pf else*)
   (match pf with 
     | CP.BForm (b,fl) -> 
           let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
     | CP.And (pf1,pf2,pos) -> 
-        (*let _ = Gen.Profiling.push_time "INF-Normalize_And" in*)
-        (*let _ = print_string("pf1: "^(string_of_pure_formula pf1)^"\n") in*)
+        (*let () = Gen.Profiling.push_time "INF-Normalize_And" in*)
+        (*let () = print_string("pf1: "^(string_of_pure_formula pf1)^"\n") in*)
           let pf1_norm = normalize_inf_formula pf1 in
           let pf2_norm = normalize_inf_formula pf2 in
-        (*let _ = Gen.Profiling.pop_time "INF-Normalize_And" in*)
+        (*let () = Gen.Profiling.pop_time "INF-Normalize_And" in*)
           CP.And(pf1_norm,pf2_norm,pos) 
     | CP.AndList pflst -> 
           let pflst_norm = List.map 
@@ -990,17 +990,17 @@ let substitute_inf (f: CP.formula) : CP.formula =
                         let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
 	                    let new_pf = sub_inf_list new_pf svneglist true false in
                         (*arith_simplify 10*) new_pf) sublist in
- (* let _ = print_string("bound = "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
+ (* let () = print_string("bound = "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   let after_sub = List.map (fun (pf,kv) -> 
                         let svlist = (find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
   			            let new_pf = sub_inf_list pf svlist false true in
                         new_pf) (List.combine after_sub boundlist) in 
- (* let _ = print_string("bound < "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
+ (* let () = print_string("bound < "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   let after_sub = List.map (fun (pf,kv) -> 
                         let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
 	                    let new_pf = sub_inf_list pf svneglist true true in
                         arith_simplify 10 new_pf) (List.combine after_sub negboundlist) in 
- (* let _ = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
+ (* let () = print_string("bound > "^(string_of_pure_formula (join_disjunctions after_sub))^"\n") in*)
   join_disjunctions after_sub
 
 let substitute_inf (f: CP.formula) : CP.formula =
@@ -1023,7 +1023,7 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
           let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
           let f = CP.And(f,inf_constr,no_pos) in f*)
   else (*MCP.mix_of_pure*) (convert_inf_to_var (normalize_inf_formula f)) in pf_norm
-  (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
+  (*let () = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
   let pr = Cprinter.string_of_pure_formula in

@@ -349,8 +349,8 @@ let sort_flow (xs:(ident * ident * nflow) list) =
 (* let exc_cnt = new counter 0 *)
 
 (* let reset_exc_hierarchy () = *)
-(*   let _ = clean_duplicates () in *)
-(*   let _ = exc_cnt # reset in *)
+(*   let () = clean_duplicates () in *)
+(*   let () = exc_cnt # reset in *)
 (*   let el = List.fold_left (fun acc (a,b,_) ->  *)
 (*       if a="" then acc else (a,b,(0,0))::acc) [] !exc_list in *)
 (*   exc_list := el *)
@@ -417,7 +417,7 @@ let sort_flow (xs:(ident * ident * nflow) list) =
 (*     a1 *)
 
 (* let add_edge(n1:string)(n2:string):bool = *)
-(*   let _ =  exc_list := !exc_list@ [(n1,n2,false_flow_int)] in *)
+(*   let () =  exc_list := !exc_list@ [(n1,n2,false_flow_int)] in *)
 (*   true *)
 
 (* let add_edge(n1:string)(n2:string):bool = *)
@@ -427,10 +427,10 @@ let sort_flow (xs:(ident * ident * nflow) list) =
   types*)
 (* FISHY : cannot be called multiple times, lead to segmentation problem in lrr proc *)
   (* why did lrr below cause segmentation problem for sleek? *)
-  (* let _ = reset_exc_hierarchy () in *)
-  (* let _ = print_flush "c-h 1" in *)
+  (* let () = reset_exc_hierarchy () in *)
+  (* let () = print_flush "c-h 1" in *)
   (* let r,_ = (lrr "" "") in *)
-  (* let _ = print_flush "c-h 2" in *)
+  (* let () = print_flush "c-h 2" in *)
   (* r *)
 
 (* let update_values() = *)
@@ -442,10 +442,10 @@ let sort_flow (xs:(ident * ident * nflow) list) =
 (*   error_flow_int := (get_hash_of_exc error_flow) *)
 (*     (\* ; Globals.sleek_mustbug_flow_int := (get_hash_of_exc Globals.sleek_mustbug_flow) *\) *)
 (*     (\* ;Globals.sleek_maybug_flow_int := (get_hash_of_exc Globals.sleek_maybug_flow) *\) *)
-(*     (\* ;let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*\) *)
+(*     (\* ;let () = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in ()*\) *)
 
 (* let compute_hierarchy () = *)
-(*   let _ = reset_exc_hierarchy () in *)
+(*   let () = reset_exc_hierarchy () in *)
 (*   exc_list := compute_hierarchy_aux exc_cnt !exc_list; *)
 (*   update_values () *)
   
@@ -658,7 +658,7 @@ struct
                       ,(if (o_max<n_max) then n_max else o_max)))) 
           ([],(-1,-1)) 
           l1 
-        in let _ = cnt # inc in  (* to account for internal node *)
+        in let () = cnt # inc in  (* to account for internal node *)
         ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1))
     in
     let r,_ = (lrr top_flow "") in
@@ -723,8 +723,8 @@ struct
       end
     method private reset_exc =
       begin
-        let _ = self # remove_dupl in
-        let _ = cnt # reset in
+        let () = self # remove_dupl in
+        let () = cnt # reset in
         let el = List.fold_left (fun acc (a,b,_) ->
             if a="" then acc else (a,b,(0,0))::acc) [] elist in
         elist <- el
@@ -745,7 +745,7 @@ struct
       end
     method compute_hierarchy =
       begin
-        let _ = self # reset_exc in
+        let () = self # reset_exc in
         elist <- compute_hierarchy_aux cnt elist;
         self # update_values;
         self # sort
@@ -1003,7 +1003,7 @@ struct
               in (temp_l@t,((x1,x2),[(x1,x2)])))
           ([],init) l1
         in
-        let _ = cnt # inc in  (* to account for internal node *)
+        let () = cnt # inc in  (* to account for internal node *)
         let dfl = ((mn,mx+1),[(mn,mx+1)]) in
         (((f1,f2,dfl)::ll) ,dfl)
     in
@@ -1069,8 +1069,8 @@ struct
       end
     method private reset_exc =
       begin
-        let _ = self # clean in
-        let _ = cnt # reset in
+        let () = self # clean in
+        let () = cnt # reset in
         let el = List.fold_left (fun acc (a,b,_) -> 
             if a="" then acc else (a,b,((0,0),[(0,0)]))::acc) [] elist in
         elist <- el
@@ -1091,7 +1091,7 @@ struct
       end
     method compute_hierarchy =
       begin
-        let _ = self # reset_exc in
+        let () = self # reset_exc in
         elist <- compute_hierarchy_aux cnt elist;
         self # update_values;
         self # sort

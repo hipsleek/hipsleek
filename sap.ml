@@ -29,7 +29,7 @@ let get_pure_ext cprog error_traces=
 
 let collect_rele_views cprog specs=
   List.fold_left (fun vnames sf ->
-      let _ =  Debug.info_hprint (add_str " spec" Cprinter.string_of_struc_formula) sf no_pos in
+      let () =  Debug.info_hprint (add_str " spec" Cprinter.string_of_struc_formula) sf no_pos in
       let hvs = Cformula.get_views_struc sf in
       vnames@(List.map (fun v -> v.Cformula.h_formula_view_name ) hvs)
   ) [] specs
@@ -62,7 +62,7 @@ let extend_specs_views_pure_ext iprog cprog sccs error_traces =
   let rele_vnames0 =  collect_rele_views cprog specs in
   let rele_vnames1 = Gen.BList.remove_dups_eq (fun s1 s2 ->
       String.compare s1 s2 = 0) rele_vnames0 in
-   let _ =  Debug.info_hprint (add_str " rele_vnames1" pr_id) (String.concat "," rele_vnames1) no_pos in
+   let () =  Debug.info_hprint (add_str " rele_vnames1" pr_id) (String.concat "," rele_vnames1) no_pos in
   (*from ext_type, lookup view_prop_extn*)
   let view_prop_extn_opt = get_pure_ext cprog error_traces in
   match view_prop_extn_opt with

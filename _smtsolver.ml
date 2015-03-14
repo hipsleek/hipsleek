@@ -48,7 +48,7 @@ let rel_defs = ref ([] : relation_definition list)
  *)
 let add_rel_def rdef =
 	(* let rn = match rdef with RelDefn (a,_,_) -> a in
-	let _ = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
+	let () = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
 	rel_defs := !rel_defs @ [rdef]
 
 (******************
@@ -438,7 +438,7 @@ let run prover input =
   output_string out_stream input;
   close_out out_stream;
   let cmd = command_for prover in
-  let _ = Sys.command cmd in
+  let () = Sys.command cmd in
   let in_stream = open_in outfile in
   let res = input_line in_stream in
   close_in in_stream;
@@ -459,13 +459,13 @@ let run prover input =
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
-	let _ = if !print_input then 
+	let () = if !print_input then 
       begin
         print_string ("Generated SMT input :\n" ^ input);
         flush stdout;
       end in
   let output = run prover input in
-	let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
+	let () = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
   res
 
@@ -480,9 +480,9 @@ let imply ante conseq = smt_imply ante conseq Z3
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let input = to_smt f None prover in
-	(*let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
+	(*let () = if !print_input then print_string ("Generated SMT input :\n" ^ input) in*)
   let output = run prover input in
-	(*let _ = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
+	(*let () = if !print_original_solver_output then print_string ("==> SMT output : " ^ output ^ "\n") in*)
   let res = output = "unsat" in
   not res
 

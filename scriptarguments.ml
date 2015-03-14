@@ -46,7 +46,7 @@ let set_lib_file arg =
   Globals.lib_files := [arg]
 
 let set_tp solver=
-  let _ = print_endline ("!!! init_tp by user: ") in 
+  let () = print_endline ("!!! init_tp by user: ") in 
   Tpdispatcher.set_tp solver
 
 let set_frontend fe_str = match fe_str  with

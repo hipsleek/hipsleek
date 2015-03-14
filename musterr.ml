@@ -128,7 +128,7 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       (*build must/may msg*)
       let build_failure_msg (ante, cons) =
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
-        (*let _ = print_endline (Cprinter.string_of_list_loc ll) in*)
+        (*let () = print_endline (Cprinter.string_of_list_loc ll) in*)
         let lli = CF.get_lines ll in
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
@@ -171,9 +171,9 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       | Some ft -> Cprinter.string_of_fail_type ft
       | None -> "None"
       in
-      let _ = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in
-      let _ = print_endline ("locle must:" ^ (pr must_fail_type)) in
-      let _ = print_endline ("locle may:" ^ (pr may_fail_type)) in
+      let () = print_endline ("locle contrad:" ^ (pr contra_fail_type)) in
+      let () = print_endline ("locle must:" ^ (pr must_fail_type)) in
+      let () = print_endline ("locle may:" ^ (pr may_fail_type)) in
     *)
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
     match oft with

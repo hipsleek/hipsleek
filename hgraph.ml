@@ -168,13 +168,13 @@ let set_pto_edges_x vertexs eds diff_pair=
               look_up rest id1 id2 (rest_ptos@[(id3,id4)])
   in
   let ptos = List.map (fun (sv1,sv2) -> (var2add vertexs sv1, var2add vertexs sv2)) diff_pair in
-  let _ = Debug.ninfo_hprint (add_str "ptos" (pr_list (pr_pair string_of_int string_of_int))) ptos no_pos in
+  let () = Debug.ninfo_hprint (add_str "ptos" (pr_list (pr_pair string_of_int string_of_int))) ptos no_pos in
   let sort_eds = List.sort cmp_edge eds in
   let sort_ptos = List.sort cmp_pair ptos in
   let sort_eds2,_ = List.fold_left (fun (r,ptos) e ->
       let b, rest_ptos = look_up ptos e.he_b_id e.he_e_id [] in
-      let _ = Debug.ninfo_hprint (add_str "e" print_he) e no_pos in
-      let _ = Debug.ninfo_hprint (add_str "b" string_of_bool) b no_pos in
+      let () = Debug.ninfo_hprint (add_str "e" print_he) e no_pos in
+      let () = Debug.ninfo_hprint (add_str "b" string_of_bool) b no_pos in
       let ne = if b then {e with he_kind = true} else e in
       (r@[ne],rest_ptos)
   ) ([],sort_ptos) sort_eds in
@@ -378,7 +378,7 @@ let from_var_to_hv vertexs sv=
       (fun _ _ -> from_var_to_hv_x vertexs sv) vertexs sv
 
 let split_adj adjs r_id=
-  (* let _ = Debug.info_pprint (" r_id: "^ (string_of_int r_id)) no_pos in *)
+  (* let () = Debug.info_pprint (" r_id: "^ (string_of_int r_id)) no_pos in *)
   let rec helper ls done_adjs=
     match ls with
       | a::rest -> if a.a_root = r_id then
@@ -521,7 +521,7 @@ let list_to_arr_x ls_adjs =
   let rec helper ls arr=
     match ls with
       | [] -> arr
-      | adj::rest -> let _ = Array.set arr adj.a_root adj.a_nexts in
+      | adj::rest -> let () = Array.set arr adj.a_root adj.a_nexts in
         helper rest arr
   in
   helper ls_adjs arr
@@ -558,7 +558,7 @@ let rec check_overlapping_scc arr_adj scc=
   ) (ex_scc,0) arr_adj
   in
   let mul_out,mul_in(* ,eqs *) = List.fold_left (fun (ls1,ls2) (id,n1,n2) ->
-       (* let _ = Debug.info_pprint (" id: "^ (string_of_int id) ^ " n1= " ^ *)
+       (* let () = Debug.info_pprint (" id: "^ (string_of_int id) ^ " n1= " ^ *)
        (*    (string_of_int n1) ^ " n2= " ^ (string_of_int n2) ) no_pos in *)
       match n1>1, n2>1 with
         | false,true -> (ls1,ls2@[id])
@@ -590,11 +590,11 @@ and check_overlapping_sccs_nested arr_adjs scc=
     eqs
   else
     (* let pr1 = pr_list string_of_int in *)
-    (* let _ = Debug.info_pprint (" ls_ones: " ^ (pr1 ls_ones)) no_pos in *)
+    (* let () = Debug.info_pprint (" ls_ones: " ^ (pr1 ls_ones)) no_pos in *)
     let ls_ones1 = List.filter (fun id -> not (List.mem id mul_ins)) ls_ones in
-    (* let _ = Debug.info_pprint (" ls_ones1: " ^ (pr1 ls_ones1)) no_pos in *)
-    let _ = List.map (fun i -> let _ =  arr_adjs.(i) <- [] in i) ls_ones1 in
-    (* let _ = Debug.info_pprint (" scc: down 1 ") no_pos in *)
+    (* let () = Debug.info_pprint (" ls_ones1: " ^ (pr1 ls_ones1)) no_pos in *)
+    let (todo_unk:int list) = List.map (fun i -> let () =  arr_adjs.(i) <- [] in i) ls_ones1 in
+    (* let () = Debug.info_pprint (" scc: down 1 ") no_pos in *)
     let nested_eqs,_,_= build_scc_arr arr_adjs in
     let used_mul_outs,used_mul_ins = List.split nested_eqs in
     let new_mul_outs = diff_int mul_outs used_mul_outs in
@@ -624,43 +624,43 @@ and partition_until ls p=
 and visit dfsnum low arr_adj x n l t=
   (* let pr1 = pr_list string_of_int in *)
   (* let pr2 = pr_arr string_of_int in *)
-  (* let _ = Debug.info_pprint (" visit: " ^ (string_of_int x)) no_pos in *)
-  (* let _ = Debug.info_pprint (" l: " ^ (pr1 l)) no_pos in *)
+  (* let () = Debug.info_pprint (" visit: " ^ (string_of_int x)) no_pos in *)
+  (* let () = Debug.info_pprint (" l: " ^ (pr1 l)) no_pos in *)
   let vist_next dfsnum2 low2 x2 y n2 l2 t2=
-    (* let _ = Debug.info_pprint (" visit_next: " ^ (string_of_int q)) no_pos in *)
+    (* let () = Debug.info_pprint (" visit_next: " ^ (string_of_int q)) no_pos in *)
     if not(List.mem y l2) then
       let t21= t2@[y] in
       let dfsnum22,low22,n22,l22,t22,sccs = visit dfsnum2 low2 arr_adj y n2 l2 t21 in
-      let _ = Array.set low22 x2 (min (Array.get low22 x2) (Array.get low22 y)) in
-      (* let _ = Debug.info_pprint (" 1 out visit_next: "^ (string_of_int y) ^ ", l22: " ^ (pr1 l22)) no_pos in *)
+      let () = Array.set low22 x2 (min (Array.get low22 x2) (Array.get low22 y)) in
+      (* let () = Debug.info_pprint (" 1 out visit_next: "^ (string_of_int y) ^ ", l22: " ^ (pr1 l22)) no_pos in *)
       (dfsnum22,low22, n22, l22, t22,sccs)
     else
-      (* let _ = Debug.info_pprint (" low2: " ^ (pr2 low2)) no_pos in *)
-      (* let _ = Debug.info_pprint (" dfsnum2: " ^ (pr2 dfsnum2)) no_pos in *)
-      let _ = Array.set low2 x2 (min (Array.get low2 x2) (Array.get dfsnum2 y)) in
-      (* let _ = Debug.info_pprint (" 2 out visit_next: "^ (string_of_int y) ^ ", l2: " ^ (pr1 l2)) no_pos in *)
+      (* let () = Debug.info_pprint (" low2: " ^ (pr2 low2)) no_pos in *)
+      (* let () = Debug.info_pprint (" dfsnum2: " ^ (pr2 dfsnum2)) no_pos in *)
+      let () = Array.set low2 x2 (min (Array.get low2 x2) (Array.get dfsnum2 y)) in
+      (* let () = Debug.info_pprint (" 2 out visit_next: "^ (string_of_int y) ^ ", l2: " ^ (pr1 l2)) no_pos in *)
       (dfsnum2,low2, n2, l2, t2,[])
   in
   let l = l@[x] in
-  let _ = Array.set dfsnum x n in
+  let () = Array.set dfsnum x n in
   let n = n+ 1 in
-  let _ = Array.set low x (Array.get dfsnum x) in
+  let () = Array.set low x (Array.get dfsnum x) in
   let dfsnum1,low1,n1,l1,t1,sccs1 = List.fold_left (fun (l_dfsnum,l_low, l_n, l_l, l_t,l_scc) q ->
       let r_dfsnum,r_low, r_n, r_l, r_t, r_sccs = vist_next l_dfsnum l_low x q l_n l_l l_t in
       (r_dfsnum,r_low, r_n, r_l, r_t, l_scc@r_sccs)
   ) (dfsnum,low, n, l, t,[]) (arr_adj.(x))
   in
-  (* let _ = Debug.info_pprint (" after nexts x: " ^ (string_of_int x)) no_pos in *)
-  (* let _ = Debug.info_pprint (" l1: " ^ (pr1 l1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" low1: " ^ (pr2 low1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" dfsnum1: " ^ (pr2 dfsnum1)) no_pos in *)
+  (* let () = Debug.info_pprint (" after nexts x: " ^ (string_of_int x)) no_pos in *)
+  (* let () = Debug.info_pprint (" l1: " ^ (pr1 l1)) no_pos in *)
+  (* let () = Debug.info_pprint (" low1: " ^ (pr2 low1)) no_pos in *)
+  (* let () = Debug.info_pprint (" dfsnum1: " ^ (pr2 dfsnum1)) no_pos in *)
   let l2,sccs2 = if low1.(x) = dfsnum1.(x) then
     let rems,scc = partition_until l1 x in
-    (* let _ = Debug.info_pprint (" scc: " ^ (pr1 scc)) no_pos in *)
-    (* let _ = Debug.info_pprint (" rems: " ^ (pr1 rems)) no_pos in *)
+    (* let () = Debug.info_pprint (" scc: " ^ (pr1 scc)) no_pos in *)
+    (* let () = Debug.info_pprint (" rems: " ^ (pr1 rems)) no_pos in *)
     (rems,[scc])
   else
-    (* let _ = Debug.info_pprint (" NONE: " ) no_pos in *)
+    (* let () = Debug.info_pprint (" NONE: " ) no_pos in *)
     (l1,[])
   in
   (dfsnum1,low1,n1,l2,t1,sccs1@sccs2)
@@ -672,7 +672,7 @@ and eq_list_int ls1 ls2 = (List.length ls1 = List.length ls2) &&
 and build_scc_x arr_adj=
   let dfs (ls_scc,topo_order,done_vs,r) nexts=
     if not(List.mem r done_vs) && nexts <> [] then
-      (* let _ = Debug.info_pprint (" dfs: " ^ (string_of_int r)) no_pos in *)
+      (* let () = Debug.info_pprint (" dfs: " ^ (string_of_int r)) no_pos in *)
       let dfsnum = Array.create !heap_size (-1) in
       let low = Array.create !heap_size (-1) in
       let _,_,_,_,_,sccs=visit dfsnum low arr_adj r 0 [] [r] in
@@ -745,7 +745,7 @@ let recover_mutrec_x comps ls_need_recover=
   in
   let rec process_one l_comps (r, ls_rn_scc_el)=
     (* let pr1 = pr_list string_of_int in *)
-    (* let _ = Debug.info_pprint (" scc: " ^ (pr1 scc)) no_pos in *)
+    (* let () = Debug.info_pprint (" scc: " ^ (pr1 scc)) no_pos in *)
     (*colect svl, els except itsefl*)
     (* let ls_r_rn = generate_mutrec scc in *)
     let comps1 = List.fold_left (fun comps trip -> process_one_mem_scc comps r trip) l_comps ls_rn_scc_el in
@@ -918,13 +918,13 @@ let recover_from_loop comps sccs ls_need_recover=
   (comps3)
 
 let rec find_chain adjg2_roots cur res ls_adj1=
-  (* let _ = Debug.info_pprint (" XXXXXXXXXX 3: " ^ (!CP.print_sv cur)) no_pos in *)
+  (* let () = Debug.info_pprint (" XXXXXXXXXX 3: " ^ (!CP.print_sv cur)) no_pos in *)
   if List.mem cur adjg2_roots then
     (*this chain points to anothe2r root*)
     (cur,res,[cur])
   else
     let nexts = look_up_adj cur ls_adj1 in
-    (* let _ = Debug.info_pprint (" XXXXXXXXXX 4: " ^ (!CP.print_sv n)) no_pos in *)
+    (* let () = Debug.info_pprint (" XXXXXXXXXX 4: " ^ (!CP.print_sv n)) no_pos in *)
     match nexts with
       | [] -> (cur,res,[])
       | [n] -> if List.mem n res then (n,res,[]) (*loop*) else
@@ -950,7 +950,7 @@ let build_raw_chains sccs adjg1_roots ls_adj1 all_adjs adj=
   (*list of (maybe emp-next ptr,ptrs in the chain, last ptrs)*)
   (*now only work with view -- should support data node also - a chain has a dn --> non emp*)
   let process_one_chain (r,r_n) =
-    (* let _ = Debug.info_pprint (" XXXXXXXXXX 5 - root: " ^ (!CP.print_sv r)) no_pos in *)
+    (* let () = Debug.info_pprint (" XXXXXXXXXX 5 - root: " ^ (!CP.print_sv r)) no_pos in *)
     let end_link, chains, deps = find_chain adjg1_roots r_n [r;r_n] ls_adj1 in
     (r_n, chains,end_link,deps)
   in
@@ -1128,8 +1128,8 @@ let update_comb_adjs ls_adj eqs=
       (ls1@[new_adj],ls2@eqs)
   ) ([],[]) adjs1 in
   (* let pr1 = pr_list print_adj in *)
-  (* let _ = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
   adjs2,eqs
 
 let update_chain_adjs_x ls_adj chain_emps=
@@ -1149,8 +1149,8 @@ let update_chain_adjs_x ls_adj chain_emps=
       (ls1@[new_adj],ls2@eqs)
   ) ([],[]) adjs1 in
   (* let pr1 = pr_list print_adj in *)
-  (* let _ = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
   adjs2,eqs
 
 let update_chain_adjs ls_adj chain_emps=
@@ -1185,8 +1185,8 @@ let update_merge_throw_chain_adjs_x ls_adj ls_merge_throw=
       (ls1@[new_adj],ls2@eqs)
   ) ([],[]) adjs1 in
   (* let pr1 = pr_list print_adj in *)
-  (* let _ = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs1: "^ (pr1 adjs1)) no_pos in *)
+  (* let () = Debug.info_pprint (" adjs2: "^ (pr1 adjs2)) no_pos in *)
   adjs2,eqs
 
 let update_merge_throw_chain_adjs ls_adj ls_merge_throw=
@@ -1388,8 +1388,8 @@ let dfs_no_loop_x r rn1 rn2 inters adjs=
   let ls_rn1 = visit [rn1] [r] [] in
   let ls_rn2 = visit [rn2] [r] [] in
   (* let pr1 = pr_list (pr_pair string_of_int (pr_list string_of_int)) in *)
-  (* let _ = Debug.info_pprint (" ls_rn1: "^ (pr1 ls_rn1)) no_pos in *)
-  (* let _ = Debug.info_pprint (" ls_rn2: "^ (pr1 ls_rn2)) no_pos in *)
+  (* let () = Debug.info_pprint (" ls_rn1: "^ (pr1 ls_rn1)) no_pos in *)
+  (* let () = Debug.info_pprint (" ls_rn2: "^ (pr1 ls_rn2)) no_pos in *)
   List.fold_left (fun ls i ->
       if cmp_one_inter i ls_rn1 ls_rn2 then (ls@[i]) else ls
   ) [] inters
@@ -1452,17 +1452,17 @@ let do_force_no_disctinct_loop_free_x adjs (r,chains) =
       | [] -> (Gen.BList.remove_dups_eq (=) res)
       | (r_n, svl,end_links)::rest ->
             (* let pr1 =pr_list string_of_int in *)
-            (* let _ = Debug.info_pprint (" r_n: "^ (string_of_int r_n)) no_pos in *)
+            (* let () = Debug.info_pprint (" r_n: "^ (string_of_int r_n)) no_pos in *)
             (*check have a self loop*)
             let end_links = List.filter (fun id -> not (id=r)) end_links in
             if (* end_links <> [] *)true  then
               let n_inter = find_loop (r_n, svl,end_links) rest [] in
-              (* let _ = Debug.info_pprint (" n_inter: "^ (pr1 n_inter)) no_pos in *)
+              (* let () = Debug.info_pprint (" n_inter: "^ (pr1 n_inter)) no_pos in *)
               find_loops rest (res@n_inter)
             else
               find_loops rest (res)
   in
-  (* let _ = Debug.info_pprint (" r: "^ (string_of_int r)) no_pos in *)
+  (* let () = Debug.info_pprint (" r: "^ (string_of_int r)) no_pos in *)
   let inter_elinks = find_loops chains [] in
   (* (List.fold_left (fun ls sv -> ls@(combine_sym sym_r sv)) [] inter_elinks, (sym_r@inter_elinks, rems)) *)
   (List.fold_left (fun ls sv -> ls@[(r,sv)]) [] inter_elinks)
@@ -1488,12 +1488,12 @@ let force_no_distinct_loop_x vertexs ls_adjg10 ls_adj10=
       (* let new_eqs2 = Gen.BList.difference_eq eq_pair new_eqs1 must_eqs in *)
       if new_eqs0 = [] then (is_loop, vs, adjg1, adj1, comps1) else
         let new_vertexs, new_adjg1, new_adj1 =  merge_alias_hv vs adjg1 adj1 new_eqs0 in
-        (* let _ = Debug.info_pprint (" *******loop********* ") no_pos in *)
+        (* let () = Debug.info_pprint (" *******loop********* ") no_pos in *)
         loop_helper true new_vertexs new_adjg1 new_adj1
     else
       let new_vertexs, new_adjg1, new_adj1 =  merge_alias_hv vs adjg1 adj1 overlap_eqs in
       (* let pr1 = pr_list (pr_pair string_of_int string_of_int) in *)
-      (* let _ = Debug.info_pprint (" *******overlapped loops*********: " ^ (pr1 overlap_eqs)) no_pos in *)
+      (* let () = Debug.info_pprint (" *******overlapped loops*********: " ^ (pr1 overlap_eqs)) no_pos in *)
       loop_helper true new_vertexs new_adjg1 new_adj1
   in
   loop_helper false vertexs ls_adjg10 ls_adj10
@@ -1553,7 +1553,7 @@ let rec force_loop_helper_x vertexs ls_adjg1 ls_adj1 ls_non_emp grps=
     in
     (* let pr0 = pr_list string_of_int in *)
     (* let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in *)
-    (* let _ = Debug.info_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in *)
+    (* let () = Debug.info_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in *)
     if new_emps_and_prunes = [] then (false,  grps, vertexs,ls_adjg1,ls_adj1) else
       let new_emps, prune_brs = List.fold_left (fun (ls1,ls2) (r,svl, brs) ->
           (ls1@[(r,svl)], ls2@[(r,brs)])
@@ -1568,7 +1568,7 @@ let rec force_loop_helper_x vertexs ls_adjg1 ls_adj1 ls_non_emp grps=
       let new_comps = build_comps sccs topo_order  new_adjsg1 new_adjs1 in
       let new_comps = List.filter (fun (_,chains) -> List.length chains > 1) new_comps in
       (* (false,  new_comps, new_vs, new_adjsg1, new_adjs1) *)
-      (* let _ = Debug.info_pprint (" loop: rule 2-3" ) no_pos in *)
+      (* let () = Debug.info_pprint (" loop: rule 2-3" ) no_pos in *)
       force_loop_helper new_vertexs new_adjsg1 new_adjs1 ls_non_emp new_comps
           (*dont need to loop*)
           (* if new_emps1 = [] then *)
@@ -1606,8 +1606,8 @@ let build_emp vertex must_diffs=
     match ls_diff with
       | [] -> false
       | (sv1,sv2)::rest -> if CP.mem_svl sv1 aset && CP.mem_svl sv2 aset then
-          (* let _ = Debug.info_pprint (" sv1: "^ (!CP.print_sv sv1)) no_pos in *)
-          (* let _ = Debug.info_pprint (" sv2: "^ (!CP.print_sv sv2)) no_pos in *)
+          (* let () = Debug.info_pprint (" sv1: "^ (!CP.print_sv sv1)) no_pos in *)
+          (* let () = Debug.info_pprint (" sv2: "^ (!CP.print_sv sv2)) no_pos in *)
           true
         else check_conflict aset rest
   in
@@ -1645,7 +1645,7 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
     in
     let pr0 = pr_list string_of_int in
     let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in
-    let _ = Debug.ninfo_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in
+    let () = Debug.ninfo_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in
     if new_emps_and_prunes = [] then (false,  comps, vertexs0,ls_adjg11,ls_adj11) else
       let new_emps, prune_brs = List.fold_left (fun (ls1,ls2) (r,svl, brs) ->
           (ls1@[(r,svl)], ls2@[(r,brs)])
@@ -1658,7 +1658,7 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
       (* let _,sccs,topo_order = build_scc (new_adjsg1@new_adjs1) in *)
       (* let new_comps = build_comps sccs topo_order new_adjsg1 new_adjs1 in *)
       (* let new_comps = List.filter (fun (_,chains) -> List.length chains > 1) new_comps in *)
-      (* let _ = Debug.info_pprint (" loop: rule 2-3-4" ) no_pos in *)
+      (* let () = Debug.info_pprint (" loop: rule 2-3-4" ) no_pos in *)
       force_inter_predicate_rules new_vertexs new_adjsg1 new_adjs1 ls_non_emp
 
 (*
@@ -1886,7 +1886,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       - (tar_e_seg, b_id)
   *)
   let is_non_touch_two_way_pto tar_edges tar_e_seg (b_id, e_id)=
-    let _ = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
+    let () = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
       let pto_nontouch =
@@ -1896,10 +1896,10 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           rev_e.he_kind
         with _ -> (*not exist is OK*) true
       in
-      let _ = Debug.ninfo_hprint (add_str "pto_nontouch" string_of_bool) pto_nontouch no_pos in
+      let () = Debug.ninfo_hprint (add_str "pto_nontouch" string_of_bool) pto_nontouch no_pos in
       if pto_nontouch then
         try
-          let _ = Debug.ninfo_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
+          let () = Debug.ninfo_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
           (* (tar_e_seg, b_id) is non_touch also*)
           let seg_e = look_up_edge tar_edges tar_e_seg b_id in
           seg_e.he_kind
@@ -1909,7 +1909,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     else true
   in
   let is_non_touch_two_way tar_edges tar_e_seg (b_id, e_id)=
-    let _ = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
+    let () = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
       let pto_nontouch =
@@ -1945,8 +1945,8 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     if not has_rev_path then false else
       let fwd_touchable = is_touchable fwd_path tar_edges in
       let rev_touchable = is_touchable rev_path tar_edges in
-      let _ = Debug.ninfo_hprint (add_str "fwd_touchable" (string_of_bool)) fwd_touchable no_pos in
-      let _ = Debug.ninfo_hprint (add_str "rev_touchable" (string_of_bool)) rev_touchable no_pos in
+      let () = Debug.ninfo_hprint (add_str "fwd_touchable" (string_of_bool)) fwd_touchable no_pos in
+      let () = Debug.ninfo_hprint (add_str "rev_touchable" (string_of_bool)) rev_touchable no_pos in
       ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
           ((fwd_touchable && rev_touchable)|| (not fwd_touchable && not rev_touchable)))
       (*11-01*)
@@ -1957,7 +1957,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       (* if not is_consistent then false else *)
       (*   if both_non_touch then *)
       (*     let touch_edges = look_up_touch_edges src_edges [rev_edge.he_b_id;rev_edge.he_e_id] [] in *)
-      (*     let _ = Debug.info_hprint (add_str "touch_edges" (pr_list print_he)) touch_edges no_pos in *)
+      (*     let () = Debug.info_hprint (add_str "touch_edges" (pr_list print_he)) touch_edges no_pos in *)
       (*     touch_edges = [] *)
       (*   else true *)
       (*end 11-01*)
@@ -1975,7 +1975,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       (*otherwise: check it is a path pi*)
       let has_path, path = dfs_pair tar_e [([], tar_b)] [tar_e] in
       if not has_path then (false,[]) else
-        let _ = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
+        let () = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
         if not non_touch_check then (true,path) else
           (*has cycle -touchable*)
           let has_cycle, scc =
@@ -1985,9 +1985,9 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
                   | [] -> []
                   | (id1,id2)::rest -> id1::(List.map (fun (_,id) -> id) path)
                 in
-                let _ = Debug.ninfo_hprint (add_str "path_vertexs" (pr_list string_of_int)) path_vertexs no_pos in
+                let () = Debug.ninfo_hprint (add_str "path_vertexs" (pr_list string_of_int)) path_vertexs no_pos in
                 let inter_scc = List.find (fun scc -> (Gen.BList.difference_eq (=) scc path_vertexs) = [] ) tar_touch_sccs in
-                let _ = Debug.ninfo_hprint (add_str " inter_scc" (pr_list string_of_int)) inter_scc no_pos in
+                let () = Debug.ninfo_hprint (add_str " inter_scc" (pr_list string_of_int)) inter_scc no_pos in
                 let is_touch = inter_scc != [] &&
                   (*at least one pto*)
                    List.exists (fun a -> (get_non_touch_constr_from_pto hg_tar.hg_edges a) !=[]) path
@@ -1996,18 +1996,18 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               with _ -> (false,[])
           in
           if has_cycle then
-            let _ = Debug.ninfo_hprint (add_str "has cycle" (pr_list string_of_int)) scc no_pos in
+            let () = Debug.ninfo_hprint (add_str "has cycle" (pr_list string_of_int)) scc no_pos in
             (false,path)
           else
             (*if non_touch is enable, all edge of pi must be pto*)
             (* let required_tar_non_touch_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
             (*     r@(get_non_touch_constr_from_pto hg_tar.hg_edges (b_id,e_id)) *)
             (* ) [] path in *)
-            (* let _ = Debug.info_hprint (add_str "required_tar_non_touch_b_ids" (pr_list string_of_int)) required_tar_non_touch_b_ids no_pos in *)
+            (* let () = Debug.info_hprint (add_str "required_tar_non_touch_b_ids" (pr_list string_of_int)) required_tar_non_touch_b_ids no_pos in *)
             (*  let is_non_touch = check_non_touch hg_tar.hg_non_touch_edges required_tar_non_touch_b_ids tar_e in *)
             let check_rev =
               try
-                let _ = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
+                let todo_unk = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
                 true
               with _ -> false
             in
@@ -2018,12 +2018,12 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             else true
             in
             (* let is_non_touch = true in *)
-            let _ = Debug.ninfo_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
+            let () = Debug.ninfo_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
             if not is_non_touch then (false,path) else
               (* cycle in conseq: sedge and its inversion have the same feature: touch and non-touch.*)
               let required_touch = List.exists (fun (b_id,e_id) ->
                   b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
-              let _ = Debug.ninfo_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
+              let () = Debug.ninfo_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
               let direct_loop = required_touch && ( List.exists (fun (b_id,e_id) ->
                 b_id = sedge.he_e_id && e_id = sedge.he_b_id) src_cycle_edges)
               in
@@ -2031,7 +2031,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
                 try
                   let rev_edge = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
                   let cons_two_way = consistent_two_way_touch path hg_tar.hg_edges hg_src.hg_edges sedge rev_edge in
-                  let _ = Debug.ninfo_hprint (add_str "cons_two_way" string_of_bool) cons_two_way no_pos in
+                  let () = Debug.ninfo_hprint (add_str "cons_two_way" string_of_bool) cons_two_way no_pos in
                   (cons_two_way,path)
                 with Not_found -> (true,path)
               end
@@ -2076,12 +2076,12 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       has_non_emp_path path
   in
   let rec find_first_non_emp waiting done_vertexs=
-    let _ = Debug.ninfo_hprint (add_str "waiting" (pr_list string_of_int)) waiting no_pos in
-    let _ = Debug.ninfo_hprint (add_str "done_vertexs" (pr_list string_of_int)) done_vertexs no_pos in
+    let () = Debug.ninfo_hprint (add_str "waiting" (pr_list string_of_int)) waiting no_pos in
+    let () = Debug.ninfo_hprint (add_str "done_vertexs" (pr_list string_of_int)) done_vertexs no_pos in
     match waiting with
       | [] -> false
       | e::rest -> begin
-            let _ = Debug.ninfo_hprint (add_str "last" string_of_int) e no_pos in
+            let () = Debug.ninfo_hprint (add_str "last" string_of_int) e no_pos in
             let next_edges = look_up_next_edges hg_tar.hg_edges e in
             try
               let e = List.find (fun e -> e.he_kind) next_edges in
@@ -2109,7 +2109,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           let non_empty_direct_loop = (tar_edge.he_kind && rev_tar_edge.he_kind) in
           let empty_direct_loop = (not tar_edge.he_kind && not rev_tar_edge.he_kind) in
           let consis_direct = non_empty_direct_loop || empty_direct_loop in
-          let _ = Debug.ninfo_hprint (add_str "consis_direct 1" string_of_bool) consis_direct no_pos in
+          let () = Debug.ninfo_hprint (add_str "consis_direct 1" string_of_bool) consis_direct no_pos in
           consis_direct
         with _ -> true
       else true
@@ -2177,7 +2177,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
                     let tar_edge = look_up_edge hg_tar.hg_edges tar_b tar_e in
                     let rev_non_emp = has_non_emp_src_path1 tar_e tar_b in
                     let non_empty_direct_loop = (tar_edge.he_kind && rev_non_emp) || (not tar_edge.he_kind && not rev_non_emp) in
-                    let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop 2" string_of_bool) non_empty_direct_loop no_pos in
+                    let () = Debug.ninfo_hprint (add_str "non_empty_direct_loop 2" string_of_bool) non_empty_direct_loop no_pos in
                     non_empty_direct_loop
                   with _ -> true
                 end
@@ -2205,13 +2205,13 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       (*otherwise: check it is a path pi*)
       let has_path, path = dfs_pair tar_e [([], tar_b)] [tar_e] in
       if not has_path then (false,[]) else
-        let _ = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
+        let () = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
         (*rule 1*)
         let valid_rhs_unfold = check_valid_unfold_rhs sedge path in
-        let _ = Debug.ninfo_hprint (add_str " valid_rhs_unfold" string_of_bool) valid_rhs_unfold no_pos in
+        let () = Debug.ninfo_hprint (add_str " valid_rhs_unfold" string_of_bool) valid_rhs_unfold no_pos in
         if not valid_rhs_unfold then (valid_rhs_unfold, path) else
           let valid_direct_loop = check_non_empty_direct_loop sedge path in
-          let _ = Debug.ninfo_hprint (add_str "valid_direct_loop" string_of_bool) valid_direct_loop no_pos in
+          let () = Debug.ninfo_hprint (add_str "valid_direct_loop" string_of_bool) valid_direct_loop no_pos in
           (valid_direct_loop, path)
   in
   (******************)
@@ -2237,9 +2237,9 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     match map_sedge_paths with
       | [_] -> true
       | (_,path1)::rest ->
-            let _ = Debug.ninfo_hprint (add_str "path1" (pr_list (pr_pair string_of_int string_of_int) )) path1 no_pos in
+            let () = Debug.ninfo_hprint (add_str "path1" (pr_list (pr_pair string_of_int string_of_int) )) path1 no_pos in
             if List.exists (fun (_,path2) ->
-                let _ = Debug.ninfo_hprint (add_str "path2" (pr_list (pr_pair string_of_int string_of_int) )) path2 no_pos in
+                let () = Debug.ninfo_hprint (add_str "path2" (pr_list (pr_pair string_of_int string_of_int) )) path2 no_pos in
                 List.exists (fun id -> List.mem id path2) path1
             ) rest
             then false
@@ -2308,7 +2308,7 @@ let check_homomorphism_x non_touch_check hg_src hg_tar=
     (*   let _,tar_sccs,_ = build_scc (hg_tar.hg_adjg2@hg_tar.hg_adj1) in *)
     (*   (\*10-07*\) *)
     (*   let tar_touch_sccs = List.filter (fun scc -> (look_up_touch_chains hg_tar.hg_edges scc) != []) tar_sccs in *)
-    (*   let _ = Debug.info_hprint (add_str "tar_touch_sccs" (pr_list_ln (pr_list string_of_int))) tar_touch_sccs no_pos in *)
+    (*   let () = Debug.info_hprint (add_str "tar_touch_sccs" (pr_list_ln (pr_list string_of_int))) tar_touch_sccs no_pos in *)
     (*   (src,tar_touch_sccs) *)
     (* else [],[] *)
     (* in *)

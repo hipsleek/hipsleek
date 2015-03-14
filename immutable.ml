@@ -158,7 +158,7 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
 	  h_formula_star_pos = pos}) -> 
-      (* let _ = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
+      (* let () = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
 	      (match h2 with
 	        | Phase _ -> (h1, h2)
 	        | Star ({h_formula_star_h1 = sh1;
@@ -352,12 +352,12 @@ let rec is_classic_lending_hformula (f: h_formula) : bool =
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
         if (isLend h1.h_formula_data_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
         if (isLend h1.h_formula_view_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
 
@@ -1570,7 +1570,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
                   (params@[new_p_ann], nc@constr, nv@vars)
               ) ([],[],[]) dn.CF.h_formula_data_param_imm
             else
-              let _ = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
+              let () = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
               let new_ann_param = List.map (fun _ -> ann_node) dn.CF.h_formula_data_arguments in
               (new_ann_param, [], [])
           in 
@@ -1925,7 +1925,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
   with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let () = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in

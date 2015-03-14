@@ -231,7 +231,7 @@ let rec float_var_decl (e:exp) : exp  =
       let e = float_var_decl b.exp_block_body in
       let decl_list = local_var_decl e in
       let ldups = Gen.BList.find_dups_eq (fun (c1,_,_)(c2,_,_)-> (String.compare c1 c2)=0) decl_list in
-      let _ = if ldups<>[] then 
+      let () = if ldups<>[] then 
           Error.report_error 
             {Err.error_loc = b.exp_block_pos; 
              Err.error_text = 
@@ -316,7 +316,7 @@ let check_use_before_declare (e:exp) : () =
   and f e = match e with
       | ConstDecl b->
         (List.iter (fun (c,e,pos) -> 
-          let _ = if (List.mem c decl_lst) then           
+          let () = if (List.mem c decl_lst) then           
            Error.report_error 
               {Err.error_loc = b.pos; 
                Err.error_text = (String.concat "," (List.map (fun (c,_,pos)-> 
@@ -327,7 +327,7 @@ let check_use_before_declare (e:exp) : () =
           decl_lst := c::!decl_lst) b.exp_const_decl_decls)
       | VarDecl b -> 
         List.iter (fun (c,e,pos) ->
-         let _ = if (List.mem c decl_lst) then           
+         let () = if (List.mem c decl_lst) then           
            Error.report_error 
               {Err.error_loc = pos; 
                Err.error_text = (String.concat "," (List.map (fun (c,_,pos)-> 
@@ -338,7 +338,7 @@ let check_use_before_declare (e:exp) : () =
             | Some s -> helper s); decl_lst := c::!decl_lst) b.exp_var_decl_decls 
       | Block b ->  check_use_before_declare b.exp_block_local_var (Gen.BList.difference_eq (=) (prev_decl_lst@decl_lst) block_var)
       | Bind b -> 
-         let _ = if (List.mem b.exp_bind_bound_var l) && (not (List.mem b.exp_bind_bound_var (prev_decl_lst @!decl_lst))) then
+         let () = if (List.mem b.exp_bind_bound_var l) && (not (List.mem b.exp_bind_bound_var (prev_decl_lst @!decl_lst))) then
          Error.report_error 
               {Err.error_loc = exp_bind_pos; 
                Err.error_text = (String.concat "," (List.map (fun (c,_,pos)-> 
@@ -559,9 +559,9 @@ let three3 (a,b,c) = c
 
 let rec check_exp_if_use_before_declare
     (e:exp) ((local,global):IS.t*IS.t) (stk:IS.t ref) : unit =
-	(* let _ = print_endline ("[check_exp_if_use_before_declare] input exp = { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+	(* let () = print_endline ("[check_exp_if_use_before_declare] input exp = { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
   let f_args (local, global) stk e =
-	(* let _ = print_endline ("Call f_args on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+	(* let () = print_endline ("Call f_args on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
  (match e with
     | Bind b ->
       (IS.empty, union_all [to_IS b.exp_bind_fields; !stk; global]) (* inner blk *)
@@ -581,7 +581,7 @@ let rec check_exp_if_use_before_declare
     | _ -> (local, union_all [!stk; global])) (* inner block *) 
   in
   let f_imp stk e = 
-	(* let _ = print_endline ("Call f_imp on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+	(* let () = print_endline ("Call f_imp on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | Seq b -> stk
     | VarDecl b ->
@@ -592,7 +592,7 @@ let rec check_exp_if_use_before_declare
     | _ -> let ef = ref IS.empty in ef
   in
   let f (local, global) stk e = 
-	(* let _ = print_endline ("Call f on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+	(* let () = print_endline ("Call f on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | ConstDecl b ->
       let helper (v,e,_) = 
@@ -627,7 +627,7 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else (* let _ = print_endline "REPORT ERROR is_not_declared 1" in *)
+        else (* let () = print_endline "REPORT ERROR is_not_declared 1" in *)
           Error.report_error 
             {Err.error_loc = pos;
             Err.error_text = v ^ ", line " 
@@ -645,7 +645,7 @@ let rec check_exp_if_use_before_declare
       then 
         if (IS.mem v local) 
         then
-          (*let _ = print_endline ("local var:"^string_of_IS local) in*)
+          (*let () = print_endline ("local var:"^string_of_IS local) in*)
         Error.report_error 
         {Err.error_loc = pos;
          Err.error_text = v ^ ", line " 
@@ -653,7 +653,7 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else (* let _ = print_endline "REPORT ERROR is_not_declared 2" in *)
+        else (* let () = print_endline "REPORT ERROR is_not_declared 2" in *)
           Error.report_error 
             {Err.error_loc = pos;
              Err.error_text = v ^ ", line " 
@@ -787,7 +787,7 @@ object (self)
               else cc::(diff xst ys)
         | [],_ -> 
               let pr = pr_list (pr_pair pr_id pr_id) in
-              let _ = Debug.binfo_hprint (add_str "WARNING : un-declared remains" pr) ys no_pos in
+              let () = Debug.binfo_hprint (add_str "WARNING : un-declared remains" pr) ys no_pos in
                 []
     in
     (* let diff xs ys = *)
@@ -814,7 +814,7 @@ let rename_exp2 e subs =
     (*  let imp_bvars = new impset in *)
     let subst_of_ident_with_bool_with_wrapper subs id =
       let new_subs = imp_bvars # filter_undecl subs in
-      (* let _ = Debug.binfo_hprint (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
+      (* let () = Debug.binfo_hprint (add_str "subst_of... (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in *)
       subst_of_ident_with_bool new_subs id
     in
     let f_args (bvars, subs) e =
@@ -860,7 +860,7 @@ let rename_exp2 e subs =
                     | Some e0 -> Some (rename_exp e0 (bvars, subs))
                   )
                 in
-                let _ = imp_bvars # pop_elem v in
+                let () = imp_bvars # pop_elem v in
                 let (v1, b) = subst_of_ident_with_bool subs v in
                 (v1, e1, l)
               in
@@ -899,16 +899,16 @@ let rename_exp2 e subs =
                 let clash_lvars = IS.inter bvars lvars in
                 if (IS.is_empty clash_lvars) then None
                 else 
-                  let _ = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
+                  let () = Debug.tinfo_hprint (add_str "Block (clash_lvars)" string_of_IS) clash_lvars no_pos in
+                  let () = Debug.tinfo_hprint (add_str "Block (local vars)" (pr_list (fun (a,_,_) -> a))) local_vs no_pos in
                   let body = b.exp_block_body in
                   (* { vs,  int x=?; e2} *) 
-                  let _ = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
+                  let () = Debug.ninfo_hprint (add_str "Block (body)" Iprinter.string_of_exp) body no_pos in
                   let clash_subs = new_naming (from_IS clash_lvars) in
-                  let _ = imp_bvars # push_list clash_subs in
-                  let _ = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
+                  let () = imp_bvars # push_list clash_subs in
+                  let () = Debug.tinfo_hprint  (add_str "Block(imp bvars)" pr_id) (imp_bvars # string_of ) no_pos in
                   let new_subs = clash_subs @ subs in
-                  let _ = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
+                  let () = Debug.tinfo_hprint (add_str "Block (new_subs)" (pr_list (pr_pair pr_id pr_id))) new_subs no_pos in
                   let new_vars =
                     let fun0 (a,b,c) = (fst (subst_of_ident_with_bool clash_subs a), b, c) in
                     List.map fun0 local_vs (* b.exp_block_local_vars *) in
@@ -955,12 +955,12 @@ let rename_exp (e:exp) ((bvars,subs) as xx:(IS.t)*((ident * ident) list)) : exp 
  Debug.no_2 "rename_exp" pr1 pr2 pr1 rename_exp2 e xx
 
 let rename_proc gvs proc : proc_decl = 
-	(* let _ = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
-	(* let _ = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_dec,l proc) ^ " }") in *)
+	(* let () = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
+	(* let () = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_dec,l proc) ^ " }") in *)
   let pv v = v.param_name in
   let pargs = to_IS (List.map pv proc.proc_args) in
   let clash_vars = IS.inter pargs gvs in
-	(* let _ = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
+	(* let () = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
   let clash_subs = new_naming (from_IS clash_vars) in
 
   let nargs = 
@@ -1244,7 +1244,7 @@ let ht_of_gvdef gvdefs =
 
 let param_of_v ht md lc nm =
   try
-  (* let _ = print_endline ("== ht length = " ^ (string_of_int (Hashtbl.length ht))) in *)
+  (* let () = print_endline ("== ht length = " ^ (string_of_int (Hashtbl.length ht))) in *)
   (* Hashtbl.iter (fun a b -> print_endline ("     -- " ^ a ^ "  -->  " ^ (Globals.string_of_typ b));) ht; *)
   let t = H.find ht nm in
   match t with 
@@ -1261,19 +1261,19 @@ let param_of_v ht md lc nm =
         param_loc = lc;
       }
   with e ->
-    let _ = print_endline ("Exception!!! in param_of_v") in
-    let _ = print_endline ("== nm = " ^ nm) in
+    let () = print_endline ("Exception!!! in param_of_v") in
+    let () = print_endline ("== nm = " ^ nm) in
     raise e
 
 let add_free_var_to_proc gvdefs ht proc = 
   let ght = ht_of_gvdef gvdefs in
   let (rs,ws) = H.find ht proc.proc_name in
-  (* let _ = print_endline ("proc:"^ proc.proc_name) in *)
-  (* let _ = print_endline ("proc rs:"^ string_of_IS rs) in *)
-  (* let _ = print_endline ("proc ws:"^ string_of_IS ws) in *)
+  (* let () = print_endline ("proc:"^ proc.proc_name) in *)
+  (* let () = print_endline ("proc rs:"^ string_of_IS rs) in *)
+  (* let () = print_endline ("proc ws:"^ string_of_IS ws) in *)
   let fun0 md is =
     (* let l = from_IS is in *)
-    (* let _ = print_endline ("== (from_IS is) length = " ^ (string_of_int (List.length l))) in *)
+    (* let () = print_endline ("== (from_IS is) length = " ^ (string_of_int (List.length l))) in *)
     List.map (param_of_v ght md proc.proc_loc) (from_IS is)
   in
   let ars = fun0 NoMod rs in
@@ -1293,8 +1293,8 @@ let exp_of_is l vs =
   List.map (exp_of_var l) (from_IS vs)
 
 let exp_of_rws l (rs,ws) = 
-  (*let _ = print_endline ("exp rs:"^ string_of_IS rs) in
-    let _ = print_endline ("exp ws:"^ string_of_IS ws) in*)
+  (*let () = print_endline ("exp rs:"^ string_of_IS rs) in
+    let () = print_endline ("exp ws:"^ string_of_IS ws) in*)
   exp_of_is l rs @ exp_of_is l ws
 
 let addin_callargs_of_exp ht e : exp = 
@@ -1356,11 +1356,11 @@ let map_body_of_proc f proc =
 
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
-  (* let _ = print_string "1\n" in *)
+  (* let () = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
+  (* let () = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
   (* let scclist = List.rev (ngscc_list cg) in *)
-  (* let _ = print_string "2a\n" in *)
+  (* let () = print_string "2a\n" in *)
   (* let _, fscc = IGC.scc cg in                                       *)
   (* let scclist = IGC.scc_list cg in                                  *)
   (* let scclist = List.map (fun scc ->                                *)
@@ -1378,12 +1378,12 @@ let add_globalv_to_mth_prog prog =
   let sccarr = IGC.scc_array cg in
   let scclist = Array.to_list sccarr in
   
-  (* let _ = print_endline ("scc: " ^ (pr_list (pr_list                        *)
+  (* let () = print_endline ("scc: " ^ (pr_list (pr_list                        *)
   (*   (fun id -> (pr_id id) ^ ": " ^ (string_of_int (fscc id)))) scclist)) in *)
   
   let sccfv = merge1 ht scclist in
   let mscc = push_freev1 cg sccfv in
-  let _ = update_ht0 ht mscc in
+  let () = update_ht0 ht mscc in
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
@@ -1410,9 +1410,9 @@ let pre_process_of_iprog iprims prog =
 		      prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
-  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
+  (* let () = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = rename_prog prog in
-  (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
+  (* let () = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = add_globalv_to_mth_prog prog in 
   prog
 

@@ -221,7 +221,7 @@ and coq_of_formula pr_w pr_s f =
   in helper f
 
 let coq_of_formula pr_w pr_s f =
-  let _ = set_prover_type () in
+  let () = set_prover_type () in
   coq_of_formula pr_w pr_s f
   
 
@@ -317,7 +317,7 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 	flush log_file;
   end;
 
-  (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
+  (*let () = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
 
 let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =

@@ -108,7 +108,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
                 | _ ->
                       let fn = ("Anon"^(fresh_trailer()))
                       in
-                      (* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
+                      (* let () = (print_string ("\n[astsimp.ml, line 241]: fresh *)
                       (* name = " ^ fn ^ "\n")) in                               *)
                       (IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos), None) ) in
             let tmp4 = tmp3 :: tmp1 in tmp4
@@ -419,17 +419,17 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
     | Named c ->
           (try
-            let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
+            let todo_unk = I.look_up_data_def_raw prog.I.prog_data_decls c
             in Named c
           with
             | Not_found ->
                   (try
-                    let _ = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+                    let todo_unk = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
                     in Named c
                   with
                     | Not_found ->
                           (try
-                            let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                            let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c
                             in Int
                           with
                             | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
@@ -441,8 +441,8 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
                                             Err.error_loc = pos;
                                             Err.error_text = c ^ " is neither data, enum type, nor prim pred";
                                         }
-                                        (*else let _ = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                                          let _ = undef_data_types := (c, pos) :: !undef_data_types in
+                                        (*else let () = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+                                          let () = undef_data_types := (c, pos) :: !undef_data_types in
                                           Named c (* Store this temporarily *)*)
                           )))
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
@@ -531,7 +531,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
       (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->
-      let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
+      let todo_unk:Globals.typ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in
@@ -544,7 +544,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
       (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) -> 
-      let _ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+      let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
       let (new_et, n_tl) = fresh_tvar tlist in          
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in           
@@ -556,7 +556,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
   | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
-      let _ = must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+      let todo_unk:Globals.typ = must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
       let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in                   
@@ -567,7 +567,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
       (n_tl,t2)
   | IP.TypeCast (ty, a1, pos) ->
-      let _ = must_unify_expect_test et ty tlist pos in
+      let todo_unk:Globals.typ = must_unify_expect_test et ty tlist pos in
       let (new_et, n_tl) = fresh_tvar tlist in
       let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
       let (tmp1,tmp2)=nt in
@@ -1050,7 +1050,7 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
       n_tl 
   | IF.Base b ->
       let (n_tl,rl) = res_retrieve tlist filter_res b.IF.formula_base_flow in
-      let _ = List.fold_left (fun tl f -> gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_base_and in
+      let todo_unk = List.fold_left (fun tl f -> gather_type_info_one_formula prog f tl filter_res) n_tl b.IF.formula_base_and in
       let n_tl = helper b.IF.formula_base_pure b.IF.formula_base_heap n_tl in
       let n_tl = res_replace n_tl rl filter_res b.IF.formula_base_flow  in
       n_tl
@@ -1195,7 +1195,7 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
       let (n_tl,_) = gather_type_info_var v tlist ((Named expect_dname)) pos in
       n_tl
   ) in
-  let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
+  let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
   (* Check type consistency for rho *)
   let ho_flow_kinds_view = List.map (fun (k, _, _) -> k) vdef.I.view_ho_vars in
   let ho_flow_kinds_args = List.map (fun ff -> ff.IF.rflow_kind) hoa in
@@ -1208,7 +1208,7 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
     | _ -> report_error pos ("Number of higher-order arguments for the view " 
                              ^ c ^ " does not match") 
   in
-  let _ = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
+  let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
   let rec helper exps tvars =
@@ -1399,9 +1399,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
          *      will be dealt with later.
          *)
         (* Step 1: Extract the main variable i.e. the root of the pointer *)
-        (* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
+        (* let () = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
         let tokens = Str.split (Str.regexp "\\.") v in
-        (* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
+        (* let () = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
         let rootptr = List.hd tokens in
         (* Step 2: Determine the type of [rootptr] and the field by looking 
          * up the current state of tlist & information supplied by the user.
@@ -1410,7 +1410,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         let type_found,type_rootptr = try (* looking up in the list of data types *)
           (* Good user provides type for [rootptr] ==> done! *)
           let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
-          (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
+          (* let () = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
           (true, Named ddef.I.data_name)
           with 
           | Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
@@ -1430,7 +1430,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
             if (List.length dts = 1) then
               (* the field uniquely determines the data type ==> done! *)
-              (* let _ = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
+              (* let () = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
               (true,Named (List.hd dts))
             else
               (false,UNK) in
@@ -1442,17 +1442,17 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           let field_access_seq = List.tl (List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens) in
           (* Get the type of the field which is the type of the pointer *)
           let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
-          (* let _ = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
+          (* let () = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
           let (n_tl,_)= gather_type_info_exp prog (List.hd ies) n_tl ptr_type in n_tl
         else n_tl
       else (* End dealing with generic ptr, continue what the original system did *)
         let n_tl = 
         (try
           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
-          (* let _ = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
+          (* let () = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
           (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
-          let _ = if not (IF.is_param_ann_list_empty ann_param) then
-            (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
+          let () = if not (IF.is_param_ann_list_empty ann_param) then
+            (* let () = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
           try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
         with
@@ -1462,7 +1462,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             n_tl
           with
           | Not_found ->
-            (*let _ = print_string (Iprinter.string_of_program prog) in*)
+            (*let () = print_string (Iprinter.string_of_program prog) in*)
             Err.report_error
             {
               Err.error_loc = pos;
