@@ -2063,14 +2063,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let bfs = bfs@(helper_unfold no bfs ifs) in
         let rs1 = List.exists (fun f ->
             let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga prog) f) in
-            let _ = Debug.binfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
+            let _ = Debug.ninfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw upf pf
         ) bfs in
         if rs1 then true
         else
           let rs2 = List.exists (fun f ->
               let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
-              let _ = Debug.binfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
+              let _ = Debug.ninfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
               TP.imply_raw upf pf
           ) ifs in
           if rs2 then false
@@ -2079,7 +2079,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
                 CP.mkOr acc pf None no_pos
             ) (CP.mkFalse no_pos) (bfs@ifs) in
-            let _ = Debug.binfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
+            let _ = Debug.ninfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw upf pf
       in
       (* type: int -> Excore.EPureI.epure -> CF.formula list -> string -> bool *)
@@ -2087,13 +2087,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
       (* let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in *)
       let body_under = fst (List.split vdef.view_un_struc_formula) in
-      let body_under = [formula1_under] in
-      (* let body_under = fst (List.split vdef.view_un_struc_formula) in *)
       let under_fail = match under_f with
         | None -> false
         | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
             List.exists (fun uf ->
-                not(check_under 0 uf body_under  vdef.view_name)
+                not(check_under 3 uf body_under vdef.view_name)
             ) ufl
             (* let baga_under_formula_list = CP.split_disjunctions baga_under_formula in *)
             (* List.exists (fun baga_under_formula -> *)
@@ -2101,6 +2099,15 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             (*     not(check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)) vdef.view_name under_f) *)
             (* ) baga_under_formula_list *)
       in
+      let under_fail = if under_fail then
+        let body_under = [formula1_under] in
+        match under_f with
+          | None -> false
+          | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
+              List.exists (fun uf ->
+                  not(check_under 3 uf body_under vdef.view_name)
+              ) ufl
+      else under_fail in
       let do_test_inv msg inv fail_res =
         if !Globals.do_test_inv then
           match inv with
