@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/foo-fact1.ss"
 Parsing file "t/foo-fact1.ss" by default parser...
@@ -14,9 +15,9 @@ Procedure fact$int SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1401: ( x=0 & res=1) -->  post_1401(x,res),
-RELDEFN post_1401: ( post_1401(v_int_31_1427,v_int_31_1429) & res=2+v_int_31_1429 & 
-v_int_31_1427+1=x & x!=0) -->  post_1401(x,res)]
+[RELDEFN post_1401: ( x=0 & res=1) -->  post_1401(x,res,flow),
+RELDEFN post_1401: ( res=2+v_int_31_1429 & v_int_31_1427+1=x & x!=0 & 
+post_1401(v_int_31_1427,v_int_31_1429,flow)) -->  post_1401(x,res,flow)]
 *************************************
 
 Post Inference result:
@@ -50,22 +51,3 @@ Base/Rec Case Splitting:
 [	fact: [[3] x=0@B,[4] 1<=x@R,[5] x<=(0-1)@R]
 ]
 Starting z3... 
-Termination Inference Result:
-fact:  requires true * N & truecase {
-                          x=0 -> requires emp * N & Term[33,1]
-     ensures true * N & (2*
-                          x)+1=res & x>=0; 
-                          1<=x -> requires emp * N & MayLoop[]
-     ensures true * N & (2*
-                          x)+1=res & x>=0; 
-                          x<=(0-1) -> requires emp * N & Loop
-                          { 31:23}[]
-     ensures false * N & false; 
-                          }
-
-6 false contexts at: ( (17,2)  (17,11)  (17,9)  (18,7)  (18,16)  (18,14) )
-
-Total verification time: 0.668716 second(s)
-	Time spent in main process: 0.5356 second(s)
-	Time spent in child processes: 0.133116 second(s)
-

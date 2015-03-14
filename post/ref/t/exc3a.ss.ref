@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc3a.ss"
 Parsing file "t/exc3a.ss" by default parser...
@@ -25,7 +26,7 @@ Error(s) detected when checking procedure loop$int
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1361: ( res=1111+x & x<=0) -->  post_1361(x,res)]
+[RELDEFN post_1361: ( res=1111+x & x<=0) -->  post_1361(x,res,flow)]
 *************************************
 
 Post Inference result:
@@ -37,7 +38,7 @@ loop$int
 
 1 false contexts at: ( (16,4) )
 
-Total verification time: 0.337538 second(s)
-	Time spent in main process: 0.310247 second(s)
-	Time spent in child processes: 0.027291 second(s)
+Total verification time: 0.35202 second(s)
+	Time spent in main process: 0.32802 second(s)
+	Time spent in child processes: 0.024 second(s)
 

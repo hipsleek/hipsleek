@@ -1228,6 +1228,13 @@ Two other problems for --inv-baga are below.
 Total number of errors: 5 in files:
   label-basic.slk({E3#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) inflem.slk({E1#Fail},{E2#Valid}).
 ====================================================================
+../../sleek sleek/fracperm/split_simple.slk --en-para -perm fperm -tp redlog
+To fix : nested timer timeout problem.
+
+Also, below for loris23:
+
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+smtsolver.ml:      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
 ====================================================================
 ====================================================================
 ====================================================================

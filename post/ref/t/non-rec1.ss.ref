@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/non-rec1.ss"
 Parsing file "t/non-rec1.ss" by default parser...
@@ -11,7 +12,7 @@ Procedure nrec$ SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1315: ( res=10) -->  post_1315(res)]
+[RELDEFN post_1315: ( res=10) -->  post_1315(res,flow)]
 *************************************
 
 Post Inference result:
@@ -23,7 +24,7 @@ nrec$
 
 0 false contexts at: ()
 
-Total verification time: 0.306783 second(s)
-	Time spent in main process: 0.283449 second(s)
-	Time spent in child processes: 0.023334 second(s)
+Total verification time: 0.328019 second(s)
+	Time spent in main process: 0.304018 second(s)
+	Time spent in child processes: 0.024001 second(s)
 

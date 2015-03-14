@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/sc-1.ss"
 Parsing file "t/sc-1.ss" by default parser...
@@ -28,36 +29,3 @@ Base/Rec Case Splitting:
 [	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
 ]
 Starting z3... 
-Termination Inference Result:
-f:  requires true * U & truecase {
-                          x<=(0-
-                          1) -> requires emp * N & Term[31,1]
-     ensures true * N & true;
-                          
-                          0<=x -> case {
-                                   0<=y -> requires emp * N & Loop
-                                   { 9:7}[]
-     ensures false * N & false; 
-                                   y<=(0-
-                                   1) -> case {
-                                          (0-x)<=y & y<=(0-
-                                          1) -> requires emp * N & Loop
-                                          { 9:7}[]
-     ensures false * N & false;
-                                          
-                                          0<=x & x<=((0-y)-
-                                          1) -> requires emp * N & Term[31,2]
-     ensures true * N & true;
-                                          
-                                          }
-                                   
-                                   }
-                          
-                          }
-
-0 false contexts at: ()
-
-Total verification time: 0.418312 second(s)
-	Time spent in main process: 0.373525 second(s)
-	Time spent in child processes: 0.044787 second(s)
-

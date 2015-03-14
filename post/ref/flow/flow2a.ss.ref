@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "flow/flow2a.ss"
 Parsing file "flow/flow2a.ss" by default parser...
@@ -11,8 +12,8 @@ Procedure loop$int SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1356: ( x_1373+1=x & 1<=x & post_1356(x_1373,x')) -->  post_1356(x,x'),
-RELDEFN post_1356: ( x'=x & x<=0) -->  post_1356(x,x')]
+[RELDEFN post_1356: ( x_1373+1=x & 1<=x & post_1356(x_1373,x',flow)) -->  post_1356(x,x',flow),
+RELDEFN post_1356: ( x'=x & x<=0) -->  post_1356(x,x',flow)]
 *************************************
 
 Post Inference result:
@@ -24,7 +25,7 @@ loop$int
 
 0 false contexts at: ()
 
-Total verification time: 0.378902 second(s)
-	Time spent in main process: 0.314193 second(s)
-	Time spent in child processes: 0.064709 second(s)
+Total verification time: 0.408023 second(s)
+	Time spent in main process: 0.34002 second(s)
+	Time spent in child processes: 0.068003 second(s)
 

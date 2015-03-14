@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/rec-f91d.ss"
 Parsing file "t/rec-f91d.ss" by default parser...
@@ -25,7 +26,7 @@ f91$int
 
 0 false contexts at: ()
 
-Total verification time: 0.405462 second(s)
-	Time spent in main process: 0.332602 second(s)
-	Time spent in child processes: 0.07286 second(s)
+Total verification time: 0.456026 second(s)
+	Time spent in main process: 0.384023 second(s)
+	Time spent in child processes: 0.072003 second(s)
 

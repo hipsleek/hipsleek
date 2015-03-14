@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/ll-data.ss"
 Parsing file "bugs/ll-data.ss" by default parser...
@@ -11,8 +12,8 @@ Procedure foo$node SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1367: ( res=0) -->  post_1367(res),
-RELDEFN post_1367: ( true) -->  post_1367(res)]
+[RELDEFN post_1367: ( res=0) -->  post_1367(res,flow),
+RELDEFN post_1367: ( true) -->  post_1367(res,flow)]
 *************************************
 
 
@@ -25,7 +26,7 @@ foo$node
 
 0 false contexts at: ()
 
-Total verification time: 0.383943 second(s)
-	Time spent in main process: 0.33568 second(s)
-	Time spent in child processes: 0.048263 second(s)
+Total verification time: 0.440026 second(s)
+	Time spent in main process: 0.384023 second(s)
+	Time spent in child processes: 0.056003 second(s)
 

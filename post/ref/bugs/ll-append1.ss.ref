@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/ll-append1.ss"
 Parsing file "bugs/ll-append1.ss" by default parser...
@@ -13,9 +14,9 @@ Procedure append$node~node SUCCESS.
 *************************************
 [RELDEFN pre_1390: ( pre_1390(n,m_1422) & n=1+n_1421 & 1<=n_1421 & 0<=m_1422) -->  pre_1390(n_1421,m_1422),
 RELASS [pre_1390]: ( pre_1390(n,m)) -->  (n!=0 | 0>m),
-RELDEFN post_1391: ( n=1 & r_1373=m+1 & 0<=m & pre_1390(n,m)) -->  post_1391(r_1373,n,m),
-RELDEFN post_1391: ( post_1391(r_1437,n_1421,m) & r_1437+1=r_1373 & n_1421+1=n & 2<=r_1373 & 
-1<=n & 0<=m & pre_1390(n,m)) -->  post_1391(r_1373,n,m)]
+RELDEFN post_1391: ( n=1 & r_1373=m+1 & 0<=m & pre_1390(n,m)) -->  post_1391(r_1373,n,m,flow),
+RELDEFN post_1391: ( r_1437+1=r_1373 & n_1421+1=n & 2<=r_1373 & 1<=n & 0<=m & 
+post_1391(r_1437,n_1421,m,flow) & pre_1390(n,m)) -->  post_1391(r_1373,n,m,flow)]
 *************************************
 
 Post Inference result:
@@ -29,7 +30,7 @@ append$node~node
 
 0 false contexts at: ()
 
-Total verification time: 0.711894 second(s)
-	Time spent in main process: 0.582912 second(s)
-	Time spent in child processes: 0.128982 second(s)
+Total verification time: 1.048064 second(s)
+	Time spent in main process: 0.872054 second(s)
+	Time spent in child processes: 0.17601 second(s)
 

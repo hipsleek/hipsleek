@@ -328,35 +328,36 @@ let incremMethodsO = ref (new incremMethods)
 
 let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
-    |[] -> ()
-    | "log"::rest -> check_prover_existence rest
-    | prover::rest -> 
-        (* let exit_code = Sys.command ("which "^prover) in *)
-        (*Do not display system info in the website*)
+  |[] -> ()
+  | "log"::rest -> check_prover_existence rest
+  | prover::rest -> 
+    let _ = Debug.tinfo_hprint (add_str "check prover" pr_id) prover no_pos in
+    (* let exit_code = Sys.command ("which "^prover) in *)
+    (*Do not display system info in the website*)
           (* let () = print_endline ("prover:" ^ prover) in *)
-          let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
-            if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter" else
-             prover
-          in
-          let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
-          if exit_code > 0 then
-            if  (Sys.file_exists prover) then
-              let _ =
-                if String.compare prover "oc" = 0 then
+    let prover = if String.compare prover "z3n" = 0 then "z3-4.2" else
+      if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter" else
+        prover
+    in
+    let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
+    if exit_code > 0 then
+      if  (Sys.file_exists prover) then
+        let _ =
+          if String.compare prover "oc" = 0 then
                   let () = Omega.is_local_solver := true in
                   let () = Omega.omegacalc := "./oc" in
-                  ()
-                else if String.compare prover "z3" = 0 then
+            ()
+          else if String.compare prover "z3" = 0 then
                   let () = Smtsolver.is_local_solver := true in
                   let () = Smtsolver.smtsolver_name := "./z3" in
-                  ()
-                else ()
-              in
-              check_prover_existence rest
-            else
+            ()
+          else ()
+        in
+        check_prover_existence rest
+      else
               let () = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
-              exit 0
-          else check_prover_existence rest
+        exit 0
+    else check_prover_existence rest
 
 let is_smtsolver_z3 tp_str=
    (* try *)

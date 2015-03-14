@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc6e.ss"
 Parsing file "t/exc6e.ss" by default parser...
@@ -29,19 +30,5 @@ Procedure loop$int SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1321(__norm#E): ( x=1+res) -->  post_1321(x,res)]
+[RELDEFN post_1321(__norm#E): ( x=1+res) -->  post_1321(x,res,flow)]
 *************************************
-
-Post Inference result:
-loop$int
- EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-         EAssume 
-           htrue&{FLOW,(1,28)=__flow#E}[]
-           
-
-0 false contexts at: ()
-
-Total verification time: 0.319414 second(s)
-	Time spent in main process: 0.29589 second(s)
-	Time spent in child processes: 0.023524 second(s)
-

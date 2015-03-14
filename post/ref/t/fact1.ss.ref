@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/fact1.ss"
 Parsing file "t/fact1.ss" by default parser...
@@ -26,7 +27,7 @@ fact$int
 
 0 false contexts at: ()
 
-Total verification time: 0.391325 second(s)
-	Time spent in main process: 0.33206 second(s)
-	Time spent in child processes: 0.059265 second(s)
+Total verification time: 0.424026 second(s)
+	Time spent in main process: 0.360022 second(s)
+	Time spent in child processes: 0.064004 second(s)
 
