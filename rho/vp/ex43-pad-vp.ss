@@ -26,13 +26,13 @@ void foo4(int a4)
 // ensures true;
 
 void foo5(int a5, int b5)
- requires @zero[a5]
+  requires @zero[a5]
   ensures true;
-// requires @zero[a]*@value[b]
-// ensures true;
+  // requires @zero[a]*@value[b]
+  // ensures true;
 
 void foo6(int a6, ref int b6)
- requires @zero[a6]
+  requires @zero[a6]
   ensures true;
 // requires @zero[a]*@full[b]
 // ensures @full[b];

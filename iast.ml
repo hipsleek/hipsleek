@@ -2908,7 +2908,7 @@ let add_bar_inits prog =
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
       { proc_name = "init_"^b.barrier_name;
-        proc_source = "source_file";
+        proc_source = (Gen.proc_files # top)^"(barrier?)";
         proc_flags = [];
         proc_mingled_name = "";
         proc_data_decl = None ;

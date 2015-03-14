@@ -95,8 +95,8 @@ and struc_formula =
 
 and assume_formula =
     {
-	formula_assume_simpl : formula;
-	formula_assume_struc : struc_formula;
+	formula_assume_simpl : formula; (* this is added after pre-checking *)
+	formula_assume_struc : struc_formula; (* this is used for proving post of methods *)
 	formula_assume_lbl : formula_label;
 	formula_assume_ensures_type : ensures_type;
 	formula_assume_vars : Cpure.spec_var list;

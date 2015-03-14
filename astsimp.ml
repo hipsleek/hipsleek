@@ -3434,18 +3434,21 @@ and comp_vp_add_pre_post f p_ref p_val =
 and add_perm_to_spec p_ref p_val (expr : CF.struc_formula) : CF.struc_formula  =
   let pr_f = Cprinter.string_of_struc_formula in
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Debug.no_2 "add_perm_to_spec" pr_f pr_svl pr_f (fun _ _ -> add_perm_to_spec_x p_ref p_val expr) expr p_ref
+  Debug.no_2 (* (fun res -> true) *) "add_perm_to_spec" pr_f pr_svl pr_f (fun _ _ -> add_perm_to_spec_x p_ref p_val expr) expr p_ref
 
 and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula  =
   let rec helper flag e =
     (* let f_none _ _ = None in *)
-    let f_f a e = Some(e,a)  in
-    let f1 a e = Some(e,a) in
+    let f1_term a e = Some(e,a) in
+    (* let f_f a e = Some(e,a)  in *)
     let rec f_struc_f a e = 
       match e with
         | CF.EBase b -> 
               (match a with
-                | Some _ -> None
+                | Some (flag,e) -> 
+                      (* flag indicates we are inside a structured EAssume *)
+                      if flag then failwith "inside EAssume - must add permission here"
+                      else None
                 | None ->
                       begin
                         match b.CF.formula_struc_continuation with
@@ -3453,25 +3456,32 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
                           | Some c -> 
                                 let f = b.CF.formula_struc_base in
                                 let (nf,post_perm)=comp_vp_add_pre_post f p_ref p_val in (* compute pre & post-permission *)
-                                let cf= helper (Some post_perm) (* post-permission *) c in
+                                let cf= 
+                                  if post_perm==[] then c (* no post-perm to add *)
+                                  else helper (Some (false,post_perm)) (* adding post-permission to EAssume *) c in
                                 Some (CF.EBase { b with CF.formula_struc_base = nf; CF.formula_struc_continuation = Some cf}, None)
                     end)
       | CF.EAssume f -> 
             begin
               match a with 
                   None -> Some (e,None)
-                | Some post_perm -> Some (e,None) (* TODO:ZH : add post-perm to f *)
+                | Some (_,post_perm) -> 
+                      let assume_simpl = f.CF.formula_assume_simpl in (* must add vperm here *)
+                      let assume_struc = f.CF.formula_assume_struc in (* to add vperm if we have classic/exact post *)
+	              let () = Debug.ninfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
+	              let () = Debug.ninfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in
+                      Some (e,None) (* TODO:ZH : add post-perm to f *)
             end
       | _ -> None in
   (* let f2 a e = None in *)
-  let f_pure = (f1,f1,f1) in
+  let f_pure = (f1_term,f1_term,f1_term) in
   let f_memo a e = Some(e,a) in
   let f_arg =
     let f1 e _ = e in
     (f1,f1,f1,(f1,f1,f1),f1) in
-  let f_gen = (f_struc_f, f1, f1, f_pure, f_memo) in
-  let (a,b) = CF.trans_n_struc_formula e flag f_gen f_arg (fun lst ->
-      List.fold_left (fun r e -> match r with None -> e | _ -> r) None lst) in
+  let f_gen = (f_struc_f, f1_term, f1_term, f_pure, f_memo) in
+  let (a,b) = CF.trans_n_struc_formula e flag f_gen f_arg (fun lst -> None) in
+      (* List.fold_left (fun r e -> match r with None -> e | _ -> r) None lst) in *)
   a
   in helper None expr
 
@@ -3487,12 +3497,19 @@ and add_perm_proc  p =
     let ns = add_perm_to_spec p_ref p_val ss in
     { p with C.proc_static_specs = ns}
 
+and rgx_prelude = Str.regexp ".*prelude"
+
+(* below will trace only files which do not contain "prelude" *)
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
     let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
   *)let pr  = Iprinter.string_of_proc_decl in
   let pr2 = Cprinter.string_of_proc_decl 5 in
-  Debug.no_1 "trans_proc" pr pr2 (fun p -> add_perm_proc (trans_proc_x prog p)) proc
+  let pr_sel f = 
+    let source = f.C.proc_source in
+    (* print_endline ("source :"^source); *)
+    not (Str.string_match rgx_prelude source 0) in
+  Debug.no_1_opt pr_sel "trans_proc" pr pr2 (fun p -> add_perm_proc (trans_proc_x prog p)) proc
 
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
@@ -5629,7 +5646,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_proc = {
                 I.proc_hp_decls = [];
                 I.proc_name = w_name;
-                I.proc_source = "source_file";
+                I.proc_source = (Gen.proc_files # top) ^ "(while_loop)";
                 I.proc_flags = [];
                 I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
                 I.proc_data_decl = proc.I.proc_data_decl;

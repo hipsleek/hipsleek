@@ -3106,6 +3106,19 @@ spec_list_grp:
       ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
   ]];
 
+disj_or_extn_constr:
+  [[
+      dc= disjunctive_constr -> 
+	  let f = F.subst_stub_flow n_flow dc in
+	  let sf = F.mkEBase [] [] [] f None no_pos in
+          (f,sf)
+    | dc= extended_constr -> 
+          let dc = F.subst_stub_flow_struc n_flow dc in
+	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
+	  (f,dc)
+  ]];
+
+
 spec:
   [[
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
@@ -3147,23 +3160,32 @@ spec:
 	      F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
 	      F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
               (* F.formula_ext_complete = false;*)
-    | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    | `ENSURES; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) None
-    | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
-	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
-	  F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
 
-    | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    (* | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) None *)
+    (* | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON -> *)
+    (*       let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in *)
+    (*       F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None *)
+
+    | `ENSURES_EXACT; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) (Some true)
 
-    | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
+    (* | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) (Some true) *)
+
+    | `ENSURES_INEXACT; ol= opt_label; (f,sf)= disj_or_extn_constr; `SEMICOLON ->
 	  F.mkEAssume f sf (fresh_formula_label ol) (Some false)
+
+    (* | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON -> *)
+    (*       let f = F.subst_stub_flow n_flow dc in *)
+    (*       let sf = F.mkEBase [] [] [] f None no_pos in *)
+    (*       F.mkEAssume f sf (fresh_formula_label ol) (Some false) *)
 
     | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
@@ -3214,11 +3236,13 @@ proc_decl:
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc "source_file" id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      let cur_file = Gen.proc_files # top in
+     mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc "source_file" id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    let cur_file = Gen.proc_files # top in
+    mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -3228,7 +3252,8 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ; flgs=opt_flag_list->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc "source_file" id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+    let cur_file = Gen.proc_files # top in
+      mkProc cur_file id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	

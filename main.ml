@@ -34,7 +34,9 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
+
 let parse_file_full file_name (primitive: bool) =
+  Gen.proc_files # push file_name;
   let org_in_chnl = open_in file_name in
   try
     Globals.input_file_name:= file_name;

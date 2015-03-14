@@ -2110,3 +2110,5 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
+
+let proc_files = new stack_noexc "__no_file" pr_id (fun s1 s2 -> s1=s2) 
