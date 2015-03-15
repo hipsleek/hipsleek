@@ -55,12 +55,12 @@ void main()
   {
     case {c@L} c'::LatchOut{+ p'::cell<_> * @full[p]}<> * c'::CNT<(0)> ->
       await(c);
-      //dprint;
+      dprint;
     ||
     case {p, c@L} c'::LatchIn{- p'::cell<_> * @full[p]}<> * c'::CNT<(2)> ->
       p = new cell(1);
       countDown(c);
-      //dprint;
+      dprint;
   }
-  //dprint;
+  dprint;
 }

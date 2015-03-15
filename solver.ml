@@ -10230,7 +10230,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       (match residue with
                         | None -> (flag, arg::result)
                         | Some r ->
-                          if (CVP.is_empty_vperm_sets (CF.get_vperm_set r) && ( (isConstEmpFormula r) || (isConstTrueFormula2 r)))
+                          if (CVP.is_zero_vperm_sets (CF.get_vperm_set r) && ((isConstEmpFormula r) || (isConstTrueFormula2 r)))
                           then (flag, arg::result) (* splitable but empty residue *)
                           else
                             let arg_r = { arg with CF.rflow_base = r; } in 
