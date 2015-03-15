@@ -93,20 +93,20 @@ let process_source_full source =
 	if not (!parse_only) then
 	  let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-	  let _ = print_string ("Translating to core language...") in
+	  let () = print_string ("Translating to core language...") in
 	  (* let cprog = Astsimp.trans_prog prog in *)
 		let cprog = Astsimp.trans_prog prog in
 	  let pstr2 = Cprinter.string_of_program cprog in
 		print_string ("Core program:\n\n" ^ pstr2 ^ "\n")		
 (*
-	  let _ = 
+	  let () = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
 			Globals.procs_verified := tmp
 		end in
 	  let ptime2 = Unix.times () in
 	  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-	  let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in
+	  let () = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime in
@@ -117,14 +117,14 @@ let process_source_full source =
 	  
 let main () =
   process_cmd_line ();
-  let _ = Debug.read_main () in
+  let () = Debug.read_main () in
   if List.length (!Globals.source_files) = 0 then begin
 	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
 	Globals.procs_verified := ["f3"];
 	Globals.source_files := ["examples/test5.ss"]
   end;
-  let _ = List.map process_source_full !Globals.source_files in
+  let todo_unk = List.map process_source_full !Globals.source_files in
 	(* Tpdispatcher.print_stats (); *)
 	()
 	  
-let _ = main ()
+let () = main ()

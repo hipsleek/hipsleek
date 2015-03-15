@@ -16,7 +16,7 @@ void loop(ref int x)
 }
 
 /*
-# ex3-bug
+# ex3-bug (FIXED by always adding flow parameter)
 
 Post Inference result:
 loop$int

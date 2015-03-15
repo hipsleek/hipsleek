@@ -160,8 +160,8 @@ object (self)
     lst # push lemma_list
 
   method set_ilemma il_lst  =
-    let _ = lst # reset in
-    let _ = List.iter (self # add_ilemma ) il_lst in
+    let () = lst # reset in
+    let () = List.iter (self # add_ilemma ) il_lst in
     ()
 
   method get_all_ilemma =

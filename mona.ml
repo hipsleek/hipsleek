@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open VarGen
 open Gen
 open GlobProver
 (* open Cpure *)
@@ -313,11 +314,11 @@ let solve_constraints_x (cons: order_atom list) (sv_lst: CP.spec_var list)=
     let var1_lst0 = List.map get_lhs_order_atom var1_constr in
     let var1_lst = var1_lst@var1_lst0 in
     (* let pr = pr_list string_of_order_atom in *)
-    (* let _ = Debug.tinfo_hprint (add_str "cons" pr) cons no_pos in *)
-    (* let _ = Debug.tinfo_hprint (add_str "mo_var_constr" pr) mo_var_constr no_pos in *)
-    (* let _ = Debug.tinfo_hprint (add_str "var1_constr" pr) var1_constr no_pos in *)
+    (* let () = Debug.tinfo_hprint (add_str "cons" pr) cons no_pos in *)
+    (* let () = Debug.tinfo_hprint (add_str "mo_var_constr" pr) mo_var_constr no_pos in *)
+    (* let () = Debug.tinfo_hprint (add_str "var1_constr" pr) var1_constr no_pos in *)
     (* let pr = pr_list Cprinter.string_of_spec_var in *)
-    (* let _ = Debug.tinfo_hprint (add_str "var1_lst" pr) var1_lst no_pos in *)
+    (* let () = Debug.tinfo_hprint (add_str "var1_lst" pr) var1_lst no_pos in *)
     let var2_lst0 = List.map get_lhs_order_atom var2_constr in
     let var2_lst = var2_lst@var2_lst0 in
     let new_unk_lst = Gen.BList.difference_eq CP.eq_spec_var unk_lst (var1_lst@var2_lst) in
@@ -443,7 +444,7 @@ let rec preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) 
     | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
           let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Unprimed), l3), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Add (a1, a2, l1) -> 
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
@@ -642,7 +643,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | CP.SubAnn(e1, e2, _ )
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
-          (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+          (* let () = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
       	  let r1 = exp_order e1 vs in 
 	  let r2 = exp_order e2 vs in
 	  if (r1 == 1 || r2 == 1) then
@@ -714,7 +715,7 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
   | CP.BagUnion(el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 2 vs)) false el
   | CP.BagDiff(e1, e2, l) -> ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))    
   | CP.Add(e1, e2, l) ->
-        (* let _ = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+        (* let () = print_string ("e1 = " ^ (Cprinter.string_of_formula_exp e1) ^ " and e2 = " ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
         if (CP.exp_contains_spec_var e1) && (CP.exp_contains_spec_var e2) then (* non-monadic formula ==> need second order *)
           ((find_order_exp e1 2 vs) || (find_order_exp e2 2 vs))
         else
@@ -869,7 +870,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
                   mona_of_exp_secondorder sum f
           | _ -> failwith ("mona.mona_of_exp_secondorder: nonlinear arithmetic isn't supported."))
   | CP.Subtract (e1, e2, p) -> 	
-		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ) in
+		let () = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ) in
 		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
   | CP.List _
   | CP.ListCons _
@@ -985,7 +986,7 @@ and mona_of_b_formula_x b f vs =
               str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
       | CP.Eq((CP.Add(a1, a2, _)), a3, _)
       | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
-            let _ = Debug.ninfo_pprint "add and eq" no_pos in
+            let () = Debug.ninfo_pprint "add and eq" no_pos in
             if (is_firstorder_mem a1 vs) && (is_firstorder_mem a2 vs) && (is_firstorder_mem a3 vs) then
               let a1str = (mona_of_exp a1 f) in
               let a2str = (mona_of_exp a2 f) in
@@ -1187,7 +1188,7 @@ let send_cmd_with_answer str =
     output_string log_all str;
   let fnc () = 
     if (String.length str < max_BUF_SIZE) then
-      let _ = (output_string !process.outchannel str;
+      let () = (output_string !process.outchannel str;
       flush !process.outchannel) in
       let str = get_answer "" !process.inchannel in
       str 
@@ -1207,8 +1208,8 @@ let send_cmd_with_answer str =
 	
 (* modify mona for not sending answers *)
 let send_cmd_no_answer str =
-  (* let _ = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
-  let _ = send_cmd_with_answer str in
+  (* let () = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
+  let (todo_unk:string) = send_cmd_with_answer str in
   ()
 
 let write_to_mona_predicates_file mona_filename =
@@ -1229,22 +1230,22 @@ let get_mona_predicates_file () : string =
     mona_pred_file
   else
     begin
-        (* let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in *)
+        (* let () = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in *)
         let alternative = mona_pred_file_alternative_path ^ mona_pred_file in
         if Sys.file_exists alternative then 
           alternative
         else
-          let _ = print_string ("\n WARNING: File " ^ alternative ^ " was not found. Aborting execution ...\n") in 
+          let () = print_string ("\n WARNING: File " ^ alternative ^ " was not found. Aborting execution ...\n") in 
           (* Creating " ^ mona_pred_file ^ " file in current directory... " in" *)
-          (* let _ = write_to_mona_predicates_file mona_pred_file in *)
-          (* let _ = print_string (" done!\n") in *)
+          (* let () = write_to_mona_predicates_file mona_pred_file in *)
+          (* let () = print_string (" done!\n") in *)
           (* mona_pred_file *)
           exit(0)
     end
 
 let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
-   (* let _ = print_endline  mona_pred_file_x in *)
+   (* let () = print_endline  mona_pred_file_x in *)
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
 let set_process (proc: prover_process_t) = 
@@ -1253,16 +1254,16 @@ let set_process (proc: prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string_if (not !Globals.compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    let () = print_string_if (not !compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
 let start () = 
   last_test_number := !test_number;
-  (* let _ = print_endline mona_prog in *)
+  (* let () = print_endline mona_prog in *)
   if(check_prover_existence mona_prog)then begin
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
-      (* let _ = print_endline (mona_prog ^ "end") in *)
+      let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", mona_prog, [|mona_prog; "-v";|]) set_process prelude in
+      (* let () = print_endline (mona_prog ^ "end") in *)
       is_mona_running := true
   end
 
@@ -1280,7 +1281,7 @@ let stop () =
       |true -> is_mona_running := false;  Sys.sigterm (* *)
       |false -> 9 in
   let num_tasks = !test_number - !last_test_number in
-  let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
+  let () = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
 let stop () =
@@ -1289,13 +1290,13 @@ let stop () =
 
 let restart reason =
   if !is_mona_running then
-	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline_if (not !Globals.compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
+	(* let () = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
+	let () = print_endline_if (not !compete_mode && not !Globals.web_compile_flag) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
   (* Log.logtime_wrapper "restart mona" restart reason  *)
-  if (not !Globals.compete_mode) then
+  if (not !compete_mode) then
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
@@ -1310,7 +1311,7 @@ let check_if_mona_is_alive () : bool =
 let create_failure_file (content: string) =
   let failure_filename = "mona.failure" in
   let fail_file = open_out failure_filename in 
-  let _ = output_string fail_file content in
+  let () = output_string fail_file content in
   Log.last_proof_command # dump;
   flush fail_file;
   close_out fail_file
@@ -1347,16 +1348,16 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
       | "" ->
             (* process might have died. maybe BDD was too large - restart mona*)
             (* print_string "MONA aborted execution! Restarting..."; *)
-            let _ = create_failure_file mona_file_content in
+            let () = create_failure_file mona_file_content in
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
-	    print_endline_if (not !Globals.compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
+	    print_endline_if (not !compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
-            let _ = create_failure_file mona_file_content in
+            let () = create_failure_file mona_file_content in
             try
-              let _ = Str.search_forward (Str.regexp "Error in file") answ 0 in
+              let (todo_unk:int) = Str.search_forward (Str.regexp "Error in file") answ 0 in
               Error.report_error {
                 Error.error_loc = no_pos;
                 Error.error_text =("Mona translation failure: " ^ answ)
@@ -1407,7 +1408,7 @@ let read_from_file chn: string =
             | [] -> ""
             | h::t -> 
                 try 
-                  let _ = Str.search_forward (Str.regexp h) line 0 in
+                  let (todo_unk:int) = Str.search_forward (Str.regexp h) line 0 in
                   answ := h;
                   raise End_of_file
                 with
@@ -1459,7 +1460,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
       output_string log_all file_content;
 	  flush log_all;
 	end;
-  let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
+  let () = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let res = check_answer file_content mona_answ is_sat_b in
@@ -1486,7 +1487,7 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 
 let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
-  (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
+  (* let () = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
   (* let (part1, part2) = (List.partition (fun (sv) -> ((\*is_firstorder_mem*\)part_firstorder_mem *)
   (*       (CP.Var(sv, no_pos)) vs)) all_fv) in  (\*deprecated*\) *)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem_sv sv vs)) all_fv) in
@@ -1507,7 +1508,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   let content = ("include \"" ^ get_mona_predicates_file () ^ "\";\n" ^ !cmd_to_send) in
   try
     begin
-      let _ = maybe_restart_mona () in
+      let () = maybe_restart_mona () in
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
       check_answer content answer is_sat_b
@@ -1532,8 +1533,8 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
       (fun _ _  -> imply_sat_helper_x is_sat_b fv f imp_no sv) fv f
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  let _ = if not !is_mona_running then start () else () in
-  let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
+  let () = if not !is_mona_running then start () else () in
+  let () = Gen.Profiling.inc_counter "stat_mona_count_imply" in
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   incr test_number;
@@ -1543,9 +1544,9 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   (* let vs = Hashtbl.create 10 in *)
-  (* let _ = find_order tmp_form vs in    (\* deprecated *\) *)
+  (* let () = find_order tmp_form vs in    (\* deprecated *\) *)
   let (var1,var2,var0) = new_order_formula tmp_form in
-  let _ = set_prover_type () in (* change to MONA logging *)
+  let () = set_prover_type () in (* change to MONA logging *)
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no (var1,var2)
         (* write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no vs (\* deprecated *\) *)
@@ -1562,8 +1563,8 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   (imply_ops pr_w pr_s ante conseq) imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
-  let _ = if not !is_mona_running then start () else () in
-  let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
+  let () = if not !is_mona_running then start () else () in
+  let () = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
@@ -1571,9 +1572,9 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   (* let f = CP.drop_varperm_formula f in *)
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
   (* let vs = Hashtbl.create 10 in *)
-  (* let _ = find_order f vs in (\* deprecated *\) *)
+  (* let () = find_order f vs in (\* deprecated *\) *)
   let (var1, var2, _) = new_order_formula f in
-  let _ = set_prover_type () in (* change to MONA logging *)
+  let () = set_prover_type () in (* change to MONA logging *)
   (* WN : what if var0 is non-empty? *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 

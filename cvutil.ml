@@ -1,3 +1,4 @@
+open VarGen
 (* cview util
  this module contains procedures
   - transform between  cformula and cpure

@@ -1,3 +1,4 @@
+open VarGen
 (*
   let $a = <formula>.
   let $b = compose.

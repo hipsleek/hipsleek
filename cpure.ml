@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open VarGen
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
@@ -1159,7 +1160,7 @@ let rec get_exp_type (e : exp) : typ =
           (* Type of a[i] is the type of the element of array a *)
           match t with
           | Array (et,_) -> et
-          | _ -> let _ = failwith "Cpure.get_exp_type : " ^ a ^ " is not an array variable" in Named "" 
+          | _ -> let () = failwith ("Cpure.get_exp_type : " ^ a ^ " is not an array variable") in Named "" 
     end
   | Template _ -> Int
 
@@ -2578,8 +2579,6 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 and mkNeqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Neq (Var (sv, pos), IConst (i, pos), pos), None),None)
 
-(* and mkNeqNull (sv : spec_var) pos = *)
-(*   BForm ((Neq (Var (sv, pos), Null pos, pos), None),None) *)
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
 
@@ -2628,7 +2627,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
 		pusher v (lrel::ll) (lunrel::l2) *)
 	)lst vs in
 	let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
-        let _ = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+        let () = Debug.ninfo_hprint (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
         let l = if !Globals.gen_baga_inv
         then
           List.map (fun ((a,ls) as lbl,f) ->
@@ -2643,7 +2642,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
         else
           l
         in
-        let _ = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
+        let () = Debug.binfo_hprint (add_str "l1" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
 	AndList (Label_Pure.norm l)
   | Or (f1,f2,lbl,pos) -> 
 	Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
@@ -3253,17 +3252,17 @@ and fresh_old_name_x (s: string):string =
   let ri = 
     try  
       let n = (String.rindex s '_') in
-      (* let _ = print_endline ((string_of_int n)) in *)
+      (* let () = print_endline ((string_of_int n)) in *)
       let l = (slen-(n+1)) in
       if (l==0) then slen-1
       else 
         let tr = String.sub s (n+1) (slen-(n+1)) in
-        let _ = int_of_string tr in
-        (* let _ = print_endline ((string_of_int n)^tr^"##") in *)
+        (* let () = int_of_string tr in *)
+        (* let () = print_endline ((string_of_int n)^tr^"##") in *)
         n
     with  _ -> slen in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-  (*let _ = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
+  (*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
   n
 
 and fresh_old_name s =
@@ -3275,7 +3274,7 @@ and fresh_spec_var (sv : spec_var) =
   let old_name = name_of_spec_var sv in
   let name = fresh_old_name old_name in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
+  (*let () = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
   (*09.05.2000 ---*)
   let t = type_of_spec_var sv in
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
@@ -3284,7 +3283,7 @@ and fresh_thread_var () =
   let old_name = "tid" in
   let name = fresh_old_name old_name in
   (*--- 09.05.2000 *)
-  (*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
+  (*let () = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
   (*09.05.2000 ---*)
   let t = thread_typ in
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
@@ -3556,12 +3555,12 @@ and b_apply_subs_x sst bf =
   let pri_lv =
     if infer_lvar_enabled then
       List.fold_left (fun a (v1, v2) ->
-          (* let _ = print_endline ("V1: " ^ (!print_sv v1)) in                                                        *)
-          (* let _ = print_endline ("V2: " ^ (!print_sv v2)) in                                                        *)
-          (* let _ = print_endline ("BF: " ^ (!print_b_formula bf)) in                                                 *)
-          (* let _ = print_endline ("C1: " ^ (string_of_bool (Gen.BList.mem_eq eq_spec_var v1 fv))) in                 *)
-          (* let _ = print_endline ("C2: " ^ (string_of_bool (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2)))) in *)
-          (* let _ = print_endline ("C2: " ^ (string_of_bool (List.mem (name_of_spec_var v2) !linking_var_tbl))) in    *)
+          (* let () = print_endline ("V1: " ^ (!print_sv v1)) in                                                        *)
+          (* let () = print_endline ("V2: " ^ (!print_sv v2)) in                                                        *)
+          (* let () = print_endline ("BF: " ^ (!print_b_formula bf)) in                                                 *)
+          (* let () = print_endline ("C1: " ^ (string_of_bool (Gen.BList.mem_eq eq_spec_var v1 fv))) in                 *)
+          (* let () = print_endline ("C2: " ^ (string_of_bool (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2)))) in *)
+          (* let () = print_endline ("C2: " ^ (string_of_bool (List.mem (name_of_spec_var v2) !linking_var_tbl))) in    *)
           if (Gen.BList.mem_eq eq_spec_var v1 fv) &&
             (* (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2))  *)
             (List.mem (name_of_spec_var v2) !linking_var_tbl)
@@ -3586,7 +3585,7 @@ and b_apply_subs_x sst bf =
               (* With a substitution (v1, v2),      *)
               (* if v1 is a linking variable        *)
               (* then v2 is also a linking variable *)
-              let _ = 
+              let () = 
                 if infer_lvar_enabled then
                   match e with
                     | Var (SpecVar _ as v1, _) ->
@@ -3885,7 +3884,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
               match t with
                 | Var (tv,pos) -> tv
                 | _ ->
-                    let _ = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                    let () = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
                     v
             else v
         in
@@ -3895,7 +3894,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
               match t with
                 | Var (tv,pos) -> tv
                 | _ ->
-                    let _ = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                    let () = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
                     v
             else v
         in
@@ -4464,14 +4463,14 @@ and filter_redundant ante cons =
 
 and filter_redundant_x ante cons =
   let ls_ante = list_of_bformula ante in
-  (* let _ = print_endline ("ls_ante:" ^ (string_of_ls_pure_formula ls_ante)) in*)
+  (* let () = print_endline ("ls_ante:" ^ (string_of_ls_pure_formula ls_ante)) in*)
   let ls_cons = list_of_bformula cons in
-  (*  let _ = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
+  (*  let () = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
   let ls_irr,_= list_of_irr_bformula ls_ante ls_cons in
   if ls_irr!=[] then Debug.dinfo_pprint "Filtered some irrelevant b_formulas" no_pos else () ;
-  (* let _ = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
+  (* let () = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
   let new_ante = elim_of_bformula ante ls_irr in
-  (* let _ = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
+  (* let () = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
   new_ante
 
 and no_of_disjs (f0 : formula) : int =
@@ -4976,8 +4975,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  tmp2
   in
 (*
-	  let _ = print_var_set rele_var_set in
-	  let _ = List.map
+	  let () = print_var_set rele_var_set in
+	  let todo_unk = List.map
 	  (fun ffv -> (print_string ("\nrelevants0: f\n" ^ (mona_of_formula (fst ffv)) ^ "\n")); print_var_set (snd ffv))
 	  relevants0
 	  in
@@ -5021,8 +5020,8 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	  begin
 		let rele_conjs = (* Gen.BList.remove_dups_eq equalFormula *) (List.map fst !reles) in
 		let filtered_f = conj_of_list rele_conjs no_pos in
-                let _ = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
-                let _ = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
+                let () = Debug.ninfo_hprint (add_str "rele_conjs" (pr_list !print_formula)) rele_conjs no_pos in
+                let () = Debug.ninfo_hprint (add_str "filtered_f" (!print_formula)) filtered_f no_pos in
                 (* WN : why this affected under_approx? *)
                 if (is_False f0) && !Globals.filtering_false_flag then f0
                 else filtered_f
@@ -5049,10 +5048,10 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
       | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
       | f::fs ->
           begin
-              let _ = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
-              let _ = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
+              let () = Debug.tinfo_hprint (add_str "svl: "  (!print_svl)) old_keep_svl no_pos in
+              let () = Debug.tinfo_hprint ( add_str "f: "   (!print_formula )) f no_pos in
               let svl = fv f in
-              let _ = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
+              let () = Debug.tinfo_hprint (add_str "svl f: "  !print_svl ) svl no_pos in
               let inters = intersect svl old_keep_svl in
               if inters = [] then
                 get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
@@ -6689,7 +6688,7 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
                  (fun x l -> f_comb l),
                  (fun x l -> f_comb l)
     in
-    (* let _ = print_string ("[cpure.ml] trans_formula: \n") in *)
+    (* let () = print_string ("[cpure.ml] trans_formula: \n") in *)
     foldr_formula e arg f f_arg f_comb
 
 (* compute a result from formula with argument
@@ -6701,7 +6700,7 @@ let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b l
     let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
 
-    (* let _ = print_string ("[cpure.ml] fold_formula_arg: \n") in *)
+    (* let () = print_string ("[cpure.ml] fold_formula_arg: \n") in *)
 
     snd (trans_formula e arg new_f f_arg f_comb)
 
@@ -6715,7 +6714,7 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
     let f_arg = voidf2, voidf2, voidf2 in
 
-    (* let _ = print_string ("[cpure.ml] fold_formula: \n") in *)
+    (* let () = print_string ("[cpure.ml] fold_formula: \n") in *)
 
     snd (trans_formula e () new_f f_arg f_comb)
 
@@ -6733,7 +6732,7 @@ let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
     let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
 
-    (* let _ = print_string ("[cpure.ml]  map_formula_arg: \n") in *)
+    (* let () = print_string ("[cpure.ml]  map_formula_arg: \n") in *)
 
     fst (trans_formula e arg new_f f_arg voidf)
 
@@ -6747,7 +6746,7 @@ let map_formula (e: formula) (f_f, f_bf, f_e) : formula =
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
     let f_arg = idf2, idf2, idf2 in
 
-    (* let _ = print_string ("[cpure.ml]  map_formula: \n") in *)
+    (* let () = print_string ("[cpure.ml]  map_formula: \n") in *)
 
     fst (trans_formula e () new_f f_arg voidf)
 
@@ -6869,7 +6868,7 @@ let rec simp_addsub e1 e2 loc =
 (* and norm_exp_aux (e:exp) = match e with  *)
 
 and norm_exp (e:exp) = 
-  (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
+  (* let () = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ 
@@ -7012,8 +7011,8 @@ let norm_bform_option (bf:b_formula) =
 
 let norm_bform_option_debug (bf:b_formula) : b_formula option =
   let r = norm_bform_aux bf in
-  let _ = print_string ("norm_bform inp :"^(!print_b_formula bf)^"\n") in
-  let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
+  let () = print_string ("norm_bform inp :"^(!print_b_formula bf)^"\n") in
+  let () = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
 
 
@@ -7035,9 +7034,9 @@ let string_of_var_eset e : string =
 
 
 let get_sub_debug s n m =
-  let _ = print_string ("get_sub inp:"^s^";"^(string_of_int n)^";"^(string_of_int m)^"\n") in
+  let () = print_string ("get_sub inp:"^s^";"^(string_of_int n)^";"^(string_of_int m)^"\n") in
   let r = String.sub s n m in
-  let _ = print_string ("get_sub out:"^r^"\n") in
+  let () = print_string ("get_sub out:"^r^"\n") in
   r
 
 (* get args from a bform formula *)
@@ -7129,8 +7128,8 @@ let get_bform_eq_args_debug (bf:b_formula) : (spec_var * spec_var) option =
   let s="get_bform_eq_args " in
   let s="DEBUG "^s in
   let r=get_bform_eq_args bf in
-  let _ = print_string (s^"inp:"^(!print_b_formula bf)^"\n") in
-  let _ = match r with 
+  let () = print_string (s^"inp:"^(!print_b_formula bf)^"\n") in
+  let () = match r with 
     | Some (v1,v2) -> let o=form_bform_eq v1 v2 in
       print_string (s^"out:"^(!print_p_formula o)^"\n") 
     | None ->  print_string (s^"out: None \n")
@@ -7145,10 +7144,10 @@ let add_equiv_eq a v1 v2 =
  else EMapSV.add_equiv a v1 v2
 
 let add_equiv_eq_debug a v1 v2 = 
-  let _ = print_string ("add_equiv_eq inp1 :"^(string_of_var_eset a)^"\n") in
-  let _ = print_string ("add_equiv_eq inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
+  let () = print_string ("add_equiv_eq inp1 :"^(string_of_var_eset a)^"\n") in
+  let () = print_string ("add_equiv_eq inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
    let ax = add_equiv_eq a v1 v2 in
-  let _ = print_string ("add_equiv_eq out :"^(string_of_var_eset ax)^"\n") in
+  let () = print_string ("add_equiv_eq out :"^(string_of_var_eset ax)^"\n") in
   ax
 
 let add_equiv_list_eqs a evars =
@@ -7167,10 +7166,10 @@ let find_eq_closure a svl =
 let add_equiv_eq_with_const a v1 v2 = EMapSV.add_equiv a v1 v2
 
 let add_equiv_eq_with_const_debug a v1 v2 = 
-  let _ = print_string ("add_equiv_eq_with_const inp1 :"^(string_of_var_eset a)^"\n") in
-  let _ = print_string ("add_equiv_eq_with_const inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
+  let () = print_string ("add_equiv_eq_with_const inp1 :"^(string_of_var_eset a)^"\n") in
+  let () = print_string ("add_equiv_eq_with_const inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
    let ax = add_equiv_eq_with_const a v1 v2 in
-  let _ = print_string ("add_equiv_eq_with_const out :"^(string_of_var_eset ax)^"\n") in
+  let () = print_string ("add_equiv_eq_with_const out :"^(string_of_var_eset ax)^"\n") in
   ax
 
 (* get arguments of an equality formula *)
@@ -7260,7 +7259,7 @@ let normalise_eq (aset : var_aset) : var_aset =
 let normalise_eq_debug (aset : var_aset) : EMapSV.emap =
  let ax, change, _ = normalise_eq_aux aset in
  (if change then
-	let _ = print_string ("normalise_eq inp :"^(string_of_var_eset aset)^"\n") in
+	let () = print_string ("normalise_eq inp :"^(string_of_var_eset aset)^"\n") in
 	print_string ("partition_eq out :"^(string_of_var_eset ax)^"\n"));
  (ax)
 
@@ -7274,9 +7273,9 @@ let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset =
 (* print if false detected - when debugging *)
 let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = 
   let (ax, _, conflict) = normalise_eq_aux aset in
-  let _ = print_string ("normalise_eq inp :"^(string_of_var_eset aset) ^ "\n") in
-  let _ = print_string ("partition_eq out :"^(string_of_var_eset ax) ^ "\n") in
-  let _ = print_string ("conflict in eq: " ^ (string_of_bool conflict) ^ "\n") in
+  let () = print_string ("normalise_eq inp :"^(string_of_var_eset aset) ^ "\n") in
+  let () = print_string ("partition_eq out :"^(string_of_var_eset ax) ^ "\n") in
+  let () = print_string ("conflict in eq: " ^ (string_of_bool conflict) ^ "\n") in
   (conflict, ax)
 
 (* check if an eq_map has a contradiction*)
@@ -7349,8 +7348,8 @@ let get_equiv_eq_with_const aset =
 
 let get_equiv_eq_with_const_debug aset =
   let ax = get_equiv_eq_with_const aset in
-  let _ = print_string ("get_equiv_eq_with_const inp :"^(string_of_var_eset aset)^"\n") in
-  let _ = print_string ("get_equiv_eq_with_const out :"^(string_of_p_var_list ax)^"\n") in
+  let () = print_string ("get_equiv_eq_with_const inp :"^(string_of_var_eset aset)^"\n") in
+  let () = print_string ("get_equiv_eq_with_const out :"^(string_of_p_var_list ax)^"\n") in
   ax
 
 (*
@@ -7487,10 +7486,10 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
   (*normalize lhs and rhs*)
   let simp e = conv_exp_to_exp_eq aset e in
   let normsimp lhs rhs =
-    let _ = Gen.Profiling.push_time "fi-normsimp" in
+    let () = Gen.Profiling.push_time "fi-normsimp" in
     let lhs = List.map (fun e -> norm_bform_a(simp_bform simp e)) lhs in
     let rhs = norm_bform_a( simp_bform simp rhs) in
-    let _ = Gen.Profiling.pop_time "fi-normsimp" in
+    let () = Gen.Profiling.pop_time "fi-normsimp" in
     (lhs,rhs) in
   let lhs,rhs = if !Globals.enable_norm_simp then normsimp lhs rhs 
   else (lhs,rhs)
@@ -7510,10 +7509,10 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
         | Neq(e1,e2,_) -> check_imply_neq eq plhs e1 e2
         | EqMin _ | EqMax _ (* min/max *) -> 0
         | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *) 
-              let _ = print_string "warning fast_imply : not normalised"
+              let () = print_string "warning fast_imply : not normalised"
               in 0
         | _ -> (* use just syntactic checking *) 0 in
-  let _ = if r>0 then (Gen.Profiling.add_to_counter "fast_imply_success" 1) else () in
+  let () = if r>0 then (Gen.Profiling.add_to_counter "fast_imply_success" 1) else () in
   (* let _  = Gen.Profiling.pop_time "fast_imply" in *) r
 
 let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
@@ -7560,11 +7559,11 @@ and imply_disj_orig_x0 ante_disj conseq t_imply imp_no =
       let (ante_disj,false_st) = List.partition f ante_disj in
       let i = List.length false_st in
       let j = List.length ante_disj in
-      let _ = 
+      let () = 
         if (i>0) 
         then
           let pri = string_of_int in
-          let _ = Debug.tinfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
+          let () = Debug.tinfo_hprint (add_str "(unsat ante, sat ante)" (pr_pair pri pri)) (i,j) no_pos in
           Debug.tinfo_hprint (add_str "unsat ante removed" (pr_list pr)) false_st no_pos
         else () 
       in 
@@ -7582,9 +7581,9 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
 let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
   if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
-    let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") no_pos in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
-    let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") no_pos in
 	(xp11,xp12,xp13)
   else (xp01,xp02,xp03)
 
@@ -7616,26 +7615,26 @@ and imply_conj_orig_x one_ante_only ante_disj0 ante_disj1 conseq_conj t_imply im
  (*###############################################################################  incremental_testing*)
 (*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
 (*let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
-  (* let _ = print_string("\nCpure.ml: imply_conj") in *)
+  (* let () = print_string("\nCpure.ml: imply_conj") in *)
   match conseq_conj with
     | h :: rest ->
 	      let r1,r2,r3 = (t_imply ante h (string_of_int !imp_no) true ( Some (process, send_ante))) in
-          (* let _ = print_string("\nCpure.ml: h:: rest "^(string_of_bool r1)) in *)
+          (* let () = print_string("\nCpure.ml: h:: rest "^(string_of_bool r1)) in *)
           if r1 then
             let send_ante = if (!Globals.enable_incremental_proving) then false
             else send_ante in
 	        let r1,r22,r23 = (imply_conj send_ante ante rest t_imply increm_funct process imp_no) in
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
-    | [] -> (* let _ = print_string("\nCpure.ml: []")  in*) (true,[],None)
+    | [] -> (* let () = print_string("\nCpure.ml: []")  in*) (true,[],None)
 
 let rec imply_disj_helper ante_disj conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) process imp_no
       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   match ante_disj with
     | h :: rest ->
-          (* let _ = print_string("\nCpure.ml: bef imply_conj ") in *)
+          (* let () = print_string("\nCpure.ml: bef imply_conj ") in *)
 	      let (r1,r2,r3) = (imply_conj true(*<-send_ante*) h conseq_conj t_imply increm_funct process imp_no) in
-          (* let _ = print_string("\nCpure.ml: affer imply_conj " ^(string_of_bool r1)) in *)
+          (* let () = print_string("\nCpure.ml: affer imply_conj " ^(string_of_bool r1)) in *)
 	      if r1 then
 	        let r1,r22,r23 = (imply_disj_helper rest conseq_conj t_imply increm_funct process imp_no) in
 	        (r1,r2@r22,r23)
@@ -7644,7 +7643,7 @@ let rec imply_disj_helper ante_disj conseq_conj t_imply (increm_funct: (formula)
 
 let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) imp_no
       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  (* let _ = print_string ("\nCpure.ml: CVC3 create process") in *)
+  (* let () = print_string ("\nCpure.ml: CVC3 create process") in *)
   let start = ref false in
   let process = 
     match increm_funct with
@@ -7653,22 +7652,22 @@ let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula
             let proc = match proc0 with
               |Some pr -> pr
               |None -> (start :=true; ifun#start_p ()) in
-            let _ = ifun#push proc in
+            let () = ifun#push proc in
             Some proc
       | None -> None in
   let xp01,xp02,xp03 = imply_disj_helper ante_disj0 conseq_conj t_imply increm_funct process imp_no in
   let r = if ( not(xp01) ) then begin (*xpure0 fails to prove. try xpure1*)
-    let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let () = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let r1 = imply_disj_helper ante_disj1 conseq_conj t_imply increm_funct process imp_no in
-    let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    let () = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
     r1
   end else (xp01, xp02, xp03) in
   let _ =
     match (increm_funct, process, !start) with
       | (Some ifun, Some proc, true) -> ifun#stop_p proc
-        (* let _ = print_string("\nCpure.ml: stop process") in  *)
+        (* let () = print_string("\nCpure.ml: stop process") in  *)
       | (_, _, _) -> () in
-  (* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
+  (* let () = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
   r*)
 
 (*###############################################################################  *)
@@ -8607,7 +8606,7 @@ if (!Globals.enable_constraint_based_filtering) then
   let disjs = list_of_disjs ante in 
   let helper f = 
   let antes = list_of_conjs ante in
-  (*let _ = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
+  (*let todo_unk = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
   let filtered_antes = if List.exists (fun c -> eq_pure_formula conseq c) antes then
       List.filter (fun c -> eq_pure_formula conseq c) antes else 
   if is_bag_constraint conseq then antes
@@ -8630,7 +8629,7 @@ if (!Globals.enable_constraint_based_filtering) then
   let disjs = list_of_disjs ante in 
   let helper f = 
   let antes = list_of_conjs ante in
-  (*let _ = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
+  (*let todo_unk = List.map (fun c -> print_string ("Antes : "^(!print_formula c)^"\n")) antes in *)
   let filtered_antes = if List.exists (fun c -> eq_pure_formula conseq c) antes then
       List.filter (fun c -> eq_pure_formula conseq c) antes else 
   if is_bag_constraint conseq then antes
@@ -8710,8 +8709,8 @@ let elim_equi_ante_x ante cons=
   let cv = fv cons in
   let eav_all = get_equi_vars ante in
   let eav = List.filter (fun v -> not(mem_svl v cv)) eav_all in
-  let _ = Debug.ninfo_hprint (add_str "cv" !print_svl) cv no_pos in
-  let _ = Debug.ninfo_hprint (add_str "eav" !print_svl) eav no_pos in
+  let () = Debug.ninfo_hprint (add_str "cv" !print_svl) cv no_pos in
+  let () = Debug.ninfo_hprint (add_str "eav" !print_svl) eav no_pos in
   if eav =[] then ante else
     List.fold_left elim_equi_var ante eav
 
@@ -8754,7 +8753,7 @@ let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
 let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
-  (* let _ = print_string ("refine_one_must: before is_sat" *)
+  (* let () = print_string ("refine_one_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let pr = !print_formula in
@@ -8764,7 +8763,7 @@ let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
 
 let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
 
-  (* let _ = print_string ("refine_must: before is_sat" *)
+  (* let () = print_string ("refine_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let rs = List.map (refine_one_must is_sat) pairs in
@@ -8797,7 +8796,7 @@ let remove_redundant (f:formula):formula =
 
 let find_all_failures is_sat ante cons =
 
-  (* let _ = print_string ("find_all_failures: before is_sat" *)
+  (* let () = print_string ("find_all_failures: before is_sat" *)
   (*                       ^ "\n\n") in *)
   (*remove duplicate, a=a*)
   let ante = (*remove_dup_constraints*) remove_redundant ante in
@@ -8808,7 +8807,7 @@ let find_all_failures is_sat ante cons =
   let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
   let must_list = refine_must is_sat must_list in
 
-  (* let _ = print_string ("find_all_failures: before find_may_failures (imply is_sat) cand_pairs" *)
+  (* let () = print_string ("find_all_failures: before find_may_failures (imply is_sat) cand_pairs" *)
   (*                       ^ "\n\n") in *)
 
   let may_list = find_may_failures (imply is_sat) cand_pairs in
@@ -8821,7 +8820,7 @@ let find_all_failures is_sat  ante cons =
 
 let find_must_failures is_sat ante cons =
 
-  (* let _ = print_string ("find_must_failures: before is_sat" *)
+  (* let () = print_string ("find_must_failures: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let (contra_list,must_list,_) = find_all_failures is_sat ante cons in
@@ -8834,7 +8833,7 @@ let find_must_failures is_sat ante cons =
 
 let check_maymust_failure is_sat ante cons =
 
-  (* let _ = print_string ("check_maymust_failure: before is_sat" *)
+  (* let () = print_string ("check_maymust_failure: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let c_l = find_must_failures is_sat ante cons in
@@ -9858,7 +9857,7 @@ let get_rel_id (f:formula) =
 (* let normalize_varperm_x (f:formula) : formula =                                                                   *)
 (*   let ls = split_conjunctions f in                                                                                *)
 (*   let lsf1,lsf2 = List.partition (is_varperm) ls in                                                               *)
-(*   (* let _ = print_endline ("normalize_varperm:"  *)                                                              *)
+(*   (* let () = print_endline ("normalize_varperm:"  *)                                                              *)
 (*   (*                        ^ "\n ### |lsf1| = " ^ (string_of_int (List.length lsf1)) *)                          *)
 (*   (*                        ^ "\n ### |lsf2| = " ^ (string_of_int (List.length lsf2))) in *)                      *)
 (*   (*zero, full , value *)                                                                                         *)
@@ -9958,12 +9957,12 @@ let get_rel_args (f:formula) = match f with
   | _ -> []
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
-  (* let _ = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
+  (* let () = Debug.binfo_hprint (add_str "2formula" !print_formula) f no_pos in *)
   match (get_rel_id f) with
     | Some n ->
           if mem n vl then true else false
     | _ ->
-          (* let _ = Debug.binfo_pprint "2None" no_pos in *)
+          (* let () = Debug.binfo_pprint "2None" no_pos in *)
           false
 
 let is_rel_in_vars (vl:spec_var list) (f:formula) =
@@ -10001,7 +10000,7 @@ let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) 
 
 (* need unsat checking for disjunctive LHS *)
 let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (formula * formula) =
-  (* let _ = print_string ("\naTpdispatcher.ml: filter") in *)
+  (* let () = print_string ("\naTpdispatcher.ml: filter") in *)
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     let ante_ls = List.filter is_sat (split_disjunctions ante) in
     if ante_ls==[] then (mkFalse no_pos,conseq)
@@ -11555,7 +11554,7 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
               let nsv = SpecVar (lsmu_typ,lsmu_name,p) in
               Var (nsv,pos)
             else
-              let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 2") in
+              let () = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 2") in
               e
         | Bag (exps,pos) ->
             let nexps = List.map helper exps in
@@ -11571,7 +11570,7 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
             let ne2 = helper e2 in
             BagDiff (ne1,ne2,pos)
         | _ ->
-            let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 1") in
+            let () = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 1") in
             e
     in helper e
   in
@@ -11879,14 +11878,14 @@ and translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                           let nf = translate_waitlevel_p_formula bf e2 (primed_of_spec_var sv1) pos in
                           nf
                       | _ ->
-                          let _ = print_endline ("waitlevel should be comparable to only an integer or a locklevelin in formula " ^ (!print_b_formula bf)) in
+                          let () = print_endline ("waitlevel should be comparable to only an integer or a locklevelin in formula " ^ (!print_b_formula bf)) in
                           BForm (bf,None)
                     )
                   else
                     let vars2 = afv e2 in
                     let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) vars2 in
                     if (b) then
-                      let _ = print_endline ("waitlevel should not be in RHS of formula " ^ (!print_b_formula bf)) in
+                      let () = print_endline ("waitlevel should not be in RHS of formula " ^ (!print_b_formula bf)) in
                       BForm (bf,None)
                     else
                       BForm (bf,None)
@@ -12439,7 +12438,7 @@ and extract_rel_pure_x (pf : formula) (rel_name : spec_var): formula * (p_formul
   let f_f arg pf =
     match pf with
       | Or _ ->
-            (* let _ = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in *)
+            (* let () = print_endline ("[Warning] extract_rel_pure: Or _ found and ignored! ") in *)
             Some (pf,[])
       | _ -> None
   in
@@ -12611,7 +12610,7 @@ and create_waitS_rel_x (concrete_bags:(spec_var * exp list) list) (f:formula) (r
                         mkEqExp g comprehension no_pos
                       with Not_found ->
                           (*If the concrete bags cannot be found, keep the relation *)
-                          (* let _ = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in *)
+                          (* let () = print_endline ("[Warning] create_waitS_rel: expecting " ^ (!print_exp s)^" to be concrete!") in *)
                           BForm ((rel, None) , None)
                       )
                     else
@@ -13541,21 +13540,21 @@ let create_view_arg_list_from_map (map: view_arg list) (hargs: spec_var list) (a
 let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
   try
     (* update the annotations first *)
-    let _ = Debug.ninfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
-    let _ = Debug.ninfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
+    let () = Debug.ninfo_pprint ("annot: " ^(string_of_int (List.length annot)  )) no_pos in
+    let () = Debug.ninfo_pprint ("annot: " ^(pr_list (string_of_int ) (List.map snd annot))) no_pos in
     let view_args_pos = List.map (fun (va,p) -> 
         try 
           
-          let _ = Debug.ninfo_pprint ("p: " ^(string_of_int p)) no_pos in
-          let (a,p) = List.find (fun (_,i) ->           let _ = Debug.ninfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
+          let () = Debug.ninfo_pprint ("p: " ^(string_of_int p)) no_pos in
+          let (a,p) = List.find (fun (_,i) ->           let () = Debug.ninfo_pprint ("i: " ^(string_of_int i)) no_pos in p == i) annot in
           (annot_arg_to_view_arg a, p)
         with Not_found -> (va,0)) map in
-    let _ = Debug.ninfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
+    let () = Debug.ninfo_pprint ("view_args_pos: " ^(string_of_int (List.length view_args_pos)  )) no_pos in
     let temp_pos = Gen.range 1 (List.length view_args_pos) in
     let view_arg_temp_pos = List.combine view_args_pos temp_pos in
     let to_be_updated, already_updated = List.partition (fun ((va,p),tp) -> p == 0 ) view_arg_temp_pos in
-    let _ = Debug.ninfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
-    let _ = Debug.ninfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
+    let () = Debug.ninfo_pprint ("to_be_updated: " ^(string_of_int (List.length to_be_updated)  )) no_pos in
+    let () = Debug.ninfo_pprint ("hargs: "^ (string_of_int (List.length  hargs)))  no_pos in
     let new_update = try  List.map (fun (((va,_),p),sv) -> ((sv_to_view_arg sv,0),p) ) (List.combine to_be_updated hargs) 
     with Invalid_argument s -> 
       raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map 000") )
@@ -13567,7 +13566,7 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     updated_view_arg
   with Invalid_argument s -> 
       (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") ) *)
-      (* let _ = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
+      (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
       List.map fst map
 
 let combine_labels_w_view_arg  lbl view_arg =
@@ -13700,9 +13699,9 @@ let nonlinear_var_list_formula (f: formula) =
 let overapp_ptrs_x f0=
   let detect_ptr_xpure_form f sv1 sv2 a b c=
      match sv1 with
-       | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
+       | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
          (* let t = type_of_spec_var sv in *)
-         (* let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+         (* let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
          if is_node_typ sv && is_num sv2 then
            let zero = IConst (0, pos) in
            (true, BForm ((Neq (sv1, zero, b), c), a))
@@ -13711,7 +13710,7 @@ let overapp_ptrs_x f0=
   in
   let rec helper f= match f with
     | BForm (bf,a) ->
-          let _ = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
+          let () = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
           (match bf with
             | (Eq (sv1,sv2,b),c) ->
                 let detected, new_f = detect_ptr_xpure_form f sv1 sv2 a b c in
@@ -13719,26 +13718,26 @@ let overapp_ptrs_x f0=
                   snd (detect_ptr_xpure_form f sv2 sv1 a b c)
                       (* begin *)
                 (* match sv1 with *)
-              (*     | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
+              (*     | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
               (*           let t = type_of_spec_var sv in *)
-              (*           let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*           let () = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
               (*             if is_node_typ sv && is_num sv2 then *)
               (*               let zero = IConst (0, pos) in *)
               (*               BForm ((Neq (sv1, zero, b), c), a) *)
               (*             else f *)
               (*     | _ -> begin *)
               (*         match sv2 with *)
-              (*           | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
+              (*           | Var (sv ,pos) -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
               (*             let t = type_of_spec_var sv in *)
-              (*             let _ = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*             let () = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
               (*             if is_node_typ sv && is_num sv1 then *)
               (*               let zero = IConst (0, pos) in *)
               (*               BForm ((Neq (sv2, zero, b), c), a) *)
               (*             else f *)
-              (*           | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
+              (*           | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
               (*       end *)
               (* end *)
-            | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
+            | _ -> let () = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
                   f
           )
     | Not _ -> f
@@ -14034,7 +14033,8 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
         )
       | _ -> Some bf
     ) in
-    let _ = transform_formula (fh, fm, ff, fb, fe) f in
+    (* what is this for? side-effects *)
+    let todo_var = transform_formula (fh, fm, ff, fb, fe) f in
     !nondet_svs
   ) in
   let nondet_svs = collect_nondet_vars f in
@@ -14057,7 +14057,7 @@ let check_non_determinism_x (var_name: ident) (f: formula) =
         );
         None
       ) in
-      let _ = transform_formula (fh, fm, ff, fb, fe) simp_f in
+      let todo_unknown = transform_formula (fh, fm, ff, fb, fe) simp_f in
       if (List.length !related_vars) <= (List.length vars) then vars
       else collect_related_vars !related_vars
     ) in

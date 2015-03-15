@@ -1,3 +1,4 @@
+open VarGen
 module DD=Debug (* which Debug is this? *)
 open Camlp4
 open Globals

@@ -1,3 +1,4 @@
+open VarGen
 (*
   Driver.
 
@@ -521,7 +522,7 @@ let _ =
         let ptime4 = Unix.times () in
         let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
         Timelog.logtime # dump;
-        min_print print_string ("\nTotal verification time: "
+        silenced_print print_string ("\nTotal verification time: "
         ^ (string_of_float t4) ^ " second(s)\n"
         ^ "\tTime spent in main process: "
         ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
@@ -532,7 +533,7 @@ let _ =
     in
     let _= sleek_proof_log_Z3 !Globals.source_files in
     let _ =
-      if (!Globals.profiling && not !inter) then
+      if (!Gen.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string_if (not !Globals.compete_mode)  "\n"
+    print_string_if (not !compete_mode)  "\n"
   )

@@ -1,3 +1,4 @@
+open VarGen
 open Camlp4.PreCast
 open Iformula
 open Globals

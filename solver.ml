@@ -1,3 +1,4 @@
+open VarGen
 (*
 26.11.2008
 todo: disable the default logging for omega
@@ -3115,7 +3116,7 @@ and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:C
                 | _ -> true) heaps
           in
           let barrier_nodes = List.filter (fun h ->
-              let name = CF.get_node_name h in
+              let name = CF.get_node_name 16 h in
               if (name="barrier") then true else false) heaps
           in
           if (List.length barrier_nodes <= 1) then (*consistent*) false
@@ -6013,7 +6014,7 @@ and is_distributive	(coer : coercion_decl) : bool =
 and check_one_node (sv : CP.spec_var) (top_level_rhs : CP.spec_var list) (lhs_heap : CF.h_formula) (rhs_heap : CF.h_formula) : bool =
   match top_level_rhs with
     | h :: r ->
-	  if (CP.eq_spec_var h sv) && (String.compare (CF.get_node_name (get_node sv lhs_heap)) (CF.get_node_name (get_node h rhs_heap))) == 0 then
+	  if (CP.eq_spec_var h sv) && (String.compare (CF.get_node_name 17 (get_node sv lhs_heap)) (CF.get_node_name 18 (get_node h rhs_heap))) == 0 then
 	    true
 	  else (check_one_node sv r lhs_heap rhs_heap)
     | [] -> false
@@ -8856,7 +8857,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (Debug.devel_zprint (lazy ("do_base_case_unfold attempt for : " ^
 	    (Cprinter.string_of_h_formula lhs_node))) pos);
     (* c1,v1,p1 *)
-    let lhs_name,lhs_arg,lhs_var = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+    let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let _ = Gen.Profiling.push_time "empty_predicate_testing" in
     let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
@@ -9031,7 +9032,7 @@ and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
       ante conseq lhs_node rhs_node
 
 and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
-  let c1,v1,p1 = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+  let c1,v1,p1 = get_node_name 20 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
   let vd = (look_up_view_def_raw 8 prog.prog_view_decls c1) in
   let na,prf =
     (match vd.view_base_case with
@@ -12905,8 +12906,8 @@ and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_
 *)
 
 and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
-  let c1 = get_node_name anode in
-  let c2 = get_node_name ln2 in
+  let c1 = get_node_name 21 anode in
+  let c2 = get_node_name 22 ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
     | None -> find_coercions c1 c2 prog anode ln2 
     | Some c ->
@@ -13814,13 +13815,13 @@ and find_possible_matches_x (hs1: h_formula list) (hs2: h_formula list) : ((h_fo
   if (List.length hs1 < List.length hs2 || List.length hs1 < 1) then []
   else
     let rec find_one_x (h: h_formula) (hs: h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
-      let h_name = get_node_name h in
+      let h_name = get_node_name 23 h in
       (match hs with
         | [] -> []
         | x::xs ->
           let res = find_one_x h xs in
           let m2 = List.map (fun (ls, rest) -> (ls, x::rest)) res in
-          let x_name = get_node_name x in
+          let x_name = get_node_name 24 x in
           if (h_name = x_name) then
             (* A possible match (h,x) *)
             let m1 = ([(x,h)],xs) in

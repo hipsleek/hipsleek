@@ -1,3 +1,4 @@
+open VarGen
 module MCP = Mcpure
 
 open Gen.Basic

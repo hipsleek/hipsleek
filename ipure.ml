@@ -6,6 +6,7 @@
 
 open Globals
 open Gen.Basic
+open VarGen
 (* open Label_only *)
 open Label
 include Ipure_D
@@ -139,7 +140,7 @@ end;;
 module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
 
 let linking_exp_list = ref (Hashtbl.create 100)
-let _ = let zero = IConst (0, no_pos)
+let () = let zero = IConst (0, no_pos)
 		in Hashtbl.add !linking_exp_list zero 0
 
 
@@ -1768,8 +1769,8 @@ let rec typ_of_exp (e: exp) : typ =
     )
   in
   let merge_types typ1 typ2 =
-    (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
-    (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+    (* let () = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+    (* let () = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
     if (typ1 = UNK) then typ2
     else if (typ1 = typ2) then typ1
     else match typ2  with
@@ -1914,8 +1915,8 @@ let trans_special_formula s (p:formula) vars =
                         let s1 = (unprimed_param,old_param) in
                         let s2 = (primed_param,new_param) in
                         (*??? QUICK TRICK*)
-                        (* let _ = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
-                        (* let _ = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
+                        (* let () = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
+                        (* let () = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
                         let new_v1 = subst_var s1 (id1,p1) in
                         let new_v1 = subst_var s2 new_v1 in
                         let new_v2 = subst_var s1 (id2,p2) in
