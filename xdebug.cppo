@@ -1,0 +1,16 @@
+let buildA s i = s^"#"^(string_of_int i);;
+let build s i = "**"^(buildA s i)^":";;
+let store s i = let n = buildA s i in VarGen.last_posn := Some n ;;
+
+#ifdef TRACE
+#define x_binfo (fun f -> \
+  Debug.binfo_hprint (fun x -> (build __FILE__ __LINE__)^(f x)))
+#define x_add (fun f -> let () = store  __FILE__ __LINE__ in f)
+#else
+#define x_binfo Debug.binfo_hprint 
+#define x_add (fun f -> f)
+#endif
+
+(* let s1 = build __FILE__ __LINE__ in \
+       Debug.binfo_hprint (fun x -> s1^(f x)) s VarGen.no_pos
+*)

@@ -2,6 +2,8 @@ let compete_mode = ref false
 let trace_failure = ref false
 let verbose_num = ref 0
 
+let last_posn = ref (None:string option)
+
 let suppress_warning_msg = ref false
 let en_warning_msg = ref true
 

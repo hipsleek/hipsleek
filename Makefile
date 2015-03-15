@@ -7,6 +7,7 @@ BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
+CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
 
 #CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
 #CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
@@ -35,6 +36,7 @@ LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBG
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
 INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
@@ -50,15 +52,16 @@ SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-cco
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
-OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)  $(CPPO_FLAGS)
+OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
  
-OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
-OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
 #static - incl C libs
-OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
-OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) $(CPPO_FLAGS)
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
@@ -67,6 +70,8 @@ all: byte # decidez.vo
 byte: sleek.byte hip.byte # decidez.vo
 
 gbyte: sleek.gbyte hip.gbyte
+
+test: dtest.byte
  
 # hsprinter.byte
 native: hip.native sleek.native
@@ -84,12 +89,19 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
-hip.gbyte: xml
+parser.cmo:
+	@ocamlbuild $(OBB_NGFLAGS) parser.cmo
+
+dtest.byte: xdebug.cppo
+	@ocamlbuild $(OBB_GFLAGS) dtest.byte
+	cp -u _build/dtest.byte dtest
+
+hip.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte g-hip
 
-sleek.gbyte: xml
+sleek.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte g-sleek

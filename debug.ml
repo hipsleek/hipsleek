@@ -303,6 +303,13 @@ let pick_front n ss =
 module DebugCore  =
 struct
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+    let pre_str = 
+      let s = !VarGen.last_posn in
+      match s with 
+        | None -> ""
+        | Some s -> 
+              let () = VarGen.last_posn := None in
+              "("^s^")" in
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -345,6 +352,7 @@ struct
                     ("\n NOW :"^(pr_o x)))) in
             (new_test, new_pr_o) in
     let s,h = push_call_gen s df in
+    let h = pre_str^"\n"^h in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
     let r = (try
