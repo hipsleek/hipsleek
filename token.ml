@@ -90,6 +90,7 @@ type sleek_token =
   | FAIL_MAY
   | XPURE
   | PAR
+  | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
   (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -199,6 +200,7 @@ module Token = struct
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
     | PAR -> "par"
+    | ARGOPTION arg -> "##OPTION "^arg
     (* | SKIP -> "skip" *)
     (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

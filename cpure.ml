@@ -12128,6 +12128,7 @@ and drop_bag_formula_weak_x (pf : formula) : formula =
   let npf, _ = trans_formula pf arg f f_arg f_comb in
   npf
 
+
 and drop_bag_formula_weak (pf : formula) : formula =
   Debug.no_1 "drop_bag_formula_weak" !print_formula !print_formula
       drop_bag_formula_weak_x pf

@@ -27,7 +27,7 @@ void foo4(int a4)
 
 void foo5(int a5, int b5)
   requires @zero[a5]
-  ensures true;
+  ensures true & a5>0;
   // requires @zero[a]*@value[b]
   // ensures true;
 

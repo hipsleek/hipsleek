@@ -391,6 +391,7 @@ let common_arguments = [
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
+      let _ = print_endline ("!!!-dre "^s) in
       Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
    "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
@@ -989,6 +990,31 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
+;;
+
+
+(* let parseinput userinp = *)
+(*   (\* Read the arguments *\) *)
+(*   Printf.printf "String:%s\n" (Array.get userinp 2); *)
+(*   Arg.parse_argv ?current:(Some (ref 0)) userinp *)
+(*     speclist *)
+(*     (fun x -> raise (Arg.Bad ("Bad argument : " ^ x))) *)
+(*     usage; *)
+(*   Printf.printf "Set stuff to:   %d '%s'\n%!"  !someint !somestr  *)
+
+
+(* let  parseit line = *)
+(*   Printf.printf "processing %s%!\n" line; *)
+(*   (\* TODO rewrite without Str*\) *)
+(*   let listl = (Str.split (Str.regexp " ") line) in *)
+(*   parseinput (Array.of_list listl) *)
+
+let parse_arguments_with_string s =
+  let _ = print_endline s in
+  let slst = (Str.split (Str.regexp " ") s) in
+  let _ = List.iter (fun s -> print_endline (s^"##")) slst in
+  let s_array = Array.of_list (Str.split (Str.regexp " ") s) in
+  Arg.parse_argv ?current:(Some (ref 0)) s_array common_arguments (fun x -> ()) "Inner flags!"
 ;;
 
 let check_option_consistency () =

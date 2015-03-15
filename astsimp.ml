@@ -3424,11 +3424,11 @@ and comp_vp_add_pre_post f p_ref p_val =
       CF.Base b ->
           let vp = b.CF.formula_base_vperm in
           let n_vp,rem_vp = check_vp vp p_ref p_val in
-          (CF.Base {b with CF.formula_base_vperm=n_vp},[])
+          (CF.Base {b with CF.formula_base_vperm=n_vp},p_ref)
     | CF.Exists g -> 
           let vp = g.CF.formula_exists_vperm in
           let n_vp,rem_vp = check_vp vp p_ref p_val in
-          (CF.Exists {g with CF.formula_exists_vperm=n_vp},[])
+          (CF.Exists {g with CF.formula_exists_vperm=n_vp},p_ref)
     | _ -> 
           let () = Debug.winfo_pprint "VPerm cannot be added to OR" no_pos in
           (f,[]) (* print warning *)
@@ -3443,13 +3443,18 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
     (* let f_none _ _ = None in *)
     let f1_term a e = Some(e,a) in
     (* let f_f a e = Some(e,a)  in *)
-    let rec f_struc_f a e = 
+    let rec f_struc_f a e =
+      
       match e with
-        | CF.EBase b -> 
+        | CF.EBase b ->
+              (* let () = print_endline ("!!!!! f_struc_f EBase"^(Cprinter.string_of_struc_formula e)) in *)
               (match a with
                 | Some (flag,e) -> 
                       (* flag indicates we are inside a structured EAssume *)
-                      if flag then failwith "inside EAssume - TODO must add permission here"
+                      if flag then
+                        let (nf,_) = comp_vp_add_pre_post b.CF.formula_struc_base e [] in
+                        Some (CF.EBase {b with CF.formula_struc_base = nf},None)
+                            (*failwith "inside EAssume - TODO must add permission here"*)
                       else None
                 | None ->
                       begin
@@ -3463,12 +3468,14 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
                                   else helper (Some (false,post_perm)) (* adding post-permission to EAssume *) c in
                                 Some (CF.EBase { b with CF.formula_struc_base = nf; CF.formula_struc_continuation = Some cf}, None)
                     end)
-      | CF.EAssume f -> 
+      | CF.EAssume f ->
+            (* let () = print_endline ("!!!!! f_struc_f EAssume"^(Cprinter.string_of_struc_formula e)) in *)
             begin
               match a with 
                   None -> Some (e,None)
                 | Some (_,post_perm) -> 
-                      let assume_simpl = f.CF.formula_assume_simpl in (* TODO : must add vperm here *)
+                      (* let assume_simpl = f.CF.formula_assume_simpl in (\* TODO : must add vperm here *\) *)
+                      let (assume_simpl,_) = comp_vp_add_pre_post (f.CF.formula_assume_simpl) post_perm [] in
                       let assume_struc = helper (Some(true,post_perm)) f.CF.formula_assume_struc in (* need to add vperm if we have classic/exact post *)
 	              let () = Debug.ninfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
 	              let () = Debug.ninfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in

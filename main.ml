@@ -86,7 +86,11 @@ let parse_file_full file_name (primitive: bool) =
         (*   (*Sys.remove "tmp_java.ss";*)                                                        *)
         (*   parseresult                                                                          *)
         (* else                                                                                   *)
-          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+          (* Parser.parse_hip file_name (Stream.of_channel org_in_chnl) *)
+        
+        let (s,p) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
+        let _ = Scriptarguments.parse_arguments_with_string s in
+        p
     ) in
     close_in org_in_chnl;
     let () = Gen.Profiling.pop_time "Parsing" in
