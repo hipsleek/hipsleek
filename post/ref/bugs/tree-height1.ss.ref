@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/tree-height1.ss"
 Parsing file "bugs/tree-height1.ss" by default parser...
@@ -60,25 +61,25 @@ RELDEFN post_1417: ( n_1445<n_1461 & 0<=n_1445 & 0<=m_1458 & 0<=n_1515 &
 v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
 post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
 post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
-post_1417(m_1531,n_1515,v_int_20_1568,flow) & res=1+v_int_20_1568 & n=n_1461+
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1461+
 1 & m_1531=m_1407-1 & m_1458<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
 RELDEFN post_1417: ( n_1461<=n_1445 & 0<=n_1461 & 0<=m_1458 & 0<=n_1515 & 
 v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
 post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
 post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
-post_1417(m_1531,n_1515,v_int_20_1568,flow) & res=1+v_int_20_1568 & n=n_1445+
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1445+
 1 & m_1531=m_1407-1 & m_1458<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
 RELDEFN post_1417: ( m_1531<=m_1458 & 0<=m_1531 & n_1445<n_1461 & 0<=n_1445 & 0<=n_1515 & 
 v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
 post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
 post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
-post_1417(m_1531,n_1515,v_int_20_1568,flow) & res=1+v_int_20_1568 & n=n_1461+
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1461+
 1 & m_1407=m_1458+1) -->  post_1417(m_1407,n,res,flow),
 RELDEFN post_1417: ( m_1531<=m_1458 & 0<=m_1531 & n_1461<=n_1445 & 0<=n_1461 & 0<=n_1515 & 
 v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
 post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
 post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
-post_1417(m_1531,n_1515,v_int_20_1568,flow) & res=1+v_int_20_1568 & n=n_1445+
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1445+
 1 & m_1407=m_1458+1) -->  post_1417(m_1407,n,res,flow)]
 *************************************
 
@@ -87,8 +88,13 @@ height$node
  EBase exists (Expl)[](Impl)[n](ex)[]x::tree{}<n>&MayLoop[]&
        {FLOW,(4,5)=__norm#E}[]
          EAssume 
-           (exists m_1407: x::tree{}<m_1407>&0<=n & m_1407>=0 & m_1407=res & 
-           m_1407=n&{FLOW,(4,5)=__norm#E}[]
+           (exists m_1407: x::tree{}<m_1407>&0<=n & res>=0 & res=n & 
+           res=m_1407&{FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
+
+Total verification time: 3.176197 second(s)
+	Time spent in main process: 2.076129 second(s)
+	Time spent in child processes: 1.100068 second(s)
+

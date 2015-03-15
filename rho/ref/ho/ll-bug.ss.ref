@@ -1,0 +1,42 @@
+
+!!!Full processing file "ho/ll-bug.ss"
+Parsing file "ho/ll-bug.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure clone$node~node... 
+( [(,0 ); (,1 )]) :ho/ll-bug.ss:27: 4: ol does not have @full permission to write.
+
+(Cause of ParCase Failure):ho/ll-bug.ss:27: 4:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(ol,@full)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ho/ll-bug.ss",Line:27,Col:4
+
+ERROR: at ho/ll-bug.ss_27:4_27:6
+Message: ol does not have @full permission to write.
+
+Procedure clone$node~node FAIL.(2)
+
+Exception Failure("ol does not have @full permission to write.") Occurred!
+
+Error(s) detected when checking procedure clone$node~node
+
+0 false contexts at: ()
+
+Total verification time: 0.49603 second(s)
+	Time spent in main process: 0.452028 second(s)
+	Time spent in child processes: 0.044002 second(s)
+

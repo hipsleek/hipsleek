@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/rec-f91b.ss"
 Parsing file "t/rec-f91b.ss" by default parser...
@@ -19,7 +20,7 @@ Post Inference result:
 f91$int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           emp&((90>=n & 91=res) | (n>=88 & 91>=n & 91=res) | (res>=91 & 
+           emp&((90>=n & 91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
            res=n))&{FLOW,(4,5)=__norm#E}[]
            
 
@@ -42,3 +43,8 @@ fact$int
            
 
 0 false contexts at: ()
+
+Total verification time: 0.540032 second(s)
+	Time spent in main process: 0.396024 second(s)
+	Time spent in child processes: 0.144008 second(s)
+

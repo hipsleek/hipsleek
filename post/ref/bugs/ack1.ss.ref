@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/ack1.ss"
 Parsing file "bugs/ack1.ss" by default parser...
@@ -26,10 +27,14 @@ post_1355(m,v_int_15_1406,r_1420,flow) & pre_1354(m,n)) -->  post_1355(m,n,res,f
 
 Post Inference result:
 Ack$int~int
- EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ EBase htrue&0<=m & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           htrue&((n>=0 & m>=1 & res>=(1+n+m)) | (0=m & n+1=res))&
-           {FLOW,(4,5)=__norm#E}[]
+           htrue&m>=0 & res>=(1+m+n)&{FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
+
+Total verification time: 0.976059 second(s)
+	Time spent in main process: 0.508031 second(s)
+	Time spent in child processes: 0.468028 second(s)
+

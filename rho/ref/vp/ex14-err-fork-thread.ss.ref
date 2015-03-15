@@ -1,0 +1,7 @@
+
+!!!Full processing file "vp/ex14-err-fork-thread.ss"
+Parsing file "vp/ex14-err-fork-thread.ss" by default parser...
+caught
+
+Exception occurred: Failure("lexing: empty token")
+Error3(s) detected at main 

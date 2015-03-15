@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/tree-size.ss"
 Parsing file "t/tree-size.ss" by default parser...
@@ -26,8 +27,13 @@ size$node
  EBase exists (Expl)[](Impl)[n](ex)[]x::tree{}<n>&MayLoop[]&
        {FLOW,(4,5)=__norm#E}[]
          EAssume 
-           (exists m_1384: x::tree{}<m_1384>&0<=n & m_1384>=0 & m_1384=res & 
-           m_1384=n&{FLOW,(4,5)=__norm#E}[]
+           (exists m_1384: x::tree{}<m_1384>&0<=n & res>=0 & res=n & 
+           res=m_1384&{FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
+
+Total verification time: 1.244076 second(s)
+	Time spent in main process: 0.992061 second(s)
+	Time spent in child processes: 0.252015 second(s)
+

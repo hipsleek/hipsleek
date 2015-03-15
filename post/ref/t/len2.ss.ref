@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/len2.ss"
 Parsing file "t/len2.ss" by default parser...
@@ -26,6 +27,9 @@ length3$node
            
 
 Checking procedure length4$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[R1,R2] pre_post_vars:[m_1398,n,R2,res,x]
+
 Procedure length4$node SUCCESS.
 
 *************************************
@@ -41,8 +45,13 @@ length4$node
  EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&MayLoop[]&
        {FLOW,(4,5)=__norm#E}[]
          EAssume 
-           (exists m_1398: x::ll{}<m_1398>&0<=n & m_1398>=0 & m_1398=res & 
-           m_1398=n&{FLOW,(4,5)=__norm#E}[]
+           (exists m_1398: x::ll{}<m_1398>&0<=n & res>=0 & res=n & 
+           res=m_1398&{FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
+
+Total verification time: 1.028063 second(s)
+	Time spent in main process: 0.836051 second(s)
+	Time spent in child processes: 0.192012 second(s)
+

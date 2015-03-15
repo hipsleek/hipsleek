@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/ll-insert.ss"
 Parsing file "t/ll-insert.ss" by default parser...
@@ -46,3 +47,8 @@ insert2$node~int
            
 
 0 false contexts at: ()
+
+Total verification time: 1.332082 second(s)
+	Time spent in main process: 1.13207 second(s)
+	Time spent in child processes: 0.200012 second(s)
+

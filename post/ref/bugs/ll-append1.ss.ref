@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "bugs/ll-append1.ss"
 Parsing file "bugs/ll-append1.ss" by default parser...
@@ -28,3 +29,8 @@ append$node~node
            
 
 0 false contexts at: ()
+
+Total verification time: 1.048064 second(s)
+	Time spent in main process: 0.872054 second(s)
+	Time spent in child processes: 0.17601 second(s)
+

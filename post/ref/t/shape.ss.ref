@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/shape.ss"
 Parsing file "t/shape.ss" by default parser...
@@ -26,7 +27,7 @@ Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
 ERROR: at t/shape.ss_15:4_15:9
 Message: Expect a node
 
-!!! WARNING logtime exception:0.000757
+!!! WARNING logtime exception:0.
 Procedure while_10_2$cell~cell FAIL.(2)
 
 Exception Failure("Expect a node") Occurred!
@@ -50,7 +51,7 @@ Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
 ERROR: at t/shape.ss_10:2_16:3
 Message: Expect a node or a hrel
 
-!!! WARNING logtime exception:0.000935
+!!! WARNING logtime exception:0.004
 Procedure main$cell~cell FAIL.(2)
 
 Exception Failure("Expect a node or a hrel") Occurred!
@@ -58,3 +59,8 @@ Exception Failure("Expect a node or a hrel") Occurred!
 Error(s) detected when checking procedure main$cell~cell
 
 0 false contexts at: ()
+
+Total verification time: 0.404024 second(s)
+	Time spent in main process: 0.380023 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

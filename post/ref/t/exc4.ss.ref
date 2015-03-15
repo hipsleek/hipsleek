@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc4.ss"
 Parsing file "t/exc4.ss" by default parser...
@@ -38,3 +39,8 @@ Exception Failure("Post condition cannot be derived.") Occurred!
 Error(s) detected when checking procedure loop$int
 
 1 false contexts at: ( (14,4) )
+
+Total verification time: 0.360021 second(s)
+	Time spent in main process: 0.33602 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

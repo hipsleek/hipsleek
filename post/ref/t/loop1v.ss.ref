@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/loop1v.ss"
 Parsing file "t/loop1v.ss" by default parser...
@@ -15,3 +16,8 @@ Checking procedure PastaA1_main$...
 Procedure PastaA1_main$ SUCCESS.
 
 0 false contexts at: ()
+
+Total verification time: 0.376022 second(s)
+	Time spent in main process: 0.348021 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

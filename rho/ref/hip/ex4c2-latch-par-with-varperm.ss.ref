@@ -1,0 +1,9 @@
+
+!!!Full processing file "hip/ex4c2-latch-par-with-varperm.ss"
+Parsing file "hip/ex4c2-latch-par-with-varperm.ss" by default parser...
+File "hip/ex4c2-latch-par-with-varperm.ss", line 47, characters 42-43
+ --error: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+ at:caught
+
+Exception occurred: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+Error3(s) detected at main 

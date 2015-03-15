@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/len.ss"
 Parsing file "t/len.ss" by default parser...
@@ -21,8 +22,13 @@ length$node
  EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&MayLoop[]&
        {FLOW,(4,5)=__norm#E}[]
          EAssume 
-           (exists m_1385: x::ll{}<m_1385>&0<=n & m_1385>=0 & m_1385=res & 
-           m_1385=n&{FLOW,(4,5)=__norm#E}[]
+           (exists m_1385: x::ll{}<m_1385>&0<=n & res>=0 & res=n & 
+           res=m_1385&{FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
+
+Total verification time: 0.728045 second(s)
+	Time spent in main process: 0.596037 second(s)
+	Time spent in child processes: 0.132008 second(s)
+

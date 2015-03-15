@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/wloop2.ss"
 Parsing file "t/wloop2.ss" by default parser...
@@ -21,8 +22,8 @@ while_10_2$cell~cell
        {FLOW,(4,5)=__norm#E}[]
          EAssume 
            (exists c_1374,d_1375: x::cell<c_1374> * y::cell<d_1375>&
-           ((c_1374>=(1+b) & c_1374=a & c_1374=d_1375) | (d_1375>=c_1374 & 
-           c_1374=a & d_1375=b))&{FLOW,(4,5)=__norm#E}[]
+           ((c_1374>=(1+b) & c_1374=d_1375 & c_1374=a) | (b>=c_1374 & 
+           b=d_1375 & c_1374=a))&{FLOW,(4,5)=__norm#E}[]
            
 
 Checking procedure main$cell~cell... 
@@ -46,3 +47,8 @@ main$cell~cell
            
 
 0 false contexts at: ()
+
+Total verification time: 0.580035 second(s)
+	Time spent in main process: 0.472029 second(s)
+	Time spent in child processes: 0.108006 second(s)
+

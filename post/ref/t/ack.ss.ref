@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/ack.ss"
 Parsing file "t/ack.ss" by default parser...
@@ -23,8 +24,7 @@ Post Inference result:
 Ack$int~int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           htrue&((n>=0 & m>=1 & res>=(1+n+m)) | (0=m & n+1=res))&
-           {FLOW,(4,5)=__norm#E}[]
+           htrue&m>=0 & res>=(1+m+n)&{FLOW,(4,5)=__norm#E}[]
            
 
 Checking procedure Ack$int~int... 
@@ -33,26 +33,23 @@ Checking procedure Ack$int~int...
 *** TERMINATION INFERENCE ***
 *****************************
 Temporal Assumptions:
- termAssume (((n1_1505>=0 & m'>=1 & r_1507>=(1+n1_1505+m')) | (0=m' & 
-n1_1505+1=r_1507))) & n1_1505+1=n' & m1_1504+1=m' & m'=m & n'=n & m'!=0 & 
-!(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & v_int_19_1506+1=m' & 
-(((r_1507>=0 & v_int_19_1506>=1 & v_int_19_1349'>=(1+r_1507+
-v_int_19_1506)) | (0=v_int_19_1506 & r_1507+1=v_int_19_1349'))) & 
+ termAssume r_1507>=(1+m'+n1_1505) & m'>=0 & n1_1505+1=n' & m1_1504+1=m' & 
+m'=m & n'=n & m'!=0 & !(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & 
+v_int_19_1506+1=m' & v_int_19_1506>=0 & v_int_19_1349'>=(1+v_int_19_1506+
+r_1507) & 
 res=v_int_19_1349' & Ackpost_1441(m',n1_1505) & Ackpost_1441(v_int_19_1506,r_1507) --> Ackpost_1441(m,n).
 
  termAssume v_bool_7_1350' & !(v_bool_6_1351') & m'!=0 & n'=n & m'=m & 
-n'=0 & m1_1502+1=m' & v_int_11_1503=1 & (((v_int_11_1503>=0 & m1_1502>=1 & 
-v_int_11_1322'>=(1+v_int_11_1503+m1_1502)) | (0=m1_1502 & v_int_11_1503+
-1=v_int_11_1322'))) & 
+n'=0 & m1_1502+1=m' & v_int_11_1503=1 & m1_1502>=0 & v_int_11_1322'>=(1+
+m1_1502+v_int_11_1503) & 
 res=v_int_11_1322' & Ackpost_1441(m1_1502,v_int_11_1503) --> Ackpost_1441(m,n).
 
  termAssume res=v_int_6_1310' & v_int_6_1310'=1+n' & m'=m & n'=n & m'=0 & 
 v_bool_6_1351' --> Ackpost_1441(m,n).
 
- termAssume (((n1_34'>=0 & m'>=1 & r_35'>=(1+n1_34'+m')) | (0=m' & n1_34'+
-1=r_35'))) & n1_34'+1=n' & m1_33'+1=m' & m'=m & n'=n & m'!=0 & 
-!(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & v_int_19_1348'+
-1=m' & Ackpre_0(m,n) --> Ackpre_0(v_int_19_1348',r_35').
+ termAssume r_35'>=(1+m'+n1_34') & m'>=0 & n1_34'+1=n' & m1_33'+1=m' & 
+m'=m & n'=n & m'!=0 & !(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & 
+v_int_19_1348'+1=m' & Ackpre_0(m,n) --> Ackpre_0(v_int_19_1348',r_35').
 
  termAssume !(v_bool_7_1350') & n'!=0 & !(v_bool_6_1351') & m'!=0 & n'=n & 
 m'=m & m1_33'+1=m' & n1_34'+1=n' & Ackpre_0(m,n) --> Ackpre_0(m',n1_34').
@@ -63,27 +60,6 @@ v_int_11_1321'=1 & Ackpre_0(m,n) --> Ackpre_0(m1_36',v_int_11_1321').
 
 
 Base/Rec Case Splitting:
-[	Ack: [[4] m=0@B,[5] n=0 & 1<=m@R,[6] 1<=n & 1<=m@R,[7] ((m<=(0-1) & n<=0) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 1<=n))@R]
+[	Ack: [[4] m=0@B,[5] n=0 & 1<=m@R,[6] 1<=m & 1<=n@R,[7] n<=(0-1) & 1<=m@R,[8] m<=(0-1)@R]
 ]
 Starting z3... 
-Termination Inference Result:
-Ack:  requires true & truecase {
-                      m=0 -> requires emp & Term[3,1]
-     ensures true & ((n>=0 & 
-                      m>=1 & res>=(1+n+m)) | (0=m & n+1=res)); 
-                      n=0 & 1<=m -> requires emp & Term[3,2,0+(0*m)+(0*n),0+
-                      (1*m)+(0*n),0+(1*m)+(1*
-                      n)]
-     ensures true & ((n>=0 & m>=1 & res>=(1+n+
-                      m)) | (0=m & n+1=res)); 
-                      1<=n & 1<=m -> requires emp & Term[3,2,0+(0*m)+(0*n),0+
-                      (1*m)+(0*n),0+(1*m)+(1*
-                      n)]
-     ensures true & ((n>=0 & m>=1 & res>=(1+n+
-                      m)) | (0=m & n+1=res)); 
-                      ((n<=(0-1) & 1<=m) | m<=(0-1)) -> requires emp & Loop
-                      { 17:12}[]
-     ensures false & false; 
-                      }
-
-0 false contexts at: ()

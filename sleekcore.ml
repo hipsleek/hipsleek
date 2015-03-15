@@ -39,8 +39,8 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
 *)
 
 let sleek_unsat_check isvl cprog ante=
-  let _ = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
-  let _ = Hgraph.reset_fress_addr () in
+  let () = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
+  let () = Hgraph.reset_fress_addr () in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante (* cprog.C.prog_left_coercions *) lem in
@@ -48,10 +48,10 @@ let sleek_unsat_check isvl cprog ante=
   let ctx = CF.build_context ectx ante no_pos in
   let ctx = Solver.elim_exists_ctx ctx in
   let init_ctx =  (* CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) *) ctx in
-  (* let _ = if (CF.isAnyFalseCtx ctx) then *)
+  (* let () = if (CF.isAnyFalseCtx ctx) then *)
   (*   print_endline ("[Warning] False ctx") *)
   (* in *)
-  (* let _ = print_endline ("1") in *)
+  (* let () = print_endline ("1") in *)
   (* let es = match init_ctx with *)
   (*   | CF.Ctx es -> es *)
   (*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *)
@@ -88,7 +88,7 @@ let sleek_unsat_check isvl cprog ante=
 
 
 (* let check_unsat cprog ante init_ctx= *)
-(*   (\* let _ = print_endline ("1") in *\) *)
+(*   (\* let () = print_endline ("1") in *\) *)
 (*   (\* let es = match init_ctx with *\) *)
 (*   (\*   | CF.Ctx es -> es *\) *)
 (*   (\*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *\) *)
@@ -124,23 +124,23 @@ let sleek_entail prog ante_ctx conseq pos=
 
 (* WN : why isn't itype added to estate? *)
 let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq =
-  let _ = Hgraph.reset_fress_addr () in
+  let () = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
-  let _ = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
+  let () = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) in
-  let _ = Debug.tinfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
+  let () = Debug.tinfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
+  let () = Debug.tinfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
-  (* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
-  (* let _ = Debug.info_pprint "=============================================================" no_pos in *)
+  let () = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
+  (* let () = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
+  (* let () = Debug.info_pprint "=============================================================" no_pos in *)
   let conseq = Astsimp.add_param_ann_constraints_struc conseq in
-  let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
+  let () = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *)
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
+  let () = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
   ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
   ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
   ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -150,8 +150,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
-  let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
+  let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
+  let () = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
   ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
   ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
   ^"\n\n")) no_pos in
@@ -174,30 +174,30 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
     else if CP.is_hprel_typ v then (vr, vt, vh@[v], iv)
     else if is_FuncT typ then (vr, vt@[v], vh, iv)
     else (vr, vt, vh, iv@[v])) ([], [], [], []) isvl in
-      (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
-      (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
-      (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
+      (* let () = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+      (* let () = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
+      (* let () = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
   (* let itype_opt = if List.mem INF_TERM itype then Some INF_TERM else None in *)
   let ctx = Infer.init_infer_type ctx itype in
-  (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
-  let _ = if !Globals.print_core || !Globals.print_core_all
+  (* let () = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
+  let () = if !Globals.print_core || !Globals.print_core_all
   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
   ^" "^(pr_list !CP.print_sv isvl)
   ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n")
   else ()
   in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
-  let _ = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
-  let _ = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
-  let _ = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
-  let _ = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
+  let () = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
+  let () = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
+  let () = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
+  let () = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
-    let _ = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
-    let _ = Globals.disable_failure_explaining := true in
-    let _ = Globals.smt_is_must_failure := None in
+    let () = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let () = Globals.disable_failure_explaining := true in
+    let () = Globals.smt_is_must_failure := None in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
@@ -205,8 +205,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
     if (!Globals.prove_invalid && not(!Globals.baga_xpure)) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
       (* TODO : new unsat checking for LHS from Loc *)
       (* need to document; and generalize? *)
-      let _ = Globals.smt_is_must_failure := None in
-      let _ = Globals.disable_failure_explaining := true in
+      let () = Globals.smt_is_must_failure := None in
+      let () = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
       (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
       let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
@@ -222,12 +222,12 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
             ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  CF.mk_cex true) in
         (false, fctx, isvl)
     else
-      (* let _ = Globals.disable_failure_explaining := false in *)
-      (* let _ = Globals.smt_is_must_failure := (Some false) in *)
+      (* let () = Globals.disable_failure_explaining := false in *)
+      (* let () = Globals.smt_is_must_failure := (Some false) in *)
       let ctx =
         if !Globals.delay_proving_sat then ctx
         else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-      let _ = if (CF.isAnyFalseCtx ctx) then
+      let () = if (CF.isAnyFalseCtx ctx) then
         print_endline_quiet ("[Warning] False ctx")
       in
       let conseq = Cfutil.elim_null_vnodes cprog conseq in
@@ -236,24 +236,24 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
       (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
       (************************)
       (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
-      (*   let _ = print_endline ("[Warning] False ctx") in *)
+      (*   let () = print_endline ("[Warning] False ctx") in *)
       (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
       (* else ctx *)
       (* in *)
-      (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
+      (* let () = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
       let rs1, _ =
         if  not !Globals.disable_failure_explaining then
-          (* let _ = sleek_entail cprog ctx conseq no_pos in *)
+          (* let () = sleek_entail cprog ctx conseq no_pos in *)
           Solver.heap_entail_struc_init_bug_inv cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
         else
           Solver.heap_entail_struc_init cprog false (* false *) true
               (CF.SuccCtx[ctx]) conseq no_pos None
       in
-      (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
+      (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
       (* tut/ex1/bugs-ex31-match.slk *)
       let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-      (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+      (* let () = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
       (* flush stdout; *)
       let res =
         if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
@@ -278,28 +278,28 @@ and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conse
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ =
-    let _ = Lem_store.all_lemma # clear_right_coercion in
-    let _ = Lem_store.all_lemma # clear_left_coercion in
+    let () = Lem_store.all_lemma # clear_right_coercion in
+    let () = Lem_store.all_lemma # clear_left_coercion in
     ()
   in
   (***************************************)
   let call_sleek ante_f conseq_f=
-    let _ = Globals.graph_norm := false in
-    let _ = Globals.disable_failure_explaining := false in
+    let () = Globals.graph_norm := false in
+    let () = Globals.disable_failure_explaining := false in
     let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] ante_f in
     let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args conseq_f in
     let r, lc, isvl = sleek_entail_check 1 [] [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
-    let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
-    let _ = if not r then
-      let _ = Globals.smt_is_must_failure := Some true in ()
+    let () = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
+    let () = if not r then
+      let () = Globals.smt_is_must_failure := Some true in ()
     else ()
     in
-    let _ = Globals.graph_norm := true in
+    let () = Globals.graph_norm := true in
     (r, lc, isvl)
   in
   (*****************************************)
-  let _ = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
-  let _ = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
+  let () = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
+  let () = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
       ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []), CF.mk_cex true) in
   let s_ctx = (CF.SuccCtx [init_ctx]) in
@@ -308,11 +308,11 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let ante0a = Cformula.force_elim_exists ante0b ante_quans in
   let conseq_quans, conseq0b = CF.split_quantifiers conseq0 in
   let conseq0a = Cformula.force_elim_exists conseq0b conseq_quans in
-  let _ = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
-  let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)
   let prove_conj_conseq_conj_ante (conj_ante, a_hg) ante_nemps1 (norm_conj_conseq,conj_conseq_hg)=
-    let _ = Debug.ninfo_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
+    let () = Debug.ninfo_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
     let r = Frame.check_imply_w_norm prog true a_hg conj_conseq_hg in
     (************use sleek for testing**********)
     (* let r,lc = call_sleek () *)
@@ -339,7 +339,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> true, ctx
       | conj_conseq::rest ->
-            let _ = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) conj_conseq no_pos in
+            let () = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) conj_conseq no_pos in
             let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps0 conj_conseq false true false in
             if is_unsat then (false, ctx) else
               let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 (norm_conj_conseq,conj_conseq_hg) [] ctx in
@@ -400,7 +400,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
             (*       unsat *)
             (* ) ante_fs in *)
             let ante_unsat, ante_fs_w_grp_config = check_unsat_conj_ante ante_fs0 [] in
-            let _ = Debug.ninfo_hprint (add_str "ante_unsat" string_of_bool) ante_unsat no_pos in
+            let () = Debug.ninfo_hprint (add_str "ante_unsat" string_of_bool) ante_unsat no_pos in
             if ante_unsat then
               (true, (CF.SuccCtx [init_ctx]), [])
             else
@@ -424,9 +424,9 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
                 let ps = List.map (fun (sv1, sv2) -> CP.mkPtrNeqEqn sv1 sv2 no_pos) nemps1 in
                 let ante_neq1 = CP.conj_of_list ps no_pos in
                 (*********abstract x!=y ******)
-                let _ = Debug.ninfo_hprint (add_str "view_ptrs" !CP.print_svl) view_ptrs no_pos in
-                let _ = Debug.ninfo_hprint (add_str "ante_nemps" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ante_nemps no_pos in
-                let _ = Debug.ninfo_hprint (add_str "ante_neq1" !CP.print_formula) ante_neq1 no_pos in
+                let () = Debug.ninfo_hprint (add_str "view_ptrs" !CP.print_svl) view_ptrs no_pos in
+                let () = Debug.ninfo_hprint (add_str "ante_nemps" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ante_nemps no_pos in
+                let () = Debug.ninfo_hprint (add_str "ante_neq1" !CP.print_formula) ante_neq1 no_pos in
                 (*partition components on conseq1*)
                 let ante_norm_conseq = Frame.heap_normal_form prog
                   (CF.mkAnd_pure conseq1 (Mcpure.mix_of_pure ante_neq1) no_pos)
@@ -452,8 +452,8 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
       let n_l, n_r = List.fold_left gen_lemma ([],[]) proof_traces in
       let old_l = Lem_store.all_lemma # get_left_coercion  in
       let old_r = Lem_store.all_lemma # get_right_coercion  in
-      let _ = Lem_store.all_lemma # add_left_coercion n_l in
-      let _ = Lem_store.all_lemma # add_right_coercion n_r in
+      let () = Lem_store.all_lemma # add_left_coercion n_l in
+      let () = Lem_store.all_lemma # add_right_coercion n_r in
       (old_l, old_r)
     else ([],[])
     in
@@ -466,9 +466,9 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
       else
         b1
     in
-    let _ = if need_lemma then
-      let _ = Lem_store.all_lemma # set_left_coercion old_l in
-      let _ = Lem_store.all_lemma # set_right_coercion old_r in
+    let () = if need_lemma then
+      let () = Lem_store.all_lemma # set_left_coercion old_l in
+      let () = Lem_store.all_lemma # set_right_coercion old_r in
       ()
     else ()
     in
@@ -502,8 +502,8 @@ and check_equiv_list iprog prog guiding_svl proof_traces need_lemma fs1 fs2: boo
       (fun _ _ -> check_equiv_list_x iprog prog guiding_svl proof_traces need_lemma fs1 fs2) fs1 fs2
 
 
-(* let _ = Sautility.check_equiv := check_equiv *)
-(* let _ = Sautility.check_equiv_list := check_equiv_list *)
+(* let () = Sautility.check_equiv := check_equiv *)
+(* let () = Sautility.check_equiv_list := check_equiv_list *)
 
 let checkeq gvars=
   (* SY_CEQ.check_relaxeq_formula gvars *)

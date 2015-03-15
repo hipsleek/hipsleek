@@ -34,7 +34,7 @@ int main(int nn)
   return nn;
  }
 /*
-# ex13a.ss --ann-vp
+# vp/ex13a.ss --ann-vp
 
 Why this error with --classic and @leak?
 

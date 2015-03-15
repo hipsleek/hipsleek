@@ -46,7 +46,7 @@ let set_lib_file arg =
   Globals.lib_files := [arg]
 
 let set_tp solver=
-  let _ = print_endline ("!!! init_tp by user: ") in 
+  let () = print_endline ("!!! init_tp by user: ") in 
   Tpdispatcher.set_tp solver
 
 let set_frontend fe_str = match fe_str  with
@@ -622,8 +622,7 @@ let common_arguments = [
   ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
-  ("--use-baga",Arg.Set Globals.use_baga,"Use baga only (no inv infer)");
-  ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
@@ -791,14 +790,14 @@ let common_arguments = [
           Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
-          (* Globals.lemma_ep := false; *)
+          Globals.lemma_ep := false;
           Gen.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
-          (* Globals.lemma_gen_unsafe:=true; *)
+          Globals.lemma_gen_unsafe:=true;
           (* Globals.lemma_syn := true; *)
           (* Globals.acc_fold := true; *)
-          (* Globals.smart_lem_search := true; *)
+          Globals.smart_lem_search := true;
           Globals.print_min := true;
           (* Globals.gen_baga_inv := true; *)
           (* Globals.en_pred_sat (); *)
@@ -808,9 +807,8 @@ let common_arguments = [
           (* Globals.is_solver_local := true; *)
           Globals.disable_failure_explaining := false;
           (* Globals.smt_compete_mode:=true; *)
-          Globals.return_must_on_pure_failure := true
-          (* ;Globals.dis_impl_var := true *)
-      ),
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
    "Minimal printing only");
   ("--svcomp-compete",
      Arg.Unit
@@ -827,7 +825,7 @@ let common_arguments = [
           Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
-
+          
           (* Globals.lemma_gen_unsafe:=true;    *)
           (* Globals.lemma_syn := true;         *)
           (* Globals.acc_fold := true;          *)
@@ -837,7 +835,7 @@ let common_arguments = [
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
           (* Globals.graph_norm := true; *)
-
+          
           Globals.is_solver_local := true;
           (* Omega.omegacalc:=  *)
           (*   if (Sys.file_exists "./oc") then "./oc" *)
@@ -1003,7 +1001,7 @@ let check_option_consistency () =
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
   (* if !Globals.allow_imm && Perm.allow_perm() then *)
   (* begin *)
-  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (*   Gen.Basic.report_error no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;

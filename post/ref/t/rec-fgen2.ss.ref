@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/rec-fgen2.ss"
 Parsing file "t/rec-fgen2.ss" by default parser...
@@ -23,12 +24,12 @@ f$int~int
  ECase case {
         k<n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
                        EAssume 
-                         emp&res=n & k<n & n>=(1+k) & n=res&
+                         emp&res=n & k<n & res>=(1+k) & res=n&
                          {FLOW,(4,5)=__norm#E}[]
                           ;
         n<=k -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
                         EAssume 
-                          emp&res=k & n<=k & res>=n & res=k&
+                          emp&res=k & n<=k & k>=n & k=res&
                           {FLOW,(4,5)=__norm#E}[]
                            
         }
@@ -40,8 +41,7 @@ Checking procedure f$int~int...
 *****************************
 Temporal Assumptions:
  termAssume v_int_14_1438=1+n' & n'=n & k'=k & n<=k & n'<k' & 
-!(v_bool_13_1326') & k'>=v_int_14_1438 & k'<=k' & v_int_14_1325'>=k' & 
-v_int_14_1325'=k' & 
+!(v_bool_13_1326') & k'>=v_int_14_1438 & k'>=k' & k'=v_int_14_1325' & 
 res=v_int_14_1325' & fpost_1395(v_int_14_1438,k') & fpost_1395(k',k') --> fpost_1395(n,k).
 
  termAssume v_bool_13_1326' & k'<=n' & n<=k & k'=k & n'=n & 
@@ -51,8 +51,7 @@ res=n' --> fpost_1395(n,k).
 res=n' --> fpost_1394(n,k).
 
  termAssume v_int_14_1438=1+n' & n'=n & k'=k & n<=k & n'<k' & 
-!(v_bool_13_1326') & v_int_14_1438<=k' & v_int_14_1324'>=v_int_14_1438 & 
-v_int_14_1324'=k' & 
+!(v_bool_13_1326') & k'>=v_int_14_1438 & k'=v_int_14_1324' & 
 v_int_14_1324'<=k' & fpre_0(n,k) --> fpre_0(v_int_14_1324',k').
 
  termAssume v_int_14_1321'<=k' & v_int_14_1321'=1+n' & n'=n & k'=k & n<=k & 
@@ -63,17 +62,3 @@ Base/Rec Case Splitting:
 [	f: [[3] k<=n@B,[4] n<k@R]
 ]
 Starting z3... 
-Termination Inference Result:
-f:  case {
-  k<n -> requires emp & Term[31,1]
-     ensures emp & n=res & n>=(1+k) & 
-  k<n & res=n; 
-  n=k -> requires emp & Term[31,1]
-     ensures emp & res=k & res>=n & 
-  n<=k & res=k; 
-  n<k -> requires emp & Term[31,2,0+(-1*n)+(1*k)]
-     ensures emp & res=k & 
-  res>=n & n<=k & res=k; 
-  }
-
-5 false contexts at: ( (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )

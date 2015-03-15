@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc6d.ss"
 Parsing file "t/exc6d.ss" by default parser...
@@ -40,3 +41,8 @@ loop$int
            
 
 0 false contexts at: ()
+
+Total verification time: 0.372022 second(s)
+	Time spent in main process: 0.33202 second(s)
+	Time spent in child processes: 0.040002 second(s)
+

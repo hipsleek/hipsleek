@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/rec-fgen3.ss"
 Parsing file "t/rec-fgen3.ss" by default parser...
@@ -22,7 +23,7 @@ Post Inference result:
 f$int~int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           htrue&((k>=(1+n) & k=res) | (n>=k & n=res))&
+           htrue&((res>=(1+n) & res=k) | (res>=k & res=n))&
            {FLOW,(4,5)=__norm#E}[]
            
 
@@ -32,17 +33,18 @@ Checking procedure f$int~int...
 *** TERMINATION INFERENCE ***
 *****************************
 Temporal Assumptions:
- termAssume (((k'>=(1+v_int_15_1380) & k'=v_int_15_1382) | 
-(v_int_15_1380>=k' & v_int_15_1380=v_int_15_1382))) & v_int_15_1380=1+n' & 
-n'=n & k'=k & n'<k' & !(v_bool_14_1312') & (((k'>=(1+v_int_15_1382) & 
-k'=v_int_15_1311') | (v_int_15_1382>=k' & v_int_15_1382=v_int_15_1311'))) & 
+ termAssume (((v_int_15_1382>=(1+v_int_15_1380) & v_int_15_1382=k') | 
+(v_int_15_1382>=k' & v_int_15_1382=v_int_15_1380))) & v_int_15_1380=1+n' & 
+n'=n & k'=k & n'<k' & !(v_bool_14_1312') & (((v_int_15_1311'>=(1+
+v_int_15_1382) & v_int_15_1311'=k') | (v_int_15_1311'>=k' & 
+v_int_15_1311'=v_int_15_1382))) & 
 res=v_int_15_1311' & fpost_1358(v_int_15_1380,k') & fpost_1358(v_int_15_1382,k') --> fpost_1358(n,k).
 
  termAssume v_bool_14_1312' & k'<=n' & k'=k & n'=n & 
 res=n' --> fpost_1358(n,k).
 
- termAssume (((k'>=(1+v_int_15_1380) & k'=v_int_15_1310') | 
-(v_int_15_1380>=k' & v_int_15_1380=v_int_15_1310'))) & v_int_15_1380=1+n' & 
+ termAssume (((v_int_15_1310'>=(1+v_int_15_1380) & v_int_15_1310'=k') | 
+(v_int_15_1310'>=k' & v_int_15_1310'=v_int_15_1380))) & v_int_15_1380=1+n' & 
 n'=n & k'=k & n'<k' & 
 !(v_bool_14_1312') & fpre_0(n,k) --> fpre_0(v_int_15_1310',k').
 
@@ -54,15 +56,3 @@ Base/Rec Case Splitting:
 [	f: [[3] k<=n@B,[4] n<k@R]
 ]
 Starting z3... 
-Termination Inference Result:
-f:  requires true & truecase {
-                      k<=n -> requires emp & Term[31,1]
-     ensures true & ((k>=(1+
-                      n) & k=res) | (n>=k & n=res)); 
-                      n<k -> requires emp & Term[31,2,-1+(-1*n)+(1*
-                      k)]
-     ensures true & ((k>=(1+n) & k=res) | (n>=k & 
-                      n=res)); 
-                      }
-
-0 false contexts at: ()

@@ -1,0 +1,26 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Fail.(may) cause:do_unmatched_rhs : HVar P[]
+
+Residue:
+ <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+

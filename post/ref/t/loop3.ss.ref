@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/loop3.ss"
 Parsing file "t/loop3.ss" by default parser...
@@ -19,8 +20,8 @@ Post Inference result:
 while_10_4$int~int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume ref [y_34]
-           htrue&((x_33>=(1+y_34) & x_33=y_34') | (y_34>=x_33 & y_34=y_34'))&
-           {FLOW,(4,5)=__norm#E}[]
+           htrue&((y_34'>=(1+y_34) & y_34'=x_33) | (y_34'>=x_33 & 
+           y_34'=y_34))&{FLOW,(4,5)=__norm#E}[]
            
 
 Checking procedure PastaA1_main$... 
@@ -40,3 +41,8 @@ PastaA1_main$
            
 
 0 false contexts at: ()
+
+Total verification time: 0.424026 second(s)
+	Time spent in main process: 0.356022 second(s)
+	Time spent in child processes: 0.068004 second(s)
+
