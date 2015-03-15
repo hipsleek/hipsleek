@@ -395,7 +395,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
         let tmp2 = convert_heap2_heap prog h2
         in IF.StarMinus { (h) with
             IF.h_formula_starminus_h1 = tmp1;
-            IF.h_formula_starminus_h2 = tmp2; }            
+            IF.h_formula_starminus_h2 = tmp2; }
     | IF.Conj (({ IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } as h))
         -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
@@ -413,7 +413,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
         let tmp2 = convert_heap2_heap prog h2
         in IF.ConjConj { (h) with
             IF.h_formula_conjconj_h1 = tmp1;
-            IF.h_formula_conjconj_h2 = tmp2; }                        
+            IF.h_formula_conjconj_h2 = tmp2; }
     | IF.Phase (({ IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } as h))
         -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
