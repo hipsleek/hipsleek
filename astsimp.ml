@@ -1708,7 +1708,7 @@ and sat_warnings cprog =
     let warn n discard = 
       print_string_quiet ("WARNING : the view body for "^n^" contains unsat branch(es) :"^(List.fold_left (fun a c-> a^"\n   "^(Cprinter.string_of_formula c)) "" discard)^"\n") in
     let trim_unsat (f:CF.formula):(CF.formula* CF.formula list) =  
-      let _=proving_loc #set (CF.pos_of_formula f) in
+      let () = proving_loc #set (CF.pos_of_formula f) in
       if CF.is_trivial_f f then (f,[])
       else 
         let goods,unsat_list = Solver.find_unsat cprog f in
@@ -1942,9 +1942,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let uns_view = C.formula_of_unstruc_view_f vdef in
         let ep_disj = Cvutil.xpure_symbolic_baga prog uns_view in
         let lhs_pure = Excore.EPureI.ef_conv_disj ep_disj in
-        let _ = Debug.tinfo_hprint (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
-        let _ = Debug.tinfo_hprint (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
-        let _ = Debug.tinfo_hprint (add_str "lhs_pure" Cprinter.string_of_pure_formula) lhs_pure no_pos in
+        let () = Debug.tinfo_hprint (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
+        let () = Debug.tinfo_hprint (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
+        let () = Debug.tinfo_hprint (add_str "lhs_pure" Cprinter.string_of_pure_formula) lhs_pure no_pos in
         CF.formula_of_pure_formula lhs_pure pos in
       let form_body_inv_baga  vdef =
         let pr vd = pr_id vd.C.view_name in
@@ -1953,9 +1953,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let uns_view = C.formula_of_unstruc_view_f vdef in
         let ep_disj = Cvutil.xpure_symbolic_baga prog uns_view in
         let lhs_pure_enum = Excore.EPureI.ef_conv_enum_disj ep_disj in
-        let _ = Debug.tinfo_hprint (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
-        let _ = Debug.tinfo_hprint (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
-        let _ = Debug.tinfo_hprint (add_str "lhs_pure_enum" Cprinter.string_of_pure_formula) lhs_pure_enum no_pos in
+        let () = Debug.tinfo_hprint (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
+        let () = Debug.tinfo_hprint (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
+        let () = Debug.tinfo_hprint (add_str "lhs_pure_enum" Cprinter.string_of_pure_formula) lhs_pure_enum no_pos in
         CF.formula_of_pure_formula lhs_pure_enum pos in
       let form_body_inv_baga_enum  vdef =
         let pr vd = pr_id vd.C.view_name in
@@ -2128,8 +2128,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx rs))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs1))) in *)
       (* let () = print_endline (string_of_bool (not(CF.isFailCtx baga_rs2))) in *)
-      let _ =
-        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) &&  not(CF.isFailCtx baga_rs2) &&
+      let () =
+        if not(CF.isFailCtx rs) && not(CF.isFailCtx baga_rs1) && not(CF.isFailCtx baga_rs2) &&
           not(over_fail) && not(under_fail) then
             begin
               let () = Debug.tinfo_pprint ("XX View defn for " ^ vn ^ " has precise invariant\n") no_pos in
@@ -2184,28 +2184,28 @@ and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_
     | None -> p)
 
 and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula option): MCP.mix_formula =
-  let mix_f = 
+  let mix_f =
     match h_f with
-      | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
-      | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f 
-      | CF.ConjStar h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 p_f 
-      | CF.ConjConj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 p_f             
-      | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
+      | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f
+      | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f
+      | CF.ConjStar h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 p_f
+      | CF.ConjConj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 p_f
+      | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
-        let helper1 (param_imm: CP.ann) = 
+        let helper1 (param_imm: CP.ann) =
 	  match (CP.mkExpAnn data_ann no_pos), (CP.mkExpAnn param_imm no_pos) with
 	    | CP.IConst i1, CP.IConst i2 -> None (* if i1<=i2 then mkMTrue  no_pos else mkMFalse no_pos  *)
 	    | (_ as n), (_ as f) -> Some (MCP.mix_of_pure(CP.BForm((CP.Lte(n, f, no_pos), None), None))) in
         let p = match p_f with
-          | Some x -> List.fold_left (fun pf ann -> 
+          | Some x -> List.fold_left (fun pf ann ->
                 match helper1 ann with
                   | None -> pf
-                  | Some mf -> CF.add_mix_formula_to_mix_formula mf pf) x h.CF.h_formula_data_param_imm  
-          | None   -> 
-                let rec helper2 ann_lst = 
-                  match ann_lst with 
+                  | Some mf -> CF.add_mix_formula_to_mix_formula mf pf) x h.CF.h_formula_data_param_imm
+          | None ->
+                let rec helper2 ann_lst =
+                  match ann_lst with
                     | [] -> MCP.mkMTrue no_pos
-                    | h1 :: t  -> 
+                    | h1 :: t  ->
                           match helper1 h1 with
                             | None    -> helper2 t
                             | Some mf -> CF.add_mix_formula_to_mix_formula mf (helper2 t) in
@@ -2213,16 +2213,16 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
         p
       | _          -> match p_f with
           | Some x -> x
-          | None   -> MCP.mkMTrue no_pos 
+          | None   -> MCP.mkMTrue no_pos
   in MCP.remove_dupl_conj_mix_formula mix_f
 
 (* below is not needed  anymore because of norm: push outer ann to inner *)
-and add_param_ann_constraints_formula_x (cf: CF.formula): CF.formula = 
+and add_param_ann_constraints_formula_x (cf: CF.formula): CF.formula =
   match cf with
     | CF.Base f   -> CF.Base { f with
           CF.formula_base_pure = add_param_ann_constraints_to_pure f.CF.formula_base_heap (Some f.CF.formula_base_pure); }
-    | CF.Or f     -> CF.Or { f with 
-          CF.formula_or_f1 =  add_param_ann_constraints_formula_x f.CF.formula_or_f1; 
+    | CF.Or f     -> CF.Or { f with
+          CF.formula_or_f1 =  add_param_ann_constraints_formula_x f.CF.formula_or_f1;
           CF.formula_or_f2 =  add_param_ann_constraints_formula_x f.CF.formula_or_f2; }
     | CF.Exists f -> CF.Exists { f with
           CF.formula_exists_pure = add_param_ann_constraints_to_pure f.CF.formula_exists_heap (Some f.CF.formula_exists_pure); }
@@ -2272,12 +2272,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
     true (*check_pre*) in
   let () = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
   (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
-  let (n_tl,inv_lock) = 
+  let (n_tl,inv_lock) =
     (match inv_lock with
       | None -> (n_tl, None)
       | Some f ->
