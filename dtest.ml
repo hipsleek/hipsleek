@@ -8,11 +8,11 @@ open VarGen
    let pr = string_of_int in
    Debug.ho_1 "foo" pr pr foo x 
 
- let () = x_binfo Gen.pr_id "hello" no_pos;;
+ let () = x_binfo_hp Gen.pr_id "hello" no_pos;;
 
- let () = x_binfo Gen.pr_id "hello2" no_pos;;
+ let () = x_binfo_hp Gen.pr_id "hello2" no_pos;;
 
- let () = x_binfo Gen.pr_id "hello" no_pos;;
+ let () = x_binfo_hp Gen.pr_id "hello" no_pos;;
 
  let x = x_add foo 2 ;;
 

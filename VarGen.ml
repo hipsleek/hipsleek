@@ -108,3 +108,7 @@ let post_pos = new prog_loc
 
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
+
+let buildA s i = s^"#"^(string_of_int i);;
+let build_loc_str s i = "**"^(buildA s i)^":";;
+let store_loc_str s i = let n = buildA s i in last_posn := Some n ;;
