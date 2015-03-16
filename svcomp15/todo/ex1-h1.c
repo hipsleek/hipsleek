@@ -48,10 +48,12 @@ DUPFF DUPFFnew(const int maxdeg)
 
 
 int main()
-   //@ infer [@shape,@post_n] requires true ensures true;
+   //@ infer [@shape,@post_n] requires emp & true ensures true;
 {
   DUPFF f, g, cf, cg, h;
-  f = DUPFFnew(2); f->coeffs[1] = 1; f->deg = 1;
+  f = DUPFFnew(2);
+  //@ dprint;
+  f->coeffs[1] = 1; // f->deg = 1;
   //  g = DUPFFnew(2); g->coeffs[2] = 1; g->deg = 2;
 
   /* h = DUPFFexgcd(&cf, &cg, f, g); */
