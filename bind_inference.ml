@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 open Ast 
 open Lexing

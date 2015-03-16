@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* cview util
  this module contains procedures

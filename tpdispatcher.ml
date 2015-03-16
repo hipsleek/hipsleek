@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
   Choose with theorem prover to prove formula

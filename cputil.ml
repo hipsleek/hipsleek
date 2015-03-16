@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* This module provides util for cpure *)
 open Globals

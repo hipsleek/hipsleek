@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 let incomplete_extra_decomp = ref false
 
 
