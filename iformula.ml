@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Created 19-Feb-2006
 
@@ -5,6 +6,7 @@
 *)
 
 open Globals
+open VarGen
 open Exc.GTable
 open Perm
 open Label_only
@@ -137,7 +139,7 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
-  | HVar of ident
+  | HVar of ident * (ident list)
 
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
@@ -216,7 +218,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 
 (*move to ipure.ml*)
 (* let linking_exp_list = ref (Hashtbl.create 100) *)
-(* let _ = let zero = P.IConst (0, no_pos) *)
+(* let () = let zero = P.IConst (0, no_pos) *)
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
 
 let apply_one_imm (fr,t) a = match a with
@@ -772,7 +774,8 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
-  | HVar v -> [(v,Unprimed)] (* TODO:HO -prime? *)
+  (* TODO:WN:HVar -*)
+  | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
   | HTrue -> []
   | HFalse -> [] 
   | HEmp -> [] 
@@ -1194,8 +1197,8 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
       (sub::sst)) [] vars
     in
     let ps1 = List.map (fun p -> Ipure.subst new_sst p) ps1 in
-    (* let _ = print_endline ("new_p1 = " ^ (!print_pure_formula new_p1)) in *)
-    (* let _ = print_endline ("ps1 = " ^ (pr_list !print_pure_formula ps1)) in *)
+    (* let () = print_endline ("new_p1 = " ^ (!print_pure_formula new_p1)) in *)
+    (* let () = print_endline ("ps1 = " ^ (pr_list !print_pure_formula ps1)) in *)
     let new_p2 = Ipure.conj_of_list ((new_p1::ps1)@ps) in
     (***************)
     (*also substitute exist vars*)
@@ -1397,7 +1400,11 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HTrue -> f
   | HFalse -> f
   | HEmp  -> f
-  | HVar v -> let (v1, _) =  (subst_var s (v, Unprimed)) in HVar v1
+  (* URGENT:TODO:WN:HVar *)
+  | HVar (v,ls) -> 
+        let (v1, _) =  (subst_var s (v, Unprimed)) in
+        let lsx =  List.map (fun v -> (subst_var s (v, Unprimed))) ls in
+        HVar (v1,ls)
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
 and rename_bound_vars_x (f : formula) = 
@@ -1705,7 +1712,8 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
     | HTrue -> f
     | HFalse -> f
     | HEmp -> f
-    | HVar v -> HVar (subst_data_name s v) (* TODO:HO *)
+    (* URGENT:TODO:WN:HVar *)
+    | HVar (v,hvar_vs) -> HVar (subst_data_name s v,hvar_vs) (* TODO:HO *)
     | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
   in
   helper f0
@@ -1809,7 +1817,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
               if not !Globals.dis_slc_ann then
                 try
                   let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-                  (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
+                  (*let () = Hashtbl.remove !Ipure.linking_exp_list c in*)
 		  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None)
                 with Not_found ->
 		    Ipure.BForm ((Ipure.Eq (nv,c,l), None), None)
@@ -1862,7 +1870,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
 	    if not !Globals.dis_slc_ann then
 	      try
 		let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-		(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
+		(* let () = Hashtbl.remove !Ipure.linking_exp_list c in *)
 		Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
 	      with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
             else 
@@ -1886,7 +1894,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
         let ho_na = List.map (fun ff -> { ff with 
           rflow_base = float_out_exps_from_heap 3 lbl_getter annot_getter ff.rflow_base }) b.h_formula_heap_ho_arguments in
-        let _ = Debug.dinfo_hprint (add_str "ho_na" (pr_list !print_rflow_formula)) ho_na no_pos in
+        let () = Debug.dinfo_hprint (add_str "ho_na" (pr_list !print_rflow_formula)) ho_na no_pos in
         (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_ho_arguments = ho_na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
     | HeapNode2 b ->
         (*LDK*)
@@ -1900,7 +1908,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
 	    if not !Globals.dis_slc_ann then
 	      try
 		let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-		(*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
+		(*let () = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
 		Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
 	      with Not_found ->
 		  Ipure.BForm ((Ipure.Eq (nv, c,b.h_formula_heap2_pos), None), None)
@@ -1948,7 +1956,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
                   (*     if not !Globals.dis_slc_ann then *)
                   (*     try *)
                   (*         let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in *)
-                  (*               (\*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*\) *)
+                  (*               (\*let () = Hashtbl.remove !Ipure.linking_exp_list c in*\) *)
 		  (*       			  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None) *)
                   (*     with Not_found -> *)
 		  (*       			  Ipure.BForm ((Ipure.Eq (nv,c,l), None), None) *)
@@ -3009,7 +3017,7 @@ let h_formula_collect_hvar hf0 =
           h_formula_conjconj_h2 = hf2;}
     |  Phase { h_formula_phase_rd = hf1;
           h_formula_phase_rw = hf2;} -> (helper hf1)@(helper hf2)
-    | HVar v -> [v]
+    | HVar (v,_) -> [v]
     | _ -> []
   in
   helper hf0

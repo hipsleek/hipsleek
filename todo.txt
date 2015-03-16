@@ -83,6 +83,14 @@ summary:     ack3c has funnay LexVar error
 let modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
   let rec helper e bvars =
 ==================================================================
+# cppo does not work on file below (to investigate)
+
+$EX cilparser.ml
+$EX parse_cmd.ml
+$EX parse_fix.ml
+$EX parse_fixbag.ml
+$EX parse_shape.ml
+$EX parser.ml
 ==================================================================
 ==================================================================
 ==================================================================

@@ -1,0 +1,82 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc6a.ss"
+Parsing file "t/exc6a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+dprint: t/exc6a.ss:16: ctx:  List of Failesc Context: [FEC(0, 1, 1  [(,1 ); (,2 ); (,0 ); (,1 )])]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: [(,0 ); (,1 ); (,0 ); (,1 )]
+  State:(exists v_int_14_1338': (htrue) * v_Exp_14_1339'::Exp<v_int_14_1338'>&v_bool_14_1340' & 100<x' & v_bool_13_1345' & 0<x' & x'=x & v_int_14_1338'=2222 & v_int_14_1338'=res & eres=v_Exp_14_1339'&{FLOW,(23,24)=Exp#E}[]
+
+  ]
+ ]
+Successful States:
+[
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:htrue&x'+1=x_1385 & x_1385=x & 0<x_1385 & v_bool_13_1345' & x_1385<=100 & !(v_bool_14_1340')&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: t/exc6a.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 1  [(,1 ); (,2 ); (,0 ); (,1 )])]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: [(,0 ); (,1 ); (,0 ); (,1 )]
+  State:(exists v_int_14_1338': (htrue) * v_Exp_14_1339'::Exp<v_int_14_1338'>&v_bool_14_1340' & 100<x' & v_bool_13_1345' & 0<x' & x'=x & v_int_14_1338'=2222 & v_int_14_1338'=res & eres=v_Exp_14_1339'&{FLOW,(23,24)=Exp#E}[]
+
+  ]
+ ]
+Successful States:
+[
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:(exists v_int_14_1344': htrue&post_1362(x',v_int_14_1344',flow) & !(v_bool_14_1340') & x_1385<=100 & v_bool_13_1345' & 0<x_1385 & x_1385=x & x'+1=x_1385&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Post condition cannot be derived:
+Empty list_partial_contex
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/exc6a.ss",Line:17,Col:4
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure loop$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure loop$int
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1362: ( x=1+res & 0<=res & res<=99 & post_1362(res,v_int_14_1389,flow)) -->  post_1362(x,res,flow),
+RELDEFN post_1362: ( x=res & res<=0) -->  post_1362(x,res,flow)]
+*************************************
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((x>=1 & x=res+1) | (!(res) & res=x))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.456026 second(s)
+	Time spent in main process: 0.388023 second(s)
+	Time spent in child processes: 0.068003 second(s)
+

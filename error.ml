@@ -1,10 +1,12 @@
+#include "xdebug.cppo"
 (*
   Created 22-Feb-2006
 
   For error handling
 *)
 
-open Globals
+(* open Globals *)
+open VarGen
 
 type error = {
   error_loc : loc;
@@ -71,8 +73,8 @@ let report_error1 e s=
   failwith s
 
 let report_warning e =
-  if (!suppress_warning_msg) then ()
-  else if (not !en_warning_msg) then report_error1 e "Warning->ERROR"
+  if (!VarGen.suppress_warning_msg) then ()
+  else if (not !VarGen.en_warning_msg) then report_error1 e "Warning->ERROR"
   else (
     print_endline_q ("\nWARNING: "
                      ^  (string_of_loc e.error_loc) ^ ":"

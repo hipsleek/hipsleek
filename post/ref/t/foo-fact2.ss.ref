@@ -1,0 +1,10 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/foo-fact2.ss"
+Parsing file "t/foo-fact2.ss" by default parser...
+File "t/foo-fact2.ss", line 15, characters 9-10
+ --error: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+ at:caught
+
+Exception occurred: Stream.Error("[infer_id] expected after COMMA (in [infer_type_list])")
+Error3(s) detected at main 

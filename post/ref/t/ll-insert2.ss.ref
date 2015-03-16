@@ -1,0 +1,36 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ll-insert2.ss"
+Parsing file "t/ll-insert2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure insert2$node~int... 
+Procedure insert2$node~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1391: ( n=1+n_1423 & 1<=n_1423 & pre_1391(n,a')) -->  pre_1391(n_1423,a'),
+RELASS [pre_1391]: ( pre_1391(n,a)) -->  n!=0,
+RELDEFN post_1392: ( r_1374=2 & n=1 & pre_1391(n,a)) -->  post_1392(r_1374,n,a,flow),
+RELDEFN post_1392: ( r_1446+1=r_1374 & n_1423+1=n & 2<=r_1374 & 1<=n & 
+post_1392(r_1446,n_1423,a,flow) & pre_1391(n,a)) -->  post_1392(r_1374,n,a,flow)]
+*************************************
+
+Post Inference result:
+insert2$node~int
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&n!=0 & 1<=n & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1374: x::ll{}<r_1374>&0<=n & r_1374>=2 & r_1374=n+1&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.880053 second(s)
+	Time spent in main process: 0.744046 second(s)
+	Time spent in child processes: 0.136007 second(s)
+

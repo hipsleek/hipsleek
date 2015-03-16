@@ -1,0 +1,64 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+
+Entail 2: Fail.(may) cause:Mismatch non-zero variable permission in consequent [(x,@full),(y,@lend)]
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 4: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (7) : Fail.(may) cause:(x,@full) cannot satisfy (under Par) (x,@lend)
+
+Residue:
+ <1>emp*U@full[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail 8: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 10: Fail.(may) cause:(x,@lend) cannot satisfy (x,@full)
+
+Residue:
+ <1>
+    emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]
+    or emp*U@lend[x]&{FLOW,(1,26)=__flow#E}[]
+    
+[[||OR|| ==> ]]
+
+
+

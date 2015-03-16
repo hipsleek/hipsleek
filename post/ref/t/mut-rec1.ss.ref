@@ -1,0 +1,63 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/mut-rec1.ss"
+Parsing file "t/mut-rec1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo1$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[post_1346,post_1347] pre_post_vars:[post_1346,res,flow,n]
+
+Procedure foo1$int SUCCESS.
+
+Checking procedure foo2$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[post_1346,post_1347] pre_post_vars:[post_1347,res,flow,n]
+
+Procedure foo2$int SUCCESS.
+
+!!! INFERRED SHAPE SPEC: EInfer @post[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+!!! INFERRED SHAPE SPEC: EInfer @post[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1346: ( res=0 & n<=0) -->  post_1346(n,res,flow),
+RELDEFN post_1346: ( res=1+v_int_44_1372 & v_int_44_1370+1=n & 1<=n & 
+post_1347(v_int_44_1370,v_int_44_1372,flow)) -->  post_1346(n,res,flow),
+RELDEFN post_1347: ( res=0 & n<=0) -->  post_1347(n,res,flow),
+RELDEFN post_1347: ( res=1+v_int_33_1398 & v_int_33_1396+1=n & 1<=n & 
+post_1346(v_int_33_1396,v_int_33_1398,flow)) -->  post_1347(n,res,flow)]
+*************************************
+
+Post Inference result:
+foo1$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((n>=1 & n=res) | (0>=n & 0=res))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Post Inference result:
+foo2$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((n>=1 & n=res) | (0>=n & 0=res))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.516031 second(s)
+	Time spent in main process: 0.412025 second(s)
+	Time spent in child processes: 0.104006 second(s)
+

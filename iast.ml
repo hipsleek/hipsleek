@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Created 19-Feb-2006
 
@@ -5,7 +6,9 @@
 *)
 
 open Globals
+open VarGen
 open Gen.Basic
+open HipUtil
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
@@ -586,7 +589,7 @@ let bag_type = BagT Int
 let iprog = ref (None: prog_decl option)
 
 let set_iprog ip=
-  let _ = iprog := (Some ip) in
+  let () = iprog := (Some ip) in
   ()
 
 let get_iprog ()=
@@ -1055,7 +1058,7 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   hp_is_pre = is_pre;
   hp_formula =  body;
   } in
-  let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
+  let () = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
 let find_close_ids ids equivs=
@@ -1163,7 +1166,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
     }
     in
-    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
+    let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1190,7 +1193,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
     in
-    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
+    let () = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1206,7 +1209,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
       (* | Void | Bool -> post_eargs0 *)
       (* | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)] *)
     in
-    let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+    let () = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
     let ipost_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
     let ipost_simpl = F.mkStar_formula cur_post ipost_simpl0 pos in
     let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
@@ -1215,15 +1218,15 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
     let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
     let inf_obj = Globals.infer_const_obj # clone in
-    let _ = inf_obj#set_list infer_lst in
-    let _ =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
+    let () = inf_obj#set_list infer_lst in
+    let () =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
         (* F.formula_inf_tnt = false; *)
         F.formula_inf_obj = inf_obj (* Globals.infer_const_obj # clone*);
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
-        F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
+        F.formula_inf_vars = [(hp_pre_decl.hp_name, Unprimed); (hp_post_decl.hp_name, Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
@@ -1258,9 +1261,9 @@ let extract_mut_args prog proc=
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
-    let _ = print_endline "\nHeap Predicate Declarations" in
-    let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
-    let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
+    let () = print_endline "\nHeap Predicate Declarations" in
+    let () = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
+    let () = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
   let trans_htrue2emp hf=
@@ -1276,8 +1279,8 @@ let genESpec_wNI body_header body_opt args ret pos=
         | F.EList [] -> if Globals.infer_const_obj # is_shape then
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
             (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE [] pos in
-            (* let _ = print_gen_spec ss hps in *)
-            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (* let () = print_gen_spec ss hps in *)
+            let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
       | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
@@ -1286,20 +1289,20 @@ let genESpec_wNI body_header body_opt args ret pos=
             let pre = Iformula.formula_trans_heap_node trans_htrue2emp pre0 in
             let post = Iformula.formula_trans_heap_node trans_htrue2emp post0 in
             let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in
-            (* let _ = print_gen_spec ss hps in *)
+            (* let () = print_gen_spec ss hps in *)
             let ss = match ss with
               | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
                     F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
               | _ -> ss
             in
-            let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
             (ss,hps,args_wi)
           else (body_header.proc_static_specs,[],body_header.proc_args_wi)
         else (body_header.proc_static_specs,[],body_header.proc_args_wi)
         | _ ->
-              (* let _ = if !Globals.sags then *)
+              (* let () = if !Globals.sags then *)
               (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
-              (*   let _ = print_gen_spec ss hps in *)
+              (*   let () = print_gen_spec ss hps in *)
               (*   () *)
               (* else () *)
               (* in *)
@@ -1322,11 +1325,11 @@ let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
   (* let ss, n_hp_dcls = match ss with *)
   (*   | F.EList [] -> *)
   (*         let ss, hps = genESpec bd ags r pos in *)
-  (*         let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
+  (*         let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
   (*         (ss,hps) *)
   (*             (\* F.mkETrueTrueF ()  *\) *)
   (*   | _ -> *)
-  (*         (\* let _ = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
+  (*         (\* let () = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
   (*         ss,[] *)
   (* in *)
   { proc_name = id;
@@ -1443,7 +1446,7 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
-      (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
+      (* let () = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
       if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
@@ -1716,7 +1719,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
         ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
         (dl, vl, henv)
       with | Invalid_argument _ | Not_found ->
-        (* let _ = print_endline ("== not found ddecl!") in *)
+        (* let () = print_endline ("== not found ddecl!") in *)
         let dl, vl = 
           if (String.compare v self = 0) then ([], [c])
           else ([], []) in
@@ -1891,7 +1894,7 @@ and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos
         (* find type of self in the heap type env *)
         let typ, _ = get_heap_type henv self in
         let tname = string_of_typ typ in
-        let _ = look_up_data_def_raw data_decls tname in
+        let todo_unknown = look_up_data_def_raw data_decls tname in
         ([tname], el)
       with Not_found ->
         ([], el)
@@ -1942,7 +1945,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
       r) in 
   (*let v,a,r = view_ans in*)
   let r = List.map (fun (v,a,r) ->  
-  (*let _ = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
+  (*let () = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
     let d2=List.length a2 in
@@ -1963,8 +1966,8 @@ and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  =
     | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
-	  (* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
-      let _ = update_fixpt iprog vl in
+	  (* let () = print_endline "Call update_fixpt from incr_fixpt_view" in *)
+      let () = update_fixpt iprog vl in
       (List.hd view_decls).view_data_name
 
 and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  = 
@@ -1981,7 +1984,7 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
                   let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
                    v.view_data_name <- orig_vdecl.view_data_name
             | [] ->
-                  let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+                  let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
                    v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           () (* self has unknown type *)
@@ -2004,7 +2007,7 @@ and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_dec
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
   (* An Hoa *)
-  (* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
+  (* let () = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
   update_fixpt iprog vl
 
 
@@ -2283,6 +2286,7 @@ module TraverseCH = Graph.Traverse.Dfs(CH)
 
 module W = struct
   type label = CH.E.label
+  (* type edge = CH.E.edge *)
   type t = int
   let weight x = 1
   let zero = 0
@@ -2302,7 +2306,7 @@ let build_hierarchy (prog : prog_decl) =
   let add_edge cdef = 
 	let pr cdef = cdef.data_name^"<:"^cdef.data_parent_name in
 	Debug.no_1 "add_edge" pr (fun _ -> "") add_edge cdef in
-  let _ = List.map add_edge prog.prog_data_decls in
+  let todo_unknown = List.map add_edge prog.prog_data_decls in
 	if TraverseCH.has_cycle class_hierarchy then begin
 	  print_string ("Error: Class hierarchy has cycles\n");
 	  failwith ("Class hierarchy has cycles\n");
@@ -2321,13 +2325,13 @@ let build_hierarchy (prog : prog_decl) =
 let exists_path (c1 : ident) (c2 : ident) :bool = 
   if c2="null" then true
   else
-	  try
-		let _ = PathCH.shortest_path class_hierarchy 
-				(CH.V.create {ch_node_name = c1}) 
-				(CH.V.create {ch_node_name = c2}) in
-		true
-	  with 
- 		| _ -> false
+    try
+      let todo_unknown = PathCH.shortest_path class_hierarchy 
+	(CH.V.create {ch_node_name = c1}) 
+	(CH.V.create {ch_node_name = c2}) in
+      true
+    with 
+      | _ -> false
 
 let exists_path c1 c2 =	Debug.no_2(* _loop *) "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
 		
@@ -2343,30 +2347,30 @@ let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
   let _  = exlist # add_edge top_flow "" in
-  let _ = (exlist # add_edge c_flow top_flow) in
-  let _ = (exlist # add_edge "__abort" top_flow) in
-  let _ = (exlist # add_edge n_flow c_flow) in
-  let _ = (exlist # add_edge abnormal_flow c_flow) in
-  let _ = (exlist # add_edge raisable_class abnormal_flow) in
-  let _ = (exlist # add_edge "__others" abnormal_flow) in
-  let _ = (exlist # add_edge ret_flow "__others") in
-  let _ = (exlist # add_edge loop_ret_flow "__others") in
-  let _ = (exlist # add_edge cont_top "__others") in
-  let _ = (exlist # add_edge brk_top "__others") in
-  let _ = (exlist # add_edge spec_flow "__others") in
-(*  let _ = (exlist # add_edge error_flow top_flow) in *)
-  let _ = (exlist # add_edge mayerror_flow top_flow) in
-  let _ = (exlist # add_edge error_flow mayerror_flow) in
-  let _ = (exlist # add_edge n_flow mayerror_flow) in
-  let _ = (exlist # add_edge bfail_flow top_flow) in
-  let _ = (exlist # add_edge false_flow top_flow) in
-  let _ = (exlist # add_edge false_flow bfail_flow) in
+  let () = (exlist # add_edge c_flow top_flow) in
+  let () = (exlist # add_edge "__abort" top_flow) in
+  let () = (exlist # add_edge n_flow c_flow) in
+  let () = (exlist # add_edge abnormal_flow c_flow) in
+  let () = (exlist # add_edge raisable_class abnormal_flow) in
+  let () = (exlist # add_edge "__others" abnormal_flow) in
+  let () = (exlist # add_edge ret_flow "__others") in
+  let () = (exlist # add_edge loop_ret_flow "__others") in
+  let () = (exlist # add_edge cont_top "__others") in
+  let () = (exlist # add_edge brk_top "__others") in
+  let () = (exlist # add_edge spec_flow "__others") in
+(*  let () = (exlist # add_edge error_flow top_flow) in *)
+  let () = (exlist # add_edge mayerror_flow top_flow) in
+  let () = (exlist # add_edge error_flow mayerror_flow) in
+  let () = (exlist # add_edge n_flow mayerror_flow) in
+  let () = (exlist # add_edge bfail_flow top_flow) in
+  let () = (exlist # add_edge false_flow top_flow) in
+  let () = (exlist # add_edge false_flow bfail_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (exlist # remove_dupl ) in
+  let todo_unknown = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let () = if clean then (exlist # remove_dupl ) in
   if (exlist # has_cycles) then begin
     print_string ("Error: Exception hierarchy has cycles\n");
     failwith ("Exception hierarchy has cycles\n");
@@ -2511,7 +2515,7 @@ let rec label_e e =
 			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}
     | Par e ->
       let nl = fresh_branch_point_id "" in
-      let _ = iast_label_table := (nl, "par", [], e.exp_par_pos) :: !iast_label_table in
+      let () = iast_label_table := (nl, "par", [], e.exp_par_pos) :: !iast_label_table in
       let cl = List.map (fun c -> 
         { c with exp_par_case_body = label_e c.exp_par_case_body; }) e.exp_par_cases 
       in Par { e with exp_par_cases = cl; }
@@ -2740,12 +2744,12 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
  **)
 let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
-       (* let _ = print_endline ("1: " ^ data_name) in *)
-       (* let _ = print_endline ("2: " ^ field_name) in *)
+       (* let () = print_endline ("1: " ^ data_name) in *)
+       (* let () = print_endline ("2: " ^ field_name) in *)
 		let ddef = look_up_data_def_raw ddefs data_name in
         (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
-       (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
+       (* let () = print_endline ("3: " ^ (snd (fst3 field))) in*)
 		field
          with _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("field name " ^ field_name ^ " is not found");}
         )
@@ -2768,7 +2772,7 @@ let get_type_of_field ddef field_name =
  * An Hoa : Traversal a list of access to get the type.
  **)
 let rec get_type_of_field_seq ddefs root_type field_seq =
-	(* let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
+	(* let () = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
 	match field_seq with
 		| [] -> root_type
 		| f::t -> (match root_type with
@@ -2802,7 +2806,7 @@ let is_not_data_type_identifier (ddefs : data_decl list) id =
  *          its component. Inline types should be expanded.
  **)
 let rec compute_typ_size ddefs t = 
-	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
+	(* let () = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
 	let res = match t with
 		| Named data_name -> (try 
 				let ddef = look_up_data_def_raw ddefs data_name in
@@ -2812,7 +2816,7 @@ let rec compute_typ_size ddefs t =
 						else 1 in a + fs) 0 ddef.data_fields
 			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_typ_size] input type does not exist."})
 		| _ -> 1 in
-	(* let _ = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
+	(* let () = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
 		res
 
 
@@ -2828,7 +2832,7 @@ let get_typ_size = compute_typ_size
  **)
 let rec compute_field_offset ddefs data_name accessed_field =
 	try 
-		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
+		(* let () = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
 		let found = ref false in
 		let ddef = look_up_data_def_raw ddefs data_name in
 		(* Accumulate the offset along the way *)
@@ -2846,7 +2850,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
 		if (not !found) then 
 			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }
 		else 
-			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
+			(* let () = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
 				offset
 	with
 		| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] is call with non-existing data type." }
@@ -2857,7 +2861,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
  *          respect to the root (that points to a type with name data_name)
  **)
 and compute_field_seq_offset ddefs data_name field_sequence = 
-	(* let _ = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	(* let () = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
 	let dname = ref data_name in
 	let res = 
 		List.fold_left (fun a field_name ->
@@ -2873,7 +2877,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 							with
 								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
 						0 field_sequence in
-	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
+	(* let () = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
 		res
 
 let b_data_constr bn larg=
@@ -2910,7 +2914,7 @@ let add_bar_inits prog =
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
       { proc_name = "init_"^b.barrier_name;
-        proc_source = "source_file";
+        proc_source = (proc_files # top)^"(barrier?)";
         proc_flags = [];
         proc_mingled_name = "";
         proc_data_decl = None ;
@@ -3080,38 +3084,38 @@ let derivegraph_of_views der_views : IG.t =
 
 let exists_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
-          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
       | Return _ ->
-          (* let _ = print_endline("exists_return: true") in *)
+          (* let () = print_endline("exists_return: true") in *)
           true
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
       | While {exp_while_body = wb} ->
-          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
           helper wb
-      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
-      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
-      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ ->
-          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
-          (* let _ = print_endline("exists_return: unexpected") in *)
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0
@@ -3122,35 +3126,35 @@ let exists_return e0=
       (fun _ -> exists_return_x e0) e0
 let exists_while_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
-          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
       | While {exp_while_body = wb} ->
-          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
           (helper wb) || (exists_return wb)
-      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
-      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
-      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ ->
-          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
-          (* let _ = print_endline("exists_return: unexpected") in *)
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0
@@ -3161,19 +3165,19 @@ let exists_while_return e0=
 
 let exists_return_val_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
-          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow _ ->
-                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 false
             | _ -> true
       end
@@ -3185,15 +3189,15 @@ let exists_return_val_x e0=
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
       | While {exp_while_body = wb} ->
-          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
           helper wb
-      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
-      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
-      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ ->
-          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
           false
   in
   helper e0
@@ -3205,13 +3209,13 @@ let exists_return_val e0=
 
 let get_return_exp_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} -> begin
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           let r = (helper tb) in
           match r with
             | None ->  (helper eb)
@@ -3227,7 +3231,7 @@ let get_return_exp_x e0=
       )
       | While {exp_while_body = wb} ->
           helper wb
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ -> None
   in
@@ -3287,7 +3291,7 @@ let annotate_field_pure_ext iprog=
       ) ddef.data_fields in
       {ddef with data_fields = ndfields}
   ) iprog.prog_data_decls in
-  let _ = iprog.prog_data_decls <- idatas in
+  let () = iprog.prog_data_decls <- idatas in
   ()
 
 (*
@@ -3297,15 +3301,15 @@ let annotate_field_pure_ext iprog=
 output: list of procs called by this function
 *)
 let detect_invoke_x prog proc =
-  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
+  (* let () = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
   let collect_called_proc e =
     match e with
       (* | CallRecv cr -> *)
-      (*       let _ = print_endline "rec" in *)
+      (*       let () = print_endline "rec" in *)
       (*       let called_proc_name = cr.exp_call_recv_method in *)
       (*       let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in *)
       (*       if (called_proc.proc_is_main && (not called_proc.proc_is_invoked)) *)
-      (*       then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
+      (*       then let () = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
       (*       else None *)
       | CallNRecv cnr ->
             let called_proc_name = cnr.exp_call_nrecv_method in
@@ -3315,7 +3319,7 @@ let detect_invoke_x prog proc =
             else (
                 let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in
 	        if (called_proc.proc_is_main && (not called_proc.proc_is_invoked))
-	        then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name]
+	        then let () = called_proc.proc_is_invoked <- true in Some [called_proc_name]
 	        else None
             )
       | _ -> None
@@ -3323,7 +3327,7 @@ let detect_invoke_x prog proc =
   match proc.proc_body with
     | None -> []
     | Some e -> fold_exp e collect_called_proc (List.concat) []
-  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
+  (* let () = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
   (* [] *)
 
 let detect_invoke prog proc=

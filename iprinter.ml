@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (* pretty printing for iast *)
 
 (* open the needed modules *)
@@ -571,7 +573,7 @@ let rec string_of_h_formula = function
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
-  | F.HVar v -> "HVar "^v
+  | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
@@ -629,7 +631,7 @@ and string_of_formula = function
                  let svp = string_of_vperm_sets vp in
                  let s = if svp = "" then s else svp ^ " & " ^ s in
                  if s = "" then  (string_of_h_formula hf)
-                 else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+                 else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s (* (string_of_pure_formula pf) *) ^ ")( FLOW "^fl^")")
               ^ ")"
       in rs^sa
 

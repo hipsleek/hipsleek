@@ -1,0 +1,9 @@
+
+!!!Full processing file "ho/msg4a.ss"
+Parsing file "ho/msg4a.ss" by default parser...
+File "ho/msg4a.ss", line 9, characters 13-14
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

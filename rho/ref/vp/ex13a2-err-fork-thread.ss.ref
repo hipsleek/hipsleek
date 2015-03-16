@@ -1,0 +1,37 @@
+
+!!!Full processing file "vp/ex13a2-err-fork-thread.ss"
+Parsing file "vp/ex13a2-err-fork-thread.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure main$int... 
+dprint: vp/ex13a2-err-fork-thread.ss:30: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp*U@value[nn]&nn'=0 & MayLoop[] & nn_1397=nn&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: vp/ex13a2-err-fork-thread.ss:33: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp*U@full[nn]&nn'=1+0 & nn_1397=nn&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure main$int SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.424025 second(s)
+	Time spent in main process: 0.400024 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Created 19-Feb-2006
 
@@ -6,6 +7,7 @@
 
 open Globals
 open Gen.Basic
+open VarGen
 (* open Label_only *)
 open Label
 module LO = Label_only.LOne

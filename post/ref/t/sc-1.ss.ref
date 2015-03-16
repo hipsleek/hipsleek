@@ -1,0 +1,31 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/sc-1.ss"
+Parsing file "t/sc-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_8_1311') & 0<=x' & y'=y & x'=x & v_int_9_1371=y'+x' & 
+v_int_9_1372=y'+
+x' & fpost_1349(v_int_9_1371,v_int_9_1372) --> fpost_1349(x,y).
+
+ termAssume v_bool_8_1311' & x'<0 & y'=y & x'=x --> fpost_1349(x,y).
+
+ termAssume !(v_bool_8_1311') & 0<=x' & y'=y & x'=x & v_int_9_1310'=y'+x' & 
+v_int_9_1309'=y'+x' & fpre_0(x,y) --> fpre_0(v_int_9_1310',v_int_9_1309').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Starting z3... 

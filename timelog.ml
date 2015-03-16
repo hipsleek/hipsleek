@@ -1,5 +1,7 @@
+#include "xdebug.cppo"
 open Gen
 open Globals
+open VarGen
 
 let trace_timer = false
 
@@ -43,7 +45,7 @@ object (self)
     end
   method start_time s = 
     let t = Gen.Profiling.get_main_time() in
-    let _ = time_stk # push (s,t) in
+    let () = time_stk # push (s,t) in
     ()
 
   method add_proof_info new_s no =
@@ -125,18 +127,18 @@ let logtime = new timelog
 
 (* let logtime_wrapper s f x = *)
 (*     try *)
-(*       let _ = logtime # start_time s in *)
+(*       let () = logtime # start_time s in *)
 (*       let res = f x in *)
-(*       let _ = logtime # stop_time in *)
+(*       let () = logtime # stop_time in *)
 (*       res *)
 (*     with e -> *)
 (*         let tt = logtime # stop_time in  *)
-(*         let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in *)
+(*         let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in *)
 (*         raise e *)
 
 let log_wrapper s logger f x  =
     try
-      let _ = logtime # start_time s in
+      let () = logtime # start_time s in
       let res = f x in
       let r = logtime # stop_time in
       let to_flag = logtime # get_timeout () in
@@ -150,5 +152,5 @@ let log_wrapper s logger f x  =
         let (pr,no) = logger None tt to_flag in
         logtime # add_proof_info (pr^"*EXC*") no;
         (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
-        let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
+        let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
         raise e

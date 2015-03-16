@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen.Basic
 
@@ -63,7 +65,7 @@ type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 (*         views := Gen.BList.remove_dups_eq eq_id (h_formula_view_name :: !views); *)
 (*         (Some hf)                                                                *)
 (*     | _ -> None in                                                               *)
-(*   let _ = CF.transform_h_formula f_hf hf in                                      *)
+(*   let todo_unk = CF.transform_h_formula f_hf hf in                                      *)
 (*   !views                                                                         *)
 
 let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
@@ -258,7 +260,7 @@ let encode_h_formula_x (hf: CF.h_formula) : ident list =
     | CF.Star _ -> None
     | _ -> Some hf
   ) in
-  let _ = CF.transform_h_formula f_hf hf in
+  let todo_unk = CF.transform_h_formula f_hf hf in
   !coded_hf
 
 let encode_h_formula (hf: CF.h_formula) : ident list =

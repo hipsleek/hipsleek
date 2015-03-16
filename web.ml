@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 module PrioQueue =
    struct
      type priority = int
@@ -66,7 +67,7 @@ begin
     (fun fd ->
       if fd = !listen_sock then begin
         let sockfd,address = Unix.accept !listen_sock in
-        let _ = match address with
+        let () = match address with
         Unix.ADDR_INET (a,p) -> print_endline ("received connection from " ^ Unix.string_of_inet_addr(a) ^ ":" ^ string_of_int(p))
         | _ -> () in
         all_clients := (sockfd,0)::(!all_clients)

@@ -1,0 +1,72 @@
+
+!!!Full processing file "web/cdl-ex3a-fm.ss"
+Parsing file "web/cdl-ex3a-fm.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: web/cdl-ex3a-fm.ss:56: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_55_1477': c_39'::CNT{}<flted_20_1955> * q_38'::cell<v_int_55_1477'>*N@full[q_38,val_55_1471,val_55_1478]@lend[c_39]@zero[p_37]&flted_22_1906=b_1941+flted_38_1940 & 0<=flted_38_1940 & flted_38_1940=0 & 0<2 & p_1882!=null & 0<=b_1887 & 0<=1 & 2=b_1887+1 & flted_51_1888=1 & v_int_52_1885=1 & b_1890<flted_51_1888 & 0<n & 0<=n & 0<=b_1890 & flted_51_1888=b_1890+n & p_37'!=null & 0<=(a_1891+1) & flted_33_1939+1=n & 0<=(n+1) & flted_22_1906=flted_33_1939+b_1890 & 0<=b_1941 & flted_22_1906=b_1941+0 & 0<=(a_1942+1) & flted_39_2072+1=0 & exists(flted_38_86:0<=(flted_38_86+1)) & flted_51_2073=2 & flted_20_1955+1=0 & v_int_55_1477'=1+flted_51_2073 & val_55_2215=flted_51_2073&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> (exists flted_51_45: q_38'::cell<flted_51_45>*
+                        U@full[q_38]&flted_51_45=2&{FLOW,(4,5)=__norm#E}[]; 
+                        P --> (exists flted_51_44: p_37'::cell<flted_51_44>*
+                        U@full[p_37]&flted_51_44=1&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+assert:web/cdl-ex3a-fm.ss:57: 6:  : ok
+
+
+dprint: web/cdl-ex3a-fm.ss:64: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_63_1506': c_39'::CNT{}<flted_20_2390> * p_37'::cell<v_int_63_1506'>*N@full[p_37,val_63_1500,val_63_1507]@lend[c_39]@zero[q_38]&flted_22_2340=b_2376+flted_38_2375 & 0<=flted_38_2375 & flted_38_2375=0 & 0<2 & 0<=(b_2321+1) & p_2320!=null & b_2321+1+1=2 & 0<(b_2321+1+1) & 0<=b_2321 & 0<=1 & flted_59_2322=1 & v_int_60_2318=2 & b_2324<flted_59_2322 & 0<n & 0<=n & 0<=b_2324 & flted_59_2322=b_2324+n & q_38'!=null & 0<=(a_2325+1) & flted_33_2374+1=n & 0<=(n+1) & flted_22_2340=flted_33_2374+b_2324 & 0<=b_2376 & flted_22_2340=b_2376+0 & 0<=(a_2377+1) & flted_39_2507+1=0 & exists(flted_38_86:0<=(flted_38_86+1)) & flted_59_2508=1 & flted_20_2390+1=0 & v_int_63_1506'=1+flted_59_2508 & val_63_2650=flted_59_2508&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> (exists flted_59_51: p_37'::cell<flted_59_51>*
+                        U@full[p_37]&flted_59_51=1&{FLOW,(4,5)=__norm#E}[]; 
+                        P --> (exists flted_59_50: q_38'::cell<flted_59_50>*
+                        U@full[q_38]&flted_59_50=2&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+assert:web/cdl-ex3a-fm.ss:65: 6:  : ok
+
+
+dprint: web/cdl-ex3a-fm.ss:67: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_63_2666,v_int_55_2665: c_39'::LatchIn{ - emp*N@zero[q_38,p_37]&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + emp*N@zero[q_38,p_37]&{FLOW,(4,5)=__norm#E}[]}<> * q_38'::cell<v_int_55_2665> * p_37'::cell<v_int_63_2666> * c_39'::CNT{}<flted_20_2676>*N@full[c_39,p_37,q_38,val_55_1471,val_55_1478,val_63_1500,val_63_1507]&v_int_47_1797=b_1822+1 & 0<=b_1822 & flted_47_1818=2 & flted_51_1813=1 & v_int_47_1797=2 & 0<v_int_47_1797 & flted_59_2240=2 & flted_47_1814=flted_59_2240 & 1=flted_47_1819 & 0<=b_2244 & b_1822=b_2244+1 & flted_22_1906=b_1941+flted_38_1940 & 0<=flted_38_1940 & flted_38_1940=0 & p_1882!=null & 0<=b_1887 & 2=b_1887+1 & flted_51_1888=1 & v_int_52_1885=1 & b_1890<flted_51_1888 & 0<=b_1890 & flted_51_1888=b_1890+n & p_37'!=null & 0<=(a_1891+1) & flted_33_1939+1=n & flted_22_1906=flted_33_1939+b_1890 & 0<=b_1941 & flted_22_1906=b_1941+0 & 0<=(a_1942+1) & flted_39_2072+1=0 & flted_51_2073=2 & flted_20_1955+1=0 & v_int_55_2665=1+flted_51_2073 & val_55_2215=flted_51_2073 & flted_22_2340=b_2376+flted_38_2375 & 0<=flted_38_2375 & flted_38_2375=0 & 0<2 & 0<=(b_2321+1) & p_2320!=null & b_2321+1+1=2 & 0<(b_2321+1+1) & 0<=b_2321 & 0<=1 & flted_59_2322=1 & v_int_60_2318=2 & b_2324<flted_59_2322 & 0<n & 0<=n & 0<=b_2324 & flted_59_2322=b_2324+n & q_38'!=null & 0<=(a_2325+1) & flted_33_2374+1=n & 0<=(n+1) & flted_22_2340=flted_33_2374+b_2324 & 0<=b_2376 & flted_22_2340=b_2376+0 & 0<=(a_2377+1) & flted_39_2507+1=0 & exists(flted_38_86:0<=(flted_38_86+1)) & flted_59_2508=1 & flted_20_2390+1=0 & v_int_63_2666=1+flted_59_2508 & val_63_2650=flted_59_2508 & flted_20_2671+1=0 & c_39'=c_39' & flted_20_2676+1=0&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert:web/cdl-ex3a-fm.ss:68: 2:  : ok
+
+
+assert/assume:web/cdl-ex3a-fm.ss:69: 2:  : failed
+
+
+assert/assume:web/cdl-ex3a-fm.ss:70: 2:  : failed
+
+
+assert/assume:web/cdl-ex3a-fm.ss:71: 2:  : failed
+
+
+assert/assume:web/cdl-ex3a-fm.ss:72: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 2.43215 second(s)
+	Time spent in main process: 2.324144 second(s)
+	Time spent in child processes: 0.108006 second(s)
+

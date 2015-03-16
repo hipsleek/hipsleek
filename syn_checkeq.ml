@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen
 open Cformula
@@ -30,9 +32,9 @@ let check_stricteq_hnodes_x stricted_eq hns1 hns2=
       (*bt-left2: may false if we check set eq as below*)
       let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
       (* (\*for debugging*\) *)
-      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
-      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
-      (* let _ = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
       (*END for debugging*)
       if stricted_eq then (* (diff1=[]) *)(b,[]) else
           (*allow dangl ptrs have diff names*)
@@ -89,9 +91,9 @@ let check_stricteq_vnodes_x stricted_eq vns1 vns2=
       (*bt-left2: may false if we check set eq as below*)
       let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
       (* (\*for debugging*\) *)
-      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
-      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
-      (* let _ = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
+      (* let () = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
       (*END for debugging*)
       if stricted_eq then (* (diff1=[]) *)(b,[]) else
           (*allow dangl ptrs have diff names*)
@@ -292,7 +294,7 @@ let rec check_relaxeq_formula_x args f10 f20=
       (* Debug.info_zprint  (lazy  ("   f2: " ^ (!CP.print_formula np2))) no_pos; *)
       (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
       let diff2 = List.map snd ss in
-      let _ = Debug.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
+      let () = Debug.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
       let np11 = (* CP.mkExists qvars1 np1 None no_pos *) np1 in
       let np21 = (* CP.mkExists qvars2 np2 None no_pos *) np2 in
       let np12 = CP.subst ss np11 in
@@ -304,7 +306,7 @@ let rec check_relaxeq_formula_x args f10 f20=
       let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args@diff2))) in
       let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args@diff2))) in
       let r2 = checkeq_pure qvars1 qvars2 np12 np21 in
-      let _ = Debug.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
+      let () = Debug.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
       r2
     else
       false
@@ -398,7 +400,7 @@ let check_exists_cyclic_proofs_x es (ante,conseq)=
     let vn_a1 = Cformula.map_heap_1 collect_vnode a1 in
     let vn_c1 = Cformula.map_heap_1 collect_vnode c1 in
     if List.length l_vns != List.length vn_a1 || List.length r_vns != List.length vn_c1 then
-      let _ = Debug.ninfo_hprint (add_str " xxxx" pr_id) "1" no_pos in
+      let () = Debug.ninfo_hprint (add_str " xxxx" pr_id) "1" no_pos in
       false
     else
       let l_ss = build_subst [] vn_a1 l_vns in
@@ -475,7 +477,7 @@ let syntax_nodes_match_x lhs0 rhs0 =
     (*data nodes that not in a cicle*)
     let r_hds = List.filter (fun hd ->
         try
-          let _ = List.find (fun sv -> CP.mem_svl sv root_ptrs) hd.Cformula.h_formula_data_arguments in
+          let todo_unk = List.find (fun sv -> CP.mem_svl sv root_ptrs) hd.Cformula.h_formula_data_arguments in
           false
         with _ -> true
     ) r_hds0 in
@@ -578,8 +580,8 @@ let syntax_contrb_lemma_end_null_x prog lhs rhs=
         Cformula.formula_trans_heap_node (heap_drop_matched cl_drop_l_hvs) lhs
       in
       let droped_rhs = if drop_r_hvs = [] then rhs else
-        let _ = Debug.ninfo_hprint (add_str "drop_r_hvs" Cprinter.string_of_spec_var_list)  drop_r_hvs no_pos in
-        let _ = Debug.ninfo_hprint (add_str "cl_drop_r_hvs" Cprinter.string_of_spec_var_list) cl_drop_r_hvs no_pos in
+        let () = Debug.ninfo_hprint (add_str "drop_r_hvs" Cprinter.string_of_spec_var_list)  drop_r_hvs no_pos in
+        let () = Debug.ninfo_hprint (add_str "cl_drop_r_hvs" Cprinter.string_of_spec_var_list) cl_drop_r_hvs no_pos in
         (* Cformula.formula_trans_heap_node (hn_drop_matched drop_r_hvs) rhs *)
         Cfutil.elim_eqnull (Cformula.heap_trans_heap_node (hview_drop_matched cl_drop_r_hvs)) rhs_null_ptrs rhs
       in

@@ -1,0 +1,27 @@
+
+!!!Full processing file "hip/ex4-latch-simple.ss"
+Parsing file "hip/ex4-latch-simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex4-latch-simple.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_48_1412': c_38'::LatchIn{ - (exists flted_48_1565: x_37'::cell<flted_48_1565>&flted_48_1565=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_38'::LatchOut{ + (exists flted_48_1566: x_37'::cell<flted_48_1566>&flted_48_1566=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_38'::CNT{}<v_int_48_1412'>*N@full[c_38,x_37]&v_int_48_1412'=1 & 0<v_int_48_1412'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.532032 second(s)
+	Time spent in main process: 0.504031 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

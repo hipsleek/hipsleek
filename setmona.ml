@@ -1,7 +1,9 @@
+#include "xdebug.cppo"
 (*
 *)
 
 open Globals
+open VarGen
 open GlobProver
 open Cpure
 
@@ -476,7 +478,7 @@ and mona_of_exp order e0 = match e0 with
   | Var (v, _) -> 
 	  (*
 		if order = FO && not (is_fo_ref v) then
-		let _ = print_var_map !var_map_ref in
+		let () = print_var_map !var_map_ref in
 		failwith ("mona_of_exp: FO var is not FO in var_map: " ^ (mona_of_spec_var v))
 		else
 	  *)
@@ -713,19 +715,19 @@ let imply (ante : formula) (conseq : formula) : bool =
 	if isConstFalse conseq0 then ante1
 	else filter_var ante1 (fv conseq)
 	in
-	let _ = output_string log_all ("\n\n#imply") in
-	let _ = output_string log_all ("\n#ante0:\n" ^ (mona_of_formula ante0) ^ "\n") in
-	let _ = output_string log_all ("\n#ante1:\n" ^ (mona_of_formula ante1) ^ "\n") in
-	let _ = output_string log_all ("\n#ante:\n" ^ (mona_of_formula ante) ^ "\n") in
-	let _ = output_string log_all ("\n#conseq0:\n" ^ (mona_of_formula conseq0) ^ "\n") in
-	let _ = output_string log_all ("\n#conseq:\n" ^ (mona_of_formula conseq) ^ "\n") in
+	let () = output_string log_all ("\n\n#imply") in
+	let () = output_string log_all ("\n#ante0:\n" ^ (mona_of_formula ante0) ^ "\n") in
+	let () = output_string log_all ("\n#ante1:\n" ^ (mona_of_formula ante1) ^ "\n") in
+	let () = output_string log_all ("\n#ante:\n" ^ (mona_of_formula ante) ^ "\n") in
+	let () = output_string log_all ("\n#conseq0:\n" ^ (mona_of_formula conseq0) ^ "\n") in
+	let () = output_string log_all ("\n#conseq:\n" ^ (mona_of_formula conseq) ^ "\n") in
   *)
   let ante = normalize ante in
   let conseq = normalize conseq in
   let var_map = H.create 103 in
   let tmptmp = mkOr ante conseq None no_pos in
-  let _ = compute_fo_formula tmptmp var_map in
-  let _ = var_map_ref := var_map in
+  let () = compute_fo_formula tmptmp var_map in
+  let () = var_map_ref := var_map in
   let tmp_vars = fv tmptmp in
   let fvars, svars = compute_vars tmp_vars in
   let var_decls =
@@ -736,7 +738,7 @@ let imply (ante : formula) (conseq : formula) : bool =
   let ante_str = mona_of_formula ante in
   let conseq_str = mona_of_formula conseq in
   let mona_str = presPred ^ "\n\n" ^ var_decls ^ "(" ^ ante_str ^ ") => (" ^ conseq_str ^ ");\n" in
-  let _ = run_mona mona_str in
+  let () = run_mona mona_str in
   let fd = open_in !resultfilename in
   let quit = ref false in
   let automaton_completed = ref false in

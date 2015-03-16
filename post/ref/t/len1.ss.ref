@@ -1,0 +1,34 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/len1.ss"
+Parsing file "t/len1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN R: ( m_1392=0 & res=0 & n=0) -->  R(n,m_1392,res),
+RELDEFN R: ( R(n_1414,m_1423,v_int_32_1427) & 0<=m_1423 & res=1+v_int_32_1427 & n_1414+
+1=n & 1<=n & m_1392=m_1423+1) -->  R(n,m_1392,res)]
+*************************************
+
+Post Inference result:
+length$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists m_1392: x::ll{}<m_1392>&0<=n & 0<=n & res>=0 & res=n & 
+           res=m_1392&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.732045 second(s)
+	Time spent in main process: 0.604037 second(s)
+	Time spent in child processes: 0.128008 second(s)
+

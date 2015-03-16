@@ -1,0 +1,40 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/ack1.ss"
+Parsing file "bugs/ack1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1354: ( n=0 & pre_1354(m,n) & m=1+v_int_13_1317' & v_int_13_1316'=1 & 
+(v_int_13_1317'+1)!=0) -->  pre_1354(v_int_13_1317',v_int_13_1316'),
+RELDEFN pre_1354: ( n=1+v_int_15_1326' & (v_int_15_1326'+1)!=0 & m'!=0 & pre_1354(m',n)) -->  pre_1354(m',v_int_15_1326'),
+RELDEFN pre_1354: ( pre_1354(m,n) & (v_int_15_1406+1)!=0 & m!=0 & n=1+v_int_15_1406 & 
+v_int_16_1334'+1=m & post_1355(m,v_int_15_1406,r_33',flow)) -->  pre_1354(v_int_16_1334',r_33'),
+RELDEFN post_1355: ( m=0 & res=1+n & pre_1354(m,n)) -->  post_1355(m,n,res,flow),
+RELDEFN post_1355: ( v_int_13_1416+1=m & n=0 & m!=0 & post_1355(v_int_13_1416,1,res,flow) & 
+pre_1354(m,n)) -->  post_1355(m,n,res,flow),
+RELDEFN post_1355: ( v_int_15_1406+1=n & v_int_16_1419+1=m & n!=0 & m!=0 & 
+post_1355(v_int_16_1419,r_1420,res,flow) & 
+post_1355(m,v_int_15_1406,r_1420,flow) & pre_1354(m,n)) -->  post_1355(m,n,res,flow)]
+*************************************
+
+Post Inference result:
+Ack$int~int
+ EBase htrue&0<=m & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&m>=0 & res>=(1+m+n)&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.976059 second(s)
+	Time spent in main process: 0.508031 second(s)
+	Time spent in child processes: 0.468028 second(s)
+

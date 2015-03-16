@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (* map_para with fork and limited number of processes *)
 let webs = ref false
 let map_para_net init g input_list max =
@@ -14,13 +15,13 @@ let map_para_net init g input_list max =
       let input, output = Unix.pipe() in
       let machine = (List.hd (!next_machines)) in
   	  match Unix.fork() with
-  	  | -1 ->let _ = print_endline "NOT_PARALLEL" in 
+  	  | -1 ->let () = print_endline "NOT_PARALLEL" in 
   	         ignore(List.map f mylist)
   	  | 0 ->
   	    begin
   	      Tpdispatcher.Netprover.set_use_socket_map machine;
-  	      let _ = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
-  	      let _ = Unix.close input in
+  	      let () = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
+  	      let todo_unk = Unix.close input in
   	      let output = Unix.out_channel_of_descr output in
   	      init ();
   	      Marshal.to_channel output (f head) [];
@@ -83,7 +84,7 @@ let map_para_net init g input_list max =
           if (not (List.exists (fun n -> n = pid) (!success_wait))) then begin
   	        let input = Unix.in_channel_of_descr input in
   	        let ans = (Marshal.from_channel input) in
-  	        let _ = ignore(Unix.waitpid [] pid) in
+  	        let () = ignore(Unix.waitpid [] pid) in
   	        success_wait := pid :: (!success_wait);
   	        next_machines := (List.assoc pid !pid_machine) :: !next_machines;
   	        running := (!running) - 1;
@@ -130,11 +131,11 @@ let map_para init g input_list max =
     | head :: tail ->
       let input, output = Unix.pipe() in
   	  match Unix.fork() with
-  	  | -1 -> begin let _ = print_endline "NOT_PARALLEL" in ignore(List.map f mylist) end
+  	  | -1 -> begin let () = print_endline "NOT_PARALLEL" in ignore(List.map f mylist) end
   	  | 0 ->
   	    begin
-  	      let _ = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
-  	      let _ = Unix.close input in
+  	      let () = Unix.dup2 (Unix.openfile ("stdout.txt."^string_of_int(Unix.getpid ())) [Unix.O_WRONLY;Unix.O_CREAT] 0o666) Unix.stdout in 
+  	      let todo_unk = Unix.close input in
   	      let output = Unix.out_channel_of_descr output in
   	      init ();
   	      Marshal.to_channel output (f head) [];
@@ -183,7 +184,7 @@ let map_para init g input_list max =
           if (not (List.exists (fun n -> n = pid) (!success_wait))) then begin
   	        let input = Unix.in_channel_of_descr input in
   	        let ans = (Marshal.from_channel input) in
-  	        let _ = ignore(Unix.waitpid [] pid) in
+  	        let () = ignore(Unix.waitpid [] pid) in
   	        success_wait := pid :: (!success_wait);
   	        running := (!running) - 1;
   	        ignore(Unix.system ("cat stdout.txt." ^ string_of_int(pid)));

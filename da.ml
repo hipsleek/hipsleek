@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
  This module performs data analysis
 *)
@@ -55,8 +57,8 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
             with _ -> t0
           else t0
           in
-          let _ =  Debug.ninfo_hprint (add_str "t1" string_of_typ) t no_pos in
-          let _ =  Debug.ninfo_hprint (add_str "rhs" !print_prog_exp) rhs no_pos in
+          let () =  Debug.ninfo_hprint (add_str "t1" string_of_typ) t no_pos in
+          let () =  Debug.ninfo_hprint (add_str "rhs" !print_prog_exp) rhs no_pos in
           match rhs with
              | Var {exp_var_name = rid} ->
                    let vsv = CP.SpecVar (t, id, Unprimed) in (* rhs must be non-void *)
@@ -73,17 +75,17 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
                       exp_scall_arguments = cargs;
                       } -> begin (*1*)
                         try
-                          let _ =  Debug.ninfo_hprint (add_str "st" string_of_typ) st no_pos in
+                          let () =  Debug.ninfo_hprint (add_str "st" string_of_typ) st no_pos in
                           if st==Bool then
                             match cargs with
                               | [sv] ->begin (*2*)
                                   try
                                     let t = get_type sv svl in
-                                    let _ =  Debug.ninfo_hprint (add_str "t2" string_of_typ) t no_pos in
-                                    let _ =  Debug.ninfo_hprint (add_str "mn" pr_id) mn no_pos in
+                                    let () =  Debug.ninfo_hprint (add_str "t2" string_of_typ) t no_pos in
+                                    let () =  Debug.ninfo_hprint (add_str "mn" pr_id) mn no_pos in
                                     if (String.compare mn ("is_null___$"^(string_of_typ t)) ==0) then
                                       let p = CP.mkNull ( CP.SpecVar (t, sv, Unprimed)) pos in
-                                      let _ =  Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
+                                      let () =  Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
                                       (None , [(id, p)])
                                     else if (String.compare mn ("is_not_null___$"^(string_of_typ t)) ==0) then
                                       let p = CP.mkNeqNull ( CP.SpecVar (t, sv, Unprimed)) pos in
@@ -124,9 +126,9 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
       | Assign b -> begin (*to update aliasing *)
           let svl = List.fold_left (fun r pc -> r@(CP.fv pc.sp_constr)) arg_svl path_conds in
           let eqs_opt, sst_cond = collect_aliasing svl e in
-          let _ =  Debug.ninfo_hprint (add_str "sst_cond" (pr_list (pr_pair pr_id !CP.print_formula))) sst_cond no_pos in
+          let () =  Debug.ninfo_hprint (add_str "sst_cond" (pr_list (pr_pair pr_id !CP.print_formula))) sst_cond no_pos in
           let path_conds1 = List.map (fun pc -> {pc with sp_tobe_cond = pc.sp_tobe_cond@sst_cond}) path_conds in
-          let _ =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath)) path_conds1 no_pos in
+          let () =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath)) path_conds1 no_pos in
           let n_path_conds= match eqs_opt with
             | None -> path_conds1
             | Some ((lsv,rsv), (sst, ass_p)) ->
@@ -141,17 +143,17 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
                   ) path_conds1 in
                   path_conds2
           in
-          let _ =  Debug.ninfo_hprint (add_str "n_path_conds" (pr_list print_sympath)) n_path_conds no_pos in
+          let () =  Debug.ninfo_hprint (add_str "n_path_conds" (pr_list print_sympath)) n_path_conds no_pos in
 	  helper b.exp_assign_rhs n_path_conds
         end
       | Bind b -> helper b.exp_bind_body path_conds
       | Block b -> helper b.exp_block_body path_conds
       | Cond b -> (*to update path condition*)
             let pos = b.exp_cond_pos in
-            let _ =  Debug.ninfo_hprint (add_str "path_conds" (pr_list print_sympath)) path_conds no_pos in
+            let () =  Debug.ninfo_hprint (add_str "path_conds" (pr_list print_sympath)) path_conds no_pos in
             let init_then_paths,init_else_paths = List.fold_left (fun (r1,r2) pc ->
                 let n_p_then, n_p_else = try
-                  let _ =  Debug.ninfo_hprint (add_str "sst_conds" (pr_list (pr_pair pr_id !CP.print_formula))) pc.sp_tobe_cond no_pos in
+                  let () =  Debug.ninfo_hprint (add_str "sst_conds" (pr_list (pr_pair pr_id !CP.print_formula))) pc.sp_tobe_cond no_pos in
                   let _,then_cond = List.find (fun (sv,_) -> String.compare sv b.exp_cond_condition ==0) pc.sp_tobe_cond in
                   let else_cond =  CP.mkNot then_cond None pos in
                   CP.mkAnd pc.sp_constr then_cond pos, CP.mkAnd pc.sp_constr else_cond pos
@@ -185,8 +187,8 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
         exp_scall_method_name = mn;
         exp_scall_arguments = args;
         } ->
-            let _ =  Debug.ninfo_hprint (add_str "cur_procn" pr_id) proc.Cast.proc_name no_pos in
-             let _ =  Debug.ninfo_hprint (add_str "mn" pr_id) mn no_pos in
+            let () =  Debug.ninfo_hprint (add_str "cur_procn" pr_id) proc.Cast.proc_name no_pos in
+             let () =  Debug.ninfo_hprint (add_str "mn" pr_id) mn no_pos in
             if String.compare proc.Cast.proc_name mn !=0 then
               path_conds
             else
@@ -216,7 +218,7 @@ let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
                     in
                     {pc with sp_rec_context = Some rec_ctx1}) path_conds
               in
-              let _ =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath) ) path_conds1 no_pos in
+              let () =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath) ) path_conds1 no_pos in
               path_conds1
   in
   (***************************************************************)
@@ -323,7 +325,7 @@ let find_rel_args_groups_x prog proc e0=
       | Block b -> find_must_neq_helper b.exp_block_body neqs
       | Cond b -> (*to update neqs*)
             let pos = b.exp_cond_pos in
-            let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
+            let () =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
             let then_eqs = find_must_neq_helper b.exp_cond_then_arm neqs in
             (*else path*)
             let else_eqs = find_must_neq_helper b.exp_cond_else_arm neqs in
@@ -346,7 +348,7 @@ let find_rel_args_groups_x prog proc e0=
         exp_scall_method_name = mn;
         exp_scall_arguments = args;
         } ->
-            let _ =  Debug.ninfo_hprint (add_str "SCall neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
+            let () =  Debug.ninfo_hprint (add_str "SCall neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
             neqs
   in
   let rec split_args svl split non_split neqs=
@@ -367,9 +369,9 @@ let find_rel_args_groups_x prog proc e0=
   (********************************************************)
   (********************************************************)
   let maybe_root_args, id_ni_args = List.partition (fun (_, inst) -> inst = I) proc.Cast.proc_args_wi in
-  let _ =  Debug.ninfo_hprint (add_str "maybe_root_args" (pr_list (fun (id,_) -> pr_id id)))
+  let () =  Debug.ninfo_hprint (add_str "maybe_root_args" (pr_list (fun (id,_) -> pr_id id)))
     maybe_root_args no_pos in
-  let _ =  Debug.ninfo_hprint (add_str "proc.Cast.proc_is_recursive" string_of_bool)
+  let () =  Debug.ninfo_hprint (add_str "proc.Cast.proc_is_recursive" string_of_bool)
     proc.Cast.proc_is_recursive no_pos in
   if not (proc.Cast.proc_is_recursive && List.length maybe_root_args > 1) then
     false,[]
@@ -383,14 +385,14 @@ let find_rel_args_groups_x prog proc e0=
       let rem = List.filter (fun (sv,_) -> not (Gen.BList.mem_eq  string_cmp sv id_grouped_args)) maybe_root_args in
       (* if rem = [] then *)
         try
-          let _ =  Debug.ninfo_hprint (add_str "arg_groups" (pr_list !CP.print_svl))
+          let () =  Debug.ninfo_hprint (add_str "arg_groups" (pr_list !CP.print_svl))
             arg_groups no_pos in
           let ni_args = List.map (fun (id,_) ->
               lookup_sv_from_id id grouped_args
           ) id_ni_args in
           (* analysize the source code to find x = y.next ==> x # y*)
           let neqs = find_must_neq_helper e0 [] in
-          let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
+          let () =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
             neqs no_pos in
           let args_split_conf = List.fold_left (fun r (hp,svl) ->
               if List.length svl <= 1 then r else
@@ -453,12 +455,12 @@ let find_rel_args_groups_scc prog scc0 =
     let recf = update_spec drop_hps add_hps in
      match sf with
        | CF.EInfer b ->
-             (* let _ =  Debug.info_hprint (add_str "EInfer" pr_id) "EInfer" no_pos in *)
+             (* let () =  Debug.info_hprint (add_str "EInfer" pr_id) "EInfer" no_pos in *)
              CF.EInfer {b with CF.formula_inf_vars =
                      add_hps@(CP.diff_svl b.CF.formula_inf_vars drop_hps);
                  CF.formula_inf_continuation = CF.struc_formula_drop_infer drop_hps b.CF.formula_inf_continuation;
              }
-       | CF.EList l-> (* let _ =  Debug.info_hprint (add_str "EList" pr_id) "EList" no_pos in *)
+       | CF.EList l-> (* let () =  Debug.info_hprint (add_str "EList" pr_id) "EList" no_pos in *)
           CF.EList (Gen.map_l_snd recf l)
        | _ -> sf
   in
@@ -477,7 +479,7 @@ let find_rel_args_groups_scc prog scc0 =
                         (r1@[hp], r2@[def], r3@[hf], r4@n_hps)
                     ) ([],[],[],[]) splits in
                     let sspec1 = proc.Cast.proc_static_specs in
-                    let _ =  Debug.ninfo_hprint (add_str "sspec1" (Cprinter.string_of_struc_formula)) sspec1 no_pos in
+                    let () =  Debug.ninfo_hprint (add_str "sspec1" (Cprinter.string_of_struc_formula)) sspec1 no_pos in
                     let sspec2 = update_spec  splitted_hps n_hps sspec1 in
                     let nf =  CF.formula_of_heap (CF.join_star_conjunctions n_hfs) no_pos in
                     let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
@@ -487,9 +489,9 @@ let find_rel_args_groups_scc prog scc0 =
                     let n_proc = {proc with Cast.proc_static_specs = sspec3;
                         Cast.proc_stk_of_static_specs = stk;
                     } in
-                    let _ =  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
+                    let  ()=  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
                     (* let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
-                    let _ = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
+                    let bug = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
                     [n_proc],defs
                   else [proc],[]
               end

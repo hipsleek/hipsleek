@@ -1,0 +1,32 @@
+
+!!!Full processing file "web/cdl-ex5a-deadlock.ss"
+Parsing file "web/cdl-ex5a-deadlock.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+!!! WARNING: [ERR-RACE:web/cdl-ex5a-deadlock.ss_54:2_64:3]
+
+Post condition cannot be derived:
+Empty list_partial_contex
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "web/cdl-ex5a-deadlock.ss",Line:62,Col:6
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.960058 second(s)
+	Time spent in main process: 0.900055 second(s)
+	Time spent in child processes: 0.060003 second(s)
+

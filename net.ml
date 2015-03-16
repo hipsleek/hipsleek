@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 let debug = ref false
 let trace f s = if !debug then (prerr_string (Printf.sprintf "\n%d: %s: %s" (Unix.getpid ()) f s); flush stderr) else ()
 let showinfo = true
@@ -37,7 +38,7 @@ module IO = struct
 			(* trace "read" ("len="^(string_of_int data_len)); *)
 			if data_len > 0 then begin
 				let data_str = String.create data_len in
-				let _ = really_input ch data_str 0 data_len in
+				let () = really_input ch data_str 0 data_len in
 				
 				from_string data_str
 			end else begin
@@ -269,7 +270,7 @@ module Socket = struct
       let address = get_address server in
       let socket_address = Unix.ADDR_INET (address, port) in
       let sockfd = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-      let _ = Unix.connect sockfd socket_address in
+      let () = Unix.connect sockfd socket_address in
       print_string "..connected.\n";
       sockfd
     with Unix.Unix_error(err, ctx1, ctx2) as exn ->

@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Gen
 open Globals
 open Cpure
@@ -64,23 +66,29 @@ let vperm_rm_prime vp = vp
 
 let empty_vperm_sets = build_vperm []
 
+let is_empty_frac fr =
+  (* let xs = List.filter (fun (f,_) -> not(Frac.is_zero f)) fr in *)
+  (* is_empty xs *)
+  List.for_all (fun (f,_) -> Frac.is_zero f) fr
+
 let is_empty_vperm_sets vps = 
   not (!Globals.ann_vp) ||
       ((is_empty vps.vperm_full_vars) &&
-          (is_empty vps.vperm_lend_vars) &&
-          (is_empty vps.vperm_value_vars) &&
-          (is_empty vps.vperm_zero_vars) &&
-          (is_empty vps.vperm_frac_vars))
+       (is_empty vps.vperm_lend_vars) &&
+       (is_empty vps.vperm_value_vars) &&
+       (* (is_empty vps.vperm_zero_vars) && *)
+       (is_empty_frac vps.vperm_frac_vars))
 
-let is_empty_frac fr =
-  let xs = List.filter (fun (f,_) -> not(Frac.is_zero f || Frac.is_value f)) fr in
-  is_empty xs
+let is_empty_frac_leak fr =
+  (* let xs = List.filter (fun (f,_) -> not(Frac.is_zero f || Frac.is_value f)) fr in *)
+  (* is_empty xs *)
+  List.for_all (fun (f,_) -> Frac.is_zero f || Frac.is_value f) fr
 
 (* WN : need to filter frac list *)
 let is_leak_vperm vps = 
   match vps with
     | { vperm_full_vars = full; vperm_frac_vars = frac } ->
-          not(is_empty full) || not(is_empty_frac frac)
+          not(is_empty full) || not(is_empty_frac_leak frac)
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -240,7 +248,7 @@ let combine_vperm_sets vps_list =
     let zero_vars = comb_vps.vperm_zero_vars in
     let msg = "Combination of vperm sets causes contradiction" in
     let err = ({ Error.error_loc = proving_loc # get; Error.error_text = msg }) in
-    (* let _ = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
+    (* let () = Debug.binfo_pprint "inside combine_vperm_sets" no_pos in *)
     if (check_dups full_vars) (* || (overlap full_vars lend_vars) *)
     then Error.report_error err
     else

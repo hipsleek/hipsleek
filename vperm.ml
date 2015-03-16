@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Cformula
 open Cpure
@@ -368,7 +370,7 @@ let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=fal
         if classic_flag && (CVP.is_leak_vperm res_vps) then 
           (* TODO:WN *)
           let vp_str = !print_vperm_sets res_vps in
-          let _ = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in
+          let () = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in
           let msg = " var permission leakage "^vp_str in
           (* let fctx = mkFailCtx_vp msg estate conseq pos in *)
           (* Fail fctx *)
@@ -432,7 +434,7 @@ let vperm_entail_rhs estate conseq pos =
     (*     if classic_flag && (CVP.is_leak_vperm res_vps) then  *)
     (*       (\* TODO:WN *\) *)
     (*       let vp_str = !print_vperm_sets res_vps in *)
-    (*       let _ = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in *)
+    (*       let () = Debug.tinfo_hprint (add_str "residue vperm" !print_vperm_sets) res_vps no_pos in *)
     (*       let msg = " var permission leakage "^vp_str in *)
     (*       let fctx = mkFailCtx_vp msg estate conseq pos in *)
     (*       Fail fctx *)
@@ -572,8 +574,8 @@ let vperm_entail_rhs estate conseq pos =
 (*   in                                                                                                                *)
 (*   (* let lhs_zero_vars = List.concat (List.map (fun v -> find_closure_mix_formula v lhs_p) old_lhs_zero_vars) in *) *)
 (*   let lhs_zero_vars = List.concat (List.map func old_lhs_zero_vars) in                                              *)
-(*   (* let _ = print_endline ("zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)                *)
-(*   let _ = if (!Globals.ann_vp) && (lhs_zero_vars!=[] || rhs_vperms!=[]) then                                        *)
+(*   (* let () = print_endline ("zero_vars = " ^ (Cprinter.string_of_spec_var_list lhs_zero_vars)) in *)                *)
+(*   let () = if (!Globals.ann_vp) && (lhs_zero_vars!=[] || rhs_vperms!=[]) then                                        *)
 (*     Debug.devel_pprint ("heap_entail_empty_rhs_heap: checking " ^                                                   *)
 (*                         (string_of_vp_ann VP_Zero) ^                                                                *)
 (*                         (Cprinter.string_of_spec_var_list lhs_zero_vars) ^                                          *)
@@ -582,8 +584,8 @@ let vperm_entail_rhs estate conseq pos =
 (*   let rhs_val, rhs_vrest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) rhs_vperms in                  *)
 (*   (* let rhs_ref, rhs_vrest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Ref) rhs_vrest in *)              *)
 (*   let rhs_full, rhs_vrest3 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) rhs_vrest in                  *)
-(*   (* let _ = print_endline ("\n LDK: " ^ (pr_list Cprinter.string_of_pure_formula rhs_vrest3)) in *)                *)
-(*   let _ = if (rhs_vrest3!=[]) then                                                                                  *)
+(*   (* let () = print_endline ("\n LDK: " ^ (pr_list Cprinter.string_of_pure_formula rhs_vrest3)) in *)                *)
+(*   let () = if (rhs_vrest3!=[]) then                                                                                  *)
 (*     print_endline ("[Warning] heap_entail_empty_rhs_heap: the conseq should not                                     *)
 (*                     include variable permissions other than " ^                                                     *)
 (*                     (string_of_vp_ann VP_Value) ^ " and " ^ (string_of_vp_ann VP_Full))                             *)
@@ -605,21 +607,21 @@ let vperm_entail_rhs estate conseq pos =
 (*             let msg = (": full permission var " ^                                                                   *)
 (*                        (Cprinter.string_of_spec_var_list (dup_vars)) ^                                              *)
 (*                       " cannot be duplicated" ^ "\n") in                                                            *)
-(*             let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                  *)
+(*             let () = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                  *)
 (*             msg                                                                                                     *)
 (*           else ""                                                                                                   *)
 (*         in                                                                                                          *)
 (*         let msg2 = if tmp1!=[] then                                                                                 *)
 (*               let msg = (": pass-by-val var " ^ (Cprinter.string_of_spec_var_list (tmp1)) ^                         *)
 (*                          " cannot have possibly zero permission" ^ "\n") in                                         *)
-(*               let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                *)
+(*               let () = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                *)
 (*               msg                                                                                                   *)
 (*             else ""                                                                                                 *)
 (*         in                                                                                                          *)
 (*         let msg3 = if tmp3!=[] then                                                                                 *)
 (*               let msg = (": full permission var " ^ (Cprinter.string_of_spec_var_list (tmp3)) ^                     *)
 (*                          " cannot have possibly zero permission" ^ "\n") in                                         *)
-(*               let _ = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                *)
+(*               let () = Debug.devel_pprint ("heap_entail_empty_rhs_heap" ^ msg) pos in                                *)
 (*               msg                                                                                                   *)
 (*             else ""                                                                                                 *)
 (*         in                                                                                                          *)

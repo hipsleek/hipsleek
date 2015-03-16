@@ -1,6 +1,8 @@
+#include "xdebug.cppo"
 open Gen
 open Globals
 open Label_only
+open VarGen
 
 module type EXPR_TYPE =
     sig

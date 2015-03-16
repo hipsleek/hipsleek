@@ -1,0 +1,30 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/non-rec2.ss"
+Parsing file "t/non-rec2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure nrec$... 
+Procedure nrec$ SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1315: ( true) -->  post_1315(flow)]
+*************************************
+
+Post Inference result:
+nrec$
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.320018 second(s)
+	Time spent in main process: 0.304018 second(s)
+	Time spent in child processes: 0.016 second(s)
+

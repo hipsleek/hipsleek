@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Camlp4.PreCast
 
 type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE
@@ -90,6 +91,7 @@ type sleek_token =
   | FAIL_MAY
   | XPURE
   | PAR
+  | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
   (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -199,6 +201,7 @@ module Token = struct
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
     | PAR -> "par"
+    | ARGOPTION arg -> "##OPTION "^arg
     (* | SKIP -> "skip" *)
     (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

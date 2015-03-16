@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (**
    GUI frontend for Sleek
  *)
@@ -408,7 +409,7 @@ class mainwindow () =
 
     method private quit () =
       if self#file_closing_check () then
-        let _ = GMain.quit () in
+        let () = GMain.quit () in
         false
       else
         true

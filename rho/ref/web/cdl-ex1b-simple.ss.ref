@@ -1,0 +1,34 @@
+
+!!!Full processing file "web/cdl-ex1b-simple.ss"
+Parsing file "web/cdl-ex1b-simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: web/cdl-ex1b-simple.ss:47: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_45_1416',v_int_46_1417': c_39'::LatchIn{ - x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<v_int_45_1416'> * x_38'::cell<v_int_46_1417'>*N@full[c_39,x_38]&v_int_46_1417'=10 & v_int_45_1416'=1 & 0<v_int_45_1416'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert/assume:web/cdl-ex1b-simple.ss:50: 2:  : failed
+
+
+assert:web/cdl-ex1b-simple.ss:53: 2:  : ok
+
+
+assert/assume:web/cdl-ex1b-simple.ss:54: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.556033 second(s)
+	Time spent in main process: 0.524032 second(s)
+	Time spent in child processes: 0.032001 second(s)
+

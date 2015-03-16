@@ -1,3 +1,18 @@
+#include "xdebug.cppo"
+open VarGen
+let silence_output = ref false
+(* let no_pos =  *)
+(* 	let no_pos1 = { Lexing.pos_fname = ""; *)
+(* 				   Lexing.pos_lnum = 0; *)
+(* 				   Lexing.pos_bol = 0;  *)
+(* 				   Lexing.pos_cnum = 0 } in *)
+(* 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;} *)
+
+(* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
+let debug_precise_trace = ref false
+let enable_counters = ref false
+let profiling = ref false
+let profile_threshold = 0.5
 
 module type INC_TYPE =
 sig
@@ -23,7 +38,7 @@ struct
   exception Bad_string
   exception Bail
 
-  let silenced_print f s = if !Globals.silence_output then () else f s 
+  let silenced_print f s = if !silence_output then () else f s 
 
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
@@ -40,19 +55,19 @@ struct
   let pr_string x = "\""^x^"\""
   
   let print_endline_quiet s =
-    let flag = !Globals.compete_mode in
+    let flag = !compete_mode in
     (* print_endline ("compete mode : "^(string_of_bool flag)); *)
     if flag then () 
     else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
   let print_string_quiet s = 
-    if !Globals.compete_mode then () 
+    if !compete_mode then () 
     else print_string s 
 
   let pr_var_prime (id,p) = match p with
-    | Globals.Primed -> id^"'"
-    | Globals.Unprimed -> id
+    | Primed -> id^"'"
+    | Unprimed -> id
 
   let print_flush s = print_endline (s); flush stdout
 
@@ -216,7 +231,7 @@ let pr_octa f1 f2 f3 f4 f5 f6 f7 f8 (x,y,z,z2,z3,z4,z5,z6) = "("^(f1 x)^",2:"^(f
      { Error.error_loc = pos; Error.error_text = msg}
 
   let report_warning pos msg = 
-    if !Globals.compete_mode then ()
+    if !compete_mode then ()
     else 
       Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
@@ -557,7 +572,7 @@ class ['a] stack  =
        Oo.copy self
        (* let n = new Gen.stack in *)
        (*   let lst = self # get_stk in *)
-       (*   let _ = n # push_list lst in *)
+       (*   let () = n # push_list lst in *)
        (* n *)
    end;;
 
@@ -972,9 +987,9 @@ struct
       let (t1,t2) = order_two t1 t2 in
       List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1) in
     let pr = string_of_debug in
-    (* let _ = print_endline ("eset1 :"^ (pr t1)) in *)
-    (* let _ = print_endline ("eset2 :"^ (pr t2)) in *)
-    (* let _ = print_endline ("eset_out :"^ (pr r)) in *)
+    (* let () = print_endline ("eset1 :"^ (pr t1)) in *)
+    (* let () = print_endline ("eset2 :"^ (pr t2)) in *)
+    (* let () = print_endline ("eset_out :"^ (pr r)) in *)
     r
 
     (* remove key e from e_set  *)
@@ -1064,13 +1079,13 @@ struct
   let rename_eset (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e,k)) s
-    else Error.report_error {Error.error_loc = Globals.no_pos; 
+    else Error.report_error {Error.error_loc = no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e, k)) s
-    else Error.report_error {Error.error_loc = Globals.no_pos; 
+    else Error.report_error {Error.error_loc = no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
   (* s - from var; t - to var *)
@@ -1200,7 +1215,7 @@ struct
       (* let l1 = dd_stk # get_stk in *)
       (* let l2 = debug_stk # get_stk in *)
       (* let pr = Basic.pr_list string_of_int in *)
-      (* let _ = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
+      (* let () = print_endline ("ddstk:"^(pr l1)^" hostk:"^(pr l2)) in *)
        if (v1=v2) then Some v1 else None
 
   let is_same_dd () =
@@ -1224,11 +1239,11 @@ struct
   let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
-      if !Globals.debug_precise_trace then debug_stk # pop; 
+      if !debug_precise_trace then debug_stk # pop; 
       r
     with exc -> 
         begin
-          if !Globals.debug_precise_trace then debug_stk # pop; 
+          if !debug_precise_trace then debug_stk # pop; 
           raise exc
         end
 
@@ -1239,12 +1254,12 @@ struct
     String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
 
   let push_no_call () =
-    if !Globals.debug_precise_trace then debug_stk # push (-3)
+    if !debug_precise_trace then debug_stk # push (-3)
     else ()
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
-    (* let _ = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
+    (* let () = print_endline ("\npush_call_gen:"^os^(string_of_bool flag_detail)) in *)
     ctr#inc;
     let v = ctr#get in
     debug_stk#push v; 
@@ -1532,7 +1547,7 @@ class task_table =
 object 
   val tasks = Hashtbl.create 10
   method add_task_instance msg time = 	
-    let m = if (time>Globals.profile_threshold) then  [time] else [] in
+    let m = if (time>profile_threshold) then  [time] else [] in
     try 
           (* t1 : time, cnt1: count, max1: those that exceeed threshold *)      
 	  let (t1,cnt1,max1) = Hashtbl.find tasks msg in
@@ -1571,7 +1586,7 @@ struct
     (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")") (=)
 
   let add_to_counter (s:string) i = 
-    if !Globals.enable_counters then counters#add s i
+    if !enable_counters then counters#add s i
     else ()
   let inc_counter (s:string) = add_to_counter s 1
 
@@ -1588,7 +1603,7 @@ struct
   let get_time () = get_all_time()
 
   let push_time_no_cnt msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       let timer = get_time () in
 	  profiling_stack # push (msg, timer,true) 
     else ()
@@ -1599,7 +1614,7 @@ struct
 	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
 
   let push_time msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       push_time_always msg
     else ()
 
@@ -1607,7 +1622,7 @@ struct
     let m1,t1,_ = profiling_stack # top in
     if (String.compare m1 msg)==0 then 
       let t2 = get_time () in
-      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = no_pos; Error.error_text = ("negative time")}
       else
 	profiling_stack # pop;
       if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
@@ -1619,20 +1634,20 @@ struct
       end	
       else tasks # add_task_instance m1 (t2-.t1) 
     else
-      (* let _ = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
-      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
+      (* let () = print_endline ("profiling_stack = " ^ profiling_stack#string_of) in *)
+      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error popping "^msg^" from the stack")}
 
   let pop_time msg = 
-    if (!Globals.profiling) then
+    if (!profiling) then
       pop_time_always msg
     else ()
 
  let print_info_task (m:string) : unit =  tasks # print_task_instance m
 
- let print_info () = if (!Globals.profiling) then  tasks # print else ()
+ let print_info () = if (!profiling) then  tasks # print else ()
 
  let print_counters_info () =
-      if !Globals.enable_counters then
+      if !enable_counters then
         print_string (string_of_counters ())
       else () 
 
@@ -1695,9 +1710,9 @@ struct
     "time_stk_"^ (spec_counter#string_of)
 
   let pop_time_to_s_no_count  msg = 
-	if (!Globals.profiling) then
+	if (!profiling) then
 	  let rec helper l = match l with
-        | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
+        | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
       profiling_stack#set_stk (helper profiling_stack#get_stk) 
@@ -1795,12 +1810,12 @@ struct
   let trim_str input =
     let start_idx = ref 0 in
     let len = String.length input in
-    let _ = 
+    let () = 
 	  while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
 	    start_idx := !start_idx + 1
 	  done in
     let end_idx = ref (len - 1) in
-    let _ = 
+    let () = 
 	  while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
 	    end_idx := !end_idx - 1
 	  done in
@@ -1891,7 +1906,7 @@ let string_of_file (fname : string) =
     let chn = open_in fname in
     let len = in_channel_length chn in
     let str = String.make len ' ' in
-    let _ = really_input chn str 0 len in
+    let () = really_input chn str 0 len in
     (close_in chn; str)
   else
     (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
@@ -1963,7 +1978,7 @@ let break_lines_1024 (input : string) : string =
   (* let n= String.index input ';' in *)
   (* let s = String.sub input 0 n in *)
   (* let delta = String.length input - String.length s in *)
-  (* let _ = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
+  (* let () = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
   (*     else  print_endline "" in *)
   break_lines_num input (1024-32)
 
@@ -2004,19 +2019,19 @@ struct
 
   let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
-          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("pushf_add_level on empty stack")}
           | lvl::stk -> let (new_i,v)=f i 
             in (new_i,(v@lvl)::stk)
 
   let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
-          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | [] -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("pushf_add_level on empty stack")}
           | lvl::stk -> (i,(lst@lvl)::stk)
 
   let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
           | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
-          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
+          | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("close level requires at least two levels")}
 
   let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
         = f i (List.concat stk)
@@ -2026,7 +2041,7 @@ struct
           | lvl::stk -> let (newi,lst)=(f i lvl) in
             if (is_empty lst) then (newi, stk)
             else (add_level lst (newi,stk))
-          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+          | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("popf_level on empty stack")}
 
   let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
         = List.map (init_level) xs
@@ -2056,7 +2071,7 @@ struct
     let rec helper xs no =
       match xs with
         | [] -> true
-        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
         | ((x,n::t)::xs1) -> 
               if (n<no) then false
               else if (n==no) then helper xs1 no
@@ -2068,7 +2083,7 @@ struct
     let rec helper xs acc no =
       match xs with
         | [] -> if (is_empty acc) then [] else [(List.rev acc,no)]
-        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("cannot happen!")}
         | ((x,n::t)::xs1) -> 
               if (n==no) then helper xs1 ((x,t)::acc) no
               else 
@@ -2077,7 +2092,7 @@ struct
                 else (List.rev acc,no)::rs
     in let r=check_sorted_tag xs in
     if r then helper xs acc 1 
-    else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+    else Error.report_error {Error.error_loc = no_pos; Error.error_text = ("need to sort group_tag!")}
 
   let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
     let rec helper xs ys =
@@ -2110,3 +2125,4 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
+

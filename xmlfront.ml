@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
   XML front-end.
 

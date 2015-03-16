@@ -1,4 +1,6 @@
+#include "xdebug.cppo"
 open Gen
+open VarGen
 open Globals
 open Ipure
 

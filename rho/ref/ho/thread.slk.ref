@@ -1,0 +1,8 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "ho/thread.slk", line 10, characters 23-24
+ error: Stream.Error("GT expected after [opt_data_h_args] (in [simple_heap_constr])")
+ at:error at: 
+SLEEK FAILURE (END)
+
