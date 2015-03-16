@@ -910,7 +910,9 @@ let stmt_list_to_block t pos =
       exp_block_local_vars = [];
       exp_block_pos = pos; }
 
-let sprog = SHGram.Entry.mk "sprog" 
+(* let arg_option = SHGram.Entry.mk "arg_option" *)
+let hip_with_option = SHGram.Entry.mk "hip_with_option"
+let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let hproc = SHGram.Entry.mk "hproc"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -920,13 +922,22 @@ let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
+  GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   hproc:[[ t = proc_decl; `EOF -> t]];
   cp_file:[[ t = cp_list; `EOF ->  t ]];
-  
+
+(* ZH: For Option *)
+arg_option: [[t = LIST0 non_empty_arg_list-> List.flatten t]]; 
+
+(* arg_list : [[ t = non_empty_arg_list -> t]]; *)
+
+non_empty_arg_list: [[ `ARGOPTION t -> let _ = print_endline "!!!!!non_empty_arg_list!" in [t]]];
+
+hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
+
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
@@ -2996,7 +3007,8 @@ decl:
         Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = k}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
+  ]];
 
 dir_path: [[t = LIST1 file_name SEP `DIV ->
     let str  = List.fold_left (fun res str -> res^str^"/") "" t in
@@ -3984,6 +3996,12 @@ END;;
 let parse_sleek n s =
   SHGram.parse sprog (PreCast.Loc.mk n) s
 
+let parse_hip_with_option n s : (string * Iast.prog_decl) =
+  let (slst,p) = SHGram.parse hip_with_option (PreCast.Loc.mk n) s in
+  let s = List.fold_left (fun r s -> r^s) "" slst in
+  (* let _ = print_endline s in*)
+  (s,p)
+;;
 let parse_sleek n s =
   DD.no_1(* _loop *) "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 

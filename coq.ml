@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Create the input file for Coq
 *)

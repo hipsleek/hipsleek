@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Share_prover
 module PrvComms =
 struct
@@ -86,7 +87,6 @@ struct
     with
     | e ->  ()
   let restart start stop = stop ();  start ()
-end;;
 (* to delete *)
 (* module Ss_Z3:SAT_SLV = functor (Sv:SV) -> *)
 (* struct *)

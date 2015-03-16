@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
 2011: Immutability module:

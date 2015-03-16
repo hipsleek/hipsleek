@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*this module supports graph on physical heap*)
 

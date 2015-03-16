@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 let tmp_files_path = ref ""
 
 (*path for the temporary files used by the prover. If you change this path here it is 
