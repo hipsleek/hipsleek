@@ -1401,6 +1401,7 @@ let process_rel_infer pre_rels post_rels =
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
   (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
   (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
+  (* let _ = print_endline "process_rel_infer" in *)
   let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in

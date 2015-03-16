@@ -1,58 +1,61 @@
 
-!!!Full processing file "ex20b-array_exists.ss"
-Parsing file "ex20b-array_exists.ss" by default parser...
+!!!Full processing file "ex23a-array-loop.ss"
+Parsing file "ex23a-array-loop.ss" by default parser...
 
-!!! processing primitives "["prelude.ss"]
+!!! processing primitives "["prelude_aux.ss"]
 Starting Omega.../usr/local/bin/oc
 
-Checking procedure foo$int... 
-dprint: ex20b-array_exists.ss:14: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+Checking procedure loop$int[]... 
+dprint: ex23a-array-loop.ss:8: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
 
 Successful States:
 [
  Label: []
- State:htrue&r_36'=a_37'[i_38'] & i_38'<=ahaub_1349 & ahalb_1348<=i_38' & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',i_38') & dom(a_37',ahalb,ahaub) & i_38'<=ahaub & ahalb<=i_38' & dom(a_1347,ahalb,ahaub) & x'=x & i_38'=5&{FLOW,(4,5)=__norm#E}[]
-       es_ho_vars_map: []htrue&r_36'=a_37'[i_38'] & i_38'<=ahaub_1349 & ahalb_1348<=i_38' & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',i_38') & dom(a_37',ahalb,ahaub) & i_38'<=ahaub & ahalb<=i_38' & dom(a_1347,ahalb,ahaub) & x'=x & i_38'=5
+ State:emp&MayLoop[] & 0<=(a[5]) & a'=a&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: []emp&MayLoop[] & 0<=(a[5]) & a'=a
 
  ]
 
-dprint: ex20b-array_exists.ss:16: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+dprint: ex23a-array-loop.ss:11: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
 
 Successful States:
 [
- Label: []
- State:(exists a_37': htrue&r_36'=a_37'[5] & 5<=ahaub_1349 & ahalb_1348<=5 & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',5) & dom(a_37',ahalb,ahaub) & 5<=ahaub & ahalb<=5 & dom(a_1347,ahalb,ahaub) & x'=x&{FLOW,(4,5)=__norm#E})[]
-       es_ho_vars_map: []EXISTS(a_37': htrue&r_36'=a_37'[5] & 5<=ahaub_1349 & ahalb_1348<=5 & dom(a_37',ahalb_1348,ahaub_1349) & ahaub=ahaub_1349 & ahalb=ahalb_1348 & update_array_1d(a_1347,a_37',1+x',5) & dom(a_37',ahalb,ahaub) & 5<=ahaub & ahalb<=5 & dom(a_1347,ahalb,ahaub) & x'=x)[]
+ Label: [(,0 ); (,1 )]
+ State:(exists v_int_10_1160': emp&update_array_1d(a,a',v_int_10_1160',5) & v_int_10_1160'+1=a[5] & 0<=(a[5]) & 0<(a[5]) & v_bool_9_1161'&{FLOW,(4,5)=__norm#E})[]
+       es_ho_vars_map: []EXISTS(v_int_10_1160': emp&update_array_1d(a,a',v_int_10_1160',5) & v_int_10_1160'+1=a[5] & 0<=(a[5]) & 0<(a[5]) & v_bool_9_1161')[]
 
  ]
 
-Procedure foo$int SUCCESS.
+dprint: ex23a-array-loop.ss:13: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
 
-*************************************
-******pure relation assumption*******
-*************************************
-[RELDEFN post_1333: ( a_1355[5]=res & x=res-1) -->  post_1333(x,res)]
-*************************************
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:(exists a_1215: emp&a'[5]=0 & v_bool_9_1161' & 0<(a[5]) & 0<=(a[5]) & v_int_10_1214+1=a[5] & update_array_1d(a,a_1215,v_int_10_1214,5)&{FLOW,(4,5)=__norm#E})[]
+       es_ho_vars_map: []EXISTS(a_1215: emp&a'[5]=0 & v_bool_9_1161' & 0<(a[5]) & 0<=(a[5]) & v_int_10_1214+1=a[5] & update_array_1d(a,a_1215,v_int_10_1214,5))[]
 
-!!!  post_1333(x,res) = ( a_1355[5]=res & x=res-1)
-!!! bottom_up_fp:[( post_1333(x,res), exists(a_1355:a_1355[5]=res) & x=res-1)]
-!!! fixpoint:[( post_1333(x,res), exists(a_1355:a_1355[5]=res) & x=res-1, true, true)]
-!!! REL POST :  post_1333(x,res)
-!!! POST:  exists(a_1355:a_1355[5]=res) & x=res-1
-!!! REL PRE :  true
-!!! PRE :  true
-Post Inference result:
-foo$int
- EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
-         EAssume 
-           htrue&exists(a_1355:a_1355[5]=res) & x=res-1&
-           {FLOW,(4,5)=__norm#E}[]
-           
-Stop Omega... 77 invocations 
+ ]
+
+dprint: ex23a-array-loop.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 2  [(,0 ); (,1 )];  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:(exists a_1215: emp&a'[5]=0 & v_bool_9_1161' & 0<(a[5]) & 0<=(a[5]) & v_int_10_1214+1=a[5] & update_array_1d(a,a_1215,v_int_10_1214,5)&{FLOW,(4,5)=__norm#E})[]
+       es_ho_vars_map: []EXISTS(a_1215: emp&a'[5]=0 & v_bool_9_1161' & 0<(a[5]) & 0<=(a[5]) & v_int_10_1214+1=a[5] & update_array_1d(a,a_1215,v_int_10_1214,5))[]
+;
+ Label: [(,1 ); (,2 )]
+ State:emp&!(v_bool_9_1161') & (a'[5])<=0 & a'=a & 0<=(a[5])&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: []emp&!(v_bool_9_1161') & (a'[5])<=0 & a'=a & 0<=(a[5])
+
+ ]
+
+Procedure loop$int[] SUCCESS.
+Stop Omega... 46 invocations 
 0 false contexts at: ()
 
-!!! log(small):(0.18176,230)
-Total verification time: 0.612368 second(s)
-	Time spent in main process: 0.552049 second(s)
-	Time spent in child processes: 0.060319 second(s)
+!!! log(small):(0.170229,197)
+Total verification time: 0.525536 second(s)
+	Time spent in main process: 0.502572 second(s)
+	Time spent in child processes: 0.022964 second(s)
 

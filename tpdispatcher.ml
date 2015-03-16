@@ -12,7 +12,7 @@ open Mcpure_D
 open Log
 open Printf
 open Label_aggr
-open Translate_out_array_in_cpure_formula
+(* open Translate_out_array_in_cpure_formula *)
 module CP = Cpure
 module MCP = Mcpure
 module NM = Auxnorm
@@ -1805,7 +1805,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-  let f = new_translate_out_array_in_one_formula_split f in
+  let f = Translate_out_array_in_cpure_formula.new_translate_out_array_in_one_formula_split f in
   (*let f = drop_array_formula f in*)
   (* let _ = print_endline ("tp_is_sat After drop: "^(Cprinter.string_of_pure_formula f)) in *)
 
@@ -1863,7 +1863,7 @@ let om_simplify f =
 
 (* Take out formulas that omega cannot handle*)
 let om_simplify f=
-  Translate_out_array_in_cpure_formula.split_and_combine om_simplify can_be_simplify f
+  Translate_out_array_in_cpure_formula.split_and_combine om_simplify Translate_out_array_in_cpure_formula.can_be_simplify f
 ;;
 
 let om_simplify f =
@@ -2026,7 +2026,7 @@ let om_pairwisecheck f =
 
 (* ZH: Take out the array part *)
 let om_pairwisecheck f =
-  Translate_out_array_in_cpure_formula.split_and_combine om_pairwisecheck (fun f-> not (contain_array f)) f
+  Translate_out_array_in_cpure_formula.split_and_combine om_pairwisecheck (fun f-> not (Translate_out_array_in_cpure_formula.contain_array f)) f
 ;;
 
 let om_pairwisecheck f =
@@ -2469,8 +2469,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let ante = translate_array_relation ante in *)
   
   (* let n_ante,n_conseq = new_translate_out_array_in_imply_full ante conseq in *)
-  let n_ante,n_conseq = new_translate_out_array_in_imply_split_full ante conseq in
-  let n_ante = drop_array_formula n_ante in
+  let n_ante,n_conseq = Translate_out_array_in_cpure_formula.new_translate_out_array_in_imply_split_full ante conseq in
+  let n_ante = Translate_out_array_in_cpure_formula.drop_array_formula n_ante in
   (* let _ = print_endline ("##After process: ante: "^(Cprinter.string_of_pure_formula n_ante)^"\n conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_ante: "^(Cprinter.string_of_pure_formula n_ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache n_conseq: "^(Cprinter.string_of_pure_formula n_conseq)) in *)

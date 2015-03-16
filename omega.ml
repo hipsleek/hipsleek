@@ -490,6 +490,14 @@ let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
     let pe0 = drop_varperm_formula pe in
+    let pe0 =
+      if !Globals.array_translate
+      then Translate_out_array_in_cpure_formula.drop_array_formula pe0
+      else pe0
+    in
+
+
+
     let svl0 = Cpure.fv pe0 in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss = List.combine svl fr_svl in

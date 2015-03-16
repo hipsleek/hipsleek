@@ -543,6 +543,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
       let pre_vars = CP.remove_dups_svl (List.fold_left (fun pres proc ->
           pres @ (List.map (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) pres scc) in
+      (*let _ = print_endline ("pre_vars!!!"^(Cprinter.string_of_typed_spec_var_list pre_vars)) in*)
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
       try
@@ -606,6 +607,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 ) ("(" ^ (pr pf1) ^")",(pr pf2) ^ " = ") tl in
             let _ = DD.binfo_pprint (s2 ^ s1) no_pos in
             (* let _ = DD.binfo_hprint (add_str "constraints" (pr_list (pr_pair pr (fun _ -> "")))) post_rel_df_new no_pos in *)
+            let _ = print_endline ("Pi.infer_pure") in
             let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars (List.hd proc_specs) in
             let _ = DD.ninfo_hprint (add_str "bottom_up_fp0" (pr_list (pr_pair pr pr))) bottom_up_fp0 no_pos in
             (* let bottom_up_fp0 = List.fold_left (fun acc proc_spec -> acc@(Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec)) [] proc_specs in *)
