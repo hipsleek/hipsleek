@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/rec-f91a1.ss"
 Parsing file "t/rec-f91a1.ss" by default parser...
@@ -13,15 +14,15 @@ Procedure f91$int SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1331_1332: ( n=res & 91<=res) -->  post_1331_1332(n,res),
-RELDEFN post_1331_1333: ( post_1331_1332(v_int_14_1374,res) & 91<=v_int_14_1374 & n=90 & n'=90 & 
-post_1331_1332(1+n',v_int_14_1374)) -->  post_1331_1333(n,res),
-RELDEFN post_1331_1333: ( post_1331_1333(v_int_14_1377,res) & v_int_14_1377<=90 & n=90 & n'=90 & 
-post_1331_1332(1+n',v_int_14_1377)) -->  post_1331_1333(n,res),
-RELDEFN post_1331_1333: ( post_1331_1332(v_int_14_1380,res) & 91<=v_int_14_1380 & n<=89 & 
-post_1331_1333(1+n,v_int_14_1380)) -->  post_1331_1333(n,res),
-RELDEFN post_1331_1333: ( post_1331_1333(v_int_14_1383,res) & v_int_14_1383<=90 & n<=89 & 
-post_1331_1333(1+n,v_int_14_1383)) -->  post_1331_1333(n,res)]
+[RELDEFN post_1331_1332: ( n=res & 91<=res) -->  post_1331_1332(n,res,flow),
+RELDEFN post_1331_1333: ( 91<=v_int_14_1374 & n=90 & n'=90 & post_1331_1332(v_int_14_1374,res,flow) & 
+post_1331_1332(1+n',v_int_14_1374,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( v_int_14_1377<=90 & n=90 & n'=90 & post_1331_1333(v_int_14_1377,res,flow) & 
+post_1331_1332(1+n',v_int_14_1377,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( 91<=v_int_14_1380 & n<=89 & post_1331_1332(v_int_14_1380,res,flow) & 
+post_1331_1333(1+n,v_int_14_1380,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( v_int_14_1383<=90 & n<=89 & post_1331_1333(v_int_14_1383,res,flow) & 
+post_1331_1333(1+n,v_int_14_1383,flow)) -->  post_1331_1333(n,res,flow)]
 *************************************
 
 Post Inference result:
@@ -29,7 +30,7 @@ f91$int
  ECase case {
         91<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
                          EAssume 
-                           htrue&91<=n & n>=91 & n=res&
+                           htrue&91<=n & res>=91 & res=n&
                            {FLOW,(4,5)=__norm#E}[]
                             ;
         n<91 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
@@ -75,19 +76,3 @@ Base/Rec Case Splitting:
 [	f91: [[5] 91<=n@B,[6] n<=90@R]
 ]
 Starting z3... 
-Termination Inference Result:
-f91:  case {
-  91<=n -> requires emp * N & Term[31,1]
-     ensures true * N & n=res & 
-  n>=91 & 91<=n; 
-  n<=90 -> requires emp * N & Term[31,2,90+(-1*
-  n)]
-     ensures true * N & 91=res & 90>=n & n<91; 
-  }
-
-6 false contexts at: ( (13,13)  (14,7)  (14,24)  (14,22)  (14,18)  (14,14) )
-
-Total verification time: 0.525075 second(s)
-	Time spent in main process: 0.444504 second(s)
-	Time spent in child processes: 0.080571 second(s)
-

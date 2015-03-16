@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/ll-insert.ss"
 Parsing file "t/ll-insert.ss" by default parser...
@@ -11,8 +12,9 @@ Procedure insert$node~int SUCCESS.
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1415: ( r_1396=2 & n=1) -->  post_1415(r_1396,n,a),
-RELDEFN post_1415: ( r_1467+1=r_1396 & n_1446+1=n & 2<=r_1396 & 1<=n & post_1415(r_1467,n_1446,a)) -->  post_1415(r_1396,n,a)]
+[RELDEFN post_1415: ( r_1396=2 & n=1) -->  post_1415(r_1396,n,a,flow),
+RELDEFN post_1415: ( r_1467+1=r_1396 & n_1446+1=n & 2<=r_1396 & 1<=n & 
+post_1415(r_1467,n_1446,a,flow)) -->  post_1415(r_1396,n,a,flow)]
 *************************************
 
 Post Inference result:
@@ -31,8 +33,8 @@ Procedure insert2$node~int SUCCESS.
 ******pure relation assumption*******
 *************************************
 [RELASS [pre_1479]: ( pre_1479(n,a)) -->  n!=0,
-RELDEFN post_1480: ( r_1398=2 & n=1 & pre_1479(n,a)) -->  post_1480(r_1398,n,a),
-RELDEFN post_1480: ( r_1398=1+n & 2<=n & pre_1479(n,a)) -->  post_1480(r_1398,n,a)]
+RELDEFN post_1480: ( r_1398=2 & n=1 & pre_1479(n,a)) -->  post_1480(r_1398,n,a,flow),
+RELDEFN post_1480: ( r_1398=1+n & 2<=n & pre_1479(n,a)) -->  post_1480(r_1398,n,a,flow)]
 *************************************
 
 Post Inference result:
@@ -46,7 +48,7 @@ insert2$node~int
 
 0 false contexts at: ()
 
-Total verification time: 0.970227 second(s)
-	Time spent in main process: 0.820705 second(s)
-	Time spent in child processes: 0.149522 second(s)
+Total verification time: 1.332082 second(s)
+	Time spent in main process: 1.13207 second(s)
+	Time spent in child processes: 0.200012 second(s)
 

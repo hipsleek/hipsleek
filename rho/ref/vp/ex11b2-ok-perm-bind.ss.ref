@@ -10,7 +10,7 @@ Procedure foo$cell SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.363582 second(s)
-	Time spent in main process: 0.345854 second(s)
-	Time spent in child processes: 0.017728 second(s)
+Total verification time: 0.412023 second(s)
+	Time spent in main process: 0.388023 second(s)
+	Time spent in child processes: 0.024 second(s)
 

@@ -4,6 +4,7 @@
  *)
 
 open Globals
+open VarGen
 open GlobProver
 open Gen.Basic
 module CP = Cpure
@@ -99,10 +100,10 @@ let rec read_till_prompt (channel: in_channel) : string =
 let send_cmd cmd =
   if !is_reduce_running then 
     let cmd = cmd ^ ";\n" in
-    let _ = output_string !process.outchannel cmd in
-    let _ = flush !process.outchannel in
+    let () = output_string !process.outchannel cmd in
+    let () = flush !process.outchannel in
     let k = read_till_prompt !process.inchannel in
-    let _ = set_proof_result ("3:"^k) in
+    let () = set_proof_result ("3:"^k) in
     ()
 
 let set_rl_mode mode =
@@ -130,7 +131,7 @@ let start () =
       let set_process proc = process := proc in
       let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
       (* let rl_bin = "redcsl" in *)
-      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      let () = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       print_endline "Starting Reduce... ";
       flush stdout
   end
@@ -151,7 +152,7 @@ let stop () =
         log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
-      let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      let () = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
       print_endline "Stopping Reduce... ";
       is_reduce_running := false
   end
@@ -173,8 +174,8 @@ let send_and_receive f =
   if !is_reduce_running then
     try
         let fnc () =
-          let _ = set_proof_string ("2:"^f^"\n") in
-          let _ = send_cmd f in
+          let () = set_proof_string ("2:"^f^"\n") in
+          let () = send_cmd f in
           input_line !process.inchannel
         in
         let fail_with_timeout () =
@@ -185,7 +186,7 @@ let send_and_receive f =
             Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout
           else fnc ()
         in
-        let _ = set_proof_result answ in
+        let () = set_proof_result answ in
         answ
     with
         (* Timeout exception is not expected here except for dis_provers_timeout *)
@@ -233,7 +234,7 @@ let time func =
 
 (* call omega's function func and collect the running time *)
 let call_omega func =
-  let _ = incr omega_call_count in
+  let () = incr omega_call_count in
   let res, time = time func in
   linear_time := !linear_time +. time;
   (*log DEBUG (string_of_float time);*)
@@ -241,7 +242,7 @@ let call_omega func =
 
 (* call redlog's function func and collect the running time *)
 let call_redlog func =
-  let _ = incr redlog_call_count in
+  let () = incr redlog_call_count in
   let res, time = time func in
   nonlinear_time := !nonlinear_time +. time;
   (*log DEBUG (string_of_float time);*)
@@ -366,7 +367,7 @@ let rec rl_of_formula_x pr_w pr_s f0 =
   in helper f0
 
 let rl_of_formula pr_w pr_s f0 =
-  let _ = set_prover_type() in
+  let () = set_prover_type() in
   rl_of_formula_x pr_w pr_s f0
 
 let rl_of_formula pr_w pr_s f0 =
@@ -388,7 +389,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         Hashtbl.find vnames name
       with Not_found ->
         let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
-        let _ = Hashtbl.add vnames name fresh_name in
+        let () = Hashtbl.add vnames name fresh_name in
         fresh_name
     in
     CP.SpecVar (typ, short_name, prm)
@@ -676,10 +677,10 @@ let find_bound_linear_b_formula v f0 =
   in
   let find_min_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, " ^ (rl_of_spec_var v) ^ ")" in
   let find_max_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, -" ^ (rl_of_spec_var v) ^ ")" in
-  let _ = send_cmd "on rounded" in
+  let () = send_cmd "on rounded" in
   let min_out = send_and_receive find_min_cmd in
   let max_out = send_and_receive find_max_cmd in
-  let _ = send_cmd "off rounded" in
+  let () = send_cmd "off rounded" in
   let min = ceil2 (parse min_out) in
   let max = floor2 (parse max_out) in
   (min, max)
@@ -1011,7 +1012,7 @@ let elim_exists_with_ineq f =
 
 
 let elim_exist_quantifier f =
-  let _ = incr ee_call_count in
+  let () = incr ee_call_count in
   let f = elim_exists_with_eq f in
   let f = elim_exists_min f in
   let f = elim_exists_max f in
@@ -1096,7 +1097,7 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
-    let _ = if !pasf then begin 
+    let () = if !pasf then begin 
       if is_linear then set_rl_mode PASF
       else set_rl_mode OFSF end
     in 
@@ -1130,7 +1131,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula pr_s pr_w f in
   let rl_input = "rlall(" ^ frl ^")" in
-  (* let _ = print_endline ("rl_input 2 = " ^ rl_input) in *)
+  (* let () = print_endline ("rl_input 2 = " ^ rl_input) in *)
   let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
@@ -1152,7 +1153,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
     let wf = if (!no_pseudo_ops || CP.is_float_formula f) 
       then f 
       else weaken_formula f in
-    let _ = if !pasf then begin 
+    let () = if !pasf then begin 
       if (is_linear_formula f) then set_rl_mode PASF
       else set_rl_mode OFSF end
     in 
@@ -1169,13 +1170,13 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
         if (has_eq_int eef) then
           begin
               (* If there is exist quantified over integers, issue the warning*)
-              let _ = if not !Globals.web_compile_flag then
+              let () = if not !Globals.web_compile_flag then
               (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"))
               in
               valid eef
           end
         else
-          let _ = incr success_ee_count in
+          let () = incr success_ee_count in
           valid eef
       else 
         valid f
@@ -1209,8 +1210,8 @@ let imply_ops_b pr_w pr_s ante conseq imp_no =
         res
       with Not_found ->
           let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
-          let _ = if time > cache_threshold then
-                let _ = log DEBUG "Caching."in
+          let () = if time > cache_threshold then
+                let () = log DEBUG "Caching."in
                 Hashtbl.add !impl_cache fstring res
           in res
   in
@@ -1287,11 +1288,11 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
   else 
     let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
     (* pasf only works with Presburger arithmetic, which is already handled by Omega *)
-    (* let _ = send_cmd "rlset pasf" in *) 
+    (* let () = send_cmd "rlset pasf" in *) 
     (* let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in *)
     let redlog_result = send_and_receive ("rlqe " ^ rlf) in 
-    (* let _ = print_endline ("RL: " ^ redlog_result) in *)
-    (* let _ = send_cmd "rlset ofsf" in *)
+    (* let () = print_endline ("RL: " ^ redlog_result) in *)
+    (* let () = send_cmd "rlset ofsf" in *)
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
     simpler_f
@@ -1364,8 +1365,8 @@ let rl_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
 		let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars rlvarsnames in
 		let vars_map = List.map2 (fun v w -> (v,w)) vars rlvarsnames in
 		let vars_rev_map = List.map2 (fun v w -> (CP.name_of_spec_var w,v)) vars newvars in
-		(*let _ = print_endline "Variable standardization :" in
-		let _ = List.map (fun (x,y) -> print_endline (x ^ "<--->" ^ (!CP.print_sv y))) vars_rev_map in*)
+		(*let () = print_endline "Variable standardization :" in
+		let todo_unk = List.map (fun (x,y) -> print_endline (x ^ "<--->" ^ (!CP.print_sv y))) vars_rev_map in*)
 			(newvars, vars_map, vars_rev_map)
 	in
 	let newvars, vars_map, vars_rev_map = helper "x" vars in
@@ -1382,10 +1383,10 @@ let parse_assignment (assignment : string) : (string * string) =
 		let lhs = Gen.SysUti.trim_str lhs in
 		let rhs = String.sub assignment (i+1) (l-i-1) in
 		let rhs = Gen.SysUti.trim_str rhs in
-		(*let _ = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
+		(*let () = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
 			(lhs,rhs)
 	with
-		| Not_found -> let _ = print_string ("parse_assignment is called with input " ^ assignment) 
+		| Not_found -> let () = print_string ("parse_assignment is called with input " ^ assignment) 
 							in ("","")
 ;;
 
@@ -1396,8 +1397,8 @@ let group_eq_vars (ass : (string * string) list) =
 	to group the variables according to the string representation of 
 	the right hand side *)
 	let ass_sorted = List.sort (fun (l1,r1) (l2,r2) -> String.compare r1 r2) ass in
-	(*let _ = print_endline "\nSorted assignments:" in
-	let _ = List.map (fun (lhs,rhs) -> print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n")) ass_sorted in*)
+	(*let () = print_endline "\nSorted assignments:" in
+	let todo_unk = List.map (fun (lhs,rhs) -> print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n")) ass_sorted in*)
 
 	(** Internal function to partition the solution **)
 	let rec partition (a : (string * string) list) (res : (string * (string list)) list) = 
@@ -1416,8 +1417,8 @@ let group_eq_vars (ass : (string * string) list) =
 
 	in
 	let grouped_vars = partition ass_sorted [] in
-	(*let _ = print_endline "\nPartitioning result:" in
-	let _ = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
+	(*let () = print_endline "\nPartitioning result:" in
+	let todo_unk = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
 			grouped_vars in*)
 		grouped_vars
 ;;	
@@ -1445,12 +1446,12 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let solved_vars = List.map fst result in
 		let all_vars = List.map fst revmap in
 		let param_vars = Gen.BList.difference_eq (fun x y -> x = y) all_vars solved_vars in
-		(*let _ = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
+		(*let () = print_endline ("Parameters : " ^ (String.concat "," param_vars)) in*)
 		(* let param_vars_x = List.filter (fun x -> x.[0] = 'x') param_vars in *)
-		(*let _ = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
+		(*let () = print_endline ("Parameters out of bv: " ^ (String.concat "," param_vars_x)) in*)
 		let result = List.append result (List.map (fun x -> (x,x)) param_vars) in
 		(*let vars_fully_solved = List.map fst (List.filter (fun (x,y) -> not (String.contains y 'x')) result) in
-		let _ = print_endline ("Variable fully solved : " ^ (String.concat "," vars_fully_solved)) in*)
+		let () = print_endline ("Variable fully solved : " ^ (String.concat "," vars_fully_solved)) in*)
 
 		(* From the solution, find the string representation *)
 		let rec recover_strrep e m = (** Given an expression and a map of safe variable --> real variable, recover the real expression **)
@@ -1464,19 +1465,19 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let strrep = try
 			List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result 
 		with
-			| Not_found -> let _ = print_endline "Assoc NotFound at strrep" in []
+			| Not_found -> let () = print_endline "Assoc NotFound at strrep" in []
 		in
-		(* let _ = print_endline "String representations: " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in *)
+		(* let () = print_endline "String representations: " in
+		let todo_unk = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " --> " ^ y)) strrep in *)
 
 		(* Convert back to our system format *)
 		let eqclasses = List.map snd (group_eq_vars result) in
 		let eqclasses = List.map (fun vnamelist -> List.map (fun vname -> try
 				List.assoc vname revmap
-			with | Not_found -> let _ = print_endline "Assoc NotFound at eqclasses" in failwith ""
+			with | Not_found -> let () = print_endline "Assoc NotFound at eqclasses" in failwith ""
 		) vnamelist) eqclasses in
-		(*let _ = print_endline "Equivalent classes : " in
-		let _ = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
+		(*let () = print_endline "Equivalent classes : " in
+		let todo_unk = List.map (fun x -> print_endline (!CP.print_svl x)) eqclasses in*)
 		(* Build the substitution map *)
 		
 		(** Internal function to select a candidate to do replacement in an equivalent class **)
@@ -1496,8 +1497,8 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
 		let sst = List.map2 (fun x y -> List.map (fun z -> (z,x)) y) candidates replace_targets in
 		let sst = List.flatten sst in
 		let sst = List.filter (fun (x,y) -> not (CP.eq_spec_var x y)) sst in
-(*		let _ = print_endline "Replacements : " in
-		let _ = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in *)
+(*		let () = print_endline "Replacements : " in
+		let todo_unk = List.map (fun (x,y) -> print_endline ((!CP.print_sv x) ^ " ---> " ^ (!CP.print_sv y))) sst in *)
 			(sst, strrep)
 ;;
 
@@ -1511,10 +1512,10 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
  *)
 let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	(* Start redlog UNNECESSARY BUT FAIL WITHOUT THIS DUE TO IO. *)
-	(*let _ = print_endline "solve_eqns :: starting reduce ..." in*)
-	(*let _ = print_endline "Initiating solving sequence ..." in*)
-	let _ = start () in
-	(*let _ = print_endline "solve_eqns :: reduce started!" in*)
+	(*let () = print_endline "solve_eqns :: starting reduce ..." in*)
+	(*let () = print_endline "Initiating solving sequence ..." in*)
+	let () = start () in
+	(*let () = print_endline "solve_eqns :: reduce started!" in*)
 
 	(* filter out the array accesses *)
 	let rec contains_no_arr e = match e with
@@ -1529,27 +1530,27 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	let unks = List.flatten unks in
 	
 	(* Rearrange the variables so that parameters lies at the end! *)
-	(*let _ = print_endline ("Base variables : " ^ (!CP.print_svl bv)) in*)
+	(*let () = print_endline ("Base variables : " ^ (!CP.print_svl bv)) in*)
 	let bv = List.append (List.filter (fun x -> match x with | CP.SpecVar (_,"res",_) -> true | _ -> false) unks) bv in (* Add res to bv *)
 	let bv = Gen.BList.remove_dups_eq CP.eq_spec_var bv in
 	let bv = Gen.BList.intersect_eq CP.eq_spec_var bv unks in
-	(*let _ = print_endline ("Base variables appeared in formulas: " ^ (!CP.print_svl bv)) in*)
+	(*let () = print_endline ("Base variables appeared in formulas: " ^ (!CP.print_svl bv)) in*)
 	let unks = Gen.BList.difference_eq CP.eq_spec_var unks bv in
 	(*let unks = List.append unks bv in*)
-	(*let _ = print_endline ("Rearranged list of unknowns : " ^ (!CP.print_svl unks)) in*)
+	(*let () = print_endline ("Rearranged list of unknowns : " ^ (!CP.print_svl unks)) in*)
 	(* Swap all primed variables *)
 	let red_unks, unksmap, unksrmap = rl_vars_map unks bv in
 	(*let red_bv, bvmaps, bvrmap = rl_vars_map bv in*)
 	(* Generate the reduce list of unknowns *)
 	let input_unknowns = List.map CP.name_of_spec_var red_unks in
 	let input_unknowns = "{" ^ (String.concat "," input_unknowns) ^ "}" in
-	(*let _ = print_endline "\nVariables to solve for : " in
-	let _ = print_endline input_unknowns in*)
+	(*let () = print_endline "\nVariables to solve for : " in
+	let () = print_endline input_unknowns in*)
 	(* Internal function to generate reduce equations *)
 	let rec rl_of_exp varsmap e = match e with
 		| CP.Null _ -> "null" (* null serves as a symbollic variable *)
 		| CP.Var (v, _) -> (try List.assoc v varsmap with 
-			| Not_found -> let _ = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
+			| Not_found -> let () = print_endline ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
 		| CP.IConst (i, _) -> string_of_int i
 		| CP.FConst (f, _) -> string_of_float f
 		| CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp varsmap e1) ^ " + " ^ (rl_of_exp varsmap e2) ^ ")"
@@ -1572,16 +1573,16 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 	try
 	let input_eqns = List.map (fun (e1,e2) -> (rl_of_exp unksmap e1) ^ " = " ^ (rl_of_exp unksmap e2)) eqns in
 	let input_eqns = "{" ^ (String.concat "," input_eqns) ^ "}" in
-	(*let _ = print_endline "\nInput equations: " in
-	let _ = print_endline input_eqns in *)
+	(*let () = print_endline "\nInput equations: " in
+	let () = print_endline input_eqns in *)
 
 	(* Pipe the solve request to reduce process *)
 	let input_command = "solve(" ^ input_eqns ^ "," ^ input_unknowns ^ ")" in
-	(*let _ = print_endline ("\nReduce input command:" ^ input_command) in*)
-	let _ = send_cmd input_command in
+	(*let () = print_endline ("\nReduce input command:" ^ input_command) in*)
+	let () = send_cmd input_command in
 	(* Read, parse and return *)
 	let red_result = read_stream () in
-	(*let _ = print_endline ("\nOriginal solution : " ^ red_result) in*)
+	(*let () = print_endline ("\nOriginal solution : " ^ red_result) in*)
 	let sst,strrep = parse_reduce_solution red_result bv unksrmap in
 		(sst,strrep)
 	with

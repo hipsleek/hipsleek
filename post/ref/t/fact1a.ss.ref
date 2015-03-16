@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/fact1a.ss"
 Parsing file "t/fact1a.ss" by default parser...
@@ -12,9 +13,9 @@ Procedure fact$int SUCCESS.
 ******pure relation assumption*******
 *************************************
 [RELDEFN pre_1330: ( pre_1330(x) & x=1+v_int_9_1308' & (v_int_9_1308'+1)!=0) -->  pre_1330(v_int_9_1308'),
-RELDEFN post_1331: ( x=0 & res=1 & pre_1330(x)) -->  post_1331(x,res),
-RELDEFN post_1331: ( post_1331(v_int_9_1355,v_int_9_1358) & res=1+v_int_9_1358 & v_int_9_1355+
-1=x & x!=0 & pre_1330(x)) -->  post_1331(x,res)]
+RELDEFN post_1331: ( x=0 & res=1 & pre_1330(x)) -->  post_1331(x,res,flow),
+RELDEFN post_1331: ( res=1+v_int_9_1358 & v_int_9_1355+1=x & x!=0 & 
+post_1331(v_int_9_1355,v_int_9_1358,flow) & pre_1330(x)) -->  post_1331(x,res,flow)]
 *************************************
 
 Post Inference result:
@@ -26,7 +27,7 @@ fact$int
 
 0 false contexts at: ()
 
-Total verification time: 0.389566 second(s)
-	Time spent in main process: 0.330342 second(s)
-	Time spent in child processes: 0.059224 second(s)
+Total verification time: 0.436027 second(s)
+	Time spent in main process: 0.372023 second(s)
+	Time spent in child processes: 0.064004 second(s)
 

@@ -1,3 +1,4 @@
+open VarGen
 module DD = Debug
 open Globals
 open Gen

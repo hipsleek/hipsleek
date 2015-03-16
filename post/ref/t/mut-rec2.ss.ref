@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/mut-rec2.ss"
 Parsing file "t/mut-rec2.ss" by default parser...
@@ -73,7 +74,7 @@ foo3$int
 
 0 false contexts at: ()
 
-Total verification time: 0.489827 second(s)
-	Time spent in main process: 0.393651 second(s)
-	Time spent in child processes: 0.096176 second(s)
+Total verification time: 0.564033 second(s)
+	Time spent in main process: 0.448027 second(s)
+	Time spent in child processes: 0.116006 second(s)
 

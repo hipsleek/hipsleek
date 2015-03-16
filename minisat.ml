@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open GlobProver
 open Gen.Basic
@@ -112,7 +113,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
     | SubAnn _        -> ""
     | Eq (e1, e2, _)  ->  
           (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
-          (* let _ = print_endline("minisat of e1: "^li^" minisat of e2: "^ri) in *)
+          (* let () = print_endline("minisat of e1: "^li^" minisat of e2: "^ri) in *)
           (* if(li=ri) then                                    *)
           (* 	begin                                           *)
           (* 	let index=addBooleanConst (li) in index         *)
@@ -463,7 +464,7 @@ and can_minisat_handle_formula (f: Cpure.formula) : bool =
 let rec collect_output (chn: in_channel)  : (string * bool) =
   try
     let line = input_line chn in
-    (* let _ = print_endline ("  -- output: " ^ line) in *)
+    (* let () = print_endline ("  -- output: " ^ line) in *)
     if line = "SATISFIABLE" then
       (line, true)
     else if (line = "c SAT")	then
@@ -524,27 +525,27 @@ let stop () =
   if !is_minisat_running then (
       let num_tasks = !test_number - !last_test_number in
       print_string_if !Globals.enable_count_stats ("\nStop minisat... " ^ (string_of_int !minisat_call_count) ^ " invocations "); flush stdout;
-      let _ = Procutils.PrvComms.stop !log_all_flag log_file !minisat_process num_tasks Sys.sigkill (fun () -> ()) in
+      let () = Procutils.PrvComms.stop !log_all_flag log_file !minisat_process num_tasks Sys.sigkill (fun () -> ()) in
       is_minisat_running := false;
   )
 
 (* restart Omega system *)
 let restart reason =
   if !is_minisat_running then (
-      let _ = print_string_if !Globals.enable_count_stats (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
+      let () = print_string_if !Globals.enable_count_stats (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
       Procutils.PrvComms.restart !log_all_flag log_file reason "minisat" start stop
   )
   else (
-      let _ = print_string_if !Globals.enable_count_stats (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
+      let () = print_string_if !Globals.enable_count_stats (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
   )
     
 (* Runs the specified prover and returns output *)
 let check_problem_through_file (input: string) (timeout: float) : bool =
   (* debug *)
-  (* let _ = print_endline "** In function minisat.check_problem" in *)
+  (* let () = print_endline "** In function minisat.check_problem" in *)
   let file_suffix = "bach_eq_minisat" in
   let infile =(file_suffix) ^ ".cnf" in
-  (* let _ = print_endline ("-- input: " ^ input^"\n") in  *)
+  (* let () = print_endline ("-- input: " ^ input^"\n") in  *)
   if !Globals.print_original_solver_input then
     begin
       print_endline_quiet "MINISAT INPUT";
@@ -586,7 +587,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
     )
   in
   let (*tstartlog*)_ = Gen.Profiling.get_time () in
-  let _ = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
+  let () = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
   let (*tstoplog*)_ = Gen.Profiling.get_time () in
   (* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
   remove_file infile;
@@ -604,7 +605,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
 (* minisat: output for cnf format *)
 let rtc_generate_B (f:Cpure.formula) =
   let ge=G.create() and gd=G.create() and gr_e=Glabel.create() in (*ge is eq graph and gd is diseq graph*)
-  (*let _ = print_endline("INSIDE rtc_generate_B, f=="^Cprinter.string_of_pure_formula f) in*)
+  (*let () = print_endline("INSIDE rtc_generate_B, f=="^Cprinter.string_of_pure_formula f) in*)
   let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)                                                           
     match f with
       |BForm (b,_)->  minisat_cnf_of_b_formula b gr_e ge gd 
@@ -626,11 +627,11 @@ let get_cnf_from_cache ge gd gr_e=
   cache
 
 let to_minisat_cnf (ante: Cpure.formula)  =
-  (*let _ = "** In function Spass.to_minisat_cnf" in*)
+  (*let () = "** In function Spass.to_minisat_cnf" in*)
   (*let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula ante))in*)
-  (*let _ = read_line() in*)
+  (*let () = read_line() in*)
   (*let _=print_endline ("CNF Formula :" ^ (Cprinter.string_of_pure_formula (to_cnf ante)))in*)
-  (* let _ = print_endline("INSIDE to_minisat_cnf"^Cprinter.string_of_pure_formula ante) in *)
+  (* let () = print_endline("INSIDE to_minisat_cnf"^Cprinter.string_of_pure_formula ante) in *)
   let _= number_vars := 0  in
   (* let _=Gen.Profiling.push_time("stat_CNF_ori_conversion") in *)
   (* let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*) *)
@@ -639,17 +640,17 @@ let to_minisat_cnf (ante: Cpure.formula)  =
   (* let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in *)
   match ante with
     | BForm ((BConst (a,_),_),_)-> 
-          let _ = print_endline ("BForm:\n ") in 
+          let () = print_endline ("BForm:\n ") in 
           if (a) 
           then (false,"t",G.create(),G.create(),Glabel.create()) 
           else (false,"f",G.create(),G.create(),Glabel.create())
     |	_ ->
-            (* let _ = print_endline ("other\n") in  *)
+            (* let () = print_endline ("other\n") in  *)
 	    (* let _=Gen.Profiling.pop_time("stat_CNF_ori_conversion") in *)
             (*			let _=print_endline "sat true" in*)
 	    (* let _=Gen.Profiling.push_time("stat_CNF_generation_of_B") in *)
 	    let (ante_str,ge,gd,gr_e)=rtc_generate_B cnf_ante in
-            let _ = Debug.ninfo_hprint (add_str "ante_str == " pr_id) ante_str no_pos in
+            let () = Debug.ninfo_hprint (add_str "ante_str == " pr_id) ante_str no_pos in
 	    (*start generating cnf for the given CNF formula*)
 	    let temp= if(ante_str <> "0" && ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
 	    let final_res= temp(*result*)^"\n" in
@@ -674,7 +675,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* to check sat of f, minisat check the validity of negative(f) or (f => None) *)
   (* let tstartlog = Gen.Profiling.get_time () in *)
-  (* let _ = print_endline ("here"^Cprinter.string_of_pure_formula f ) in *)
+  (* let () = print_endline ("here"^Cprinter.string_of_pure_formula f ) in *)
   let (flag,minisat_input,ge,gd,gr_e) = to_minisat_cnf f in
   (* let tstoplog = Gen.Profiling.get_time () in                                                          *)
   (* let _= Globals.minisat_time_cnf_conv := !Globals.minisat_time_cnf_conv +. (tstoplog -. tstartlog) in *)
@@ -705,7 +706,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     (* let _= print_endline ("ori cnf form: "^minisat_input) in *)
     (* let tstartlog = Gen.Profiling.get_time () in *)
     let cnf_T = get_cnf_from_cache ge gd gr_e in
-    (*let _ = print_endline("get_cnf_from_cache "^cnf_T^"\n") in *)
+    (*let () = print_endline("get_cnf_from_cache "^cnf_T^"\n") in *)
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.minisat_time_BCC := !Globals.minisat_time_BCC +. (tstoplog -. tstartlog) in  *)
     (* let tstoplog = Gen.Profiling.get_time () in *)
@@ -713,10 +714,10 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     (* let _=Gen.Profiling.pop_time("stat_generation_of_T") in *)
     (* let _=Gen.Profiling.push_time("stat_check_sat_2") in *)
     let all_input=if(cnf_T <> "") then cnf_T^minisat_input else minisat_input in
-    (*let _ = print_endline("cnf_T:"^cnf_T^" minisat_input:"^minisat_input^"\n") in*)
+    (*let () = print_endline("cnf_T:"^cnf_T^" minisat_input:"^minisat_input^"\n") in*)
     (* let _=print_endline ("All input: \n"^all_input) in *)
     (* let tstartlog = Gen.Profiling.get_time () in *)
-    (* let _ = print_endline("all_input: "^all_input^"\n") in  *)
+    (* let () = print_endline("all_input: "^all_input^"\n") in  *)
     let res= check_problem_through_file (all_input) timeout in 
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
@@ -732,14 +733,14 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   let result = Debug.no_1 "minisat_is_sat" pr string_of_bool (fun _ -> minisat_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
-     let _ = print_endline ("-- minisat_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
-     let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
+     let () = print_endline ("-- minisat_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
+     let () = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result
 
 (* see imply *)
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
-  (* let _ = print_endline "** In function minisat.is_sat: " in *)
+  (* let () = print_endline "** In function minisat.is_sat: " in *)
   minisat_is_sat f sat_no 
 
 let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
@@ -749,7 +750,7 @@ let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
 (* string_of_bool is_sat f sat_no                                          *)
 
 let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
-  (* let _ = print_endline "** In function minisat.is_sat: " in *)
+  (* let () = print_endline "** In function minisat.is_sat: " in *)
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
@@ -769,7 +770,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 *)
       
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
-  (*let _ = print_endline "** In function minisat.imply:" in *)
+  (*let () = print_endline "** In function minisat.imply:" in *)
   (*  let _=List.map (fun x-> print_endline (minisat_cnf_of_spec_var x)) all in*)
   let cons= (mkNot_s conseq) in
   let imply_f= mkAnd ante cons no_pos  in
@@ -780,7 +781,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   if(res) then false else true
     
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function minisat.imply:" in *)
+  (* let () = print_endline "** In function minisat.imply:" in *)
   try
     let result = imply ante conseq timeout in
     (*bach-test*)
@@ -795,13 +796,13 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = pint_endline "** In function minisat.imply:" in *)
+  (* let () = pint_endline "** In function minisat.imply:" in *)
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_2(* _loop *) "minisat.imply" (add_str "ante" pr) (add_str "conseq" pr) string_of_bool
       (fun _ _ -> imply ante conseq timeout) ante conseq
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
-  (* let _ = print_endline "** In function minisat.imply_with_check:" in *)
+  (* let () = print_endline "** In function minisat.imply_with_check:" in *)
   Cpure.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
       (**
          * To be implemented
@@ -809,7 +810,7 @@ let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : s
 
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
-  (* let _ = print_endline "** In function minisat.simplify" in *)
+  (* let () = print_endline "** In function minisat.simplify" in *)
   try (Omega.simplify 10 f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =

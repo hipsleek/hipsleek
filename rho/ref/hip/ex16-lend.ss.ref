@@ -36,7 +36,7 @@ Error(s) detected when checking procedure f$cell
 
 0 false contexts at: ()
 
-Total verification time: 0.307858 second(s)
-	Time spent in main process: 0.292355 second(s)
-	Time spent in child processes: 0.015503 second(s)
+Total verification time: 0.396023 second(s)
+	Time spent in main process: 0.376023 second(s)
+	Time spent in child processes: 0.02 second(s)
 

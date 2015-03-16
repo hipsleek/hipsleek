@@ -1,3 +1,4 @@
+open VarGen
 (* Translate an input program with pointer into an intermediate 
    input program without
    @param prog current program declaration
@@ -105,7 +106,7 @@ let default_value (t :typ) pos : exp =
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
   match t with
     | Named c ->
-	      (try let _ = look_up_enum_def_raw prog.prog_enum_decls c in "int"
+	      (try let todo_unk = look_up_enum_def_raw prog.prog_enum_decls c in "int"
 	      with | Not_found -> c)
     |t -> string_of_typ t
 
@@ -165,7 +166,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       | VarDecl v ->
             let vars = List.map (fun (id,e0,pos) -> id) v.exp_var_decl_decls in
             let new_bvars = vars@bvars in
-            (* let _ = print_endline ("new_bvars = " ^ (string_of_ident_list new_bvars)) in *)
+            (* let () = print_endline ("new_bvars = " ^ (string_of_ident_list new_bvars)) in *)
             (new_bvars,[],[])
       | ConstDecl c ->
             let vars = List.map (fun (id,e0,pos) -> id) c.exp_const_decl_decls in
@@ -173,7 +174,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
             (new_bvars,[],[])
       | Unary u ->
             let _,fvars,fw = helper u.exp_unary_exp bvars in
-            let _ = Debug.binfo_hprint (add_str "Unary" string_of_exp) e no_pos in
+            let () = Debug.binfo_hprint (add_str "Unary" string_of_exp) e no_pos in
             ( match u.exp_unary_op with
               | OpPreInc
               | OpPreDec
@@ -197,7 +198,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       | Assign a ->
             let _,fvars1,fw1 = helper a.exp_assign_lhs bvars in
             let _,fvars2,fw2 = helper a.exp_assign_rhs bvars in
-            let _ = Debug.ninfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
+            let () = Debug.ninfo_hprint (add_str "modifies" (pr_list pr_id)) fvars1 no_pos in
             if (is_var a.exp_assign_lhs) then
               (bvars,fvars1@fvars2,fvars1@fw1@fw2)
             else (bvars,fvars1@fvars2,fw1@fw2)
@@ -221,7 +222,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
             (*ignore exp_call_recv_method*)
             (* let _,fvars1,fw1 = List.fold_right (fun (a,b,c) (aa,bs,cs) -> (a@as,b@bs,c@cs)) (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) ([],[],[]) in *)
             let _,fvars1,fw1 = accumulate c.exp_call_recv_arguments bvars in
-            let _ = Debug.ninfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
+            let () = Debug.ninfo_hprint (add_str "modifies(call)" string_of_exp) e no_pos in
             (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_recv_arguments) in *)
             (* let fvars1 = List.concat fvars_l in *)
             let _,fvars2,fw2 = helper c.exp_call_recv_receiver bvars in
@@ -238,8 +239,8 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
                   | None -> failwith "Impossible") (List.filter (fun (para,arg) ->
                 (para.param_mod = RefMod) && (is_var arg)
             ) args) in
-            let _ = Debug.ninfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
-            let _ = Debug.ninfo_hprint (add_str "ref args" (pr_list pr_id)) fw2 no_pos in
+            let () = Debug.ninfo_hprint (add_str "modifies(Ncall)" string_of_exp) e no_pos in
+            let () = Debug.ninfo_hprint (add_str "ref args" (pr_list pr_id)) fw2 no_pos in
             (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in *)
             (* let fvars = List.concat fvars_l in *)
             (bvars,fvars,fw1@fw2)
@@ -675,7 +676,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
           (new_e,vars) (*bind opens another scope*)
       | Block b ->
           (*Note: no more Block after case_normalize_program*)
-          let _ = print_endline ("Block: " ^ (pr_list (fun (id,_,_) -> id) b.exp_block_local_vars)) in
+          let () = print_endline ("Block: " ^ (pr_list (fun (id,_,_) -> id) b.exp_block_local_vars)) in
           (*b.exp_block_local_vars is empty until IastUtil.float_var_decl*)
           let new_body,_ = helper b.exp_block_body vars in
           let new_e = Block {b with exp_block_body = new_body} in
@@ -833,8 +834,8 @@ let rec trans_specs_x specs new_params flags pos =
         (sub1::(sub2::sst))
       else sst) [] tmp
   in
-  (* let _ = print_endline ("specs: " ^ (string_of_struc_formula specs)) in *)
-  (* let _ = print_endline ("sst: " ^ (string_of_subst_primed sst)) in *)
+  (* let () = print_endline ("specs: " ^ (string_of_struc_formula specs)) in *)
+  (* let () = print_endline ("sst: " ^ (string_of_subst_primed sst)) in *)
   (*list of addressable reference parameters*)
   let rvars = List.map (fun (param,flag) ->
       if (flag) then [(param.param_name, Unprimed)] else []
@@ -845,7 +846,7 @@ let rec trans_specs_x specs new_params flags pos =
     e.g. p::int_ptr(x) --> p=x
   *)
   let new_specs = Iformula.subst_pointer_struc sst specs rvars in
-  (* let _ = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
+  (* let () = print_endline ("new_specs: " ^ (string_of_struc_formula new_specs)) in *)
   (*create h_formula to add to pre-condition*)
   (* inc(ref int_ptr x, int_ptr y) *)
   (*   requires [old_x,old_y] x::node<old_x> * y::node<old_y> *)
@@ -910,11 +911,11 @@ let rec trans_specs_x specs new_params flags pos =
   ) (Iformula.HTrue,Ipure.mkTrue pos,[]) tmp
   in
   let post = Iformula.mkBase_wo_flow post_h post_p IvpermUtils.empty_vperm_sets [] pos in
-  (* let _ = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
-  (* let _ = print_endline ("post = " ^ (string_of_h_formula post)) in *)
+  (* let () = print_endline ("pre = " ^ (string_of_h_formula pre)) in *)
+  (* let () = print_endline ("post = " ^ (string_of_h_formula post)) in *)
   let new_specs2 = Iformula.add_h_formula_to_pre (pre,impl_vars) new_specs in
   let new_specs3 = Iformula.add_formula_to_post (post,ex_vars) new_specs2 in
-  (* let _ = print_endline ("new_specs3: " ^ (string_of_struc_formula new_specs3)) in *)
+  (* let () = print_endline ("new_specs3: " ^ (string_of_struc_formula new_specs3)) in *)
   new_specs3
 
 and trans_specs specs (new_params:param list) flags pos =
@@ -934,7 +935,7 @@ and trans_specs specs (new_params:param list) flags pos =
   new_proc_name : name of the new auxiliary proc
 *)
 and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) (new_proc_name:ident) pos =
-  (* let _ = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
+  (* let () = print_endline ("new_proc_name = " ^ new_proc_name ) in *)
   (*inc(ref int x,int y) --> inc(ref int_ptr x, int_ptr y)*)
   let params = proc.proc_args in
   let new_params = List.map2 (fun param flag ->
@@ -986,7 +987,7 @@ and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   (* let names, es = List.split trans_tmp in *)
   (* let vars = List.map (fun id -> Var {exp_var_name =id; exp_var_pos=pos}) names in *)
   (* let orig_call =  CallNRecv {c with exp_call_nrecv_arguments = vars} in *)
-  (* (\* let _ = print_endline ("### orig_call : " ^ (string_of_exp orig_call)) in *\) *)
+  (* (\* let () = print_endline ("### orig_call : " ^ (string_of_exp orig_call)) in *\) *)
   (* let new_body = List.fold_left (fun e2 eo -> *)
   (*     match eo with *)
   (*       | None -> e2 *)
@@ -996,7 +997,7 @@ and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   (*           e123 *)
   (* ) orig_call es *)
   (* in *)
-  (* let _ = print_endline ("### new_body : " ^ (string_of_exp new_body)) in *)
+  (* let () = print_endline ("### new_body : " ^ (string_of_exp new_body)) in *)
   (* let new_body = match proc.proc_body with *)
   (*   | None -> None *)
   (*   | Some e -> *)
@@ -1010,12 +1011,12 @@ and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
       proc_dynamic_specs = new_dynamic_specs;}
   in
   let rvars = Hashtbl.find h proc.proc_name in
-  let _ = Hashtbl.replace h new_proc_name rvars in (*their ref vars are comparable*)
+  let () = Hashtbl.replace h new_proc_name rvars in (*their ref vars are comparable*)
   (*trans auxiliary variables*)
   let new_proc1 = trans_proc_decl prog new_proc true in
-  let _ = print_endline ("### new_proc1 : " ^ (string_of_proc_decl new_proc1)) in
+  let () = print_endline ("### new_proc1 : " ^ (string_of_proc_decl new_proc1)) in
   (* UPDATE TO GLOBAL VARIABLE *)
-  let _ = (aux_procs := new_proc1::!aux_procs) in
+  let () = (aux_procs := new_proc1::!aux_procs) in
   new_proc
 (*********************************)
 (***<<<<< create_aux_proc ********)
@@ -1081,17 +1082,17 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
             e
       | VarDecl v ->
           (*Add variables into current scope*)
-          (* let _ = print_endline ("Vardecl : " ^ (string_of_exp e)) in *)
-          (* let _ = print_endline ("Vardecl : before E.add") in *)
+          (* let () = print_endline ("Vardecl : " ^ (string_of_exp e)) in *)
+          (* let () = print_endline ("Vardecl : before E.add") in *)
           let org_t = v.exp_var_decl_type in
-          let _ = List.map (fun (v,_,_) ->
+          let todo_unk = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
               (E.add v (E.VarInfo{
                   E.var_name = v;
                   E.var_alpha = alpha;
                   E.var_type = UNK; }))
           ) v.exp_var_decl_decls in
-          (* let _ = print_endline ("Vardecl : after E.add") in *)
+          (* let () = print_endline ("Vardecl : after E.add") in *)
           let decls = List.map (fun (id,e0,pos) -> 
               let e1 = match e0 with
                 | None -> None
@@ -1146,7 +1147,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       | ConstDecl c ->
           (*Add variables into current scope*)
           (*let org_t = c.exp_const_decl_type in*)
-          let _ = List.map (fun (v,_,_) ->
+          let todo_unk = List.map (fun (v,_,_) ->
               let alpha = E.alpha_name v in
               (E.add v (E.VarInfo{
                   E.var_name = v;
@@ -1269,8 +1270,8 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           let _,outer_vars = List.split (E.visible_names ()) in
           (*addr vars of the inner scope*)
           let addr_vars = find_addr b.exp_bind_body in
-          let _ = E.push_scope () in
-          let _ = List.map (fun v ->
+          let () = E.push_scope () in
+          let todo_unk = List.map (fun v ->
               let alpha = E.alpha_name v in
               E.add v (E.VarInfo{
                   E.var_name = v;
@@ -1287,17 +1288,17 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) new_body del_vars
           in
           (**********************<<<***********************)
-          let _ = E.pop_scope ()in
+          let () = E.pop_scope ()in
           let new_e = Bind {b with exp_bind_body = new_body2} in
           (new_e)
       | Block b ->
           (*Note: no more Block after case_normalize_program*)
-          let _ = print_endline ("Warning: unexpected Block: no more Block after case_normalize_program") in
+          let () = print_endline ("Warning: unexpected Block: no more Block after case_normalize_program") in
           (*b.exp_block_local_vars is empty until IastUtil.float_var_decl*)
           let _,outer_vars = List.split (E.visible_names ()) in
           (*addr vars of the inner scope*)
           let addr_vars = find_addr b.exp_block_body in
-          let _ = E.push_scope () in
+          let () = E.push_scope () in
           let new_body = helper b.exp_block_body vars in
           (********************>>>*************************)
           let _,inner_vars = List.split (E.visible_names ()) in
@@ -1307,7 +1308,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) new_body del_vars
           in
           (***********************<<<**********************)
-          let _ = E.pop_scope ()in
+          let () = E.pop_scope ()in
           let new_e = Block {b with exp_block_body = new_body} in
           (new_e) (* Block creates a new inner scope *)
       | BoolLit _ -> e
@@ -1406,9 +1407,9 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                       let new_arg = helper arg vars in
                       (false,new_arg)
               in
-              (* let _ = print_endline ("c.args = " ^ (pr_list string_of_exp c.exp_call_nrecv_arguments)) in *)
-              (* let _ = print_endline ("proc.proc_name = " ^ proc.proc_name) in *)
-              (* let _ = print_endline ("proc.args = " ^ (string_of_param_list proc.proc_args)) in *)
+              (* let () = print_endline ("c.args = " ^ (pr_list string_of_exp c.exp_call_nrecv_arguments)) in *)
+              (* let () = print_endline ("proc.proc_name = " ^ proc.proc_name) in *)
+              (* let () = print_endline ("proc.args = " ^ (string_of_param_list proc.proc_args)) in *)
 
               let flags,new_args = List.split (List.map2 (fun arg param -> trans_arg_addr arg param) c.exp_call_nrecv_arguments proc.proc_args) in
               (* if (List.exists (fun (b:bool) -> b) flags) then *)
@@ -1451,7 +1452,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               (*       exp_call_nrecv_method = new_proc_name; *)
               (*       exp_call_nrecv_arguments = new_args;} *)
               (*   in *)
-              (*   (\* let _ = print_endline ("### new_e : " ^ (string_of_exp new_e)) in *\) *)
+              (*   (\* let () = print_endline ("### new_e : " ^ (string_of_exp new_e)) in *\) *)
               (*   new_e *)
               (* else *)
               (*   let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in *)
@@ -1472,7 +1473,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           (*then branch*)
           (*addr vars of then branch*)
           let then_addr_vars = find_addr c.exp_cond_then_arm in
-          let _ = E.push_scope () in
+          let () = E.push_scope () in
           let then_e = helper c.exp_cond_then_arm vars in
           (******************>>>**************************)
           let _,then_inner_vars = List.split (E.visible_names ()) in
@@ -1482,10 +1483,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) then_e del_vars
           in
           (*******************<<<**************************)
-          let _ = E.pop_scope ()in
+          let () = E.pop_scope ()in
           (*else branch*)
           let else_addr_vars = find_addr c.exp_cond_else_arm in
-          let _ = E.push_scope () in
+          let () = E.push_scope () in
           let else_e = helper c.exp_cond_else_arm vars in
           (*******************>>>**************************)
           let _,else_inner_vars = List.split (E.visible_names ()) in
@@ -1495,7 +1496,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) else_e del_vars
           in
           (********************<<<*************************)
-          let _ = E.pop_scope () in
+          let () = E.pop_scope () in
           let new_e = Cond {c with 
               exp_cond_condition = cond_e;
               exp_cond_then_arm = then_e;
@@ -1565,8 +1566,8 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           (*body*)
           let addr_vars = find_addr w.exp_while_body in
           let all_addr_vars = Gen.BList.remove_dups_eq (=) (vars@addr_vars) in
-          (* let _ = print_endline ("While : addr" ^ (string_of_ident_list all_addr_vars))  in *)
-          let _ = E.push_scope () in
+          (* let () = print_endline ("While : addr" ^ (string_of_ident_list all_addr_vars))  in *)
+          let () = E.push_scope () in
           let body = helper w.exp_while_body vars in
           (**********************>>>***********************)
           (*scoping*)
@@ -1577,7 +1578,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               mkSeq e del_e no_pos) body del_vars
           in
           (**********************<<<***********************)
-          let _ = E.pop_scope ()in
+          let () = E.pop_scope ()in
           (*TO CHECK: not sure what exp_while_wrappings is for? *)
           let wrap =
             (match w.exp_while_wrappings with
@@ -1617,7 +1618,7 @@ and find_addr (e:exp) : ident list =
     match e with
       | Var v -> []
       | VarDecl v ->
-          (* let _ = print_endline ("VarDecl: " ^ (string_of_exp e)) in *)
+          (* let () = print_endline ("VarDecl: " ^ (string_of_exp e)) in *)
           let vars = List.map (fun (id,e0,pos) ->
               match e0 with
                 | None -> []
@@ -1634,7 +1635,7 @@ and find_addr (e:exp) : ident list =
           (*translate*)
           (match u.exp_unary_op with
             | OpAddr -> 
-                (* let _ = print_endline ("Unary: " ^ (string_of_exp e)) in *)
+                (* let () = print_endline ("Unary: " ^ (string_of_exp e)) in *)
                 let e0 = u.exp_unary_exp in
                 (match e0 with
                   | Var v -> [v.exp_var_name] (*FOUND*)
@@ -1880,10 +1881,10 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
             proc_args = new_params;}
     | Some body ->
         let body1,_ = trans_exp_ptr prog body vars in
-        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] body1 (after trans_exp_ptr): \n " ^ (string_of_exp body1)) in *)
+        (* let () = print_endline ("### [" ^ proc.proc_name ^ "] body1 (after trans_exp_ptr): \n " ^ (string_of_exp body1)) in *)
         (*Similar to Astsimp.trans_proc*)
-        (* let _ = E.clear () in *)
-        let _ = E.push_scope () in
+        (* let () = E.clear () in *)
+        let () = E.push_scope () in
         (*Note: ordering of args is important*)
         let all_args = 
           if Gen.is_some proc.proc_data_decl then
@@ -1934,7 +1935,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
             (proc.proc_static_specs,proc.proc_dynamic_specs)
         in
         (*<=============TRANSPEC (if any)============*)
-        (* let _ = print_endline ("addr_vars = " ^ (string_of_ident_list addr_vars)) in *)
+        (* let () = print_endline ("addr_vars = " ^ (string_of_ident_list addr_vars)) in *)
         (*List of pass-by-val/ref params that have been taken address-of*)
         let val_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) val_params in
         (* let ref_params1,_ = List.partition (fun p -> List.mem p.param_name addr_vars) ref_params in *)
@@ -1965,14 +1966,14 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
         (* let ref_subst = List.map2 (fun v ptr -> (v.param_name,ptr.param_name)) ref_params1 ref_ptrs in *)
         let all_subst = val_subst(* @ref_subst *) in
 
-        (* let _ = print_endline ("val_subst = " ^ (string_of_subst val_subst)) in *)
-        (* let _ = print_endline ("ref_subst = " ^ (string_of_subst ref_subst)) in *)
+        (* let () = print_endline ("val_subst = " ^ (string_of_subst val_subst)) in *)
+        (* let () = print_endline ("ref_subst = " ^ (string_of_subst ref_subst)) in *)
         let body2 = if (all_subst!=[]) then
               subst_exp body1 all_subst 
             else
               body1
         in
-        (* let _ = print_endline ("body2 (after all_subst) : \n" ^ (string_of_exp body2)) in *)
+        (* let () = print_endline ("body2 (after all_subst) : \n" ^ (string_of_exp body2)) in *)
 
         let addr_vars = List.map (fun id ->
             subst_var id all_subst
@@ -1985,7 +1986,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
             E.var_type = UNK; } (*Do not care about typ when translating*)
         in
         let vinfos = List.map p2v all_args in
-        let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
+        let todo_unk = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
         (*Need to trans_exp_addr of
         addressable reference variables  : rvars (from hashtbl h)
         and addressable local variables
@@ -2006,7 +2007,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
             Gen.BList.remove_dups_eq (=) (rvars@addr_vars)
             (* Gen.BList.difference_eq (=) (rvars@addr_vars) rrvars *)
         in
-        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] trans_vars:  " ^ (string_of_ident_list trans_vars)) in *)
+        (* let () = print_endline ("### [" ^ proc.proc_name ^ "] trans_vars:  " ^ (string_of_ident_list trans_vars)) in *)
         let body3 = trans_exp_addr prog body2 trans_vars in
         let _,inner_vars = List.split (E.visible_names ()) in
         (*those that were converted and need to be deleted
@@ -2027,7 +2028,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
           else
             new_body
         in
-        (* let _ = print_endline ("new_body2: \n " ^ (string_of_exp new_body2)) in *)
+        (* let () = print_endline ("new_body2: \n " ^ (string_of_exp new_body2)) in *)
         (* <<< Add code for pass-by-val variables that are addressed of*)
         (*Add code for pass-by-ref variables that are addressed of*)
         (* let tmp_ref = List.combine ref_params1 ref_ptrs in *)
@@ -2037,11 +2038,11 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
         (*   else *)
         (*     new_body2 *)
         (* in *)
-        (* let _ = print_endline ("### [" ^ proc.proc_name ^ "] new_body3: \n " ^ (string_of_exp new_body3)) in *)
+        (* let () = print_endline ("### [" ^ proc.proc_name ^ "] new_body3: \n " ^ (string_of_exp new_body3)) in *)
         (* <<< Add code for pass-by-ref variables that are addressed of*)
 
-        let _ = E.pop_scope () in
-        (* let _ = E.clear () in *)
+        let () = E.pop_scope () in
+        (* let () = E.clear () in *)
         let ptypes2 = List.map (fun p -> p.param_type) new_params2 in
         let new_mingled2 = mingle_name_enum prog proc.proc_name ptypes2 in
         let new_proc = 
@@ -2052,7 +2053,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
             proc_args = new_params2;
             proc_body = (Some new_body2)}
         in
-        (* let _ = print_endline ("new_proc = " ^ (string_of_proc_decl new_proc)) in *)
+        (* let () = print_endline ("new_proc = " ^ (string_of_proc_decl new_proc)) in *)
         new_proc
   )
 
@@ -2087,14 +2088,14 @@ let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
     (*if not found -> find*)
     (match proc.proc_body with
       | None -> 
-          let _ = Hashtbl.replace h proc.proc_name [] in
+          let () = Hashtbl.replace h proc.proc_name [] in
           []
       | Some e ->
-          (* let _ = print_endline ("find_addr_inter_proc: proc_name = " ^ proc.proc_name) in *)
+          (* let () = print_endline ("find_addr_inter_proc: proc_name = " ^ proc.proc_name) in *)
           (*vars that have been taken address_of in proc body*)
           let addr_vars = find_addr e in
           (* if ((rvars@addr_vars) = []) then  *)
-          (*   let _ = Hashtbl.replace h proc.proc_name [] in *)
+          (*   let () = Hashtbl.replace h proc.proc_name [] in *)
           (*   [] *)
           (* else *)
           (*reference params that have been taken address_of*)
@@ -2104,17 +2105,17 @@ let rec find_addr_inter_proc prog (proc:proc_decl) (vs:ident list): ident list =
           ) proc.proc_args in
           (*create an entry for the hashtbl*)
           let p_names = List.map (fun p -> p.param_name) params in
-          let _ = Hashtbl.replace h proc.proc_name p_names in
+          let () = Hashtbl.replace h proc.proc_name p_names in
           (*vars that have been passed as reference and 
             are addressable in callees of this proc*)
-          (* let _ = print_endline (proc.proc_name ^ " : vs" ^ (string_of_ident_list vs)) in *)
-          (* let _ = print_endline (proc.proc_name ^ " : addr_vars" ^ (string_of_ident_list addr_vars)) in *)
-          (* let _ = print_endline (proc.proc_name ^ " : rvars" ^ (string_of_ident_list rvars)) in *)
-          (* let _ = print_endline (proc.proc_name ^ " : p_names" ^ (string_of_ident_list p_names)) in *)
+          (* let () = print_endline (proc.proc_name ^ " : vs" ^ (string_of_ident_list vs)) in *)
+          (* let () = print_endline (proc.proc_name ^ " : addr_vars" ^ (string_of_ident_list addr_vars)) in *)
+          (* let () = print_endline (proc.proc_name ^ " : rvars" ^ (string_of_ident_list rvars)) in *)
+          (* let () = print_endline (proc.proc_name ^ " : p_names" ^ (string_of_ident_list p_names)) in *)
           let vars = find_addr_inter_exp prog proc e addr_vars in
-          (* let _ = print_endline (proc.proc_name ^ " : vars" ^ (string_of_ident_list vars)) in *)
+          (* let () = print_endline (proc.proc_name ^ " : vars" ^ (string_of_ident_list vars)) in *)
           let vars = Gen.BList.remove_dups_eq (=) (p_names@vars) in
-          let _ = Hashtbl.replace h proc.proc_name vars in
+          let () = Hashtbl.replace h proc.proc_name vars in
           vars
     )
 
@@ -2206,7 +2207,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                  ) in
                (*find list of addressible variables and their corresponding param 
                  that are passed by reference to the procedure*)
-               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : vs = " ^ (string_of_ident_list vs)) in *)
+               (* let () = print_endline ( "CallNRecv: proc " ^ mn ^ " : vs = " ^ (string_of_ident_list vs)) in *)
                let tmp =
                  (try
                       List.map2 (fun param arg ->
@@ -2227,33 +2228,33 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                           else []
                       ) params args
                   with | _ ->
-                      let _ = print_endline ("args = " ^ (pr_list string_of_exp args)) in
-                      let _ = print_endline ("params = " ^ (string_of_param_list params)) in
+                      let () = print_endline ("args = " ^ (pr_list string_of_exp args)) in
+                      let () = print_endline ("params = " ^ (string_of_param_list params)) in
                       Error.report_error 
                           {Err.error_loc = pos;
                            Err.error_text = "Procedure " ^ orig_mn ^ " Args and Params not matched "})
                in
                (*pvars is the new list of addressable params*)
                let avars,pvars = List.split (List.concat tmp) in
-               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : avars = " ^ (string_of_ident_list avars)) in *)
-               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : pvars = " ^ (string_of_ident_list pvars)) in *)
+               (* let () = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : avars = " ^ (string_of_ident_list avars)) in *)
+               (* let () = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : pvars = " ^ (string_of_ident_list pvars)) in *)
                (*TO CHECK: recursive call ??? *)
                (*============FIXPOINT=========================>*)
                let rvars =
                  let dvars = Gen.BList.difference_eq (=) pvars rvars in
                  if ((dvars=[]) && (from_hashtbl=true)) 
                  then
-                   (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : fixed-point") in *)
+                   (* let () = print_endline ( "CallNRecv: proc " ^ mn ^ " : fixed-point") in *)
                    rvars  (*reach fix-point*)
                  else
                    let new_rvars = (rvars@dvars) in
-                   (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : new_rvars = " ^ (string_of_ident_list new_rvars)) in *)
+                   (* let () = print_endline ( "CallNRecv: proc " ^ mn ^ " : new_rvars = " ^ (string_of_ident_list new_rvars)) in *)
                    (*re-compute the list of addressible reference parameters
                    for the proc decl*)
                    find_addr_inter_proc prog decl new_rvars
                in
                (*<======================================*)
-               (* let _ = print_endline ( "CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
+               (* let () = print_endline ( "CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
                let fct param arg =
                  if (List.mem param.param_name rvars) then
                         (*identifer the variable name*)
@@ -2269,8 +2270,8 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                (*vars that are passed as addressable params*)
                let vars = List.map2 fct params args in
                let vars = List.concat vars in
-               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
-               (* let _ = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : vars = " ^ (string_of_ident_list vars)) in *)
+               (* let () = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : rvars = " ^ (string_of_ident_list rvars)) in *)
+               (* let () = print_endline (proc.proc_name ^ " :: CallNRecv: proc " ^ mn ^ " : vars = " ^ (string_of_ident_list vars)) in *)
                vars
            with Not_found ->
                Error.report_error 
@@ -2351,7 +2352,7 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
   let new_gvar_decls = List.map trans_global_var_decl gvar_decls in
   (* let procs = prog.prog_proc_decls in *)
   (*Empty hashtbl h*)
-  let _ = Hashtbl.clear h in
+  let () = Hashtbl.clear h in
   let _ =
     (try
          List.map (fun proc -> find_addr_inter_proc prog proc []) prog.prog_proc_decls
@@ -2361,7 +2362,7 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
              {Err.error_loc = no_pos;
               Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"})
   in
-  (* let _ = *)
+  (* let () = *)
   (*   (try *)
   (*        List.map (fun proc -> *)
   (*            let vars = Hashtbl.find h proc.proc_name in *)
@@ -2373,7 +2374,7 @@ let trans_pointers_x (prog : prog_decl) : prog_decl =
   (*            {Err.error_loc = no_pos; *)
   (*             Err.error_text = "[trans_pointers] Exception when find_addr_inter_proc"}) *)
   (* in *)
-  (* let _ = print_endline ("start elimiating pointers in proc_decl..."); flush stdout in *)
+  (* let () = print_endline ("start elimiating pointers in proc_decl..."); flush stdout in *)
   let new_procs = List.map (fun proc -> trans_proc_decl prog proc false) prog.prog_proc_decls in
   let new_procs1 = new_procs@(!aux_procs) in
   {prog with prog_global_var_decls = new_gvar_decls;

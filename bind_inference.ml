@@ -1,3 +1,4 @@
+open VarGen
 open Ast 
 open Lexing
 open Globals

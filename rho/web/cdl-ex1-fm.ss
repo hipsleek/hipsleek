@@ -42,7 +42,7 @@ void main()
 {
   cell h, r;
   int v;
-  CDL c = create_latch(2) with h'::cell<1> * r'::cell<2> * @full[h,r];
+  CDL c = create_latch(2) with h'::cell<1> * r'::cell<2> * @full[h, r];
   par {h, r, v, c@L}
   {
     case {h, c@L} c'::LatchIn{- h'::cell<1> * @full[h]}<> * c'::CNT<(1)> ->
@@ -58,7 +58,7 @@ void main()
       dprint;
     ||
     //else ->
-    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @full[h,r]}<> * c'::CNT<0> ->
+    case {v, c@L} c'::LatchOut{+ h'::cell<1> * r'::cell<2> * @full[h, r]}<> * c'::CNT<0> ->
       //dprint;
       await(c);
       v = h.val + r.val;

@@ -8,7 +8,7 @@ Starting Omega.../usr/local/bin/oc
 !!!WARNING : uninterpreted free variables [Q] in specification.
 0 false contexts at: ()
 
-Total verification time: 0.30166 second(s)
-	Time spent in main process: 0.284897 second(s)
-	Time spent in child processes: 0.016763 second(s)
+Total verification time: 0.372022 second(s)
+	Time spent in main process: 0.356022 second(s)
+	Time spent in child processes: 0.016 second(s)
 

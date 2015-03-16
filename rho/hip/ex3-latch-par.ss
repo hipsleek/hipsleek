@@ -1,25 +1,23 @@
-/*
-  Example with simple CountDownLatch
- */
+/* Example with simple CountDownLatch */
 
 //CountDownLatch
-data CDL{
-}
+data CDL {}
 
-data cell{
-  int v;
-}
+data cell { int val; }
 
 pred_prim LatchIn{-%P@Split}<>;
 
 pred_prim LatchOut{+%P@Split}<>;
 
 pred_prim CNT<n:int>
-inv n>=(-1);
+  inv n>=(-1);
 
-//lemma_split "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>;
 
-lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
+// Normalization lemma
+lemma_prop "idemp-CNT" self::CNT<a> * self::CNT<(-1)> -> self::CNT<(-1)>;
+
+lemma_prop "combine-CNT" self::CNT<a> * self::CNT<b> & a,b>=0 ->  self::CNT<a+b>;
 
 /********************************************/
 CDL create_latch(int n) with %P
@@ -38,52 +36,28 @@ void await(CDL c)
   requires c::LatchOut{+%P}<> * c::CNT<0>
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<(-1)>
-  ensures c::CNT<(-1)> * %P;
+  ensures c::CNT<(-1)>;
   
+/********************************************/
 void main()
   requires emp ensures emp;
 {
-  cell x = null;
-  //= new cell(10);
-  //assume x::cell<_>;
-  CDL c = create_latch(1) with x'::cell<1>;
-  //cell x = new cell(10);
-  //dprint;
-  int r=0;
-  // r'=0
-  par [x,r]
-  { case [x] c'::LatchIn{}<-x'::cell<1>>*c'::CNT<1> : 
-       x = new cell(1); 
-       countDown(c);  int r2 = r;  // r'=r
-  || else [r] : await(c); r = x.val+r;  //x'=x;r'=1
+  cell x;
+  int v = 1;
+  CDL c = create_latch(1) with x'::cell<_> * @full[x];
+  par {x, v, c@L}
+  {
+    case {x, c@L} c'::LatchIn{- x'::cell<_> * @full[x]}<> * c'::CNT<(1)> ->
+      x = new cell(1);
+      countDown(c);
+      //dprint;
+    ||
+    case {v, c@L} c'::LatchOut{+ x'::cell<_> * @full[x]}<> * c'::CNT<0> ->
+      await(c);
+      v = x.val + v;
+      //dprint;
   }
-  dprint;
+  //dprint;
+  assert v' = 2; // Expected: ok
+  assert v' = 3; // Expected: failed
 }
-
-/*
-# ex1-latch-simple.ss
-
-[
- Label: []
- State:
-(exists flted_39_1602: c_42'::CNT{}<flted_39_1602> * x_41'::cell<Anon_11>
-&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
-& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
-& n=v_int_48_1587 & Anon_11=v_int_46_1576 
-& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
-& 0<=(n+1)&{FLOW,(4,5
-)=__norm#E})[]
-       es_ho_vars_map: [Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]; 
-                        Px_41'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
-
-# print (P,x'_41...)
-# what is below? why is it a repeat of above?
- 
-EXISTS(flted_39_1602: c_42'::CNT<flted_39_1602> * x_41'::cell<Anon_11>
-&exists(flted_38_51:0<=(flted_38_51+1)) & flted_39_1602+1=0 
-& 0<=(flted_33_1599+1) & v_int_46_1576=10 & v_int_48_1587=1 
-& n=v_int_48_1587 & Anon_11=v_int_46_1576 
-& x_41'!=null & 0<=(v_int_48_1587+1) & flted_33_1599+1=n 
-& 0<=(n+1))[]
-
- */

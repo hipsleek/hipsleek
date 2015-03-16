@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc6a.ss"
 Parsing file "t/exc6a.ss" by default parser...
@@ -38,7 +39,7 @@ Escaped States:
 Successful States:
 [
  Label: [(,1 ); (,2 ); (,0 ); (,1 )]
- State:(exists v_int_14_1344': htrue&post_1362(x',v_int_14_1344') & !(v_bool_14_1340') & x_1385<=100 & v_bool_13_1345' & 0<x_1385 & x_1385=x & x'+1=x_1385&{FLOW,(4,5)=__norm#E}[]
+ State:(exists v_int_14_1344': htrue&post_1362(x',v_int_14_1344',flow) & !(v_bool_14_1340') & x_1385<=100 & v_bool_13_1345' & 0<x_1385 & x_1385=x & x'+1=x_1385&{FLOW,(4,5)=__norm#E}[]
 
  ]
 
@@ -61,21 +62,21 @@ Error(s) detected when checking procedure loop$int
 *************************************
 ******pure relation assumption*******
 *************************************
-[RELDEFN post_1362: ( x=1+res & 0<=res & res<=99 & post_1362(res,v_int_14_1389)) -->  post_1362(x,res),
-RELDEFN post_1362: ( x=res & res<=0) -->  post_1362(x,res)]
+[RELDEFN post_1362: ( x=1+res & 0<=res & res<=99 & post_1362(res,v_int_14_1389,flow)) -->  post_1362(x,res,flow),
+RELDEFN post_1362: ( x=res & res<=0) -->  post_1362(x,res,flow)]
 *************************************
 
 Post Inference result:
 loop$int
  EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
          EAssume 
-           htrue&((res>=0 & res+1=x) | (0>=x & x=res))&
+           htrue&((x>=1 & x=res+1) | (!(res) & res=x))&
            {FLOW,(4,5)=__norm#E}[]
            
 
 0 false contexts at: ()
 
-Total verification time: 0.409058 second(s)
-	Time spent in main process: 0.343242 second(s)
-	Time spent in child processes: 0.065816 second(s)
+Total verification time: 0.456026 second(s)
+	Time spent in main process: 0.388023 second(s)
+	Time spent in child processes: 0.068003 second(s)
 

@@ -6,37 +6,13 @@ Parsing file "web/cdl-ex4-race.ss" by default parser...
 Starting Omega.../usr/local/bin/oc
 
 Checking procedure main$... 
-( []) :web/cdl-ex4-race.ss:58: 14: p_37 does not have @lend/@full permission to read (inside bind)
+!!! WARNING: [ERR-RACE:web/cdl-ex4-race.ss_54:2_70:3]
 
-(Cause of ParCase Failure):web/cdl-ex4-race.ss:58: 14:  List of Failesc Context: [FEC(1, 0, 0 )]
-Failed States:
-[
- Label: []
- State:
-        fe_kind: MAY
-        fe_name: logical bug
-        fe_locs: {
-                  fc_message: Mismatch non-zero variable permission in consequent [(p_37,@lend)]
-                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
-[[empty]]
- ]
-
-Context of Verification Failure: 1 File "",Line:0,Col:0
-
-Last Proving Location: 1 File "web/cdl-ex4-race.ss",Line:58,Col:14
-
-ERROR: at web/cdl-ex4-race.ss_58:14_58:19
-Message: p_37 does not have @lend/@full permission to read (inside bind)
-
-Procedure main$ FAIL.(2)
-
-Exception Failure("p_37 does not have @lend/@full permission to read (inside bind)") Occurred!
-
-Error(s) detected when checking procedure main$
+Procedure main$ SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.529297 second(s)
-	Time spent in main process: 0.501408 second(s)
-	Time spent in child processes: 0.027889 second(s)
+Total verification time: 1.832112 second(s)
+	Time spent in main process: 1.736107 second(s)
+	Time spent in child processes: 0.096005 second(s)
 

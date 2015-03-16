@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Format
 

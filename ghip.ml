@@ -1,3 +1,4 @@
+open VarGen
 (**
   GUI frontend for HIP
  *)

@@ -6,13 +6,13 @@ Parsing file "web/cdl-ex5-deadlock.ss" by default parser...
 Starting Omega.../usr/local/bin/oc
 
 Checking procedure main$... 
-!!! WARNING: [ERR-DEADLOCK:web/cdl-ex5-deadlock.ss_54:2_64:3]
+!!! WARNING: [ERR-RACE:web/cdl-ex5-deadlock.ss_54:2_64:3]
 
 Procedure main$ SUCCESS.
 
 0 false contexts at: ()
 
-Total verification time: 0.698425 second(s)
-	Time spent in main process: 0.652978 second(s)
-	Time spent in child processes: 0.045447 second(s)
+Total verification time: 0.856052 second(s)
+	Time spent in main process: 0.796049 second(s)
+	Time spent in child processes: 0.060003 second(s)
 

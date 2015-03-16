@@ -45,11 +45,11 @@ void main()
   requires emp ensures emp;
 {
   cell p, q;
-  CDL c = create_latch(2) with p'::cell<1> * q'::cell<2>;
+  CDL c = create_latch(2) with p'::cell<1> * q'::cell<2> * @full[p, q];
   //dprint;
   par {p, q, c@L}
   {
-    case {p, c@L} c'::LatchIn{- p'::cell<1>}<> * c'::LatchOut{+ q'::cell<2>}<> * c'::CNT<(1)> ->
+    case {p, c@L} c'::LatchIn{- p'::cell<1> * @full[p]}<> * c'::LatchOut{+ q'::cell<2> * @full[q]}<> * c'::CNT<(1)> ->
       p = new cell(1);
       countDown(c);
       await(c);
@@ -57,7 +57,7 @@ void main()
       //dprint;
       assert q'::cell<3>; // Expected: ok
     ||
-    case {q, c@L} c'::LatchIn{- q'::cell<2>}<> *  c'::LatchOut{+ p'::cell<1>}<> * c'::CNT<(1)> ->
+    case {q, c@L} c'::LatchIn{- q'::cell<2> * @full[q]}<> *  c'::LatchOut{+ p'::cell<1> * @full[p]}<> * c'::CNT<(1)> ->
       q = new cell(2);
       countDown(c);
       await(c);

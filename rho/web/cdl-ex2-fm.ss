@@ -43,21 +43,21 @@ void main()
   requires emp ensures emp;
 {
   cell p, q;
-  CDL c = create_latch(1) with p'::cell<_> * q'::cell<_>;
+  CDL c = create_latch(1) with p'::cell<_> * q'::cell<_> * @full[p, q];
   par {p, q, c@L}
   {
-    case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_>}<> * c'::CNT<(1)> ->
+    case {p, q, c@L} c'::LatchIn{- p'::cell<_> * q'::cell<_> * @full[p, q]}<> * c'::CNT<(1)> ->
       p = new cell(1);
       q = new cell(2);
       countDown(c);
       //dprint;
     ||
-    case {c@L} c'::LatchOut{+ p'::cell<_>}<> * c'::CNT<(0)> ->
+    case {c@L} c'::LatchOut{+ p'::cell<_> * @full[p]}<> * c'::CNT<(0)> ->
       await(c);
       p.val = p.val + 1;
       //dprint;
     ||
-    case {c@L} c'::LatchOut{+ q'::cell<_>}<> * c'::CNT<0> ->
+    case {c@L} c'::LatchOut{+ q'::cell<_> * @full[q]}<> * c'::CNT<0> ->
       await(c);
       q.val = q.val + 1;
   }

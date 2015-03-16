@@ -1,3 +1,4 @@
+open VarGen
 (*
    Created 24 - 08 - 2006
    Sanity Checks

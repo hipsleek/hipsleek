@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc.ss"
 Parsing file "t/exc.ss" by default parser...
@@ -39,7 +40,7 @@ Error(s) detected when checking procedure loop$int
 
 0 false contexts at: ()
 
-Total verification time: 0.332123 second(s)
-	Time spent in main process: 0.306839 second(s)
-	Time spent in child processes: 0.025284 second(s)
+Total verification time: 0.360021 second(s)
+	Time spent in main process: 0.34002 second(s)
+	Time spent in child processes: 0.020001 second(s)
 

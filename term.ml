@@ -1,3 +1,4 @@
+open VarGen
 module CP = Cpure
 (* module CF = Cformula *)
 module MCP = Mcpure
@@ -406,8 +407,8 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           let rank_formula = MCP.pure_of_mix rank_formula in*)
           let estate, entail_dec_res = 
             if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
-              let _ = Globals.templ_term_inf := true in
-              (* let _ = print_endline "COLLECT RANK" in *)
+              let () = Globals.templ_term_inf := true in
+              (* let () = print_endline "COLLECT RANK" in *)
               let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 
               (match es with Some es -> es | None -> estate), true
             else
@@ -438,7 +439,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
                 let bnd_formula = join_conjunctions bnd_formula_l in
                 let estate, entail_bnd_res = 
                   if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
-                    (* let _ = print_endline "COLLECT BND" in *)
+                    (* let () = print_endline "COLLECT BND" in *)
                     let es = Template.collect_templ_assume_init estate lhs_p bnd_formula pos
                     in (match es with Some es -> es | None -> estate), true
                   else
@@ -448,12 +449,12 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
                 if not entail_bnd_res then
                   let tr = (term_pos, None, Some orig_ante, MayTerm_S (Not_Bounded_Measure m)) in
                   let err_msg = string_of_term_res tr in
-                  let _ = add_term_err_stk err_msg in
-                  let _ = add_term_res_stk tr in
+                  let () = add_term_err_stk err_msg in
+                  let () = add_term_res_stk tr in
                   { estate with es_term_err = Some err_msg }
                 else
                   let tr = (term_pos, None, Some orig_ante, Term_S Bounded_Measure) in
-                  let _ = add_term_res_stk tr in
+                  let () = add_term_res_stk tr in
                   estate
           in
 
@@ -517,7 +518,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
 let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let _ = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
+      let () = Debug.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let dst_tinfo = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_d, dst_lv, dst_il, l_pos = (dst_tinfo.lex_ann, dst_tinfo.lex_exp, dst_tinfo.lex_tmp, dst_tinfo.lex_loc) in
@@ -540,10 +541,10 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
         let es = if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
             if is_ret then 
-              let _ = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
+              let () = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
               { es with es_term_res_rhs = Some t_ann_d }
             else
-              let _ = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
+              let () = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
               { es with es_term_call_rhs =  Some t_ann_d; }
           else es 
         in es
@@ -675,7 +676,7 @@ let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
   err
 
 let add_unreachable_res (ctx: list_failesc_context) pos : term_res =
-  let _ = 
+  let () = 
     begin
       Debug.devel_zprint (lazy (">>>>>> [term.ml][add_unreachable_res] <<<<<<")) pos;
       Debug.devel_hprint (add_str "Context" Cprinter.string_of_list_failesc_context) ctx pos
@@ -887,7 +888,7 @@ let rank_gt_phase_constr (cl: phase_constr list) =
   (*
   let pr_v = !print_sv in
   let pr_vl = pr_list pr_v in
-  let _ = print_endline ("\neq_l: " ^ (pr_list pr_vl eq_l)) in
+  let () = print_endline ("\neq_l: " ^ (pr_list pr_vl eq_l)) in
   *)
   let gt_l = List.fold_left (fun a c ->
     match c with
@@ -895,7 +896,7 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     | P_Gte _ -> a
   ) [] cl in
 
-  (* let _ = print_endline ("\ngt_l: " ^ (pr_list (pr_pair pr_v pr_v) gt_l)) in *)
+  (* let () = print_endline ("\ngt_l: " ^ (pr_list (pr_pair pr_v pr_v) gt_l)) in *)
   
   let find_group v l =
     try List.find (fun e -> Gen.BList.mem_eq eq_spec_var v e) l
@@ -920,7 +921,7 @@ let rank_gt_phase_constr (cl: phase_constr list) =
     else (g_v1, g_v2)::acc
   ) [] gt_l in
 
-  (*let _ = print_endline ("\n1. gt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in*)
+  (*let () = print_endline ("\n1. gt_l: " ^ (pr_list (pr_pair pr_vl pr_vl) gt_l)) in*)
 
   let g = build_phase_constr_graph gt_l in
 
@@ -995,7 +996,7 @@ let value_of_var (v: spec_var) l : int =
 (*   let pr_v = !print_sv in *)
 (*   let pr_vl = pr_list pr_v in *)
 (*   let cl = phase_constr_of_formula_list (phase_constr_stk # get_stk) in *)
-(*   let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+(*   let () = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
 (*   let l =  *)
 (*     try rank_gt_phase_constr cl  *)
 (*     with _ ->  *)
@@ -1027,13 +1028,13 @@ let phase_num_infer_one_scc (pl : CP.formula list) =
   (* let pr_vl = pr_list pr_v in *)
   let cl = phase_constr_of_formula_list pl in
   let s_msg = (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl in 
-  (* let _ = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
-  let _ = Debug.trace_pprint s_msg no_pos in
+  (* let () = Debug.trace_hprint (add_str "Phase Constrs" (pr_list string_of_phase_constr)) cl no_pos in *)
+  let () = Debug.trace_pprint s_msg no_pos in
   let l = 
     try 
       (* let r = rank_gt_phase_constr cl in *)
       let r = rank_phase_constr cl in
-      let _ = 
+      let () = 
         begin
           Debug.trace_hprint (add_str "Inferred phase constraints"
             (pr_list !print_formula)) (phase_constr_stk # get_stk) no_pos;
@@ -1065,7 +1066,7 @@ let phase_num_infer_by_scc () =
     let cl = List.concat (List.map (fun (_, l) -> l) pl) in
     Debug.trace_hprint (add_str ("scc " ^ (string_of_int i))
       (pr_list !CP.print_formula)) cl no_pos;
-    let _ = phase_num_infer_one_scc cl in ()
+    let todo_unk = phase_num_infer_one_scc cl in ()
   ) phase_constr_tbl
 
 let phase_num_infer_by_scc () =
@@ -1159,7 +1160,7 @@ let subst_phase_num_struc rem_phase subst (struc: struc_formula) : struc_formula
   
   let s_f = f_ext, f_f, f_h, (f_m, f_a, f_pf, f_bf, f_pe) in
   let n_struc = transform_struc_formula s_f struc in
-  let _ = 
+  let () = 
     begin
       (* Debug.trace_hprint (add_str ("proc name") (pr_id)) pname no_pos; *)
       Debug.trace_hprint (add_str ("subst") (pr_list (pr_pair !print_sv string_of_int))) subst no_pos;
@@ -1184,7 +1185,7 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
   let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
   let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-  let _ = proc.Cast.proc_stk_of_static_specs # push s_specs in 
+  let () = proc.Cast.proc_stk_of_static_specs # push s_specs in 
   { proc with
       Cast.proc_static_specs = s_specs;
       Cast.proc_dynamic_specs = d_specs; }

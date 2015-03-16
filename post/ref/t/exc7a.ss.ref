@@ -1,3 +1,4 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
 
 !!!Full processing file "t/exc7a.ss"
 Parsing file "t/exc7a.ss" by default parser...
@@ -14,7 +15,7 @@ Error(s) detected when checking procedure loop$int
 
 0 false contexts at: ()
 
-Total verification time: 0.349583 second(s)
-	Time spent in main process: 0.321094 second(s)
-	Time spent in child processes: 0.028489 second(s)
+Total verification time: 0.360022 second(s)
+	Time spent in main process: 0.336021 second(s)
+	Time spent in child processes: 0.024001 second(s)
 

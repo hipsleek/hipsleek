@@ -17,38 +17,38 @@ ref/hip/ex2b-latch.slk.ref:ERROR: at hip/ex2b-latch.slk_8:10_8:20
 ref/hip/ex2b-latch.slk.ref: <1>c_42'::LatchOut{ + x_21::cell<flted_26_68>&flted_26_68=10&{FLOW,(4,5)=__norm#E}[]}<>&x_21=x_41' & v_int_50_22=1 & v_int_48_1561=10 & flted_26_67=v_int_48_1561&{FLOW,(4,8)=__MayError#E}[]
 ref/hip/ex4d1-bind.slk.ref: <1>x::cell<flted_4_16>&flted_4_16=1&{FLOW,(4,8)=__MayError#E}[]
 ref/hip/ex4d1-bind.slk.ref: <1>Hole[53]&flted_10_42=1&{FLOW,(4,8)=__MayError#E}[]
-ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.000205
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/bag-of-pairs.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_1_2})")
-ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.000204
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/bag-of-pairs.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
-ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.000318
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/bag-of-pairs.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_a1_a2})")
-ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.000172
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/bag-of-pairs.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
 ref/ho/bag-of-pairs.slk.ref:[Warning] False ctx
 ref/ho/bag-of-pairs.slk.ref:[Warning] False ctx
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.00054
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete-bags.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {5,6,1,2,3,4,1,2}")
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.001558
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete-bags.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{1,2})")
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.000169
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete-bags.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2}")
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.0006
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.004001
 ref/ho/concrete-bags.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.000575
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete-bags.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {3,4,1,2}")
-ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.000372
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete-bags.slk.ref:Entail 6: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{1,2})")
-ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.000193
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2,3}")
-ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.00034
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2,3}")
-ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.000274
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/concrete.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(C,D)")
 ref/ho/cyclic-check.slk.ref:ERROR: at ho/cyclic-check.slk_11:10_11:20
-ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.00071
+ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/cyclic-check.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
-ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.000631
+ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/cyclic-check.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2}")
 ref/ho/latch2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
 ref/ho/latch2.slk.ref: at:error at: 
@@ -60,19 +60,19 @@ ref/ho/latch.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRA
 ref/ho/latch.slk.ref: at:error at: 
 ref/ho/latch.slk.ref:SLEEK FAILURE (END)
 ref/ho/lemma-prop0a.slk.ref:ERROR: at ho/lemma-prop0a.slk_4:10_4:20
-ref/ho/lemma-prop0a.slk.ref:!!! WARNING logtime exception:0.000345error at: 
+ref/ho/lemma-prop0a.slk.ref:!!! WARNING logtime exception:0.error at: 
 ref/ho/lemma-prop0a.slk.ref:SLEEK FAILURE (END)
 ref/ho/lemma-prop0.slk.ref:ERROR: at ho/lemma-prop0.slk_4:10_4:20
-ref/ho/lemma-prop0.slk.ref:!!! WARNING logtime exception:0.000341error at: 
+ref/ho/lemma-prop0.slk.ref:!!! WARNING logtime exception:0.error at: 
 ref/ho/lemma-prop0.slk.ref:SLEEK FAILURE (END)
 ref/ho/lemma-prop1.slk.ref:ERROR: at ho/lemma-prop1.slk_4:10_4:20
-ref/ho/lemma-prop1.slk.ref:!!! WARNING logtime exception:0.000242error at: 
+ref/ho/lemma-prop1.slk.ref:!!! WARNING logtime exception:0.004error at: 
 ref/ho/lemma-prop1.slk.ref:SLEEK FAILURE (END)
 ref/ho/lemma-prop2.slk.ref:ERROR: at ho/lemma-prop2.slk_8:10_8:20
-ref/ho/lemma-prop2.slk.ref:!!! WARNING logtime exception:0.000883error at: 
+ref/ho/lemma-prop2.slk.ref:!!! WARNING logtime exception:0.error at: 
 ref/ho/lemma-prop2.slk.ref:SLEEK FAILURE (END)
 ref/ho/lemma-prop.slk.ref:ERROR: at ho/lemma-prop.slk_4:10_4:20
-ref/ho/lemma-prop.slk.ref:!!! WARNING logtime exception:0.000375error at: 
+ref/ho/lemma-prop.slk.ref:!!! WARNING logtime exception:0.error at: 
 ref/ho/lemma-prop.slk.ref:SLEEK FAILURE (END)
 ref/ho/msg2a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
 ref/ho/msg2a.slk.ref: at:error at: 
@@ -110,11 +110,11 @@ ref/ho/msg-d2.slk.ref:SLEEK FAILURE (END)
 ref/ho/msg.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
 ref/ho/msg.slk.ref: at:error at: 
 ref/ho/msg.slk.ref:SLEEK FAILURE (END)
-ref/ho/parahip1.slk.ref:!!! WARNING logtime exception:0.000296
+ref/ho/parahip1.slk.ref:!!! WARNING logtime exception:0.004
 ref/ho/parahip1.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
-ref/ho/parahip2.slk.ref:!!! WARNING logtime exception:0.000153
+ref/ho/parahip2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/parahip2.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(B,B)")
-ref/ho/parahip3.slk.ref:!!! WARNING logtime exception:0.000304
+ref/ho/parahip3.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/parahip3.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
 ref/ho/split-cnt.slk.ref:ERROR: at ho/split-cnt.slk_8:10_8:20
 ref/ho/split-cnt.slk.ref: <1>c2::CNT{}<flted_23_57>&flted_23_57=0 & flted_23_58=1&{FLOW,(6,7)=__Error#E}[]
@@ -151,58 +151,58 @@ ref/ho/thread-split.slk.ref: error: Stream.Error("[id_ann_list_opt] expected aft
 ref/ho/thread-split.slk.ref: at:error at: 
 ref/ho/thread-split.slk.ref:SLEEK FAILURE (END)
 ref/ho/wait2.slk.ref:ERROR: at ho/wait2.slk_1:10_1:32
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000287
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
 ref/ho/wait2.slk.ref: <1>emp&cyclic(B)&{FLOW,(4,8)=__MayError#E}[]
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000116
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000263
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000263
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000175
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 6: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000153
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 7: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000244
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 8: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c3})")
-ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.000275
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2.slk.ref:Entail 9: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
 ref/ho/wait2z.slk.ref:ERROR: at ho/wait2z.slk_7:10_7:32
-ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.000365
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2z.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
-ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.000364
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2z.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_2_1}")
-ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.00022
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2z.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_2_1}")
-ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.001297
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.004
 ref/ho/wait2z.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
-ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.00045
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait2z.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
 ref/ho/wait3.slk.ref:ERROR: at ho/wait3.slk_8:10_8:20
-ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.000251
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait3.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
-ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.000297
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait3.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
-ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.000257
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait3.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
-ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.000208
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/wait3.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
 ref/ho/wait.slk.ref:ERROR: at ho/wait.slk_1:10_1:32
-ref/ho/wait.slk.ref:!!! WARNING logtime exception:0.000308
+ref/ho/wait.slk.ref:!!! WARNING logtime exception:0.004
 ref/ho/wait.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
 ref/ho/waits-pred.slk.ref:ERROR: at ho/waits-pred.slk_16:10_16:64
-ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.001511
-ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.002027
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/waits-pred.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
-ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.000318
-ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.00152
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.004
 ref/ho/waits-pred.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1}")
-ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.000416
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/waits.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
-ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.000359
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/waits.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
-ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.000381
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
 ref/ho/waits.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
 ref/slk/bug-3a-ho-vars.slk.ref: <1>y::cell<flted_3_17>&flted_3_17=2 & flted_3_18=1&{FLOW,(4,8)=__MayError#E}[]
 ref/slk/bug-3a-ho-vars.slk.ref: <1>y::cell<flted_6_36>&t=x & z=y & flted_6_36=2 & flted_6_37=1&{FLOW,(4,8)=__MayError#E}[]
@@ -276,7 +276,7 @@ ref/slk/latch.slk.ref:ERROR: at slk/latch.slk_10:10_10:20
 ref/slk/latch.slk.ref: <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
 ref/slk/latch.slk.ref: <1>HVar P[]&{FLOW,(4,8)=__MayError#E}[]
 ref/slk/lemma-prop.slk.ref:ERROR: at slk/lemma-prop.slk_4:10_4:20
-ref/slk/lemma-prop.slk.ref:!!! WARNING logtime exception:0.000384error at: 
+ref/slk/lemma-prop.slk.ref:!!! WARNING logtime exception:0.error at: 
 ref/slk/lemma-prop.slk.ref:SLEEK FAILURE (END)
 ref/vp/ex12a-bind-lend.slk.ref:[Warning] False ctx
 ref/vp/ex12b-lend.slk.ref:[Warning] False ctx

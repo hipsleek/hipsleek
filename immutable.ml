@@ -1,3 +1,4 @@
+open VarGen
 (*
 2011: Immutability module:
   - utils for immutability
@@ -157,7 +158,7 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
 	  h_formula_star_pos = pos}) -> 
-      (* let _ = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
+      (* let () = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
 	      (match h2 with
 	        | Phase _ -> (h1, h2)
 	        | Star ({h_formula_star_h1 = sh1;
@@ -352,12 +353,12 @@ let rec is_classic_lending_hformula (f: h_formula) : bool =
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
         if (isLend h1.h_formula_data_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
         if (isLend h1.h_formula_view_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
 
@@ -1480,7 +1481,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
     | [] -> []
 ;; 
 
-let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
@@ -1561,7 +1562,7 @@ let merge_imm_ann ann1 ann2 =
     | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
       (ann, [], [])
 
-let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
@@ -1572,7 +1573,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
                   (params@[new_p_ann], nc@constr, nv@vars)
               ) ([],[],[]) dn.CF.h_formula_data_param_imm
             else
-              let _ = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
+              let () = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
               let new_ann_param = List.map (fun _ -> ann_node) dn.CF.h_formula_data_arguments in
               (new_ann_param, [], [])
           in 
@@ -1582,19 +1583,19 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
           (n_dn, constr, new_vars)
     | _ -> (h, [], [])
 
-let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
-let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   if (!Globals.allow_field_ann) then
   (* if false then *)
     let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
     (h,constr,new_vars)
   else (h,[],[])
 
-let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1 "normalize_field_ann_heap_node" pr pr_out normalize_field_ann_heap_node_x h
@@ -1946,7 +1947,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
   with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let () = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
