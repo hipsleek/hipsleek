@@ -2090,7 +2090,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let check_under no uf fl vn =
         Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
       (* let _ = Debug.binfo_hprint (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in *)
-      let body_under = fst (List.split vdef.view_un_struc_formula) in
+      let body_under = [formula1_under] in
       let under_fail = match under_f with
         | None -> false
         | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
@@ -2104,7 +2104,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 (* ) baga_under_formula_list *)
       in
       let under_fail = if under_fail then
-        let body_under = [formula1_under] in
+        let body_under = fst (List.split vdef.view_un_struc_formula) in
         match under_f with
           | None -> false
           | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
