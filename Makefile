@@ -7,7 +7,8 @@ BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
-CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
+#CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
+CPPO_FLAGS = 
 
 #CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
 #CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
@@ -159,7 +160,7 @@ ghip.native:
 clean:
 	$(OCAMLBUILD) -quiet -clean 
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
-	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
 
 decidez.vo:
