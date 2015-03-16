@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
  This module performs data analysis

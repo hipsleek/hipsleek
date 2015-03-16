@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 let silence_output = ref false
 (* let no_pos =  *)

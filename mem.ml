@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* asankhs:  Created on 03-Sep-2012 for Memory Specifications *)
 (* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --mem --field-ann -tp om *)

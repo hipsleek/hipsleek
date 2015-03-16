@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* Created on 20th Dec 2012 by asankhs to handle Infinity *)
 

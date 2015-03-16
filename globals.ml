@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 
 (* global types and utility functions *)

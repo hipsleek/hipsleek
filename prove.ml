@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (**This module is code for both Workers/Slave or Manager/Master.                           *)
 (**Since they share common messages and utilities, relevant submodules are included:       *)
 (** - [Utils] contains some utility functions.                                             *)
