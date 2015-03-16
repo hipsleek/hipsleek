@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*translates cformulas to iformulas, with some simplifications*)
 open Globals

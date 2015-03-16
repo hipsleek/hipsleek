@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
  1. this file provides interfaces and implementations for

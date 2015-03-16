@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* test - added to immutability branch *)
 (******************************************)

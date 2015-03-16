@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*This file supports for framing specification*)
 

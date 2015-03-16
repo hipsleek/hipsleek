@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (** pretty printing for formula and cast *)
 
 open Format

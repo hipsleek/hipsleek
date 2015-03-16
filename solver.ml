@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open VarGen
 (*
 26.11.2008
@@ -5121,7 +5123,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               (* let osubsumed_es, non_subsume_es = Cfutil.partition_error_es es in *)
               (* let tmp0, prf = match osafe_es with *)
               (*   | Some es1 -> *)
-              (*         heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos *)
+              (*         x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos *)
               (*   | None -> (SuccCtx [ctx], UnsatAnte) *)
               (* in *)
               (* let tmp = match oerr_es with *)
@@ -5139,7 +5141,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               let tmp0, prf = match osubsumed_es with
                 | Some es1 ->
                        let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
-                       let rs,prf = heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
+                       let rs,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
                        (* let res = *)
                        (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
                        (*   else ((not (CF.isFailCtx rs))) *)
@@ -5576,17 +5578,17 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             let ctx_L = CF.add_to_context_num 3 ctx "left OR 2 on conseq" in
             let ctx_R = CF.add_to_context_num 4 ctx "right OR 2 on conseq" in
             if !Globals.use_set then
-	      let rs1, prf1 = heap_entail_conjunct_lhs 2 prog is_folding  ctx_L f1 pos in
+	      let rs1, prf1 = x_add heap_entail_conjunct_lhs 2 prog is_folding  ctx_L f1 pos in
               let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq 1" (Cprinter.string_of_formula )) (f1)  no_pos in
               let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
-	      let rs2, prf2 = heap_entail_conjunct_lhs 3 prog is_folding  ctx_R f2 pos in
+	      let rs2, prf2 = x_add heap_entail_conjunct_lhs 3 prog is_folding  ctx_R f2 pos in
               let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq 2" (Cprinter.string_of_formula )) (f2)  no_pos in
               let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 2" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
 	      ((fold_context_left 5 [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))
             else
-              let rs1, prf1 = heap_entail_conjunct_lhs 4 prog is_folding  ctx_L f1 pos in
+              let rs1, prf1 = x_add heap_entail_conjunct_lhs 4 prog is_folding  ctx_L f1 pos in
 	      if (isFailCtx rs1) then
-	        let rs2, prf2 = heap_entail_conjunct_lhs 5 prog is_folding  ctx_R f2 pos in
+	        let rs2, prf2 = x_add heap_entail_conjunct_lhs 5 prog is_folding  ctx_R f2 pos in
                 let () = Debug.info_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 4" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
 	        (filter_set rs2, prf2)
 	      else

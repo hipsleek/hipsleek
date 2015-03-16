@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Camlp4.PreCast
 
 type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE

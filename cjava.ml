@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* 
    Pretty printing to Java for Cast.

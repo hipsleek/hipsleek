@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
   Predicate compiler: compiles predicates to executable code.
