@@ -624,7 +624,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let v1 = (add_str "vars" pr_vars) vars in
                       let v2 = (add_str "pre_post_vars" pr_vars) pre_post_vars in
                       let v = ("\n"^v1^" "^v2^"\n") in
-                      DD.info_pprint ("WARNING : Inferable vars include some external variables!"^v) inf_pos
+                      if not(!Globals.print_min) then DD.info_pprint ("WARNING : Inferable vars include some external variables!"^v) inf_pos
                     end
                   else
                   if not(CP.subset unknown_rel vars_rel) then
@@ -2929,7 +2929,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
       if f1 then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
-		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in 
+		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
 		    (*possibly change to flat post here as well??*)
            let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state flat_post None None None pos (Some pid) in
            let () =  DD.ninfo_hprint (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos in
@@ -2960,7 +2960,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         Prooftracer.pop_div ();
 	(* print_endline "DONE!" *)
       end in
-
     if (CF.isSuccessListPartialCtx_new rs) then
       rs
     else begin

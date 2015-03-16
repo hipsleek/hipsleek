@@ -948,6 +948,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
+        | c=class_decl -> DataDef c
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
@@ -1031,7 +1032,7 @@ template_data_header:
 data_body: 
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
-      | `OBRACE; `CBRACE                             -> []] ];
+      | `OBRACE; `CBRACE                   -> []] ];
  
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
