@@ -1159,7 +1159,8 @@ let norm_dups_pred_x cprog f=
   (*          bool * (Hgraph.CP.spec_var * Hgraph.CP.spec_var) list * *)
   (*          Hgraph.heap_graph *)
   (*        but an expression was expected of type unit *)
-  let todo_bug_here = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
+  let () = Debug.winfo_pprint "(TO FIX) norm_graph (in frame.ml) not executed!" no_pos in
+  (* let todo_unk_bug_here = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in *)
   let maybe_rdups_groups = get_dups_hv eqs0 maybe_emps [] in
   let all_dups_roots = List.map fst maybe_rdups_groups in
   (* let () = Debug.info_pprint (" XXXXXXXXXX 1") no_pos in *)

@@ -381,6 +381,9 @@ let replace_with_user_include
 
 (***************end process compare file*****************)
 
+let saved_cprog = ref None
+let saved_prim_names = ref None
+
 (*Working*)
 let process_source_full source =
   if (not !Globals.web_compile_flag) then
@@ -450,6 +453,7 @@ let process_source_full source =
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
       ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
     in
+    let () = saved_prim_names := Some prim_names in
     (* let () = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline_quiet ("PROG: "^Iprinter.string_of_program prog) in *)
     let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
@@ -518,6 +522,7 @@ let process_source_full source =
     (* let () = I.set_iprog intermediate_prog in *)
     (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
     let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let () = saved_cprog := Some cprog in
     (* let () = if !Globals.sa_pure then *)
     (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
     (*       if v.Cast.view_kind = Cast.View_NORM then *)
@@ -726,6 +731,7 @@ let process_source_full_parse_only source =
   let () = Gen.Profiling.pop_time "Preprocessing" in
   (prog, prims_list)
 
+
 let process_source_full_after_parser source (prog, prims_list) =
   Debug.info_zprint (lazy (("Full processing file (after parser) \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
@@ -785,6 +791,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let () =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  let () = saved_cprog := Some cprog in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
@@ -944,12 +951,15 @@ let loop_cmd parsed_content =
   let todo_unk = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
   ()
 
-let finalize () =
+let finalize_bug () =
   let () = Log.last_cmd # dumping "finalize on hip" in
-  (* WN : ERROR *)
-  (* type: Cast.prog_decl -> Globals.ident list -> unit *)
-  let () = Debug.binfo_pprint "WARNING : Logging not done on finalize" no_pos in
-  let todo_bug_here = Log.process_proof_logging !Globals.source_files in
+  (match !saved_cprog,!saved_prim_names with
+    | Some(cprog),Some(prim_names) ->
+          let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
+    | Some(cprog),None ->
+          let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
+    | _,_ ->
+          let () = Debug.binfo_pprint "WARNING : Logging not done on finalize" no_pos in ());
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 
@@ -963,7 +973,7 @@ let old_main () =
     let () = Gen.Profiling.print_info () in
     ()
   with _ as e -> begin
-    finalize ();
+    finalize_bug ();
     print_string "caught\n"; 
     Printexc.print_backtrace stderr;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
@@ -974,11 +984,15 @@ let old_main () =
   end
 
 let () = 
-  if not(!Globals.do_infer_inc) then old_main ()
+  if not(!Globals.do_infer_inc) then
+        (* let () = print_endline "I am executing old stuff?.." in *)
+        old_main ()
   else
+    (* this part seems to be for incremental inference *)
     let res = pre_main () in
     while true do
       try
+        (* let () = print_endline "I am executing here.." in *)
         let () = print_string "# " in
         let s = Parse_cmd.parse_cmd (read_line ()) in
         match s with
@@ -994,7 +1008,7 @@ let () =
           let () = Gen.Profiling.print_info () in
           ()
         with _ as e -> begin
-          finalize ();
+          finalize_bug ();
           print_string "caught\n"; Printexc.print_backtrace stdout;
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
           print_string ("\nError4(s) detected at main \n");
