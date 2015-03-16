@@ -6,7 +6,7 @@ open VarGen
 
 open Globals
 open Cast
-open Prooftracere
+open Prooftracer
 open Gen.Basic
 open Cformula
 
