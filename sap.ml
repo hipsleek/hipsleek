@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*handle pure extension to spec inference*)
 

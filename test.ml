@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
  created 21-Feb-2006

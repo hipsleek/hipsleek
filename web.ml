@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 module PrioQueue =
    struct
      type priority = int

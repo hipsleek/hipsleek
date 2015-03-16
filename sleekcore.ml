@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*
   the wrapper of sleek implementation

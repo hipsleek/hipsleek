@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
 this module contains funtions relating to output of cformula
 *)

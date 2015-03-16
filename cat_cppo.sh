@@ -9,7 +9,6 @@ $EX cfsolver.ml
 $EX cfutil.ml
 $EX checkeq.ml
 $EX checks.ml
-$EX cilparser.ml
 $EX cjava.ml
 $EX classic.ml
 $EX cleanUp.ml
@@ -100,19 +99,10 @@ $EX net.ml
 $EX new-mona.ml
 $EX norm.ml
 $EX oast.ml
-$EX old-parser-w-fperm.ml
-$EX old_cvc3.ml
-$EX old_musterr.ml
-$EX old_smtsolver.ml
 $EX omega.ml
 $EX others.ml
 $EX paralib1.ml
 $EX paralib1v2.ml
-$EX parse_cmd.ml
-$EX parse_fix.ml
-$EX parse_fixbag.ml
-$EX parse_shape.ml
-$EX parser.ml
 $EX perm.ml
 $EX pi.ml
 $EX piecewise.ml
@@ -178,7 +168,6 @@ $EX view_generator.ml
 $EX vperm.ml
 $EX web.ml
 $EX wrapper.ml
-$EX xdebug.ml
 $EX xmlfront.ml
 $EX z3.ml
 $EX z3m.ml
