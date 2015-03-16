@@ -1,0 +1,66 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/shape.ss"
+Parsing file "t/shape.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_11
+!!! generate unknown predicate for Post synthesis of : :GP_12
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+!!! generate unknown predicate for Pre synthesis of while_10_2$cell~cell: :HP_1344
+!!! generate unknown predicate for Post synthesis of while_10_2$cell~cell: :GP_1345
+Checking procedure while_10_2$cell~cell... 
+
+
+******************************
+   ******* SPECIFICATION1 ********
+******************************
+ infer[@shape HP_1344,GP_1345]requires (htrue) * HP_1344(x,y)&
+truerequires emp
+ ensures (htrue) * GP_1345(x,y)&true{,(4,5)=__norm#E};
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
+
+ERROR: at t/shape.ss_15:4_15:9
+Message: Expect a node
+
+!!! WARNING logtime exception:0.
+Procedure while_10_2$cell~cell FAIL.(2)
+
+Exception Failure("Expect a node") Occurred!
+
+Error(s) detected when checking procedure while_10_2$cell~cell
+
+Checking procedure main$cell~cell... 
+
+
+******************************
+   ******* SPECIFICATION1 ********
+******************************
+ infer[@shape HP_11,GP_12]requires HP_11(x,y)&
+truerequires emp
+ ensures GP_12(x,y)&true{,(4,5)=__norm#E};
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/shape.ss",Line:10,Col:2
+
+ERROR: at t/shape.ss_10:2_16:3
+Message: Expect a node or a hrel
+
+!!! WARNING logtime exception:0.004
+Procedure main$cell~cell FAIL.(2)
+
+Exception Failure("Expect a node or a hrel") Occurred!
+
+Error(s) detected when checking procedure main$cell~cell
+
+0 false contexts at: ()
+
+Total verification time: 0.404024 second(s)
+	Time spent in main process: 0.380023 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

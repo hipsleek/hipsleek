@@ -1,4 +1,5 @@
 open Globals
+open VarGen
 open GlobProver
 open Gen.Basic
 open Cpure
@@ -116,7 +117,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
     ) 
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  (* | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula" *)
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -240,7 +241,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | Neq (e1, e2, _) -> "(" ^ (spass_tptp_of_exp e1) ^ " != " ^ (spass_tptp_of_exp e2) ^ ")"
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
-  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
+  (* | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula" *)
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -323,7 +324,7 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | Neq (ex1, ex2, _)    -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
   | EqMax _              -> false
   | EqMin _              -> false
-  | VarPerm _            -> false
+  (* | VarPerm _            -> false *)
   (* bag formulars *)
   | BagIn _
   | BagNotIn _
@@ -382,7 +383,7 @@ let string_of_spass_output output =
 let rec collect_output (chn: in_channel) (accumulated_output: string list) : (string list * bool) =
   try
     let line = input_line chn in
-    (* let _ = print_endline ("  -- output: " ^ line) in *)
+    (* let () = print_endline ("  -- output: " ^ line) in *)
     if line = "---SPASS-MOD-STOP---" then
       (accumulated_output, true)
     else
@@ -394,7 +395,7 @@ let rec collect_output (chn: in_channel) (accumulated_output: string list) : (st
 (* TODO: this function need to be optimized                                *)
 let get_prover_result (output : string list) : validity_t =
   (* debug *)
-  (* let _ = print_endline "** In functin get_prover_result:" in *)
+  (* let () = print_endline "** In functin get_prover_result:" in *)
   (* List.iter (fun x -> print_endline x) output; *)
   let rec is_start_with (subtext: string) (text: string) : bool =
     let len = String.length subtext in
@@ -405,7 +406,7 @@ let get_prover_result (output : string list) : validity_t =
   let conclusion_line = try List.find (is_start_with "SPASS beiseite:") output
                         with Not_found -> "Unknown" in
   (* debug *)
-  (* let _ = print_endline ("-- get_prover_result: " ^ conclusion_line) in *)
+  (* let () = print_endline ("-- get_prover_result: " ^ conclusion_line) in *)
   let validity =
     if (conclusion_line = "SPASS beiseite: Completion found.") then
       Invalid
@@ -452,7 +453,7 @@ let stop () =
   if !is_spass_running then (
     let num_tasks = !test_number - !last_test_number in
     print_string_if !Globals.enable_count_stats ("Stop SPASS... " ^ (string_of_int !spass_call_count) ^ " invocations "); flush stdout;
-    let _ = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
+    let () = Procutils.PrvComms.stop !log_all_flag log_file !spass_process num_tasks Sys.sigkill (fun () -> ()) in
     is_spass_running := false;
   )
   else Debug.info_pprint "SPASS is not running" no_pos
@@ -460,21 +461,21 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_spass_running then (
-    let _ = print_string_if !Globals.enable_count_stats (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
+    let () = print_string_if !Globals.enable_count_stats (reason ^ " Restarting SPASS after ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_file reason "SPASS" start stop
   )
   else (
-    let _ = print_string_if !Globals.enable_count_stats (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in 
+    let () = print_string_if !Globals.enable_count_stats (reason ^ " not restarting SPASS ... " ^ (string_of_int !spass_call_count) ^ " invocations ") in 
     start ()
   )
     
 (* Runs the specified prover and returns output *)
 let check_problem_through_file (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.check_problem" in *)
+  (* let () = print_endline "** In function Spass.check_problem" in *)
   let file_suffix = Random.int 1000000 in
   let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".spass" in
-  (* let _ = print_endline ("-- input: \n" ^ input) in *) 
+  (* let () = print_endline ("-- input: \n" ^ input) in *) 
   let out_stream = open_out infile in
   output_string out_stream input;
   close_out out_stream;
@@ -515,7 +516,7 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
         (* failwith "spass timeout"; *)
         raise exc
   in
-  let _ = Procutils.PrvComms.stop false stdout !spass_process 0 9 (fun () -> ()) in
+  let () = Procutils.PrvComms.stop false stdout !spass_process 0 9 (fun () -> ()) in
   remove_file infile;
   res
 
@@ -527,22 +528,22 @@ let check_problem_through_file (input: string) (timeout: float) : prover_output_
 (* Runs the specified prover and returns output *)
 let check_problem_through_stdin (input: string) (timeout: float) : prover_output_t =
   (* debug *)
-  (*let _ = print_endline "** In function Spass.check_problem_through_stdin" in 
-  let _ = print_endline ("  -- input: \n" ^ input) in*)
+  (*let () = print_endline "** In function Spass.check_problem_through_stdin" in 
+  let () = print_endline ("  -- input: \n" ^ input) in*)
   if not !is_spass_running then (
-    (*let _ = print_endline "  -- start SPASS" in*)
+    (*let () = print_endline "  -- start SPASS" in*)
     start ()
   )
   else if (!spass_call_count = !spass_restart_interval) then (
-    (*let _ = print_endline "  -- restart SPASS" in
+    (*let () = print_endline "  -- restart SPASS" in
     restart("Regularly restart:1 ");*)
     spass_call_count := 0;
   );
-  (*let _ = print_endline (" -- spass_process_pid: " ^ string_of_int(!spass_process.pid)) in*)
+  (*let () = print_endline (" -- spass_process_pid: " ^ string_of_int(!spass_process.pid)) in*)
   let fnc f =
     output_string (!spass_process.outchannel) f;
     flush (!spass_process.outchannel);
-    let _ = incr spass_call_count in
+    let () = incr spass_call_count in
     let (prover_output, running_state) = get_answer !spass_process.inchannel in
     is_spass_running := running_state;
     prover_output in
@@ -637,7 +638,7 @@ let to_spass_tptp (ante: Cpure.formula) (conseq: Cpure.formula) : string =
 
 let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   (* debug *)
-  (* let _ = print_endline "** In function to_spass:" in *)
+  (* let () = print_endline "** In function to_spass:" in *)
   let conseq = match conseq with
     (* We don't have conseq part in is_sat checking *)
     | None   -> Cpure.mkFalse no_pos
@@ -647,13 +648,13 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
     if (spass_input_format = "dfg") then (
 	    (* if sending problem in DFG format to SPASS *)
 	    let dfg_res = to_spass_dfg ante conseq
-      (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
+      (* let () = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
       in dfg_res
     ) 
     else if (spass_input_format = "tptp") then (
       (* if sending problem in TPTP format to SPASS *)
       let tptp_res = to_spass_tptp ante conseq in
-      (* let _ = print_endline ("-- Input problem in TPTP format:\n" ^ tptp_res) in *)
+      (* let () = print_endline ("-- Input problem in TPTP format:\n" ^ tptp_res) in *)
       tptp_res
     ) 
     else illegal_format "[spass.ml] The value of spass_input_format is invalid!" in
@@ -667,8 +668,8 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   let omega_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_ante ^ "  ==>  " ^ omega_conseq ^ ")}" ^ ";" ^ Gen.new_line_str in
   let omega_temp_str = Omega.omega_of_formula omega_temp_f in
   let omega_temp_formula  =  "complement {[" ^ omega_vstr ^ "] : (" ^ omega_temp_str ^ ")}" ^ ";" ^ Gen.new_line_str in
-  let _ = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
-  let _ = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
+  let () = print_endline ("-- Input problem in Omega format - omega_temp_str:\n" ^ omega_formula) in
+  let () = print_endline ("-- Input problem in Omega format - omega_temp_formula:\n" ^ omega_temp_formula) in *)
   res
 
 (**************************************************************
@@ -685,30 +686,30 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 *)
 
 let rec spass_imply (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  (* let _ = "** In function Spass.spass_imply" in *)
+  (* let () = "** In function Spass.spass_imply" in *)
   let pr = Cprinter.string_of_pure_formula in
   let result = 
     Debug.no_2(* _loop *) "spass_imply" (pr_pair pr pr) string_of_float string_of_bool
     (fun _ _ -> spass_imply_x ante conseq timeout) (ante, conseq) timeout in
   (* let omega_result = Omega.imply ante conseq "" timeout in
-  let _ = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
-  let _ = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
+  let () = print_endline ("-- spass_imply result: " ^ (if result then "TRUE" else "FALSE")) in
+  let () = print_endline ("-- omega_imply result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result;
     
 
 and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool =
-  let _ = "** In function Spass.spass_imply_x" in
+  (* let () = "** In function Spass.spass_imply_x" in *)
   let res, should_run_spass =
     if not ((can_spass_handle_formula ante) && (can_spass_handle_formula conseq)) then
       (* for debug *)
       (* let fomega_ante = Omega.omega_of_formula ante in
-      let _ = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
+      let () = print_endline ("can_spass_handle_formula ante:" ^ fomega_ante ^ ": " ^ 
               (if (can_spass_handle_formula ante) then "true" else "false")) in
       let fomega_conseq = Omega.omega_of_formula conseq in
-      let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
+      let () = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
-        let _ = print_endline "-- use Omega.imply_..." in
+        let () = print_endline "-- use Omega.imply_..." in
         let (pr_w, pr_s) = Cpure.drop_complex_ops in
         match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
         | None -> (false, (* true*) false)
@@ -720,7 +721,7 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
         | _ -> (false, (* true *) false) (* TrungTQ: Maybe BUG: in the exception case, it should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
-    (* let _ = print_endline "-- use Spass.check_problem" in *)
+    (* let () = print_endline "-- use Spass.check_problem" in *)
     let spass_input = to_spass ante (Some conseq) in
     let validity =
       if (spass_input_mode = "file") then
@@ -729,7 +730,7 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
         check_problem_through_stdin spass_input timeout
       else illegal_format "[spass.ml] The value of spass_input_mode is invalid!" in
     (* let prover_output = String.concat "\n" output.original_output_text in *)
-    (* debug let _ = print_endline ("** prover output:" ^              *)
+    (* debug let () = print_endline ("** prover output:" ^              *)
     (* prover_output) in                                               *)
     let res =
       match validity.validity_result with (* TrungTQ: may be bugs here *)
@@ -742,17 +743,17 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
     res
 
 let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
+  (* let () = print_endline "** In function Spass.imply:" in *)
   let result = spass_imply ante conseq timeout in
-  (* let _ = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
+  (* let () = print_endline ("-- imply result: " ^ (if result then "true" else "false" )) in *)
   result
 
 let imply_with_check (ante : Cpure.formula) (conseq : Cpure.formula) (imp_no : string) (timeout: float) : bool option =
-  (* let _ = print_endline "** In function Spass.imply_with_check:" in *)
+  (* let () = print_endline "** In function Spass.imply_with_check:" in *)
   Cpure.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
+  (* let () = print_endline "** In function Spass.imply:" in *)
   try
     let result = imply ante conseq timeout in
     result
@@ -765,7 +766,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function Spass.imply:" in *)
+  (* let () = print_endline "** In function Spass.imply:" in *)
   Debug.no_1(* _loop *) "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 
@@ -776,15 +777,15 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
 
 let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.spass_is_sat:" in *)
+  (* let () = print_endline "** In function Spass.spass_is_sat:" in *)
   (* anything that SPASS counldn't handle will be transfer to Omega *)
   let res, should_run_spass =
     if not (can_spass_handle_formula f) then
       (* for debug *)
       (* let fomega = Omega.omega_of_formula f in
-      let _ = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
+      let () = print_endline ("can_spass_handle_formula f: " ^ fomega ^ ": " ^ 
               (if (can_spass_handle_formula f) then "true" else "false")) in
-      let _ = print_endline "-- use Omega.is_sat..." in *)
+      let () = print_endline "-- use Omega.is_sat..." in *)
       try
         let (pr_w, pr_s) = Cpure.drop_complex_ops in
         let optr = (Omega.is_sat_with_check pr_w pr_s f sat_no) in
@@ -798,7 +799,7 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
         | _ -> (true, false) (* TrungTQ: Maybe BUG: Why res = true in the exception case? It should return UNKNOWN *)
     else (false, true) in
   if (should_run_spass) then
-    (* let _ = print_endline "-- use Spass.check_problem..." in *)
+    (* let () = print_endline "-- use Spass.check_problem..." in *)
     (* to check sat of f, spass check the validity of negative(f) or (f => None) *)
     let spass_input = to_spass f None in
     let validity =
@@ -826,16 +827,16 @@ let spass_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   let result = Debug.no_1 "spass_is_sat" pr string_of_bool (fun _ -> spass_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
-  let _ = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
-  let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
+  let () = print_endline ("-- spass_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
+  let () = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)
   result
 
 (* see imply *)
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.is_sat: " in *)
+  (* let () = print_endline "** In function Spass.is_sat: " in *)
   let result = spass_is_sat f sat_no in
-  (* let _ = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
+  (* let () = print_endline ("-- is_sat result: " ^ (if result then "true" else "false")) in *)
   result
 
 let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
@@ -845,7 +846,7 @@ let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
 (* string_of_bool is_sat f sat_no                                          *)
 
 let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
-  (* let _ = print_endline "** In function Spass.is_sat: " in *)
+  (* let () = print_endline "** In function Spass.is_sat: " in *)
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
@@ -860,7 +861,7 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
 *)
 let simplify (f: Cpure.formula) : Cpure.formula =
   (* debug *)
-  (* let _ = print_endline "** In function Spass.simplify" in *)
+  (* let () = print_endline "** In function Spass.simplify" in *)
   try (Omega.simplify f) with _ -> f
 
 let simplify (pe : Cpure.formula) : Cpure.formula =

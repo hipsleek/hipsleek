@@ -1,0 +1,22 @@
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail t::Thrd{-@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ -%P}<> . //* %P.
+print residue.
+
+/*
+# ex60c --ann-vp
+
+Why only there a failure with -%P failure?
+
+!!! init_tp : Using Z3 by default
+Starting z3... 
+
+Entail 1: Fail.(must) cause:matching of ho_args failed (Mismatch non-zero variable permission in consequent [(x,@full)])
+
+
+*/

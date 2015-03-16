@@ -747,7 +747,7 @@ $output_file = "log";
 				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
 				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
 				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
-				["vperm/vperm_check.ss",6,  "--ann-vp", 
+				["vperm/ho_vperm_check.ss",6,  "--ann-vp", 
                                 "inc","SUCCESS",
                                 "incCell","SUCCESS",
                                 "test1","FAIL",
@@ -1827,6 +1827,7 @@ $output_file = "log";
 # the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 my $lem = '--elp';
 my $inv = '--inv-test';
+my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["cll-d.slk", "", (), "Valid."],
@@ -1851,14 +1852,14 @@ my $inv = '--inv-test';
                       ["sleek9.slk", " --elp ", ([$lem,"Valid.Valid."]),"Valid.Fail.Valid.Valid."],
                       ["sleek12-lend.slk", "", (), "Valid.Fail.Valid."],
                       ["sleek13-lend.slk", "", (), "Valid.Valid.Valid.Fail."],
-                      ["lst-under1.slk", "--inv-test", ([$inv,"Valid.Fail."]), "Valid.Fail."],
-                      ["lst-under2.slk", "--inv-test", ([$inv,"Fail.Valid"]), "Valid.Fail."],
-              ["ll-under1a.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1b.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Valid."]), ""],
-              ["ll-under1c.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
-              ["ll-under1d.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1e.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Fail."]), ""],
-              ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
+                      ["lst-under1.slk", "--inv-test", ([$dis,"Valid.Fail."]), "Valid.Fail."],
+                      ["lst-under2.slk", "--inv-test", ([$dis,"Fail.Valid"]), "Valid.Fail."],
+              ["ll-under1a.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1b.slk", " --inv-test --baga-xpure ", ([$dis,"Fail.Valid."]), ""],
+              ["ll-under1c.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Fail."]), ""],
+              ["ll-under1d.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1e.slk", " --inv-test --baga-xpure ", ([$dis,"Fail.Fail."]), ""],
+              ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$dis,"Valid.Fail."]), ""],
                       ["baga-test-eps.slk", "--eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
@@ -1940,7 +1941,7 @@ my $inv = '--inv-test';
         ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
               ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+              ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
               ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
               ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid."],
               ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
@@ -1959,7 +1960,7 @@ my $inv = '--inv-test';
                       ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"]
                  ],
     "sleek_vperm" => [
-                      ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+              ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp", (), "Valid.Valid.Fail."]],
         	"sleek_fracperm"=>[["fracperm/sleek.slk","--en-para -perm fperm -tp redlog", (),"Valid.Valid.Valid.Fail."],
         				["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", (), "Fail."],

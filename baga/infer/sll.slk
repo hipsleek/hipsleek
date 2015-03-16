@@ -1,0 +1,10 @@
+data node {
+     node next;
+}.
+
+pred sll<n> == self=null & n=0
+     or self::node<q> * q::sll<n-1>
+     inv n>=0
+     .
+
+checksat x::sll<n> & n=1.

@@ -1,3 +1,4 @@
+open VarGen
 (**
    Helper and other ultilities for Hip/Sleek's GUI
  *)
@@ -337,7 +338,7 @@ module SleekHelper = struct
       let header = clean (String.sub src 0 e.pos.start_char) in
       let src = Printf.sprintf "%s checkentail %s." header e.name in
       let cmds = parse_command_list src in
-      let _ = SE.clear_all () in
+      let () = SE.clear_all () in
       let rec exec cmds = match cmds with
         | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
         | [cmd] -> process_cmd cmd
@@ -447,7 +448,7 @@ module HipHelper = struct
   let parse_locs_line (line: string) : seg_pos list =
     let parse loc =
       let regexp = Str.regexp "(\\([0-9]+\\)-\\([0-9]+\\))" in
-      let _ = Str.string_match regexp loc 0 in
+      let () = Str.string_match regexp loc 0 in
       { start_char = int_of_string (Str.matched_group 1 loc);
         stop_char = int_of_string (Str.matched_group 2 loc);
         start_line = 0; (* ignore for now *)
@@ -461,7 +462,7 @@ module HipHelper = struct
     let err_pos = 
       try
         let regexp = Str.regexp "Possible locations of failures: \\([^\\.]+\\)\\." in
-        let _ = Str.search_forward regexp hip_output 0 in
+        let (todo_unk:int) = Str.search_forward regexp hip_output 0 in
         let locs_line = Str.matched_group 1 hip_output in
         log ("Failed branches location: " ^ locs_line);
         parse_locs_line locs_line;

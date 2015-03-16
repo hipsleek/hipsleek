@@ -1,4 +1,5 @@
 open Globals
+open VarGen
 open Others
 open Gen.Basic
 open GlobProver
@@ -184,8 +185,8 @@ let extract_eset_of_lbl_lst lst rhs =
           (l,nf)
     ) ls2
   in n_lst
-(* let _ = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
-(* let _ = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
+(* let () = Debug.info_hprint (add_str "mkE eqall" EMapSV.string_of) eq_all no_pos in *)
+(* let () = Debug.info_hprint (add_str "mkE ws" string_of_spec_var_list) ws no_pos in *)
 (* let r = formula_of_eset r no_pos in *)
 
 let extract_eset_of_lbl_lst lst rhs =

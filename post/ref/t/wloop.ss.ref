@@ -1,0 +1,47 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/wloop.ss"
+Parsing file "t/wloop.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure while_7_2$int~int... 
+Procedure while_7_2$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1340: ( y<x & post_1340(x,1+y,y',flow)) -->  post_1340(x,y,y',flow),
+RELDEFN post_1340: ( y'=y & x<=y) -->  post_1340(x,y,y',flow)]
+*************************************
+
+Post Inference result:
+while_7_2$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [y]
+           htrue&((y'>=(1+y) & y'=x) | (y'>=x & y'=y))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure while_7_2$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_7_1323') & x'<=y' & y'=y & 
+x'=x --> while_7_2post_1363(x,y).
+
+ termAssume v_bool_7_1323' & y_1376<x' & y_1376=y & x'=x & y_1383=1+y_1376 & 
+(((y'>=(1+y_1383) & y'=x') | (y'>=x' & 
+y'=y_1383))) & while_7_2post_1363(x',y_1383) --> while_7_2post_1363(x,y).
+
+ termAssume v_bool_7_1323' & y_1376<x' & y_1376=y & x'=x & y'=1+
+y_1376 & while_7_2pre_0(x,y) --> while_7_2pre_0(x',y').
+
+
+Base/Rec Case Splitting:
+[	while_7_2: [[2] x<=y@B,[3] y<x@R]
+]
+Starting z3... 

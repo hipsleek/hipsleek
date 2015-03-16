@@ -1,0 +1,100 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/tree-height1.ss"
+Parsing file "bugs/tree-height1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure height$node... 
+Procedure height$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1416: ( pre_1416(n) & 0<=n_1445 & n_1445<n) -->  pre_1416(n_1445),
+RELDEFN pre_1416: ( 0<=m_1458 & post_1417(m_1458,n_1445,v_int_17_1377',flow) & 0<=n_1445 & 
+n_1445<=(n-2) & pre_1416(n) & n_1461=n-1) -->  pre_1416(n_1461),
+RELDEFN pre_1416: ( 0<=m_1458 & post_1417(m_1458,n_1445,v_int_17_1377',flow) & n_1445=n-1 & 
+pre_1416(n) & 1<=n_1461 & n_1461<n) -->  pre_1416(n_1461),
+RELDEFN pre_1416: ( n_1461=0) -->  pre_1416(n_1461),
+RELDEFN pre_1416: ( pre_1416(n) & 0<=m_1475 & n_1461<n & 0<=n_1461 & n_1445=n-1 & 
+v_int_17_1485<v_int_17_1484 & post_1417(n_1488,n_1445,v_int_17_1484,flow) & 
+post_1417(m_1475,n_1461,v_int_17_1485,flow) & 1<=(m_1475+n_1488) & 0<=n_1488) -->  pre_1416(n_1488),
+RELDEFN pre_1416: ( 0<=m_1475 & post_1417(m_1475,n_1461,v_int_17_1485,flow) & pre_1416(n) & 
+n_1461=n-1 & n_1445<=(n-2) & 0<=n_1445 & v_int_17_1485<v_int_17_1484 & 
+post_1417(n_1488,n_1445,v_int_17_1484,flow) & 0<=n_1488) -->  pre_1416(n_1488),
+RELDEFN pre_1416: ( n_1488=0) -->  pre_1416(n_1488),
+RELDEFN pre_1416: ( pre_1416(n) & 0<=m_1458 & n_1461<n & 0<=n_1461 & n_1445=n-1 & 
+v_int_17_1511<=v_int_17_1512 & post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 1<=(m_1458+n_1515) & 0<=n_1515) -->  pre_1416(n_1515),
+RELDEFN pre_1416: ( pre_1416(n) & 0<=m_1458 & n_1445<=(n-2) & 0<=n_1445 & n_1461=n-1 & 
+v_int_17_1511<=v_int_17_1512 & post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 0<=n_1515) -->  pre_1416(n_1515),
+RELDEFN pre_1416: ( n_1515=0) -->  pre_1416(n_1515),
+RELDEFN post_1417: ( m_1407=0 & res=0 & n=0 & pre_1416(n)) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( n_1445<n_1461 & 0<=n_1445 & 0<=m_1504 & 0<=n_1488 & 
+v_int_17_1485<v_int_17_1484 & pre_1416(n) & 
+post_1417(n_1488,n_1445,v_int_17_1484,flow) & 
+post_1417(m_1475,n_1461,v_int_17_1485,flow) & 
+post_1417(m_1504,n_1488,v_int_18_1539,flow) & res=1+v_int_18_1539 & n=n_1461+
+1 & m_1475=m_1407-1 & m_1504<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( n_1461<=n_1445 & 0<=n_1461 & 0<=m_1504 & 0<=n_1488 & 
+v_int_17_1485<v_int_17_1484 & pre_1416(n) & 
+post_1417(n_1488,n_1445,v_int_17_1484,flow) & 
+post_1417(m_1475,n_1461,v_int_17_1485,flow) & 
+post_1417(m_1504,n_1488,v_int_18_1539,flow) & res=1+v_int_18_1539 & n=n_1445+
+1 & m_1475=m_1407-1 & m_1504<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( m_1475<=m_1504 & 0<=m_1475 & n_1445<n_1461 & 0<=n_1445 & 0<=n_1488 & 
+v_int_17_1485<v_int_17_1484 & pre_1416(n) & 
+post_1417(n_1488,n_1445,v_int_17_1484,flow) & 
+post_1417(m_1475,n_1461,v_int_17_1485,flow) & 
+post_1417(m_1504,n_1488,v_int_18_1539,flow) & res=1+v_int_18_1539 & n=n_1461+
+1 & m_1407=m_1504+1) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( m_1475<=m_1504 & 0<=m_1475 & n_1461<=n_1445 & 0<=n_1461 & 0<=n_1488 & 
+v_int_17_1485<v_int_17_1484 & pre_1416(n) & 
+post_1417(n_1488,n_1445,v_int_17_1484,flow) & 
+post_1417(m_1475,n_1461,v_int_17_1485,flow) & 
+post_1417(m_1504,n_1488,v_int_18_1539,flow) & res=1+v_int_18_1539 & n=n_1445+
+1 & m_1407=m_1504+1) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( n_1445<n_1461 & 0<=n_1445 & 0<=m_1458 & 0<=n_1515 & 
+v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
+post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1461+
+1 & m_1531=m_1407-1 & m_1458<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( n_1461<=n_1445 & 0<=n_1461 & 0<=m_1458 & 0<=n_1515 & 
+v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
+post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1445+
+1 & m_1531=m_1407-1 & m_1458<=(m_1407-2)) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( m_1531<=m_1458 & 0<=m_1531 & n_1445<n_1461 & 0<=n_1445 & 0<=n_1515 & 
+v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
+post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1461+
+1 & m_1407=m_1458+1) -->  post_1417(m_1407,n,res,flow),
+RELDEFN post_1417: ( m_1531<=m_1458 & 0<=m_1531 & n_1461<=n_1445 & 0<=n_1461 & 0<=n_1515 & 
+v_int_17_1511<=v_int_17_1512 & pre_1416(n) & 
+post_1417(m_1458,n_1445,v_int_17_1511,flow) & 
+post_1417(n_1515,n_1461,v_int_17_1512,flow) & 
+post_1417(m_1531,n_1515,v_int_20_1571,flow) & res=1+v_int_20_1571 & n=n_1445+
+1 & m_1407=m_1458+1) -->  post_1417(m_1407,n,res,flow)]
+*************************************
+
+Post Inference result:
+height$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::tree{}<n>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists m_1407: x::tree{}<m_1407>&0<=n & res>=0 & res=n & 
+           res=m_1407&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 3.176197 second(s)
+	Time spent in main process: 2.076129 second(s)
+	Time spent in child processes: 1.100068 second(s)
+

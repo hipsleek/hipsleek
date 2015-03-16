@@ -27,8 +27,8 @@ module Utils = struct
   let sleep (f:float) : unit = 
     let start = Unix.gettimeofday () in
     while (Unix.gettimeofday ()) -. start < f do
-      (* let _ = Unix.select [] [] [Unix.stderr] f in (); *)
-      let _ = Gen.Basic.restart  (Unix.select [] [] [Unix.stderr]) f in ();
+      (* let () = Unix.select [] [] [Unix.stderr] f in (); *)
+      let () = Gen.Basic.restart  (Unix.select [] [] [Unix.stderr]) f in ();
     done  
   
   (** [time_used f a] applies the [f] to argument [a] and returns the result with duration it takes. *)
@@ -527,7 +527,7 @@ module Manager = struct
                     try
 (*                      wait_slave_fds := List.filter (fun d -> d <> fd) !wait_slave_fds; (* remove from waiting slaves *)*)
                       let seqno, idx, result = Net.IO.read_result (Unix.in_channel_of_descr fd) in
-                      let _ = process_slave_msg manager_out_ch seqno idx result in ()
+                      let () = process_slave_msg manager_out_ch seqno idx result in ()
                     with
                       GroupDone seqno -> cancel_jobs_of seqno;
                     | Obsoleted_Seqno -> show_info "skipped, obsolete job_id.";

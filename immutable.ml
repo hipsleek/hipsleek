@@ -1,3 +1,4 @@
+open VarGen
 (*
 2011: Immutability module:
   - utils for immutability
@@ -50,14 +51,14 @@ let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * C
             | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | CP.ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           )
     | CP.ConstAnn k1 ->
           (match imm2 with
             | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           ) 
     | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
@@ -83,7 +84,8 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
     | None -> (f,[],[],[])
@@ -106,13 +108,15 @@ let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (
               | _ -> (f,[],[to_rhs], [])
           end
 
-let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
   let pr2a = pr_list !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 
+    subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
@@ -154,7 +158,7 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
 	  h_formula_star_pos = pos}) -> 
-      (* let _ = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
+      (* let () = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
 	      (match h2 with
 	        | Phase _ -> (h1, h2)
 	        | Star ({h_formula_star_h1 = sh1;
@@ -348,12 +352,12 @@ let rec is_classic_lending_hformula (f: h_formula) : bool =
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
         if (isLend h1.h_formula_data_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
         if (isLend h1.h_formula_view_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
 
@@ -1353,6 +1357,9 @@ and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
     | SuccCtx(cl) ->
 	  SuccCtx(List.map (subs_crt_holes_ctx 12 ) cl)
 
+and subs_crt_holes_list_failesc_ctx ctx = 
+  transform_list_failesc_context (idf, idf, (fun es -> Ctx (subs_holes_es es))) ctx
+
 and subs_crt_holes_ctx_x (ctx : context) : context = 
   match ctx with
     | Ctx(es) -> Ctx(subs_holes_es es)
@@ -1471,7 +1478,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
     | [] -> []
 ;; 
 
-let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
@@ -1552,7 +1559,7 @@ let merge_imm_ann ann1 ann2 =
     | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
       (ann, [], [])
 
-let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
@@ -1563,7 +1570,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
                   (params@[new_p_ann], nc@constr, nv@vars)
               ) ([],[],[]) dn.CF.h_formula_data_param_imm
             else
-              let _ = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
+              let () = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
               let new_ann_param = List.map (fun _ -> ann_node) dn.CF.h_formula_data_arguments in
               (new_ann_param, [], [])
           in 
@@ -1573,19 +1580,19 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
           (n_dn, constr, new_vars)
     | _ -> (h, [], [])
 
-let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
-let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   if (!Globals.allow_field_ann) then
   (* if false then *)
     let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
     (h,constr,new_vars)
   else (h,[],[])
 
-let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1 "normalize_field_ann_heap_node" pr pr_out normalize_field_ann_heap_node_x h
@@ -1918,7 +1925,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
   with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let () = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in

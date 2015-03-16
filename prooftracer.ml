@@ -22,6 +22,7 @@
   selective reporting can be done separately.
 *)
 open Globals
+open VarGen
 open GlobProver
 
 module CP = Cpure
@@ -633,8 +634,8 @@ let write_html_output () =
 	let setup_script = !jsonproof ^ "\n];\n" in
 	let htmloutres = Str.global_replace (Str.regexp_string "//$SETUP_SCRIPT") setup_script template in
 	let htmloutres = Str.global_replace (Str.regexp_string "$$RESOURCE_DIR_URL$$") ("file://" ^ resource_dir) htmloutres in
-	(* let _ = print_endline !jsonproof in *)
-	let _ = post_process_html () in
+	(* let () = print_endline !jsonproof in *)
+	let () = post_process_html () in
 	let chn = open_out !html_output_file in
 	let chntest = open_out "testjason.html" in
 		output_string chn !html_output;

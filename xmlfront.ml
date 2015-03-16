@@ -1,3 +1,4 @@
+open VarGen
 (*
   XML front-end.
 

@@ -1,3 +1,4 @@
+open VarGen
 (*translates cformulas to iformulas, with some simplifications*)
 open Globals
 open Wrapper
@@ -26,7 +27,7 @@ let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
   | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
-    (* let _ = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
+    (* let () = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
     IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.Bptriple ((c,t,a),p) ->
       let nc = IP.Var (rev_trans_spec_var c, p) in
@@ -92,7 +93,7 @@ let rec rev_trans_pf f = match f with
   | CP.BagSub (e1,e2,p) -> IP.BagSub (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.BagMin (v1,v2,p) -> IP.BagMin (rev_trans_spec_var v1, rev_trans_spec_var v2, p)
   | CP.BagMax  (v1,v2,p) -> IP.BagMax (rev_trans_spec_var v1, rev_trans_spec_var v2, p)
-  | CP.VarPerm _ -> failwith "rev_trans_pure: unexpected VarPerm, if you want support for it , implement this case\n" 
+  (* | CP.VarPerm _ -> failwith "rev_trans_pure: unexpected VarPerm, if you want support for it , implement this case\n"  *)
   | CP.RelForm (v,el,p)-> IP.RelForm (sv_n v, List.map rev_trans_exp el, p)
   | CP.ListIn (e1,e2,p) -> IP.ListIn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListNotIn (e1,e2,p) -> IP.ListNotIn (rev_trans_exp e1, rev_trans_exp e2, p)
@@ -114,7 +115,7 @@ let rec rev_trans_heap f = match f with
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
   | CF.HEmp   -> IF.HEmp
-  | CF.HVar (CP.SpecVar(_,v,_))   -> IF.HVar v
+  | CF.HVar (CP.SpecVar(_,v,_),ls)   -> IF.HVar (v,List.map (Cpure.string_of_spec_var) ls)
   | CF.ThreadNode b ->
         IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
             b.CF.h_formula_thread_name
@@ -158,19 +159,21 @@ and rev_trans_formula f =
     String.sub s 0 is
   in
   match f with 
-    | CF.Base b-> IF.Base  { 
-	  IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
-          IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
-          IF.formula_base_flow = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
-          IF.formula_base_and = [];
-          IF.formula_base_pos = b.CF.formula_base_pos }
-    | CF.Exists b-> IF.Exists{
-	  IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
-          IF.formula_exists_heap = rev_trans_heap b.CF.formula_exists_heap;
-          IF.formula_exists_pure = rev_trans_mix b.CF.formula_exists_pure;
-          IF.formula_exists_flow = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
-          IF.formula_exists_and = [];
-          IF.formula_exists_pos =b.CF.formula_exists_pos}
+    | CF.Base b -> IF.Base { 
+        IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
+        IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
+        IF.formula_base_vperm = (* b.CF.formula_base_vperm; *) IvpermUtils.empty_vperm_sets;
+        IF.formula_base_flow = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
+        IF.formula_base_and = [];
+        IF.formula_base_pos = b.CF.formula_base_pos }
+    | CF.Exists b -> IF.Exists {
+        IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
+        IF.formula_exists_heap = rev_trans_heap b.CF.formula_exists_heap;
+        IF.formula_exists_pure = rev_trans_mix b.CF.formula_exists_pure;
+        IF.formula_exists_vperm = (* b.CF.formula_exists_vperm; *) IvpermUtils.empty_vperm_sets;
+        IF.formula_exists_flow = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
+        IF.formula_exists_and = [];
+        IF.formula_exists_pos =b.CF.formula_exists_pos}
     | CF.Or b-> IF.Or {
 	  IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 
 	  IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
@@ -251,4 +254,4 @@ let transform_hp_rels_to_iviews hp_rels =
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
 
-let _ = Solver.rev_trans_formula := rev_trans_formula
+let () = Solver.rev_trans_formula := rev_trans_formula

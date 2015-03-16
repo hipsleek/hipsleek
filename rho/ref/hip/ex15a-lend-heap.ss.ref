@@ -1,0 +1,37 @@
+
+!!!Full processing file "hip/ex15a-lend-heap.ss"
+Parsing file "hip/ex15a-lend-heap.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex15a-lend-heap.ss:9: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_6_1339': x_37'::cell<v_int_6_1339'>*N@full[x_37,y_38,z_39]&z_39'=2 & y_38'=1 & v_int_6_1339'=1 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex15a-lend-heap.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists y_1496,z_1495: x_37'::cell<Anon_11>*N@full[val_13_1345,val_17_1351,x_37,y_38,z_39]&v_int_6_1386=1 & y_1496=1 & z_1495=2 & Anon_11=v_int_6_1386 & v_int_6_1386=1 & y_1496=1 & z_1495=2 & Anon_11=v_int_6_1386 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1428=1 & z_1426=2 & Anon_1427=v_int_6_1428 & v_int_6_1423=1 & y_1435=1 & z_1422=2 & Anon_1425=v_int_6_1423 & Anon_1424=Anon_1425 & y_38'=Anon_1424+y_1435 & v_int_6_1483=1 & y_1481=1 & Anon_1482=v_int_6_1483 & v_int_6_1477=1 & y_1476=1 & z_1491=2 & Anon_1480=v_int_6_1477 & Anon_1478=Anon_1480 & Anon_1479=Anon_1480 & z_39'=2+Anon_1479&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert/assume:hip/ex15a-lend-heap.ss:20: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.524031 second(s)
+	Time spent in main process: 0.49203 second(s)
+	Time spent in child processes: 0.032001 second(s)
+

@@ -1,3 +1,4 @@
+open VarGen
 (* This module provides util for cpure *)
 open Globals
 open Gen.Basic

@@ -1,0 +1,34 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ack-5.ss"
+Parsing file "t/ack-5.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1354: ( m=0 & res=1+n) -->  post_1354(m,n,res,flow),
+RELDEFN post_1354: ( v_int_13_1410+1=m & n=0 & m!=0 & post_1354(v_int_13_1410,1,res,flow)) -->  post_1354(m,n,res,flow),
+RELDEFN post_1354: ( v_int_15_1403+1=n & v_int_16_1412+1=m & n!=0 & m!=0 & 
+post_1354(v_int_16_1412,r_1413,res,flow) & 
+post_1354(m,v_int_15_1403,r_1413,flow)) -->  post_1354(m,n,res,flow)]
+*************************************
+
+Post Inference result:
+Ack$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&m>=0 & res>=(1+m+n)&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.904055 second(s)
+	Time spent in main process: 0.468029 second(s)
+	Time spent in child processes: 0.436026 second(s)
+

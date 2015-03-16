@@ -1,9 +1,11 @@
+open VarGen
 (* test - added to immutability branch *)
 (******************************************)
 (* command line processing                *)
 (******************************************)
 open Gen.Basic
 open Globals
+open HipUtil
 (* module I = Iast *)
 
 module M = Lexer.Make(Token.Token)
@@ -28,254 +30,15 @@ let print_version () =
   print_endline ("IT IS FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
-(* ================================================== *)
-(* The following part translate away array, making it normal variables *)
-(* ================================================== *)
 
-module Set_of_new_var = Set.Make(String);;
-(* Translate away all the array-involved expressions *)
-let translate_out_array
-      (input_prog:Iast.prog_decl):(Iast.prog_decl)=
-  let rec translate_out_array_proc_exp
-        (exp:Iast.exp)(var_set:Set_of_new_var.t):(Iast.exp*Set_of_new_var.t)=
-    let mk_name_from_indexlst
-          (indexlst:Iast.exp list):string=
-      match indexlst with
-        | h::[] ->Iprinter.string_of_exp h
-        | _ -> failwith "main.ml translate_out_array: To Be Implemented"
-    in
-    match exp with
-      | Iast.ArrayAt {exp_arrayat_array_base=arr_name;exp_arrayat_index=indexlst;exp_arrayat_pos=loc}->
-            let new_var_name = (Iprinter.string_of_exp arr_name)^(mk_name_from_indexlst indexlst) in
-            (Var {exp_var_name=new_var_name;exp_var_pos=loc},(Set_of_new_var.add new_var_name var_set))
-      | Iast.ArrayAlloc e-> (exp,var_set)
-
-      | Iast.Assert e-> (exp,var_set)
-
-      | Iast.Assign e->
-            let (new_lhs,new_set) = translate_out_array_proc_exp e.exp_assign_lhs var_set in
-            let (new_rhs,new_set) = translate_out_array_proc_exp e.exp_assign_rhs new_set in
-            (Assign ({e with exp_assign_lhs = new_lhs; exp_assign_rhs = new_rhs}),new_set)
-
-      | Iast.Binary e->
-            let (new_oper1,new_set) = translate_out_array_proc_exp e.exp_binary_oper1 var_set in
-            let (new_oper2,new_set) = translate_out_array_proc_exp e.exp_binary_oper2 new_set in
-            (Binary ({e with exp_binary_oper1=new_oper1;exp_binary_oper2=new_oper2}),new_set)
-
-      | Iast.Bind e->
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_bind_body var_set in
-            (Bind ({e with exp_bind_body = new_body}),new_set)
-
-      | Iast.Block e->
-            
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_block_body var_set in
-            (Block ({e with exp_block_body=new_body}),new_set)
-
-      | Iast.BoolLit e ->
-            (exp,var_set)
-
-      | Iast.Break e ->
-            (exp,var_set)
-
-      | Iast.Barrier _ ->
-            (exp,var_set)
-
-      | Iast.CallRecv e->
-            let (new_receiver,new_set) = translate_out_array_proc_exp e.exp_call_recv_receiver var_set in
-            let (new_recv_arguments,new_set) =
-              List.fold_left (fun (ra,s) e-> let (ta,ts) = translate_out_array_proc_exp e s in (ra@[ta],ts))  ([],new_set) e.exp_call_recv_arguments in
-            (CallRecv ({e with exp_call_recv_receiver=new_receiver;exp_call_recv_arguments=new_recv_arguments}),new_set)
-
-      | Iast.CallNRecv e->
-            let (new_recv_arguments,new_set)=
-              List.fold_left (fun (ra,s) e->let (ta,ts)= translate_out_array_proc_exp e s in (ra@[ta],ts))  ([],var_set) e.exp_call_nrecv_arguments in
-            (CallNRecv ({e with exp_call_nrecv_arguments = new_recv_arguments}),new_set)
-
-      | Iast.Cast e->
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_cast_body var_set in
-            (Cast ({e with exp_cast_body=new_body}),new_set)
-
-      | Iast.Cond e ->
-            let (new_condition,new_set) = translate_out_array_proc_exp e.exp_cond_condition var_set in
-            let (new_then_arm,new_set) = translate_out_array_proc_exp e.exp_cond_then_arm new_set in
-            let (new_else_arm,new_set) = translate_out_array_proc_exp e.exp_cond_else_arm new_set in
-            (Cond ({e with exp_cond_condition = new_condition;exp_cond_then_arm= new_then_arm;exp_cond_else_arm=new_else_arm}),new_set)
-
-      | Iast.ConstDecl e->
-            (exp,var_set)
-      | Iast.Continue e->
-            (exp,var_set)
-      | Iast.Catch e ->
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_catch_body var_set in
-            (Catch ({e with exp_catch_body=new_body}),new_set)
-      | Iast.Debug e->
-            (exp,var_set)
-
-      | Iast.Dprint e->
-            (exp,var_set)
-      | Iast.Empty _->
-            (exp,var_set)
-      | Iast.FloatLit e->
-            (exp,var_set)
-      | Iast.Finally e->
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_finally_body var_set in
-            (Finally ({e with exp_finally_body=new_body}),new_set)
-      | Iast.IntLit e->
-            (exp,var_set)
-
-      | Iast.Java e ->
-            (exp,var_set)
-      | Iast.Label ((control_path_id,path_label),exp)->
-            let (new_exp,new_set) = translate_out_array_proc_exp exp var_set in
-            (Label ((control_path_id,path_label),new_exp),new_set)
-      | Iast.Member e->
-            let (new_base,new_set) = translate_out_array_proc_exp e.exp_member_base var_set in
-            (Member ({e with exp_member_base = new_base}),new_set)
-      | Iast.New e->
-            let (new_arguments,new_set) = 
-              List.fold_left (fun (na,ns) e-> let (ta,ts) = translate_out_array_proc_exp e ns in (na@[ta],ts))  ([],var_set) e.exp_new_arguments in
-            (New ({e with exp_new_arguments=new_arguments}),new_set)
-
-      | Iast.Null _->
-            (exp,var_set)
-      | Iast.Raise e->
-            begin
-              match e.exp_raise_val with
-                | Some v ->
-                      let (new_raise_val,new_set)=translate_out_array_proc_exp v var_set in
-                      (Raise ({e with exp_raise_val= (Some new_raise_val)}),new_set)
-                | None -> (exp,var_set)
-            end
-
-      | Iast.Return e ->
-            begin
-              match e.exp_return_val with
-                | Some v->
-                      let (new_return_val,new_set)=translate_out_array_proc_exp v var_set in
-                      (Return ({e with exp_return_val=(Some new_return_val)}),new_set)
-                | None -> (exp,var_set)
-            end
-
-      | Iast.Seq e->
-            let (new_exp1,new_set) = translate_out_array_proc_exp e.exp_seq_exp1 var_set in
-            let (new_exp2,new_set) = translate_out_array_proc_exp e.exp_seq_exp2 new_set in
-            (Seq ({e with exp_seq_exp1 = new_exp1;exp_seq_exp2 = new_exp2}),new_set)
-      | Iast.This e->
-            (exp,var_set)
-      | Iast.Time _ ->
-            (exp,var_set)
-
-      | Iast.Try e->
-            let (new_try_block,new_set) = translate_out_array_proc_exp e.exp_try_block var_set in
-            let (new_catch_clauses,new_set)=
-              List.fold_left (fun  (nc,ns) e-> let (tc,ts) = translate_out_array_proc_exp e ns in (nc@[tc],ts)) ([],new_set) e.exp_catch_clauses in
-            let (new_finally_clause,new_set)=
-              List.fold_left (fun  (nf,ns) e-> let (tf,ts) = translate_out_array_proc_exp e ns in (nf@[tf],ts)) ([],new_set) e.exp_finally_clause  in
-            (Try ({e with exp_catch_clauses=new_catch_clauses;exp_finally_clause=new_finally_clause}),new_set)
-      | Iast.Unary e->
-            let (new_exp,new_set) = translate_out_array_proc_exp e.exp_unary_exp var_set in
-            (Unary ({e with exp_unary_exp = new_exp}),new_set)
-      | Iast.Unfold e->
-            (exp,var_set)
-      | Iast.Var e->
-            (exp,var_set)
-      | Iast.VarDecl e->
-            let (new_decls,new_set)=
-              List.fold_left 
-                  (fun   (nd,ns) (ident,exp_opt,loc) ->
-                      match exp_opt with
-                        | Some ve ->
-                              let (te,ts) = translate_out_array_proc_exp ve ns in
-                              (nd@[(ident,(Some te),loc)],ts)
-                        | None -> (nd@[ident,None,loc],ns)
-                  )  ([],var_set) e.exp_var_decl_decls in
-             (VarDecl ({e with exp_var_decl_decls = new_decls}),new_set)
-      | Iast.While e->
-            let (new_condition,new_set) = translate_out_array_proc_exp e.exp_while_condition var_set in
-            let (new_body,new_set) = translate_out_array_proc_exp e.exp_while_body new_set in
-            let (new_while_wrappings,new_set) =
-              begin
-                match e.exp_while_wrappings with
-                  | Some (ew,id)->
-                        let (new_ew,new_set) = translate_out_array_proc_exp ew new_set in
-                        ( Some (new_ew,id),new_set )
-                  | None -> (None,new_set)
-              end
-            in
-            (While ({e with exp_while_condition = new_condition;exp_while_body = new_body;exp_while_wrappings = new_while_wrappings}),new_set)
-  in
-  (* Now can only support int type *)
-  let mk_var_decl_from_var_set
-        (var_set:Set_of_new_var.t):(Iast.exp)=
-    let decl_lst = Set_of_new_var.fold (fun elt elst -> {Iast.exp_var_decl_type=Globals.Int;Iast.exp_var_decl_decls=[(elt,None,no_pos)];Iast.exp_var_decl_pos=no_pos}::elst) var_set [] in
-    match decl_lst with
-      |h::rest ->
-           List.fold_left (fun seq_exp decl ->Iast.Seq ({exp_seq_exp1 = (VarDecl decl);exp_seq_exp2 = seq_exp;exp_seq_pos=Globals.no_pos})) (VarDecl h) rest
-      | []->Empty Globals.no_pos
-  in
-  let rec mk_linear_exp
-        (exp:Iast.exp):(Iast.exp)=
-    match exp with
-      | Iast.Seq ({exp_seq_exp1=e1;exp_seq_exp2=e2;exp_seq_pos=loc})->
-            begin
-              match e1, e2 with
-                | Iast.Seq ({exp_seq_exp1=e11;exp_seq_exp2=e12;exp_seq_pos=loc1}),Iast.Seq ({exp_seq_exp1=e21;exp_seq_exp2=e22;exp_seq_pos=loc2})->
-                      let l_e1 = mk_linear_exp e1 in
-                      begin
-                        match l_e1 with
-                          | Seq ({exp_seq_exp1 = le11; exp_seq_exp2 = le12;exp_seq_pos = loc_new}) ->
-                                let l_e2 = mk_linear_exp (Seq ({exp_seq_exp1=le12;exp_seq_exp2=e2;exp_seq_pos=loc_new})) in
-                                Seq ({exp_seq_exp1=le11;exp_seq_exp2 = l_e2;exp_seq_pos=loc})
-                          | _ ->
-                                failwith "Unexpeted case"
-                      end
-                | _, Iast.Seq _ ->
-                      Seq ({exp_seq_exp1 = e1; exp_seq_exp2 = (mk_linear_exp e2); exp_seq_pos = loc})
-                | Iast.Seq _,_ ->
-                      let l_e1 = mk_linear_exp e1 in
-                      begin
-                        match l_e1 with
-                          | Iast.Seq ({exp_seq_exp1 = e11; exp_seq_exp2 = e12; exp_seq_pos = loc1 }) ->
-                                let l_e2 = mk_linear_exp (Seq ({exp_seq_exp1 = e12; exp_seq_exp2 = e2; exp_seq_pos = loc1 })) in
-                                Seq ({exp_seq_exp1 = e11; exp_seq_exp2 = l_e2;exp_seq_pos = loc})
-                          | _ -> failwith "Unexpected case"
-                      end
-                | _,_->
-                      exp
-            end
-      | _ -> exp
-  in
-  let rec translate_out_array_proc_list
-        (proc_lst:Iast.proc_decl list):(Iast.proc_decl list)=
-    match proc_lst with
-      | h::rest ->
-            begin
-              match h.proc_body with
-                | Some exp ->
-                      begin
-                        match exp with
-                          | Iast.Block exp_block ->
-                                let (new_exp,new_set) = translate_out_array_proc_exp exp_block.exp_block_body (Set_of_new_var.empty) in
-                                let new_body = Iast.Seq ({exp_seq_exp1 = mk_var_decl_from_var_set new_set; exp_seq_exp2 = new_exp; exp_seq_pos = Globals.no_pos}) in
-                                let new_block = Iast.Block ({exp_block with exp_block_body = new_body}) in
-                                { h with proc_body = Some new_block } :: (translate_out_array_proc_list rest)
-                          | _ -> failwith "translate_out_array_proc_list: Unexpected"
-                      end
-                | None -> h::(translate_out_array_proc_list rest)
-            end
-      |[] -> []
-  in
-  let prog_proc_lst = input_prog.prog_proc_decls in
-  let new_prog_proc_lst = translate_out_array_proc_list prog_proc_lst in
-  {input_prog with prog_proc_decls = new_prog_proc_lst}
-
-(* ======================= End of the tranlate_away_array part =========================== *)
 
 (******************************************)
 (* main function                          *)
 (******************************************)
 
+
 let parse_file_full file_name (primitive: bool) =
+  proc_files # push file_name;
   let org_in_chnl = open_in file_name in
   try
     Globals.input_file_name:= file_name;
@@ -299,7 +62,7 @@ let parse_file_full file_name (primitive: bool) =
         (*   "cil"                                                                 *)
         (* else if(ext = ".java") then "joust"                                     *)
         (* else "default"                                                          *)
-        "default"
+          "default"
       )
     ) in
     (* start parsing *)
@@ -307,20 +70,16 @@ let parse_file_full file_name (primitive: bool) =
       if (not !Globals.web_compile_flag) then
       print_endline_quiet ("Parsing file \"" ^ file_name ^ "\" by " 
                      ^ parser_to_use ^ " parser...");
-    let _ = Gen.Profiling.push_time "Parsing" in
+    let () = Gen.Profiling.push_time "Parsing" in
     let prog = (
       if parser_to_use = "cil" then
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
-      else if parser_to_use = "cil-i" then
-        let cil_prog = Cilparser.parse_prep file_name in
-        let stdlib_procs = Parser.create_tnt_stdlib_proc () in
-        { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
         (*   let result_str = Pretty_ss.print_out_str_from_files_new [file_name] ss_file_name in  *)
-        (*   (* let _ = print_endline_quiet "using jparser" in *)                                 *)
+        (*   (* let () = print_endline_quiet "using jparser" in *)                                       *)
         (*   let input_channel = open_in ss_file_name in                                          *)
         (*   let parseresult = Parser.parse_hip ss_file_name (Stream.of_channel input_channel) in *)
         (*   close_in input_channel;                                                              *)
@@ -330,7 +89,7 @@ let parse_file_full file_name (primitive: bool) =
           Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
     close_in org_in_chnl;
-    let _ = Gen.Profiling.pop_time "Parsing" in
+    let () = Gen.Profiling.pop_time "Parsing" in
     prog
   with
       End_of_file -> exit 0
@@ -407,7 +166,7 @@ let process_include_files incl_files ref_file =
 
 (**************vp: process compare file******************)
 let parse_file_cp file_name = 
-  let _ = print_string ("File to compare: " ^ file_name ^ "\n" ) in
+  let () = print_string ("File to compare: " ^ file_name ^ "\n" ) in
   let org_in_chnl = open_in file_name in 
   try
     let a  = Parser.parse_cpfile file_name (Stream.of_channel org_in_chnl) in
@@ -432,8 +191,8 @@ let process_validate prog =
       match tcomps with
         |[] -> proc
         |(id, tcs)::y ->
-             let _ = Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
-             let _ = Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos in
+             let () = Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
+             let () = Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos in
              if(String.compare id proc_name == 0) then (
                  {proc with Iast.proc_test_comps = Some tcs}
              )
@@ -459,7 +218,7 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 (* let rec replace_h_formula hformula fl cprog = (\* Long *\) *)
-(*   Solver.unfold_heap_x (cprog, None) hformula [] (Cpure.SpecVar (Globals.Named "node", "H", Globals.Unprimed)) fl 1 no_pos *)
+(*   Solver.unfold_heap_x (cprog, None) hformula [] (Cpure.SpecVar (Globals.Named "node", "H", Unprimed)) fl 1 no_pos *)
   (* match hformula with *)
     (* | Cformula.Star sh -> Cformula.Star { sh with *)
     (*       Cformula.h_formula_star_h1 = replace_h_formula sh.Cformula.h_formula_star_h1 iprog; *)
@@ -532,14 +291,14 @@ let print_spec cprog =
       | p :: pl -> (match p.Cast.proc_body with
           | None -> ""
           | Some _ ->
-                let _ = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+                let () = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
                 (* let sf = p.Cast.proc_static_specs in *)
-                (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Globals.Unprimed)) p.Cast.proc_args in *)
+                (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
                 (* let new_sf = List.fold_left (fun sf fv ->  *)
                 (*     Solver.unfold_struc_nth 10 (cprog, None) sf fv false 0 no_pos *)
                 (*     ) sf fvs in *)
                 ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
-                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Globals.Unprimed)) *\) false 1 no_pos) *)
+                    (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
                 Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
         ) ^ (helper pl)
       | [] -> ""
@@ -555,7 +314,7 @@ let reverify_with_hp_rel old_cprog iprog =
         match hp_kind with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try
-                   let _ = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+                   let todo_unk = Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
                      (Cpure.name_of_spec_var hp)
                    in
                    (r_hp_defs, r_unk_hps)
@@ -569,7 +328,7 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  (* let _ = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
+  (* let () = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
   let need_trans_hprels1 = (* List.map (fun def -> *)
   (*     let new_rhs = List.map (fun (f, og) -> *)
   (*         let nf, esvl= (Cformula.drop_hrel_f f unk_hps) in *)
@@ -595,34 +354,61 @@ let hip_epilogue () =
   if (!Globals.dump_lemmas) then 
     Lem_store.all_lemma # dump
   else ()
+(* -------------------------------------------------------- *)
+(* Process primitives list in prelude.ss.                   *)
+let replace_with_user_include
+      prim_lists prim_incls =
+  let is_same_prim
+        proc1 proc2 =
+    match proc1.Iast.proc_body, proc2.Iast.proc_body with
+      | None, None ->
+            (proc1.Iast.proc_name = proc2.Iast.proc_name) 
+      | _, _ ->
+            false
+  in
+  let is_covered_by_user
+        proc prim_incls =
+    List.fold_left (fun r prog -> r || (List.fold_left (fun r1 proc1 -> r1 || (is_same_prim proc proc1)) false prog.Iast.prog_proc_decls)) false prim_incls
+  in
+  List.map (fun prog -> { prog with Iast.prog_proc_decls = List.filter (fun pc -> not (is_covered_by_user pc prim_incls)) prog.Iast.prog_proc_decls}) prim_lists
+;;
+(* --------------------------------------------------------- *)
 
 (***************end process compare file*****************)
+
+let saved_cprog = ref None
+let saved_prim_names = ref None
 
 (*Working*)
 let process_source_full source =
   if (not !Globals.web_compile_flag) then
   Debug.info_zprint (lazy (("Full processing file \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
-  let _ = Gen.Profiling.push_time "Preprocessing" in
+  let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
-  let _ = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
-  let _ = Gen.Profiling.push_time "Process compare file" in
+  let () = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
+  let () = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.validate || !Globals.cp_prefile) then (
       process_validate prog
   )
   else prog
   in
   let prog = process_lib_file prog in
-  let _ = Gen.Profiling.pop_time "Process compare file" in
+  let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
     | None -> ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
+  (*let () = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
   let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
+  let () = Debug.ninfo_hprint (add_str "prims_list.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_list no_pos in
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
+  let () = Debug.ninfo_hprint (add_str "prims_incls.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_incls no_pos in
+  let prims_list = replace_with_user_include prims_list prims_incls in
+  let () = Debug.ninfo_hprint (add_str "new_prims_lists.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> Iprinter.string_of_proc_decl proc) prog.Iast.prog_proc_decls)))) prims_list no_pos in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -643,18 +429,18 @@ let process_source_full source =
     close_out oc;
   );
   if (!Scriptarguments.parse_only) then
-    let _ = Gen.Profiling.pop_time "Preprocessing" in
+    let () = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     (* Global variables translating *)
-    let _ = Gen.Profiling.push_time "Translating global var" in
-    (* let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
+    let () = Gen.Profiling.push_time "Translating global var" in
+    (* let () = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
    
     (* Append all primitives in list into one only *)
-		(* let _ = print_endline_quiet ("process_source_full: before  process_intermediate_prims ") in *)
+		(* let () = print_endline_quiet ("process_source_full: before  process_intermediate_prims ") in *)
     let iprims_list = process_intermediate_prims prims_list in
-		(* let _ = print_endline_quiet ("process_source_full: after  process_intermediate_prims") in *)
+		(* let () = print_endline_quiet ("process_source_full: after  process_intermediate_prims") in *)
     let iprims = Iast.append_iprims_list_head iprims_list in
     
     let prim_names = 
@@ -662,11 +448,12 @@ let process_source_full source =
       (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
       ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
     in
-    (* let _ = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
+    let () = saved_prim_names := Some prim_names in
+    (* let () = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline_quiet ("PROG: "^Iprinter.string_of_program prog) in *)
     let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
                 
-                (*let _ = print_string (Iprinter.string_of_program prog^"haha") in*)
+                (*let () = print_string (Iprinter.string_of_program prog^"haha") in*)
                
     let tnt_prim_proc_decls = Hashtbl.fold (fun id _ acc ->
       if List.exists (fun (p, _) -> String.compare p id == 0) acc then acc
@@ -677,30 +464,31 @@ let process_source_full source =
     let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     
-    (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
-    (* let _ = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
-    let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
+    (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
+    let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
    
-	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
+    (* let _= print_string ("\n*After label_procs_prog iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     
 	(*let intermediate_prog_reverif = 
 			if (!Globals.reverify_all_flag) then 
 					Marshal.from_string (Marshal.to_string intermediate_prog [Marshal.Closures]) 0 
 			else intermediate_prog in*)
-    (* let _ = print_endline_quiet ("process_source_full: before --pip") in *)
-    let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+    (* let () = print_endline_quiet ("process_source_full: before --pip") in *)
+    let () = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
 		        else if(!Globals.print_input) then
 							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
 						else () in
-    (* let _ = print_endline_quiet ("process_source_full: after --pip") in *)
-    let _ = Gen.Profiling.pop_time "Translating global var" in
+    (* let () = print_endline_quiet ("process_source_full: after --pip") in *)
+    let () = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
-    let _ = Gen.Profiling.push_time "Translating to Core" in
-(*    let _ = print_string ("Translating to core language...\n"); flush stdout in *)
-    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
+    let () = Gen.Profiling.push_time "Translating to Core" in
+(*    let () = print_string ("Translating to core language...\n"); flush stdout in *)
+    (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
     (**************************************)
     (*Simple heuristic for ParaHIP website*)
     (*Heuristic: check if waitlevel and locklevels have been used for verification
@@ -716,20 +504,21 @@ let process_source_full source =
         if b then
           Globals.allow_locklevel := true
     in
-    let _ = if !Globals.web_compile_flag then
-          let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+    let () = if !Globals.web_compile_flag then
+          let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
           ()
     in
     (**************************************)
     (*to improve: annotate field*)
-    let _ = Iast.annotate_field_pure_ext intermediate_prog in
+    let () = Iast.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     (*used in lemma*)
-    (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
-    (* let _ = I.set_iprog intermediate_prog in *)
-    (*let _ = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
-    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-    (* let _ = if !Globals.sa_pure then *)
+    (* let () =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
+    (* let () = I.set_iprog intermediate_prog in *)
+    (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
+    let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let () = saved_cprog := Some cprog in
+    (* let () = if !Globals.sa_pure then *)
     (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
     (*       if v.Cast.view_kind = Cast.View_NORM then *)
     (*         (nviews@[v], eviews) *)
@@ -741,39 +530,39 @@ let process_source_full source =
     (* else cprog.Cast.prog_view_decls *)
     (* in *)
     (* ========= lemma process (normalize, translate, verify) ========= *)
-    let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+    let () = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
     (* ========= end - lemma process (normalize, translate, verify) ========= *)
 
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
-    (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+    (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
     (* Forward axioms and relations declarations to SMT solver module *)
-    let _ = List.map (fun crdef -> 
-        let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+    let todo_unk = List.map (fun crdef -> 
+        let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
         Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
     ) (List.rev cprog.Cast.prog_rel_decls) in
-    let _ = List.map (fun cadef ->
-        let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+    let todo_unk = List.map (fun cadef ->
+        let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
         Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
     ) (List.rev cprog.Cast.prog_axiom_decls) in
-    (* let _ = print_string (" done-2\n"); flush stdout in *)
-    let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
+    (* let () = print_string (" done-2\n"); flush stdout in *)
+    let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
     else if(!Globals.print_core) then
       print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
     else ()
     in
-    let _ = 
+    let () = 
       if !Globals.verify_callees then begin
 	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
 	    Globals.procs_verified := tmp
       end in
-    let _ = Gen.Profiling.pop_time "Translating to Core" in
+    let () = Gen.Profiling.pop_time "Translating to Core" in
     (* let ptime2 = Unix.times () in
        let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-       let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
+       let () = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
     let _ =
       if !Scriptarguments.comp_pred then begin
-	    let _ = print_string ("Compiling predicates to Java..."); flush stdout in
+	    let () = print_string ("Compiling predicates to Java..."); flush stdout in
 	    let compile_one_view vdef = 
 	      if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
 	        let data_def, pbvars = Predcomp.gen_view cprog vdef in
@@ -796,26 +585,26 @@ let process_source_full source =
 	    exit 0
       end
     in
-    let _ = Gen.Profiling.pop_time "Preprocessing" in
+    let () = Gen.Profiling.pop_time "Preprocessing" in
 
     (* An Hoa : initialize html *)
-    let _ = Prooftracer.initialize_html source in
+    let () = Prooftracer.initialize_html source in
 
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-      (* let _ =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
-      (* let _ = I.set_iprog intermediate_prog in *)
+      (* let () =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
+      (* let () = I.set_iprog intermediate_prog in *)
       ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string_quiet ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string_quiet ("\nError1(s) detected at main "^"\n");
-      let _ = Log.process_proof_logging !Globals.source_files cprog prim_names in
+      let () = Log.process_proof_logging !Globals.source_files cprog prim_names in
       raise e
     end);
 	if (!Globals.reverify_all_flag || !Globals.reverify_flag)
 	then
-          let _ =  Debug.info_pprint "re-verify\n" no_pos; in
+          let () =  Debug.info_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
 	
@@ -826,7 +615,7 @@ let process_source_full source =
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 
     (* An Hoa : export the proof to html *)
-    let _ = if !Globals.print_proof then
+    let () = if !Globals.print_proof then
     		begin 
     			print_string "\nExport proof to HTML file ... ";
     			Prooftracer.write_html_output ();
@@ -835,7 +624,7 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = Log.process_proof_logging !Globals.source_files cprog prim_names
+    let () = Log.process_proof_logging !Globals.source_files cprog prim_names
     (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
       (* begin *)
       (*   let tstartlog = Gen.Profiling.get_time () in *)
@@ -860,14 +649,14 @@ let process_source_full source =
       (*   (\* let _=print_endline_quiet ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
       (* end *)
     in
-    (* let _ = Log.process_sleek_logging () in *)
+    (* let () = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
-    (*let _ = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
+    (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     hip_epilogue ();
     if (not !Globals.web_compile_flag) then 
       print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
-		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+		(List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
+		    ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
     else ();
     Timelog.logtime # dump;
     silenced_print print_string ("\nTotal verification time: " 
@@ -898,7 +687,7 @@ let process_source_list source_files =
     let ext = String.lowercase(String.sub file_name index length) in
     if (ext = ".java") then
       let ss_file_name = file_name ^ ".ss" in
-      let _ = Pretty_ss.print_out_str_from_files_new source_files ss_file_name in
+      let () = Pretty_ss.print_out_str_from_files_new source_files ss_file_name in
       [process_source_full ss_file_name]
     else
       let parser = 
@@ -907,7 +696,7 @@ let process_source_list source_files =
         else if (ext = ".i") then "cil-i"
         else (* "default" *) !Parser.parser_name
       in 
-      let _ = Parser.parser_name := parser in
+      let () = Parser.parser_name := parser in
       List.map process_source_full source_files
 
 (*None Working: see process_source_full instead *)
@@ -935,41 +724,42 @@ let process_source_full_parse_only source =
     (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
-  let _ = Gen.Profiling.pop_time "Preprocessing" in
+  let () = Gen.Profiling.pop_time "Preprocessing" in
   (prog, prims_list)
+
 
 let process_source_full_after_parser source (prog, prims_list) =
   Debug.info_zprint (lazy (("Full processing file (after parser) \"" ^ source ^ "\"\n"))) no_pos;
   flush stdout;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
-  let _ = Gen.Profiling.push_time "Translating global var" in
-  (* let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
+  let () = Gen.Profiling.push_time "Translating global var" in
+  (* let () = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
   (* Append all primitives in list into one only *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
 	(* let _= List.map (fun x-> print_endline_quiet ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
-  (* let _ = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
-    (* let _ = print_endline_quiet (Iprinter.string_of_program prog) in *)
+  (* let () = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
+    (* let () = print_endline_quiet (Iprinter.string_of_program prog) in *)
   let intermediate_prog = Globalvars.trans_global_to_param prog in
-  (* let _ = print_endline_quiet ("process_source_full: before pre_process_of_iprog") in *)
-    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
+  (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog") in *)
+    (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-    (* let _ = print_endline_quiet ("process_source_full: before label_procs_prog") in *)
-    (* let _ = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
+    (* let () = print_endline_quiet ("process_source_full: before label_procs_prog") in *)
+    (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
-  (* let _ = print_endline_quiet ("process_source_full: before --pip") in *)
-  let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+  (* let () = print_endline_quiet ("process_source_full: before --pip") in *)
+  let () = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
 	         else if(!Globals.print_input) then
 							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
 						else () in
-  (* let _ = print_endline_quiet ("process_source_full: after --pip") in *)
-  let _ = Gen.Profiling.pop_time "Translating global var" in
+  (* let () = print_endline_quiet ("process_source_full: after --pip") in *)
+  let () = Gen.Profiling.pop_time "Translating global var" in
   (* Global variables translated *)
   (* let ptime1 = Unix.times () in
      let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
-  let _ = Gen.Profiling.push_time "Translating to Core" in
-  (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+  let () = Gen.Profiling.push_time "Translating to Core" in
+  (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
 
   (**************************************)
   (*Simple heuristic for ParaHIP website*)
@@ -986,32 +776,33 @@ let process_source_full_after_parser source (prog, prims_list) =
       if b then
         Globals.allow_locklevel := true
   in
-  let _ = if !Globals.web_compile_flag then
-        let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+  let () = if !Globals.web_compile_flag then
+        let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
         ()
   in
   (**************************************)
   (*annotate field*)
-  let _ = Iast.annotate_field_pure_ext intermediate_prog in
+  let () = Iast.annotate_field_pure_ext intermediate_prog in
   (*used in lemma*)
-  (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
-  (* let _ = I.set_iprog intermediate_prog in *)
+  (* let () =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
+  (* let () = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  let () = saved_cprog := Some cprog in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
-  let _ = List.map (fun crdef -> 
-      let _ = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
+  let todo_unk = List.map (fun crdef -> 
+      let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
   )
     (List.rev cprog.Cast.prog_rel_decls) in
 
-  let _ = List.map (fun cadef ->
-      let _ = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
+  let todo_unk = List.map (fun cadef ->
+      let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
   ) (List.rev cprog.Cast.prog_axiom_decls) in
-  (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
+  (* let () = print_string (" done-2\n"); flush stdout in *)
+  let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
   else if(!Globals.print_core) then
     print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
   else ()
@@ -1021,13 +812,13 @@ let process_source_full_after_parser source (prog, prims_list) =
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
       Globals.procs_verified := tmp
     end in
-  let _ = Gen.Profiling.pop_time "Translating to Core" in
+  let () = Gen.Profiling.pop_time "Translating to Core" in
   (* let ptime2 = Unix.times () in
      let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-     let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
+     let () = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
   let _ =
     if !Scriptarguments.comp_pred then begin
-      let _ = print_string ("Compiling predicates to Java..."); flush stdout in
+      let () = print_string ("Compiling predicates to Java..."); flush stdout in
       let compile_one_view vdef = 
 	if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
 	  let data_def, pbvars = Predcomp.gen_view cprog vdef in
@@ -1050,16 +841,16 @@ let process_source_full_after_parser source (prog, prims_list) =
       exit 0
     end
   in
-  let _ = Gen.Profiling.pop_time "Preprocessing" in
+  let () = Gen.Profiling.pop_time "Preprocessing" in
   
   (* An Hoa : initialize html *)
-  let _ = Prooftracer.initialize_html source in
+  let () = Prooftracer.initialize_html source in
   
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
-    (* let _ =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
-    (* let _ = I.set_iprog intermediate_prog in *)
+    (* let () =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
+    (* let () = I.set_iprog intermediate_prog in *)
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
@@ -1070,7 +861,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   
   (* An Hoa : export the proof to html *)
-  let _ = if !Globals.print_proof then
+  let () = if !Globals.print_proof then
     begin 
       print_string "\nExport proof to HTML file ... ";
       Prooftracer.write_html_output ();
@@ -1079,13 +870,13 @@ let process_source_full_after_parser source (prog, prims_list) =
   in
   
   (* print mapping table control path id and loc *)
-  (*let _ = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
+  (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
   if (not !Globals.web_compile_flag) then 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
-      (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+      (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
+	  ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
   else ();
   silenced_print print_string ("\nTotal verification time: " 
   ^ (string_of_float t4) ^ " second(s)\n"
@@ -1115,14 +906,14 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (* Cprinter.fmt_cut (); *)
   process_cmd_line ();
-  let _ = Debug.read_main () in
+  let () = Debug.read_main () in
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
-  (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
-    let _ = record_backtrace_quite () in
-  (*let _ = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
+  (*let () = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
+    let () = record_backtrace_quite () in
+  (*let () = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
@@ -1130,9 +921,9 @@ let main1 () =
       (* Globals.source_files := ["examples/test5.ss"] *)
         print_string "Source file(s) not specified\n"
     end;
-    let _ = Gen.Profiling.push_time "Overall" in
-    let _ = process_source_list !Globals.source_files in
-    let _ = Gen.Profiling.pop_time "Overall" in
+    let () = Gen.Profiling.push_time "Overall" in
+    let todo_unk:unit list = process_source_list !Globals.source_files in
+    let () = Gen.Profiling.pop_time "Overall" in
     (*  Tpdispatcher.print_stats (); *)
     ()
 
@@ -1144,35 +935,41 @@ let pre_main () =
   Tpdispatcher.init_tp();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then
-	  let _ = print_version ()
+	  let () = print_version ()
     in []
   else
-    let _ = record_backtrace_quite () in
+    let () = record_backtrace_quite () in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
 		List.map ( fun x-> let _= print_endline_quiet ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
 
 let loop_cmd parsed_content = 
-  let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
+  let todo_unk = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
   ()
 
-let finalize () =
-  let _ = Log.last_cmd # dumping "finalize on hip" in
-  let _ = Log.process_proof_logging !Globals.source_files in
+let finalize_bug () =
+  let () = Log.last_cmd # dumping "finalize on hip" in
+  (match !saved_cprog,!saved_prim_names with
+    | Some(cprog),Some(prim_names) ->
+          let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
+    | Some(cprog),None ->
+          let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
+    | _,_ ->
+          let () = Debug.binfo_pprint "WARNING : Logging not done on finalize" no_pos in ());
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () = 
   try
     main1 ();
-    (* let _ =  *)
+    (* let () =  *)
     (*   if !Global.enable_counters then *)
     (*     print_string (Gen.Profiling.string_of_counters ()) *)
     (*   else () in *)
-    let _ = Gen.Profiling.print_counters_info () in
-    let _ = Gen.Profiling.print_info () in
+    let () = Gen.Profiling.print_counters_info () in
+    let () = Gen.Profiling.print_info () in
     ()
   with _ as e -> begin
-    finalize ();
+    finalize_bug ();
     print_string_quiet "caught\n"; 
     Printexc.print_backtrace stderr;
     print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
@@ -1182,28 +979,32 @@ let old_main () =
       print_endline "UNKNOWN"; (* UNKNOWN(5) *)
   end
 
-let _ = 
-  if not(!Globals.do_infer_inc) then old_main ()
+let () = 
+  if not(!Globals.do_infer_inc) then
+        (* let () = print_endline "I am executing old stuff?.." in *)
+        old_main ()
   else
+    (* this part seems to be for incremental inference *)
     let res = pre_main () in
     while true do
       try
-        let _ = print_string "# " in
+        (* let () = print_endline "I am executing here.." in *)
+        let () = print_string "# " in
         let s = Parse_cmd.parse_cmd (read_line ()) in
         match s with
           | (_,(false, None, None)) -> exit 0;
           | _ ->
           Iformula.cmd := s;
           loop_cmd res;
-          (* let _ =  *)
+          (* let () =  *)
           (*   if !Global.enable_counters then *)
           (*     print_string (Gen.Profiling.string_of_counters ()) *)
           (*   else () in *)
-          let _ = Gen.Profiling.print_counters_info () in
-          let _ = Gen.Profiling.print_info () in
+          let () = Gen.Profiling.print_counters_info () in
+          let () = Gen.Profiling.print_info () in
           ()
         with _ as e -> begin
-          finalize ();
+          finalize_bug ();
           print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
           print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
           print_string_quiet ("\nError4(s) detected at main \n");

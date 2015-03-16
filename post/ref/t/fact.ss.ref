@@ -1,0 +1,49 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/fact.ss"
+Parsing file "t/fact.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN Uf1: ( res=1+n & 1<=n) -->  Uf1(n,res),
+RELDEFN Uf1: ( res+1=n & n<=0) -->  Uf1(n,res)]
+*************************************
+
+Post Inference result:
+foo$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((res+1=n & n<=0) | (res=1+n & 1<=n))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN Uf: ( x=0 & res=1) -->  Uf(x,res),
+RELDEFN Uf: ( Uf(v_int_20_1391,v_int_20_1394) & res=2+v_int_20_1394 & v_int_20_1391+1=x & 
+x!=0) -->  Uf(x,res)]
+*************************************
+
+Post Inference result:
+fact$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&x>=0 & (2*x)+1=res&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.512031 second(s)
+	Time spent in main process: 0.436027 second(s)
+	Time spent in child processes: 0.076004 second(s)
+

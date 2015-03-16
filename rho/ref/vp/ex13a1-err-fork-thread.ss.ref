@@ -1,0 +1,62 @@
+
+!!!Full processing file "vp/ex13a1-err-fork-thread.ss"
+Parsing file "vp/ex13a1-err-fork-thread.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure main$int... 
+dprint: vp/ex13a1-err-fork-thread.ss:30: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:emp*U@value[nn]&nn'=0 & MayLoop[] & nn_1402=nn&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: vp/ex13a1-err-fork-thread.ss:34: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:t_36'::Thrd{ + emp*U@full[nn]&nn'=1+nn&{FLOW,(4,5)=__norm#E}[]}<>*N@full[t_36]@zero[nn]&nn_1402=nn&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: vp/ex13a1-err-fork-thread.ss:37: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:t_36'::dead{}<>*U@full[nn,t_36]&nn'=1+nn & nn_1402=nn&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [Q --> emp*U@full[nn]&nn'=1+nn&
+                        {FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+Post condition cannot be derived:
+  (may) cause:  res=1+nn |-  res=1. LOCS:[24;22;38;26] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex13a1-err-fork-thread.ss",Line:35,Col:2
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure main$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure main$int
+
+0 false contexts at: ()
+
+Total verification time: 0.444027 second(s)
+	Time spent in main process: 0.420026 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

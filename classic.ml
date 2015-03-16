@@ -1,3 +1,4 @@
+open VarGen
 module DD = Debug
 open Globals
 open Gen
@@ -12,8 +13,8 @@ module CP = Cpure
 let heap_entail_rhs_htrue_x prog es h_ante h_conseq rhs_h_matched_set=
   let nh_ante = HEmp in
   let quans,base = split_quantifiers es.es_formula in
-  let h1, p1, fl1, t1, a1 = split_components base in
-  let es_f = mkExists quans nh_ante p1 t1 fl1 a1 (pos_of_formula base) in
+  let h1, p1, vp1, fl1, t1, a1 = split_components base in
+  let es_f = mkExists quans nh_ante p1 vp1 t1 fl1 a1 (pos_of_formula base) in
   let n_es = {es with es_formula = es_f} in
   ( nh_ante, HEmp, n_es, rhs_h_matched_set@(get_ptrs h1))
 

@@ -1,3 +1,4 @@
+open VarGen
 (*
   Support to convert our code into Java code.
   
@@ -350,6 +351,7 @@ and java_of_exp = function
   | Try b -> "translator is in need of reviews"
   | Catch b-> "translator is in need of reviews"
   | Finally b-> "translator is in need of reviews"
+  | Par _ -> "translator is in need of reviews"
 				
 and add_semicolon (str : string) : string =
   let l = String.length str in

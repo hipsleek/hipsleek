@@ -1,3 +1,5 @@
+open VarGen
+
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
@@ -8,7 +10,6 @@ let total_entailments = ref 0
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
-let debug_precise_trace = ref false
 
 let change_flow = ref false
 
@@ -70,11 +71,19 @@ type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
-and control_path_id = control_path_id_strict  option
+and control_path_id = control_path_id_strict option
     (*identifier for if, catch, call*)
 
-let gen_lemma_action_invalid = -1
+let eq_ho_flow_kind k1 k2 = 
+  match k1, k2 with
+  | INFLOW, INFLOW
+  | OUTFLOW, OUTFLOW
+  | NEUTRAL, NEUTRAL -> true
+  | _ -> false
 
+let ho_always_split = ref false
+
+let gen_lemma_action_invalid = -1
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
@@ -93,15 +102,16 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc =  {
-    start_pos : Lexing.position (* might be expanded to contain more information *);
-    mid_pos : Lexing.position;
-    end_pos : Lexing.position;
-  }
+(* and loc =  { *)
+(*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)
+(*     mid_pos : Lexing.position; *)
+(*     end_pos : Lexing.position; *)
+(*   } *)
 
-and primed =
-  | Primed
-  | Unprimed
+(* moved to Gen *)
+(* and primed = *)
+(*   | Primed *)
+(*   | Unprimed *)
 
 (* indicate whether lemma_split is applicable or not*)
 and split_ann =
@@ -111,8 +121,20 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
+and vp_ann = 
+  | VP_Zero | VP_Full | VP_Value
+  | VP_Lend | VP_Frac of Frac.frac 
+  (* | VP_Ref * *)
 
+let eq_vp_ann a1 a2 = 
+  match a1, a2 with
+  | VP_Zero, VP_Zero -> true
+  | VP_Full, VP_Full -> true
+  | VP_Lend, VP_Lend -> true
+  | VP_Value, VP_Value -> true
+  | VP_Frac f1, VP_Frac f2 -> Frac.eq_frac f1 f2
+  | _ -> false
+  
 (* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
 let imm_top = Accs
 let imm_bot = Mutable
@@ -136,7 +158,7 @@ let print_arg_kind i= match i with
 
 (* TODO : move typ here in future *)
 type typ =
-  | FORM
+  | FORM (* Type for formula *)
   | UNK
   | TVar of int
   | AnnT
@@ -160,6 +182,7 @@ type typ =
   | UtT (* unknown temporal type *)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+  (* | SLTyp (* type of ho formula *) *)
 
 let is_node_typ t =
   match t with
@@ -220,7 +243,7 @@ let is_program_pointer (name:ident) =
   let slen = (String.length name) in
   try  
       let n = (String.rindex name '_') in
-      (* let _ = print_endline ((string_of_int n)) in *)
+      (* let () = print_endline ((string_of_int n)) in *)
       let l = (slen-(n+1)) in
       if (l==0) then (false,name)
       else 
@@ -317,14 +340,14 @@ type perm_type =
   
 let perm = ref NoPerm
 
-let no_pos = 
-	let no_pos1 = { Lexing.pos_fname = "";
-				   Lexing.pos_lnum = 0;
-				   Lexing.pos_bol = 0; 
-				   Lexing.pos_cnum = 0 } in
-	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
-
-let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0)
+(* moved to Gen *)
+(* let no_pos =  *)
+(* 	let no_pos1 = { Lexing.pos_fname = ""; *)
+(* 				   Lexing.pos_lnum = 0; *)
+(* 				   Lexing.pos_bol = 0;  *)
+(* 				   Lexing.pos_cnum = 0 } in *)
+(* 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;} *)
+(* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
 
 let is_float_type (t:typ) = match t with
   | Float -> true
@@ -358,15 +381,17 @@ let string_of_vp_ann a =
     | VP_Zero -> "@zero"
     | VP_Full -> "@full"
     | VP_Value -> "@value"
+    | VP_Lend -> "@lend"
+    | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
     (* | VP_Ref-> "@p_ref" *)
   )
 
 
 let string_of_ho_flow_kind (k:ho_flow_kind) =
   match k with
-    | INFLOW -> "(-)"
-    | OUTFLOW -> "(+)"
-    | NEUTRAL -> "(.)" (* or "" *)
+    | INFLOW -> "-"
+    | OUTFLOW -> "+"
+    | NEUTRAL -> "."
 
 let string_of_ho_split_kind (k:ho_split_kind) =
   match k with
@@ -444,47 +469,10 @@ let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
 
-(*Proof logging facilities*)
-class ['a] store (x_init:'a) (epr:'a->string) =
-   object (self)
-     val emp_val = x_init
-     val mutable lc = None
-     method is_avail : bool = match lc with
-       | None -> false
-       | Some _ -> true
-     method set (nl:'a) = lc <- Some nl
-     method get :'a = match lc with
-       | None -> emp_val
-       | Some p -> p
-     method reset = lc <- None
-     method get_rm :'a = match lc with
-       | None -> emp_val
-       | Some p -> (self#reset; p)
-     method string_of : string = match lc with
-       | None -> "Why None?"
-       | Some l -> (epr l)
-     method dump = print_endline ("\n store dump :"^(self#string_of))
-   end;;
 
-(* this will be set to true when we are in error explanation module *)
-class failure_mode =
-object
-  inherit [bool] store false string_of_bool
-end;;
-
-
-class prog_loc =
-object
-  inherit [loc] store no_pos string_of_loc
-     method string_of_pos : string = match lc with
-       | None -> "None"
-       | Some l -> (string_of_pos l.start_pos)
-end;;
 
 
 (*Some global vars for logging*)
-let proving_loc  = new prog_loc
-let post_pos = new prog_loc
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 let z3_proof_log_list = ref ([]: string list)
@@ -494,8 +482,6 @@ let add_to_z3_proof_log_list (f: string) =
 	z3_proof_log_list := !z3_proof_log_list @ [f]
 
 
-let entail_pos = ref no_pos
-let set_entail_pos p = entail_pos := p
 
 (* let set_proving_loc p = proving_loc#set p *)
 (*   (\* proving_loc := Some p *\) *)
@@ -533,6 +519,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT        -> "UtT"
   | HpT        -> "HpT"
+  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -578,6 +565,7 @@ let rec string_of_typ_alpha = function
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | UtT -> "UtT"
   | HpT        -> "HpT"
+  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
@@ -754,7 +742,6 @@ let lsmu_typ = BagT (Int)
 let thrd_name = "thrd"
 let thrd_typ = Named "thrd"
 
-let silence_output = ref false
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -825,7 +812,7 @@ let allow_exhaustive_norm = ref true
 
 let dis_show_diff = ref false
 
-let sap = ref false
+(* sap has moved to VarGen; needed by debug.ml *)
 let sae = ref false
 let sac = ref false
 
@@ -1095,6 +1082,9 @@ let allow_threads_as_resource = ref false
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
+(* let ann_vp = ref true (\* Enable variable permissions in rho, any problem *)
+(* for run-fast-test? *\) *)
+
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
 let print_proc = ref false
@@ -1152,7 +1142,6 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
-let verbose_num = ref 0
 
 let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
 
@@ -1176,8 +1165,6 @@ let show_gist = ref false
 let imply_top_flag = ref false
 let early_contra_flag = ref true
 
-let trace_failure = ref false
-
 let trace_all = ref false
 
 let print_mvars = ref false
@@ -1195,7 +1182,6 @@ let print_html = ref false
 
 let wrap_exists_implicit_explicit = ref false
 
-let profiling = ref false
 
 let enable_syn_base_case = ref false
 
@@ -1208,7 +1194,6 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
-let enable_counters = ref false
 
 let enable_time_stats = ref true
 
@@ -1236,8 +1221,6 @@ let simplify_error = ref false
 
 let prune_cnt_limit = ref 2
 
-let suppress_warning_msg = ref false
-let en_warning_msg = ref true
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
@@ -1256,8 +1239,6 @@ let pass_global_by_value = ref false
 let exhaust_match = ref false
 
 let memo_verbosity = ref 2
-
-let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
@@ -1289,30 +1270,11 @@ let cpfile = ref ""
   let do_sat_slice = ref false
 
 let smt_compete_mode = ref false
-let compete_mode = ref false
 let svcomp_compete_mode = ref false
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
-let print_endline_q s =
-  if !compete_mode then ()
-  else print_endline s
-
-let print_backtrace_quiet () =
-  if !compete_mode then ()
-  else
-    Printexc.print_backtrace stdout
-
-let get_backtrace_quiet () =
-  if !compete_mode then ""
-  else
-    Printexc.get_backtrace ()
-
-let record_backtrace_quite () =
-  if !compete_mode then ()
-  else
-    Printexc.record_backtrace !trace_failure
 
 (* for Termination *)
 let dis_term_chk = ref false
@@ -1353,6 +1315,8 @@ type infer_type =
   | INF_DFA (* For infer[@dfa] *)
   | INF_FLOW (* For infer[@flow] *)
   | INF_CLASSIC (* For infer[@leak] *)
+  | INF_PAR (* For infer[@par] inside par *)
+  | INF_VER_POST (* For infer[@ver_post] for post-checking *)
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1376,6 +1340,8 @@ let string_of_inf_const x =
   | INF_DFA -> "@dfa"
   | INF_FLOW -> "@flow"
   | INF_CLASSIC -> "@leak"
+  | INF_PAR -> "@par"
+  | INF_VER_POST -> "@ver_post"
 
 (* let inf_const_to_int x = *)
 (*   match x with *)
@@ -1436,13 +1402,13 @@ let string_of_inf_const x =
 (*   method reset c  = Array.set arr (inf_const_to_int c) false *)
 (*   method mk_or (o2:inf_obj) =  *)
 (*     let o1 = o2 # clone in *)
-(*     let _ = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in *)
+(*     let () = Array.iteri (fun i a -> if a then o1 # set_ind i) arr in *)
 (*     o1 *)
 (*   method clone =  *)
 (*     let no = new inf_obj in *)
 (*     let ar = no # get_arr in *)
-(*     let _ = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in *)
-(*     (\* let _ = print_endline ("Cloning :"^(no #string_of)) in *\) *)
+(*     let () = Array.iteri (fun i _ -> Array.set ar i (self # get_int i)) ar in *)
+(*     (\* let () = print_endline ("Cloning :"^(no #string_of)) in *\) *)
 (*     no *)
 (* end;; *)
 
@@ -1474,6 +1440,8 @@ object (self)
       helper "@dfa"           INF_DFA;
       helper "@flow"          INF_FLOW;
       helper "@leak"          INF_CLASSIC;
+      helper "@par"           INF_PAR;
+      helper "@ver_post"      INF_VER_POST;
       (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
       if arr==[] then failwith  ("empty -infer option :"^s) 
     end
@@ -1492,6 +1460,7 @@ object (self)
   method is_term_wo_post = self # get INF_TERM_WO_POST
   method is_pre  = self # get INF_PRE
   method is_post  = self # get INF_POST
+  method is_ver_post  = self # get INF_VER_POST
   method is_imm  = self # get INF_IMM
   method is_shape  = self # get INF_SHAPE
   method is_error  = self # get INF_ERROR
@@ -1499,6 +1468,7 @@ object (self)
   method is_efa  = self # get INF_EFA
   method is_dfa  = self # get INF_DFA
   method is_classic  = self # get INF_CLASSIC
+  method is_par  = self # get INF_PAR
   method is_add_flow  = self # get INF_FLOW
   (* method get_arr  = arr *)
   method is_infer_type t  = self # get t
@@ -1510,12 +1480,12 @@ object (self)
   method mk_or (o2:inf_obj) = 
     let o1 = o2 # clone in
     let l = self # get_lst in
-    let _ = o1 # set_list l in
+    let () = o1 # set_list l in
     o1
   method clone = 
     let no = new inf_obj in
-    let _ = no # set_list arr in
-    (* let _ = print_endline ("Cloning :"^(no #string_of)) in *)
+    let () = no # set_list arr in
+    (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
     no
 end;;
 
@@ -1555,7 +1525,7 @@ let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
-let do_test_inv = ref false
+let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
@@ -1615,42 +1585,42 @@ let sleek_timeout_limit = ref 0.
 
 let dis_inv_baga () = 
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
-  let _ = gen_baga_inv := false in
+  let () = gen_baga_inv := false in
   ()
 
 let dis_bk ()=
-  let _ = oc_simplify := true in
-  let _ = sat_timeout_limit:= 2. in
-  let _ = user_sat_timeout := false in
-  let _ = imply_timeout_limit := 3. in
-  (* let _ = en_slc_ps := false in *)
+  let () = oc_simplify := true in
+  let () = sat_timeout_limit:= 2. in
+  let () = user_sat_timeout := false in
+  let () = imply_timeout_limit := 3. in
+  (* let () = en_slc_ps := false in *)
   ()
 
 let dis_pred_sat () = 
   if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
-  (* let _ = gen_baga_inv := false in *)
-  let _ = prove_invalid := false in
+  (* let () = gen_baga_inv := false in *)
+  let () = prove_invalid := false in
   (*baga bk*)
-  let _ = dis_bk () in
+  let () = dis_bk () in
   ()
 
 let en_bk () =
-  let _ = oc_simplify := false in
-  let _ = sat_timeout_limit:= 1. in
-  let _ = user_sat_timeout := true in
-  let _ = imply_timeout_limit := 1. in
-  (* let _ = en_slc_ps := true in *)
+  let () = oc_simplify := false in
+  let () = sat_timeout_limit:= 1. in
+  let () = user_sat_timeout := true in
+  let () = imply_timeout_limit := 1. in
+  (* let () = en_slc_ps := true in *)
   ()
 
 let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
-  (* let _ = gen_baga_inv := true in *)
-  let _ = prove_invalid := true in
+  (* let () = gen_baga_inv := true in *)
+  let () = prove_invalid := true in
   (*baga bk*)
-  let _ = en_bk ()  in
+  let () = en_bk ()  in
   ()
 
-(* let _ = if !smt_compete_mode then *)
+(* let () = if !smt_compete_mode then *)
 (*   begin *)
 (*     (\* Debug.trace_on := false; *\) *)
 (*     (\* Debug.devel_debug_on:= false; *\) *)
@@ -1670,7 +1640,7 @@ let en_pred_sat () =
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
 (* let report_error2 (pos : loc) (msg : string) = *)
-(*   let _ = *)
+(*   let () = *)
 (*     try !reporter pos msg *)
 (*     with Not_found -> *)
 (*       let report pos msg = *)
@@ -1768,7 +1738,7 @@ let fresh_var_name (tn:string)(ln:int):string =
 let fresh_trailer () =
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
-	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
+	(*let () = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
 
@@ -1802,22 +1772,6 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = 
-  p.start_pos.Lexing.pos_fname ^ "_" ^ 
-  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
-  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
-  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
-  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
-
-let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
-;;
-
-let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
-
-let string_of_loc_by_char_num (l : loc) = 
-  Printf.sprintf "(%d-%d)"
-    l.start_pos.Lexing.pos_cnum
-    l.end_pos.Lexing.pos_cnum
 
 let string_of_formula_label ((i,s):formula_label) =
       "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
@@ -1918,7 +1872,7 @@ let norm_file_name str =
 (* let wrap_gen save_fn set_fn restore_fn flags f a = *)
 (*   (\* save old_value *\) *)
 (*   let old_values = save_fn flags in *)
-(*   let _ = set_fn flags in *)
+(*   let () = set_fn flags in *)
 (*   try  *)
 (*     let res = f a in *)
 (*     (\* restore old_value *\) *)
@@ -2010,14 +1964,14 @@ let set_last_sleek_fail () =
 
 (* let read_main () = *)
 (*   let xs = read_from_debug_file (debug_file ()) in *)
-(*   (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+(*   (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
 (*   List.iter (fun x -> *)
 (*       try *)
 (*         let l = String.index x ',' in *)
 (*         let m = String.sub x 0 l in *)
 (*         let split = String.sub x (l+1) ((String.length x) -l -1) in *)
-(*         let _ = print_endline (m) in *)
-(*         let _ = print_endline (split) in *)
+(*         let () = print_endline (m) in *)
+(*         let () = print_endline (split) in *)
 (*         let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
 (*           if String.compare split "Loop" == 0 then DO_Loop else *)
 (*             DO_Normal *)
@@ -2070,8 +2024,8 @@ let lcm_l (l: int list): int =
   | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
   
 let smt_return_must_on_error ()=
-  let _ = if !return_must_on_pure_failure then
-    (* let _ = smt_is_must_failure := (Some true) in *) ()
+  let () = if !return_must_on_pure_failure then
+    (* let () = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()
 
@@ -2086,3 +2040,4 @@ let string_of_lemma_kind (l: lemma_kind) =
       | LEM_SAFE      -> "LEM_SAFE"
       | LEM_INFER     -> "LEM_INFER"
       | LEM_INFER_PRED   -> "LEM_INFER_PRED"
+

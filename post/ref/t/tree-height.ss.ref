@@ -1,0 +1,100 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/tree-height.ss"
+Parsing file "t/tree-height.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure height$node... 
+Procedure height$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1419: ( pre_1419(n) & 0<=n_1448 & n_1448<n) -->  pre_1419(n_1448),
+RELDEFN pre_1419: ( 0<=m_1461 & post_1420(m_1461,n_1448,v_int_20_1380',flow) & 0<=n_1448 & 
+n_1448<=(n-2) & pre_1419(n) & n_1464=n-1) -->  pre_1419(n_1464),
+RELDEFN pre_1419: ( 0<=m_1461 & post_1420(m_1461,n_1448,v_int_20_1380',flow) & n_1448=n-1 & 
+pre_1419(n) & 1<=n_1464 & n_1464<n) -->  pre_1419(n_1464),
+RELDEFN pre_1419: ( n_1464=0) -->  pre_1419(n_1464),
+RELDEFN pre_1419: ( pre_1419(n) & 0<=m_1478 & n_1464<n & 0<=n_1464 & n_1448=n-1 & 
+v_int_20_1488<v_int_20_1487 & post_1420(n_1491,n_1448,v_int_20_1487,flow) & 
+post_1420(m_1478,n_1464,v_int_20_1488,flow) & 1<=(m_1478+n_1491) & 0<=n_1491) -->  pre_1419(n_1491),
+RELDEFN pre_1419: ( 0<=m_1478 & post_1420(m_1478,n_1464,v_int_20_1488,flow) & pre_1419(n) & 
+n_1464=n-1 & n_1448<=(n-2) & 0<=n_1448 & v_int_20_1488<v_int_20_1487 & 
+post_1420(n_1491,n_1448,v_int_20_1487,flow) & 0<=n_1491) -->  pre_1419(n_1491),
+RELDEFN pre_1419: ( n_1491=0) -->  pre_1419(n_1491),
+RELDEFN pre_1419: ( pre_1419(n) & 0<=m_1461 & n_1464<n & 0<=n_1464 & n_1448=n-1 & 
+v_int_20_1514<=v_int_20_1515 & post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 1<=(m_1461+n_1518) & 0<=n_1518) -->  pre_1419(n_1518),
+RELDEFN pre_1419: ( pre_1419(n) & 0<=m_1461 & n_1448<=(n-2) & 0<=n_1448 & n_1464=n-1 & 
+v_int_20_1514<=v_int_20_1515 & post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 0<=n_1518) -->  pre_1419(n_1518),
+RELDEFN pre_1419: ( n_1518=0) -->  pre_1419(n_1518),
+RELDEFN post_1420: ( m_1410=0 & res=0 & n=0 & pre_1419(n)) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( n_1448<n_1464 & 0<=n_1448 & 0<=m_1507 & 0<=n_1491 & 
+v_int_20_1488<v_int_20_1487 & pre_1419(n) & 
+post_1420(n_1491,n_1448,v_int_20_1487,flow) & 
+post_1420(m_1478,n_1464,v_int_20_1488,flow) & 
+post_1420(m_1507,n_1491,v_int_21_1542,flow) & res=1+v_int_21_1542 & n=n_1464+
+1 & m_1478=m_1410-1 & m_1507<=(m_1410-2)) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( n_1464<=n_1448 & 0<=n_1464 & 0<=m_1507 & 0<=n_1491 & 
+v_int_20_1488<v_int_20_1487 & pre_1419(n) & 
+post_1420(n_1491,n_1448,v_int_20_1487,flow) & 
+post_1420(m_1478,n_1464,v_int_20_1488,flow) & 
+post_1420(m_1507,n_1491,v_int_21_1542,flow) & res=1+v_int_21_1542 & n=n_1448+
+1 & m_1478=m_1410-1 & m_1507<=(m_1410-2)) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( m_1478<=m_1507 & 0<=m_1478 & n_1448<n_1464 & 0<=n_1448 & 0<=n_1491 & 
+v_int_20_1488<v_int_20_1487 & pre_1419(n) & 
+post_1420(n_1491,n_1448,v_int_20_1487,flow) & 
+post_1420(m_1478,n_1464,v_int_20_1488,flow) & 
+post_1420(m_1507,n_1491,v_int_21_1542,flow) & res=1+v_int_21_1542 & n=n_1464+
+1 & m_1410=m_1507+1) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( m_1478<=m_1507 & 0<=m_1478 & n_1464<=n_1448 & 0<=n_1464 & 0<=n_1491 & 
+v_int_20_1488<v_int_20_1487 & pre_1419(n) & 
+post_1420(n_1491,n_1448,v_int_20_1487,flow) & 
+post_1420(m_1478,n_1464,v_int_20_1488,flow) & 
+post_1420(m_1507,n_1491,v_int_21_1542,flow) & res=1+v_int_21_1542 & n=n_1448+
+1 & m_1410=m_1507+1) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( n_1448<n_1464 & 0<=n_1448 & 0<=m_1461 & 0<=n_1518 & 
+v_int_20_1514<=v_int_20_1515 & pre_1419(n) & 
+post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 
+post_1420(m_1534,n_1518,v_int_23_1574,flow) & res=1+v_int_23_1574 & n=n_1464+
+1 & m_1534=m_1410-1 & m_1461<=(m_1410-2)) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( n_1464<=n_1448 & 0<=n_1464 & 0<=m_1461 & 0<=n_1518 & 
+v_int_20_1514<=v_int_20_1515 & pre_1419(n) & 
+post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 
+post_1420(m_1534,n_1518,v_int_23_1574,flow) & res=1+v_int_23_1574 & n=n_1448+
+1 & m_1534=m_1410-1 & m_1461<=(m_1410-2)) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( m_1534<=m_1461 & 0<=m_1534 & n_1448<n_1464 & 0<=n_1448 & 0<=n_1518 & 
+v_int_20_1514<=v_int_20_1515 & pre_1419(n) & 
+post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 
+post_1420(m_1534,n_1518,v_int_23_1574,flow) & res=1+v_int_23_1574 & n=n_1464+
+1 & m_1410=m_1461+1) -->  post_1420(m_1410,n,res,flow),
+RELDEFN post_1420: ( m_1534<=m_1461 & 0<=m_1534 & n_1464<=n_1448 & 0<=n_1464 & 0<=n_1518 & 
+v_int_20_1514<=v_int_20_1515 & pre_1419(n) & 
+post_1420(m_1461,n_1448,v_int_20_1514,flow) & 
+post_1420(n_1518,n_1464,v_int_20_1515,flow) & 
+post_1420(m_1534,n_1518,v_int_23_1574,flow) & res=1+v_int_23_1574 & n=n_1448+
+1 & m_1410=m_1461+1) -->  post_1420(m_1410,n,res,flow)]
+*************************************
+
+Post Inference result:
+height$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::tree{}<n>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists m_1410: x::tree{}<m_1410>&0<=n & res>=0 & res=n & 
+           res=m_1410&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 3.232201 second(s)
+	Time spent in main process: 2.116132 second(s)
+	Time spent in child processes: 1.116069 second(s)
+

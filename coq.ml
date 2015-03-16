@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open VarGen
 open GlobProver
 module CP = Cpure
 module Err = Error
@@ -34,7 +35,7 @@ let rec coq_of_typ = function
   | Tup2 _ -> illegal_format ("coq_of_typ: Tup2 type not supported for Coq")
   | FORM -> illegal_format ("coq_of_typ: FORMULA type not supported for Coq")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
-  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT | HpT->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT | HpT (* | SLTyp *) ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -188,7 +189,7 @@ and coq_of_b_formula b =
           (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
 			illegal_format "coq_of_exp : relation cannot be handled"
     | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
-    | CP.VarPerm _ ->
+    (* | CP.VarPerm _ -> *)
 		illegal_format "coq_of_exp : VarPerm cannot be handled"
 
 (* pretty printing for formulas *)
@@ -220,7 +221,7 @@ and coq_of_formula pr_w pr_s f =
   in helper f
 
 let coq_of_formula pr_w pr_s f =
-  let _ = set_prover_type () in
+  let () = set_prover_type () in
   coq_of_formula pr_w pr_s f
   
 
@@ -316,7 +317,7 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 	flush log_file;
   end;
 
-  (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
+  (*let () = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
 
 let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =

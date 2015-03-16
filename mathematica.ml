@@ -4,6 +4,7 @@
  *)
 
 open Globals
+open VarGen
 open GlobProver
 open Gen.Basic
 module CP = Cpure
@@ -71,14 +72,14 @@ let log level msg =
 (* Wait and read the output channel of mathematica process until it is ready to work *)
 let rec wait_for_ready_prover (channel: in_channel)  =
   let line = input_line channel in
-  (* let _ = print_endline ("== in wait_for_ready_prover: line = " ^ line) in *)
+  (* let () = print_endline ("== in wait_for_ready_prover: line = " ^ line) in *)
   let line = Gen.trim_str line in
   if (line = "") then ()
   else (wait_for_ready_prover channel)
 
 let rec read_output (channel: in_channel) : string =
   let line = input_line channel in 
-  (* let _ = print_endline ("== in read_output: line = " ^ line) in *)
+  (* let () = print_endline ("== in read_output: line = " ^ line) in *)
   let line = Gen.trim_str line in
   if (((String.length line) > 3) && ((String.sub line 0 4) = "Out[")) then line
   else (read_output channel)
@@ -88,8 +89,8 @@ let rec read_output (channel: in_channel) : string =
  *)
 let send_cmd cmd =
   if !is_mathematica_running then (
-    let _ = output_string !process.outchannel cmd in
-    let _ = flush !process.outchannel in
+    let () = output_string !process.outchannel cmd in
+    let () = flush !process.outchannel in
     ()
   )
 
@@ -100,7 +101,7 @@ let start () =
       is_mathematica_running := true;
     ) in
     let set_process proc = process := proc in
-    let _ = Procutils.PrvComms.start !is_log_all log_file ("math", "math",  [||] ) set_process prelude in
+    let () = Procutils.PrvComms.start !is_log_all log_file ("math", "math",  [||] ) set_process prelude in
     print_endline "Starting mathematica... "; flush stdout;
     wait_for_ready_prover !process.inchannel;
     print_endline ("Mathematica started successfully!"); 
@@ -122,7 +123,7 @@ let stop () =
       log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
       log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
     ) in
-    let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !mathematica_call_count 9 ending_fnc in
+    let () = Procutils.PrvComms.stop !is_log_all log_file !process  !mathematica_call_count 9 ending_fnc in
     is_mathematica_running := false
   )
 
@@ -142,7 +143,7 @@ let send_and_receive (f : string) : string =
   if !is_mathematica_running then (
     try
       let fnc () = (
-        let _ = send_cmd f in
+        let () = send_cmd f in
         read_output !process.inchannel
       ) in
       let fail_with_timeout () = (
@@ -176,14 +177,14 @@ let check_formula (f: string) : bool option =
     else if (result = "False") then
       Some false
     else
-      let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 1: ") no_pos in
-      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
-      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
+      let () = Debug.dinfo_pprint ("Mathematica unexpected anser 1: ") no_pos in
+      let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
   with _ ->
-      let _ = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
-      let _ = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
-      let _ = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
+      let () = Debug.dinfo_pprint ("Mathematica unexpected anser 2: ") no_pos in
+      let () = Debug.dinfo_zprint (lazy (("   Input : " ^ f))) no_pos in
+      let () = Debug.dinfo_zprint (lazy (("   Output: " ^ output))) no_pos in
       failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
@@ -202,7 +203,7 @@ let time func =
 
 (* call omega's function func and collect the running time *)
 let call_omega func =
-  let _ = incr omega_call_count in
+  let () = incr omega_call_count in
   let res, time = time func in
   linear_time := !linear_time +. time;
   (*log DEBUG (string_of_float time);*)
@@ -210,7 +211,7 @@ let call_omega func =
 
 (* call mathematica's function func and collect the running time *)
 let call_mathematica func =
-  let _ = incr mathematica_call_count in
+  let () = incr mathematica_call_count in
   let res, time = time func in
   nonlinear_time := !nonlinear_time +. time;
   (*log DEBUG (string_of_float time);*)
@@ -388,7 +389,7 @@ let rec math_of_b_formula b : string =
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _
-  | CP.VarPerm _
+  (* | CP.VarPerm _ *)
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
@@ -443,7 +444,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
       with 
       | Not_found ->
           let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
-          let _ = Hashtbl.add vnames name fresh_name in
+          let () = Hashtbl.add vnames name fresh_name in
           fresh_name 
     ) in
     CP.SpecVar (typ, short_name, prm)
@@ -793,8 +794,8 @@ let imply_ops pr_w pr_s ante conseq imp_no =
         res
       with Not_found -> (
         let res, time = imply_no_cache_ops pr_w pr_s f imp_no in
-        let _ = if time > cache_threshold then
-              let _ = log DEBUG "Caching."in
+        let () = if time > cache_threshold then
+              let () = log DEBUG "Caching."in
               Hashtbl.add !impl_cache fstring res in
         res
       ) in

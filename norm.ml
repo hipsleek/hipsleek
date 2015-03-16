@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Gen
 open Cformula
@@ -17,7 +18,7 @@ let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
     let new_f = CF.drop_views_formula f1 [view_name] in
-    (* let _ = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
+    (* let () = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
      (CF.fv new_f)
   in
   let rec build_keep_pos_list rem_args res index all=
@@ -29,10 +30,10 @@ let norm_elim_useless_para_x view_name sf args=
    in
   if args = [] then (view_name, args, []) else
     let svl = extract_svl (CF.struc_to_formula sf) in
-    (* let _ = Debug.info_zprint  (lazy  (" svl:" ^ (!CP.print_svl svl) )) no_pos in *)
-    (* let _ = Debug.info_zprint  (lazy  (" args:" ^ (!CP.print_svl args) )) no_pos in *)
+    (* let () = Debug.info_zprint  (lazy  (" svl:" ^ (!CP.print_svl svl) )) no_pos in *)
+    (* let () = Debug.info_zprint  (lazy  (" args:" ^ (!CP.print_svl args) )) no_pos in *)
     let new_args = CP.intersect_svl args svl in
-    (* let _ = Debug.info_zprint  (lazy  (" new_args:" ^ (!CP.print_svl new_args) )) no_pos in *)
+    (* let () = Debug.info_zprint  (lazy  (" new_args:" ^ (!CP.print_svl new_args) )) no_pos in *)
     if List.length args > List.length new_args then
       let keep_pos = build_keep_pos_list args [] 0 new_args in
       let new_vname = CP.fresh_old_name view_name in
@@ -40,7 +41,7 @@ let norm_elim_useless_para_x view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let _ = Debug.info_zprint  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
+      let () = Debug.info_zprint  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
       (new_vname, new_args, ss)
     else
       (view_name, args, [])
@@ -400,7 +401,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
   match defs with
     | [a] -> [vdecl]
     | [(hp1,(* (_,hrel1,_,f1) *) def1);(hp2,(* (a,hrel2,_,f2) *) def2)] ->
-        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in
+        let () = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in
         let f1 = CF.disj_of_list (List.map fst def1.CF.def_rhs) no_pos in
         let f2 = CF.disj_of_list (List.map fst def2.CF.def_rhs) no_pos in
         let n_f1 =
@@ -409,13 +410,13 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
           else
             f1
         in
-        (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
+        (* let () = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
         let (_, eq_hfs) = Sautil.match_one_hp_views iprog cprog cur_m cviews def2 in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
-             let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
+             let () = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
             let _,args2 = CF.extract_HRel def2.CF.def_lhs in
             let vname2 = (CP.name_of_spec_var hp2) in
             let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
@@ -427,12 +428,12 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
           else
             let eq_hf = List.hd eq_hfs in
             let eq_vn = extract_view_name eq_hf in
-            let _ = Debug.info_zprint  (lazy  ("  DO NOT SYNTHESIZE. MATCHED view: "^ (eq_vn) ^ "\n")) no_pos in 
+            let () = Debug.info_zprint  (lazy  ("  DO NOT SYNTHESIZE. MATCHED view: "^ (eq_vn) ^ "\n")) no_pos in 
             let to_hp = CP.SpecVar (HpT, eq_vn, Unprimed) in
             ([], Some ([hp2], to_hp))
         in
         (*hp1 must equal hp*)
-        (* let _ = Debug.info_zprint  (lazy  ("  hp1: "^ (!CP.print_sv hp1))) no_pos in *)
+        (* let () = Debug.info_zprint  (lazy  ("  hp1: "^ (!CP.print_sv hp1))) no_pos in *)
         (***hprels to views*******)
         let n_f10 =
           match view_ss with
@@ -482,7 +483,7 @@ let cont_para_analysis_view cprog vdef other_vds=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else
       let _, reach_dns, reach_vns = look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
-      let ( _,mix_f,_,_,_) = CF.split_components f in
+      let ( _,mix_f,_,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
       let rec_vns, other_vns = List.partition (fun vn ->
         String.compare vn.CF.h_formula_view_name vname = 0
@@ -732,10 +733,10 @@ let convert_substitution_helper_opt from_sv to_sv h p emap subs_pure =
 let elim_useless_exists (h: CF.h_formula) (p: CP.formula)  (qvars: CP.spec_var list) = 
   let unused_qvars, qvars = Gen.BList.diff_split_eq CP.eq_spec_var qvars (CF.h_fv h) in
   let new_pure = CP.mkExists unused_qvars p (CP.get_pure_label p) (CP.pos_of_formula p) in
-  let _ = Debug.ninfo_hprint (add_str "unused qvars" (pr_list Cprinter.string_of_spec_var) ) unused_qvars no_pos in
-  let _ = Debug.ninfo_hprint (add_str "qvars" (pr_list Cprinter.string_of_spec_var) ) qvars no_pos in
-  let _ = Debug.ninfo_hprint (add_str "p: " ( Cprinter.string_of_pure_formula) ) p no_pos in
-  let _ = Debug.ninfo_hprint (add_str "new_pure: " ( Cprinter.string_of_pure_formula) ) new_pure no_pos in
+  let () = Debug.ninfo_hprint (add_str "unused qvars" (pr_list Cprinter.string_of_spec_var) ) unused_qvars no_pos in
+  let () = Debug.ninfo_hprint (add_str "qvars" (pr_list Cprinter.string_of_spec_var) ) qvars no_pos in
+  let () = Debug.ninfo_hprint (add_str "p: " ( Cprinter.string_of_pure_formula) ) p no_pos in
+  let () = Debug.ninfo_hprint (add_str "new_pure: " ( Cprinter.string_of_pure_formula) ) new_pure no_pos in
   let new_pure = CP.elim_exists new_pure in
   (new_pure, qvars)
 
@@ -755,20 +756,20 @@ let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.vie
               if (String.compare d.CF.h_formula_data_name ddecl.C.data_name == 0) then
                 let ddecl_fields = List.map (fun (a,b) -> snd a) ddecl.C.data_fields in
                 let lst = List.combine ddecl_fields d.CF.h_formula_data_arguments in
-                let _ = Debug.info_hprint (add_str "field:" (pr_id) ) fld_name no_pos in
+                let () = Debug.info_hprint (add_str "field:" (pr_id) ) fld_name no_pos in
                 let bck_sv = List.fold_left (fun acc (f,a) -> if (String.compare fld_name f == 0 )then acc@[a] else acc) [] lst in
                 if (List.length bck_sv >=1) then Some (List.hd bck_sv)
                 else None
               else None
             else None
       | CF.ViewNode v -> 
-            let _ = Debug.info_hprint (add_str "view:" (pr_id) ) v.CF.h_formula_view_name no_pos in
+            let () = Debug.info_hprint (add_str "view:" (pr_id) ) v.CF.h_formula_view_name no_pos in
             if (String.compare v.CF.h_formula_view_name vdef.C.view_name == 0) then 
-              let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view but not support 2 recursive calls yet" in
+              let () = Gen.report_warning pos "[norml.ml] trying to linearize a view but not support 2 recursive calls yet" in
               None
             else
               if (Gen.BList.mem_eq CP.eq_spec_var v.CF.h_formula_view_node aliases) then
-                let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view but we do not support mix defs" in
+                let () = Gen.report_warning pos "[norml.ml] trying to linearize a view but we do not support mix defs" in
                 None
               else
                 None
@@ -778,7 +779,7 @@ let back_ptr_of_heap_x (h: CF.h_formula) fwd_ptr_of_prev_node emap  (vdef: C.vie
             let bk2 = helper h2 (ddecl,fld_name) in
             combine_opt_ptrs bk1 bk2
       | _ -> 
-            let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view but we do not support linearization of non-star formulas" in
+            let () = Gen.report_warning pos "[norml.ml] trying to linearize a view but we do not support linearization of non-star formulas" in
             None (* rec *)
   in
   if (List.length vdef.C.view_backward_fields != 1) then 
@@ -799,7 +800,7 @@ let subs_head_with_free vdef hd p emap =
             (* identify fwd ptr of head *)
             let args_lst = List.combine h.CF.h_formula_view_arguments vdef.C.view_vars in
             let free = List.filter (fun (n,v) -> not(Gen.BList.mem_eq CP.eq_spec_var v (vdef.C.view_forward_ptrs@vdef.C.view_backward_ptrs))) args_lst in
-            let _ = Debug.info_hprint (add_str "free" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) free no_pos in
+            let () = Debug.info_hprint (add_str "free" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) free no_pos in
             let new_head = List.fold_left (fun acc_head (f,t) -> 
                 let h,p =  convert_substitution_helper f t acc_head p emap false in 
                 h) hd free in
@@ -815,7 +816,7 @@ let subs_head_with_free vdef hd p emap =
 *)
 let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
   let (fwd_ptr_v, fwd_ptr_n) = List.hd fwd_ptrs in (* check that fwd_ptrs has exactly size 1, was done earlier *)
-  let _ = Debug.info_hprint (add_str "fwd_ptrs:" (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )  (fwd_ptr_v, fwd_ptr_n)  no_pos in
+  let () = Debug.info_hprint (add_str "fwd_ptrs:" (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )  (fwd_ptr_v, fwd_ptr_n)  no_pos in
   let (bk_ptrs_v, bk_ptr_n) = 
     if (List.length bk_ptrs == 1) then  
       let (bk_ptr_v, bk_ptr_n) = List.hd bk_ptrs in 
@@ -861,12 +862,12 @@ let convert_h_formula_to_linear_recursive_helper  prog (head: CF.h_formula) (tai
             let bk_ptrs_vdef = vdef.C.view_backward_ptrs in
             let pp = (Mcpure.pure_of_mix p) in
             if (String.compare vdef.C.view_name hd.CF.h_formula_view_name == 0 && (List.length fwd_ptrs_vdef == 1)) then
-              let _ = Gen.report_warning pos "[norml.ml] linearizing a tail-rec def into a linear one " in
+              let () = Gen.report_warning pos "[norml.ml] linearizing a tail-rec def into a linear one " in
               (* identify fwd ptr of head *)
               let args_lst = List.combine vdef.C.view_vars hd.CF.h_formula_view_arguments in
               let fwd_ptrs = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v fwd_ptrs_vdef) args_lst in
               let bk_ptrs  = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v bk_ptrs_vdef) args_lst in
-              let _ = Debug.info_hprint (add_str "fwd_ptrs:" (pr_list (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )) fwd_ptrs no_pos in
+              let () = Debug.info_hprint (add_str "fwd_ptrs:" (pr_list (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )) fwd_ptrs no_pos in
               let (tail, head, pp, qvars) = convert_substitution prog fwd_ptrs bk_ptrs (* fwd_ptr_v fwd_ptr_n *) tail head pp emap qvars vdef in
               let new_f = CF.mkStarH tail head pos in 
               let new_pure, new_qvars = elim_useless_exists new_f pp qvars in
@@ -874,11 +875,11 @@ let convert_h_formula_to_linear_recursive_helper  prog (head: CF.h_formula) (tai
               (new_f, p, new_qvars)
             else
               (* base case with non-emp heap? *)
-              let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view which is not tail-rec? 1 " in
+              let () = Gen.report_warning pos "[norml.ml] trying to linearize a view which is not tail-rec? 1 " in
               (orig_f, p, qvars)            (* self does not point to the recursive node *)
       | _ -> 
             (* base case with non-emp heap? *)
-            let _ = Gen.report_warning pos "[norml.ml] trying to linearize a view which is not tail-rec? 2 " in
+            let () = Gen.report_warning pos "[norml.ml] trying to linearize a view which is not tail-rec? 2 " in
             (orig_f, p, qvars)           (* if pred is well defined and tail-rec, should never reach here *)
   in
   (h,p,q)
@@ -963,7 +964,7 @@ let convert_h_formula_to_linear prog (vdef: C.view_decl) (f: CF.h_formula) (p: M
   in
   if not((List.length vdef.C.view_forward_ptrs == 1) && (List.length vdef.C.view_backward_ptrs <= 1)) then
     let pos = CF.pos_of_h_formula f in
-    let _ = Gen.report_warning pos "[norml.ml] we currently do not support tail conversion of views with more than 1 fwd ptr or more than 1 bk ptr " in
+    let () = Gen.report_warning pos "[norml.ml] we currently do not support tail conversion of views with more than 1 fwd ptr or more than 1 bk ptr " in
     ((f, p, qvars), None)
   else
     new_f
@@ -981,7 +982,7 @@ let convert_formula_to_linear_x prog (vdef: C.view_decl) (f: CF.formula): CF.for
             let ((f1_heap, f1_pure, f1_qv), new_view) = convert_h_formula_to_linear prog vdef f1.CF.formula_base_heap  f1_pure [] in
             if not(Gen.is_empty f1_qv) then 
               (* should never reach this branch if normalization works ok *)
-              CF.mkExists_w_lbl f1_qv f1_heap f1_pure f1.CF.formula_base_type 
+              CF.mkExists_w_lbl f1_qv f1_heap f1_pure f1.CF.formula_base_vperm f1.CF.formula_base_type 
                   f1.CF.formula_base_flow  f1.CF.formula_base_and f1.CF.formula_base_pos f1.CF.formula_base_label
             else
               CF.Base({f1 with formula_base_heap = f1_heap; formula_base_pure = f1_pure})

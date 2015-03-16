@@ -1,0 +1,43 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+
+// (2) [P --> y::cell<m>]
+//checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- x::cell<n> * %P}<>.
+//print residue.
+
+// (4) [P --> y::cell<m>]
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> |- c::LatchOut{+ x::cell<n> * %P}<>.
+print residue.
+
+// Should Fail
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * x::cell<m> |- c::LatchOut{+ x::cell<n> * %P}<> * %P.
+print residue.
+
+// P -> c::LatchOut{+ y::cell<m>} * x::cell<n>
+checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> * x::cell<n> |- c::LatchOut{+ x::cell<n>}<> * %P.
+print residue.
+
+checkentail_exact c::LatchOut{+ x::cell<n>}<> * x::cell<m> |- c::LatchOut{+ %P}<> * %P.
+print residue.
+
+/*
+heap_entail_conjunct#20@7@5@4@3@2@1
+heap_entail_conjunct#20 inp1 :false
+heap_entail_conjunct#20 inp2 : es_formula: x::cell<n> * y::cell<m>&{FLOW,(4,5)=__norm#E}[]
+ es_evars: [P]
+ es_infer_vars_rel: []
+heap_entail_conjunct#20 inp3 : x::cell<n> * (HVar P)&{FLOW,(4,5)=__norm#E}[]
+heap_entail_conjunct#20@7 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: separation entailment
+                   fe_locs: {
+                             fc_message: do_unmatched_rhs : HVar P
+                             fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]false
+*/

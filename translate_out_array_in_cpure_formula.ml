@@ -1,6 +1,7 @@
 open Cpure
 open Globals
 open Debug
+open VarGen
 (* Translate out array in cpure formula  *)
 
 (* array_transform_info contains 2 fields. *target_array* denotes the array element expression to be translated, while *new_name* denoting the new expression *)
@@ -259,7 +260,7 @@ let rec contain_array
       | BVar _
       | BagMin _
       | BagMax _
-      | VarPerm _
+      (*| VarPerm _*)
       | RelForm _ ->
             false
       | BagIn (sv,e1,loc)
@@ -976,8 +977,8 @@ let rec standarize_array_formula
       | BagIn _
       | BagNotIn _
       | BagMin _
-      | BagMax _
-      | VarPerm _ ->
+      | BagMax _ ->
+      (*| VarPerm _ ->*)
             failwith ("standarize_p_formula 1: "^(!print_p_formula p)^" To Be Implemented")
       (* | RelForm _ -> *)
       (*       failwith ("standarize_p_formula 2: "^(!print_p_formula p)^" To Be Implemented") *)
@@ -1474,8 +1475,8 @@ let extract_translate_scheme
       | BagIn _
       | BagNotIn _
       | BagMin _
-      | BagMax _
-      | VarPerm _ ->
+      | BagMax _ ->
+      (*| VarPerm _ ->*)
             failwith ("extract_translate_scheme: "^(!print_p_formula p)^" To Be Implemented")
   in
   let rec helper (* Still working on the Hashtbl *)
@@ -1593,8 +1594,8 @@ let rec mk_array_free_formula
         | RelForm (sv,elst,loc) ->
               RelForm (sv, List.map (fun re -> mk_array_free_exp re) elst,loc)
         | BagMin _
-        | BagMax _
-        | VarPerm _->
+        | BagMax _->
+        (*| VarPerm _->*)
               failwith ("mk_array_free_p_formula: 2"^(!print_p_formula p)^" To Be Implemented")
     in
     (mk_array_free_p_formula p,None)
@@ -1692,8 +1693,8 @@ let rec get_array_element_in_f
         | BagIn _
         | BagNotIn _
         | BagMin _
-        | BagMax _
-        | VarPerm _ ->
+        | BagMax _ ->
+        (* | VarPerm _ -> *)
               failwith ("extract_translate_scheme: "^(!print_p_formula p)^" To Be Implemented")
     in
     match f with
@@ -1835,7 +1836,7 @@ let rec drop_array_formula
       | BVar _
       | BagMin _
       | BagMax _
-      | VarPerm _
+      (* | VarPerm _ *)
       | RelForm _ ->
             false
       | BagIn (sv,e1,loc)
@@ -3142,7 +3143,7 @@ let rec translate_back_array_in_one_formula
         | BVar _
         | BagMin _
         | BagMax _
-        | VarPerm _
+        (* | VarPerm _ *)
         | RelForm _ ->
               p
         | BagIn (sv,e1,loc)->

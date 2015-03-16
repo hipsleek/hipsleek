@@ -1,0 +1,51 @@
+
+!!!Full processing file "hip/ex15d-lend-heap.ss"
+Parsing file "hip/ex15d-lend-heap.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex15d-lend-heap.ss:9: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_6_1338': x_36'::cell<v_int_6_1338'>*N@full[x_36,y_37,z_38]&z_38'=2 & y_37'=1 & v_int_6_1338'=1 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+( []) :hip/ex15d-lend-heap.ss:12: 6: Proving condition of a par's case failed.
+
+(Cause of ParCase Failure):hip/ex15d-lend-heap.ss:12: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: Imm annotation @par mismatches
+                  fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[ SEARCH ==>  Match(x_36',x_36') ==> ]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/ex15d-lend-heap.ss",Line:8,Col:6
+
+ERROR: at hip/ex15d-lend-heap.ss_12:6_13:21
+Message: Proving condition of a par's case failed.
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving condition of a par's case failed.") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.408024 second(s)
+	Time spent in main process: 0.388023 second(s)
+	Time spent in child processes: 0.020001 second(s)
+

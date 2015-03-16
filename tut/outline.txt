@@ -1,0 +1,22 @@
+(Tut 3a) Termination/Non-Termination Verification
+
+. A Unified Specification Logic
+. Temporal Predicates
+. A Resource Logic for Termination/Non-Termination
+. Flow-Sensitive Temporal Entailment
+. Flow-Insensitive Temporal Entailment
+. Hoare Rule for Resource Logic
+. Examples of Verification
+
+(Tut 3b) Termination/Non-Termination Spec Inference
+
+. Introduction
+. Unknown Pre/Post Temporal Predicates
+. With Partial Specification
+. Overall Inference Algorithm
+. Hoare Rule with Unknown Temporal Predicates
+. Inferring Base-Case Termination
+. Inferring Ranking Function
+. Inferring Inductive Falsity
+. Inferring Pre-Condition to Avoid Base-Case
+. Experiments with SVCOMP15 benchmarks

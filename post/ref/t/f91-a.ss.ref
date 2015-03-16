@@ -1,0 +1,32 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/f91-a.ss"
+Parsing file "t/f91-a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN P: ( n=res & 91<=res) -->  P(n,res),
+RELDEFN P: ( P(v_int_17_1347,res) & n<=90 & P(1+n,v_int_17_1347)) -->  P(n,res)]
+*************************************
+
+Post Inference result:
+f91$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((90>=n & 91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
+           res=n))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.432025 second(s)
+	Time spent in main process: 0.348021 second(s)
+	Time spent in child processes: 0.084004 second(s)
+

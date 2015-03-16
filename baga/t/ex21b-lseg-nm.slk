@@ -1,0 +1,19 @@
+data node {
+     node next;
+}.
+
+pred lseg<p,n,m> == self=p & n=0 & m=0
+  or self::node<q> * q::lseg<p,n-1,m-1>
+  inv false
+ .
+/* 
+# ex21b.slk
+
+must detect false is not invariant
+need to do fixpoint checking for user-supplied inv
+
+
+!!! memo_pf_P: n>=0 & n=m & n=idx
+!!! Predicate lseg has over invariant
+
+*/

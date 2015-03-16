@@ -1,0 +1,41 @@
+data cell { int v; }.
+
+checkentail (exists y_1533,z_1532: x_40'::cell<Anon_11>*@full[x_40,y_41,z_42] * @lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & z_42'=Anon_1519+z_1530)
+|- 
+(exists flted_19_44: x_40'::cell<flted_19_44>&flted_19_44=1 & 
+       y_41'=2 & z_42'=3).
+//x_40'::cell<1> & y_41'=2 & z_42'=3.
+
+checkentail (exists y_1533,z_1532: x_40'::cell<Anon_11>*@full[x_40,y_41,z_42] * @lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & z_42'=Anon_1519+z_1530)
+|-
+(exists flted_20_46: x_40'::cell<flted_20_46>&flted_20_46=2 & 
+       y_41'=2 & z_42'=3).
+//x_40'::cell<2> & y_41'=2 & z_42'=3.
+
+checkentail (exists y_1533,z_1532: x_40'::cell<Anon_11>*@full[x_40,y_41,z_42] * @lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & z_42'=Anon_1519+z_1530)
+|-
+(exists flted_21_48: x_40'::cell<flted_21_48>&flted_21_48=1 & 
+       y_41'=3 & z_42'=3). 
+//x_40'::cell<1> & y_41'=3 & z_42'=3.
+
+checkentail (exists y_1533,z_1532: x_40'::cell<Anon_11>*@full[x_40,y_41,z_42] * @lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & z_42'=Anon_1519+z_1530)
+|- 
+(exists flted_22_50: x_40'::cell<flted_22_50>&flted_22_50=1 & 
+       y_41'=2 & z_42'=4).
+//x_40'::cell<1> & y_41'=2 & z_42'=4.
+
+checkentail (exists y_1533,z_1532: x_40'::cell<Anon_11>*@full[x_40,y_41,z_42]*@lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1533=1 & z_1532=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & z_42'=Anon_1519+z_1530)
+|-
+ (exists flted_22_50: x_40'::cell<flted_22_50>&flted_22_50=1 & 
+       y_41'=2 & z_42'=4).
+       
+checkentail @full[x_40,y_41,z_42] * @lend[val_13_1365,val_16_1371]&v_int_6_1439=1 & 
+y_1546=1 & z_1547=2 & Anon_11=v_int_6_1439 & v_int_6_1439=1 & y_1546=1 & 
+z_1547=2 & Anon_11=v_int_6_1439 & Anon_12=Anon_11 & Anon_13=Anon_11 & 
+v_int_6_1475=1 & z_1473=2 & Anon_1474=v_int_6_1475 & v_int_6_1470=1 & 
+y_1482=1 & z_1469=2 & Anon_1472=v_int_6_1470 & Anon_1471=Anon_1472 & 
+y_41'=Anon_1471+y_1482 & v_int_6_1523=1 & y_1521=1 & 
+Anon_1522=v_int_6_1523 & v_int_6_1517=1 & y_1516=1 & z_1530=2 & 
+Anon_1520=v_int_6_1517 & Anon_1518=Anon_1520 & Anon_1519=Anon_1520 & 
+z_42'=Anon_1519+z_1530
+|- Anon_11=1 & y_41'=2 & z_42'=4.

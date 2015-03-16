@@ -1,3 +1,4 @@
+open VarGen
 open GlobProver
 
 let parse_only = ref false
@@ -43,6 +44,10 @@ let set_gen_cpfile arg =
 
 let set_lib_file arg =
   Globals.lib_files := [arg]
+
+let set_tp solver=
+  let () = print_endline ("!!! init_tp by user: ") in 
+  Tpdispatcher.set_tp solver
 
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
@@ -178,7 +183,7 @@ let common_arguments = [
     "Turn off brief tracing");
     ("-dd", Arg.Set Debug.devel_debug_on,
     "Turn on devel_debug");
-    ("--dd-trace", Arg.Set Globals.debug_precise_trace,
+  ("--dd-trace", Arg.Set Gen.debug_precise_trace,
     "Turn on more precise tracing");
     ("--dis-ddb", Arg.Clear Debug.trace_on,
     "Turn off experimental trace_on");
@@ -208,7 +213,7 @@ let common_arguments = [
     "Disable timeout on provers");
     ("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
-    ("--trace-failure", Arg.Set Globals.trace_failure,
+  ("--trace-failure", Arg.Set VarGen.trace_failure,
     "Enable trace all failure (and exception). Use make gbyte");
     ("--trace-all", Arg.Set Globals.trace_all,
     "Trace all proof paths");
@@ -236,7 +241,7 @@ let common_arguments = [
     "Use the bag theory from Isabelle, instead of the set theory");
     ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
     ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
-    ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+  ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"disable manual annotation of variable permissions");
     ("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
     ("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
     ("--dis-web-compile", Arg.Clear Globals.web_compile_flag,"disable web compilation setting");
@@ -319,7 +324,7 @@ let common_arguments = [
     "Number of unfolding using XPure");
     ("-mona-cycle", Arg.Set_int Mona.mona_cycle,
     "Number of times mona can be called before it restarts (default 90)");
-    ("-v:", Arg.Set_int Globals.verbose_num,
+  ("-v:", Arg.Set_int VarGen.verbose_num,
     "Verbosity level for Debugging");
     ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
@@ -363,7 +368,7 @@ let common_arguments = [
     ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
     "Build the image theory in Isabelle - default false");
     ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
+   "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], set_tp (* Tpdispatcher.set_tp *)),
     "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
     ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
     ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
@@ -392,6 +397,10 @@ let common_arguments = [
     ("-dre", Arg.String (fun s ->
         Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
     "Shorthand for -debug-regexp");
+  ("-drea", Arg.String (fun s ->
+      Debug.z_debug_file:=("$.*"); Debug.z_debug_flag:=true;
+      Debug.mk_debug_arg s),
+   "Matched input/output with reg-exp");
     ("-v", Arg.Set Debug.debug_on,
     "Verbose");
     ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe,
@@ -404,12 +413,12 @@ let common_arguments = [
     "<p,q,..> comma-separated list of provers to try in parallel");
     (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
     (* "enable sat statistics"); *)
-    ("--en-pstat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Gen.profiling,
     "enable profiling statistics");
-    ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-cstat", Arg.Set Gen.enable_counters, "enable counter statistics");
     ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
     ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
-    ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-stat", (Arg.Tuple [Arg.Set Gen.profiling; Arg.Set Gen.enable_counters]),
     "enable all statistics");
     ("--sbc", Arg.Set Globals.enable_syn_base_case,
     "use only syntactic base case detection");
@@ -562,7 +571,11 @@ let common_arguments = [
     ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
     ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
     ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
-    
+
+  (* HO predicate *)
+  ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
+
     (* Proof Logging *)
     ("--en-logging", Arg.Unit (fun _ ->
         Globals.proof_logging_txt:=true; Globals.proof_logging:=true ), "Enable proof logging");
@@ -626,8 +639,14 @@ let common_arguments = [
     ("--dis-prove-invalid",Arg.Clear Globals.prove_invalid,"disable prove invalid");
 
     (* use classical reasoning in separation logic *)
-    ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
-    ("--dis-classic", Arg.Clear Globals.opt_classic, "Disable classical reasoning in separation logic");  
+  ("--classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # set Globals.INF_CLASSIC),
+  (* Arg.Set Globals.opt_classic,  *)
+  "Use classical reasoning in separation logic");
+  ("--dis-classic", 
+       Arg.Unit (fun _ -> Globals.infer_const_obj # reset Globals.INF_CLASSIC),
+  (* Arg.Clear Globals.opt_classic,  *)
+  "Disable classical reasoning in separation logic");  
     ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
     ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
     ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -658,13 +677,13 @@ let common_arguments = [
     ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
     ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
     (* WN: Please use longer meaningful variable names *)
-    ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
     ("--sa-error", Arg.Set Globals.sae, "infer error spec");
     ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
     ("--sa-case", Arg.Set Globals.sac, "combine case spec");
     ("--sa-dis-case", Arg.Clear Globals.sac, "disable to combine case spec");
     ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
-    ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
+  ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
     ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
     ("--gff", Arg.Set Globals.gen_fixcalc, "shorthand for gen-fixcalc-file");
     ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
@@ -767,8 +786,8 @@ let common_arguments = [
     ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
     ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
     ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
-    ("--en-warning", Arg.Set Globals.en_warning_msg, "enable warning (default)");
-    ("--dis-warning", Arg.Clear Globals.en_warning_msg, "disable warning (switch to report error)");
+  ("--en-warning", Arg.Set VarGen.en_warning_msg, "enable warning (default)");
+  ("--dis-warning", Arg.Clear VarGen.en_warning_msg, "disable warning (switch to report error)");
     ("--print-min",
     Arg.Unit
         (fun _ ->
@@ -776,7 +795,7 @@ let common_arguments = [
             Debug.trace_on := false;
             Debug.devel_debug_on:= false;
             Globals.lemma_ep := false;
-            Globals.silence_output:=false;
+          Gen.silence_output:=false;
             Globals.enable_count_stats:=false;
             Globals.enable_time_stats:=false;
             Globals.lemma_gen_unsafe:=true;
@@ -799,15 +818,15 @@ let common_arguments = [
     Arg.Unit
         (fun _ ->
             (* print_endline "inside svcomp-compete setting"; *)
-            Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
             Globals.svcomp_compete_mode:=true; (* main flag *)
             (* Globals.show_unexpected_ents := false; *)
             (* diable printing *)
-            Globals.trace_failure := false;
+          VarGen.trace_failure := false;
             Debug.trace_on := false;
             Debug.devel_debug_on:= false;
             Globals.lemma_ep := false;
-            Globals.silence_output:=true;
+          Gen.silence_output:=true;
             Globals.enable_count_stats:=false;
             Globals.enable_time_stats:=false;
             
@@ -839,13 +858,13 @@ let common_arguments = [
     ("--smt-compete",
     Arg.Unit
         (fun _ ->
-            Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
             Globals.smt_compete_mode:=true;
             Globals.show_unexpected_ents := false;
             Debug.trace_on := false;
             Debug.devel_debug_on:= false;
             Globals.lemma_ep := false;
-            Globals.silence_output:=true;
+          Gen.silence_output:=true;
             Globals.enable_count_stats:=false;
             Globals.enable_time_stats:=false;
             Globals.lemma_gen_unsafe:=true;
@@ -867,12 +886,12 @@ let common_arguments = [
         (fun _ ->
             (* Globals.show_unexpected_ents := true;  *)
             (*this flag is one that is  diff with compared to --smt-compete *)
-            Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
             Globals.smt_compete_mode :=true;
             Debug.trace_on := true;
             Debug.devel_debug_on:= false;
             Globals.lemma_ep := false;
-            Globals.silence_output:=false;
+          Gen.silence_output:=false;
             Globals.enable_count_stats:=false;
             Globals.enable_time_stats:=false;
             Globals.lemma_gen_unsafe:=true;
@@ -896,7 +915,7 @@ let common_arguments = [
             Debug.trace_on := true;
             Debug.devel_debug_on:= false;
             Globals.lemma_ep := false;
-            Globals.silence_output:=false;
+          Gen.silence_output:=false;
             Globals.enable_count_stats:=false;
             Globals.enable_time_stats:=false;
             (* Globals.lemma_gen_unsafe:=true; *)
@@ -986,7 +1005,7 @@ let check_option_consistency () =
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
   (* if !Globals.allow_imm && Perm.allow_perm() then *)
   (* begin *)
-  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (*   Gen.Basic.report_error no_pos "immutability and permission options cannot be turned on at the same time" *)
   (* end *)
 ;; (*Clean warning*)
 Astsimp.inter_hoa := !inter_hoa;;

@@ -1,0 +1,42 @@
+
+!!!Full processing file "vp/ex11c-cell-read-heap.ss"
+Parsing file "vp/ex11c-cell-read-heap.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+( []) :vp/ex11c-cell-read-heap.ss:14: 11: h does not have @lend/@full permission to read (var access)
+
+(Cause of ParCase Failure):vp/ex11c-cell-read-heap.ss:14: 11:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(h,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex11c-cell-read-heap.ss",Line:14,Col:7
+
+ERROR: at vp/ex11c-cell-read-heap.ss_14:11_14:12
+Message: h does not have @lend/@full permission to read (var access)
+
+Procedure foo$cell FAIL.(2)
+
+Exception Failure("h does not have @lend/@full permission to read (var access)") Occurred!
+
+Error(s) detected when checking procedure foo$cell
+
+0 false contexts at: ()
+
+Total verification time: 0.388023 second(s)
+	Time spent in main process: 0.368022 second(s)
+	Time spent in child processes: 0.020001 second(s)
+

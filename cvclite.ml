@@ -1,4 +1,6 @@
+open VarGen
 open Globals
+open VarGen
 open GlobProver
 
 module CP = Cpure
@@ -161,7 +163,7 @@ and cvcl_of_b_formula b =
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n")
+  (* | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n") *)
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

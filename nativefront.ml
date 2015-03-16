@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Sleekcommons
 
@@ -9,12 +10,12 @@ module IP = Ipure
 let get_command (input : string) : (string * string) =
   let start_idx = ref 0 in
   let len = String.length input in
-  let _ = 
+  let () = 
 	while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
 	  start_idx := !start_idx + 1
 	done in
   let end_idx = ref !start_idx in
-  let _ = 
+  let () = 
 	while (!end_idx < len) && ((String.get input !end_idx) != ' ') do
 	  end_idx := !end_idx + 1
 	done in

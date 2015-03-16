@@ -1,3 +1,4 @@
+open VarGen
 open Globals
 open Gen
 open Cpure
@@ -446,8 +447,8 @@ let get_opt_model is_linear templ_unks vars assertions =
       let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
       let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
       
-      (* let _ = print_endline ("MOST COMMON NL VARS: " ^ (pr_list pr_spec_var subst_nl_vars)) in         *)
-      (* let _ = print_endline ("Z3m MODEL: " ^ (pr_list (pr_pair pr_id Z3m.string_of_z3m_val) model)) in *)
+      (* let () = print_endline ("MOST COMMON NL VARS: " ^ (pr_list pr_spec_var subst_nl_vars)) in         *)
+      (* let () = print_endline ("Z3m MODEL: " ^ (pr_list (pr_pair pr_id Z3m.string_of_z3m_val) model)) in *)
       
       let nl_vars_w_z3m_val = List.map (fun v -> 
         let v_name = name_of_spec_var v in
@@ -676,7 +677,7 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
 
     let ln_r = Omega.get_model bnd_vars n_asserts in
 
-    let _ = 
+    let () = 
       Debug.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
       Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
       Debug.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
@@ -693,7 +694,7 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
       let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
       let r = Omega.get_model bnd_vars templ_unk_constrs in
 
-      let _ = 
+      let () = 
         Debug.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
         Debug.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
         Debug.tinfo_hprint (add_str "simpl unk constrs: " !print_formula) r no_pos 
@@ -726,12 +727,12 @@ let get_model_ln is_linear templ_unks vars assertions =
   let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
   let pos_vars = lcm::pos_vars in
 
-  let _ = 
+  let () = 
     Debug.tinfo_pprint ">>>>>>> get_model_ln <<<<<<<" no_pos;
     Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) assertions no_pos; 
     Debug.tinfo_hprint (add_str "linearized asserts: " (pr_list !print_formula)) ln_asserts no_pos;
     Debug.tinfo_hprint (add_str "pos vars: " !print_svl) pos_vars no_pos;
-    Debug.tinfo_hprint (add_str "nneg: " !print_svl) nneg_vars
+    Debug.tinfo_hprint (add_str "nneg: " !print_svl) nneg_vars no_pos
   in
 
   let ln_asserts = 
@@ -870,14 +871,14 @@ let norm_subst svl subst =
         a @ ((v, e)::n_xs)) [] grouped_subst) 
   in
   let normalized_subst = helper subst in
-  (* let _ = print_endline ("norm_subst: normalized_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) normalized_subst)) in *)
+  (* let () = print_endline ("norm_subst: normalized_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) normalized_subst)) in *)
   (* We assume that trivial and cyclic substs like 
    * (x1, x2) and (x2, x1) have been removed by simplify *)
   (* let sorted_subst = List.sort (fun (v1, e1) (v2, e2) ->                                                          *)
   (*   if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1                                                           *)
   (*   else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1                                                       *)
   (*   else 0) normalized_subst in                                                                                   *)
-  (* let _ = print_endline ("norm_subst: sorted_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) sorted_subst)) in *)
+  (* let () = print_endline ("norm_subst: sorted_subst: " ^ (pr_list (pr_pair !print_sv !print_exp) sorted_subst)) in *)
   (* List.fold_left (fun subst (v, e) ->                                                                             *)
   (*   (List.remove_assoc v subst) @ [(v, a_apply_par_term subst e)]) sorted_subst sorted_subst                      *)
   let vl = List.map fst normalized_subst in

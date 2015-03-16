@@ -1,0 +1,23 @@
+pred_prim Thrd{+%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail t::Thrd{+@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ +%P}<> . //* %P.
+print residue.
+
+/*
+# ex60c1 --ann-vp
+
+Why only there a failure with -%P failure
+but not +P below?
+
+Residue:
+ <1>emp*N@full[t,x]&x=5&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [P --> htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]]
+[
+
+
+*/

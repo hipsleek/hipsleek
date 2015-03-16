@@ -1,0 +1,65 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ack.ss"
+Parsing file "t/ack.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [Ack$int~int] for Ack$int~int
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1368: ( m=0 & res=1+n) -->  post_1368(m,n,res,flow),
+RELDEFN post_1368: ( m1_1429+1=m & n=0 & m!=0 & post_1368(m1_1429,1,res,flow)) -->  post_1368(m,n,res,flow),
+RELDEFN post_1368: ( n1_1434+1=n & v_int_19_1431+1=m & n!=0 & m!=0 & 
+post_1368(v_int_19_1431,r_1432,res,flow) & post_1368(m,n1_1434,r_1432,flow)) -->  post_1368(m,n,res,flow)]
+*************************************
+
+Post Inference result:
+Ack$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&m>=0 & res>=(1+m+n)&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure Ack$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume r_1507>=(1+m'+n1_1505) & m'>=0 & n1_1505+1=n' & m1_1504+1=m' & 
+m'=m & n'=n & m'!=0 & !(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & 
+v_int_19_1506+1=m' & v_int_19_1506>=0 & v_int_19_1349'>=(1+v_int_19_1506+
+r_1507) & 
+res=v_int_19_1349' & Ackpost_1441(m',n1_1505) & Ackpost_1441(v_int_19_1506,r_1507) --> Ackpost_1441(m,n).
+
+ termAssume v_bool_7_1350' & !(v_bool_6_1351') & m'!=0 & n'=n & m'=m & 
+n'=0 & m1_1502+1=m' & v_int_11_1503=1 & m1_1502>=0 & v_int_11_1322'>=(1+
+m1_1502+v_int_11_1503) & 
+res=v_int_11_1322' & Ackpost_1441(m1_1502,v_int_11_1503) --> Ackpost_1441(m,n).
+
+ termAssume res=v_int_6_1310' & v_int_6_1310'=1+n' & m'=m & n'=n & m'=0 & 
+v_bool_6_1351' --> Ackpost_1441(m,n).
+
+ termAssume r_35'>=(1+m'+n1_34') & m'>=0 & n1_34'+1=n' & m1_33'+1=m' & 
+m'=m & n'=n & m'!=0 & !(v_bool_6_1351') & n'!=0 & !(v_bool_7_1350') & 
+v_int_19_1348'+1=m' & Ackpre_0(m,n) --> Ackpre_0(v_int_19_1348',r_35').
+
+ termAssume !(v_bool_7_1350') & n'!=0 & !(v_bool_6_1351') & m'!=0 & n'=n & 
+m'=m & m1_33'+1=m' & n1_34'+1=n' & Ackpre_0(m,n) --> Ackpre_0(m',n1_34').
+
+ termAssume v_bool_7_1350' & !(v_bool_6_1351') & m'!=0 & n'=n & m'=m & 
+n'=0 & m1_36'+1=m' & 
+v_int_11_1321'=1 & Ackpre_0(m,n) --> Ackpre_0(m1_36',v_int_11_1321').
+
+
+Base/Rec Case Splitting:
+[	Ack: [[4] m=0@B,[5] n=0 & 1<=m@R,[6] 1<=m & 1<=n@R,[7] n<=(0-1) & 1<=m@R,[8] m<=(0-1)@R]
+]
+Starting z3... 

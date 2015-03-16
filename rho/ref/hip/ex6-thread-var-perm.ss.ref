@@ -1,0 +1,9 @@
+
+!!!Full processing file "hip/ex6-thread-var-perm.ss"
+Parsing file "hip/ex6-thread-var-perm.ss" by default parser...
+File "hip/ex6-thread-var-perm.ss", line 18, characters 21-22
+ --error: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ at:caught
+
+Exception occurred: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+Error3(s) detected at main 

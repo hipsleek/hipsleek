@@ -3,6 +3,7 @@ module CF = Cformula
 module MCP = Mcpure
 
 open Globals
+open VarGen
 open Cast
 open Cprinter
 open Gen
@@ -276,9 +277,9 @@ let add_term_relation_proc prog proc spec =
       ut_name = utpost_name;
       ut_is_pre = false; } in
   
-    let _ = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
-    (* let _ = ut_decls # push_list [utpre_decl; utpost_decl] in *)
-    let _ = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
+    let () = Debug.ninfo_hprint (add_str "added to UT_decls" (pr_list pr_id)) [utpre_name; utpost_name] no_pos in
+    (* let () = ut_decls # push_list [utpre_decl; utpost_decl] in *)
+    let () = prog.prog_ut_decls <- ([utpre_decl; utpost_decl] @ prog.prog_ut_decls) in
   
     let uid = {
       CP.tu_id = 0;
