@@ -55,7 +55,7 @@ type command =
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
-  | Validate of (validate_result * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
+  | Validate of (validate_result * ident option * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapeLFP of (ident list)

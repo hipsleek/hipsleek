@@ -3125,6 +3125,11 @@ and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
   let pr = !print_h_formula in
   Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
 
+let drop_htrue hf=
+  match hf with
+    | HTrue -> HEmp
+    | _ -> hf
+
 let transform_formula_x f (e:formula):formula =
   let rec helper f e = (
     let (_, f_f, f_h_f, f_p_t) = f in
@@ -3154,6 +3159,21 @@ let transform_formula_x f (e:formula):formula =
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
   Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
+
+let transform_formula_simp trans_hf (e:formula):formula =
+  let rec helper e =
+    match e with     
+      | Base b ->
+            let new_heap = trans_hf b.formula_base_heap in
+            Base { b with formula_base_heap = new_heap; }
+        | Or o -> 
+              Or {o with formula_or_f1 = helper o.formula_or_f1;
+                  formula_or_f2 = helper o.formula_or_f2;}
+        | Exists e ->
+              let new_heap = trans_hf e.formula_exists_heap in
+              Exists { e with formula_exists_heap = new_heap;}
+  in
+  helper  e
 
 let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in

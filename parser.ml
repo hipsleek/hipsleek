@@ -2312,10 +2312,18 @@ validate_result:
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
   ]];
+validate_cmd_pair:
+    [[ `VALIDATE; vr = validate_result  ->
+      (vr, None)
+      | `VALIDATE; vr = validate_result; `COMMA; fl=OPT id ->
+            (vr, fl)
+   ]];
 
 validate_cmd:
-  [[ `VALIDATE; vr = validate_result; lc = OPT validate_list_context  ->
-      (vr, (un_option lc []))
+  [[ (* `VALIDATE; vr = validate_result; fl=OPT id; lc = OPT validate_list_context  -> *)
+      pr = validate_cmd_pair; lc = OPT validate_list_context  ->
+          let vr,fl = pr in
+          (vr, fl, (un_option lc []))
    ]];
 
 cond_path:

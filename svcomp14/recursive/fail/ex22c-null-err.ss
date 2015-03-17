@@ -11,6 +11,7 @@ int null_err()
   return x.val;
 }
 
+
 int exc_only()
   requires true
   ensures true & flow __Exc;
@@ -22,7 +23,7 @@ bool rand()
 
 int main()
   requires true
-  ensures true & flow __Error;
+  ensures true & flow __Error;// or  true & flow __norm;
 {
   int r = 1;
   //dprint;
@@ -30,6 +31,7 @@ int main()
   dprint;
   return r;
 }
+
 
 
 

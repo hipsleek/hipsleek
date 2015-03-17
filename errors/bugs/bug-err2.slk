@@ -1,0 +1,46 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+/*
+//13. must. cause:15.3  emp & y=x |-  x!=null (must-bug).
+checkentail emp& x=y |- x::node<_,_> .
+
+//33. may. cause:15.3  y=x |-  x!=null (may-bug).
+checkentail htrue & x=y |- x::node<_,_> .
+
+
+//15. may. cause:15.3  y<x | x<y |-  x!=null (may-bug).
+checkentail htrue & x!=y |- x::node<_,_> * y::node<_,_>.
+
+//34. must. cause:15.3  y<x | x<y |-  x!=null (must-bug).
+checkentail emp & x!=y |- x::node<_,_> * y::node<_,_>.
+
+//35. must. cause:15.3  emp & y=x |-  x!=null (must-bug).
+checkentail htrue& x=null |- x::node<_,_> .
+
+
+/*
+Why \/ on LHS?  because CP.simplify_filter_ante call simplify from provers.
+*/
+
+//16. must bug - cause:15.2 contradiction in RHS: false
+checkentail emp & true |- x::node<_,_> * x::node<_,_>.
+
+
+
+// soundness of must bug?
+
+//17. may bug. cause:15.4 no match for rhs data node: x (may-bug).
+checkentail emp & x=y & y!=null |- x::node<_,_> .
+*/
+
+//23. must-bug - cause:22  y!=null |-  y=null (must-bug).
+checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
+
+/*
+//31. may bug. cause:15.4 no match for rhs data node x.
+checkentail htrue& x != null |- x::node<_,_>.
+*/

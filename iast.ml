@@ -1131,10 +1131,13 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x pname body_opt args0 ret cur_pre cur_post infer_type infer_lst pos=
+let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst pos=
   let is_infer_ret r=
     (infer_type = INF_SHAPE && is_node_typ r)
   in
+  (* remove htrue before adding unknown preds for inference *)
+  let cur_pre = F.transform_formula_simp F.drop_htrue cur_pre0 in
+  let cur_post = F.transform_formula_simp F.drop_htrue cur_post0 in
   (*keep pointers only*)
   let args = List.filter (fun p -> match p.param_type with
     | Named _ -> true
@@ -2338,7 +2341,7 @@ let sub_type2 (t1 : typ) (t2 : typ) =
     exists_path (string_of_typ t1) (string_of_typ t2)
   else false
    
-let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
+let sub_type t1 t2 = Exc.GTable.sub_type t1 t2 || sub_type2 t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
@@ -3368,3 +3371,4 @@ let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) 
                     else new_t::restlst
           end
     | [] -> []
+

@@ -1299,7 +1299,7 @@ let rec get_loop_ctx c =
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 
 let get_loop_only sl =
-  let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
+  let ls = List.map (fun (_,c,_) -> get_loop_ctx c) sl in
   List.concat ls
 
 let add_unsound_ctx (es: entail_state) pos = 

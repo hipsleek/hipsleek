@@ -814,6 +814,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
+let fo_iheap = ref true
+
 let sae = ref false
 let sac = ref false
 
@@ -1214,6 +1216,8 @@ let print_cil_input = ref false
 (* let allow_pred_spec = ref false *)
 
 let disable_failure_explaining = ref false
+
+let enable_error_as_exc = ref false
 
 let bug_detect = ref false
 

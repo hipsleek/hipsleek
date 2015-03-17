@@ -483,10 +483,15 @@ let find_rel_args_groups_scc prog scc0 =
                     let sspec2 = update_spec  splitted_hps n_hps sspec1 in
                     let nf =  CF.formula_of_heap (CF.join_star_conjunctions n_hfs) no_pos in
                     let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
-                    let n_proc = {proc with Cast.proc_static_specs = sspec3} in
-                    let () =  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
-                    (* let () = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
-                    let todo_unk = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
+                    let stk = proc.proc_stk_of_static_specs in
+                    let _ = stk # pop in
+                    let _ = stk # push sspec3 in
+                    let n_proc = {proc with Cast.proc_static_specs = sspec3;
+                        Cast.proc_stk_of_static_specs = stk;
+                    } in
+                    let  ()=  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
+                    (* let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
+                    let bug = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
                     [n_proc],defs
                   else [proc],[]
               end

@@ -1009,7 +1009,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       else f2
     in
     (* fresh non-shape values *)
-    let f4 = Cfutil.fresh_data_v_no_change f3 in
+    let f4 = Cfutil.fresh_data_v(*_no_change*) f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)
@@ -1800,9 +1800,12 @@ let collect_sel_hpdef hpdefs sel_hps unk_hps m=
 let match_one_hp_views_x iprog prog cur_m (vdcls: CA.view_decl list) def:(CP.spec_var* CF.h_formula list)=
   let helper args r paras vdcl=
     let () = DD.ninfo_hprint (add_str "        vdcl.Cast.view_name:" pr_id) vdcl.Cast.view_name no_pos in
-    if (List.length args) = ((List.length vdcl.Cast.view_vars) + 1) then
+    let self_t = CP.type_of_spec_var r in
+    if (List.length args) = ((List.length vdcl.Cast.view_vars) + 1) &&
+      self_t = (Named vdcl.Cast.view_data_name)
+    then
       let f1 = Cformula.formula_of_heap def.Cformula.def_lhs no_pos in
-      let self_sv = CP.SpecVar (CP.type_of_spec_var r ,self, Unprimed) in
+      let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
       let sst = List.combine (r::paras) (self_sv::vdcl.Cast.view_vars) in
       let () = DD.ninfo_hprint (add_str "        sst:" (pr_list (pr_pair
           !CP.print_sv !CP.print_sv))) sst no_pos in

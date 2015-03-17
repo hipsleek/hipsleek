@@ -34,7 +34,7 @@ let string_of_vres t =
 
 
 let proc_sleek_result_validate is_valid lc =
-  if not is_valid then
+  let eres = if not is_valid then
   let final_error_opt = CF.get_final_error lc in
   match final_error_opt with
     | Some (_, fk) -> begin
@@ -45,6 +45,8 @@ let proc_sleek_result_validate is_valid lc =
       end
     | None -> VR_Fail (-1) (* INCONSISTENCY *)
   else VR_Valid
+  in
+  (eres, CF.flow_formula_of_list_context lc)
   (* match lc with *)
   (*   | CF.FailCtx _ -> *)
   (*     if CF.is_must_failure lc then *)
@@ -67,7 +69,7 @@ let proc_sleek_result_validate is_valid lc =
 
 let proc_sleek_result_validate b lc =
   Debug.no_1 "proc_sleek_result_validate" 
-  Cprinter.string_of_list_context_short string_of_vres 
+  Cprinter.string_of_list_context_short (fun (er,_) -> string_of_vres er)
   (fun _ -> proc_sleek_result_validate b lc) lc
 
 module H = Hashtbl
@@ -1520,7 +1522,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline "*************************************" in
   ()
 
-let process_validate exp_res ils_es =
+let process_validate exp_res opt_fl ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1565,7 +1567,7 @@ let process_validate exp_res ils_es =
           false, [], []
     | Some (lc, res, ldfa) -> 
           begin (*res*)
-            let res = proc_sleek_result_validate res lc in
+            let res, fls = proc_sleek_result_validate res lc in
             let unexp =
               match res, exp_res with
                 | VR_Valid, VR_Valid -> None
@@ -1576,7 +1578,22 @@ let process_validate exp_res ils_es =
                 | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
-              | None -> res_str := "OK"
+              | None -> begin
+                  match opt_fl with
+                    | None -> res_str := "OK" (*do not compare expect flow *)
+                    | Some id -> if not !Globals.enable_error_as_exc then res_str := "OK" else
+                          let reg = Str.regexp "\#E" in
+                          let res_fl_ids = List.map (fun ff ->
+                          let fl_w_sharp = exlist # get_closest ff.CF.formula_flow_interval in
+                          Str.global_replace reg "" fl_w_sharp
+                      ) fls in
+                      let _ = Debug.ninfo_hprint (add_str "res_fl_ids" (pr_list pr_id)) res_fl_ids no_pos in
+                      if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
+                        res_str := "OK"
+                      else
+                        let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                        res_str := ( "Expecting flow "^(id))
+                end
               | Some s -> 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := s
@@ -1946,7 +1963,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout

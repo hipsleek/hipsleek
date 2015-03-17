@@ -8,7 +8,7 @@ pred ll<n> == self = null & n = 0
 //four point status
 //complete
 //pure
-//1. Valid. (bot)
+//1. Valid. (bot) should be Valid. current system is over-appr, can not detect precise false
 checkentail false |- n = 3.
 //print residue.
 
@@ -22,7 +22,7 @@ checkentail n>3 |- n <2.
 checkentail n>3 |- n > 4.
 
 //heap
-//5. Valid. (bot)
+//5. Valid. (bot).should be Valid. current system is over-appr, can not detect precise false
 checkentail  x::ll<n> & n<0 |- true .
 
 //6. Valid
