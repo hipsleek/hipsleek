@@ -403,11 +403,12 @@ CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) l
   Debug.no_2 "check_specs_infer" pr1 pr_exp pr3
       (fun _ _ -> fn sp) sp e0
 
-and determine_infer_classic sp = match sp with
-      | CF.EInfer b ->
-            let inf_o = b.CF.formula_inf_obj in
-            inf_o # is_classic
-      | _ -> false 
+and determine_infer_classic sp = false
+  (* match sp with                             *)
+  (* | CF.EInfer b ->                          *)
+  (*       let inf_o = b.CF.formula_inf_obj in *)
+  (*       inf_o # is_classic                  *)
+  (* | _ -> false                              *)
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
@@ -2227,7 +2228,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
                    (* let _ = print_endline "locle6" in *)
                   let res = if (CF.isFailListFailescCtx_new ctx) then
-                    let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
+                  let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
                      (* let _ = print_endline "locle7" in *)
                     ctx
                   else
@@ -2999,7 +3000,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		    print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 		  if pr_flag then
                     begin
-                      print_string_quiet (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
+                      print_string_web_mode (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
                       (* print_string_quiet ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
 		      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		      Debug.devel_zprint (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
@@ -3437,7 +3438,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                         if !Globals.web_compile_flag then
                           print_string_quiet ("\nProcedure <b>"^proc.proc_name^"</b> <font color=\"blue\">SUCCESS</font>.\n")
                         else
-                          print_string_quiet ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                          print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
 	              else
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                         if !Globals.web_compile_flag then
@@ -3449,7 +3450,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             else ())
                           end
                         else
-                          print_string_quiet ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
+                          print_web_mode ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
                     end;
 	      	  pp
 	        end
@@ -3580,8 +3581,8 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     if !Globals.check_all then begin
       (* dummy_exception(); *)
       let _ = Infer.rel_ass_stk # reset in
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
-      print_string_quiet ("\nException "^(Printexc.to_string e)^" Occurred!\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
+      print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       print_backtrace_quiet ();
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       Log.last_cmd # dumping (proc.proc_name^" FAIL2");
@@ -3666,7 +3667,7 @@ let check_proc_wrapper_map iprog prog (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(3)\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(3)\n");
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -3677,7 +3678,7 @@ let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
     check_proc iprog prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
-      print_string_quiet ("\nProcedure "^proc.proc_name^" FAIL.(4)\n");
+      print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(4)\n");
       print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else

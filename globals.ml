@@ -1152,9 +1152,9 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
-let verbose_num = ref 0
+let verbose_num = ref (-1)
 
-let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1290,6 +1290,8 @@ let cpfile = ref ""
 let smt_compete_mode = ref false
 let compete_mode = ref false
 let svcomp_compete_mode = ref false
+let tnt_web_mode = ref false
+
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)

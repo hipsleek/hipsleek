@@ -851,6 +851,9 @@ let is_num (e : exp) : bool = match e with
 let is_mult_op b = 
   match b with | OpMult -> true | _ -> false
 
+let is_div_op b = 
+  match b with | OpDiv -> true | _ -> false
+
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false

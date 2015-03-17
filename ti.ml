@@ -169,18 +169,20 @@ let solve_trrel_list params trrels turels =
   
   let conds = base_conds @ rec_conds in
   
+  (* let may_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in *)
+  (* if (is_sat may_cond) && not !Globals.tnt_infer_lex then                      *)
+  (*   conds @ [MayTerm may_cond]                                                 *)
+  (* else conds                                                                   *)
   let rem_cond = om_simplify (mkNot (join_disjs (List.map get_cond conds))) in
   let pre_cond = CP.join_conjunctions (List.fold_left (fun acc tu ->
     let cond = simplify 11 tu.call_ctx params in
     acc @ [cond]) [] turels) in
   let unk_cond = om_simplify (mkAnd pre_cond rem_cond) in
   let may_cond = om_simplify (mkAnd rem_cond (mkNot unk_cond)) in 
-  
-  (* if (* (is_sat may_cond) && *) not !Globals.tnt_infer_lex then *)
-    conds @ 
-    (if is_sat unk_cond then [Rec unk_cond] else []) @
-    (if is_sat may_cond then [Rec may_cond] else [])
-  (* else conds *)
+  conds @ 
+  (if is_sat unk_cond then [Rec unk_cond] else []) @
+  (if is_sat may_cond then [Rec may_cond] else [])
+
   (* let conds = List.map simplify_trrel_sol conds in                 *)
   (* let conds = List.concat (List.map split_disj_trrel_sol conds) in *)
   (* conds                                                            *)
@@ -362,7 +364,7 @@ let solve_turel_one_scc prog trrels tg scc =
     (fun _ -> solve_turel_one_scc prog trrels tg scc) tg
   
 let finalize_turel_graph prog tg =
-  print_endline_quiet "Termination Inference Result:";
+  print_web_mode "Termination Inference Result:";
   (* let _ = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   
