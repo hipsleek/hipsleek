@@ -1217,8 +1217,8 @@ let extract_mut_args prog proc=
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
-    let _ = print_endline "\nHeap Predicate Declarations" in
-    let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
+    let _ = print_endline_quiet "\nHeap Predicate Declarations" in
+    let _ = List.iter (fun hpdcl -> print_endline_quiet (!print_hp_decl hpdcl)) unk_hps in
     let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in

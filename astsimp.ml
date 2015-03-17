@@ -1,5 +1,6 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+open Gen.Basic
 open Wrapper
 open Others
 open Exc.GTable
@@ -6263,7 +6264,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
         if ivs_unk!=[] then 
           begin
             let s = (Cprinter.string_of_spec_var_list ivs_unk) in
-            print_endline ("WARNING (must fix): Vars from"^s^"has type UNK")
+            print_endline_quiet ("WARNING (must fix): Vars from"^s^"has type UNK")
           end;
         if ivs_unk!=[] then
           Err.report_error { Err.error_loc = pos;

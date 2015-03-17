@@ -2304,10 +2304,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           if not(Infer.rel_ass_stk# is_empty) then
                         begin
                           if (* !Globals.sap *) true then begin
-                            print_endline "";
-                            print_endline "*************************************";
-                            print_endline "*******relational assumptions 2 ********";
-                            print_endline "*************************************";
+                            print_endline_quiet "";
+                            print_endline_quiet "*************************************";
+                            print_endline_quiet "*******relational assumptions 2 ********";
+                            print_endline_quiet "*************************************";
                         end;
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
@@ -2316,13 +2316,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
-			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
+			  if !Globals.testing_flag then print_endline_quiet ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog [] x) in
                           (* let pr = if !Globals.print_html then Cprinter.string_of_html_hprel_short *)
                           let pr_len x = string_of_int (List.length x) in
-                          print_endline (pr (ras1));
-                          print_endline "*************************************";
-                          if !Globals.testing_flag then print_endline "<rstop>*************************************"
+                          print_endline_quiet (pr (ras1));
+                          print_endline_quiet "*************************************";
+                          if !Globals.testing_flag then print_endline_quiet "<rstop>*************************************"
                           end
                         end;
                           raise (Err.Ppf ({
@@ -2764,13 +2764,13 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         else print_endline_quiet ("*******relational definition ********")
         in
         print_endline_quiet "*********************************************************";
-        if !Globals.testing_flag then print_endline "<dstart>";
+        if !Globals.testing_flag then print_endline_quiet "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
         let old_print_imm = !print_ann in
          let _= if !print_html then let _ = print_ann:= false in () else () in
         print_endline_quiet (pr1 defs);
           let _ = print_ann:=  old_print_imm in
-        if !Globals.testing_flag then print_endline "<dstop>"; 
+        if !Globals.testing_flag then print_endline_quiet "<dstop>"; 
         print_endline_quiet "*************************************";
         ()
       end;
@@ -2797,13 +2797,13 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           print_endline_quiet ("*******relational definition " ^"********")
         in
         print_endline_quiet "*********************************************************";
-        if !Globals.testing_flag then print_endline "<dstart>";
+        if !Globals.testing_flag then print_endline_quiet "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
         let old_print_imm = !print_ann in
         let _= if !print_html then let _ = print_ann:= false in () else () in
         print_endline_quiet (pr1 defs);
         let _ = print_ann:=  old_print_imm in
-        if !Globals.testing_flag then print_endline "<dstop>"; 
+        if !Globals.testing_flag then print_endline_quiet"<dstop>"; 
         print_endline_quiet "*************************************";
         ()
       end;
@@ -2900,7 +2900,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         print_endline_quiet "\n*************************************";
         print_endline_quiet "*******relational definition ********";
         print_endline_quiet "*************************************";
-        if !Globals.testing_flag then print_endline "<dstart>";
+        if !Globals.testing_flag then print_endline_quiet "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
         (* let pr1 = if !Globals.print_html then pr_list_ln Cprinter.string_of_html_hprel_def_short else pr1 in *)
         (* print_endline (rel_defs # string_of_reverse); *)
@@ -2908,8 +2908,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
          let _= if !print_html then let _ = print_ann:= false in () else () in
         print_endline_quiet (pr1 defs);
           let _ = print_ann:=  old_print_imm in
-        if !Globals.testing_flag then print_endline "<dstop>"; 
-        print_endline "*************************************";
+        if !Globals.testing_flag then print_endline_quiet "<dstop>"; 
+        print_endline_quiet "*************************************";
         let _ = CF.rel_def_stk # reset in
         ()
       end;
@@ -3149,7 +3149,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
-			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
+			  if !Globals.testing_flag then print_endline_quiet ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog sel_post_hp_rels x) in
                           (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)
                           let pr_len x = string_of_int (List.length x) in
@@ -3162,7 +3162,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let _ = print_ann:=  old_print_imm in
                           (* print_endline (pr (hp_lst_assume)); *)
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
-                          if !Globals.testing_flag then print_endline "<rstop>*************************************"
+                          if !Globals.testing_flag then print_endline_quiet "<rstop>*************************************"
                           end
                         end;
                       (****************************************************************)
@@ -3736,7 +3736,7 @@ let rec check_prog iprog (prog : prog_decl) =
     else  None
   in
   let _ = I.set_iprog iprog in
-  let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in
+  let _ = if (Printexc.backtrace_status ()) then print_endline_quiet "backtrace active" in
   (* let _ = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
   (* if true (\* !Globals.check_coercions *\) then  *)
   (*   begin *)

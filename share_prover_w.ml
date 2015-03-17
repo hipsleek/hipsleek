@@ -210,7 +210,7 @@ INTERACTION
 								minisat_process := proc
 							let start () =
 						  if not !is_minisat_running then (
-							print_endline ("Starting Minisat... \n");
+							print_endline_quiet ("Starting Minisat... \n");
 							last_test_number := !test_number;
 							if (minisat_input_format = "cnf") then (
 							  Procutils.PrvComms.start false stdout (minisat_name, minisat_path, [|minisat_arg|]) set_process (fun () -> ());
@@ -263,7 +263,7 @@ INTERACTION
 							  res
 							with _ -> ((* exception : return the safe result to ensure soundness *)
 							  Printexc.print_backtrace stdout;
-							  print_endline ("WARNING: Restarting prover due to timeout");
+							  print_endline_quiet ("WARNING: Restarting prover due to timeout");
 							  Unix.kill !minisat_process.GlobProver.pid 9;
 							  ignore (Unix.waitpid [] !minisat_process.GlobProver.pid);
 							  false

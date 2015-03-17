@@ -673,7 +673,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
           (new_e,vars) (*bind opens another scope*)
       | Block b ->
           (*Note: no more Block after case_normalize_program*)
-          let _ = print_endline ("Block: " ^ (pr_list (fun (id,_,_) -> id) b.exp_block_local_vars)) in
+          let _ = print_endline_quiet ("Block: " ^ (pr_list (fun (id,_,_) -> id) b.exp_block_local_vars)) in
           (*b.exp_block_local_vars is empty until IastUtil.float_var_decl*)
           let new_body,_ = helper b.exp_block_body vars in
           let new_e = Block {b with exp_block_body = new_body} in
@@ -1010,7 +1010,7 @@ and create_aux_proc prog (proc:proc_decl) (c:exp_call_nrecv) (flags: bool list) 
   let _ = Hashtbl.replace h new_proc_name rvars in (*their ref vars are comparable*)
   (*trans auxiliary variables*)
   let new_proc1 = trans_proc_decl prog new_proc true in
-  let _ = print_endline ("### new_proc1 : " ^ (string_of_proc_decl new_proc1)) in
+  let _ = print_endline_quiet ("### new_proc1 : " ^ (string_of_proc_decl new_proc1)) in
   (* UPDATE TO GLOBAL VARIABLE *)
   let _ = (aux_procs := new_proc1::!aux_procs) in
   new_proc
@@ -1288,7 +1288,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           (new_e)
       | Block b ->
           (*Note: no more Block after case_normalize_program*)
-          let _ = print_endline ("Warning: unexpected Block: no more Block after case_normalize_program") in
+          let _ = print_endline_quiet ("Warning: unexpected Block: no more Block after case_normalize_program") in
           (*b.exp_block_local_vars is empty until IastUtil.float_var_decl*)
           let _,outer_vars = List.split (E.visible_names ()) in
           (*addr vars of the inner scope*)
@@ -2219,8 +2219,8 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
                           else []
                       ) params args
                   with | _ ->
-                      let _ = print_endline ("args = " ^ (pr_list string_of_exp args)) in
-                      let _ = print_endline ("params = " ^ (string_of_param_list params)) in
+                      let _ = print_endline_quiet ("args = " ^ (pr_list string_of_exp args)) in
+                      let _ = print_endline_quiet ("params = " ^ (string_of_param_list params)) in
                       Error.report_error 
                           {Err.error_loc = pos;
                            Err.error_text = "Procedure " ^ orig_mn ^ " Args and Params not matched "})

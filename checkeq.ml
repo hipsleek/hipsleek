@@ -1343,7 +1343,7 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
               report_error no_pos "Have not support comparing 2 MemoF yet"
             else
               (* temporarily convert to pure formula*)
-              let _ = print_endline ("Have not support comparing 2 MemoF yet") in
+              let _ = print_endline_quiet ("Have not support comparing 2 MemoF yet") in
               let p1 = MCP.fold_mem_lst (mkTrue no_pos) false true mp1 in
               let p2 = MCP.fold_mem_lst (mkTrue no_pos) false true mp2 in
               checkeq_p_formula_with_diff hvars p1 p2 mtl
@@ -2398,7 +2398,7 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     res
   in
   let _ = Gen.Profiling.push_time "Validating" in
-  let _ = print_endline ("Validating procedure " ^ proc.Cast.proc_name ^ "....") in
+  let _ = print_endline_quiet ("Validating procedure " ^ proc.Cast.proc_name ^ "....") in
   let test_comps = proc.Cast.proc_test_comps in
   let (res1, res2) =
     match test_comps with
@@ -2421,11 +2421,11 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     if(is_have_tc) then(
         let _ = 
         if res1 && res2 then
-          print_endline ("Validate " ^ proc.Cast.proc_name ^ " SUCCESS.")
+          print_endline_quiet ("Validate " ^ proc.Cast.proc_name ^ " SUCCESS.")
         else
           let f_ass_msg = if not res1 then "assumption" else "" in
           let f_msg = if not res2 then f_ass_msg ^ " definition" else f_ass_msg in
-          print_endline ("Validate " ^ proc.Cast.proc_name ^ " FAIL. (at " ^ f_msg ^")")
+          print_endline_quiet ("Validate " ^ proc.Cast.proc_name ^ " FAIL. (at " ^ f_msg ^")")
         (* let _ = if(res1) then *)
 	(*           print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" ) *)
 	(*         else *)

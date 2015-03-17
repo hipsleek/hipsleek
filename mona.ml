@@ -1341,7 +1341,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             begin
     	      if !log_all_flag == true then
 		output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not sent to mona)\n");
-	      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
+	      print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
               is_sat_b;
             end
       | "" ->
@@ -1366,7 +1366,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
                     begin
     	              if !log_all_flag == true then
 		        output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
-		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
+		      print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
                       is_sat_b;
                     end
   in
@@ -1440,7 +1440,7 @@ let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.form
         let var_decls = first_order_var_decls ^ second_order_var_decls in
         var_decls ^(mona_of_formula f f vs)
       end
-    with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
+    with exc -> print_endline_quiet ("\nEXC: " ^ Printexc.to_string exc); ""
   in
   if not (f_str == "") then  output_string mona_file (f_str ^ ";\n" );
   flush mona_file;

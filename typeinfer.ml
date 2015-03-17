@@ -808,7 +808,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
         | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
-        | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist       
+        | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist       
       )
   | IP.XPure({IP.xpure_view_node = vn ;
               IP.xpure_view_name = r;
@@ -827,7 +827,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
           Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-        | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
+        | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist
     )
 
 and gather_type_info_term_ann prog tann tlist =
@@ -1477,7 +1477,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       with
       | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
       | Failure s -> failwith s
-      | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
+      | _ -> print_endline_quiet ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
     | IF.HVar v -> (v,{sv_info_kind = FORM;id=0})::tlist

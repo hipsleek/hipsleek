@@ -1145,8 +1145,8 @@ let param_of_v ht md lc nm =
         param_loc = lc;
       }
   with e ->
-    let _ = print_endline ("Exception!!! in param_of_v") in
-    let _ = print_endline ("== nm = " ^ nm) in
+    let _ = print_endline_quiet ("Exception!!! in param_of_v") in
+    let _ = print_endline_quiet ("== nm = " ^ nm) in
     raise e
 
 let add_free_var_to_proc gvdefs ht proc = 

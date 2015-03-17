@@ -45,7 +45,7 @@ let gen_fixcalc_file str_fc=
     let reg = Str.regexp "\(\.ss\)\|\(.slk\)" in
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".fc" file_name) in
     (* let _ = print_endline (file_name1 ^ ".fc") in *)
-    let _ = print_endline ("\n generating fixcalc file : " ^ file_name1) in
+    let _ = print_endline_quiet ("\n generating fixcalc file : " ^ file_name1) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     (*open_out*) open_out_gen [Open_wronly; Open_append; Open_creat] 0o600 (file_name1)
   in
@@ -546,7 +546,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
       let check_imply = TP.imply_raw new_pf pf in
       if check_imply then 
         let _ = DD.info_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
-        let _ = print_endline "" in
+        let _ = print_endline_quiet "" in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
         (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)

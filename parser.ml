@@ -1781,7 +1781,7 @@ perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
                   let pa = List.hd (List.tl (List.tl t)) in
                   Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
                 else
-                  let _ = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let _ = print_endline_quiet ("Warning: bounded permission has incorrect number of arguments") in
                   let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
                   Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
             | _ -> List.hd t (*other permission systems have one parameter*)
@@ -2017,8 +2017,8 @@ cexp_w:
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
           begin
-            if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+            if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+            else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
@@ -2044,7 +2044,7 @@ cexp_w:
           with Not_found -> 
             if not (rel_names # mem id) then 
               if not !Globals.web_compile_flag then 
-                print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+                print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list -> 

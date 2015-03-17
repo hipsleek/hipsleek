@@ -342,8 +342,8 @@ let main () =
                                      prompt := "SLEEK> "
                               with
                                 | _ -> dummy_exception();
-                                    print_string ("Error.\n");
-                                    print_endline "Last SLEEK FAILURE:";
+                                    print_string_quiet ("Error.\n");
+                                    print_endline_quiet "Last SLEEK FAILURE:";
                                     Log.last_cmd # dumping "sleek_dump(interactive)";
                                     (*     sleek_command # dump; *)
                                     (* print_endline "Last PURE PROOF FAILURE:"; *)
@@ -373,7 +373,7 @@ let main () =
           begin
             dummy_exception();
             let _ = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
-            print_endline "SLEEK FAILURE (END)";
+            print_endline_quiet "SLEEK FAILURE (END)";
             Log.last_cmd # dumping "sleek_dumEND)";
           end
 
@@ -487,7 +487,7 @@ let _ =
             | Some b -> if b then "SAT" else "UNKNOWN"
         in msg
       in
-      print_endline (str_res)
+      print_endline_quiet (str_res)
     else ()
     in
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)

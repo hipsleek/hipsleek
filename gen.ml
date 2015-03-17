@@ -1342,7 +1342,7 @@ struct
   let is_sat_baga_eq eq (xs:baga) : bool = 
     let r= not(is_dupl_baga_eq eq xs) in
     begin
-      print_endline ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
+      Basic.print_endline_quiet ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
       r
     end
 
@@ -1350,7 +1350,7 @@ struct
   let is_sat_baga (xs:baga) : bool = 
     let r = not(is_dupl_baga xs) in
     begin
-      print_endline ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
+      Basic.print_endline_quiet ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
       r
     end
 
@@ -1540,9 +1540,9 @@ object
   method print_task_instance msg : unit = 	
     try 
  	  let (t1,cnt1,_) = Hashtbl.find tasks msg in
-	  print_endline ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
+	  Basic.print_endline_quiet ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
     with Not_found -> 
-	  print_endline ("Task "^msg^" does not exist in profiling table.")
+	  Basic.print_endline_quiet ("Task "^msg^" does not exist in profiling table.")
   method print : unit = 
     let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
     let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in

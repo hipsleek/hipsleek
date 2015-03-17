@@ -2043,7 +2043,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
                   if not (estate.es_infer_obj # is_add_flow || infer_const_obj # is_add_flow) then
                     List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
                   else if (is_rec && not (exlist # is_norm_flow current_nflow) && exlist # is_top_flow conseq_nflow) then
-                    let _ = print_endline "here" in
+                    let _ = print_endline_quiet "here" in
                     let l1 = List.map (fun x -> (rel_cat,CP.drop_sel_rel_formula x rhs_rels,rhs)) new_lhs_list in
                     let l2 = List.map (fun x -> match rel_cat with
                           | CP.RelDefn (id,_) -> (CP.RelDefn (id,None),x,rhs)

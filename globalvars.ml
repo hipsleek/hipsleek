@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Gen.Basic
 
 module I = Iast
 
@@ -510,7 +511,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
       if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
           || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
           || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)) then
-        let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
+        let _ = print_endline_quiet ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
         ()
       else
         Error.report_error {Error.error_loc = no_pos; Error.error_text = ("scc = " ^ (string_of_ident_list scc) ^ "not found")}

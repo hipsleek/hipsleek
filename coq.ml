@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open Gen.Basic
 open GlobProver
 module CP = Cpure
 module Err = Error
@@ -332,9 +333,9 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
     write pr_w pr_s ante conseq;
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
-        print_endline ("ante:"^(!print_p_f_f ante));
-        print_endline ("conseq:"^(!print_p_f_f conseq));
+        print_endline_quiet ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("ante:"^(!print_p_f_f ante));
+        print_endline_quiet ("conseq:"^(!print_p_f_f conseq));
         flush stdout;
         failwith s
       end

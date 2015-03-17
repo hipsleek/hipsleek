@@ -300,7 +300,7 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
             collect_goto_label_in_block blk index depth
         | Cil.TryFinally _
         | Cil.TryExcept _ -> 
-            let _ = print_endline ("Cilparser: handle TryFinally, TryExcept later") in
+            let _ = print_endline_quiet ("Cilparser: handle TryFinally, TryExcept later") in
             ([], [], index)
         | _ -> ([], [], index)
       ) in
@@ -2258,10 +2258,10 @@ let process_one_file (cil: Cil.file) : unit =
     )
   );
   let prog = translate_file cil in
-  let _ = print_endline ("------------------------") in
-  let _ = print_endline ("--> translated program: ") in
-  let _ = print_endline ("------------------------") in 
-  let _ = print_endline (Iprinter.string_of_program prog) in 
+  let _ = print_endline_quiet ("------------------------") in
+  let _ = print_endline_quiet ("--> translated program: ") in
+  let _ = print_endline_quiet ("------------------------") in 
+  let _ = print_endline_quiet (Iprinter.string_of_program prog) in 
   ()
 
 let parse_prep (filename: string): Iast.prog_decl = 
@@ -2275,12 +2275,12 @@ let parse_prep (filename: string): Iast.prog_decl =
     )
   );
   if (!Globals.print_cil_input) then (
-    print_endline "";
-    print_endline ("***********************************");
-    print_endline ("********* input cil file **********");
-    print_endline (string_of_cil_file cil);
-    print_endline ("******** end of cil file **********");
-    print_endline "";
+    print_endline_quiet "";
+    print_endline_quiet ("***********************************");
+    print_endline_quiet ("********* input cil file **********");
+    print_endline_quiet (string_of_cil_file cil);
+    print_endline_quiet ("******** end of cil file **********");
+    print_endline_quiet "";
   );
   (* finally, translate cil to iast *)
   let prog = translate_file cil in

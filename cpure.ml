@@ -1155,8 +1155,8 @@ let do_with_check msg prv_call (pe : formula) : 'a option =
       begin
         if not(msg="") then 
           begin
-            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
-            print_endline ("WARNING : Formula :"^(!print_formula pe));
+            print_endline_quiet ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline_quiet ("WARNING : Formula :"^(!print_formula pe));
           end;
         None
       end
@@ -1168,9 +1168,9 @@ let do_with_check2 msg prv_call (ante : formula) (conseq : formula) : 'a option 
       begin
         if not(msg="") then 
           begin
-            print_endline ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
-            print_endline ("WARNING : Ante :"^(!print_formula ante));
-            print_endline ("WARNING : Conseq :"^(!print_formula conseq));
+            print_endline_quiet ("\nWARNING : Illegal_Prover_Format for "^msg^" :"^s);
+            print_endline_quiet ("WARNING : Ante :"^(!print_formula ante));
+            print_endline_quiet ("WARNING : Conseq :"^(!print_formula conseq));
           end;
         None
       end
@@ -3842,7 +3842,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
               match t with
                 | Var (tv,pos) -> tv
                 | _ ->
-                    let _ = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                    let _ = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
                     v
             else v
         in
@@ -3852,7 +3852,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
               match t with
                 | Var (tv,pos) -> tv
                 | _ ->
-                    let _ = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                    let _ = print_endline_quiet "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
                     v
             else v
         in
@@ -11496,7 +11496,7 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
               let nsv = SpecVar (lsmu_typ,lsmu_name,p) in
               Var (nsv,pos)
             else
-              let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 2") in
+              let _ = print_endline_quiet ("[convert_ls_to_lsmu_exp] Warning: unexpected 2") in
               e
         | Bag (exps,pos) ->
             let nexps = List.map helper exps in
@@ -11512,7 +11512,7 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
             let ne2 = helper e2 in
             BagDiff (ne1,ne2,pos)
         | _ ->
-            let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 1") in
+            let _ = print_endline_quiet ("[convert_ls_to_lsmu_exp] Warning: unexpected 1") in
             e
     in helper e
   in
@@ -11820,14 +11820,14 @@ and translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                           let nf = translate_waitlevel_p_formula bf e2 (primed_of_spec_var sv1) pos in
                           nf
                       | _ ->
-                          let _ = print_endline ("waitlevel should be comparable to only an integer or a locklevelin in formula " ^ (!print_b_formula bf)) in
+                          let _ = print_endline_quiet ("waitlevel should be comparable to only an integer or a locklevelin in formula " ^ (!print_b_formula bf)) in
                           BForm (bf,None)
                     )
                   else
                     let vars2 = afv e2 in
                     let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) vars2 in
                     if (b) then
-                      let _ = print_endline ("waitlevel should not be in RHS of formula " ^ (!print_b_formula bf)) in
+                      let _ = print_endline_quiet ("waitlevel should not be in RHS of formula " ^ (!print_b_formula bf)) in
                       BForm (bf,None)
                     else
                       BForm (bf,None)

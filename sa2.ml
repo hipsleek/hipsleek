@@ -1706,23 +1706,23 @@ and infer_shapes_from_fresh_obligation_x iprog cprog proc_name is_pre cond_path 
     let _ =
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
-      print_endline "";
-      print_endline "\n*************************************************";
-      print_endline "*******relational assumptions (obligation)********";
-      print_endline "****************************************************";
-      print_endline (pr ho_constrs0);
-      print_endline "*************************************"
+      print_endline_quiet "";
+      print_endline_quiet "\n*************************************************";
+      print_endline_quiet "*******relational assumptions (obligation)********";
+      print_endline_quiet "****************************************************";
+      print_endline_quiet (pr ho_constrs0);
+      print_endline_quiet "*************************************"
     end
     in
     let _ =
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
-      print_endline "";
-      print_endline "\n*************************************************";
-      print_endline "*******relational assumptions (pre-assumptions)********";
-      print_endline "****************************************************";
-      print_endline (pr pre_constrs);
-      print_endline "*************************************"
+      print_endline_quiet "";
+      print_endline_quiet "\n*************************************************";
+      print_endline_quiet "*******relational assumptions (pre-assumptions)********";
+      print_endline_quiet "****************************************************";
+      print_endline_quiet (pr pre_constrs);
+      print_endline_quiet "*************************************"
     end
     in
     (***************  END PRINTING*********************)
@@ -2174,8 +2174,8 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
     in
     if !Globals.sleek_flag then () 
     else
-      let _ = print_endline "\nHeap Predicate Declarations" in
-      let _ = print_endline "===========================" in
+      let _ = print_endline_quiet "\nHeap Predicate Declarations" in
+      let _ = print_endline_quiet "===========================" in
       let _ = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
       ()
   else ()

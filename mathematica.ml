@@ -101,9 +101,9 @@ let start () =
     ) in
     let set_process proc = process := proc in
     let _ = Procutils.PrvComms.start !is_log_all log_file ("math", "math",  [||] ) set_process prelude in
-    print_endline "Starting mathematica... "; flush stdout;
+    print_endline_quiet "Starting mathematica... "; flush stdout;
     wait_for_ready_prover !process.inchannel;
-    print_endline ("Mathematica started successfully!"); 
+    print_endline_quiet ("Mathematica started successfully!"); 
   )
 
 (* stop mathematica system *)
@@ -112,7 +112,7 @@ let stop () =
     let ending_fnc () = ( 
       let outchannel = !process.outchannel in
       output_string outchannel "Quit\n"; flush outchannel;
-      print_endline "Halting mathematica... "; flush stdout;
+      print_endline_quiet "Halting mathematica... "; flush stdout;
       log DEBUG "\n***************";
       log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
       log DEBUG ("Number of mathematica calls: " ^ (string_of_int !mathematica_call_count));
@@ -129,7 +129,7 @@ let stop () =
 let restart reason =
   if !is_mathematica_running then (
     print_string reason;
-    print_endline " Restarting mathematica... "; flush stdout;
+    print_endline_quiet " Restarting mathematica... "; flush stdout;
     Procutils.PrvComms.restart !is_log_all log_file "mathematica" reason start stop
   )
 
@@ -153,7 +153,7 @@ let send_and_receive (f : string) : string =
       answ
     with
     | ex ->
-        print_endline (Printexc.to_string ex);
+        print_endline_quiet (Printexc.to_string ex);
         (restart "mathematica crashed or something really bad happenned!"; "mathematica not running 1")
   )
   else (

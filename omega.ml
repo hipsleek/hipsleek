@@ -183,7 +183,7 @@ and omega_of_formula_x pr_w pr_s f  =
         end
   | AndList _ ->
         begin
-          let _ = print_endline ("AndList:?"^(!print_formula f)) in
+          let _ = print_endline_quiet ("AndList:?"^(!print_formula f)) in
           report_error no_pos "omega.ml: encountered AndList, should have been already handled"
         end
   | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
@@ -578,8 +578,8 @@ let is_sat (pe : formula) sat_no : bool =
     is_sat pe sat_no
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-        print_endline ("Apply Omega.is_sat on formula :"^(!print_pure pe));
+        print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("Apply Omega.is_sat on formula :"^(!print_pure pe));
         flush stdout;
         failwith s
       end
@@ -709,9 +709,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     imply_ops pr_weak pr_strong ante conseq imp_no timeout
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-        print_endline ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
-		print_endline ("and conseq Formula :"^(!print_pure conseq));
+        print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
+        print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
         flush stdout;
         failwith s
       end
@@ -727,8 +727,8 @@ let is_valid (pe : formula) timeout : bool =
     is_valid_ops pr_w pr_s pe timeout
   with Illegal_Prover_Format s -> 
       begin
-        print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-        print_endline ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
+        print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+        print_endline_quiet ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
         flush stdout;
         failwith s
       end

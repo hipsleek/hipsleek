@@ -149,7 +149,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
   ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
   ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)

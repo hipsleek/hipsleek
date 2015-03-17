@@ -610,7 +610,6 @@ let print_svcomp2015_result term_anns =
     print_endline "UNKNOWN"
 
 let print_svcomp2015_result term_anns =
-  (* print_endline "hello"; *)
   Debug.no_1 "print_svcomp2015_result" 
     (add_str "result" (fun lst -> string_of_int (List.length lst)))
     pr_none print_svcomp2015_result term_anns
@@ -638,9 +637,9 @@ let pr_proc_case_specs prog =
       
 let pr_im_case_specs iter_num =
   if !Globals.tnt_verbosity == 0 then begin
-    print_endline ("TNT @ ITER " ^ (string_of_int iter_num));
+    print_endline_quiet ("TNT @ ITER " ^ (string_of_int iter_num));
     Hashtbl.iter (fun mn ispec -> 
-      print_endline (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs end
+      print_endline_quiet (mn ^ ": " ^ (print_tnt_case_spec ispec))) proc_case_specs end
   else ()
    
 let update_spec_proc prog proc =

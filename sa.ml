@@ -3716,10 +3716,10 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (* let _ = DD.info_zprint (lazy ((" callee_hps: " ^ (!CP.print_svl callee_hps)))) no_pos in *)
   let _ =
     if !Globals.sap then
-      let _ =  print_endline "" in
-      let _ = print_endline "*********************************************************************" in
-      let _ = print_endline "*******pre-process (split/unknown analyze) hprel assumptions ********" in
-      let _ = print_endline "**********************************************************************" in
+      let _ =  print_endline_quiet "" in
+      let _ = print_endline_quiet "*********************************************************************" in
+      let _ = print_endline_quiet "*******pre-process (split/unknown analyze) hprel assumptions ********" in
+      let _ = print_endline_quiet "**********************************************************************" in
       ()
     else ()
   in
@@ -3751,10 +3751,10 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (*END for temporal*)
    let _ =
     if !Globals.sap then
-      let _ =  print_endline "" in
-      let _ = print_endline "**************************************************************************" in
-      let _ = print_endline "*******loop: collect partial defs, substition, simplification ********" in
-      let _ = print_endline "**************************************************************************" in
+      let _ =  print_endline_quiet "" in
+      let _ = print_endline_quiet "**************************************************************************" in
+      let _ = print_endline_quiet "*******loop: collect partial defs, substition, simplification ********" in
+      let _ = print_endline_quiet "**************************************************************************" in
       ()
     else ()
   in
@@ -3766,7 +3766,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
       let _ = print_string "\n\n*******relational assumptions (3) ********\n" in
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
-      let _ = print_endline "\n\n*******partial definitions ********" in
+      let _ = print_endline_quiet "\n\n*******partial definitions ********" in
       let pdef_sort_fn (hp1,_,_,_,_,_,_) (hp2,_,_,_,_,_,_)=
         let n1 = CP.name_of_spec_var hp1 in
         let n2 = CP.name_of_spec_var hp2 in
@@ -3781,10 +3781,10 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (*step 6: over-approximate to generate hp def*)
   let _ =
     if !Globals.sap then
-      let _ =  print_endline "" in
-      let _ = print_endline "*********************************************************************" in
-      let _ = print_endline "*******subst, join, combine split, transfrom unknown ********" in
-      let _ = print_endline "**********************************************************************" in
+      let _ =  print_endline_quiet "" in
+      let _ = print_endline_quiet "*********************************************************************" in
+      let _ = print_endline_quiet "*******subst, join, combine split, transfrom unknown ********" in
+      let _ = print_endline_quiet "**********************************************************************" in
       ()
     else ()
   in
@@ -3823,7 +3823,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (* let hp_defs21 = Sautil.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in *)
   let hp_defs4=
      if !Globals.pred_elim_dangling then
-       let _ = print_endline "\n*******relational definitions (wo elim-dangling) ********" in
+       let _ = print_endline_quiet "\n*******relational definitions (wo elim-dangling) ********" in
        let _ = print_endline
          ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )
        in
@@ -3852,8 +3852,8 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   (****************************************************)
    let _ =
     if !Globals.sap then
-      let _ = print_endline "\n*******relational definitions ********" in
-      let _ = print_endline
+      let _ = print_endline_quiet "\n*******relational definitions ********" in
+      let _ = print_endline_quiet
         ((let pr = pr_list_ln Cprinter.string_of_hp_rel_def_short in pr hp_defs5) )  in
       ()
     else ()
@@ -3861,10 +3861,10 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let _ =
     if !Globals.sap then
-      let _ =  print_endline "" in
-      let _ = print_endline "*********************************************************************" in
-      let _ = print_endline "*******post-process: predefined predicates matching  ********" in
-      let _ = print_endline "**********************************************************************" in
+      let _ =  print_endline_quiet "" in
+      let _ = print_endline_quiet "*********************************************************************" in
+      let _ = print_endline_quiet "*******post-process: predefined predicates matching  ********" in
+      let _ = print_endline_quiet "**********************************************************************" in
       ()
     else ()
   in

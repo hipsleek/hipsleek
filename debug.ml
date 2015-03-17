@@ -1,4 +1,5 @@
 open Globals
+open Gen.Basic
 
 let debug_on = ref false
 let devel_debug_on = ref false
@@ -498,7 +499,7 @@ let debug_file ()=
         Some(open_in (global_debug_conf))
       with _ ->
           begin
-            print_endline ("WARNING : cannot find debug file "^fname); 
+            print_endline_quiet ("WARNING : cannot find debug file "^fname); 
             z_debug_flag:=false;
             None
           end

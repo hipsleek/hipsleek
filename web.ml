@@ -56,7 +56,7 @@ begin
         Net.IO.write_job outc jno prover_arg formula;(* TODO data needs to be changed to accomodate seqno etc *)
         flag := false;
         queue := nqueue;
-        print_endline "finished_assignment"
+        print_endline_quiet "finished_assignment"
       end) idle;
       
   if !queue = PrioQueue.Empty then ignore(Unix.select (((!listen_sock)::(List.map (fun a->(fst a)) !all_clients))@(List.map (fun (fd,_) -> fd) (!provers))) [] [] (-1.)) else ();
@@ -67,14 +67,14 @@ begin
       if fd = !listen_sock then begin
         let sockfd,address = Unix.accept !listen_sock in
         let _ = match address with
-        Unix.ADDR_INET (a,p) -> print_endline ("received connection from " ^ Unix.string_of_inet_addr(a) ^ ":" ^ string_of_int(p))
+        Unix.ADDR_INET (a,p) -> print_endline_quiet ("received connection from " ^ Unix.string_of_inet_addr(a) ^ ":" ^ string_of_int(p))
         | _ -> () in
         all_clients := (sockfd,0)::(!all_clients)
       end else begin
         let in_ch = Unix.in_channel_of_descr fd in
         let seq_no,prover_arg,formula,priority = Net.IO.read_job_web in_ch in
         if seq_no = -1 then begin
-          print_endline "client closed connection";
+          print_endline_quiet "client closed connection";
           Unix.close fd;
           all_clients := List.remove_assoc fd (!all_clients)
         end else begin
@@ -82,7 +82,7 @@ begin
           incr job_no;
           queue := PrioQueue.insert !queue priority (!job_no,seq_no,prover_arg,formula); (* TODO change priority *)
           job_clients := (!job_no,(seq_no,Unix.out_channel_of_descr fd))::(!job_clients);
-          print_endline (" received "^string_of_int(!job_no))
+          print_endline_quiet (" received "^string_of_int(!job_no))
         end
       end) lst;
 
@@ -107,7 +107,7 @@ let main () =
     (fun s -> ())
     ("Usage: " ^ Sys.argv.(0) ^ "--socket [port] --cluster [cluster adresses]");
   if Unix.fork() > 0 then begin
-    print_endline "Web service started.";
+    print_endline_quiet "Web service started.";
     exit 0
   end else begin
     ignore(Unix.setsid());
@@ -137,9 +137,9 @@ let main () =
       
       main_loop ();
     with
-    | End_of_file -> begin print_endline "END OF FILE"; exit 0 end
+    | End_of_file -> begin print_endline_quiet "END OF FILE"; exit 0 end
     | Unix.Unix_error (err, _, _) ->
-        print_endline (Unix.error_message err);
+        print_endline_quiet (Unix.error_message err);
   end;
   
 ;;

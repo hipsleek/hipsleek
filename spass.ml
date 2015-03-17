@@ -434,7 +434,7 @@ let set_process (proc: prover_process_t) =
 
 let start () =
   if not !is_spass_running then (
-    print_endline ("Starting SPASS... \n");
+    print_endline_quiet ("Starting SPASS... \n");
     last_test_number := !test_number;
     let prelude () = () in
     if (spass_input_format = "dfg") then (
@@ -554,7 +554,7 @@ let check_problem_through_stdin (input: string) (timeout: float) : prover_output
       with 
       | _ -> (
         print_backtrace_quiet ();
-        print_endline ("WARNING: Restarting prover due to timeout");
+        print_endline_quiet ("WARNING: Restarting prover due to timeout");
         Unix.kill !spass_process.pid 9;
         ignore (Unix.waitpid [] !spass_process.pid);
         { original_output_text = []; validity_result = Aborted; }
@@ -708,7 +708,7 @@ and spass_imply_x (ante : Cpure.formula) (conseq : Cpure.formula) timeout : bool
       let _ = print_endline ("can_spass_handle_formula conseq:" ^ fomega_conseq^ ": " ^ 
               (if (can_spass_handle_formula conseq) then "true" else "false")) in *)
       try
-        let _ = print_endline "-- use Omega.imply_..." in
+        let _ = print_endline_quiet "-- use Omega.imply_..." in
         let (pr_w, pr_s) = Cpure.drop_complex_ops in
         match (Omega.imply_with_check pr_w pr_s ante conseq "" timeout) with
         | None -> (false, (* true*) false)
@@ -757,9 +757,9 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
     let result = imply ante conseq timeout in
     result
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-    print_endline ("Apply Spass.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
-    print_endline ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+    print_endline_quiet ("Apply Spass.imply on ante Formula :" ^ (Cprinter.string_of_pure_formula ante));
+    print_endline_quiet ("and conseq Formula :" ^ (Cprinter.string_of_pure_formula conseq));
     flush stdout;
     failwith s
   )
@@ -849,8 +849,8 @@ let is_sat (pe : Cpure.formula) (sat_no: string) : bool =
   try
     is_sat pe sat_no;
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :" ^ s);
-    print_endline ("Apply Spass.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :" ^ s);
+    print_endline_quiet ("Apply Spass.is_sat on formula :" ^ (Cprinter.string_of_pure_formula pe));
     flush stdout;
     failwith s
   )

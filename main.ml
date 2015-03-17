@@ -291,7 +291,7 @@ let print_spec cprog =
       | p :: pl -> (match p.Cast.proc_body with
           | None -> ""
           | Some _ ->
-                let _ = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+                let _ = print_endline_quiet (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
                 (* let sf = p.Cast.proc_static_specs in *)
                 (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Globals.Unprimed)) p.Cast.proc_args in *)
                 (* let new_sf = List.fold_left (fun sf fv ->  *)
