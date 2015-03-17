@@ -482,7 +482,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 (* (new_spec,[],true) *)
       | CF.EBase b ->
             let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
-            stk_vars # push_list vs;
+            let () = stk_vars # push_list vs in
+            let () = x_binfo_hp (add_str "Ebase" pr_id) (stk_vars # string_of_no_ln) no_pos in
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
@@ -1847,6 +1848,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         begin
                           stk_vars # push_list lsv;
+                          let () = x_binfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
                           let tmp_res1 = check_exp prog proc rs body post_start_label in
                           stk_vars # pop_list lsv;
                           let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
@@ -1897,6 +1899,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             try
               let vss = List.map (fun (t,i) -> CP.SpecVar (t, i, Unprimed)) local_vars in
               stk_vars # push_list vss;
+              let () = x_binfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
               let ctx1 = check_exp prog proc ctx e post_start_label in
               stk_vars # pop_list vss;
               let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
@@ -3305,6 +3308,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   (* push proc.proc_args *)
                   let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
                   stk_vars # push_list args;
+                  let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
                   let pr_flag = not(!phase_infer_ind) in
 		  if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then 
 		    print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
@@ -3780,6 +3784,7 @@ let reverify_proc prog proc do_infer =
             (* push proc.proc_args *)
             let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
             stk_vars # push_list args;
+            let () = x_binfo_hp (add_str "inside reverify" pr_id) (stk_vars # string_of_no_ln) no_pos in
             let pr_flag = not(!phase_infer_ind) in
             let new_spec = proc.proc_stk_of_static_specs # top in
 	    if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
