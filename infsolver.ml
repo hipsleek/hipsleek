@@ -4079,161 +4079,146 @@ module ThreeValuedSimp =
  struct 
   module InfS = InfSolver(Coq_sv)(Three_Val_NoneError)(NoneError3ValRel)(FZT)(IZT)
   
+  type coq_SimpResult =
+  | EQ_TRUE
+  | EQ_FALSE
+  | EQ_ERROR
+  | OTHER
+  
+  (** val coq_SimpResult_rect :
+      InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+      'a1) -> coq_SimpResult -> 'a1 **)
+  
+  let coq_SimpResult_rect f f0 f1 f2 f3 = function
+  | EQ_TRUE -> f0 __
+  | EQ_FALSE -> f1 __
+  | EQ_ERROR -> f2 __
+  | OTHER -> f3 __
+  
+  (** val coq_SimpResult_rec :
+      InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+      'a1) -> coq_SimpResult -> 'a1 **)
+  
+  let coq_SimpResult_rec f f0 f1 f2 f3 = function
+  | EQ_TRUE -> f0 __
+  | EQ_FALSE -> f1 __
+  | EQ_ERROR -> f2 __
+  | OTHER -> f3 __
+  
+  (** val judge : InfS.FA.coq_ZF -> coq_SimpResult **)
+  
+  let judge = function
+  | InfS.FA.ZF_BF z0 ->
+    (match z0 with
+     | InfS.FA.ZBF_Const v ->
+       (match v with
+        | Three_Val_NoneError.VTrue -> EQ_TRUE
+        | Three_Val_NoneError.VFalse -> EQ_FALSE
+        | Three_Val_NoneError.VError -> EQ_ERROR)
+     | _ -> OTHER)
+  | _ -> OTHER
+  
   (** val simplify : InfS.FA.coq_ZF -> InfS.FA.coq_ZF **)
   
   let rec simplify = function
   | InfS.FA.ZF_BF bf -> InfS.FA.eliminateMinMax bf
   | InfS.FA.ZF_And (f1, f2) ->
-    (match simplify f1 with
-     | InfS.FA.ZF_BF z0 ->
-       (match z0 with
-        | InfS.FA.ZBF_Const v ->
-          (match v with
-           | Three_Val_NoneError.VTrue -> simplify f2
-           | Three_Val_NoneError.VFalse ->
-             (match simplify f2 with
-              | InfS.FA.ZF_BF z1 ->
-                (match z1 with
-                 | InfS.FA.ZBF_Const v0 ->
-                   (match v0 with
-                    | Three_Val_NoneError.VTrue ->
-                      InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                        Three_Val_NoneError.VFalse)
-                    | x -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x))
-                 | _ ->
-                   InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                     Three_Val_NoneError.VFalse))
-              | _ ->
-                InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse))
-           | Three_Val_NoneError.VError ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError))
-        | x ->
-          let e1 = InfS.FA.ZF_BF x in
-          (match simplify f2 with
-           | InfS.FA.ZF_BF z1 ->
-             (match z1 with
-              | InfS.FA.ZBF_Const v ->
-                (match v with
-                 | Three_Val_NoneError.VTrue -> e1
-                 | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-              | x0 -> InfS.FA.ZF_And (e1, (InfS.FA.ZF_BF x0)))
-           | x0 -> InfS.FA.ZF_And (e1, x0)))
-     | x ->
-       (match simplify f2 with
-        | InfS.FA.ZF_BF z0 ->
-          (match z0 with
-           | InfS.FA.ZBF_Const v ->
-             (match v with
-              | Three_Val_NoneError.VTrue -> x
-              | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-           | x0 -> InfS.FA.ZF_And (x, (InfS.FA.ZF_BF x0)))
-        | x0 -> InfS.FA.ZF_And (x, x0)))
+    (match judge (simplify f1) with
+     | EQ_TRUE ->
+       (match judge (simplify f2) with
+        | EQ_FALSE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> simplify f2)
+     | EQ_FALSE ->
+       (match judge (simplify f2) with
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse))
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER ->
+       (match judge (simplify f2) with
+        | EQ_TRUE -> simplify f1
+        | EQ_FALSE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | OTHER -> InfS.FA.ZF_And ((simplify f1), (simplify f2))))
   | InfS.FA.ZF_Or (f1, f2) ->
-    (match simplify f1 with
-     | InfS.FA.ZF_BF z0 ->
-       (match z0 with
-        | InfS.FA.ZBF_Const v ->
-          (match v with
-           | Three_Val_NoneError.VTrue ->
-             (match simplify f2 with
-              | InfS.FA.ZF_BF z1 ->
-                (match z1 with
-                 | InfS.FA.ZBF_Const v0 ->
-                   (match v0 with
-                    | Three_Val_NoneError.VFalse ->
-                      InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                        Three_Val_NoneError.VTrue)
-                    | x -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x))
-                 | _ ->
-                   InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                     Three_Val_NoneError.VTrue))
-              | _ ->
-                InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue))
-           | Three_Val_NoneError.VFalse -> simplify f2
-           | Three_Val_NoneError.VError ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError))
-        | x ->
-          let e1 = InfS.FA.ZF_BF x in
-          (match simplify f2 with
-           | InfS.FA.ZF_BF z1 ->
-             (match z1 with
-              | InfS.FA.ZBF_Const v ->
-                (match v with
-                 | Three_Val_NoneError.VFalse -> e1
-                 | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-              | x0 -> InfS.FA.ZF_Or (e1, (InfS.FA.ZF_BF x0)))
-           | x0 -> InfS.FA.ZF_Or (e1, x0)))
-     | x ->
-       (match simplify f2 with
-        | InfS.FA.ZF_BF z0 ->
-          (match z0 with
-           | InfS.FA.ZBF_Const v ->
-             (match v with
-              | Three_Val_NoneError.VFalse -> x
-              | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-           | x0 -> InfS.FA.ZF_Or (x, (InfS.FA.ZF_BF x0)))
-        | x0 -> InfS.FA.ZF_Or (x, x0)))
+    (match judge (simplify f1) with
+     | EQ_TRUE ->
+       (match judge (simplify f2) with
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue))
+     | EQ_FALSE ->
+       (match judge (simplify f2) with
+        | EQ_TRUE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> simplify f2)
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER ->
+       (match judge (simplify f2) with
+        | EQ_TRUE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+        | EQ_FALSE -> simplify f1
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | OTHER -> InfS.FA.ZF_Or ((simplify f1), (simplify f2))))
   | InfS.FA.ZF_Imp (f1, f2) ->
-    (match simplify f1 with
-     | InfS.FA.ZF_BF z0 ->
-       (match z0 with
-        | InfS.FA.ZBF_Const v ->
-          (match v with
-           | Three_Val_NoneError.VTrue -> simplify f2
-           | Three_Val_NoneError.VFalse ->
-             (match simplify f2 with
-              | InfS.FA.ZF_BF z1 ->
-                (match z1 with
-                 | InfS.FA.ZBF_Const v0 ->
-                   (match v0 with
-                    | Three_Val_NoneError.VFalse ->
-                      InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                        Three_Val_NoneError.VTrue)
-                    | x -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x))
-                 | _ ->
-                   InfS.FA.ZF_BF (InfS.FA.ZBF_Const
-                     Three_Val_NoneError.VTrue))
-              | _ ->
-                InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue))
-           | Three_Val_NoneError.VError ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError))
-        | x ->
-          let e1 = InfS.FA.ZF_BF x in
-          (match simplify f2 with
-           | InfS.FA.ZF_BF z1 ->
-             (match z1 with
-              | InfS.FA.ZBF_Const v ->
-                (match v with
-                 | Three_Val_NoneError.VFalse -> InfS.FA.ZF_Not e1
-                 | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-              | x0 -> InfS.FA.ZF_Imp (e1, (InfS.FA.ZF_BF x0)))
-           | x0 -> InfS.FA.ZF_Imp (e1, x0)))
-     | x ->
-       (match simplify f2 with
-        | InfS.FA.ZF_BF z0 ->
-          (match z0 with
-           | InfS.FA.ZBF_Const v ->
-             (match v with
-              | Three_Val_NoneError.VFalse -> InfS.FA.ZF_Not x
-              | x0 -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const x0))
-           | x0 -> InfS.FA.ZF_Imp (x, (InfS.FA.ZF_BF x0)))
-        | x0 -> InfS.FA.ZF_Imp (x, x0)))
+    (match judge (simplify f1) with
+     | EQ_TRUE ->
+       (match judge (simplify f2) with
+        | EQ_TRUE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> simplify f2)
+     | EQ_FALSE ->
+       (match judge (simplify f2) with
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | _ -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue))
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER ->
+       (match judge (simplify f2) with
+        | EQ_TRUE ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+        | EQ_FALSE -> InfS.FA.ZF_Not (simplify f1)
+        | EQ_ERROR ->
+          InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+        | OTHER -> InfS.FA.ZF_Imp ((simplify f1), (simplify f2))))
   | InfS.FA.ZF_Not f ->
-    (match simplify f with
-     | InfS.FA.ZF_BF z0 ->
-       (match z0 with
-        | InfS.FA.ZBF_Const v ->
-          (match v with
-           | Three_Val_NoneError.VTrue ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
-           | Three_Val_NoneError.VFalse ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
-           | Three_Val_NoneError.VError ->
-             InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError))
-        | x -> InfS.FA.ZF_Not (InfS.FA.ZF_BF x))
-     | x -> InfS.FA.ZF_Not x)
-  | InfS.FA.ZF_Forall (v, q, f) -> InfS.FA.ZF_Forall (v, q, (simplify f))
-  | InfS.FA.ZF_Exists (v, q, f) -> InfS.FA.ZF_Exists (v, q, (simplify f))
+    (match judge (simplify f) with
+     | EQ_TRUE ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
+     | EQ_FALSE ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER -> InfS.FA.ZF_Not (simplify f))
+  | InfS.FA.ZF_Forall (v, q, f) ->
+    (match judge (simplify f) with
+     | EQ_TRUE -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+     | EQ_FALSE ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER -> InfS.FA.ZF_Forall (v, q, (simplify f)))
+  | InfS.FA.ZF_Exists (v, q, f) ->
+    (match judge (simplify f) with
+     | EQ_TRUE -> InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VTrue)
+     | EQ_FALSE ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VFalse)
+     | EQ_ERROR ->
+       InfS.FA.ZF_BF (InfS.FA.ZBF_Const Three_Val_NoneError.VError)
+     | OTHER -> InfS.FA.ZF_Exists (v, q, (simplify f)))
  end
 
 module type STRVAR = 

@@ -1912,6 +1912,22 @@ module ThreeValuedSimp :
     val coq_T : IA.coq_ZF -> FA.coq_ZF
    end
   
+  type coq_SimpResult =
+  | EQ_TRUE
+  | EQ_FALSE
+  | EQ_ERROR
+  | OTHER
+  
+  val coq_SimpResult_rect :
+    InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+    'a1) -> coq_SimpResult -> 'a1
+  
+  val coq_SimpResult_rec :
+    InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+    'a1) -> coq_SimpResult -> 'a1
+  
+  val judge : InfS.FA.coq_ZF -> coq_SimpResult
+  
   val simplify : InfS.FA.coq_ZF -> InfS.FA.coq_ZF
  end
 
@@ -2325,6 +2341,22 @@ module InfSolverExtract :
       
       val coq_T : IA.coq_ZF -> FA.coq_ZF
      end
+    
+    type coq_SimpResult =
+    | EQ_TRUE
+    | EQ_FALSE
+    | EQ_ERROR
+    | OTHER
+    
+    val coq_SimpResult_rect :
+      InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+      'a1) -> coq_SimpResult -> 'a1
+    
+    val coq_SimpResult_rec :
+      InfS.FA.coq_ZF -> (__ -> 'a1) -> (__ -> 'a1) -> (__ -> 'a1) -> (__ ->
+      'a1) -> coq_SimpResult -> 'a1
+    
+    val judge : InfS.FA.coq_ZF -> coq_SimpResult
     
     val simplify : InfS.FA.coq_ZF -> InfS.FA.coq_ZF
    end
