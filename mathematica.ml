@@ -821,7 +821,7 @@ let imply ante conseq imp_no =
 
 (* unimplemented *)
 let simplify (f: CP.formula) : CP.formula =
-  if is_linear_formula f then Omega.simplify 7 f 
+  if is_linear_formula f then Omega.simplify f 
   else f
 
 let hull (f: CP.formula) : CP.formula = 

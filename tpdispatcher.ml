@@ -1853,22 +1853,22 @@ let tp_is_sat f sat_no =
 
     (* in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in *)
 
-(* let norm_pure_input f = *)
-(*   let f = cnv_ptr_to_int f in *)
-(*   let f = if !Globals.allow_inf  *)
-(*     then let f = Infinity.convert_inf_to_var f *)
-(*            in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in *)
-(*       let f = mkAnd add_inf_constr f no_pos in f *)
-(*     else f in f *)
+let norm_pure_input f =
+  let f = cnv_ptr_to_int f in
+  let f = if !Globals.allow_inf 
+    then let f = Infinity.convert_inf_to_var f
+    in let add_inf_constr = BForm((mkLt (CP.Var(CP.SpecVar(Int,constinfinity,Primed),no_pos)) (CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),no_pos)) no_pos,None),None) in
+      let f = mkAnd add_inf_constr f no_pos in f
+    else f in f
 
-(* let norm_pure_input f = *)
-(*   let pr = Cprinter.string_of_pure_formula in *)
-(*   Debug.no_1 "norm_pure_input" pr pr norm_pure_input f *)
+let norm_pure_input f =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_pure_input" pr pr norm_pure_input f
 
 let om_simplify f =
   (* wrap_pre_post cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input norm_pure_result
-      (Omega.simplify 12) f 
+      Omega.simplify f
   (* let f = cnv_ptr_to_int f in *)
   (* let r = Omega.simplify f in *)
   (* cnv_int_to_ptr r *)
@@ -1906,8 +1906,8 @@ let simplify (f : CP.formula) : CP.formula =
       (* if !Globals.allow_inf && Infinity.contains_inf f then f
       else
       let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)
-      let omega_simplify f =  simplify_omega f in
-        (* Omega.simplify f  in *)
+      let omega_simplify f = simplify_omega f
+        (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
       let z3_simplify f =
@@ -1920,8 +1920,8 @@ let simplify (f : CP.formula) : CP.formula =
         let f = wrap_pre_post norm_pure_input norm_pure_result Z3.simplify f in
         CP.arith_simplify 13 f
       in
-      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
-      let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in
+(*      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
+      let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in *)
       if !external_prover then 
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
@@ -1942,43 +1942,43 @@ let simplify (f : CP.formula) : CP.formula =
                         else ((*Omega*)Smtsolver.simplify f)
                   | Mona | MonaH ->
                         if (is_bag_constraint f) then
-                          (mona_simplify f)
+                          (Mona.simplify f)
                         else
                           (* exist x, f0 ->  eexist x, x>0 /\ f0*)
                           let f1 = CP.add_gte0_for_mona f in
                           let f=(omega_simplify f1) in
                           CP.arith_simplify 12 f
                   | OM ->
-                        if (is_bag_constraint f) then (mona_simplify f)
+                        if (is_bag_constraint f) then (Mona.simplify f)
                         else
                           let f=(omega_simplify f) in
                           CP.arith_simplify 12 f
                   | OI ->
                         if (is_bag_constraint f) then (Isabelle.simplify f)
                         else (omega_simplify f)
-                  | SetMONA -> mona_simplify f
+                  | SetMONA -> Mona.simplify f
                   | CM ->
-                        if is_bag_constraint f then mona_simplify f
+                        if is_bag_constraint f then Mona.simplify f
                         else omega_simplify f
                   | Z3 -> z3_simplify f
                         (* Smtsolver.simplify f *)
                   | Z3N -> z3n_simplify f
                         (* Smtsolver.simplify f *)
-                  | Redlog -> redlog_simplify f
-                  | OCRed -> redlog_simplify f
+                  | Redlog -> Redlog.simplify f
+                  | OCRed -> Redlog.simplify f
                   | RM ->
-                        if is_bag_constraint f then mona_simplify f
-                        else redlog_simplify f
+                        if is_bag_constraint f then Mona.simplify f
+                        else Redlog.simplify f
                   | PARAHIP ->
                         if is_bag_constraint f then
-                          mona_simplify f
+                          Mona.simplify f
                         else
-                          redlog_simplify f
+                          Redlog.simplify f
                   | ZM -> 
-                        if is_bag_constraint f then mona_simplify f
+                        if is_bag_constraint f then Mona.simplify f
                         else Smtsolver.simplify f
                   | AUTO ->
-                        if (is_bag_constraint f) then (mona_simplify f)
+                        if (is_bag_constraint f) then (Mona.simplify f)
                         else if (is_list_constraint f) then (Coq.simplify f)
                         else if (is_array_constraint f) then (Smtsolver.simplify f)
                         else (omega_simplify f)
@@ -2259,7 +2259,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
         if is_bag_constraint f then Mona.pairwisecheck f
         else Redlog.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
-  let fn f = wrap_pre_post norm_pure_input norm_pure_result fn f in
+  (* let fn f = wrap_pre_post norm_pure_input norm_pure_result fn f in *)
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let () = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 

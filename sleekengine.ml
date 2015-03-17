@@ -766,17 +766,16 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = Cast.categorize_view cprog5 in
-  (* if                                                                                                                    *)
-  (*   (* !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)                                   *)
-  (*  (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe                                                           *)
-  (*   || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn)) then *)
-  (*   cprog5                                                                                                              *)
-  (* else                                                                                                                  *)
-  (*   try                                                                                                                 *)
-  (*     Cast.categorize_view cprog5                                                                                       *)
-  (*   with _ -> cprog5                                                                                                    *)
-  (* in                                                                                                                    *)
+  let cprog6 =  if
+    (* !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
+   (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
+    || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn)) then
+    cprog5
+  else
+    try
+      Cast.categorize_view cprog5
+    with _ -> cprog5
+  in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
   let _ =  (* if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
            (*     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then *)

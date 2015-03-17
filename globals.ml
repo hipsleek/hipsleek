@@ -1019,7 +1019,7 @@ let allow_field_ann = ref false
 
 let remove_abs = ref true
 
-let imm_merge = ref true
+let imm_merge = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
@@ -1219,7 +1219,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let enable_error_as_exc = ref false
 

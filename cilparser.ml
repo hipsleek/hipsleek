@@ -2091,6 +2091,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                                   (* in *)
                                   (ityp, Iast.NoMod)
                               end
+                            | _ -> (translate_typ ty no_pos, Iast.NoMod)
                           ) in
                           let newparam = {Iast.param_type = param_ty;
                           Iast.param_name = name;

@@ -1166,7 +1166,7 @@ let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) st
 let simplify (f: CP.formula) : CP.formula = 
   (* let () = print_endline "locle: simplify" in *)
   try
-    (Omega.simplify 6 f)
+    (Omega.simplify f)
   with
     | _ -> f
 
