@@ -72,6 +72,46 @@ Failed States:
  ]ex1-h1.c_54:19_-1:-1
 
 
+------------------------------------
+#ex1-h2:
+
+to infer case shape spec
+
+/*
+*********************************************************
+GOT
+*********************************************************
+[ GP_25(res_2136) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>&
+ v_int_star_42_2110=null
+ or res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+    v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+ (4,5)]
+*************************************
+
+
+!!!  post_2174(maxdeg,flow) = ( (maxdeg+1)<=0) \/ ( 0<=maxdeg)
+!!! n_base:3
+!!! bottom_up_fp:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg))]
+!!! fixpoint:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg), true, true)]
+!!! REL POST :  post_2174(maxdeg,flow)
+!!! POST:  ((maxdeg+1)<=0 | 0<=maxdeg)
+!!! REL PRE :  true
+!!! PRE :  true
+
+EXPECT:?
+ GP_25(res_2136, maxdeg) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+  case {
+   maxdeg<0 -> v_int_star_42_2110=null;
+   maxdeg>=0
+     v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg,v_int_44_2138,v_int_star_42_2110>;
+  }
+ */
 
 ==============================================================
 
