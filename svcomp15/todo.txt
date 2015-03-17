@@ -113,6 +113,21 @@ EXPECTED:?
   }
  */
 
+------------------------------------
+#ex1-h2a:
+
+GOT
+----
+G(res_1409,a_1410) ::=
+ res_1409::node<v_int_20_1411,v_null_type_20_1408>&0<=a_1410 &
+ v_null_type_20_1408=null
+ or emp&a_1410<0 & res_1409=null
+
+EXPECTED:
+G(res,m) ::=
+case { m>=0 -> [] res::node<0,null>;
+        m<0 -> [] res = null;
+};
 ==============================================================
 
 #ex2-2005.c (false-memtrack)
