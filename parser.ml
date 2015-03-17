@@ -1519,7 +1519,7 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
 c_typ:
- [[ `COLON; t=typ -> t
+ [[ `COLON; t= typ -> t
  ]];
 
 cid_typ:
@@ -2639,6 +2639,7 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
+   | `ANN_KEY           -> ann_type
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type

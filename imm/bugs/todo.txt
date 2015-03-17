@@ -25,7 +25,31 @@ checkentail x::ll<n>@L * y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0
   |- x::ll<n>@L * y::ll<m>.
 print residue.
 =========================================================
+# imm/bugs/clist.ss
+
+  requires x::clist<n>@L ensures false;
+
+Why did we have imm failure which also occurs with --imm
+
+Checking procedure length$node... 
+Proving precondition in method length$node Failed.
+  (must) cause:  mismatched imm annotation for data node
+
+Context of Verification Failure: 1 File "clist.ss",Line:25,Col:33
+Last Proving Location: 1 File "clist.ss",Line:39,Col:15
+
+Procedure length$node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
 =========================================================
+# clist1.ss
+
+  requires x::clist<n> ensures false;
+
+Why did we go into a loop with the above spec?
+Is it due to lemma?
 =========================================================
 =========================================================
 =========================================================

@@ -1144,7 +1144,9 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
     | _ -> false
   ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
-  if args = [] && ret = Void then
+  (* ANNTEMP: change below condition to prvious value *)
+  if not(!Globals.sa_syn) || (args = [] && ret = Void)  then
+  (* if true then *)
     F.mkETrueTrueF (),[],[]
   else
     let mut_vars = match body_opt with

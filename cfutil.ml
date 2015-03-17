@@ -2474,3 +2474,6 @@ let look_up_first_field prog lsctx0 dname=
   in
   process_failesc_contexts lsctx0
 
+let is_view_node_segmented vn prog =
+  let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
+  vdcl.Cast.view_is_segmented

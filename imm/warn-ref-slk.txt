@@ -1,0 +1,75 @@
+ref/bugs/baga-test.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/bugs/baga-test.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/bugs/baga-test.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/bugs/imm-ls-1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/bugs/imm-ls-1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/bugs/imm-ls-1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/bugs/imm-ls-1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/bugs/imm-ls-1.slk.ref:!!! WARNING logtime exception:0.000211
+ref/bugs/sleek0224.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/sleek0224.slk.ref:[Warning] False ctx
+ref/bugs/sleek0224.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/sleek0224.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/sleek0224.slk.ref:[Warning] False ctx
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:[Warning] False ctx
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:[Warning] False ctx
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/bugs/symb-diff.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/field/field.slk.ref:[Warning] False ctx
+ref/hip/test1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test1.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test2.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test2.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test2.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test2.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test31.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test31.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/hip/test31.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/hip/test31.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/hip/test31.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/hip/test3.slk.ref:ERROR: at hip/test3.slk_6:5_6:14
+ref/inf/lend-2.slk.ref:ERROR: at inf/lend-2.slk_8:42_8:43
+ref/inf/lend-2.slk.ref:Message: UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent
+ref/inf/lend-2.slk.ref:ERROR: at inf/lend-2.slk_8:42_8:43
+ref/inf/lend-2.slk.ref:Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent")
+ref/inf/lend-3.slk.ref:ERROR: at inf/lend-3.slk_8:42_8:43
+ref/inf/lend-3.slk.ref:Message: UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent
+ref/inf/lend-3.slk.ref:ERROR: at inf/lend-3.slk_8:42_8:43
+ref/inf/lend-3.slk.ref:Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent")
+ref/norm/field.slk.ref:[Warning] False ctx
+ref/norm/field.slk.ref:[Warning] False ctx
+ref/norm/field.slk.ref:[Warning] False ctx
+ref/norm/norm1.slk.ref:Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+ref/norm/norm1.slk.ref:[Warning] False ctx
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm3.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm4.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/norm/norm4.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/norm/norm4.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm4.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm4.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/norm/norm7.slk.ref:WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented
+ref/norm/norm7.slk.ref:Warning: ::0: 0: combining two views not yet implemented

@@ -1,0 +1,10 @@
+
+!!!Full processing file "inf/cell-3c.ss"
+Parsing file "inf/cell-3c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+caught
+
+Exception occurred: Failure("number of arguments for relation P2 does not match")
+Error3(s) detected at main 

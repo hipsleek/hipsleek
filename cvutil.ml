@@ -157,6 +157,10 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
     | _ -> false
   in helper ann1 ann2
 
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+  let pr = pr_list CP.string_of_ann in
+  Debug.no_2 "compatible_ann" pr pr string_of_bool compatible_ann ann1 ann2
+
 (****************************************************************************)
 (****************************************************************************)
 (****************************************************************************)

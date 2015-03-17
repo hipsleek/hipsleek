@@ -726,11 +726,11 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
           None)
         else Some (neg_f)*)
 
-let infer_lhs_contra pre_thus f ivars pos msg =
+let infer_lhs_contra i pre_thus f ivars pos msg =
   let pr = !print_mix_formula in
   let pr2 = !print_pure_f in
-  Debug.no_2 "infer_lhs_contra" pr !print_svl (pr_option pr2) 
-      (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
+  Debug.no_3_num i "infer_lhs_contra" pr !print_svl pr_id (pr_option pr2) 
+      (fun _ _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars msg
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
   if no_infer_pure estate then 
@@ -763,7 +763,7 @@ Unfolded state losed x::ll<nnn> or nnn>=0 info.
     else
       let ivars = estate.es_infer_vars in
       let p_thus = estate.es_infer_pure_thus in
-      let r = infer_lhs_contra p_thus lhs_xpure ivars pos msg in
+      let r = infer_lhs_contra 1 p_thus lhs_xpure ivars pos msg in
       match r with
         | None -> 
           begin
@@ -772,7 +772,7 @@ Unfolded state losed x::ll<nnn> or nnn>=0 info.
               DD.devel_pprint ">>>>>> infer_lhs_contra_estate <<<<<<" pos;
               DD.devel_pprint "Add relational assumption" pos;
               let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
-              let rel_ass = infer_lhs_contra p_thus lhs_xpure vs_lhs pos "relational assumption" in
+              let rel_ass = infer_lhs_contra 2 p_thus lhs_xpure vs_lhs pos "relational assumption" in
               let () = DD.devel_hprint (add_str "rel_ass(unsat) : " (pr_opt !CP.print_formula)) rel_ass pos in
               begin
                 match rel_ass with
@@ -817,8 +817,8 @@ let infer_lhs_contra_estate i estate lhs_xpure pos msg =
   let pr = CP.print_lhs_rhs in
   let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
   let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
-  Debug.no_2_num i "infer_lhs_contra_estate" (add_str "estate" pr0) 
-      (add_str "lhs_xpure" pr1) pr_res (fun _ _ -> infer_lhs_contra_estate estate lhs_xpure pos msg) estate lhs_xpure
+  Debug.no_3_num i "infer_lhs_contra_estate" (add_str "estate" pr0) 
+      (add_str "lhs_xpure" pr1) pr_id pr_res (fun _ _ _ -> infer_lhs_contra_estate estate lhs_xpure pos msg) estate lhs_xpure msg
 
 (*
    should this be done by ivars?

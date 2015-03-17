@@ -36,6 +36,7 @@ let simplify_with_label simp (f:formula) =
   join_disjunctions ls
 
 let simplify_with_label_omega_x (f:formula) =
+(*  let simp = Omega.simplify 2 in  *)
   let simp = (* Omega.simplify *) !simplify_raw in
   simplify_with_label simp f
 

@@ -1,0 +1,17 @@
+relation P3(int v1).
+relation P4(int v1).
+
+infer [P3] 
+0<=a & a<=3 & P3(a) & a<=2 & 0<=b & b<=3 & a<=b
+        |- true.
+print residue.
+
+infer [P3,P4] 
+0<=a & a<=3 & P3(a) & a<=2 & 0<=b & b<=3 & a<=b
+        |- P4(b).
+print residue.
+               
+infer [P3,P4] 
+      (exists b:a<=b & b=a & a<=2)
+        |- P4(b).
+print residue.

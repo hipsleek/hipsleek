@@ -753,6 +753,7 @@ let normalize_h_formula (h : IF.h_formula): IF.h_formula =
 	| _ -> h*)
 	
 let rec is_compatible_field_layout (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): bool =	
+  (* Debug.info_hprint(add_str "is_compatible_field_layout" pr_none) () Globals.no_pos ; *)
 match (ann_lst_l, ann_lst_r) with
     | ([], []) -> true
     | (ann_l :: tl, ann_r :: tr ) ->

@@ -18015,6 +18015,29 @@ let h_formula_contains_node_name h ident =
       | _ -> false
   in helper h
 
+let h_formula_contains_node h aset ident =
+  let rec helper h =
+    match h with
+      | ViewNode   ({ h_formula_view_name = name; h_formula_view_node = sv; })
+      | DataNode   ({ h_formula_data_name = name; h_formula_data_node = sv; })
+      | ThreadNode ({ h_formula_thread_name = name; h_formula_thread_node = sv; }) ->
+            if (String.compare ident name == 0 && CP.EMapSV.mem sv aset) then true else false
+      | Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) || (helper h2))
+      | _ -> false
+  in helper h
+
 let star_elim_useless_emp h = 
   let rec helper h =
     match h with

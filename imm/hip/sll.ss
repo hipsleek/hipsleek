@@ -95,6 +95,7 @@ node get_tail(node x)
 }
 
 /* transform a normal singly linked list in a sorted list */
+/*
 void insertion_sort(node x, ref node y)
 
   requires x::ll<n,@L,@M> * y::sll<m1, ys1, yl1,@L,@M>
@@ -107,7 +108,7 @@ void insertion_sort(node x, ref node y)
 		insertion_sort(x.next, y);
 	}
 }
-
+*/
 void id(int x)
 	requires true ensures true;
 {

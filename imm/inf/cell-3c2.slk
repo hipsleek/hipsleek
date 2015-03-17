@@ -1,0 +1,26 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+relation P2(ann v1).
+
+infer [P1,P2] 
+c::cell<v>@a & P1(a) // & a<:@L //& @M<:b
+        |- c::cell<w>@b & P2(b).
+print residue.
+
+                              
+/*
+# cell-3c1.slk
+
+Why false?
+Why a>2?
+
+
+Entail (2) : Valid. 
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
+[[empty]]
+*/
+

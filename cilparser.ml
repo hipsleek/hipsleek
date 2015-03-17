@@ -2063,8 +2063,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 (match ty with
                   | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
                   | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-                        (translate_typ ty1 no_pos)
-                  | _ -> (translate_typ ty no_pos)
+                        (translate_typ ty1 pos)
+                  | _ -> (translate_typ ty pos)
                 )
           | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
     ) in
@@ -2355,7 +2355,7 @@ let process_one_file (cil: Cil.file) : unit =
 let parse_hip (filename: string) : Iast.prog_decl =
   (* do the preprocess by GCC first *)
   let prep_filename = filename ^ ".prep" in
-  let cmd = "gcc -C -E " ^ filename ^ " -o " ^ prep_filename in
+  let cmd = "gcc " ^ "-I ../ " ^ " -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/  "^ " -C -E " ^ filename ^ " -o " ^ prep_filename in
   if not !compete_mode then (
     print_endline ("GCC Preprocessing...");
     print_endline cmd;

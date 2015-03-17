@@ -1,0 +1,13 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(may) cause:AndR[ true |-  2<a. LOCS:[12];  flted_12_35=3 |-  flted_12_35=a. LOCS:[12];  true |-  q=Anon_13. LOCS:[0;12] (may-bug).]
+
+Residue:
+ <1>emp&flted_12_35=3&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
