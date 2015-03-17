@@ -101,7 +101,7 @@ GOT
 !!! REL PRE :  true
 !!! PRE :  true
 
-EXPECT:?
+EXPECTED:?
  GP_25(res_2136, maxdeg) ::=
  res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
  deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
