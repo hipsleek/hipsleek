@@ -28,7 +28,7 @@ let exist_invisible_cells f vars=
       ) cl_ptrs)
   ) dnodes
 
-let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx) as br_ctx)=
+let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx,_) as br_ctx)=
   let rec detect_mem_leak_ctx c vars=
     match c with
       | Ctx es -> exist_invisible_cells es.es_formula vars,es
@@ -55,7 +55,7 @@ let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx) as br_ctx)=
     ([],[br_ctx])
 
 let detect_mem_leak_partial_ctx prog proc br_ctx=
-  let pr1 (_,ctx) = Cprinter.string_of_context_short ctx in
+  let pr1 (_,ctx,_) = Cprinter.string_of_context_short ctx in
   let pr2 p = pr_id p.Cast.proc_name in
   let pr3 (_,ls2) = (pr_list pr1) ls2 in
   Debug.no_2 "detect_mem_leak_partial_ctx" pr2 pr1 pr3

@@ -29,8 +29,8 @@ int count_rest(struct node* rest, struct node* h)
    ensures G(rest,h);
 */
 /*
-	requires rest::cll<p, n> & h = p 
-	ensures rest::cll<p, n> & res = n; 
+	requires rest::clls<p, n> & h = p 
+	ensures rest::clls<p, n> & res = n; 
 */
 
 {
@@ -39,7 +39,8 @@ int count_rest(struct node* rest, struct node* h)
     return 0; 
   else
     {
-      n = count_rest(rest->next, h);
+      struct node* tmp = rest->next;
+      n = count_rest(tmp, h);
       n = n + 1;
       return n;
     }

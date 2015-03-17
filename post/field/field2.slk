@@ -1,0 +1,35 @@
+data node {
+  int val;
+  node next;
+}.
+
+//checkentail x::node<v,_>@A * x::node<w,_>@A  |- false.
+//print residue. // fail as expected
+
+checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
+print residue. // should succeed
+
+/*
+# field2.slk
+
+checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
+print residue. // should succeed
+
+Entail 1: Fail.(may) cause: true |-  v=w. LOCS:[0;9] (may-bug)
+Residue:
+ <1>emp&x!=null & x!=null&{FLOW,(4,8)=__MayError}[]
+
+Should get:
+ <1> x::node<v,_>@A & v=w 
+
+# field2.slk --field-ann
+
+Why did we have:
+
+[Warning] False ctx
+Entail 1: Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+*/

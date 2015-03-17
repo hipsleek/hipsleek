@@ -476,6 +476,7 @@ let common_arguments = [
   (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
+  ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -679,6 +680,7 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");

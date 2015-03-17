@@ -624,7 +624,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let v1 = (add_str "vars" pr_vars) vars in
                       let v2 = (add_str "pre_post_vars" pr_vars) pre_post_vars in
                       let v = ("\n"^v1^" "^v2^"\n") in
-                      DD.info_pprint ("WARNING : Inferable vars include some external variables!"^v) inf_pos
+                      if not(!Globals.print_min) then DD.info_pprint ("WARNING : Inferable vars include some external variables!"^v) inf_pos
                     end
                   else
                   if not(CP.subset unknown_rel vars_rel) then
@@ -1588,18 +1588,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      
 	      let barr_failesc_context (f,e,n) =  
 		let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in
-		let res = List.map (fun (lbl,c2)-> 
+		let res = List.map (fun (lbl,c2, oft)-> 
 		    let list_context_res,prf =process_ctx c2 in					
 		    match list_context_res with
-		      | CF.FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])],prf
-		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls,prf) n in
+		      | CF.FailCtx (t,c,_) -> begin
+                          let lc = if !Globals.enable_error_as_exc then
+                             ([([],esc_skeletal, [((lbl, c ,Some t))])])
+                          else [([(lbl,t)],esc_skeletal,[])]
+                          in
+                          lc,prf
+                        end
+		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c, oft)])) ls,prf) n in
 		let res_l,prf_l =List.split res in
 		let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in
 		(res, mkprf prf_l)  in
 	      
 	      let barr_failesc_context (f,e,n) =
-		let pr1 (_,_,n) = pr_list (fun (_,c)-> Cprinter.string_of_context c) n in   
-		let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun c-> Cprinter.string_of_context (snd c)) c) l) in
+		let pr1 (_,_,n) = pr_list (fun (_,c,_)-> Cprinter.string_of_context c) n in   
+		let pr2 (l,_) = String.concat "\n result: " (List.map (fun (_,_,c)-> pr_list (fun (_,ctx,_)-> Cprinter.string_of_context (* (snd c) *) ctx) c) l) in
 		Debug.no_1(* _loop *) "barrier_failesc_context" pr1 pr2 barr_failesc_context (f,e,n) in
 	      
               let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^"\nBarrier call \n") in
@@ -2387,7 +2393,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let () = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
                   (*Loc: error as exception *)
                   (* move must, may flow into esc_stack *)
-                  if (CF.isSuccessListFailescCtx_new res) then
+                  if (!Globals.enable_error_as_exc || (CF.isSuccessListFailescCtx_new res)) then
                     (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                     let res = 
                      (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
@@ -2921,10 +2927,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
      (* let () = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
-      if f1 then
+      if not !Globals.enable_error_as_exc && f1 then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
-		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in 
+		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
 		    (*possibly change to flat post here as well??*)
            let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state flat_post None None None pos (Some pid) in
            let () =  DD.ninfo_hprint (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos in
@@ -2955,7 +2961,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         Prooftracer.pop_div ();
 	(* print_endline "DONE!" *)
       end in
-
     if (CF.isSuccessListPartialCtx_new rs) then
       rs
     else begin
@@ -2968,6 +2973,17 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in*)
       let _ =
         if not !Globals.disable_failure_explaining then
+          let rs = if !Globals.enable_error_as_exc then
+            (* convert brs with error flow -> Fail *)
+            List.fold_left (fun acc (fs, brs) ->
+                let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
+                    match oft with
+                      | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
+                      | None -> (acc_fs, acc_rest@[br])
+                ) ([],[]) brs in
+                acc@[(fs@ex_fs, rest)]
+            ) [] rs
+          else rs in
           let s,fk,ets= CF.get_failure_list_partial_context rs in
           (* let s = match CF.get_must_failure_list_partial_context rs with *)
           (*     | Some s -> "(must) cause:\n"^s *)
@@ -3037,6 +3053,9 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
+  let _ =  Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: STARTING" (
+      let pr proc = Cprinter.string_of_struc_formula_for_spec_inst prog (proc.proc_stk_of_static_specs # top) in
+      pr_list_ln  pr)) scc_procs no_pos in
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
@@ -3255,7 +3274,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       let () = List.iter (fun proc ->
           if is_print_inferred_spec then
           let () =  Debug.info_hprint (add_str "INFERRED SHAPE SPEC"
-              (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in
+              (Cprinter.string_of_struc_formula)) (proc.proc_stk_of_static_specs#top) (*proc.proc_static_specs*)  no_pos in
           ()
           else ()
       ) new_scc_procs in
@@ -3318,7 +3337,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     print_endline_quiet "\n\n******************************";
                     print_endline_quiet "   ******* SPECIFICATION1 ********";
                     print_endline_quiet "******************************";
-                    print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
+                    print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog (proc0.proc_stk_of_static_specs # top)
+                        (* proc0.Cast.proc_static_specs *))
                   end
                   in
                   (*****LOCKSET variable: ls'=ls *********)
@@ -3736,7 +3756,12 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		    Prooftracer.add_proc proc pp;
 		  end
 		  in
-		  let () = match exc with | Some e -> raise e | None -> () in
+		  let () = match exc with
+                    | Some e ->
+                          (* let _ = print_string_quiet (get_backtrace_quiet ()) in *)
+                          raise e
+                    | None -> ()
+                  in
                   if pr_flag then
                     begin
 		      if pp then
@@ -4088,7 +4113,9 @@ let rec check_prog iprog (prog : prog_decl) =
   (***************************INTERNAL**************************)
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
-    let scc, ini_hpdefs = Da.find_rel_args_groups_scc prog scc in
+    let scc, ini_hpdefs =
+      Da.find_rel_args_groups_scc prog scc
+    in
 
     let has_infer_shape_proc = Pi.is_infer_shape_scc scc in
 

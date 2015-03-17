@@ -814,6 +814,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
+let fo_iheap = ref true
+
 let sae = ref false
 let sac = ref false
 
@@ -1219,6 +1221,8 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref true
 
+let enable_error_as_exc = ref false
+
 let bug_detect = ref false
 
 let simplify_error = ref false
@@ -1541,6 +1545,8 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
+let is_inferring = ref false
+let use_baga = ref false
 let prove_invalid = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let do_under_baga_approx = ref false (* flag to choose under_baga *)

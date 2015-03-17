@@ -345,7 +345,7 @@ let mkFailCtx_vp msg estate conseq pos =
   let estate = { estate with es_formula = substitute_flow_into_f !Exc.GTable.top_flow_int estate.es_formula } in
   mkFailCtx_in (
       Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
-      mk_failure_may msg logical_error, estate.es_trace)) (mk_cex true)
+      mk_failure_may msg logical_error, estate.es_trace)) (Ctx {estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}) (mk_cex true)
 
 let vperm_entail_set ?(par_flag=false) ?(ver_post_flag=false) ?(classic_flag=false) lhs_vperm_sets rhs_vperm_sets =
     let pr_vp = pr_pair !print_sv string_of_vp_ann in

@@ -16,6 +16,8 @@ time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 echo -e "\n##################### must-bugs error tests ###################"
 time ./run-fast-tests.pl musterr $@
 
+time ./run-fast-tests.pl musterr -flags "--efa-exc" $@
+
 echo -e "\n##################### infinity tests ########################"
 time ./run-fast-tests.pl infinity $@
 

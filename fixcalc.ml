@@ -895,7 +895,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* Parse result *)
   DD.ninfo_pprint ("Result of fixcalc: " ^ res) no_pos;
   let fixpoints = Parse_fix.parse_fix res in
-  DD.devel_hprint (add_str "Result of fixcalc (parsed): "
+  DD.ninfo_hprint (add_str "Result of fixcalc (parsed): "
     (pr_list !CP.print_formula)) fixpoints no_pos;
 
   (* Pre-result *)

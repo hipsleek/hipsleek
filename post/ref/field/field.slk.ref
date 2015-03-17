@@ -1,0 +1,73 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>q::node<flted_25_81,Anon_15>&flted_25_81=3 & flted_25_82=2 & v=flted_25_82 & Anon_16=q&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>q::ll{}<flted_32_97>&a=2 & flted_32_97+1=n & Anon_17=q&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>x::node<Anon_18,q> * q::ll{}<flted_37_117>&q!=null & flted_37_117+1=n&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 7: Valid. 
+
+Residue:
+ <1>x::node<v,q> * q::ll{}<flted_42_131>&v!=3 & flted_42_131+1=n&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 8: Valid. 
+
+Residue:
+ <1>x::node<Anon_162,q_163> * q_163::ll{}<flted_7_161>&3<n & flted_7_161+1=n & Anon_19=Anon_162 & q=q_163&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 9: Fail.(may) cause: 0<(flted_7_183+1) & (((q=1 & 1<=flted_7_183) | (q=null & flted_7_183=0))) |-  q!=null. LOCS:[7;1;6;0;50] (may-bug)
+
+Residue:
+ <1>(Hole[186]) * q_185::ll{}<flted_7_183>&0<n & flted_7_183+1=n & Anon_20=Anon_184 & q=q_185&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 10: Valid. 
+
+Residue:
+ <1>emp&v=5 & x!=null&{FLOW,(4,5)=__norm#E}[]
+
+
