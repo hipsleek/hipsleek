@@ -1,4 +1,6 @@
+#include "xdebug.cppo"
 open Globals
+open VarGen
 open Gen
 
 module CP = Cpure

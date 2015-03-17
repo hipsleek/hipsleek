@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (* module CP = Cpure    *)
 (* module CF = Cformula *)
 (* module MCP = Mcpure  *)
@@ -22,7 +24,7 @@ let add_ret_trel_stk prog ctx lhs rhs pos =
     termr_lhs = lhs;
     termr_rhs = rhs; 
     termr_pos = pos; } in 
-  (* let _ = print_endline_quiet (print_ret_trel trel) in *)
+  (* let () = print_endline_quiet (print_ret_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel
   
@@ -34,7 +36,7 @@ let merge_trrels rec_trrels =
   let same_cond_path r1 r2 = CP.eq_term_ann r1.termr_rhs r2.termr_rhs in
   let grp_trrels = partition_eq (fun r1 r2 -> 
     (same_cond_path r1 r2) && (same_flow_path r1 r2)) rec_trrels in
-  (* let _ = List.iter (fun trrels -> print_endline_quiet (pr_list print_ret_trel trrels)) grp_trrels in *)
+  (* let () = List.iter (fun trrels -> print_endline_quiet (pr_list print_ret_trel trrels)) grp_trrels in *)
   let merge_trrels = List.map (fun grp ->
     let conds = List.map (fun r -> r.ret_ctx) grp in
     match grp with
@@ -90,14 +92,14 @@ let solve_base_trrels params base_trrels turels =
     simplify 7 btr.ret_ctx btr.termr_rhs_params) base_trrels in
   let not_term_cond = List.fold_left (fun ac tu ->
     let ctx = simplify 9 tu.call_ctx params in
-    (* let _ = print_endline_quiet ("ctx: " ^ (!CP.print_formula ctx)) in *)
+    (* let () = print_endline_quiet ("ctx: " ^ (!CP.print_formula ctx)) in *)
     mkOr ac ctx) (CP.mkFalse no_pos) turels in
   let not_term_cond = om_simplify not_term_cond in
   let term_cond = mkNot not_term_cond in
   
-  (* let _ = print_endline_quiet ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
-  (* let _ = print_endline_quiet ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
-  (* let _ = print_endline_quite ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
+  (* let () = print_endline_quiet ("term_cond: " ^ (!CP.print_formula term_cond)) in         *)
+  (* let () = print_endline_quiet ("not_term_cond: " ^ (!CP.print_formula not_term_cond)) in *)
+  (* let () = print_endline_quite ("base_ctx: " ^ (pr_list !CP.print_formula base_ctx)) in   *)
     
   let base_cond = List.fold_left (fun ac bctx ->
     mkOr ac (mkAnd bctx term_cond)) (CP.mkFalse no_pos) base_ctx in
@@ -137,7 +139,7 @@ let solve_trrel_list params trrels turels =
     else CP.join_disjunctions not_rec_conds 
   in
   
-  (* let _ = print_endline_quiet ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
+  (* let () = print_endline_quiet ("not_rec_cond: " ^ (!CP.print_formula not_rec_cond)) in *)
   
   let rec_conds = List.fold_left (fun acc rtr ->
     let rec_cond = simplify 4 rtr.ret_ctx rtr.termr_rhs_params in
@@ -210,7 +212,7 @@ let case_split_init prog trrels turels =
   let fn_cond_w_ids = List.map (fun (fn, trrels, turels) ->
     let params = snd fn in
     (fn, List.map (fun c -> tnt_fresh_int (), c) (solve_trrel_list params trrels turels))) fn_rels in
-  let _ = 
+  let () = 
     let pr_cond (i, c) = "[" ^ (string_of_int i) ^ "]" ^ (print_trrel_sol c) in 
     print_endline_quiet ("\nBase/Rec Case Splitting:\n" ^ 
       (pr_list (fun ((fn, _), s) -> 
@@ -235,7 +237,7 @@ let add_call_trel_stk prog ctx lhs rhs callee args pos =
     termu_cle = callee;
     termu_rhs_args = args; 
     termu_pos = pos; } in 
-  (* let _ = print_endline_quiet (print_call_trel trel) in *)
+  (* let () = print_endline_quiet (print_call_trel trel) in *)
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel
   
@@ -365,7 +367,7 @@ let solve_turel_one_scc prog trrels tg scc =
   
 let finalize_turel_graph prog tg =
   print_web_mode "Termination Inference Result:";
-  (* let _ = print_endline (print_graph_by_rel tg) in *)
+  (* let () = print_endline (print_graph_by_rel tg) in *)
   pr_proc_case_specs prog
   
 (* let rec solve_turel_graph iter_num prog trrels tg =                                         *)
@@ -373,11 +375,11 @@ let finalize_turel_graph prog tg =
 (*     try                                                                                     *)
 (*       let scc_list = Array.to_list (TGC.scc_array tg) in                                    *)
 (*       let scc_groups = partition_scc_list tg scc_list in                                    *)
-(*       (* let _ =                                                             *)             *)
+(*       (* let () =                                                             *)             *)
 (*       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)             *)
 (*       (*   print_endline_quiet (print_graph_by_rel tg)                       *)             *)
 (*       (* in                                                                  *)             *)
-(*       (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)             *)
+(*       (* let () = print_endline_quiet (print_scc_list_num scc_list) in        *)             *)
 (*       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in *)
 (*       finalize_turel_graph prog tg                                                          *)
 (*     with                                                                                    *)
@@ -395,13 +397,13 @@ let rec solve_turel_graph iter_num prog trrels tg =
 and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
   if iter_num < !Globals.tnt_thres then
     try
-      let _ = pr_im_case_specs iter_num in
+      let () = pr_im_case_specs iter_num in
       let tg = sub_graph_of_scc_list tg scc_list in
-      (* let _ =                                                       *)
+      (* let () =                                                       *)
       (*   print_endline_quiet ("GRAPH @ ITER " ^ (string_of_int iter_num)); *)
       (*   print_endline_quiet (print_graph_by_rel tg)                       *)
       (* in                                                            *)
-      (* let _ = print_endline_quiet (print_scc_list_num scc_list) in        *)
+      (* let () = print_endline_quiet (print_scc_list_num scc_list) in        *)
       let tg = List.fold_left (fun tg -> solve_turel_one_scc prog trrels tg) tg scc_list in
       ()
     with
@@ -410,22 +412,22 @@ and solve_turel_graph_one_group iter_num prog trrels tg scc_list =
   else ()
   
 let solve_turel_graph_init prog trrels tg =
-  let _ = solve_turel_graph 0 prog trrels tg in
+  let () = solve_turel_graph 0 prog trrels tg in
   finalize_turel_graph prog tg
 
 let solve_trel_init prog trrels turels =
   let fn_cond_w_ids = case_split_init prog trrels turels in 
   (* Update TNT case spec with base condition *)
-  let _ = List.iter (add_case_spec_of_trrel_sol_proc prog)
+  let () = List.iter (add_case_spec_of_trrel_sol_proc prog)
     (List.map (fun ((fn, _), sl) -> (fn, List.map snd sl)) fn_cond_w_ids) in
-  (* let _ =                                 *)
+  (* let () =                                 *)
   (*   print_endline_quiet ("Initial Case Spec:"); *)
   (*   pr_proc_case_specs prog               *)
   (* in                                      *)
   
   let irels = List.concat (List.map (fun rel -> 
     inst_call_trel_base rel fn_cond_w_ids) turels) in
-  (* let _ = print_endline_quiet ("Initial Inst Assumption:\n" ^               *)
+  (* let () = print_endline_quiet ("Initial Inst Assumption:\n" ^               *)
   (*   (pr_list (fun ir -> (print_call_trel_debug ir) ^ "\n") irels)) in *)
     
   let tg = graph_of_trels irels in
@@ -450,25 +452,25 @@ let solve no_verification_errors should_infer_tnt prog =
   if turels = [] && trrels = [] then 
     Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
   else if not no_verification_errors then
-    let _ = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
+    let () = Debug.tinfo_pprint ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos in
     ()
   else if not should_infer_tnt then ()
   else
-    let _ = print_endline_quiet "\n\n*****************************" in
-    let _ = print_endline_quiet     "*** TERMINATION INFERENCE ***" in
-    let _ = print_endline_quiet     "*****************************" in
+    let () = print_endline_quiet "\n\n*****************************" in
+    let () = print_endline_quiet     "*** TERMINATION INFERENCE ***" in
+    let () = print_endline_quiet     "*****************************" in
 
     (* Temporarily disable template assumption printing *)
     let pr_templassume = !print_relassume in
-    let _ = print_relassume := false in
+    let () = print_relassume := false in
 
-    let _ = print_endline_quiet "Temporal Assumptions:" in
-    let _ = List.iter (fun trrel -> print_endline_quiet ((print_ret_trel trrel) ^ "\n")) trrels in
-    let _ = List.iter (fun turel -> print_endline_quiet ((print_call_trel turel) ^ "\n")) turels in
+    let () = print_endline_quiet "Temporal Assumptions:" in
+    let () = List.iter (fun trrel -> print_endline_quiet ((print_ret_trel trrel) ^ "\n")) trrels in
+    let () = List.iter (fun turel -> print_endline_quiet ((print_call_trel turel) ^ "\n")) turels in
   
-    let _ = solve_trel_init prog trrels turels in
+    let () = solve_trel_init prog trrels turels in
   
-    let _ = print_relassume := pr_templassume in
+    let () = print_relassume := pr_templassume in
     ()
   
   

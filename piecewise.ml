@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen
 open Cpure
@@ -90,7 +92,7 @@ let get_cond_dec_templ_assume templ_assume =
     let eq = mkPure (mkEq (mkVar v pos) e pos) in
     (mkAnd a eq pos, vs @ [v])) (ante, []) templ_args in 
   let cond = get_cond_templ_args ante cond_args in
-  (* let _ = print_endline ("COND ARGS: " ^ (pr_spec_var templ.templ_id) ^ *)
+  (* let () = print_endline ("COND ARGS: " ^ (pr_spec_var templ.templ_id) ^ *)
   (*   (pr_list pr_spec_var cond_args) ^ " -> " ^                          *)
   (*   (pr_formula cond)) in                                               *)
   ((templ, cond_args), cond)

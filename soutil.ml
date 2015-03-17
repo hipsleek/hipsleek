@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Others
 open Stat_global
@@ -15,18 +17,18 @@ open Mcpure
 open Cvutil
 
 let exist_invisible_cells f vars=
-  let (hf,mf,_,_,_) = CF.split_components f in
+  let (hf,mf,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let dnodes = get_datas f in
   List.exists (fun dn ->
       let cl_ptrs = find_close [dn.h_formula_data_node] eqs in
-      let _ =  DD.ninfo_hprint (add_str "cl_ptrs" !CP.print_svl) cl_ptrs no_pos in
+      let () =  DD.ninfo_hprint (add_str "cl_ptrs" !CP.print_svl) cl_ptrs no_pos in
       not (List.exists (fun (CP.SpecVar (_,id,prm)) ->
           prm = Primed && List.exists (fun ((_,id1)) -> string_compare id id1) vars
       ) cl_ptrs)
   ) dnodes
 
-let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx) as br_ctx)=
+let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx,_) as br_ctx)=
   let rec detect_mem_leak_ctx c vars=
     match c with
       | Ctx es -> exist_invisible_cells es.es_formula vars,es
@@ -53,7 +55,7 @@ let detect_mem_leak_partial_ctx_x prog proc ((pt, ctx) as br_ctx)=
     ([],[br_ctx])
 
 let detect_mem_leak_partial_ctx prog proc br_ctx=
-  let pr1 (_,ctx) = Cprinter.string_of_context_short ctx in
+  let pr1 (_,ctx,_) = Cprinter.string_of_context_short ctx in
   let pr2 p = pr_id p.Cast.proc_name in
   let pr3 (_,ls2) = (pr_list pr1) ls2 in
   Debug.no_2 "detect_mem_leak_partial_ctx" pr2 pr1 pr3

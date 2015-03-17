@@ -9,7 +9,7 @@
 // 3. may_error
 checkentail x>3 |- x>5.
 
-// 4. may_error
+// 4. must_error
 checkentail x>3 |- x>5 & flow __Error.
 print residue.
 

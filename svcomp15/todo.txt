@@ -1,0 +1,207 @@
+#ex1-200204.c (false-memtrack)
+
+
+ERROR: at _0:0_0:0
+Message: Function "calloc" is not defined within program
+
+
+gcc -C -E ex1-200204.c -o ex1-200204.c.prep
+old type = TFun(TPtr(TVoid(), ), size: TInt(int, ), )
+new type = TFun(TPtr(TVoid(), ),
+                __size: TNamed(size_t___0, TInt(unsigned long, ), ),
+                 __attribute__((__leaf__)) )
+caught
+
+Exception occurred: Errormsg.Error
+Error3(s) detected at main
+466:1-466:108: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different integer types).
+
+------------------------------------
+#ex1a-calloc.c: DONE
+
+to support calloc
+------------------------------------
+@ex1-b.c FIXED
+
+------------------------------------
+@ex1-c.c: FIXED. added offset into defer data node.
+
+Exception Invalid_argument("List.combine") Occurred!
+
+------------------------------------
+@ex1-d.c: FIXED
+
+------------------------------------
+@ex1-e.c: FIXED
+
+ERROR: at ex1-e.c_74:6_74:18
+Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__int__$int~int has invalid argument types
+
+------------------------------------
+#ex1-f:
+
+!!!>>>>>> mismatch ptr value_32_1895::DUPFFstruct<maxdeg_32_1896,deg_32_1897,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr value_32_1898::DUPFFstruct<maxdeg_32_1899,deg_32_1900,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
+
+------------------------------------
+ERROR: at ex1-200204.c_40:19_-1:-1: FIXED
+Message: lhs and rhs do not match 1
+
+------------------------------------
+#ex1-h1:
+
+Checking procedure main$... Proving binding in method main$ for spec  EAssume
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( []) bind: node  f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L cannot be derived from context
+ex1-h1.c_54:19_-1:-1
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message:
+                   do_unmatched_rhs : f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L
+                  fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]ex1-h1.c_54:19_-1:-1
+
+
+
+==============================================================
+
+#ex2-2005.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: __anonstruct_Struct3_24 & void_star
+caught
+
+
+==============================================================
+#ex3-9605-1.c (false-free)
+
+------------------------------------
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+#ex3-a.c: OK
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: node & void_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: node & void_star")
+
+------------------------------
+Checking procedure while_16_2$int~int~int_star...
+Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex3-9605-1.c",Line:17,Col:4
+
+Procedure while_16_2$int~int~int_star FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+
+
+
+==============================================================
+#ex3-9605-2.c (false-defer)
+
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+
+==============================================================
+#ex3-9605-3.c (true-memsafe)
+
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+==============================================================
+#ex4-lockfree0.c (true-memsafe)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex5-lockfree1.c (false-memsafe)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex6-lockfree2.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+==============================================================
+# ex7-lockfree3.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex8-t19.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
+
+==============================================================
+# ex9-t19.c (true-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
+==============================================================
+# ex10-t0102.c (false-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
+==============================================================
+# ex11-t0102.c (true-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
+
+==============================================================
+
+
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================

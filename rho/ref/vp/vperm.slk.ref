@@ -1,0 +1,80 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp*N@zero[x1,v2,v1]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Fail.(may) cause:(v1,@zero) cannot satisfy (v1,@full)
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>emp*N@zero[x1,v2,v1]&v1=x1&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>emp*N@full[x1]@zero[v2,v1]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 6: Fail.(may) cause:(v1,@zero) cannot satisfy (v1,@value)
+
+
+Entail 7: Fail.(may) cause:(v1',@zero) cannot satisfy (v1',@value)
+
+
+Entail 8: Fail.(may) cause:OrL[(v1,@zero) cannot satisfy (v1,@value),Mismatch non-zero variable permission in consequent [(v1,@value)]]
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>emp*N@full[x1]@zero[v2,v1]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 10: Valid. 
+
+Residue:
+ <1>emp*N@full[x1]@zero[v2,v1]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 11: Valid. 
+
+Residue:
+ <1>
+    emp*N@full[x3]@zero[v2,v1]&{FLOW,(4,5)=__norm#E}[]
+    or emp*N@full[x3]@zero[v2]&{FLOW,(4,5)=__norm#E}[]
+    
+[[||OR|| ==> ]]
+
+
+
+Entail 12: Valid. 
+
+Residue:
+ <1>emp*N@zero[x3]&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 13: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 14: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+[Warning] False ctx
+
+Entail 15: Valid. 
+
+

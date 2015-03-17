@@ -1,0 +1,42 @@
+
+!!!Full processing file "vp/ex13b-err-fork-thread.ss"
+Parsing file "vp/ex13b-err-fork-thread.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$int... 
+( []) :vp/ex13b-err-fork-thread.ss:13: 8: v_int_13_1348 does not have @full permission to write.
+
+(Cause of ParCase Failure):vp/ex13b-err-fork-thread.ss:13: 8:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message:  var permission leakage  N@full[n]@zero[v_int_13_1348]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex13b-err-fork-thread.ss",Line:13,Col:8
+
+ERROR: at vp/ex13b-err-fork-thread.ss_13:8_13:9
+Message: v_int_13_1348 does not have @full permission to write.
+
+Procedure foo$int FAIL.(2)
+
+Exception Failure("v_int_13_1348 does not have @full permission to write.") Occurred!
+
+Error(s) detected when checking procedure foo$int
+
+0 false contexts at: ()
+
+Total verification time: 0.396023 second(s)
+	Time spent in main process: 0.376023 second(s)
+	Time spent in child processes: 0.02 second(s)
+

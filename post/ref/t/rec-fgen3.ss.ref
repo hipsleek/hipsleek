@@ -1,0 +1,58 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-fgen3.ss"
+Parsing file "t/rec-fgen3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f$int~int] for f$int~int
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1329: ( n=res & k<=res) -->  post_1329(n,k,res,flow),
+RELDEFN post_1329: ( n<k & post_1329(v_int_15_1352,k,res,flow) & post_1329(1+
+n,k,v_int_15_1352,flow)) -->  post_1329(n,k,res,flow)]
+*************************************
+
+Post Inference result:
+f$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((res>=(1+n) & res=k) | (res>=k & res=n))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume (((v_int_15_1382>=(1+v_int_15_1380) & v_int_15_1382=k') | 
+(v_int_15_1382>=k' & v_int_15_1382=v_int_15_1380))) & v_int_15_1380=1+n' & 
+n'=n & k'=k & n'<k' & !(v_bool_14_1312') & (((v_int_15_1311'>=(1+
+v_int_15_1382) & v_int_15_1311'=k') | (v_int_15_1311'>=k' & 
+v_int_15_1311'=v_int_15_1382))) & 
+res=v_int_15_1311' & fpost_1358(v_int_15_1380,k') & fpost_1358(v_int_15_1382,k') --> fpost_1358(n,k).
+
+ termAssume v_bool_14_1312' & k'<=n' & k'=k & n'=n & 
+res=n' --> fpost_1358(n,k).
+
+ termAssume (((v_int_15_1310'>=(1+v_int_15_1380) & v_int_15_1310'=k') | 
+(v_int_15_1310'>=k' & v_int_15_1310'=v_int_15_1380))) & v_int_15_1380=1+n' & 
+n'=n & k'=k & n'<k' & 
+!(v_bool_14_1312') & fpre_0(n,k) --> fpre_0(v_int_15_1310',k').
+
+ termAssume !(v_bool_14_1312') & n'<k' & k'=k & n'=n & v_int_15_1307'=1+
+n' & fpre_0(n,k) --> fpre_0(v_int_15_1307',k').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] k<=n@B,[4] n<k@R]
+]
+Starting z3... 

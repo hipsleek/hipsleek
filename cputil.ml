@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (* This module provides util for cpure *)
 open Globals
 open Gen.Basic
@@ -73,3 +75,23 @@ let psv = Cprinter.string_of_spec_var in
  let pr1 = (pr_list psv) in
  let pr2 = pr_list pr1 in
  Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+
+let sel_subst_x p sst drop_svl=
+  if drop_svl = [] then
+    p
+  else
+    let sst1 = List.fold_left (fun r (sv1, sv2) -> begin
+        let b1 = mem_svl sv1 drop_svl in
+        let b2 = mem_svl sv2 drop_svl in
+        match b1,b2 with
+          | true, false -> r@[(sv1,sv2)]
+          | false, true -> r@[(sv2,sv1)]
+          | _ -> r
+    end
+    ) [] sst in
+    if sst1 = [] then p else subst sst1 p
+
+let sel_subst p sst drop_svl=
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_3 "sel_subst" !print_formula pr1 !print_svl !print_formula
+      sel_subst_x p sst drop_svl

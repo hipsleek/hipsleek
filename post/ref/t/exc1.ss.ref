@@ -1,0 +1,17 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc1.ss"
+Parsing file "t/exc1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+
+1 false contexts at: ( (12,4) )
+
+Total verification time: 0.376021 second(s)
+	Time spent in main process: 0.352021 second(s)
+	Time spent in child processes: 0.024 second(s)
+

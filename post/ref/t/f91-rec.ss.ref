@@ -1,0 +1,26 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/f91-rec.ss"
+Parsing file "t/f91-rec.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+12 false contexts at: ( (25,13)  (26,7)  (26,24)  (26,22)  (26,18)  (26,14)  (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+
+Total verification time: 0.660039 second(s)
+	Time spent in main process: 0.600036 second(s)
+	Time spent in child processes: 0.060003 second(s)
+

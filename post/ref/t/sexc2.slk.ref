@@ -1,0 +1,8 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+File "t/sexc2.slk", line 1, characters 0-5
+ error: Stream.Error("illegal begin of sprog")
+ at:error at: 
+SLEEK FAILURE (END)
+

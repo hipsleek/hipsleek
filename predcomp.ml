@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
   Predicate compiler: compiles predicates to executable code.
 
@@ -126,6 +128,7 @@ and aug_class_name (t : typ) = match t with
   | Tup2 _ -> "Tup2"
   | Bptyp -> "Bperm"
   | HpT -> "HeapP"
+  (* | SLTyp -> "SLAug" *)
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
@@ -272,7 +275,7 @@ and compile_disjunct (prog : C.prog_decl) (f0 : formula) (input_vars : ident lis
   | Exists ({formula_exists_heap = h;
 			 formula_exists_pure = pure;
 			 formula_exists_pos = pos}) -> begin
-	  let _ = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in
+	  let () = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in
 		(* Compile heap for now *)
 	  let h_exp, h_out, h_map = compile_heap prog f0 input_vars h in
 	  let evars_sv, _ = split_quantifiers f0 in
@@ -1149,21 +1152,24 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
   | CP.Max (e1, e2, pos) -> begin
       let ce1, p1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
-      let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.max";
-      exp_call_nrecv_arguments = [ce1; ce2];
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+      let ce = CallNRecv ({
+        exp_call_nrecv_method = "IntAug.max";
+        exp_call_nrecv_arguments = [ce1; ce2];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
     end
   | CP.Min (e1, e2, pos) -> begin
       let ce1, p1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
       let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.min";
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [ce1; ce2];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [ce1; ce2];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
     end
   | CP.Var (sv, pos) -> begin
@@ -1438,11 +1444,13 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	let cem, pbcem = gen_pure_exp emax vmap unbound_vars in
 	let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
-	let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
-        exp_call_nrecv_lock = None;
-	exp_call_nrecv_arguments = [ce1; ce2];
-	exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-	exp_call_nrecv_pos = pos}) in
+	let maxe = CallNRecv ({
+    exp_call_nrecv_method = "Math.max";
+    exp_call_nrecv_lock = None;
+    exp_call_nrecv_arguments = [ce1; ce2];
+    exp_call_nrecv_ho_arg = None;
+    exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+    exp_call_nrecv_pos = pos}) in
 	let ce = Binary ({exp_binary_op = OpEq;
 	exp_binary_oper1 = cem;
 	exp_binary_oper2 = maxe;
@@ -1454,11 +1462,13 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	let cem, pbcem = gen_pure_exp emin vmap unbound_vars in
 	let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
 	let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
-	let mine = CallNRecv ({exp_call_nrecv_method = "Math.min";
-        exp_call_nrecv_lock = None;
-	exp_call_nrecv_arguments = [ce1; ce2];
-	exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-	exp_call_nrecv_pos = pos}) in
+	let mine = CallNRecv ({
+    exp_call_nrecv_method = "Math.min";
+    exp_call_nrecv_lock = None;
+    exp_call_nrecv_arguments = [ce1; ce2];
+    exp_call_nrecv_ho_arg = None;
+    exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+    exp_call_nrecv_pos = pos}) in
 	let ce = Binary ({exp_binary_op = OpEq;
 	exp_binary_oper1 = cem;
 	exp_binary_oper2 = mine;
@@ -1636,10 +1646,10 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
      checkers for predicate invocations will use the same name as the
      root pointer for the predicate instance.
   *)
-  (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
+  (*  let () = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0,_, _,_ = split_components base in
+  let h, pure0,_,_, _,_ = split_components base in
   let pos = pos_of_formula disj in
   (* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1651,7 +1661,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
   let pure0 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0  in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
-  (*  let _ = print_vmap vmap in *)
+  (*  let () = print_vmap vmap in *)
   (* compile *)
   (* tests *)
   let h_exp = gen_heap prog h vmap unbound_vars in
@@ -1728,6 +1738,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_args_wi =  List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
+    proc_ho_arg = None;
     proc_return = Bool;
     (* proc_static_specs = Iformula.mkEFalseF (); *)
     proc_static_specs = Iformula.mkETrueF ();
@@ -1755,16 +1766,20 @@ and combine_disj_results disj_results pos : exp = match disj_results with
       let bvar_name = fresh_var_name "xxx" pos.start_pos.Lexing.pos_lnum in
       let disj_res = Var ({exp_var_name = bvar_name;
       exp_var_pos = pos}) in
-      let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
-      let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
-      exp_call_nrecv_lock = None;
-      exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
-      exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
-      exp_call_nrecv_pos = pos}) in
+      let call = CallNRecv ({
+        exp_call_nrecv_method = disj_proc.proc_name;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
+      let undo_call' = CallNRecv ({
+        exp_call_nrecv_method = disj_proc.proc_name;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
+        exp_call_nrecv_pos = pos}) in
       let undo_call = VarDecl {exp_var_decl_type = Bool;
       exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
       exp_var_decl_pos = pos } in
@@ -1834,11 +1849,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   *)
   let in_names = List.map CP.name_of_spec_var in_params in
   let vmap = H.create 103 in
-  let _ = List.iter 
+  let () = List.iter 
     (fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
   let pbvars0 = gen_partially_bound_params out_params (C.formula_of_unstruc_view_f vdef) in
   (* update partially bound vars for vdef *)
-  let _ = update_partially_bound vdef pbvars0 in
+  let () = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
@@ -1855,6 +1870,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
+    proc_ho_arg = None;
     proc_return = Bool;
     proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();

@@ -107,23 +107,24 @@ module Make (Token : SleekTokenS)
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
-	[("assert", ASSERT);
+  [("assert", ASSERT);
    ("assert_exact", ASSERT_EXACT);
    ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
-	 ("assume", ASSUME);
-	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
+   ("assume", ASSUME);
+   ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("ann", ANN_KEY);
    ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
-	 ("bagmin", BAGMIN);
+   ("bagmin", BAGMIN);
    ("bag", BAG);
-     ("Barrier", BARRIER);
-	 ("bind", BIND);
-	 ("bool", BOOL);
-	 ("break", BREAK);
-	 ("case",CASE);
+   ("Barrier", BARRIER);
+   ("bind", BIND);
+   ("bool", BOOL);
+   ("break", BREAK);
+   ("case",CASE);
    ("catch", CATCH);
    ("check_normalize", CHECKNORM);
    ("checkeq", CHECKEQ);
@@ -155,30 +156,30 @@ module Make (Token : SleekTokenS)
    ("infer_inexact", INFER_INEXACT);
    ("relation_infer", REL_INFER);
    ("capture_residue", CAPTURERESIDUE);
-	 ("class", CLASS);
-	 (* ("coercion", COERCION); *)
-	 ("compose", COMPOSE);
+   ("class", CLASS);
+   (* ("coercion", COERCION); *)
+   ("compose", COMPOSE);
    ("combine", COMBINE);
-	 ("const", CONST);
-	 ("continue", CONTINUE);
-	 ("data", DATA);
-	 ("debug", DDEBUG);
-	 ("diff", DIFF);
-	 ("dynamic", DYNAMIC);
-	 ("else", ELSE_TT);
+   ("const", CONST);
+   ("continue", CONTINUE);
+   ("data", DATA);
+   ("debug", DDEBUG);
+   ("diff", DIFF);
+   ("dynamic", DYNAMIC);
+   ("else", ELSE_TT);
    ("emp", EMPTY);
-	 ("ensures", ENSURES);
+   ("ensures", ENSURES);
    ("ensures_exact", ENSURES_EXACT);
    ("ensures_inexact", ENSURES_INEXACT);
-	 ("enum", ENUM);
-	 (* ("ex", EXISTS); *)
-	 ("exists", EXISTS);
-	 ("extends", EXTENDS);
-	 ("false", FALSE);
+   ("enum", ENUM);
+   (* ("ex", EXISTS); *)
+   ("exists", EXISTS);
+   ("extends", EXTENDS);
+   ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
-	 ("float", FLOAT);
-	 ("forall", FORALL);
+   ("float", FLOAT);
+   ("forall", FORALL);
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
@@ -188,70 +189,70 @@ module Make (Token : SleekTokenS)
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
-	 ("in", IN_T);
+   ("in", IN_T);
    ("infer", INFER);
-	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
+   ("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
-	 ("int", INT);
-         ("char",INT);
-	 ("INFint", INFINT_TYPE);
-	 ("intersect", INTERSECT);
-	 ("inv", INV);
-         ("inv_exact", INV_EXACT);
-         ("inv_sat", INV_SAT);
-         ("BG", BG);
-	 ("inv_lock", INVLOCK);
+   ("int", INT);
+   ("char", INT);
+   ("INFint", INFINT_TYPE);
+   ("intersect", INTERSECT);
+   ("inv", INV);
+   ("inv_exact", INV_EXACT);
+   ("inv_sat", INV_SAT);
+   ("BG", BG);
+   ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA TLEM);
-	 ("lemma_prop", LEMMA TLEM_PROP);
-	 ("lemma_split", LEMMA TLEM_SPLIT);
-	 ("lemma_test", LEMMA TLEM_TEST);
-	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
-	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
-         ("lemma_safe", LEMMA TLEM_SAFE);
-	 ("lemma_infer", LEMMA TLEM_INFER);
-         ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
-	 (* ("lemma_exact", LEMMA (\* true *\)); *)
+   ("lemma", LEMMA TLEM);
+   ("lemma_prop", LEMMA TLEM_PROP);
+   ("lemma_split", LEMMA TLEM_SPLIT);
+   ("lemma_test", LEMMA TLEM_TEST);
+   ("lemma_test_new", LEMMA TLEM_TEST_NEW);
+   ("lemma_unsafe", LEMMA TLEM_UNSAFE);
+   ("lemma_safe", LEMMA TLEM_SAFE);
+   ("lemma_infer", LEMMA TLEM_INFER);
+   ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
+   (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
-	 ("let", LET);
-	 ("max", MAX);
-	 ("min", MIN);
-	 ("new", NEW);
-	 ("notin", NOTIN);
+   ("let", LET);
+   ("max", MAX);
+   ("min", MIN);
+   ("new", NEW);
+   ("notin", NOTIN);
    ("notinlist", NOTINLIST);
-	 ("null", NULL);
-	 ("off", OFF);
-	 ("on", ON);
-	 ("or", ORWORD);
-	 ("and", ANDWORD);
-	 ("macro",PMACRO);
-     ("perm",PERM);
-     ("pred", PRED);
-     ("spec", SPEC);
-     ("pred_prim", PRED_PRIM);
-     ("pred_extn", PRED_EXT);
-     ("hip_include", HIP_INCLUDE);
-     ("pred_split", PRED_SPLIT);
-     ("pred_norm_disj", PRED_NORM_DISJ);
-     ("pred_spec", PRED_SPEC);
-     ("pred_norm_seg", PRED_NORM_SEG);
-     ("print", PRINT);
-     ("print_lemmas", PRINT_LEMMAS);
-     ("mem", MEM);
-     ("memE", MEME);
-	 ("dprint", DPRINT);
-	 ("sleek_compare", CMP);
+   ("null", NULL);
+   ("off", OFF);
+   ("on", ON);
+   ("or", ORWORD);
+   ("and", ANDWORD);
+   ("macro",PMACRO);
+   ("perm",PERM);
+   ("pred", PRED);
+   ("spec", SPEC);
+   ("pred_prim", PRED_PRIM);
+   ("pred_extn", PRED_EXT);
+   ("hip_include", HIP_INCLUDE);
+   ("pred_split", PRED_SPLIT);
+   ("pred_norm_disj", PRED_NORM_DISJ);
+   ("pred_spec", PRED_SPEC);
+   ("pred_norm_seg", PRED_NORM_SEG);
+   ("print", PRINT);
+   ("print_lemmas", PRINT_LEMMAS);
+   ("mem", MEM);
+   ("memE", MEME);
+   ("dprint", DPRINT);
+   ("sleek_compare", CMP);
    ("raise", RAISE);
-("relation", REL);
-	 ("requires", REQUIRES);
+   ("relation", REL);
+   ("requires", REQUIRES);
    ("refines", REFINES);
-	 ("res", RES "res");
+   ("res", RES "res");
    ("rev",REVERSE);
-	 ("return", RETURN);
-	 ("self", SELFT "self");
+   ("return", RETURN);
+   ("self", SELFT "self");
    ("set",SET);
-	 ("split", SPLIT);
-	 ("LexVar", LEXVAR);
+   ("split", SPLIT);
+   ("LexVar", LEXVAR);
    ("template", TEMPL);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
@@ -260,32 +261,35 @@ module Make (Token : SleekTokenS)
    ("MayLoop", MAYLOOP);
    (* ("TermU", TERMU); *)
    (* ("TermR", TERMR); *)
-	 ("subset", SUBSET);
-	 ("static", STATIC);
+   ("subset", SUBSET);
+   ("static", STATIC);
    ("tail",TAIL);
-	 ("then", THEN);
-	 ("this", THIS "this");
+   ("then", THEN);
+   ("this", THIS "this");
    ("time", DTIME);
    ("throws", THROWS);
-	 ("to", TO);
-	 ("true", TRUE);
+   ("to", TO);
+   ("true", TRUE);
    ("try", TRY);
-	 ("unfold", UNFOLD);
-	 ("union", UNION);
+   ("unfold", UNFOLD);
+   ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
-	 ("void", VOID);
+   ("void", VOID);
    (*("variance", VARIANCE);*)
-	 ("while", WHILE);
+   ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
    (* Template *)
    ("template", TEMPLATE);
    ("template_solve", TEMPL_SOLVE);
-	 (flow, FLOW flow);]
+   (flow, FLOW flow);
+   ("par", PAR);
+   (* ("skip", SKIP) *)
+  ]
 }
   
   
@@ -294,17 +298,19 @@ module Make (Token : SleekTokenS)
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
   let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9']
   let identseq = alpha identchar* (* An Hoa : a single identifier *)
-	let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
+    let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
   let locname = ident
   let not_star_symbolchar = ['$' '!' '%' '&' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~' '\\']
   let symbolchar = '*' | not_star_symbolchar
   let hexa_char = ['0'-'9' 'A'-'F' 'a'-'f']
   let decimal_literal = ['0'-'9'] ['0'-'9' '_']*
+  (* let decimal_literal = ['0'-'9'] ['0'-'9']* *)
   let hex_literal = '0' ['x' 'X'] hexa_char ['0'-'9' 'A'-'F' 'a'-'f' '_']*
   let oct_literal = '0' ['o' 'O'] ['0'-'7'] ['0'-'7' '_']*
   let bin_literal = '0' ['b' 'B'] ['0'-'1'] ['0'-'1' '_']*
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
   let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
+  let frac_literal = int_literal ('/') int_literal
   
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
@@ -315,6 +321,14 @@ rule tokenizer file_name = parse
   | float_literal as f
         { try  FLOAT_LIT(float_of_string f, f)
           with Failure _ -> err (Literal_overflow "float") (Loc.of_lexbuf lexbuf) }
+  (* | frac_literal as f *)
+  (*   { try *)
+  (*       let div_index = String.index f '/' in *)
+  (*       let num = int_of_string (String.sub f 0 div_index) in *)
+  (*       let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in *)
+  (*       FRAC_LIT (Frac.make num den, f) *)
+  (*     with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf) *)
+  (*   } *)
   | (int_literal as i) "l"
         { try  INT_LITER(int_of_string i, i) (*can try different converter if needed*)
           with Failure _ -> err (Literal_overflow "int32") (Loc.of_lexbuf lexbuf) }
@@ -345,7 +359,9 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
-  | "@A" { ACCS }  
+  | "##OPTION " (['0'-'9' 'A'-'Z' 'a'-'z' '-' ' ' '.' '_' '"' ]* as x) {ARGOPTION (Camlp4.Struct.Token.Eval.string x)}
+  | "@frac" { PFRAC }
+  | "@A" { ACCS }
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
@@ -373,10 +389,12 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@leak" { INFER_AT_CLASSIC }
+  | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
+  | "@ver_post" { INFER_AT_VER_POST }
   | "@imm" { INFER_AT_IMM }
   | "@shape" { INFER_AT_SHAPE }
   | "@error" { INFER_AT_ERROR }
@@ -391,6 +409,7 @@ rule tokenizer file_name = parse
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
+  | "@lend" { PLEND }
   | "@Split" { SPLITANN } (*Split annotation*)
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
@@ -440,6 +459,8 @@ rule tokenizer file_name = parse
   | "-->" { CONSTR }
   | "<#" { TOPAREN }
   | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* | "-%" { IN_RFLOW }  *)
+  (* | "+%" { OUT_RFLOW } *)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }
@@ -463,7 +484,7 @@ rule tokenizer file_name = parse
       { let pos = lexbuf.lex_curr_p in
         lexbuf.lex_curr_p <- { pos with pos_bol  = pos.pos_bol  + 1 ;
                                         pos_cnum = pos.pos_cnum + 1 }; EOF      }
-    | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
+  | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
 
 (* search for the first open brace following java keyword *)
 and java file_name = parse 
@@ -489,7 +510,8 @@ and comment file_name = parse
   | _  { comment file_name lexbuf }
 
 and line_comment file_name = parse
-  | newline { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
+  | newline 
+  | eof { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | _ { line_comment file_name lexbuf }
   
 

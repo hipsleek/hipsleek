@@ -1,0 +1,16 @@
+data tree {
+     tree parent;
+     tree left;
+     tree right;
+     tree next;
+}.
+
+data node3 {
+     node3 left;
+     node3 right;
+     node3 next;
+}.
+
+pred tll<ll,lr> == self::node3<null,null,lr> & self=ll
+     or self::node3<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+     .

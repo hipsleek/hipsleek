@@ -1,0 +1,46 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc.ss"
+Parsing file "t/exc.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+dprint: t/exc.ss:19: ctx:  List of Failesc Context: [FEC(0, 2, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: [(,0 ); (,1 )]
+  State:htrue&v_bool_12_1349' & 0<x' & x'=x & v_int_15_1345'=2 & res=v_int_15_1345'&{FLOW,(20,21)=__Return#E}[]
+;
+  Path: [(,1 ); (,2 )]
+  State:htrue&!(v_bool_12_1349') & x'<=0 & x'=x & v_int_17_1348'=1+x' & res=v_int_17_1348'&{FLOW,(20,21)=__Return#E}[]
+
+  ]
+ ]
+
+Post condition cannot be derived:
+  (may) cause:  res=2 & 0<x |-  res=x+1. LOCS:[15;5;12;8] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/exc.ss",Line:17,Col:11
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure loop$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure loop$int
+
+0 false contexts at: ()
+
+Total verification time: 0.360021 second(s)
+	Time spent in main process: 0.34002 second(s)
+	Time spent in child processes: 0.020001 second(s)
+

@@ -1,4 +1,7 @@
+#include "xdebug.cppo"
 open Globals
+open VarGen
+
 open Error
 open Cpure
 type var_rep = string

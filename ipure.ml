@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Created 19-Feb-2006
 
@@ -6,6 +7,7 @@
 
 open Globals
 open Gen.Basic
+open VarGen
 (* open Label_only *)
 open Label
 include Ipure_D
@@ -139,7 +141,7 @@ end;;
 module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
 
 let linking_exp_list = ref (Hashtbl.create 100)
-let _ = let zero = IConst (0, no_pos)
+let () = let zero = IConst (0, no_pos)
 		in Hashtbl.add !linking_exp_list zero 0
 
 
@@ -200,10 +202,10 @@ and pfv (pf: p_formula)=
     | BagSub (a1, a2, _) -> combine_avars a1 a2
     | BagMax (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
     | BagMin (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
-    | VarPerm (ct,ls,_) -> 
-      ls
+  (*   | VarPerm (ct,ls,_) ->                         *)
+  (*     ls                                           *)
   (* let ls1 = List.map (fun v -> (v,Unprimed)) ls in *)
-  (* ls1 *)
+  (* ls1                                              *)
     | ListIn (a1, a2, _) -> 
       let fv1 = afv a1 in
       let fv2 = afv a2 in
@@ -588,7 +590,7 @@ and pos_of_pf pf=
      | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
      | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
      | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
-     | VarPerm (_,_,p) -> p
+     (* | VarPerm (_,_,p) -> p *)
      | XPure xp ->  xp.xpure_view_pos
    end
 
@@ -789,10 +791,10 @@ and p_apply_one ((fr, t) as p) pf =
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> BagMax (v_apply_one p v1, v_apply_one p v2, pos)
   | BagMin (v1, v2, pos) -> BagMin (v_apply_one p v1, v_apply_one p v2, pos)
-  | VarPerm (ct,ls,pos) -> (*TO CHECK*)
-      let func v = v_apply_one p v in
-      let ls1 = List.map func ls in
-      VarPerm (ct,ls1,pos)
+  (* | VarPerm (ct,ls,pos) -> (*TO CHECK*) *)
+  (*     let func v = v_apply_one p v in   *)
+  (*     let ls1 = List.map func ls in     *)
+  (*     VarPerm (ct,ls1,pos)              *)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -931,7 +933,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | BagMin (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)	
-  | VarPerm _ -> [] (*can not have anon_var*)
+  (* | VarPerm _ -> [] (*can not have anon_var*) *)
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -1010,7 +1012,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
 	| BagNotIn (_, e, _) -> find_lexp_exp e ls
 	| BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| BagMin _ | BagMax _ -> []
-	| VarPerm _ -> []
+	(* | VarPerm _ -> [] *)
 	| ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1153,12 +1155,12 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | EqMax (exp1, exp2,exp3,_)
   | EqMin (exp1, exp2,exp3,_) -> (contain_vars_exp exp1) || (contain_vars_exp exp2) || (contain_vars_exp exp3)
   | LexVar _ -> false
+  (* | VarPerm _ *)
   | BagIn (_ , exp1 , _)
   | BagNotIn (_ , exp1 , _) -> (contain_vars_exp exp1)
   | BagSub (exp1, exp2,_) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | BagMin _
-  | BagMax _ 
-  | VarPerm _ -> false
+  | BagMax _ -> false
   | ListIn (exp1, exp2,_) 
   | ListNotIn (exp1, exp2,_) 
   | ListAllN (exp1, exp2,_) 
@@ -1667,7 +1669,7 @@ and float_out_pure_min_max (p : formula) : formula =
         		let t = BForm ((BagSub (ne1, ne2, l), il), lbl) in
         		add_exists t np1 np2 l
           | SubAnn _
-      | VarPerm _
+      (* | VarPerm _ *)
           | BagMin _
           | BagMax _ -> BForm (b,lbl)
           | ListIn (e1, e2, l) ->
@@ -1768,8 +1770,8 @@ let rec typ_of_exp (e: exp) : typ =
     )
   in
   let merge_types typ1 typ2 =
-    (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
-    (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+    (* let () = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+    (* let () = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
     if (typ1 = UNK) then typ2
     else if (typ1 = typ2) then typ1
     else match typ2  with
@@ -1914,8 +1916,8 @@ let trans_special_formula s (p:formula) vars =
                         let s1 = (unprimed_param,old_param) in
                         let s2 = (primed_param,new_param) in
                         (*??? QUICK TRICK*)
-                        (* let _ = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
-                        (* let _ = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
+                        (* let () = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
+                        (* let () = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
                         let new_v1 = subst_var s1 (id1,p1) in
                         let new_v1 = subst_var s2 new_v1 in
                         let new_v2 = subst_var s1 (id2,p2) in
@@ -2079,7 +2081,8 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
       let (pf,il) = e in
       let npf = (match pf with
         | Frm _ | BConst _ | XPure _
-        | BVar _ | BagMin _ | SubAnn _ | VarPerm _ | BagMax _ -> pf
+        (* | VarPerm _ *)
+        | BVar _ | BagMin _ | SubAnn _ | BagMax _ -> pf
         | Lt (e1,e2,l) ->
             let ne1 = transform_exp f_exp e1 in
             let ne2 = transform_exp f_exp e2 in

@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
   The frontend engine of SLEEK.
 *)
@@ -32,7 +34,7 @@ let string_of_vres t =
 
 
 let proc_sleek_result_validate is_valid lc =
-  if not is_valid then
+  let eres = if not is_valid then
   let final_error_opt = CF.get_final_error lc in
   match final_error_opt with
     | Some (_, fk) -> begin
@@ -43,6 +45,8 @@ let proc_sleek_result_validate is_valid lc =
       end
     | None -> VR_Fail (-1) (* INCONSISTENCY *)
   else VR_Valid
+  in
+  (eres, CF.flow_formula_of_list_context lc)
   (* match lc with *)
   (*   | CF.FailCtx _ -> *)
   (*     if CF.is_must_failure lc then *)
@@ -65,7 +69,7 @@ let proc_sleek_result_validate is_valid lc =
 
 let proc_sleek_result_validate b lc =
   Debug.no_1 "proc_sleek_result_validate" 
-  Cprinter.string_of_list_context_short string_of_vres 
+  Cprinter.string_of_list_context_short (fun (er,_) -> string_of_vres er)
   (fun _ -> proc_sleek_result_validate b lc) lc
 
 module H = Hashtbl
@@ -108,6 +112,14 @@ I.data_invs = []; (* F.mkTrue no_pos; *)
 I.data_is_template = false;
 I.data_methods = [] }
 
+let iexc_def =  {I.data_name = raisable_class;
+I.data_fields = [];
+I.data_pos = no_pos;
+I.data_parent_name = "Object";
+I.data_invs = []; (* F.mkTrue no_pos; *)
+I.data_is_template = false;
+I.data_methods = [] }
+
 let ithrd_def =  {I.data_name = Globals.thrd_name ;
 I.data_fields = [];
 I.data_pos = no_pos;
@@ -117,7 +129,7 @@ I.data_is_template = false;
 I.data_methods = [] }
 
 let iprog = { I.prog_include_decls =[];
-I.prog_data_decls = [iobj_def;ithrd_def];
+I.prog_data_decls = [iobj_def;ithrd_def;iexc_def];
 I.prog_global_var_decls = [];
 I.prog_logical_var_decls = [];
 I.prog_enum_decls = [];
@@ -160,10 +172,13 @@ let cprog = ref {
     (*Cast.prog_left_coercions = [];
     Cast.prog_right_coercions = [];*)
     Cast. prog_barrier_decls = []}
-	
-let _ = 
-	Lem_store.all_lemma # clear_right_coercion;
-	Lem_store.all_lemma # clear_left_coercion
+
+let _ =
+  Lem_store.all_lemma # clear_right_coercion;
+  Lem_store.all_lemma # clear_left_coercion
+
+let update_iprog ip=
+  iprog = ip
 
 (* Moved to CFormula *)
 (* let residues =  ref (None : (CF.list_context * bool) option)    (\* parameter 'bool' is used for printing *\) *)
@@ -247,7 +262,7 @@ let clear_all () =
 (*   let pr2 = string_of_bool in *)
 (*   Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name *)
 
-let silenced_print f s = if !Globals.silence_output then () else f s 
+let silenced_print f s = if !Gen.silence_output then () else f s 
 
 (*no longer used*)
 (* let process_pred_def pdef =  *)
@@ -619,8 +634,14 @@ let process_list_lemma ldef_lst =
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
-    let tmp = iprog.I.prog_data_decls in
-    iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
+    (* let tmp = iprog.I.prog_data_decls in *)
+    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_compare dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
+    let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
+      let _ = Iast.build_exc_hierarchy true iprog in
+      let _ = exlist # compute_hierarchy  in
+      let _ = iprog.I.prog_data_decls <- iprog.I.prog_data_decls@[iexc_def] in
+      ()
+    in ()
   else begin
     dummy_exception() ;
     (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
@@ -894,9 +915,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
                 Cpure.mkNull sv no_pos) subst_vars in
             let new_const = List.fold_left (fun f0 f1 ->
                 Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
-            let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components f in
+            let new_h, new_p, new_vp, new_fl, new_t, new_a = Cformula.split_components f in
             let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
-            let new_f = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in
+            let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
             new_f
   in
 	match mf0 with
@@ -1002,7 +1023,7 @@ let run_simplify (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.simplify_tp pf in
@@ -1018,7 +1039,7 @@ let run_hull (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.hull pf in
@@ -1035,7 +1056,7 @@ let run_pairwise (iante0 : meta_formula) =
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
-  let (h,p,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.tp_pairwisecheck pf in
@@ -1501,7 +1522,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate exp_res ils_es =
+let process_validate exp_res opt_fl ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1546,7 +1567,7 @@ let process_validate exp_res ils_es =
           false, [], []
     | Some (lc, res, ldfa) -> 
           begin (*res*)
-            let res = proc_sleek_result_validate res lc in
+            let res, fls = proc_sleek_result_validate res lc in
             let unexp =
               match res, exp_res with
                 | VR_Valid, VR_Valid -> None
@@ -1557,7 +1578,22 @@ let process_validate exp_res ils_es =
                 | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
-              | None -> res_str := "OK"
+              | None -> begin
+                  match opt_fl with
+                    | None -> res_str := "OK" (*do not compare expect flow *)
+                    | Some id -> if not !Globals.enable_error_as_exc then res_str := "OK" else
+                          let reg = Str.regexp "\#E" in
+                          let res_fl_ids = List.map (fun ff ->
+                          let fl_w_sharp = exlist # get_closest ff.CF.formula_flow_interval in
+                          Str.global_replace reg "" fl_w_sharp
+                      ) fls in
+                      let _ = Debug.ninfo_hprint (add_str "res_fl_ids" (pr_list pr_id)) res_fl_ids no_pos in
+                      if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
+                        res_str := "OK"
+                      else
+                        let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                        res_str := ( "Expecting flow "^(id))
+                end
               | Some s -> 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := s
@@ -1927,7 +1963,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
@@ -2146,7 +2182,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
     with ex ->
         let exs = (Printexc.to_string ex) in
         let _ = print_exception_result exs (*sel_hps*) num_id in
-		let _ = if !Globals.trace_failure then
+		let _ = if !VarGen.trace_failure then
 		  (print_string "caught\n"; print_backtrace_quiet ()) else () in
         (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
         (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
@@ -2173,15 +2209,18 @@ let process_term_infer () =
   end
 
 let process_check_norm_x (f : meta_formula) =
-  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
-  let num_id = "\nCheckNorm "^nn in  
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) else () in
+  let nn = "(" ^ (string_of_int (sleek_proof_counter#inc_and_get)) ^ ") " in
+  let num_id = "\nCheckNorm " ^ nn in  
+  let () = if (!Globals.print_input || !Globals.print_input_all) 
+    then print_endline_quiet ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
+    else () 
+  in
   let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
-  let (n_tl,cf) = meta_to_formula f false [] []  in
+  let (n_tl, cf) = meta_to_formula f false [] []  in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
   let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
-  let _ = print_string (num_id^": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
+  let _ = print_string (num_id ^ ": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
   () (* TO IMPLEMENT*)
 
 let process_check_norm (f : meta_formula) =
@@ -2274,7 +2313,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       res
     with ex -> 
         (* print_exc num_id *)
-        (if !Globals.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
+        (if !VarGen.trace_failure then (print_string "caught\n"; print_backtrace_quiet ()));
         let _ = print_string ("\nEntail "^nn^": "^(Printexc.to_string ex)^"\n") in
         let _ = if is_tnt_flag then should_infer_tnt := false in
         (*   let _ = match itype with *)

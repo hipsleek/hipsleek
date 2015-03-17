@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen
 open Cpure
@@ -153,7 +155,7 @@ let syscall cmd =
        Buffer.add_channel buf in_chn 1
      done
    with End_of_file -> ());
-  let _ = Unix.close_process (in_chn, out_chn) in
+  let todo_unk = Unix.close_process (in_chn, out_chn) in
   Buffer.contents buf
 
 let search_backward keyword str pos = 
@@ -167,11 +169,11 @@ exception Parse_error
 let clp_process_output lp_output =
   let len = String.length lp_output in
   try
-    let _ = search_backward "ERROR" lp_output (len - 1) in
+    let todo_unk = search_backward "ERROR" lp_output (len - 1) in
     Aborted
   with Not_found ->
     try 
-      let _ = search_backward "infeasible" lp_output (len - 1) in
+      let todo_unk = search_backward "infeasible" lp_output (len - 1) in
       Unsat
     with Not_found -> 
       try
@@ -279,7 +281,7 @@ let get_model solver obj_vars assertions =
   let lp_inp = gen_lp_input solver obj_vars assertions in
   let lp_out = run solver lp_inp in
 
-  let _ = 
+  let () = 
     Debug.tinfo_pprint ">>>>>>> get_model_lp <<<<<<<" no_pos;
     Debug.tinfo_hprint (add_str "lp input:\n " idf) lp_inp no_pos;
     Debug.tinfo_hprint (add_str "lp output: " idf) lp_out no_pos 

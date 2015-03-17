@@ -1,0 +1,28 @@
+
+!!!Full processing file "web/cdl-ex1a-fm.ss"
+Parsing file "web/cdl-ex1a-fm.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+assert:web/cdl-ex1a-fm.ss:66: 2:  : ok
+
+
+assert/assume:web/cdl-ex1a-fm.ss:67: 2:  : failed
+
+
+assert/assume:web/cdl-ex1a-fm.ss:68: 2:  : failed
+
+
+assert/assume:web/cdl-ex1a-fm.ss:69: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 1.832112 second(s)
+	Time spent in main process: 1.736107 second(s)
+	Time spent in child processes: 0.096005 second(s)
+

@@ -1,59 +1,59 @@
-open Gen.Basic
-
+#include "xdebug.cppo"
+open VarGen
 
 let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (* let rec init body stmt cpl binding = match stmt with *)
-    (* | Cast.Label lab -> let _ = print_endline "label" in init body lab.Cast.exp_label_exp cpl binding *)
-    (* | Cast.CheckRef _ -> let _ = print_endline "check ref" in cpl *)
-    (* | Cast.Java _ -> let _ = print_endline "java" in cpl *)
-    (* | Cast.Assert _ -> let _ = print_endline "assert" in cpl *)
-    (* | Cast.Assign assi -> let _ = print_endline "assign" in init body assi.Cast.exp_assign_rhs cpl binding *)
-    (* | Cast.BConst _ -> let _ = print_endline "bconst" in cpl *)
-    (* | Cast.Bind _ -> let _ = print_endline "bind" in cpl *)
-    (* | Cast.Block bl -> let _ = print_endline "block" in init body bl.Cast.exp_block_body cpl binding *)
-    (* | Cast.Barrier _ -> let _ = print_endline "barrier" in cpl *)
-    (* | Cast.Cond co -> let _ = print_endline "cond" in  *)
+    (* | Cast.Label lab -> let () = print_endline "label" in init body lab.Cast.exp_label_exp cpl binding *)
+    (* | Cast.CheckRef _ -> let () = print_endline "check ref" in cpl *)
+    (* | Cast.Java _ -> let () = print_endline "java" in cpl *)
+    (* | Cast.Assert _ -> let () = print_endline "assert" in cpl *)
+    (* | Cast.Assign assi -> let () = print_endline "assign" in init body assi.Cast.exp_assign_rhs cpl binding *)
+    (* | Cast.BConst _ -> let () = print_endline "bconst" in cpl *)
+    (* | Cast.Bind _ -> let () = print_endline "bind" in cpl *)
+    (* | Cast.Block bl -> let () = print_endline "block" in init body bl.Cast.exp_block_body cpl binding *)
+    (* | Cast.Barrier _ -> let () = print_endline "barrier" in cpl *)
+    (* | Cast.Cond co -> let () = print_endline "cond" in  *)
     (*   let (cpl1, binding1) = init body co.Cast.exp_cond_then_arm (List.map (fun (cp, cl) -> (1::cp, cl)) cpl) binding in *)
     (*   let (cpl2, binding2) = init body co.Cast.exp_cond_else_arm (List.map (fun (cp, cl) -> (2::cp, cl)) cpl) binding in *)
     (*   (cpl1@cpl2, binding1@binding2) *)
-    (* | Cast.Cast _ -> let _ = print_endline "cast" in cpl *)
-    (* | Cast.Catch _ -> let _ = print_endline "catch" in cpl *)
-    (* | Cast.Debug _ -> let _ = print_endline "debug" in cpl *)
-    (* | Cast.Dprint _ -> let _ = print_endline "dprint" in cpl *)
-    (* | Cast.FConst _ -> let _ = print_endline "fconst" in cpl *)
-    (* | Cast.ICall _ -> let _ = print_endline "icall" in cpl *)
-    (* | Cast.IConst _ -> let _ = print_endline "iconst" in cpl *)
-    (* | Cast.New _ -> let _ = print_endline "new" in cpl *)
-    (* | Cast.Null _ -> let _ = print_endline "null" in cpl *)
-    (* | Cast.EmptyArray _ -> let _ = print_endline "empty array" in cpl *)
-    (* | Cast.Print _ -> let _ = print_endline "print" in cpl *)
-    (* | Cast.SCall sc -> let _ = print_endline "scall" in *)
+    (* | Cast.Cast _ -> let () = print_endline "cast" in cpl *)
+    (* | Cast.Catch _ -> let () = print_endline "catch" in cpl *)
+    (* | Cast.Debug _ -> let () = print_endline "debug" in cpl *)
+    (* | Cast.Dprint _ -> let () = print_endline "dprint" in cpl *)
+    (* | Cast.FConst _ -> let () = print_endline "fconst" in cpl *)
+    (* | Cast.ICall _ -> let () = print_endline "icall" in cpl *)
+    (* | Cast.IConst _ -> let () = print_endline "iconst" in cpl *)
+    (* | Cast.New _ -> let () = print_endline "new" in cpl *)
+    (* | Cast.Null _ -> let () = print_endline "null" in cpl *)
+    (* | Cast.EmptyArray _ -> let () = print_endline "empty array" in cpl *)
+    (* | Cast.Print _ -> let () = print_endline "print" in cpl *)
+    (* | Cast.SCall sc -> let () = print_endline "scall" in *)
       (* let cl1 = if ((String.compare sc.Cast.exp_scall_method_name "is_null___$node") = 0 or *)
       (*         (String.compare sc.Cast.exp_scall_method_name "is_not_null___$node") = 0) then *)
       (*   sc::cl else cl in *)
       (* if sc.Cast.exp_scall_is_rec then (cp, cl1) else (cp, cl1) *)
       (* (List.map (fun (cp, cl) -> (cp, sc::cl)) cpl, binding) *)
-    (* | Cast.Seq seq -> let _ = print_endline "seq" in  *)
+    (* | Cast.Seq seq -> let () = print_endline "seq" in  *)
     (*   let (cpl1, binding1) = init body seq.Cast.exp_seq_exp1 cpl binding in *)
     (*   init body seq.Cast.exp_seq_exp2 cpl1 binding1 *)
-    (* | Cast.This _ -> let _ = print_endline "this" in cpl *)
-    (* | Cast.Time _ -> let _ = print_endline "time" in cpl *)
-    (* | Cast.Var _ -> let _ = print_endline "var" in cpl *)
-    (* | Cast.VarDecl _ -> let _ = print_endline "var decl" in cpl *)
-    (* | Cast.Unfold _ -> let _ = print_endline "unfold" in cpl *)
-    (* | Cast.Unit _ -> let _ = print_endline "unit" in cpl *)
-    (* | Cast.While _ -> let _ = print_endline "while" in cpl *)
-    (* | Cast.Sharp _ -> let _ = print_endline "sharp" in cpl *)
-    (* | Cast.Try _ -> let _ = print_endline "try" in cpl *)
+    (* | Cast.This _ -> let () = print_endline "this" in cpl *)
+    (* | Cast.Time _ -> let () = print_endline "time" in cpl *)
+    (* | Cast.Var _ -> let () = print_endline "var" in cpl *)
+    (* | Cast.VarDecl _ -> let () = print_endline "var decl" in cpl *)
+    (* | Cast.Unfold _ -> let () = print_endline "unfold" in cpl *)
+    (* | Cast.Unit _ -> let () = print_endline "unit" in cpl *)
+    (* | Cast.While _ -> let () = print_endline "while" in cpl *)
+    (* | Cast.Sharp _ -> let () = print_endline "sharp" in cpl *)
+    (* | Cast.Try _ -> let () = print_endline "try" in cpl *)
     (* | _ -> (cpl, binding) *)
   (* in *)
   (* let rec loop cpl args = *)
-    (* let _ = List.map (fun (cp, cl) ->  *)
-    (*     let _ = List.map (fun c -> *)
+    (* let todo_unk = List.map (fun (cp, cl) ->  *)
+    (*     let todo_unk = List.map (fun c -> *)
     (*         if c.Cast.exp_scall_is_rec *)
     (*         then *)
     (*           let values = ["not_null"] *)
-    (*           let _ = List.map (fun c -> *)
+    (*           let todo_unk = List.map (fun c -> *)
     (*               let name = c.Cast.exp_scall_method_name in *)
     (*               let paras = c.Cast.exp_scall_arguments in *)
     (*               if ((String.compare name "is_null___$node") = 0 and () *)
@@ -115,30 +115,30 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
     | _ -> (cpl, args)
   in
   let string_of_cond_path cp = List.fold_left (fun s i -> s ^ string_of_int(i) ^ ";") "" cp in
-  let _ = print_endline_quiet proc_name in
+  let () = print_endline_quiet proc_name in
   let proc = Cast.find_proc prog proc_name in
-  (* let _ = print_endline (Cprinter.string_of_proc_decl 100 proc) in *)
+  (* let () = print_endline (Cprinter.string_of_proc_decl 100 proc) in *)
   let (cpl, _) = match proc.Cast.proc_body with
     | None -> ([([], [])], [])
     | Some body -> part body [([[0]], [])] proc.Cast.proc_args
   in
-  (* let _ = List.map (fun (cps, _) -> let _ = print_endline "cond path: " in List.map (fun cp -> print_endline (string_of_cond_path cp)) cps) cpl in *)
-  (* let _ = List.map (fun (_, cl) -> let _ = print_endline "call list: " in List.map (fun cl -> print_endline (Cprinter.string_of_exp (Cast.SCall cl))) cl) cpl in *)
-  (* let _ = List.map (fun (il, _) -> let _ = print_endline "il: " in List.map (fun i -> print_string (string_of_int i)) il) link_hpargs_w_path in *)
+  (* let todo_unk = List.map (fun (cps, _) -> let () = print_endline "cond path: " in List.map (fun cp -> print_endline (string_of_cond_path cp)) cps) cpl in *)
+  (* let todo_unk = List.map (fun (_, cl) -> let () = print_endline "call list: " in List.map (fun cl -> print_endline (Cprinter.string_of_exp (Cast.SCall cl))) cl) cpl in *)
+  (* let todo_unk = List.map (fun (il, _) -> let () = print_endline "il: " in List.map (fun i -> print_string (string_of_int i)) il) link_hpargs_w_path in *)
   let a = List.map (fun (cps, _) -> let filted_hprel = 
     List.filter (fun hprel -> 
         let cp_hprel = string_of_cond_path hprel.Cformula.hprel_path in
         List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
     ) constrs0 in
   (List.hd cps, [], filted_hprel)) cpl in
-  let _ = print_endline_quiet "\n*************************************" in
-  let _ = List.map (fun (_, _, hprel_list) -> let _ = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
-  let _ = print_endline_quiet "*************************************" in
+  let () = print_endline_quiet "\n*************************************" in
+  let todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
+  let () = print_endline_quiet "*************************************" in
   a
 
 let subst_formula formula hprel_def =
   let helper formula h_formula hprel_def =
-    if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
+    if (Cformula.get_node_name 14 h_formula == Cformula.get_node_name 15 hprel_def.Cformula.hprel_def_hrel)
     then (
         let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
           | (_, None,_) -> formula
@@ -147,7 +147,7 @@ let subst_formula formula hprel_def =
         List.fold_left (fun all_formula (_, formula,_) ->
             match formula with
               | None -> all_formula
-              | Some f -> Cformula.mkOr all_formula f Globals.no_pos)
+              | Some f -> Cformula.mkOr all_formula f VarGen.no_pos)
             first_formula (List.tl hprel_def.Cformula.hprel_def_body)
     )
     else formula
@@ -229,8 +229,8 @@ let get_case struc_formula prog args hprel_defs =
     ) case_list_list1
   in
   let case0 = helper struc_formula prog in
-  let case1 = Solver.normalize_to_CNF case0 Globals.no_pos in
-  (* let _ = List.map (fun arg -> print_endline (Cprinter.string_of_spec_var arg)) args in *)
+  let case1 = Solver.normalize_to_CNF case0 no_pos in
+  (* let todo_unk = List.map (fun arg -> print_endline (Cprinter.string_of_spec_var arg)) args in *)
   let case2 = Cpure.remove_dup_constraints case1 (* need more *) in
   match case2 with
     | Cpure.And (f1, f2, _) ->
@@ -278,10 +278,10 @@ let partition_paths hprel_defs prog =
 
 let rec group_cases pf_sf_l =
   let is_eq pf1 pf2 =
-    let not_pf1 = Cpure.mkNot pf1 None Globals.no_pos in
-    let not_pf2 = Cpure.mkNot pf2 None Globals.no_pos in
-    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None Globals.no_pos) (Cpure.mkOr not_pf2 pf1 None Globals.no_pos) Globals.no_pos in
-    not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None Globals.no_pos) "check eq" "")
+    let not_pf1 = Cpure.mkNot pf1 None no_pos in
+    let not_pf2 = Cpure.mkNot pf2 None no_pos in
+    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None no_pos) (Cpure.mkOr not_pf2 pf1 None VarGen.no_pos) VarGen.no_pos in
+    not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None no_pos) "check eq" "")
   in
   match pf_sf_l with
     | [] -> []
@@ -293,15 +293,15 @@ let rec group_cases pf_sf_l =
 let check_cases cases specs =
   let rec helper pure_formula =
     let list_conjs = Cpure.split_conjunctions pure_formula in
-    let filtered_list_conjs = List.filter (fun pf -> Tpdispatcher.is_sat 100 (Cpure.mkNot pf None Globals.no_pos) "check true conjs" "") list_conjs in
-    List.fold_left (fun pfs pf -> Cpure.mkAnd pfs pf Globals.no_pos) (List.hd filtered_list_conjs) (List.tl filtered_list_conjs)
+    let filtered_list_conjs = List.filter (fun pf -> Tpdispatcher.is_sat 100 (Cpure.mkNot pf None no_pos) "check true conjs" "") list_conjs in
+    List.fold_left (fun pfs pf -> Cpure.mkAnd pfs pf no_pos) (List.hd filtered_list_conjs) (List.tl filtered_list_conjs)
   in
-  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None Globals.no_pos) (List.hd cases) (List.tl cases) in
-  if not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None Globals.no_pos) "check universe" "")
+  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None no_pos) (List.hd cases) (List.tl cases) in
+  if not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None no_pos) "check universe" "")
   then (cases, specs)
   else (
-      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case Globals.no_pos)) None Globals.no_pos] in
-      let new_specs = specs@[Cformula.mkEFalse Cformula.mkFalseFlow Globals.no_pos] in
+      let new_cases = cases@[Cpure.mkNot (helper (Solver.normalize_to_CNF uni_case no_pos)) None VarGen.no_pos] in
+      let new_specs = specs@[Cformula.mkEFalse Cformula.mkFalseFlow no_pos] in
       (new_cases, new_specs)
   )
 
@@ -340,20 +340,20 @@ let check_cases cases specs =
 (*           Cformula.hprel_def_body = new_body }) main *)
 
 let create_specs hprel_defs prog proc_name =
-  let _ = print_endline_quiet "\n*************************************" in
-  let _ = print_endline_quiet "**************case specs*************" in
-  let _ = print_endline_quiet "*************************************" in
+  let () = print_endline_quiet "\n*************************************" in
+  let () = print_endline_quiet "**************case specs*************" in
+  let () = print_endline_quiet "*************************************" in
   let proc = try List.find (fun proc -> proc.Cast.proc_name = proc_name) (Cast.list_of_procs prog) with
     | Not_found -> raise (Failure "fail proc name")
   in
   if (List.fold_left (fun b hprel_def -> b && (List.length hprel_def.Cformula.hprel_def_body = 1)) true hprel_defs)
   then
-    let _ = print_endline "\n*************************************" in
+    let () = print_endline "\n*************************************" in
     ()
   else
     let partition_hprel_defs = partition_paths hprel_defs prog in
     let grouped_hprel_defs = group_paths partition_hprel_defs in
-    (* let _ = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) grouped_hprel_defs in *)
+    (* let todo_unk = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) grouped_hprel_defs in *)
     (* let grouped_hprel_defs = *)
     (*   if (hd.Cast.proc_is_recursive) *)
     (*   then *)
@@ -363,7 +363,7 @@ let create_specs hprel_defs prog proc_name =
     (*     group_paths partition_hprel_defs *)
     (* in *)
     (* let substed_grouped_hprel_defs = List.map (fun hprel_defs -> subst_hprel_defs hprel_defs) grouped_hprel_defs in *)
-    (* let _ = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) substed_grouped_hprel_defs in *)
+    (* let todo_unk = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) substed_grouped_hprel_defs in *)
     let proc_static_specs = proc.Cast.proc_static_specs in
     let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs (* substed_grouped_hprel_defs *) in
     let args = Cformula.h_fv (List.hd (List.hd grouped_hprel_defs (* substed_grouped_hprel_defs *))).Cformula.hprel_def_hrel in
@@ -372,7 +372,7 @@ let create_specs hprel_defs prog proc_name =
     (* if (check_cases cases specs) *)
     (* then Cformula.ECase { *)
     (*     Cformula.formula_case_branches = group_cases (List.combine cases specs); *)
-    (*     Cformula.formula_case_pos = Globals.no_pos *)
+    (*     Cformula.formula_case_pos = no_pos *)
     (* } *)
     (* else *)
     (* Cformula.mkEList_flatten specs *)
@@ -380,7 +380,7 @@ let create_specs hprel_defs prog proc_name =
     let (new_cases, new_specs) = (cases, specs) in
     let final_spec = Cformula.ECase {
         Cformula.formula_case_branches = group_cases (List.combine new_cases new_specs);
-        Cformula.formula_case_pos = Globals.no_pos
+        Cformula.formula_case_pos = no_pos
     }
     in
     let short_final_spec = 
@@ -391,6 +391,6 @@ let create_specs hprel_defs prog proc_name =
       else
         final_spec
     in
-    let _ = print_endline_quiet (Cprinter.string_of_struc_formula_for_spec1 short_final_spec) in
-    let _ = print_endline_quiet "*************************************" in
+    let () = print_endline_quiet (Cprinter.string_of_struc_formula_for_spec1 short_final_spec) in
+    let () = print_endline_quiet "*************************************" in
     ()

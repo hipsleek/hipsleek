@@ -1,0 +1,25 @@
+
+!!!Full processing file "vp/ex12-bind-lend.ss"
+Parsing file "vp/ex12-bind-lend.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+dprint: vp/ex12-bind-lend.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:h'::cell<n>*N@full[r_34,v_35]@value[h]&h_1368=h & h'=null & r_34'=n&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure foo$cell SUCCESS.
+
+1 false contexts at: ( (16,2) )
+
+Total verification time: 0.412024 second(s)
+	Time spent in main process: 0.392024 second(s)
+	Time spent in child processes: 0.02 second(s)
+

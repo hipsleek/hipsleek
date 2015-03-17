@@ -1,6 +1,7 @@
+#include "xdebug.cppo"
 open Gen
 
-let no_pos = Globals.no_pos
+let no_pos = no_pos
 let report_error = Gen.report_error
 
 module Ts = Tree_shares.Ts
@@ -20,7 +21,7 @@ module CP = Cpure
     let string_of v1 = CP.string_of_spec_var v1
 	let rename s a =  match s with CP.SpecVar(t,_,p)-> CP.SpecVar(t,a,p)
     let get_name v = CP.string_of_spec_var v
-	let var_of v = CP.SpecVar(Globals.Tree_sh,v,Globals.Unprimed)
+	let var_of v = CP.SpecVar(Globals.Tree_sh,v,Unprimed)
     let fresh_var v = cnt:=!cnt+1; rename v ("__ts_fv_"^(string_of_int !cnt))
 end*)
 
@@ -45,7 +46,7 @@ module Ss_proc_Z3:Share_prover.SAT_SLV = functor (Sv:Share_prover.SV) ->
 	let string_of_eq (v1,v2,v3) = (Sv.string_of v1)^" * "^(Sv.string_of v2)^" = "^(match v3 with | PVar v3 ->  Sv.string_of v3 | _ -> " true")
 	let string_of_eq_l l = String.concat "\n" (List.map string_of_eq l)
 
-	let to_sv v = CP.SpecVar(Globals.Bool,Sv.string_of v,Globals.Unprimed)
+	let to_sv v = CP.SpecVar(Globals.Bool,Sv.string_of v,Unprimed)
 
 	let mkBfv v = CP.BForm ((CP.BVar (to_sv v,no_pos),None),None)
 
@@ -103,8 +104,8 @@ module Ss_proc_Z3:Share_prover.SAT_SLV = functor (Sv:Share_prover.SV) ->
 					let f2 = CP.Or (CP.Not (mkBfv v2, None, no_pos),mkBfv v1, None, no_pos) in
 					CP.And (CP.And (f1,f2,no_pos),a,no_pos)) vc_f c_subst_vars in
 				CP.mkExists (List.map to_sv c_ev) ve_f None no_pos in
-			(*let _ = Debug.devel_print ("share prover: call_imply ante:  "^ (Cprinter.string_of_pure_formula ante_tot))in
-			let _ = Debug.devel_print ("share prover: call_imply conseq:  "^ (Cprinter.string_of_pure_formula conseq_tot))in*)
+			(*let () = Debug.devel_print ("share prover: call_imply ante:  "^ (Cprinter.string_of_pure_formula ante_tot))in
+			let () = Debug.devel_print ("share prover: call_imply conseq:  "^ (Cprinter.string_of_pure_formula conseq_tot))in*)
 			Gen.Profiling.inc_counter ("pm_i") ;
 			Gen.Profiling.do_1 "tmi" (fun c-> Smtsolver.imply ante_tot c 0.) conseq_tot
 
@@ -228,20 +229,20 @@ INTERACTION
 							(* restart Omega system *)
 						let restart reason =
 						  if !is_minisat_running then (
-							let _ = print_string (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
+							let () = print_string (reason ^ " Restarting minisat after ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in
 							Procutils.PrvComms.restart false stdout reason "minisat" start stop
 						  )
 						  else (
-							let _ = print_string (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
+							let () = print_string (reason ^ " not restarting minisat ... " ^ (string_of_int !minisat_call_count) ^ " invocations ") in ()
 						  )
 
 						(* Runs the specified prover and returns output *)
 						let check_problem_through_file (input: string) (timeout: float) : bool =
 						  (* debug *)
-						  (* let _ = print_endline "** In function minisat.check_problem" in *)
+						  (* let () = print_endline "** In function minisat.check_problem" in *)
 						  let file_suffix = Random.int 1000000 in
 						  let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".cnf" in
-						  (*let _ = print_endline ("-- input: \n" ^ input) in*)
+						  (*let () = print_endline ("-- input: \n" ^ input) in*)
 						  let out_stream = open_out infile in
 						  output_string out_stream input;
 						  close_out out_stream;
@@ -268,7 +269,7 @@ INTERACTION
 							  ignore (Unix.waitpid [] !minisat_process.GlobProver.pid);
 							  false
 							) in
-						  let _ = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
+						  let () = Procutils.PrvComms.stop false stdout !minisat_process 0 9 (fun () -> ()) in
 						  remove_file infile;
 						  res
 
@@ -323,7 +324,7 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 			let mkExists vl f =
 				(*let fv = List.fold_left (fun a c-> a@ (List.map fst c)) [] f in
 				let vl = List.filter (fun c-> List.mem c fv) vl in*)
-				(*let _ = print_string "here1a\n"; flush stdout in		*)
+				(*let () = print_string "here1a\n"; flush stdout in		*)
 				let r = List.fold_left (fun f v->
 					let l1, l2 = List.partition (fun c-> List.exists (fun (c,_)->  v=c) c) f in
 					if l1=[] then f
@@ -331,7 +332,7 @@ MAIN INTERFACE : CHECKING IMPLICATION AND SATISFIABILITY
 						let nl1 = negVar v l1 in
 						let l1 = mkOr l1 nl1 in
 						l1@l2) f vl  in
-				(*let _ = print_string "here1b\n"; flush stdout in		*)
+				(*let () = print_string "here1b\n"; flush stdout in		*)
 				r
 
 

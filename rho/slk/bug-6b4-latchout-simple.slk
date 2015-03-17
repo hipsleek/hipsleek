@@ -1,0 +1,29 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+// (4) [P --> y::cell<m>]
+checkentail c::LatchOut{+ x::cell<n> & n>3}<>
+            |- c::LatchOut{+ x::cell<n> * %PPP & n>0}<>.
+print residue.
+
+
+/*
+bug-6b4 --esl
+
+Good to have emp instantiation
+
+checkentail c::LatchOut{+ x::cell<n> & n>3}<>
+            |- c::LatchOut{+ x::cell<n> * %PPP & n>0}<>.
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> emp&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+*/

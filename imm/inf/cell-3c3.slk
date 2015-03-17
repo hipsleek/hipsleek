@@ -1,0 +1,51 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+relation P2(ann v1).
+
+
+infer [P1,P2] 
+c::cell<v>@a & P1(a) & a<:@L //& @M<:b
+        |- c::cell<w>@b & P2(b).
+print residue.
+/*
+infer [P1] 
+c::cell<v>@a & P1(a) & a<:@L //& @M<:b
+        |- c::cell<w>@L.
+print residue.
+              */ 
+/*
+# cell-3c1.slk
+
+Why false?
+
+
+Entail (2) : Valid.                      
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
+[[empty]]
+
+
+!!!  ptrs_ps: :[]
+!!!  non_ptrs_ps: :[ a<:b, b=a, a<:@L]
+simplify_raw@23@21@19
+simplify_raw inp1 : exists(b:a<:b & b=a) & a<:@L
+simplify_raw@23 EXIT: a<:@L
+
+!!! evars: :[b]
+!!! non_ptr_f: : a<:@L
+!!! e_ptr_vars: :[]
+!!! f: : a<:@L
+!!!:0: 0: >>>>>> infer_lhs_contra <<<<<<
+!!!:0: 0: trigger cond   : :relational assumption
+!!!:0: 0: LHS pure       : : P1(a) & a<:@L & a=b & ann_f_r_22=b & a<:ann_f_r_22 & w=v
+!!!:0: 0: ovrlap inf vars: :[a]
+!!!:0: 0: pre infer   : : !(a<:@L)
+!!!:0: 0: new pre infer   : : !(a<:@L)
+!!!:0: 0: pre thus   : : true
+
+
+*/
+

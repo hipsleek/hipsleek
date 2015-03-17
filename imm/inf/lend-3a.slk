@@ -9,6 +9,8 @@ relation R(int v,
 /*
 # lend-3a.slk --pcp
 
+DONE
+
 Why is theR relation not being printed
 by --pcp
 

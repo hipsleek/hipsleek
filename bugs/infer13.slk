@@ -11,11 +11,13 @@ pred ll<n> == self = null & n = 0
 pred lseg<p> == self = p 
 	or self::node<q> * q::lseg<p> & self!=p 
   inv true.
-  
+
+HeapPred H1(node y).
 //(5)
-//infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 //infer [x,z] x::node<z>   |- x::lseg<z> .
-infer [z] x::node<z>   |- x::node<q>*q::lseg<z> .
+
+//infer [z] x::node<z>   |- x::node<q>*q::lseg<z> .
 print residue.
 
 /*
@@ -31,8 +33,6 @@ Residue:
 [[ SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==>  Match(z,q) ==> ]]
 
 Why did we infer z::lseg<inf_z_54>? where did inf_z_54 came from?
-
-
 
 
 */

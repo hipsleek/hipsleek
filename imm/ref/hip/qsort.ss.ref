@@ -1,0 +1,49 @@
+
+!!!Full processing file "hip/qsort.ss"
+Parsing file "hip/qsort.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure append_bll$node~node... 
+Proving precondition in method append_bll$node~node Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/qsort.ss",Line:57,Col:14
+
+Procedure append_bll$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure append_bll$node~node
+
+Checking procedure partition$node~int... 
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Procedure partition$node~int SUCCESS.
+
+Checking procedure qsort$node... 
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Procedure qsort$node SUCCESS.
+
+32 false contexts at: ( (74,1)  (94,8)  (94,19)  (94,3)  (91,4)  (89,2)  (87,8)  (87,3)  (85,8)  (85,2)  (81,2)  (83,3)  (82,6)  (81,6)  (80,13)  (80,13)  (80,8)  (78,9)  (78,3)  (76,12)  (76,8)  (75,1)  (35,3)  (35,10)  (34,8)  (55,21)  (59,9)  (58,9)  (57,14)  (57,25)  (57,9)  (56,13) )
+
+Total verification time: 1.046901 second(s)
+	Time spent in main process: 0.933062 second(s)
+	Time spent in child processes: 0.113839 second(s)
+

@@ -202,8 +202,60 @@ The result: x'<=x
 When change fixcalc input to [3] -> result: ((x >= 1 && 0 = PRIx) || (PRIx >= 2223 && PRIx = x) || (0 >= PRIx && PRIx = x))
 but it is not correct.
 =======================================================
+# post/ex3-bug
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&{FLOW,(1,30)=__flow#E}[]
+
+Why inferred spec not capturing below:
+
+!!! POST:  ((flow>=23 & 24>=flow & x>=1 & 0=x') | (flow>=23 & 24>=flow & 0>=x' & x'=x))
 =======================================================
+# post/flow/ex1
+
+It seems that dis-split-fixcalc is more precise
+than en-split fixcalc; while split-calc may be unsound.
+
+# see ex1a.oc
+
+With --dis-split-fixcalc:
+
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001) 
+      | (x=x' & 2001<=x') 
+      | (x=x' & x'<=0))&
+           {FLOW,(4,5)=__norm#E}[]
+
+
+--en-split-fixcalc:
+
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&
+   ((2000>=x & 2001=x') 
+   | (x'>=2001 & x'=x) 
+   | (0>=x' & x'=x))&
+ {FLOW,(4,5)=__norm#E}[]
 =======================================================
+# ex1a.oc
+
+PairWiseCheck Dis;
+#{[x,2001]: 1 <= x <= 2000} union{[x,2001]: 1998 <= x <= 2001} union {[x,x]: 2001 <= x} union  {[x,x]: x <= 0}
+
+Dis2 := {[x,x']:
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001))};
+
+PairWiseCheck Dis2;
+
+# {[x,2001]: 1 <= x <= 2001}
+
+# it seems that pairwisecheck has a bug..
 =======================================================
 =======================================================
 =======================================================

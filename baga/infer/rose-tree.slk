@@ -1,0 +1,18 @@
+data mtree {
+     int val;
+     mnode next;
+}.
+
+data mnode {
+     mtree child;
+     mnode prev;
+     mnode next;
+     mtree parent;
+}.
+
+pred dll<b,p> == self=null
+         or nl::dll<l,p> * self::mnode<cl,b,nl,p> * cl::mtree<v,c> * c::dll<null,cl>
+         .
+
+pred treep<> == self::mtree<v,c> * c::dll<null,t>.
+

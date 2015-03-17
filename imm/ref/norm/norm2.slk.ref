@@ -1,0 +1,34 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>x::cell<w@A>&v=w & x=y&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>x::cell<v@A>&x=y&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>x::cell<v@A>&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>x::cell<Anon_11>&Anon_11=Anon_12 & x=y&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>x::cell<Anon_14@A>&Anon_13=Anon_14 & x=y&{FLOW,(4,5)=__norm#E}[]
+
+

@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (* 
    Pretty printing to Java for Cast.
 *)
@@ -23,7 +25,7 @@ let is_not_null_prim args =
   (List.hd args) ^ " != null"
 
 let primitives_map = Hashtbl.create 19
-let _ = List.map (fun (op, func) -> Hashtbl.add primitives_map op func)
+let todo_unk = List.map (fun (op, func) -> Hashtbl.add primitives_map op func)
   [("add___", binary_prim " + ");
    ("minus___", binary_prim " - ");
    ("mult___", binary_prim " * ");
@@ -90,10 +92,10 @@ let rec remove_block_rhs prog (bmap : bind_map) (null_vars : IdentSet.t) (lhs : 
 		  exp_seq_exp2 = e2}) ->
 	  (* do not make assignment to lhs in e1 *)
 	  let nvars1 = remove_block_rhs prog bmap null_vars "" e1 java_code in
-	  let _ = add_semicolon java_code in
-	  let _ = Buffer.add_string java_code ("\n") in
+	  let () = add_semicolon java_code in
+	  let () = Buffer.add_string java_code ("\n") in
 	  let nvars2 = remove_block_rhs prog bmap nvars1 lhs e2 java_code in
-	  let _ = add_semicolon java_code in
+	  let () = add_semicolon java_code in
 		nvars2
   | VarDecl  ({exp_var_decl_type = t;
 			   exp_var_decl_name = var}) ->
@@ -102,24 +104,24 @@ let rec remove_block_rhs prog (bmap : bind_map) (null_vars : IdentSet.t) (lhs : 
 		   it was introduced to hold "null" *)
 		IdentSet.add var null_vars
 	  else
-		let _ = Buffer.add_string java_code ((CP.name_of_type t) ^ " " ^ var ^ ";") in
+		let () = Buffer.add_string java_code ((CP.name_of_type t) ^ " " ^ var ^ ";") in
 		  null_vars
   | Assign ({exp_assign_lhs = lhs;
 			 exp_assign_rhs = rhs}) ->
 	  if is_block rhs then
-		let _ = java_of_exp prog bmap null_vars e0 java_code in
+		let todo_unk = java_of_exp prog bmap null_vars e0 java_code in
 		  null_vars
 	  else if not(IdentSet.mem lhs null_vars) then begin
-		let _ = Buffer.add_string java_code (lhs ^ " = ") in
+		let () = Buffer.add_string java_code (lhs ^ " = ") in
 		let nvars = remove_block_rhs prog bmap null_vars "" rhs java_code in
-		let _ = Buffer.add_string java_code ";" in
+		let () = Buffer.add_string java_code ";" in
 		  nvars
 	  end else
 		(* in case lhs is a null var, just ignored the assignment *)
 		null_vars
   | rest_e -> 
 	  if lhs = "" then
-		let _ = java_of_exp prog bmap null_vars rest_e java_code in
+		let todo_unk = java_of_exp prog bmap null_vars rest_e java_code in
 		  null_vars
 	  else begin
 		(* make the pushed in assignment to lhs *)
@@ -200,7 +202,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 	  let ddef = look_up_data_def no_pos prog.prog_data_decls (string_of_typ t) in
 	  let field_names = List.map snd idl in
 		(* add local bind map *)
-	  let _ = List.map2 
+	  let todo_unk = List.map2 
 		(fun id -> fun fld -> H.add bmap id (bvar, Cast.get_field_name fld))
 		field_names ddef.data_fields 
 	  in
@@ -208,7 +210,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 		   pretty print the body. Any null vars introduced by the bind
 		   body is local. Therefore there's no need to propagate them.
 		*)
-	  let _ = java_of_exp prog bmap null_vars e java_code in
+	  let todo_unk = java_of_exp prog bmap null_vars e java_code in
 		(* clear local bind map *)
 		ignore (List.map (fun id -> H.remove bmap id) field_names);
 		null_vars
@@ -281,10 +283,10 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2}) -> 
 	  let null_vars1 = java_of_exp prog bmap null_vars e1 java_code in
-	  let _ = add_semicolon java_code in
-	  let _ = Buffer.add_string java_code "\n" in
+	  let () = add_semicolon java_code in
+	  let () = Buffer.add_string java_code "\n" in
 	  let null_vars2 = java_of_exp prog bmap null_vars1 e2 java_code in
-	  let _ = add_semicolon java_code in
+	  let () = add_semicolon java_code in
 		null_vars2
   | This _ -> 
 	  Buffer.add_string java_code "this";
@@ -296,7 +298,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 		   it was introduced to hold "null" *)
 		IdentSet.add var null_vars
 	  else
-		let _ = Buffer.add_string java_code ((string_of_typ t) ^ " " ^ var ^ ";") in
+		let () = Buffer.add_string java_code ((string_of_typ t) ^ " " ^ var ^ ";") in
 		  null_vars
   | Unit l -> null_vars
   | While ({exp_while_condition = id;

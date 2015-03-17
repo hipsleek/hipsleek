@@ -1,5 +1,6 @@
 %{
   open Globals
+  open VarGen
   open Cpure
 
   module Err = Error

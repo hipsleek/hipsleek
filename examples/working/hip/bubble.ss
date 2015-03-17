@@ -91,4 +91,4 @@ void bsort(node xs)
 	}
 }
 
-void skip()
+// void skip(); // do we need this skip?

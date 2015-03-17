@@ -1,4 +1,4 @@
-# lend-1.slk --print-type 
+# lend-1.slk --print-type (DONE)
 
 Can you change integer formula back to annotation
 formula at Omega.ml. See trans_bool method which
@@ -19,7 +19,7 @@ Entail (1) : Valid.
  inferred pure: [v:AnnT<:@M]
 [[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
 =======================================================
-# lend-2.slk --print-type 
+# lend-2.slk --print-type (DONE)
 
 Need to introduce a new type "ann" for annotation?
 
@@ -37,7 +37,9 @@ Entail (1) : Valid.
 [[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
 
 =======================================================
-# lend-3.slk --print-type 
+# lend-3.slk --print-type (IGNORE)
+
+Maybe @imm should be used only for HIP..
 
 infer [@imm] p::cell<f>@v * q::cell<2>@w & R(v,w) 
   |- p::cell<a> * q::cell<_>@L.
@@ -51,7 +53,7 @@ Priority to relations, and then variables.
  error: Stream.Error("[infer_type] or [id_list] or CSQUARE expected after OSQUARE (in [id_list_w_itype])")
  at:(Program not linked with -g, cannot print stack backtrace)
 =======================================================
-# lend-3a.slk --pcp
+# lend-3a.slk --pcp (DONE)
 
 //relation R(int v,int w).
 relation R(int v,
@@ -60,8 +62,73 @@ relation R(int v,
 Why is the R relation not being printed
 by --pcp
 =======================================================
+# cell-3b.ss
+
+[RELASS [P1]: ( P1(a)) -->  a=@M,
+RELDEFN P2: ( b=@M) -->  P2(b)]
+
+ c::cell<v>@a & P1(a) |- c::cell<_>
+
+     P1(a) --> a<:M
+
+ c::cell<v>@a & a<:M |- c::cell<_>@b & P2(b)
+
+     b<:@M -> P2(b)
+
+*************************************
+Two problems:
+ (1) why numeric for fixcalc?
+ (2) Why false for PRE?
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( P2(b), b=0, P1(a), false)]
+*************************************
+
+!!!REL POST :  P2(b)
+!!!POST:  b=0
+!!!REL PRE :  P1(a)
+!!!PRE :  false
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( P2(b), b=0, P1(a), false)]
+
 =======================================================
+# cell-3c.ss
+
+Why is there a check 1 fail?
+
+Checking procedure foo$cell... check 1 fail
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ true]
+Procedure foo$cell SUCCESS.
+Stop Omega... 18 invocations 
+0 false contexts at: ()
+
+c::cell<v>@a & P1(a) |- c::cell<w>@L
+
 =======================================================
+# cell-3c1.slk
+
+infer [P1,P2] 
+c::cell<v>@a & P1(a)  & a<:@L 
+        |- c::cell<w>@b & P2(b).
+print residue.
+
+                              
+Why false?
+Why a>2?
+
+
+Entail (2) : Valid. 
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
+[[empty]]
 =======================================================
 =======================================================
 =======================================================

@@ -1,0 +1,64 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+/*
+# ex60c --ann-vp
+
+Residue:
+ <1>emp&n=5&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [P --> x::cell<n>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
+
+Why only there a failure with @full[x] on -%P failure?
+
+Entail 2: Fail.(must) cause:matching of ho_args failed (Mismatch non-zero variable permission in consequent [(x,@full)])
+
+
+
+
+match_one_ho_arg@11
+match_one_ho_arg inp1 :(( - htrue*U@full[x]&{FLOW,(4,5)=__norm#E}[], - HVar PPP&{FLOW,(4,5)=__norm#E}[]),)
+match_one_ho_arg@11 EXIT:(None,None,[])
+
+match_one_ho_arg@11
+match_one_ho_arg inp1 :(( - x::cell<n>&{FLOW,(4,5)=__norm#E}[], - HVar ZZZ&{FLOW,(4,5)=__norm#E}[]),)
+match_one_ho_arg@11 EXIT:(None,None,[(ZZZ, x::cell<n>&{FLOW,(4,5)=__norm#E}[])])
+
+heap_entail_non_empty_rhs_heap@15@14@13@12@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_non_empty_rhs_heap inp1 : es_formula: HVar ZZZ&{FLOW,(4,5)=__norm#E}[]
+ es_evars: [ZZZ]
+ es_gen_impl_vars: [ZZZ; ZZZ]
+ es_infer_vars_rel: []
+heap_entail_non_empty_rhs_heap inp2 :LHS base: HVar ZZZ&{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp3 :RHS base: x::cell<n>&{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp4 :ante    : HVar ZZZ&{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp5 :conseq  : x::cell<n>&{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp6 :matched_set:[]
+heap_entail_non_empty_rhs_heap@15 EXIT:( 
+Good Context: length= 1 [es_formula: emp&{FLOW,(4,5)=__norm#E}[]
+                         es_ho_vars_map: [ZZZ --> x::cell<n>&
+                                          {FLOW,(4,5)=__norm#E}[]]
+                         es_evars: [ZZZ]
+                         es_ante_evars: [ZZZ; ZZZ; ZZZ]
+                         es_gen_impl_vars: [ZZZ; ZZZ]
+                         es_trace:  COND ==>  UnmatchedRHSData ==> 
+
+
+checkentail t::Thrd{-@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{ -%PPP}<> . // * %P.
+print residue.
+
+*/
+
+
+checkentail t::Thrd{-x::cell<n>}<>
+   & n=5
+   |-  t::Thrd{ -%ZZZ}<> . // * %P.
+print residue.

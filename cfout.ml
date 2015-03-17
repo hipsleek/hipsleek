@@ -1,8 +1,10 @@
+#include "xdebug.cppo"
 (*
 this module contains funtions relating to output of cformula
 *)
 
 open Globals
+open VarGen
 open Gen
 open Exc.GTable
 open Perm
@@ -56,7 +58,7 @@ let get_all_data_fields prog=
 
 let shorten_svl_avoid_field prog fv =
   let fields = get_all_data_fields prog in
-  let _ = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
+  let () = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
   let pad = "0" in
   (* let n_tbl = Hashtbl.create 1 in *)
   let reg = Str.regexp "[0-9]*_.*" in
@@ -109,9 +111,9 @@ let rearrange_h_formula_x args0 hf0 =
           (*   | _ -> raise Not_found) in *)
           let rf = List.filter (fun hf -> contains_spec_var hf re) fl in
           let fv = h_fv (List.hd rf) in
-          (* let _ = print_endline (pr_list !print_sv fv) in *)
+          (* let () = print_endline (pr_list !print_sv fv) in *)
           let fl1 = helper fv fl in
-          (* let _ = print_endline (pr_list !print_h_formula fl1) in *)
+          (* let () = print_endline (pr_list !print_h_formula fl1) in *)
           let hf1 = List.fold_left (fun f1 f2 -> mkStarH f1 f2 no_pos) (List.hd fl1) (List.tl fl1) in hf1
     | _ -> hf0
 
@@ -183,9 +185,9 @@ let rearrange_def def=
                  | None -> []
   ) new_body1 in
   let svl = List.flatten svll in
-  (* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *)
+  (* let () = print_endline ((pr_list !print_sv) (args@svl)) in *)
   let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in
-  (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
+  (*let () = print_endline ((pr_list !print_sv) svl_rd) in*)
   (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   (* let n_tbl = Hashtbl.create 1 in *)
@@ -234,9 +236,9 @@ let rearrange_hp_def def=
       fv f
   ) new_body1 in
   let svl = List.flatten svll in
-  (* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *)
+  (* let () = print_endline ((pr_list !print_sv) (args@svl)) in *)
   let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in
-  (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
+  (*let () = print_endline ((pr_list !print_sv) svl_rd) in*)
   (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   (* let n_tbl = Hashtbl.create 1 in *)
@@ -286,17 +288,17 @@ let rearrange_entailment_x prog lhs0 rhs0=
   let all_svl = CP.remove_dups_svl (l_svl@r_svl@l_quans@r_quans) in
   let new_svl = shorten_svl_avoid_field prog all_svl in
   let sst0 = List.combine all_svl new_svl in
-  let _ = Debug.ninfo_hprint (add_str "sst0" (pr_list (pr_pair !CP.print_sv !CP.print_sv) )) sst0 no_pos in
+  let () = Debug.ninfo_hprint (add_str "sst0" (pr_list (pr_pair !CP.print_sv !CP.print_sv) )) sst0 no_pos in
   let n_lhs = subst_avoid_capture all_svl new_svl (rearrange_formula l_svl l_bare) in
   let n_rhs = subst_avoid_capture all_svl new_svl (rearrange_formula r_svl r_bare) in
   let nl_quans = CP.subst_var_list sst0 l_quans in
-  let _ = Debug.ninfo_hprint (add_str "l_quans" (!CP.print_svl) ) l_quans no_pos in
-  let _ = Debug.ninfo_hprint (add_str "nl_quans" (!CP.print_svl) ) nl_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "l_quans" (!CP.print_svl) ) l_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "nl_quans" (!CP.print_svl) ) nl_quans no_pos in
   (*handle quantifiers*)
   let n_lhs2 = add_quantifiers nl_quans n_lhs in
   let nr_quans = CP.subst_var_list sst0 r_quans in
-  let _ = Debug.ninfo_hprint (add_str "r_quans" (!CP.print_svl) ) r_quans no_pos in
-  let _ = Debug.ninfo_hprint (add_str "nr_quans" (!CP.print_svl) ) nr_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "r_quans" (!CP.print_svl) ) r_quans no_pos in
+  let () = Debug.ninfo_hprint (add_str "nr_quans" (!CP.print_svl) ) nr_quans no_pos in
   let n_rhs2 = add_quantifiers nr_quans n_rhs in
   (n_lhs2, n_rhs2)
   (* (lhs, rhs) *)
@@ -382,9 +384,9 @@ let rec shorten_formula f =
 (*       | Ctx en -> Ctx {en with *)
 (*           es_formula = *)
 (*                 let fv = CP.remove_dups_svl (fv en.es_formula) in *)
-(*                 (\* let _ = print_endline ((pr_list !print_sv) fv) in *\) *)
+(*                 (\* let () = print_endline ((pr_list !print_sv) fv) in *\) *)
 (*                 let new_svl = shorten_svl fv in *)
-(*                 (\* let _ = print_endline ((pr_list !print_sv) new_svl) in *\) *)
+(*                 (\* let () = print_endline ((pr_list !print_sv) new_svl) in *\) *)
 (*                 subst_avoid_capture fv new_svl en.es_formula *)
 (*         } *)
 (*       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2) *)

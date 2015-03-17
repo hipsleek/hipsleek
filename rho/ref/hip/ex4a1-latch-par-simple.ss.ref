@@ -1,0 +1,59 @@
+
+!!!Full processing file "hip/ex4a1-latch-par-simple.ss"
+Parsing file "hip/ex4a1-latch-par-simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex4a1-latch-par-simple.ss:53: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_49_1424',v_int_50_1425': c_39'::LatchIn{ - (exists flted_49_1638: x_37'::cell<flted_49_1638>*U@lend[x_37]&
+flted_49_1638=1&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + (exists flted_49_1639: x_37'::cell<flted_49_1639>*U@lend[x_37]&
+flted_49_1639=1&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<v_int_49_1424'> * x_37'::cell<v_int_50_1425'>*N@full[c_39,r1_40,r2_41,x_37,y_38]&r2_41'=0 & r1_40'=0 & v_int_50_1425'=1 & v_int_49_1424'=1 & 0<v_int_49_1424'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a1-latch-par-simple.ss:59: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_58_1704,r2_1705,v_int_50_1706,flted_49_1707,v_int_49_1708,b_1709,r2_41',v_int_50_1683,v_int_49_1682: c_39'::LatchOut{ + (exists flted_58_44: x_37'::cell<flted_58_44>*U@lend[x_37]&flted_58_44=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_58_1704>*U@full[r1_40]@lend[x_37,c_39]&r2_41'=0 & r1_40'=0 & v_int_50_1683=1 & v_int_49_1682=1 & 0<v_int_49_1682 & r2_1705=0 & r1_40'=0 & v_int_50_1706=1 & v_int_49_1708=1 & 0<v_int_49_1708 & flted_49_1707=1 & 0<=b_1709 & 0<=0 & v_int_49_1708=b_1709+0 & flted_58_1704=0&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a1-latch-par-simple.ss:64: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_63_1923,flted_63_1924,flted_49_1925,v_int_49_1926,r1_1927,r2_1928,flted_63_1929,b_1930,b_1931,v_int_50_1932,r2_41',r1_40',v_int_50_1683,v_int_49_1682: c_39'::LatchIn{ - (exists flted_63_47: x_37'::cell<flted_63_47>*U@lend[x_37]&flted_63_47=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_63_1924> * x_37'::cell<flted_63_1923>*U@lend[x_37,c_39]&r2_41'=0 & r1_40'=0 & v_int_50_1683=1 & v_int_49_1682=1 & 0<v_int_49_1682 & v_int_49_1926=b_1930+0 & 0<=b_1930 & flted_49_1925=1 & 0<v_int_49_1926 & v_int_49_1926=1 & v_int_50_1932=1 & r1_1927=0 & r2_1928=0 & flted_63_1929=1 & 0<=b_1931 & 0<=1 & b_1930=b_1931+1 & flted_63_1924=1 & flted_63_1923=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a1-latch-par-simple.ss:70: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists r1_1998: c_39'::LatchOut{ + emp*N@lend[x_37]&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchIn{ - emp*N@lend[x_37]&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_41_1843> * x_37'::cell<flted_58_1842> * c_39'::CNT{}<flted_22_2029>*N@full[c_39,r1_40,r2_41,val_61_1441,x_37,y_38]&v_int_49_1682=b_1694+0 & 0<=b_1694 & flted_49_1691=1 & 0<v_int_49_1682 & v_int_49_1682=1 & v_int_50_1683=1 & r1_1998=0 & r2_41'=0 & flted_63_1908=1 & 0<=b_1911 & b_1694=b_1911+1 & flted_58_1712=b_1722+flted_40_1721 & 0<=flted_40_1721 & flted_40_1721=0 & r2_1718=0 & v_int_50_1719=1 & v_int_49_1720=1 & 0<v_int_49_1720 & r2_1713=0 & r1_1899=0 & v_int_50_1714=1 & v_int_49_1716=1 & 0<v_int_49_1716 & flted_49_1715=1 & 0<=b_1717 & v_int_49_1716=b_1717+0 & flted_58_1712=0 & 0<=b_1722 & flted_58_1712=b_1722+0 & 0<=(a_1723+1) & flted_41_1843+1=0 & exists(flted_40_60:0<=(flted_40_60+1)) & flted_58_1842=1 & r1_40'=1+flted_58_1842 & r2_1945=0 & r1_1946=0 & v_int_50_1947=1 & v_int_49_1948=1 & 0<v_int_49_1948 & v_int_49_1938=b_1942+0 & 0<=b_1942 & flted_49_1937=1 & 0<v_int_49_1938 & v_int_49_1938=1 & v_int_50_1944=1 & r1_1939=0 & r2_1940=0 & flted_63_1941=1 & 0<=b_1943 & 0<=1 & b_1942=b_1943+1 & flted_63_1936=1 & flted_63_1935=1 & b_1950<flted_63_1936 & 0<n & 0<=n & 0<=b_1950 & flted_63_1936=b_1950+n & x_37'!=null & 0<=(a_1951+1) & b_1961+1=n & 0<=(n+1) & flted_22_1966=b_1961+b_1950 & b_1999=b_1722 & flted_22_2006=b_1999+b_1911 & b_2020=flted_22_2006 & flted_22_2029=b_2020+flted_22_1966&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+assert:hip/ex4a1-latch-par-simple.ss:71: 2:  : ok
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 1.448089 second(s)
+	Time spent in main process: 1.372085 second(s)
+	Time spent in child processes: 0.076004 second(s)
+

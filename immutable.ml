@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
 2011: Immutability module:
   - utils for immutability
@@ -50,14 +52,14 @@ let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * C
             | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | CP.ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           )
     | CP.ConstAnn k1 ->
           (match imm2 with
             | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           ) 
     | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
@@ -83,7 +85,8 @@ let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool =
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
 
-let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
     | None -> (f,[],[],[])
@@ -106,13 +109,15 @@ let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (
               | _ -> (f,[],[to_rhs], [])
           end
 
-let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
+  bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
   let pr1 = !CP.print_svl in
   let pr2 = (Cprinter.string_of_imm)  in
   let pr2a = pr_list !CP.print_formula in
   let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
   let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 
+    subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
 
 let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
   let rec helper ann ann_lst = 
@@ -130,22 +135,22 @@ let get_weakest_imm  (ann_lst: CP.ann list): CP.ann =
       | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
   in helper (CP.ConstAnn(Mutable)) ann_lst
 
-let rec remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
+let rec remove_true_rd_phase (h : h_formula) : h_formula = 
   match h with
-    | CF.Phase ({CF.h_formula_phase_rd = h1;
-	  CF.h_formula_phase_rw = h2;
-	  CF.h_formula_phase_pos = pos
+    | Phase ({h_formula_phase_rd = h1;
+	  h_formula_phase_rw = h2;
+	  h_formula_phase_pos = pos
 	 }) -> 
-      if (h1 == CF.HEmp) then h2
-      else if (h2 == CF.HEmp) then h1
+      if (h1 == HEmp) then h2
+      else if (h2 == HEmp) then h1
       else h
-    | CF.Star ({CF.h_formula_star_h1 = h1;
-	  CF.h_formula_star_h2 = h2;
-	  CF.h_formula_star_pos = pos
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos
 	 }) -> 
       let h1r = remove_true_rd_phase h1 in
       let h2r = remove_true_rd_phase h2 in
-      CF.mkStarH h1r h2r pos
+      mkStarH h1r h2r pos
     | _ -> h
 
 
@@ -154,7 +159,7 @@ let rec split_wr_phase (h : h_formula) : (h_formula * h_formula) =
     | Star ({h_formula_star_h1 = h1;
 	  h_formula_star_h2 = h2;
 	  h_formula_star_pos = pos}) -> 
-      (* let _ = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
+      (* let () = print_string("[cris]: split star " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
 	      (match h2 with
 	        | Phase _ -> (h1, h2)
 	        | Star ({h_formula_star_h1 = sh1;
@@ -262,8 +267,8 @@ let maybe_replace_w_empty h =
           let node_imm = dn.CF.h_formula_data_imm in
           let param_imm = dn.CF.h_formula_data_param_imm in
           let new_h =  
-            if (isAccs node_imm) then HEmp 
-            else if !Globals.allow_field_ann &&  (isAccsList param_imm) then HEmp else h
+            if (isAccs node_imm) && (!Globals.remove_abs) then HEmp 
+            else if !Globals.allow_field_ann &&  (isAccsList param_imm) && (!Globals.remove_abs) then HEmp else h
             (* match !Globals.allow_field_ann, !Globals.allow_imm with *)
             (*   | true, _     -> if (isAccsList param_imm) then HEmp else h *)
             (*   | false, true -> if (isAccs node_imm) then HEmp else h *)
@@ -271,7 +276,7 @@ let maybe_replace_w_empty h =
           in new_h
     | CF.ViewNode vn ->  
           let node_imm = vn.CF.h_formula_view_imm in
-          if (isAccs node_imm) then HEmp else h 
+          if (isAccs node_imm)  && (!Globals.remove_abs) then HEmp else h 
           (* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *)
           (* let new_h =  *)
           (*   match !Globals.allow_field_ann, !Globals.allow_imm with *)
@@ -280,6 +285,7 @@ let maybe_replace_w_empty h =
           (*     | _,_         -> HEmp *)
           (* in new_h *)
     | _ -> h
+
 
 (* let maybe_replace_w_empty h = *)
 (*   match h with *)
@@ -348,12 +354,12 @@ let rec is_classic_lending_hformula (f: h_formula) : bool =
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
         if (isLend h1.h_formula_data_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
         else
           false
   | ViewNode (h1) ->
         if (isLend h1.h_formula_view_imm) then
-          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
+          (* let () = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
         else
           false
 
@@ -749,15 +755,17 @@ and insert_rd_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
 (*   transform_struc_formula f e *)
 
 and propagate_imm_struc_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
-  match sf with
-    | EBase f   -> EBase {f with 
-          formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
-    | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
-    | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
-    | EAssume f -> EAssume {f with
-	  formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
-	  formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
-    | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
+  let res = 
+    match sf with
+      | EBase f   -> EBase {f with 
+            formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
+      | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
+      | EAssume f -> EAssume {f with
+	    formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
+	    formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
+  in res
 
 and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1353,6 +1361,9 @@ and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
     | SuccCtx(cl) ->
 	  SuccCtx(List.map (subs_crt_holes_ctx 12 ) cl)
 
+and subs_crt_holes_list_failesc_ctx ctx = 
+  transform_list_failesc_context (idf, idf, (fun es -> Ctx (subs_holes_es es))) ctx
+
 and subs_crt_holes_ctx_x (ctx : context) : context = 
   match ctx with
     | Ctx(es) -> Ctx(subs_holes_es es)
@@ -1471,7 +1482,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CP.a
     | [] -> []
 ;; 
 
-let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) = 
+let rec normalize_h_formula_dn auxf (h : CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) = 
   match h with
     | CF.Star({CF.h_formula_star_h1 = h1;
       CF.h_formula_star_h2 = h2;
@@ -1552,7 +1563,7 @@ let merge_imm_ann ann1 ann2 =
     | ann_n, _ -> let ann = if (subtype_ann 2  ann_n  ann2 ) then ann2 else  ann1 in
       (ann, [], [])
 
-let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
@@ -1563,7 +1574,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
                   (params@[new_p_ann], nc@constr, nv@vars)
               ) ([],[],[]) dn.CF.h_formula_data_param_imm
             else
-              let _ = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
+              let () = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
               let new_ann_param = List.map (fun _ -> ann_node) dn.CF.h_formula_data_arguments in
               (new_ann_param, [], [])
           in 
@@ -1573,19 +1584,19 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
           (n_dn, constr, new_vars)
     | _ -> (h, [], [])
 
-let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
-let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   if (!Globals.allow_field_ann) then
   (* if false then *)
     let h, constr, new_vars = normalize_h_formula_dn (push_node_imm_to_field_imm 1) h in
     (h,constr,new_vars)
   else (h,[],[])
 
-let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * Globals.primed) list) =
+let normalize_field_ann_heap_node (h:CF.h_formula): CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
   let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
   Debug.no_1 "normalize_field_ann_heap_node" pr pr_out normalize_field_ann_heap_node_x h
@@ -1600,6 +1611,25 @@ let normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
 
+let normalize_field_ann_struc_formula_x (sf:CF.struc_formula): CF.struc_formula =
+  if (!Globals.allow_field_ann) then
+  (* if (false) then *)
+    let rec helper sf = 
+    match sf with
+      | EBase f   -> EBase {f with 
+            formula_struc_base = normalize_field_ann_formula f.formula_struc_base  }
+      | EList l   -> EList  (map_l_snd (fun c->  helper c ) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  helper c) f.formula_case_branches;}
+      | EAssume f -> EAssume {f with
+	    formula_assume_simpl = normalize_field_ann_formula f.formula_assume_simpl;
+	    formula_assume_struc = helper f.formula_assume_struc;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = helper f.formula_inf_continuation } 
+    in helper sf
+  else sf
+
+let normalize_field_ann_struc_formula (h:CF.struc_formula): CF.struc_formula =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "normalize_field_ann_struc_formula" pr pr normalize_field_ann_struc_formula_x h
 
 let update_read_write_ann (ann_from: CP.ann) (ann_to: CP.ann): CP.ann  =
   match ann_from with
@@ -1918,7 +1948,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
   with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
-  let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
+  let () = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
@@ -1962,3 +1992,344 @@ let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * 
 let initialize_imm_args args =
   List.map (fun _ -> Some (Ipure.ConstAnn(Mutable))) args
 
+let propagate_imm_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
+  let res = propagate_imm_formula sf view_name imm imm_p in
+  normalize_field_ann_formula res
+
+let propagate_imm sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
+  let res = propagate_imm_struc_formula sf view_name imm imm_p in
+  normalize_field_ann_struc_formula res
+
+(* ===============================  below is for merging aliased nodes ================================= *)
+(* ================== ex: x::node<a,y>@A * y::node<b,z> & x=y ----> y::node<b,z> & x=y ================= *)
+
+let crop_incompatible_disjuncts unfolded_f dn emap =
+  let rec helper f = 
+    match f with
+      | Base   ({formula_base_heap = h; formula_base_pure = p; })
+      | Exists ({formula_exists_heap = h; formula_exists_pure = p; }) ->
+            let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix p) in
+            let emap2 = CP.EMapSV.build_eset subs in
+            let emap  = CP.EMapSV.merge_eset emap emap2 in
+            let sv, ident = dn.h_formula_data_node, dn.h_formula_data_name in
+            let aset  = sv::(CP.EMapSV.find_equiv_all sv emap) in
+            if  h_formula_contains_node h aset ident then Some f
+            else None
+      | Or orf ->
+            let f1 = helper orf.formula_or_f1 in
+            let f2 = helper orf.formula_or_f2 in
+            match f1,f2 with
+              | Some f1, Some f2 -> Some (Or {orf with formula_or_f1 = f1; formula_or_f2 = f2})
+              | Some f, None
+              | None, Some f -> Some f
+              | None, None   -> None
+
+  in helper unfolded_f
+
+let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
+  let v =  vn.h_formula_view_node in
+  let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
+  let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
+  let unfolded_f = unfold_fun vh aset v uf in
+  let ret_f = push_exists qvars unfolded_f in
+  let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
+  ret_f
+
+(* return (compatible_flag, to_keep_node) *)
+let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap = 
+  let comp, ret_h, unfold_f =
+    match h1, h2 with
+      | DataNode dn1, DataNode dn2 ->
+            let p1 = List.combine dn1.h_formula_data_arguments dn1.h_formula_data_param_imm in
+            let p2 = List.combine dn2.h_formula_data_arguments dn2.h_formula_data_param_imm in
+            let imm = List.combine p1 p2 in
+            let (comp, updated_elements) = List.fold_left (fun (comp,lst) ((a1,i1), (a2,i2)) ->
+                match i1, i2 with
+                  | CP.ConstAnn(Accs), a -> (true && comp, lst@[(a2,i2)])
+                  | a, CP.ConstAnn(Accs) -> (true && comp, lst@[(a1,i1)])
+                  | _, _ ->
+                        Debug.print_info "Warning: " "possible unsoundess (* between overlapping heaps) " no_pos;
+                        (false && comp, lst)
+            ) (true,[]) imm in
+            let args, pimm = List.split updated_elements in
+            (* !!!! Andreea: to check how to safely merge two data nodes. Origins and Original info (and other info) abt dn2 is lost *)
+            let dn = DataNode {dn1 with h_formula_data_arguments = args; h_formula_data_param_imm = pimm;} in
+            (comp, dn, None)
+      | ViewNode vn1, ViewNode vn2 -> Debug.print_info "Warning: " "combining two views not yet implemented" no_pos;
+            (true, h1, None)
+      | DataNode dn, ((ViewNode vn) as vh)
+      | ((ViewNode vn) as vh), DataNode dn ->
+            let pimm = CP.annot_arg_to_imm_ann_list_no_pos vn.h_formula_view_annot_arg in
+            let comp = 
+              if (List.length dn.h_formula_data_param_imm == List.length (pimm) ) then 
+                let imm = List.combine dn.h_formula_data_param_imm pimm in
+                let comp = List.fold_left (fun acc (i1,i2) -> 
+                    match i1, i2 with
+                      | CP.ConstAnn(Accs), a -> true && acc
+                      | a, CP.ConstAnn(Accs) -> true && acc
+                      | _, _ -> false
+                ) true imm in
+                comp
+              else false in
+            let () = x_binfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
+            if comp then
+              let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
+              (comp, h1, ret_f)
+            (* incompatible for merging *)
+            else (comp, h1, None)
+      | _, _ -> 
+            Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 
+            (false, h1, None)
+  in (comp, ret_h, unfold_f)
+
+let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap = 
+  let pr = Cprinter.string_of_h_formula in
+  let pr_out3 = pr_opt Cprinter.string_of_formula in
+  Debug.no_2 "compatible_at_field_lvl" pr pr (pr_triple string_of_bool pr pr_out3) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
+
+
+(* return (compatible_flag, to_keep_node) *)
+let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
+  let comp, ret_h =
+    if (isAccs imm2) then (true, h1)
+    else  if (isAccs imm1) then (true, h2)
+    else (false, h1) in
+  let compatible, keep_h, struc =
+    (match h1, h2 with
+      | DataNode _, DataNode _
+      | ViewNode _, ViewNode _ -> (comp, ret_h, None)
+      | ((DataNode dn) as dh), ((ViewNode vn) as vh)
+      | ((ViewNode vn) as vh), ((DataNode dn) as dh) ->
+            if comp then
+              let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
+              (comp, dh, ret_f)
+              (* (comp, dh, None) *)
+            else (comp, ret_h, None)
+      | _, _ -> (comp, ret_h, None)) in
+  (compatible, keep_h, struc)
+
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap = 
+  if (!Globals.allow_field_ann) then compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap
+  else compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap
+
+let compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap =
+  let pr = Cprinter.string_of_h_formula in
+  let pr_out3 = pr_opt Cprinter.string_of_formula in
+  Debug.no_2 "compatible_nodes" pr pr (pr_triple string_of_bool pr pr_out3) (fun _ _ ->  compatible_nodes prog imm1 imm2 h1 h2 unfold_fun qvars emap ) h1 h2
+
+let partition_eqs_subs lst1 lst2 quantif =
+  let eqs_lst = List.combine lst1 lst2 in
+  let eqs_lst = List.map (fun (a,b) -> 
+      if Gen.BList.mem_eq CP.eq_spec_var a quantif then (a,b)
+      else if Gen.BList.mem_eq CP.eq_spec_var b quantif then (b,a)
+      else (a,b) ) eqs_lst in
+  let eqs_lst = List.fold_left (fun acc (a,b) -> if CP.eq_spec_var a b then acc else acc@[(a,b)]) [] eqs_lst in
+  let subs, eqs_lst = List.partition (fun (a,b) ->
+      Gen.BList.mem_eq CP.eq_spec_var a quantif ||  Gen.BList.mem_eq CP.eq_spec_var b quantif 
+  ) eqs_lst in 
+  (* let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs_lst in *)
+  (eqs_lst, subs)
+
+let norm_abs_node h p xpure =
+  if (isAccs (get_imm h)) then
+    let xpured, _, _ = xpure h p 0 in (* 0 or 1? *)(* !!!! add the xpure to pure *)
+    (HEmp, Some (MCP.pure_of_mix xpured))
+  else
+    (h, None)  
+
+(* assume nodes are aliased *)
+let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
+  let comp, ret_h, _ = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
+  let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
+  let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
+  (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
+  if comp  && comp_view then
+    let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
+    ([ret_h], eqs, subs, [])                      (* should I also add the pure of merged (@A) node? *)
+    (* ([], []) *)
+  else
+    (* let xpure1 =  *)
+    (* remove node annotated with @A if it's not compatible for merging *)
+    if (isAccs vn1.h_formula_view_imm) then  ([h2], [], [], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
+
+(* assume nodes are aliased *)
+let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
+  let comp, ret_h, struc = compatible_nodes prog dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
+  if comp then
+    (* let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in *)
+    (* add here merge code *)
+    match struc with
+      | None   -> ([ret_h], [], [],[])  
+      | Some s -> ([ret_h], [], [],[s])  
+  else
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
+    else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
+
+let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
+  let pr3 = Cprinter.string_of_h_formula in
+  let pr1 d = pr3 (DataNode dn1) in
+  let pr2 v = pr3 (ViewNode vn2) in
+  let pr_out = pr_quad (pr_list pr3) pr_none pr_none pr_none in
+  Debug.no_4 "merge_data_node_w_view_node" pr1 pr2 pr3 pr3 pr_out (fun _ _ _ _ -> merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap) dn1 vn2 h1 h2
+
+(* assume nodes are aliased *)
+let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap =
+  let comp, ret_h, _ = compatible_nodes prog dn1.h_formula_data_imm dn2.h_formula_data_imm h1 h2 unfold_fun qvars emap in
+  let comp_data = comp && (String.compare dn1.h_formula_data_name dn2.h_formula_data_name = 0) in
+  if comp_data then
+    let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments dn2.h_formula_data_arguments quantif in
+    ([ret_h], eqs, subs, [])
+  else
+    if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
+    else if (isAccs dn2.h_formula_data_imm) then  ([h1], [], [], [])
+    else ([h1;h2], [], [], [])
+
+(* merged two nodes and return merged node and resulted equalities. *)
+let merge_two_nodes h1 h2 prog quantif unfold_fun qvars emap =
+  match h1, h2 with
+    | [(DataNode dn1) as h1], DataNode dn2  -> merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap
+    | [(ViewNode vn) as h2], ((DataNode dn) as h1)
+    | [(DataNode dn) as h1], ((ViewNode vn) as h2) ->  merge_data_node_w_view_node prog dn vn h1 h2 quantif unfold_fun qvars emap (* ([h1;h2], []) *)
+    | [(ViewNode vn1) as h1], ViewNode vn2 -> merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap
+(* ([h1;h2], []) *)
+    | _, _ -> (h1@[h2], [], [], [])
+
+(* let get_node_var h =  *)
+
+let defined_node h1 = 
+  match h1 with
+    | DataNode _
+    | ViewNode _
+    | ThreadNode _ -> true
+    | _ -> false
+
+let aliased_nodes h1 h2 emap =
+  if (defined_node h1) && (defined_node h2) then
+    CP.EMapSV.is_equiv emap (get_node_var h1) (get_node_var h2)
+  else
+    false                               (* assume that if node is undefined, it does not have an aliased *)
+
+let merge_list_w_node node lst emap prog quantif unfold_fun qvars = 
+  let aliases, disj = List.partition (fun n -> aliased_nodes node n emap) lst in 
+  let new_h, eqs, subs, structs = List.fold_left (fun (a, e, s, structs) n -> 
+      let merged, eqs, subs, struc =  merge_two_nodes a n prog quantif unfold_fun qvars emap in
+      (merged, e@eqs, subs@s, struc@structs)
+  ) ([node],[], [], []) aliases in (* here!! *)
+  (new_h, disj, eqs, subs, structs)
+
+let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun qvars =
+  let rec helper lst emap = 
+    match lst with 
+      | []   -> ([], [], [], true, [])
+      (* | [h]  -> let new_h, pure = norm_abs_node h p xpure in  *)
+      (*   ([new_h], (opt_to_list pure)) *)  (* andreeac: uncomment this 2 lines if you wnat to replace @A node with HEmp & xpure*)
+      | h::t ->
+            let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
+            let (fixpoint, emap) = List.fold_left 
+              ( fun (fixpoint,emap) (a,b) -> 
+                  if CP.EMapSV.is_equiv emap a b then (fixpoint&&true,emap)
+                  else (fixpoint&&false, CP.EMapSV.add_equiv emap a b) 
+              ) (true, emap) eqs_lst in
+            let fixpoint = fixpoint && (is_empty subs_lst) in
+            let merged_tail, eqs_lst_tail, subs_lst_tail, fixpoint_tail, struc_tail = helper updated_tail emap  in
+            (updated_head@merged_tail, eqs_lst@eqs_lst_tail, subs_lst@subs_lst_tail, fixpoint&&fixpoint_tail, struc_lst@struc_tail) in
+  helper lst emap
+
+(* merge aliased nodes 
+ * return merged node and resulted qualities. *)
+let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = (* f *)
+  match f with
+    | Star _ ->
+          let node_lst = split_star_h f in
+          let node_lst, eqs, subs, fixpoint, struc = merge_alias_nodes_h_formula_helper prog p node_lst emap quantif xpure unfold_fun qvars in
+          let updated_f = combine_star_h node_lst in
+          let eqs = List.map (fun (a,b) -> CP.mkEqVar a b no_pos) eqs in
+          let aux_pure  = CP.join_conjunctions eqs in
+          (* substitute non-global variables in conseq *)
+          let fr, t = List.split subs in
+          let updated_f = subst_avoid_capture_h fr t updated_f in
+          let new_pure = MCP.memoise_add_pure p aux_pure in
+          let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
+          (updated_f, new_pure, fixpoint, struc)
+              (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+    | _ -> (f, p, true, [])
+
+let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = 
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.no_2 "merge_alias_nodes_h_formula"  pr1 pr2 (pr_quad (add_str "heap" pr1) (add_str "pure" pr2) string_of_bool pr_none) (fun _ _ -> merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars) f p
+
+let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun qvars =
+  let rec helper heapf puref = 
+    let (subs,_) = CP.get_all_vv_eqs (MCP.pure_of_mix puref) in
+    let emap = CP.EMapSV.build_eset subs in
+    let new_f, new_p, fixpoint, struc = merge_alias_nodes_h_formula prog heapf puref emap quantif xpure unfold_fun qvars in
+    (* let new_p = *)
+    (*   match new_p with *)
+    (*     | Some p -> MCP.memoise_add_pure puref p *)
+    (*     | None   -> puref in *)
+    if not fixpoint then helper new_f new_p
+    else (new_f, new_p, struc)
+  in helper heapf puref
+      
+let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
+  let fl  = flow_formula_of_formula f in 
+  let pos = pos_of_formula f in
+  let new_f, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_f =  mk_new_f new_f new_p in
+  let ret_f = match unfold_f_lst with
+    | [] -> new_f
+    | _  ->
+          let f = List.fold_left (fun acc f-> normalize_combine_star acc f pos) new_f unfold_f_lst in
+          rec_fun f
+  in ret_f 
+  
+
+let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
+  let rec helper f =
+    let fl  = flow_formula_of_formula f in 
+    let pos = pos_of_formula f in
+    match f with
+      | Base bf ->
+            let mk_base f p = Base { bf with formula_base_heap = f;  formula_base_pure = p; } in
+            merge_and_combine prog f bf.formula_base_heap bf.formula_base_pure quantif xpure unfold_fun [] mk_base helper
+      | Exists ef ->
+            let qvars = ef.formula_exists_qvars in
+            let mk_exists f p =  Exists{ef with formula_exists_heap = f;  formula_exists_pure = p; } in
+            merge_and_combine prog f ef.formula_exists_heap ef.formula_exists_pure quantif xpure unfold_fun qvars mk_exists helper
+      | Or orf -> 
+            Or {orf with formula_or_f1 = helper orf.formula_or_f1;  formula_or_f2 = helper orf.formula_or_f2;}
+  in
+  if not (!Globals.imm_merge) then f
+  else helper f
+
+let merge_alias_nodes_formula prog f quantif xpure unfold_fun =
+  let pr = Cprinter.string_of_formula in
+  Debug.no_1 "merge_alias_nodes_formula" pr pr (fun _ -> merge_alias_nodes_formula prog f quantif xpure unfold_fun) f
+
+let rec merge_alias_nodes_struc_formula prog f xpure conseq unfold_fun =
+  let res =
+    match f with
+      | EBase f ->
+            let (ee, ei) = (f.formula_struc_exists, f.formula_struc_explicit_inst) in
+            let quantif = if conseq then ee@ei@f.formula_struc_implicit_inst else [] in
+            EBase {f with
+                formula_struc_base =  merge_alias_nodes_formula prog f.formula_struc_base quantif xpure unfold_fun}
+      | EList l   -> EList  (map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) l)
+      | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c-> merge_alias_nodes_struc_formula prog c xpure conseq unfold_fun) f.formula_case_branches;}
+      | EAssume f -> 
+            EAssume {f with
+	    formula_assume_simpl = merge_alias_nodes_formula prog f.formula_assume_simpl [] xpure unfold_fun;
+	    formula_assume_struc = merge_alias_nodes_struc_formula prog f.formula_assume_struc xpure conseq unfold_fun;}
+      | EInfer f  -> EInfer {f with formula_inf_continuation = merge_alias_nodes_struc_formula prog f.formula_inf_continuation xpure conseq unfold_fun }
+  in if not (!Globals.imm_merge) then f
+  else res
+
+let merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "merge_alias_nodes_struc_formula" pr pr (fun _ -> merge_alias_nodes_struc_formula prog f xpure conseq  unfold_fun) f
+
+(* ===============================  end - merging aliased nodes ================================= *)
