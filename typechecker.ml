@@ -2001,6 +2001,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin
+            let () = x_binfo_hp (add_str "Dprint" pr_id) (stk_vars # string_of_no_ln) no_pos in
             (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
             (* let ctx0 = ctx in *)
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
@@ -2012,11 +2013,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
             if str = "" then begin
               let str1 =
-                (Cprinter.string_of_list_failesc_context ctx)  in
+                (Cprinter.string_of_list_failesc_context ctx) in
 	      (if (Gen.is_empty ctx) then
                 (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
-                ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context")) 
-	       else
+                ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
+	      else
                 let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
                 let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
