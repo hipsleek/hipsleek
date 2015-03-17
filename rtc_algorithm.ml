@@ -6,6 +6,7 @@
 (* on the efficiency of the overall*)
 open Format
 open Graph
+open Gen.Basic
 
 module Vt =
 struct

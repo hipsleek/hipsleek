@@ -402,7 +402,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
         let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
         match nes with | Some es -> es | None -> es) estate ptempl_assumes in
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
-      collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls)
+      let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
       let () = print_endline_quiet ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes

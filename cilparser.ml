@@ -344,7 +344,7 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
             collect_goto_label_in_block blk index depth
         | Cil.TryFinally _
         | Cil.TryExcept _ -> 
-            let () = print_endline_quite ("Cilparser: handle TryFinally, TryExcept later") in
+            let () = print_endline_quiet ("Cilparser: handle TryFinally, TryExcept later") in
             ([], [], index)
         | _ -> ([], [], index)
       ) in

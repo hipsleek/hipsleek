@@ -862,16 +862,16 @@ let common_arguments = [
      Arg.Unit
       (fun _ ->
           (* print_endline "inside svcomp-compete setting"; *)
-          Globals.compete_mode:=true; (* main flag *)
+          compete_mode:=true; (* main flag *)
           Globals.svcomp_compete_mode:=true; (* main flag *)
           Globals.tnt_web_mode:=true; (* main flag *)
           (* Globals.show_unexpected_ents := false; *)
           (* diable printing *)
-          Globals.trace_failure := false;
+          VarGen.trace_failure := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Gen.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           

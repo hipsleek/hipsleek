@@ -4,6 +4,7 @@
 *)
 
 open Globals
+open Gen.Basic
 open VarGen
 open GlobProver
 module CP = Cpure

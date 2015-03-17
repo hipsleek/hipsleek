@@ -4779,6 +4779,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = "divs___"; 
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
+                  I.exp_call_nrecv_ho_arg = None;
                   I.exp_call_nrecv_path_id = pid;
                   I.exp_call_nrecv_pos = pos; } in 
               helper new_e
