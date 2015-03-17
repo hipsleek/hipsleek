@@ -2071,6 +2071,7 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
                 ) true imm in
                 comp
               else false in
+            let () = x_binfo_hp (add_str "compatible for merging:" string_of_bool) comp no_pos in
             if comp then
               let ret_f = unfold_and_norm vn vh dn emap unfold_fun qvars emap in
               (comp, h1, ret_f)
@@ -2080,6 +2081,12 @@ let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap =
             Debug.print_info "Warning: " "combining different kind of nodes not yet implemented" no_pos; 
             (false, h1, None)
   in (comp, ret_h, unfold_f)
+
+let compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap = 
+  let pr = Cprinter.string_of_h_formula in
+  let pr_out3 = pr_opt Cprinter.string_of_formula in
+  Debug.no_2 "compatible_at_field_lvl" pr pr (pr_triple string_of_bool pr pr_out3) (fun _ _ -> compatible_at_field_lvl imm1 imm2 h1 h2 unfold_fun qvars emap) h1 h2 
+
 
 (* return (compatible_flag, to_keep_node) *)
 let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
@@ -2150,7 +2157,6 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 prog quantif unfold_fun qvars emap =
 (* assume nodes are aliased *)
 let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   let comp, ret_h, struc = compatible_nodes prog dn1.h_formula_data_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
-  (* if comp then *)
   if comp then
     (* let (eqs, subs) = partition_eqs_subs dn1.h_formula_data_arguments vn2.h_formula_view_arguments quantif in *)
     (* add here merge code *)
@@ -2161,6 +2167,13 @@ let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap
     if (isAccs dn1.h_formula_data_imm) then  ([h2], [], [], [])
     else if (isAccs vn2.h_formula_view_imm) then  ([h1], [], [], [])
     else ([h1;h2], [], [], [])
+
+let merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap =
+  let pr3 = Cprinter.string_of_h_formula in
+  let pr1 d = pr3 (DataNode dn1) in
+  let pr2 v = pr3 (ViewNode vn2) in
+  let pr_out = pr_quad (pr_list pr3) pr_none pr_none pr_none in
+  Debug.no_4 "merge_data_node_w_view_node" pr1 pr2 pr3 pr3 pr_out (fun _ _ _ _ -> merge_data_node_w_view_node prog dn1 vn2 h1 h2 quantif unfold_fun qvars emap) dn1 vn2 h1 h2
 
 (* assume nodes are aliased *)
 let merge_two_data_nodes prog dn1 dn2 h1 h2 quantif unfold_fun qvars emap =
