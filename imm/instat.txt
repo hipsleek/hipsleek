@@ -1,0 +1,64 @@
+
+data cell{int val;}.
+
+infer[] x::cell<_>@w /\ ... |- x::cell<>@v /\ ...
+
+which should be the best strategy for match?
+(i) 
+    x::cell<_>@z /\ z=w-v /\ @w<:@v /\ ... |- emp ...
+
+(ii)
+     x::cell<_>@z /\ z=w-v /\ @w=@v /\ ...  |- emp ...
+
+
+
+Scenario 1:
+===========
+infer[] x::cell<_>@M  |- x::cell<>@v
+
+         (i)                                 (ii)
+   @M<:v |- true  ---> OK           @M = v |- true ---> OK
+..... all OK  \forall w
+
+
+Scenario 2:
+===========
+infer[] x::cell<_>@M  /\ @L<:v |- x::cell<>@v
+
+               (i)                                      (ii)
+ @M<:v /\ @L<:v |- true  ---> OK (infer v<:@L)          @M = v /\ @L<:v |- true ---> NOT OK ====> false context
+
+
+Scenario 3:
+===========
+infer[] x::cell<_>@M  /\ v=@L |- x::cell<>@v
+
+               (i)                                      (ii)
+ @M<:v /\ v=@L |- true  ---> OK  (infer v=@L)           @M = v /\ v=@L |- true ---> NOT OK ====> false context
+
+
+Scenario 4:
+===========
+infer[] x::cell<_>@M  |- x::cell<>@v & v=@L
+ 
+               (i)                                      (ii)
+ @M<:v |-  v=@L  ---> OK (infer v=@L)                    @M = v |- v=@L ---> infer contra (!(v=@M))
+ (entailment checking would fail, but that is ok)
+
+
+Scenario 5:
+===========
+infer[] x::cell<_>@M  |- x::cell<>@v & v<:@L
+ 
+               (i)                                       (ii)
+ @M<:v |-  v<:@L  ---> OK (infer v<:@L)                  @M = v |- v<:@L ---> OK (infer v=@M)
+
+
+Scenario 6:
+===========
+infer[] x::cell<_>@M  |- x::cell<>@v & @L<:v
+ 
+               (i)                                       (ii)
+ @M<:v |-  @L<:v  ---> OK (infer @L<:v)                  @M = v |- @L<:v ---> OK (infer contra !(v=@M))
+
+

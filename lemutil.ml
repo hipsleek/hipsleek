@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 open Globals
 open Wrapper
@@ -14,13 +15,16 @@ module CP=Cpure
 let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
   (*************INTERNAL******************)
   let back_up_progs iprog cprog=
-    (iprog.I.prog_view_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls, cprog.C.prog_hp_decls,
+    (iprog.I.prog_view_decls,iprog.I.prog_data_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls,
+    cprog.C.prog_data_decls, cprog.C.prog_hp_decls,
     Lem_store.all_lemma # get_left_coercion, Lem_store.all_lemma # get_right_coercion)
   in
-  let reset_progs (ivdecls, ihpdecls, cvdecls, chpdecls, left_coers, righ_coers)=
+  let reset_progs (ivdecls, iddecls, ihpdecls, cvdecls, cddecls,chpdecls, left_coers, righ_coers)=
     let () = iprog0.I.prog_view_decls <- ivdecls in
     let () = iprog0.I.prog_hp_decls <- ihpdecls in
     let () = cprog0.C.prog_view_decls <- cvdecls in
+    let () = cprog0.C.prog_hp_decls <- chpdecls in
+    let () = cprog0.C.prog_data_decls <- cddecls in
     let () = cprog0.C.prog_hp_decls <- chpdecls in
     let () = Lem_store.all_lemma # set_coercion left_coers righ_coers in
     ()

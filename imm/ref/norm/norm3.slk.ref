@@ -1,0 +1,121 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&n=n_69&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 4: Valid. 
+
+Residue:
+ <1>emp&n=m&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 5: Fail.(must) cause:mismatched imm annotation for view ll
+
+Residue:
+ <1>emp&n=m&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 6: Valid. 
+
+Residue:
+ <1>emp&n=m & x=y&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,y) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 7: Fail.(may) cause:do_unmatched_rhs : q::ll{}<flted_45_145>
+
+Residue:
+ <1>q_159::ll{}<flted_4_157>&x=y & 0<m & n=m & 0<n & flted_4_157+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 8: Fail.(must) cause: 0<(m+1) & y!=null & 0<=m |-  n_185=0 & y=null. LOCS:[4;50;5;3] (RHS: contradiction)
+
+Residue:
+ <1>y::node<Anon_15,q> * q::ll{}<m>@A&x=y & m+1=n & 0<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 9: Fail.(must) cause: 0<(m+1) & x!=null & 0<=m |-  flted_55_215=0 & x=null. LOCS:[4;55;5;3] (RHS: contradiction)
+
+Residue:
+ <1>y::node<Anon_16,q> * q::ll{}<m>@A&x=y & m+1=n & 0<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 10: Fail.(must) cause:base case unfold failed
+
+Residue:
+ <1>x::ll{}<n>&x=y&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseUnfold ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 11: Fail.(must) cause:base case unfold failed
+
+Residue:
+ <1>x::ll{}<n>&x=y&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseUnfold ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 12: Valid. 
+
+Residue:
+ <1>emp&x=y&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+

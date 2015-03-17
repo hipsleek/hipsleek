@@ -115,6 +115,7 @@ module Make (Token : SleekTokenS)
    ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("ann", ANN_KEY);
    ("AndList", ANDLIST);
    ("bagmax", BAGMAX);
    ("bagmin", BAGMIN);
@@ -359,6 +360,7 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "##OPTION " (['0'-'9' 'A'-'Z' 'a'-'z' '-' ' ' '.' '_' '"' ]* as x) {ARGOPTION (Camlp4.Struct.Token.Eval.string x)}
   | "@frac" { PFRAC }
   | "@A" { ACCS }
   | '&' { AND }
@@ -483,7 +485,7 @@ rule tokenizer file_name = parse
       { let pos = lexbuf.lex_curr_p in
         lexbuf.lex_curr_p <- { pos with pos_bol  = pos.pos_bol  + 1 ;
                                         pos_cnum = pos.pos_cnum + 1 }; EOF      }
-    | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
+  | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
 
 (* search for the first open brace following java keyword *)
 and java file_name = parse 

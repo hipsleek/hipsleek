@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (* Ocamlgraph RTC program: Find Biconnected component, *)
 (* RTC algorithm generating extra constraints for Equality Logic*)
 (* Xuan Bach-24/04/2012*)

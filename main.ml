@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* test - added to immutability branch *)
 (******************************************)
@@ -86,11 +87,22 @@ let parse_file_full file_name (primitive: bool) =
         (*   (*Sys.remove "tmp_java.ss";*)                                                        *)
         (*   parseresult                                                                          *)
         (* else                                                                                   *)
-          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+          (* Parser.parse_hip file_name (Stream.of_channel org_in_chnl) *)
+        
+        let (s,p) = Parser.parse_hip_with_option file_name (Stream.of_channel org_in_chnl) in
+        let _ = Scriptarguments.parse_arguments_with_string s in
+        p
     ) in
     close_in org_in_chnl;
     let () = Gen.Profiling.pop_time "Parsing" in
-    prog
+    let prog1 = if not primitive then
+      let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) "start\n" no_pos in
+      let p = IastUtil.generate_free_fnc prog in
+      let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) "end\n" no_pos in
+      p
+    else prog
+    in
+    prog1
   with
       End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)-> (

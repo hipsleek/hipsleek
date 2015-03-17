@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (* map_para with fork and limited number of processes *)
 let webs = ref false
 let map_para_net init g input_list max =

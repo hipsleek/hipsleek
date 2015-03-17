@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 
 open Globals
@@ -1420,3 +1421,25 @@ let pre_process_of_iprog iprims prog =
   (* let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in *)
   let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
   Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog
+
+
+let generate_free_fnc iprog=
+  let rec gen_annon_field fields res=
+    match fields with
+      | [] -> res
+      | [_] -> res ^ "_"
+      | _::rest -> gen_annon_field rest (res^"_,")
+  in
+  let gen_one_data acc ddclr=
+    if string_compare ddclr.data_name "Object" || string_compare ddclr.data_name "String" then acc else
+      let free_proc = (
+          "void free" ^ " (" ^ ddclr.data_name ^ " p)\n" ^
+              "  requires p::" ^ ddclr.data_name ^ "<" ^ (gen_annon_field ddclr.data_fields "") ^ ">\n" ^ 
+              "  ensures  emp & true; \n"
+      ) in
+      let _ = Debug.ninfo_hprint (add_str "to add free" pr_id) free_proc no_pos in
+      let pfree = Parser.parse_c_aux_proc "free" free_proc in
+      acc@[pfree]
+  in
+  let free_fncs = List.fold_left gen_one_data [] iprog.prog_data_decls in
+  {iprog with prog_proc_decls = iprog.prog_proc_decls@free_fncs;}

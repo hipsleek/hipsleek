@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 open GlobProver
 
@@ -263,9 +264,12 @@ let common_arguments = [
     ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
     ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
     ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-    ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
     ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-    ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
+  ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
     ("--mem", Arg.Unit (fun _ -> 
         Globals.allow_mem := true; 
         Globals.allow_field_ann := true;),
@@ -395,6 +399,7 @@ let common_arguments = [
         Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
     "Match logged methods from a regular expression");
     ("-dre", Arg.String (fun s ->
+      let _ = print_endline ("!!!-dre "^s) in
         Debug.z_debug_file:=("$"^s); Debug.z_debug_flag:=true),
     "Shorthand for -debug-regexp");
   ("-drea", Arg.String (fun s ->
@@ -475,6 +480,7 @@ let common_arguments = [
     (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
     ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
     ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
+  ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
     ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
     ("--refine-error", Arg.Set Globals.simplify_error,
     "Simplify the error");
@@ -678,6 +684,7 @@ let common_arguments = [
     ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
     (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
     ("--sa-error", Arg.Set Globals.sae, "infer error spec");
     ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
     ("--sa-case", Arg.Set Globals.sac, "combine case spec");
@@ -993,6 +1000,31 @@ let sleek_arguments = common_arguments @ sleek_specific_arguments
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments
+;;
+
+
+(* let parseinput userinp = *)
+(*   (\* Read the arguments *\) *)
+(*   Printf.printf "String:%s\n" (Array.get userinp 2); *)
+(*   Arg.parse_argv ?current:(Some (ref 0)) userinp *)
+(*     speclist *)
+(*     (fun x -> raise (Arg.Bad ("Bad argument : " ^ x))) *)
+(*     usage; *)
+(*   Printf.printf "Set stuff to:   %d '%s'\n%!"  !someint !somestr  *)
+
+
+(* let  parseit line = *)
+(*   Printf.printf "processing %s%!\n" line; *)
+(*   (\* TODO rewrite without Str*\) *)
+(*   let listl = (Str.split (Str.regexp " ") line) in *)
+(*   parseinput (Array.of_list listl) *)
+
+let parse_arguments_with_string s =
+  let _ = print_endline s in
+  let slst = (Str.split (Str.regexp " ") s) in
+  let _ = List.iter (fun s -> print_endline (s^"##")) slst in
+  let s_array = Array.of_list (Str.split (Str.regexp " ") s) in
+  Arg.parse_argv ?current:(Some (ref 0)) s_array common_arguments (fun x -> ()) "Inner flags!"
 ;;
 
 let check_option_consistency () =

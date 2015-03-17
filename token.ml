@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Camlp4.PreCast
 
 type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE
@@ -39,6 +40,7 @@ type sleek_token =
   | IF 
   | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE (* An Hoa [22/08/2011] : inline keyword for inline field declaration in structures *)
   | INV_EXACT | INV_SAT | BG
+  | ANN_KEY
   | LET
   | MAX | MIN 
   | NEW | NOTIN | NULL
@@ -90,6 +92,7 @@ type sleek_token =
   | FAIL_MAY
   | XPURE
   | PAR
+  | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
   (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -131,7 +134,8 @@ module Token = struct
     | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | HP->"HeapPred" | HPPOST->"PostPred"
-    | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
+    | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE ->"inline" (* An Hoa : inline added *)
+    | ANN_KEY -> "ann"
     | INV_EXACT -> "inv_exact" | INV_SAT -> "inv_sat" | BG -> "BG"
     | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test" | LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *)
     | LEMMA TLEM_SPLIT ->"lemma_split"
@@ -199,6 +203,7 @@ module Token = struct
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
     | PAR -> "par"
+    | ARGOPTION arg -> "##OPTION "^arg
     (* | SKIP -> "skip" *)
     (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

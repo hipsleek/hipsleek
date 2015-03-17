@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (*this file contains all unitilise for shape analysis.
 it is used mainly by infer.infer_collect_hp and sa.infer_hp

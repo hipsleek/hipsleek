@@ -1,10 +1,22 @@
+#include "xdebug.cppo"
 open Globals
 open Gen.Basic
 open VarGen
 
+let wrap_infer_inv f a b =
+  let flag = !is_inferring in
+  is_inferring := true;
+  try
+    let res = f a b in
+    is_inferring := flag;
+    res
+  with _ as e ->
+      (is_inferring := flag;
+      raise e)
+
 let wrap_exception dval f e =
-  try 
-    f e 
+  try
+    f e
   with _ -> dval
 
 let wrap_num_disj f n a b c d =

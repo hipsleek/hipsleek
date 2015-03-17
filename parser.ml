@@ -910,7 +910,9 @@ let stmt_list_to_block t pos =
       exp_block_local_vars = [];
       exp_block_pos = pos; }
 
-let sprog = SHGram.Entry.mk "sprog" 
+(* let arg_option = SHGram.Entry.mk "arg_option" *)
+let hip_with_option = SHGram.Entry.mk "hip_with_option"
+let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let hproc = SHGram.Entry.mk "hproc"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -920,13 +922,22 @@ let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
+  GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   hproc:[[ t = proc_decl; `EOF -> t]];
   cp_file:[[ t = cp_list; `EOF ->  t ]];
-  
+
+(* ZH: For Option *)
+arg_option: [[t = LIST0 non_empty_arg_list-> List.flatten t]]; 
+
+(* arg_list : [[ t = non_empty_arg_list -> t]]; *)
+
+non_empty_arg_list: [[ `ARGOPTION t -> let _ = print_endline "!!!!!non_empty_arg_list!" in [t]]];
+
+hip_with_option: [[ opt =arg_option; h = hprog-> (opt,h)]];
+
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
@@ -937,6 +948,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
+        | c=class_decl -> DataDef c
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
@@ -1020,7 +1032,7 @@ template_data_header:
 data_body: 
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
-      | `OBRACE; `CBRACE                             -> []] ];
+      | `OBRACE; `CBRACE                   -> []] ];
  
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
@@ -1507,7 +1519,7 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
 c_typ:
- [[ `COLON; t=typ -> t
+ [[ `COLON; t= typ -> t
  ]];
 
 cid_typ:
@@ -2300,10 +2312,18 @@ validate_result:
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
   ]];
+validate_cmd_pair:
+    [[ `VALIDATE; vr = validate_result  ->
+      (vr, None)
+      | `VALIDATE; vr = validate_result; `COMMA; fl=OPT id ->
+            (vr, fl)
+   ]];
 
 validate_cmd:
-  [[ `VALIDATE; vr = validate_result; lc = OPT validate_list_context  ->
-      (vr, (un_option lc []))
+  [[ (* `VALIDATE; vr = validate_result; fl=OPT id; lc = OPT validate_list_context  -> *)
+      pr = validate_cmd_pair; lc = OPT validate_list_context  ->
+          let vr,fl = pr in
+          (vr, fl, (un_option lc []))
    ]];
 
 cond_path:
@@ -2619,6 +2639,7 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
+   | `ANN_KEY           -> ann_type
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
@@ -2996,7 +3017,8 @@ decl:
         Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = k}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
+  ]];
 
 dir_path: [[t = LIST1 file_name SEP `DIV ->
     let str  = List.fold_left (fun res str -> res^str^"/") "" t in
@@ -3984,6 +4006,12 @@ END;;
 let parse_sleek n s =
   SHGram.parse sprog (PreCast.Loc.mk n) s
 
+let parse_hip_with_option n s : (string * Iast.prog_decl) =
+  let (slst,p) = SHGram.parse hip_with_option (PreCast.Loc.mk n) s in
+  let s = List.fold_left (fun r s -> r^s) "" slst in
+  (* let _ = print_endline s in*)
+  (s,p)
+;;
 let parse_sleek n s =
   DD.no_1(* _loop *) "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 

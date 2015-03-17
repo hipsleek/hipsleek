@@ -8,7 +8,9 @@ data node {
 pred lseg<p> == self = p 
 	or self::node<q> * q::lseg<p> & self!=p 
   inv true.
-  
+
+
+
 //(5)
 //infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
 //infer [x,z] x::node<z>   |- x::lseg<z> .

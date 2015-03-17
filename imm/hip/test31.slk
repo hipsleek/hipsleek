@@ -1,0 +1,39 @@
+data node{
+ int val;
+ node next;
+}.
+
+/*
+pred ls<p,a,b> == self=p or
+  self::node<_@a,q@b>*q::ls<p,a,b> //& self!=p
+  inv true.
+*/
+
+pred ll<p> == self=p or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+/*
+checkentail x::node<aa@A,y> * x::node<b,z@A> & a=0 & b=1 |- (exists c: x::node<c,z> & c=1).
+print residue.
+*/
+
+checkentail x::node<a,y>@A * y::ll<null>@A * x::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or
+  x::node<a,y>@A * y::ll<null>@A * x::node<_,q>*q::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or
+  x::node<a,y>@A * y::ll<null>@A * x::node<_,q>*q::ll<null> |- x::node<a,y> .
+print residue.
+
+
+/*
+checkentail x::node<a,y>@A * y::ll<null>@A & x=null or x::node<a,y>@A * y::ll<null>@A * x::node<a,z>*z::ll<null> |- x::node<a,y> * y::ll<null>.
+print residue.
+
+checkentail x::node<a,b>*b::node<_,_>*emp |- x::node<_,_>.
+print residue.
+*/

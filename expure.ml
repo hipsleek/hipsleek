@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 open Globals
 open Wrapper
@@ -14,7 +15,7 @@ open Excore
 open Cprinter
 
 let find_baga_inv view  =
-  if !Globals.gen_baga_inv then
+  if !Globals.is_inferring (* !Globals.gen_baga_inv *) then
     Hashtbl.find Excore.map_baga_invs view.Cast.view_name
   else
     match view.Cast.view_baga_inv with

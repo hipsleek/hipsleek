@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open VarGen
 (* cview util
  this module contains procedures
@@ -155,6 +156,10 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
 				                        (CP.eq_ann a a2) && compatible
     | _ -> false
   in helper ann1 ann2
+
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+  let pr = pr_list CP.string_of_ann in
+  Debug.no_2 "compatible_ann" pr pr string_of_bool compatible_ann ann1 ann2
 
 (****************************************************************************)
 (****************************************************************************)
@@ -1119,7 +1124,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 	h_formula_conj_pos = pos})
       | ConjStar ({h_formula_conjstar_h1 = h1;
 	h_formula_conjstar_h2 = h2;
-	h_formula_conjstar_pos = pos})	    		
+	h_formula_conjstar_pos = pos})
       | ConjConj ({h_formula_conjconj_h1 = h1;
 	h_formula_conjconj_h2 = h2;
 	h_formula_conjconj_pos = pos}) ->
@@ -1129,7 +1134,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
             let () = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
             let () = Debug.ninfo_hprint (add_str "memset" !CF.print_mem_formula) memset no_pos in
             MCP.merge_mems ph1 ph2 true
-      | StarMinus _ 
+      | StarMinus _
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
       | HEmp | HVar _  -> MCP.mkMTrue no_pos

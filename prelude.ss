@@ -462,8 +462,8 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-/* pred_prim memLoc<heap:bool,size:int> */
-/*   inv size>0; */
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
 
                                   ///////////////
                                   /*

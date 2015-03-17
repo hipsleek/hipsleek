@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (**
    GUI frontend for Sleek
  *)
