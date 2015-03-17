@@ -48,7 +48,7 @@ let rhs_pure_stk = new Gen.stack            (* used for detecting pure contra in
 (*cyclic: should improve the design. why AS call solver??*)
 let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
 let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
-    let () = print_endline ("Solver.manage_unsafe_lemmas: not int " ) in
+    let () = print_endline_quiet ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))
 
 (*
@@ -61,17 +61,17 @@ let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.
 *)
 let manage_infer_pred_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl)
   (fnc)->
-      let () = print_endline ("Solver.manage_infer_lemmas: not int " ) in
+      let () = print_endline_quiet ("Solver.manage_infer_lemmas: not int " ) in
       (([],[],None): ((CP.formula * CP.formula * CP.formula * CP.formula) list) * (CF.hp_rel_def list) * CF.list_context list option))
 
 let trans_hprel_2_cview = ref (fun (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) (proc_name:string) (hpdefs:CF.hp_rel_def list)->
-    let () = print_endline ("Solver.trans_hprel_2_cview: not int " ) in
+    let () = print_endline_quiet ("Solver.trans_hprel_2_cview: not int " ) in
     (([], []): (view_decl list * hp_decl list)))
 
 let trans_formula_hp_2_view = ref (fun (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) (proc_name:string)
   (chprels_decl: hp_decl list) (hpdefs:CF.hp_rel_def list) (view_equivs: (Globals.ident * Globals.ident) list)
   (f:CF.formula) ->
-    let () = print_endline ("Solver.trans_formula_hp_2_view: not int " ) in
+    let () = print_endline_quiet ("Solver.trans_formula_hp_2_view: not int " ) in
     (f:CF.formula))
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
@@ -3402,7 +3402,7 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
   ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
   ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
-    (* let _= print_endline("bach: heap_entail_struc_list_partial_context") in *)
+    (* let () = print_endline("bach: heap_entail_struc_list_partial_context") in *)
     let l = List.map 
       (fun c-> heap_entail_struc_partial_context prog is_folding  has_post c conseq tid delayed_f join_id pos pid f to_string) cl in
     let l_ctx , prf_l = List.split l in
@@ -3892,7 +3892,7 @@ and find_thread_delayed_resource es es_f id pos =
               | _ -> false) heaps
         in
         let () = if (List.length t_heaps) > 1 then
-              print_endline ("[Warning] helper_inner: multiple ThreadNode, might need to normalize")
+              print_endline_quiet ("[Warning] helper_inner: multiple ThreadNode, might need to normalize")
         in
         (if ((List.length t_heaps) == 0) then
               let error_msg = "Thrd node " ^ (Cprinter.string_of_spec_var id) ^ "not found when join" in
@@ -6881,7 +6881,7 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
                 match rs1 with
 	              | OCtx (c1, c2) ->
                         (*Won't expect this case to happen*)
-                        let () = print_endline ("[WARNING] process_thread_one_match: process_one: unexpected disjunctive ctx \n") in
+                        let () = print_endline_quiet ("[WARNING] process_thread_one_match: process_one: unexpected disjunctive ctx \n") in
                         (((MCP.mkMTrue pos) , (MCP.mkMTrue pos)),empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos)
 		                    (* let tmp1 = process_one_x c1 in *)
 		                    (* let tmp2 = process_one_x c2 in *)
@@ -7046,7 +7046,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     (* let () = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let () = hec_stack # push slk_no in
     let logger fr tt timeout =
-      let _ =
+      let () =
         Log.add_sleek_logging es_opt timeout tt infer_type infer_vars !Globals.do_classic_frame_rule 
             caller avoid hec_num slk_no ante conseq consumed_heap evars
             (match fr with Some (lc,_) -> Some lc | None -> None) pos in
@@ -8315,6 +8315,7 @@ type: bool *
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let (r_rez,r_succ_match, r_fail_match, (fc_kind, (contra_list, must_list, may_list))) =  
     fold_fun_impt  (true,[],None, (Failure_Valid, ([],[],[]))) rhs_p in
+
   if r_rez then begin (* Entailment is valid *)
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
@@ -8382,6 +8383,41 @@ type: bool *
           (* let _, rhs_p = TermUtils.strip_lexvar_mix_formula rhs_p in *)
           (estate, lhs_p, (* rhs_p, *) None)
       in
+      (* Termination: Try to prove rhs_wf with inference *)
+      (* rhs_wf = None --> measure succeeded or no striggered inference *)
+      (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
+      (* lctx = Succ --> termination succeeded with inference *)
+      let estate = match rhs_wf with
+        | None -> estate
+        | Some rank ->
+              begin
+                let () = Debug.ninfo_hprint (add_str "conseq1" pr_no) conseq no_pos in
+                match (heap_infer_decreasing_wf prog conseq estate rank is_folding lhs pos) with
+                  | None -> (try
+                        let t_ann, ml, il = Term.find_lexvar_es estate in
+                        let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
+                        let term_measures, term_res, term_err_msg =
+                          Some (CP.Fail CP.TermErr_May, ml, il),
+                          (term_pos, t_ann_trans, orig_ante,
+                          Term.MayTerm_S (Term.Not_Decreasing_Measure t_ann_trans)),
+                          Some (Term.string_of_term_res (term_pos, t_ann_trans, None, Term.TermErr (Term.Not_Decreasing_Measure t_ann_trans)))
+                        in
+                        let term_stack = match term_err_msg with
+                          | None -> estate.CF.es_var_stack
+                          | Some msg -> msg::estate.CF.es_var_stack
+                        in
+                        Term.term_res_stk # pop;
+                        Term.term_res_stk # push term_res;
+                        { estate with
+                            CF.es_var_measures = term_measures;
+                            CF.es_var_stack = term_stack;
+                            CF.es_term_err = term_err_msg;
+                        }
+                    with _ -> estate)
+                  | Some es -> es
+              end
+      in
+
       (* Termination: Try to prove rhs_wf with inference *)
       (* rhs_wf = None --> measure succeeded or no striggered inference *)
       (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
@@ -9391,7 +9427,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
                      CF.h_formula_thread_resource = l_rsr;}),
         ThreadNode ({CF.h_formula_thread_delayed = r_dl;
         CF.h_formula_thread_resource = r_rsr;} as r_t) ->
-            let () = print_endline ("Matching ThreadNodes") in
+            let () = print_endline_quiet ("Matching ThreadNodes") in
             (*Whether the delayed constraints are syntatically eq*)
           let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
           let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in
@@ -9410,13 +9446,13 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
   (match is_thread, eq_dl, match_number with
     | false, _ , _ -> label_list, l_args, r_args, (is_thread,true,None,None)
     | true, false, _ ->
-        let () = print_endline ("MATCH of ThreadNodes failed") in
+        let () = print_endline_quiet ("MATCH of ThreadNodes failed") in
         let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "delayed formulas unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "101 : delayed formulas unmatched between LHS node and RHS node" Globals.sl_error, estate.es_trace)) (Ctx (convert_to_must_es estate)) (mk_cex true), NoAlias) in
         label_list, l_args, r_args, (is_thread,false,Some rs,None)
     | true, true, 0
     | true, true, 1 ->
         (*For matching two thread nodes*)
-        let () = print_endline ("Attempt Syntatic MATCH of ThreadNodes") in
+        let () = print_endline_quiet ("Attempt Syntatic MATCH of ThreadNodes") in
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -9437,7 +9473,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
     | true, true, 2 ->
         (*For Syntatic SPLIT 
           TOCHECK: currently ignore pure constraints for the resource*)
-        let () = print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in
+        let () = print_endline_quiet ("Attempt Syntatic SPLIT of ThreadNodes") in
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -9961,7 +9997,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* An Hoa : fix new_ante *)
           let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a pos  in
           let () = Debug.tinfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
-              let _ = Debug.tinfo_hprint (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
+          let () = Debug.tinfo_hprint (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
           let lhs_vars = CP.fv to_lhs in
           (* Apply the new bindings to the consequent *)
           let e_subs = ivar_subs_to_conseq @ ext_subst in
@@ -13047,10 +13083,10 @@ and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is
       (* anode |- _ *)
       (* unfold by removing LHS head anode, and replaced with rhs_b into new_lhs to continue *)
         let old_trace = estate.es_trace in
-        let _ = DD.ninfo_hprint (add_str "ok" string_of_int) ok no_pos in
+        let () = DD.ninfo_hprint (add_str "ok" string_of_int) ok no_pos in
         let estate = {estate with
             es_trace=(("(left: " ^ coer.coercion_name ^ ")")::old_trace)} in
-         let _ = DD.ninfo_hprint (add_str "estate.es_formula" !print_formula) estate.es_formula no_pos in
+         let () = DD.ninfo_hprint (add_str "estate.es_formula" !print_formula) estate.es_formula no_pos in
       let ctx0 = Ctx estate in
       (*err.4/E8*)
       let new_ctx1 = build_context ctx0 ( CF.change_flow_w_flag new_lhs (ok==2) !error_flow_int) pos in
@@ -13216,13 +13252,13 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             (*prove extra heap + guard*)
             let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) lhs_vperm CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
 
-            let () = print_endline ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in
-            let () = print_endline ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in
+            let () = print_endline_quiet ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in
+            let () = print_endline_quiet ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in
 
             (*=====================================================*)
             (***********Handle high-order argument: BEGIN**********)
             if (List.length ho_ps1 != List.length ho_ps2) then
-              let () = print_endline ("apply_left_coercion_complex: ho_args mismatched between anode and head_node") in
+              let () = print_endline_quiet ("apply_left_coercion_complex: ho_args mismatched between anode and head_node") in
               Debug.tinfo_zprint (lazy ("apply_left_coercion_complex: ho_args mismatched between anode and head_node")) no_pos;
               (CF.mkFailCtx_in( Basic_Reason ( { 
 	          fc_message ="failed left coercion application, ho_args mismatched between anode and head_node";
@@ -13241,7 +13277,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
                 let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
                 coer_rhs_new
             in
-            let () = print_endline ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in
+            let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in
 
             (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
             (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
@@ -13554,7 +13590,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       (*=====================================================*)
       (***********Handle high-order argument: BEGIN**********)
       if (List.length ho_ps1 != List.length ho_ps2) then
-        let () = print_endline ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node") in
+        let () = print_endline_quiet ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node") in
         Debug.tinfo_zprint (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
         (false, estate, h, p, vp, mkNormalFlow ()) (* false, return dummy h and p *)
       else

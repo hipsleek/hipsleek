@@ -459,7 +459,7 @@ struct
     minisat_process := proc
   let start () =
     if not !is_minisat_running then (
-      print_endline ("Starting Minisat... \n");
+      print_endline_quiet ("Starting Minisat... \n");
       last_test_number := !test_number;
       if (minisat_input_format = "cnf") then (
         PrvComms.start (minisat_name, minisat_path, [|minisat_arg|]) set_process;

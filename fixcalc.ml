@@ -47,7 +47,7 @@ let gen_fixcalc_file str_fc=
     let reg = Str.regexp "\(\.ss\)\|\(.slk\)" in
     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".fc" file_name) in
     (* let () = print_endline (file_name1 ^ ".fc") in *)
-    let () = print_endline ("\n generating fixcalc file : " ^ file_name1) in
+    let () = print_endline_quiet ("\n generating fixcalc file : " ^ file_name1) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     (*open_out*) open_out_gen [Open_wronly; Open_append; Open_creat] 0o600 (file_name1)
   in
@@ -620,8 +620,8 @@ let compute_inv_mutrec mutrec_vnames views =
       (* let pf =  MCP.pure_of_mix view.Cast.view_user_inv in *)
       let check_imply = true (* TP.imply_raw new_pf pf *) in
       if check_imply then
-        let () = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
-        (* let () = print_endline "" in *)
+        let _ = DD.ninfo_hprint (add_str ("new 2 inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
+        (* let _ = print_endline "" in *)
         (* let idx = CP.mk_typed_spec_var Int "idx" in *)
         (* let new_pf_svl = CP.fv new_pf in *)
         (* let new_pf = if List.mem idx new_pf_svl then CP.wrap_exists_svl new_pf [idx] else new_pf in *)
@@ -1342,7 +1342,8 @@ let compute_fixpoint_x2 input_pairs ante_vars specs bottom_up =
         in new_acc
     ) 1 input_pairs in
     let () = Debug.binfo_hprint (add_str "n_base" string_of_int) n_base no_pos in
-    Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up
+    (* Wrapper.wrap_num_disj compute_fixpoint_x n_base input_pairs ante_vars specs bottom_up *)
+    compute_fixpoint_x input_pairs ante_vars specs bottom_up
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in

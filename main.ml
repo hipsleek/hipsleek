@@ -76,6 +76,10 @@ let parse_file_full file_name (primitive: bool) =
       if parser_to_use = "cil" then
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
+      else if parser_to_use = "cil-i" then
+        let cil_prog = Cilparser.parse_prep file_name in
+        let stdlib_procs = Parser.create_tnt_stdlib_proc () in
+        { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else
         (* if parser_to_use = "joust" then                                                        *)
         (*   let ss_file_name = file_name ^ ".ss" in                                              *)
@@ -303,7 +307,7 @@ let print_spec cprog =
       | p :: pl -> (match p.Cast.proc_body with
           | None -> ""
           | Some _ ->
-                let () = print_endline (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+                let () = print_endline_quiet (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
                 (* let sf = p.Cast.proc_static_specs in *)
                 (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
                 (* let new_sf = List.fold_left (fun sf fv ->  *)
@@ -705,6 +709,7 @@ let process_source_list source_files =
       let parser = 
         if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
+        else if (ext = ".i") then "cil-i"
         else (* "default" *) !Parser.parser_name
       in 
       let () = Parser.parser_name := parser in
@@ -981,13 +986,17 @@ let old_main () =
     ()
   with _ as e -> begin
     finalize_bug ();
-    print_string "caught\n"; 
+    print_string_quiet "caught\n"; 
     Printexc.print_backtrace stderr;
-    print_string ("\nException occurred: " ^ (Printexc.to_string e));
-    print_string ("\nError3(s) detected at main \n");
+    print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string_quiet ("\nError3(s) detected at main \n");
     (* print result for svcomp 2015 *)
-    if (!Globals.svcomp_compete_mode) then
-      print_endline "UNKNOWN(5)";
+    (
+    if !Globals.tnt_web_mode then
+      print_web_mode ("\nError: " ^ (Printexc.to_string e))
+    else if (!Globals.svcomp_compete_mode) then
+      print_endline "UNKNOWN" (* UNKNOWN(5) *)
+    )
   end
 
 let () = 
@@ -1016,12 +1025,16 @@ let () =
           ()
         with _ as e -> begin
           finalize_bug ();
-          print_string "caught\n"; Printexc.print_backtrace stdout;
-          print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError4(s) detected at main \n");
+          print_string_quiet "caught\n"; Printexc.print_backtrace stdout;
+          print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
+          print_string_quiet ("\nError4(s) detected at main \n");
           (* print result for svcomp 2015 *)
-          if (!Globals.svcomp_compete_mode) then
-            print_endline "UNKNOWN(7)"
+          (
+          if !Globals.tnt_web_mode then
+            print_web_mode ("\nError: " ^ (Printexc.to_string e))
+          else if (!Globals.svcomp_compete_mode) then
+            print_endline "UNKNOWN" (* UNKNOWN(7) *)
+          )
         end
     done;
     hip_epilogue ()

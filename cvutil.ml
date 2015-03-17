@@ -1358,7 +1358,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                     if(res) then
                       (*x1=x2, x3=x4, x1!=x3*)
                       if (p_vars=[] || p1_vars=[]) then
-                        let () = print_endline ("xpure_perm: check: something wrong happened with heap nodes") in
+                        let () = print_endline_quiet ("xpure_perm: check: something wrong happened with heap nodes") in
                         MCP.mkMTrue no_pos
                       else
                         let np = CP.mkNeqVar (List.hd p_vars) (List.hd p1_vars) no_pos in

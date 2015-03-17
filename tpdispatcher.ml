@@ -473,7 +473,7 @@ let init_tp () =
       let () = Omega.omegacalc := "./oc" in
       ()
       else ()) in
-  let () = print_endline ("!!! init_tp by default: ") in 
+  let () = print_endline_quiet ("!!! init_tp by default: ") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 

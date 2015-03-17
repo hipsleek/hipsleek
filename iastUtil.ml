@@ -1079,6 +1079,9 @@ let find_free_vars (e:exp) bound : IS.t =
   let (rs,ws) = find_free_read_write e bound in
   IS.union rs ws
 
+let find_free_vars_only e =
+  let emp = IS.empty in
+  find_free_vars e emp 
 
 let find_free_read_write_of_proc proc prog: (IS.t * IS.t) = 
   (*find proc idents*)
@@ -1262,8 +1265,8 @@ let param_of_v ht md lc nm =
         param_loc = lc;
       }
   with e ->
-    let () = print_endline ("Exception!!! in param_of_v") in
-    let () = print_endline ("== nm = " ^ nm) in
+    let () = print_endline_quiet ("Exception!!! in param_of_v") in
+    let () = print_endline_quiet ("== nm = " ^ nm) in
     raise e
 
 let add_free_var_to_proc gvdefs ht proc = 

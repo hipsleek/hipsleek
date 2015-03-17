@@ -3343,41 +3343,58 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
 let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" ""
+    pr_args (Some("V",2)) (Some "A") "case " "{" "}" ""
     (
-      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
-        (fun () -> pr_struc_formula_for_spec c2)
+      fun (c1,c2) -> wrap_box ("B", 0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+        (fun () ->
+          fmt_cut (); 
+          fmt_open_vbox 2;
+          wrap_box ("V",2) pr_struc_formula_for_spec c2);
+          fmt_close ();
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
-    fmt_string "requires ";
-    pr_formula_for_spec fb;
+    fmt_open_vbox 0;
+    wrap_box ("B",0) (fun fb ->
+      fmt_string "requires ";
+      pr_formula_for_spec fb) fb;
     (match cont with
-          | None -> ()
-          | Some l -> pr_struc_formula_for_spec l
-        );
-  | EAssume  {
-			formula_assume_vars = x;
-			formula_assume_simpl = b;
-			formula_assume_lbl = (y1,y2);
-			formula_assume_ensures_type = t;
-			formula_assume_struc = s;}->
-    let ensures_str = match t with
-                     | None -> "\n     ensures "
-                     | Some true -> "\n     ensures_exact "
-                     | Some false -> "\n     ensures_inexact " in
-    fmt_string ensures_str;
-    pr_formula_for_spec b;
-    fmt_string ";";
-	if !print_assume_struc then
-	  (fmt_string "struct:";
-	   wrap_box ("B",0) pr_struc_formula_for_spec s)
-	 else ()
+    | None -> ()
+    | Some l ->
+      (fmt_cut ();
+      wrap_box ("B",0) pr_struc_formula_for_spec l) 
+    );
+    fmt_close ();
+  | EAssume {
+      formula_assume_vars = x;
+      formula_assume_simpl = b;
+      formula_assume_lbl = (y1,y2);
+      formula_assume_ensures_type = t;
+      formula_assume_struc = s;} ->
+    wrap_box ("V",0);
+    (fun b -> 
+      let ensures_str = 
+        match t with
+        | None ->       "ensures "
+        | Some true ->  "ensures_exact "
+        | Some false -> "ensures_inexact " in
+      fmt_string ensures_str;
+      pr_formula_for_spec b;
+      fmt_string ";";
+      fmt_cut ();
+      if !print_assume_struc then
+        (fmt_string "struct:";
+        wrap_box ("B",0) pr_struc_formula_for_spec s)
+      else ()) b
   | EInfer b -> 
     (* let il = if b.formula_inf_tnt then [INF_TERM] else [] in *)
     let il = b.formula_inf_obj # get_lst in
-    fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
-    pr_struc_formula_for_spec b.formula_inf_continuation
+    fmt_open_vbox 0;
+    (if (il = []) then ()
+    else fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars)));
+    fmt_cut ();
+    wrap_box ("B",0) pr_struc_formula_for_spec b.formula_inf_continuation;
+    fmt_close ();
     (* report_error no_pos "Do not expect EInfer at this level" *)
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
   (*| EOr b ->

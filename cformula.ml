@@ -10549,7 +10549,7 @@ let consistent_context (c:context) : bool =
 let must_consistent_context (s:string) l : unit =
   if !consistency_checking then
     let b = consistent_context l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": context inconsistent")
 		
 let must_consistent_context (s:string) l : unit =
@@ -10572,7 +10572,7 @@ let consistent_list_failesc_context (l:list_failesc_context) : bool =
 let must_consistent_list_failesc_context (s:string) l : unit =
   if !consistency_checking then
     let b = consistent_list_failesc_context l in
-    if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
+    if b then print_endline_quiet ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
 
 (*let isStrictFalseCtx ctx = match ctx with
@@ -11698,7 +11698,7 @@ let rec merge_esc f e1 e2 =
     | (l1,b1)::z1,(l2,b2)::z2 ->
           let flag = not ((fst l1)==(fst l2)) in
           (if flag then 
-            print_endline ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
+            print_endline_quiet ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
           ; (l1,merge_success b1 b2)::(merge_esc f z1 z2)
               (* if not ((fst l1)==(fst l2)) then  *)
               (*   Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in merge failesc context lbl mismatch\n"} *)
