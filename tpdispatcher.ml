@@ -3815,3 +3815,4 @@ let () =
   Excore.simplify_raw := simplify_raw;
   Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := simplify_omega;
+  Cfout.simplify_raw := simplify_raw;

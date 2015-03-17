@@ -483,7 +483,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       | CF.EBase b ->
             let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
             let () = stk_vars # push_list vs in
-            let () = x_binfo_hp (add_str "Ebase" pr_id) (stk_vars # string_of_no_ln) no_pos in
+            let () = x_tinfo_hp (add_str "Ebase" pr_id) (stk_vars # string_of_no_ln) no_pos in
             Debug.devel_zprint (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
@@ -1848,7 +1848,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         begin
                           stk_vars # push_list lsv;
-                          let () = x_binfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
+                          let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
                           let tmp_res1 = check_exp prog proc rs body post_start_label in
                           stk_vars # pop_list lsv;
                           let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
@@ -1899,7 +1899,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             try
               let vss = List.map (fun (t,i) -> CP.SpecVar (t, i, Unprimed)) local_vars in
               stk_vars # push_list vss;
-              let () = x_binfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
+              let () = x_tinfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
               let ctx1 = check_exp prog proc ctx e post_start_label in
               stk_vars # pop_list vss;
               let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
@@ -2007,21 +2007,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
             let ctx2 = list_failesc_context_and_unsat_now prog ctx in
             let ctx = ctx2 in
+            let ctx_simp = Cfout.simplify_failesc_context_list ctx in
             (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
             (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
             if str = "" then begin
-              let str1 =
-                (Cprinter.string_of_list_failesc_context ctx) in
+              let str1 = (Cprinter.string_of_list_failesc_context ctx) in
+              let str2 = (Cprinter.string_of_list_failesc_context ctx_simp) in
 	      (if (Gen.is_empty ctx) then
                 (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
 	      else
-                let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
+                let tmp1 = "\ndprint before: " ^ pos.start_pos.Lexing.pos_fname
                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
                 let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-                print_string_quiet tmp1);
+                let tmp2 = "\ndprint after: " ^ pos.start_pos.Lexing.pos_fname
+                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n" in
+                let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
+                print_string_quiet (tmp1 ^ tmp2));
               ctx
             end else begin
               ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
@@ -3309,7 +3313,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   (* push proc.proc_args *)
                   let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
                   stk_vars # push_list args;
-                  let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+                  let () = x_tinfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
                   let pr_flag = not(!phase_infer_ind) in
 		  if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then 
 		    print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
