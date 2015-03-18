@@ -412,16 +412,21 @@ let simplify_branch_context (pt, ctx, fail_type) =
       | Ctx en -> Ctx {en with
             es_formula =
                 let () = x_binfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                let all_svl = fv en.es_formula in
+                let () = x_binfo_hp (add_str "all variables" (pr_list !print_sv)) all_svl no_pos in
                 let h,mf,vp,fl,t,a = split_components en.es_formula in
-                let pf = Mcpure.pure_of_mix mf in
-                let pf_simp = !simplify_raw pf in
-                let mf_simp = Mcpure.mix_of_pure pf_simp in
                 let curr_svl = stk_vars # get_stk in
                 let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
                 let bind_svl = h_fv h in
                 let () = x_binfo_hp (add_str "bind variables" (pr_list !print_sv)) bind_svl no_pos in
-                let imp_svl = curr_svl@bind_svl in
+                let imp_svl = Gen.BList.remove_dups_eq Cpure.eq_spec_var (curr_svl@bind_svl) in
                 let () = x_binfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
+                let exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
+                let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                let pf = Mcpure.pure_of_mix mf in
+                let pf1 = Cpure.mkExists exists_svl pf None no_pos in
+                let pf_simp = !simplify_raw pf1 in
+                let mf_simp = Mcpure.mix_of_pure pf_simp in
                 mkBase h mf_simp vp t fl a no_pos
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
