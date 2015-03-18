@@ -5363,3 +5363,4 @@ Lem_store.lem_pr:= string_of_coerc_long;;
 Lem_store.lem_pr_med:= string_of_coerc_med;;
 CVP.print_vperm_sets := string_of_vperm_sets;;
 Cformula.print_vperm_sets := string_of_vperm_sets;;
+Cfout.print_list_failesc_context := string_of_list_failesc_context;

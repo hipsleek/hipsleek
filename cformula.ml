@@ -17453,7 +17453,7 @@ let add_struc_unfold_num (f : struc_formula) uf =
 	| _ -> (h, None)
 
 let f_fst l ( _ :'a) = l
-	
+
 let rec find_nodes e l=
 	 let f_heap_f l h  = match h with
 	  | HRel (p,vl, _) ->

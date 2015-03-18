@@ -7,6 +7,7 @@ open Globals
 open VarGen
 open Gen
 open Exc.GTable
+open VarGen
 open Perm
 open Label_only
 open Label
@@ -17,6 +18,9 @@ module MCP = Mcpure
 
 let n_tbl = Hashtbl.create 1
 let id_tbl = Hashtbl.create 1
+
+let print_list_failesc_context = ref (fun (c:Cformula.list_failesc_context) -> "list failesc context printer has not been initialized")
+let simplify_raw = ref(fun (c:Cpure.formula) -> Cpure.mkTrue no_pos)
 
 let shorten_svl fv =
   (* let n_tbl = Hashtbl.create 1 in *)
@@ -254,9 +258,6 @@ let rearrange_hp_def def=
   {def with def_rhs = new_body2;
       def_lhs = new_hrel;}
 
-
-
-
 let rearrange_rel (rel: hprel) =
   let lfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_lhs)) in
   let gfv = (match rel.hprel_guard with
@@ -400,6 +401,29 @@ let rec shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let simplify_branch_context (pt, ctx) =
+  let _ = print_endline "simplify2222" in
+  let rec helper ctx =
+    match ctx with
+      | Ctx en -> Ctx {en with
+            es_formula =
+                let h,p,vp,fl,t,a = split_components en.es_formula in
+                mkBase h (Mcpure.mix_of_pure (!simplify_raw (Mcpure.pure_of_mix p))) vp t fl a no_pos
+        }
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in (pt, helper ctx)
+
+let simplify_failesc_context fc =
+  match fc with
+    | (bfl, esc, bcl) -> (bfl, esc, List.map simplify_branch_context bcl)
+
+let simplify_failesc_context_list_x ctx =
+  List.map (fun x -> simplify_failesc_context x) ctx
+
+let simplify_failesc_context_list ctx =
+  let pr = !print_list_failesc_context in
+  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list_x ctx
 
 let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e
