@@ -1,10 +1,18 @@
-open Globals
+(* open Globals *)
+open Gen.Basic
+open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
+let z_debug_arg = ref (None:Str.regexp option)
+
+let () = if !compete_mode then
+  begin
+    trace_on := false;
+  end
 let log_devel_debug = ref false
 let debug_log = Buffer.create 5096
 
@@ -28,9 +36,12 @@ let pprint msg (pos:loc) =
 	print tmp
 
 (* system development debugging *)
-let ho_print flag (pr:'a->string) (m:'a) : unit = 
+let ho_print flag (pr:'a->string) (m:'a) : unit =
   let d = Gen.StackTrace.is_same_dd_get () in
-  if flag (* !devel_debug_on *)  || not(d==None) then 
+  (* let () = print_endline ("\ndd_get:"^((pr_option string_of_int) d)) in *)
+  (* WN : should we use && or || *)
+  if !compete_mode then ()
+  else if (flag (* !devel_debug_on *)  ||  not(d==None)) then 
     let s = (pr m) in
     let msg = match d with 
       | None -> ("\n!!!" ^ s)
@@ -59,8 +70,8 @@ let devel_print s =
 
 let prior_msg pos =
   let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
-  let tmp = if is_no_pos !entail_pos then tmp 
-  else (tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (post_pos#get).start_pos.Lexing.pos_lnum)^"]") 
+  let tmp = if is_no_pos !VarGen.entail_pos then tmp 
+  else (tmp^"[entail:"^(string_of_int !VarGen.entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int (VarGen.post_pos#get).start_pos.Lexing.pos_lnum)^"]") 
   in tmp
 
 let devel_pprint (msg:string) (pos:loc) =
@@ -86,18 +97,22 @@ let dinfo_pprint m p = devel_pprint m p
 
 let binfo_pprint (msg:string) (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^m) msg
 
+let winfo_pprint (msg:string) (pos:loc) =
+  let s = if !devel_debug_on then (prior_msg pos) else " " in
+  let flag = !trace_on || !devel_debug_on in
+  ho_print flag (fun m -> s^m) ("**WARNING**"^msg)
 
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun x -> s^(pr x)) m
 
 let binfo_zprint msg (pos:loc) =
   let s = if !devel_debug_on then (prior_msg pos) else " " in
-  let flag = !trace_on or !devel_debug_on in
+  let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^(Lazy.force m)) msg
 
 
@@ -136,7 +151,7 @@ let ninfo_pprint m p = ()
 let add_str s f xs = s^":"^(f xs)
 
 let gen_vv_flags d =
-  let m = !Globals.verbose_num in
+  let m = !VarGen.verbose_num in
   let (flag,str) =
     if d<0 then (m==d,"EXACT:")
     else if m>50 then (d>=m,"DEBUG:")
@@ -192,30 +207,34 @@ let vv_result (s:string) (d:int) ls =
   vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>")
 
 let trace_pprint (msg:string) (pos:loc) : unit = 
-	ho_print false (fun a -> " "^a) msg
+	ho_print !devel_debug_on (fun a -> " "^a) msg
 
 let trace_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print false (fun x -> " "^(pr x)) m
+	ho_print !devel_debug_on (fun x -> " "^(pr x)) m
 
 let trace_zprint m (pos:loc) = 
-	ho_print false (fun x -> Lazy.force x) m
+	ho_print !devel_debug_on (fun x -> Lazy.force x) m
 
 let tinfo_zprint m p = trace_zprint m p
 let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
-let info_pprint (msg:string) (pos:loc) : unit = 
-	ho_print true (fun a -> " "^a) msg
+let info_pprint (msg:string) (pos:loc) : unit =
+  let flag = not(!compete_mode) in
+  ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print true (fun x -> " "^(pr x)) m
+  let flag = not(!compete_mode) in
+  ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-	if !Globals.sap then ho_print true (fun x -> " "^(pr x)) m
-        else ()
+  let flag = not(!compete_mode) in
+  if !VarGen.sap then ho_print flag (fun x -> " "^(pr x)) m
+  else ()
 
 let info_zprint m (pos:loc) = 
-	ho_print true (fun x -> Lazy.force x) m
+  let flag = not(!compete_mode) in
+  ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
 (* 	lazy_print (prior_msg pos) msg *)
@@ -238,16 +257,16 @@ open Gen.StackTrace
   (*   let r = try *)
   (*     pop_ho (f e1) e2  *)
   (*   with ex ->  *)
-  (*       let _ = print_string (h^"\n") in *)
-  (*       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
-  (*       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
-  (*       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in *)
+  (*       let () = print_string (h^"\n") in *)
+  (*       let () = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
+  (*       let () = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
+  (*       let () = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in *)
   (*       raise ex in *)
   (*   if not(test r) then r else *)
-  (*     let _ = print_string (h^"\n") in *)
-  (*     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
-  (*     let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
-  (*     let _ = print_string (s^" out :"^(pr_o r)^"\n") in *)
+  (*     let () = print_string (h^"\n") in *)
+  (*     let () = print_string (s^" inp1 :"^(pr1 e1)^"\n") in *)
+  (*     let () = print_string (s^" inp2 :"^(pr2 e2)^"\n") in *)
+  (*     let () = print_string (s^" out :"^(pr_o r)^"\n") in *)
   (*     r *)
 
 (* ss with at least one argument *)
@@ -279,9 +298,18 @@ let pick_front n ss =
 (*       val convert : string -> lst_pair -> t *)
 (*     end;; *)
 
+
+
 module DebugCore  =
 struct
-  let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+  let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+    let pre_str = 
+      let s = !VarGen.last_posn in
+      match s with 
+        | None -> ""
+        | Some s -> 
+              let () = VarGen.last_posn := None in
+              "("^s^")" in
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -294,6 +322,16 @@ struct
           if (a1=(List.nth args (i-1))) then helper xs
           else (print_string (s^" res"^(string_of_int i)^" :"^(a1)^"\n");(helper xs)) in
       helper xs in
+    let check_args args = true
+      (* match !z_debug_arg with *)
+      (*   | None -> false  *)
+      (*   | Some re ->  *)
+      (*         (\* let () = print_endline ("check_args:"^s) in *\) *)
+      (*         List.exists (fun x ->  *)
+      (*             try  *)
+      (*               (Str.search_forward re x 0);true *)
+      (*             with _ -> false) args *)
+    in
     let (test,pr_o) = match g with
       | None -> (test,pr_o)
       | Some g -> 
@@ -314,24 +352,39 @@ struct
                     ("\n NOW :"^(pr_o x)))) in
             (new_test, new_pr_o) in
     let s,h = push_call_gen s df in
+    let h = pre_str^"\n"^h in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
     flush stdout;
     let r = (try
       pop_aft_apply_with_exc f e
     with ex -> 
-        (let _ = print_string ("\n"^h^"\n") in
+        (
         (* if not df then *) 
-        (pr_args args; pr_lazy_res lz);
-        let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
-        flush stdout;
-        raise ex)) in
+        let flag = check_args args in
+        if flag then
+          begin
+            let () = print_string ("\n"^h^"\n") in
+            (pr_args args; pr_lazy_res lz);
+            let () = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+            flush stdout;
+            raise ex 
+          end
+        else raise ex
+        )) in
     (if not(test r) then r else
-      let _ = print_string ("\n"^h^"\n") in
       (* if not df then *)
-      (pr_args args; pr_lazy_res lz);
-      let _ = print_string (s^" EXIT:"^(pr_o r)^"\n") in
-      flush stdout;
-      r)
+      let res_str = pr_o r in
+      let flag = check_args (res_str::args) in
+      if not(flag) then r
+      else
+        begin
+          let () = print_string ("\n"^h^"\n") in
+          (pr_args args; pr_lazy_res lz);
+          let () = print_string (s^" EXIT:"^(res_str)^"\n") in
+          flush stdout;
+          r
+        end
+    )
 
 let choose bs xs = 
   let rec hp bs xs = match bs,xs with
@@ -453,6 +506,9 @@ let regexp_line_str = ref []
 let z_debug_file = ref ""
 (* let z_debug_regexp = ref None *)
 let z_debug_flag = ref false
+let mk_debug_arg s =
+  let re = Str.regexp s in
+  z_debug_arg := Some re
 
 (*let debug_file = open_in_gen [Open_creat] 0o666 ("z-debug.log")*)
 let debug_file ()=
@@ -475,18 +531,18 @@ let debug_file ()=
   else
     begin
       let debug_conf = "./" ^ fname in
-      (* let _ = print_endline (debug_conf) in *)
+      (* let () = print_endline (debug_conf) in *)
       let global_debug_conf =
         if (Sys.file_exists debug_conf) then
           debug_conf
         else (get_path Sys.executable_name) ^ (String.sub debug_conf 2 ((String.length debug_conf) -2))
       in
-      (* let _ = print_endline global_debug_conf in *)
+      (* let () = print_endline global_debug_conf in *)
       try
         Some(open_in (global_debug_conf))
       with _ ->
           begin
-            print_endline ("WARNING : cannot find debug file "^fname); 
+            print_endline_quiet ("WARNING : cannot find debug file "^fname); 
             z_debug_flag:=false;
             None
           end
@@ -494,7 +550,7 @@ let debug_file ()=
 
 let read_from_debug_file chn : string list =
   let line = ref [] in
-  let quitloop = ref false in
+  (* let quitloop = ref false in *)
   (try
     while true do
       let xs = (input_line chn) in
@@ -521,9 +577,13 @@ let proc_option str =
     match str with
       | [] -> (tr_flag,lp_flag)
       | s::str ->
-            if String.compare s "Trace" == 0 then aux str true lp_flag 
-            else if String.compare s "Loop" == 0 then aux str tr_flag true 
-            else aux str tr_flag lp_flag
+            begin
+              if String.compare s "Trace" == 0 then aux str true lp_flag 
+              else if String.compare s "Loop" == 0 then aux str tr_flag true 
+              else 
+                let () = (print_endline ("Warning - wrong debug command :"^s)) 
+                in aux str tr_flag lp_flag
+            end
   in aux str false false
 
 let rec get_words str =
@@ -553,8 +613,8 @@ let add_entry_with_options entry_fn xs =
           | true,false -> DO_Trace
           | true,true -> DO_Both
         in
-        let _ = print_endline (m) in
-        let _ = print_endline (split) in
+        let () = print_endline (m) in
+        let () = print_endline (split) in
         (* let kind = if String.compare split "Trace" == 0 then DO_Trace else *)
         (*   if String.compare split "Loop" == 0 then DO_Loop else *)
         (*     DO_Normal *)
@@ -567,12 +627,12 @@ let read_main () =
   let xs = match debug_file() with
     | Some c -> read_from_debug_file c
     | _ -> [] in
-  let _ = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
-  let _ = add_entry_with_options (fun x k -> 
+  let () = add_entry_with_options (fun x k -> Hashtbl.add debug_map x k) xs in
+  let () = add_entry_with_options (fun x k -> 
       let re = Str.regexp_case_fold x 
       in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
   ()
-  (* (\* let _ = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
+  (* (\* let () = print_endline ((pr_list (fun x -> x)) xs) in *\) *)
   (* List.iter (fun x -> *)
   (*     try *)
   (*       let l = String.index x ',' in *)
@@ -585,8 +645,8 @@ let read_main () =
   (*         | false,true -> DO_Loop *)
   (*         | true,false -> DO_Trace *)
   (*         | true,true -> DO_Both *)
-  (*       (\* let _ = print_endline (m) in *\) *)
-  (*       (\* let _ = print_endline (split) in *\) *)
+  (*       (\* let () = print_endline (m) in *\) *)
+  (*       (\* let () = print_endline (split) in *\) *)
   (*       (\* let kind = if String.compare split "Trace" == 0 then DO_Trace else *\) *)
   (*       (\*   if String.compare split "Loop" == 0 then DO_Loop else *\) *)
   (*       (\*     DO_Normal *\) *)
@@ -1223,6 +1283,10 @@ end
 
 module DebugEmpty  =
 struct
+  let z_debug_file = ref ""
+    (* let z_debug_regexp = ref None *)
+  let z_debug_flag = ref false
+
   let read_main() = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
@@ -1274,7 +1338,29 @@ struct
   let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f = f
   let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f = f
 
-  let no_1_all (i:int) s l (p,g) p1 p0 f =  f
+  let no_1_all (i:int) s l p g p1 p0 f =  f
+  let no_2_all (i:int) s l p g p1 p2 p0 f =  f
+  let no_3_all (i:int) s l p g p1 p2 p3 p0 f =  f
+  let no_4_all (i:int) s l p g p1 p2 p3 p4 p0 f =  f
+  let no_5_all (i:int) s l p g p1 p2 p3 p4 p5 p0 f =  f
+  let no_6_all (i:int) s l p g p1 p2 p3 p4 p5 p6 p0 f =  f
+
+(*
+type: int ->
+  string ->
+  ('w23 -> bool) option ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) option ->
+  bool list ->
+  ('x23 -> string) ->
+  ('y23 -> string) ->
+  ('z23 -> string) ->
+  ('a24 -> string) ->
+  ('b24 -> string) ->
+  ('w23 -> string) ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) ->
+  'x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23
+*)
+
 
 end
 

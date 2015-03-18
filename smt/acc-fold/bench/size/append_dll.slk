@@ -1,0 +1,99 @@
+data node2 {
+  node2 prev;
+  node2 next;
+}.
+ pred dll<p:node2> == 
+  emp&self=null or
+(exists p_20,self_21,q_19: self::node2<p_20,q_19> * 
+  q_19::dll<self_21>&p_20=p & self_21=self)
+  inv true.
+
+ 
+// id: 0; line: 19; kind: BIND
+ checkentail_exact (exists p1,self,q1: q1::dll<self> * x'::node2<p1,q1> * y::dll<p>&x'=x & 
+y'=y & x!=null & self=x' & p1=q)
+ |-  (exists self1,p2,q2: x'::node2<prev',next'> * q2::dll<self1> * y::dll<p>&
+next'=q2 & prev'=p2 & x'=x & y'=y & x!=null & self1=x' & p2=q).
+expect Valid.
+ 
+// id: 2; line: 19; kind: PRE
+ checkentail_exact q::dll<self> * y::dll<p> * x'::node2<p1,q>&v'=null & v'=q & x'=x & y'=y & 
+x!=null & self=x' & p1=q1
+ |-  q::dll<self> * y::dll<p> * x'::node2<p1,q>&v'=null & v'=q & x'=x & y'=y & 
+x!=null & self=x' & p1=q1.
+expect Valid.
+ 
+// id: 4; line: 19; kind: PRE
+ checkentail_exact q::dll<self> * y::dll<p> * x'::node2<p1,q>&v'!=null & v'=q & x'=x & y'=y & 
+x!=null & self=x' & p1=q1
+ |-  q::dll<self> * y::dll<p> * x'::node2<p1,q>&v'!=null & v'=q & x'=x & y'=y & 
+x!=null & self=x' & p1=q1.
+expect Valid.
+ 
+// id: 6; line: 20; kind: BIND
+ checkentail_exact q::dll<self> * y::dll<p> * x'::node2<p1,q>&v' & q=null & x'=x & y'=y & 
+x!=null & self=x' & p1=q1
+ |-  x'::node2<prev',next'> * q::dll<self> * y::dll<p>&next'=q & prev'=p1 & v' & 
+q=null & x'=x & y'=y & x!=null & self=x' & p1=q1.
+expect Valid.
+ 
+// id: 8; line: 21; kind: PRE
+ checkentail_exact x'::node2<p,y'>&y'=null & next=q & v' & q=null & x'=x & y'=y & x!=null & 
+self=x' & p=q1
+ |-  x'::node2<p,y'>&y'=null & next=q & v' & q=null & x'=x & y'=y & x!=null & 
+self=x' & p=q1.
+expect Valid.
+ 
+// id: 10; line: 21; kind: PRE
+ checkentail_exact q::dll<self> * y::dll<p> * x'::node2<p1,y'>&y'!=null & next=q & v' & 
+q=null & x'=x & y'=y & x!=null & self=x' & p1=q1
+ |-  q::dll<self> * y::dll<p> * x'::node2<p1,y'>&y'!=null & next=q & v' & 
+q=null & x'=x & y'=y & x!=null & self=x' & p1=q1.
+expect Valid.
+ 
+// id: 12; line: 22; kind: BIND
+ checkentail_exact (exists p2,self1,q2: q2::dll<self1> * q::dll<self> * y'::node2<p2,q2> * 
+x'::node2<p,y'>&v' & y'!=null & next=q & v1' & q=null & x'=x & y'=y & 
+x!=null & self=x' & p=q1 & self1=y' & p2=p1)
+ |-  (exists self2,p3,q3: y'::node2<prev',next'> * q::dll<self> * 
+q3::dll<self2> * x'::node2<p,y'>&next'=q3 & prev'=p3 & v' & y'!=null & 
+next=q & v1' & q=null & x'=x & y'=y & x!=null & self=x' & p=q1 & self2=y' & 
+p3=p1).
+expect Valid.
+ 
+// id: 14; line: 25; kind: BIND
+ checkentail_exact q::dll<self> * y::dll<p> * x'::node2<p1,q>&!(v') & q!=null & x'=x & y'=y & 
+x!=null & self=x' & p1=q1
+ |-  x'::node2<prev',next'> * q::dll<self> * y::dll<p>&next'=q & prev'=p1 & 
+!(v') & q!=null & x'=x & y'=y & x!=null & self=x' & p1=q1.
+expect Valid.
+ 
+// id: 16; line: 25; kind: PRE_REC
+ checkentail_exact q1::dll<self> * y::dll<p1> * x'::node2<p2,q1>&v1'=q1 & !(v') & q1!=null & 
+x'=x & y'=y & x!=null & self=x' & p2=q2
+ |-  v1'::dll<q> * y'::dll<p> * x'::node2<p2,q1>&p=p1 & q=self & v1'=q1 & 
+!(v') & q1!=null & x'=x & y'=y & x!=null & self=x' & p2=q2 & v1'!=null.
+expect Valid.
+ 
+// id: 20; line: 16; kind: POST
+ checkentail_exact q::dll<self1> * q1::dll<self> * x'::node2<p,y'> * y'::node2<x',q>&prev=p1 & 
+v' & y'!=null & next=q1 & v1' & q1=null & x'=x & y'=y & x!=null & self=x' & 
+p=q2 & self1=y' & p1=p2
+ |-  (exists q3: x::dll<q3> * q1::dll<self>&prev=p1 & v' & y'!=null & next=q1 & 
+v1' & q1=null & x'=x & y'=y & x!=null & self=x' & p=q2 & self1=y' & p1=p2 & 
+q3=q2).
+expect Valid.
+ 
+// id: 28; line: 16; kind: POST
+ checkentail_exact x'::node2<p,y'>&!(v') & y'=null & next=q & v1' & q=null & x'=x & y'=y & 
+x!=null & self=x' & p=q1
+ |-  (exists q2: x::dll<q2>&!(v') & y'=null & next=q & v1' & q=null & x'=x & 
+y'=y & x!=null & self=x' & p=q1 & q2=q1).
+expect Valid.
+ 
+// id: 34; line: 16; kind: POST
+ checkentail_exact x'::node2<p2,q1> * q1::dll<q>&p=p1 & q=self & !(v') & q1!=null & x'=x & 
+y'=y & x!=null & self=x' & p2=q2
+ |-  (exists q3: x::dll<q3>&p=p1 & q=self & !(v') & q1!=null & x'=x & y'=y & 
+x!=null & self=x' & p2=q2 & q3=q2).
+expect Valid.

@@ -1,0 +1,87 @@
+!!! init_tp : Using Z3 by default
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&x=null & n=0&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&x=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&x=null & Anon_13=0&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>emp&flted_24_68=null & Anon_81=Anon_14 & q_82=q & Anon_87=Anon_15 & q_88=q2 & Anon_93=Anon_16 & q_94=flted_24_68 & 0+1+1+1=n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_82) ==>  Fold ==>  SEARCH ==>  Match(q2,q_88) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 5: Valid. 
+
+
+Entail 6: Fail.(must) cause: true |-  1+1+0+1=n & 4<n. LOCS:[0;7;34] (RHS: contradiction)
+
+
+Entail 7: Valid. 
+
+Residue:
+ <1>emp&Anon_177=Anon_23 & q_178=q & m+1=n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_178) ==> ]]
+
+
+
+Entail 8: Fail.(may) cause:OrL[do_unmatched_rhs : x::node<a,b>,valid]
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>(exists flted_7_214: b::ll{}<flted_7_214>&flted_7_214+1=n & 4<n&{FLOW,(4,5)=__norm#E})[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 10: Valid. 
+
+
+Entail 11: Fail.(must) cause: ((x=1 & 1<=n) | (x=null & n=0)) |-  n<0. LOCS:[0;1;6;56] (must-bug)
+
+
+Entail 12: Valid. 
+
+
+Entail 13: Valid. 
+
+
+Entail 14: Fail.(must) cause: 1<n & (((x=1 & 1<=n) | (x=null & n=0))) |-  x=null. LOCS:[0;1;6;68] (must-bug)
+
+Stop z3... 66 invocations Stop Omega... 7 invocations 
+SAT Count   : 413
+SAT % Hit   : 89.58%
+IMPLY Count : 55
+IMPLY % Hit : 58.18%
+Time(cache overhead) : 0.030006 (seconds)
+
+!!! log(small):(0.64495,549)
+Total verification time: 0.245327 second(s)
+	Time spent in main process: 0.20876 second(s)
+	Time spent in child processes: 0.036567 second(s)
+

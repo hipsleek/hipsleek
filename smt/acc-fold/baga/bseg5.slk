@@ -1,0 +1,105 @@
+
+data node {
+     node next;
+}.
+
+pred b1<y,z> ==
+     self=y
+     or (exists u: self::node<u> * u::b1<y,z> & u=z ).
+
+/*
+# bseg5.slk -dre "conj_from"
+
+conv_from_ef_disj@12
+conv_from_ef_disj inp1 :[([z], x=y),([x,z], z=y)]
+conv_from_ef_disj@12 EXIT: x=y #  [[z]]
+
+should be:
+   x=y & z!=null \/ z=y & x!=null & z!=null,  [[z],[x,z]]
+
+
+In general:
+(([a,b],pure1) \/ [c],pure2) 
+   ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
+
+
+*/
+
+
+checkentail x::b1<y,z> * z::node<_> |- false.
+expect Fail.
+
+checkentail x::b1<y,z> * z::node<_> & x!=y & y!=z |- false.
+expect Valid.
+
+
+//!!! baga inv(b1):[([], x=y),([x], z=y),([y,x], z=y)]
+checkentail x::b1<y,z> * z::node<_> & x!=y |- x::node<y> & y=z.
+expect Valid.
+
+
+checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
+expect Fail.
+
+/*
+
+x::b1<y,z> = false
+
+x::b1<y,z> 
+ = [([],x=y)]
+
+x::b1<y,z> 
+ = [([],x=y)] \/ (exists u: ([x],true) * u::b1<y,z> & u=z ).
+ = [([],x=y)] \/ (exists u: ([x],true) * [([],u=y] & u=z ).
+ = [([],x=y)] \/ (exists u: ([x], u=y & u=z ).
+ = [([],x=y)] \/ ([x], (ex u: u=y & u=z)).
+ = [([],x=y),([x], y=z)]
+
+x::b1<y,z> 
+ = [([],x=y)] \/ (exists u: ([x],true) * u::b1<y,z> & u=z ).
+ = [([],x=y)] \/ (exists u: ([x],true) * [([],u=y),([u], y=z)] & u=z ).
+ = [([],x=y)] \/ (exists u: ([x],true) * [([],u=y & u=z),([u], y=z & u=z)] ).
+ = [([],x=y)] \/ (exists u: [([x],u=y & u=z),([x,u], y=z & u=z)].
+ = [([],x=y)] \/ ([x],y=z) \/ ([x,z], (ex u: y=z & u=z).
+ = [([],x=y),([x],y=z),([x,z], y=z)].
+
+x::b1<y,z> 
+ = [([],x=y)] \/ (exists u: ([x],true) * u::b1<y,z> & u=z ).
+ = [([],x=y)] \/ (exists u: ([x],true) * 
+                  [([],u=y),([u],y=z),([u,z], y=z)]& u=z ).
+ = [([],x=y)] \/ (exists u: ([x],true) * 
+                  [([],u=y & u=z),([u],y=z & u=z),([u,z], y=z & u=z)] ).
+ = [([],x=y)] \/ (exists u: 
+                  [([x],u=y & u=z),([x,u],y=z & u=z),([x,u,z], y=z & u=z)] ).
+ = [([],x=y)] \/  [([x],y=z),([x,z],y=z),([x,z,z], y=z)] ).
+ = [([],x=y)] \/  [([x],y=z),([x,z],y=z)] ).
+ = [([],x=y),([x],y=z),([x,z], y=z)].
+
+checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
+print residue.
+expect Valid.
+
+checkentail z::node<_> & x!=y & x=y
+ or x::node<y> * z::node<_> * z::node<_> & x!=y
+ |- false.
+expect Valid.
+*/
+
+/*
+# bseg3.slk
+
+
+checkentail true |- false.
+print residue.
+expect Valid.
+
+
+!!! [[([], self=y),([self], true),([z,self], true)]]
+!!! [[([], self=y),([self], true),([z,self], true)
+                    ,([z,self], true),([z,self], true)]]
+!!! baga inv(b1):[([], self=y),([self], true),([z,self], true)
+                    ,([z,self], true),([z,self], true)]Stop Omega...
+
+need normalization.
+
+*/

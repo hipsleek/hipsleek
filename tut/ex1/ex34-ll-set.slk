@@ -1,0 +1,41 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+//(1)
+checkentail x=null |- x::llSet<S>.
+print residue.
+
+
+//(2)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S>.
+print residue.
+
+//(3)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S> & S={b,a}.
+print residue.
+
+//(4)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S> & S={b}.
+print residue.
+
+//(5)
+checkentail x::llSet<S> & S!={} |- x::node<_,q>.
+print residue.
+
+//(6)
+checkentail x::llSet<S> & S={a} |- x::node<_,q1>*q1::node<_,q2>.
+
+//(7)
+checkentail x::llSet<S> & S={a,b} |- x::node<_,q1>*q1::node<_,q2>.
+
+//(8)
+checkentail x::llSet<S> & S={a,b} & a!=b |- x::node<_,q1>*q1::node<_,q2>.

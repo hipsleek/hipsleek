@@ -1,0 +1,57 @@
+
+!!!Full processing file "hip/s2l2-v2-c.ss"
+Parsing file "hip/s2l2-v2-c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[f] pre_post_vars:[Anon_1329,n,s,r,res,x]
+
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Post condition cannot be derived:
+  (may) cause:  0<=r1_2373 & 0<=r1_2373 & 0<=s1_2372 & v_2369<=0 & x!=null & 0<=v_2369 & 
+0<=s1_2372 & (((v_node_19_1226'=1 & x=2 & exists(n1:s1_2372=1+n1 & 0<=n1) & 
+exists(r1:exists(s1:exists(v:0<=v & s1_2372=v+s1 & Anon_2994=f( v, r1)) & 
+0<=s1) & 0<=r1)) | (x=1 & v_node_19_1226'=null & s1_2372=0 & s1_2372=0 & 
+Anon_2994=0))) & r=f( v_2369, r1_2373) |-  0<=r. LOCS:[18;12;17;7;8;19;0;6;9;10] (may-bug)
+OrR
+  (must) cause: AndR[ 0<=r1_2373 & 0<=n1_3066 & 0<=r1_2373 & 0<=n1_3066 & 0<1 & x!=null & 0<=1 & 
+(((v_node_21_3051=1 & x=2 & exists(n1:n1_3066=1+n1 & 0<=n1) & 
+exists(r1:exists(s1:exists(v:0<=v & n1_3066=v+s1 & r1_3068=f( v, r1)) & 
+0<=s1) & 0<=r1)) | (x=1 & v_node_21_3051=null & n1_3066=0 & n1_3066=0 & 
+r1_3068=0))) & Anon_1329=f( v_3064, r1_3068) & exists(s_1328:s_1328=v_3064+
+n1_3066) & exists(s_1327:s_1327=1+n1_3066) & 0<=v_3064 & v_3064=1 |-  Anon_1329=f( v_3064, r1_3068). LOCS:[22;10;21;20;18;12;17;6;7;0;8;9];  exists(s_1327:s_1327=1+s1_3067) & 0<=r1_2373 & 0<=s1_3067 & 0<=r1_2373 & 
+0<=s1_3067 & 0<1 & x!=null & 0<=1 & 0<=1 & exists(s_1328:s_1328=1+s1_3067) & 
+(((v_node_21_3051=1 & x=2 & exists(n1:s1_3067=1+n1 & 0<=n1) & 
+exists(r1:exists(s1:exists(v:0<=v & s1_3067=v+s1 & Anon_2566=f( v, r1)) & 
+0<=s1) & 0<=r1)) | (x=1 & v_node_21_3051=null & s1_3067=0 & s1_3067=0 & 
+Anon_2566=0))) & r=f( 1, r1_2373) |-  0<=r. LOCS:[22;21;20;18;12;17;8;7;0;6;9;10] (must-bug).]
+OrR
+  (must) cause:  0<=1 & 0<=(f( v_int_24_2605, f( 1, r1_2373))) & 0<=r1_2373 & 0<=s1_2372 & 
+0<=v_int_24_2605 & f( 1, r1_2373)=f( 1, r1_2373) & (v_int_24_2605+1)!=1 & 
+0<(v_int_24_2605+1) & 0<=(v_int_24_2605+1) & 0<=(v_int_24_2605+1+s1_2372) & 
+(((v_node_26_1251'=1 & exists(n1:v_int_24_2605+1+s1_2372=1+n1 & 0<=n1) & 
+exists(r1:exists(s1:exists(v:0<=v & v_int_24_2605+1+s1_2372=v+s1 & 
+Anon_3212=f( v, r1)) & 0<=s1) & 0<=r1)) | (v_node_26_1251'=null & 
+v_int_24_2605+1+s1_2372=0 & v_int_24_2605+1+s1_2372=0 & Anon_3212=0))) & 
+r=f( v_int_24_2605+1, r1_2373) |-  0<=r. LOCS:[26;25;24;20;18;7;8;0;6;9;10] (must-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/s2l2-v2-c.ss",Line:26,Col:11
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

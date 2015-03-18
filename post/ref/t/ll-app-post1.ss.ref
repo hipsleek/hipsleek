@@ -1,0 +1,53 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ll-app-post1.ss"
+Parsing file "t/ll-app-post1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure append2$node~node... Proving binding in method append2$node~node for spec  EAssume 
+   (exists r_1373: x::ll{}<r_1373>&0<=n1 & 0<=n2 & 
+   post_1390(r_1373,n1,n2,flow)&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( []) bind: node  x'::node<val_36_1359',next_36_1360'>@L cannot be derived from context
+t/ll-app-post1.ss_36:5_36:11
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  x'=null |-  x'!=null. LOCS:[13;31;0] (must-bug)
+                   fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}}
+[[empty]]
+       FAIL_OR 
+        
+         fe_kind: Valid
+         fe_name: 
+         fe_locs: Failure_Valid
+[[empty]]
+       
+ ]t/ll-app-post1.ss_36:5_36:11
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/ll-app-post1.ss",Line:36,Col:5
+
+Procedure append2$node~node FAIL.(2)
+
+Exception Failure("bind failure exception") Occurred!
+
+Error(s) detected when checking procedure append2$node~node
+
+0 false contexts at: ()
+
+Total verification time: 0.420025 second(s)
+	Time spent in main process: 0.380023 second(s)
+	Time spent in child processes: 0.040002 second(s)
+

@@ -1,0 +1,10 @@
+template int g(int x, int y).
+
+//infer [g] v >= 0 & r1 >= 0 & r = g(v, r1) |- r >= 0.
+infer [g] r = g(v, r1) & r2 = g(1, r1) & r' = g(v-1, r2) |- r > r'.
+//infer [g] r = g(0, r1) |- r > r1.
+//infer [g] r = g(1, r1) |- r > r1.
+
+template_solve.
+
+

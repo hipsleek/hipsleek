@@ -1,0 +1,56 @@
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == self=p
+  or (exists a: self::node<a> * a::nlseg<p> & self!=p)
+ inv true.
+
+lemma_safe self::nlseg<p> -> (exists u: self::nlseg<u> * u::nlseg<p>).
+
+/*
+lemma_safe self::nlseg<p> <- (exists u: self::nlseg<u> * u::nlseg<p> 
+           * p::node<_>@L).
+*/
+
+//(1)
+checkentail x::node<a>*a::nlseg<p> * p::node<_>@L
+                |- x::nlseg<p>.
+print residue.
+
+
+//(2)
+checkentail x::node<a> |- x::node<b>@L.
+print residue.
+/*
+ <1>x::node<a>&a=b&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+*/
+
+//(3)
+checkentail x::node<a>@L |- x::node<b>@L.
+print residue.
+/*
+should succeed without hole
+ <1>Hole[155]&a=b&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+*/
+
+//(4)
+checkentail x::node<a>@L |- x::node<b>.
+print residue.
+/*
+ <1>emp&a=b&{FLOW,(21,22)=__norm}[]
+[[ Match ==> ]]
+*/
+// should fail
+
+
+/* 
+  -imm        &* /\
+    x::node<_,_>@L /\ y::node<_,_>@L
+
+  --dis-imm   *
+*/
+
+

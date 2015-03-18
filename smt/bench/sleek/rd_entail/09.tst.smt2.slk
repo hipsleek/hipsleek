@@ -1,0 +1,13 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred DLL<y,z,w> ==
+ self = y & z = w
+or (exists zp: self::GTyp<f0 = zp,f1 = w> * zp::DLL<y,z,self> & null != self).
+
+checkentail x::DLL<y,z,w> * a::DLL<x,w,b>
+         |- a::DLL<y,z,b>.
+

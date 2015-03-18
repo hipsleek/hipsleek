@@ -1,0 +1,36 @@
+/*
+(define-fun dll ((?fr Dll_t) (?bk Dll_t) (?pr Dll_t) (?nx Dll_t))
+
+
+  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr))  (distinct ?bk ?pr)
+    (exists ((?u Dll_t))  (and (distinct ?fr ?nx) (tobool (ssep
+
+
+      (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
+      (dll ?u ?bk ?fr ?nx))
+
+
+))))))
+*/
+data node {
+  node next;
+}.
+
+pred sll<nx> ==
+   self=nx 
+or (exists u: self::node<u> * u::sll<nx> & self!=nx).
+
+checkentail_exact
+ self::node<u> * u::sll<nx> & self!=nx 
+   |- self::sll<c>.
+print residue.
+
+checkentail_exact
+ self=nx  |- self::sll<nx>.
+print residue.
+
+checkentail_exact
+ self=nx  |- self::sll<c>.
+print residue.
+
+

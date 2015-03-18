@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Gen.Basic
 
 external set_close_on_exec : Unix.file_descr -> unit = "unix_set_close_on_exec";;
@@ -61,21 +63,21 @@ struct
   let maybe_raise_timeout (fn: 'a -> 'b) (arg: 'a) (limit:float) : 'b =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    let _ = set_timer limit in
+    let () = set_timer limit in
     let proof_no = get_proof_no_str () in
     try
-      let _ = if !Globals.enable_time_stats then Timelog.logtime # timer_start proof_no limit else () in
+      let () = if !Globals.enable_time_stats then Timelog.logtime # timer_start proof_no limit else () in
       let res = fn arg in
       let x = Unix.getitimer Unix.ITIMER_REAL in
       (* let nt = limit -. x.Unix.it_value in *)
       let nt = limit -. x.Unix.it_value in
-      let _ = if !Globals.enable_time_stats then Timelog.logtime # timer_stop proof_no nt else () in
+      let () = if !Globals.enable_time_stats then Timelog.logtime # timer_stop proof_no nt else () in
       set_timer 0.0;
       reset_sigalrm ();
       res
     with e ->
         begin
-          let _ = Timelog.logtime # timer_timeout proof_no limit in
+          let () = Timelog.logtime # timer_timeout proof_no limit in
           (* Debug.info_pprint (Timelog.logtime # print_timer)  no_pos; *)
           (* Debug.info_pprint ("TIMEOUT"^(Printexc.to_string e)) no_pos; *)
           raise e
@@ -91,15 +93,14 @@ struct
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      | Timeout ->  
-            Printf.eprintf " Timeout after %s secs" (string_of_float tsec);
+      | Timeout -> (
+          print_endline_quiet (" Timeout after " ^ (string_of_float tsec) ^ " secs") ;
           (with_timeout ())
-      | exc -> begin
-          Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
+        )
+      | exc -> (
+          print_endline_quiet ("maybe_raise_and_catch_timeout : Unexpected exception : " ^ (Printexc.to_string exc));
           raise exc
-          (* print_endline "Non-timeout Exception from maybe_raise_and_catch" ;  *)
-          (* with_timeout () *)
-              end
+        )
 
   let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
     try 
@@ -144,15 +145,15 @@ struct
    ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
   let start (log_all_flag: bool) (log_file: out_channel) (prover: string * string * string array) set_process prelude= 
     let (prover_name, prover_proc, prover_arg_array) = prover in
-    let _ = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
+    let () = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
     try
-        let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
-        let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
-        set_process process;
-        prelude ()
+      let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
+      let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
+      set_process process;
+      prelude ()
     with
       | e -> begin
-          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^ "\n") in
+          print_endline_quiet ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name);
           flush stdout; flush stderr;
           log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
           raise e
@@ -164,8 +165,8 @@ struct
    ** killing_signal - signal that kills the process. For most of provers, 2 should be enough to kill the process
    ** ending_function - function containing some final disposition for the prover (many provers don't need this, so one can just send (fun ()->() ) ) *)
   let stop (log_all_flag: bool) (log_file: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
-    let _ = ending_function () in
-    let _ = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
+    let () = ending_function () in
+    let () = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
     flush log_file;
     close_pipes process;
     let fn () =

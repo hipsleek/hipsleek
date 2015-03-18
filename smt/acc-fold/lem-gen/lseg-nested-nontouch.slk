@@ -1,0 +1,19 @@
+data node1{
+     node1 next1;
+}.
+
+data node2{
+     node2 next2;
+     node1 down;
+}.
+
+pred lso<out> == self=out
+  or (exists u: self::node1<u> * u::lso<out>).
+
+pred nll<out, boundary> == self=out
+     or (exists u, r: self::node2<u, r> * r::lso<boundary> * u::nll<out,boundary> & self != out).
+
+
+checkentail x::nll<u,v> * u::nll<out,v> * out::node2<_,_> |- x::nll<out,v>.
+
+checkentail x::nll<out,v> |- x::nll<u,v> * u::nll<out,v>.

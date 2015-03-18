@@ -1,3 +1,9 @@
+/**
+ * Test matching algorithm.
+ * 
+ * @author Vu An Hoa
+ */
+
 relation input_match(int a, int b, int c, int d) == true.
 
 int firstarg(int a, int b)

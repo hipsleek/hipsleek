@@ -1,0 +1,80 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 3: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Fail.(may) cause:AndR[ true |-  1<v. LOCS:[34];  flted_34_82=2 |-  flted_34_82=v. LOCS:[34];  x!=null & q!=x & q!=null |-  q=Anon_16. LOCS:[0;34] (may-bug).]
+
+Residue:
+ <1>q::node<flted_34_81,Anon_15>&flted_34_81=3 & flted_34_82=2&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 5: Fail.(may) cause: ((1<=flted_43_111 & q!=null) | (flted_43_111=0 & q=null)) |-  q=Anon_17. LOCS:[1;0;43] (may-bug)
+
+Residue:
+ <1>q::ll{}<flted_43_111>&a=2 & flted_43_111+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>x::node<Anon_18,q> * q::ll{}<flted_49_140>&q!=null & flted_49_140+1=n&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 7: Valid. 
+
+Residue:
+ <1>x::node<v,q> * q::ll{}<flted_55_154>&v!=3 & flted_55_154+1=n&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 8: Fail.(may) cause:AndR[ 3<(flted_7_194+1) & (((1<=flted_7_194 & q_196!=null) | (flted_7_194=0 & 
+q_196=null))) |-  q!=null. LOCS:[7;1;0;61];  3<(flted_7_194+1) & (((1<=flted_7_194 & q_196!=null) | (flted_7_194=0 & 
+q_196=null))) |-  q_196=q. LOCS:[7;1;0;61];  true |-  Anon_195=Anon_19. LOCS:[0;61] (may-bug).]
+
+Residue:
+ <1>x::node<Anon_195,q_196> * q_196::ll{}<flted_7_194>&3<n & flted_7_194+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 9: Fail.(may) cause:AndR[ 0<(flted_7_235+1) & (((1<=flted_7_235 & q_237!=null) | (flted_7_235=0 & 
+q_237=null))) |-  q!=null. LOCS:[7;1;0;66];  0<(flted_7_235+1) & (((1<=flted_7_235 & q_237!=null) | (flted_7_235=0 & 
+q_237=null))) |-  q_237=q. LOCS:[7;1;0;66];  true |-  Anon_236=Anon_20. LOCS:[0;66] (may-bug).]
+
+Residue:
+ <1>x::node<Anon_236,q_237> * q_237::ll{}<flted_7_235>&0<n & flted_7_235+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 10: Valid. 
+
+Residue:
+ <1>x::node<v@A,Anon_21@A>&v=5&{FLOW,(4,5)=__norm#E}[]
+
+

@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Format
 
@@ -49,16 +51,16 @@ let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
 (* this command invokes
     f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close
 *)
-let pr_list_open_sep (f_open:unit -> unit) 
-    (f_close:unit -> unit) 
+let pr_list_open_sep (f_open:unit -> unit)
+    (f_close:unit -> unit)
     (f_sep:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
   let rec helper xs = match xs with
     | [x] -> (f_elem x)
-    | y::ys -> (f_elem y; f_sep(); helper ys) 
+    | y::ys -> (f_elem y; f_sep(); helper ys)
   in match xs with
     | [] -> f_open();f_close()
-    | xs -> f_open(); (helper xs); f_close() 
+    | xs -> f_open(); (helper xs); f_close()
 
 (* print op and a break after *)
 let pr_brk_after op = (fun () -> fmt_string (op); fmt_cut() )

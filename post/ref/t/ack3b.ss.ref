@@ -1,0 +1,49 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ack3b.ss"
+Parsing file "t/ack3b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [Ack$int~int] for Ack$int~int
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1375_1377_1378: ( m=0 & res=1+n & (n+1)<=0) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1378: ( (r_1500+1)<=0 & n1_1502+1=n & v_int_25_1499+1=m & (n+1)<=0 & 1<=m & 
+post_1375_1377_1378(v_int_25_1499,r_1500,res,flow) & 
+post_1375_1377_1378(m,n1_1502,r_1500,flow)) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1378: ( 0<=res & 0<=r_1506 & n1_1508+1=n & v_int_25_1505+1=m & (n+1)<=0 & 1<=m & 
+post_1375_1377_1379(v_int_25_1505,r_1506,res,flow) & 
+post_1375_1377_1378(m,n1_1508,r_1506,flow)) -->  post_1375_1377_1378(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( m=0 & res=1+n & 0<=n) -->  post_1375_1377_1379(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( 0<=res & m1_1571+1=m & n=0 & 1<=m & post_1375_1377_1379(m1_1571,1,res,flow)) -->  post_1375_1377_1379(m,n,res,flow),
+RELDEFN post_1375_1377_1379: ( 0<=n1_1576 & 0<=res & 0<=v_int_25_1573 & 0<=r_1574 & m'=1+v_int_25_1573 & 
+m=1+v_int_25_1573 & n=1+n1_1576 & 
+post_1375_1377_1379(v_int_25_1573,r_1574,res,flow) & 
+post_1375_1377_1379(m',n1_1576,r_1574,flow)) -->  post_1375_1377_1379(m,n,res,flow)]
+*************************************
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/ack3b.ss",Line:25,Col:11
+
+ERROR: at _0:0_0:0
+Message: Error in compute_fixpoint_aux
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+
+Error1(s) detected at main 
+caught
+
+Exception occurred: Failure("Error in compute_fixpoint_aux")
+Error3(s) detected at main 

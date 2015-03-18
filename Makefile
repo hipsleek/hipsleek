@@ -7,6 +7,11 @@ BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
+#CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
+CPPO_FLAGS = 
+
+#CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
+#CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
 
 ifdef OCAML_TOPLEVEL_PATH
  INCLPRE = $(OPREP)
@@ -31,36 +36,47 @@ LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBG
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
+
 GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE 
+SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
 #FLAGS = $(INCLUDES),-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
-OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)  $(CPPO_FLAGS)
+OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
  
-OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
-OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
-OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+#static - incl C libs
+OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
+
+OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) $(CPPO_FLAGS)
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: byte decidez.vo 
+all: byte # decidez.vo 
 # gui
-byte: sleek.byte hip.byte decidez.vo
+byte: sleek.byte hip.byte # decidez.vo
 
 gbyte: sleek.gbyte hip.gbyte
+
+test: dtest.byte
  
 # hsprinter.byte
 native: hip.native sleek.native
+static: ship.native ssleek.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte
 
@@ -74,12 +90,19 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
-hip.gbyte: xml
+parser.cmo:
+	@ocamlbuild $(OBB_NGFLAGS) parser.cmo
+
+dtest.byte: xdebug.cppo
+	@ocamlbuild $(OBB_GFLAGS) dtest.byte
+	cp -u _build/dtest.byte dtest
+
+hip.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte g-hip
 
-sleek.gbyte: xml
+sleek.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte g-sleek
@@ -99,6 +122,11 @@ hip.native: xml
 	cp -u _build/main.native hip
 	cp -u _build/main.native n-hip
 
+ship.native: xml
+	@ocamlbuild $(OBNS_FLAGS) main.native
+	cp -u _build/main.native hip
+	cp -u _build/main.native s-hip
+
 hsprinter.byte: xml
 	@ocamlbuild $(OB_FLAGS) hsprinter.byte
 
@@ -106,6 +134,11 @@ sleek.native: xml
 	@ocamlbuild $(OBN_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek
+
+ssleek.native: xml
+	@ocamlbuild $(OBNS_FLAGS) sleek.native
+	cp -u _build/sleek.native sleek
+	cp -u _build/sleek.native s-sleek
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
@@ -127,7 +160,7 @@ ghip.native:
 clean:
 	$(OCAMLBUILD) -quiet -clean 
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
-	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
 
 decidez.vo:
@@ -197,4 +230,3 @@ change_mli:
 		fi; \
 	)
 	rm *.cmi
-

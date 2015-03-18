@@ -1,0 +1,86 @@
+
+!!!Full processing file "demo/sll-reverse-1.ss"
+Parsing file "demo/sll-reverse-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & n=0)])
+!!! SCall neqs:[(x,y)]
+!!! neqs:[(x,y)]
+Checking procedure reverse$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1257,HP_1258,G1]requires HP_1257(x) * HP_1258(y)&
+true
+ ensures G1(x',y')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)HP_1257(x)&x!=null --> x::node<val1,next1> * HP_1275(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1275(next1)&true --> HP_1257(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)x1::node<val1,y> * HP_1258(y)&true --> HP_1258(x1)&
+true(3,4),
+ // POST
+(1;0)G1(x',y')&true --> G1(x',y')&
+true(3,4),
+ // POST
+(2;0)HP_1258(y') * HP_1257(x)&x=null --> G1(x,y')&
+true(3,4)]
+
+Procedure reverse$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1257(x2) ::=  [emp&x2=null; x2::node<val2,next2> * HP_1257(next2)],
+ HP_1258(x1) ::=  [
+  x1::node<val,y> * HP_1258(y)
+  or emp&x1=DP
+  ],
+ G1(x3,y1) ::=  [hfalse; HP_1258(y1)&x3=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1257(x2) ::= 
+ x2::node<val2,next2> * HP_1257(next2)
+ or emp&x2=null
+ (3,4),
+ HP_1258(x1) ::= 
+ x1::node<val,y> * HP_1258(y)
+ or emp&x1=DP
+ (3,4),
+ G1(x3,y1) ::= HP_1258(y1)&x3=null(3,4),
+ H1(x,y) ::= HP_1257(x) * HP_1258(y)]
+*************************************
+Stop Omega... 18 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.052259,290)
+Total verification time: 0.346127 second(s)
+	Time spent in main process: 0.324663 second(s)
+	Time spent in child processes: 0.021464 second(s)
+

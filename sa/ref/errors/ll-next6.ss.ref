@@ -1,0 +1,54 @@
+
+!!!Full processing file "errors/ll-next6.ss"
+Parsing file "errors/ll-next6.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!!WARNING : uninterpreted free variables [q] in specification.
+Checking procedure get_next$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G4]requires H1(x,q)&true
+ ensures EXISTS(p: G4(res,x',x,p)&true&
+{,(3,4)=__norm}[];
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x,q)&true --> x::node<val1,next1> * HP_1227(next1,q@NI) * 
+HP_1228(q,x@NI)&
+true(3,4),
+ // POST
+(0)HP_1227(res,q@NI) * x::node<val1,res>&true --> G4(res,x',x,p)&
+true(3,4)]
+
+Procedure get_next$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1,q1) ::=  [x1::node<val,DP1>&q1=DP],
+ G4(res1,x3,x2,p1) ::=  [x3::node<val,res1>&res1=DP1 & x3=x2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1,q1) ::= x1::node<val,DP1>&q1=DP(3,4),
+ G4(res1,x3,x2,p1) ::= x3::node<val,res1>&res1=DP1 & x3=x2(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.020005,179)
+Total verification time: 0.281952 second(s)
+	Time spent in main process: 0.268694 second(s)
+	Time spent in child processes: 0.013258 second(s)
+

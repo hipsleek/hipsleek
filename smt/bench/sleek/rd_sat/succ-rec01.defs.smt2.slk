@@ -1,0 +1,25 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<> ==
+self::one<> * self::Q<>.
+
+pred Q<> ==
+ self::zero<>
+or (exists x1: x1::succ1rec<self> * x1::Q<>).
+
+pred succ1rec<y1> ==
+self::zero<> * y1::one<>.
+
+pred zero<> ==
+null = self.
+
+pred one<> ==
+null != self.
+
+checkentail x0::P<>
+         |- false.
+

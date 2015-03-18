@@ -1,0 +1,33 @@
+//1
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow XXX.
+print residue.
+
+/*
+# v-next7d2c.slk
+
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow XXX.
+print residue.
+
+Why XXX not flagged as an error?
+
+INPUT: 
+ ### ante =  emp&1<x&{FLOW,(5,6)=__Error}[]
+ ### conseq =  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
+run_infer:
+ emp&1<x&{FLOW,(5,6)=__Error}[] [] |-  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
+*/
+
+
+//1
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow __norm.
+print residue.
+
+//1
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow __MayError.
+print residue.

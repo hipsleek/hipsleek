@@ -1,0 +1,31 @@
+
+!!!Full processing file "demo/test-mut.ss"
+Parsing file "demo/test-mut.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_child$node... 
+Procedure check_child$node SUCCESS.
+
+Checking procedure check_tree$tree... 
+Procedure check_tree$tree SUCCESS.
+
+Checking procedure main$tree... 
+Procedure main$tree SUCCESS.
+Stop Omega... 13 invocations 
+2 false contexts at: ( (35,16)  (35,23) )
+
+!!! log(small):(0.08902,562)
+Total verification time: 0.375636 second(s)
+	Time spent in main process: 0.358119 second(s)
+	Time spent in child processes: 0.017517 second(s)
+

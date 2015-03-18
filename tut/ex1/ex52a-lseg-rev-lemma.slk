@@ -1,0 +1,41 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_, q> * q::lseg<n - 1, p>;
+ } inv n >= 0.
+
+pred lseg_rev<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::lseg_rev<n-1,q>*q::node<_,p>;
+ } inv n >= 0.
+
+lemma_safe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        <-> self::lseg_rev<n,r> * r::node<_,p>.
+
+//lemma_safe "lseg-lseg-rev" self::lseg<n,p> <-> self::lseg_rev<n,p>. 
+
+
+/*
+# ex52a-lseg-rev-lemma.slk
+
+lemma_safe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        -> self::lseg_rev<n,r> & r::node<_,p>.
+
+Why is there a split failure?
+
+!!! WARNING : split equiv lemma into two -> lemmas error at: 
+SLEEK FAILURE (END)
+
+*/
+
+//checkentail x::node<_,q>*q::lseg<n,p> |- x::lseg_rev<m,p>.
+
+//checkentail x::lseg<n,p> |- x::lseg_rev<m,p>.

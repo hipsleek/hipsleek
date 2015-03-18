@@ -1,0 +1,34 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/strong2.ss"
+Parsing file "t/strong2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure rec1$int... 
+Procedure rec1$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1336: ( res=0 & i<=0) -->  post_1336(i,res,flow),
+RELDEFN post_1336: ( res=1+v_int_13_1375 & v_int_13_1359+2=i & 1<=i & 
+post_1336(v_int_13_1373,v_int_13_1375,flow) & 
+post_1336(v_int_13_1366,v_int_13_1373,flow) & 
+post_1336(v_int_13_1359,v_int_13_1366+1,flow)) -->  post_1336(i,res,flow)]
+*************************************
+
+Post Inference result:
+rec1$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((i>=1 & 1=res) | (0>=i & 0=res))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.464028 second(s)
+	Time spent in main process: 0.392024 second(s)
+	Time spent in child processes: 0.072004 second(s)
+

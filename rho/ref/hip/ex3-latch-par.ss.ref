@@ -1,0 +1,22 @@
+
+!!!Full processing file "hip/ex3-latch-par.ss"
+Parsing file "hip/ex3-latch-par.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+assert:hip/ex3-latch-par.ss:61: 2:  : ok
+
+
+assert/assume:hip/ex3-latch-par.ss:62: 2:  : failed
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 1.000061 second(s)
+	Time spent in main process: 0.940058 second(s)
+	Time spent in child processes: 0.060003 second(s)
+

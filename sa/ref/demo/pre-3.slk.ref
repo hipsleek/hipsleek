@@ -1,0 +1,15 @@
+Starting Omega...oc
+H is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::= emp&x=null(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.05288 second(s)
+	Time spent in main process: 0.038955 second(s)
+	Time spent in child processes: 0.013925 second(s)
+

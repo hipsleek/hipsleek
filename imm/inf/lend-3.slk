@@ -1,0 +1,23 @@
+data cell{
+ int fst;
+}.
+
+relation R(int v,int w).
+//relation R(ann v,ann w).
+
+infer [R] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+/*
+# lend-3.slk --print-type 
+
+@imm should pick up all relations with @ann parameters
+for inference; where needed. 
+
+Priority to relations, and then variables.
+
+ error: Stream.Error("[infer_type] or [id_list] or CSQUARE expected after OSQUARE (in [id_list_w_itype])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+
+*/

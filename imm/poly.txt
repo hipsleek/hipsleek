@@ -1,0 +1,75 @@
+
+data cell{int val;}.
+
+
+@M <: @I <: @L<: @A
+
+checkentail x::cell<_>@M  |- x::cell<_>@A  --> x::cell<_>@M
+checkentail x::cell<_>@M  |- x::cell<_>@L  --> x::cell<_>@M
+checkentail x::cell<_>@M  |- x::cell<_>@I  --> x::cell<_>@A
+checkentail x::cell<_>@M  |- x::cell<_>@M  --> x::cell<_>@A
+
+
+checkentail x::cell<_>@I  |- x::cell<_>@A  --> x::cell<_>@I
+checkentail x::cell<_>@I  |- x::cell<_>@L  --> x::cell<_>@I
+checkentail x::cell<_>@I  |- x::cell<_>@I  --> x::cell<_>@A
+checkentail x::cell<_>@I  |- x::cell<_>@M  --> Fail
+
+
+checkentail x::cell<_>@L  |- x::cell<_>@A  --> x::cell<_>@L
+checkentail x::cell<_>@L  |- x::cell<_>@L  --> x::cell<_>@L
+checkentail x::cell<_>@L  |- x::cell<_>@I  --> Fail
+checkentail x::cell<_>@L  |- x::cell<_>@M  --> Fail
+
+
+checkentail x::cell<_>@A  |- x::cell<_>@A  --> x::cell<_>@A
+checkentail x::cell<_>@A  |- x::cell<_>@L  --> Fail
+checkentail x::cell<_>@A  |- x::cell<_>@I  --> Fail
+checkentail x::cell<_>@A  |- x::cell<_>@M  --> Fail
+
+
+checkentail x::cell<_>@w & w<:v |- x::cell<_>@v --> x::cell<_>@(w-v)
+
+
+checkentail x::cell<_>@w  |- x::cell<_>@A --> x::cell<_>@(w-A)
+
+infer [w] x::cell<_>@w  |- x::cell<_>@L --> x::cell<_>@w
+   infer_pure : [w<:L]
+
+
+infer [] x::cell<_>@w  |- x::cell<_>@L --> 
+               w<:L
+
+infer [] x::cell<_>@w & w<:L  |- x::cell<_>@L --> x::cell<_>@(w-L)
+
+infer [] x::cell<_>@w & w<:I  |- x::cell<_>@I --> x::cell<_>@(w-@I)=@A
+
+infer [] x::cell<_>@w & w<:M  |- x::cell<_>@M --> x::cell<_>@(w-@M)=@A
+               
+
+each match action should update the residue (es_formula) and consumed heap (es_heap)
+
+// Current implementation:
+for the above example, after match we have:
+es_formula:   x::cell<_>@[@w,@v] * A ,  where @[@w,@v] should be smth like @w \subtract @v
+es_heap:      x::cell<_>@v
+
+the problem with this approach is that 
+(i) I did not defined a \subtract function 
+(ii) I need to express somehow the fact that
+x::cell<_>@[@w,@v] and x::cell<_>@v are disjoint. 
+
+
+// Proposal to change (I):
+es_formula:   x::cell<_>@z * A /\ @z=residue(@w,@v) /\  @u=consumed(@w,@v) /\ DISJ(@z,@u)
+es_heap:      x::cell<_>@u
+
+must define "residue" and "consumed" functions, and DISJ as relation
+
+
+// Proposal to change (II):
+es_formula:   x::cell<_>@z * A /\ @z=residue(@w,@v)
+es_heap:      emp
+
+postpone updating es_heap until I have a concrete value for @z
+

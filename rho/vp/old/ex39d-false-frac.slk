@@ -1,0 +1,49 @@
+
+//(1)
+infer[] @frac(1/3)[x] * @frac(1/2)[x] |- false.
+print residue.
+expect Fail. //zero
+
+infer[] @frac(2/3)[x] * @frac(1/2)[x] |- false.
+print residue.
+expect Valid. //should succeed but fail
+
+//(3)
+infer[] @frac(1/3)[x] * @frac(1/2)[x] |- @frac(2/3)[x].
+print residue.
+expect Valid. //should succeed 1/6
+
+infer[] @frac(4/3)[x]  |- false.
+print residue.
+expect Valid. //should succeed with false
+
+//(5)
+infer[] @full[x]*@full[x]  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+//(6)
+infer[] @frac(1/3)[x] * @frac(1/2)[x] |- true.
+print residue.
+expect Valid. //zero
+
+//(7)
+infer[] @full[x]*@value[x']  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+
+infer[] @full[x]*@full[x']  |- false.
+print residue.
+expect Valid. //this succeeded with false
+
+infer[] @full[x]*@full[y']  |- false.
+print residue.
+expect Fail. //this succeeded with false
+
+/*
+# ex39d.slk --ann-vp
+
+Normalization of frac not properly done.
+
+*/

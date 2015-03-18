@@ -1,0 +1,12 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rb.ss"
+Parsing file "t/rb.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure rotate_case_3$node~node~node... 
+Procedure rotate_case_3$node~node~node SUCCESS.
+
+Checking procedure case_2$node~node~node~node... 

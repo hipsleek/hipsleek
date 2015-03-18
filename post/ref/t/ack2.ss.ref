@@ -1,0 +1,26 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ack2.ss"
+Parsing file "t/ack2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+Termination checking result: 
+(19)->(19) (MayTerm ERR: not bounded)[m; 
+n]
+(17)->(17) (MayTerm ERR: not bounded)[m; 
+n]
+(11)->(11) (MayTerm ERR: not bounded)[m; 
+n]
+
+
+0 false contexts at: ()
+
+Total verification time: 0.476028 second(s)
+	Time spent in main process: 0.416025 second(s)
+	Time spent in child processes: 0.060003 second(s)
+

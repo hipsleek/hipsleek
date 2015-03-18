@@ -1,0 +1,14 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred PeList<y> ==
+ self = y
+or (exists xp: self::GTyp<f0 = xp> * xp::PeList<y> & null != self).
+
+checkentail x::PeList<y> * y::PeList<z>
+         |- x::PeList<z>.
+
+expect unknown.

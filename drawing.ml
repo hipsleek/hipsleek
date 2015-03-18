@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
   Turn formulas to graph drawings.
 *)
@@ -65,7 +67,7 @@ and dot_of_form prog (n : int) (f0 : formula) visib_names buffer = match f0 with
 *)
 and dot_of_conjunct prog n h p visib_names buffer = 
   let sgraph = fresh_name () in
-  let _ = Buffer.add_string buffer ("\nsubgraph " ^ sgraph ^ " {\n") in
+  let () = Buffer.add_string buffer ("\nsubgraph " ^ sgraph ^ " {\n") in
   let nodes = gen_nodes prog n h buffer in
 	gen_edges prog n h p nodes buffer;
 	gen_edges_visib_names n visib_names p nodes buffer;
@@ -123,16 +125,16 @@ and gen_nodes prog n h0 buffer = match h0 with
       let tmp = List.map (fun v -> (dot_of_spec_var v, pname)) mvars in
 	Buffer.add_string buffer (pname ^ " [shape=box,style=dashed,label=\"" ^ c ^ "\"];\n");
 	(dot_of_spec_var p, pname) :: tmp
-  | HTrue | HFalse | HEmp |HRel _ |  Hole _ -> []
+  | HTrue | HFalse | HEmp | HVar _ |HRel _ |  Hole _ |  FrmHole _ -> []
 
 
 and gen_edges prog n h0 p nodes buffer = 
   let hvars = h_fv h0 in
   let heqs = List.map (fun hv -> (hv, hv)) hvars in
-  let asets = Context.alias_nth 4 ((MCP.ptr_equations_with_null p) @ heqs) in
+  let asets = Csvutil.alias_nth 4 ((MCP.ptr_equations_with_null p) @ heqs) in
 	(* see if an edge from start to finish can be added *)
   let make_edge start finish lbl =
-    let aset' = Context.get_aset asets finish in
+    let aset' = Csvutil.get_aset asets finish in
     let aset = List.map dot_of_spec_var aset' in
       (* find out nodes that are aliased with finish *)
     let dest = List.filter (fun (a, b) -> List.mem a aset) nodes in
@@ -172,14 +174,14 @@ and gen_edges prog n h0 p nodes buffer =
 	  let param_names = List.map dot_of_spec_var vdef.Cast.view_vars in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) args param_names)
 	end
-      | HTrue | HFalse | HEmp | HRel _ | Hole _ -> ()
+      | HTrue | HFalse | HEmp | HVar _ | HRel _ | Hole _ |  FrmHole _  -> ()
 
 and gen_edges_visib_names n visib_names p nodes buffer =
-  let visib_names = List.map (fun v -> SpecVar (Named "", v, Primed)) visib_names in
+  let visib_names = List.map (fun v -> SpecVar (Globals.null_type, v, Primed)) visib_names in
   let veqs = List.map (fun v -> (v, v)) visib_names in
-  let asets = Context.alias_nth 5 ((MCP.ptr_equations_with_null p) @ veqs) in
+  let asets = Csvutil.alias_nth 5 ((MCP.ptr_equations_with_null p) @ veqs) in
   let make_edge var =
-    let aset' = Context.get_aset asets var in
+    let aset' = Csvutil.get_aset asets var in
     let aset = List.map dot_of_spec_var aset' in
     let dest = List.filter (fun (a, b) -> List.mem a aset) nodes in
     let edges = List.map (fun (_, b) ->

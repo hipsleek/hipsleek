@@ -1,0 +1,46 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+lemma_unsafe self::olseg<p> <- 
+     (exists u,w: self::olseg<u>*u::node<w>*w::node<p>).
+
+lemma_unsafe self::olseg<p> <- 
+    (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+
+/* 
+   add message to say unsafe lemmas added
+   complex lemma appln not working ..
+*/
+
+//(1)
+checkentail_exact x::node<a>*a::node<p> |- x::olseg<p>.
+expect Fail.
+
+checkentail_exact x::node<p> |- x::olseg<p>.
+expect Valid.
+
+//(3)
+checkentail_exact x::node<a>*a::node<b> * b::olseg<p> |- x::olseg<p>.
+expect Valid.
+
+checkentail_exact x::node<b>*b::olseg<p> |- x::olseg<p>.
+expect Fail.
+
+//(5)
+checkentail_exact  b::olseg<p> * p::node<a> * a::node<b> |- b::olseg<b>.
+expect Valid.
+
+
+checkentail_exact  k::node<b> * b::olseg<p> * p::node<a> * a::node<b> |- k::olseg<b>.
+expect Fail.
+
+//(7)
+checkentail_exact  k::node<b> * b::olseg<p> * p::node<a> * a::node<b> * b::node<g>|- k::olseg<g>.
+expect Valid.
+
+

@@ -1,0 +1,45 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-f91g.ss"
+Parsing file "t/rec-f91g.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN postA: ( n=res & 91<=res) -->  postA(n,res),
+RELDEFN postB: ( postA(v_int_14_1373,res) & 91<=v_int_14_1373 & n=90 & n'=90 & postA(1+
+n',v_int_14_1373)) -->  postB(n,res),
+RELDEFN postB: ( postB(v_int_14_1376,res) & v_int_14_1376<=90 & n=90 & n'=90 & postA(1+
+n',v_int_14_1376)) -->  postB(n,res),
+RELDEFN postB: ( postA(v_int_14_1379,res) & 91<=v_int_14_1379 & n<=89 & postB(1+
+n,v_int_14_1379)) -->  postB(n,res),
+RELDEFN postB: ( postB(v_int_14_1382,res) & v_int_14_1382<=90 & n<=89 & postB(1+
+n,v_int_14_1382)) -->  postB(n,res)]
+*************************************
+
+Post Inference result:
+f91$int
+ ECase case {
+        91<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                         EAssume 
+                           emp&91<=n & res>=91 & res=n&
+                           {FLOW,(4,5)=__norm#E}[]
+                            ;
+        n<91 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&n<91 & 90>=n & 91=res&{FLOW,(4,5)=__norm#E}[]
+                           
+        }
+
+6 false contexts at: ( (13,13)  (14,7)  (14,24)  (14,22)  (14,18)  (14,14) )
+
+Total verification time: 0.540032 second(s)
+	Time spent in main process: 0.468028 second(s)
+	Time spent in child processes: 0.072004 second(s)
+

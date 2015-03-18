@@ -1,0 +1,11 @@
+Starting Omega...oc
+
+ERROR: at _0:0_0:0 
+Message: type substitution error: cannot substitute 'node' by 'cell'
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.053674 second(s)
+	Time spent in main process: 0.04001 second(s)
+	Time spent in child processes: 0.013664 second(s)
+

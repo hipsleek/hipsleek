@@ -1,0 +1,133 @@
+pred_prim WAIT<b:bag((int,int))>.
+
+// these could be added to prelude ..
+
+relation cyclic(bag((int,int)) g).
+relation acyclic(bag((int,int)) g).
+
+
+/*
+
+  axiom true --> acylic({}) 
+
+  cyclic {} = false
+  cyclic S  = {(a,b)} U S'= S & path(S',b,a)
+
+  path (S,a,a) = true
+  path (S,a,b) = {(a,?c)} U S'= S & path(S',c,b)
+
+  acyclic S               = SAT S
+  sat_acyclic {}          = true
+  sat_acyclic {(a,b}} U S = a<b & sat_acyclic S
+
+  cyclic S /\ acyclic S  <->false
+
+  cyclic S & S2 <=S2   --> cyclic S2
+  acyclic S & S0 <= S --> acyclic S
+
+  cyclic S U S --> cyclic S
+
+// acyclic test
+   D & acyclic(S) |- false
+  -------------------------
+     D  |- cyclic(S)
+
+=====
+
+// S is instantiated
+   D |- cyclic(S)
+  try acyclic test
+
+// if u ve relation on RHS, use
+   --> z3
+
+// if you have set on RHS
+   --> mona
+
+
+*/
+
+// (1)
+checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} |- x::WAIT<C>.
+print residue.
+expect Valid.
+
+// (2)
+checkentail x::WAIT<B> & cyclic(B) |- x::WAIT<C> & cyclic(C).
+print residue.
+expect Valid.
+
+// (3)
+checkentail x::WAIT<B> & B={} |- x::WAIT<C> & cyclic(C).
+print residue.
+expect Fail.
+
+// (4)
+checkentail B={} & B=C & acyclic(C) |- true.
+print residue.
+expect Valid.
+
+// (5)
+checkentail x::WAIT<B> & B={tup2(c1,c2),tup2(c2,c1)} 
+    |- x::WAIT<C> & cyclic(C).
+expect Valid.
+print residue.
+
+// (6)
+checkentail S = union(S1,{tup2(c1,c2)})
+  |- S = union(S1,{tup2(c1,c2)}).
+expect Valid.
+print residue.
+
+// (7)
+checkentail S = union(S1,{tup2(c1,c2)})
+  |- S = union(S1,{tup2(c2,c1)}).
+expect Fail.
+print residue.
+
+// (8)
+checkentail S = union(S1,{tup2(c1,c3)}) & c3=c2
+  |- S = union({tup2(c1,c2)},S1).
+expect Valid.
+print residue.
+
+// (9)
+checkentail S = union(S1,{tup2(c1,c2)}) & c1=c2
+  |- S = union(S1,{tup2(c2,c1)}).
+expect Valid.
+print residue.
+
+//(10)
+checkentail cyclic(B) & B=C |- cyclic(C).
+expect Valid.
+
+
+/*
+   D= {..} |- |D|>4
+
+   D={..}  & |D|=k |- k>4  
+
+
+   D={(a,b),(c,d)} & a<b & c<d |- false
+  --------------------------------------
+   D={(a,b),(c,d)} & acyclic(D) |- false
+   D={(a,b),(c,d)} & acyclic(D) |- false
+  ------------------------------
+       D={..} |- cyclic(D)
+
+   D= {..} & g=cyclic(D) |- g
+
+*/
+
+/*
+global RS stk;
+
+void check_RS(int n)
+  requires stk::RS<_,a>@L & a>=n
+  ensures true;
+
+void check_min_RS()
+  requires stk::RS<m,a>@L & m<=0
+  ensures true;
+*/
+

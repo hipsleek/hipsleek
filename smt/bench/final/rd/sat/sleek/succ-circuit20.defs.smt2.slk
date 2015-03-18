@@ -1,0 +1,41 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2:GTyp,x3:GTyp,x4:GTyp,x5:GTyp,x6:GTyp,x7:GTyp,x8:GTyp,x9:GTyp,x10:GTyp,x11:GTyp,x12:GTyp,x13:GTyp,x14:GTyp,x15:GTyp,x16:GTyp,x17:GTyp,x18:GTyp,x19:GTyp,x20:GTyp> ==
+self::one<> * x2::one<> * x3::one<> * x4::one<> * x5::one<> * x6::one<> * x7::one<> * x8::one<> * x9::one<> * x10::one<> * x11::one<> * x12::one<> * x13::one<> * x14::one<> * x15::one<> * x16::one<> * x17::one<> * x18::one<> * x19::one<> * x20::one<> * self::Q<x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20>.
+
+pred Q<y2:GTyp,y3:GTyp,y4:GTyp,y5:GTyp,y6:GTyp,y7:GTyp,y8:GTyp,y9:GTyp,y10:GTyp,y11:GTyp,y12:GTyp,y13:GTyp,y14:GTyp,y15:GTyp,y16:GTyp,y17:GTyp,y18:GTyp,y19:GTyp,y20:GTyp> ==
+ self::zero<> * y2::zero<> * y3::zero<> * y4::zero<> * y5::zero<> * y6::zero<> * y7::zero<> * y8::zero<> * y9::zero<> * y10::zero<> * y11::zero<> * y12::zero<> * y13::zero<> * y14::zero<> * y15::zero<> * y16::zero<> * y17::zero<> * y18::zero<> * y19::zero<> * y20::zero<>
+or (exists x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20: x1::succ20circuit<x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20,self,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15,y16,y17,y18,y19,y20> * x1::Q<x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19,x20>).
+
+pred succ20circuit<x2:GTyp,x3:GTyp,x4:GTyp,x5:GTyp,x6:GTyp,x7:GTyp,x8:GTyp,x9:GTyp,x10:GTyp,x11:GTyp,x12:GTyp,x13:GTyp,x14:GTyp,x15:GTyp,x16:GTyp,x17:GTyp,x18:GTyp,x19:GTyp,x20:GTyp,y1:GTyp,y2:GTyp,y3:GTyp,y4:GTyp,y5:GTyp,y6:GTyp,y7:GTyp,y8:GTyp,y9:GTyp,y10:GTyp,y11:GTyp,y12:GTyp,y13:GTyp,y14:GTyp,y15:GTyp,y16:GTyp,y17:GTyp,y18:GTyp,y19:GTyp,y20:GTyp> ==
+(exists z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20: self::notg<y1> * self::xorg<x2,y2> * self::andg<x2,z3> * z3::xorg<x3,y3> * z3::andg<x3,z4> * x4::xorg<y4,z4> * z4::andg<x4,z5> * x5::xorg<y5,z5> * z5::andg<x5,z6> * x6::xorg<y6,z6> * z6::andg<x6,z7> * x7::xorg<y7,z7> * z7::andg<x7,z8> * x8::xorg<y8,z8> * z8::andg<x8,z9> * x9::xorg<y9,z9> * z9::andg<x9,z10> * x10::xorg<y10,z10> * z10::andg<x10,z11> * x11::xorg<y11,z11> * z11::andg<x11,z12> * x12::xorg<y12,z12> * z12::andg<x12,z13> * x13::xorg<y13,z13> * z13::andg<x13,z14> * x14::xorg<y14,z14> * z14::andg<x14,z15> * x15::xorg<y15,z15> * z15::andg<x15,z16> * x16::xorg<y16,z16> * z16::andg<x16,z17> * x17::xorg<y17,z17> * z17::andg<x17,z18> * x18::xorg<y18,z18> * z18::andg<x18,z19> * x19::xorg<y19,z19> * z19::andg<x19,z20> * x20::xorg<y20,z20>).
+
+pred notg<y:GTyp> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y:GTyp,z:GTyp> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y:GTyp,z:GTyp> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+null != self.
+
+pred zero<> ==
+null = self.
+
+checkentail_exact x0::P<x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16,x17,x18,x19>
+         |- false.
+
+expect Fail.

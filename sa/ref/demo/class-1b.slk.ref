@@ -1,0 +1,20 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>G(b)&b!=null & a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 2
+SAT % Hit   : 50.%
+Time(cache overhead) : 0.000116 (seconds)
+
+!!! log(small):(0.005209,3)
+Total verification time: 0.055267 second(s)
+	Time spent in main process: 0.040999 second(s)
+	Time spent in child processes: 0.014268 second(s)
+

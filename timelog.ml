@@ -1,5 +1,7 @@
+#include "xdebug.cppo"
 open Gen
 open Globals
+open VarGen
 
 let trace_timer = false
 
@@ -19,41 +21,41 @@ object (self)
     (* add_str "timer status" (pr_pair string_of_float (pr_option string_of_int)) (timer,timer_exc) *)
   method timer_start pno s =
     begin
-      if trace_timer then print_endline ("inside timer_start "^pno);
+      if trace_timer then print_endline_quiet ("inside timer_start "^pno);
       timer_timeout_flag <- false;
       stk_t # push s
     end
   method timer_stop pno s =
     begin
       (* timer_timeout <- false; *)
-      if trace_timer then print_endline ("inside timer_stop "^pno); 
+      if trace_timer then print_endline_quiet ("inside timer_stop "^pno); 
       let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
-      else print_endline "Nested Timer(stop)"
+      else print_endline_quiet "Nested Timer(stop)"
     end
   method timer_timeout pno s =
     begin
-      if trace_timer then print_endline ("inside timer_timeout "^pno);
+      if trace_timer then print_endline_quiet ("inside timer_timeout "^pno);
       timer_timeout_flag <- true;
       let r = stk_t # pop_top_no_exc in
       if stk_t # is_empty then 
         (if timer_val==None then timer_val <- Some s)
-      else print_endline "Nested Timer(timeout)"
+      else print_endline_quiet "Nested Timer(timeout)"
     end
   method start_time s = 
     let t = Gen.Profiling.get_main_time() in
-    let _ = time_stk # push (s,t) in
+    let () = time_stk # push (s,t) in
     ()
 
   method add_proof_info new_s no =
     if trace_timer then 
-      print_endline ("inside add_proof_info "^new_s^" "^no);
+      print_endline_quiet ("inside add_proof_info "^new_s^" "^no);
     match last_big with
       | None -> ()
       | Some(s,t,slk_no) -> 
             begin
-              if trace_timer then print_endline "adding last_big";
+              if trace_timer then print_endline_quiet "adding last_big";
               let to_flag = timer_timeout_flag in
               (* let slk_no = get_sleek_no ()) in  *)
               last_big<-None;
@@ -104,9 +106,9 @@ object (self)
     let bb = List.fold_left (fun c (_,x1) -> c +. x1) 0. bigger in 
     let s = List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
     (* let (small_mona,small_others) = List.partition (fun (e,x) -> x>=0.5) ls in *)
-    Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
-    if not(big==[]) then Debug.info_hprint (add_str ("log(big)(>0.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
-    if not(bigger==[]) then Debug.info_hprint (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
+    if (not (!Globals.web_compile_flag || !Globals.print_min)) then Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
+    if not(big==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("log(big)(>0.5s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
+    if not(bigger==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
     ()
 
   (* method dump =  *)
@@ -125,18 +127,18 @@ let logtime = new timelog
 
 (* let logtime_wrapper s f x = *)
 (*     try *)
-(*       let _ = logtime # start_time s in *)
+(*       let () = logtime # start_time s in *)
 (*       let res = f x in *)
-(*       let _ = logtime # stop_time in *)
+(*       let () = logtime # stop_time in *)
 (*       res *)
 (*     with e -> *)
 (*         let tt = logtime # stop_time in  *)
-(*         let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in *)
+(*         let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in *)
 (*         raise e *)
 
 let log_wrapper s logger f x  =
     try
-      let _ = logtime # start_time s in
+      let () = logtime # start_time s in
       let res = f x in
       let r = logtime # stop_time in
       let to_flag = logtime # get_timeout () in
@@ -150,5 +152,5 @@ let log_wrapper s logger f x  =
         let (pr,no) = logger None tt to_flag in
         logtime # add_proof_info (pr^"*EXC*") no;
         (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
-        let _ = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
+        let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
         raise e

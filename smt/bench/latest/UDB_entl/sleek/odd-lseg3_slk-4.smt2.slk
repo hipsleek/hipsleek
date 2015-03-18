@@ -1,0 +1,14 @@
+
+data node {
+  node nxt;
+}.
+
+pred olseg<p:node> ==
+ self::node<nxt = p>
+or (exists a,b: self::node<nxt = a> * a::node<nxt = b> * b::olseg<p>).
+
+checkentail_exact x::node<nxt = b> * b::olseg<p>
+         |- x::olseg<p>.
+
+expect Fail.
+

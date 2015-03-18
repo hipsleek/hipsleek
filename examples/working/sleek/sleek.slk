@@ -12,6 +12,7 @@ checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
 checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 1>.
 
 //checkentail x::node<_, null> |- x::ll<3>.
+print residue.
 
 //checkentail x::ll<n> /** r::ll<n>*/ |- x::ll<n+1>.
 

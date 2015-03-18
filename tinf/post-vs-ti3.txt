@@ -1,0 +1,1242 @@
+=======
+ base-1  
+=======
+11a12
+> Checking procedure f$int... 
+34,40c35
+< 
+< Context of Verification Failure: 1 File "examples/base-1.ss",Line:8,Col:10
+< Last Proving Location: 1 File "examples/base-1.ss",Line:13,Col:4
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+43,49d37
+< Stop Omega... 17 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.035299,218)
+< Total verification time: 0.312778 second(s)
+< 	Time spent in main process: 0.292394 second(s)
+< 	Time spent in child processes: 0.020384 second(s)
+50a39
+> 0 false contexts at: ()
+=======
+ base-2  
+=======
+11a12
+> Checking procedure f$int... 
+38,44d38
+< Stop Omega... 15 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.029156,207)
+< Total verification time: 0.34301 second(s)
+< 	Time spent in main process: 0.326837 second(s)
+< 	Time spent in child processes: 0.016173 second(s)
+45a40
+> 0 false contexts at: ()
+=======
+ base-3c  
+=======
+11a12
+> Checking procedure f$int... 
+34,40c35
+< 
+< Context of Verification Failure: 1 File "examples/base-3c.ss",Line:8,Col:10
+< Last Proving Location: 1 File "examples/base-3c.ss",Line:13,Col:4
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+43,49d37
+< Stop Omega... 17 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.034868,219)
+< Total verification time: 0.313908 second(s)
+< 	Time spent in main process: 0.294211 second(s)
+< 	Time spent in child processes: 0.019697 second(s)
+50a39
+> 0 false contexts at: ()
+=======
+ bool-2  
+=======
+11a12
+> Checking procedure f$int~int~boolean... 
+48c49
+<            y<=(0-1) -> requires emp & Term[30,3,0+(1*x)+(0*
+---
+>            y<=(0-1) -> requires emp & Term[30,2,0+(1*x)+(0*
+57c58
+<         1<=y -> requires emp & Term[30,2,0+(1*x)+(0*y)]
+---
+>         1<=y -> requires emp & Term[30,3,0+(1*x)+(0*y)]
+62,68d62
+< Stop Omega... 56 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.072302,400)
+< Total verification time: 0.488924 second(s)
+< 	Time spent in main process: 0.436998 second(s)
+< 	Time spent in child processes: 0.051926 second(s)
+69a64
+> 0 false contexts at: ()
+=======
+ fact-2  
+=======
+11a12,28
+> *************************************
+> *******pure relation assumption ******
+> *************************************
+> [RELDEFN post_1150: ( x=0 & res=1) -->  post_1150(x,res),
+> RELDEFN post_1150: ( 1<=v_int_9_1192 & v_int_9_1186<=(0-2) & 
+> post_1150(v_int_9_1186,v_int_9_1192) & x=v_int_9_1186+1 & res=v_int_9_1192+1) -->  post_1150(x,res),
+> RELDEFN post_1150: ( 0<=v_int_9_1186 & 1<=v_int_9_1192 & post_1150(v_int_9_1186,v_int_9_1192) & 
+> x=v_int_9_1186+1 & res=v_int_9_1192+1) -->  post_1150(x,res)]
+> *************************************
+> 
+> Post Inference result:
+> fact$int
+>  requires emp & factpre_0(x)[29]
+>  ensures emp & 1<=res & 
+> factpost_1125(x)[] & x=res-1;
+> 
+> Checking procedure fact$int... 
+17,19c34,37
+<  termAssume 1<=v_int_9_1189 & v_int_9_1185+1=x' & !(v_bool_8_1133') & 
+< x'!=0 & !(v_bool_8_1133') & x'=x & x'!=0 & v_int_9_1132'=v_int_9_1189+1 & 
+< res=v_int_9_1132' & factpost_1125(v_int_9_1185) --> factpost_1125(x).
+---
+>  termAssume post_1150(v_int_9_1186,v_int_9_1192) & 1<=v_int_9_1192 & 
+> v_int_9_1186+1=x' & !(v_bool_8_1133') & x'!=0 & !(v_bool_8_1133') & x'=x & 
+> x'!=0 & v_int_9_1132'=v_int_9_1192+1 & 
+> res=v_int_9_1132' & factpost_1125(v_int_9_1186) --> factpost_1125(x).
+35c53
+<  ensures emp & 1<=res; 
+---
+>  ensures emp & x=res-1 & 1<=res; 
+37c55
+<  ensures emp & 1<=res; 
+---
+>  ensures emp & x=res-1 & 1<=res; 
+41,47d58
+< Stop Omega... 21 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.037882,231)
+< Total verification time: 0.315794 second(s)
+< 	Time spent in main process: 0.296673 second(s)
+< 	Time spent in child processes: 0.019121 second(s)
+48a60
+> 0 false contexts at: ()
+=======
+ fact-case4  
+=======
+18c18
+< Context of Verification Failure: 1 File "examples/fact-case4.ss",Line:4,Col:17
+---
+> Context of Verification Failure: 1 File "",Line:0,Col:0
+21c21
+< ERROR: at examples/fact-case4.ss_4:17_4:23 
+---
+> ERROR: at _0:0_0:0 
+31c31,32
+< !!! proc.proc_name:fact$intStop Omega... 1 invocations 
+---
+> !!! proc.proc_name:fact$int
+> Checking procedure fact$int... 
+33,38d33
+< 
+< !!! log(small):(0.035407,194)
+< Total verification time: 0.301549 second(s)
+< 	Time spent in main process: 0.287501 second(s)
+< 	Time spent in child processes: 0.014048 second(s)
+< 
+=======
+ fact-case5  
+=======
+23c23
+<  Stop Omega... 0 invocations caught
+---
+>  caught
+=======
+ loop-1  
+=======
+11a12
+> Checking procedure f$int... 
+18c19
+< (4) (ERR: unexpected unsound Loop at return)
+---
+> (0) (ERR: unexpected unsound Loop at return)
+20,26d20
+< Stop Omega... 2 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.060244,173)
+< Total verification time: 0.311269 second(s)
+< 	Time spent in main process: 0.259867 second(s)
+< 	Time spent in child processes: 0.051402 second(s)
+27a22
+> 0 false contexts at: ()
+=======
+ loop-4b  
+=======
+11a12,23
+> *************************************
+> *******pure relation assumption ******
+> *************************************
+> [RELDEFN fpost: ( false) -->  fpost_1125(x)[]]
+> *************************************
+> 
+> Post Inference result:
+> f$int
+>  requires emp & fpre_0(x)[29]
+>  ensures emp & 1234<x & fpost_1125(x)[];
+> 
+> Checking procedure f$int... 
+28,34d39
+< Stop Omega... 0 invocations 
+< 3 false contexts at: ( (11,4)  (11,8)  (11,6) )
+< 
+< !!! log(small):(0.016541,152)
+< Total verification time: 0.263492 second(s)
+< 	Time spent in main process: 0.249906 second(s)
+< 	Time spent in child processes: 0.013586 second(s)
+35a41
+> 3 false contexts at: ( (11,4)  (11,8)  (11,6) )
+=======
+ mult-2a  
+=======
+11a12
+> Checking procedure f$int~int... 
+47c48,51
+<            y<=(0-1) -> requires emp & MayLoop[]
+---
+>            y<=(0-
+>            1) -> case {
+>                   y<=(0-1) & 
+>                   0<=x -> requires emp & MayLoop[]
+48a53,54
+>                   }
+>            
+50d55
+<                     1<=y & 
+60,66d64
+< Stop Omega... 132 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.37737,1528)
+< Total verification time: 2.080053 second(s)
+< 	Time spent in main process: 1.96566 second(s)
+< 	Time spent in child processes: 0.114393 second(s)
+67a66
+> 0 false contexts at: ()
+=======
+ mutual-3  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+53,59c55
+< 
+< Context of Verification Failure: 1 File "examples/mutual-3.ss",Line:4,Col:10
+< Last Proving Location: 1 File "examples/mutual-3.ss",Line:7,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+63c59,61
+<   1<=x -> requires emp & MayLoop[]
+---
+>   2<=x -> requires emp & Loop[]
+>  ensures false & false; 
+>   x=1 -> requires emp & Term[30,3]
+69,70c67,68
+<   1<=x -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>   1<=x -> requires emp & Loop[]
+>  ensures false & false; 
+72,78d69
+< Stop Omega... 40 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.065078,340)
+< Total verification time: 0.418296 second(s)
+< 	Time spent in main process: 0.395145 second(s)
+< 	Time spent in child processes: 0.023151 second(s)
+79a71
+> 0 false contexts at: ()
+=======
+ mutual-4a  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+70,76d71
+< Stop Omega... 45 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.069187,399)
+< Total verification time: 0.449225 second(s)
+< 	Time spent in main process: 0.426194 second(s)
+< 	Time spent in child processes: 0.023031 second(s)
+77a73
+> 0 false contexts at: ()
+=======
+ mutual-4  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+66,72d67
+< Stop Omega... 33 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.047429,320)
+< Total verification time: 0.412924 second(s)
+< 	Time spent in main process: 0.362067 second(s)
+< 	Time spent in child processes: 0.050857 second(s)
+73a69
+> 0 false contexts at: ()
+=======
+ mutual-5a  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+56c58
+<  ensures emp & true; 
+---
+>  ensures emp & x<=0; 
+63,69d64
+< Stop Omega... 26 invocations 
+< 8 false contexts at: ( (10,14)  (10,21)  (11,7)  (11,27)  (11,23)  (11,21)  (11,14)  (11,14) )
+< 
+< !!! log(small):(0.037945,248)
+< Total verification time: 0.351349 second(s)
+< 	Time spent in main process: 0.332297 second(s)
+< 	Time spent in child processes: 0.019052 second(s)
+70a66
+> 8 false contexts at: ( (10,14)  (10,21)  (11,7)  (11,27)  (11,23)  (11,21)  (11,14)  (11,14) )
+=======
+ mutual-5b2  
+=======
+16a17
+> Checking procedure f$int... 
+23,24c24,26
+< v_int_18_1416+1=x' & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & 
+< !(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+---
+> v_int_18_1416<=10 & 9<=v_int_18_1416 & v_int_18_1416+1=x' & 
+> v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 
+> 0<x' & !(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+28,29c30,32
+< v_int_18_1415+1=x' & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & 
+< !(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+---
+> v_int_18_1415<=8 & 0<v_int_18_1415 & v_int_18_1415+1=x' & v_bool_18_1144' & 
+> x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 0<x' & 
+> !(v_bool_17_1145') & x'=x & 9<=x & x<=10 & 
+32,34c35,37
+<  termAssume res=v_int_21_1141' & !(v_bool_20_1142') & !(v_bool_20_1142') & 
+< !(v_bool_19_1143') & x'<=20 & !(v_bool_19_1143') & x'<=20 & 
+< !(v_bool_18_1144') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+---
+>  termAssume res=v_int_21_1141' & 10<x' & !(v_bool_20_1142') & 
+> !(v_bool_20_1142') & !(v_bool_19_1143') & x'<=20 & !(v_bool_19_1143') & 
+> x'<=20 & !(v_bool_18_1144') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+44,47c47,50
+<  termAssume res=v_int_19_1139' & 10<v_int_19_1347 & v_int_19_1347=1+x' & 
+< v_bool_19_1143' & 20<x' & v_bool_19_1143' & 20<x' & !(v_bool_18_1144') & 
+< 10<x' & !(v_bool_18_1144') & 10<x' & !(v_bool_17_1145') & 0<x' & 
+< !(v_bool_17_1145') & x'=x & 10<x & 
+---
+>  termAssume res=v_int_19_1139' & 10<v_int_19_1347 & 10<v_int_19_1347 & 
+> v_int_19_1347=1+x' & v_bool_19_1143' & 20<x' & v_bool_19_1143' & 20<x' & 
+> !(v_bool_18_1144') & 10<x' & !(v_bool_18_1144') & 10<x' & 
+> !(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 10<x & 
+51,52c54,56
+< v_int_18_1270+1=x' & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & 
+< !(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+---
+> v_int_18_1270<=8 & 0<v_int_18_1270 & v_int_18_1270+1=x' & v_bool_18_1144' & 
+> x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 0<x' & 
+> !(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+55,57c59,61
+<  termAssume res=v_int_18_1135' & v_int_18_1269<=0 & v_int_18_1269+1=x' & 
+< v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & !(v_bool_17_1145') & 
+< 0<x' & !(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+---
+>  termAssume res=v_int_18_1135' & v_int_18_1269<=0 & v_int_18_1269<=0 & 
+> v_int_18_1269+1=x' & v_bool_18_1144' & x'<=10 & v_bool_18_1144' & x'<=10 & 
+> !(v_bool_17_1145') & 0<x' & !(v_bool_17_1145') & x'=x & 0<x & x<=8 & 
+98,104c102
+< 
+< Context of Verification Failure: 1 File "",Line:0,Col:0
+< Last Proving Location: 1 File "examples/mutual-5b2.ss",Line:21,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+107,109c105,108
+<  ensures emp & true; 
+<   1<=x & x<=8 -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>  ensures emp & x<=0; 
+>   1<=x & x<=8 -> requires emp & Term[32,2,-1+(1*x)]
+>  ensures emp & x<=8 & 
+>   0<x; 
+111c110
+<  ensures emp & true; 
+---
+>  ensures emp & 10<x; 
+114,115c113,115
+<   9<=x & x<=10 -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>   9<=x & x<=10 -> requires emp & Term[32,3,-9+(1*x)]
+>  ensures emp & x<=10 & 
+>   9<=x; 
+120,126d119
+< Stop Omega... 54 invocations 
+< 22 false contexts at: ( (17,14)  (17,21)  (21,7)  (21,14)  (20,24)  (20,31)  (20,11)  (20,7)  (19,17)  (19,30)  (19,26)  (19,24)  (19,13)  (19,11)  (19,7)  (18,18)  (18,29)  (18,27)  (18,25)  (18,14)  (18,11)  (18,7) )
+< 
+< !!! log(small):(0.105789,418)
+< Total verification time: 0.617036 second(s)
+< 	Time spent in main process: 0.586195 second(s)
+< 	Time spent in child processes: 0.030841 second(s)
+127a121
+> 22 false contexts at: ( (17,14)  (17,21)  (21,7)  (21,14)  (20,24)  (20,31)  (20,11)  (20,7)  (19,17)  (19,30)  (19,26)  (19,24)  (19,13)  (19,11)  (19,7)  (18,18)  (18,29)  (18,27)  (18,25)  (18,14)  (18,11)  (18,7) )
+=======
+ mutual-5b3  
+=======
+16a17
+> Checking procedure f$int... 
+23,24c24,26
+< v_int_19_1486+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+< !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+---
+> v_int_19_1486<=10 & 9<=v_int_19_1486 & v_int_19_1486+1=x' & 
+> v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 
+> 0<x' & !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+28,29c30,32
+< v_int_19_1485+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+< !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+---
+> v_int_19_1485<=8 & 3<v_int_19_1485 & v_int_19_1485+1=x' & v_bool_19_1147' & 
+> x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 0<x' & 
+> !(v_bool_18_1148') & x'=x & 9<=x & x<=10 & 
+32,34c35,37
+<  termAssume res=v_int_22_1144' & !(v_bool_21_1145') & !(v_bool_21_1145') & 
+< !(v_bool_20_1146') & x'<=20 & !(v_bool_20_1146') & x'<=20 & 
+< !(v_bool_19_1147') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+---
+>  termAssume res=v_int_22_1144' & 10<x' & !(v_bool_21_1145') & 
+> !(v_bool_21_1145') & !(v_bool_20_1146') & x'<=20 & !(v_bool_20_1146') & 
+> x'<=20 & !(v_bool_19_1147') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+44,47c47,50
+<  termAssume res=v_int_20_1142' & 10<v_int_20_1417 & v_int_20_1417=1+x' & 
+< v_bool_20_1146' & 20<x' & v_bool_20_1146' & 20<x' & !(v_bool_19_1147') & 
+< 10<x' & !(v_bool_19_1147') & 10<x' & !(v_bool_18_1148') & 0<x' & 
+< !(v_bool_18_1148') & x'=x & 10<x & 
+---
+>  termAssume res=v_int_20_1142' & 10<v_int_20_1417 & 10<v_int_20_1417 & 
+> v_int_20_1417=1+x' & v_bool_20_1146' & 20<x' & v_bool_20_1146' & 20<x' & 
+> !(v_bool_19_1147') & 10<x' & !(v_bool_19_1147') & 10<x' & 
+> !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 10<x & 
+51,52c54,56
+< v_int_19_1340+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+< !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+---
+> v_int_19_1340<=8 & 3<v_int_19_1340 & v_int_19_1340+1=x' & v_bool_19_1147' & 
+> x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 0<x' & 
+> !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+56,57c60,62
+< v_int_19_1339+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+< !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+---
+> v_int_19_1339<=3 & 0<v_int_19_1339 & v_int_19_1339+1=x' & v_bool_19_1147' & 
+> x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 0<x' & 
+> !(v_bool_18_1148') & x'=x & 3<x & x<=8 & 
+61,62c66,68
+< v_int_19_1273+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+< !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+---
+> v_int_19_1273<=3 & 0<v_int_19_1273 & v_int_19_1273+1=x' & v_bool_19_1147' & 
+> x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 0<x' & 
+> !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+65,67c71,73
+<  termAssume res=v_int_19_1138' & v_int_19_1272<=0 & v_int_19_1272+1=x' & 
+< v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & !(v_bool_18_1148') & 
+< 0<x' & !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+---
+>  termAssume res=v_int_19_1138' & v_int_19_1272<=0 & v_int_19_1272<=0 & 
+> v_int_19_1272+1=x' & v_bool_19_1147' & x'<=10 & v_bool_19_1147' & x'<=10 & 
+> !(v_bool_18_1148') & 0<x' & !(v_bool_18_1148') & x'=x & 0<x & x<=3 & 
+118,124c124
+< 
+< Context of Verification Failure: 1 File "",Line:0,Col:0
+< Last Proving Location: 1 File "examples/mutual-5b3.ss",Line:22,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+127,131c127,133
+<  ensures emp & true; 
+<   1<=x & x<=3 -> requires emp & MayLoop[]
+<  ensures emp & true; 
+<   4<=x & x<=8 -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>  ensures emp & x<=0; 
+>   1<=x & x<=3 -> requires emp & Term[32,2,-1+(1*x)]
+>  ensures emp & x<=3 & 
+>   0<x; 
+>   4<=x & x<=8 -> requires emp & Term[32,3,-5+(1*x)]
+>  ensures emp & x<=8 & 
+>   3<x; 
+133c135
+<  ensures emp & true; 
+---
+>  ensures emp & 10<x; 
+136,137c138,140
+<   9<=x & x<=10 -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>   9<=x & x<=10 -> requires emp & Term[32,4,-1+(1*x)]
+>  ensures emp & x<=10 & 
+>   9<=x; 
+142,148d144
+< Stop Omega... 65 invocations 
+< 22 false contexts at: ( (18,14)  (18,21)  (22,7)  (22,14)  (21,24)  (21,31)  (21,11)  (21,7)  (20,17)  (20,30)  (20,26)  (20,24)  (20,13)  (20,11)  (20,7)  (19,18)  (19,29)  (19,27)  (19,25)  (19,14)  (19,11)  (19,7) )
+< 
+< !!! log(small):(0.164903,508)
+< Total verification time: 0.782637 second(s)
+< 	Time spent in main process: 0.718484 second(s)
+< 	Time spent in child processes: 0.064153 second(s)
+149a146
+> 22 false contexts at: ( (18,14)  (18,21)  (22,7)  (22,14)  (21,24)  (21,31)  (21,11)  (21,7)  (20,17)  (20,30)  (20,26)  (20,24)  (20,13)  (20,11)  (20,7)  (19,18)  (19,29)  (19,27)  (19,25)  (19,14)  (19,11)  (19,7) )
+=======
+ mutual-5b  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+21c23,24
+< 0<x' & !(v_bool_9_1147') & v_int_10_1146'=v_int_10_1323+v_int_10_1322 & 
+---
+> 0<x' & !(v_bool_9_1147') & 0<x' & v_int_10_1146'=v_int_10_1323+
+> v_int_10_1322 & 
+82c85
+<  ensures emp & true; 
+---
+>  ensures emp & x<=0; 
+89,95d91
+< Stop Omega... 77 invocations 
+< 8 false contexts at: ( (9,14)  (9,21)  (10,7)  (10,27)  (10,23)  (10,21)  (10,14)  (10,14) )
+< 
+< !!! log(small):(0.088068,423)
+< Total verification time: 0.491583 second(s)
+< 	Time spent in main process: 0.459654 second(s)
+< 	Time spent in child processes: 0.031929 second(s)
+96a93
+> 8 false contexts at: ( (9,14)  (9,21)  (10,7)  (10,27)  (10,23)  (10,21)  (10,14)  (10,14) )
+=======
+ mutual-5c  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+21c23
+< 0<x' & !(v_bool_8_1145') & v_int_9_1144'=v_int_9_1281+v_int_9_1280 & 
+---
+> 0<x' & !(v_bool_8_1145') & 0<x' & v_int_9_1144'=v_int_9_1281+v_int_9_1280 & 
+63c65
+<  ensures emp & true; 
+---
+>  ensures emp & x<=0; 
+70,76d71
+< Stop Omega... 39 invocations 
+< 8 false contexts at: ( (8,14)  (8,21)  (9,7)  (9,27)  (9,23)  (9,21)  (9,14)  (9,14) )
+< 
+< !!! log(small):(0.053669,285)
+< Total verification time: 0.375262 second(s)
+< 	Time spent in main process: 0.353097 second(s)
+< 	Time spent in child processes: 0.022165 second(s)
+77a73
+> 8 false contexts at: ( (8,14)  (8,21)  (9,7)  (9,27)  (9,23)  (9,21)  (9,14)  (9,14) )
+=======
+ mutual-5e  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+53,59c55
+< 
+< Context of Verification Failure: 1 File "examples/mutual-5e.ss",Line:4,Col:10
+< Last Proving Location: 1 File "examples/mutual-5e.ss",Line:7,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+63,64c59,60
+<   1<=x -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>   1<=x -> requires emp & Loop[]
+>  ensures false & false; 
+69,70c65,66
+<   (x<=(0-1) | 1<=x) -> requires emp & MayLoop[]
+<  ensures emp & true; 
+---
+>   (x<=(0-1) | 1<=x) -> requires emp & Loop[]
+>  ensures false & false; 
+72,78d67
+< Stop Omega... 34 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.059427,289)
+< Total verification time: 0.371413 second(s)
+< 	Time spent in main process: 0.346765 second(s)
+< 	Time spent in child processes: 0.024648 second(s)
+79a69
+> 0 false contexts at: ()
+=======
+ mutual-5f  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+21c23,24
+< x'!=0 & !(v_bool_8_1149') & v_int_9_1148'=v_int_9_1331+v_int_9_1330 & 
+---
+> x'!=0 & !(v_bool_8_1149') & x'!=0 & v_int_9_1148'=v_int_9_1331+
+> v_int_9_1330 & 
+80c83
+<  ensures emp & true; 
+---
+>  ensures emp & x=0; 
+87,93d89
+< Stop Omega... 79 invocations 
+< 8 false contexts at: ( (8,14)  (8,21)  (9,7)  (9,27)  (9,23)  (9,21)  (9,14)  (9,14) )
+< 
+< !!! log(small):(0.094585,418)
+< Total verification time: 0.537337 second(s)
+< 	Time spent in main process: 0.469548 second(s)
+< 	Time spent in child processes: 0.067789 second(s)
+94a91
+> 8 false contexts at: ( (8,14)  (8,21)  (9,7)  (9,27)  (9,23)  (9,21)  (9,14)  (9,14) )
+=======
+ mutual-5  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+68,74d69
+< Stop Omega... 44 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.067248,403)
+< Total verification time: 0.441641 second(s)
+< 	Time spent in main process: 0.418977 second(s)
+< 	Time spent in child processes: 0.022664 second(s)
+75a71
+> 0 false contexts at: ()
+=======
+ mutual-6  
+=======
+14a15,16
+> Checking procedure g$int... 
+> Checking procedure f$int... 
+53,59c55
+< 
+< Context of Verification Failure: 1 File "examples/mutual-6.ss",Line:4,Col:10
+< Last Proving Location: 1 File "examples/mutual-6.ss",Line:7,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+63c59,61
+<   1<=x -> requires emp & MayLoop[]
+---
+>   2<=x -> requires emp & Loop[]
+>  ensures false & false; 
+>   x=1 -> requires emp & Term[30,3]
+72,78d69
+< Stop Omega... 41 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.055346,350)
+< Total verification time: 0.407735 second(s)
+< 	Time spent in main process: 0.383747 second(s)
+< 	Time spent in child processes: 0.023988 second(s)
+79a71
+> 0 false contexts at: ()
+=======
+ mutual-7  
+=======
+14a15,16
+> Checking procedure g$int~int... 
+> Checking procedure f$int~int... 
+47,53c49
+< 
+< Context of Verification Failure: 1 File "examples/mutual-7.ss",Line:4,Col:10
+< Last Proving Location: 1 File "examples/mutual-7.ss",Line:7,Col:7
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+57c53,55
+<   0<=x -> requires emp & MayLoop[]
+---
+>   0<=x -> case {
+>            y<=0 -> requires emp & Term[30,4,1+(2*x)+(0*
+>            y)]
+58a57,61
+>            1<=y -> requires emp & Term[30,5,0+(0*x)+(2*
+>            y)]
+>  ensures emp & true; 
+>            }
+>   
+64c67,68
+<            0<=y -> requires emp & MayLoop[]
+---
+>            0<=y -> requires emp & Term[30,5,3+(0*x)+(2*
+>            y)]
+68,69c72,76
+<                   (x<=((0-y)-1) | ((0-x)<=y & y<=(0-
+<                   1))) -> requires emp & MayLoop[]
+---
+>                   (0-x)<=y & y<=(0-1) -> requires emp & Term[30,4,0+(2*x)+(0*
+>                   y)]
+>  ensures emp & true; 
+>                   x<=((0-y)-
+>                   1) -> requires emp & Term[30,3]
+76,82d82
+< Stop Omega... 59 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.063805,347)
+< Total verification time: 0.445568 second(s)
+< 	Time spent in main process: 0.414846 second(s)
+< 	Time spent in child processes: 0.030722 second(s)
+83a84
+> 0 false contexts at: ()
+=======
+ num-1  
+=======
+11a12
+> Checking procedure f$int~int... 
+32,38c33
+< 
+< Context of Verification Failure: 1 File "examples/num-1.ss",Line:4,Col:10
+< Last Proving Location: 1 File "examples/num-1.ss",Line:7,Col:14
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+47c42,46
+<                      y<x -> requires emp & MayLoop[]
+---
+>                      6<=x & x<=10 & 
+>                      y<=0 -> requires emp & Term[30,4]
+>  ensures emp & true; 
+>                      y<x & 
+>                      x<=5 -> requires emp & MayLoop[]
+52c51
+<                      y<x -> requires emp & Term[30,2,10+(-1*x)+(0*
+---
+>                      y<x -> requires emp & Term[30,3,10+(-1*x)+(0*
+55,56c54,58
+<                      x<=y & 
+<                      x<=10 -> requires emp & MayLoop[]
+---
+>                      ((0-y)+11)<=x & x<=y & 
+>                      x<=10 -> requires emp & Term[30,2]
+>  ensures emp & true; 
+>                      x<=y & y<=((0-x)+
+>                      10) -> requires emp & MayLoop[]
+63,69d64
+< Stop Omega... 52 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.070425,365)
+< Total verification time: 0.509857 second(s)
+< 	Time spent in main process: 0.452742 second(s)
+< 	Time spent in child processes: 0.057115 second(s)
+70a66
+> 0 false contexts at: ()
+=======
+ num-2a  
+=======
+11a12
+> Checking procedure f$int~int... 
+46,52d46
+< Stop Omega... 26 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.041823,256)
+< Total verification time: 0.348958 second(s)
+< 	Time spent in main process: 0.329615 second(s)
+< 	Time spent in child processes: 0.019343 second(s)
+53a48
+> 0 false contexts at: ()
+=======
+ num-2  
+=======
+11a12
+> Checking procedure f$int~int... 
+52,58d52
+< Stop Omega... 40 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.051144,346)
+< Total verification time: 0.441875 second(s)
+< 	Time spent in main process: 0.416815 second(s)
+< 	Time spent in child processes: 0.02506 second(s)
+59a54
+> 0 false contexts at: ()
+=======
+ reach-1  
+=======
+11a12
+> Checking procedure f$int... 
+26,32d26
+< Stop Omega... 4 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.017647,158)
+< Total verification time: 0.263694 second(s)
+< 	Time spent in main process: 0.24918 second(s)
+< 	Time spent in child processes: 0.014514 second(s)
+33a28
+> 0 false contexts at: ()
+=======
+ reach-1  
+=======
+11a12
+> Checking procedure f$int... 
+26,32d26
+< Stop Omega... 4 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.017647,158)
+< Total verification time: 0.263694 second(s)
+< 	Time spent in main process: 0.24918 second(s)
+< 	Time spent in child processes: 0.014514 second(s)
+33a28
+> 0 false contexts at: ()
+=======
+ rec-f91a  
+=======
+11a12
+> Checking procedure f91$int... 
+41,47d41
+< Stop Omega... 63 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.163366,756)
+< Total verification time: 1.330969 second(s)
+< 	Time spent in main process: 1.26622 second(s)
+< 	Time spent in child processes: 0.064749 second(s)
+48a43
+> 0 false contexts at: ()
+=======
+ rec-f91b1  
+=======
+11a12
+> Checking procedure f91$int... 
+17,19c18,20
+<  termAssume res=v_int_36_1142' & n'<91 & n<91 & n'=n & !(v_bool_35_1143') & 
+< n'<91 & !(v_bool_35_1143') & v_int_36_1220=1+n' & v_int_36_1220<91 & 
+< v_int_36_1142'=91 & 
+---
+>  termAssume res=v_int_36_1142' & 91<=v_int_36_1142' & n'<91 & n<91 & n'=n & 
+> !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & v_int_36_1220=1+n' & 
+> v_int_36_1220<91 & v_int_36_1142'=91 & v_int_36_1220<91 & 
+22,23c23,25
+<  termAssume res=v_int_36_1142' & n'<91 & n<91 & n'=n & !(v_bool_35_1143') & 
+< n'<91 & !(v_bool_35_1143') & v_int_36_1142'=1+n' & 
+---
+>  termAssume res=v_int_36_1142' & 91<=v_int_36_1142' & n'<91 & n<91 & n'=n & 
+> !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & v_int_36_1142'=1+n' & 
+> 91<=v_int_36_1142' & 
+29,31c31,34
+<  termAssume 91<=v_int_36_1141' & v_int_36_1141'=91 & v_int_36_1220<91 & 
+< v_int_36_1220=1+n' & !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & 
+< n'=n & n<91 & n'<91 & f91pre_0(n) --> f91pre_0(v_int_36_1141').
+---
+>  termAssume 91<=v_int_36_1141' & v_int_36_1220<91 & v_int_36_1141'=91 & 
+> v_int_36_1220<91 & v_int_36_1220=1+n' & !(v_bool_35_1143') & n'<91 & 
+> !(v_bool_35_1143') & n'=n & n<91 & 
+> n'<91 & f91pre_0(n) --> f91pre_0(v_int_36_1141').
+33,34c36,37
+<  termAssume 91<=v_int_36_1141' & v_int_36_1141'=1+n' & !(v_bool_35_1143') & 
+< n'<91 & !(v_bool_35_1143') & n'=n & n<91 & 
+---
+>  termAssume 91<=v_int_36_1141' & 91<=v_int_36_1141' & v_int_36_1141'=1+n' & 
+> !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & n'=n & n<91 & 
+52c55
+<  ensures emp & res=n; 
+---
+>  ensures emp & 91<=n & res=n; 
+54c57
+<  ensures emp & res=91; 
+---
+>  ensures emp & n<91 & res=91; 
+59,65d61
+< Stop Omega... 16 invocations 
+< 6 false contexts at: ( (35,13)  (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
+< 
+< !!! log(small):(0.038275,263)
+< Total verification time: 0.353438 second(s)
+< 	Time spent in main process: 0.33522 second(s)
+< 	Time spent in child processes: 0.018218 second(s)
+66a63
+> 6 false contexts at: ( (35,13)  (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
+=======
+ rec-f91b2  
+=======
+11a12
+> Checking procedure f91$int... 
+17,19c18,21
+<  termAssume res=v_int_36_1142' & v_int_36_1142'=91 & n'<91 & n<=91 & n'=n & 
+< !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & v_int_36_1218=1+n' & 
+< v_int_36_1218<=91 & v_int_36_1224=91 & 
+---
+>  termAssume res=v_int_36_1142' & v_int_36_1224<=91 & v_int_36_1142'=91 & 
+> n'<91 & n<=91 & n'=n & !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & 
+> v_int_36_1218=1+n' & v_int_36_1218<=91 & v_int_36_1224=91 & 
+> v_int_36_1218<=91 & 
+28,30c30,33
+<  termAssume v_int_36_1141'<=91 & v_int_36_1141'=91 & v_int_36_1218<=91 & 
+< v_int_36_1218=1+n' & !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & 
+< n'=n & n<=91 & n'<91 & f91pre_0(n) --> f91pre_0(v_int_36_1141').
+---
+>  termAssume v_int_36_1141'<=91 & v_int_36_1218<=91 & v_int_36_1141'=91 & 
+> v_int_36_1218<=91 & v_int_36_1218=1+n' & !(v_bool_35_1143') & n'<91 & 
+> !(v_bool_35_1143') & n'=n & n<=91 & 
+> n'<91 & f91pre_0(n) --> f91pre_0(v_int_36_1141').
+43c46
+<  ensures emp & res=n; 
+---
+>  ensures emp & 91<n & res=n; 
+45c48
+<  ensures emp & res=91; 
+---
+>  ensures emp & n<=91 & res=91; 
+47c50
+<  ensures emp & res=91; 
+---
+>  ensures emp & n<=91 & res=91; 
+52,58d54
+< Stop Omega... 21 invocations 
+< 5 false contexts at: ( (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
+< 
+< !!! log(small):(0.044084,265)
+< Total verification time: 0.352351 second(s)
+< 	Time spent in main process: 0.334371 second(s)
+< 	Time spent in child processes: 0.01798 second(s)
+59a56
+> 5 false contexts at: ( (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
+=======
+ rec-f91b3  
+=======
+11a12
+> Checking procedure f91$int... 
+41,47d41
+< Stop Omega... 63 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.164416,756)
+< Total verification time: 1.304784 second(s)
+< 	Time spent in main process: 1.26802 second(s)
+< 	Time spent in child processes: 0.036764 second(s)
+48a43
+> 0 false contexts at: ()
+=======
+ rec-f91b  
+=======
+11a12
+> Checking procedure f91$int... 
+42,48d42
+< Stop Omega... 15 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.033925,222)
+< Total verification time: 0.338897 second(s)
+< 	Time spent in main process: 0.292091 second(s)
+< 	Time spent in child processes: 0.046806 second(s)
+49a44
+> 0 false contexts at: ()
+=======
+ rec-f91c  
+=======
+11a12
+> Checking procedure f91$int... 
+41,47d41
+< Stop Omega... 63 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.163413,756)
+< Total verification time: 1.301462 second(s)
+< 	Time spent in main process: 1.265023 second(s)
+< 	Time spent in child processes: 0.036439 second(s)
+48a43
+> 0 false contexts at: ()
+=======
+ rec-f91d  
+=======
+11a12
+> Checking procedure f91$int... 
+42,48d42
+< Stop Omega... 15 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.035068,222)
+< Total verification time: 0.308135 second(s)
+< 	Time spent in main process: 0.290956 second(s)
+< 	Time spent in child processes: 0.017179 second(s)
+49a44
+> 0 false contexts at: ()
+=======
+ rec-f91  
+=======
+11a12
+> Checking procedure f91$int... 
+41,47d41
+< Stop Omega... 63 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.153245,756)
+< Total verification time: 1.305404 second(s)
+< 	Time spent in main process: 1.268685 second(s)
+< 	Time spent in child processes: 0.036719 second(s)
+48a43
+> 0 false contexts at: ()
+=======
+ rec-fgen0  
+=======
+11a12
+> Checking procedure f$int~int... 
+14,20d14
+< Stop Omega... 3 invocations 
+< 6 false contexts at: ( (16,12)  (17,7)  (17,20)  (17,18)  (17,16)  (17,14) )
+< 
+< !!! log(small):(0.039357,206)
+< Total verification time: 0.326242 second(s)
+< 	Time spent in main process: 0.312097 second(s)
+< 	Time spent in child processes: 0.014145 second(s)
+21a16
+> 6 false contexts at: ( (16,12)  (17,7)  (17,20)  (17,18)  (17,16)  (17,14) )
+=======
+ rec-fgen1  
+=======
+11a12
+> Checking procedure f$int~int... 
+17,19c18,20
+<  termAssume res=v_int_14_1142' & v_int_14_1142'=k' & n'<k' & n<k & k'=k & 
+< n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1246=1+
+< n' & v_int_14_1246<k' & 
+---
+>  termAssume res=v_int_14_1142' & k'<=k' & v_int_14_1142'=k' & n'<k' & n<k & 
+> k'=k & n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+> v_int_14_1246=1+n' & v_int_14_1246<k' & v_int_14_1246<k' & 
+22,23c23,25
+<  termAssume res=v_int_14_1142' & n'<k' & n<k & k'=k & n'=n & 
+< !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1142'=1+n' & 
+---
+>  termAssume res=v_int_14_1142' & k'<=v_int_14_1142' & n'<k' & n<k & k'=k & 
+> n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1142'=1+
+> n' & k'<=v_int_14_1142' & 
+29,31c31,34
+<  termAssume k'<=v_int_14_1141' & v_int_14_1141'=k' & v_int_14_1246<k' & 
+< v_int_14_1246=1+n' & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+< n'=n & k'=k & n<k & n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+---
+>  termAssume k'<=v_int_14_1141' & v_int_14_1246<k' & v_int_14_1141'=k' & 
+> v_int_14_1246<k' & v_int_14_1246=1+n' & !(v_bool_13_1143') & n'<k' & 
+> !(v_bool_13_1143') & n'=n & k'=k & n<k & 
+> n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+33,34c36,37
+<  termAssume k'<=v_int_14_1141' & v_int_14_1141'=1+n' & !(v_bool_13_1143') & 
+< n'<k' & !(v_bool_13_1143') & n'=n & k'=k & n<k & 
+---
+>  termAssume k'<=v_int_14_1141' & k'<=v_int_14_1141' & v_int_14_1141'=1+n' & 
+> !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & n'=n & k'=k & n<k & 
+52c55
+<  ensures emp & res=n; 
+---
+>  ensures emp & k<=n & res=n; 
+54c57,58
+<  ensures emp & res=k; 
+---
+>  ensures emp & n<k & 
+>   res=k; 
+59,65d62
+< Stop Omega... 16 invocations 
+< 6 false contexts at: ( (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+< 
+< !!! log(small):(0.046565,255)
+< Total verification time: 0.385723 second(s)
+< 	Time spent in main process: 0.34166 second(s)
+< 	Time spent in child processes: 0.044063 second(s)
+66a64
+> 6 false contexts at: ( (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+=======
+ rec-fgen2  
+=======
+11a12
+> Checking procedure f$int~int... 
+17,19c18,20
+<  termAssume res=v_int_14_1142' & v_int_14_1142'=k' & n'<k' & n<=k & k'=k & 
+< n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1242=1+
+< n' & v_int_14_1242<=k' & 
+---
+>  termAssume res=v_int_14_1142' & k'<=k' & v_int_14_1142'=k' & n'<k' & n<=k & 
+> k'=k & n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+> v_int_14_1242=1+n' & v_int_14_1242<=k' & v_int_14_1242<=k' & 
+28,30c29,32
+<  termAssume v_int_14_1141'<=k' & v_int_14_1141'=k' & v_int_14_1242<=k' & 
+< v_int_14_1242=1+n' & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+< n'=n & k'=k & n<=k & n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+---
+>  termAssume v_int_14_1141'<=k' & v_int_14_1242<=k' & v_int_14_1141'=k' & 
+> v_int_14_1242<=k' & v_int_14_1242=1+n' & !(v_bool_13_1143') & n'<k' & 
+> !(v_bool_13_1143') & n'=n & k'=k & n<=k & 
+> n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+43c45
+<  ensures emp & res=n; 
+---
+>  ensures emp & k<n & res=n; 
+45c47
+<  ensures emp & res=k; 
+---
+>  ensures emp & n<=k & res=k; 
+47c49,50
+<  ensures emp & res=k; 
+---
+>  ensures emp & n<=k & 
+>   res=k; 
+52,58d54
+< Stop Omega... 21 invocations 
+< 5 false contexts at: ( (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+< 
+< !!! log(small):(0.039075,261)
+< Total verification time: 0.353322 second(s)
+< 	Time spent in main process: 0.334674 second(s)
+< 	Time spent in child processes: 0.018648 second(s)
+59a56
+> 5 false contexts at: ( (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+=======
+ rec-fgen3  
+=======
+11a12
+> Checking procedure f$int~int... 
+43,49d43
+< Stop Omega... 64 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.192384,740)
+< Total verification time: 1.616357 second(s)
+< 	Time spent in main process: 1.577482 second(s)
+< 	Time spent in child processes: 0.038875 second(s)
+50a45
+> 0 false contexts at: ()
+=======
+ rec-fgen  
+=======
+11a12
+> Checking procedure f91$int... 
+41,47d41
+< Stop Omega... 63 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.154722,756)
+< Total verification time: 1.306025 second(s)
+< 	Time spent in main process: 1.27038 second(s)
+< 	Time spent in child processes: 0.035645 second(s)
+48a43
+> 0 false contexts at: ()
+=======
+ sc-2  
+=======
+11a12
+> Checking procedure f$int~int... 
+14,20d14
+< Stop Omega... 0 invocations 
+< 4 false contexts at: ( (24,16)  (24,9)  (24,7)  (23,14) )
+< 
+< !!! log(small):(0.028422,198)
+< Total verification time: 0.33198 second(s)
+< 	Time spent in main process: 0.295954 second(s)
+< 	Time spent in child processes: 0.036026 second(s)
+21a16
+> 4 false contexts at: ( (24,16)  (24,9)  (24,7)  (23,14) )
+=======
+ sc  
+=======
+11a12
+> Checking procedure f$int~int... 
+32,38c33
+< 
+< Context of Verification Failure: 1 File "examples/sc.ss",Line:7,Col:10
+< Last Proving Location: 1 File "examples/sc.ss",Line:23,Col:7
+< 
+< ERROR: at _0:0_0:0 
+< Message: [TNT Inference]: One of analyzed scc's successors is Unknown.
+<  Termination Inference Result:
+---
+> Termination Inference Result:
+42c37,49
+<   1<=x -> requires emp & MayLoop[]
+---
+>   1<=x -> case {
+>            0<=y -> requires emp & Loop[]
+>  ensures false & false; 
+>            y<=(0-
+>            1) -> case {
+>                   1<=x & x<=((0-y)-
+>                   1) -> requires emp & Term[29,2]
+>  ensures emp & true; 
+>                   ((0-x)+1)<=y & y<=(0-
+>                   1) -> requires emp & Loop[]
+>  ensures false & false; 
+>                   y=0-x & 
+>                   1<=x -> requires emp & Term[29,3]
+43a51,54
+>                   }
+>            
+>            }
+>   
+45,51d55
+< Stop Omega... 23 invocations 
+< 0 false contexts at: ()
+< 
+< !!! log(small):(0.038254,226)
+< Total verification time: 0.33429 second(s)
+< 	Time spent in main process: 0.314265 second(s)
+< 	Time spent in child processes: 0.020025 second(s)
+52a57
+> 0 false contexts at: ()

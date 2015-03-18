@@ -1,0 +1,35 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/strong1.ss"
+Parsing file "t/strong1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure rec1$int... 
+Post condition cannot be derived:
+  (may) cause:  (((1<=v_int_11_1373 & v_int_11_1373<=(v_int_11_1380+1)) | (v_int_11_1380+
+1=0 & v_int_11_1373<=0))) & (((1<=v_int_11_1380 & 
+v_int_11_1380<=v_int_11_1387) | (v_int_11_1387=0 & v_int_11_1380<=0))) & 
+(((1<=v_int_11_1387 & v_int_11_1387<=v_int_11_1389) | (v_int_11_1389=0 & 
+v_int_11_1387<=0))) & 0<i & v_int_11_1373+2=i & res=1+v_int_11_1389 |-  ((1<=i & i<=res) | (res=0 & i<=0)). LOCS:[10;4;11;7] (may-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/strong1.ss",Line:11,Col:9
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure rec1$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure rec1$int
+
+0 false contexts at: ()
+
+Total verification time: 0.396023 second(s)
+	Time spent in main process: 0.352021 second(s)
+	Time spent in child processes: 0.044002 second(s)
+

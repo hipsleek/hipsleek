@@ -1,0 +1,88 @@
+# bugs-ex11-ll-size.slk
+
+  why isn't x!=null inferred?
+
+
+Residue:
+ <1>q_50::ll{}<flted_7_48>&flted_7_48+1=n & Anon_12=v_49 & q=q_50&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+==================================================================
+# bugs-ex11a.slk
+
+infer[x] x=null |- x::node<_,q>.
+print residue.
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+Why isn't x!=null attached here?
+Did we lose it?
+==================================================================
+# bugs-ex11a.slk
+
+infer[x] x=null |- x::node<_,q>.
+print residue.
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+Why isn't x!=null attached here as inferred pre
+Did we lose it below?
+
+early_hp_contra_detection#1@6@5
+early_hp_contra_detection#1 inp1 : emp&xxxx=null&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [xxxx]
+early_hp_contra_detection#1 inp2 : xxxx::node<Anon_12,q>&{FLOW,(4,5)=__norm#E}[]
+early_hp_contra_detection#1@6 EXIT:CONTRADICTION DETECTEDREAL_CONTRA
+ es = Some( es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_orig_ante: Some(emp&xxxx=null&{FLOW,(4,5)=__norm#E}[])
+ es_infer_vars: [xxxx]
+ es_infer_vars_rel: [])
+
+early_hp_contra_detection_add_to_list_context#1@5
+early_hp_contra_detection_add_to_list_context#1 inp1 : emp&xxxx=null&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [xxxx]
+early_hp_contra_detection_add_to_list_context#1 inp2 : xxxx::node<Anon_12,q>&{FLOW,(4,5)=__norm#E}[]
+early_hp_contra_detection_add_to_list_context#1@5 EXIT:(real_c:false,true,Some( 
+Good Context: length= 1 [es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+                         es_orig_ante: Some(emp&xxxx=null&
+                                        {FLOW,(4,5)=__norm#E}[])
+                         es_infer_vars: [xxxx]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+[[empty]]
+==================================================================
+# ex32a-11-app.ss  --en-syn-mode
+
+Expecting  QQ to be == ls_nt
+This still obtains:
+
+!!! INFERRED SHAPE SPEC: EBase exists (Expl)[](Impl)[val_42_1399](ex)[]x::node<val_42_1399,next_42_1400> * 
+       next_42_1400::ll{}<>&x!=null&{FLOW,(1,28)=__flow#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   x::QQ{}<y>&{FLOW,(4,5)=__norm#E}[]
+                   Stop Omega... 129 invocations 
+==================================================================
+# bugs-ex11d.slk
+
+//(7)
+infer[n] x::ll<n> |- x::node<_,q>.
+print residue.
+// [n!=0]
+// Why not n>=1 ?
+
+
+//(8)
+infer[n] x::ll<n> |- x::node<_,q>*q::node<_,r>.
+print residue.
+// [n!=0; n!=1]
+// Why not n>=2 ?
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

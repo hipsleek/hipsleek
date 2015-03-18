@@ -1,0 +1,7 @@
+data node {
+     node next;
+}.
+
+pred ell<n> == self=null & n=0
+     or self::node<q> * q::node<p> * p::ell<n-2>
+     .

@@ -1,0 +1,16 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! fixpoint:[( Q(m,n,k), ((k=n & 0<=n & n<=m) | (m=k & 0<=k & k<=n)), P(m,n), 0<=m & 0<=n)]
+Stop Omega... 10 invocations 
+SAT Count   : 2
+SAT % Hit   : 50.%
+IMPLY Count : 5
+IMPLY % Hit : 40.%
+Time(cache overhead) : 0.000475 (seconds)
+
+!!! log(small):(0.014478,17)
+Total verification time: 0.128519 second(s)
+	Time spent in main process: 0.059035 second(s)
+	Time spent in child processes: 0.069484 second(s)
+

@@ -1,0 +1,51 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&p_146=p&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(x,x) ==> ]]
+
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 4: Fail.(may) cause:UnionR[ (x!=null | x=p) |-  p=q. LOCS:[1;0;23] (may-bug), ((x!=null | x=q_210)) & ((q_210!=null | q_210=p)) |-  q_210=q. LOCS:[1;0;23] (may-bug)]
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 5: Fail.(may) cause: (x!=null | x=p) |-  p=q. LOCS:[1;0;28] (may-bug)
+
+Residue:
+ <1>x::ls{}<p>&{FLOW,(4,8)=__MayError#E}[]
+
+

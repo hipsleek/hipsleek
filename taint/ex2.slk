@@ -1,0 +1,16 @@
+//(1) Valid
+checkentail (r & (a|b)| !r& !(a|b)) & a |- r.
+checkentail (r & (a|b)| !r& !(a|b)) & a |- !r.
+
+//(2) Valid
+checkentail (r & (a|b)| !r& !(a|b)) & b |- r.
+
+//(3) Fail
+checkentail (r & (a|b)| !r& !(a|b)) & !b |- !r.
+
+//(4) Valid
+checkentail (r & (a|b)| !r& !(a|b)) & !b & !a |- !r.
+
+//(3) Fail
+checkentail (r & (a|b)| !r& !(a|b)) & !b & a |- !r.
+checkentail (r & (a|b)| !r& !(a|b)) & !b & a |- r.

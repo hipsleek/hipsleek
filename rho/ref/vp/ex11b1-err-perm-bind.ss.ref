@@ -1,0 +1,42 @@
+
+!!!Full processing file "vp/ex11b1-err-perm-bind.ss"
+Parsing file "vp/ex11b1-err-perm-bind.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+( []) :vp/ex11b1-err-perm-bind.ss:13: 10: h does not have @lend/@full permission to read (inside bind)
+
+(Cause of ParCase Failure):vp/ex11b1-err-perm-bind.ss:13: 10:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(h,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex11b1-err-perm-bind.ss",Line:13,Col:6
+
+ERROR: at vp/ex11b1-err-perm-bind.ss_13:10_13:15
+Message: h does not have @lend/@full permission to read (inside bind)
+
+Procedure foo$cell FAIL.(2)
+
+Exception Failure("h does not have @lend/@full permission to read (inside bind)") Occurred!
+
+Error(s) detected when checking procedure foo$cell
+
+0 false contexts at: ()
+
+Total verification time: 0.388024 second(s)
+	Time spent in main process: 0.368023 second(s)
+	Time spent in child processes: 0.020001 second(s)
+

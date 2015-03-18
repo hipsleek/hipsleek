@@ -1,0 +1,15 @@
+Starting Omega...oc
+
+!!!Final MTL: [[(g, d), (f, w), (A, B)]]
+Checkeq (1) : Valid.
+Checkeq (2) : Fail.
+
+Checkeq (3) : Fail.
+
+!!!Final MTL: [[(g, d), (f, w), (A, A)]]
+Checkeq (4) : Valid.Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055761 second(s)
+	Time spent in main process: 0.041539 second(s)
+	Time spent in child processes: 0.014222 second(s)
+

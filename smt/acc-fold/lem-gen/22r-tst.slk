@@ -1,0 +1,31 @@
+
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<f0 = xp> * xp::ls<y> & null != self & self != y).
+
+checkentail x::node<y> & x!=y 
+         |- x::ls<y>.
+expect Valid.
+
+/*
+lemma_unsafe self::ls<p> * p::node<f0 = z,f1 = _> -> self::ls<z>.
+//above lemma is unsound for non-touching
+
+*/
+
+//lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+ 
+/*
+ checkentail_exact x::ls<y> * y::node<f0 = z,f1 = _> * z::node<f0=null>
+         |- x::ls<z> * z::ls<null>.
+*/
+
+checkentail x::ls<y> * y::node<z> * z::ls<null>
+         |- x::ls<z> * z::ls<null>.
+
+expect Valid.
+

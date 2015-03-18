@@ -1,0 +1,19 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 |- fpre(x').
+
+infer [@term] x>=0 & fpre(x) & x'=x-1 & fpost(x') |- fpost(x).
+
+infer [@term] x<0 & Term[] |- fpost(x).
+
+term_infer.
+
+/*
+f:  case {
+  0<=x -> requires emp & Term[0+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Term[]
+ ensures emp & true; 
+  }
+*/

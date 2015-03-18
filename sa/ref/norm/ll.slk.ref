@@ -1,0 +1,24 @@
+Starting Omega...oc
+ll is defined.
+llN is defined.
+Starting z3... 
+
+!!! formula1: emp&self=null & ((n=0 | 1<=n))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & n=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=n)])
+!!! extn pred:
+: llN(a,n) ::=  [
+  EXISTS(n_37: a::node<_,p> * llN(p,n_37)&n=1+n_37 & 0<=n_37)[]
+  or emp&a=null & n=0
+  ]Stop Omega... 8 invocations 
+SAT Count   : 18
+SAT % Hit   : 55.55%
+IMPLY Count : 5
+IMPLY % Hit : 40.%
+Time(cache overhead) : 0.001056 (seconds)
+
+!!! log(small):(0.011917,32)
+Total verification time: 0.067359 second(s)
+	Time spent in main process: 0.050256 second(s)
+	Time spent in child processes: 0.017103 second(s)
+

@@ -1,0 +1,68 @@
+
+!!!Full processing file "paper/ex-3.ss"
+Parsing file "paper/ex-3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=v_int_12_1246 & 0<=y' & 0<=y' & 0<=v_int_12_1246 & 
+v_int_12_1246=y'+x' & !(v_bool_11_1132') & 0<=x' & !(v_bool_11_1132') & 
+x'=x & y'=y & 0<=x & 0<=y & 
+0<=x' & fpost_1129(v_int_12_1246,y') --> fpost_1129(x,y).
+
+ termAssume 0<=v_int_12_1210 & y'<0 & y'<0 & 0<=v_int_12_1210 & 
+v_int_12_1210=y'+x' & !(v_bool_11_1132') & 0<=x' & !(v_bool_11_1132') & 
+x'=x & y'=y & 0<=x & y<0 & 
+0<=x' & fpost_1128(v_int_12_1210,y') --> fpost_1128(x,y).
+
+ termAssume v_int_12_1209<0 & v_int_12_1209<0 & v_int_12_1209=y'+x' & 
+!(v_bool_11_1132') & 0<=x' & !(v_bool_11_1132') & x'=x & y'=y & 0<=x & y<0 & 
+0<=x' & fpost_1127(v_int_12_1209,y') --> fpost_1128(x,y).
+
+ termAssume x'<0 & x<0 & y'=y & x'=x & v_bool_11_1132' & x'<0 & 
+v_bool_11_1132' --> fpost_1127(x,y).
+
+ termAssume 0<=x' & 0<=y & 0<=x & y'=y & x'=x & !(v_bool_11_1132') & 0<=x' & 
+!(v_bool_11_1132') & v_int_12_1131'=y'+x' & 0<=v_int_12_1131' & 
+0<=y' & fpre_0(x,y) --> fpre_0(v_int_12_1131',y').
+
+ termAssume 0<=x' & y<0 & 0<=x & y'=y & x'=x & !(v_bool_11_1132') & 0<=x' & 
+!(v_bool_11_1132') & v_int_12_1131'=y'+x' & 0<=v_int_12_1131' & 
+y'<0 & fpre_0(x,y) --> fpre_0(v_int_12_1131',y').
+
+ termAssume 0<=x' & y<0 & 0<=x & y'=y & x'=x & !(v_bool_11_1132') & 0<=x' & 
+!(v_bool_11_1132') & v_int_12_1131'=y'+x' & 
+v_int_12_1131'<0 & fpre_0(x,y) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f: [[4] x<=(0-1)@B,[5] 0<=x & 0<=y@R,[6] y<=(0-1) & 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[29]
+ ensures emp & x<0; 
+  0<=x -> case {
+           y<0 -> requires emp & Term[29,2,0+(1*x)+(0*
+           y)]
+ ensures emp & 0<=x & y<0; 
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  }
+
+Termination checking result: SUCCESS
+
+
+3 false contexts at: ( (11,13)  (12,9)  (12,7) )

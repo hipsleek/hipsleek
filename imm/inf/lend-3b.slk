@@ -1,0 +1,27 @@
+data cell{
+ int fst;
+}.
+
+relation R(ann v,ann w).
+
+infer [R] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+/*
+# lend-3b.slk --print-type 
+
+Entail (1) : Valid. 
+
+ <1>q::cell<flted@w>&w<:@L & v=@M & R(v,w) & flted=2&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(v,w)) -->  v=@M & w<:@L]
+[[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
+
+<1>q:cell::cell<flted:int@w:AnnT>&w:AnnT<:@L & v:AnnT=@M & R:RelT([])(v:AnnT,w:AnnT) & flted:int=2&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R:RelT([])(v:AnnT,w:AnnT)) -->  v:AnnT=@M & w:AnnT<:@L]
+
+
+
+*/

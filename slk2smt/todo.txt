@@ -1,0 +1,49 @@
+=================================================
+data-01.slk: DONE
+
+data node {
+     node next;
+}.
+
+EXPECT:
+
+(declare-sort node 0)
+(declare-fun next () (Field node node))
+
+=================================================
+data-02.slk: DONE
+
+data node {
+     node next;
+     node prev;
+}.
+
+EXPECT:
+
+(declare-sort node 0)
+(declare-fun next () (Field node node))
+(declare-fun prev () (Field node node))
+
+=================================================
+data-03.slk: DONE
+
+data node1 {
+     node1 next;
+}.
+
+data node2 {
+     node1 down;
+     node2 next;
+}.
+
+EXPECT:
+
+(declare-sort node1 0)
+(declare-fun next () (Field node1 node1))
+(declare-sort node2 0)
+(declare-fun down () (Field node2 node1))
+(declare-fun next () (Field node2 node2))
+
+=================================================
+=================================================
+=================================================

@@ -1,0 +1,19 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred BinTree<> ==
+ emp
+or (exists yp,xp: self::GTyp<f0 = yp,f1 = xp> * yp::BinTree<> * xp::BinTree<> & null != self).
+
+pred BinTreeSeg<y> ==
+ self = y
+or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinTreeSeg<y> * yp::BinTree<> & null != self)
+or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinTree<> * yp::BinTreeSeg<y> & null != self).
+
+checkentail x::BinTreeSeg<z> * z::BinTreeSeg<y>
+         |- x::BinTreeSeg<y>.
+
+expect unknown.

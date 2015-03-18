@@ -1,0 +1,114 @@
+(* this file lists all tools/scripts in loris-7 *)
+
+==============================================
+internal tools:
+
+---------------------
+commit:
+ - author: Andreea
+ - version:
+ - use:
+ - note:
+
+---------------------
+smt2check:
+ - author: https://github.com/mihasighi/smtcomp14-sl/
+ - internal: Loc
+ - version:
+ - use: smt2check file.smt2
+ - note: check format of smt2 in separation logic
+
+---------------------
+smt2slk:
+ - author: Long + Loc
+ - version:
+ - use: 
+ - note:
+
+---------------------
+slk2smt:
+ - author: Long + Loc
+ - version:
+ - use: 
+ - note:
+
+---------------------
+gen-vc from hip:
+ - author:Chanh
+ - version:
+ - use: 
+ - note:
+
+---------------------
+gen-log files from hip/sleek:
+ - author: Bach
+ - version:
+ - use: 
+ - note:
+
+---------------------
+debugging in sleek/hip:
+ - author: Prof. Chin + Loc
+ - version:
+ - use: 
+ - note:
+
+
+---------------------
+verifying C code with hip:
+ - author: Trung
+ - version:
+ - use: hip filename.c
+ - note:
+
+=============================================
+solvers:
+
+--------------------
+ z3
+ - author: Microsoft
+ - internal: Loc
+ - version:
+ - use:
+ - note:
+---------------------
+ oc
+ - author:
+ - internal: Loc
+ - version:
+ - use:
+ - note:
+
+---------------------
+ redlog
+ - author:
+ - internal: Khanh
+ - version:
+ - use:
+ - note:
+
+---------------------
+ mona
+ - author:
+ - internal: Andreea
+ - version:
+ - use:
+ - note:
+
+--------------------
+ asterix
+ - author: Separation Logic + Superposition Calculus = Heap Theorem Prover,
+           PLDI'2011
+ - internal: Loc
+ - version:
+ - use: asterix < input
+ - note: Separation Logic solver for lseg
+
+
+=============================================
+benchamrks
+
+
+=============================================
+
+=============================================

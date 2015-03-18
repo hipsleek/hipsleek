@@ -1,0 +1,75 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-fgen1.ss"
+Parsing file "t/rec-fgen1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f$int~int] for f$int~int
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1343_1344: ( n=res & k<=res) -->  post_1343_1344(n,k,res,flow),
+RELDEFN post_1343_1345: ( n+1=k & res=k & post_1343_1344(k,k,k,flow)) -->  post_1343_1345(n,k,res,flow),
+RELDEFN post_1343_1345: ( res=k & (n+2)<=k & post_1343_1344(k,k,k,flow) & post_1343_1345(1+n,k,k,flow)) -->  post_1343_1345(n,k,res,flow)]
+*************************************
+
+Post Inference result:
+f$int~int
+ ECase case {
+        k<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&res=n & k<=n & res>=k & res=n&
+                          {FLOW,(4,5)=__norm#E}[]
+                           ;
+        n<k -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         emp&res=k & n<k & k>=(1+n) & k=res&
+                         {FLOW,(4,5)=__norm#E}[]
+                          
+        }
+
+Checking procedure f$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_14_1441=1+n' & n'=n & k'=k & n<k & n'<k' & 
+!(v_bool_13_1326') & v_int_14_1441<k' & k'>=(1+v_int_14_1441) & k'<=k' & 
+v_int_14_1325'>=k' & v_int_14_1325'=k' & 
+res=v_int_14_1325' & fpost_1398(v_int_14_1441,k') & fpost_1397(k',k') --> fpost_1398(n,k).
+
+ termAssume !(v_bool_13_1326') & n'<k' & n<k & k'=k & n'=n & 
+v_int_14_1325'=1+n' & v_int_14_1325'>=k' & 
+res=v_int_14_1325' & fpost_1397(v_int_14_1324',k') & fpost_1397(v_int_14_1325',k') --> fpost_1398(n,k).
+
+ termAssume v_bool_13_1326' & k'<=n' & k<=n & k'=k & n'=n & 
+res=n' --> fpost_1397(n,k).
+
+ termAssume v_int_14_1441=1+n' & n'=n & k'=k & n<k & n'<k' & 
+!(v_bool_13_1326') & v_int_14_1441<k' & k'>=(1+v_int_14_1441) & 
+k'=v_int_14_1324' & 
+k'<=v_int_14_1324' & fpre_0(n,k) --> fpre_0(v_int_14_1324',k').
+
+ termAssume v_int_14_1324'=v_int_14_1324' & v_int_14_1324'>=k' & 
+k'<=v_int_14_1324' & !(v_bool_13_1326') & n'<k' & n<k & k'=k & n'=n & 
+v_int_14_1324'=1+n' & 
+k'<=v_int_14_1324' & fpre_0(n,k) --> fpre_0(v_int_14_1324',k').
+
+ termAssume v_int_14_1321'<k' & v_int_14_1321'=1+n' & n'=n & k'=k & n<k & 
+n'<k' & !(v_bool_13_1326') & fpre_0(n,k) --> fpre_0(v_int_14_1321',k').
+
+ termAssume k'<=v_int_14_1321' & v_int_14_1321'=1+n' & n'=n & k'=k & n<k & 
+n'<k' & !(v_bool_13_1326') & fpre_0(n,k) --> fpre_0(v_int_14_1321',k').
+
+
+Base/Rec Case Splitting:
+[	f: [[5] k<=n@B,[6] n<k@R]
+]
+Starting z3... 

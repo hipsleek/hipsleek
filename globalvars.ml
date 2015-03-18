@@ -1,8 +1,11 @@
+#include "xdebug.cppo"
+open VarGen
 (** Created 20-May-2009
 	Convert global variables into reference parameters
 *)
 
 open Globals
+open Gen.Basic
 
 module I = Iast
 
@@ -227,9 +230,10 @@ let rec find_read_write_global_var
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         find_read_write_global_var global_vars local_vars new_e
         with _ ->
                 Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
@@ -387,6 +391,12 @@ let rec find_read_write_global_var
 		| None  -> (IdentSet.empty, IdentSet.empty)
 		| Some e -> find_read_write_global_var global_vars local_vars e
 		end 
+  | I.Par e ->
+    let (rl, wl) = List.split (List.map (fun c -> 
+      find_read_write_global_var global_vars local_vars c.I.exp_par_case_body
+      ) e.I.exp_par_cases)
+    in (union_all rl, union_all wl)
+    
   
 (** Construct the read/write variable declarations from the read/write sets 
 	@param global_var_decls list of global variable declarations 
@@ -421,9 +431,9 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
   let local_vars = to_IdentSet (List.map get_local_id proc.I.proc_args) in
   let global_vars = IdentSet.diff global_id_set local_vars in
 	(* let _= print_endline ("BachLe: Find Global vars Debugging..."^proc.I.proc_name)in *)
-	let find_in_body global_vars local_vars= (*Find read/write global vars in procedure body*)
+	let find_in_body global_vars local_vars = (*Find read/write global vars in procedure body*)
     match proc.I.proc_body with
-	  None -> (IdentSet.empty,IdentSet.empty)
+	  | None -> (IdentSet.empty,IdentSet.empty)
     | Some e ->
 	  begin
 	    	let (reads, writes) = find_read_write_global_var global_vars local_vars e in
@@ -462,6 +472,12 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 	 (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv R:" ^x) )readSet in  *)
 	 (* let _= IdentSet.iter (fun x-> print_endline (proc.I.proc_name^" Find glbv W:" ^x) )writeSet in *)
 	 Hashtbl.replace h proc.I.proc_name (readSet,writeSet)
+  
+let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_decl) : unit =
+  let pr1 proc = proc.I.proc_name in
+  let pr2 _ = "" in
+  Debug.no_1 "find_read_write_global_var_proc" pr1 pr2 
+    (fun _ -> find_read_write_global_var_proc global_id_set proc) proc
 			
 (** Get the read/write global variables of a procedure from the hash table 
 	@param global_var_decls list of global variable declarations
@@ -471,9 +487,9 @@ let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I
 	(I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = Hashtbl.find h proc.I.proc_name in
   (*LDK*)
-  (* let _ = print_string ("get_read_write_global_var: proc_name: "^ proc.I.proc_name ^ "\n") in *)
-  (* let _ = print_string ("read vars: "^(string_of_IdentSet reads)^"\n") in *)
-  (* let _ = print_string ("writes vars: "^(string_of_IdentSet writes)^"\n") in *)
+  (* let () = print_string ("get_read_write_global_var: proc_name: "^ proc.I.proc_name ^ "\n") in *)
+  (* let () = print_string ("read vars: "^(string_of_IdentSet reads)^"\n") in *)
+  (* let () = print_string ("writes vars: "^(string_of_IdentSet writes)^"\n") in *)
   let readSet = IdentSet.diff reads writes in
   let writeSet = writes in
   to_var_decl_list global_var_decls readSet writeSet
@@ -504,7 +520,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
       if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
           || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
           || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)) then
-        let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
+        let () = print_endline_quiet ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
         ()
       else
         Error.report_error {Error.error_loc = no_pos; Error.error_text = ("scc = " ^ (string_of_ident_list scc) ^ "not found")}
@@ -522,7 +538,7 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 	let (r2,w2) = Hashtbl.find h v2 in
 	let r = IdentSet.union r1 r2 in
 	let w = IdentSet.union w1 w2 in
-	let _ = Hashtbl.replace h v1 (r,w) in
+	let () = Hashtbl.replace h v1 (r,w) in
 	merge_scc scc1
 
 (** Find read write global variables for all procedures using graph data structure 
@@ -532,12 +548,12 @@ let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_var_decls = prog.I.prog_global_var_decls in
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
   let proc_decls = prog.I.prog_proc_decls in
-  let _ = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
+  let () = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
   (* let scclist = NGComponents.scc_list g in *)
   (* let sccarr = Array.of_list scclist in    *)
   let sccarr = NGComponents.scc_array g in
   let n = Array.length sccarr in
-  let _ = Array.iter merge_scc sccarr in
+  let () = Array.iter merge_scc sccarr in
   for k = 0 to n-1 do
 	for i = 0 to n-1 do
 	  for j = 0 to n-1 do
@@ -677,9 +693,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let new_e = I.CallNRecv {
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
-		    I.exp_call_nrecv_arguments = args;
-		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
-		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+            I.exp_call_nrecv_arguments = args;
+            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+            I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         let new_e1 = extend_body temp_procs new_e in
         (* ================== *)
         match new_e1 with
@@ -690,9 +707,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
               let new_fork_exp = I.CallNRecv {
                   I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
                   I.exp_call_nrecv_method = e.I.exp_call_nrecv_method; (*fork_name*)
-		          I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
-		          I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
-		          I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
+                  I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
+                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
+                  I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
               in
               new_fork_exp
           | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a I.CallNRecv")}
@@ -792,6 +810,10 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		I.exp_raise_val = match e.I.exp_raise_val with 
 			| None -> None
 			| Some e -> Some (extend_body temp_procs e)}
+  | I.Par e ->
+    let cl = List.map (fun c -> { c with 
+      I.exp_par_case_body = extend_body temp_procs c.I.exp_par_case_body }) e.I.exp_par_cases in
+    I.Par { e with I.exp_par_cases = cl; }
 
 (* Rename local variables when there is conflict *)
 
@@ -861,8 +883,8 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 	  begin
 		(*if IdentSet.mem e.I.exp_bind_bound_var global_vars then
       let list_elem = IdentSet.elements global_vars in
-      let _ = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
-      let _ = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
+      let () = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
+      let () = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
       let new_name = create_new_ids global_vars e.I.exp_bind_bound_var in
 		  let new_body = Astsimp.rename_exp [e.I.exp_bind_bound_var,new_name] e.I.exp_bind_body in
 		  let new_exp = { e with I.exp_bind_bound_var = new_name; I.exp_bind_body = new_body } in
@@ -997,6 +1019,10 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		I.exp_raise_val = match e.I.exp_raise_val with 
 			| None -> None
 			| Some e -> Some (check_and_change global_vars e)}
+  | I.Par e ->
+    let cl = List.map (fun c -> { c with 
+      I.exp_par_case_body = check_and_change global_vars c.I.exp_par_case_body }) e.I.exp_par_cases in
+    I.Par { e with I.exp_par_cases = cl; }
   
 (** Rename the parameters and local variables if there is conflict with global variables 
 	@param proc procedure declaration
@@ -1081,9 +1107,9 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let new_prog =
 	match prog.I.prog_global_var_decls with
-	  [] -> prog
+	| [] -> prog
 	| _ ->
-		let _ = find_read_write_global_var_all_procs prog in
+		let () = find_read_write_global_var_all_procs prog in
 		let temp_decls1 = List.map resolve_name_conflict prog.I.prog_proc_decls in
 		let temp_decls2 = List.map (extend_args prog.I.prog_global_var_decls) temp_decls1 in
 		let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in

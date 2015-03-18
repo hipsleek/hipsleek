@@ -1,0 +1,70 @@
+
+!!!Full processing file "hip/ll-traverse.ss"
+Parsing file "hip/ll-traverse.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val1,next1> * HP_1226(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1226(next1)&next1!=null --> H(next1)&
+true(3,4),
+ // POST
+(1;0)x::node<val1,next1> * G(next1,x')&next1!=null --> G(x,x')&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * HP_1226(next1)&next1=null --> G(x,next1)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<val,next> * HP_1226(next)&x1!=null],
+ G(x4,x2) ::=  [GP_1281(x4,x3) * x3::node<val,x2>&x2=null],
+ GP_1281(x4,x3) ::=  [
+  x4::node<val,next> * GP_1281(next,x3)&next!=null
+  or emp&x4=x3
+  ],
+ HP_1226(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1226(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node<val,next> * HP_1226(next)&x1!=null(3,4),
+ G(x4,x2) ::= GP_1281(x4,x3) * x3::node<val,x2>&x2=null(3,4),
+ GP_1281(x4,x3) ::= 
+ x4::node<val,next> * GP_1281(next,x3)&next!=null
+ or emp&x4=x3
+ (3,4),
+ HP_1226(next2) ::= 
+ next2::node<val,next> * HP_1226(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.033382,241)
+Total verification time: 0.309453 second(s)
+	Time spent in main process: 0.295175 second(s)
+	Time spent in child processes: 0.014278 second(s)
+

@@ -1,0 +1,34 @@
+data node {
+     node next;
+}.
+
+pred SLL<p:node> ==
+ self = p
+or (exists x: self::node<x> * x::SLL<p>).
+
+pred SLL_rev<p:node> ==
+ self = p
+or (exists x: self::SLL_rev<x> * x::node<p> ).
+
+lemma_safe  self::node<x> * x::SLL<p:node> 
+          <-> (exists x: self::SLL<x>*x::node<p>).
+
+lemma_unsafe  self::SLL<p:node> <-> self::SLL_rev<p> .
+
+/*
+checkentail a::SLL<null>
+         |- a::SLL_rev<null>.
+expect Valid.
+*/
+
+checkentail self::SLL<p:node> |- self::SLL_rev<p>.
+
+checkentail self = p
+or (exists x: self::node<x> * x::SLL<p>)
+|- self::SLL_rev<p>.
+
+checkentail (exists x: self::node<x> * x::SLL<p>)
+|- self::SLL_rev<p>.
+
+checkentail (exists x: self::SLL<x> * x::node<x> )
+|- self::SLL_rev<p>.

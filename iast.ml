@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (*
   Created 19-Feb-2006
 
@@ -5,7 +6,9 @@
 *)
 
 open Globals
+open VarGen
 open Gen.Basic
+open HipUtil
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
 open Perm
@@ -15,6 +18,7 @@ module P = Ipure
 module Err = Error
 module CP = Cpure
 module LO = Label_only.LOne
+module VP = IvpermUtils
 
 type typed_ident = (typ * ident)
 
@@ -28,7 +32,9 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
-    mutable prog_hp_decls : hp_decl list;
+    mutable prog_templ_decls: templ_decl list;
+    mutable prog_ut_decls: ut_decl list;
+    mutable prog_hp_decls : hp_decl list; 
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
     mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -36,7 +42,8 @@ type prog_decl = {
     (* An Hoa: relational declaration *)
     prog_proc_decls : proc_decl list;
     prog_barrier_decls : barrier_decl list;
-    mutable prog_coercion_decls : coercion_decl_list list
+    mutable prog_coercion_decls : coercion_decl_list list;
+    prog_test_comps: (ident*test_comps) list
 }
 
 and data_field_ann =
@@ -67,10 +74,13 @@ and view_kind =
   | View_DERV
   | View_SPEC
 
+and ibaga_pure = (ident list * P.formula) list
+
 and view_decl = 
     { view_name : ident; 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+    mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
     mutable view_vars : ident list;
     mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;
@@ -79,11 +89,15 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
     mutable view_derv: bool;
+    view_type_of_self : typ option;
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
+    view_baga_inv : ibaga_pure option;
+    view_baga_over_inv : ibaga_pure option;
+    view_baga_under_inv : ibaga_pure option;
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
@@ -112,6 +126,24 @@ and axiom_decl = {
     axiom_conclusion : P.formula ;
 }
 
+and templ_decl = {
+    templ_name: ident;
+    templ_ret_typ: typ;
+    templ_typed_params: (typ * ident) list;
+    templ_body: P.exp option;
+    templ_pos: loc;
+}
+
+(* Unknown Temporal Declaration *)
+and ut_decl = {
+    ut_name: ident;
+    ut_fname: ident;
+    ut_typed_params: (typ * ident) list;
+    ut_is_pre: bool;
+    ut_pos: loc;
+}
+
+
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
@@ -122,14 +154,15 @@ hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
 
-and hopred_decl = { hopred_name : ident;
-hopred_mode : ho_branch_label;
-hopred_mode_headers : ident list;
-hopred_typed_vars: (typ * ident) list;
-mutable hopred_typed_args : (typ * ident) list;
-hopred_fct_args : ident list;
-hopred_shape    : Iformula.struc_formula list;
-hopred_invariant :P.formula }
+and hopred_decl = { 
+  hopred_name : ident;
+  hopred_mode : ho_branch_label;
+  hopred_mode_headers : ident list;
+  hopred_typed_vars: (typ * ident) list;
+  mutable hopred_typed_args : (typ * ident) list;
+  hopred_fct_args : ident list;
+  hopred_shape    : Iformula.struc_formula list;
+  hopred_invariant :P.formula }
 
 and barrier_decl = {
     barrier_thc : int;
@@ -140,32 +173,33 @@ and barrier_decl = {
 
 
 and enum_decl = { enum_name : ident;
-enum_fields : (ident * int option) list } 
+enum_fields : (ident * int option) list }
     (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
   | NoMod
   | RefMod
   | CopyMod (* WN : this signify pass-by-copy semantics *)
-    (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
+          (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
 
 and jump_label_type =
-  | NoJumpLabel 
+  | NoJumpLabel
   | JumpLabel of ident
-        
-and rise_type = 
+
+and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
-and param = { param_type : typ;
-param_name : ident;
-param_mod : param_modifier;
-param_loc : loc }
+and param = { 
+    param_type : typ;
+    param_name : ident;
+    param_mod : param_modifier;
+    param_loc : loc }
 
 (*
   and multi_spec = spec list
 
-  and spec = 
+  and spec =
   | SCase of scase_spec
   | SRequires of srequires_spec
   | SEnsure of sensures_spec
@@ -192,26 +226,32 @@ param_loc : loc }
   }
 *)
 
-and proc_decl = { proc_name : ident;
-mutable proc_mingled_name : ident;
-mutable proc_data_decl : data_decl option; (* the class containing the method *)
-mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
-proc_flags: (ident*ident*(flags option)) list;
-proc_source : ident;
-proc_constructor : bool;
-proc_args : param list;
-mutable proc_args_wi : (ident *hp_arg_kind) list;
-proc_return : typ;
-(*   mutable proc_important_vars : CP.spec_var list;*)
-proc_static_specs : Iformula.struc_formula;
-proc_dynamic_specs : Iformula.struc_formula;
-proc_exceptions : ident list;
-proc_body : exp option;
-proc_is_main : bool;
-mutable proc_is_invoked : bool;
-proc_file : string;
-proc_loc : loc;
-proc_test_comps: test_comps option}
+and proc_decl = { 
+  proc_name : ident;
+  mutable proc_mingled_name : ident;
+  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+  mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
+  proc_flags: (ident*ident*(flags option)) list;
+  proc_source : ident;
+  proc_constructor : bool;
+  proc_args : param list;
+  proc_ho_arg : param option;
+  mutable proc_args_wi : (ident *hp_arg_kind) list;
+  proc_return : typ;
+  (*   mutable proc_important_vars : CP.spec_var list;*)
+  proc_static_specs : Iformula.struc_formula;
+  proc_dynamic_specs : Iformula.struc_formula;
+  proc_exceptions : ident list;
+  proc_body : exp option;
+  proc_is_main : bool;
+  proc_is_while : bool; (* true if the proc is translated from a while loop *)
+  mutable proc_has_while_return: bool;
+  mutable proc_is_invoked : bool;
+proc_verified_domains: infer_type list;
+  proc_file : string;
+  proc_loc : loc;
+  proc_test_comps: test_comps option
+}
 
 and coercion_decl = { coercion_type : coercion_type;
 coercion_exact : bool;
@@ -222,6 +262,7 @@ coercion_body : F.formula;
 coercion_proof : exp;
 coercion_type_orig: coercion_type option; (* store origin type before transforming *)
 coercion_kind : lemma_kind;
+coercion_origin : lemma_origin;
 }
 
 and coercion_decl_list = {
@@ -347,11 +388,13 @@ exp_bool_lit_pos : loc }
     
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
-and exp_call_nrecv = { exp_call_nrecv_method : ident;
-exp_call_nrecv_lock : ident option;
-exp_call_nrecv_arguments : exp list;
-exp_call_nrecv_path_id : control_path_id;
-exp_call_nrecv_pos : loc }
+and exp_call_nrecv = { 
+  exp_call_nrecv_method : ident;
+  exp_call_nrecv_lock : ident option;
+  exp_call_nrecv_arguments : exp list;
+  exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_path_id : control_path_id;
+  exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
 exp_call_recv_method : ident;
@@ -442,9 +485,10 @@ exp_unary_pos : loc }
 and exp_var = { exp_var_name : ident;
 exp_var_pos : loc }
 
-and exp_var_decl = { exp_var_decl_type : typ;
-exp_var_decl_decls : (ident * exp option * loc) list;
-exp_var_decl_pos : loc }
+and exp_var_decl = { 
+    exp_var_decl_type : typ;
+    exp_var_decl_decls : (ident * exp option * loc) list;
+    exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
 exp_while_body : exp;
@@ -467,6 +511,21 @@ exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : (string * primed);
 exp_unfold_pos : loc } 
+
+and exp_par = {
+  exp_par_vperm: VP.vperm_sets;
+  exp_par_lend_heap: F.formula;
+  exp_par_cases: exp_par_case list;
+  exp_par_pos: loc;
+}
+
+and exp_par_case = {
+  exp_par_case_vperm: VP.vperm_sets;
+  exp_par_case_cond: F.formula option;
+  exp_par_case_body: exp;
+  exp_par_case_else: bool;
+  exp_par_case_pos: loc;
+}
 
 and exp =
   | ArrayAt of exp_arrayat (* An Hoa *)
@@ -508,6 +567,7 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
+  | Par of exp_par
 
 (* utility functions *)
 
@@ -529,7 +589,7 @@ let bag_type = BagT Int
 let iprog = ref (None: prog_decl option)
 
 let set_iprog ip=
-  let _ = iprog := (Some ip) in
+  let () = iprog := (Some ip) in
   ()
 
 let get_iprog ()=
@@ -544,7 +604,16 @@ let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
 let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
+let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
+let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
+let norm_par_case_list pl pos = 
+  let pl, else_pl = List.partition (fun c -> not c.exp_par_case_else) pl in
+  if (List.length else_pl > 1) then 
+    (Err.report_error {
+      Err.error_loc = pos;
+      Err.error_text = Printf.sprintf "Par statement has more than one else branches." })
+  else pl @ else_pl
 
 let find_empty_static_specs iprog = 
   let er = List.filter (fun c-> F.isEConstTrue c.proc_static_specs) iprog.prog_proc_decls in
@@ -604,148 +673,156 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
-	  | Some e1 -> e1
-	  | None  ->
-		let n_arg = f_args in_arg e in 
-                let comb_f = comb_f e in
-                let zero = comb_f [] in  
-		match e with	
-                  | Assert _ 
-                  | BoolLit _ 
-                  | Break _
-                  | Continue _ 
-                  | Debug _ 
-                  | Dprint _ 
-                  | Empty _ 
-                  | FloatLit _ 
-                  | IntLit _
-                  | Java _ 
-                  | Null _ 
-                  | This _ 
-                  | Time _ 
-                  | Unfold _ 
-                  | Var _ -> (e,zero)
-	          | ArrayAt b -> (* An Hoa *)
-		        let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
-		        (ArrayAt {b with exp_arrayat_index = el},comb_f rl)
-                  | Assign b ->
-                        let e1,r1 = helper n_arg b.exp_assign_lhs  in
-                        let e2,r2 = helper n_arg b.exp_assign_rhs  in
-                        (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
-                  | Binary b -> 
-                        let e1,r1 = helper n_arg b.exp_binary_oper1  in
-                        let e2,r2 = helper n_arg b.exp_binary_oper2  in
-                        (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
-                  | Bind b -> 
-                        let e1,r1 = helper n_arg b.exp_bind_body  in
-                        (Bind {b with exp_bind_body = e1; },r1)
-		  | Barrier _ -> (e,zero)
-			(*let e,r = helper n_arg b.exp_barrier_recv  in     
-                          (Barrier {b with exp_barrier_recv = e},r)*)
-                  | Block b -> 
-                        let e1,r1 = helper n_arg b.exp_block_body  in     
-                        (Block {b with exp_block_body = e1;},r1)
-                  | CallRecv b -> 
-                        let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
-                        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
-                        let e2l,r2l = List.split ler in
-                        let r = comb_f (r1::r2l) in
-                        (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
-                  | CallNRecv b -> 
-                        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
-                        let e2l,r2l = List.split ler in
-                        let r = comb_f r2l in
-                        (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
-                  | Cast b -> 
-                        let e1,r1 = helper n_arg b.exp_cast_body  in  
-                        (Cast {b with exp_cast_body = e1},r1)
-	          | Catch b -> 
-		        let e1,r1 = helper n_arg b.exp_catch_body in
-		        (Catch {b with exp_catch_body = e1},r1)
-                  | Cond b -> 
-                        let e1,r1 = helper n_arg b.exp_cond_condition in
-                        let e2,r2 = helper n_arg b.exp_cond_then_arm in
-                        let e3,r3 = helper n_arg b.exp_cond_else_arm in
-                        let r = comb_f [r1;r2;r3] in
-                        (Cond {b with
-                            exp_cond_condition = e1;
-                            exp_cond_then_arm = e2;
-                            exp_cond_else_arm = e3;},r)
-	          | Finally b ->
-		        let e1,r1 = helper n_arg b.exp_finally_body in
-		        (Finally {b with exp_finally_body=e1},r1)
-                  | Label (l,b) -> 
-                        let e1,r1 = helper n_arg b in
-                        (Label (l,e1),r1)
-                  | Member b -> 
-                        let e1,r1 = helper n_arg b.exp_member_base in
-                        (Member {b with exp_member_base = e1;},r1)
-			    (* An Hoa *)
-		  | ArrayAlloc b -> 
-                        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
-                        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
-                  | New b -> 
-                        let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
-                        (New {b with exp_new_arguments = el},(comb_f rl))
-                  | Raise b -> (match b.exp_raise_val with
-                      | None -> (e,zero)
-                      | Some body -> 
-                            let e1,r1 = helper n_arg body in
-                            (Raise {b with exp_raise_val = Some e1},r1))
-                  | Return b->(match b.exp_return_val with
-                      | None -> (e,zero)
-                      | Some body -> 
-                            let e1,r1 = helper n_arg body in
-                            (Return {b with exp_return_val = Some e1},r1))
-                  | Seq b -> 
-                        let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
-                        let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
-                        let r = comb_f [r1;r2] in
-                        (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
-                  | Try b -> 
-                        let ecl = List.map (helper n_arg) b.exp_catch_clauses in
-                        let fcl = List.map (helper n_arg) b.exp_finally_clause in
-                        let tb,r1 = helper n_arg b.exp_try_block in
-                        let catc, rc = List.split ecl in
-                        let fin, rf = List.split fcl in
-                        let r = comb_f (r1::(rc@rf)) in
-                        (Try {b with
-                            exp_try_block = tb;
-                            exp_catch_clauses = catc;
-                            exp_finally_clause = fin;},r)
-                  | Unary b -> 
-                        let e1,r1 = helper n_arg b.exp_unary_exp in
-                        (Unary {b with exp_unary_exp = e1},r1)
-                  | ConstDecl b -> 
-                        let l = List.map (fun (c1,c2,c3)-> 
-                            let e1,r1 = helper n_arg c2 in
-                            ((c1,e1,c3),r1))b.exp_const_decl_decls in
-                        let el,rl = List.split l in
-                        let r = comb_f rl in
-                        (ConstDecl {b with exp_const_decl_decls=el},r) 
-                  | VarDecl b -> 
-                        let ll = List.map (fun (c1,c2,c3)-> match c2 with
-                          | None -> ((c1,None,c3),zero)
-                          | Some s -> 
-                                let e1,r1 = helper n_arg s in
-                                ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
-                        let dl,rl =List.split ll in
-                        let r = comb_f rl in
-                        (VarDecl {b with exp_var_decl_decls = dl},r)
-                  | While b -> 
-                        let wrp,r = match b.exp_while_wrappings with
-                          | None -> (None,zero)
-                          | Some (s,l) -> 
-                                let wrp,r = helper n_arg s in
-                                (Some (wrp,l),r) in
-                        let ce,cr = helper n_arg b.exp_while_condition in
-                        let be,br = helper n_arg b.exp_while_body in
-                        let r = comb_f [r;cr;br] in
-                        (While {b with
-                            exp_while_condition = ce;
-                            exp_while_body = be;
-                            exp_while_wrappings = wrp},r) in
-  helper init_arg e
+    | Some e1 -> e1
+    | None  ->
+      let n_arg = f_args in_arg e in 
+      let comb_f = comb_f e in
+      let zero = comb_f [] in
+      match e with
+      | Assert _ 
+      | BoolLit _ 
+      | Break _
+      | Continue _ 
+      | Debug _ 
+      | Dprint _ 
+      | Empty _ 
+      | FloatLit _ 
+      | IntLit _
+      | Java _ 
+      | Null _ 
+      | This _ 
+      | Time _ 
+      | Unfold _ 
+      | Var _ -> (e, zero)
+      | ArrayAt b -> (* An Hoa *)
+          let el, rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+          (ArrayAt {b with exp_arrayat_index = el}, comb_f rl)
+      | Assign b ->
+          let e1, r1 = helper n_arg b.exp_assign_lhs  in
+          let e2, r2 = helper n_arg b.exp_assign_rhs  in
+          (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;}, (comb_f [r1;r2]))
+      | Binary b ->
+          let e1,r1 = helper n_arg b.exp_binary_oper1  in
+          let e2,r2 = helper n_arg b.exp_binary_oper2  in
+          (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
+      | Bind b ->
+          let e1,r1 = helper n_arg b.exp_bind_body  in
+          (Bind {b with exp_bind_body = e1; }, r1)
+      | Barrier _ -> (e, zero)
+          (*let e,r = helper n_arg b.exp_barrier_recv  in     
+          (Barrier {b with exp_barrier_recv = e},r)*)
+      | Block b ->
+          let e1,r1 = helper n_arg b.exp_block_body  in     
+          (Block {b with exp_block_body = e1;},r1)
+      | CallRecv b ->
+          let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
+          let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
+          let e2l,r2l = List.split ler in
+          let r = comb_f (r1::r2l) in
+          (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
+      | CallNRecv b -> 
+          let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
+          let e2l,r2l = List.split ler in
+          let r = comb_f r2l in
+          (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
+      | Cast b -> 
+          let e1,r1 = helper n_arg b.exp_cast_body  in  
+          (Cast {b with exp_cast_body = e1},r1)
+      | Catch b -> 
+          let e1,r1 = helper n_arg b.exp_catch_body in
+          (Catch {b with exp_catch_body = e1},r1)
+      | Cond b -> 
+          let e1,r1 = helper n_arg b.exp_cond_condition in
+          let e2,r2 = helper n_arg b.exp_cond_then_arm in
+          let e3,r3 = helper n_arg b.exp_cond_else_arm in
+          let r = comb_f [r1;r2;r3] in
+          (Cond {b with
+            exp_cond_condition = e1;
+            exp_cond_then_arm = e2;
+            exp_cond_else_arm = e3;},r)
+      | Finally b ->
+          let e1,r1 = helper n_arg b.exp_finally_body in
+          (Finally {b with exp_finally_body=e1},r1)
+      | Label (l,b) -> 
+          let e1,r1 = helper n_arg b in
+          (Label (l,e1),r1)
+      | Member b -> 
+          let e1,r1 = helper n_arg b.exp_member_base in
+          (Member {b with exp_member_base = e1;},r1)
+      (* An Hoa *)
+      | ArrayAlloc b -> 
+          let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+          (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
+      | New b -> 
+          let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
+          (New {b with exp_new_arguments = el},(comb_f rl))
+      | Raise b -> (match b.exp_raise_val with
+          | None -> (e,zero)
+          | Some body -> 
+              let e1,r1 = helper n_arg body in
+              (Raise {b with exp_raise_val = Some e1},r1))
+      | Return b->(match b.exp_return_val with
+          | None -> (e,zero)
+          | Some body -> 
+              let e1,r1 = helper n_arg body in
+              (Return {b with exp_return_val = Some e1},r1))
+      | Seq b -> 
+          let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
+          let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
+          let r = comb_f [r1;r2] in
+          (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+      | Try b -> 
+          let ecl = List.map (helper n_arg) b.exp_catch_clauses in
+          let fcl = List.map (helper n_arg) b.exp_finally_clause in
+          let tb,r1 = helper n_arg b.exp_try_block in
+          let catc, rc = List.split ecl in
+          let fin, rf = List.split fcl in
+          let r = comb_f (r1::(rc@rf)) in
+          (Try {b with
+            exp_try_block = tb;
+            exp_catch_clauses = catc;
+            exp_finally_clause = fin;},r)
+      | Unary b -> 
+          let e1,r1 = helper n_arg b.exp_unary_exp in
+          (Unary {b with exp_unary_exp = e1},r1)
+      | ConstDecl b -> 
+          let l = List.map (fun (c1,c2,c3) -> 
+            let e1,r1 = helper n_arg c2 in
+            ((c1,e1,c3),r1))b.exp_const_decl_decls in
+          let el,rl = List.split l in
+          let r = comb_f rl in
+          (ConstDecl {b with exp_const_decl_decls=el},r) 
+      | VarDecl b -> 
+          let ll = List.map (fun (c1,c2,c3)-> match c2 with
+            | None -> ((c1,None,c3),zero)
+            | Some s -> 
+                let e1,r1 = helper n_arg s in
+                ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
+          let dl,rl =List.split ll in
+          let r = comb_f rl in
+          (VarDecl {b with exp_var_decl_decls = dl},r)
+      | While b -> 
+          let wrp,r = match b.exp_while_wrappings with
+            | None -> (None,zero)
+            | Some (s,l) -> 
+                let wrp,r = helper n_arg s in
+                (Some (wrp,l),r) in
+          let ce,cr = helper n_arg b.exp_while_condition in
+          let be,br = helper n_arg b.exp_while_body in
+          let r = comb_f [r;cr;br] in
+          (While {b with
+            exp_while_condition = ce;
+            exp_while_body = be;
+            exp_while_wrappings = wrp}, r)
+      | Par b ->
+          let trans_par_case c =
+            let ce, cr = helper n_arg c.exp_par_case_body in
+            ({ c with exp_par_case_body = ce }, cr)
+          in 
+          let cl, rl = List.split (List.map trans_par_case b.exp_par_cases) in
+          let r = comb_f rl in
+          (Par { b with exp_par_cases = cl }, r)
+  in helper init_arg e
 
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let f_c e lst = match lst with
@@ -807,11 +884,24 @@ let is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
+let is_num (e : exp) : bool = match e with
+  | FloatLit _ | IntLit _ -> true
+  | _ -> false
+
+let is_mult_op b = 
+  match b with | OpMult -> true | _ -> false
+
+let is_div_op b = 
+  match b with | OpDiv -> true | _ -> false
 
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
-  
+ 
+let get_ident (e : exp)  = match e with
+  | Var v -> Some v.exp_var_name
+  | _ -> None
+
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
@@ -852,6 +942,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
+  | Par e -> e.exp_par_pos
 
 let get_catch_of_exp e = match e with
 	| Catch e -> e
@@ -970,7 +1061,7 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   hp_is_pre = is_pre;
   hp_formula =  body;
   } in
-  let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
+  let () = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
 let find_close_ids ids equivs=
@@ -978,6 +1069,17 @@ let find_close_ids ids equivs=
   let pr2 = pr_list (pr_pair pr_id pr_id) in
   Debug.no_2 "find_close_ids" pr1 pr2 pr1
       (fun _ _ -> Gen.find_close_ids ids equivs) ids equivs
+
+let look_up_test_comps test_comps pname=
+  let rec helper rem_comps=
+    match rem_comps with
+      | [] -> None
+      | (id, tcs)::tl ->
+            if(String.compare id pname == 0) then
+              Some tcs
+            else helper tl
+  in
+  helper test_comps
 
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
@@ -1032,14 +1134,22 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x pname body_opt args0 ret pos=
+let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst pos=
+  let is_infer_ret r=
+    (infer_type = INF_SHAPE && is_node_typ r)
+  in
+  (* remove htrue before adding unknown preds for inference *)
+  let cur_pre = F.transform_formula_simp F.drop_htrue cur_pre0 in
+  let cur_post = F.transform_formula_simp F.drop_htrue cur_post0 in
   (*keep pointers only*)
   let args = List.filter (fun p -> match p.param_type with
     | Named _ -> true
     | _ -> false
   ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
-  if args = [] && ret = Void then
+  (* ANNTEMP: change below condition to prvious value *)
+  if not(!Globals.sa_syn) || (args = [] && ret = Void)  then
+  (* if true then *)
     F.mkETrueTrueF (),[],[]
   else
     let mut_vars = match body_opt with
@@ -1058,10 +1168,10 @@ let genESpec_x pname body_opt args0 ret pos=
         hp_part_vars = [];
         hp_root_pos = 0;
         hp_is_pre = true;
-        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
     }
     in
-    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
+    let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1078,16 +1188,17 @@ let genESpec_x pname body_opt args0 ret pos=
             in
             r@ref_args
         ) [] args)@
-	    (match ret with
-	      | Globals.Void -> []
-	      | _ -> [(ret, res_name, Globals.I)]
+	    (if is_infer_ret ret then [(ret, res_name, Globals.I)] else []
+              (* match ret with *)
+	      (* | Globals.Void | Bool -> [] *)
+	      (* | _ -> [(ret, res_name, Globals.I)] *)
 	    );
         hp_part_vars = [];
         hp_root_pos = 0;
         hp_is_pre = false;
-        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
     in
-    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
+    let () = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1098,30 +1209,39 @@ let genESpec_x pname body_opt args0 ret pos=
         in
         r@hp_args
     ) [] args in
-    let post_eargs = match ret with
-      | Void -> post_eargs0
-      | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
+    let post_eargs = if is_infer_ret ret then post_eargs0@[P.Var ((res_name, Unprimed),pos)] else post_eargs0
+      (* match ret with *)
+      (* | Void | Bool -> post_eargs0 *)
+      (* | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)] *)
     in
-    let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
-    let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
+    let () = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+    let ipost_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
+    let ipost_simpl = F.mkStar_formula cur_post ipost_simpl0 pos in
     let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
-    let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
+    let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
+    let ipre_simpl = F.mkStar_formula cur_pre ipre_simpl0 pos in
+    let ipre = F.mkEBase [] [] [] ipre_simpl (Some ipost) pos in
     (* generate Iformula.struc_infer_formula*)
+    let inf_obj = Globals.infer_const_obj # clone in
+    let () = inf_obj#set_list infer_lst in
+    let () =  Debug.ninfo_hprint (add_str "inf_obj" (pr_id)) (inf_obj#string_of) no_pos in
     (F.EInfer {
+        (* F.formula_inf_tnt = false; *)
+        F.formula_inf_obj = inf_obj (* Globals.infer_const_obj # clone*);
         F.formula_inf_post = true;
         F.formula_inf_xpost = None;
         F.formula_inf_transpec = None;
-        F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
+        F.formula_inf_vars = [(hp_pre_decl.hp_name, Unprimed); (hp_post_decl.hp_name, Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
-let genESpec pname body_opt args ret pos=
+let genESpec pname body_opt args ret cur_pre cur_post infer_type  infer_lst pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
-      (fun _ _ -> genESpec_x pname body_opt args ret pos) args ret
+  Debug.no_3 "genESpec" pr_id pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
+      (fun _ _ _ -> genESpec_x pname body_opt args ret cur_pre cur_post infer_type infer_lst pos) pname args ret
 
 let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
@@ -1146,34 +1266,61 @@ let extract_mut_args prog proc=
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
-    let _ = print_endline "\nHeap Predicate Declarations" in
-    let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
-    let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
+    let () = print_endline_quiet "\nHeap Predicate Declarations" in
+    let () = List.iter (fun hpdcl -> print_endline_quiet (!print_hp_decl hpdcl)) unk_hps in
+    let () = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls,args_wi =
-    match body_header.proc_static_specs with
-      | F.EList [] ->
-          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
-          (* let _ = print_gen_spec ss hps in *)
-          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps,args_wi)
-      | _ ->
-            (* let _ = if !Globals.sags then *)
-            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
-            (*   let _ = print_gen_spec ss hps in *)
-            (*   () *)
-            (* else () *)
-            (* in *)
-            (body_header.proc_static_specs,[],body_header.proc_args_wi)
+  let trans_htrue2emp hf=
+    match hf with
+      | F.HTrue -> F.HEmp
+      | _ -> hf
   in
-  {body_header with
-      proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
-      proc_static_specs = ss;
-      proc_args_wi = args_wi;
-  }
-
-let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
+  let has_shape_args = List.exists (fun p -> is_node_typ p.param_type) args in
+  if not has_shape_args ||  not !Globals.sags then body_header
+  else
+    let ss, n_hp_dcls,args_wi =
+      match body_header.proc_static_specs with
+        | F.EList [] -> if Globals.infer_const_obj # is_shape then
+          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret
+            (F.mkTrue_nf pos) (F.mkTrue_nf pos) INF_SHAPE [] pos in
+            (* let () = print_gen_spec ss hps in *)
+            let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
+          else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+      | F.EInfer i_sf -> if Globals.infer_const_obj # is_shape || i_sf.F.formula_inf_obj # is_shape then
+          let is_simpl, pre0,post0 = F.get_pre_post i_sf.F.formula_inf_continuation in
+          if is_simpl then
+            let pre = Iformula.formula_trans_heap_node trans_htrue2emp pre0 in
+            let post = Iformula.formula_trans_heap_node trans_htrue2emp post0 in
+            let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pre post INF_SHAPE (i_sf.F.formula_inf_obj#get_lst) pos in
+            (* let () = print_gen_spec ss hps in *)
+            let ss = match ss with
+              | F.EInfer i_sf2 -> F.EInfer {i_sf2 with
+                    F.formula_inf_obj = i_sf.F.formula_inf_obj # mk_or i_sf2.F.formula_inf_obj;}
+              | _ -> ss
+            in
+            let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+            (ss,hps,args_wi)
+          else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+        else (body_header.proc_static_specs,[],body_header.proc_args_wi)
+        | _ ->
+              (* let () = if !Globals.sags then *)
+              (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+              (*   let () = print_gen_spec ss hps in *)
+              (*   () *)
+              (* else () *)
+              (* in *)
+              (body_header.proc_static_specs,[],body_header.proc_args_wi)
+    in
+    {body_header with
+        proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
+        proc_static_specs = ss;
+      proc_verified_domains = body_header.proc_verified_domains@[INF_SHAPE];
+        proc_args_wi = args_wi;
+    }
+  
+let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
   (*   | None -> [] *)
@@ -1183,11 +1330,11 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* let ss, n_hp_dcls = match ss with *)
   (*   | F.EList [] -> *)
   (*         let ss, hps = genESpec bd ags r pos in *)
-  (*         let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
+  (*         let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
   (*         (ss,hps) *)
   (*             (\* F.mkETrueTrueF ()  *\) *)
   (*   | _ -> *)
-  (*         (\* let _ = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
+  (*         (\* let () = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
   (*         ss,[] *)
   (* in *)
   { proc_name = id;
@@ -1199,13 +1346,17 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_constructor = c;
   proc_exceptions = ot;
   proc_args = ags;
+  proc_ho_arg = ho_param;
   proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
   proc_return = r;
   (*  proc_important_vars = [];*)
   proc_static_specs = ss;
   proc_dynamic_specs = ds;
   proc_loc = pos;
+  proc_verified_domains = [];
   proc_is_main = true;
+  proc_has_while_return = false;
+  proc_is_while = false;
   proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
@@ -1300,8 +1451,18 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
-      (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
+      (* let () = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
       if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | [] -> raise Not_found
+
+and look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
+
+and look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
+  List.find (fun d -> d.ut_name = name) defs
+
+and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
 and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
@@ -1394,225 +1555,380 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   let ddef = look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
+and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
+  if (cmp_typ old_typ new_typ) then henv
+  else (
+    List.map (fun (id, t) ->
+      if not (is_type_var old_typ) then (
+        let msg = "type substitution error: cannot substitute '"
+                  ^ (string_of_typ old_typ) ^ "' by '"
+                  ^ (string_of_typ new_typ) ^ "'" in
+        report_error no_pos msg
+      )
+      else (
+        if (cmp_typ t old_typ) then (id, new_typ)
+        else (id, t)
+      )
+    ) henv
+  )
 
-and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (ident list) * (ident list) =
+and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+  let pr_typ = string_of_typ in
+  let pr_henv = pr_list (fun (id,t) ->
+    "(" ^ id ^ "," ^ (string_of_typ t) ^ ")"
+  ) in 
+  Debug.no_3 "subs_heap_type_env" pr_henv pr_typ pr_typ pr_henv
+    (fun _ _ _ -> subs_heap_type_env_x henv old_typ new_typ)
+    henv old_typ new_typ
+
+and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
+  try
+    let (_, typ) = List.find (fun (n,t) ->
+      (String.compare n id = 0)
+    ) henv in
+    (typ, henv)
+  with Not_found ->
+    let typ = TVar (fresh_int ()) in
+    let henv = henv @ [(id, typ)] in
+    (typ, henv)
+
+and collect_data_view_from_struc_x (f:F.struc_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list) 
+    : (ident list) * (ident list) * ((ident * typ) list) =
   match f with
   | F.EAssume b ->
-      collect_data_view_from_formula data_names b.F.formula_assume_simpl
+      collect_data_view_from_formula b.F.formula_assume_simpl data_decls henv
   | F.ECase b->
-      let dvll = List.map (fun (_, sf) ->
-        collect_data_view_from_struc data_names sf
-      ) b.F.formula_case_branches in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, sf) ->
+        let (dl2, vl2, henv) = collect_data_view_from_struc sf data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) b.F.formula_case_branches in
+      (dl, vl, henv)
   | F.EBase b->
-      let dl1, vl1 = collect_data_view_from_formula data_names b.F.formula_struc_base in
-      let dl2, vl2 = (
+      let dl1, vl1, henv =
+        let base = b.F.formula_struc_base in
+        collect_data_view_from_formula base data_decls henv in
+      let dl2, vl2, henv = (
         match b.F.formula_struc_continuation with
-        | None -> ([], [])
-        | Some sf -> collect_data_view_from_struc data_names sf
+        | None -> ([], [], henv)
+        | Some sf -> collect_data_view_from_struc sf data_decls henv
       ) in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | F.EInfer b -> collect_data_view_from_struc data_names b.F.formula_inf_continuation
+      (dl, vl, henv)
+  | F.EInfer b ->
+      let cont = b.F.formula_inf_continuation in
+      collect_data_view_from_struc cont data_decls henv
   | F.EList b -> 
-      let dvll = List.map (fun (_, sf) -> collect_data_view_from_struc data_names sf) b in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
-  
-and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
-  let rec helper (h0 : F.h_formula) = (
-    match h0 with
-    | F.HeapNode h -> 
-        let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
-        if v = self then (
-          let deref_str = ref "" in
-          for i = 1 to h.F.h_formula_heap_deref do
-            deref_str := !deref_str ^ "_star"
-          done;
-          let view_data_name = c ^ !deref_str in
-          let dl, vl = (
-            if (List.mem view_data_name data_names) then ([view_data_name], [])
-            else ([], [view_data_name])
-          ) in
-          (dl, vl)
-        )
-        else ([], [])
-    | F.Star h -> 
-        let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          let _ = report_warning pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed") in
-          ([],[])
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | F.Phase h -> 
-        let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | F.Conj h ->
-        let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
-        let dl1, vl1 = helper h1 in
-        let dl2, vl2 = helper h2 in
-        let d1 = List.length (dl1 @ vl1) in
-        let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
-          report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
-        else (
-          let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-          let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-          (dl, vl)
-        )
-    | _ -> ([], [])
-  ) in
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, sf) ->
+        let (dl2, vl2, henv) = collect_data_view_from_struc sf data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) b in
+      (dl, vl, henv)
+
+and collect_data_view_from_struc (f:F.struc_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list) 
+    : (ident list) * (ident list) * ((ident * typ) list) =
+  let pr_sf = !F.print_struc_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_struc" pr_sf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_struc_x f data_decls henv) f henv
+
+and collect_data_view_from_formula_x (f0 : F.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+
   match f0 with
     | F.Base f ->
-        let dl1, vl1 = helper f.F.formula_base_heap in
-        let dl2, vl2 = collect_data_view_from_pure_formula data_names f.F.formula_base_pure in
+        let dl1, vl1, henv =
+          let heap = f.F.formula_base_heap in
+          collect_data_view_from_h_formula heap data_decls henv in
+        let dl2, vl2, henv = 
+          let pure = f.F.formula_base_pure in
+          collect_data_view_from_pure_formula pure data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
     | F.Exists f -> 
-        let dl1, vl1 = helper f.F.formula_exists_heap in
-        let dl2, vl2 = collect_data_view_from_pure_formula data_names f.F.formula_exists_pure in
+        let dl1, vl1, henv =
+          let heap = f.F.formula_exists_heap in
+          collect_data_view_from_h_formula heap data_decls henv in
+        let dl2, vl2, henv =
+          let pure = f.F.formula_exists_pure in
+          collect_data_view_from_pure_formula pure data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
     | F.Or f -> 
-        let dl1, vl1 = collect_data_view_from_formula data_names f.F.formula_or_f1 in
-        let dl2, vl2 = collect_data_view_from_formula data_names f.F.formula_or_f2 in
+        let dl1, vl1, henv =
+          let f1 = f.F.formula_or_f1 in
+          collect_data_view_from_formula f1 data_decls henv in
+        let dl2, vl2, henv =
+          let f2 = f.F.formula_or_f2 in
+          collect_data_view_from_formula f2 data_decls henv in
         let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-        (dl, vl)
+        (dl, vl, henv)
 
-and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
-  let pr1 = !F.print_formula in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_formula" pr1 pr3
-      (fun _ -> collect_data_view_from_formula_x data_names f0) f0
+and collect_data_view_from_formula (f0 : F.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_f = !F.print_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_formula" pr_f pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_formula_x f0 data_decls henv) f0 henv
 
-and collect_data_view_from_pure_formula_x (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) * ((ident * typ) list) =
+  match h0 with
+  | F.HeapNode h -> (
+      let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
+      let deref_str = ref "" in
+      for i = 1 to h.F.h_formula_heap_deref do
+        deref_str := !deref_str ^ "_star"
+      done;
+      let c = c ^ !deref_str in
+      try
+        let ddecl = look_up_data_def_raw data_decls c in
+        let dl, vl = (
+          if (String.compare v self = 0) then ([c], [])
+          else ([], [])
+        ) in
+        let vtyp, henv = get_heap_type henv v in
+        let henv = subs_heap_type_env henv vtyp (Named c) in
+        let henv = List.fold_left2 (fun henv1 arg field ->
+          let ((t1,_), _, _, _) = field in
+          match arg with
+          | P.Var ((id,_),_) ->
+              let t2, henv = get_heap_type henv id in
+              subs_heap_type_env henv t2 t1
+          | P.Ann_Exp (P.Var ((id,_),_), t2, _) ->
+              if not (cmp_typ t1 t2) then
+                let msg = " type error in h_formula: " ^ (!print_h_formula h0) in
+                report_error h.F.h_formula_heap_pos msg
+              else
+                let t3, henv = get_heap_type henv id in
+                subs_heap_type_env henv t3 t1
+          | _ -> henv
+        ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
+        (dl, vl, henv)
+      with | Invalid_argument _ | Not_found ->
+        (* let () = print_endline ("== not found ddecl!") in *)
+        let dl, vl = 
+          if (String.compare v self = 0) then ([], [c])
+          else ([], []) in
+        (dl, vl, henv)
+    )
+  | F.Star h -> 
+      let h1, h2 = h.F.h_formula_star_h1, h.F.h_formula_star_h2 in
+      let pos = h.F.h_formula_star_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | F.Phase h -> 
+      let h1, h2 = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw in
+      let pos =  h.F.h_formula_phase_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | F.Conj h ->
+      let h1, h2 = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2 in
+      let pos = h.F.h_formula_conj_pos in
+      let dl1, vl1, henv = collect_data_view_from_h_formula h1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_h_formula h2 data_decls henv in
+      let d1 = List.length (dl1 @ vl1) in
+      let d2 = List.length (dl2 @ vl2) in
+      if false (* d1>0 & d2>0 *) then
+        let msg = "self occurs as heap nodes multiple times in one branch" in
+        report_error pos msg
+      else (
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      )
+  | _ -> ([], [], henv)
+
+and collect_data_view_from_h_formula (f0 : F.h_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_hf = !F.print_h_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_h_formula" pr_hf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_h_formula_x f0 data_decls henv) f0 henv
+
+
+and collect_data_view_from_pure_formula_x (f0 : P.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
   match f0 with
-  | P.BForm (bf, _) -> collect_data_view_from_pure_bformula data_names bf
+  | P.BForm (bf, _) -> collect_data_view_from_pure_bformula bf data_decls henv
   | P.And (f1, f2, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_formula data_names f1 in
-      let dl2, vl2 = collect_data_view_from_pure_formula data_names f2 in
+      let dl1, vl1, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_pure_formula f2 data_decls henv in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
+      (dl, vl, henv)
   | P.AndList fs ->
-      let dvll = List.map (fun (_, f1) -> collect_data_view_from_pure_formula data_names f1) fs in
-      let dll, vll = List.split dvll in
-      let dl = Gen.Basic.remove_dups (List.concat dll) in
-      let vl = Gen.Basic.remove_dups (List.concat vll) in
-      (dl, vl)
+      let (dl, vl, henv) = List.fold_left (fun (dl1, vl1, henv) (_, f1) ->
+        let dl2, vl2, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+        let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
+        let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
+        (dl, vl, henv)
+      ) ([], [], henv) fs in
+      (dl, vl, henv)
   | P.Or (f1, f2, _, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_formula data_names f1 in
-      let dl2, vl2 = collect_data_view_from_pure_formula data_names f2 in
+      let dl1, vl1, henv = collect_data_view_from_pure_formula f1 data_decls henv in
+      let dl2, vl2, henv = collect_data_view_from_pure_formula f2 data_decls henv in
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | P.Not (f1, _, _) -> collect_data_view_from_pure_formula data_names f1
-  | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
-  | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
+      (dl, vl, henv)
+  | P.Not (f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
+  | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
+  | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
 
+and collect_data_view_from_pure_formula (f0 : P.formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_f = !P.print_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_pure_formula" pr_f pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_pure_formula_x f0 data_decls henv) f0 henv
 
-and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
-  let pr1 = !P.print_formula in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_pure_formula" pr1 pr3
-      (fun _ -> collect_data_view_from_pure_formula_x data_names f0) f0
-
-and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
+and collect_data_view_from_pure_bformula_x (bf : P.b_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
   let pf, _ = bf in
   match pf with
-  | P.XPure _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
-  | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [])
-  | P.Eq (e1, e2, _)
-  | P.Neq (e1, e2, _) ->
-      let dl1, vl1 = collect_data_view_from_pure_exp data_names e1 in
-      let dl2, vl2 = collect_data_view_from_pure_exp data_names e2 in
-      let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
-      let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
-      (dl, vl)
-  | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [])
-  | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [])
-  | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
-  | P.VarPerm _ | P.RelForm _ -> ([], [])
-
-and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
-  match e0 with
-  | P.Ann_Exp (e, t, pos) -> (
-      match e with
-      | P.Var ((id, _), _) ->
-            if String.compare id self != 0 then ([],[]) else
-              let t_id = string_of_typ t in
-              if (List.mem t_id data_names) then
-                ([t_id], [])       (* type annotation of self to view decl *)
-              else
-                report_error pos ("self has invalid type: " ^ t_id)
-      | _ -> ([], [])
+  | P.XPure _ | P.Frm _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [], henv)
+  | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [], henv)
+  | P.Eq (e1, e2, pos) | P.Neq (e1, e2, pos) -> (
+      let typ_info = (
+        match (e1, e2) with
+        | P.Var ((id1,_),_), P.Var ((id2,_),_) ->
+            let t1, henv = get_heap_type henv id1 in
+            let t2, henv = get_heap_type henv id2 in
+            Some (t1, t2, henv)
+        | P.Ann_Exp (P.Var ((id1,_),_), typ, _), P.Var ((id2,_),_) ->
+            let t1, henv = get_heap_type henv id1 in
+            let henv = subs_heap_type_env henv t1 typ in
+            let t2, henv = get_heap_type henv id2 in
+            Some (typ, t2, henv)
+        | P.Var ((id1,_),_), P.Ann_Exp (P.Var ((id2,_),_), typ, _) ->
+            let t1, henv = get_heap_type henv id1 in
+            let t2, henv = get_heap_type henv id2 in
+            let henv = subs_heap_type_env henv t2 typ in
+            Some (t1, typ, henv)
+        | P.Ann_Exp (P.Var ((id1,_),_), typ1, _), P.Ann_Exp (P.Var ((id2,_),_), typ2, _) ->
+            let t1, henv = get_heap_type henv id1 in
+            let henv = subs_heap_type_env henv t1 typ1 in
+            let t2, henv = get_heap_type henv id2 in
+            let henv = subs_heap_type_env henv t1 typ2 in
+            Some (typ1, typ2, henv)
+        | _ -> None
+      ) in
+      let henv = (match typ_info with
+        | None -> henv
+        | Some (t1, t2, henv) ->
+            if (is_type_var t1) then subs_heap_type_env henv t1 t2
+            else if (is_type_var t2) then subs_heap_type_env henv t2 t1
+            else if not (cmp_typ t1 t2) then
+              let msg = "type error in bformula: " ^ (!P.print_b_formula bf) in
+              report_error pos msg
+            else henv
+      ) in
+      ([], [], henv)
     )
-  | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
-  | P.Null _ | P.Level _  | P.Var _ -> ([], [])
-  | P.IConst _ | P.FConst _ | P.AConst _  |P.NegInfConst _ | P.InfConst _ | P.Tsconst _ -> ([], [])
-  | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])
-  | P.Max _ | P.Min _ | P.TypeCast _ -> ([], [])
-  | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])
-  | P.List _ | P.ListCons _ | P.ListHead _ | P.ListTail _ -> ([], [])
-  | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
-  | P.ArrayAt _ | P.Func _ -> ([], [])
+  | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [], henv)
+  | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [], henv)
+  | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
+  (* | P.VarPerm _ *) | P.RelForm _ -> ([], [], henv)
 
-and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
-  let pr1 = !P.print_formula_exp in
-  let pr2 = pr_list pr_id in
-  let pr3 = pr_pair pr2 pr2 in
-  Debug.no_1 "collect_data_view_from_pure_exp" pr1 pr3
-      (fun _ -> collect_data_view_from_pure_exp_x data_names e0) e0
+and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_decl list)
+    (henv: (ident * typ) list)
+    : (ident list) * (ident list) *((ident * typ) list) =
+  let pr_bf = !P.print_b_formula in
+  let pr_henv = pr_list (fun (id,t) -> "(" ^ id ^ "," ^ (string_of_typ t) ^ ")") in 
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl,henv) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ " , "
+                             ^ (pr_henv henv) ^")" in
+  Debug.no_2 "collect_data_view_from_pure_bformula" pr_bf pr_henv pr_out
+      (fun _ _ -> collect_data_view_from_pure_bformula_x bf data_decls henv) bf henv
 
-and find_data_view_x (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
-  let (dl,el) = collect_data_view_from_struc data_names f in
-  if (List.length dl>1) then report_error pos ("self points to different data node types")
-  else (dl,el)
+and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos 
+    : (ident list) * (ident list) =
+  let henv = [] in
+  let (dl,el,henv) = collect_data_view_from_struc vdecl.view_formula data_decls henv in
+  match dl with
+  | [] -> (
+      try
+        (* find type of self in the heap type env *)
+        let typ, _ = get_heap_type henv self in
+        let tname = string_of_typ typ in
+        let todo_unknown = look_up_data_def_raw data_decls tname in
+        ([tname], el)
+      with Not_found ->
+        ([], el)
+    )
+  | [hd] -> (dl,el)
+  | _ -> report_error pos ("self points to different data node types")
 
-and find_data_view (data_names: ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
-  let pr1 a= String.concat  "," a in
-  let pr2 = !print_struc_formula in
-  Debug.no_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
-      (fun _ _ -> find_data_view_x data_names f pos) data_names f
+and find_data_view (vdecl: view_decl) (data_decls: data_decl list) pos
+    : (ident list) * (ident list) =
+  let pr_view = !print_view_decl in
+  let pr_ids = pr_list pr_id in
+  let pr_out (dl,vl) = "(" ^ (pr_ids dl) ^ " , " ^ (pr_ids vl) ^ ")" in
+  Debug.no_1 "find_data_view" pr_view pr_out
+      (fun _ -> find_data_view_x vdecl data_decls pos) vdecl
 
-and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list)
+    : (view_decl * (ident list) * (ident list)) list =
   Debug.no_1 "syn_data_name" pr_no pr_no
       (fun _ -> syn_data_name_x data_decls view_decls) () 
 
-and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list)
+    : (view_decl * (ident list) * (ident list)) list =
   let view_decls_org = view_decls in
-  let data_names = List.map (fun v -> v.data_name) data_decls in
   (* Restore the original list of view_decls and continue with the previous implementation *)
   let view_decls = view_decls_org in
-  let rl = List.map (fun v -> let (a,b)=(find_data_view data_names v.view_formula no_pos) in (v, a, b)) view_decls in
+  let rl = List.map (fun v ->
+    let (a,b)=(find_data_view v data_decls no_pos) in
+    (v, a, b)
+  ) view_decls in
   rl
 
 and fixpt_data_name (view_ans)  =
@@ -1634,7 +1950,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
       r) in 
   (*let v,a,r = view_ans in*)
   let r = List.map (fun (v,a,r) ->  
-  (*let _ = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
+  (*let () = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
     let d2=List.length a2 in
@@ -1655,8 +1971,8 @@ and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  =
     | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
-	  (* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
-      let _ = update_fixpt iprog vl in
+	  (* let () = print_endline "Call update_fixpt from incr_fixpt_view" in *)
+      let () = update_fixpt iprog vl in
       (List.hd view_decls).view_data_name
 
 and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  = 
@@ -1673,10 +1989,11 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
                   let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
                    v.view_data_name <- orig_vdecl.view_data_name
             | [] ->
-                  let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+                  let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
                    v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
-          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+          () (* self has unknown type *)
+          (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else v.view_data_name <- List.hd a) vl
 
@@ -1695,7 +2012,7 @@ and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_dec
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
   (* An Hoa *)
-  (* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
+  (* let () = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
   update_fixpt iprog vl
 
 
@@ -1920,10 +2237,11 @@ and mkMember base fields path_id pos =
            exp_member_path_id = path_id;
            exp_member_pos = pos }
 
-and mkCallNRecv method_name lock args path_id pos =
+and mkCallNRecv method_name lock args ho_arg path_id pos =
   CallNRecv { exp_call_nrecv_method = method_name;
               exp_call_nrecv_lock = lock;
               exp_call_nrecv_arguments = args;
+              exp_call_nrecv_ho_arg = ho_arg;
               exp_call_nrecv_path_id = path_id;
               exp_call_nrecv_pos = pos }
 
@@ -1973,6 +2291,7 @@ module TraverseCH = Graph.Traverse.Dfs(CH)
 
 module W = struct
   type label = CH.E.label
+  (* type edge = CH.E.edge *)
   type t = int
   let weight x = 1
   let zero = 0
@@ -1992,7 +2311,7 @@ let build_hierarchy (prog : prog_decl) =
   let add_edge cdef = 
 	let pr cdef = cdef.data_name^"<:"^cdef.data_parent_name in
 	Debug.no_1 "add_edge" pr (fun _ -> "") add_edge cdef in
-  let _ = List.map add_edge prog.prog_data_decls in
+  let todo_unknown = List.map add_edge prog.prog_data_decls in
 	if TraverseCH.has_cycle class_hierarchy then begin
 	  print_string ("Error: Class hierarchy has cycles\n");
 	  failwith ("Class hierarchy has cycles\n");
@@ -2011,13 +2330,13 @@ let build_hierarchy (prog : prog_decl) =
 let exists_path (c1 : ident) (c2 : ident) :bool = 
   if c2="null" then true
   else
-	  try
-		let _ = PathCH.shortest_path class_hierarchy 
-				(CH.V.create {ch_node_name = c1}) 
-				(CH.V.create {ch_node_name = c2}) in
-		true
-	  with 
- 		| _ -> false
+    try
+      let todo_unknown = PathCH.shortest_path class_hierarchy 
+	(CH.V.create {ch_node_name = c1}) 
+	(CH.V.create {ch_node_name = c2}) in
+      true
+    with 
+      | _ -> false
 
 let exists_path c1 c2 =	Debug.no_2(* _loop *) "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
 		
@@ -2027,35 +2346,40 @@ let sub_type2 (t1 : typ) (t2 : typ) =
     exists_path (string_of_typ t1) (string_of_typ t2)
   else false
    
-let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
+let sub_type t1 t2 = Exc.GTable.sub_type t1 t2 || sub_type2 t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
 let inbuilt_build_exc_hierarchy () =
   let _  = exlist # add_edge top_flow "" in
-  let _ = (exlist # add_edge c_flow top_flow) in
-  let _ = (exlist # add_edge "__abort" top_flow) in
-  let _ = (exlist # add_edge n_flow c_flow) in
-  let _ = (exlist # add_edge abnormal_flow c_flow) in
-  let _ = (exlist # add_edge raisable_class abnormal_flow) in
-  let _ = (exlist # add_edge "__others" abnormal_flow) in
-  let _ = (exlist # add_edge ret_flow "__others") in
-  let _ = (exlist # add_edge loop_ret_flow "__others") in
-  let _ = (exlist # add_edge cont_top "__others") in
-  let _ = (exlist # add_edge brk_top "__others") in
-  let _ = (exlist # add_edge spec_flow "__others") in
-  let _ = (exlist # add_edge error_flow top_flow) in
-  let _ = (exlist # add_edge bfail_flow top_flow) in
+  let () = (exlist # add_edge c_flow top_flow) in
+  let () = (exlist # add_edge "__abort" top_flow) in
+  let () = (exlist # add_edge n_flow c_flow) in
+  let () = (exlist # add_edge abnormal_flow c_flow) in
+  let () = (exlist # add_edge raisable_class abnormal_flow) in
+  let () = (exlist # add_edge "__others" abnormal_flow) in
+  let () = (exlist # add_edge ret_flow "__others") in
+  let () = (exlist # add_edge loop_ret_flow "__others") in
+  let () = (exlist # add_edge cont_top "__others") in
+  let () = (exlist # add_edge brk_top "__others") in
+  let () = (exlist # add_edge spec_flow "__others") in
+(*  let () = (exlist # add_edge error_flow top_flow) in *)
+  let () = (exlist # add_edge mayerror_flow top_flow) in
+  let () = (exlist # add_edge error_flow mayerror_flow) in
+  let () = (exlist # add_edge n_flow mayerror_flow) in
+  let () = (exlist # add_edge bfail_flow top_flow) in
+  let () = (exlist # add_edge false_flow top_flow) in
+  let () = (exlist # add_edge false_flow bfail_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
-  let _ = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
-  let _ = if clean then (exlist # remove_dupl ) in
-	if (exlist # has_cycles) then begin
-	  print_string ("Error: Exception hierarchy has cycles\n");
-	  failwith ("Exception hierarchy has cycles\n");
-	end 
+  let todo_unknown = List.map (fun c-> (exlist # add_edge c.data_name c.data_parent_name)) (prog.prog_data_decls) in
+  let () = if clean then (exlist # remove_dupl ) in
+  if (exlist # has_cycles) then begin
+    print_string ("Error: Exception hierarchy has cycles\n");
+    failwith ("Exception hierarchy has cycles\n");
+  end
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   let pr _ = exlist # string_of in
@@ -2193,7 +2517,13 @@ let rec label_e e =
 			  exp_while_condition = label_e e.exp_while_condition;
 			  exp_while_body = label_e e.exp_while_body;
 			  exp_while_path_id = nl;
-			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
+			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}
+    | Par e ->
+      let nl = fresh_branch_point_id "" in
+      let () = iast_label_table := (nl, "par", [], e.exp_par_pos) :: !iast_label_table in
+      let cl = List.map (fun c -> 
+        { c with exp_par_case_body = label_e c.exp_par_case_body; }) e.exp_par_cases 
+      in Par { e with exp_par_cases = cl; }
     | _ -> Error.report_error   
       {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
   in map_exp e helper
@@ -2337,10 +2667,11 @@ let label_proc keep proc = {proc with
 			| None -> None 
 			| Some s -> Some (label_exp s);}
 
-let label_procs_prog prog keep = {prog with
-	prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
-	prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls;
-	}
+let label_procs_prog prog keep = 
+  { prog with
+    prog_data_decls = List.map (fun c->{ c with data_methods = List.map (label_proc keep) c.data_methods}) prog.prog_data_decls;	
+    prog_proc_decls = List.map (label_proc keep) prog.prog_proc_decls; }
+    
 (************************************************************************************
  * Use to support pragma declaration in system
  *   - Remove duplicated Obj/Class, such as Object and String which are
@@ -2364,45 +2695,52 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | [] -> iprims
   | hd::tl ->
         let new_iprims = {
-					      prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
-                prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
-                prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
-                prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
-                prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
-                prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
-                prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
-                prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
-                prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
-                prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
-                prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
-                prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
-                prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
-                prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
-                prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
-				prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
-				} in
-             append_iprims_list new_iprims tl
+	    prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
+            prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
+            prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
+            prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
+            prog_enum_decls = hd.prog_enum_decls @ iprims.prog_enum_decls;
+            prog_view_decls = hd.prog_view_decls @ iprims.prog_view_decls;
+            prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
+            prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
+            prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
+                prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
+                prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
+            prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
+            prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
+            prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
+            prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
+            prog_proc_decls = hd.prog_proc_decls @  iprims.prog_proc_decls;
+            prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
+	    prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
+            prog_test_comps = [];
+	} in
+        append_iprims_list new_iprims tl
 
 let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
   match iprims_list with
   | [] ->
         let new_prims = {
-					      prog_include_decls = [];
-                prog_data_decls = [];
-                prog_global_var_decls = [];
-                prog_logical_var_decls = [];
-                prog_enum_decls = [];
-                prog_view_decls = [];
-                prog_func_decls = [];
-                prog_rel_decls = [];
-                prog_rel_ids = [];
-                prog_hp_decls = [];
-                prog_hp_ids = [];
-                prog_axiom_decls = [];
-                prog_hopred_decls = [];
-                prog_proc_decls = [];
-                prog_coercion_decls = [];
-				prog_barrier_decls = [];}
+	    prog_include_decls = [];
+            prog_data_decls = [];
+            prog_global_var_decls = [];
+            prog_logical_var_decls = [];
+            prog_enum_decls = [];
+            prog_view_decls = [];
+            prog_func_decls = [];
+            prog_rel_decls = [];
+            prog_rel_ids = [];
+                prog_templ_decls = [];
+                prog_ut_decls = [];
+            prog_hp_decls = [];
+            prog_hp_ids = [];
+            prog_axiom_decls = [];
+            prog_hopred_decls = [];
+            prog_proc_decls = [];
+            prog_coercion_decls = [];
+	    prog_barrier_decls = [];
+            prog_test_comps = [];
+        }
         in new_prims
   | hd::tl -> append_iprims_list hd tl
 
@@ -2411,12 +2749,12 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
  **)
 let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
-       (* let _ = print_endline ("1: " ^ data_name) in *)
-       (* let _ = print_endline ("2: " ^ field_name) in *)
+       (* let () = print_endline ("1: " ^ data_name) in *)
+       (* let () = print_endline ("2: " ^ field_name) in *)
 		let ddef = look_up_data_def_raw ddefs data_name in
         (try
 		let field = List.find (fun x -> (get_field_name x = field_name)) ddef.data_fields in
-       (* let _ = print_endline ("3: " ^ (snd (fst3 field))) in*)
+       (* let () = print_endline ("3: " ^ (snd (fst3 field))) in*)
 		field
          with _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = ("field name " ^ field_name ^ " is not found");}
         )
@@ -2439,7 +2777,7 @@ let get_type_of_field ddef field_name =
  * An Hoa : Traversal a list of access to get the type.
  **)
 let rec get_type_of_field_seq ddefs root_type field_seq =
-	(* let _ = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
+	(* let () = print_endline ("[get_type_of_field_seq] : input = { " ^ (string_of_typ root_type) ^ " , [" ^ (String.concat "," field_seq) ^ "] }") in *)
 	match field_seq with
 		| [] -> root_type
 		| f::t -> (match root_type with
@@ -2473,7 +2811,7 @@ let is_not_data_type_identifier (ddefs : data_decl list) id =
  *          its component. Inline types should be expanded.
  **)
 let rec compute_typ_size ddefs t = 
-	(* let _ = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
+	(* let () = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
 	let res = match t with
 		| Named data_name -> (try 
 				let ddef = look_up_data_def_raw ddefs data_name in
@@ -2483,7 +2821,7 @@ let rec compute_typ_size ddefs t =
 						else 1 in a + fs) 0 ddef.data_fields
 			with | Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_typ_size] input type does not exist."})
 		| _ -> 1 in
-	(* let _ = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
+	(* let () = print_endline ("[compute_typ_size] output = " ^ (string_of_int res)) in *)
 		res
 
 
@@ -2499,7 +2837,7 @@ let get_typ_size = compute_typ_size
  **)
 let rec compute_field_offset ddefs data_name accessed_field =
 	try 
-		(* let _ = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
+		(* let () = print_endline ("[compute_field_offset] input = { " ^ data_name ^ " , " ^ accessed_field ^ " }") in *)
 		let found = ref false in
 		let ddef = look_up_data_def_raw ddefs data_name in
 		(* Accumulate the offset along the way *)
@@ -2517,7 +2855,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
 		if (not !found) then 
 			Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] " ^ "The data type " ^ data_name ^ " does not have field " ^ accessed_field }
 		else 
-			(* let _ = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
+			(* let () = print_endline ("[compute_field_offset] output = " ^ (string_of_int offset)) in *)
 				offset
 	with
 		| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_offset] is call with non-existing data type." }
@@ -2528,7 +2866,7 @@ let rec compute_field_offset ddefs data_name accessed_field =
  *          respect to the root (that points to a type with name data_name)
  **)
 and compute_field_seq_offset ddefs data_name field_sequence = 
-	(* let _ = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
+	(* let () = print_endline ("[compute_field_seq_offset] input = { " ^ data_name ^ " , [" ^ (String.concat "," field_sequence) ^ "] }") in *)
 	let dname = ref data_name in
 	let res = 
 		List.fold_left (fun a field_name ->
@@ -2544,7 +2882,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 							with
 								| Not_found -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "[compute_field_seq_offset]: " ^ !dname ^ " does not exists!" } )
 						0 field_sequence in
-	(* let _ = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
+	(* let () = print_endline ("[compute_field_seq_offset] output = { " ^ (string_of_int res) ^ " }") in *)
 		res
 
 let b_data_constr bn larg=
@@ -2568,42 +2906,46 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name [] 0 false SPLIT0 (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
-                        let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
+            let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
-			{ proc_name = "init_"^b.barrier_name;
-                          proc_source = "source_file";
-			  proc_flags = [];
-			  proc_mingled_name = "";
-			  proc_data_decl = None ;
-			  proc_hp_decls = [];
-                          proc_constructor = false;
-			  proc_args = ags;
-                          proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
-			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
-			  proc_dynamic_specs = F.mkEFalseF ();
-			  proc_exceptions = [];
-			  proc_body = None;
-			  proc_is_main = false;
-                          proc_is_invoked = false;
-			  proc_file = "";
-			  proc_loc = no_pos;
-			proc_test_comps = None}) prog.prog_barrier_decls in
+      { proc_name = "init_"^b.barrier_name;
+        proc_source = (proc_files # top)^"(barrier?)";
+        proc_flags = [];
+        proc_mingled_name = "";
+        proc_data_decl = None ;
+        proc_hp_decls = [];
+        proc_constructor = false;
+        proc_args = ags;
+        proc_ho_arg = None;
+        proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
+        proc_return = Void;
+        proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
+        proc_dynamic_specs = F.mkEFalseF ();
+        proc_exceptions = [];
+        proc_body = None;
+        proc_is_main = false;
+        proc_is_while = false;
+        proc_has_while_return = false;
+        proc_is_invoked = false;
+                          proc_verified_domains = [];
+        proc_file = "";
+        proc_loc = no_pos;
+        proc_test_comps = None}) prog.prog_barrier_decls in
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name kind coer_type ihps ihead ibody=
+let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
   { coercion_type = coer_type;
   coercion_exact = false;
   coercion_infer_vars = ihps;
@@ -2615,12 +2957,13 @@ let mk_lemma lemma_name kind coer_type ihps ihead ibody=
   exp_return_pos = no_pos });
   coercion_type_orig = None;
   coercion_kind = kind;
+  coercion_origin = orig;
   }
 
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2630,16 +2973,17 @@ let gen_normalize_lemma_comb ddef =
   coercion_exact = false;
   coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
-  coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
+  coercion_body = F. mkBase (gennode perm3 args1) pure VP.empty_vperm_sets top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE; (*default. should improve*)
+  coercion_origin = LEM_GEN;
  }
  
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name [] (* TODO:HO *) 0 false SPLIT0 (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in
@@ -2648,12 +2992,13 @@ let gen_normalize_lemma_comb ddef =
   coercion_name = lem_name;
   coercion_exact = false;
   coercion_infer_vars = [];
-  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
+  coercion_head = F.mkBase (gennode perm3 args) pure VP.empty_vperm_sets top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
 
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE;
+  coercion_origin = LEM_GEN;
  }
 
 let add_normalize_lemmas prog4 = 
@@ -2744,36 +3089,38 @@ let derivegraph_of_views der_views : IG.t =
 
 let exists_return_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
-          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow f ->
-                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
       | Return _ ->
+          (* let () = print_endline("exists_return: true") in *)
           true
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
       | While {exp_while_body = wb} ->
-          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
           helper wb
-      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
-      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
-      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ ->
-          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = print_endline("exists_return: unexpected") in *)
           false
   in
   helper e0
@@ -2782,22 +3129,60 @@ let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
       (fun _ -> exists_return_x e0) e0
+let exists_while_return_x e0=
+  let rec helper e=
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
+          match et with
+            | Const_flow f ->
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
+            | _ -> false
+      end
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (helper wb) || (exists_return wb)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = print_endline("exists_return: unexpected") in *)
+          false
+  in
+  helper e0
+let exists_while_return e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_while_return" pr1 string_of_bool
+      (fun _ -> exists_while_return_x e0) e0
 
 let exists_return_val_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
-          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
             | Const_flow _ ->
-                (* let _ = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
+                (* let () = Debug.info_zprint (lazy  (" et" ^ ( f))) no_pos in *)
                 false
             | _ -> true
       end
@@ -2809,15 +3194,15 @@ let exists_return_val_x e0=
       | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
           (helper e2) || (helper e1)
       | While {exp_while_body = wb} ->
-          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          (* let () = Debug.info_pprint (" WHILE" ) no_pos in *)
           helper wb
-      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
-      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
-      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      (* | Bind _ -> let () = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let () = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let () = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ ->
-          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          (* let () = Debug.info_pprint (" *****" ) no_pos in *)
           false
   in
   helper e0
@@ -2829,13 +3214,13 @@ let exists_return_val e0=
 
 let get_return_exp_x e0=
   let rec helper e=
-    (* let _ = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
+    (* let () = Debug.info_zprint (lazy  (" helper: " ^ (!print_exp e)  )) no_pos in *)
     match e with
       | Block { exp_block_body = bb} ->
-          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          (* let () = Debug.info_pprint (" BLOCK" ) no_pos in *)
           helper bb
       | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} -> begin
-          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (* let () = Debug.info_pprint (" COND" ) no_pos in *)
           let r = (helper tb) in
           match r with
             | None ->  (helper eb)
@@ -2851,7 +3236,7 @@ let get_return_exp_x e0=
       )
       | While {exp_while_body = wb} ->
           helper wb
-      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+      | Label (_, el) -> (* let () = Debug.info_pprint (" LABEL" ) no_pos in *)
                          helper el
       | _ -> None
   in
@@ -2911,7 +3296,7 @@ let annotate_field_pure_ext iprog=
       ) ddef.data_fields in
       {ddef with data_fields = ndfields}
   ) iprog.prog_data_decls in
-  let _ = iprog.prog_data_decls <- idatas in
+  let () = iprog.prog_data_decls <- idatas in
   ()
 
 (*
@@ -2921,15 +3306,15 @@ let annotate_field_pure_ext iprog=
 output: list of procs called by this function
 *)
 let detect_invoke_x prog proc =
-  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
+  (* let () = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
   let collect_called_proc e =
     match e with
       (* | CallRecv cr -> *)
-      (*       let _ = print_endline "rec" in *)
+      (*       let () = print_endline "rec" in *)
       (*       let called_proc_name = cr.exp_call_recv_method in *)
       (*       let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in *)
       (*       if (called_proc.proc_is_main && (not called_proc.proc_is_invoked)) *)
-      (*       then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
+      (*       then let () = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
       (*       else None *)
       | CallNRecv cnr ->
             let called_proc_name = cnr.exp_call_nrecv_method in
@@ -2939,7 +3324,7 @@ let detect_invoke_x prog proc =
             else (
                 let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in
 	        if (called_proc.proc_is_main && (not called_proc.proc_is_invoked))
-	        then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name]
+	        then let () = called_proc.proc_is_invoked <- true in Some [called_proc_name]
 	        else None
             )
       | _ -> None
@@ -2947,7 +3332,7 @@ let detect_invoke_x prog proc =
   match proc.proc_body with
     | None -> []
     | Some e -> fold_exp e collect_called_proc (List.concat) []
-  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
+  (* let () = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
   (* [] *)
 
 let detect_invoke prog proc=
@@ -2955,3 +3340,40 @@ let detect_invoke prog proc=
   let pr2 = pr_list pr_id in
   Debug.no_1 "detect_invoke" pr1 pr2
       (fun _ -> detect_invoke_x prog proc) proc
+      
+let tnt_prim_procs = 
+  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
+  
+let tnt_prim_proc_tbl: (string, string) Hashtbl.t = Hashtbl.create 10
+  
+let is_tnt_prim_proc id =
+  List.exists (fun pid -> String.compare pid id == 0) tnt_prim_procs
+
+(* Input is a list of proc_decl, output is a list containing non-duplicate element of the types that will be returned inside a while loop *)
+let rec no_duplicate_while_return_type_list (proclst:proc_decl list):(typ list) =
+  let rec helper (proc:proc_decl): (typ option) =
+    match proc.proc_body with
+      | None -> None
+      | Some e ->
+            if exists_while_return e
+            then Some proc.proc_return
+            else None
+  in
+  let is_duplicate (tlst:typ list) (t:typ):bool =
+    match tlst with
+      | h::rest -> Globals.cmp_typ h t
+      | [] -> false
+  in
+  match proclst with
+    | h::rest ->
+          let t = helper h in
+          begin
+            match t with
+              | None -> no_duplicate_while_return_type_list rest
+              | Some new_t ->
+                    let restlst = no_duplicate_while_return_type_list rest in
+                    if is_duplicate restlst new_t then restlst
+                    else new_t::restlst
+          end
+    | [] -> []
+

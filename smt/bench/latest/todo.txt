@@ -1,0 +1,88 @@
+UDB_entl
+------------
+dll-vc02.smt2
+dll-vc06.smt2
+dll-vc07.smt2
+dll-vc08.smt2
+dll-vc10.smt2
+dll-vc11.smt2
+
+=====================================
+UDB_sat
+--------------
+ succ-circuit*.defs.smt2
+ succ-rec*.defs.smt2
+
+======================================
+FDB_entl
+--------------
+dll-vc02.smt2
+dll-vc06.smt2
+dll-vc07.smt2
+dll-vc08.smt2
+dll-vc10.smt2
+dll-vc11.smt2
+
+=============
+sll0a
+
+======================================
+"clones-01-e07.tptp.smt2",
+
+"clones-01-e08.tptp.smt2",
+
+"clones-01-e09.tptp.smt2",
+
+"clones-01-e10.tptp.smt2",
+
+"clones-02-e07.tptp.smt2",
+
+"clones-02-e08.tptp.smt2",
+
+"clones-02-e09.tptp.smt2",
+
+"clones-02-e10.tptp.smt2",
+
+"clones-03-e07.tptp.smt2",
+
+"clones-03-e09.tptp.smt2",
+
+"clones-03-e10.tptp.smt2",
+
+======================================
+"smallfoot-vc28.tptp.smt2",
+
+gen lemma: tail-rec <-> non-tail-rec
+
+======================================
+"smallfoot-vc29.tptp.smt2",
+
+"smallfoot-vc30.tptp.smt2",
+
+similar to "clones-01-e07.tptp.smt2",
+
+======================================
+"smallfoot-vc32.tptp.smt2",
+
+similar to "clones-01-e07.tptp.smt2",
+
+======================================
+"smallfoot-vc33.tptp.smt2",
+
+similar to "clones-01-e07.tptp.smt2",
+
+======================================
+"smallfoot-vc35.tptp.smt2",
+
+similar to "clones-01-e07.tptp.smt2",
+
+======================================
+"smallfoot-vc37.tptp.smt2",
+
+similar to "clones-01-e07.tptp.smt2",
+
+======================================
+"smallfoot-vc41.tptp.smt2",
+
+======================================
+"smallfoot-vc42.tptp.smt2",

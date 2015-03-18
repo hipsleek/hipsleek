@@ -1,0 +1,52 @@
+
+!!!Full processing file "examples/base-3b.ss"
+Parsing file "examples/base-3b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+
+Warning: False precondition detected in procedure f$int
+ with context:  hfalse&false&{FLOW,(24,25)=__norm}[]
+ es_heap: emp
+ es_pure: true
+ es_ho_vars_map: []
+ es_cond_path: [0]
+
+
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<v_int_11_1166 & v_int_11_1166=1+x' & !(v_bool_8_1129') & 
+0<x' & !(v_bool_8_1129') & x'=x & 0<x & 
+0<x' & fpost_1125(v_int_11_1166) --> fpost_1125(x).
+
+ termAssume 0<x' & 0<x & x'=x & !(v_bool_8_1129') & 0<x' & 
+!(v_bool_8_1129') & v_int_11_1128'=1+x' & 
+0<v_int_11_1128' & fpre_0(x) --> fpre_0(v_int_11_1128').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] 1<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires false & falserequires emp & Loop[]
+ ensures false & false; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+Stop Omega... 9 invocations 
+1 false contexts at: ( (9,4) )
+
+!!! log(small):(0.024995,182)
+Total verification time: 0.287566 second(s)
+	Time spent in main process: 0.271754 second(s)
+	Time spent in child processes: 0.015812 second(s)
+

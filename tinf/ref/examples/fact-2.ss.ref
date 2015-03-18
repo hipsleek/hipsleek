@@ -1,0 +1,59 @@
+
+!!!Full processing file "examples/fact-2.ss"
+Parsing file "examples/fact-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN post_1150: ( x=0 & res=1) -->  post_1150(x,res),
+RELDEFN post_1150: ( 1<=v_int_9_1192 & v_int_9_1186<=(0-2) & 
+post_1150(v_int_9_1186,v_int_9_1192) & x=v_int_9_1186+1 & res=v_int_9_1192+1) -->  post_1150(x,res),
+RELDEFN post_1150: ( 0<=v_int_9_1186 & 1<=v_int_9_1192 & post_1150(v_int_9_1186,v_int_9_1192) & 
+x=v_int_9_1186+1 & res=v_int_9_1192+1) -->  post_1150(x,res)]
+*************************************
+
+Post Inference result:
+fact$int
+ requires emp & factpre_0(x)[29]
+ ensures emp & 1<=res & 
+factpost_1125(x)[] & x=res-1;
+
+Checking procedure fact$int... 
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_9_1231=v_int_9_1237-1 & 1<=v_int_9_1237 & v_int_9_1231+
+1=x' & !(v_bool_8_1133') & x'!=0 & !(v_bool_8_1133') & x'=x & x'!=0 & 
+v_int_9_1132'=v_int_9_1237+1 & 
+res=v_int_9_1132' & factpost_1125(v_int_9_1231) --> factpost_1125(x).
+
+ termAssume x'=0 & x'=x & v_bool_8_1133' & x'=x' & v_bool_8_1133' & 
+v_int_8_1127'=1 & res=v_int_8_1127' --> factpost_1125(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_8_1133') & x'!=0 & !(v_bool_8_1133') & 
+v_int_9_1131'=1 & v_int_9_1129'+
+1=x' & factpre_0(x) --> factpre_0(v_int_9_1129').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29,1]
+ ensures emp & x=res-1 & 1<=res; 
+  1<=x -> requires emp & Term[29,2,-1+(1*x)]
+ ensures emp & x=res-1 & 1<=res; 
+  }
+
+0 false contexts at: ()

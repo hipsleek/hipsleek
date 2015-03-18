@@ -1,0 +1,52 @@
+
+!!!Full processing file "hip/ll_all3.ss"
+Parsing file "hip/ll_all3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure ret_first$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G2]requires H1(x)&true
+ ensures G2(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(0)H1(res)&true --> G2(x,res)&
+true(3,4)]
+
+Procedure ret_first$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(a) ::=  [htrue],
+ G2(x1,res1) ::=  [emp&x1=res1 & x1=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(a) ::= NONE,
+ G2(x1,res1) ::= emp&x1=res1 & x1=DP(3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.02756,214)
+Total verification time: 0.299117 second(s)
+	Time spent in main process: 0.279497 second(s)
+	Time spent in child processes: 0.01962 second(s)
+

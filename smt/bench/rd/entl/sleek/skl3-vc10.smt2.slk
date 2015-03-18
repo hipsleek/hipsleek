@@ -1,0 +1,21 @@
+
+data SL3_t {
+  SL3_t n1;
+  SL3_t n2;
+  SL3_t n3;
+}.
+
+pred skl1<ex:SL3_t> ==
+ self = ex
+or (exists tl: self::SL3_t<n3 = null,n2 = null,n1 = tl> * tl::skl1<ex>).
+
+pred skl2<ex:SL3_t> ==
+ self = ex
+or (exists tl,Z1: self::SL3_t<n3 = null,n2 = tl,n1 = Z1> * Z1::skl1<tl> * tl::skl2<ex>).
+
+pred skl3<ex:SL3_t> ==
+ self = ex
+or (exists tl,Z1,Z2: self::SL3_t<n3 = tl,n2 = Z2,n1 = Z1> * Z1::skl1<Z2> * Z2::skl2<tl> * tl::skl3<ex>).
+
+checkentail x1::skl3<x2> * x2::SL3_t<n3 = null,n2 = x2_2,n1 = x2_1> * x2_2::SL3_t<n3 = null,n2 = null,n1 = x2_2_1> * x2_1::SL3_t<n3 = null,n2 = null,n1 = x2_1_1> * x2_1_1::SL3_t<n3 = null,n2 = null,n1 = x2_2> * x2_2_1::SL3_t<n3 = null,n2 = null,n1 = null>
+         |- x1::skl3<null>.

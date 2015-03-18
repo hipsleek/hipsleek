@@ -1,0 +1,58 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc6b.ss"
+Parsing file "t/exc6b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+dprint: t/exc6b.ss:14: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue&MayLoop[] & pre_1363(x) & x'=x&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: t/exc6b.ss:20: ctx:  List of Failesc Context: [FEC(0, 1, 2  [(,1 ); (,2 ); (,0 ); (,1 )];  [(,1 ); (,2 )])]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: [(,0 ); (,1 ); (,0 ); (,1 )]
+  State:(exists v_int_16_1338': (htrue) * v_Exp_16_1339'::Exp<v_int_16_1338'>&v_bool_16_1340' & 100<x' & v_bool_15_1345' & 0<x' & x'=x & pre_1363(x) & v_int_16_1338'=2222 & v_int_16_1338'=res & eres=v_Exp_16_1339'&{FLOW,(23,24)=Exp#E}[]
+
+  ]
+ ]
+Successful States:
+[
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:(exists v_int_15_1344': htrue&post_1364(x',v_int_15_1344',flow) & x'+1=x_1387 & pre_1363(x) & x_1387=x & 0<x_1387 & v_bool_15_1345' & x_1387<=100 & !(v_bool_16_1340')&{FLOW,(4,5)=__norm#E}[]
+;
+ Label: [(,1 ); (,2 )]
+ State:htrue&!(v_bool_15_1345') & x'<=0 & x'=x & pre_1363(x)&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure loop$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1363: ( x=1+x' & 0<=x' & x'<=99 & pre_1363(x)) -->  pre_1363(x'),
+RELDEFN post_1364(Exp#E): ( res=2222 & 101<=x & pre_1363(x)) -->  post_1364(x,res,flow),
+RELDEFN post_1364: ( x=1+res & 0<=res & res<=99 & post_1364(res,v_int_15_1396,flow) & pre_1363(x)) -->  post_1364(x,res,flow),
+RELDEFN post_1364(__norm#E): ( x=res & res<=0 & pre_1363(x)) -->  post_1364(x,res,flow)]
+*************************************
+
+!!! PROBLEM with fix-point calculation
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+caught
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 

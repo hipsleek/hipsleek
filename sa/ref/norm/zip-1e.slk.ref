@@ -1,0 +1,42 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&((self=null & i=0) | (1<=i & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&i=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=i),
+([], self=null & i=0)])
+!!! formula1: emp&((self=null & k=0) | (1<=k & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&k=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=k),
+([], self=null & k=0)])
+!!! formula1: emp&((self=null & y=null & n=0 & m=0) | (self!=null & y!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&m=0 & n=0 & y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null & n=0 & m=0)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entailing lemma one3: Fail. INCONSISTENCY : expected failure but success instead
+
+!!! fixpoint:[]
+: no residue 
+Stop Omega... 43 invocations 
+SAT Count   : 1120
+SAT % Hit   : 91.51%
+IMPLY Count : 136
+IMPLY % Hit : 67.64%
+Time(cache overhead) : 0.130463 (seconds)
+
+!!! log(small):(1.939903,1339)
+Total verification time: 0.519279 second(s)
+	Time spent in main process: 0.459333 second(s)
+	Time spent in child processes: 0.059946 second(s)
+

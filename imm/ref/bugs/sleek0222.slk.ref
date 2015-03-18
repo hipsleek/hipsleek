@@ -1,0 +1,21 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(must) cause:UnionR[ 2<n & x!=null & 0<=n |-  flted_29_58=0 & x=null. LOCS:[29;18;15] (RHS: contradiction), false |-  flted_17_65+1=flted_29_58. LOCS:[0;17] (RHS: contradiction)]
+
+Residue:
+ <1>x::node<p,q> * q::ll{}<n,,flted_29_35>&flted_29_35=@M & 2<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail 2: Fail.(must) cause: flted_34_68=@A |-  flted_34_68=@M. LOCS:[34] (must-bug)
+
+Residue:
+ <1>emp&2<n & flted_34_68=@A&{FLOW,(6,7)=__Error#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+

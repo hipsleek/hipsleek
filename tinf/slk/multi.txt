@@ -1,0 +1,89 @@
+int f(x,y)
+{
+  if x>=0 {
+     f(x+y,y);f(x-y,y)
+  }
+}
+
+
+case x>=0
+
+ case y>=0
+   pre(x,y) & x>=0 & x1=x+y--> pre(x1,y)
+   pre(x,y) & x>=0 & x2=x-y --> pre(x2,y)
+
+   x>=0 & x2=x-y  & & x1=x+y &
+     post(x1,y) & post(x2,y)--> post(x,y)
+
+   post(x,y) = x>=0 & y>=0
+
+   y>=0 & x>=0 & x2=x-y  & & x1=x+y --> x1>=0 & y>=0 (OK)
+   y>=0 & x>=0 & x2=x-y  & & x1=x+y --> x2>=0 & y>=0
+
+
+ case y<0
+   pre(x,y) & x>=0 & x1=x+y--> pre(x1,y)
+   pre(x,y) & x>=0 & x2=x-y --> pre(x2,y)
+   x>=0 & x2=x-y  & & x1=x+y &
+     post(x1,y) & post(x2,y)--> post(x,y)
+
+
+   post(x,y) = x>=0 & y<0
+
+   y<0 & x>=0 & x2=x-y  & & x1=x+y --> x1>=0 & y<0
+   y<0 & x>=0 & x2=x-y  & & x1=x+y --> x2>=0 & y<0 (OK)
+
+case x<0
+ x<0--> post(x,y)
+
+
+
+int f(x,y)
+{
+  if (x>=0) {
+    if * {
+     f(x+y,y)
+    else
+     f(x-y,y)
+    }
+  }
+}
+
+case x>=0
+
+ case y=0
+  pre(x,y) & x>=0 & x1=x+y--> pre(x1,y)
+  pre(x,y) & x>=0 & x2=x-y--> pre(x2,y)
+
+
+    x>=0 & x1=x+y  & post(x1,y) --> post(x,y)
+    x>=0 & x2=x-y  &  x2=x-y & post(x2,y) --> post(x,y)
+
+  post(x,y) = x>=0 & y=0
+
+    x>=0 & x1=x+y & y=0            --> x1>=0 & y=0
+    x>=0 & x2=x-y  &  x2=x-y & y=0 --> x2>=0 & y=0
+
+
+ case y>0
+  pre(x,y) & x>=0 & x1=x+y--> pre(x1,y)
+  pre(x,y) & x>=0 & x2=x-y--> pre(x2,y)
+  x>=0 & x1=x+y & post(x1,y) --> post(x,y)
+  x>=0 & x2=x-y  &  x2=x-y & post(x2,y) --> post(x,y)
+
+  post(x,y) = x>=0 & y>0
+    x>=0 & x1=x+y & y>0            --> x1>=0 & y>0
+    x>=0 & x2=x-y  &  x2=x-y & y>0 --> x2>=0 & y>0
+
+ case y<0
+  pre(x,y) & x>=0 & x1=x+y--> pre(x1,y)
+  pre(x,y) & x>=0 & x2=x-y--> pre(x2,y)
+  x>=0 & x1=x+y & post(x1,y) --> post(x,y)
+  x>=0 & x2=x-y  &  x2=x-y & post(x2,y) --> post(x,y)
+
+  post(x,y) = x>=0 & y<0
+    x>=0 & x1=x+y & y<0            --> x1>=0 & y<0
+    x>=0 & x2=x-y  &  x2=x-y & y<0 --> x2>=0 & y<0
+
+case x<0
+ x<0--> post(x,y)

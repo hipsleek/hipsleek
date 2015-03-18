@@ -1,0 +1,54 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/fact2.ss"
+Parsing file "t/fact2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume n'=n & v_int_9_1404+1=n' & 
+res=v_int_9_1367' & factpost_1394(v_int_9_1404) --> factpost_1394(n).
+
+ termAssume n'=n & v_int_9_1366'+
+1=n' & factpre_0(n) --> factpre_0(v_int_9_1366').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] true@R]
+]
+Termination Inference Result:
+fact:  requires true & truerequires emp & Loop{ 9:9}[]
+     ensures false & false;
+
+Checking procedure fact1$int... 
+Procedure fact1$int SUCCESS.
+
+Checking procedure fact1$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume !(v_bool_16_1359') & n'!=0 & n'=n & v_int_17_1441+1=n' & 
+res=v_int_17_1358' & fact1post_1423(v_int_17_1441) --> fact1post_1423(n).
+
+ termAssume v_bool_16_1359' & n'=0 & n'=n & v_int_16_1353'=0 & 
+res=v_int_16_1353' --> fact1post_1423(n).
+
+ termAssume !(v_bool_16_1359') & n'!=0 & n'=n & v_int_17_1357'+
+1=n' & fact1pre_0(n) --> fact1pre_0(v_int_17_1357').
+
+
+Base/Rec Case Splitting:
+[	fact1: [[2] n=0@B,[3] 1<=n@R,[4] n<=(0-1)@R]
+]
+Starting z3... 

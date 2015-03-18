@@ -1,0 +1,9 @@
+data node {
+     node next;
+}.
+
+pred ll<> ==
+     self = null
+     or (exists u: self::node<u> * u::ll<>).
+
+checkentail x::node<null> |- x::ll<>.

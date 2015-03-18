@@ -1,4 +1,10 @@
 ==============================================
+15Dec
+
+Total number of errors: 8 in files:
+  infer/infer10.slk({E15#Fail}) infer/infer12.slk({E5#Fail}) infinity.slk({E66#Valid}) fracperm/split_simple.slk(no result  for {E}) fracperm/split-combine.slk(no result  for {E}) veribsync/bperm-split-combine.slk(no result  for {E}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+
+==============================================
 Total number of errors: 10 in files:
   infer/infer1.slk infer/infer2.slk infer/infer8.slk 
   infer/infer13.slk infer/infer14.slk 
@@ -512,6 +518,743 @@ lemma_safe "three" self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,
 Entailing lemma three: Fail. Details below:
 	 "==>" implication: : Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
 	 "==>" implication: : Valid.
+====================================================================
+Before  merging with default:
+
+sleek
+  Total number of errors: 1 in files:
+  lemmas/rlseg.slk({L3#Valid}).
+sleek --eps
+  Total number of errors: 4 in files:
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
+hip --eps
+All test results were as expected.
+Total verification time: 206.84 second
+	Time spent in main process: 143.84 second
+	Time spent in child processes: 63.00 second
+	Number of false contexts: 424
+
+sleek
+  lemmas/rlseg.slk({L3#Valid}).
+
+--eps
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
+====================================================================
+# baga-test-eps.slk --eps
+
+Unexpected: 13 14 15 
+
+# baga-test-eps.slk --en-acc-fold/--dis-acc-fold
+
+Unexpected: 3 15 
+
+--dis-acc-fold cause the following issues..
+
+Total number of errors: 3 in files:
+  baga-test-eps.slk(no result (!!!check script options, provers, etc)) 
+  baga-test.slk({E3#Valid}) 
+  imm/imm-hard.slk(no result (!!!check script options, provers, etc)).
+
+# baga-test-eps.slk --inv-baga
+
+Unexpected: 3 10 13 15 
+====================================================================
+# baga-test-eps.slk
+
+in new smt2014 branch, unsat is not being detected
+in two examples below. I think this is due to new unsat
+we currently have? Please make the new unsat into an option
+that is disabled by default, if this is the case.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+Why is UNSAT on lhs not being detected?
+
+//(1) (3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+//(5) --eps
+// (15) Valid
+checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+expect Valid.
+
+====================================================================
+
+sleek --eps 
+
+#loop 
+
+Checking lemmas/odd-lseg.slk (runs with extra options:  
+   --elp --dis-lem-gen )
+Unexpected result with : baga-test.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid})
+
+====================================================================
+
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+
+--dis-baga-xpure
+Total number of errors: 7 in files:
+  baga-test.slk({E15#Valid}) 
+  inflem.slk({E2#Valid}) // lemma not proven
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+--imm
+Total number of errors: 7 in files:
+  baga-test.slk({E15#Valid}) 
+  inflem.slk({E2#Valid}) 
+  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) 
+  lemmas/app-tail.slk({E1#Valid}) 
+  lemmas/ll.slk({E1#Valid}) 
+  lemmas/ll_tail.slk({E1#Valid},{E2#Valid}) 
+  lemmas/dseg-new.slk({L1#Valid}).
+
+-- default branch
+Total number of errors: 1 in files:
+  lemmas/rlseg.slk({L3#Valid}).
+
+
+Total number of errors: 14 in files:
+  cll-d.slk({E1#Valid}) sleek3.slk({E1#Valid}) sleek9.slk({E3#Valid},{E4#Valid}) baga-test.slk({E15#Valid},{E3#Valid}) baga-test-2.slk({E3#Valid}) infer/app-inv.slk({E1#Valid}) infer/app-inv2.slk({E1#Valid}) infer/infer5a.slk({E2#Valid}) inflem.slk({E2#Valid}) lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L7#Valid},{L8#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/ll.slk({E1#Valid}) lemmas/ll_tail.slk({E2#Valid}) lemmas/dseg-new.slk({L1#Valid}).
+
+====================================================================
+# hip --eps --baga-xpure
+
+rb.ss (very long)
+Total number of errors: 22 in files:
+.
+Total verification time: 1573.67 second
+	Time spent in main process: 1324.09 second
+	Time spent in child processes: 249.58 second
+	Number of false contexts: 383
+
+Checking ../../modular_examples/dll-modular.ss (runs with extra options: --overeps)
+Checking ../../modular_examples/selection-modular.ss (runs with extra options: --overeps --lda)
+Checking ../../modular_examples/qsort-modular.ss (runs with extra options: --overeps --lda)
+All test results were as expected.
+Total verification time: 1596.18 second
+	Time spent in main process: 1344.02 second
+	Time spent in child processes: 252.16 second
+	Number of false contexts: 413
+
+(FIXED)
+
+error at: cll.ss delete
+error at: heaps.ss deleteoneel
+error at: heaps.ss deletemax
+error at: rb.ss remove_min
+error at: rb.ss del
+
+# hip --eps --dis-baga-xpure
+Total number of errors: 22 in files:
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss f1
+error at: ../../modular_examples/dll-modular.ss f2
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/dll-modular.ss test_fold
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+.
+Total verification time: 237.68 second
+	Time spent in main process: 196.22 second
+	Time spent in child processes: 41.45 second
+	Number of false contexts: 383
+
+(* without Omega simplify *)
+Total verification time: 254.68 second
+	Time spent in main process: 206.29 second
+	Time spent in child processes: 48.39 second
+	Number of false contexts: 413
+
+All test results were as expected.
+Total verification time: 254.77 second
+	Time spent in main process: 206.51 second
+	Time spent in child processes: 48.26 second
+	Number of false contexts: 413
+
+(* with Omega simplify *)
+#hip --eps (default)
+
+All test results were as expected.
+Total verification time: 231.97 second
+	Time spent in main process: 160.11 second
+	Time spent in child processes: 71.86 second
+	Number of false contexts: 424
+====================================================================
+# cvutil.ml
+
+Fix below caused extra failures. Why?
+
+  if !Globals.baga_xpure 
+      &&  not(!Globals.en_slc_ps) 
+  then
+      let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+      let ans = conv_from_ef_disj disj in
+      ans
+
+Total number of errors: 26 in files:
+error at: dll.ss test_del2
+error at: selection.ss delete_min
+error at: selection.ss selection_sort
+error at: avl-orig-2.ss get_max
+error at: avl-orig-2.ss insert
+error at: avl-orig-2.ss rotate_left_child
+error at: avl-orig-2.ss rotate_right_child
+error at: avl-orig3.ss get_max
+error at: avl-orig3.ss insert
+error at: avl-orig3.ss rotate_left_child
+error at: avl-orig3.ss rotate_right_child
+error at: bubble.ss bubble
+error at: bubble.ss bsort
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_5
+error at: rb.ss del_5r
+error at: rb.ss del_2
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: rb.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss selection_sort
+====================================================================
+# (default) sleek -flags "print-dis-tidy"
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+Total verification time: 40.41 second
+	Time spent in main process: 30.39 second
+	Time spent in child processes: 10.02 second
+	Number of false contexts: 0
+
+# (default) sleek "--baga-xpure --eps"
+
+Unexpected result with : baga-test-2.slk (failed check(s): {E15#Fail}) 
+Unexpected result with : 
+infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : 
+infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+LOOP at odd-lseg.slk
+
+===================================================================
+sleek (smt2104) --eps
+
+Unexpected result with : infer/app-inv.slk (failed check(s): no result (!!!check script options, provers, etc)) 
+Unexpected result with : infer/app-inv2.slk (failed check(s): no result (!!!check script options, provers, etc))
+
+--inv not working with --eps
+
+ll:={[self,n_33] -> [] -> []: (0=0 && ) ||  
+  exists (flted_7_16,Anon_12,NODq: (self>0 && ll(NODq,flted_7_16)) && )
+};
+bottomupgen([ll], [1], SimHeur);
+ 
+
+--en-inf not working with --eps
+
+Unexpected result with : infinity.slk (failed check(s): {E77#Valid},{E78#Valid}) 
+< Entail 14: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_55_110>@ rem br[{1,2}]
+---
+> Entail 14: Fail.(cex)(must) cause: true |-  exists(flted_55_97:flted_55_97=2 & (((x=null & flted_55_97=\inf) | x=1))). LOCS:[55;0] (must-bug)
+55c55
+< Entail 71: Fail.(cex)(must) cause:do_unmatched_rhs : x::sortll<flted_231_404>@ rem br[{1,2}]
+---
+> Entail 71: Fail.(cex)(must) cause: true |-  exists(flted_231_384:flted_231_384=2 & (((x=null & flted_231_384=\inf) | 
+> x=1))). LOCS:[231;0] (must-bug)
+259c260
+<  <1>emp&(([null=flted][null=p][x!=null][a=m & a<=m1 & m1=\inf & m1=\inf]))&{FLOW,(21,22)=__norm}[]
+---
+>  <1>emp&a=m & m<=m1 & a<=m1 & m1=\inf & m1=\inf & p=flted & flted=null&{FLOW,(21,22)=__norm}[]
+< Entail 77: Fail.(cex)(may) cause: ((x=null & r=v & x=null & m=\inf) | (x=null & r=v & x!=null)) |-  r=min(v,m). LOCS:[252] (may-bug)
+---
+> Entail 77: Valid. 
+263c264
+< Entail 78: Fail.(cex)(may) cause: ((null=null & m=\inf) | null!=null) |-  r=min(v,m). LOCS:[0;255] (may-bug)
+---
+> Entail 78: Valid. 
+
+Unexpected result with : inflem.slk (failed check(s): {E2#Valid}) 
+
+====================================================================
+# sleek3.slk
+
+Entailing lemma lem_12: Valid.
+
+Valid Lemmas : [lem_12:==>] added to lemma store.
+
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek3.slk", "--elp", "Fail.", "Valid.Fail.Valid."],
+
+===================================================================
+Total number of errors: 2 in files:
+  sleek3.slk({L1#Fail}) baga-test-2.slk({E15#Fail}).
+====================================================================
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  sleek9.slk(no result  for {E}) lemmas/app-tail.slk(no result  for {E}) lemmas/ll_tail.slk(no result  for {E}) lemmas/sll_tailL.slk(no result for {L}) lemmas/dseg-new.slk(no result for {L}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+!!! formula1: emp&((tx=self & n=1 & self!=null) | (2<=n & self!=null))&
+{FLOW,(1,24)=__flow}[]
+!!! formula1_under: emp&n=1 & tx>0&{FLOW,(1,24)=__flow}[]
+!!! WARNING logtime exception:10.
+Stop Omega... 30 invocations 
+SAT Count   : 31
+SAT % Hit   : 64.51%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.00274 (seconds)
+
+!!! log(small):(0.013134,54)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(pairwise:53<1:TIMEOUT:OM*EXC*,10.)])
+
+====================================================================
+run-fast-test
+
+sleek
+hip --eps
+sleek --eps (FIXED)
+Total number of errors: 3 in files:
+  threads/thrd1.slk({E10#Valid},{E11#Fail},{E12#Fail},{E13#Fail},{E14#Valid},{E15#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E21#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E6#Valid},{E7#Fail},{E8#Valid},{E9#Fail}) conchip/threads.slk({E3#Valid}) conchip/latch.slk({E5#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+All test results were as expected.
+Total verification time: 450.15 second
+	Time spent in main process: 408.57 second
+	Time spent in child processes: 41.58 second
+	Number of false contexts: 427
+====================================================================
+# post branch
+
+./hip examples/working/hip/rb.ss -p del 
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "examples/working/hip/rb.ss",Line:427,Col:13
+
+ERROR: at examples/working/hip/rb.ss_427:13_427:89 
+Message: split_components: don't expect OR
+ 
+Procedure del$node~int FAIL.(2)
+
+Exception Failure("split_components: don't expect OR") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure del$node~int
+
+error at: rb.ss remove_min (FIXED)
+error at: rb.ss del (FIXED)
+
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss joinHelper
+.
+====================================================================
+# post branch (before merge with default)
+
+sleek --eps
+
+All test results were as expected.
+Total verification time: 68.50 second
+	Time spent in main process: 60.25 second
+	Time spent in child processes: 8.25 second
+	Number of false contexts: 0
+
+hip --eps
+
+error at: conchip/deadpool.ss forkHelper
+Total number of errors: 1 in files:
+ error at: conchip/deadpool.ss forkHelper
+.
+Total verification time: 452.68 second
+	Time spent in main process: 409.64 second
+	Time spent in child processes: 43.04 second
+	Number of false contexts: 427
+
+====================================================================
+./run-fast-tests.pl imm -flags "--eps"
+
+Total number of errors: 2 in files:
+ error at: bigint_imm.ss mult2
+error at: bigint-tight-imm.ss mult
+.
+Total verification time: 756.47 second
+	Time spent in main process: 320.22 second
+	Time spent in child processes: 436.25 second
+	Number of false contexts: 63
+====================================================================
+./run-fast-tests.pl hip -flags "--eps"
+
+minimise wrong false_flow
+
+Total number of errors: 3 in files:
+ error at: conchip/latch-exp2.ss main
+ error at: conchip/latch-exp2.ss thread1
+ error at: conchip/deadpool.ss forkHelper
+
+# conchip/latch-exp2.ss main
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of Object
+ Stop Omega... 0 invocations caught
+
+The exception is raised in exc.ml. It seems to
+be looking for "Object" inside exc hierarchy.
+Can you check if there is a problem with hip
+or the example itself.
+                
+We are in "post" branch.
+                
+                let rec get (lst:(string*string*nflow)list):nflow = match
+lst with
+                  | [] -> report_error no_pos ("Can not find flow of " ^
+f) (* false_flow_int *)
+                  | (a,_,(b,c))::rst -> if (String.compare f a)==0 then
+
+====================================================================
+After merge with svcomp14
+=========================
+
+./rfp sleek
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  label-dll.slk({E1#Fail}) fracperm/split-combine.slk({E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+./rfp sleek --eps
+
+very slow with below, loop?
+
+Checking fracperm/split-combine.slk (runs with extra options: --en-para -perm fperm -tp redlog)
+
+
+Total number of errors: 2 in files:
+  label-dll.slk({E1#Fail}) fracperm/split-combine.slk({E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+====================================================================
+
+Long's fix:
+===========
+The first bad revision is:
+changeset:   13939:6b0965ce8783
+parent:      13935:728c8c5e49f9
+user:        longph
+date:        Tue Dec 30 15:24:07 2014 +0800
+summary:     m
+
+Why did under affected so many examples? Did it affect
+unsat checking?
+
+Total number of errors: 19 in files:
+  label-dll.slk({E4#Valid}) sleek10.slk({E1#Valid}) sleek9.slk({E3#Valid},{E4#Valid}) baga-test-eps.slk({E10#Valid},{E6#Valid},{E7#Valid}) baga-test.slk({E10#Valid},{E15#Valid},{E6#Valid},{E7#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid},{E7#Valid}) baga-test-2.slk({E10#Valid},{E15#Valid},{E6#Valid},{E7#Valid}) infer/app-inv.slk({E2#Valid},{E4#Valid},{E5#Valid},{E6#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid},{E8#Valid}) infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid},{E9#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm-field/sleek05.slk({E1#Valid}) infinity.slk({E75#Valid},{E76#Valid}) lemmas/app-tail.slk({E1#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 52.55 second
+	Time spent in main process: 39.23 second
+	Time spent in child processes: 13.32 second
+	Number of false contexts: 0
+
+=====================
+undoing Long's fix:
+
+        | _ -> if (CP.is_False baga_under_formula) then false (* true *) else not (check_under 3 baga_under_formula (fst (List.split vdef.view_un_struc_formula)))
+
+Total number of errors: 2 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 80.89 second
+	Time spent in main process: 53.71 second
+	Time spent in child processes: 27.18 second
+====================================================================
+# rft sleek
+
+must fix loop when redlog absent error.
+
+# before merging with default
+
+Total number of errors: 5 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  fracperm/split_simple.slk(no result  for {E}) 
+  vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+     ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+     ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+     ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+
+# after merging with default
+
+Starting hip-sleek tests:
+Total number of errors: 9 in files:
+  infer/infer2.slk({E3#Valid},{E7#Valid},{E8#Valid}) infer/infer5a.slk({E2#Valid}) infer/infer8.slk({E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+
+infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) 
+
+fracperm/split_simple.slk(no result  for {E}) vperm/vperm.slk({E10#Valid},{E11#Valid},{E2#Valid},{E4#Valid},{E5#Valid},{E9#Valid}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+# errors at default
+
+Total number of errors: 6 in files:
+  infer/infer2.slk({E3#Valid},{E7#Valid},{E8#Valid}) infer/infer5a.slk({E2#Valid}) infer/infer8.slk({E30#Valid}) infer/infer9.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+
+infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+
+====================================================================
+# hip --eps
+
+Total number of errors: 52 in files:
+ error at: bubble.ss id2
+error at: bubble.ss id3
+error at: bubble.ss bubble
+error at: bubble.ss bsort
+error at: vperm/vperm_check.ss inc
+error at: vperm/vperm_check.ss incCell
+error at: vperm/vperm_check.ss test1
+error at: vperm/vperm_check.ss test2
+error at: vperm/vperm_check.ss test3
+error at: vperm/vperm_check.ss test4
+error at: vperm/task_decompose.ss inc
+error at: vperm/task_decompose.ss creator
+error at: parahip/cell.ss test
+error at: parahip/cell.ss test1
+error at: parahip/cell-extreme-cases.ss test
+error at: parahip/cell-extreme-cases.ss test2
+error at: parahip/cell-extreme-cases.ss test3
+error at: parahip/cell-extreme-cases.ss test4
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss func
+error at: parahip/unordered-locking.ss main
+error at: veribsync/hip-bperm1.ss updateCell
+error at: veribsync/barrier-static-consistency.ss participant
+error at: veribsync/barrier-static-consistency.ss participant1
+error at: veribsync/barrier-dynamic-exp3.ss thread1
+error at: veribsync/barrier-dynamic-exp3.ss thread2
+error at: veribsync/barrier-dynamic-exp3.ss thread3
+error at: veribsync/barrier-dynamic-exp4.ss childthread1
+error at: veribsync/barrier-dynamic-exp4.ss childthread2
+error at: veribsync/barrier-dynamic-exp4.ss thread1
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.====================================================================
+run-fast-test thread_hip
+
+Starting sleek-hip_threads tests:
+Starting hip tests:
+Checking threads/motiv-example.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/motiv-example2.ss (runs with extra options: --en-para --en-thrd-resource -tp redlog)
+Checking threads/no-deadlock-nonlexical2.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical2.ss main
+error at: threads/no-deadlock-nonlexical2.ss thread1
+error at: threads/no-deadlock-nonlexical2.ss thread2
+Checking threads/no-deadlock-nonlexical.ss (runs with extra options: --en-para --en-thrd-resource -tp parahip --en-lsmu-infer)
+error at: threads/no-deadlock-nonlexical.ss main
+error at: threads/no-deadlock-nonlexical.ss thread1
+error at: threads/no-deadlock-nonlexical.ss thread2
+Checking threads/forkjoin.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/forkjoin.ss func
+error at: threads/forkjoin.ss main
+Checking threads/cell4.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/cell4.ss inc
+error at: threads/cell4.ss main
+Checking threads/ls-bind.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/ls-bind.ss func
+error at: threads/ls-bind.ss main
+Checking threads/no-deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock1.ss func
+error at: threads/no-deadlock1.ss main
+Checking threads/no-deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock2.ss func
+error at: threads/no-deadlock2.ss main
+Checking threads/no-deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/no-deadlock3.ss func
+error at: threads/no-deadlock3.ss main
+Checking threads/deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock1.ss func
+error at: threads/deadlock1.ss main
+Checking threads/deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock2.ss func
+error at: threads/deadlock2.ss main
+Checking threads/deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/deadlock3.ss func
+error at: threads/deadlock3.ss main
+Checking threads/disj-no-deadlock1.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock1.ss func
+error at: threads/disj-no-deadlock1.ss main
+Checking threads/disj-no-deadlock2.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock2.ss func
+error at: threads/disj-no-deadlock2.ss main
+Checking threads/disj-no-deadlock3.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-no-deadlock3.ss func
+error at: threads/disj-no-deadlock3.ss main
+Checking threads/disj-deadlock.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/disj-deadlock.ss func
+error at: threads/disj-deadlock.ss main
+Checking threads/ordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/ordered-locking.ss func
+error at: threads/ordered-locking.ss main
+Checking threads/unordered-locking.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/unordered-locking.ss func
+error at: threads/unordered-locking.ss main
+Checking threads/oracle.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/oracle.ss thread
+error at: threads/oracle.ss main
+Checking threads/owicki-gries.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/owicki-gries.ss incrementor2
+error at: threads/owicki-gries.ss incrementor1
+error at: threads/owicki-gries.ss main
+Checking threads/fibonacci.ss (runs with extra options: --en-para -tp parahip --en-lsmu-infer --en-thrd-resource)
+error at: threads/fibonacci.ss seq_fib
+error at: threads/fibonacci.ss para_fib
+Total number of errors: 43 in files:
+
+				["threads/motiv-example.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/motiv-example2.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical2.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "inc","SUCCESS",
+                                "main","SUCCESS"
+
+to fix : ex40-44 for threadhip
+====================================================================
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) fracperm/split_simple.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+====================================================================
+--inv-baga
+
+Total number of errors: 20 in files:
+  label-basic.slk({E3#Valid}) lst-under1.slk({I2#Fail}) lst-under2.slk({I1#Fail}) ll-under1c.slk({I2#Fail}) ll-under1e.slk({I1#Fail},{I2#Fail}) ll-under1f.slk({I2#Fail}) baga-test-eps.slk({E10#Valid},{E6#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid}) infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm-field/sleek05.slk({E1#Valid}) inf-no-eps.slk(no result  for {E}) infinity.slk(no result  for {E}) inflem.slk({E1#Fail},{E2#Valid}).
+
+Total number of errors: 19 in files:
+  label-basic.slk({E3#Valid}) lst-under1.slk({I2#Fail}) lst-under2.slk({I1#Fail}) ll-under1c.slk({I2#Fail}) ll-under1e.slk({I1#Fail},{I2#Fail}) ll-under1f.slk({I2#Fail}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid}) infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm-field/sleek05.slk({E1#Valid}) inf-no-eps.slk(no result  for {E}) infinity.slk(no result  for {E}) inflem.slk({E1#Fail},{E2#Valid}).
+====================================================================
+# rft sleek
+
+Total number of errors: 3 in files:
+  label-basic.slk({E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+
+How come label-basic is failing?
+in default, it was still working.
+Two other problems for --inv-baga are below.
+
+# rft sleek -flags "--inv-baga"
+
+Total number of errors: 5 in files:
+  label-basic.slk({E3#Valid}) baga-test-2.slk({E10#Valid},{E6#Valid}) infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) inflem.slk({E1#Fail},{E2#Valid}).
+====================================================================
+../../sleek sleek/fracperm/split_simple.slk --en-para -perm fperm -tp redlog
+To fix : nested timer timeout problem.
+
+Also, below for loris23:
+
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+smtsolver.ml:      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
 ====================================================================
 ====================================================================
 ====================================================================

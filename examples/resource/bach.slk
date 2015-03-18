@@ -4,7 +4,8 @@ pred_prim R<low:int, high:int>
 pred_prim R2<low:int>
  inv low>=0 .
 
-lemma "R split" self::R<a,b> & b>=q & a-p<=b-q & q>=0 <-> self::R<p,q> * self::R<a-p,b-q> .
+lemma "R split" self::R<a,b> & b>=q & a-p<=b-q & q>=0 
+        <-> self::R<p,q> * self::R<a-p,b-q> .
 
 //1
 checkentail x::R<_,_> * y::R2<_> & x!=y |- false .

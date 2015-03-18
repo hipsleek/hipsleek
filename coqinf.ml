@@ -1,6 +1,8 @@
 open Cpure
 open Globals
 open Gen
+open VarGen
+
 (*module type SV_TYPE =
 sig
   type t

@@ -1,0 +1,43 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+/*
+
+  is_touching?: true
+  is_segmented?: true
+
+  forward_ptr: [self,out]
+  forward_field: [node2.next]
+  backward_ptr: [last,pr]
+  backward_field: [node2.prev]
+  aux(self,pr,last,out,node2.next,node2.prev) :- true
+
+*/
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
+
+
+/*
+ -> possibly touching
+ -> node.next2,lsso.p  (forward)
+ -> aux(v@node.next1,u@node.next2) = v=u
+
+  is_touching?: true
+  is_segmented?: true
+
+  forward_ptr: [self,out]
+  forward_field: [node2.next]
+  backward_ptr: []
+  backward_field: []
+  aux(self,out,node2.prev,node2.next) :- node2.prev=node2.next
+
+*/
+pred lsso<out> == self = out
+     or (exists u: self::node2<v,u> * u::lsso<out> 
+           & v=u).
+
+

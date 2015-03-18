@@ -1,0 +1,30 @@
+Starting Omega...oc
+H_9 is defined.
+H_7 is defined.
+H_0 is defined.
+H_8 is defined.
+H1 is defined.
+H2 is defined.
+H_5 is defined.
+G2 is defined.
+G1 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [prev_4=prv]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 18
+SAT % Hit   : 66.66%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.003254 (seconds)
+
+!!! log(small):(0.008804,19)
+Total verification time: 0.076184 second(s)
+	Time spent in main process: 0.062296 second(s)
+	Time spent in child processes: 0.013888 second(s)
+

@@ -1,0 +1,71 @@
+
+!!!Full processing file "errors/ll-next.ss"
+Parsing file "errors/ll-next.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_next$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x)&x!=null --> x::node<val1,next1> * HP_1247(next1)&
+true(3,4),
+ // POST
+(1;0)H(x)&res=null & x=null --> G(x,res)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,res> * HP_1247(res)&true --> G(x,res)&
+true(3,4)]
+
+Procedure get_next$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node<val,next> * HP_1247(next)],
+ G(x2,res1) ::=  [emp&x2=null & res1=null; x2::node<val,res1> * HP_1247(res1)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<val,next> * HP_1247(next)
+ or emp&x1=null
+ (3,4),
+ G(x2,res1) ::= 
+ x2::node<val,res1> * HP_1247(res1)
+ or emp&x2=null & res1=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | (self=null & res1=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self>0 | (self=null & res1=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null & res_1273=null),
+([self], true)])
+Checking procedure test$node... 
+Procedure test$node SUCCESS.
+Stop Omega... 12 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.046171,268)
+Total verification time: 0.319882 second(s)
+	Time spent in main process: 0.299944 second(s)
+	Time spent in child processes: 0.019938 second(s)
+

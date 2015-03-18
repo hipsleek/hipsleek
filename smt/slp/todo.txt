@@ -1,0 +1,86 @@
+# ext-2.slk
+
+ent1 is split to ent1a and ent1b
+ent1b needs lemma "ls1" to be inferred for succ but
+ent1a runs very slow when the lemma exists.
+
+HOW to balance?
+
+dynamic lemma synthesis vs. static lemma:
+ - May be synthesizing lemma on-the-fly merits here.
+
+===============================================================
+// 10-08. todo: conseq is nomalized twice??
+
+===============================================================
+// 10-10
+
+detect loop of lseg in rhs => emps
+
+===============================================================
+
+classic:
+smallfoot-vc72.tptp.smt2: OK
+
+smallfoot-vc73.tptp.smt2: OK
+
+
+ls-vc04.smt2: bug
+
+null
+smallfoot-vc41.tptp.smt2:
+smallfoot-vc42.tptp.smt2:
+20.tst.smt2.slk: OK
+22.tst.smt2.slk
+
+===============================================================
+Total number of unexpected results: 16 in files:
+ latest/UDB_entl/dll-vc04.smt2 : OK
+ latest/FDB_entl/dll-vc04.smt2: OK
+ latest/UDB_entl/nll-vc03.smt2: OK
+ latest/FDB_entl/nll-vc03.smt2: OK
+ latest/UDB_entl/nll-vc08.smt2: OK
+ latest/FDB_entl/nll-vc08.smt2: OK
+ latest/UDB_entl/nll-vc10.smt2: OK
+ latest/FDB_entl/nll-vc10.smt2: OK
+ latest/UDB_entl/odd-lseg3_slk-5.smt2 : OK
+ latest/UDB_entl/skl3-vc02.smt2: OK
+ latest/FDB_entl/skl3-vc02.smt2: OK
+ latest/UDB_entl/07.tst.smt2: OK
+ latest/UDB_entl/13.tst.smt2: OK
+ latest/UDB_entl/14.tst.smt2: OK
+ latest/UDB_entl/17.tst.smt2 OK(need_cycle_checkpoint.is_out_of_scope)
+ latest/UDB_entl/18.tst.smt2: OK
+
+
+Total number of unsound results: 4 in files:
+ latest/UDB_entl/dll-vc04.smt2: OK
+ latest/FDB_entl/dll-vc04.smt2: OK
+ 
+
+Total number of timeout files: 8 in:
+ latest/UDB_entl/dll-vc05.smt2
+ latest/FDB_entl/dll-vc05.smt2
+ latest/UDB_entl/dll-vc06.smt2
+ latest/FDB_entl/dll-vc06.smt2
+ latest/UDB_entl/dll-vc12.smt2
+ latest/FDB_entl/dll-vc12.smt2
+ latest/sll0a_entl/clones-01-e08.tptp.smt2
+ latest/sll0a_entl/smallfoot-vc37.tptp.smt2
+
+ latest/UDB_entl/nll-vc04.smt2
+ latest/FDB_entl/nll-vc04.smt2
+
+
+Total number of unknown results: 6 in files:
+ latest/UDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc11.smt2
+ latest/FDB_entl/dll-vc11.smt2
+ latest/UDB_entl/dll-vc13.smt2
+ latest/FDB_entl/dll-vc13.smt2
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================

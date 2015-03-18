@@ -1,0 +1,17 @@
+// (declare-fun ll ((?self node))
+//   Space (tospace (or (= ?self nil)
+//     (exists ((?x node)) (tobool (ssep
+//        (pto ?self (ref next ?x))
+//        (ll ?x))
+// )))))
+
+data node1 {
+     node1 next;
+     node1 prev;
+}.
+
+pred dll<p> ==
+     self = null
+     or (exists q: self::node1<p,q> * q::dll<self>).
+
+checkentail x::node1<null,null> |- x::dll<null>.

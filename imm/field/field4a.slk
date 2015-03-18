@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+
+//OK
+checkentail x::node<3,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
+print residue.
+expect Valid.
+
+checkentail x::node<3,q> * q::ll<n>  
+   |- x::node<a,_>@A *x::node<b,_> & b>2.
+
+
+/*
+#field4.slk
+
+Why did these two examples
+fail with @A at RHS?
+
+Residue:
+{ }
+Validate 1: Expecting Valid BUT got : Fail_May
+
+
+*/

@@ -1,0 +1,9 @@
+
+!!!Full processing file "hip/ex4-par-simple.ss"
+Parsing file "hip/ex4-par-simple.ss" by default parser...
+File "hip/ex4-par-simple.ss", line 51, characters 2-3
+ --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ at:caught
+
+Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+Error3(s) detected at main 

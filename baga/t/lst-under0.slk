@@ -1,0 +1,45 @@
+data node {
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<q> * q::ll<n-1>
+  //inv_sat BG([],self=null&n=0) | BG([self],n=1) | BG([self],n=2) | BG([self],n=4)
+  /* inv_exact BG([],self=null & n=0) | BG([self],n>0) */
+  //inv_sat BG([],self=null & n=0) | BG([self],n>0)
+  inv n>=0
+  //inv_sat BG([],self=null ) 
+  //inv_sat BG([],self=null & n=0) 
+  inv_sat BG([],self=null & n=0) | BG([self],n>0)
+  .
+
+checksat x::ll<n> & n=0.
+// no output?
+// Entail SAT.
+
+checksat x::ll<n> & n<0.
+// no output?
+// Entail UNSAT.
+
+checksat x::ll<n> & n>3.
+// no output?
+// Entail UNKNOWN.
+
+checkentail x::ll<n> & n=0 |- false.
+
+checkentail x::ll<n> & n<0 |- false.
+
+checkentail x::ll<n> & n>3 |- false.
+
+checkentail x::ll<n> & n>0 |- x!=null.
+
+checkentail x::ll<n> & n>4 |- x!=null.
+
+checkentail x::ll<n> & n>4 |- x=null.
+
+/*
+# lst-under1.slk --inv-test
+
+Valid.(Over)
+Failure.(Under)
+*/

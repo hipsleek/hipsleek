@@ -1,0 +1,75 @@
+
+!!!Full processing file "errors/dll-insert1.ss"
+Parsing file "errors/dll-insert1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(x,v_node2_28_1227)]
+Checking procedure insert$node2~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x)&true --> x::node2<val1,prev1,next1> * HP_1256(prev1) * 
+HP_1257(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1257(next1)&next1!=null --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)HP_1256(prev1) * HP_1257(next1) * v1::node2<a',x,v2> * 
+x::node2<val1,prev1,v1>&v2=null & next1=null --> G1(x)&
+true(3,4),
+ // POST
+(2;0)x::node2<val1,prev1,next1> * HP_1256(prev1) * G1(next1)&
+next1!=null --> G1(x)&
+true(3,4)]
+
+Procedure insert$node2~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [x1::node2<val,DP,next> * HP_1257(next)&x1!=null],
+ G1(x2) ::=  [x2::node2<val,DP,v1> * v1::node2<a',x2,v>&v=null; x2::node2<val,DP,v1> * 
+G1(v1)&v1!=null],
+ HP_1257(next2) ::=  [emp&next2=null; next2::node2<val,DP,next> * HP_1257(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= x1::node2<val,DP,next> * HP_1257(next)&x1!=null(3,4),
+ G1(x2) ::= 
+ x2::node2<val,DP,v1> * G1(v1)&v1!=null
+ or x2::node2<val,DP,v1> * v1::node2<a',x2,v>&v=null
+ (3,4),
+ HP_1257(next2) ::= 
+ next2::node2<val,DP,next> * HP_1257(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.045848,294)
+Total verification time: 0.332789 second(s)
+	Time spent in main process: 0.316965 second(s)
+	Time spent in child processes: 0.015824 second(s)
+

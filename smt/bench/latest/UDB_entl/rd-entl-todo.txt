@@ -1,0 +1,454 @@
+
+1. parser:
+2. adding expect (from cyclic):
+3. sleek run
+  - date:
+  - date:
+
+=========================================
+01-22.tst.smt2: lemma synthesis
+
+01.tst.smt2:
+
+/*
+lemma_unsafe  self::GTyp<f0 = y,f1 = _> * y::RList<z>
+         -> self::RList<z>.
+*/
+
+=========================================
+02.tst.smt2:
+
+lemma_unsafe  self::RList<y> * y::RList<z>
+         -> self::RList<z>.
+
+=========================================
+03.tst.smt2:
+
+lemma_unsafe  self::List<y> * y::GTyp<f0 = z,f1 = _> -> self::List<z>.
+
+
+=========================================
+04.tst.smt2:
+
+lemma_unsafe  self::List<y> * y::List<z>
+         -> self::List<z>.
+
+=========================================
+05.tst.smt2: (~ 03.)
+
+OK with lem-en-syn
+
+lemma_unsafe  self::PeList<y> * y::GTyp<f0 = z,f1 = _> -> self::PeList<z>.
+
+
+=========================================
+06.tst.smt2: (~ 04.)
+
+OK with lem-en-syn
+
+=========================================
+07.tst.smt2: 
+
+lemma_unsafe  self::DLL<y,z,w> |- self::SLL<y>.
+
+OK with lem-en-syn
+
+=========================================
+08.tst.smt2: ~07, but the preds are in reverse order
+
+
+loop with lem-en-syn
+
+=========================================
+09.tst.smt2: ~ 04.06, but for dll OK
+
+
+=========================================
+10.tst.smt2: mutual rec:
+OK: --lem-en-syn
+ listo and liste
+
+
+=========================================
+11.tst.smt2:
+
+ (loop with --lem-en-syn)
+
+ listo and liste
+
+
+
+=========================================
+12.tst.smt2:
+
+OK: --lem-en-syn
+ listo and liste
+
+=========================================
+13.tst.smt2:
+
+List -> Tree
+
+OK: --lem-en-syn
+
+
+=========================================
+14.tst.smt2:
+
+List -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+15.tst.smt2:
+
+Concat (Tree * Tree) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+16.tst.smt2:
+
+
+loop wit h--lem-en-syn
+
+=========================================
+17.tst.smt2:
+
+Concat (TreeSeg * TreeSeg) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+18.tst.smt2:
+
+Concat (TreeSeg * TreeSeg) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+19.tst.smt2: OK
+
+=========================================
+20.tst.smt2:
+
+fix bug: --lem-en-syn
+
+=========================================
+21.tst.smt2:
+
+(loop with --lem-en-syn)
+
+=========================================
+22.tst.smt2:
+
+lemma_unsafe self::ls<p> * p::GTyp<f0 = z,f1 = _> -> self::ls<z>.
+
+
+=========================================
+parser:
+
+22.tst.smt2: FIXED (by Mihaela)
+syntax error on line 56
+Fatal error: exception Parsing.Parse_error
+
+(assert (tobool (ssep
+        (ls x y)
+	(pto y (ref f0 z))
+        (ls z nil)
+))))
+   ^^^
+should remove the last )
+============
+dll2.smt2: REMOVED
+: lexing error on line 1")lure("
+
+ (by Mihaela)
+Indeed, this is a slide benchmark that should not be there ... I'll remove it.
+
+=========================================
+add expectation: (Chanh): DONE
+
+   - append_dll*
+   - append_sll*
+   - lsegx4*
+   - elseg
+   - odd*
+
+=========================================
+sleek run: 03 Jun
+
+entl 
+1-22.tst.smt2.slk: wrong
+
+todo:
+ gen-lem (Trung)
+
+======================================================================
+# dll2-entails-dll-rev.smt2.lsk: wrong
+
+
+
+======================================================================
+# dll2-entails-dll0+.smt2.slk: wrong
+
+
+======================================================================
+#dll-rev-entails-dll2.smt2.slk:
+
+todo: 
+
+======================================================================
+#dll-entails-dll0+.smt2.slk:
+
+todo: gen lemma:
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+           self::DLL<p,tl,tl> * tl::DLL_t<next = n,prev = self>.
+
+- pred-en-split
+
+======================================================================
+# dll-entails-dll-rev.smt2.slk :
+
+todo: need to gen lemma:
+lemma_unsafe self::DLL_plus<p,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+======================================================================
+#dll-entails-node-dll-rev.smt2.slk
+
+todo:  need to gen lemma:
+
+lemma_unsafe  self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+            self::DLL_plus_rev<p,tl1,n1> * n1::DLL_plus<tl1,tl,n>.
+
+======================================================================
+#dll-entails-node-node-dll.smt2.slk
+
+1. syntactically subst
+     self::points_to<b:DLL_t,c:DLL_t> <-> self::DLL_t<c,b>.
+  - view defs:
+  - ante + conseq
+2. fix bug (Trung)
+   checkentail x::DLL_plus<null,c,null>
+         |- (exists y,a: x::DLL_t<null,y> * y::DLL_t<x,a> * a::DLL_plus<y,c,null>).
+should valid
+
+======================================================================
+#dll-mid-entails-dll-rev.smt2.slk
+
+1. syntactically subst
+     self::points_to<b:DLL_t,c:DLL_t> <-> self::DLL_t<c,b>.
+  - view defs:
+  - ante + conseq
+
+2. fix bug
+  checkentail x::DLL_t<next = tl,prev = null> * tl::DLL_t<self,null>
+   |- x::DLL_plus_rev<null,y,null>.
+should be valid
+
+3. gen lemma
+ lemma_unsafe self::DLL_plus_rev<p,tl1,n1>*n1::DLL_plus<tl1,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+
+======================================================================
+#dll-rev-entails-dll-mid.smt2.slk
+
+correlate to #dll-mid-entails-dll-rev.smt2.slk
+
+======================================================================
+#dll-rev-entails-dll.smt2.slk
+
+correlate to #dll-entails-node-dll-rev.smt2.slk
+
+todo: need to gen lemma:
+lemma_unsafe self::DLL_plus<p,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+
+======================================================================
+#dll-spaghetti-existential.smt2.slk
+
+ - matching quantifiers of rhs with heap lhs
+
+======================================================================
+#dll-spaghetti.smt2.slk
+
+todo:
+ - gen lemma/ statically subst DLL_plus_rev/DLL_plus
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+           self::DLL_plus_rev<p,tl,n>.
+ - graph matching
+
+
+======================================================================
+#dll2-spaghetti-existential.smt2.slk 
+
+
+======================================================================
+#dll2-spaghetti.smt2.slk
+
+
+======================================================================
+#dll-vc01.smt2.slk: OK
+
+#dll-vc02.smt2.slk: OK
+
+#dll-vc03.smt2.slk: OK
+
+#dll-vc04.smt2.slk: OK
+
+#dll-vc05.smt2.slk: OK
+
+#dll-vc06.smt2.slk: OK
+
+#dll-vc07.smt2.slk: OK
+
+#dll-vc08.smt2.slk:
+
+todo: gen lemma
+lemma_unsafe self::dll<n1,p,n1> * n1::Dll_t<n,self> <-> self::dll<n1,p,n>.
+
+#dll-vc09.smt2.slk: OK
+
+#dll-vc10.smt2.slk
+todo: gen lemma
+lemma_unsafe self::dll<n1,p,n1> * n1::Dll_t<n,self> <-> self::dll<n1,p,n>.
+
+
+#dll-vc11.smt2.slk: OK
+
+#dll-vc12.smt2.slk: OK
+
+#dll-vc13.smt2.slk: OK
+
+
+======================================================================
+#lss-vc01.smt2.slk: OK
+
+#lss-vc02.smt2.slk: OK
+
+#lss-vc03.smt2.slk: OK
+
+
+
+======================================================================
+#node-dll-rev-dll-entails-dll.smt2.slk
+
+relate to #dll-entails-node-dll-rev.smt2.slk
+
+gen lemma:
+lemma_unsafe  self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+            self::DLL_plus_rev<p,tl1,n1> * n1::DLL_plus<tl1,tl,n>.
+
+======================================================================
+#node-node-dll-entails-dll.smt2.slk: OK
+
+
+======================================================================
+#node-tll-tll-entails-tll.smt2.slk
+
+
+
+======================================================================
+#tll-entails-node-tll-tll.smt2.slk
+
+
+======================================================================
+#tll-pp-entails-tll-pp-rev.smt2.slk
+
+
+======================================================================
+#tll-pp-rev-entails-tll-pp.smt2.slk
+
+
+======================================================================
+#tll-ravioli-existential.smt2.slk
+
+
+graph
+======================================================================
+#tll-ravioli.smt2.slk
+
+
+graph
+======================================================================
+#tll_slk-1.smt2.slk: OK
+
+#tll_slk-2.smt2.slk: OK
+
+#tll_slk-3.smt2.slk: OK
+
+#tll_slk-4.smt2.slk: OK
+
+#tll_slk-5.smt2.slk : OK
+
+#tll_slk-6.smt2.slk: OK
+
+#tll_slk-7.smt2.slk : OK
+
+#tll_slk-8.smt2.slk: OK
+
+#tll_slk-9.smt2.slk : OK
+
+#tll_slk-10.smt2.slk : OK
+
+#tll_slk-11.smt2.slk : OK
+
+#tll_slk-12.smt2.slk : OK
+
+ #tll_slk-13.smt2.slk: OK
+
+todo: FIXED
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+
+======================================================================
+#tree-pp-entails-tree-pp-rev.smt2.slk
+
+todo: lemma?
+
+
+======================================================================
+#tree-pp-rev-entails-tree-pp.smt2.slk
+
+todo: lemma?
+
+======================================================================
+#nlcl-vc01.smt2: FAIL
+
+
+======================================================================
+#nlcl-vc02.smt2: FAIL
+
+======================================================================
+#nlcl-vc03.smt2:
+
+======================================================================
+#nlcl-vc04.smt2: FAIL
+
+
+======================================================================
+#nlcl-vc05.smt2:
+
+todo: (Long) check with those files in nlcl0a
+
+---------------
+nll-vc01.smt2.slk --> nll-vc16.smt2.slk
+
+todo: (Long) check with those files in nll
+
+--------------
+skl2-vc01.smt2.slk --> skl2-vc04.smt2.slk
+skl3-vc01.smt2.slk --> skl3-vc10.smt2.slk
+
+todo: (Long) check with those files in skl3
+
+======================================================================
+======================================================================
+=========================================
+=========================================
+=========================================
+=========================================
+=========================================
+=========================================
+=========================================

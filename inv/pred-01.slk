@@ -1,0 +1,11 @@
+data node {
+     node next;
+}.
+
+pred ll<> ==
+     self = null
+     or (exists x: self::node<x> * x::ll<>).
+
+// expect: true
+
+checkentail true |- true.

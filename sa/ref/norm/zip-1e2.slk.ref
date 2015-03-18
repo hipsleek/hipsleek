@@ -1,0 +1,52 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Entailing lemma one2: Valid.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ P1(self1) ::= 
+ self1::node<_,p> * p::zipNM<q>
+ or emp&self1=null
+ (3,4),
+ P2(y1) ::= 
+ y1::node<_,q1>
+ or emp&y1=null
+ (3,4)]
+*************************************
+
+!!! fixpoint:[]
+ <1>
+    emp&y=null & self2=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&self2=null --> P1(self2)&true(3,4); 
+                  emp&y=null --> P2(y)&true(3,4); 
+                  self2::node<_,p> * p::zipNM<q>&true --> P1(self2)&true(3,4); 
+                  y::node<_,q1>&true --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 21 invocations 
+SAT Count   : 90
+SAT % Hit   : 71.11%
+IMPLY Count : 11
+IMPLY % Hit : 36.36%
+Time(cache overhead) : 0.006068 (seconds)
+
+!!! log(small):(0.043935,128)
+Total verification time: 0.116511 second(s)
+	Time spent in main process: 0.084657 second(s)
+	Time spent in child processes: 0.031854 second(s)
+

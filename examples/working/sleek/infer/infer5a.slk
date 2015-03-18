@@ -1,0 +1,38 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+//(3)
+infer [x,y] b::node<2222,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+expect Fail.
+// TODO : "b" part of the inferred?
+// --baga-xpure (1) why is inf_b_91=1 inferred?
+//         this seems to be due to baga enuemration
+// --dis-baga-xpure (2) why this fail? (OK tro fail)
+
+
+infer [x,y,b] b::node<2222,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+expect Valid.
+
+/*
+# infer5.slk
+
+ <1>emp&flted_22_60=1 & Anon_16=flted_22_60 & Anon_15=inf_Anon_90 & Anon_17=inf_Anon_94 & inf_b_91=1 & inf_flted_22_95=Cnull&{FLOW,(21,22)=__norm}[]
+ inferred heap: [y::node<inf_Anon_94,inf_flted_22_95>; 
+                 x::node<inf_Anon_90,inf_b_91>]
+ inferred pure: [inf_flted_22_95=Cnull; inf_b_91=1]
+
+
+Inferred Heap:[ x::node<inf_Anon_74,inf_b_75>[Orig], 
+               y::node<inf_Anon_78,inf_flted_20_79>[Orig]]
+Inferred Pure:[ inf_b_75=b & inf_flted_20_79=null]
+*/
+

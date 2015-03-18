@@ -1,0 +1,46 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail 1: Fail.(must) cause:base case unfold failed
+
+ <1>x::ll{}<>&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  BaseCaseUnfold ==> ]]
+
+
+Entail 2: Fail.(must) cause:base case unfold failed
+
+ <1>x::ll1{}<>&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  BaseCaseUnfold ==> ]]
+
+
+Entail 3: Fail.(must) cause:base case unfold failed
+
+
+Entail 4: Fail.(must) cause:base case unfold failed
+
+ <1>x::ll2{}<>&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  BaseCaseUnfold ==> ]]
+
+Stop Omega... 13 invocations 
+SAT Count   : 81
+SAT % Hit   : 91.35%
+IMPLY Count : 6
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.002455 (seconds)
+
+!!! log(small):(0.017554,101)
+Total verification time: 0.077995 second(s)
+	Time spent in main process: 0.058245 second(s)
+	Time spent in child processes: 0.01975 second(s)
+

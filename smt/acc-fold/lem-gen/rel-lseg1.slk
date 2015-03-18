@@ -1,0 +1,55 @@
+data node {
+     node next;
+}.
+
+pred SLL<p:node> ==
+ self = p
+or (exists x: self::node<x> * x::SLL<p>).
+
+lemma_unsafe  self::node<x1> * x1::SLL<p:node> 
+          <-> (exists x: self::SLL<x>*x::node<p>).
+
+/*
+# rel-lseg1.slk
+
+1. Why reverse direction cannot be proven?
+2. Can we print <==
+
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "==>" implication: : Fail. (may) cause: OrR[ x_230::node<p_229>&p_227=x_230 & p_229=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),valid]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+*/
+
+checkentail_exact 
+      self::node<x1> * x1::SLL<p:node> 
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+
+checkentail_exact 
+      self::node<p>
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+
+checkentail_exact 
+      self::node<x1> * x1::node<u>*u::SLL<p:node> 
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+checkentail_exact 
+      (exists x: self::SLL<x>*x::node<p>)
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+ .
+
+
+checkentail_exact 
+      x::node<p> & self=x
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+ .
+
+
+checkentail_exact 
+      (exists x: self::node<q>*q::SLL<x>*x::node<p>)
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+.

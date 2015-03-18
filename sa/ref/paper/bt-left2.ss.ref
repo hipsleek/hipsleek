@@ -1,0 +1,80 @@
+
+!!!Full processing file "paper/bt-left2.ss"
+Parsing file "paper/bt-left2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure count$node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(z)&true
+ ensures G1(z)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;2;0)H1(z)&z!=null --> z::node2<val2,left2,right2> * HP_1258(left2) * 
+HP_1259(right2)&
+true(3,4),
+ // BIND
+(2;2;0)H1(z)&z!=null --> z::node2<val1,left1,right1> * HP_1267(left1) * 
+HP_1268(right1)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1258(cleft1')&true --> H1(cleft1')&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1268(cleft1')&true --> H1(cleft1')&
+true(3,4),
+ // POST
+(1;0)H1(z)&z=null --> G1(z)&
+true(3,4),
+ // POST
+(1;2;0)z::node2<val2,left2,right2> * G1(left2) * HP_1259(right2)&
+true --> G1(z)&
+true(3,4),
+ // POST
+(2;2;0)z::node2<val1,left1,right1> * HP_1267(left1) * G1(right1)&
+true --> G1(z)&
+true(3,4)]
+
+Procedure count$node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(z1) ::=  [emp&z1=null; z1::node2<val3,DP,right3> * H1(right3)],
+ G1(z2) ::=  [emp&z2=null; z2::node2<val1,DP,right1> * G1(right1)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(z1) ::= 
+ z1::node2<val3,DP,right3> * H1(right3)
+ or emp&z1=null
+ (3,4),
+ G1(z2) ::= 
+ z2::node2<val1,DP,right1> * G1(right1)
+ or emp&z2=null
+ (3,4)]
+*************************************
+Stop Omega... 11 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.06346,352)
+Total verification time: 0.362451 second(s)
+	Time spent in main process: 0.345274 second(s)
+	Time spent in child processes: 0.017177 second(s)
+

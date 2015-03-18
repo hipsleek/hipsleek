@@ -1,4 +1,6 @@
+#include "xdebug.cppo"
 open Globals
+open VarGen
 open Gen
 
 module CP = Cpure
@@ -107,7 +109,7 @@ let merge_ieq_ieq f1 f2  =  (* merge_other f1 f2 *)
                   else merge_other f1 f2
               (* v1<v2 | v3<i4 *)
             | (CP.Lt ( (CP.Var(v1,_) as var1), (CP.Var(v2,_) as var2), _), _), (CP.Lt (CP.Var(v3,_),CP.Var(v4,_), _), _) ->
-                  if (CP.eq_spec_var v1 v4) & (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))] (* a<b | b<a *)
+                  if (CP.eq_spec_var v1 v4) && (CP.eq_spec_var v2 v3) then merged [(CP.BForm((CP.mkNeq var1 var2 no_pos, None), None))] (* a<b | b<a *)
                   else merge_other f1 f2
             | _ -> merge_other f1 f2
           end

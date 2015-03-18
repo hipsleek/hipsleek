@@ -1,0 +1,41 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+/*
+pred P<> ==
+self::one<> * self::Q<>.
+
+pred Q<> ==
+ self::zero<>
+or (exists x1: x1::succ1circuit<self> * x1::Q<>).
+
+pred succ1circuit<y1> ==
+self::notg<y1>.
+*/
+pred notg<y> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y,z> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y,z> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+self::GTyp<_,_>.
+
+pred zero<> ==
+null = self.
+
+/*
+checkentail x0::P<>
+         |- false.
+*/

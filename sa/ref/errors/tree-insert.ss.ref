@@ -1,0 +1,40 @@
+
+!!!Full processing file "errors/tree-insert.ss"
+Parsing file "errors/tree-insert.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_13
+!!! generate unknown predicate for Post synthesis of : :GP_14
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! neqs:[(x,v_node_15_1218),(x,v_node_17_1226),(x,v_node_22_1237),(x,v_node_24_1245)]
+Checking procedure insert$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_13,GP_14]requires HP_13(x)&true
+ ensures GP_14(x,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure insert$node~int FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure insert$node~int
+
+!!! proc.proc_name:insert$node~intStop Omega... 25 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.147022,474)
+Total verification time: 0.517203 second(s)
+	Time spent in main process: 0.499818 second(s)
+	Time spent in child processes: 0.017385 second(s)
+

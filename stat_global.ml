@@ -1,4 +1,6 @@
+#include "xdebug.cppo"
 open Globals
+open VarGen
 open Gen.Basic
 open Cprinter
 
@@ -76,7 +78,7 @@ let wrap_trace (tr : path_trace) exec_function args =
      let b = last_trace # is_avail in
      let m = last_trace # get in
 	   let _= return_exp_loc := log_return_exp_loc tr in
-     let _ = last_trace # set tr in 
+     let () = last_trace # set tr in 
      let res = exec_function args in
      let _= if b then last_trace # set m 
      else last_trace # reset

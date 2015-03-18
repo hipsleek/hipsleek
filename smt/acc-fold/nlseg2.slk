@@ -1,0 +1,46 @@
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == self=p
+  or (exists a: self::node<a> * a::nlseg<p> & self!=p)
+ inv true.
+
+lemma_safe self::nlseg<p> -> (exists u: self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe self::nlseg<p> <- (exists u: self::nlseg<u> * u::nlseg<p> 
+           * p::node<_>@L).
+
+/* 
+Entailing lemma lem_11: Valid.
+Valid Lemmas : [lem_11:==>] added to lemma store.
+
+# can we have a message that UNSAFE lemma has been added?
+*/
+
+//(1)
+checkentail_exact x::node<a>*a::nlseg<p> * p::node<_>@L
+                |- x::nlseg<p>.
+print residue.
+// fail but should succeed..
+
+//(2)
+checkentail_exact 
+  self::nlseg<u> * u::nlseg<p> 
+                * p::node<_>@L |- self::nlseg<p>.
+// fail but should succeed
+
+//(3)
+checkentail_exact 
+  u::nlseg<p>  * p::node<_>@L & self=u |- self::nlseg<p>.
+print residue.
+
+//(4)
+checkentail_exact 
+  self::node<a> * a::nlseg<u> * u::nlseg<p> 
+                * p::node<_>@L & a!=u|- self::nlseg<p>.
+/*
+   why is there a must-bug?
+Entail 4: Fail.(must) cause: p!=self & p!=null & self!=null |-  p=self. LOCS:[0;39;38;5] (must-bug)
+*/
+

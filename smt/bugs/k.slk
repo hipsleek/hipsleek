@@ -1,0 +1,11 @@
+pred notg<y> ==
+   self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred_prim one<> 
+ inv null != self.
+
+pred_prim zero<> 
+ inv null = self.
+
+checkentail x::zero<> |- x=null.

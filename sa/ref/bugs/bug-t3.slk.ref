@@ -1,0 +1,60 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 2: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 3: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 4: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 5: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 6: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 7: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 8: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 16
+SAT % Hit   : 87.5%
+Time(cache overhead) : 0.000684 (seconds)
+
+!!! log(small):(0.01681,32)
+Total verification time: 0.07213 second(s)
+	Time spent in main process: 0.057907 second(s)
+	Time spent in child processes: 0.014223 second(s)
+

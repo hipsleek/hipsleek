@@ -1,0 +1,80 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/mut-rec2.ss"
+Parsing file "t/mut-rec2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo1$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[Uf1,Uf2] pre_post_vars:[Uf1,res,n]
+
+Procedure foo1$int SUCCESS.
+
+Checking procedure foo2$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[Uf1,Uf2] pre_post_vars:[Uf2,res,n]
+
+Procedure foo2$int SUCCESS.
+
+!!! INFERRED SHAPE SPEC: EInfer [Uf1,Uf2]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     emp&Uf1(n,res)&{FLOW,(4,5)=__norm#E}[]
+                     
+!!! INFERRED SHAPE SPEC: EInfer [Uf1,Uf2]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     emp&Uf2(n,res)&{FLOW,(4,5)=__norm#E}[]
+                     
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN Uf1: ( res=0 & n<=0) -->  Uf1(n,res),
+RELDEFN Uf1: ( Uf2(v_int_51_1388,v_int_51_1390) & res=1+v_int_51_1390 & v_int_51_1388+
+1=n & 1<=n) -->  Uf1(n,res),
+RELDEFN Uf2: ( res=0 & n<=0) -->  Uf2(n,res),
+RELDEFN Uf2: ( Uf1(v_int_42_1414,v_int_42_1416) & res=1+v_int_42_1416 & v_int_42_1414+
+1=n & 1<=n) -->  Uf2(n,res)]
+*************************************
+
+Post Inference result:
+foo1$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((n>=1 & n=res) | (0>=n & 0=res))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Post Inference result:
+foo2$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((n>=1 & n=res) | (0>=n & 0=res))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure foo3$int... 
+Procedure foo3$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN Uf3: ( res=0 & n<=0) -->  Uf3(n,res),
+RELDEFN Uf3: ( n=res & 1<=res) -->  Uf3(n,res)]
+*************************************
+
+Post Inference result:
+foo3$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&((n=res & 1<=res) | (res=0 & n<=0))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.564033 second(s)
+	Time spent in main process: 0.448027 second(s)
+	Time spent in child processes: 0.116006 second(s)
+

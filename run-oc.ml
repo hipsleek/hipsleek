@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 let results = ref ([] : (float * string) list)
 let sorted_results = ref ([] : (float * string) list)
 
@@ -12,11 +13,11 @@ let rec run_helper (fr : int) (input : string) : unit =
   if (fr < String.length input) then
 	let oc_chn = open_out "/tmp/oc.input" in
 	let formula, next_fr = get_formula fr input in
-	let _ = output_string oc_chn formula in
-	let _ = close_out oc_chn in
+	let () = output_string oc_chn formula in
+	let () = close_out oc_chn in
 	let ptime1 = Unix.times () in
 	let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-	let _ = Sys.command "oc /tmp/oc.input" in
+	let () = Sys.command "oc /tmp/oc.input" in
 	let ptime2 = Unix.times () in
 	let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 	  results := (t2 -. t1, formula) :: !results;

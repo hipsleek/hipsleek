@@ -1,0 +1,94 @@
+
+!!!Full processing file "norm/zip.ss"
+Parsing file "norm/zip.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! formula1: emp&((p=self & self=null) | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], p=self & self=null)])
+!!! formula1: emp&((self=null & n=0) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & n=0)])
+!!! formula1: emp&((p=r & r=null & self=null) | (self!=null & p!=null & r!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & r=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,r,self], true),
+([], p=r & r=null & self=null)])
+!!! neqs:[]
+Checking procedure zip$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,y)&true
+ ensures G(x,y,res)&true{,(3,4)=__norm};
+
+assert:norm/zip.ss:34: 11:  : ok
+
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (x!=0 | 0<=y), (x!=0 | y<=0)]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,y)&x!=null --> x::node<val2,next2> * HP_1363(next2,y@NI) * 
+HP_1364(y,x@NI)&
+true(3,4),
+ // BIND
+(2;0)HP_1364(y,x@NI)&true --> y::node<val1,next1> * HP_1371(next1,x@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1363(next2,y@NI) * HP_1371(next1,x@NI)&true --> H(next2,next1)&
+true(3,4),
+ // POST
+(1;1;0)H(res,y)&res=null & res=null & y=null --> G(x,y,res)&
+true(3,4),
+ // POST
+(2;0)x::node<val2,next2> * G(next2,next1,v1) * y::node<val1,next1> * 
+res::node<v2,v1>&true --> G(x,y,res)&
+true(3,4)]
+
+Procedure zip$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,y1) ::=  [emp&y1=null & x1=null; x1::node<val4,next4> * H(next4,next3) * 
+y1::node<val3,next3>],
+ G(x2,y2,res1) ::=  [emp&y2=null & res1=null & x2=null; x2::node<val,next> * G(next,next1,v1) * 
+y2::node<val1,next1> * res1::node<v,v1>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,y1) ::= 
+ x1::node<val4,next4> * H(next4,next3) * y1::node<val3,next3>
+ or emp&y1=null & x1=null
+ (3,4),
+ G(x2,y2,res1) ::= 
+ x2::node<val,next> * G(next,next1,v1) * y2::node<val1,next1> * 
+ res1::node<v,v1>
+ or emp&y2=null & res1=null & x2=null
+ (3,4)]
+*************************************
+Stop Omega... 67 invocations 
+1 false contexts at: ( (35,10) )
+
+!!! log(small):(0.146507,497)
+Total verification time: 0.480618 second(s)
+	Time spent in main process: 0.405423 second(s)
+	Time spent in child processes: 0.075195 second(s)
+

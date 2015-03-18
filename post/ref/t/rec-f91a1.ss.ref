@@ -1,0 +1,78 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-f91a1.ss"
+Parsing file "t/rec-f91a1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f91$int] for f91$int
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1331_1332: ( n=res & 91<=res) -->  post_1331_1332(n,res,flow),
+RELDEFN post_1331_1333: ( 91<=v_int_14_1374 & n=90 & n'=90 & post_1331_1332(v_int_14_1374,res,flow) & 
+post_1331_1332(1+n',v_int_14_1374,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( v_int_14_1377<=90 & n=90 & n'=90 & post_1331_1333(v_int_14_1377,res,flow) & 
+post_1331_1332(1+n',v_int_14_1377,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( 91<=v_int_14_1380 & n<=89 & post_1331_1332(v_int_14_1380,res,flow) & 
+post_1331_1333(1+n,v_int_14_1380,flow)) -->  post_1331_1333(n,res,flow),
+RELDEFN post_1331_1333: ( v_int_14_1383<=90 & n<=89 & post_1331_1333(v_int_14_1383,res,flow) & 
+post_1331_1333(1+n,v_int_14_1383,flow)) -->  post_1331_1333(n,res,flow)]
+*************************************
+
+Post Inference result:
+f91$int
+ ECase case {
+        91<=n -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                         EAssume 
+                           htrue&91<=n & res>=91 & res=n&
+                           {FLOW,(4,5)=__norm#E}[]
+                            ;
+        n<91 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          htrue&n<91 & 90>=n & 91=res&{FLOW,(4,5)=__norm#E}[]
+                           
+        }
+
+Checking procedure f91$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_14_1436=1+n' & n'=n & n<91 & n'<91 & !(v_bool_13_1314') & 
+v_int_14_1436<91 & 90>=v_int_14_1436 & 91=v_int_14_1313' & 
+v_int_14_1313'>=91 & 
+res=v_int_14_1313' & f91post_1399(v_int_14_1436) & f91post_1398(v_int_14_1313') --> f91post_1399(n).
+
+ termAssume !(v_bool_13_1314') & n'<91 & n<91 & n'=n & v_int_14_1313'=1+n' & 
+v_int_14_1313'>=91 & 
+res=v_int_14_1313' & f91post_1398(v_int_14_1312') & f91post_1398(v_int_14_1313') --> f91post_1399(n).
+
+ termAssume v_bool_13_1314' & 91<=n' & 91<=n & n'=n & 
+res=n' --> f91post_1398(n).
+
+ termAssume v_int_14_1436=1+n' & n'=n & n<91 & n'<91 & !(v_bool_13_1314') & 
+v_int_14_1436<91 & 90>=v_int_14_1436 & 91=v_int_14_1312' & 
+91<=v_int_14_1312' & f91pre_0(n) --> f91pre_0(v_int_14_1312').
+
+ termAssume v_int_14_1312'>=91 & 91<=v_int_14_1312' & !(v_bool_13_1314') & 
+n'<91 & n<91 & n'=n & v_int_14_1312'=1+n' & 
+91<=v_int_14_1312' & f91pre_0(n) --> f91pre_0(v_int_14_1312').
+
+ termAssume v_int_14_1310'<91 & v_int_14_1310'=1+n' & n'=n & n<91 & n'<91 & 
+!(v_bool_13_1314') & f91pre_0(n) --> f91pre_0(v_int_14_1310').
+
+ termAssume 91<=v_int_14_1310' & v_int_14_1310'=1+n' & n'=n & n<91 & n'<91 & 
+!(v_bool_13_1314') & f91pre_0(n) --> f91pre_0(v_int_14_1310').
+
+
+Base/Rec Case Splitting:
+[	f91: [[5] 91<=n@B,[6] n<=90@R]
+]
+Starting z3... 

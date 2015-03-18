@@ -1,0 +1,56 @@
+
+!!!Full processing file "paper/sll-creat.ss"
+Parsing file "paper/sll-creat.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure create_list$int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ G1]requires emp&true
+ ensures G1(res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(1;0)emp&res=null --> G1(res)&
+true(3,4),
+ // POST
+(2;0)res::node<v1,tmp1> * G1(tmp1)&true --> G1(res)&
+true(3,4)]
+
+Procedure create_list$int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ G1(res1) ::=  [emp&res1=null; res1::node<v,tmp> * G1(tmp)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ G1(res1) ::= 
+ res1::node<v,tmp> * G1(tmp)
+ or emp&res1=null
+ (3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.033254,223)
+Total verification time: 0.307465 second(s)
+	Time spent in main process: 0.291226 second(s)
+	Time spent in child processes: 0.016239 second(s)
+

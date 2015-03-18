@@ -1,0 +1,72 @@
+
+!!!Full processing file "demo/foo-2.ss"
+Parsing file "demo/foo-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x)&x!=null --> x::node<val1,next1> * HP_1243(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1243(next1)&true --> H(next1)&
+true(3,4),
+ // POST
+(1;0)H(x)&res=null & x=null --> G(x,res)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * G(next1,res)&true --> G(x,res)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H(next2)],
+ G(x3,res1) ::=  [GP_1285(x3,x2)&res1=null & x2=null],
+ GP_1285(x3,x2) ::=  [
+  x3::node<val,next> * GP_1285(next,x2)
+  or emp&x3=x2
+  ]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<val2,next2> * H(next2)
+ or emp&x1=null
+ (3,4),
+ G(x3,res1) ::= GP_1285(x3,x2)&res1=null & x2=null(3,4),
+ GP_1285(x3,x2) ::= 
+ x3::node<val,next> * GP_1285(next,x2)
+ or emp&x3=x2
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.033086,240)
+Total verification time: 0.334239 second(s)
+	Time spent in main process: 0.295204 second(s)
+	Time spent in child processes: 0.039035 second(s)
+

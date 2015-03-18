@@ -1,0 +1,54 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/wloop2.ss"
+Parsing file "t/wloop2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure while_10_2$cell~cell... 
+Procedure while_10_2$cell~cell SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1396: ( b_1425=1+b & b<a & post_1396(c_1374,d_1375,a,b_1425,flow)) -->  post_1396(c_1374,d_1375,a,b,flow),
+RELDEFN post_1396: ( c_1374=a & d_1375=b & a<=b) -->  post_1396(c_1374,d_1375,a,b,flow)]
+*************************************
+
+Post Inference result:
+while_10_2$cell~cell
+ EBase exists (Expl)[](Impl)[a; b](ex)[]x::cell<a> * y::cell<b>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists c_1374,d_1375: x::cell<c_1374> * y::cell<d_1375>&
+           ((c_1374>=(1+b) & c_1374=d_1375 & c_1374=a) | (b>=c_1374 & 
+           b=d_1375 & c_1374=a))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure main$cell~cell... 
+Procedure main$cell~cell SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1441: ( a=c_1386 & d_1387=b & c_1386<=b) -->  post_1441(c_1386,d_1387,a,b,flow),
+RELDEFN post_1441: ( a=c_1386 & d_1387=c_1386 & b<c_1386) -->  post_1441(c_1386,d_1387,a,b,flow)]
+*************************************
+
+Post Inference result:
+main$cell~cell
+ EBase exists (Expl)[](Impl)[a; b](ex)[]x::cell<a> * y::cell<b>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists c_1386,d_1387: x::cell<c_1386> * y::cell<d_1387>&
+           ((a=c_1386 & d_1387=c_1386 & b<c_1386) | (a=c_1386 & d_1387=b & 
+           c_1386<=b))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.580035 second(s)
+	Time spent in main process: 0.472029 second(s)
+	Time spent in child processes: 0.108006 second(s)
+

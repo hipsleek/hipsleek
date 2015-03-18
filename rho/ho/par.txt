@@ -1,0 +1,12 @@
+
+
+par { p1 } { p2 }
+
+par {f1()} {f2()}
+
+proc requires K1
+     ensures_infer;
+{
+   .. code ..
+}
+
