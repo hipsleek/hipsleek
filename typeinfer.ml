@@ -223,9 +223,14 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
           (tl, Some (Named n1))
       | t1, t2  -> (
-          if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
-          else if sub_type t2 t1 then (tlist,Some k1)
-          else 
+            let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+            let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+            if is_null_type t1 then (tlist, Some k2)
+            else if is_null_type t2 then (tlist, Some k1)
+            else
+              if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
+              else if sub_type t2 t1 then (tlist,Some k1)
+              else
             begin
               match t1,t2 with
               | TVar i1,_ -> repl_tlist i1 k2 tl

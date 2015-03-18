@@ -818,6 +818,8 @@ let fo_iheap = ref true
 
 let sae = ref false
 let sac = ref false
+(* transform a predicate to case formula *)
+let sa_pred_case = ref true
 
 let sags = ref true
 

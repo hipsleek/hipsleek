@@ -1178,6 +1178,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
       [hp_pre_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars,
       [(hp_pre_decl.hp_name, Unprimed)],ipre_simpl
     in
+    let post_args = if !sa_pred_case then args0 else args in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1193,7 +1194,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 infer_type infer_lst 
             else [hp_arg]
             in
             r@ref_args
-        ) [] args)@
+        ) [] post_args)@
 	    (if is_infer_ret ret then [(ret, res_name, Globals.I)] else []
               (* match ret with *)
 	      (* | Globals.Void | Bool -> [] *)
