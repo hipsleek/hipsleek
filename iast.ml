@@ -891,6 +891,9 @@ let is_num (e : exp) : bool = match e with
 let is_mult_op b = 
   match b with | OpMult -> true | _ -> false
 
+let is_div_op b = 
+  match b with | OpDiv -> true | _ -> false
+
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
@@ -1263,8 +1266,8 @@ let extract_mut_args prog proc=
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
-    let () = print_endline "\nHeap Predicate Declarations" in
-    let () = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
+    let () = print_endline_quiet "\nHeap Predicate Declarations" in
+    let () = List.iter (fun hpdcl -> print_endline_quiet (!print_hp_decl hpdcl)) unk_hps in
     let () = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in

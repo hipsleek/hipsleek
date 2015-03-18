@@ -14,7 +14,7 @@ open Mcpure_D
 open Log
 open Printf
 open Label_aggr
-(* open Translate_out_array_in_cpure_formula *)
+
 module CP = Cpure
 module MCP = Mcpure
 module NM = Auxnorm
@@ -473,7 +473,7 @@ let init_tp () =
       let () = Omega.omegacalc := "./oc" in
       ()
       else ()) in
-  let () = print_endline ("!!! init_tp by default: ") in 
+  let () = print_endline_quiet ("!!! init_tp by default: ") in 
   set_tp !Smtsolver.smtsolver_name (* "z3" *)
   (* set_tp "parahip" *)
 
@@ -3994,3 +3994,4 @@ let () =
   Excore.simplify_raw := simplify_raw;
   Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := simplify_omega;
+  Cfout.simplify_raw := simplify_raw;

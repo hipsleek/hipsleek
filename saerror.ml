@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open VarGen
+open Gen.Basic
 
 let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (* let rec init body stmt cpl binding = match stmt with *)
@@ -115,7 +116,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
     | _ -> (cpl, args)
   in
   let string_of_cond_path cp = List.fold_left (fun s i -> s ^ string_of_int(i) ^ ";") "" cp in
-  let () = print_endline proc_name in
+  let () = print_endline_quiet proc_name in
   let proc = Cast.find_proc prog proc_name in
   (* let () = print_endline (Cprinter.string_of_proc_decl 100 proc) in *)
   let (cpl, _) = match proc.Cast.proc_body with
@@ -131,9 +132,9 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
         List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
     ) constrs0 in
   (List.hd cps, [], filted_hprel)) cpl in
-  let () = print_endline "\n*************************************" in
-  let todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
-  let () = print_endline "*************************************" in
+  let () = print_endline_quiet "\n*************************************" in
+  let todo_unk = List.map (fun (_, _, hprel_list) -> let () = print_endline_quiet "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
+  let () = print_endline_quiet "*************************************" in
   a
 
 let subst_formula formula hprel_def =
@@ -340,9 +341,9 @@ let check_cases cases specs =
 (*           Cformula.hprel_def_body = new_body }) main *)
 
 let create_specs hprel_defs prog proc_name =
-  let () = print_endline "\n*************************************" in
-  let () = print_endline "**************case specs*************" in
-  let () = print_endline "*************************************" in
+  let () = print_endline_quiet "\n*************************************" in
+  let () = print_endline_quiet "**************case specs*************" in
+  let () = print_endline_quiet "*************************************" in
   let proc = try List.find (fun proc -> proc.Cast.proc_name = proc_name) (Cast.list_of_procs prog) with
     | Not_found -> raise (Failure "fail proc name")
   in
@@ -391,6 +392,6 @@ let create_specs hprel_defs prog proc_name =
       else
         final_spec
     in
-    let () = print_endline (Cprinter.string_of_struc_formula_for_spec1 short_final_spec) in
-    let () = print_endline "*************************************" in
+    let () = print_endline_quiet (Cprinter.string_of_struc_formula_for_spec1 short_final_spec) in
+    let () = print_endline_quiet "*************************************" in
     ()

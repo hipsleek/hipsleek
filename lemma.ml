@@ -271,7 +271,7 @@ let manage_safe_lemmas repo iprog cprog =
     | Some name -> 
           let () = Log.last_cmd # dumping (name) in
           let () = if !Globals.lemma_ep then
-            print_endline ("\nFailed to prove "^ (name) ^ " in current context.")
+            print_endline_quiet ("\nFailed to prove "^ (name) ^ " in current context.")
           else ()
           in
           Lem_store.all_lemma # pop_coercion;
@@ -297,7 +297,7 @@ let manage_unsafe_lemmas_x repo iprog cprog: (CF.list_context list option) =
       (l2r@left,r2l@right,((ldef.I.coercion_name)::names))
     with e ->
         (*This will mask all errors*)
-        let () = print_endline ("manage_unsafe_lemmas: error(s) occurred") in
+        let () = print_endline_quiet ("manage_unsafe_lemmas: error(s) occurred") in
         raise e
         (* (left,right,names) *)
   ) ([],[], []) repo in
@@ -342,13 +342,13 @@ let manage_infer_lemmas str repo iprog cprog =
     | Some name -> 
           let () = Log.last_cmd # dumping (name) in
           let () = if !Globals.lemma_ep then
-            print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.")
+            print_endline_quiet ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.")
           else ()
           in
           false,Some([List.hd(nctx)])
     | None ->
           let () = if !Globals.lemma_ep then
-            print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.")
+            print_endline_quiet ("\n Temp Lemma(s) "^str^" as valid in current context.")
           else ()
           in
           true,Some nctx
@@ -505,7 +505,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         let r = Fixpoint.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in
                         let () = Debug.info_hprint (add_str "fixpoint"
                             (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
-                        let () = print_endline "" in
+                        let () = print_endline_quiet "" in
                         r
                       in
                       rl,lshape
@@ -559,7 +559,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                       let r = Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
                       let () = Debug.info_hprint (add_str "fixpoint"
                           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
-                      let () = print_endline "" in
+                      let () = print_endline_quiet "" in
                       r
                     in
                     (rr,hp_defs)

@@ -2328,23 +2328,23 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog iflow proc_name callee_
     let () =  if !VarGen.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
-      print_endline "";
-      print_endline "\n*************************************************";
-      print_endline "*******relational assumptions (obligation)********";
-      print_endline "****************************************************";
-      print_endline (pr ho_constrs0);
-      print_endline "*************************************"
+      print_endline_quiet "";
+      print_endline_quiet "\n*************************************************";
+      print_endline_quiet "*******relational assumptions (obligation)********";
+      print_endline_quiet "****************************************************";
+      print_endline_quiet (pr ho_constrs0);
+      print_endline_quiet "*************************************"
     end;
     in
     let () = if !VarGen.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
-      print_endline "";
-      print_endline "\n*************************************************";
-      print_endline "*******relational assumptions (pre-assumptions)********";
-      print_endline "****************************************************";
-      print_endline (pr pre_constrs);
-      print_endline "*************************************"
+      print_endline_quiet "";
+      print_endline_quiet "\n*************************************************";
+      print_endline_quiet "*******relational assumptions (pre-assumptions)********";
+      print_endline_quiet "****************************************************";
+      print_endline_quiet (pr pre_constrs);
+      print_endline_quiet "*************************************"
     end;
     in
     (***************  END PRINTING*********************)
@@ -3201,8 +3201,8 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
     in
     if !Globals.sleek_flag || not (!VarGen.sap) then () 
     else
-      let () = print_endline "\nHeap Predicate Declarations" in
-      let () = print_endline "===========================" in
+      let () = print_endline_quiet "\nHeap Predicate Declarations" in
+      let () = print_endline_quiet "===========================" in
       let () = List.iter (fun hpdcl -> print_string (Cprinter.string_of_hp_decl hpdcl)) all_hp_decls in
       ()
   else ()

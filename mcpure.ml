@@ -909,8 +909,8 @@ and merge_mems_full_check (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo
     if (consistent_memo_pure r) then r
     else report_error no_pos "merge_mems : inconsistent memo_pure after merging"
   else
-    let () = print_endline s1 in
-    let () = print_endline s2 in
+    let () = print_endline_quiet s1 in
+    let () = print_endline_quiet s2 in
     report_error no_pos ("merge_mems : inconsistent memo_pure before merging")
 
 and merge_mems_repatch (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =

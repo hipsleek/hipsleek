@@ -348,11 +348,11 @@ let infer_lex_template_init prog (inf_templs: ident list)
     templ_unks (templ_assumes: templ_assume list) =
   let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
-  let () = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
+  let () = print_endline_quiet "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
 
   if num_call_ctx == 1 then begin
-    print_endline ("Nothing to do with Lexicographic Inference (only one call context).");
-    print_endline ("Trying to infer conditional termination and/or non-termination ...");
+    print_endline_quiet ("Nothing to do with Lexicographic Inference (only one call context).");
+    print_endline_quiet ("Trying to infer conditional termination and/or non-termination ...");
     infer_loop_template_init prog dec_templ_assumes
   end
   else try
@@ -361,9 +361,9 @@ let infer_lex_template_init prog (inf_templs: ident list)
     let dec_templ_assumes_l = rotate_head_list num_dec_templ_assumes in
     let rank_l = List.map (find_lex_rank prog inf_templs templ_unks) dec_templ_assumes_l in
     let res = sort_rank_list (num_call_ctx-1) rank_l in
-    print_endline (pr_list (pr_list !print_exp) res)
+    print_endline_quiet (pr_list (pr_list !print_exp) res)
   with Lex_Infer_Failure reason -> 
-    print_endline reason; ()
+    print_endline_quiet reason; ()
     (* print_endline ("Trying to infer conditional termination and/or non-termination ..."); *)
     (* infer_loop_template_init prog dec_templ_assumes *)
     
@@ -393,7 +393,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
   match res with
   | Unsat -> 
     if !Globals.templ_piecewise then
-      let () = print_endline ("Continue with piecewise function inference ...") in
+      let () = print_endline_quiet ("Continue with piecewise function inference ...") in
       let ptempl_assumes, inf_ptempls, ptempl_defs = 
         Piecewise.infer_piecewise_main prog templ_assumes in
       let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
@@ -404,7 +404,7 @@ let infer_rank_template_init prog (inf_templs: ident list) =
       let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
       let todo_unk = collect_and_solve_templ_assumes_common false prog (List.map name_of_spec_var inf_ptempls) in ()
     else 
-      let () = print_endline ("Trying to infer lexicographic termination arguments ...") in
+      let () = print_endline_quiet ("Trying to infer lexicographic termination arguments ...") in
       infer_lex_template_init prog inf_templs templ_unks templ_assumes
   | _ -> ()
 

@@ -114,18 +114,18 @@ object (self)
   method dump_left =
     let lems = left_lem # reverse_of in
     let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
-    print_endline ("\n===========\nLEFT LEMMAS\n===========\n" ^ (pr_list_ln pr lems))
+    print_endline_quiet ("\n===========\nLEFT LEMMAS\n===========\n" ^ (pr_list_ln pr lems))
 
   method dump_right =
     let lems = right_lem # reverse_of in
     let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
-    print_endline ("\n============\nRIGHT LEMMAS\n============\n" ^ (pr_list_ln pr lems))
+    print_endline_quiet ("\n============\nRIGHT LEMMAS\n============\n" ^ (pr_list_ln pr lems))
 
   method dump =
-    print_endline "\nLemma store dump:";
+    print_endline_quiet "\nLemma store dump:";
     self # dump_left;
     self # dump_right;
-    print_endline ""
+    print_endline_quiet ""
 
 
 
@@ -170,7 +170,7 @@ object (self)
 
   method string_of =
     let lems = lst # reverse_of in
-    print_endline ("ILemmas:"^(pr_list !ilem_lst_pr lems))
+    print_endline_quiet ("ILemmas:"^(pr_list !ilem_lst_pr lems))
 
 end;;
 
