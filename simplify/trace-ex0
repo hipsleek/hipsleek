@@ -95,6 +95,15 @@ xpure_heap_sym_i#20 inp2 : ((self=null & n=0) | (self=1 & n=1) | (self=1 & 2<=n)
 xpure_heap_sym_i#20 inp3 :0
 xpure_heap_sym_i#20@11 EXIT:( true,[], [])#true
 
+(==solver.ml#7977==)
+xpure_heap_i#9@2@1
+(==solver.ml#7978==)
+xpure_heap_sym_i#19@5@1
+(==solver.ml#7983==)
+xpure_heap_i#10@8@1
+(==solver.ml#7984==)
+xpure_heap_sym_i#20@11@1
+
 (==astsimp.ml#2003==)
 heap_entail_init@1
 heap_entail_init inp1 : 
