@@ -2564,6 +2564,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0 =
     if !Globals.gen_baga_inv then
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
+      let cviews0 = List.filter (fun cv ->
+          not cv.Cast.view_is_prim
+      ) cviews0 in
       let () = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj;
           Hashtbl.add Excore.map_precise_invs cv.C.view_name true
