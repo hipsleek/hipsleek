@@ -34,7 +34,7 @@ let string_of_vres t =
 
 
 let proc_sleek_result_validate is_valid lc =
-  if not is_valid then
+  let eres = if not is_valid then
   let final_error_opt = CF.get_final_error lc in
   match final_error_opt with
     | Some (_, fk) -> begin
@@ -45,6 +45,8 @@ let proc_sleek_result_validate is_valid lc =
       end
     | None -> VR_Fail (-1) (* INCONSISTENCY *)
   else VR_Valid
+  in
+  (eres, CF.flow_formula_of_list_context lc)
   (* match lc with *)
   (*   | CF.FailCtx _ -> *)
   (*     if CF.is_must_failure lc then *)
@@ -67,7 +69,7 @@ let proc_sleek_result_validate is_valid lc =
 
 let proc_sleek_result_validate b lc =
   Debug.no_1 "proc_sleek_result_validate" 
-  Cprinter.string_of_list_context_short string_of_vres 
+  Cprinter.string_of_list_context_short (fun (er,_) -> string_of_vres er)
   (fun _ -> proc_sleek_result_validate b lc) lc
 
 module H = Hashtbl
@@ -435,7 +437,7 @@ let process_templ_def tdef =
       iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
       !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
     with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
-  else print_endline (tdef.I.templ_name ^ " is already defined.")
+  else print_endline_quiet (tdef.I.templ_name ^ " is already defined.")
 
 let process_ut_def utdef =
   if Astsimp.check_data_pred_name iprog utdef.I.ut_name then
@@ -444,7 +446,7 @@ let process_ut_def utdef =
       iprog.I.prog_ut_decls <- (utdef::iprog.I.prog_ut_decls);
       !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
     with _ -> dummy_exception (); iprog.I.prog_ut_decls <- tmp 
-  else print_endline (utdef.I.ut_name ^ " is already defined.")
+  else print_endline_quiet (utdef.I.ut_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
@@ -556,19 +558,19 @@ let process_list_lemma ldef_lst  =
         (*       | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in *)
         (* let defs = pre_preds@post_pred@rem in *)
         let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
-        print_endline "";
-        print_endline "\n*************************************";
-        print_endline "*******relational definition ********";
-        print_endline "*************************************";
+        print_endline_quiet "";
+        print_endline_quiet "\n*************************************";
+        print_endline_quiet "*******relational definition ********";
+        print_endline_quiet "*************************************";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-        print_endline (pr1 defs1);
-        print_endline "*************************************"
+        print_endline_quiet (pr1 defs1);
+        print_endline_quiet "*************************************"
     end
     in
     let _ =
       let _ = Debug.info_hprint (add_str "fixpoint1"
           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
-      let _ = print_endline "" in
+      let _ = print_endline_quiet "" in
       ()
     in
     r2 
@@ -1066,7 +1068,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = Sa2.rel_def_stk # reset in
   let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
@@ -1346,14 +1348,14 @@ let process_shape_infer pre_hps post_hps=
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs = pre_preds@post_pred@rem in
         let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs else defs in
-        print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
+        print_endline_quiet "";
+      print_endline_quiet "\n*************************************";
+      print_endline_quiet "*******relational definition ********";
+      print_endline_quiet "*************************************";
       (* print_endline (rel_defs # string_of_reverse); *)
        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-       print_endline (pr1 defs1);
-      print_endline "*************************************"
+       print_endline_quiet (pr1 defs1);
+      print_endline_quiet "*************************************"
     end
   in
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
@@ -1433,7 +1435,7 @@ let process_rel_infer pre_rels post_rels =
   let r = Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
   let _ = Debug.info_hprint (add_str "fixpoint2"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
-  let _ = print_endline "" in
+  let _ = print_endline_quiet "" in
   ()
 
 let process_shape_lfp sel_hps=
@@ -1460,13 +1462,13 @@ let process_shape_lfp sel_hps=
   let _ = Debug.ninfo_hprint ( add_str "  ls_pdefs (lfp): " (pr_list_ln (pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula)))) ls_pdefs no_pos in
   let unk_hps = List.map (fun (_,(hp,_)) -> hp) (!sleek_hprel_unknown) in
   let hp_defs = List.map (Sacore.compute_lfp !cprog unk_hps defs) ls_pdefs in
-  let _ = print_endline "" in
-  let _ = print_endline "\n*************************************" in
-  let _ = print_endline "*******lfp definition ********" in
-  let _ = print_endline "*************************************" in
+  let _ = print_endline_quiet "" in
+  let _ = print_endline_quiet "\n*************************************" in
+  let _ = print_endline_quiet "*******lfp definition ********" in
+  let _ = print_endline_quiet "*************************************" in
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
-  let _ = print_endline (pr1 hp_defs) in
-  let _ = print_endline "*************************************" in
+  let _ = print_endline_quiet (pr1 hp_defs) in
+  let _ = print_endline_quiet "*************************************" in
   ()
 
 let process_shape_rec sel_hps=
@@ -1511,16 +1513,16 @@ let process_shape_rec sel_hps=
   (* let defs = List.map snd !sleek_hprel_defns in *)
   let hp_defs = List.map (transform_to_hpdef) ls_pdefs in
   let _ = sleek_hprel_defns := !sleek_hprel_defns@(List.map (fun a -> ([],a)) hp_defs) in
-  let _ = print_endline "" in
-  let _ = print_endline "\n*************************************" in
-  let _ = print_endline "*******recurrence ********" in
-  let _ = print_endline "*************************************" in
+  let _ = print_endline_quiet "" in
+  let _ = print_endline_quiet "\n*************************************" in
+  let _ = print_endline_quiet "*******recurrence ********" in
+  let _ = print_endline_quiet "*************************************" in
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
-  let _ = print_endline (pr1 hp_defs) in
-  let _ = print_endline "*************************************" in
+  let _ = print_endline_quiet (pr1 hp_defs) in
+  let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate exp_res ils_es =
+let process_validate exp_res opt_fl ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1565,7 +1567,7 @@ let process_validate exp_res ils_es =
           false, [], []
     | Some (lc, res, ldfa) -> 
           begin (*res*)
-            let res = proc_sleek_result_validate res lc in
+            let res, fls = proc_sleek_result_validate res lc in
             let unexp =
               match res, exp_res with
                 | VR_Valid, VR_Valid -> None
@@ -1576,7 +1578,22 @@ let process_validate exp_res ils_es =
                 | _,_ -> Some ("Expecting 3 "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
-              | None -> res_str := "OK"
+              | None -> begin
+                  match opt_fl with
+                    | None -> res_str := "OK" (*do not compare expect flow *)
+                    | Some id -> if not !Globals.enable_error_as_exc then res_str := "OK" else
+                          let reg = Str.regexp "\#E" in
+                          let res_fl_ids = List.map (fun ff ->
+                          let fl_w_sharp = exlist # get_closest ff.CF.formula_flow_interval in
+                          Str.global_replace reg "" fl_w_sharp
+                      ) fls in
+                      let _ = Debug.ninfo_hprint (add_str "res_fl_ids" (pr_list pr_id)) res_fl_ids no_pos in
+                      if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
+                        res_str := "OK"
+                      else
+                        let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                        res_str := ( "Expecting flow "^(id))
+                end
               | Some s -> 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := s
@@ -1639,7 +1656,7 @@ let process_validate exp_res ils_es =
           (*   print_endline (validate_id ^ "FAIL.") *)
           (* in *) ()
   in
-  let _ = print_endline ("\n") in
+  let _ = print_endline_quiet ("\n") in
   ()
 
 let process_shape_divide pre_hps post_hps=
@@ -1674,8 +1691,8 @@ let process_shape_divide pre_hps post_hps=
   let pr_one (cond, _,constrs)=
     begin
       if constrs <> [] then
-        let _ = print_endline ("Group: " ^ (CF.string_of_cond_path cond)) in
-        print_endline ((pr_list_ln Cprinter.string_of_hprel_short) constrs)
+        let _ = print_endline_quiet ("Group: " ^ (CF.string_of_cond_path cond)) in
+        print_endline_quiet ((pr_list_ln Cprinter.string_of_hprel_short) constrs)
     end
   in
   let _ = List.iter pr_one ls_cond_danghps_constrs in
@@ -1709,14 +1726,14 @@ let process_shape_conquer sel_ids cond_paths=
       let rel_defs =  Sa2.rel_def_stk in
       if not(rel_defs# is_empty) then
         let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
-        print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
+        print_endline_quiet "";
+      print_endline_quiet "\n*************************************";
+      print_endline_quiet "*******relational definition ********";
+      print_endline_quiet "*************************************";
       (* print_endline (rel_defs # string_of_reverse); *)
        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-       print_endline (pr1 defs);
-      print_endline "*************************************"
+       print_endline_quiet (pr1 defs);
+      print_endline_quiet "*************************************"
     end
   in
   ()
@@ -1743,12 +1760,12 @@ let process_shape_postObl pre_hps post_hps=
   let _ = begin
       if (ls_hprel <> []) then
         let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
-        print_endline "";
-      print_endline "\n************************************************";
-      print_endline "*******relational definition (obligation)********";
-      print_endline "**************************************************";
-      print_endline (pr ls_hprel);
-      print_endline "*************************************"
+        print_endline_quiet "";
+      print_endline_quiet "\n************************************************";
+      print_endline_quiet "*******relational definition (obligation)********";
+      print_endline_quiet "**************************************************";
+      print_endline_quiet (pr ls_hprel);
+      print_endline_quiet "*************************************"
     end
   in
   ()
@@ -1761,11 +1778,11 @@ let process_shape_sconseq pre_hps post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin
-    print_endline "\n*************************************";
-    print_endline "*******relational assumptions (1) ********";
-    print_endline "*************************************";
-    print_endline (pr1 constrs1);
-    print_endline "*************************************";
+    print_endline_quiet "\n*************************************";
+    print_endline_quiet "*******relational assumptions (1) ********";
+    print_endline_quiet "*************************************";
+    print_endline_quiet (pr1 constrs1);
+    print_endline_quiet "*************************************";
   end;
   in
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
@@ -1781,11 +1798,11 @@ let process_shape_sante pre_hps post_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin
-    print_endline "\n*************************************";
-    print_endline "*******relational assumptions (1) ********";
-    print_endline "*************************************";
-    print_endline (pr1 constrs1);
-    print_endline "*************************************";
+    print_endline_quiet "\n*************************************";
+    print_endline_quiet "*******relational assumptions (1) ********";
+    print_endline_quiet "*************************************";
+    print_endline_quiet (pr1 constrs1);
+    print_endline_quiet "*************************************";
   end;
   in
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
@@ -1807,7 +1824,7 @@ let process_pred_split ids=
   let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
   let _ = if split_map = [] then () else
     (*print*)
-    let _ = print_endline ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
+    let _ = print_endline_quiet ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
     ()
   in
   ()
@@ -1863,12 +1880,12 @@ let process_shape_infer_prop pre_hps post_hps=
     begin
       let rel_defs =  Cformula.rel_def_stk in
       if not(rel_defs# is_empty) then
-        print_endline "";
-      print_endline "\n*************************************";
-      print_endline "*******relational definition ********";
-      print_endline "*************************************";
-      print_endline (Cformula.rel_def_stk # string_of_reverse);
-      print_endline "*************************************"
+        print_endline_quiet "";
+      print_endline_quiet "\n*************************************";
+      print_endline_quiet "*******relational definition ********";
+      print_endline_quiet "*************************************";
+      print_endline_quiet (Cformula.rel_def_stk # string_of_reverse);
+      print_endline_quiet "*************************************"
     end
   in
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
@@ -1906,11 +1923,11 @@ let process_shape_split pre_hps post_hps=
     infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
-    print_endline "\n*************************************";
-    print_endline "*******relational assumptions (1) ********";
-    print_endline "*************************************";
-    print_endline (pr1 new_constrs);
-    print_endline "*************************************";
+    print_endline_quiet "\n*************************************";
+    print_endline_quiet "*******relational assumptions (1) ********";
+    print_endline_quiet "*************************************";
+    print_endline_quiet (pr1 new_constrs);
+    print_endline_quiet "*************************************";
   end;
   ()
 
@@ -1946,7 +1963,7 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout =
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.mk_cex false) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) (CF.Ctx (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos)) (CF.mk_cex false) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
@@ -2141,7 +2158,7 @@ let process_sat_check (f : meta_formula) =
 
 let process_nondet_check (v: ident) (mf: meta_formula) =
   if (!Globals.print_input || !Globals.print_input_all) then (
-    print_endline ("Check_nondet:\n ### var = " ^ v ^"\n ### formula = " ^ (string_of_meta_formula mf));
+    print_endline_quiet ("Check_nondet:\n ### var = " ^ v ^"\n ### formula = " ^ (string_of_meta_formula mf));
   );
   let (_,f) = meta_to_formula mf false [] [] in
   let pf = CF.get_pure f in
@@ -2149,7 +2166,7 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let res_str = if res then "Valid" else "Fail" in
   let msg = "\nNondet constraint " ^ (string_of_int nn) ^ ": " ^ res_str ^ "." in
-  print_endline msg
+  print_endline_quiet msg
   
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
@@ -2194,13 +2211,13 @@ let process_term_infer () =
 let process_check_norm_x (f : meta_formula) =
   let nn = "(" ^ (string_of_int (sleek_proof_counter#inc_and_get)) ^ ") " in
   let num_id = "\nCheckNorm " ^ nn in  
-  let _ = if (!Globals.print_input || !Globals.print_input_all) 
-    then print_endline ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
+  let () = if (!Globals.print_input || !Globals.print_input_all) 
+    then print_endline_quiet ("INPUT 7: \n ### f = " ^ (string_of_meta_formula f)) 
     else () 
   in
   let _ = Debug.devel_pprint ("\nprocess_check_norm:" ^ "\n ### f = "^(string_of_meta_formula f)  ^"\n\n") no_pos in
   let (n_tl, cf) = meta_to_formula f false [] []  in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 8: \n ### cf = " ^ (Cprinter.string_of_formula cf)) else () in
   let estate = (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) in
   let newf = Solver.prop_formula_w_coers 1 !cprog estate cf (Lem_store.all_lemma # get_left_coercion) in
   let _ = print_string (num_id ^ ": " ^ (Cprinter.string_of_formula newf) ^ "\n\n") in
@@ -2214,7 +2231,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   (*let _ = print_endline ("\n Compare Check") in*)
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nCheckeq "^nn in  
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT 9: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 9: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
   let _ = Debug.devel_pprint ("\nrun_cmp_check:"
                               ^ "\n ### f1 = "^(string_of_meta_formula if1)
                               ^ "\n ### f2 = "^(string_of_meta_formula if2)
@@ -2223,7 +2240,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in
 
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 3: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 3: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
   if(not !Globals.dis_show_diff) then(
@@ -2252,7 +2269,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   )
 
 let print_result f m =
-      print_endline (((add_str m Cprinter.string_of_pure_formula) f)^"\n")
+      print_endline_quiet (((add_str m Cprinter.string_of_pure_formula) f)^"\n")
 
 let process_simplify (f : meta_formula) =
   let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  

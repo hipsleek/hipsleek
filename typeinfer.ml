@@ -482,7 +482,10 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
       | Not_found ->
           let vk = fresh_proc_var_kind tlist ex_t in
           ((var,vk)::tlist, vk.sv_info_kind)
-      | ex -> report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
+      | ex ->
+            let _ = print_string_quiet (get_backtrace_quiet ()) in
+            report_error pos ("gather_type_info_var : unexpected exception "^(Printexc.to_string ex))
+            (* raise ex *)
 
 and gather_type_info_exp prog a0 tlist et =  
   Debug.no_eff_3 "gather_type_info_exp" [false;true] 
@@ -810,7 +813,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
         | Invalid_argument _ -> failwith ("number of arguments for relation " ^ r ^ " does not match")
-        | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist       
+        | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist       
       )
   | IP.XPure({IP.xpure_view_node = vn ;
               IP.xpure_view_name = r;
@@ -829,7 +832,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
           Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
       with
         | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-        | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r);tlist
+        | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist
     )
 
 and gather_type_info_term_ann prog tann tlist =
@@ -1095,6 +1098,16 @@ and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist =
     (* check_shallow_var := true *)
   end
 
+(* |ls2| = |ls1| ==> ls1, ls2
+   ls2 = ls2a::_ & |ls2a|=|ls1| -> ls1,ls2a
+*)
+and add_last_diff ls1 ls2 res=
+  match ls1,ls2 with
+    | ([], []) ->  res
+    | ([], [((_,id),l,_,_)]) -> res@[(Ipure.Var ((id,Unprimed),l))]
+    | (a::rest1,_::rest2) -> add_last_diff rest1 rest2 (res@[a])
+    | _ -> raise (Invalid_argument "first is longer than second")
+
 and try_unify_data_type_args prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
   if (deref = 0) then (
@@ -1103,6 +1116,8 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let (n_tl,_) = gather_type_info_var v tlist ((Named c)) pos in
       let fields = I.look_up_all_fields prog ddef in
       try
+        (*fields may contain offset field and not-in-used*)
+        let ies = add_last_diff ies fields ([]) in
         let f tl arg ((ty,_),_,_,_)=
           (let (n_tl,_) = gather_type_info_exp prog arg tl ty in n_tl)
         in (List.fold_left2 f n_tl ies fields)
@@ -1499,7 +1514,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       with
       | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
       | Failure s -> failwith s
-      | _ -> print_endline ("gather_type_info_heap: relation " ^ r);tlist
+      | _ -> print_endline_quiet ("gather_type_info_heap: relation " ^ r);tlist
       )
     | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
     (* TODO:WN:HVar *)

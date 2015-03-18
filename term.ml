@@ -1194,7 +1194,7 @@ let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
   let mutual_grp = List.map (fun p -> p.Cast.proc_name) proc_lst in
   match proc_lst with
-    | [] -> print_endline "ERROR : empty SCC prog_lst!"; prog
+    | [] -> print_endline_quiet "ERROR : empty SCC prog_lst!"; prog
     | proc::_ ->
           begin
             let index = proc.Cast.proc_call_order in
@@ -1299,7 +1299,7 @@ let rec get_loop_ctx c =
     | OCtx (c1,c2) -> (get_loop_ctx c1) @ (get_loop_ctx c2)
 
 let get_loop_only sl =
-  let ls = List.map (fun (_,c) -> get_loop_ctx c) sl in
+  let ls = List.map (fun (_,c,_) -> get_loop_ctx c) sl in
   List.concat ls
 
 let add_unsound_ctx (es: entail_state) pos = 

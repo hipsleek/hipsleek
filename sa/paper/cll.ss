@@ -27,17 +27,14 @@ int count_rest(node rest, node h)
 */
 
 {
-	int n;
-	
-	if (rest == h)
-		return 0; 
-	else
-	{
-		n = count_rest(rest.next, h);
-		n = n + 1;
-
-		return n;
-	}
+  int n;
+  if (rest == h)
+    return 0;
+  else {
+    n = count_rest(rest.next, h);
+    n = n + 1;
+    return n;
+  }
 }
 
 /*

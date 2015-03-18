@@ -3343,41 +3343,58 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
 let rec pr_struc_formula_for_spec (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" ""
+    pr_args (Some("V",2)) (Some "A") "case " "{" "}" ""
     (
-      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
-        (fun () -> pr_struc_formula_for_spec c2)
+      fun (c1,c2) -> wrap_box ("B", 0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+        (fun () ->
+          fmt_cut (); 
+          fmt_open_vbox 2;
+          wrap_box ("V",2) pr_struc_formula_for_spec c2);
+          fmt_close ();
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
-    fmt_string "requires ";
-    pr_formula_for_spec fb;
+    fmt_open_vbox 0;
+    wrap_box ("B",0) (fun fb ->
+      fmt_string "requires ";
+      pr_formula_for_spec fb) fb;
     (match cont with
-          | None -> ()
-          | Some l -> pr_struc_formula_for_spec l
-        );
-  | EAssume  {
-			formula_assume_vars = x;
-			formula_assume_simpl = b;
-			formula_assume_lbl = (y1,y2);
-			formula_assume_ensures_type = t;
-			formula_assume_struc = s;}->
-    let ensures_str = match t with
-                     | None -> "\n     ensures "
-                     | Some true -> "\n     ensures_exact "
-                     | Some false -> "\n     ensures_inexact " in
-    fmt_string ensures_str;
-    pr_formula_for_spec b;
-    fmt_string ";";
-	if !print_assume_struc then
-	  (fmt_string "struct:";
-	   wrap_box ("B",0) pr_struc_formula_for_spec s)
-	 else ()
+    | None -> ()
+    | Some l ->
+      (fmt_cut ();
+      wrap_box ("B",0) pr_struc_formula_for_spec l) 
+    );
+    fmt_close ();
+  | EAssume {
+      formula_assume_vars = x;
+      formula_assume_simpl = b;
+      formula_assume_lbl = (y1,y2);
+      formula_assume_ensures_type = t;
+      formula_assume_struc = s;} ->
+    wrap_box ("V",0);
+    (fun b -> 
+      let ensures_str = 
+        match t with
+        | None ->       "ensures "
+        | Some true ->  "ensures_exact "
+        | Some false -> "ensures_inexact " in
+      fmt_string ensures_str;
+      pr_formula_for_spec b;
+      fmt_string ";";
+      fmt_cut ();
+      if !print_assume_struc then
+        (fmt_string "struct:";
+        wrap_box ("B",0) pr_struc_formula_for_spec s)
+      else ()) b
   | EInfer b -> 
     (* let il = if b.formula_inf_tnt then [INF_TERM] else [] in *)
     let il = b.formula_inf_obj # get_lst in
-    fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars));
-    pr_struc_formula_for_spec b.formula_inf_continuation
+    fmt_open_vbox 0;
+    (if (il = []) then ()
+    else fmt_string ("infer" ^ (string_of_infer_list il b.formula_inf_vars)));
+    fmt_cut ();
+    wrap_box ("B",0) pr_struc_formula_for_spec b.formula_inf_continuation;
+    fmt_close ();
     (* report_error no_pos "Do not expect EInfer at this level" *)
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
   (*| EOr b ->
@@ -3501,7 +3518,7 @@ let string_of_path_trace  (pt : path_trace) = poly_string_of_pr  pr_path_trace p
 let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =  poly_printer_of_pr fmt pr_path_trace pt
 
 
-let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_) -> string_of_path_trace lbl) l)
+let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_,_) -> string_of_path_trace lbl) l)
 
 let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)(* ^" "^(summary_list_path_trace l2) *)^")"
 
@@ -3731,7 +3748,7 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx (ft ,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft ,_,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
@@ -3823,7 +3840,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx (ft,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
+    | FailCtx (ft,_,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
     | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
     
 let pr_entail_state_short e =
@@ -3849,7 +3866,7 @@ let pr_entail_state_short e =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx (ft,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft,_,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
@@ -3895,7 +3912,7 @@ let pr_esc_stack_lvl ((i,s),e) =
     begin
       fmt_open_vbox 0;
       pr_vwrap_naive ("Try-Block:"^(string_of_int i)^":"^s^":")
-          (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
+          (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Path: " pr_path_trace lbl;
 		      pr_vwrap "State:" pr_context_short fs)) e;
       fmt_close_box ()
     end
@@ -3913,7 +3930,7 @@ let pr_successful_states e = match e with
   | [] -> ()
   | _ ->   
   pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+      (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
 		  pr_vwrap "State:" pr_context_short fs)) e
 
 let is_empty_esc_state e =
@@ -3949,14 +3966,14 @@ let pr_partial_context ((l1,l2): partial_context) =
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
     	  pr_vwrap "State:" pr_fail_type fs)) l1;
   pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+      (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
     	  pr_vwrap "State:" pr_context fs)) l2;
   fmt_close_box ()
 
 let pr_partial_context_short ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   pr_vwrap_naive "Successful States:"
-      (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+      (pr_seq_vbox "" (fun (lbl,fs,_)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
     	  pr_vwrap "State:" pr_context_short fs)) l2;
   fmt_close_box ()
 
@@ -4133,6 +4150,7 @@ let pr_view_decl v =
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
+  (* pr_vwrap  "view_type_of_self: " (pr_opt string_of_typ) v.view_type_of_self; *)
   pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
   pr_vwrap  "addr vars: " pr_list_of_spec_var v.view_addr_vars;
@@ -5159,7 +5177,7 @@ let html_of_fail_type f = ""
 
 let html_of_failesc_context (fs,es,ss) =
 	let htmlfs = if fs = [] then "&empty;" else "{" ^ (String.concat " , " (List.map html_of_fail_type fs)) ^ "}" in
-	let htmlss = if ss = [] then "&empty;" else "{" ^ (String.concat "<br /><br /><b>OR</b> " (List.map (fun (pt, c) -> html_of_context c) ss)) ^ "}" in
+	let htmlss = if ss = [] then "&empty;" else "{" ^ (String.concat "<br /><br /><b>OR</b> " (List.map (fun (pt, c,_) -> html_of_context c) ss)) ^ "}" in
 		"[Failed state : " ^ htmlfs ^ "<br />\n" ^ "Successful states : " ^ htmlss ^ "]"
 
 let html_of_list_failesc_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_failesc_context lctx)

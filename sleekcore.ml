@@ -84,42 +84,14 @@ let sleek_unsat_check isvl cprog ante=
     (true, CF.SuccCtx [init_ctx], [])
   else
     (false, CF.FailCtx (CF.Trivial_Reason
-     ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  CF.mk_cex true),
+     ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  init_ctx, CF.mk_cex true),
   [])
 
 
-(* let check_unsat cprog ante init_ctx= *)
 (*   (\* let () = print_endline ("1") in *\) *)
-(*   (\* let es = match init_ctx with *\) *)
-(*   (\*   | CF.Ctx es -> es *\) *)
-(*   (\*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *\) *)
-(*   (\* in *\) *)
-(*   let helper f= *)
-(*     (\* let f1 = Frame.norm_dups_pred cprog f in *\) *)
-(*     Solver.unsat_base_nth 1 cprog (ref 1) f *)
-(*   in *)
-(*   let fs = (\* (Frame.heap_normal_form cprog ante) *\)  [ ante] in *)
-(*   let rec loop_helper fs= *)
-(*     match fs with *)
-(*       | [] -> false, None *)
-(*       | f::rest -> *)
-(*             let res1 = helper f in *)
-(*             if res1 then (true,Some f) else *)
-(*             loop_helper rest *)
-(*   in *)
-(*   let r,fail_of = *)
-(*     match fs with *)
-(*       | [] -> report_error no_pos "sleekengine.check_unsat" *)
-(*       | _ -> loop_helper fs *)
-(*   in *)
-(*   if r then (true, CF.SuccCtx [init_ctx], []) *)
-(*   else (false, CF.FailCtx (CF.Trivial_Reason *)
-(*       ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])), *)
-(*   []) *)
-
 let sleek_entail prog ante_ctx conseq pos=
   let pid = None in
-  let ante_failesc_ctx = [([],[],[([], ante_ctx)])] in
+  let ante_failesc_ctx = [([],[],[([], ante_ctx, None)])] in
   let rs, prf = Solver.heap_entail_struc_list_failesc_context_init 12 prog false true ante_failesc_ctx conseq None None None pos pid in
   rs, prf
 
@@ -128,9 +100,11 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let () = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
   let () = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
-  let ante = Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) in
+  let ante = if (!Globals.remove_abs && not(!Globals.imm_merge)) then 
+    Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) else ante in
   let () = Debug.tinfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
-  let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in
+  let ante = Norm.imm_abs_norm_formula ante cprog  (Solver.unfold_for_abs_merge cprog no_pos) in
+  let conseq = if ((!Globals.remove_abs)  && not(!Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
   let () = Debug.tinfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
@@ -151,7 +125,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
-  let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
+  let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("INPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let () = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
   ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
   ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -220,7 +194,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante c
         (true, (CF.SuccCtx[ctx]), isvl)
       else
         let fctx = CF.FailCtx (CF.Trivial_Reason
-            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),  CF.mk_cex true) in
+            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),ctx,  CF.mk_cex true) in
         (false, fctx, isvl)
     else
       (* let () = Globals.disable_failure_explaining := false in *)
@@ -302,7 +276,8 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let () = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
   let () = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
-      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []), CF.mk_cex true) in
+      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),
+  init_ctx, CF.mk_cex true) in
   let s_ctx = (CF.SuccCtx [init_ctx]) in
   let ante_quans, ante0b = (CF.split_quantifiers ante0) in
   let ante0b = (CF.simplify_pure_f ante0b) in
@@ -409,7 +384,8 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
               if conseq_unsat0 then
                 (*rhs is unsat*)
                 (false, CF.FailCtx (CF.Trivial_Reason
-                    ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []), CF.mk_cex true),
+                    ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, []),
+                init_ctx, CF.mk_cex true),
                 [])
               else
                 (*pi1 =  ptos predicate into pure*)

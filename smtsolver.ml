@@ -592,7 +592,7 @@ let smtsolver_path =
   else if (Sys.file_exists global_oc)  then ref global_oc
   else 
     begin
-      print_endline ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
+      print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string)
     end
 
 (***********)
@@ -670,8 +670,8 @@ and start() =
   )
   with e -> (
     if (!compete_mode) then (
-      print_endline "Unable to run the prover Z3!";
-      print_endline ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
+      print_endline_quiet "Unable to run the prover Z3!";
+      print_endline_quiet ("Please make sure its executable file (" ^ !smtsolver_name ^ ") is installed")
     );
     raise e
   )
@@ -885,14 +885,14 @@ let process_stdout_print ante conseq input output res =
   if (not !(outconfig.suppress_print_implication)) then
   begin
     if !(outconfig.print_implication) then 
-      print_endline ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
+      print_endline_quiet ("CHECKING IMPLICATION:\n\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n");
     if !(Globals.print_original_solver_input) then (
-      print_endline (">>> GENERATED SMT INPUT:\n\n" ^ input);
+      print_endline_quiet (">>> GENERATED SMT INPUT:\n\n" ^ input);
       flush stdout;
     );
     if !(Globals.print_original_solver_output) then (
-      print_endline (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
-      print_endline (match output.sat_result with
+      print_endline_quiet (">>> Z3 OUTPUT RECEIVED:\n" ^ (string_of_smt_output output));
+      print_endline_quiet (match output.sat_result with
         | UnSat -> ">>> VERDICT: UNSAT/VALID!"
         | Sat -> ">>> VERDICT: FAILED!"
         | Unknown -> ">>> VERDICT: UNKNOWN! CONSIDERED AS FAILED."
@@ -1113,9 +1113,9 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
   try
     imply ante conseq timeout
   with Illegal_Prover_Format s -> (
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.imply on ante Formula :"^(!print_pure ante));
-    print_endline ("and conseq Formula :"^(!print_pure conseq));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+    print_endline_quiet ("Apply z3.imply on ante Formula :"^(!print_pure ante));
+    print_endline_quiet ("and conseq Formula :"^(!print_pure conseq));
     flush stdout;
     failwith s
   )
@@ -1182,8 +1182,8 @@ let is_sat (pe : CP.formula) sat_no : bool =
   try
     is_sat pe sat_no
   with Illegal_Prover_Format s -> 
-    print_endline ("\nWARNING : Illegal_Prover_Format for :"^s);
-    print_endline ("Apply z3.is_sat on formula :"^(!print_pure pe));
+    print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
+    print_endline_quiet ("Apply z3.is_sat on formula :"^(!print_pure pe));
     flush stdout;
     failwith s
 

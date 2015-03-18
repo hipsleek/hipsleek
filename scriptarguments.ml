@@ -260,9 +260,12 @@ let common_arguments = [
   ("--oc-dis-adv-simp", Arg.Clear Globals.oc_adv_simplify,"disable oc advancde simplification");
   ("--oc-en-adv-simp", Arg.Set Globals.oc_adv_simplify,"enable oc advanced simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-  ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+  ("--field-imm", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-  ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--dis-field-imm", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--imm-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
+  ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");
+  ("--dis-imm-merge", Arg.Clear Globals.imm_merge,"don't merge aliased nodes");
   ("--mem", Arg.Unit (fun _ -> 
     Globals.allow_mem := true; 
     Globals.allow_field_ann := true;),
@@ -473,6 +476,7 @@ let common_arguments = [
   (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
+  ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dfa", Arg.Set Globals.disable_failure_explaining,"shorthand for --dis-failure-analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
@@ -676,6 +680,7 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
   ("--sa-error", Arg.Set Globals.sae, "infer error spec");
   ("--sa-dis-error", Arg.Clear Globals.sae, "disable to infer error spec");
   ("--sa-case", Arg.Set Globals.sac, "combine case spec");
@@ -853,6 +858,48 @@ let common_arguments = [
           (* Globals.dis_impl_var := true *)
       ),
    "SVCOMP14 competition mode - essential printing only");
+  ("--tnt-web-mode",
+     Arg.Unit
+      (fun _ ->
+          (* print_endline "inside svcomp-compete setting"; *)
+          compete_mode:=true; (* main flag *)
+          Globals.svcomp_compete_mode:=true; (* main flag *)
+          Globals.tnt_web_mode:=true; (* main flag *)
+          (* Globals.show_unexpected_ents := false; *)
+          (* diable printing *)
+          VarGen.trace_failure := false;
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Gen.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          
+          (* Globals.lemma_gen_unsafe:=true;    *)
+          (* Globals.lemma_syn := true;         *)
+          (* Globals.acc_fold := true;          *)
+          (* Globals.smart_lem_search := true;  *)
+          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          (* Globals.do_infer_inv := true; *)
+          (* Globals.lemma_gen_unsafe := true; *)
+          (* Globals.graph_norm := true; *)
+          
+          Globals.is_solver_local := true;
+          (* Omega.omegacalc:=  *)
+          (*   if (Sys.file_exists "./oc") then "./oc" *)
+          (*   else "oc"; *)
+          (* Fixcalc.fixcalc_exe := *)
+          (*   if (Sys.file_exists "./fixcalc") then "./fixcalc" *)
+          (*   else "fixcalc"; *)
+          (* Smtsolver.smtsolver_path := *)
+          (*   if (Sys.file_exists "./z3-4.3.2") then "./z3-4.3.2" *)
+          (*   else "z3-4.3.2"; *)
+          Globals.disable_failure_explaining := false;
+          Globals.return_must_on_pure_failure := true;
+          (* Globals.dis_impl_var := true *)
+      ),
+   "Essential printing only for HipTNT+ website");
   ("--smt-compete",
      Arg.Unit
       (fun _ ->

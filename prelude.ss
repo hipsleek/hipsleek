@@ -28,13 +28,13 @@ int mults___(int a, int b)
     a = 0 -> ensures res = 0;
     a > 0 -> case {
       b = 0 -> ensures res = 0;
-      b < 0 -> ensures res = a * b & res < 0 & res < -a & res < b;
-      b > 0 -> ensures res = a * b & res > 0 & res > a & res > b;
+      b < 0 -> ensures res < 0 & res < -a & res < b;
+      b > 0 -> ensures res > 0 & res > a & res > b;
     }
     a < 0 -> case {
       b = 0 -> ensures res = 0;
-      b < 0 -> ensures res = a * b & res > 0 & res > -a & res > -b;
-      b > 0 -> ensures res = a * b & res < 0 & res < a & res < -b;
+      b < 0 -> ensures res > 0 & res > -a & res > -b;
+      b > 0 -> ensures res < 0 & res < a & res < -b;
     }
   }
 
@@ -103,6 +103,37 @@ case {
   }
 }
 */
+
+int divs___(int a, int b) 
+  case {
+    a = 0 -> case {
+      b >= 1 -> ensures res = 0;
+      b <= -1 -> ensures res = 0;
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+    a > 0 -> case {
+      b = 1 -> ensures res = a;
+      b = -1 -> ensures res = -a;
+      b > 1 -> case {
+        a < b -> ensures res = 0;
+        a >= b -> ensures res >= 1 & res < a;
+      }
+      b < -1 -> case {
+        -a > b -> ensures res = 0;
+        -a <= b -> ensures res <= 1 & a + res > 0;
+      }
+      /* -1 < b < 1 -> requires false ensures false; */
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+    a < 0 -> case {
+      b = 1 -> ensures res = a;
+      b = -1 -> ensures res = -a;
+      b > 1 -> ensures res <= 0 & res > a;
+      b < -1 -> ensures res >= 0 & a + res < 0;
+      /* -1 < b < 1 -> requires false ensures false; */
+      -1 < b < 1 -> ensures true & flow __DivByZeroErr;
+    }
+  }
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -462,8 +493,8 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
-/* pred_prim memLoc<heap:bool,size:int> */
-/*   inv size>0; */
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
 
                                   ///////////////
                                   /*

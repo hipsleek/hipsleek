@@ -28,7 +28,7 @@ module LO2 = Label_only.Lab2_List
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
 (* some variables and functions decide which parser will be used *)
-let parser_name = ref "unknown"
+let parser_name = (* ref "unknown" *) ref "default"
 
 let set_parser name =
   parser_name := name
@@ -1519,7 +1519,7 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
 c_typ:
- [[ `COLON; t=typ -> t
+ [[ `COLON; t= typ -> t
  ]];
 
 cid_typ:
@@ -1893,7 +1893,7 @@ perm_aux: [[
                   let pa = List.hd (List.tl (List.tl t)) in
                   Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
                 else
-                  let () = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let () = print_endline_quiet ("Warning: bounded permission has incorrect number of arguments") in
                   let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
                   Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
             | _ -> List.hd t (*other permission systems have one parameter*)
@@ -2130,8 +2130,8 @@ cexp_w:
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
           begin
-            if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+            if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+            else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
             Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
           end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
@@ -2157,7 +2157,7 @@ cexp_w:
           with Not_found -> 
             if not (rel_names # mem id) then 
               if not !Globals.web_compile_flag then 
-                print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+                print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
     | peek_cexp_list; ocl = opt_comma_list -> 
@@ -2312,10 +2312,18 @@ validate_result:
     | `FAIL_MUST -> VR_Fail 1
     | `FAIL_MAY -> VR_Fail (-1)
   ]];
+validate_cmd_pair:
+    [[ `VALIDATE; vr = validate_result  ->
+      (vr, None)
+      | `VALIDATE; vr = validate_result; `COMMA; fl=OPT id ->
+            (vr, fl)
+   ]];
 
 validate_cmd:
-  [[ `VALIDATE; vr = validate_result; lc = OPT validate_list_context  ->
-      (vr, (un_option lc []))
+  [[ (* `VALIDATE; vr = validate_result; fl=OPT id; lc = OPT validate_list_context  -> *)
+      pr = validate_cmd_pair; lc = OPT validate_list_context  ->
+          let vr,fl = pr in
+          (vr, fl, (un_option lc []))
    ]];
 
 cond_path:
@@ -2631,6 +2639,7 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
+   | `ANN_KEY           -> ann_type
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
@@ -4120,8 +4129,24 @@ let create_tnt_prim_proc id : Iast.proc_decl option =
     else None
   in map_opt (parse_c_aux_proc "tnt_prim_proc") proc_source  
   
+let create_tnt_stdlib_proc () : Iast.proc_decl list =
+  let alloca_proc =
+    "void_star __builtin_alloca(int size)\n" ^
+    "  case {\n" ^
+    "    size <= 0 -> requires true ensures res = null;\n" ^
+    "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" 
+  in
+  let lt_proc = 
+    "int lt___(int_star p, int_star q)\n" ^
+    "  requires p::int_star<vp, op> * q::int_star<vq, oq>\n" ^
+    "  case {\n" ^
+    "    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res > 0;\n" ^
+    "    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res <= 0; }\n"
+  in List.map (parse_c_aux_proc "tnt_stdlib_proc") [alloca_proc; lt_proc]  
+  
 let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
     | None -> [] | Some pd -> [pd]) ids)
+
 

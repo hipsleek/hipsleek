@@ -1,0 +1,22 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+WARNING: _0:0_0:0:data field imm not set. Setting it now to be the same as node lvl imm. 
+
+Entail 1: Fail.(may) cause:UnionR[UnionR[ p_1522!=p_1576 & p_1576!=null & (((s!=null & p!=s) | p=s)) & p_1522!=null & 
+p_1576!=s' & p_1522!=s' & s'!=null |-  s'=w. LOCS:[1;25;28;27;0;26;29] (may-bug), p_1522!=q_165 & q_165!=null & (((s!=null & p!=s) | p=s)) & p_1522!=null & 
+q_165!=s' & p_1522!=s' & s'!=null & s'!=q_165 |-  q_165=w. LOCS:[1;25;28;27;0;26;7;29] (may-bug)], q_171!=q_165 & q_165!=null & (((s!=null & p!=s) | p=s)) & q_171!=null & 
+q_165!=s' & q_171!=s' & s'!=null & s'!=q_171 & q_165!=q_171 |-  q_171=w. LOCS:[1;25;28;27;0;26;7;29] (may-bug)]
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+

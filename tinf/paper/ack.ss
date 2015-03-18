@@ -1,5 +1,5 @@
 int Ack(int m, int n)
-infer [@term]
+  infer [@term,@post_n]
  requires true
  ensures true;
 { 
@@ -25,12 +25,15 @@ infer [@term]
 
 Ack:  case {
   m=0 -> requires emp & Term[3,1]
- ensures emp & true; 
-  1<=m & 0<=n -> requires emp & MayLoop[]
- ensures emp & true; 
-  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
-  0<=n)) -> requires emp & Loop[]
- ensures false & false; 
+         ensures emp & true; 
+  1<=m & 0<=n -> 
+         requires emp & MayLoop[]
+         ensures emp & true; 
+   ((m<=(0-1) & n<=(0-1)) 
+  | (n<=(0-1) & 1<=m) 
+  | (m<=(0-1) & 0<=n)) -> 
+         requires emp & Loop[]
+         ensures false & false; 
   }
 
 Why is below going into an infinite loop?

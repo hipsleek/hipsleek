@@ -108,7 +108,7 @@ let proc_gen_cmd cmd =
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-    | Validate (vr, lc) -> process_validate vr lc
+    | Validate (vr, opt_fl, lc) -> process_validate vr opt_fl lc
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapeLFP ids -> process_shape_lfp ids
@@ -211,7 +211,7 @@ let parse_file (parse) (source_file : string) =
       | Slk_Hull f -> process_hull f
       | Slk_PairWise f -> process_pairwise f
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-      | Validate (id, lc) -> process_validate id lc
+      | Validate (id, opt_fl, lc) -> process_validate id opt_fl lc
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
       | ShapeLFP ids -> process_shape_lfp ids
@@ -363,8 +363,8 @@ let main () =
                                      prompt := "SLEEK> "
                               with
                                 | _ -> dummy_exception();
-                                    print_string ("Error.\n");
-                                    print_endline "Last SLEEK FAILURE:";
+                                    print_string_quiet ("Error.\n");
+                                    print_endline_quiet "Last SLEEK FAILURE:";
                                     Log.last_cmd # dumping "sleek_dump(interactive)";
                                     (*     sleek_command # dump; *)
                                     (* print_endline "Last PURE PROOF FAILURE:"; *)
@@ -394,7 +394,7 @@ let main () =
           begin
             dummy_exception();
             let () = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
-            print_endline "SLEEK FAILURE (END)";
+            print_endline_quiet "SLEEK FAILURE (END)";
             Log.last_cmd # dumping "sleek_dumEND)";
           end
 
@@ -508,7 +508,7 @@ let _ =
             | Some b -> if b then "SAT" else "UNKNOWN"
         in msg
       in
-      print_endline (str_res)
+      print_endline_quiet (str_res)
     else ()
     in
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)

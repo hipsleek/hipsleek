@@ -431,12 +431,12 @@ let simplify_failesc_context fc =
   match fc with
     | (bfl, esc, bcl) -> (bfl, esc, List.map simplify_branch_context bcl)
 
-let simplify_failesc_context_list_x ctx =
+let simplify_failesc_context_list ctx =
   List.map (fun x -> simplify_failesc_context x) ctx
 
-let simplify_failesc_context_list ctx =
-  let pr = !print_list_failesc_context in
-  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list_x ctx
+(* let simplify_failesc_context_list ctx = *)
+(*   let pr = !print_list_failesc_context in *)
+(*   Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list_x ctx *)
 
 let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e

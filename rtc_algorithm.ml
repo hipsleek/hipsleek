@@ -6,6 +6,7 @@
 (* on the efficiency of the overall*)
 open Format
 open Graph
+open Gen.Basic
 
 module Vt =
 struct
@@ -54,7 +55,7 @@ let max_of (x:int) (y:int)= if (x>y) then x else y
 
 let get_var v1 v2 graph=
 		try let ed=Glabel.find_edge graph v1 v2 in !(Glabel.E.label ed)
-		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
+		with Not_found-> let _=print_endline_quiet ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
 
 class graphFindBCC =
 	object (self)
@@ -161,7 +162,7 @@ class graphFindBCC =
 			                          then 
 																	let _= G.remove_vertex eq_graph e in 
 																	let _= Glabel.remove_vertex g_e e in 
-																	let _= print_endline ("got eq=1") in i
+																	let _= print_endline_quiet ("got eq=1") in i
 																else
 						                      let _=(self)#init_map e in i+1)  eq_graph 0
 		
@@ -213,11 +214,11 @@ class graphFindBCC =
 			G.iter_edges_e (fun e-> G.add_edge_e graph e) diseq_graph 
 			
 		method print_graph graph=
-			let print_graph f graph_= f (fun v -> print_endline v) graph_ in
+			let print_graph f graph_= f (fun v -> print_endline_quiet v) graph_ in
 				let  _ = print_graph Dfs.postfix graph in ()
 		
 		method print_chordal_graph graph=
-					let print_graph_chordal f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in let _= let _= print_endline ("{"^v^"}")in List.map (fun x-> print_string (x^ "  {"^v^"} " )) neib in ()) graph_ in
+					let print_graph_chordal f graph_= f (fun v -> let neib= Adj.list_from_vertex graph_ v in let _= let _= print_endline_quiet ("{"^v^"}")in List.map (fun x-> print_string (x^ "  {"^v^"} " )) neib in ()) graph_ in
 						let  _ = print_graph_chordal Dfs.postfix graph in ()
 	end;;
 		
@@ -248,7 +249,7 @@ class rTC=
 	
 	method get_var v1 v2 graph=
 		try let ed=Glabel.find_edge graph v1 v2 in !(Glabel.E.label ed)
-		with Not_found-> let _=print_endline ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
+		with Not_found-> let _=print_endline_quiet ("get_var:NOT FOUND VAR!!!"^v1^" "^v2) in exit(0)
 	
 (*	method get_id gr_e v1 v2=*)
 	method get_var_triangular v el gr_e=
@@ -309,7 +310,7 @@ class rTC=
 			loop_gc es 
 	
 	method print_all graph =
-		let _=Glabel.iter_edges_e (fun x->print_endline ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
+		let _=Glabel.iter_edges_e (fun x->print_endline_quiet ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
 	
 	method rm_edges_all_diseq eq_g diseq_g g_e =
 			G.iter_vertex 

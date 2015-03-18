@@ -1,0 +1,12 @@
+infer [v,w] v<:w |- w=@M.
+expect Valid.
+print residue.
+//  inferred pure: [w=@M]
+
+infer [v,w] v<:w |- w=@M & v<:@L.
+expect Valid.
+print residue.
+
+checkentail v<:w & v<:@L & w=@M |- w=@M & v<:@L.
+expect Valid.
+print residue.

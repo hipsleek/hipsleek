@@ -1,0 +1,16 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * y::l6<_> & y=x|- false.
+expect Fail.
+
+checkentail x::l6<_> * x::l6<_>  * x::l6<_> |- false.
+expect Fail.

@@ -814,6 +814,8 @@ let allow_exhaustive_norm = ref true
 let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
+let fo_iheap = ref true
+
 let sae = ref false
 let sac = ref false
 
@@ -1015,6 +1017,10 @@ let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
+let remove_abs = ref true
+
+let imm_merge = ref false
+
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
@@ -1144,7 +1150,7 @@ let split_rhs_flag = ref true
 let n_xpure = ref 1
 
 
-let fixcalc_disj = ref 3 (* should be n+1 where n is the base-case *)
+let fixcalc_disj = ref 2 (* should be n+1 where n is the base-case *)
 
 let pre_residue_lvl = ref 0
 (* Lvl 0 - add conjunctive pre to residue only *)
@@ -1215,6 +1221,8 @@ let print_cil_input = ref false
 
 let disable_failure_explaining = ref false
 
+let enable_error_as_exc = ref false
+
 let bug_detect = ref false
 
 let simplify_error = ref false
@@ -1271,6 +1279,8 @@ let cpfile = ref ""
 
 let smt_compete_mode = ref false
 let svcomp_compete_mode = ref false
+let tnt_web_mode = ref false
+
 let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
