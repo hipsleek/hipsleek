@@ -2001,7 +2001,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin
-            let () = x_binfo_hp (add_str "Dprint" pr_id) (stk_vars # string_of_no_ln) no_pos in
+            let curr_svl = stk_vars # get_stk in
+            let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
             (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
             (* let ctx0 = ctx in *)
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
