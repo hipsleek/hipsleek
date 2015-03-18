@@ -2011,7 +2011,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
             let ctx2 = list_failesc_context_and_unsat_now prog ctx in
             let ctx = ctx2 in
-            (* let ctx_simp = Cfout.simplify_failesc_context_list ctx in *)
+            let ctx_simp = Cfout.simplify_failesc_context_list ctx in
             (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
             (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)

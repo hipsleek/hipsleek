@@ -406,7 +406,7 @@ let rec shorten_formula f =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
-let simplify_branch_context (pt, ctx) =
+let simplify_branch_context (pt, ctx, fail_type) =
   let rec helper ctx =
     match ctx with
       | Ctx en -> Ctx {en with
@@ -425,7 +425,7 @@ let simplify_branch_context (pt, ctx) =
                 mkBase h mf_simp vp t fl a no_pos
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
-  in (pt, helper ctx)
+  in (pt, helper ctx, fail_type)
 
 let simplify_failesc_context fc =
   match fc with
@@ -434,9 +434,9 @@ let simplify_failesc_context fc =
 let simplify_failesc_context_list ctx =
   List.map (fun x -> simplify_failesc_context x) ctx
 
-(* let simplify_failesc_context_list ctx = *)
-(*   let pr = !print_list_failesc_context in *)
-(*   Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list_x ctx *)
+let simplify_failesc_context_list ctx =
+  let pr = !print_list_failesc_context in
+  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list ctx
 
 let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e
