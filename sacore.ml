@@ -3539,7 +3539,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let ilemma_inf = Iast.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE LEM_GEN Iast.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let () = Debug.info_hprint (add_str "\nRight. ilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
-    let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
+    let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog (x_add Cvutil.xpure_heap) in
     (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
     let valid, n_rhs = match lc_opt with
       | Some lcs -> begin
@@ -3659,7 +3659,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let () = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
   (*L2: old*)
   (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
-  let rel_fixs,hp_defs0, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
+  let rel_fixs,hp_defs0, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog (x_add Cvutil.xpure_heap) in
   let r =
     match lc_opt with
       | Some lcs ->

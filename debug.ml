@@ -303,13 +303,12 @@ let pick_front n ss =
 module DebugCore  =
 struct
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-    let pre_str = 
-      let s = !VarGen.last_posn in
-      match s with 
-        | None -> ""
-        | Some s -> 
-              let () = VarGen.last_posn := None in
-              "("^s^")" in
+    let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
+      (* if s=="" thenmatch s with  *)
+      (*   | None -> "" *)
+      (*   | Some s ->  *)
+      (*         (\* let () = VarGen.last_posn := None in *\) *)
+      (*         "("^s^")" in *)
     let pr_args xs =
       let rec helper (i:int) args = match args with
         | [] -> ()
@@ -395,6 +394,7 @@ let choose bs xs =
 
 let ho_aux_no (f:'a -> 'z) (last:'a) : 'z =
   push_no_call ();
+  (* VarGen.last_posn # reset; *)
   pop_aft_apply_with_exc_no f last
 
 
