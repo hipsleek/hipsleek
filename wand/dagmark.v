@@ -30,6 +30,6 @@ Module Type Mdagmark.
   Axiom axiom_7 : forall D x D1, valid (imp (mark D x D1) (and (subset_reach D x D1) (eq_notreach D x D1))).
   Axiom axiom_8 : forall l r x D, valid (imp (lookup D x 1 l r) (mark D x D)).
   Axiom axiom_9 : forall D, valid (mark D null_node D).
-  Axiom lem_subdagupdate : forall y D x D1, valid (imp (and (star (dag x D1) (mwand (dag x D) (union (dag x D) (dag y D)))) (and (subset_reach D x D1) (eq_notreach D x D1))) (union (dag x D1) (dag y D1))).
+  Axiom lem_subdagupdate : forall r D l D1, valid (imp (and (star (dag l D1) (mwand (dag l D) (union (dag l D) (dag r D)))) (and (subset_reach D l D1) (eq_notreach D l D1))) (union (dag l D1) (dag r D1))).
 End Mdagmark.
 

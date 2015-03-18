@@ -10755,7 +10755,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 (CP.split_conjunctions (Mcpure.pure_of_mix check_p)))) 
                 else failwith "Ramification Lemma failed heap guard checking" in
               let h,p,fl,t,a = split_components coer.coercion_body in
-              let () = print_endline("RLEM_H : "^(Cprinter.string_of_h_formula lhs_wand)) in
+              (*let () = print_endline("RLEM_H : "^(Cprinter.string_of_h_formula lhs_wand)) in*)
               (*let () = print_endline("RLEM_P : "^Cprinter.string_of_mix_formula check_p) in
               let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in*)
               let vl = Cformula.h_fv h in
@@ -10764,14 +10764,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let h = Cformula.h_subst (List.combine vl fresh_vl) h in
               let check_p = Mcpure.memo_subst (List.combine vl fresh_vl) check_p in
               (*let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in*)
-              let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in
+              (*let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in*)
               let gvl = Cformula.h_fv lhs_wand in
 	      (*let gvl = List.sort CP.compare_spec_var gvl in*)
               let abs_vl = List.filter (fun c -> CP.is_void_typ c) gvl in
               let rl = List.hd (gvl) in
               let rl2 = List.hd (List.tl gvl) in
               let fl2 = List.hd (List.tl fvl) in
-              let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
               (*let fl2 = if CP.is_void_typ fl2 then fl2 else List.hd (CP.fresh_spec_vars [rl]) in*)
               (*let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in*)
               let gvl = fvl@[rl]@[rl2] in
@@ -10787,8 +10787,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      (*let () = print_endline("Length of Rho2"^string_of_int (List.length rho2)) in*)
               (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
               let gvl = if (List.length rho2)=0 then fvl@abs_vl else gvl in
-              let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
-              let () = print_endline("FreshVL :"^Cprinter.string_of_spec_var_list fresh_vl) in 	
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              let () = print_endline("FreshVL :"^Cprinter.string_of_spec_var_list fresh_vl) in *)	
               let gvl_2 = List.filter (fun h -> is_data h) (split_all_conjunctions lhs_wand) in
               let rho = if List.length fresh_vl = List.length gvl then 
 			let fresh_vl_1 = List.sort CP.compare_spec_var fresh_vl in 
@@ -10804,17 +10804,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   if List.length check_p_vl == List.length ((List.hd abs_vl)::wand_head_var_lst) then
                   List.combine check_p_vl ((List.hd abs_vl)::wand_head_var_lst)
                 else try 
- 			let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+ 			(*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in*)
 			(*let v = List.hd (List.tl gvl) in*)
-			let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in
+			(*let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in*)
                        let gvl2_vl =  (h_fv (List.hd gvl_2)) in
                        let v = if(List.length fvl == List.length gvl2_vl) then List.hd (List.tl gvl) else List.hd (List.tl gvl2_vl)in
                        let g' = if(List.length fvl == List.length gvl2_vl) then rl2 else List.hd (List.tl gvl) in
                        let g = List.hd abs_vl in
 	               let check_p_vl = List.sort CP.compare_spec_var check_p_vl in
 	 	       let fix_lem_vl = g::(List.sort CP.compare_spec_var (v::gvl2_vl@[g']))  in	
-		       let () = print_endline("VL :"^Cprinter.string_of_spec_var_list fix_lem_vl) in
-		       let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
+		       (*let () = print_endline("VL :"^Cprinter.string_of_spec_var_list fix_lem_vl) in
+		       let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in*)
                        List.combine check_p_vl fix_lem_vl 
                   with _ -> (*let () = print_endline ("Exception") in *)failwith "Lemma too complex" in
               let check_p = Mcpure.memo_subst rho2 check_p in
