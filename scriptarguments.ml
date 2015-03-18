@@ -630,7 +630,8 @@ let common_arguments = [
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
   ("--use-baga",Arg.Set Globals.use_baga,"use baga only (no inv infer)");
   ("--dis-use-baga",Arg.Clear Globals.use_baga,"disable use baga only (no inv infer)");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
+  ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
