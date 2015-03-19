@@ -5366,3 +5366,7 @@ Lem_store.lem_pr_med:= string_of_coerc_med;;
 CVP.print_vperm_sets := string_of_vperm_sets;;
 Cformula.print_vperm_sets := string_of_vperm_sets;;
 Cfout.print_list_failesc_context := string_of_list_failesc_context;
+Cfout.print_formula := string_of_formula;
+Cfout.print_pure_formula := string_of_pure_formula;
+Cfout.print_sv := string_of_spec_var;
+

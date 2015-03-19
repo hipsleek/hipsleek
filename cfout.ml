@@ -4,6 +4,7 @@ this module contains funtions relating to output of cformula
 *)
 
 open Globals
+open Global_var
 open VarGen
 open Gen
 open Exc.GTable
@@ -20,6 +21,9 @@ let n_tbl = Hashtbl.create 1
 let id_tbl = Hashtbl.create 1
 
 let print_list_failesc_context = ref (fun (c:Cformula.list_failesc_context) -> "list failesc context printer has not been initialized")
+let print_formula = ref (fun (c:Cformula.formula) -> "formula printer has not been initialized")
+let print_pure_formula = ref (fun (c:Cpure.formula) -> "pure formula printer has not been initialized")
+let print_sv = ref (fun (c:Cpure.spec_var) -> "spec_var printer has not been initialized")
 let simplify_raw = ref(fun (c:Cpure.formula) -> Cpure.mkTrue no_pos)
 
 let shorten_svl fv =
@@ -402,17 +406,31 @@ let rec shorten_formula f =
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
 
-let simplify_branch_context (pt, ctx) =
-  let _ = print_endline "simplify2222" in
+let simplify_branch_context (pt, ctx, fail_type) =
   let rec helper ctx =
     match ctx with
       | Ctx en -> Ctx {en with
             es_formula =
-                let h,p,vp,fl,t,a = split_components en.es_formula in
-                mkBase h (Mcpure.mix_of_pure (!simplify_raw (Mcpure.pure_of_mix p))) vp t fl a no_pos
+                let () = x_binfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
+                let all_svl = fv en.es_formula in
+                let () = x_binfo_hp (add_str "all variables" (pr_list !print_sv)) all_svl no_pos in
+                let h,mf,vp,fl,t,a = split_components en.es_formula in
+                let curr_svl = stk_vars # get_stk in
+                let () = x_binfo_hp (add_str "curr variables" (pr_list !print_sv)) curr_svl no_pos in
+                let bind_svl = h_fv h in
+                let () = x_binfo_hp (add_str "bind variables" (pr_list !print_sv)) bind_svl no_pos in
+                let imp_svl = Gen.BList.remove_dups_eq Cpure.eq_spec_var (curr_svl@bind_svl) in
+                let () = x_binfo_hp (add_str "important variables" (pr_list !print_sv)) imp_svl no_pos in
+                let exists_svl = Gen.BList.difference_eq Cpure.eq_spec_var all_svl imp_svl in
+                let () = x_binfo_hp (add_str "exists variables" (pr_list !print_sv)) exists_svl no_pos in
+                let pf = Mcpure.pure_of_mix mf in
+                let pf1 = Cpure.mkExists exists_svl pf None no_pos in
+                let pf_simp = !simplify_raw pf1 in
+                let mf_simp = Mcpure.mix_of_pure pf_simp in
+                mkBase h mf_simp vp t fl a no_pos
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
-  in (pt, helper ctx)
+  in (pt, helper ctx, fail_type)
 
 let simplify_failesc_context fc =
   match fc with
@@ -421,9 +439,9 @@ let simplify_failesc_context fc =
 let simplify_failesc_context_list ctx =
   List.map (fun x -> simplify_failesc_context x) ctx
 
-(* let simplify_failesc_context_list ctx = *)
-(*   let pr = !print_list_failesc_context in *)
-(*   Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list_x ctx *)
+let simplify_failesc_context_list ctx =
+  let pr = !print_list_failesc_context in
+  Debug.no_1 "simplify_failesc_context_list" pr pr simplify_failesc_context_list ctx
 
 let inline_print e =
     if (!Globals.print_en_inline) then elim_imm_vars_f e
